@@ -6,7 +6,7 @@
 
 ## 1 Overview
 
-The OMEGA logging system(OMEGA logging system) offers a standardized Application Programming Interface (API) that facilitates the tracking of events occurring during the runtime of all Omega sub-components. Each event comprises a descriptive message along with an indicator denoting its severity level.
+The OMEGA logging system offers a standardized Application Programming Interface (API) that facilitates the tracking of events occurring during the runtime of all Omega sub-components. Each event comprises a descriptive message along with an indicator denoting its severity level.
 
 ## 2 Requirements
 
@@ -20,13 +20,14 @@ We are currently investigating this requirement.
 
 Regarding logging, the ability for the Ocean model to work with E3SM is limited to three aspects:
 
-The Ocean model can obtain a Fortran file unit number by utilizing a subroutine in the E3SM share/util library.
-The Ocean model can obtain a log file name from a Fortran namelist file through a subroutine in the E3SM share/util library.
-The Ocean model allows utility subroutines in the E3SM share/util library to save their log messages in the Ocean log file while the Ocean model utilizes these subroutines.
+* The Ocean model can obtain a Fortran file unit number by utilizing a subroutine in the E3SM share/util library.
+* The Ocean model can obtain a log file name from a Fortran namelist file through a subroutine in the E3SM share/util library.
+* The Ocean model allows utility subroutines in the E3SM share/util library to save their log messages in the Ocean log file while the Ocean model utilizes these subroutines.
+
 Since Fortran file unit numbers cannot be recognized in C++ code, we may need to decide on one of two options:
 
-Not to support logging inter-operability with E3SM.
-Allow E3SM utility subroutines to save their log messages to the Ocean model-designated file unit using a Fortran interface to E3SM.
+* Not to support logging inter-operability with E3SM.
+* Allow E3SM utility subroutines to save their log messages to the Ocean model-designated file unit using a Fortran interface to E3SM.
 
 ### 2.3 Requirement: Multi-processing
 
@@ -50,7 +51,7 @@ It is desired for the OMEGA logging system to support various use-cases of log f
 
 ### 2.8 Desired: Output sinks
 
-It is desired for the OMEGA logging system to have a default destination for log messages, which is the local file system. Additionally, the system should be capable of transporting log messages to various output sinks such as emails or databases. This functionality is crucial for ensuring the accessibility and availability of log data, enabling users to view and analyze the logs through multiple channels.
+It is desired for the OMEGA logging system to be capable of transporting log messages to various output sinks such as emails or databases. This functionality is crucial for ensuring the accessibility and availability of log data, enabling users to view and analyze the logs through multiple channels.
 
 ### 2.9 Desired: Local logging
 
@@ -58,7 +59,7 @@ It is desired for the OMEGA logging system to provide each sub-component with it
 
 ## 3 Algorithmic Formulation
 
-No algorithm is necessary for the system to function.
+No algorithm is necessary for the logging system.
 
 ## 4 Design
 
@@ -74,7 +75,7 @@ Furthermore, the message format can be set using -D LOG\_PATTERN=<pattern> at co
 
 #### 4.1.2 Class/structs/data types
 
-No public data type is necessary for system to function.
+No public data type is necessary for the logging system.
 
 ### 4.2 Methods
 
@@ -88,12 +89,12 @@ The OMEGA logging system includes macros that allow the user to write log messag
 
 The OMEGA logging system provides the following macros for writing log messages with different severity levels:
 
-LOG\_CRITICAL: Used to indicate a critical error or issue that requires immediate attention and could potentially cause data loss or application failure.
-LOG\_ERROR: Used to indicate an error or issue that could cause application instability or incorrect behavior.
-LOG\_WARN: Used to indicate a warning or potential issue that should be addressed but does not necessarily require immediate attention.
-LOG\_INFO: Used to provide general informational messages about the application's operation or progress.
-LOG\_DEBUG: Used to provide detailed debugging information for developers to track down issues or analyze behavior.
-LOG\_TRACE: Used to provide the most detailed level of information, including function calls and variable values, and is typically used for deep analysis and debugging.
+1. LOG\_CRITICAL: Used to indicate a critical error or issue that requires immediate attention and could potentially cause data loss or application failure.
+2. LOG\_ERROR: Used to indicate an error or issue that could cause application instability or incorrect behavior.
+3. LOG\_WARN: Used to indicate a warning or potential issue that should be addressed but does not necessarily require immediate attention.
+4. LOG\_INFO: Used to provide general informational messages about the application's operation or progress.
+5. LOG\_DEBUG: Used to provide detailed debugging information for developers to track down issues or analyze behavior.
+6. LOG\_TRACE: Used to provide the most detailed level of information, including function calls and variable values, and is typically used for deep analysis and debugging.
 
 Each macro can accept an optional argument of an Omega data type, which will be formatted automatically by the OMEGA logging system if the data type is recognized. 
 
