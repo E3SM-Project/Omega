@@ -16,18 +16,7 @@ It is a requirement for the OMEGA logging system to furnish Omega sub-components
 
 ### 2.2 Requirement: Inter-operability with E3SM
 
-We are currently investigating this requirement.
-
-Regarding logging, the ability for the Ocean model to work with E3SM is limited to three aspects:
-
-* The Ocean model can obtain a Fortran file unit number by utilizing a subroutine in the E3SM share/util library.
-* The Ocean model can obtain a log file name from a Fortran namelist file through a subroutine in the E3SM share/util library.
-* The Ocean model allows utility subroutines in the E3SM share/util library to save their log messages in the Ocean log file while the Ocean model utilizes these subroutines.
-
-Since Fortran file unit numbers cannot be recognized in C++ code, we may need to decide on one of two options:
-
-* Not to support logging inter-operability with E3SM.
-* Allow E3SM utility subroutines to save their log messages to the Ocean model-designated file unit using a Fortran interface to E3SM.
+It is a requirement for the OMEGA logging system to recognize the log root filename defined in E3SM as a part of the input configuration.
 
 ### 2.3 Requirement: Multi-processing
 
@@ -96,7 +85,10 @@ The OMEGA logging system provides the following macros for writing log messages 
 5. LOG\_DEBUG: Used to provide detailed debugging information for developers to track down issues or analyze behavior.
 6. LOG\_TRACE: Used to provide the most detailed level of information, including function calls and variable values, and is typically used for deep analysis and debugging.
 
-Each macro can accept an optional argument of an Omega data type, which will be formatted automatically by the OMEGA logging system if the data type is recognized. 
+In order to enhance the logging capabilities, OMEGA logging system provides each macro with an optional argument of an Omega data type. If the data type is recognized, it will be formatted automatically by the system and appended in the appropriate format to the log message. As an example, the following macro demonstrates how an argument of type Array1DR8 can be appended to a log message:
+
+    Array1DR8 var;
+    LOG_INFO("log message", var);
 
 ## 5 Verification and Testing
 
