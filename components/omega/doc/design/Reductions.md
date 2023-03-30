@@ -63,7 +63,17 @@ callable from environments other than the default.
 The results (esp sums) must be bit-for-bit reproducible on a given
 machine with respect to processor and thread count
 
-### 2.9 Desired: Other reduction operations
+### 2.9 Requirement: Accelerators and location
+
+When running on accelerated architectures, the ability to specify
+whether the reduction occurs on host or device is needed.
+
+### 2.10 Requirement: CPU threading
+
+For reductions performed on the CPU, the operations must support
+and MPI+OpenMP model while still meeting reproducibility requirements.
+
+### 2.11 Desired: Other reduction operations
 
 It will be desireable in the future to add other reduction operations
 like minloc/maxloc.
@@ -214,8 +224,10 @@ with random numbers that extend across the entire range of that
 type (for later reproducibility tests). A reference sum will
 be computed serially using the same reproducible algorithm
 as the global implementation. The basic test will compare the
-global sum with the reference serial sum.
-  - tests requirement 2.1, 2.3, part of 2.8
+global sum with the reference serial sum. Because the data types
+include both host and device arrays, this will also test reductions
+on either location. 
+  - tests requirement 2.1, 2.3, part of 2.8, 2.9
 
 ### 5.2 Reproducibility
 
@@ -223,8 +235,9 @@ A MachEnv and decomposition for a subset of MPI ranks will be
 created and the reference arrays above will be distributed across
 the new decomposition. Global sums in each case will be compared
 to the serial reference value and the full MPI rank case
-for bit reproducibility. 
-  - tests requirement 2.7, 2.8
+for bit reproducibility. Similarly, a test with CPU threading
+on will test reproducibility under threading.
+  - tests requirement 2.7, 2.8, 2.10
 
 ### 5.3 Restricted index range
 
@@ -237,7 +250,7 @@ similarly-restricted serial reference sums.
 
 A mask array will be defined for each type and used with the
 sum-with-product interface and compared against a serial
-version of the same
+version of the same.
   - tests requirement 2.4
 
 ### 5.5 Multi-field sums
@@ -247,14 +260,7 @@ with reference serial sums. Then the multi-field interface will
 be tested against these reference sums.
   - tests requirement 2.6
 
-### 5.6 Multi-field sums
-
-Additional arrays similar to the reference arrays will be created
-with reference serial sums. Then the multi-field interface will
-be tested against these reference sums.
-  - tests requirement 2.6
-
-### 5.7 Min/Max
+### 5.6 Min/Max
 
 A similar approach to the sums above will be used to test the
 min and max functions in all combinations of interfaces.
