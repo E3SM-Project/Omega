@@ -65,7 +65,7 @@ simulations, the model must support years that extend beyond the
 4-digit representation and support negative years to represent
 years Before the Common Era (BCE)
 
-### 2.6 Required: Time string representation
+### 2.7 Required: Time string representation
 
 For model output or metadata, the model must be able to
 represent a time in accepted formats. Following ISO standards
@@ -955,16 +955,81 @@ of all attached alarms.
 
 ## 5 Verification and Testing
 
-### 5.1 Test xxx
+### 5.1 Test TimeFrac
 
-Describe test including conditions for pass/fail
-List which requirements it tests: 
-  - tests requirement xxx
+We will test the base TimeFrac class by creating some reference
+times, one of which will be a fractional time that cannot be
+exactly represented by a float (eg 1/3 seconds). Constructors and
+set functions will be paired with get functions to make sure both
+set/get are working. All operators (equivalence, relational,
+algebraic) operators will be tested with known values. We will
+try to anticipate values that could fail. 
+  - tests parts of requirement 2.2, 2.5, 2.6
 
-### 5.2 Test yyy
+### 5.2 Test TimeInstant
 
-Describe test including conditions for pass/fail
-List which requirements it tests: 
-  - tests requirement zzz
+Similar to TimeFrac, create reference times in each of the
+supported calendars using constructor and set functions. Test
+retrievals (get) to verify they return the reference value.
+Test all the supported TimeInstant operators with known values
+in each of the calendars. 
+  - tests parts of requirement 2.1, 2.3
+
+### 5.3 Test Calendar
+
+For each of the supported calendars (including a custom
+calendar), create an instance of the calendar and use
+the retrieval (get) functions to verify that various
+calendar properties are as expected (eg days per year,
+days per month, leap years/days, etc.). For some calendars,
+known reference dates exist from the references above and
+we will verify that these result in correct elapsed time
+or Julian day. Test the few operators (equivalence, copy
+constructors).
+  - tests most of requirement 2.3
+
+### 5.4 Test Time Intervals
+
+As in the others, test constructors and set functions by
+pairing with retrieval (get) functions for a given
+reference time interval. Test assignment constructors
+by creating a time interval for a given time step in
+various time units (seconds, hours, days, etc.). Test
+equivalence/non-equivalence by comparing known time intervals.
+Test algebraic operators (addition, subtraction, increment,
+decrement, multiply, divide, etc.) using reference values.
+Test creation of time interval by subtraction of time instants.
+  - tests requirement 2.4, parts of 2.1
+
+### 5.5 Test Alarms
+
+Test both one-time and periodic alarms at various supported
+intervals, including annual, monthly/nmonths, daily/ndays,
+hourly/nhours, nminutes, seconds. This is accomplished by
+choosing a start time in a calendar and integrating over a
+time period that covers the alarm. Use the Gregorian calendar
+(as most complex) and choose an interval that includes leap
+years/days. Also verify that alarms are not ringing at arbitrary
+selected times in between. Check the reset function and verify
+alarms are reset appropriately.
+  - tests requirement 2.5
+
+### 5.6 Test Clock
+
+This is the primary test of putting it all together and
+verifying that we can advance a model clock. Construct a
+clock with a given calendar and time step. Test various
+retrieval functions to get known quantities - also test
+the ability to change time step with set/get pair. Set a
+number of alarms at various times and periodic intervals.
+Integrate forward in time for N years and verify all alarms
+are triggered at proper times. Also verify that the final
+time is exact with no roundoff error accumulated. Create
+another clock with large time steps (years) that extend over a
+potential paleoclimate interval to test large number
+representations are supported correctly.
+  - tests requirement 2.1, 2.2, 2.3, 2.4, 2.5, 2.6
+
+
 
 
