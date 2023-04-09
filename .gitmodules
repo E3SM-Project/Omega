@@ -74,3 +74,6 @@
 	path = components/ww3/src/WW3
 	url = git@github.com:E3SM-Project/WW3.git
 	branch = e3sm
+[submodule "components/omega/external/YAKL"]
+	path = components/omega/external/YAKL
+	url = git@github.com:mrnorman/YAKL.git

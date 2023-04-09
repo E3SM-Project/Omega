@@ -25,7 +25,7 @@ if (NOT DEFINED PROJECT_NAME)
   cmake_minimum_required(VERSION 3.16)
   project(OmegaOceanModel)
 
-  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD 11)
 
   # Set the build type to Release by default
   if(NOT CMAKE_BUILD_TYPE)
