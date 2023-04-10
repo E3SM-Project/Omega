@@ -1,8 +1,8 @@
 # Omega Top-level CMakeLists.txt
 #
 # - supports two build modes:
-#    1) standalone
-#    2) embedded(e3sm)
+#    1) stand-alone build mode
+#    2) embedded(e3sm) build mode
 #
 # - variable name prefix: "OMEGA_"
 #     * controls the process of Omega building
@@ -11,15 +11,15 @@
 ###########################################################
 # STEP 1: Setup                                           #
 #                                                         #
-# Assign proper values to the build-controlling variables #
+# Assign values to the build-controlling variables        #
 ###########################################################
 
-# include variables and macros for Omega build
+# define variables and macros for Omega build
 include(${CMAKE_CURRENT_SOURCE_DIR}/OmegaBuild.cmake)
 
-# handle multiple types of Omega build
+# handle build types 
 if (NOT DEFINED PROJECT_NAME)
-  # standalone build
+  # enter standa-lone build
 
   cmake_minimum_required(VERSION 3.16)
   project(${OMEGA_PROJECT_NAME})
@@ -52,20 +52,25 @@ endif()
 ###########################################################
 # STEP 2: Update                                          #
 #                                                         #
-# modify build-controlling variables to accomodate        #
-# further changes                                         #
+# update cmake & yakl variables, and adjust               #
+# build-controlling variables                             #
 ###########################################################
 
 # update CMake variables from the build-controlling variables
 update_variables()
 
+###########################################
+# place holder for further build-controls #
+###########################################
+
 # check if all-required variables have proper values
 check_setup()
 
+
 ###########################################################
-# STEP 2: Build                                           #
+# STEP 3: Build                                           #
 #                                                         #
-# build Omega and generate tests                          #
+# build Omega, and generate tests                          #
 ###########################################################
 
 add_subdirectory(external)

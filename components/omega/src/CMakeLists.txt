@@ -1,3 +1,5 @@
+# build Omega
+
 # Add source files for the library
 set(LIBSRC_FILES
   infra/logging.cpp
