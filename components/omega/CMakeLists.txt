@@ -1,19 +1,18 @@
 # Omega Top-level CMakeLists.txt
 #
 # - supports two build modes:
-#    1) standalone and
+#    1) standalone
 #    2) embedded(e3sm)
 #
-# - uses a prefix of "OMEGA_" in all
-#    Omega build controlling variables(OBCVs)
+# - variable name prefix: "OMEGA_"
+#     * controls the process of Omega building
 
 
-####################################
-# STEP 1: Setup                    #
-#                                  #
-# Assign proper values to build-con#
-# trolling variables               #
-####################################
+###########################################################
+# STEP 1: Setup                                           #
+#                                                         #
+# Assign proper values to the build-controlling variables #
+###########################################################
 
 # include variables and macros for Omega build
 include(${CMAKE_CURRENT_SOURCE_DIR}/OmegaBuild.cmake)
@@ -23,7 +22,7 @@ if (NOT DEFINED PROJECT_NAME)
   # standalone build
 
   cmake_minimum_required(VERSION 3.16)
-  project(OmegaOceanModel)
+  project(${OMEGA_PROJECT_NAME})
 
   set(CMAKE_CXX_STANDARD 11)
 
@@ -50,34 +49,40 @@ else()
 
 endif()
 
-####################################
-# STEP 2: Update                   #
-#                                  #
-# modify build-controlling variable#
-# s to accomodate further changes  #
-####################################
+###########################################################
+# STEP 2: Update                                          #
+#                                                         #
+# modify build-controlling variables to accomodate        #
+# further changes                                         #
+###########################################################
 
-# update CMake variables from Omega build-controlling variables(OBCVs)
-update_cmake_variables()
+# update CMake variables from the build-controlling variables
+update_variables()
 
 # check if all-required variables have proper values
 check_setup()
 
-####################################
-# STEP 3: Build                    #
-#                                  #
-# build Omega and generate tests   #
-####################################
+###########################################################
+# STEP 2: Build                                           #
+#                                                         #
+# build Omega and generate tests                          #
+###########################################################
 
 add_subdirectory(external)
 add_subdirectory(src)
-add_subdirectory(test)
 
-####################################
-# STEP 4: Output                   #
-#                                  #
-# prepare outputs according to the #
-# output-controlling variables     #
-####################################
+if(${OMEGA_BUILD_TEST})
+
+  enable_testing()
+  add_subdirectory(test)
+
+endif()
+
+###########################################################
+# STEP 4: Output                                          #
+#                                                         #
+# prepare outputs according to the output-controlling     #
+# variables                                               #
+###########################################################
 
 wrap_outputs()
