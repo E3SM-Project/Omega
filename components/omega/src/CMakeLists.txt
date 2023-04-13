@@ -24,9 +24,9 @@ set_property(TARGET ${OMEGA_LIB_NAME} PROPERTY CMAKE_CACHE_FILE_DEPENDS "CMakeCa
 yakl_process_target(${OMEGA_LIB_NAME})
 
 # handles cuda cases
-if ("${YAKL_ARCH}" STREQUAL "CUDA")
+if (YAKL_ARCH STREQUAL "CUDA")
   set_target_properties(${OMEGA_LIB_NAME} PROPERTIES LINKER_LANGUAGE CXX)
-  if (${CMAKE_VERSION} VERSION_GREATER "3.18.0")
+  if (CMAKE_VERSION VERSION_GREATER "3.18.0")
     set_target_properties(${OMEGA_LIB_NAME} PROPERTIES CUDA_ARCHITECTURES OFF)
   endif()
 endif()
@@ -46,9 +46,9 @@ if(OMEGA_BUILD_EXECUTABLE)
   yakl_process_target(${OMEGA_EXE_NAME})
 
   # handles cuda cases
-  if ("${YAKL_ARCH}" STREQUAL "CUDA")
+  if (YAKL_ARCH STREQUAL "CUDA")
     set_target_properties(${OMEGA_EXE_NAME} PROPERTIES LINKER_LANGUAGE CXX)
-    if (${CMAKE_VERSION} VERSION_GREATER "3.18.0")
+    if (CMAKE_VERSION VERSION_GREATER "3.18.0")
       set_target_properties(${OMEGA_EXE_NAME} PROPERTIES CUDA_ARCHITECTURES OFF)
     endif()
   endif()

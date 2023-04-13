@@ -1,17 +1,17 @@
 # Omega Top-level CMakeLists.txt
 #
 # - supports two build modes:
-#    1) stand-alone build mode
-#    2) embedded(e3sm) build mode
+#    1) standalone build
+#    2) e3sm build
 #
 # - variable name prefix: "OMEGA_"
-#     * controls the process of Omega building
+#     * controls the Omega building
 
 
 ###########################################################
 # STEP 1: Setup                                           #
 #                                                         #
-# Assign values to the build-controlling variables        #
+# Assign values to the Omega build-controlling variables  #
 ###########################################################
 
 # define variables and macros for Omega build
@@ -25,11 +25,6 @@ if (NOT DEFINED PROJECT_NAME)
   project(${OMEGA_PROJECT_NAME})
 
   set(CMAKE_CXX_STANDARD 11)
-
-  # Set the build type to Release by default
-  if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-  endif()
 
   # update variables for standalone build
   setup_standalone_build()
@@ -76,7 +71,7 @@ check_setup()
 add_subdirectory(external)
 add_subdirectory(src)
 
-if(${OMEGA_BUILD_TEST})
+if(OMEGA_BUILD_TEST)
 
   enable_testing()
   add_subdirectory(test)

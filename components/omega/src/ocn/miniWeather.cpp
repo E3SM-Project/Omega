@@ -83,8 +83,10 @@ void reductions           ( realConst3d state , double &mass , double &te , Fixe
 ///////////////////////////////////////////////////////////////////////////////////////
 // THE MAIN PROGRAM STARTS HERE
 ///////////////////////////////////////////////////////////////////////////////////////
-int _main(int argc, char **argv) {
+int _main(int argc, char **argv, double * mass_out, double * te_out) {
+
   MPI_Init(&argc,&argv);
+
   yakl::init();
   {
     Fixed_data fixed_data;
@@ -144,9 +146,12 @@ int _main(int argc, char **argv) {
     double mass, te;
     reductions(state,mass,te,fixed_data);
 
+    *mass_out = (mass - mass0)/mass0;
+    *te_out = (te - te0  )/te0;
+
     if (mainproc) {
-      printf( "d_mass: %le\n" , (mass - mass0)/mass0 );
-      printf( "d_te:   %le\n" , (te   - te0  )/te0   );
+      printf( "d_mass: %le\n" , *mass_out);
+      printf( "d_te:   %le\n" , *te_out);
     }
 
     finalize();

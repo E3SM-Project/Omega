@@ -1,6 +1,6 @@
 
-# Add a test for the stand-alone executable
-add_test(NAME OMEGA_TEST COMMAND ${OMEGA_EXE_NAME})
+# Add a test
+add_executable(OMEGA_TEST test_main.cpp)
+target_link_libraries(OMEGA_TEST ${OMEGA_LIB_NAME})
+add_test(NAME OMEGA_TEST COMMAND OMEGA_TEST)
 
-# Configure test dependencies
-set_tests_properties(OMEGA_TEST PROPERTIES DEPENDS ${OMEGA_EXE_NAME})
