@@ -11,12 +11,16 @@
 #include <iostream>
 #include <math.h>
 
+#include "logging.h"
+
 double _main(int argc, char **argv, double * mass, double * te);
 
 ///////////////////////////////////////////////////////////////////////////////////////
 // THE MAIN PROGRAM STARTS HERE
 ///////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv) {
+
+  LOG_INFO("Starting Omega...");
 
   int retval = 1;
  
@@ -50,6 +54,8 @@ int main(int argc, char **argv) {
       retval = 0;
     }
   }
+
+  LOG_INFO("Omega is finished.");
 
   return retval;
 

@@ -2,7 +2,6 @@
 
 # Add source files for the library
 set(LIBSRC_FILES
-  infra/logging.cpp
   ocn/miniWeather.cpp
 )
 
@@ -13,6 +12,7 @@ set_target_properties(${OMEGA_LIB_NAME} PROPERTIES COMPILE_FLAGS "${OMEGA_DEV_MI
 # Link the spdlog and YAKL libraries
 target_link_libraries(${OMEGA_LIB_NAME} spdlog "${OMEGA_LDFLAGS}")
 target_include_directories(${OMEGA_LIB_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(${OMEGA_LIB_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/infra")
 
 # include yakl cmake utility
 include(${CMAKE_CURRENT_SOURCE_DIR}/../external/YAKL/yakl_utils.cmake)
@@ -33,14 +33,17 @@ endif()
 
 # build Omega executable
 if(OMEGA_BUILD_EXECUTABLE)
-
+  set(EXESRC_FILES
+    drivers/main.cpp
+  )
   # Create the executable target
-  add_executable(${OMEGA_EXE_NAME} drivers/main.cpp)
+  add_executable(${OMEGA_EXE_NAME} ${EXESRC_FILES})
   set_target_properties(${OMEGA_EXE_NAME} PROPERTIES COMPILE_FLAGS "${OMEGA_DEV_MINIWEATHER_EXE_DEFS}")
 
   # Link the Omega library
   target_link_libraries(${OMEGA_EXE_NAME} ${OMEGA_LIB_NAME})
   target_include_directories(${OMEGA_EXE_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+  target_include_directories(${OMEGA_EXE_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/infra")
 
   # help the executable target to be built with yakl
   yakl_process_target(${OMEGA_EXE_NAME})
