@@ -1,7 +1,9 @@
 <!--- OMEGA global reductions requirements and design ------------------------->
 
-# OMEGA Requirements and Design:
-## *Global Reductions*
+(omega-design-global-reductions)=
+
+
+# Global Reductions
 
 ## 1 Overview
 
@@ -115,9 +117,11 @@ type I4, I8, R4, R8, Real and DD is the dimension 1D thru 5D)
 or supported scalar data type, there will be a sum function
 aliased to the globalSum interface:
 
+```c++
     sum = globalSum(const ArrayTTDD array, 
                     const I4 mpiComm, 
                     const std::vector<I4> indxRange);
+```
 
 where mpiComm is the MPI communicator extracted from the
 relevant MachEnv (eg defaultEnv.comm) and indxRange is a
@@ -125,7 +129,7 @@ relevant MachEnv (eg defaultEnv.comm) and indxRange is a
 The entries of this vector will be the min, max index of
 each array dimension. So, for example an array dimensioned
 `(nCellsAll+1, nVertLevels+1)` might need to be summed over
-the 'indxRange{0, nCellsOwned-1, 0, nVertLevels-1}`. Note
+the `indxRange{0, nCellsOwned-1, 0, nVertLevels-1}`. Note
 that the indxRange supports a constant scalar values only so
 does not support a variable index range like
 minLevelCell/maxLevelCell. That is best managed either
@@ -143,10 +147,12 @@ host and device arrays will be summed on the device.
 
 There will be a similar interface for a sum with product:
 
+```c++
     sum = globalSum(const ArrayTTDD array1,
                     const ArrayTTDD array2, 
                     const I4 mpiComm, 
                     const std::vector<I4> indxRange);
+```
 
 that returns the sum of `array1*array2`. The two arrays
 must be of the same data type. It is not required that
@@ -162,10 +168,12 @@ To sum multiple fields at once, a `std::vector` of
 arrays must be constructed and the result will be
 stored in a `std::vector` of appropriate type:
 
+```c++
     std::vector<type> sum = 
          globalSum(const std::vector<ArrayTTDD> arrays,
                    const I4 mpiComm,
                    const std::vector<I4> indxRange)
+```
 
 As is the case with sum-product, each array must be
 of the same data type but can have slightly different
@@ -175,11 +183,22 @@ with the indxRange requested.
 
 #### 4.2.4 Global sum multi-field with product
 
-The multi-field sum with product is still to be determined.
-The typical use case is for the second array in the product
-to be the same for all fields (eg a mask or an area array),
-but we may wish to support a case where each array product
-has a different array for both operands.
+The multi-field sum with product is still to be determined, but
+should have an interface like:
+
+```c++
+    std::vector<type> sum = 
+         globalSum(const std::vector<ArrayTTDD> arrays1,
+                   const std::vector<ArrayTTDD> arrays2,
+                   const I4 mpiComm,
+                   const std::vector<I4> indxRange)
+```
+
+The implementation detail that needs to be determined is how
+to manage two use cases. A typical use case is for the second
+array in the product to be the same for all fields (eg a mask or
+an area array), but we may wish to support a case where each
+array product has a different array for both operands.
 Because YAKL arrays contain metadata and a pointer to
 the data, it may be possible to create a std::vector of
 the same array, allowing both the case of a fixed array
@@ -191,6 +210,7 @@ different arrays. This requires some testing of approaches.
 The global minval will support interfaces similar to the
 global sums, but will return the minimum value instead.
 
+```c++
     varMin = globalMinval(const ArrayTTDD array, 
                           const I4 mpiComm, 
                           const std::vector<I4> indxRange);
@@ -204,6 +224,7 @@ global sums, but will return the minimum value instead.
          globalMinval(const std::vector<ArrayTTDD> arrays,
                       const I4 mpiComm,
                       const std::vector<I4> indxRange)
+```
 
 Note that the minval routine will not be cognizant of any
 special values so any inactive entries should either be
