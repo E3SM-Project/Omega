@@ -371,9 +371,6 @@ fields that have been added to a group:
 ```
 ## 5 Verification and Testing
 
-Requirement 2.3 will be enforced as needed when defining available
-fields so will not be tested as part of unit testing.
-
 ### 5.1 Test creation/retrieval
 
 Create dimensions for a sample multi-dimensional field and then
@@ -402,3 +399,10 @@ and non-existent fields (to check error modes). Retrieve the
 list of fields in each group and check against the expected
 names.
   - tests requirement 2.7
+
+### 5.5 Test CF compliance
+
+To test CF compliance, we will test output files using a CF checking
+code. This may be a part of Polaris testing rather than the unit test
+framework.
+  - tests requirement 2.3
