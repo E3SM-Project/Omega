@@ -1,9 +1,8 @@
 # build Omega
 
 # Add source files for the library
-set(LIBSRC_FILES
-  ocn/miniWeather.cpp
-)
+file(GLOB LIBSRC_FILES ocn/*.cpp)
+#set(LIBSRC_FILES ocn/miniWeather.cpp)
 
 # Create the library target
 add_library(${OMEGA_LIB_NAME} ${LIBSRC_FILES})
