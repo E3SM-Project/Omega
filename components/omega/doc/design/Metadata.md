@@ -76,13 +76,12 @@ No algorithms are used.
 
 ## 4 Design
 
-The general philosophy in this design is to have modules that
-"own" the variable define the field metadata and add it to a
-list of available fields. This internally generated list ensures
-that the list of available fields remains consistent with the
-code base and specific model configuration. Note that this
-requires most initialization to occur before processing output
-streams so that the requested contents can be checked against
+The general philosophy is that modules will define the metadata for
+each field they own and add it to a list of available fields. This
+internally generated list ensures that the list of available fields
+remains consistent with the code base and specific model configuration.
+Note that this requires most initialization to occur before processing
+output streams so that the requested contents can be checked against
 the list of defined fields.
 
 Internally, the metadata class will make use of the C++ 
@@ -135,7 +134,7 @@ retrieved from anywhere.
 
    public:
       // [Methods described below]
-   }
+   };
 ```
 
 Another class is needed to describe dimensions for arrays
