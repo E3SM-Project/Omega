@@ -15,6 +15,8 @@
 #include <ctime>
 #include <chrono>
 
+#include "logging.h"
+
 // We're going to define all arrays on the host because this doesn't use parallel_for
 typedef yakl::Array<real  ,1,yakl::memDevice> real1d;
 typedef yakl::Array<real  ,2,yakl::memDevice> real2d;
@@ -776,8 +778,10 @@ void output( realConst3d state , real etime , int &num_out , Fixed_data const &f
 
   int ncid, t_dimid, x_dimid, z_dimid, dens_varid, uwnd_varid, wwnd_varid, theta_varid, t_varid, dimids[3];
   MPI_Offset st1[1], ct1[1], st3[3], ct3[3];
+
   //Inform the user
   if (mainproc) { printf("*** OUTPUT ***\n"); }
+
   //Allocate some (big) temp arrays
   doub2d dens ( "dens"     , nz,nx );
   doub2d uwnd ( "uwnd"     , nz,nx );
@@ -841,6 +845,8 @@ void output( realConst3d state , real etime , int &num_out , Fixed_data const &f
     ct1[0] = 1;
     double etimearr[1];
     etimearr[0] = etime; ncwrap( ncmpi_put_vara_double( ncid , t_varid , st1 , ct1 , etimearr ) , __LINE__ );
+
+    OMEGA_LOG_INFO("TEST IN MINI: {}", dens);
   }
   //End "independent" write mode
   ncwrap( ncmpi_end_indep_data(ncid) , __LINE__ );

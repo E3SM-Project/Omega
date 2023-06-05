@@ -20,7 +20,7 @@ double _main(int argc, char **argv, double * mass, double * te);
 ///////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv) {
 
-  LOG_INFO("Starting Omega...");
+  OMEGA_LOG_INFO("Starting Omega...");
 
   int retval = 1;
  
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  LOG_INFO("Omega is finished.");
+  OMEGA_LOG_INFO("Omega is finished.");
 
   return retval;
 
