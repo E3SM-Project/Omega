@@ -95,7 +95,6 @@ project(E3SM C CXX Fortran)
 # Include function definitions
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_util.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/build_mpas_model.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/build_omega.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/build_eamxx.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/build_model.cmake)
 
@@ -122,8 +121,6 @@ set (CMAKE_Fortran_FLAGS_DEBUG "")
 set(BUILDCONF ${CASEROOT}/Buildconf)
 
 build_mpas_models()
-
-build_omega()
 
 # Set global cmake settings
 set(CMAKE_MODULE_PATH ${CIMEROOT}/src/CMake)

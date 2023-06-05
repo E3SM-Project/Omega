@@ -14,7 +14,7 @@ target_include_directories(${OMEGA_LIB_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR
 target_include_directories(${OMEGA_LIB_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/infra")
 
 # include yakl cmake utility
-include(${CMAKE_SOURCE_DIR}/../../externals/YAKL/yakl_utils.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../../externals/YAKL/yakl_utils.cmake)
 
 # Enable caching for incremental compilation
 set_property(TARGET ${OMEGA_LIB_NAME} PROPERTY CMAKE_CACHE_FILE_DEPENDS "CMakeCache.txt")
