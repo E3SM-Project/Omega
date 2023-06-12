@@ -27,7 +27,7 @@ using I8 = std::int64_t; ///< alias for 64-bit integer
 using R4 = float;        ///< alias for 32-bit (single prec) real
 using R8 = double;       ///< alias for 64-bit (double prec) real
 
-///< generic real 64-bit (default) or 32-bit (if -DSINGLE_PRECISION used)
+/// generic real 64-bit (default) or 32-bit (if -DSINGLE_PRECISION used)
 #ifdef SINGLE_PRECISION
 using Real = float;
 #else
