@@ -22,10 +22,12 @@
 namespace OMEGA{
 
 // Standard integer and floating point types
-using I4 = std::int32_t;
-using I8 = std::int64_t;
-using R4 = float;
-using R8 = double;
+using I4 = std::int32_t; ///< alias for 32-bit integer
+using I8 = std::int64_t; ///< alias for 64-bit integer
+using R4 = float;        ///< alias for 32-bit (single prec) real
+using R8 = double;       ///< alias for 64-bit (double prec) real
+
+///< generic real 64-bit (default) or 32-bit (if -DSINGLE_PRECISION used)
 #ifdef SINGLE_PRECISION
 using Real = float;
 #else
@@ -34,6 +36,7 @@ using Real = double;
 
 // Aliases for YAKL arrays - by default, all arrays are on the device and
 // use C-ordering.
+/// Aliases for YAKL device arrays of various dimensions and types
 using Array1DI4   = yakl::Array<I4,1,yakl::memDevice,yakl::styleC>;
 using Array1DI8   = yakl::Array<I8,1,yakl::memDevice,yakl::styleC>;
 using Array1DR4   = yakl::Array<R4,1,yakl::memDevice,yakl::styleC>;
@@ -61,6 +64,7 @@ using Array5DR8   = yakl::Array<R8,5,yakl::memDevice,yakl::styleC>;
 using Array5DReal = yakl::Array<Real,5,yakl::memDevice,yakl::styleC>;
 
 // Also need similar aliases for arrays on the host
+/// Aliases for YAKL host arrays of various dimensions and types
 using ArrayHost1DI4   = yakl::Array<I4,1,yakl::memHost,yakl::styleC>;
 using ArrayHost1DI8   = yakl::Array<I8,1,yakl::memHost,yakl::styleC>;
 using ArrayHost1DR4   = yakl::Array<R4,1,yakl::memHost,yakl::styleC>;
