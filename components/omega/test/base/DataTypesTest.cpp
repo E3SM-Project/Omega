@@ -24,12 +24,12 @@ int main(int argc, char *argv[]) {
    yakl::init();
 
    // declare variables of each supported type
-   OMEGA::I4   MyInt4  = 1;
-   OMEGA::I8   MyInt8  = 2;
-   OMEGA::R4   MyR4    = 3.0;
-   OMEGA::R8   MyR8    = 4.0000000000001;
-   OMEGA::Real MyReal  = 5.000001;
-   int         SizeTmp = 0;
+   OMEGA::I4 MyInt4   = 1;
+   OMEGA::I8 MyInt8   = 2;
+   OMEGA::R4 MyR4     = 3.0;
+   OMEGA::R8 MyR8     = 4.0000000000001;
+   OMEGA::Real MyReal = 5.000001;
+   int SizeTmp        = 0;
 
    // Check expected size (in bytes) for data types
    SizeTmp = sizeof(MyInt4);
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
    using yakl::c::parallel_for;
 
    // Test for 1DI4
-   OMEGA::Array1DI4     TstArr1DI4("TstArr", NumCells);
+   OMEGA::Array1DI4 TstArr1DI4("TstArr", NumCells);
    OMEGA::ArrayHost1DI4 RefArr1DI4("RefArr", NumCells);
 
    for (int i = 0; i < NumCells; ++i) {
@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 1DI4 test: FAIL" << std::endl;
 
    // Test for 2DI4
-   OMEGA::Array2DI4     TstArr2DI4("TstArr", NumCells, NumVertLvls);
+   OMEGA::Array2DI4 TstArr2DI4("TstArr", NumCells, NumVertLvls);
    OMEGA::ArrayHost2DI4 RefArr2DI4("RefArr", NumCells, NumVertLvls);
 
    for (int j = 0; j < NumCells; ++j) {
@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 2DI4 test: FAIL" << std::endl;
 
    // Test for 3DI4
-   OMEGA::Array3DI4     TstArr3DI4("TstArr", NumTracers, NumCells, NumVertLvls);
+   OMEGA::Array3DI4 TstArr3DI4("TstArr", NumTracers, NumCells, NumVertLvls);
    OMEGA::ArrayHost3DI4 RefArr3DI4("RefArr", NumTracers, NumCells, NumVertLvls);
 
    for (int k = 0; k < NumTracers; ++k) {
@@ -181,8 +181,8 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 3DI4 test: FAIL" << std::endl;
 
    // Test for 4DI4
-   OMEGA::Array4DI4     TstArr4DI4("TstArr", NumTimeLvls, NumTracers, NumCells,
-                                   NumVertLvls);
+   OMEGA::Array4DI4 TstArr4DI4("TstArr", NumTimeLvls, NumTracers, NumCells,
+                               NumVertLvls);
    OMEGA::ArrayHost4DI4 RefArr4DI4("RefArr", NumTimeLvls, NumTracers, NumCells,
                                    NumVertLvls);
 
@@ -226,8 +226,8 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 4DI4 test: FAIL" << std::endl;
 
    // Test for 5DI4
-   OMEGA::Array5DI4     TstArr5DI4("TstArr", NumExtra, NumTimeLvls, NumTracers,
-                                   NumCells, NumVertLvls);
+   OMEGA::Array5DI4 TstArr5DI4("TstArr", NumExtra, NumTimeLvls, NumTracers,
+                               NumCells, NumVertLvls);
    OMEGA::ArrayHost5DI4 RefArr5DI4("RefArr", NumExtra, NumTimeLvls, NumTracers,
                                    NumCells, NumVertLvls);
 
@@ -275,7 +275,7 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 5DI4 test: FAIL" << std::endl;
 
    // Test for 1DI8
-   OMEGA::Array1DI8     TstArr1DI8("TstArr", NumCells);
+   OMEGA::Array1DI8 TstArr1DI8("TstArr", NumCells);
    OMEGA::ArrayHost1DI8 RefArr1DI8("RefArr", NumCells);
 
    for (int i = 0; i < NumCells; ++i) {
@@ -303,7 +303,7 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 1DI8 test: FAIL" << std::endl;
 
    // Test for 2DI8
-   OMEGA::Array2DI8     TstArr2DI8("TstArr", NumCells, NumVertLvls);
+   OMEGA::Array2DI8 TstArr2DI8("TstArr", NumCells, NumVertLvls);
    OMEGA::ArrayHost2DI8 RefArr2DI8("RefArr", NumCells, NumVertLvls);
 
    for (int j = 0; j < NumCells; ++j) {
@@ -336,7 +336,7 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 2DI8 test: FAIL" << std::endl;
 
    // Test for 3DI8
-   OMEGA::Array3DI8     TstArr3DI8("TstArr", NumTracers, NumCells, NumVertLvls);
+   OMEGA::Array3DI8 TstArr3DI8("TstArr", NumTracers, NumCells, NumVertLvls);
    OMEGA::ArrayHost3DI8 RefArr3DI8("RefArr", NumTracers, NumCells, NumVertLvls);
 
    for (int k = 0; k < NumTracers; ++k) {
@@ -373,8 +373,8 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 3DI8 test: FAIL" << std::endl;
 
    // Test for 4DI8
-   OMEGA::Array4DI8     TstArr4DI8("TstArr", NumTimeLvls, NumTracers, NumCells,
-                                   NumVertLvls);
+   OMEGA::Array4DI8 TstArr4DI8("TstArr", NumTimeLvls, NumTracers, NumCells,
+                               NumVertLvls);
    OMEGA::ArrayHost4DI8 RefArr4DI8("RefArr", NumTimeLvls, NumTracers, NumCells,
                                    NumVertLvls);
 
@@ -418,8 +418,8 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 4DI8 test: FAIL" << std::endl;
 
    // Test for 5DI8
-   OMEGA::Array5DI8     TstArr5DI8("TstArr", NumExtra, NumTimeLvls, NumTracers,
-                                   NumCells, NumVertLvls);
+   OMEGA::Array5DI8 TstArr5DI8("TstArr", NumExtra, NumTimeLvls, NumTracers,
+                               NumCells, NumVertLvls);
    OMEGA::ArrayHost5DI8 RefArr5DI8("RefArr", NumExtra, NumTimeLvls, NumTracers,
                                    NumCells, NumVertLvls);
 
@@ -467,7 +467,7 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 5DI8 test: FAIL" << std::endl;
 
    // Test for 1DR4
-   OMEGA::Array1DR4     TstArr1DR4("TstArr", NumCells);
+   OMEGA::Array1DR4 TstArr1DR4("TstArr", NumCells);
    OMEGA::ArrayHost1DR4 RefArr1DR4("RefArr", NumCells);
 
    for (int i = 0; i < NumCells; ++i) {
@@ -495,7 +495,7 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 1DR4 test: FAIL" << std::endl;
 
    // Test for 2DR4
-   OMEGA::Array2DR4     TstArr2DR4("TstArr", NumCells, NumVertLvls);
+   OMEGA::Array2DR4 TstArr2DR4("TstArr", NumCells, NumVertLvls);
    OMEGA::ArrayHost2DR4 RefArr2DR4("RefArr", NumCells, NumVertLvls);
 
    for (int j = 0; j < NumCells; ++j) {
@@ -528,7 +528,7 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 2DR4 test: FAIL" << std::endl;
 
    // Test for 3DR4
-   OMEGA::Array3DR4     TstArr3DR4("TstArr", NumTracers, NumCells, NumVertLvls);
+   OMEGA::Array3DR4 TstArr3DR4("TstArr", NumTracers, NumCells, NumVertLvls);
    OMEGA::ArrayHost3DR4 RefArr3DR4("RefArr", NumTracers, NumCells, NumVertLvls);
 
    for (int k = 0; k < NumTracers; ++k) {
@@ -565,8 +565,8 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 3DR4 test: FAIL" << std::endl;
 
    // Test for 4DR4
-   OMEGA::Array4DR4     TstArr4DR4("TstArr", NumTimeLvls, NumTracers, NumCells,
-                                   NumVertLvls);
+   OMEGA::Array4DR4 TstArr4DR4("TstArr", NumTimeLvls, NumTracers, NumCells,
+                               NumVertLvls);
    OMEGA::ArrayHost4DR4 RefArr4DR4("RefArr", NumTimeLvls, NumTracers, NumCells,
                                    NumVertLvls);
 
@@ -610,8 +610,8 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 4DR4 test: FAIL" << std::endl;
 
    // Test for 5DR4
-   OMEGA::Array5DR4     TstArr5DR4("TstArr", NumExtra, NumTimeLvls, NumTracers,
-                                   NumCells, NumVertLvls);
+   OMEGA::Array5DR4 TstArr5DR4("TstArr", NumExtra, NumTimeLvls, NumTracers,
+                               NumCells, NumVertLvls);
    OMEGA::ArrayHost5DR4 RefArr5DR4("RefArr", NumExtra, NumTimeLvls, NumTracers,
                                    NumCells, NumVertLvls);
 
@@ -659,7 +659,7 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 5DR4 test: FAIL" << std::endl;
 
    // Test for 1DR8
-   OMEGA::Array1DR8     TstArr1DR8("TstArr", NumCells);
+   OMEGA::Array1DR8 TstArr1DR8("TstArr", NumCells);
    OMEGA::ArrayHost1DR8 RefArr1DR8("RefArr", NumCells);
 
    for (int i = 0; i < NumCells; ++i) {
@@ -687,7 +687,7 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 1DR8 test: FAIL" << std::endl;
 
    // Test for 2DR8
-   OMEGA::Array2DR8     TstArr2DR8("TstArr", NumCells, NumVertLvls);
+   OMEGA::Array2DR8 TstArr2DR8("TstArr", NumCells, NumVertLvls);
    OMEGA::ArrayHost2DR8 RefArr2DR8("RefArr", NumCells, NumVertLvls);
 
    for (int j = 0; j < NumCells; ++j) {
@@ -720,7 +720,7 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 2DR8 test: FAIL" << std::endl;
 
    // Test for 3DR8
-   OMEGA::Array3DR8     TstArr3DR8("TstArr", NumTracers, NumCells, NumVertLvls);
+   OMEGA::Array3DR8 TstArr3DR8("TstArr", NumTracers, NumCells, NumVertLvls);
    OMEGA::ArrayHost3DR8 RefArr3DR8("RefArr", NumTracers, NumCells, NumVertLvls);
 
    for (int k = 0; k < NumTracers; ++k) {
@@ -757,8 +757,8 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 3DR8 test: FAIL" << std::endl;
 
    // Test for 4DR8
-   OMEGA::Array4DR8     TstArr4DR8("TstArr", NumTimeLvls, NumTracers, NumCells,
-                                   NumVertLvls);
+   OMEGA::Array4DR8 TstArr4DR8("TstArr", NumTimeLvls, NumTracers, NumCells,
+                               NumVertLvls);
    OMEGA::ArrayHost4DR8 RefArr4DR8("RefArr", NumTimeLvls, NumTracers, NumCells,
                                    NumVertLvls);
 
@@ -802,8 +802,8 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 4DR8 test: FAIL" << std::endl;
 
    // Test for 5DR8
-   OMEGA::Array5DR8     TstArr5DR8("TstArr", NumExtra, NumTimeLvls, NumTracers,
-                                   NumCells, NumVertLvls);
+   OMEGA::Array5DR8 TstArr5DR8("TstArr", NumExtra, NumTimeLvls, NumTracers,
+                               NumCells, NumVertLvls);
    OMEGA::ArrayHost5DR8 RefArr5DR8("RefArr", NumExtra, NumTimeLvls, NumTracers,
                                    NumCells, NumVertLvls);
 
@@ -851,7 +851,7 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 5DR8 test: FAIL" << std::endl;
 
    // Test for 1DReal
-   OMEGA::Array1DReal     TstArr1DReal("TstArr", NumCells);
+   OMEGA::Array1DReal TstArr1DReal("TstArr", NumCells);
    OMEGA::ArrayHost1DReal RefArr1DReal("RefArr", NumCells);
 
    for (int i = 0; i < NumCells; ++i) {
@@ -879,7 +879,7 @@ int main(int argc, char *argv[]) {
       std::cout << "YAKL 1DReal test: FAIL" << std::endl;
 
    // Test for 2DReal
-   OMEGA::Array2DReal     TstArr2DReal("TstArr", NumCells, NumVertLvls);
+   OMEGA::Array2DReal TstArr2DReal("TstArr", NumCells, NumVertLvls);
    OMEGA::ArrayHost2DReal RefArr2DReal("RefArr", NumCells, NumVertLvls);
 
    for (int j = 0; j < NumCells; ++j) {

@@ -2,8 +2,8 @@
 
 ## Data Types and Precision
 
-OMEGA supports all standard data types and uses some specific defined
-types to guarantee a specific level of precision. Specifically, we
+OMEGA supports all standard data types and uses some additional defined
+types to guarantee a specific level of precision. In particular, we
 define I4, I8, R4 and R8 types for 4-byte (32-bit) and 8-byte (64-bit)
 integer and floating point variables. Note that these exist in the
 OMEGA namespace so use the scoped form OMEGA::I4, etc. 
