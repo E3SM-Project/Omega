@@ -91,9 +91,10 @@ To support multiple time slices per file and to support cases
 where the model is re-run over the same interval (eg during
 testing or repeating a failed run), the user must specify the
 desired behavior when an output file of the same name already
-exists. A minimum set of options should include over-writing
-(replacing) the file, appending to the existing file, or exiting
-with an error message.
+exists. A minimum set of options should include replacing
+the file, overwriting portions of a file (eg specific time
+slices), appending to the existing file, or exiting with an
+error message.
 
 ### 2.11 Desired: Time averaging
 
