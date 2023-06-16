@@ -4,7 +4,7 @@
 
 The Omega build system is based on CMake, a popular build tool.
 
-![CMake-based Omega build process](cmakebuild.png)
+![CMake-based Omega build process](../_static/cmakebuild.png)
 
 The overall build process is specified in the CMakeLists.txt file
 located at the top-level directory of Omega. The build process
