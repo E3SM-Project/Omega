@@ -91,4 +91,5 @@ artifacts to designated locations or generating dynamic outputs as needed.
 
 Note: Until the Omega build is integrated into the E3SM build, specific
 modifications are required to trigger the Omega build within the E3SM
-build process.
+build process. Please see[Omega Build User Guide](../userGuide/OmegaBuild.md)
+for details.
