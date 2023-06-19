@@ -21,7 +21,7 @@ macro(setup_common_variables)
  
   if(NOT DEFINED OMEGA_CXX_FLAGS )
     # initialize cxx flags as an empty list
-    set(OMEGA_BUILD_TYPE "")
+    set(OMEGA_CXX_FLAGS "")
   endif()
 
 endmacro()

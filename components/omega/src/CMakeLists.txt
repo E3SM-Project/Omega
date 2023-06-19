@@ -1,13 +1,13 @@
 # build Omega
 
 # Add source files for the library
-file(GLOB LIBSRC_FILES ocn/*.cpp)
+file(GLOB _LIBSRC_FILES ocn/*.cpp)
 
-list(JOIN OMEGA_CXX_FLAGS " " _OMEGA_CXX_FLAGS_EXPANDED)
+list(JOIN OMEGA_CXX_FLAGS " " _CXX_FLAGS_EXPANDED)
 
 # Create the library target
-add_library(${OMEGA_LIB_NAME} ${LIBSRC_FILES})
-set_target_properties(${OMEGA_LIB_NAME} PROPERTIES COMPILE_FLAGS "${_OMEGA_CXX_FLAGS_EXPANDED}")
+add_library(${OMEGA_LIB_NAME} ${_LIBSRC_FILES})
+set_target_properties(${OMEGA_LIB_NAME} PROPERTIES COMPILE_FLAGS "${_CXX_FLAGS_EXPANDED}")
 
 # add include directories
 target_include_directories(${OMEGA_LIB_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/infra")
@@ -33,7 +33,7 @@ if(OMEGA_BUILD_EXECUTABLE)
   )
   # Create the executable target
   add_executable(${OMEGA_EXE_NAME} ${EXESRC_FILES})
-  set_target_properties(${OMEGA_EXE_NAME} PROPERTIES COMPILE_FLAGS "${_OMEGA_CXX_FLAGS_EXPANDED}")
+  set_target_properties(${OMEGA_EXE_NAME} PROPERTIES COMPILE_FLAGS "${_CXX_FLAGS_EXPANDED}")
   target_include_directories(${OMEGA_EXE_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/infra")
   target_link_libraries(${OMEGA_EXE_NAME} ${OMEGA_LIB_NAME})
 
