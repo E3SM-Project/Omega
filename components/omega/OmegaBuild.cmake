@@ -88,6 +88,10 @@ macro(update_variables)
   # Set the build type
   set(CMAKE_BUILD_TYPE ${OMEGA_BUILD_TYPE})
 
+  if(OMEGA_CXX_COMPILER)
+    set(CMAKE_CXX_COMPILER ${OMEGA_CXX_COMPILER})
+  endif()
+
   if(OMEGA_INSTALL_PREFIX)
     set(CMAKE_INSTALL_PREFIX ${OMEGA_INSTALL_PREFIX})
   endif()

@@ -35,8 +35,38 @@ src
 test
 ```
 
-To run the Omega test suite, execute the `ctest` command in
-the "test" subdirectory.
+To build the Omega, execute the `make` command in the directory.
+
+```sh
+>> make
+Scanning dependencies of target yakl
+[ 11%] Building Fortran object external/YAKL/CMakeFiles/yakl.dir/src/YAKL_gator_mod.F90.o
+[ 22%] Building CXX object external/YAKL/CMakeFiles/yakl.dir/src/YAKL.cpp.o
+[ 33%] Linking CXX static library libyakl.a
+[ 33%] Built target yakl
+[ 44%] Building CXX object src/CMakeFiles/OmegaLib.dir/ocn/ocndummy.cpp.o
+[ 55%] Linking CXX static library libOmegaLib.a
+[ 55%] Built target OmegaLib
+[ 66%] Building CXX object src/CMakeFiles/omega.exe.dir/drivers/drvdummy.cpp.o
+[ 77%] Linking CXX executable omega.exe
+[ 77%] Built target omega.exe
+[ 88%] Building CXX object test/CMakeFiles/OMEGA_TEST.dir/testdummy.cpp.o
+[100%] Linking CXX executable OMEGA_TEST
+[100%] Built target OMEGA_TEST
+```
+
+To run the Omega test suite, execute the `ctest` command.
+
+```sh
+>> ctest
+Test project <cmake working directory>
+    Start 1: OMEGA_TEST
+1/1 Test #1: OMEGA_TEST .......................   Passed    0.01 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.01 sec
+```
 
 ## E3SM Component Build
 
@@ -91,4 +121,4 @@ requiring any specific configuration for Omega.
 
 NOTE: In this version, the compiled library file for Omega,
 "libOmegaLib.a", is not linked to the E3SM executable. You can
-find the Omega library file at "${E3SM_BLD_DIRECTORY}/cmake-bld/omega/src".
+find the Omega library file at `${E3SM_BLD_DIRECTORY}/cmake-bld/omega/src`.
