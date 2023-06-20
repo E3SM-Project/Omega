@@ -3,9 +3,6 @@
 # - supports two build modes:
 #    1) standalone build
 #    2) e3sm build
-#
-# - variable name prefix: "OMEGA_"
-#     * controls the Omega building
 
 
 ###########################################################
@@ -17,7 +14,7 @@
 # define variables and macros for Omega build
 include(${CMAKE_CURRENT_SOURCE_DIR}/OmegaBuild.cmake)
 
-# handle build types 
+# handle build modes 
 if (NOT DEFINED PROJECT_NAME)
   # enter standalone build
 
@@ -51,7 +48,7 @@ endif()
 # build-controlling variables                             #
 ###########################################################
 
-# update CMake variables from the build-controlling variables
+# update CMake and YAKL variables from the build-controlling variables
 update_variables()
 
 ###########################################
