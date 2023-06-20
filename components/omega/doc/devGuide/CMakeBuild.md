@@ -11,8 +11,8 @@ steps: Setup, Update, Build, and Output.
 
 ![CMake-based Omega build process](../_static/cmakebuild.png)
 
-Build step is consist of adding three sub-directory that drives
-builds for external libraries, Omega model, and optional tests.
+The build step consists of adding three subdirectories that drive builds
+for external libraries, the Omega model, and optional tests.
 
 ## Step 1: Setup
 
@@ -91,5 +91,5 @@ artifacts to designated locations or generating dynamic outputs as needed.
 
 Note: Until the Omega build is integrated into the E3SM build, specific
 modifications are required to trigger the Omega build within the E3SM
-build process. Please see[Omega Build User Guide](../userGuide/OmegaBuild.md)
+build process. Please see [Omega Build User Guide](../userGuide/OmegaBuild.md)
 for details.
