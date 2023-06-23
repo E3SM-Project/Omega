@@ -26,6 +26,20 @@ macro(setup_common_variables)
 
 endmacro()
 
+###########################
+# Preset Standalone build #
+###########################
+macro(preset)
+ 
+  # set CMAKE_CXX_COMPILER from OMEGA_CXX_COMPILER
+  if(OMEGA_CXX_COMPILER)
+    execute_process(COMMAND which ${OMEGA_CXX_COMPILER}
+                    OUTPUT_VARIABLE _OMEGA_CXX_COMPILER
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+    set(CMAKE_CXX_COMPILER ${_OMEGA_CXX_COMPILER})
+  endif()
+
+endmacro()
 
 macro(setup_standalone_build)
 
@@ -88,10 +102,6 @@ macro(update_variables)
   # Set the build type
   set(CMAKE_BUILD_TYPE ${OMEGA_BUILD_TYPE})
 
-  if(OMEGA_CXX_COMPILER)
-    set(CMAKE_CXX_COMPILER ${OMEGA_CXX_COMPILER})
-  endif()
-
   if(OMEGA_INSTALL_PREFIX)
     set(CMAKE_INSTALL_PREFIX ${OMEGA_INSTALL_PREFIX})
   endif()
@@ -125,13 +135,13 @@ endmacro()
 ################################
 macro(check_setup)
 
-  message("OMEGA_BUILD_MODE = ${OMEGA_BUILD_MODE}")
+  #message("OMEGA_BUILD_MODE = ${OMEGA_BUILD_MODE}")
 
   if(OMEGA_BUILD_MODE STREQUAL "E3SM")
-    message("In E3SM")
+    message("*** Omega E3SM-component Build ***")
 
   elseif(${OMEGA_BUILD_MODE} STREQUAL "STANDALONE")
-    message("In STANDALONE")
+    message("*** Omega Standalone Build ***")
 
   else()
 

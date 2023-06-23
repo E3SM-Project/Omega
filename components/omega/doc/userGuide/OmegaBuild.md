@@ -7,6 +7,12 @@ The Omega build system supports two modes: standalone and E3SM component.
 
 ## Standalone Build
 
+CMake and OMEGA prefer an out-of-source build. This enables a user to build
+and maintain multiple executables from the same source directory.
+The standard practice is for a user to create a separate directory where
+the build should take place and the commands below should be launched from
+that directory.
+
 To perform a standalone build, you need to execute the cmake command with
 the required CMake and Omega parameters. For example, you can specify the
 CC parameter as the C++ compiler and enable the ctest option to guide the

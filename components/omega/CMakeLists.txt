@@ -14,12 +14,18 @@
 # define variables and macros for Omega build
 include(${CMAKE_CURRENT_SOURCE_DIR}/OmegaBuild.cmake)
 
+
 # handle build modes 
 if (NOT DEFINED PROJECT_NAME)
   # enter standalone build
 
+  preset()
+
   cmake_minimum_required(VERSION 3.16) # used in E3SM
-  project(${OMEGA_PROJECT_NAME})
+
+  project(${OMEGA_PROJECT_NAME}
+             LANGUAGES CXX
+         )
 
   set(CMAKE_CXX_STANDARD 17) # used in E3SM
 
