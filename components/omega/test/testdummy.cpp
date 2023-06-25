@@ -9,13 +9,13 @@ double dummy(int argc, char **argv);
 ///////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv) {
 
-  int retval = 0;
- 
-  cout << "Starting tests..." << endl;
+   int retval = 0;
 
-  dummy(argc, argv);
+   cout << "Starting tests..." << endl;
 
-  cout << "Tests are finished." << endl;
+   dummy(argc, argv);
 
-  return retval;
+   cout << "Tests are finished." << endl;
+
+   return retval;
 }

@@ -4,15 +4,15 @@
 
 using namespace std;
 
-void dummy(int argc, char ** argv);
+void dummy(int argc, char **argv);
 
-int main(int argc, char ** argv) {
+int main(int argc, char **argv) {
 
-    cout << "Starting driver..." << endl;
+   cout << "Starting driver..." << endl;
 
-    dummy(argc, argv);
+   dummy(argc, argv);
 
-    cout << "Stopped driver." << endl;
+   cout << "Stopped driver." << endl;
 
-    return 0;
+   return 0;
 }
