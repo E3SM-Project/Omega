@@ -1,5 +1,7 @@
 (omega-user-build)=
 
+# CMake-based Omega Build
+
 Omega's build system is built upon the CMake build tool, which provides
 a robust foundation for managing the build process.
 
@@ -110,8 +112,7 @@ Step 1: Modify `${E3SM_ROOT}/components/CMakeLists.txt`
 
 Add the lines indicated as "added" in the `CMakeLists.txt` file.
 
-```cmake
-# Include function definitions
+```bash
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_util.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/build_mpas_model.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/build_omega.cmake) # <= added
