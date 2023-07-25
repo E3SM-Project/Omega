@@ -19,8 +19,8 @@
 
 #include "mpi.h"
 
-#include <string>
 #include <map>
+#include <string>
 
 namespace OMEGA {
 
@@ -35,134 +35,128 @@ constexpr int VecLength = 1;
 #endif
 
 /// The MachEnv class is a container that holds information on
-/// the message passing, threading and node environment. 
+/// the message passing, threading and node environment.
 class MachEnv {
 
-   private:
-      MPI_Comm Comm;       ///< MPI communicator for this environment
-      int MyTask;          ///< task ID for local MPI task (rank)
-      int NumTasks;        ///< total number of MPI tasks (ranks)
-      int MasterTask;      ///< task ID for master task
-      bool MasterTaskFlag; ///< true if this task is the master task
-      bool MemberFlag;     ///< true if task is in communicator group
+ private:
+   MPI_Comm Comm;       ///< MPI communicator for this environment
+   int MyTask;          ///< task ID for local MPI task (rank)
+   int NumTasks;        ///< total number of MPI tasks (ranks)
+   int MasterTask;      ///< task ID for master task
+   bool MasterTaskFlag; ///< true if this task is the master task
+   bool MemberFlag;     ///< true if task is in communicator group
 
-      // Add threading variables here
-      int NumThreads;    ///< number of OpenMP threads per task
+   // Add threading variables here
+   int NumThreads; ///< number of OpenMP threads per task
 
-      // Add any other useful machine parameters here
-      // It may be useful at some point to track the number
-      // of various devices per node (CPUs, GPUs), the number
-      // of tasks allocated per node, etc.
+   // Add any other useful machine parameters here
+   // It may be useful at some point to track the number
+   // of various devices per node (CPUs, GPUs), the number
+   // of tasks allocated per node, etc.
 
-      /// The default environment describes the environment for OMEGA
-      /// defined for most of the model. Because it is used most often,
-      /// we store the extra pointer here for easier retrieval.
-      static MachEnv* DefaultEnv;
+   /// The default environment describes the environment for OMEGA
+   /// defined for most of the model. Because it is used most often,
+   /// we store the extra pointer here for easier retrieval.
+   static MachEnv *DefaultEnv;
 
-      /// All environments are tracked/stored within the class and
-      /// paired with a name in this map for later retrieval.
-      static std::map<std::string, MachEnv*> AllEnvs;
+   /// All environments are tracked/stored within the class and
+   /// paired with a name in this map for later retrieval.
+   static std::map<std::string, MachEnv *> AllEnvs;
 
-      /// Default constructor. This constructor fills a MachEnv with
-      /// mostly invalid values. Most environments are actually defined
-      /// using either the Init routine (for the default environment) or
-      /// the createEnv routine for all other environments
-      MachEnv();
+   /// Default constructor. This constructor fills a MachEnv with
+   /// mostly invalid values. Most environments are actually defined
+   /// using either the Init routine (for the default environment) or
+   /// the createEnv routine for all other environments
+   MachEnv();
 
-      /// Adds a created MachEnv to list of all instances. It also
-      /// performs some error checking to prevent duplicate names or
-      /// environments.
-      static void addEnv(
-               const std::string Name, ///< [in] name of environment
-               MachEnv* newEnv         ///< [in] new environment to add
-               );
+   /// Adds a created MachEnv to list of all instances. It also
+   /// performs some error checking to prevent duplicate names or
+   /// environments.
+   static void addEnv(const std::string Name, ///< [in] name of environment
+                      MachEnv *newEnv         ///< [in] new environment to add
+   );
 
-   public:
+ public:
+   // Methods
 
-      // Methods
+   /// Initializes the Machine Environment and creates the default
+   /// machine environment based on an input MPI communicator. In
+   /// standalone mode, this will typically be MPI_COMM_WORLD, but
+   /// in coupled mode, this is the communicator assigned to the
+   /// Omega component.
+   static void init(const MPI_Comm InComm ///< [in] MPI communicator to use
+   );
 
-      /// Initializes the Machine Environment and creates the default
-      /// machine environment based on an input MPI communicator. In
-      /// standalone mode, this will typically be MPI_COMM_WORLD, but
-      /// in coupled mode, this is the communicator assigned to the
-      /// Omega component.
-      static void init(
-              const MPI_Comm InComm ///< [in] MPI communicator to use
-              );
+   /// Creates a new environment with a given name from a contiguous
+   /// subset of tasks in an existing environment starting at task 0
+   /// of the parent environment.
+   static void createEnv(const std::string Name, ///< [in] name of environment
+                         const MachEnv *InEnv, ///< [in] existing parent MachEnv
+                         const int NewSize     ///< [in] use first newSize tasks
+   );
 
-      /// Creates a new environment with a given name from a contiguous
-      /// subset of tasks in an existing environment starting at task 0
-      /// of the parent environment.
-      static void createEnv(
-              const std::string Name, ///< [in] name of environment
-              const MachEnv* InEnv,   ///< [in] existing parent MachEnv
-              const int NewSize       ///< [in] use first newSize tasks
-              );
+   /// Creates a new environment with a given name from a strided
+   /// subset of of tasks in an existing environment.
+   static void createEnv(const std::string Name, ///< [in] name of env
+                         const MachEnv *InEnv, ///< [in] existing parent MachEnv
+                         const int NewSize,    ///< [in] num tasks in new env
+                         const int Begin,      ///< [in] starting parent task
+                         const int Stride ///< [in] stride for tasks to incl
+   );
 
-      /// Creates a new environment with a given name from a strided
-      /// subset of of tasks in an existing environment.
-      static void createEnv(
-              const std::string Name, ///< [in] name of env
-              const MachEnv* InEnv,   ///< [in] existing parent MachEnv
-              const int NewSize,      ///< [in] num tasks in new env
-              const int Begin,        ///< [in] starting parent task
-              const int Stride        ///< [in] stride for tasks to incl
-              );
+   /// Creates a new environment with a given name from a custom subset
+   /// of tasks in an existing environment. The tasks are defined by a
+   /// list of parent tasks to include.
+   static void
+   createEnv(const std::string Name, ///< [in] name of environment
+             const MachEnv *InEnv,   ///< [in] existing parent MachEnv
+             const int NewSize,      ///< [in] num tasks in new env
+             const int Tasks[]       ///< [in] vector of parent tasks to incl
+   );
 
-      /// Creates a new environment with a given name from a custom subset
-      /// of tasks in an existing environment. The tasks are defined by a
-      /// list of parent tasks to include.
-      static void createEnv(
-              const std::string Name, ///< [in] name of environment
-              const MachEnv* InEnv,   ///< [in] existing parent MachEnv
-              const int NewSize,      ///< [in] num tasks in new env
-              const int Tasks[]       ///< [in] vector of parent tasks to incl
-              );
+   /// Removes a MachEnv
+   static void
+   removeEnv(const std::string Name ///< [in] name of environment to remove
+   );
 
-      /// Removes a MachEnv
-      static void removeEnv(
-              const std::string Name  ///< [in] name of environment to remove
-              );
+   // Retrieval functions
 
-      // Retrieval functions
+   /// Retrieve the default environment
+   static MachEnv *getDefaultEnv();
 
-      /// Retrieve the default environment
-      static MachEnv* getDefaultEnv();
+   /// Retrieve any other environment by name
+   static MachEnv *getEnv(const std::string Name ///< [in] name of environment
+   );
 
-      /// Retrieve any other environment by name
-      static MachEnv* getEnv(
-                const std::string Name ///< [in] name of environment
-                );
+   /// Get communicator for an environment
+   MPI_Comm getComm() const; ///< returns MPI communicator for this env
 
-      /// Get communicator for an environment
-      MPI_Comm getComm() const; ///< returns MPI communicator for this env
+   /// Get local task/rank ID
+   int getMyTask() const;
 
-      /// Get local task/rank ID
-      int getMyTask() const;
+   /// Get total number of MPI tasks/ranks
+   int getNumTasks() const;
 
-      /// Get total number of MPI tasks/ranks
-      int getNumTasks() const;
+   /// Get task ID for the master task (typically 0)
+   int getMasterTask() const;
 
-      /// Get task ID for the master task (typically 0)
-      int getMasterTask() const;
+   /// Determine whether local task is the master
+   bool isMasterTask() const;
 
-      /// Determine whether local task is the master
-      bool isMasterTask() const;
+   /// Determine whether local task is a member of this environment.
+   /// This is primarily to prevent retrievals of non-existent
+   /// values when a given environment uses only a subset of the
+   /// tasks.
+   bool isMember() const;
 
-      /// Determine whether local task is a member of this environment.
-      /// This is primarily to prevent retrievals of non-existent
-      /// values when a given environment uses only a subset of the
-      /// tasks.
-      bool isMember() const;
+   // Only one variable can be set
 
-      // Only one variable can be set
-
-      /// Set master task ID. By default, the master task is task 0 but
-      /// can be set here to a different task if the master task has
-      /// become over-burdened by work or memory (eg in coupled mode when
-      /// all components are using the same master).
-      int setMasterTask(const int TaskID ///< [in] new task to use as master
-                       );
+   /// Set master task ID. By default, the master task is task 0 but
+   /// can be set here to a different task if the master task has
+   /// become over-burdened by work or memory (eg in coupled mode when
+   /// all components are using the same master).
+   int setMasterTask(const int TaskID ///< [in] new task to use as master
+   );
 
 }; // end class MachEnv
 

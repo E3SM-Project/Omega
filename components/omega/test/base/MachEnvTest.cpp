@@ -29,21 +29,20 @@ void InitMachEnvs() {
 
    // Initialize three environments in reverse order that they
    // are tested.  Use default as parent env
-   OMEGA::MachEnv* tmpEnv=OMEGA::MachEnv::getDefaultEnv();
+   OMEGA::MachEnv *tmpEnv = OMEGA::MachEnv::getDefaultEnv();
 
    // Initialize general subset environment
-   int InclSize = 4;
+   int InclSize     = 4;
    int InclTasks[4] = {1, 2, 5, 7};
-   OMEGA::MachEnv::createEnv("Subset", tmpEnv, InclSize, InclTasks); 
+   OMEGA::MachEnv::createEnv("Subset", tmpEnv, InclSize, InclTasks);
 
    // Initialize strided environment
-   OMEGA::MachEnv::createEnv("Stride", tmpEnv, 4, 1, 2); 
+   OMEGA::MachEnv::createEnv("Stride", tmpEnv, 4, 1, 2);
 
    // Initialize contiguous subset environment
-   OMEGA::MachEnv::createEnv("Contig", tmpEnv, 4); 
+   OMEGA::MachEnv::createEnv("Contig", tmpEnv, 4);
 
 } // end of InitMachEnvs
-
 
 //------------------------------------------------------------------------------
 // The test driver for MachEnv. This tests the values stored in the Default
@@ -62,7 +61,7 @@ int main(int argc, char *argv[]) {
    MPI_Comm_size(MPI_COMM_WORLD, &WorldSize);
    int WorldMaster = 0;
    bool IsWorldMaster;
-   if (WorldTask == WorldMaster){
+   if (WorldTask == WorldMaster) {
       IsWorldMaster = true;
    } else {
       IsWorldMaster = false;
@@ -85,35 +84,35 @@ int main(int argc, char *argv[]) {
 
    // Verify retrieved values match expected reference values for the
    // DefaultEnv
-   OMEGA::MachEnv* tmpEnv = OMEGA::MachEnv::getDefaultEnv();
-   int MyTask = tmpEnv->getMyTask();
+   OMEGA::MachEnv *tmpEnv = OMEGA::MachEnv::getDefaultEnv();
+   int MyTask             = tmpEnv->getMyTask();
    if (MyTask == WorldTask)
       std::cout << "DefaultEnv task test: PASS" << std::endl;
    else {
-      std::cout << "DefaultEnv task test: FAIL " <<
-                   "MyTask, WorldTask = " << MyTask << WorldTask << std::endl;
+      std::cout << "DefaultEnv task test: FAIL "
+                << "MyTask, WorldTask = " << MyTask << WorldTask << std::endl;
    }
 
    int MySize = tmpEnv->getNumTasks();
    if (MySize == WorldSize)
       std::cout << "DefaultEnv NumTasks test: PASS" << std::endl;
    else {
-      std::cout << "DefaultEnv NumTasks test: FAIL " <<
-                   "MySize, WorldSize = " <<
-                    MySize << " " << WorldSize << std::endl;
+      std::cout << "DefaultEnv NumTasks test: FAIL "
+                << "MySize, WorldSize = " << MySize << " " << WorldSize
+                << std::endl;
    }
 
    int MyMaster = tmpEnv->getMasterTask();
    if (MyMaster == WorldMaster)
       std::cout << "DefaultEnv master task test: PASS" << std::endl;
    else {
-      std::cout << "DefaultEnv master task test: FAIL " <<
-                   "MyMaster, WorldMaster = " <<
-                    MyMaster << " " << WorldMaster << std::endl;
+      std::cout << "DefaultEnv master task test: FAIL "
+                << "MyMaster, WorldMaster = " << MyMaster << " " << WorldMaster
+                << std::endl;
    }
 
    bool IsMyMaster = tmpEnv->isMasterTask();
-   if (MyTask == MyMaster){
+   if (MyTask == MyMaster) {
       if (IsMyMaster)
          std::cout << "DefaultEnv is master task test: PASS" << std::endl;
       else
@@ -133,12 +132,12 @@ int main(int argc, char *argv[]) {
    if (MyMaster == 2)
       std::cout << "DefaultEnv set master task test: PASS" << std::endl;
    else {
-      std::cout << "DefaultEnv set master task test: FAIL " <<
-                   "MyMaster = " << MyMaster << std::endl;
+      std::cout << "DefaultEnv set master task test: FAIL "
+                << "MyMaster = " << MyMaster << std::endl;
    }
 
    IsMyMaster = tmpEnv->isMasterTask();
-   if (MyTask == 2){
+   if (MyTask == 2) {
       if (IsMyMaster)
          std::cout << "DefaultEnv isMaster after setMaster: PASS" << std::endl;
       else
@@ -154,54 +153,54 @@ int main(int argc, char *argv[]) {
    // Test contiguous subset environment (first four tasks of default)
 
    // Test retrieval of environment
-   OMEGA::MachEnv* ContigEnv = OMEGA::MachEnv::getEnv("Contig");
+   OMEGA::MachEnv *ContigEnv = OMEGA::MachEnv::getEnv("Contig");
 
    // Check membership in the new communicator
    if (MyTask < 4) {
       if (ContigEnv->isMember())
          std::cout << "contiguous member test: PASS" << std::endl;
       else
-         std::cout << "contiguous member test: FAIL " << 
-                      "MyTask " << MyTask << std::endl;
+         std::cout << "contiguous member test: FAIL "
+                   << "MyTask " << MyTask << std::endl;
 
    } else {
       if (ContigEnv->isMember())
-         std::cout << "contiguous member test: FAIL " <<
-                      "MyTask " << MyTask << std::endl;
+         std::cout << "contiguous member test: FAIL "
+                   << "MyTask " << MyTask << std::endl;
       else
          std::cout << "contiguous member test: PASS" << std::endl;
    }
 
    // Perform standard checks on new communicator
-   if (ContigEnv->isMember()){
+   if (ContigEnv->isMember()) {
       int ContigTask = ContigEnv->getMyTask();
       if (ContigTask == WorldTask)
          std::cout << "contiguous task test: PASS" << std::endl;
       else {
-         std::cout << "contiguous task test: FAIL " <<
-                      "ContigTask, WorldTask = " <<
-                       ContigTask << " " << WorldTask << std::endl;
+         std::cout << "contiguous task test: FAIL "
+                   << "ContigTask, WorldTask = " << ContigTask << " "
+                   << WorldTask << std::endl;
       }
 
       int ContigSize = ContigEnv->getNumTasks();
       if (ContigSize == 4)
          std::cout << "contiguous NumTasks test: PASS " << std::endl;
       else {
-         std::cout << "contiguous NumTasks test: FAIL " <<
-                      "ContigSize (should be 4)  = " << ContigSize << std::endl;
+         std::cout << "contiguous NumTasks test: FAIL "
+                   << "ContigSize (should be 4)  = " << ContigSize << std::endl;
       }
 
       int ContigMaster = ContigEnv->getMasterTask();
       if (ContigMaster == WorldMaster)
          std::cout << "contiguous master task test: PASS" << std::endl;
       else {
-         std::cout << "contiguous master task test: FAIL " <<
-                      "MyMaster, WorldMaster = " <<
-                       MyMaster << " " << WorldMaster << std::endl;
+         std::cout << "contiguous master task test: FAIL "
+                   << "MyMaster, WorldMaster = " << MyMaster << " "
+                   << WorldMaster << std::endl;
       }
 
       bool IsContigMaster = ContigEnv->isMasterTask();
-      if (ContigTask == ContigMaster){
+      if (ContigTask == ContigMaster) {
          if (IsContigMaster)
             std::cout << "contiguous is master task test: PASS" << std::endl;
          else
@@ -219,53 +218,53 @@ int main(int argc, char *argv[]) {
    // Test the strided constructor with only odd-numbered tasks
 
    // Test retrieval
-   OMEGA::MachEnv* StrideEnv = OMEGA::MachEnv::getEnv("Stride");
+   OMEGA::MachEnv *StrideEnv = OMEGA::MachEnv::getEnv("Stride");
 
    // Check membership in the new communicator
-   if (MyTask%2 == 1) {
+   if (MyTask % 2 == 1) {
       if (StrideEnv->isMember())
          std::cout << "strided member test: PASS" << std::endl;
       else
-         std::cout << "strided member test: FAIL " <<
-                      "MyTask " << MyTask << std::endl;
+         std::cout << "strided member test: FAIL "
+                   << "MyTask " << MyTask << std::endl;
 
    } else {
       if (StrideEnv->isMember())
-         std::cout << "strided member test: FAIL " <<
-                      "MyTask " << MyTask << std::endl;
+         std::cout << "strided member test: FAIL "
+                   << "MyTask " << MyTask << std::endl;
       else
          std::cout << "strided member test: PASS" << std::endl;
    }
 
    // Perform standard checks on new communicator
-   if (StrideEnv->isMember()){
+   if (StrideEnv->isMember()) {
       int StrideTask = StrideEnv->getMyTask();
-      if (StrideTask == WorldTask/2)
+      if (StrideTask == WorldTask / 2)
          std::cout << "strided task test: PASS" << std::endl;
       else {
-         std::cout << "strided task test: FAIL " <<
-                      "StrideTask, WorldTask = " <<
-                       StrideTask <<  " " << WorldTask << std::endl;
+         std::cout << "strided task test: FAIL "
+                   << "StrideTask, WorldTask = " << StrideTask << " "
+                   << WorldTask << std::endl;
       }
 
       int StrideSize = StrideEnv->getNumTasks();
       if (StrideSize == 4)
          std::cout << "strided NumTasks test: PASS" << std::endl;
       else {
-         std::cout << "strided NumTasks test: FAIL " <<
-                      "StrideSize (should be 4)  = " << StrideSize << std::endl;
+         std::cout << "strided NumTasks test: FAIL "
+                   << "StrideSize (should be 4)  = " << StrideSize << std::endl;
       }
 
       int StrideMaster = StrideEnv->getMasterTask();
       if (StrideMaster == 0)
          std::cout << "strided master task test: PASS" << std::endl;
       else {
-         std::cout << "strided master task test: FAIL " <<
-                      "master = " << StrideMaster << std::endl;
+         std::cout << "strided master task test: FAIL "
+                   << "master = " << StrideMaster << std::endl;
       }
 
       bool IsStrideMaster = StrideEnv->isMasterTask();
-      if (StrideTask == StrideMaster){
+      if (StrideTask == StrideMaster) {
          if (IsStrideMaster)
             std::cout << "strided is master task test: PASS" << std::endl;
          else
@@ -282,19 +281,19 @@ int main(int argc, char *argv[]) {
    //---------------------------------------------------------------------------
    // Test general subset constructor using tasks 1,2,5,7
 
-   int InclSize = 4;
+   int InclSize     = 4;
    int InclTasks[4] = {1, 2, 5, 7};
 
    // Test retrieval
-   OMEGA::MachEnv* SubsetEnv = OMEGA::MachEnv::getEnv("Subset");
+   OMEGA::MachEnv *SubsetEnv = OMEGA::MachEnv::getEnv("Subset");
 
    // Check membership in the new communicator
-   MyTask = SubsetEnv->getMyTask();
+   MyTask          = SubsetEnv->getMyTask();
    bool TaskInList = false;
-   int NewTask = -1;
-   for (int i=0; i < InclSize; ++i){
+   int NewTask     = -1;
+   for (int i = 0; i < InclSize; ++i) {
       ++NewTask;
-      if (WorldTask == InclTasks[i]){
+      if (WorldTask == InclTasks[i]) {
          TaskInList = true;
          break;
       }
@@ -308,10 +307,10 @@ int main(int argc, char *argv[]) {
       }
 
    } else {
-      if (SubsetEnv->isMember()){
-         std::cout << "subset non-member test: FAIL" <<
-                      " MyTask " << MyTask << " InclTasks ";
-         for (int i=0; i < InclSize; ++i){
+      if (SubsetEnv->isMember()) {
+         std::cout << "subset non-member test: FAIL"
+                   << " MyTask " << MyTask << " InclTasks ";
+         for (int i = 0; i < InclSize; ++i) {
             std::cout << InclTasks[i];
          }
          std::cout << std::endl;
@@ -321,23 +320,23 @@ int main(int argc, char *argv[]) {
    }
 
    // Perform standard checks on new communicator
-   if (SubsetEnv->isMember()){
+   if (SubsetEnv->isMember()) {
       int SubsetTask = SubsetEnv->getMyTask();
       if (SubsetTask == NewTask)
          std::cout << "subset task test: PASS " << std::endl;
       else {
-         std::cout << "subset task test: FAIL " <<
-                      "SubsetTask, NewTask = " <<
-                       SubsetTask << " " << NewTask << std::endl;
+         std::cout << "subset task test: FAIL "
+                   << "SubsetTask, NewTask = " << SubsetTask << " " << NewTask
+                   << std::endl;
       }
 
       int SubsetSize = SubsetEnv->getNumTasks();
       if (SubsetSize == InclSize)
          std::cout << "subset size test: PASS " << std::endl;
       else {
-         std::cout << "subset size test: FAIL " <<
-                      "SubsetSize, InclSize  = " <<
-                       SubsetSize << " " << InclSize << std::endl;
+         std::cout << "subset size test: FAIL "
+                   << "SubsetSize, InclSize  = " << SubsetSize << " "
+                   << InclSize << std::endl;
       }
 
       int SubsetMaster = SubsetEnv->getMasterTask();
@@ -349,7 +348,7 @@ int main(int argc, char *argv[]) {
       }
 
       bool IsSubsetMaster = SubsetEnv->isMasterTask();
-      if (SubsetTask == SubsetMaster){
+      if (SubsetTask == SubsetMaster) {
          if (IsSubsetMaster)
             std::cout << "subset is master task test: PASS" << std::endl;
          else
