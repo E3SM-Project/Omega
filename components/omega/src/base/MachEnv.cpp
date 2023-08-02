@@ -74,7 +74,7 @@ MachEnv::MachEnv(const std::string Name, // [in] name of environment
 #endif
 
    // Add this environment to the list of environments
-   AllEnvs.emplace(Name,*this);
+   AllEnvs.emplace(Name, *this);
 
 } // end constructor with MPI communicator
 
@@ -151,8 +151,7 @@ MachEnv::MachEnv(const std::string Name, // [in] name of environment
          MasterTaskFlag = false;
       }
 
-
-   // otherwise initialize all values to bogus values
+      // otherwise initialize all values to bogus values
    } else {
 
       MemberFlag     = false;
@@ -160,7 +159,6 @@ MachEnv::MachEnv(const std::string Name, // [in] name of environment
       NumTasks       = -999;
       MasterTask     = -999;
       MasterTaskFlag = false;
-
    }
 
 #ifdef OMEGA_THREADED
@@ -249,8 +247,7 @@ MachEnv::MachEnv(const std::string Name, // [in] name of environment
          MasterTaskFlag = false;
       }
 
-
-   // otherwise, set all members to bogus values
+      // otherwise, set all members to bogus values
    } else {
 
       MemberFlag     = false;
@@ -258,7 +255,6 @@ MachEnv::MachEnv(const std::string Name, // [in] name of environment
       NumTasks       = -999;
       MasterTask     = -999;
       MasterTaskFlag = false;
-
    }
 
 #ifdef OMEGA_THREADED
@@ -344,7 +340,7 @@ MachEnv::MachEnv(const std::string Name, // [in] name of environment
          MasterTaskFlag = false;
       }
 
-   // otherwise, set all members to bogus values
+      // otherwise, set all members to bogus values
    } else {
 
       MemberFlag     = false;
@@ -352,7 +348,6 @@ MachEnv::MachEnv(const std::string Name, // [in] name of environment
       NumTasks       = -999;
       MasterTask     = -999;
       MasterTaskFlag = false;
-
    }
 
 #ifdef OMEGA_THREADED
@@ -452,7 +447,8 @@ int MachEnv::setMasterTask(const int TaskID) {
    int Err = 0;
 
    // If called from outside the group, don't do anything
-   if (!MemberFlag) return Err;
+   if (!MemberFlag)
+      return Err;
 
    // Check for valid input and reset the master if valid
    if (TaskID >= 0 && TaskID < NumTasks) {
@@ -474,16 +470,16 @@ int MachEnv::setMasterTask(const int TaskID) {
 //------------------------------------------------------------------------------
 // Print all members of a MachEnv
 
-void MachEnv::print() const { 
+void MachEnv::print() const {
 
-   std::cout << "  Comm           = " << Comm           << std::endl;
-   std::cout << "  MyTask         = " << MyTask         << std::endl;
-   std::cout << "  NumTasks       = " << NumTasks       << std::endl;
-   std::cout << "  MasterTask     = " << MasterTask     << std::endl;
+   std::cout << "  Comm           = " << Comm << std::endl;
+   std::cout << "  MyTask         = " << MyTask << std::endl;
+   std::cout << "  NumTasks       = " << NumTasks << std::endl;
+   std::cout << "  MasterTask     = " << MasterTask << std::endl;
    std::cout << "  MasterTaskFlag = " << MasterTaskFlag << std::endl;
-   std::cout << "  MemberFlag     = " << MemberFlag     << std::endl;
-   std::cout << "  NumThreads     = " << NumThreads     << std::endl;
-   std::cout << "  VecLength      = " << VecLength      << std::endl;
+   std::cout << "  MemberFlag     = " << MemberFlag << std::endl;
+   std::cout << "  NumThreads     = " << NumThreads << std::endl;
+   std::cout << "  VecLength      = " << VecLength << std::endl;
 
 } // end print
 

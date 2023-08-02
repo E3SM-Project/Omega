@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
    // expected reference values
    OMEGA::MachEnv *DefEnv = OMEGA::MachEnv::getDefaultEnv();
 
-   int MyTask             = DefEnv->getMyTask();
+   int MyTask = DefEnv->getMyTask();
    if (MyTask == WorldTask)
       std::cout << "DefaultEnv task test: PASS" << std::endl;
    else {

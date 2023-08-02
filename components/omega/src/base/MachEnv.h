@@ -85,32 +85,32 @@ class MachEnv {
    /// subset of tasks in an existing environment starting at task 0
    /// of the parent environment. The master task can optionally be
    /// set but will default to zero if not provided.
-   MachEnv(const std::string Name,   ///< [in] name of environment
-           const MachEnv *InEnv,     ///< [in] existing parent MachEnv
-           const int NewSize,        ///< [in] use first newSize tasks
-           const int InMasterTask=0  ///< [in] optional task to use for master
+   MachEnv(const std::string Name,    ///< [in] name of environment
+           const MachEnv *InEnv,      ///< [in] existing parent MachEnv
+           const int NewSize,         ///< [in] use first newSize tasks
+           const int InMasterTask = 0 ///< [in] optional task to use for master
    );
 
    /// Constructs a new environment with a given name from a strided
    /// subset of of tasks in an existing environment. The master task
    /// can optionally be set but will default to zero if not provided.
-   MachEnv(const std::string Name,   ///< [in] name of env
-           const MachEnv *InEnv,     ///< [in] existing parent MachEnv
-           const int NewSize,        ///< [in] num tasks in new env
-           const int Begin,          ///< [in] starting parent task
-           const int Stride,         ///< [in] stride for tasks to incl
-           const int InMasterTask=0  ///< [in] optional task to use for master
+   MachEnv(const std::string Name,    ///< [in] name of env
+           const MachEnv *InEnv,      ///< [in] existing parent MachEnv
+           const int NewSize,         ///< [in] num tasks in new env
+           const int Begin,           ///< [in] starting parent task
+           const int Stride,          ///< [in] stride for tasks to incl
+           const int InMasterTask = 0 ///< [in] optional task to use for master
    );
 
    /// Constructs a new environment with a given name from a custom subset
    /// of tasks in an existing environment. The tasks are defined by a
    /// list of parent tasks to include. The master task can optionally be
    /// set but will default to zero if not provided.
-   MachEnv(const std::string Name,  ///< [in] name of environment
-           const MachEnv *InEnv,    ///< [in] existing parent MachEnv
-           const int NewSize,       ///< [in] num tasks in new env
-           const int Tasks[],       ///< [in] vector of parent tasks to incl
-           const int InMasterTask=0 ///< [in] optional task to use for master
+   MachEnv(const std::string Name,    ///< [in] name of environment
+           const MachEnv *InEnv,      ///< [in] existing parent MachEnv
+           const int NewSize,         ///< [in] num tasks in new env
+           const int Tasks[],         ///< [in] vector of parent tasks to incl
+           const int InMasterTask = 0 ///< [in] optional task to use for master
    );
 
    /// Removes a MachEnv
