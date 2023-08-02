@@ -37,15 +37,12 @@ be used to tune the vector length for CPU architectures. For
 GPU builds, this VecLength is set to 1.
 
 As noted previously, additional environments can be defined for
-subsets of a parent environment. There are three interfaces for
-creating an environment:
+subsets of a parent environment. There are three constructor
+interfaces for creating an environment:
 ```c++
-  OMEGA::MachEnv MyNewEnv = 
-      OMEGA::MachEnv::createNewEnv(Name, ParentEnv, NewSize);
-  OMEGA::MachEnv MyNewEnv = 
-      OMEGA::MachEnv::createNewEnv(Name, ParentEnv, NewSize, Begin, Stride);
-  OMEGA::MachEnv MyNewEnv = 
-      OMEGA::MachEnv::createNewEnv(Name, ParentEnv, NewSize, Tasks);
+  OMEGA::MachEnv MyNewEnv(Name, ParentEnv, NewSize);
+  OMEGA::MachEnv MyNewEnv(Name, ParentEnv, NewSize, Begin, Stride);
+  OMEGA::MachEnv MyNewEnv(Name, ParentEnv, NewSize, Tasks);
 ```
 An optional additional argument exists for all three that can supply an
 alternative task to use as the Master Task for message passing. If not
