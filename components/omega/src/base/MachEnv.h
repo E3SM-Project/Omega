@@ -59,21 +59,15 @@ class MachEnv {
    /// we store the extra pointer here for easier retrieval.
    static MachEnv *DefaultEnv;
 
-   /// All environments are tracked/stored within the class and
-   /// paired with a name in this map for later retrieval.
-   static std::map<std::string, MachEnv *> AllEnvs;
+   /// All environments are tracked/stored within the class as a
+   /// map paired with a name for later retrieval.
+   static std::map<std::string, MachEnv> AllEnvs;
 
-   /// Default constructor. This constructor fills a MachEnv with
-   /// mostly invalid values. Most environments are actually defined
-   /// using either the Init routine (for the default environment) or
-   /// the createEnv routine for all other environments
-   MachEnv();
-
-   /// Adds a created MachEnv to list of all instances. It also
-   /// performs some error checking to prevent duplicate names or
-   /// environments.
-   static void addEnv(const std::string Name, ///< [in] name of environment
-                      MachEnv *newEnv         ///< [in] new environment to add
+   /// Constructor for environment based on input MPI communicator
+   /// This should only be used for the default environment so is
+   /// kept private and called from the init routine.
+   MachEnv(const std::string Name, ///< [in] name of the environment
+           const MPI_Comm inComm   ///< [in] MPI communicator to use
    );
 
  public:
@@ -87,31 +81,36 @@ class MachEnv {
    static void init(const MPI_Comm InComm ///< [in] MPI communicator to use
    );
 
-   /// Creates a new environment with a given name from a contiguous
+   /// Constructs a new environment with a given name from a contiguous
    /// subset of tasks in an existing environment starting at task 0
-   /// of the parent environment.
-   static void createEnv(const std::string Name, ///< [in] name of environment
-                         const MachEnv *InEnv, ///< [in] existing parent MachEnv
-                         const int NewSize     ///< [in] use first newSize tasks
+   /// of the parent environment. The master task can optionally be
+   /// set but will default to zero if not provided.
+   MachEnv(const std::string Name,   ///< [in] name of environment
+           const MachEnv *InEnv,     ///< [in] existing parent MachEnv
+           const int NewSize,        ///< [in] use first newSize tasks
+           const int InMasterTask=0  ///< [in] optional task to use for master
    );
 
-   /// Creates a new environment with a given name from a strided
-   /// subset of of tasks in an existing environment.
-   static void createEnv(const std::string Name, ///< [in] name of env
-                         const MachEnv *InEnv, ///< [in] existing parent MachEnv
-                         const int NewSize,    ///< [in] num tasks in new env
-                         const int Begin,      ///< [in] starting parent task
-                         const int Stride ///< [in] stride for tasks to incl
+   /// Constructs a new environment with a given name from a strided
+   /// subset of of tasks in an existing environment. The master task
+   /// can optionally be set but will default to zero if not provided.
+   MachEnv(const std::string Name,   ///< [in] name of env
+           const MachEnv *InEnv,     ///< [in] existing parent MachEnv
+           const int NewSize,        ///< [in] num tasks in new env
+           const int Begin,          ///< [in] starting parent task
+           const int Stride,         ///< [in] stride for tasks to incl
+           const int InMasterTask=0  ///< [in] optional task to use for master
    );
 
-   /// Creates a new environment with a given name from a custom subset
+   /// Constructs a new environment with a given name from a custom subset
    /// of tasks in an existing environment. The tasks are defined by a
-   /// list of parent tasks to include.
-   static void
-   createEnv(const std::string Name, ///< [in] name of environment
-             const MachEnv *InEnv,   ///< [in] existing parent MachEnv
-             const int NewSize,      ///< [in] num tasks in new env
-             const int Tasks[]       ///< [in] vector of parent tasks to incl
+   /// list of parent tasks to include. The master task can optionally be
+   /// set but will default to zero if not provided.
+   MachEnv(const std::string Name,  ///< [in] name of environment
+           const MachEnv *InEnv,    ///< [in] existing parent MachEnv
+           const int NewSize,       ///< [in] num tasks in new env
+           const int Tasks[],       ///< [in] vector of parent tasks to incl
+           const int InMasterTask=0 ///< [in] optional task to use for master
    );
 
    /// Removes a MachEnv
@@ -157,6 +156,9 @@ class MachEnv {
    /// all components are using the same master).
    int setMasterTask(const int TaskID ///< [in] new task to use as master
    );
+
+   /// Prints all members of a MachEnv (typically for debugging)
+   void print() const;
 
 }; // end class MachEnv
 

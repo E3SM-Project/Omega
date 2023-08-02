@@ -27,20 +27,23 @@
 
 void InitMachEnvs() {
 
-   // Initialize three environments in reverse order that they
-   // are tested.  Use default as parent env
-   OMEGA::MachEnv *tmpEnv = OMEGA::MachEnv::getDefaultEnv();
+   // Initialize several environments in reverse order that they
+   // are tested.  Use the default environment as the parent
+   OMEGA::MachEnv *DefEnv = OMEGA::MachEnv::getDefaultEnv();
 
    // Initialize general subset environment
    int InclSize     = 4;
    int InclTasks[4] = {1, 2, 5, 7};
-   OMEGA::MachEnv::createEnv("Subset", tmpEnv, InclSize, InclTasks);
+   OMEGA::MachEnv tmpEnv1("Subset", DefEnv, InclSize, InclTasks);
 
    // Initialize strided environment
-   OMEGA::MachEnv::createEnv("Stride", tmpEnv, 4, 1, 2);
+   OMEGA::MachEnv tmpEnv2("Stride", DefEnv, 4, 1, 2);
 
    // Initialize contiguous subset environment
-   OMEGA::MachEnv::createEnv("Contig", tmpEnv, 4);
+   OMEGA::MachEnv tmpEnv3("Contig", DefEnv, 4);
+
+   // Initialize contiguous subset environment but different master task
+   OMEGA::MachEnv tmpEnv4("Contig2", DefEnv, 4, 2);
 
 } // end of InitMachEnvs
 
@@ -51,7 +54,7 @@ void InitMachEnvs() {
 //
 int main(int argc, char *argv[]) {
 
-   // initialize environments
+   // Initialize the global MPI environment
    MPI_Init(&argc, &argv);
 
    // Create reference values based on MPI_COMM_WORLD
@@ -70,22 +73,26 @@ int main(int argc, char *argv[]) {
    // The subset environments create 4-task sub-environments so
    // make sure the unit test is run with at least 8 to adequately
    // test all subsets.
-   std::cout << "MachEnv unit tests " << std::endl;
    if (WorldSize < 8) {
       std::cerr << "Please run unit test with at least 8 tasks" << std::endl;
       std::cout << "MachEnv unit test: FAIL" << std::endl;
       return -1;
    }
 
-   // Initialize the Machine Environment and the subset environments
-   // Not that the initialization also creates the default env.
+   // Initialize the Machine Environment class - this also creates
+   // the default MachEnv
    OMEGA::MachEnv::init(MPI_COMM_WORLD);
+
+   // Initialize the test environments. We do this in a separate routine
+   // to make sure environments created during the OMEGA init phase
+   // persist to the later run stage.
    InitMachEnvs();
 
-   // Verify retrieved values match expected reference values for the
-   // DefaultEnv
-   OMEGA::MachEnv *tmpEnv = OMEGA::MachEnv::getDefaultEnv();
-   int MyTask             = tmpEnv->getMyTask();
+   // Verify retrieved values of the Default environment match the
+   // expected reference values
+   OMEGA::MachEnv *DefEnv = OMEGA::MachEnv::getDefaultEnv();
+
+   int MyTask             = DefEnv->getMyTask();
    if (MyTask == WorldTask)
       std::cout << "DefaultEnv task test: PASS" << std::endl;
    else {
@@ -93,7 +100,7 @@ int main(int argc, char *argv[]) {
                 << "MyTask, WorldTask = " << MyTask << WorldTask << std::endl;
    }
 
-   int MySize = tmpEnv->getNumTasks();
+   int MySize = DefEnv->getNumTasks();
    if (MySize == WorldSize)
       std::cout << "DefaultEnv NumTasks test: PASS" << std::endl;
    else {
@@ -102,7 +109,7 @@ int main(int argc, char *argv[]) {
                 << std::endl;
    }
 
-   int MyMaster = tmpEnv->getMasterTask();
+   int MyMaster = DefEnv->getMasterTask();
    if (MyMaster == WorldMaster)
       std::cout << "DefaultEnv master task test: PASS" << std::endl;
    else {
@@ -111,7 +118,7 @@ int main(int argc, char *argv[]) {
                 << std::endl;
    }
 
-   bool IsMyMaster = tmpEnv->isMasterTask();
+   bool IsMyMaster = DefEnv->isMasterTask();
    if (MyTask == MyMaster) {
       if (IsMyMaster)
          std::cout << "DefaultEnv is master task test: PASS" << std::endl;
@@ -126,9 +133,9 @@ int main(int argc, char *argv[]) {
 
    // Test setting a new master task
 
-   tmpEnv->setMasterTask(2);
+   DefEnv->setMasterTask(2);
 
-   MyMaster = tmpEnv->getMasterTask();
+   MyMaster = DefEnv->getMasterTask();
    if (MyMaster == 2)
       std::cout << "DefaultEnv set master task test: PASS" << std::endl;
    else {
@@ -136,7 +143,7 @@ int main(int argc, char *argv[]) {
                 << "MyMaster = " << MyMaster << std::endl;
    }
 
-   IsMyMaster = tmpEnv->isMasterTask();
+   IsMyMaster = DefEnv->isMasterTask();
    if (MyTask == 2) {
       if (IsMyMaster)
          std::cout << "DefaultEnv isMaster after setMaster: PASS" << std::endl;
@@ -152,7 +159,7 @@ int main(int argc, char *argv[]) {
    //---------------------------------------------------------------------------
    // Test contiguous subset environment (first four tasks of default)
 
-   // Test retrieval of environment
+   // Test retrieval of the contiguous environment
    OMEGA::MachEnv *ContigEnv = OMEGA::MachEnv::getEnv("Contig");
 
    // Check membership in the new communicator
@@ -213,6 +220,73 @@ int main(int argc, char *argv[]) {
       }
 
    } // end if member of Contiguous subset
+
+   //---------------------------------------------------------------------------
+   // Test a similar contiguous subset environment (first four tasks of default)
+   // in which the master task has been initialized to task 2
+
+   // Test retrieval of the contiguous environment
+   OMEGA::MachEnv *Contig2Env = OMEGA::MachEnv::getEnv("Contig2");
+
+   // Check membership in the new communicator
+   if (MyTask < 4) {
+      if (Contig2Env->isMember())
+         std::cout << "contiguous2 member test: PASS" << std::endl;
+      else
+         std::cout << "contiguous2 member test: FAIL "
+                   << "MyTask " << MyTask << std::endl;
+
+   } else {
+      if (Contig2Env->isMember())
+         std::cout << "contiguous2 member test: FAIL "
+                   << "MyTask " << MyTask << std::endl;
+      else
+         std::cout << "contiguous2 member test: PASS" << std::endl;
+   }
+
+   // Perform standard checks on new communicator
+   if (Contig2Env->isMember()) {
+      int Contig2Task = Contig2Env->getMyTask();
+      if (Contig2Task == WorldTask)
+         std::cout << "contiguous2 task test: PASS" << std::endl;
+      else {
+         std::cout << "contiguous2 task test: FAIL "
+                   << "Contig2Task, WorldTask = " << Contig2Task << " "
+                   << WorldTask << std::endl;
+      }
+
+      int Contig2Size = Contig2Env->getNumTasks();
+      if (Contig2Size == 4)
+         std::cout << "contiguous2 NumTasks test: PASS " << std::endl;
+      else {
+         std::cout << "contiguous2 NumTasks test: FAIL "
+                   << "Contig2Size (should be 4)  = " << Contig2Size
+                   << std::endl;
+      }
+
+      int Contig2Master = Contig2Env->getMasterTask();
+      if (Contig2Master == 2)
+         std::cout << "contiguous2 master task test: PASS" << std::endl;
+      else {
+         std::cout << "contiguous2 master task test: FAIL "
+                   << "MyMaster, WorldMaster = " << MyMaster << " "
+                   << WorldMaster << std::endl;
+      }
+
+      bool IsContig2Master = Contig2Env->isMasterTask();
+      if (Contig2Task == Contig2Master) {
+         if (IsContig2Master)
+            std::cout << "contiguous2 is master task test: PASS" << std::endl;
+         else
+            std::cout << "contiguous2 is master task test: FAIL" << std::endl;
+      } else {
+         if (IsContig2Master)
+            std::cout << "contiguous2 is master task test: FAIL" << std::endl;
+         else
+            std::cout << "contiguous2 is master task test: PASS" << std::endl;
+      }
+
+   } // end if member of Contig2 subset
 
    //---------------------------------------------------------------------------
    // Test the strided constructor with only odd-numbered tasks
@@ -376,6 +450,11 @@ int main(int argc, char *argv[]) {
 #endif
 
    // finalize environments
+   OMEGA::MachEnv::removeEnv("Contig");
+   OMEGA::MachEnv::removeEnv("Contig2");
+   OMEGA::MachEnv::removeEnv("Stride");
+   OMEGA::MachEnv::removeEnv("Subset");
+
    // MPI_Status status;
    MPI_Finalize();
 

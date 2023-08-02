@@ -25,33 +25,15 @@ namespace OMEGA {
 
 // create the static class members
 MachEnv *MachEnv::DefaultEnv = nullptr;
-std::map<std::string, MachEnv *> MachEnv::AllEnvs;
+std::map<std::string, MachEnv> MachEnv::AllEnvs;
 
 // Constructors
 //------------------------------------------------------------------------------
-// Default constructor that fills a MachEnv with mostly invalid values.
-// Environments are instead created using the relevant create function.
+// Constructor that creates an environment using an input communicator.
+// This is typically used to set the default OMEGA communicator
 
-MachEnv::MachEnv() {
-
-   // Set the communicator to the MPI equivalent of a null ptr
-   Comm = MPI_COMM_NULL;
-
-   // Set all other values to invalid numbers
-   MyTask         = -999;
-   NumTasks       = -999;
-   MasterTask     = -999;
-   MasterTaskFlag = false;
-   MemberFlag     = true;
-   NumThreads     = -999;
-
-} // end default constructor
-
-//------------------------------------------------------------------------------
-// Add a MachEnv to list of instances
-//
-void MachEnv::addEnv(const std::string Name, // [in] name of environment
-                     MachEnv *NewEnv         // [in] environment to add
+MachEnv::MachEnv(const std::string Name, // [in] name of environment
+                 const MPI_Comm InComm   // [in] parent MPI communicator
 ) {
 
    // Check to see if an environment of the same name already exists and
@@ -62,69 +44,65 @@ void MachEnv::addEnv(const std::string Name, // [in] name of environment
       return;
    }
 
-   // Add to list of environments
-   AllEnvs[Name] = NewEnv;
-
-} // end addEnv
-
-//------------------------------------------------------------------------------
-// Initializes the Machine Environment by creating the DefaultEnv for Omega
-
-void MachEnv::init(const MPI_Comm InComm // [in] communicator to use
-) {
-
-   // Create the Env structure and make it persistent (static)
-   static MachEnv DefEnv;
-
    // Set the communicator to the input communicator by duplicating it
-   MPI_Comm_dup(InComm, &(DefEnv.Comm));
+   MPI_Comm_dup(InComm, &Comm);
 
    // get task ID and set local MPI task
-   MPI_Comm_rank(DefEnv.Comm, &(DefEnv.MyTask));
+   MPI_Comm_rank(Comm, &MyTask);
 
    // get total number of MPI tasks
-   MPI_Comm_size(DefEnv.Comm, &(DefEnv.NumTasks));
+   MPI_Comm_size(Comm, &NumTasks);
 
    // Set task 0 as master
-   DefEnv.MasterTask = 0;
+   MasterTask = 0;
 
    // determine if this task is the master task
-   if (DefEnv.MyTask == DefEnv.MasterTask) {
-      DefEnv.MasterTaskFlag = true;
+   if (MyTask == MasterTask) {
+      MasterTaskFlag = true;
    } else {
-      DefEnv.MasterTaskFlag = false;
+      MasterTaskFlag = false;
    }
 
    // All tasks are members of this communicator's group
-   DefEnv.MemberFlag = true;
+   MemberFlag = true;
 
 #ifdef OMEGA_THREADED
    // total number of OpenMP threads
-   DefEnv.NumThreads = omp_get_num_threads();
+   NumThreads = omp_get_num_threads();
 #else
-   DefEnv.NumThreads = 1;
+   NumThreads = 1;
 #endif
 
-   // Add to list of environments
-   OMEGA::MachEnv::addEnv("Default", &DefEnv);
+   // Add this environment to the list of environments
+   AllEnvs.emplace(Name,*this);
 
-   // Retrieve this environment and set pointer to DefaultEnv
-   MachEnv::DefaultEnv = getEnv("Default");
+} // end constructor with MPI communicator
 
-} // end init Mach Env
-
-// Create functions
 //------------------------------------------------------------------------------
-// Create a new environment from a contiguous subset of an
-// existing environment starting from same root task.
+// Construct a new environment from a contiguous subset of an
+// existing environment starting from same root task. The master task
+// can be changed from the default (0) as the optional argument InMasterTask.
 
-void MachEnv::createEnv(const std::string Name, // [in] name of environment
-                        const MachEnv *InEnv,   // [in] parent MachEnv
-                        const int NewSize       // [in] num tasks in new env
+MachEnv::MachEnv(const std::string Name, // [in] name of environment
+                 const MachEnv *InEnv,   // [in] parent MachEnv
+                 const int NewSize,      // [in] num tasks in new env
+                 int InMasterTask        // [in] optionally set Master Task
 ) {
 
-   // Create the new Env structure and make it persistent (static)
-   static MachEnv NewEnv;
+   // Check to see if an environment of the same name already exists and
+   // if so, exit with an error
+   if (AllEnvs.find(Name) != AllEnvs.end()) {
+      std::cerr << "Attempted to create a MachEnv with name " << Name
+                << " but an Env of that name already exists ";
+      return;
+   }
+
+   // Check for valid master task input
+   if (InMasterTask < 0 || InMasterTask >= NewSize) {
+      std::cerr << "Invalid MasterTask " << InMasterTask
+                << " sent to constructor: must be [0,NewSize-1]" << std::endl;
+      return;
+   }
 
    // Get communicator from old environment
    MPI_Comm InComm = InEnv->getComm();
@@ -153,59 +131,77 @@ void MachEnv::createEnv(const std::string Name, // [in] name of environment
    MPI_Group_range_incl(InGroup, NRanges, Range, &NewGroup);
 
    // Create the communicator for the new group
-   MPI_Comm_create(InComm, NewGroup, &NewEnv.Comm);
+   MPI_Comm_create(InComm, NewGroup, &Comm);
 
-   // determine whether this task is a part of the new communicator
-   if (NewEnv.Comm != MPI_COMM_NULL) {
+   // if this task is part of the new group/communicator,
+   // initialize all values
+   if (Comm != MPI_COMM_NULL) {
 
-      NewEnv.MemberFlag = true;
+      MemberFlag = true;
       // get task ID for local MPI task
-      MPI_Comm_rank(NewEnv.Comm, &NewEnv.MyTask);
+      MPI_Comm_rank(Comm, &MyTask);
       // get total number of MPI tasks
-      MPI_Comm_size(NewEnv.Comm, &NewEnv.NumTasks);
+      MPI_Comm_size(Comm, &NumTasks);
+      // Set master task to either the optional input or 0 as default
+      MasterTask = InMasterTask;
+      // determine if this task is the master task
+      if (MyTask == MasterTask) {
+         MasterTaskFlag = true;
+      } else {
+         MasterTaskFlag = false;
+      }
 
+
+   // otherwise initialize all values to bogus values
    } else {
 
-      NewEnv.MemberFlag = false;
-      NewEnv.MyTask     = -999;
-      NewEnv.NumTasks   = -999;
-   }
+      MemberFlag     = false;
+      MyTask         = -999;
+      NumTasks       = -999;
+      MasterTask     = -999;
+      MasterTaskFlag = false;
 
-   // Set task 0 as master
-   NewEnv.MasterTask = 0;
-
-   // determine if this task is the master task
-   if (NewEnv.MyTask == NewEnv.MasterTask) {
-      NewEnv.MasterTaskFlag = true;
-   } else {
-      NewEnv.MasterTaskFlag = false;
    }
 
 #ifdef OMEGA_THREADED
    // total number of OpenMP threads
-   NewEnv.NumThreads = omp_get_num_threads();
+   NumThreads = omp_get_num_threads();
 #else
-   NewEnv.NumThreads = 1;
+   NumThreads = 1;
 #endif
 
-   // Add to list of environments
-   OMEGA::MachEnv::addEnv(Name, &NewEnv);
+   // Add this environment to the list of environments
+   AllEnvs.emplace(Name, *this);
 
-} // end create with contiguous range
+} // end subset constructor with contiguous range
 
 //------------------------------------------------------------------------------
-// Create a new environment from a strided subset of an
-// existing environment
+// Construct a new environment from a strided subset of an
+// existing environment. The master task can be changed from the default (0)
+// with an optional input argument InMasterTask.
 
-void MachEnv::createEnv(const std::string Name, // [in] name of environment
-                        const MachEnv *InEnv,   // [in] parent MachEnv
-                        const int NewSize,      // [in] num tasks in new env
-                        const int Begin,        // [in] starting parent task
-                        const int Stride        // [in] stride for tasks to incl
+MachEnv::MachEnv(const std::string Name, // [in] name of environment
+                 const MachEnv *InEnv,   // [in] parent MachEnv
+                 const int NewSize,      // [in] num tasks in new env
+                 const int Begin,        // [in] starting parent task
+                 const int Stride,       // [in] stride for tasks to incl
+                 const int InMasterTask  // [in] optionally set Master Task
 ) {
 
-   // Create the new Env structure and make it persistent (static)
-   static MachEnv NewEnv;
+   // Check to see if an environment of the same name already exists and
+   // if so, exit with an error
+   if (AllEnvs.find(Name) != AllEnvs.end()) {
+      std::cerr << "Attempted to create a MachEnv with name " << Name
+                << " but an Env of that name already exists ";
+      return;
+   }
+
+   // Check for valid master task input
+   if (InMasterTask < 0 || InMasterTask >= NewSize) {
+      std::cerr << "Invalid MasterTask " << InMasterTask
+                << " sent to constructor: must be [0,NewSize-1]" << std::endl;
+      return;
+   }
 
    // First retrieve the group associated with the parent environment
    MPI_Comm InComm = InEnv->getComm();
@@ -233,66 +229,84 @@ void MachEnv::createEnv(const std::string Name, // [in] name of environment
    MPI_Group_range_incl(InGroup, NRanges, Range, &NewGroup);
 
    // Create the communicator for the new group
-   MPI_Comm_create(InComm, NewGroup, &(NewEnv.Comm));
+   MPI_Comm_create(InComm, NewGroup, &Comm);
 
-   // determine whether this task is a part of the new communicator
-   // and set quantities accordingly
-   if (NewEnv.Comm != MPI_COMM_NULL) { // this task is part of the group
+   // if this task is part of the new group/communicator
+   // initialize all members
+   if (Comm != MPI_COMM_NULL) { // this task is part of the group
 
-      NewEnv.MemberFlag = true;
+      MemberFlag = true;
       // get task ID for local MPI task
-      MPI_Comm_rank(NewEnv.Comm, &(NewEnv.MyTask));
+      MPI_Comm_rank(Comm, &MyTask);
       // get total number of MPI tasks
-      MPI_Comm_size(NewEnv.Comm, &(NewEnv.NumTasks));
+      MPI_Comm_size(Comm, &NumTasks);
+      // Set master task to either the input value or default to 0
+      MasterTask = InMasterTask;
+      // determine if this task is the master task
+      if (MyTask == MasterTask) {
+         MasterTaskFlag = true;
+      } else {
+         MasterTaskFlag = false;
+      }
 
+
+   // otherwise, set all members to bogus values
    } else {
-      NewEnv.MemberFlag = false;
-      NewEnv.MyTask     = -999;
-      NewEnv.NumTasks   = -999;
-   }
 
-   // Set task 0 as master
-   NewEnv.MasterTask = 0;
+      MemberFlag     = false;
+      MyTask         = -999;
+      NumTasks       = -999;
+      MasterTask     = -999;
+      MasterTaskFlag = false;
 
-   // determine if this task is the master task
-   if (NewEnv.MyTask == NewEnv.MasterTask) {
-      NewEnv.MasterTaskFlag = true;
-   } else {
-      NewEnv.MasterTaskFlag = false;
    }
 
 #ifdef OMEGA_THREADED
    // total number of OpenMP threads
-   NewEnv.NumThreads = omp_get_num_threads();
+   NumThreads = omp_get_num_threads();
 #else
-   NewEnv.NumThreads = 1;
+   NumThreads = 1;
 #endif
 
-   // Add to list of environments
-   OMEGA::MachEnv::addEnv(Name, &NewEnv);
+   // Add this environment to the list of environments
+   AllEnvs.emplace(Name, *this);
 
 } // end constructor using strided range
 
 //------------------------------------------------------------------------------
-// Create a new environment from a custom subset of an
+// Construct a new environment from a custom subset of an
 // existing environment, supplying list of parent tasks to include
+// The master task can be changed from the default (0) with an optional
+// argument InMasterTask.
 
-void MachEnv::createEnv(const std::string Name, // [in] name of environment
-                        const MachEnv *InEnv,   // [in] parent MPI communicator
-                        const int NewSize,      // [in] num tasks in new env
-                        const int Tasks[] // [in] vector of parent tasks to incl
+MachEnv::MachEnv(const std::string Name, // [in] name of environment
+                 const MachEnv *InEnv,   // [in] parent MPI communicator
+                 const int NewSize,      // [in] num tasks in new env
+                 const int Tasks[],      // [in] vector of parent tasks to incl
+                 const int InMasterTask  // [in] optionally set Master Task
 ) {
 
-   // Create the new Env structure and make it persistent (static)
-   static MachEnv NewEnv;
+   // Check to see if an environment of the same name already exists and
+   // if so, exit with an error
+   if (AllEnvs.find(Name) != AllEnvs.end()) {
+      std::cerr << "Attempted to create a MachEnv with name " << Name
+                << " but an Env of that name already exists ";
+      return;
+   }
 
-   // Error checks on valid tasks
+   // Check for valid master task input
+   if (InMasterTask < 0 || InMasterTask >= NewSize) {
+      std::cerr << "Invalid MasterTask " << InMasterTask
+                << " sent to constructor: must be [0,NewSize-1]" << std::endl;
+      return;
+   }
+
+   // Check the input task list to make sure all are valid
    MPI_Comm InComm = InEnv->getComm();
    int OldSize;
-   int ThisTask;
    MPI_Comm_size(InComm, &OldSize);
    for (int i = 0; i < NewSize; ++i) {
-      ThisTask = Tasks[i];
+      int ThisTask = Tasks[i];
       if (ThisTask < 0 || ThisTask >= OldSize) {
          std::cerr << "Invalid task in MachEnv constructor "
                    << "task = " << ThisTask << " is < 0 or larger than old size"
@@ -310,54 +324,71 @@ void MachEnv::createEnv(const std::string Name, // [in] name of environment
    MPI_Group_incl(InGroup, NewSize, Tasks, &NewGroup);
 
    // Create the communicator for the new group
-   MPI_Comm_create(InComm, NewGroup, &(NewEnv.Comm));
+   MPI_Comm_create(InComm, NewGroup, &Comm);
 
-   // determine whether this task is a part of the new communicator
-   // and set values accordingly
-   if (NewEnv.Comm != MPI_COMM_NULL) { // member of new group
+   // If this task is part of the new group/communicator
+   // initialize all class members
+   if (Comm != MPI_COMM_NULL) { // member of new group
 
-      NewEnv.MemberFlag = true;
+      MemberFlag = true;
       // get task ID for local MPI task
-      MPI_Comm_rank(NewEnv.Comm, &(NewEnv.MyTask));
+      MPI_Comm_rank(Comm, &MyTask);
       // get total number of MPI tasks
-      MPI_Comm_size(NewEnv.Comm, &(NewEnv.NumTasks));
+      MPI_Comm_size(Comm, &NumTasks);
+      // set master task to either input value or default to 0
+      MasterTask = InMasterTask;
+      // determine if this task is the master task
+      if (MyTask == MasterTask) {
+         MasterTaskFlag = true;
+      } else {
+         MasterTaskFlag = false;
+      }
 
+   // otherwise, set all members to bogus values
    } else {
-      NewEnv.MemberFlag = false;
-      NewEnv.MyTask     = -999;
-      NewEnv.NumTasks   = -999;
-   }
 
-   // Set task 0 as master
-   NewEnv.MasterTask = 0;
+      MemberFlag     = false;
+      MyTask         = -999;
+      NumTasks       = -999;
+      MasterTask     = -999;
+      MasterTaskFlag = false;
 
-   // determine if this task is the master task
-   if (NewEnv.MyTask == NewEnv.MasterTask) {
-      NewEnv.MasterTaskFlag = true;
-   } else {
-      NewEnv.MasterTaskFlag = false;
    }
 
 #ifdef OMEGA_THREADED
    // total number of OpenMP threads
-   NewEnv.NumThreads = omp_get_num_threads();
+   NumThreads = omp_get_num_threads();
 #else
-   NewEnv.NumThreads = 1;
+   NumThreads = 1;
 #endif
 
-   // Add to list of environments
-   OMEGA::MachEnv::addEnv(Name, &NewEnv);
+   // Add this environment to the list of environments
+   AllEnvs.emplace(Name, *this);
 
 } // end constructor with selected tasks
+
+//------------------------------------------------------------------------------
+// Initializes the Machine Environment by creating the DefaultEnv for Omega
+
+void MachEnv::init(const MPI_Comm InComm // [in] communicator to use
+) {
+
+   // Create the default environment based on the input communicator
+   MachEnv DefEnv("Default", InComm);
+
+   // Retrieve this environment and set pointer to DefaultEnv
+   MachEnv::DefaultEnv = getEnv("Default");
+
+} // end init Mach Env
 
 // Remove/delete functions
 //------------------------------------------------------------------------------
 // Remove environment
 
-void MachEnv::removeEnv(const std::string name // [in] name of env to remove
+void MachEnv::removeEnv(const std::string Name // [in] name of env to remove
 ) {
 
-   AllEnvs.erase(name);
+   AllEnvs.erase(Name);
 
 } // end removeEnv
 
@@ -368,19 +399,19 @@ MachEnv *MachEnv::getDefaultEnv() { return MachEnv::DefaultEnv; }
 
 //------------------------------------------------------------------------------
 // Get environment by name
-MachEnv *MachEnv::getEnv(const std::string name ///< [in] name of environment
+MachEnv *MachEnv::getEnv(const std::string Name ///< [in] Name of environment
 ) {
 
    // look for an instance of this name
-   auto it = AllEnvs.find(name);
+   auto it = AllEnvs.find(Name);
 
    // if found, return the environment pointer
    if (it != AllEnvs.end()) {
-      return it->second;
+      return &(it->second);
 
       // otherwise print an error and return a null pointer
    } else {
-      std::cerr << "Attempt to retrieve a non-existent MachEnv " << name
+      std::cerr << "Attempt to retrieve a non-existent MachEnv " << Name
                 << " has not been defined or has been removed";
       return nullptr;
    }
@@ -420,6 +451,10 @@ int MachEnv::setMasterTask(const int TaskID) {
 
    int Err = 0;
 
+   // If called from outside the group, don't do anything
+   if (!MemberFlag) return Err;
+
+   // Check for valid input and reset the master if valid
    if (TaskID >= 0 && TaskID < NumTasks) {
       MasterTask = TaskID;
       if (MyTask == MasterTask) {
@@ -428,13 +463,29 @@ int MachEnv::setMasterTask(const int TaskID) {
          MasterTaskFlag = false;
       }
    } else {
-      std::cerr << "Error: invalid TaskID sent to MachEnv.setMasterTask"
-                << std::endl;
+      std::cerr << "Error: invalid TaskID sent to MachEnv.setMasterTask "
+                << TaskID << std::endl;
       Err = -1;
    }
    return Err;
 
 } // end setMasterTask
+
+//------------------------------------------------------------------------------
+// Print all members of a MachEnv
+
+void MachEnv::print() const { 
+
+   std::cout << "  Comm           = " << Comm           << std::endl;
+   std::cout << "  MyTask         = " << MyTask         << std::endl;
+   std::cout << "  NumTasks       = " << NumTasks       << std::endl;
+   std::cout << "  MasterTask     = " << MasterTask     << std::endl;
+   std::cout << "  MasterTaskFlag = " << MasterTaskFlag << std::endl;
+   std::cout << "  MemberFlag     = " << MemberFlag     << std::endl;
+   std::cout << "  NumThreads     = " << NumThreads     << std::endl;
+   std::cout << "  VecLength      = " << VecLength      << std::endl;
+
+} // end print
 
 } // end namespace OMEGA
 

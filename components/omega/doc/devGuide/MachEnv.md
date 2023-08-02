@@ -47,7 +47,10 @@ creating an environment:
   OMEGA::MachEnv MyNewEnv = 
       OMEGA::MachEnv::createNewEnv(Name, ParentEnv, NewSize, Tasks);
 ```
-The first creates a new environment from the first `NewSize` contiguous
+An optional additional argument exists for all three that can supply an
+alternative task to use as the Master Task for message passing. If not
+provided, the master task defaults to 0. The first interface above
+creates a new environment from the first `NewSize` contiguous
 tasks in the parent machine environment. The second creates a new
 environment from a strided set of tasks starting at the `Begin` Task
 (eg all odd tasks would have Begin=1 and Stride=2). The final
@@ -64,6 +67,6 @@ a `removeEnv` function that can delete any defined environment.
 As a class that is basically a container for the environment parameters,
 the implementation is a simple class with several scalar data members and
 the retrieval/creation functions noted above. To track all defined
-environments, a c++ map container is used to pair a name with a pointer to
-a defined environment.  
+environments, a c++ map container is used to pair a name with each
+defined environment.  
 
