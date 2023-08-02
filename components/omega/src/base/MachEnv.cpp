@@ -131,7 +131,12 @@ MachEnv::MachEnv(const std::string Name, // [in] name of environment
    MPI_Group_range_incl(InGroup, NRanges, Range, &NewGroup);
 
    // Create the communicator for the new group
-   MPI_Comm_create(InComm, NewGroup, &Comm);
+   int Err = MPI_Comm_create(InComm, NewGroup, &Comm);
+   if (Err != MPI_SUCCESS) {
+      std::cerr << "Error creating new communicator in MachEnv constructor"
+                << std::endl;
+      return;
+   }
 
    // if this task is part of the new group/communicator,
    // initialize all values
@@ -227,7 +232,12 @@ MachEnv::MachEnv(const std::string Name, // [in] name of environment
    MPI_Group_range_incl(InGroup, NRanges, Range, &NewGroup);
 
    // Create the communicator for the new group
-   MPI_Comm_create(InComm, NewGroup, &Comm);
+   int Err = MPI_Comm_create(InComm, NewGroup, &Comm);
+   if (Err != MPI_SUCCESS) {
+      std::cerr << "Error creating new communicator in MachEnv constructor"
+                << std::endl;
+      return;
+   }
 
    // if this task is part of the new group/communicator
    // initialize all members
@@ -320,7 +330,12 @@ MachEnv::MachEnv(const std::string Name, // [in] name of environment
    MPI_Group_incl(InGroup, NewSize, Tasks, &NewGroup);
 
    // Create the communicator for the new group
-   MPI_Comm_create(InComm, NewGroup, &Comm);
+   int Err = MPI_Comm_create(InComm, NewGroup, &Comm);
+   if (Err != MPI_SUCCESS) {
+      std::cerr << "Error creating new communicator in MachEnv constructor"
+                << std::endl;
+      return;
+   }
 
    // If this task is part of the new group/communicator
    // initialize all class members
