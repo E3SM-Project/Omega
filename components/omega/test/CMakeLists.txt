@@ -109,6 +109,37 @@ endif()
 
 add_test(NAME YAKL_TEST COMMAND ./${_TestYaklName})
 
+
+##################
+# Broadcast test
+##################
+
+set(_TestBroadcastName testBroadcast.exe)
+
+# Add broadcast test
+add_executable(${_TestBroadcastName} infra/BroadcastTest.cpp)
+
+target_compile_options(
+  ${_TestBroadcastName}
+  PRIVATE
+  "-I${OMEGA_SOURCE_DIR}/src/base"
+  "-I${OMEGA_SOURCE_DIR}/src/infra"
+  ${OMEGA_CXX_FLAGS}
+)
+
+target_link_options(
+  ${_TestBroadcastName}
+  PRIVATE
+  ${OMEGA_LINK_OPTIONS}
+)
+
+target_link_libraries(${_TestBroadcastName} ${OMEGA_LIB_NAME} yakl)
+
+add_test(
+  NAME BROADCAST_TEST
+  COMMAND ${MPI_EXEC} -n 8 -- ./${_TestBroadcastName}
+)
+
 ##################
 # test properties
 ##################
@@ -118,5 +149,6 @@ set_tests_properties(
   MACHINE_ENV_TEST
   LOGGING_TEST
   YAKL_TEST
+  BROADCAST_TEST
   PROPERTIES FAIL_REGULAR_EXPRESSION "FAIL"
 )

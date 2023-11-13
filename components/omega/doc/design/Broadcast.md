@@ -98,8 +98,8 @@ int Broadcast([data type] value,  ///< [in] value to be broadcast
 As in 4.2.1, but adds the machine environment as an argument:
 
 ```c++
-int Broadcast([data type] value,    ///< [in] value to be broadcast
-              const MachEnv subEnv, ///< [in] defined OMEGA environment
+int Broadcast([data type] value,     ///< [in] value to be broadcast
+              const MachEnv *subEnv, ///< [in] defined OMEGA environment
               );
 ```
 
@@ -109,7 +109,7 @@ As in 4.2.2, but adds the machine environment as an argument:
 
 ```c++
 int Broadcast([data type] value,     ///< [in] value to be broadcast
-              const MachEnv subEnv,  ///< [in] defined OMEGA environment
+              const MachEnv *subEnv, ///< [in] defined OMEGA environment
               const int srcRank      ///< [in] rank to broadcast from
               );
 ```
