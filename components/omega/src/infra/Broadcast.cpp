@@ -15,170 +15,180 @@
 namespace OMEGA {
 
 //------------------------------------------------------------------------------
-// Broadcast I4 scalar value
-int Broadcast(I4 &value, const MachEnv *InEnv, const int rankBcast) {
-   int retval = 0;
+// Broadcast I4 scalar Value
+int Broadcast(I4 &Value, const MachEnv *InEnv, const int RankBcast) {
+   int RetVal, Root;
 
-   retval = MPI_Bcast(&value, 1, MPI_INT32_T, rankBcast, InEnv->getComm());
+   Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
+   RetVal = MPI_Bcast(&Value, 1, MPI_INT32_T, Root, InEnv->getComm());
 
-   return retval;
+   return RetVal;
 } // end Broadcast for I4 data type
 
-int Broadcast(I4 &value, const int rankBcast) {
-   return Broadcast(value, MachEnv::getDefaultEnv(), rankBcast);
+int Broadcast(I4 &Value, const int RankBcast) {
+   return Broadcast(Value, MachEnv::getDefaultEnv(), RankBcast);
 } // end Broadcast for I4 data type
 
 //------------------------------------------------------------------------------
-// Broadcast I8 scalar value
-int Broadcast(I8 &value, const MachEnv *InEnv, const int rankBcast) {
-   int retval = 0;
+// Broadcast I8 scalar Value
+int Broadcast(I8 &Value, const MachEnv *InEnv, const int RankBcast) {
+   int RetVal, Root;
 
-   retval = MPI_Bcast(&value, 1, MPI_INT64_T, rankBcast, InEnv->getComm());
+   Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
+   RetVal = MPI_Bcast(&Value, 1, MPI_INT64_T, Root, InEnv->getComm());
 
-   return retval;
+   return RetVal;
 } // end Broadcast for I8 data type
 
-int Broadcast(I8 &value, const int rankBcast) {
-   return Broadcast(value, MachEnv::getDefaultEnv(), rankBcast);
+int Broadcast(I8 &Value, const int RankBcast) {
+   return Broadcast(Value, MachEnv::getDefaultEnv(), RankBcast);
 } // end Broadcast for I8 data type
 
 //------------------------------------------------------------------------------
-// Broadcast R4 scalar value
-int Broadcast(R4 &value, const MachEnv *InEnv, const int rankBcast) {
-   int retval = 0;
+// Broadcast R4 scalar Value
+int Broadcast(R4 &Value, const MachEnv *InEnv, const int RankBcast) {
+   int RetVal, Root;
 
-   retval = MPI_Bcast(&value, 1, MPI_FLOAT, rankBcast, InEnv->getComm());
+   Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
+   RetVal = MPI_Bcast(&Value, 1, MPI_FLOAT, Root, InEnv->getComm());
 
-   return retval;
+   return RetVal;
 } // end Broadcast
 
-int Broadcast(R4 &value, const int rankBcast) {
-   return Broadcast(value, MachEnv::getDefaultEnv(), rankBcast);
-} // end Broadcast
-
-//------------------------------------------------------------------------------
-// Broadcast R8 scalar value
-int Broadcast(R8 &value, const MachEnv *InEnv, const int rankBcast) {
-   int retval = 0;
-
-   retval = MPI_Bcast(&value, 1, MPI_DOUBLE, rankBcast, InEnv->getComm());
-
-   return retval;
-} // end Broadcast
-
-int Broadcast(R8 &value, const int rankBcast) {
-   return Broadcast(value, MachEnv::getDefaultEnv(), rankBcast);
+int Broadcast(R4 &Value, const int RankBcast) {
+   return Broadcast(Value, MachEnv::getDefaultEnv(), RankBcast);
 } // end Broadcast
 
 //------------------------------------------------------------------------------
-// Broadcast bool scalar value
-int Broadcast(bool &value, const MachEnv *InEnv, const int rankBcast) {
-   int retval = 0;
+// Broadcast R8 scalar Value
+int Broadcast(R8 &Value, const MachEnv *InEnv, const int RankBcast) {
+   int RetVal, Root;
 
-   retval = MPI_Bcast(&value, 1, MPI_C_BOOL, rankBcast, InEnv->getComm());
+   Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
+   RetVal = MPI_Bcast(&Value, 1, MPI_DOUBLE, Root, InEnv->getComm());
 
-   return retval;
+   return RetVal;
 } // end Broadcast
 
-int Broadcast(bool &value, const int rankBcast) {
-   return Broadcast(value, MachEnv::getDefaultEnv(), rankBcast);
+int Broadcast(R8 &Value, const int RankBcast) {
+   return Broadcast(Value, MachEnv::getDefaultEnv(), RankBcast);
 } // end Broadcast
 
 //------------------------------------------------------------------------------
-// Broadcast std::string value
-int Broadcast(std::string &value, const MachEnv *InEnv, const int rankBcast) {
-   int retval = 0;
+// Broadcast bool scalar Value
+int Broadcast(bool &Value, const MachEnv *InEnv, const int RankBcast) {
+   int RetVal, Root;
 
-   retval = MPI_Bcast((void *)value.c_str(), value.size(), MPI_CHAR, rankBcast,
+   Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
+   RetVal = MPI_Bcast(&Value, 1, MPI_C_BOOL, Root, InEnv->getComm());
+
+   return RetVal;
+} // end Broadcast
+
+int Broadcast(bool &Value, const int RankBcast) {
+   return Broadcast(Value, MachEnv::getDefaultEnv(), RankBcast);
+} // end Broadcast
+
+//------------------------------------------------------------------------------
+// Broadcast std::string Value
+int Broadcast(std::string &Value, const MachEnv *InEnv, const int RankBcast) {
+   int RetVal, Root;
+
+   Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
+   RetVal = MPI_Bcast((void *)Value.c_str(), Value.size(), MPI_CHAR, Root,
                       InEnv->getComm());
 
-   return retval;
+   return RetVal;
 } // end Broadcast
 
-int Broadcast(std::string &value, const int rankBcast) {
-   return Broadcast(value, MachEnv::getDefaultEnv(), rankBcast);
+int Broadcast(std::string &Value, const int RankBcast) {
+   return Broadcast(Value, MachEnv::getDefaultEnv(), RankBcast);
 } // end Broadcast
 
 //------------------------------------------------------------------------------
 // Broadcast I4 array
-int Broadcast(std::vector<I4> &value, const MachEnv *InEnv,
-              const int rankBcast) {
-   int retval = 0;
+int Broadcast(std::vector<I4> &Value, const MachEnv *InEnv,
+              const int RankBcast) {
+   int RetVal, Root;
 
-   retval = MPI_Bcast((void *)value.data(), value.size(), MPI_INT32_T,
-                      rankBcast, InEnv->getComm());
+   Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
+   RetVal = MPI_Bcast((void *)Value.data(), Value.size(), MPI_INT32_T, Root,
+                      InEnv->getComm());
 
-   return retval;
+   return RetVal;
 } // end Broadcast
 
-int Broadcast(std::vector<I4> &value, const int rankBcast) {
-   return Broadcast(value, MachEnv::getDefaultEnv(), rankBcast);
+int Broadcast(std::vector<I4> &Value, const int RankBcast) {
+   return Broadcast(Value, MachEnv::getDefaultEnv(), RankBcast);
 } // end Broadcast
 
 //------------------------------------------------------------------------------
 // Broadcast I8 array
-int Broadcast(std::vector<I8> &value, const MachEnv *InEnv,
-              const int rankBcast) {
-   int retval = 0;
+int Broadcast(std::vector<I8> &Value, const MachEnv *InEnv,
+              const int RankBcast) {
+   int RetVal, Root;
 
-   retval = MPI_Bcast((void *)value.data(), value.size(), MPI_INT64_T,
-                      rankBcast, InEnv->getComm());
+   Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
+   RetVal = MPI_Bcast((void *)Value.data(), Value.size(), MPI_INT64_T, Root,
+                      InEnv->getComm());
 
-   return retval;
+   return RetVal;
 } // end Broadcast
 
-int Broadcast(std::vector<I8> &value, const int rankBcast) {
-   return Broadcast(value, MachEnv::getDefaultEnv(), rankBcast);
+int Broadcast(std::vector<I8> &Value, const int RankBcast) {
+   return Broadcast(Value, MachEnv::getDefaultEnv(), RankBcast);
 } // end Broadcast
 
 //------------------------------------------------------------------------------
 // Broadcast R4 array
-int Broadcast(std::vector<R4> &value, const MachEnv *InEnv,
-              const int rankBcast) {
-   int retval = 0;
+int Broadcast(std::vector<R4> &Value, const MachEnv *InEnv,
+              const int RankBcast) {
+   int RetVal, Root;
 
-   retval = MPI_Bcast((void *)value.data(), value.size(), MPI_FLOAT, rankBcast,
+   Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
+   RetVal = MPI_Bcast((void *)Value.data(), Value.size(), MPI_FLOAT, Root,
                       InEnv->getComm());
 
-   return retval;
+   return RetVal;
 } // end Broadcast
 
-int Broadcast(std::vector<R4> &value, const int rankBcast) {
-   return Broadcast(value, MachEnv::getDefaultEnv(), rankBcast);
+int Broadcast(std::vector<R4> &Value, const int RankBcast) {
+   return Broadcast(Value, MachEnv::getDefaultEnv(), RankBcast);
 } // end Broadcast
 
 //------------------------------------------------------------------------------
 // Broadcast R8 array
-int Broadcast(std::vector<R8> &value, const MachEnv *InEnv,
-              const int rankBcast) {
-   int retval = 0;
+int Broadcast(std::vector<R8> &Value, const MachEnv *InEnv,
+              const int RankBcast) {
+   int RetVal, Root;
 
-   retval = MPI_Bcast((void *)value.data(), value.size(), MPI_DOUBLE, rankBcast,
+   Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
+   RetVal = MPI_Bcast((void *)Value.data(), Value.size(), MPI_DOUBLE, Root,
                       InEnv->getComm());
 
-   return retval;
+   return RetVal;
 } // end Broadcast
 
-int Broadcast(std::vector<R8> &value, const int rankBcast) {
-   return Broadcast(value, MachEnv::getDefaultEnv(), rankBcast);
+int Broadcast(std::vector<R8> &Value, const int RankBcast) {
+   return Broadcast(Value, MachEnv::getDefaultEnv(), RankBcast);
 }
 
 //------------------------------------------------------------------------------
 // Broadcast bool array
 // Elements of vector<bool> seem to be non-addressable
-// int Broadcast(std::vector<bool> &value, const MachEnv *InEnv, const int
-// rankBcast ) {
-//    int retval = 0;
+// int Broadcast(std::vector<bool> &Value, const MachEnv *InEnv, const int
+// RankBcast ) {
+//    int RetVal;
 //
-//    retval = MPI_Bcast((void *)value.data(), value.size(), MPI_C_BOOL,
-//    rankBcast, InEnv->getComm());
+//    RetVal = MPI_Bcast((void *)Value.data(), Value.size(), MPI_C_BOOL,
+//    RankBcast, InEnv->getComm());
 //
-//    return retval;
+//    return RetVal;
 //} // end Broadcast
 //
-// int Broadcast(std::vector<bool> &value, const int rankBcast
+// int Broadcast(std::vector<bool> &Value, const int RankBcast
 //) {
-//    return Broadcast(value, MachEnv::getDefaultEnv(), rankBcast);
+//    return Broadcast(Value, MachEnv::getDefaultEnv(), RankBcast);
 //}
 
 } // namespace OMEGA

@@ -15,20 +15,20 @@
 
 #include <iostream>
 
-template <class myType>
+template <class MyType>
 void TestBroadcast(OMEGA::MachEnv *Env, std::string TypeName) {
 
    const int MyTask     = Env->getMyTask();
    const int IsMyMaster = Env->isMasterTask();
    const int RootTask   = 2;
 
-   myType MyVal, FromVal, ToVal;
+   MyType MyVal, FromVal, ToVal;
 
-   if constexpr (std::is_same_v<myType, bool>) {
+   if constexpr (std::is_same_v<MyType, bool>) {
       FromVal = true;
       ToVal   = false;
 
-   } else if constexpr (std::is_same_v<myType, std::string>) {
+   } else if constexpr (std::is_same_v<MyType, std::string>) {
       FromVal = "a";
       ToVal   = "b";
 
@@ -45,7 +45,7 @@ void TestBroadcast(OMEGA::MachEnv *Env, std::string TypeName) {
    // Test broadcasting value from master task
    OMEGA::Broadcast(MyVal);
 
-   if (MyTask == 2) {
+   if (!IsMyMaster) {
       if (MyVal == FromVal)
          std::cout << TypeName << " scalar broadcast from a default task: PASS"
                    << std::endl;
@@ -94,10 +94,10 @@ void TestBroadcast(OMEGA::MachEnv *Env, std::string TypeName) {
 
    // length of vector<string> is not fixed
    // elements of vector<bool> seems to be non-addressable
-   if constexpr (!std::is_same_v<myType, std::string> &&
-                 !std::is_same_v<myType, bool>) {
+   if constexpr (!std::is_same_v<MyType, std::string> &&
+                 !std::is_same_v<MyType, bool>) {
 
-      std::vector<myType> MyVector;
+      std::vector<MyType> MyVector;
 
       for (int i = 1; i <= 5; i++) {
          if (MyTask == RootTask)
@@ -111,7 +111,7 @@ void TestBroadcast(OMEGA::MachEnv *Env, std::string TypeName) {
 
       if (IsMyMaster) {
          if (std::all_of(MyVector.cbegin(), MyVector.cend(),
-                         [&](myType v) { return v == FromVal; }))
+                         [&](MyType v) { return v == FromVal; }))
             std::cout << TypeName
                       << " vector broadcast from the default env.: PASS"
                       << std::endl;
