@@ -1,7 +1,7 @@
 # build Omega
 
 # Add source files for the library
-file(GLOB _LIBSRC_FILES base/*.cpp infra/*.cpp ocn/*.cpp)
+file(GLOB _LIBSRC_FILES infra/*.cpp base/*.cpp ocn/*.cpp)
 
 # Create the library target
 add_library(${OMEGA_LIB_NAME} ${_LIBSRC_FILES})
