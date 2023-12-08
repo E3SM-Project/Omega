@@ -43,3 +43,9 @@ final METIS parallel decomposition.
 METIS and ParMETIS support a number of partitioning schemes, but MetisKWay
 is currently the only supported decomposition method for Omega and is
 generally the better option.
+
+Once the mesh is decomposed, all of the mesh index arrays are stored in
+a Decomp named Default which can be retrieved as described in the
+Developer guide. In the future, additional decompositions associated
+with processor subsets (as described in MachEnv) but this capability is
+not yet supported.

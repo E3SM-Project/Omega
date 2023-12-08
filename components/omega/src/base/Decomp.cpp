@@ -616,9 +616,9 @@ Decomp::Decomp(
 
    // Create device copies of all arrays
 
-   //NCellsHalo = NCellsHaloH.createDeviceCopy();
-   //CellID     = CellIDH.createDeviceCopy();
-   //CellLoc    = CellLocH.createDeviceCopy();
+   // NCellsHalo = NCellsHaloH.createDeviceCopy();
+   // CellID     = CellIDH.createDeviceCopy();
+   // CellLoc    = CellLocH.createDeviceCopy();
 
    // NEdgesHalo = NEdgesHaloH.createDeviceCopy();
    // EdgeID     = EdgeIDH.createDeviceCopy();

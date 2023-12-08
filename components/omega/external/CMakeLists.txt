@@ -58,5 +58,3 @@ set_target_properties(metis PROPERTIES
 add_library(parmetis STATIC IMPORTED GLOBAL)
 set_target_properties(parmetis PROPERTIES
    IMPORTED_LOCATION ${PARMETIS_ROOT}/lib/libparmetis.a)
-
-
