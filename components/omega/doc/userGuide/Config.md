@@ -82,4 +82,3 @@ input YAML-formatted file.  Details of the implementation within omega
 can be found in the [Developer's Guide](#omega-dev-config) and the actual
 interfaces for extracting configuration variables into the modules that
 own them are described there as well.
-

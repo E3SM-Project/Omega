@@ -65,7 +65,7 @@ functions existsGroup or existsVar, where the variable name is provided.
 The developer will need to decide the action to take based on that
 condition. For example, the code could return a critical error and terminate
 if it is required. In some cases, it may be sufficient to issue a warning
-and set the value of the variable to an internal default. 
+and set the value of the variable to an internal default.
 In this latter case, it is a good idea to add the variable and its value to
 the configuration using the add function. For example:
 ```c++
