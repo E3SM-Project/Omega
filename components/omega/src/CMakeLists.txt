@@ -7,11 +7,17 @@ file(GLOB _LIBSRC_FILES infra/*.cpp base/*.cpp ocn/*.cpp)
 add_library(${OMEGA_LIB_NAME} ${_LIBSRC_FILES})
 
 # add compiler options
+target_include_directories(
+    ${OMEGA_LIB_NAME}
+    PRIVATE
+    ${OMEGA_SOURCE_DIR}/src/base
+    ${OMEGA_SOURCE_DIR}/src/infra
+    ${OMEGA_SOURCE_DIR}/src/ocn
+)
+
 target_compile_options(
     ${OMEGA_LIB_NAME}
     PRIVATE
-    "-I${OMEGA_SOURCE_DIR}/src/base"
-    "-I${OMEGA_SOURCE_DIR}/src/infra"
      ${OMEGA_CXX_FLAGS}
 )
 
@@ -22,7 +28,7 @@ target_link_options(
     ${OMEGA_LINK_OPTIONS}
 )
 
-target_link_libraries(${OMEGA_LIB_NAME} spdlog yakl pioc)
+target_link_libraries(${OMEGA_LIB_NAME} spdlog yakl pioc yaml-cpp)
 
 # build Omega executable
 if(OMEGA_BUILD_EXECUTABLE)
