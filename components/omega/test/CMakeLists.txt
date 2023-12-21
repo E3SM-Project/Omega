@@ -153,6 +153,41 @@ add_test(
   COMMAND ${MPI_EXEC} -n 8 -- ./${_TestDecompName}
 )
 
+##################
+# Halo test
+##################
+
+set(_TestHaloName testHalo.exe)
+
+# Add halo test
+add_executable(${_TestHaloName} base/HaloTest.cpp)
+
+target_include_directories(
+  ${_TestHaloName}
+  PRIVATE
+  ${OMEGA_SOURCE_DIR}/src/base
+  ${OMEGA_SOURCE_DIR}/src/infra
+  ${PARMETIS_ROOT}/include
+)
+
+target_compile_options(
+  ${_TestHaloName}
+  PRIVATE
+  ${OMEGA_CXX_FLAGS}
+)
+
+target_link_options(
+  ${_TestHaloName}
+  PRIVATE
+  ${OMEGA_LINK_OPTIONS}
+)
+
+target_link_libraries(${_TestHaloName} ${OMEGA_LIB_NAME} yakl metis)
+
+add_test(
+  NAME HALO_TEST
+  COMMAND ${MPI_EXEC} -n 8 -- ./${_TestHaloName}
+)
 
 ##################
 # YAKL test
