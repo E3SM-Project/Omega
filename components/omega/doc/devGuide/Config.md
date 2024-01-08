@@ -11,7 +11,7 @@ file and it's requirements are described in the
 [User Guide](#omega-user-config).
 
 Within the model, the paradigm should be that a given module will extract
-it's configuration from the full configuration as part of the module's
+its configuration from the full configuration as part of the module's
 initialization and store it in private class or module variables to be used
 later. This is partly for performance reasons. In the current implementation,
 the configuration is read in and owned by the master MPI task and the
@@ -73,7 +73,7 @@ Err = HmixConfig.add("HmixNewVar", value);
 ```
 Then it will be included in any future writing of the configuration in
 order to save provenance. Similarly, an existing value can be changed using
-the ``set`` function that has an analogous form. There is a also remove
+the ``set`` function that has an analogous form. There is also a remove
 function that can remove a variable or subconfiguration from any Config -
 only the name needs to be supplied. Finally, any configuration can be
 written using the write function with a filename supplied as in
