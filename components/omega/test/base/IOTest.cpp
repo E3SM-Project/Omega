@@ -266,24 +266,23 @@ int main(int argc, char *argv[]) {
    OMEGA::R8 FileMetaR8Ref   = 1.23456789;
    std::string FileMetaDescr = "OMEGA IO Unit test file";
 
-   Err = OMEGA::IO::writeMeta("FileMetaI4", &FileMetaI4Ref, OMEGA::IO::IOTypeI4,
-                              OutFileID, OMEGA::IO::GlobalID);
+   Err = OMEGA::IO::writeMeta("FileMetaI4", FileMetaI4Ref, OutFileID,
+                              OMEGA::IO::GlobalID);
    if (Err != 0)
       LOG_ERROR("IOTest: error writing global I4 metadata FAIL");
-   Err = OMEGA::IO::writeMeta("FileMetaI8", &FileMetaI8Ref, OMEGA::IO::IOTypeI8,
-                              OutFileID, OMEGA::IO::GlobalID);
+   Err = OMEGA::IO::writeMeta("FileMetaI8", FileMetaI8Ref, OutFileID,
+                              OMEGA::IO::GlobalID);
    if (Err != 0)
       LOG_ERROR("IOTest: error writing global I8 metadata FAIL");
-   Err = OMEGA::IO::writeMeta("FileMetaR4", &FileMetaR4Ref, OMEGA::IO::IOTypeR4,
-                              OutFileID, OMEGA::IO::GlobalID);
+   Err = OMEGA::IO::writeMeta("FileMetaR4", FileMetaR4Ref, OutFileID,
+                              OMEGA::IO::GlobalID);
    if (Err != 0)
       LOG_ERROR("IOTest: error writing global R4 metadata FAIL");
-   Err = OMEGA::IO::writeMeta("FileMetaR8", &FileMetaR8Ref, OMEGA::IO::IOTypeR8,
-                              OutFileID, OMEGA::IO::GlobalID);
+   Err = OMEGA::IO::writeMeta("FileMetaR8", FileMetaR8Ref, OutFileID,
+                              OMEGA::IO::GlobalID);
    if (Err != 0)
       LOG_ERROR("IOTest: error writing global R8 metadata FAIL");
-   Err = OMEGA::IO::writeMeta("FileMetaDescr", (void *)FileMetaDescr.c_str(),
-                              OMEGA::IO::IOTypeChar, OutFileID,
+   Err = OMEGA::IO::writeMeta("FileMetaDescr", FileMetaDescr, OutFileID,
                               OMEGA::IO::GlobalID);
    if (Err != 0)
       LOG_ERROR("IOTest: error writing global char metadata FAIL");
@@ -364,24 +363,24 @@ int main(int argc, char *argv[]) {
    OMEGA::R8 VarMetaR8Ref      = 2.23456789;
    std::string VarMetaDescrRef = "Test array for I4 on Cells";
 
-   Err = OMEGA::IO::writeMeta("VarMetaI4", &VarMetaI4Ref, OMEGA::IO::IOTypeI4,
-                              OutFileID, VarIDCellI4);
+   Err =
+       OMEGA::IO::writeMeta("VarMetaI4", VarMetaI4Ref, OutFileID, VarIDCellI4);
    if (Err != 0)
       LOG_ERROR("IOTest: error writing var I4 metadata FAIL");
-   Err = OMEGA::IO::writeMeta("VarMetaI8", &VarMetaI8Ref, OMEGA::IO::IOTypeI8,
-                              OutFileID, VarIDCellI4);
+   Err =
+       OMEGA::IO::writeMeta("VarMetaI8", VarMetaI8Ref, OutFileID, VarIDCellI4);
    if (Err != 0)
       LOG_ERROR("IOTest: error writing var I8 metadata FAIL");
-   Err = OMEGA::IO::writeMeta("VarMetaR4", &VarMetaR4Ref, OMEGA::IO::IOTypeR4,
-                              OutFileID, VarIDCellI4);
+   Err =
+       OMEGA::IO::writeMeta("VarMetaR4", VarMetaR4Ref, OutFileID, VarIDCellI4);
    if (Err != 0)
       LOG_ERROR("IOTest: error writing var R4 metadata FAIL");
-   Err = OMEGA::IO::writeMeta("VarMetaR8", &VarMetaR8Ref, OMEGA::IO::IOTypeR8,
-                              OutFileID, VarIDCellI4);
+   Err =
+       OMEGA::IO::writeMeta("VarMetaR8", VarMetaR8Ref, OutFileID, VarIDCellI4);
    if (Err != 0)
       LOG_ERROR("IOTest: error writing var R8 metadata FAIL");
-   Err = OMEGA::IO::writeMeta("VarMetaDescr", (void *)VarMetaDescrRef.c_str(),
-                              OMEGA::IO::IOTypeChar, OutFileID, VarIDCellI4);
+   Err = OMEGA::IO::writeMeta("VarMetaDescr", VarMetaDescrRef, OutFileID,
+                              VarIDCellI4);
    if (Err != 0)
       LOG_ERROR("IOTest: error writing var char metadata FAIL");
 
@@ -494,7 +493,7 @@ int main(int argc, char *argv[]) {
    OMEGA::R8 FileMetaR8New;
    std::string FileMetaDescrNew;
 
-   Err = OMEGA::IO::readMeta("FileMetaI4", &FileMetaI4New, InFileID,
+   Err = OMEGA::IO::readMeta("FileMetaI4", FileMetaI4New, InFileID,
                              OMEGA::IO::GlobalID);
    if (Err != 0)
       LOG_ERROR("IOTest: error reading file I4 metadata FAIL");
@@ -504,7 +503,7 @@ int main(int argc, char *argv[]) {
       LOG_INFO("IOTest: read/write file metadata I4 test FAIL");
    }
 
-   Err = OMEGA::IO::readMeta("FileMetaI8", &FileMetaI8New, InFileID,
+   Err = OMEGA::IO::readMeta("FileMetaI8", FileMetaI8New, InFileID,
                              OMEGA::IO::GlobalID);
    if (Err != 0)
       LOG_ERROR("IOTest: error reading file I8 metadata FAIL");
@@ -514,7 +513,7 @@ int main(int argc, char *argv[]) {
       LOG_INFO("IOTest: read/write file metadata I8 test FAIL");
    }
 
-   Err = OMEGA::IO::readMeta("FileMetaR4", &FileMetaR4New, InFileID,
+   Err = OMEGA::IO::readMeta("FileMetaR4", FileMetaR4New, InFileID,
                              OMEGA::IO::GlobalID);
    if (Err != 0)
       LOG_ERROR("IOTest: error reading file R4 metadata FAIL");
@@ -524,7 +523,7 @@ int main(int argc, char *argv[]) {
       LOG_INFO("IOTest: read/write file metadata R4 test FAIL");
    }
 
-   Err = OMEGA::IO::readMeta("FileMetaR8", &FileMetaR8New, InFileID,
+   Err = OMEGA::IO::readMeta("FileMetaR8", FileMetaR8New, InFileID,
                              OMEGA::IO::GlobalID);
    if (Err != 0)
       LOG_ERROR("IOTest: error reading file R8 metadata FAIL");
@@ -534,8 +533,8 @@ int main(int argc, char *argv[]) {
       LOG_INFO("IOTest: read/write file metadata R8 test FAIL");
    }
 
-   Err = OMEGA::IO::readMeta("FileMetaDescr", (void *)FileMetaDescrNew.c_str(),
-                             InFileID, OMEGA::IO::GlobalID);
+   Err = OMEGA::IO::readMeta("FileMetaDescr", FileMetaDescrNew, InFileID,
+                             OMEGA::IO::GlobalID);
    if (Err != 0)
       LOG_ERROR("IOTest: error reading file string metadata FAIL");
    if (FileMetaDescrNew == FileMetaDescr) {
@@ -733,7 +732,7 @@ int main(int argc, char *argv[]) {
    OMEGA::R8 VarMetaR8New;
    std::string VarMetaDescrNew;
 
-   Err = OMEGA::IO::readMeta("VarMetaI4", &VarMetaI4New, InFileID, VarIDCellI4);
+   Err = OMEGA::IO::readMeta("VarMetaI4", VarMetaI4New, InFileID, VarIDCellI4);
    if (Err != 0)
       LOG_ERROR("IOTest: error reading var I4 metadata FAIL");
    if (VarMetaI4New == VarMetaI4Ref) {
@@ -741,7 +740,7 @@ int main(int argc, char *argv[]) {
    } else {
       LOG_INFO("IOTest: read/write var metadata I4 test FAIL");
    }
-   Err = OMEGA::IO::readMeta("VarMetaI8", &VarMetaI8New, InFileID, VarIDCellI4);
+   Err = OMEGA::IO::readMeta("VarMetaI8", VarMetaI8New, InFileID, VarIDCellI4);
    if (Err != 0)
       LOG_ERROR("IOTest: error reading var I8 metadata FAIL");
    if (VarMetaI8New == VarMetaI8Ref) {
@@ -749,7 +748,7 @@ int main(int argc, char *argv[]) {
    } else {
       LOG_INFO("IOTest: read/write var metadata I8 test FAIL");
    }
-   Err = OMEGA::IO::readMeta("VarMetaR4", &VarMetaR4New, InFileID, VarIDCellI4);
+   Err = OMEGA::IO::readMeta("VarMetaR4", VarMetaR4New, InFileID, VarIDCellI4);
    if (Err != 0)
       LOG_ERROR("IOTest: error reading var R4 metadata FAIL");
    if (VarMetaR4New == VarMetaR4Ref) {
@@ -757,7 +756,7 @@ int main(int argc, char *argv[]) {
    } else {
       LOG_INFO("IOTest: read/write var metadata R4 test FAIL");
    }
-   Err = OMEGA::IO::readMeta("VarMetaR8", &VarMetaR8New, InFileID, VarIDCellI4);
+   Err = OMEGA::IO::readMeta("VarMetaR8", VarMetaR8New, InFileID, VarIDCellI4);
    if (Err != 0)
       LOG_ERROR("IOTest: error reading var R8 metadata FAIL");
    if (VarMetaR8New == VarMetaR8Ref) {
@@ -765,8 +764,8 @@ int main(int argc, char *argv[]) {
    } else {
       LOG_INFO("IOTest: read/write var metadata R8 test FAIL");
    }
-   Err = OMEGA::IO::readMeta("VarMetaDescr", (void *)VarMetaDescrNew.c_str(),
-                             InFileID, VarIDCellI4);
+   Err = OMEGA::IO::readMeta("VarMetaDescr", VarMetaDescrNew, InFileID,
+                             VarIDCellI4);
    if (Err != 0)
       LOG_ERROR("IOTest: error reading var string metadata FAIL");
    if (VarMetaDescrNew == VarMetaDescrRef) {
@@ -822,7 +821,7 @@ int main(int argc, char *argv[]) {
 
    // Exit environments
    if (Err == 0)
-      LOG_INFO("DecompTest: Successful completion");
+      LOG_INFO("IOTest: Successful completion");
    yakl::finalize();
    MPI_Finalize();
 

@@ -181,21 +181,60 @@ int defineDim(int FileID, ///< [in] ID of the file containing dim
 
 /// Writes metadata (name, value) associated with a variable and/or file.
 /// The variable ID can be GlobalID for global file and/or simulation
-/// attributes/metadata. A void pointer is used here to create a generic
-/// interface for all types.
+/// attributes/metadata. Specific interfaces for each data type are aliased
+/// to a generic interface form.
 int writeMeta(const std::string &MetaName, ///< [in] name of metadata
-              const void *MetaValue,       ///< [in] pointer to metadata data
-              IODataType MetaType, ///< [in] data type for this meta data
-              int FileID,          ///< [in] ID of the file for writing
+              I4 MetaValue,                ///< [in] value of metadata
+              int FileID,                  ///< [in] ID of the file for writing
+              int VarID ///< [in] ID for variable associated with metadata
+);
+int writeMeta(const std::string &MetaName, ///< [in] name of metadata
+              I8 MetaValue,                ///< [in] value of metadata
+              int FileID,                  ///< [in] ID of the file for writing
+              int VarID ///< [in] ID for variable associated with metadata
+);
+int writeMeta(const std::string &MetaName, ///< [in] name of metadata
+              R4 MetaValue,                ///< [in] value of metadata
+              int FileID,                  ///< [in] ID of the file for writing
+              int VarID ///< [in] ID for variable associated with metadata
+);
+int writeMeta(const std::string &MetaName, ///< [in] name of metadata
+              R8 MetaValue,                ///< [in] value of metadata
+              int FileID,                  ///< [in] ID of the file for writing
+              int VarID ///< [in] ID for variable associated with metadata
+);
+int writeMeta(const std::string &MetaName, ///< [in] name of metadata
+              std::string MetaValue,       ///< [in] value of metadata
+              int FileID,                  ///< [in] ID of the file for writing
               int VarID ///< [in] ID for variable associated with metadata
 );
 
 /// Reads metadata (name, value) associated with a variable and/or file.
 /// The variable ID can be GlobalID for global file and/or simulation
-/// metadata. A void pointer is used to make this a generic interface for
-/// all data types.
+/// metadata. Specific interfaces for each supported type are aliased
+/// to a generic interface form.
 int readMeta(const std::string &MetaName, ///< [in] name of metadata
-             void *MetaValue,             ///< [out] value of metadata
+             I4 &MetaValue,               ///< [out] value of metadata
+             int FileID,                  ///< [in] ID of the file for writing
+             int VarID ///< [in] ID for variable associated with metadata
+);
+int readMeta(const std::string &MetaName, ///< [in] name of metadata
+             I8 &MetaValue,               ///< [out] value of metadata
+             int FileID,                  ///< [in] ID of the file for writing
+             int VarID ///< [in] ID for variable associated with metadata
+);
+int readMeta(const std::string &MetaName, ///< [in] name of metadata
+             R4 &MetaValue,               ///< [out] value of metadata
+             int FileID,                  ///< [in] ID of the file for writing
+             int VarID ///< [in] ID for variable associated with metadata
+);
+int readMeta(const std::string &MetaName, ///< [in] name of metadata
+             R8 &MetaValue,               ///< [out] value of metadata
+             int FileID,                  ///< [in] ID of the file for writing
+             int VarID ///< [in] ID for variable associated with metadata
+);
+int readMeta(const std::string &MetaName, ///< [in] name of metadata
+             std::string &MetaValue,      ///< [out] value of metadata
              int FileID,                  ///< [in] ID of the file for writing
              int VarID ///< [in] ID for variable associated with metadata
 );

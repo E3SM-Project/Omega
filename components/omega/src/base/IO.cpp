@@ -392,48 +392,214 @@ int defineDim(int FileID,                 // [in] ID of the file containing dim
 // metadata. This interface and PIO use a void pointer to create a generic
 // interface.
 int writeMeta(const std::string &MetaName, // [in] name of metadata
-              const void *MetaValue,       // [in] value of metadata
-              IODataType MetaType,         // [in] data type of this metadata
+              I4 MetaValue,                // [in] value of metadata
               int FileID,                  // [in] ID of the file for writing
               int VarID // [in] ID for variable associated with metadata
 ) {
 
-   int Err           = 0;
-   PIO_Offset Length = 1;
-   if (MetaType == IOTypeChar)
-      Length = strlen((char *)MetaValue);
+   int Err             = 0;
+   IODataType MetaType = IOTypeI4;
+   PIO_Offset Length   = 1;
 
    Err = PIOc_put_att(FileID, VarID, MetaName.c_str(), MetaType, Length,
-                      MetaValue);
+                      &MetaValue);
    if (Err != PIO_NOERR) {
-      LOG_ERROR("IO::writeMeta: PIO error while writing metadata");
+      LOG_ERROR("IO::writeMeta(I4): PIO error while writing metadata");
       Err = -1;
    }
 
    return Err;
 
-} // End writeMeta
+} // End writeMeta (I4)
+
+int writeMeta(const std::string &MetaName, // [in] name of metadata
+              I8 MetaValue,                // [in] value of metadata
+              int FileID,                  // [in] ID of the file for writing
+              int VarID // [in] ID for variable associated with metadata
+) {
+
+   int Err             = 0;
+   IODataType MetaType = IOTypeI8;
+   PIO_Offset Length   = 1;
+
+   Err = PIOc_put_att(FileID, VarID, MetaName.c_str(), MetaType, Length,
+                      &MetaValue);
+   if (Err != PIO_NOERR) {
+      LOG_ERROR("IO::writeMeta(I8): PIO error while writing metadata");
+      Err = -1;
+   }
+
+   return Err;
+
+} // End writeMeta (I8)
+
+int writeMeta(const std::string &MetaName, // [in] name of metadata
+              R4 MetaValue,                // [in] value of metadata
+              int FileID,                  // [in] ID of the file for writing
+              int VarID // [in] ID for variable associated with metadata
+) {
+
+   int Err             = 0;
+   IODataType MetaType = IOTypeR4;
+   PIO_Offset Length   = 1;
+
+   Err = PIOc_put_att(FileID, VarID, MetaName.c_str(), MetaType, Length,
+                      &MetaValue);
+   if (Err != PIO_NOERR) {
+      LOG_ERROR("IO::writeMeta(R4): PIO error while writing metadata");
+      Err = -1;
+   }
+
+   return Err;
+
+} // End writeMeta (R4)
+
+int writeMeta(const std::string &MetaName, // [in] name of metadata
+              R8 MetaValue,                // [in] value of metadata
+              int FileID,                  // [in] ID of the file for writing
+              int VarID // [in] ID for variable associated with metadata
+) {
+
+   int Err             = 0;
+   IODataType MetaType = IOTypeR8;
+   PIO_Offset Length   = 1;
+
+   Err = PIOc_put_att(FileID, VarID, MetaName.c_str(), MetaType, Length,
+                      &MetaValue);
+   if (Err != PIO_NOERR) {
+      LOG_ERROR("IO::writeMeta(R8): PIO error while writing metadata");
+      Err = -1;
+   }
+
+   return Err;
+
+} // End writeMeta (R8)
+
+int writeMeta(const std::string &MetaName, // [in] name of metadata
+              std::string MetaValue,       // [in] value of metadata
+              int FileID,                  // [in] ID of the file for writing
+              int VarID // [in] ID for variable associated with metadata
+) {
+
+   int Err             = 0;
+   IODataType MetaType = IOTypeChar;
+   PIO_Offset Length   = MetaValue.length() + 1; // add 1 for char terminator
+
+   Err = PIOc_put_att(FileID, VarID, MetaName.c_str(), MetaType, Length,
+                      (void *)MetaValue.c_str());
+   if (Err != PIO_NOERR) {
+      LOG_ERROR("IO::writeMeta(str): PIO error while writing metadata");
+      Err = -1;
+   }
+
+   return Err;
+
+} // End writeMeta (str)
 
 //------------------------------------------------------------------------------
 // Reads metadata (name, value) associated with a variable and/or file.
 // The variable ID can be GlobalID for global file and/or simulation
-// metadata. A void pointer is used to make this a generic interface.
-int readMeta(const std::string &MetaName, ///< [in] name of metadata
-             void *MetaValue,             // [out] value of metadata
+// metadata. Specific interfaces for supported data types are aliased to the
+// same generic form.
+int readMeta(const std::string &MetaName, // [in] name of metadata
+             I4 &MetaValue,               // [out] value of metadata
              int FileID,                  // [in] ID of the file for writing
              int VarID // [in] ID for variable associated with metadata
 ) {
    int Err = 0;
 
-   Err = PIOc_get_att(FileID, VarID, MetaName.c_str(), MetaValue);
+   Err = PIOc_get_att(FileID, VarID, MetaName.c_str(), &MetaValue);
    if (Err != PIO_NOERR) {
-      LOG_ERROR("IO::writeMeta: PIO error while writing metadata");
+      LOG_ERROR("IO::readMeta(I4): PIO error while reading metadata");
       Err = -1;
    }
 
    return Err;
 
-} // End readMeta
+} // End readMeta (I4)
+
+int readMeta(const std::string &MetaName, // [in] name of metadata
+             I8 &MetaValue,               // [out] value of metadata
+             int FileID,                  // [in] ID of the file for writing
+             int VarID // [in] ID for variable associated with metadata
+) {
+   int Err = 0;
+
+   Err = PIOc_get_att(FileID, VarID, MetaName.c_str(), &MetaValue);
+   if (Err != PIO_NOERR) {
+      LOG_ERROR("IO::readMeta(I8): PIO error while reading metadata");
+      Err = -1;
+   }
+
+   return Err;
+
+} // End readMeta (I8)
+
+int readMeta(const std::string &MetaName, // [in] name of metadata
+             R4 &MetaValue,               // [out] value of metadata
+             int FileID,                  // [in] ID of the file for writing
+             int VarID // [in] ID for variable associated with metadata
+) {
+   int Err = 0;
+
+   Err = PIOc_get_att(FileID, VarID, MetaName.c_str(), &MetaValue);
+   if (Err != PIO_NOERR) {
+      LOG_ERROR("IO::readMeta(R4): PIO error while reading metadata");
+      Err = -1;
+   }
+
+   return Err;
+
+} // End readMeta (R4)
+
+int readMeta(const std::string &MetaName, // [in] name of metadata
+             R8 &MetaValue,               // [out] value of metadata
+             int FileID,                  // [in] ID of the file for writing
+             int VarID // [in] ID for variable associated with metadata
+) {
+   int Err = 0;
+
+   Err = PIOc_get_att(FileID, VarID, MetaName.c_str(), &MetaValue);
+   if (Err != PIO_NOERR) {
+      LOG_ERROR("IO::readMeta(R8): PIO error while reading metadata");
+      Err = -1;
+   }
+
+   return Err;
+
+} // End readMeta (R8)
+
+int readMeta(const std::string &MetaName, // [in] name of metadata
+             std::string &MetaValue,      // [out] value of metadata
+             int FileID,                  // [in] ID of the file for writing
+             int VarID // [in] ID for variable associated with metadata
+) {
+   int Err = 0;
+
+   // For string variables, find the length of the string first
+   // and resize the string to make sure the allocated length is large
+   // enough when passing the pointer later
+   PIO_Offset Length;
+   Err = PIOc_inq_attlen(FileID, VarID, MetaName.c_str(), &Length);
+   if (Err != PIO_NOERR) {
+      LOG_ERROR("IO::readMeta(str): PIO error while finding string length");
+      Err = -1;
+      return Err;
+   }
+   int StrLength = Length - 1;
+   MetaValue.resize(StrLength);
+
+   // Now read the string
+   Err =
+       PIOc_get_att(FileID, VarID, MetaName.c_str(), (void *)MetaValue.c_str());
+   if (Err != PIO_NOERR) {
+      LOG_ERROR("IO::readMeta(str): PIO error while reading metadata");
+      Err = -1;
+   }
+
+   return Err;
+
+} // End readMeta (str)
 
 //------------------------------------------------------------------------------
 // Defines a variable for an output file. The name and dimensions of

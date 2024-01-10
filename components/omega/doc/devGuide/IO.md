@@ -187,17 +187,15 @@ interfaces, but the base IO module contains interfaces for reading and
 writing metadata associated with either an array or the file or simulation
 itself. To read/write metadata, use:
 ```c++
-   int Err = IO::writeMeta(MetaName, &MetaValue, IODataType, FileID, VarID);
-   int Err = IO::readMeta (MetaName, &MetaValue,             FileID, VarID)
+   int Err = IO::writeMeta(MetaName, MetaValue, FileID, VarID);
+   int Err = IO::readMeta (MetaName, MetaValue, FileID, VarID);
 ```
 where MetaName is a ``std::string`` holding the name of the metadata and
-the MetaValue is the value of the MetaData. The MetaValue is passed as
-a void pointer and for most arithmetic types is converted automatically,
-but for string metadata, the pointer must be extracted and coerced using
-``(void *)MetaValue.c_str()``. The FileID is once again the ID of the
-open data file and VarID is the variable to which this metadata is attached.
-For global file and simulation metadata not attached to a variable, the
-ID ``IO::GlobaID`` is used to denote global metadata.
+the MetaValue is the value of the MetaData. All supported OMEGA data types are
+allowed except boolean which must be converted to an integer type. The FileID
+is once again the ID of the open data file and VarID is the variable to which
+this metadata is attached. For global file and simulation metadata not attached
+to a variable, the ID ``IO::GlobalID`` is used to denote global metadata.
 
 For an example of the full read/write process, the IO unit test contains
 the full reading and writing of a data file and associated metadata. We
