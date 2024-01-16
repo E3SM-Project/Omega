@@ -115,4 +115,4 @@ Decomp::clear();
 ```
 which destroys all host and device arrays before YAKL finalizes and removes
 the memory pool in which all the arrays are allocated. Failure to call clear
-before `yakl::finalize()` will result in an error. 
+before `yakl::finalize()` will result in an error.
