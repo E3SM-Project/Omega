@@ -54,6 +54,7 @@ design/Broadcast
 design/Config
 design/DataTypes
 design/Decomp
+design/Driver
 design/Halo
 design/Logging
 design/MachEnv
