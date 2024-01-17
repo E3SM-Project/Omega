@@ -174,7 +174,7 @@ target_include_directories(
   PRIVATE
   ${OMEGA_SOURCE_DIR}/src/base
   ${OMEGA_SOURCE_DIR}/src/infra
-  ${PARMETIS_ROOT}/include
+  ${Parmetis_INCLUDE_DIRS}
 )
 
 target_compile_options(
@@ -189,7 +189,11 @@ target_link_options(
   ${OMEGA_LINK_OPTIONS}
 )
 
-target_link_libraries(${_TestIOName} ${OMEGA_LIB_NAME} spdlog yakl metis pioc)
+target_link_libraries(${_TestIOName}     ${OMEGA_LIB_NAME} spdlog yakl parmetis metis pioc)
+
+if(GKlib_FOUND)
+   target_link_libraries(${_TestIOName} gklib)
+endif()
 
 add_test(
   NAME IO_TEST
