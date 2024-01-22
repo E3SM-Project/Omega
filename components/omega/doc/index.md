@@ -27,6 +27,7 @@ userGuide/MachEnv
 userGuide/Broadcast
 userGuide/Logging
 userGuide/Decomp
+userGuide/IO
 userGuide/Halo
 ```
 
@@ -45,6 +46,7 @@ devGuide/BuildDocs
 devGuide/CMakeBuild
 devGuide/Logging
 devGuide/Decomp
+devGuide/IO
 devGuide/Halo
 ```
 

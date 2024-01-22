@@ -22,7 +22,11 @@ target_link_options(
   ${OMEGA_LINK_OPTIONS}
 )
 
-target_link_libraries(${_TestDataTypesName} ${OMEGA_LIB_NAME} yakl metis)
+target_link_libraries(${_TestDataTypesName} ${OMEGA_LIB_NAME} yakl parmetis metis)
+
+if(GKlib_FOUND)
+  target_link_libraries(${_TestDataTypesName} gklib)
+endif()
 
 add_test(
   NAME DATA_TYPES_TEST
@@ -83,7 +87,7 @@ target_link_options(
   ${OMEGA_LINK_OPTIONS}
 )
 
-target_link_libraries(${_TestBroadcastName} ${OMEGA_LIB_NAME} yakl)
+target_link_libraries(${_TestBroadcastName} ${OMEGA_LIB_NAME} spdlog yakl)
 
 add_test(
   NAME BROADCAST_TEST
@@ -113,7 +117,7 @@ target_link_options(
   ${OMEGA_LINK_OPTIONS}
 )
 
-target_link_libraries(${_TestLoggingName} ${OMEGA_LIB_NAME} yakl)
+target_link_libraries(${_TestLoggingName} ${OMEGA_LIB_NAME} spdlog yakl)
 
 add_test(NAME LOGGING_TEST COMMAND ./${_TestLoggingName})
 
@@ -123,7 +127,6 @@ add_test(NAME LOGGING_TEST COMMAND ./${_TestLoggingName})
 
 set(_TestDecompName testDecomp.exe)
 
-# Add broadcast test
 add_executable(${_TestDecompName} base/DecompTest.cpp)
 
 target_include_directories(
@@ -131,7 +134,7 @@ target_include_directories(
   PRIVATE
   ${OMEGA_SOURCE_DIR}/src/base
   ${OMEGA_SOURCE_DIR}/src/infra
-  ${PARMETIS_ROOT}/include
+  ${Parmetis_INCLUDE_DIRS}
 )
 
 target_compile_options(
@@ -146,7 +149,11 @@ target_link_options(
   ${OMEGA_LINK_OPTIONS}
 )
 
-target_link_libraries(${_TestDecompName} ${OMEGA_LIB_NAME} yakl metis)
+target_link_libraries(${_TestDecompName} ${OMEGA_LIB_NAME} spdlog yakl parmetis metis pioc)
+
+if(GKlib_FOUND)
+  target_link_libraries(${_TestDecompName} gklib)
+endif()
 
 add_test(
   NAME DECOMP_TEST
@@ -189,6 +196,46 @@ add_test(
   COMMAND ${MPI_EXEC} -n 8 -- ./${_TestHaloName}
 )
 
+#############
+# IO test
+#############
+
+set(_TestIOName testIO.exe)
+
+add_executable(${_TestIOName} base/IOTest.cpp)
+
+target_include_directories(
+   ${_TestIOName}
+  PRIVATE
+  ${OMEGA_SOURCE_DIR}/src/base
+  ${OMEGA_SOURCE_DIR}/src/infra
+  ${Parmetis_INCLUDE_DIRS}
+)
+
+target_compile_options(
+   ${_TestIOName}
+  PRIVATE
+  ${OMEGA_CXX_FLAGS}
+)
+
+target_link_options(
+   ${_TestIOName}
+  PRIVATE
+  ${OMEGA_LINK_OPTIONS}
+)
+
+target_link_libraries(${_TestIOName}     ${OMEGA_LIB_NAME} spdlog yakl parmetis metis pioc)
+
+if(GKlib_FOUND)
+   target_link_libraries(${_TestIOName} gklib)
+endif()
+
+add_test(
+  NAME IO_TEST
+  COMMAND ${MPI_EXEC} -n 8 -- ./${_TestIOName}
+)
+
+
 ##################
 # YAKL test
 ##################
@@ -196,7 +243,7 @@ add_test(
 set(_TestYaklName testYakl.exe)
 
 add_executable(
-  ${_TestYaklName} ${E3SM_EXTERNALS_ROOT}/YAKL/unit/performance/performance.cpp
+  ${_TestYaklName} ${E3SM_EXTERNALS_ROOT}/YAKL/unit/ParForC/ParForC.cpp
 )
 
 include(${E3SM_EXTERNALS_ROOT}/YAKL/yakl_utils.cmake)
@@ -222,6 +269,8 @@ set_tests_properties(
   MACHINE_ENV_TEST
   BROADCAST_TEST
   LOGGING_TEST
+  DECOMP_TEST
+  IO_TEST
   YAKL_TEST
   PROPERTIES FAIL_REGULAR_EXPRESSION "FAIL"
 )

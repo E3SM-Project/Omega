@@ -36,7 +36,7 @@ int initDecompTest() {
    MPI_Comm DefComm       = DefEnv->getComm();
 
    // Initialize the IO system
-   Err = OMEGA::IOInit(DefComm);
+   Err = OMEGA::IO::init(DefComm);
    if (Err != 0)
       LOG_ERROR("DecompTest: error initializing parallel IO");
 
@@ -130,9 +130,10 @@ int main(int argc, char *argv[]) {
                RefSumVertices);
    }
 
-   // Test that device arrays are identical
+   // Clean up
+   OMEGA::Decomp::clear();
+   OMEGA::MachEnv::removeAll();
 
-   // MPI_Status status;
    if (Err == 0)
       LOG_INFO("DecompTest: Successful completion");
    yakl::finalize();
