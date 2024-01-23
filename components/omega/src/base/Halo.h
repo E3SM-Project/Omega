@@ -29,33 +29,32 @@ namespace OMEGA {
 // Set the default MPI real data type as single or double precision based on
 // the default real data type used by OMEGA.
 #ifdef SINGLE_PRECISION
-constexpr MPI_Datatype MPI_RealKind = MPI_FLOAT;
+static const MPI_Datatype MPI_RealKind = MPI_FLOAT;
 #else
-constexpr MPI_Datatype MPI_RealKind = MPI_DOUBLE;
+static const MPI_Datatype MPI_RealKind = MPI_DOUBLE;
 #endif
 
 /// The meshElement enum identifies the index space to use for a halo exchange.
-enum MeshElement{OnCell, OnEdge, OnVertex};
-
+enum MeshElement { OnCell, OnEdge, OnVertex };
 
 /// The Halo class contains two nested classes, ExchList and Neighbor classes,
 /// defined below. The Halo class holds all the Neighbor objects needed by a
 /// task to perform a full halo exchange with each of its neighboring tasks for
 /// any array defined on the mesh. The local task ID and the MPI communicator
-/// handle are also stored here. The MyElem and TotSize for the current halo
-/// exchange as well as a pointer to the current Neighbor being worked with,
-/// MyNeighbor, are saved here for easy accessibility by the Halo methods.
+/// handle are also stored here. NumLayers, MyElem, TotSize, and MyNeighbor are
+/// temporary variables utilized by the current halo exchange which are stored
+/// here for easy accesibility by the Halo methods.
 class Halo {
  private:
+   const Decomp *MyDecomp{nullptr}; /// Pointer to decomposition object
 
-   const Decomp *MyDecomp{nullptr};     /// Pointer to decomposition object
-
-   I4 NNghbr;                           /// number of neighboring tasks
-   I4 MyTask;                           /// local MPI Task ID
-   I4 HaloWidth;                        /// cell width of halo
-   I4 TotSize;   /// Array size at each mesh element for current exchange
-   MPI_Comm MyComm;                     /// MPI communicator handle
-   MeshElement MyElem;                /// index space of current array
+   I4 NNghbr;          /// number of neighboring tasks
+   I4 MyTask;          /// local MPI Task ID
+   I4 HaloWidth;       /// cell width of halo
+   I4 NumLayers;       /// number of halo layers for current exchange
+   I4 TotSize;         /// Array size at each mesh element for current exchange
+   MPI_Comm MyComm;    /// MPI communicator handle
+   MeshElement MyElem; /// index space of current array
 
    /// Forward Declaration of Neighbor class, defined below
    class Neighbor;
@@ -90,8 +89,8 @@ class Halo {
       std::vector<std::vector<I4>> Ind;
 
       /// The constructor for the ExchList class takes as input an array of
-      /// vectors containing a list of indices to be sent or received for
-      /// each halo level for a particular neighbor, and the halo width
+      /// vectors, each containing a list of indices to be sent or received for
+      /// each halo layer for a particular neighbor
       ExchList(const std::vector<std::vector<I4>> List);
 
       /// Empty constructor for ExchList class, needed by the definition
@@ -110,8 +109,7 @@ class Halo {
    /// neighboring task.
    class Neighbor {
     private:
-
-      I4 TaskID;      /// ID of neighboring task
+      I4 TaskID; /// ID of neighboring task
 
       /// Arrays of ExchList objects for sends and recieves for each
       /// index space. 0 = OnCell, 1 = OnEdge, 2 = OnVertex
@@ -136,8 +134,7 @@ class Halo {
                const std::vector<std::vector<I4>> &SendVert,
                const std::vector<std::vector<I4>> &RecvCell,
                const std::vector<std::vector<I4>> &RecvEdge,
-               const std::vector<std::vector<I4>> &RecvVert,
-               const I4 NghbrID);
+               const std::vector<std::vector<I4>> &RecvVert, const I4 NghbrID);
 
       /// Halo is a friend class to allow access to private members
       /// of the class
@@ -145,18 +142,14 @@ class Halo {
 
    }; // end class Neighbor
 
-
    // Private methods
-
 
    /// Send a vector of integers to each neighboring task and receive a vector
    /// of integers from each neighboring task. The first dimension of each
    /// input 2D vector represents the task in the order they appear in
    /// NeighborList. Utilized only during halo construction
-   int exchangeVectorInt(
-       const std::vector<std::vector<I4>> &SendVec,
-       std::vector<std::vector<I4>> &RecvVec
-   );
+   int exchangeVectorInt(const std::vector<std::vector<I4>> &SendVec,
+                         std::vector<std::vector<I4>> &RecvVec);
 
    /// Generate the lists of indices to send to and receive from each
    /// neighboring task for the input IndexSpace and the Decomp pointed to
@@ -165,11 +158,10 @@ class Halo {
    /// represent the task in the order they appear in NeighborList, and the
    /// remaining 2D vector is used in constructing a Neighbor object for
    /// that task. Utilized only during halo construction
-   int generateExchangeLists(
-       std::vector<std::vector<std::vector<I4>>> &SendLists,
-       std::vector<std::vector<std::vector<I4>>> &RecvLists,
-       const MeshElement IndexSpace
-   );
+   int
+   generateExchangeLists(std::vector<std::vector<std::vector<I4>>> &SendLists,
+                         std::vector<std::vector<std::vector<I4>>> &RecvLists,
+                         const MeshElement IndexSpace);
 
    /// Allocate the recieve buffers and call MPI_Irecv for each Neighbor
    int startReceives();
@@ -237,12 +229,12 @@ class Halo {
    // Function template to perform a full halo exchange on the input YAKL array
    // of any supported type defined on the input index space ThisElem
    template <typename T>
-   int exchangeFullArrayHalo(
-       T &Array,            // YAKL array of any type
-       MeshElement ThisElem // index space Array is defined on
+   int
+   exchangeFullArrayHalo(T &Array,            // YAKL array of any type
+                         MeshElement ThisElem // index space Array is defined on
    ) {
 
-      I4 IErr{0};  // error code
+      I4 IErr{0}; // error code
 
       // Logical flag to track if all messages have been received
       bool AllReceived{false};
@@ -250,20 +242,28 @@ class Halo {
       // Save the index space the input array is defined on
       MyElem = ThisElem;
 
+      // For cell-based quantities, the number of halo layers equals HaloWidth,
+      // edge- and vertex-based quantities have an extra layer.
+      if (MyElem == OnCell) {
+         NumLayers = HaloWidth;
+      } else {
+         NumLayers = HaloWidth + 1;
+      }
+
       // Determine the number of array elements per cell, edge, or vertex
       // in the input array
       yakl::Dims MyDims = Array.get_dimensions();
-      I4 NDims = MyDims.size();
+      I4 NDims          = MyDims.size();
       if (NDims == 1) {
          TotSize = 1;
       } else if (NDims == 2) {
          TotSize = MyDims[1];
       } else {
          TotSize = 1;
-         for (int I = 0; I < NDims-2; ++I) {
+         for (int I = 0; I < NDims - 2; ++I) {
             TotSize *= MyDims[I];
          }
-         TotSize *= MyDims[NDims-1];
+         TotSize *= MyDims[NDims - 1];
       }
 
       // Allocate the receive buffers and Call MPI_Irecv for each Neighbor
@@ -283,10 +283,15 @@ class Halo {
       // Call MPI_Isend for each Neighbor to send the packed buffers
       startSends();
 
+      // Wait for all sends to complete before proceeding
+      for (int INghbr = 0; INghbr < NNghbr; ++INghbr) {
+         MyNeighbor = &Neighbors[INghbr];
+         MPI_Wait(&MyNeighbor->SReq, MPI_STATUS_IGNORE);
+      }
 
-      I4 MaxIter = 100000000;   // Large integer to prevent infinite loop
-      I4 IPass = 0;             // Number of passes through while loop
-      I4 NRcvd = 0;             // Number of messages received
+      I4 MaxIter = 100000000; // Large integer to prevent infinite loop
+      I4 IPass   = 0;         // Number of passes through while loop
+      I4 NRcvd   = 0;         // Number of messages received
 
       // Until all messages from neighboring tasks are received, loop
       // through Neighbor objects and use MPI_Test to check if the message
@@ -296,7 +301,7 @@ class Halo {
             MyNeighbor = &Neighbors[INghbr];
             if (not MyNeighbor->Received) {
                MPI_Test(&MyNeighbor->RReq, &MyNeighbor->Received,
-                   MPI_STATUS_IGNORE);
+                        MPI_STATUS_IGNORE);
                if (MyNeighbor->Received) {
                   NRcvd++;
                }
@@ -311,8 +316,7 @@ class Halo {
          }
          ++IPass;
          if (IPass == MaxIter) {
-            LOG_ERROR(
-               "Halo: Maximum iterations reached during halo exchange");
+            LOG_ERROR("Halo: Maximum iterations reached during halo exchange");
             IErr = -1;
             break;
          }
@@ -324,7 +328,6 @@ class Halo {
 }; // end class Halo
 
 } // end namespace OMEGA
-
 
 //===----------------------------------------------------------------------===//
 #endif // defined OMEGA_HALO_H
