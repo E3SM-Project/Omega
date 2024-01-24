@@ -6,6 +6,15 @@ file(GLOB _LIBSRC_FILES infra/*.cpp base/*.cpp ocn/*.cpp)
 # Create the library target
 add_library(${OMEGA_LIB_NAME} ${_LIBSRC_FILES})
 
+# add include directories
+target_include_directories(
+    ${OMEGA_LIB_NAME}
+    PRIVATE
+    ${OMEGA_SOURCE_DIR}/src/base
+    ${OMEGA_SOURCE_DIR}/src/infra
+    ${Parmetis_INCLUDE_DIRS}
+)
+
 # add compiler options
 target_include_directories(
     ${OMEGA_LIB_NAME}
@@ -28,7 +37,11 @@ target_link_options(
     ${OMEGA_LINK_OPTIONS}
 )
 
-target_link_libraries(${OMEGA_LIB_NAME} spdlog yakl pioc yaml-cpp)
+target_link_libraries(${OMEGA_LIB_NAME} spdlog yakl pioc yaml-cpp parmetis metis)
+
+if(GKlib_FOUND)
+    target_link_libraries(${OMEGA_LIB_NAME} gklib)
+endif()
 
 # build Omega executable
 if(OMEGA_BUILD_EXECUTABLE)

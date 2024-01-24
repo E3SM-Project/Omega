@@ -30,11 +30,20 @@ as illustrated below. In some cases, you may also want to add `OMEGA_CIME_MACHIN
 to specify which system you intend to use. The values of `OMEGA_CIME_COMPILER`
 and `OMEGA_CIME_MACHINE` are defined in
 "${E3SM}/cime\_config/machines/config\_machines.xml".
+OMEGA requires some external libraries. Many of these are built automatically
+from the E3SM distribution. However, the METIS, ParMETIS, and, optionally,
+GKlib libraries must be built separately and the path must be supplied during
+the cmake invocation as shown below. If a `OMEGA_METIS_ROOT` is not supplied,
+it is assumed that both METIS and ParMETIS are installed in the same
+`OMEGA_PARMETIS_ROOT` location. If a `OMEGA_GKLIB_ROOT` is not supplied, it is
+assumed that both GKLIB and METIS are installed in the same `OMEGA_METIS_ROOT`
+location. All three libraries should be static libraries.
 
 ```sh
 >> cmake \
   -DOMEGA_CIME_COMPILER=nvidiagpu \
   -DOMEGA_CIME_MACHINE=pm-gpu \
+  -DOMEGA_PARMETIS_ROOT=/path/to/parmetis \
   ${E3SM_HOME}/components/omega
 ```
 
@@ -121,8 +130,11 @@ specified by `DOMEGA_INSTALL_PREFIX`.
 The `./omega_ctest.sh` command runs Omega unit tests. To run the tests, MPI
 parallel job launcher such as SLURM srun should be available. You may first
 get allocation of an interactive computing node or use batch system.
+In addition, you must either copy (or soft link) a mesh file into the same
+directory as the unit test executables or specify in a configuration file
+(not implemented yet) the path to that mesh input file.
 
-For example, if you are on an interactive computingnode, you can run
+For example, if you are on an interactive computing node, you can run
 Omega unit test by running `omega_ctest.sh` as shown below.
 
 ```sh
