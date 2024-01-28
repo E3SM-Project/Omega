@@ -4,7 +4,7 @@
 
 The MetaData feature in Ometa is constructed using four distinct C++ classes.
 These classes are designed to facilitate the organization and retrieval of
-metadata throughout the Omega source code. 
+metadata throughout the Omega source code.
 
 ## Class Descriptions
 

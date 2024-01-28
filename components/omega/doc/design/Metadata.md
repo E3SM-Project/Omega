@@ -297,7 +297,7 @@ metadata entry, there will be an explicit get function:
 
 where MetaName is the name associated with the metadata
 to be retrieved. Value argument is passed by reference so that
-metadata value can be returned using the argument. This function is 
+metadata value can be returned using the argument. This function is
 overloaded with Omega data types.
 
 During I/O stages, we will need a capability for retrieving

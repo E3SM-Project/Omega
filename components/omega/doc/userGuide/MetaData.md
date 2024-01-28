@@ -1,6 +1,6 @@
 (omega-user-metadata)=
 
-# What is Metadata in Omega?  
+# What is Metadata in Omega?
 It is important that OMEGA and E3SM data files be in a self-describing format
 to streamline analysis, archiving, and provenance. This involves detailing the
 integration of metadata management within OMEGA's code and its interaction with
