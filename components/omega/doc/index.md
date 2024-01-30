@@ -28,6 +28,7 @@ userGuide/Config
 userGuide/Broadcast
 userGuide/Logging
 userGuide/Decomp
+userGuide/MetaData
 userGuide/IO
 userGuide/Halo
 ```
@@ -48,6 +49,7 @@ devGuide/BuildDocs
 devGuide/CMakeBuild
 devGuide/Logging
 devGuide/Decomp
+devGuide/MetaData
 devGuide/IO
 devGuide/Halo
 ```
