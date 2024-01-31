@@ -17,6 +17,8 @@
 
 using namespace OMEGA;
 
+const I4 FILL_VALUE = 0;
+
 void printResult(bool result, bool expected, std::string msg_pass,
                  std::string msg_fail) {
 
@@ -115,7 +117,6 @@ void testMetaData() {
    // test create() 3
    std::vector<std::shared_ptr<MetaDim>> Dimensions;
    Dimensions.push_back(MetaDim::create(DimName, DimValue));
-   const I4 FILL_VALUE = 0;
 
    auto Data3 = ArrayMetaData::create(
        ArrayName,
@@ -270,6 +271,110 @@ void testMetaGroup() {
                "'" + GroupName + "' is not destroyed");
 }
 
+std::vector<std::shared_ptr<MetaDim>> initMetaDim(const std::string DimName,
+                                                  const I4 DimValue) {
+
+   std::vector<std::shared_ptr<MetaDim>> Dimensions;
+   Dimensions.push_back(MetaDim::create(DimName, DimValue));
+
+   return Dimensions;
+}
+
+void initMetaData(const std::string FieldName,
+                  const std::vector<std::shared_ptr<MetaDim>> Dimensions) {
+
+   auto Data = ArrayMetaData::create(
+       FieldName,
+       "Description",                   /// long Name or description
+       "Units",                         /// units
+       "StdName",                       /// CF standard Name
+       std::numeric_limits<int>::min(), /// min valid value
+       std::numeric_limits<int>::max(), /// max valid value
+       FILL_VALUE,                      /// scalar used for undefined entries
+       1,                               /// number of dimensions
+       Dimensions                       /// dim pointers
+   );
+}
+
+void initMetaGroup(const std::string GroupName) {
+
+   auto Group1 = MetaGroup::create(GroupName);
+}
+
+void testMetaInit() {
+
+   const std::string GroupName{"MyInitGroup"};
+   const std::string FieldName{"MyInitField"};
+   const std::string DimName{"MyInitDim"};
+   const I4 DimValue{1};
+   int ret;
+
+   auto dimensions = initMetaDim(DimName, DimValue);
+
+   initMetaData(FieldName, dimensions);
+
+   initMetaGroup(GroupName);
+
+   printResult(MetaGroup::has(GroupName), true,
+               "'" + GroupName + "' is created",
+               "'" + GroupName + "' should exist");
+
+   // test get()
+   auto Group1 = MetaGroup::get(GroupName);
+
+   // test hasField()
+   printResult(Group1->hasField(FieldName), false,
+               "'" + FieldName + "' is not in a group",
+               "'" + FieldName + "' is in a group");
+
+   ret = Group1->addField(FieldName);
+
+   printResult(ret == 0, true, "addField() returns zero.",
+               "addField() returns non-zero.");
+
+   printResult(Group1->hasField(FieldName), true,
+               "'" + FieldName + "' is in a group",
+               "'" + FieldName + "' is not in a group");
+
+   // test getField()
+   auto Data1 = MetaData::get(FieldName);
+   auto Data2 = Group1->getField(FieldName);
+
+   printResult(Data1 == Data2, true, "getField() returns correct instance.",
+               "getField() returns incorrect instance.");
+
+   // test removeField()
+   ret = Group1->removeField(FieldName);
+
+   printResult(ret == 0, true, "removeField() returns zero.",
+               "removeField() returns non-zero.");
+
+   printResult(Group1->hasField(FieldName), false,
+               "'" + FieldName + "' is not in a group",
+               "'" + FieldName + "' is in a group");
+
+   // test MetaGroup::destroy()
+   MetaGroup::destroy(GroupName);
+
+   printResult(MetaGroup::has(GroupName), false,
+               "'" + GroupName + "' is destroyed correctly",
+               "'" + GroupName + "' is not destroyed");
+
+   // test MetaData::destroy()
+   MetaData::destroy(FieldName);
+
+   printResult(MetaData::has(FieldName), false,
+               "'" + FieldName + "' is destroyed correctly",
+               "'" + FieldName + "' is not destroyed");
+
+   // test MetaDim::destroy()
+   MetaDim::destroy(DimName);
+
+   printResult(MetaDim::has(DimName), false,
+               "'" + DimName + "' is destroyed correctly",
+               "'" + DimName + "' is not destroyed");
+}
+
 int main(int argc, char **argv) {
 
    int RetVal = 0;
@@ -281,6 +386,8 @@ int main(int argc, char **argv) {
       testMetaData();
 
       testMetaGroup();
+
+      testMetaInit();
 
    } catch (const std::exception &Ex) {
       std::cout << Ex.what() << ": FAIL" << std::endl;
