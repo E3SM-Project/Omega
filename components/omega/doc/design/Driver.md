@@ -65,8 +65,11 @@ requirement 2.4
 
 An initialization method must initialize all model state, mesh
 and other information needed by the model itself or the parent
-coupled system. The model state must correspond to the initial
-time for the simulation integration.
+coupled system. Variables needed by the parent model will be
+returned as arguments while all other parts of the model state
+will be retained in static variables for later retrieval by the
+run method as described in Req 2.3. The model state on initialization
+must correspond to the initial time for the simulation integration.
 
 ## 3 Algorithmic Formulation
 
@@ -80,7 +83,7 @@ be two layers of these functions. One will be the internal
 Omega inteface used by the Omega standalone driver. A second
 layer will be needed for translating between internal Omega
 data types and E3SM (or other parent model) data types and
-ensuring the model is synchronized correctly with the parent. 
+ensuring the model is synchronized correctly with the parent.
 
 Within the directory structure of OMEGA, the `src/driver`
 directory will contain two subdirectories called standalone
@@ -96,13 +99,16 @@ routines described below will reside in the `src/ocean` directory.
 
 #### 4.1.1 Parameters
 
-There are currently no additional parameters needed for this level. Configuration is generally determined by other modules.
+There are currently no additional parameters needed for this level.
+Configuration is generally determined by other modules.
 
 #### 4.1.2 Class/structs/data types
 
-For standalone simulation, data types are determined by other modules (eg state and mesh). No new data types are needed here.
+For standalone simulation, data types are determined by other modules
+(eg state and mesh). No new data types are needed here.
 
-E3SM data types are in flux (from MCT to MOAB). We will add the coupled model data types here in the future. 
+E3SM data types are in flux (from MCT to MOAB). We will add the coupled
+model data types here in the future.
 
 ### 4.2 Methods
 
@@ -114,7 +120,7 @@ MPI communicator to use as the master ocean communicator
 (`MPI_COMM_WORLD` for standalone, a coupler-partitioned
 communicator for coupled simulations). On output, it will
 return mesh information, the current model state and the
-time instant associated with that state. 
+time instant associated with that state.
 
 The precise interface awaits the design of various other
 modules, but will look something like:
@@ -196,7 +202,7 @@ int main(int argc, char **argv) {
    OMEGA::Alarm EndAlarm;
 
    int Err = OcnInit(MPI_COMM_WORLD, CurrTime, RunInterval, CurrState,
-                     etc);
+                     EndAlarm, etc);
    if (Err != 0) LOG_ERROR("Error initializing OMEGA");
 
 
@@ -240,14 +246,16 @@ To be added later
 
 ### 5.1 Test forward model
 
-A forward model test is included as part of the test suite
-that runs the standalone model and tests for successful
-completion. All forward model system testing will be
-inherently testing the driver.
+A forward model smoke test is included as part of the CTest
+unit test suite. This test runs the standalone model in a
+minimal configuration and only tests for successful completion.
+Other forward model system testing (eg in Polaris) will be
+inherently testing the driver layers.
   - tests requirements 2.2-2.7
 
 ### 5.2 Coupled model testing
 
-Once Omega is integrated into E3SM, various E3SM tests will
-be run regularly and will test all interfaces
+Once Omega is integrated into E3SM, various E3SM system tests
+will be run regularly and will test all coupled interfaces.
+We will add an Omega developer test suite to include these tests.
   - tests requirement 2.1
