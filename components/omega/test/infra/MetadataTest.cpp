@@ -91,7 +91,7 @@ void testMetaData() {
    printResult(MetaData::has(SimMeta), true, "'" + SimMeta + "' is created",
                "'" + SimMeta + "' should exist");
 
-   std::map<std::string, std::any> *VarMeta = Data2->getAllMetaData();
+   std::map<std::string, std::any> *VarMeta = Data2->getAllEntries();
    std::string MetaName;
    int MetaVal, Count = 1;
 
@@ -139,42 +139,42 @@ void testMetaData() {
    printResult(Data3 == Data4, true, "get() returns correct instance.",
                "get() returns incorrect instance.");
 
-   // test hasMetaData()
-   printResult(Data4->hasMetaData("FillValue"), true,
+   // test hasEntry()
+   printResult(Data4->hasEntry("FillValue"), true,
                "'" + ArrayName + "' has a fill value.",
                "'" + ArrayName + "' does not have a fill value");
 
-   // test getMetaData()
+   // test getEntry()
    I4 FillValue;
-   ret = Data3->getMetaData("FillValue", FillValue);
+   ret = Data3->getEntry("FillValue", FillValue);
 
-   printResult(ret == 0, true, "getMetaData() returns zero",
-               "getMetaData() returns non-zero");
+   printResult(ret == 0, true, "getEntry() returns zero",
+               "getEntry() returns non-zero");
 
    printResult(FILL_VALUE == FillValue, true,
                "'" + ArrayName + "' has a correct fill value",
                "'" + ArrayName + "' has an incorrect fill value");
 
-   // test addMetaData()
+   // test addEntry()
    const R8 NewValue = 2.0;
-   ret               = Data3->addMetaData("NewMeta", NewValue);
+   ret               = Data3->addEntry("NewMeta", NewValue);
 
-   printResult(ret == 0, true, "addMetaData() returns zero",
-               "addMetaData() returns non-zero");
+   printResult(ret == 0, true, "addEntry() returns zero",
+               "addEntry() returns non-zero");
 
    R8 R8Value;
-   ret = Data3->getMetaData("NewMeta", R8Value);
+   ret = Data3->getEntry("NewMeta", R8Value);
 
-   printResult(NewValue == R8Value, true, "getMetaData() returns correct value",
-               "getMetaData() returns incorrect value");
+   printResult(NewValue == R8Value, true, "getEntry() returns correct value",
+               "getEntry() returns incorrect value");
 
-   // test removeMetaData()
-   ret = Data3->removeMetaData("NewMeta");
+   // test removeEntry()
+   ret = Data3->removeEntry("NewMeta");
 
-   printResult(ret == 0, true, "removeMetaData() returns zero",
-               "removeMetaData() returns non-zero");
+   printResult(ret == 0, true, "removeEntry() returns zero",
+               "removeEntry() returns non-zero");
 
-   printResult(Data3->hasMetaData("NewMeta"), false,
+   printResult(Data3->hasEntry("NewMeta"), false,
                "'NewMeta' is removed correctly", "'NewMeta' is not removed");
 
    // test destroy()

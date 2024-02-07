@@ -17,7 +17,7 @@ std::map<std::string, std::shared_ptr<MetaData>> MetaData::AllFields;
 std::map<std::string, std::shared_ptr<MetaDim>> MetaDim::AllDims;
 std::map<std::string, std::shared_ptr<MetaGroup>> MetaGroup::AllGroups;
 
-bool MetaData::has(const std::string Name /// name of field
+bool MetaData::has(const std::string Name /// Name of field
 ) {
    return (AllFields.find(Name) != AllFields.end());
 }
@@ -46,7 +46,7 @@ std::shared_ptr<MetaData> MetaData::create(
    auto Data = create(Name);
 
    for (const auto &MetaPair : MetaPairs) {
-      Data->addMetaData(MetaPair.first, MetaPair.second);
+      Data->addEntry(MetaPair.first, MetaPair.second);
    }
 
    return Data;
@@ -61,26 +61,26 @@ std::shared_ptr<MetaData> MetaData::create(
 
 std::shared_ptr<MetaData> ArrayMetaData::create(
     const std::string Name,        /// Name of var
-    const std::string Description, /// long Name or description
-    const std::string Units,       /// units
+    const std::string Description, /// Long Name or description
+    const std::string Units,       /// Units
     const std::string StdName,     /// CF standard Name
-    const std::any ValidMin,       /// min valid field Value
-    const std::any ValidMax,       /// max valid field Value
-    const std::any FillValue,      /// scalar used for undefined entries
-    const int NDims,               /// number of dimensions
-    const std::vector<std::shared_ptr<MetaDim>> Dimensions // dim pointers
+    const std::any ValidMin,       /// Min valid field Value
+    const std::any ValidMax,       /// Max valid field Value
+    const std::any FillValue,      /// Scalar used for undefined entries
+    const int NDims,               /// Number of dimensions
+    const std::vector<std::shared_ptr<MetaDim>> Dimensions // MetaDim pointers
 ) {
 
    auto Data = MetaData::create(Name);
 
-   Data->addMetaData("Description", Description);
-   Data->addMetaData("Units", Units);
-   Data->addMetaData("StdName", StdName);
-   Data->addMetaData("ValidMin", ValidMin);
-   Data->addMetaData("ValidMax", ValidMax);
-   Data->addMetaData("FillValue", FillValue);
-   Data->addMetaData("NDims", NDims);
-   Data->addMetaData("Dimensions", Dimensions);
+   Data->addEntry("Description", Description);
+   Data->addEntry("Units", Units);
+   Data->addEntry("StdName", StdName);
+   Data->addEntry("ValidMin", ValidMin);
+   Data->addEntry("ValidMax", ValidMax);
+   Data->addEntry("FillValue", FillValue);
+   Data->addEntry("NDims", NDims);
+   Data->addEntry("Dimensions", Dimensions);
 
    return Data;
 }
@@ -104,7 +104,7 @@ int MetaData::destroy(const std::string Name /// Name of field to remove
    return RetVal;
 }
 
-std::shared_ptr<MetaData> MetaData::get(const std::string Name /// name of field
+std::shared_ptr<MetaData> MetaData::get(const std::string Name /// Name of field
 ) {
    if (!has(Name)) {
       throw std::runtime_error("Failed to retrieve a field instance because '" +
@@ -114,17 +114,17 @@ std::shared_ptr<MetaData> MetaData::get(const std::string Name /// name of field
    return AllFields[Name];
 }
 
-bool MetaData::hasMetaData(const std::string Name // name of metadata
+bool MetaData::hasEntry(const std::string Name // Name of metadata
 ) {
    return (MetaMap.find(Name) != MetaMap.end());
 }
-int MetaData::addMetaData(
-    const std::string Name, /// Name of new metadata to add
-    const std::any Value    /// Value of new metadata to add
+
+int MetaData::addEntry(const std::string Name, /// Name of new metadata to add
+                       const std::any Value    /// Value of new metadata to add
 ) {
    int RetVal = 0;
 
-   if (hasMetaData(Name)) {
+   if (hasEntry(Name)) {
       LOG_ERROR("Failed to add the metadata '" + Name + "' because " +
                 "the field already has the metadata.");
 
@@ -137,13 +137,12 @@ int MetaData::addMetaData(
    return RetVal;
 }
 
-int MetaData::removeMetaData(
-    const std::string Name /// Name of metadata to remove
+int MetaData::removeEntry(const std::string Name /// Name of metadata to remove
 ) {
 
    int RetVal = 0;
 
-   if (!hasMetaData(Name)) {
+   if (!hasEntry(Name)) {
       LOG_ERROR("Failed to remove the metadata '" + Name + "' because " +
                 "the metadata name does not exist.");
       RetVal = -1;
@@ -158,12 +157,12 @@ int MetaData::removeMetaData(
    return RetVal;
 }
 
-int MetaData::getMetaData(const std::string Name, /// Name of metadata to get
-                          I4 &Value               /// I4 Value of metadata
+int MetaData::getEntry(const std::string Name, /// Name of metadata to get
+                       I4 &Value               /// I4 Value of metadata
 ) {
    int RetVal = 0;
 
-   if (!hasMetaData(Name)) {
+   if (!hasEntry(Name)) {
       LOG_ERROR("Metadata '" + Name + "' does not exist.");
       RetVal = -1;
 
@@ -174,12 +173,12 @@ int MetaData::getMetaData(const std::string Name, /// Name of metadata to get
    return RetVal;
 }
 
-int MetaData::getMetaData(const std::string Name, /// Name of metadata to get
-                          I8 &Value               /// I8 Value of metadata
+int MetaData::getEntry(const std::string Name, /// Name of metadata to get
+                       I8 &Value               /// I8 Value of metadata
 ) {
    int RetVal = 0;
 
-   if (!hasMetaData(Name)) {
+   if (!hasEntry(Name)) {
       LOG_ERROR("Metadata '" + Name + "' does not exist.");
       RetVal = -1;
 
@@ -190,12 +189,12 @@ int MetaData::getMetaData(const std::string Name, /// Name of metadata to get
    return RetVal;
 }
 
-int MetaData::getMetaData(const std::string Name, /// Name of metadata to get
-                          R4 &Value               /// R4 Value of metadata
+int MetaData::getEntry(const std::string Name, /// Name of metadata to get
+                       R4 &Value               /// R4 Value of metadata
 ) {
    int RetVal = 0;
 
-   if (!hasMetaData(Name)) {
+   if (!hasEntry(Name)) {
       LOG_ERROR("Metadata '" + Name + "' does not exist.");
       RetVal = -1;
 
@@ -206,12 +205,12 @@ int MetaData::getMetaData(const std::string Name, /// Name of metadata to get
    return RetVal;
 }
 
-int MetaData::getMetaData(const std::string Name, /// Name of metadata to get
-                          R8 &Value               /// R8 Value of metadata
+int MetaData::getEntry(const std::string Name, /// Name of metadata to get
+                       R8 &Value               /// R8 Value of metadata
 ) {
    int RetVal = 0;
 
-   if (!hasMetaData(Name)) {
+   if (!hasEntry(Name)) {
       LOG_ERROR("Metadata '" + Name + "' does not exist.");
       RetVal = -1;
 
@@ -222,12 +221,12 @@ int MetaData::getMetaData(const std::string Name, /// Name of metadata to get
    return RetVal;
 }
 
-int MetaData::getMetaData(const std::string Name, /// Name of metadata to get
-                          bool &Value             /// bool Value of metadata
+int MetaData::getEntry(const std::string Name, /// Name of metadata to get
+                       bool &Value             /// Bool Value of metadata
 ) {
    int RetVal = 0;
 
-   if (!hasMetaData(Name)) {
+   if (!hasEntry(Name)) {
       LOG_ERROR("Metadata '" + Name + "' does not exist.");
       RetVal = -1;
 
@@ -238,12 +237,12 @@ int MetaData::getMetaData(const std::string Name, /// Name of metadata to get
    return RetVal;
 }
 
-int MetaData::getMetaData(const std::string Name, /// Name of metadata to get
-                          std::string &Value      /// string Value of metadata
+int MetaData::getEntry(const std::string Name, /// Name of metadata to get
+                       std::string &Value      /// String Value of metadata
 ) {
    int RetVal = 0;
 
-   if (!hasMetaData(Name)) {
+   if (!hasEntry(Name)) {
       LOG_ERROR("Metadata '" + Name + "' does not exist.");
       RetVal = -1;
 
@@ -254,16 +253,16 @@ int MetaData::getMetaData(const std::string Name, /// Name of metadata to get
    return RetVal;
 }
 
-std::map<std::string, std::any> *MetaData::getAllMetaData() { return &MetaMap; }
+std::map<std::string, std::any> *MetaData::getAllEntries() { return &MetaMap; }
 
-bool MetaDim::has(const std::string Name /// name of dimension
+bool MetaDim::has(const std::string Name /// Name of dimension
 ) {
    return (AllDims.find(Name) != AllDims.end());
 }
 
 std::shared_ptr<MetaDim>
-MetaDim::create(const std::string Name, // name of dimension
-                const I4 Length         // length of dimension
+MetaDim::create(const std::string Name, // Name of dimension
+                const I4 Length         // Length of dimension
 ) {
    if (has(Name)) {
       throw std::runtime_error("Failed to create a MetaDim instance because '" +
@@ -278,7 +277,7 @@ MetaDim::create(const std::string Name, // name of dimension
    return Dim;
 }
 
-int MetaDim::destroy(const std::string Name // name of dimension
+int MetaDim::destroy(const std::string Name // Name of dimension
 ) {
    int RetVal = 0;
 
@@ -289,7 +288,7 @@ int MetaDim::destroy(const std::string Name // name of dimension
 
    } else {
       if (AllDims.erase(Name) != 1) {
-         LOG_ERROR("Dimension, '" + Name + "', is not correctly removed.");
+         LOG_ERROR("Dimension, '" + Name + "', was not successfully removed.");
          RetVal = -1;
       }
    }
@@ -298,7 +297,7 @@ int MetaDim::destroy(const std::string Name // name of dimension
 }
 
 std::shared_ptr<MetaDim>
-MetaDim::get(const std::string Name /// name of dimension
+MetaDim::get(const std::string Name /// Name of dimension
 ) {
    if (!has(Name)) {
       throw std::runtime_error(
@@ -309,7 +308,7 @@ MetaDim::get(const std::string Name /// name of dimension
    return AllDims[Name];
 }
 
-int MetaDim::getLength(I4 &Length // length of dimension
+int MetaDim::getLength(I4 &Length // Length of dimension
 ) {
    int RetVal = 0;
 
@@ -318,13 +317,13 @@ int MetaDim::getLength(I4 &Length // length of dimension
    return RetVal;
 }
 
-bool MetaGroup::has(const std::string Name /// name of group
+bool MetaGroup::has(const std::string Name /// Name of group
 ) {
    return (AllGroups.find(Name) != AllGroups.end());
 }
 
 std::shared_ptr<MetaGroup>
-MetaGroup::create(const std::string Name // name of group
+MetaGroup::create(const std::string Name // Name of group
 ) {
    if (has(Name)) {
       return get(Name);
@@ -338,7 +337,7 @@ MetaGroup::create(const std::string Name // name of group
    }
 }
 
-int MetaGroup::destroy(const std::string Name // name of group
+int MetaGroup::destroy(const std::string Name // Name of group
 ) {
    int RetVal = 0;
 
@@ -358,7 +357,7 @@ int MetaGroup::destroy(const std::string Name // name of group
 }
 
 std::shared_ptr<MetaGroup>
-MetaGroup::get(const std::string Name /// name of dimension
+MetaGroup::get(const std::string Name /// Name of dimension
 ) {
    if (!has(Name)) {
       throw std::runtime_error(
@@ -369,19 +368,19 @@ MetaGroup::get(const std::string Name /// name of dimension
    return AllGroups[Name];
 }
 
-bool MetaGroup::hasField(const std::string FieldName /// name of field
+bool MetaGroup::hasField(const std::string FieldName /// Name of field
 ) {
    return (Fields.find(FieldName) != Fields.end());
 }
 
-int MetaGroup::addField(const std::string FieldName // name of field to add
+int MetaGroup::addField(const std::string FieldName // Name of field to add
 ) {
    int RetVal = 0;
 
    if (hasField(FieldName)) {
       LOG_ERROR("Failed to add the field '" + FieldName + "' because " +
                 "the group already has the field.");
-      RetVal = -1; // the field already exists in the group.
+      RetVal = -1; // The field already exists in the group.
 
    } else if (MetaData::has(FieldName)) {
       Fields[FieldName] = MetaData::get(FieldName);
@@ -389,14 +388,14 @@ int MetaGroup::addField(const std::string FieldName // name of field to add
    } else {
       LOG_ERROR("Failed to add the field '" + FieldName + "' because " +
                 "the field does not exist.");
-      RetVal = -2; // the field name does not exist.
+      RetVal = -2; // The field name does not exist.
    }
 
    return RetVal;
 }
 
 std::shared_ptr<MetaData>
-MetaGroup::getField(const std::string FieldName /// name of field to add
+MetaGroup::getField(const std::string FieldName /// Name of field to add
 ) {
    if (!hasField(FieldName)) {
       throw std::runtime_error("Failed to get a MetaData instance because "
@@ -408,7 +407,7 @@ MetaGroup::getField(const std::string FieldName /// name of field to add
 }
 
 int MetaGroup::removeField(
-    const std::string FieldName // name of field to remove
+    const std::string FieldName // Name of field to remove
 ) {
    int RetVal = 0;
 

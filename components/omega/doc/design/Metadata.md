@@ -266,7 +266,7 @@ the code, simulation, file metadata, but also for variables if additional
 metadata is desired.
 
 ```c++
-    int addMetaData(const std::string MetaName,   /// Name of new metadata to add
+    int addEntry(const std::string MetaName,   /// Name of new metadata to add
            const std::any Value          /// Value of new metadata to add
     );
 ```
@@ -280,7 +280,7 @@ For symmetry, we will supply a remove function, though the
 use case is likely rare.
 
 ```c++
-    int removeMetaData(const std::string MetaName /// Name of metadata to remove
+    int removeEntry(const std::string MetaName /// Name of metadata to remove
     );
 ```
 
@@ -290,7 +290,7 @@ The most common use case will be retrieving metadata. For a single
 metadata entry, there will be an explicit get function:
 
 ```c++
-    int getMetaData(const std::string MetaName,   /// Name of metadata to get
+    int getEntry(const std::string MetaName,   /// Name of metadata to get
            I4 &Value                     /// I4 Value of metadata
     );
 ```
@@ -309,8 +309,8 @@ example, to retrieve all metadata from a defined field:
 
 ```c++
    auto MyVar = MetaData::create("MyVar");
-   MyVar->addMetaData("Name", 1);
-   std::map<std::string, std::any> *VarMeta = MyVar->getAllMetaData();
+   MyVar->addEntry("Name", 1);
+   std::map<std::string, std::any> *VarMeta = MyVar->getAllEntries();
    std::string MetaName;
    std::any    MetaVal;
 
@@ -375,7 +375,7 @@ For metadata, a function will be provided to inquire whether metadata
 with a given name have already been defined:
 
 ```c++
-   bool Metadata::hasMetaData(const std::string Name);
+   bool Metadata::hasEntry(const std::string Name);
 ```
 
 #### 4.2.7 Metadata groups

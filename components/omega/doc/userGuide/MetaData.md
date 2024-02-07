@@ -48,20 +48,20 @@
   ```
 
 ### Managing Metadata in Instances
-- **Adding Metadata**: Use `addMetaData` function.
+- **Adding Metadata**: Use `addEntry` function.
   ```
   const R8 AValue = 2.0;
-  int ret = Data1->addMetaData("NewMeta", AValue);
+  int ret = Data1->addEntry("NewMeta", AValue);
   ```
   The following data types are allowed as metadata values: I4, I8, R4, R8, std::string, and bool.
-- **Removing Metadata**: Employ `removeMetaData` function.
+- **Removing Metadata**: Employ `removeEntry` function.
   ```
-  int ret = Data1->removeMetaData("NewMeta");
+  int ret = Data1->removeEntry("NewMeta");
   ```
-- **Retrieving Metadata**: Use `getMetaData` function.
+- **Retrieving Metadata**: Use `getEntry` function.
   ```
   R8 R8Value;
-  int ret = Data1->getMetaData("NewMeta", R8Value);
+  int ret = Data1->getEntry("NewMeta", R8Value);
   ```
 
 ### Handling MetaData Instances

@@ -48,7 +48,7 @@ variables they interact with. Function names begin with a lowercase letter.
                to instantiate a MetaData class.
 - **Non-Static Member Access**: Functions dealing with non-static members often
                conclude with a specific descriptor indicating the targeted
-               information, e.g., `getMetaData("Name", Var);` retrieves
+               information, e.g., `getEntry("Name", Var);` retrieves
                metadata from a MetaData instance.
 - **Instance Management**: The terms `create/destroy` are designated for
                functions that instantiate or delete an instance, respectively.
@@ -150,12 +150,12 @@ other reasons.
 
 ## Add/Remove a Metadata to/from a MetaData Instance
 
-To add metadata to a `MetaData` instance, the `addMetaData` function is used:
+To add metadata to a `MetaData` instance, the `addEntry` function is used:
 
 ```
     int ret;
     const R8 AValue = 2.0;
-    ret = Data1->addMetaData("NewMeta", AValue);
+    ret = Data1->addEntry("NewMeta", AValue);
 ```
 
 The following data types are allowed as metadata values:
@@ -167,35 +167,35 @@ The following data types are allowed as metadata values:
 - std::string
 - bool
 
-`addMetaData` returns an integer value of zero upon success and returns -1
+`addEntry` returns an integer value of zero upon success and returns -1
 if the metadata name already exists.
 
-To remove metadata from a MetaData instance, the `removeMetaData` function
+To remove metadata from a MetaData instance, the `removeEntry` function
 is used.
 
 ```
     int ret;
-    ret = Data1->removeMetaData("NewMeta");
+    ret = Data1->removeEntry("NewMeta");
 ```
 
-`removeMetaData` returns an integer value of zero upon success, -1 when there
+`removeEntry` returns an integer value of zero upon success, -1 when there
 is no metadata by that name, and -2 when the removal action fails for other
 reasons.
 
 ## Retreive a Metadata from a MetaData Instance
 
-Users can retrieve metadata using the `getMetaData` function.
+Users can retrieve metadata using the `getEntry` function.
 
 ```
     R8 R8Value;
-    ret = Data1->getMetaData("NewMeta", R8Value);
+    ret = Data1->getEntry("NewMeta", R8Value);
 ```
 
-The first argument of `getMetaData` is the name of the metadata. The second
-argument is passed by reference, allowing `getMetaData` to place
+The first argument of `getEntry` is the name of the metadata. The second
+argument is passed by reference, allowing `getEntry` to place
 the metadata's value into it.
 
-Note that `getMetaData` is overloaded with several methods, each having
+Note that `getEntry` is overloaded with several methods, each having
 different data types for the second argument. It is the user's responsibility
 to match the metadata name with the correct data type of the value. Otherwise,
 the function may throw a type-casting error exception.

@@ -28,18 +28,18 @@ class MetaDim {
 
  public:
    static std::shared_ptr<MetaDim>
-   create(const std::string Name, /// name of dimension
+   create(const std::string Name, /// Name of dimension
           const I4 Length         /// length of dimension
    );
 
-   static int destroy(const std::string Name /// name of dimension
+   static int destroy(const std::string Name /// Name of dimension
    );
 
    static std::shared_ptr<MetaDim>
    get(const std::string Name /// Name of dimension
    );
 
-   static bool has(const std::string Name /// name of dimension
+   static bool has(const std::string Name /// Name of dimension
    );
 
    int getLength(I4 &Length /// length of dimension
@@ -56,7 +56,7 @@ class MetaData {
 
  public:
    static std::shared_ptr<MetaData>
-   create(const std::string Name /// [in] Name to assign
+   create(const std::string Name /// Name of field
    );
 
    static std::shared_ptr<MetaData>
@@ -70,45 +70,45 @@ class MetaData {
    static std::shared_ptr<MetaData> get(const std::string Name /// Name of field
    );
 
-   static bool has(const std::string Name /// name of field
+   static bool has(const std::string Name /// Name of field
    );
 
-   bool hasMetaData(const std::string MetaName /// name of metadata
+   bool hasEntry(const std::string MetaName /// Name of metadata
    );
 
-   int addMetaData(const std::string MetaName, /// Name of new metadata to add
-                   const std::any Value        /// Value of new metadata to add
+   int addEntry(const std::string MetaName, /// Name of new metadata to add
+                const std::any Value        /// Value of new metadata to add
    );
 
-   int removeMetaData(const std::string MetaName /// Name of metadata to remove
+   int removeEntry(const std::string MetaName /// Name of metadata to remove
    );
 
-   int getMetaData(const std::string MetaName, /// Name of metadata to get
-                   I4 &Value                   /// I4 Value of metadata
+   int getEntry(const std::string MetaName, /// Name of metadata to get
+                I4 &Value                   /// I4 Value of metadata
    );
 
-   int getMetaData(const std::string MetaName, /// Name of metadata to get
-                   I8 &Value                   /// I8 Value of metadata
+   int getEntry(const std::string MetaName, /// Name of metadata to get
+                I8 &Value                   /// I8 Value of metadata
    );
 
-   int getMetaData(const std::string MetaName, /// Name of metadata to get
-                   R4 &Value                   ///  R4 Value of metadata
+   int getEntry(const std::string MetaName, /// Name of metadata to get
+                R4 &Value                   ///  R4 Value of metadata
    );
 
-   int getMetaData(const std::string MetaName, /// Name of metadata to get
-                   R8 &Value                   /// R8 Value of metadata
+   int getEntry(const std::string MetaName, /// Name of metadata to get
+                R8 &Value                   /// R8 Value of metadata
    );
 
-   int getMetaData(const std::string MetaName, /// Name of metadata to get
-                   bool &Value                 /// bool Value of metadata
+   int getEntry(const std::string MetaName, /// Name of metadata to get
+                bool &Value                 /// bool Value of metadata
    );
 
-   int getMetaData(const std::string MetaName, /// Name of metadata to get
-                   std::string &Value          /// string Value of metadata
+   int getEntry(const std::string MetaName, /// Name of metadata to get
+                std::string &Value          /// string Value of metadata
    );
 
    /// returns the pointer to the metadata map
-   std::map<std::string, std::any> *getAllMetaData();
+   std::map<std::string, std::any> *getAllEntries();
 };
 
 class ArrayMetaData : public MetaData {
@@ -138,30 +138,30 @@ class MetaGroup {
 
  public:
    static std::shared_ptr<MetaGroup>
-   create(const std::string Name /// name of group
+   create(const std::string Name /// Name of group
    );
 
-   static int destroy(const std::string Name /// name of group
+   static int destroy(const std::string Name /// Name of group
    );
 
    static std::shared_ptr<MetaGroup>
    get(const std::string Name /// Name of group
    );
 
-   static bool has(const std::string Name /// name of group
+   static bool has(const std::string Name /// Name of group
    );
 
-   bool hasField(const std::string FieldName /// name of field to add
+   bool hasField(const std::string FieldName /// Name of field to add
    );
 
-   int addField(const std::string FieldName /// name of field to add
+   int addField(const std::string FieldName /// Name of field to add
    );
 
    std::shared_ptr<MetaData>
-   getField(const std::string FieldName /// name of field to add
+   getField(const std::string FieldName /// Name of field to add
    );
 
-   int removeField(const std::string FieldName /// name of field to remove
+   int removeField(const std::string FieldName /// Name of field to remove
    );
 
    /// returns the pointer to the metagroup map
