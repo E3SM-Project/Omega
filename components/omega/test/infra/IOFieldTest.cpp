@@ -81,8 +81,8 @@ int initIOFieldTest() {
    // Create host data arrays
    OMEGA::ArrayHost2DI4 DataI4H("FieldI4H", NCellsSize, NVertLevels);
    OMEGA::ArrayHost2DR8 DataR8H("FieldR8H", NCellsSize, NVertLevels);
-   for (int Cell; Cell < NCellsSize; ++Cell) {
-      for (int k; k < NVertLevels; ++k) {
+   for (int Cell = 0; Cell < NCellsSize; ++Cell) {
+      for (int k = 0; k < NVertLevels; ++k) {
          DataI4H(Cell, k) = Cell + k;
          DataR8H(Cell, k) = Cell + k + 1.2345678;
       }
@@ -172,8 +172,8 @@ int main(int argc, char **argv) {
    int NVertLevels       = 64;
    OMEGA::ArrayHost2DI4 RefI4H("RefI4H", NCellsSize, NVertLevels);
    OMEGA::ArrayHost2DR8 RefR8H("RefR8H", NCellsSize, NVertLevels);
-   for (int Cell; Cell < NCellsSize; ++Cell) {
-      for (int k; k < NVertLevels; ++k) {
+   for (int Cell = 0; Cell < NCellsSize; ++Cell) {
+      for (int k = 0; k < NVertLevels; ++k) {
          RefI4H(Cell, k) = Cell + k;
          RefR8H(Cell, k) = Cell + k + 1.2345678;
       }
