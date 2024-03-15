@@ -20,6 +20,8 @@ using:
 int Err = OMEGA::IOField::attachData<ArrayType>("FieldName", DataArray);
 ```
 where ArrayType is the data type of the DataArray (eg. Array2DI4). The
+array can be either a host or device array and the IO system will determine
+whether any data transfer is required based on the type. The
 DataArray must not be a local temporary because IOStreams will need to
 retrieve this array when it comes time to write/read the stream. The
 "attach" function is separate from field definition because some data arrays
