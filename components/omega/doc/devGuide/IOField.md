@@ -24,7 +24,7 @@ DataArray must not be a local temporary because IOStreams will need to
 retrieve this array when it comes time to write/read the stream. The
 "attach" function is separate from field definition because some data arrays
 may not have been initialized at the time of field definition and also
-because some array locations my change in time (eg different time index or
+because some array locations may change in time (e.g. different time index or
 array for different time levels for prognostic variables).
 
 When it is time to write an IOStream, the IOStream module can extract
