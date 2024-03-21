@@ -66,6 +66,7 @@ devGuide/TimeMgr
 :caption: Design documents
 :maxdepth: 1
 
+design/OmegaV0ShallowWater
 design/Broadcast
 design/Config
 design/DataTypes
@@ -79,11 +80,10 @@ design/Metadata
 design/IO
 design/IOStreams
 design/Reductions
-design/ShallowWaterOmega0
 design/State
 design/TimeMgr
 design/Timers
 design/Tracers
 
-design/OmegaDesignTemplate
+design/Template
 ```
