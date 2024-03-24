@@ -1,5 +1,5 @@
 set(MPICC "cc")
-set(MPICXX "hipcc")
+set(MPICXX "mpicxx") # Needs MPICH_CXX to use hipcc
 set(MPIFC "ftn")
 set(SCC "cc")
 set(SCXX "hipcc")

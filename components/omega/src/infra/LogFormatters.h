@@ -13,27 +13,27 @@
 #include <spdlog/spdlog.h>
 
 template <>
-struct fmt::formatter<OMEGA::ArrayHost1DReal> : fmt::formatter<std::string> {
-   auto format(OMEGA::ArrayHost1DReal my, format_context &ctx)
+struct fmt::formatter<OMEGA::HostArray1DReal> : fmt::formatter<std::string> {
+   auto format(OMEGA::HostArray1DReal my, format_context &ctx)
        -> decltype(ctx.out()) {
 #ifdef OMEGA_DEBUG
       return fmt::format_to(
-          ctx.out(), "[data type of '{}' is ArrayHost1DReal.]", my.label());
+          ctx.out(), "[data type of '{}' is HostArray1DReal.]", my.label());
 #else
-      return fmt::format_to(ctx.out(), "[data type of '' is ArrayHost1DReal.]");
+      return fmt::format_to(ctx.out(), "[data type of '' is HostArray1DReal.]");
 #endif
    }
 };
 
 template <>
-struct fmt::formatter<OMEGA::ArrayHost2DReal> : fmt::formatter<std::string> {
-   auto format(OMEGA::ArrayHost2DReal my, format_context &ctx)
+struct fmt::formatter<OMEGA::HostArray2DReal> : fmt::formatter<std::string> {
+   auto format(OMEGA::HostArray2DReal my, format_context &ctx)
        -> decltype(ctx.out()) {
 #ifdef OMEGA_DEBUG
       return fmt::format_to(
-          ctx.out(), "[data type of '{}' is ArrayHost2DReal.]", my.label());
+          ctx.out(), "[data type of '{}' is HostArray2DReal.]", my.label());
 #else
-      return fmt::format_to(ctx.out(), "[data type of '' is ArrayHost2DReal.]");
+      return fmt::format_to(ctx.out(), "[data type of '' is HostArray2DReal.]");
 #endif
    }
 };

@@ -1,5 +1,5 @@
 set(MPICC "cc")
-set(MPICXX "hipcc") # Needs MPICH_CXX to use hipcc
+set(MPICXX "mpicxx") # Needs MPICH_CXX to use hipcc
 set(MPIFC "ftn") # Linker needs to be the Cray wrapper ftn, not mpif90
 set(SCC "cc")
 set(SCXX "hipcc")

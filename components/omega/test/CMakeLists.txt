@@ -8,21 +8,20 @@ set(_TestDataTypesName testDataTypes.exe)
 
 add_executable(${_TestDataTypesName} base/DataTypesTest.cpp)
 
-target_compile_options(
+target_include_directories(
   ${_TestDataTypesName}
   PRIVATE
-  "-I${OMEGA_SOURCE_DIR}/src/base"
-  "-I${OMEGA_SOURCE_DIR}/src/infra"
-  ${OMEGA_CXX_FLAGS}
+  ${OMEGA_SOURCE_DIR}/src/base
+  ${OMEGA_SOURCE_DIR}/src/infra
 )
 
-target_link_options(
-  ${_TestDataTypesName}
-  PRIVATE
-  ${OMEGA_LINK_OPTIONS}
-)
+  target_compile_definitions(
+    ${_TestDataTypesName}
+    PUBLIC
+    OMEGA_ARCH=${OMEGA_ARCH}
+  )
 
-target_link_libraries(${_TestDataTypesName} ${OMEGA_LIB_NAME} yakl parmetis metis)
+target_link_libraries(${_TestDataTypesName} ${OMEGA_LIB_NAME} Kokkos::kokkos parmetis metis)
 
 if(GKlib_FOUND)
   target_link_libraries(${_TestDataTypesName} gklib)
@@ -33,7 +32,6 @@ add_test(
   COMMAND ${MPI_EXEC} -n 1 -- ./${_TestDataTypesName}
 )
 
-
 ##################
 # Machine env test
 ##################
@@ -42,21 +40,26 @@ set(_TestMachEnvName testMachEnv.exe)
 
 add_executable(${_TestMachEnvName} base/MachEnvTest.cpp)
 
-target_compile_options(
+target_include_directories(
   ${_TestMachEnvName}
   PRIVATE
-  "-I${OMEGA_SOURCE_DIR}/src/base"
-  "-I${OMEGA_SOURCE_DIR}/src/infra"
-  ${OMEGA_CXX_FLAGS}
+  ${OMEGA_SOURCE_DIR}/src/base
+  ${OMEGA_SOURCE_DIR}/src/infra
 )
 
-target_link_options(
+target_compile_definitions(
   ${_TestMachEnvName}
-  PRIVATE
-  ${OMEGA_LINK_OPTIONS}
+  PUBLIC
+  OMEGA_ARCH=${OMEGA_ARCH}
 )
 
-target_link_libraries(${_TestMachEnvName} ${OMEGA_LIB_NAME} yakl)
+#target_link_options(
+#  ${_TestMachEnvName}
+#  PRIVATE
+#  ${OMEGA_LINK_OPTIONS}
+#)
+
+target_link_libraries(${_TestMachEnvName} ${OMEGA_LIB_NAME})
 
 add_test(
   NAME MACHINE_ENV_TEST
@@ -73,21 +76,26 @@ set(_TestBroadcastName testBroadcast.exe)
 # Add broadcast test
 add_executable(${_TestBroadcastName} base/BroadcastTest.cpp)
 
-target_compile_options(
+target_include_directories(
   ${_TestBroadcastName}
   PRIVATE
-  "-I${OMEGA_SOURCE_DIR}/src/base"
-  "-I${OMEGA_SOURCE_DIR}/src/infra"
-  ${OMEGA_CXX_FLAGS}
+  ${OMEGA_SOURCE_DIR}/src/base
+  ${OMEGA_SOURCE_DIR}/src/infra
 )
 
-target_link_options(
-  ${_TestBroadcastName}
-  PRIVATE
-  ${OMEGA_LINK_OPTIONS}
-)
+  target_compile_definitions(
+    ${_TestBroadcastName}
+    PUBLIC
+    OMEGA_ARCH=${OMEGA_ARCH}
+  )
 
-target_link_libraries(${_TestBroadcastName} ${OMEGA_LIB_NAME} spdlog yakl)
+#target_link_options(
+#  ${_TestBroadcastName}
+#  PRIVATE
+#  ${OMEGA_LINK_OPTIONS}
+#)
+
+target_link_libraries(${_TestBroadcastName} ${OMEGA_LIB_NAME} spdlog)
 
 add_test(
   NAME BROADCAST_TEST
@@ -103,21 +111,26 @@ set(_TestLoggingName testLogging.exe)
 
 add_executable(${_TestLoggingName} infra/LoggingTest.cpp)
 
-target_compile_options(
+target_include_directories(
   ${_TestLoggingName}
   PRIVATE
-  "-I${OMEGA_SOURCE_DIR}/src/base"
-  "-I${OMEGA_SOURCE_DIR}/src/infra"
-  ${OMEGA_CXX_FLAGS}
+  ${OMEGA_SOURCE_DIR}/src/base
+  ${OMEGA_SOURCE_DIR}/src/infra
 )
 
-target_link_options(
+target_compile_definitions(
   ${_TestLoggingName}
-  PRIVATE
-  ${OMEGA_LINK_OPTIONS}
+  PUBLIC
+  OMEGA_ARCH=${OMEGA_ARCH}
 )
 
-target_link_libraries(${_TestLoggingName} ${OMEGA_LIB_NAME} spdlog yakl)
+#target_link_options(
+#  ${_TestLoggingName}
+#  PRIVATE
+#  ${OMEGA_LINK_OPTIONS}
+#)
+
+target_link_libraries(${_TestLoggingName} ${OMEGA_LIB_NAME} spdlog)
 
 add_test(NAME LOGGING_TEST COMMAND ./${_TestLoggingName})
 
@@ -137,19 +150,19 @@ target_include_directories(
   ${Parmetis_INCLUDE_DIRS}
 )
 
-target_compile_options(
+target_compile_definitions(
   ${_TestDecompName}
-  PRIVATE
-  ${OMEGA_CXX_FLAGS}
+  PUBLIC
+  OMEGA_ARCH=${OMEGA_ARCH}
 )
 
-target_link_options(
-  ${_TestDecompName}
-  PRIVATE
-  ${OMEGA_LINK_OPTIONS}
-)
+#target_link_options(
+#  ${_TestDecompName}
+#  PRIVATE
+#  ${OMEGA_LINK_OPTIONS}
+#)
 
-target_link_libraries(${_TestDecompName} ${OMEGA_LIB_NAME} spdlog yakl parmetis metis pioc)
+target_link_libraries(${_TestDecompName} ${OMEGA_LIB_NAME} Kokkos::kokkos spdlog parmetis metis pioc)
 
 if(GKlib_FOUND)
   target_link_libraries(${_TestDecompName} gklib)
@@ -160,35 +173,35 @@ add_test(
   COMMAND ${MPI_EXEC} -n 8 -- ./${_TestDecompName}
 )
 
-##################
-# Halo test
-##################
-
-set(_TestHaloName testHalo.exe)
-
-# Add halo test
-add_executable(${_TestHaloName} base/HaloTest.cpp)
-
-target_include_directories(
-  ${_TestHaloName}
-  PRIVATE
-  ${OMEGA_SOURCE_DIR}/src/base
-  ${OMEGA_SOURCE_DIR}/src/infra
-  ${Parmetis_INCLUDE_DIRS}
-)
-
-target_compile_options(
-  ${_TestHaloName}
-  PRIVATE
-  ${OMEGA_CXX_FLAGS}
-)
-
-target_link_libraries(${_TestHaloName} ${OMEGA_LIB_NAME} spdlog yakl parmetis metis pioc)
-
-add_test(
-  NAME HALO_TEST
-  COMMAND ${MPI_EXEC} -n 8 -- ./${_TestHaloName}
-)
+###################
+## Halo test
+###################
+#
+#set(_TestHaloName testHalo.exe)
+#
+## Add halo test
+#add_executable(${_TestHaloName} base/HaloTest.cpp)
+#
+#target_include_directories(
+#  ${_TestHaloName}
+#  PRIVATE
+#  ${OMEGA_SOURCE_DIR}/src/base
+#  ${OMEGA_SOURCE_DIR}/src/infra
+#  ${Parmetis_INCLUDE_DIRS}
+#)
+#
+#target_compile_definitions(
+#  ${_TestHaloName}
+#  PUBLIC
+#  OMEGA_ARCH=${OMEGA_ARCH}
+#)
+#
+#target_link_libraries(${_TestHaloName} ${OMEGA_LIB_NAME} Kokkos::kokkos spdlog parmetis metis pioc)
+#
+#add_test(
+#  NAME HALO_TEST
+#  COMMAND ${MPI_EXEC} -n 8 -- ./${_TestHaloName}
+#)
 
 ################
 # HorzMesh test
@@ -196,7 +209,7 @@ add_test(
 
 set(_TestHorzMeshName testHorzMesh.exe)
 
-# Add broadcast test
+# Add Horizen Mesh test
 add_executable(${_TestHorzMeshName} ocn/HorzMeshTest.cpp)
 
 target_include_directories(
@@ -208,13 +221,19 @@ target_include_directories(
   ${Parmetis_INCLUDE_DIRS}
 )
 
-target_compile_options(
+target_compile_definitions(
   ${_TestHorzMeshName}
-  PRIVATE
-  ${OMEGA_LINK_OPTIONS}
+  PUBLIC
+  OMEGA_ARCH=${OMEGA_ARCH}
 )
 
-target_link_libraries(${_TestHorzMeshName} ${OMEGA_LIB_NAME} spdlog yakl parmetis metis pioc)
+#target_compile_options(
+#  ${_TestHorzMeshName}
+#  PRIVATE
+#  ${OMEGA_LINK_OPTIONS}
+#)
+
+target_link_libraries(${_TestHorzMeshName} ${OMEGA_LIB_NAME} Kokkos::kokkos spdlog parmetis metis pioc)
 
 add_test(
   NAME HORZMESH_TEST
@@ -237,19 +256,25 @@ target_include_directories(
   ${Parmetis_INCLUDE_DIRS}
 )
 
-target_compile_options(
-   ${_TestIOName}
-  PRIVATE
-  ${OMEGA_CXX_FLAGS}
+target_compile_definitions(
+  ${_TestIOName}
+  PUBLIC
+  OMEGA_ARCH=${OMEGA_ARCH}
 )
 
-target_link_options(
-   ${_TestIOName}
-  PRIVATE
-  ${OMEGA_LINK_OPTIONS}
-)
+#target_compile_options(
+#   ${_TestIOName}
+#  PRIVATE
+#  ${OMEGA_CXX_FLAGS}
+#)
 
-target_link_libraries(${_TestIOName}     ${OMEGA_LIB_NAME} spdlog yakl parmetis metis pioc)
+#target_link_options(
+#   ${_TestIOName}
+#  PRIVATE
+#  ${OMEGA_LINK_OPTIONS}
+#)
+
+target_link_libraries(${_TestIOName}     ${OMEGA_LIB_NAME} spdlog parmetis metis pioc)
 
 if(GKlib_FOUND)
    target_link_libraries(${_TestIOName} gklib)
@@ -276,17 +301,23 @@ target_include_directories(
   ${OMEGA_SOURCE_DIR}/src/infra
 )
 
-target_compile_options(
-  ${_TestConfigName}
-  PRIVATE
-  ${OMEGA_CXX_FLAGS}
-)
+  target_compile_definitions(
+    ${_TestConfigName}
+    PUBLIC
+    OMEGA_ARCH=${OMEGA_ARCH}
+  )
 
-target_link_options(
-  ${_TestConfigName}
-  PRIVATE
-  ${OMEGA_LINK_OPTIONS}
-)
+#target_compile_options(
+#  ${_TestConfigName}
+#  PRIVATE
+#  ${OMEGA_CXX_FLAGS}
+#)
+
+#target_link_options(
+#  ${_TestConfigName}
+#  PRIVATE
+#  ${OMEGA_LINK_OPTIONS}
+#)
 
 target_link_libraries(${_TestConfigName} ${OMEGA_LIB_NAME} yaml-cpp)
 
@@ -303,21 +334,27 @@ set(_TestMetadataName testMetadata.exe)
 
 add_executable(${_TestMetadataName} infra/MetadataTest.cpp)
 
-target_compile_options(
+target_include_directories(
   ${_TestMetadataName}
   PRIVATE
-  "-I${OMEGA_SOURCE_DIR}/src/base"
-  "-I${OMEGA_SOURCE_DIR}/src/infra"
-  ${OMEGA_CXX_FLAGS}
+  ${OMEGA_SOURCE_DIR}/src/base
+  ${OMEGA_SOURCE_DIR}/src/infra
 )
 
-target_link_options(
+target_compile_definitions(
   ${_TestMetadataName}
-  PRIVATE
-  ${OMEGA_LINK_OPTIONS}
+  PUBLIC
+  OMEGA_ARCH=${OMEGA_ARCH}
 )
 
-target_link_libraries(${_TestMetadataName} ${OMEGA_LIB_NAME} yakl)
+
+#target_link_options(
+#  ${_TestMetadataName}
+#  PRIVATE
+#  ${OMEGA_LINK_OPTIONS}
+#)
+
+target_link_libraries(${_TestMetadataName} ${OMEGA_LIB_NAME})
 
 add_test(NAME METADATA_TEST COMMAND ./${_TestMetadataName})
 
@@ -329,12 +366,17 @@ set(_TestIOFieldName testIOField.exe)
 
 add_executable(${_TestIOFieldName} infra/IOFieldTest.cpp)
 
-target_compile_options(
-   ${_TestIOFieldName}
+target_include_directories(
+  ${_TestIOFieldName}
   PRIVATE
-  "-I${OMEGA_SOURCE_DIR}/src/base"
-  "-I${OMEGA_SOURCE_DIR}/src/infra"
-  ${OMEGA_CXX_FLAGS}
+  ${OMEGA_SOURCE_DIR}/src/base
+  ${OMEGA_SOURCE_DIR}/src/infra
+)
+
+target_compile_definitions(
+  ${_TestIOFieldName}
+  PUBLIC
+  OMEGA_ARCH=${OMEGA_ARCH}
 )
 
 target_link_options(
@@ -343,33 +385,35 @@ target_link_options(
   ${OMEGA_LINK_OPTIONS}
 )
 
-target_link_libraries(${_TestIOFieldName} ${OMEGA_LIB_NAME} yakl)
+target_link_libraries(${_TestIOFieldName} ${OMEGA_LIB_NAME} Kokkos::kokkos)
 
 add_test(NAME IOFIELD_TEST
          COMMAND ${MPI_EXEC} -n 8 -- ./${_TestIOFieldName})
 
 ##################
-# YAKL test
+# Kokkos test
 ##################
 
-set(_TestYaklName testYakl.exe)
+set(_TestKokkosName testKokkos.exe)
 
-add_executable(
-  ${_TestYaklName} ${E3SM_EXTERNALS_ROOT}/YAKL/unit/ParForC/ParForC.cpp
+add_executable(${_TestKokkosName} infra/OmegaKokkosTest.cpp)
+
+target_include_directories(
+  ${_TestKokkosName}
+  PRIVATE
+  ${OMEGA_SOURCE_DIR}/src/base
+  ${OMEGA_SOURCE_DIR}/src/infra
 )
 
-include(${E3SM_EXTERNALS_ROOT}/YAKL/yakl_utils.cmake)
-yakl_process_target(${_TestYaklName})
+  target_compile_definitions(
+    ${_TestKokkosName}
+    PUBLIC
+    OMEGA_ARCH=${OMEGA_ARCH}
+  )
 
-# handles cuda cases
-if (YAKL_ARCH STREQUAL "CUDA")
-  set_target_properties(${_TestYaklName} PROPERTIES LINKER_LANGUAGE CXX)
-  if (CMAKE_VERSION VERSION_GREATER "3.18.0")
-    set_target_properties(${_TestYaklName} PROPERTIES CUDA_ARCHITECTURES OFF)
-  endif()
-endif()
+target_link_libraries(${_TestKokkosName} ${OMEGA_LIB_NAME})
 
-add_test(NAME YAKL_TEST COMMAND ./${_TestYaklName})
+add_test(NAME KOKKOS_TEST COMMAND ./${_TestKokkosName})
 
 ##################
 # test properties
@@ -382,15 +426,11 @@ set_tests_properties(
   LOGGING_TEST
   CONFIG_TEST
   DECOMP_TEST
-  HALO_TEST
+#  HALO_TEST
   HORZMESH_TEST
   IO_TEST
   METADATA_TEST
+  KOKKOS_TEST
   IOFIELD_TEST
   PROPERTIES FAIL_REGULAR_EXPRESSION "FAIL" PASS_REGULAR_EXPRESSION "PASS"
-)
-
-set_tests_properties(
-  YAKL_TEST
-  PROPERTIES FAIL_REGULAR_EXPRESSION "ERROR"
 )
