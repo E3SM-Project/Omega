@@ -98,6 +98,9 @@ int initIOStreamTest(std::shared_ptr<Clock> &ModelClock, // Model clock
    HorzMesh *DefMesh = HorzMesh::getDefault();
    I4 NCellsSize     = DefMesh->NCellsSize;
 
+   // Create the time dimension
+   std::shared_ptr<Dimension> TimeDim = Dimension::create("Time", 1);
+
    // Set vertical levels and time levels
    I4 NVertLevels = 60;
    std::shared_ptr<Dimension> VertDim =
@@ -135,21 +138,23 @@ int initIOStreamTest(std::shared_ptr<Clock> &ModelClock, // Model clock
    // Define temperature and salinity tracer fields and create a tracer
    // group
 
-   std::vector<std::string> DimNames(2);
-   DimNames[0] = "NCells";
-   DimNames[1] = "NVertLevels";
+   std::vector<std::string> DimNames(3);
+   DimNames[0] = "Time";
+   DimNames[1] = "NCells";
+   DimNames[2] = "NVertLevels";
 
-   // 2D Fields on device
+   // 3D Fields on device
 
-   DimNames[0]    = "NCells";
-   DimNames[1]    = "NVertLevels";
+   DimNames[0]    = "Time";
+   DimNames[1]    = "NCells";
+   DimNames[2]    = "NVertLevels";
    Real FillValue = -1.2345e-30;
    auto TempField = Field::create(
        "Temperature", "Potential temperature at cell centers", "deg C",
-       "sea_water_pot_tem", -3.0, 100.0, FillValue, 2, DimNames);
+       "sea_water_pot_tem", -3.0, 100.0, FillValue, 3, DimNames);
    auto SaltField =
        Field::create("Salinity", "Salinity at cell centers", "",
-                     "sea_water_salinity", 0.0, 100.0, FillValue, 2, DimNames);
+                     "sea_water_salinity", 0.0, 100.0, FillValue, 3, DimNames);
 
    // Create Tracer group
    auto TracerGroup = FieldGroup::create("Tracers");
@@ -239,6 +244,9 @@ int main(int argc, char **argv) {
       Alarm StopAlarm("Stop Time", StopTime);
       Err1 = ModelClock->attachAlarm(&StopAlarm);
       TestEval("Attach stop alarm", Err1, ErrRef, Err);
+
+      // Try to write for 'OnStartup' before time integration
+      Err1 = IOStream::writeAll(*ModelClock);
 
       // Overwrite
       // Step forward in time and write files if it is time
