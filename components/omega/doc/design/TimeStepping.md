@@ -91,7 +91,83 @@ If time permits, other schemes will be added and tested. This includes the four-
 
 ## 4 Design
 
-Design specifics will be added at a later time.
+To ensure modularity, each time stepper is implemented as a separate class. Since there will be common functionality and common interface between different time steppers, every time stepper inherits from an abstract `TimeStepper` base class.
+
+### 4.1 Data types and parameters
+
+#### 4.1.1 Parameters
+
+The time stepper can be specified in the input configuration file:
+```yaml
+TimeIntegration:
+    TimeStepper: Forward-Backward
+```
+In the code, the time stepper type is represented by an enum:
+```c++
+enum TimeStepperType {
+    ForwardBackward,
+    AdamsBashforth2,
+    RungeKutta4,
+    ...
+}
+```
+
+#### 4.1.2 Class/structs/data types
+
+#### 4.1.2.1 TimeStepper
+
+The abstract `TimeStepper` class defines the interface that every time stepper needs to implement, and provides common data members and functionality.
+
+```c++
+class TimeStepper {
+    public:
+        TimeStepper(TimeStepperType TSType, Tendencies* ModelTendencies);
+        virtual void doStep(State* ModelState, Clock* ModelClock) const = 0;
+        virtual ~TimeStepper() = default;
+
+        TimeStepperType TSType;
+    private:
+        Tendencies* ModelTendencies;
+};
+```
+
+#### 4.1.2.2 Example of a derived class
+As an example, the fourth order Runge-Kutta stepper extends the base class by  storing the scheme weights and provides a concrete implementation of the `doStep` method.
+
+```c++
+class RK4Stepper : public TimeStepper {
+    public:
+        RK4Stepper(Tendencies* ModelTendencies);
+        void doStep(State* ModelState, Clock* ModelClock) const override;
+    private:
+        R8 RKWeights[4];
+        R8 RKSubstepWeights[4];
+};
+```
+
+### 4.2 Methods
+
+Every time stepper needs to have a constructor and an implementation of the `doStep` method.
+
+#### 4.2.1 Constructor
+
+The constructor will typically call the base class constructor with the right time stepper type, and
+then perform scheme-specific initialization
+
+```c++
+RK4Stepper::RK4Stepper(Tendencies* ModelTendencies) : TimeStepper(RungeKutta4, ModelTendencies) {
+    // fill RKWeights and RKSubstepWeights
+    ...
+}
+```
+
+#### 4.2.2 Time step advance
+
+The public `doStep` method
+```c++
+    void doStep(State* ModelState, Clock* ModelClock) const;
+```
+advances the model state and clock by one time step.
 
 ## 5 Verification and Testing
 
