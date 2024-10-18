@@ -49,8 +49,10 @@ AuxiliaryState::~AuxiliaryState() {
 // Compute the auxiliary variables
 void AuxiliaryState::computeAll(const OceanState *State, int ThickTimeLevel,
                                 int VelTimeLevel) const {
-   const Array2DReal &LayerThickCell = State->LayerThickness[ThickTimeLevel];
-   const Array2DReal &NormalVelEdge  = State->NormalVelocity[VelTimeLevel];
+   Array2DReal LayerThickCell;
+   Array2DReal NormalVelEdge;
+   State->getLayerThickness(LayerThickCell, ThickTimeLevel);
+   State->getNormalVelocity(NormalVelEdge, VelTimeLevel);
 
    const int NVertLevels = LayerThickCell.extent_int(1);
    const int NChunks     = NVertLevels / VecLength;
