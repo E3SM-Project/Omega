@@ -218,7 +218,7 @@ int initTimeStepperTest(const std::string &mesh) {
 // of steps
 int adjustTimeStep(TimeStepper *Stepper, Real TimeEnd) {
    TimeInterval TimeStep = Stepper->getTimeStep();
-   Real TimeStepSeconds;
+   R8 TimeStepSeconds;
    TimeStep.get(TimeStepSeconds, TimeUnits::Seconds);
 
    const int NSteps = std::ceil(TimeEnd / TimeStepSeconds);
@@ -285,7 +285,7 @@ int testTimeStepper(const std::string &Name, TimeStepperType Type,
 
    const Real TimeEnd = 1;
 
-   const Real BaseTimeStepSeconds = 0.2;
+   const R8 BaseTimeStepSeconds = 0.2;
 
    // This creates global exact solution and needs to be done only once
    const static bool CallOnlyOnce = [=]() {
@@ -293,7 +293,7 @@ int testTimeStepper(const std::string &Name, TimeStepperType Type,
       return true;
    }();
 
-   Real TimeStepSeconds = BaseTimeStepSeconds;
+   R8 TimeStepSeconds = BaseTimeStepSeconds;
 
    // Convergence loop
    for (int RefLevel = 0; RefLevel < NRefinements; ++RefLevel) {
