@@ -42,8 +42,18 @@ class IOStream {
    IO::Mode Mode;        ///< mode (read or write)
    bool ReducePrecision; ///< flag to use 32-bit precision for 64-bit floats
    Alarm MyAlarm;        ///< time mgr alarm for read/write
+   Alarm MyFileAlarm;    ///< time mgr alarm for creating new output file
+   Alarm MyFileEndAlarm; ///< time mgr alarm for closing output file
    bool OnStartup;       ///< flag to read/write on model startup
    bool OnShutdown;      ///< flag to read/write on model shutdown
+
+   int OutFileID;                        ///< ID assigned to the output file
+   std::map<std::string, int> FieldIDs;  ///< ID assigned to fields
+   std::map<std::string, int> AllDimIDs; ///< ID assigned to dimensions
+
+   std::string OutFileName; ///< name of output file
+
+   int TimeIndex; ///< Index for the stacked time frame
 
    /// A pointer file is used if we wish OMEGA to read the name of the file
    /// from another file. This is useful for writing the name of a restart

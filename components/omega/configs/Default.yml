@@ -77,7 +77,11 @@ Omega:
       IfExists: replace
       Precision: double
       Freq: 1
-      FreqUnits: months
+      FreqUnits: months,OnStartup
+      # If FileFreq and FileFreqUnits are commented out,
+      # the output file frequency will default to the IO frequency.
+      FileFreq: 1
+      FileFreqUnits: years
       UseStartEnd: false
       Contents:
         - Tracers
@@ -89,6 +93,8 @@ Omega:
       Precision: single
       Freq: 10
       FreqUnits: days
+      FileFreq: 1
+      FileFreqUnits: months
       UseStartEnd: true
       StartTime: 0001-06-01_00:00:00
       EndTime: 0001-06-30_00:00:00
