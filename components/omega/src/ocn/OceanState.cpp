@@ -93,7 +93,6 @@ OceanState::OceanState(
    LayerThicknessH.resize(NTimeLevels);
    NormalVelocityH.resize(NTimeLevels);
 
-
    for (int I = 0; I < NTimeLevels; I++) {
       LayerThicknessH[I] = HostArray2DR8("LayerThickness" + std::to_string(I),
                                          NCellsSize, NVertLevels);
@@ -315,13 +314,11 @@ void OceanState::defineFields() {
 
    // Associate Field with data
    I4 TimeIndex = getTimeIndex(0);
-   Err = NormalVelocityField->attachData<Array2DR8>(
-       NormalVelocity[TimeIndex]);
+   Err = NormalVelocityField->attachData<Array2DR8>(NormalVelocity[TimeIndex]);
    if (Err != 0)
       LOG_ERROR("Error attaching data array to field {}",
                 NormalVelocityFldName);
-   Err = LayerThicknessField->attachData<Array2DR8>(
-       LayerThickness[TimeIndex]);
+   Err = LayerThicknessField->attachData<Array2DR8>(LayerThickness[TimeIndex]);
    if (Err != 0)
       LOG_ERROR("Error attaching data array to field {}",
                 LayerThicknessFldName);
@@ -352,9 +349,10 @@ void OceanState::read(int StateFileID, I4 CellDecompR8, I4 EdgeDecompR8) {
 
    I4 Err;
 
+   I4 TimeIndex = getTimeIndex(0);
+
    // Read LayerThickness
    int LayerThicknessID;
-   I4 TimeIndex = getTimeIndex(0);
    Err = IO::readArray(LayerThicknessH[TimeIndex].data(), NCellsAll,
                        "layerThickness", StateFileID, CellDecompR8,
                        LayerThicknessID);
@@ -373,7 +371,8 @@ void OceanState::read(int StateFileID, I4 CellDecompR8, I4 EdgeDecompR8) {
 
 //------------------------------------------------------------------------------
 // Get layer thickness device array
-I4 OceanState::getLayerThickness(Array2DReal &LayerThick, const I4 TimeLevel) const {
+I4 OceanState::getLayerThickness(Array2DReal &LayerThick,
+                                 const I4 TimeLevel) const {
    I4 Err = 0;
 
    I4 TimeIndex = getTimeIndex(TimeLevel);
@@ -396,7 +395,8 @@ I4 OceanState::getLayerThicknessH(HostArray2DReal &LayerThickH,
 
 //------------------------------------------------------------------------------
 // Get normal velocity device array
-I4 OceanState::getNormalVelocity(Array2DReal &NormVel, const I4 TimeLevel) const {
+I4 OceanState::getNormalVelocity(Array2DReal &NormVel,
+                                 const I4 TimeLevel) const {
 
    I4 Err = 0;
 
@@ -451,8 +451,7 @@ I4 OceanState::exchangeHalo(const I4 TimeLevel) {
 
    copyToHost(TimeLevel);
 
-
-   I4 TimeIndex = getTimeIndex(TimeLevel); 
+   I4 TimeIndex = getTimeIndex(TimeLevel);
 
    MeshHalo->exchangeFullArrayHalo(LayerThicknessH[TimeIndex], OnCell);
    MeshHalo->exchangeFullArrayHalo(NormalVelocityH[TimeIndex], OnEdge);
@@ -526,7 +525,8 @@ I4 OceanState::getTimeIndex(const I4 TimeLevel) const {
 
    // Check if time level is valid
    if (TimeLevel > 1 || (TimeLevel + NTimeLevels) <= 1) {
-      LOG_ERROR("OceanState: Time level {} is out of range {}", TimeLevel, NTimeLevels);
+      LOG_ERROR("OceanState: Time level {} is out of range {}", TimeLevel,
+                NTimeLevels);
       return -1;
    }
 
