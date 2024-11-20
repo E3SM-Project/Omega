@@ -15,6 +15,7 @@ target_include_directories(
     ${PIOC_SOURCE_DIR}
     ${PIOC_BINARY_DIR}
     ${Parmetis_INCLUDE_DIRS}
+    ${OMEGA_BUILD_DIR}/external/GSW-C
 )
 
 target_compile_definitions(
@@ -32,10 +33,17 @@ if(OMEGA_SINGLE_PRECISION)
   )
 endif()
 
+
 target_link_options(
     OmegaLibFlags
     INTERFACE
     ${OMEGA_LINK_OPTIONS}
+)
+
+target_link_directories(
+	OmegaLibFlags
+	INTERFACE
+	${OMEGA_BUILD_DIR}/external/GSW-C
 )
 
 target_link_libraries(
@@ -48,6 +56,7 @@ target_link_libraries(
     parmetis
     metis
     gptl
+    gswteos-10
     pacer
     stdc++fs
     cpptrace::cpptrace
@@ -65,6 +74,8 @@ endif()
 file(GLOB_RECURSE _LIBSRC_FILES infra/*.cpp base/*.cpp ocn/*.cpp timeStepping/*.cpp)
 
 add_library(${OMEGA_LIB_NAME} ${_LIBSRC_FILES})
+
+add_dependencies(${OMEGA_LIB_NAME} gswteos)
 
 target_link_libraries(
     ${OMEGA_LIB_NAME}
