@@ -168,7 +168,12 @@ The Metadata associated with a field can be retrieved individually using:
    int Err = MyField->getMetadata(MetadataName, MetaValue);
 ```
 where the MetaValue can be a scalar of any supported data type (I4, I8, R4, R8,
-bool, std::string). The existence of a metadata entry can be determined with:
+bool, std::string). If the value of a metadata entry needs to be changed,
+an update function is provided:
+```c++
+   int Err = MyField->updateMetadata(MetadataName, NewMetaValue);
+```
+The existence of a metadata entry can be determined with:
 ```c++
    bool MetaExists = MyField->hasMetadata(MetadataName);
 ```

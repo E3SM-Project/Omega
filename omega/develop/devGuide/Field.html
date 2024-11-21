@@ -320,7 +320,12 @@ The Metadata associated with a field can be retrieved individually using:</p>
 </pre></div>
 </div>
 <p>where the MetaValue can be a scalar of any supported data type (I4, I8, R4, R8,
-bool, std::string). The existence of a metadata entry can be determined with:</p>
+bool, std::string). If the value of a metadata entry needs to be changed,
+an update function is provided:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">updateMetadata</span><span class="p">(</span><span class="n">MetadataName</span><span class="p">,</span><span class="w"> </span><span class="n">NewMetaValue</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The existence of a metadata entry can be determined with:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">MetaExists</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">hasMetadata</span><span class="p">(</span><span class="n">MetadataName</span><span class="p">);</span>
 </pre></div>
 </div>
