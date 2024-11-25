@@ -85,7 +85,9 @@ with the defaults for each being ``IO::FmtDefault``, and
 NetCDF4. Earlier NetCDF formats should be avoided, but are provided in
 case an input file is in an earlier format.
 
-Once the file is open, data is read/written using:
+Once the file is open, data is read/written using one of two interfaces,
+depending on whether the array is decomposed across MPI tasks or not. For
+large decomposed arrays, the interface is:
 ```c++
 int Err = IO::readArray (&Array, Size, VariableName, FileID, DecompID, VarID);
 int Err = IO::writeArray(&Array, Size, &FillValue,   FileID, DecompID, VarID);
@@ -98,6 +100,16 @@ supplied and the variable ID (VarID) is returned in case it is needed for
 reading of variable metadata. For writing, a FillValue is supplied to fill
 undefined locations in an array and the variable ID must have been assigned
 in a prior defineVar call prior to the write as described below.
+
+For arrays or scalars that are not distributed, the non-distributed variable
+interface must be used:
+```c++
+int Err = IO::readNDVar(&Array, VariableName, FileID, VarID);
+int Err = IO::writeNDVar(&Array, FileID, VarID);
+```
+with arguments similar to the distributed array calls above. Note that
+when defining dimensions for these fields, the dimensions must be
+non-distributed. For scalars, the number of dimensions should be zero.
 
 The IO subsystem must know how the data is laid out in the parallel
 decomposition. Both the dimensions of the array and the decomposition
@@ -171,8 +183,9 @@ where VarID is the ID assigned to the variable, FileID is the usual ID of
 the data file, VarName is a ``std::string`` holding the variable name,
 IODataType is the data type described above, NDims are the number of dimensions,
 and DimIDs are an integer ``std::vector`` holding the dimension IDs for each
-dimension. The variable ID can then be used in all IO calls related to this
-variable.
+dimension. For scalar variables, NDims should be set to zero and a null pointer
+should be used in place of the DimID argument. Once defined, the variable ID
+is used in all IO calls related to this variable.
 
 In addition to data in a file, we can also read and write metadata. As with
 the data itself, metadata is typically managed by the IOStreams and Metadata

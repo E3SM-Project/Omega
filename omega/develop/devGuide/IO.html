@@ -238,7 +238,9 @@ In the longer interface, the user must supply these values using the enums:</p>
 <code class="docutils literal notranslate"><span class="pre">IO::IfExists::Fail</span></code>. The E3SM standard format is currently
 NetCDF4. Earlier NetCDF formats should be avoided, but are provided in
 case an input file is in an earlier format.</p>
-<p>Once the file is open, data is read/written using:</p>
+<p>Once the file is open, data is read/written using one of two interfaces,
+depending on whether the array is decomposed across MPI tasks or not. For
+large decomposed arrays, the interface is:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IO</span><span class="o">::</span><span class="n">readArray</span><span class="w"> </span><span class="p">(</span><span class="o">&amp;</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">Size</span><span class="p">,</span><span class="w"> </span><span class="n">VariableName</span><span class="p">,</span><span class="w"> </span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">DecompID</span><span class="p">,</span><span class="w"> </span><span class="n">VarID</span><span class="p">);</span>
 <span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IO</span><span class="o">::</span><span class="n">writeArray</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">Size</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">FillValue</span><span class="p">,</span><span class="w">   </span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">DecompID</span><span class="p">,</span><span class="w"> </span><span class="n">VarID</span><span class="p">);</span>
 </pre></div>
@@ -251,6 +253,15 @@ supplied and the variable ID (VarID) is returned in case it is needed for
 reading of variable metadata. For writing, a FillValue is supplied to fill
 undefined locations in an array and the variable ID must have been assigned
 in a prior defineVar call prior to the write as described below.</p>
+<p>For arrays or scalars that are not distributed, the non-distributed variable
+interface must be used:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IO</span><span class="o">::</span><span class="n">readNDVar</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">VariableName</span><span class="p">,</span><span class="w"> </span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">VarID</span><span class="p">);</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IO</span><span class="o">::</span><span class="n">writeNDVar</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">VarID</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>with arguments similar to the distributed array calls above. Note that
+when defining dimensions for these fields, the dimensions must be
+non-distributed. For scalars, the number of dimensions should be zero.</p>
 <p>The IO subsystem must know how the data is laid out in the parallel
 decomposition. Both the dimensions of the array and the decomposition
 across tasks must be defined. For each dimension, a dimension must be
@@ -321,8 +332,9 @@ be defined (this is required for writing only) using:</p>
 the data file, VarName is a <code class="docutils literal notranslate"><span class="pre">std::string</span></code> holding the variable name,
 IODataType is the data type described above, NDims are the number of dimensions,
 and DimIDs are an integer <code class="docutils literal notranslate"><span class="pre">std::vector</span></code> holding the dimension IDs for each
-dimension. The variable ID can then be used in all IO calls related to this
-variable.</p>
+dimension. For scalar variables, NDims should be set to zero and a null pointer
+should be used in place of the DimID argument. Once defined, the variable ID
+is used in all IO calls related to this variable.</p>
 <p>In addition to data in a file, we can also read and write metadata. As with
 the data itself, metadata is typically managed by the IOStreams and Metadata
 interfaces, but the base IO module contains interfaces for reading and
