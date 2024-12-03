@@ -39,7 +39,8 @@ Fields are created with standard metadata using
                  ValidMax,    ///< [in] max valid field value  field data)
                  FillValue,   ///< [in] scalar used for undefined entries
                  NumDims,     ///< [in] number of dimensions (int)
-                 Dimensions   ///< dim names for each dim (vector of strings)
+                 Dimensions,  ///< [in] dim names (vector of strings)
+                 InTimeDependent ///< [in] (opt, default true) if time varying
    );
 ```
 This interface enforces a list of required metadata. If a CF standard name does
@@ -49,8 +50,16 @@ for some intermediate calculations or unique analyses. If there is no
 restriction on valid range, an appropriately large range should be provided for
 the data type. Similarly, if a FillValue is not being used, a very unique
 number should be supplied to prevent accidentally treating valid data as a
-FillValue.  Actual field data stored in an array is attached in a separate
-call as described below. Fields without a data array can be created with:
+FillValue. The optional TimeDependent argument can be omitted and is assumed
+to be true by default. Fields with this attribute will be output with the
+unlimited time dimension added. Time should not be added explicitly in the
+dimension list since it will be added during I/O. Fields that do not change
+with time should include this argument with the value false so that the time
+dimension is not added. Actual field data stored in an array is attached in a
+separate call as described below. Scalar fields can be added by setting the
+NumDims to zero (the Dimensions vector is ignored but an empty vector
+must still be supplied in the argument list). Scalar data is attached using
+a 1D array with size 1. Fields without a data array can be created with:
 ```c++
    std::shared_ptr<Field> MyField =
    Field::create(FieldName ///< [in] Name of field
@@ -108,9 +117,10 @@ captured correctly. If the location of the data changes (eg the time
 level changes and the pointer points to a different time slice), the data must
 be updated by calling the attach routine to replace the pointer to the new
 location. It is up to the developer to insert the appropriate call to reattach
-the data. The attach function primarily sets the pointer to the data location
-but it also sets the data type of the variable and its memory location using
-two enum classes:
+the data. As mentioned previously, scalar data should be attached using the
+appropriate 1D HostArray with a size of 1. The attach function primarily sets
+the pointer to the data location but it also sets the data type of the variable
+and its memory location using two enum classes:
 ```c++
 enum class FieldType {Unknown, I4, I8, R4, R8};
 enum class FieldMemLoc {Unknown, Device, Host, Both};
@@ -155,7 +165,15 @@ The dimension information can be retrieved using:
    int Err = MyField->getDimNames(MyDimNames);
 ```
 Once the dimension names have been retrieved, the Dimension class API can be
-used to extract further dimension information.
+used to extract further dimension information. Two other field quantities
+can be retrieved, but are used only by the IOStream capability:
+```c++
+   bool IsTimeDependent = MyField->isTimeDependent();
+   bool IsDistributed   = MyField->isDistributed();
+```
+The first determines whether the unlimited time dimension should be added
+during IO operations. The second determines whether any of the dimensions
+are distributed across MPI tasks so that parallel IO is required.
 
 The data and metadata stored in a field can be retrieved using several
 functions.  To retrieve a pointer to the full Field, use:

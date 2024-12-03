@@ -194,7 +194,8 @@ See <a class="reference internal" href="Dimension.html#omega-dev-dimension"><spa
 <span class="w">                 </span><span class="n">ValidMax</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; [in] max valid field value  field data)</span>
 <span class="w">                 </span><span class="n">FillValue</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] scalar used for undefined entries</span>
 <span class="w">                 </span><span class="n">NumDims</span><span class="p">,</span><span class="w">     </span><span class="c1">///&lt; [in] number of dimensions (int)</span>
-<span class="w">                 </span><span class="n">Dimensions</span><span class="w">   </span><span class="c1">///&lt; dim names for each dim (vector of strings)</span>
+<span class="w">                 </span><span class="n">Dimensions</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in] dim names (vector of strings)</span>
+<span class="w">                 </span><span class="n">InTimeDependent</span><span class="w"> </span><span class="c1">///&lt; [in] (opt, default true) if time varying</span>
 <span class="w">   </span><span class="p">);</span>
 </pre></div>
 </div>
@@ -205,8 +206,16 @@ for some intermediate calculations or unique analyses. If there is no
 restriction on valid range, an appropriately large range should be provided for
 the data type. Similarly, if a FillValue is not being used, a very unique
 number should be supplied to prevent accidentally treating valid data as a
-FillValue.  Actual field data stored in an array is attached in a separate
-call as described below. Fields without a data array can be created with:</p>
+FillValue. The optional TimeDependent argument can be omitted and is assumed
+to be true by default. Fields with this attribute will be output with the
+unlimited time dimension added. Time should not be added explicitly in the
+dimension list since it will be added during I/O. Fields that do not change
+with time should include this argument with the value false so that the time
+dimension is not added. Actual field data stored in an array is attached in a
+separate call as described below. Scalar fields can be added by setting the
+NumDims to zero (the Dimensions vector is ignored but an empty vector
+must still be supplied in the argument list). Scalar data is attached using
+a 1D array with size 1. Fields without a data array can be created with:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Field</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyField</span><span class="w"> </span><span class="o">=</span>
 <span class="w">   </span><span class="n">Field</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="n">FieldName</span><span class="w"> </span><span class="c1">///&lt; [in] Name of field</span>
 <span class="w">   </span><span class="p">);</span>
@@ -262,9 +271,10 @@ captured correctly. If the location of the data changes (eg the time
 level changes and the pointer points to a different time slice), the data must
 be updated by calling the attach routine to replace the pointer to the new
 location. It is up to the developer to insert the appropriate call to reattach
-the data. The attach function primarily sets the pointer to the data location
-but it also sets the data type of the variable and its memory location using
-two enum classes:</p>
+the data. As mentioned previously, scalar data should be attached using the
+appropriate 1D HostArray with a size of 1. The attach function primarily sets
+the pointer to the data location but it also sets the data type of the variable
+and its memory location using two enum classes:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">FieldType</span><span class="w"> </span><span class="p">{</span><span class="n">Unknown</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="p">,</span><span class="w"> </span><span class="n">I8</span><span class="p">,</span><span class="w"> </span><span class="n">R4</span><span class="p">,</span><span class="w"> </span><span class="n">R8</span><span class="p">};</span>
 <span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">FieldMemLoc</span><span class="w"> </span><span class="p">{</span><span class="n">Unknown</span><span class="p">,</span><span class="w"> </span><span class="n">Device</span><span class="p">,</span><span class="w"> </span><span class="n">Host</span><span class="p">,</span><span class="w"> </span><span class="n">Both</span><span class="p">};</span>
 </pre></div>
@@ -308,7 +318,15 @@ field name, so we provide:</p>
 </pre></div>
 </div>
 <p>Once the dimension names have been retrieved, the Dimension class API can be
-used to extract further dimension information.</p>
+used to extract further dimension information. Two other field quantities
+can be retrieved, but are used only by the IOStream capability:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">IsTimeDependent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">isTimeDependent</span><span class="p">();</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">IsDistributed</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">isDistributed</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>The first determines whether the unlimited time dimension should be added
+during IO operations. The second determines whether any of the dimensions
+are distributed across MPI tasks so that parallel IO is required.</p>
 <p>The data and metadata stored in a field can be retrieved using several
 functions.  To retrieve a pointer to the full Field, use:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Field</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyField</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">MyFieldName</span><span class="p">);</span>
