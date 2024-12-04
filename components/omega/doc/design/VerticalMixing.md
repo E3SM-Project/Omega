@@ -75,3 +75,26 @@ $$
 in these formulae, $\alpha$ and *n* are tunable parameters, most often chosen as 5 and 2 respectively.  $\nu_b$ and $\kappa_b$ are the background viscosity and diffusivity respectively.
 
 ### 3.2 Convective Instability Mixing
+
+Commonly, mixing due to convective instability is treated as a step function for the diffusivity and viscosity.  This is often represented as
+
+$$
+\kappa
+= 
+\begin{cases}
+\kappa_{conv} \quad \text{ if } N^2 \leq 0\\
+0 \quad \text{ if } N^2 > 0
+\end{cases}
+$$
+
+A similar expression is utilized for viscosity.  The effect of this formula is to homogenize T, S, and normal velocity, for unstable stratification, but also in neutral stratification.  The behavior in unstable stratification is likely correct, but for neutral stratification, homogenization of momentum is questionable.  To allow for a different behavior, we slightly modifty the algorithm above to, 
+
+$$
+\kappa
+= 
+\begin{cases}
+\kappa_{conv} \quad \text{ if } N^2 < 0\\
+0 \quad \text{ if } N^2 \geq 0
+\end{cases}
+$$
+
