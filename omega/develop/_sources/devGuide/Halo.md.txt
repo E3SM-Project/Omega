@@ -49,7 +49,7 @@ buffer memory space to communicate with that neighbor. All member variables
 and objects and most member methods of the Halo class are declared private
 as they are only needed by the Halo class methods to execute an exchange.
 
-The main private methods of the Halo class which execute an exchange are
+The main methods of the Halo class which execute an exchange are
   - startReceives: wrapper to call MPI_Irecv for each neighbor
   - packBuffer: packs halo elements into a buffer to send to a neighbor
   - startSend: wrapper to call MPI_Isend to send a buffer to each neighbor
@@ -61,10 +61,9 @@ array types.
 The exchangeFullArrayHalo function is the main interface to conduct a halo
 exchange for any supported array defined in the DataTypes module. The
 exchangeFullArrayHalo function is a template which passes the array to the
-proper private Halo methods which perform the exchange, depending on the type
-and dimensionality of the array. The user must also pass the index space on
-which the array is defined to this function. This is currently done using an
-enum defined in the Halo header file.
+Halo methods above which perform the exchange. The index space on which
+the array is defined must also be passed to this function. This is currently
+done using an enum defined in the Halo header file.
 ```c++
 enum MeshElement{OnCell, OnEdge, OnVertex};
 ```
@@ -74,5 +73,3 @@ MyHalo.exchangeFullArrayHalo(SomeCellBasedArray, OMEGA::OnCell);
 ```
 for a constructed Halo named MyHalo and any supported array type in the cell
 index space.
-
-At present, only host (CPU) arrays are supported by the Halo class.

@@ -204,7 +204,7 @@ exchange with a single neighboring task in any index space, as well as the
 buffer memory space to communicate with that neighbor. All member variables
 and objects and most member methods of the Halo class are declared private
 as they are only needed by the Halo class methods to execute an exchange.</p>
-<p>The main private methods of the Halo class which execute an exchange are</p>
+<p>The main methods of the Halo class which execute an exchange are</p>
 <ul class="simple">
 <li><p>startReceives: wrapper to call MPI_Irecv for each neighbor</p></li>
 <li><p>packBuffer: packs halo elements into a buffer to send to a neighbor</p></li>
@@ -216,10 +216,9 @@ array types.</p>
 <p>The exchangeFullArrayHalo function is the main interface to conduct a halo
 exchange for any supported array defined in the DataTypes module. The
 exchangeFullArrayHalo function is a template which passes the array to the
-proper private Halo methods which perform the exchange, depending on the type
-and dimensionality of the array. The user must also pass the index space on
-which the array is defined to this function. This is currently done using an
-enum defined in the Halo header file.</p>
+Halo methods above which perform the exchange. The index space on which
+the array is defined must also be passed to this function. This is currently
+done using an enum defined in the Halo header file.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="nc">MeshElement</span><span class="p">{</span><span class="n">OnCell</span><span class="p">,</span><span class="w"> </span><span class="n">OnEdge</span><span class="p">,</span><span class="w"> </span><span class="n">OnVertex</span><span class="p">};</span>
 </pre></div>
 </div>
@@ -229,7 +228,6 @@ enum defined in the Halo header file.</p>
 </div>
 <p>for a constructed Halo named MyHalo and any supported array type in the cell
 index space.</p>
-<p>At present, only host (CPU) arrays are supported by the Halo class.</p>
 </section>
 
 
