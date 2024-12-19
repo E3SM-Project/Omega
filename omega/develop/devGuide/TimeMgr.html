@@ -327,14 +327,22 @@ is set as the new ring time:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">SingleAlarm</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">NewAlarmTime</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>If the Alarm is periodic, the new ring time will be set to the next interval
-boundary after the input time:</p>
+<p>If the Alarm is periodic, the ringing will be switched off as above and the
+new ring time will be set to the next interval boundary after the input time.
+The interval boundary is an integer number of intervals after the start time
+provided on Alarm creation.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">PeriodicAlarm</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">CurrentTime</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>This Alarm will ring next at <code class="docutils literal notranslate"><span class="pre">CurrentTime</span> <span class="pre">+</span> <span class="pre">AlarmInterval</span></code>. An Alarm can be
-permanently stopped using the <code class="docutils literal notranslate"><span class="pre">stop</span></code> method:</p>
+<p>An Alarm can be permanently stopped using the <code class="docutils literal notranslate"><span class="pre">stop</span></code> method:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">SingleAlarm</span><span class="p">.</span><span class="n">stop</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>It is sometimes useful to retrieve other aspects of a periodic Alarm, namely
+the Alarm interval and the last time the Alarm was ringing. Two retrieval
+functions are provided that return const pointers to these values:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">*</span><span class="n">AlarmInterval</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PeriodicAlarm</span><span class="p">.</span><span class="n">getInterval</span><span class="p">();</span>
+<span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">*</span><span class="n">PriorRingTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PeriodicAlarm</span><span class="p">.</span><span class="n">getRingTimePrev</span><span class="p">();</span>
 </pre></div>
 </div>
 </section>

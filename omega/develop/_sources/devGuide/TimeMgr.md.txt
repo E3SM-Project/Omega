@@ -159,15 +159,23 @@ is set as the new ring time:
 ```c++
 SingleAlarm.reset(NewAlarmTime);
 ```
-If the Alarm is periodic, the new ring time will be set to the next interval
-boundary after the input time:
+If the Alarm is periodic, the ringing will be switched off as above and the
+new ring time will be set to the next interval boundary after the input time.
+The interval boundary is an integer number of intervals after the start time
+provided on Alarm creation.
 ```c++
 PeriodicAlarm.reset(CurrentTime);
 ```
-This Alarm will ring next at `CurrentTime + AlarmInterval`. An Alarm can be
-permanently stopped using the `stop` method:
+An Alarm can be permanently stopped using the `stop` method:
 ```c++
 SingleAlarm.stop();
+```
+It is sometimes useful to retrieve other aspects of a periodic Alarm, namely
+the Alarm interval and the last time the Alarm was ringing. Two retrieval
+functions are provided that return const pointers to these values:
+```c++
+const TimeInterval *AlarmInterval = PeriodicAlarm.getInterval();
+const TimeInstant *PriorRingTime = PeriodicAlarm.getRingTimePrev();
 ```
 
 ### 6. Clock
