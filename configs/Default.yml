@@ -16,8 +16,6 @@ Omega:
   Advection:
     FluxThicknessType: Center
     FluxTracerType: Center
-  WindStress:
-    InterpType: Isotropic
   Tendencies:
     ThicknessFluxTendencyEnable: true
     PVTendencyEnable: true
@@ -28,10 +26,6 @@ Omega:
     VelHyperDiffTendencyEnable: true
     ViscDel4: 1.2e11
     DivFactor: 1.0
-    WindForcingTendencyEnable: false
-    Density0: 1026.0
-    BottomDragTendencyEnable: false
-    BottomDragCoeff: 0.0
     TracerHorzAdvTendencyEnable: true
     TracerDiffTendencyEnable: true
     EddyDiff2: 10.0
@@ -102,7 +96,7 @@ Omega:
       Contents:
         - Tracers
         - State
-        - SshCell
+        - SshCellDefault
     Highfreq:
       UsePointerFile: false
       Filename: ocn.hifreq.$Y-$M
