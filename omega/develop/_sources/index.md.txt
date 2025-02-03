@@ -110,6 +110,7 @@ design/TimeMgr
 design/Timers
 design/TimeStepping
 design/Tracers
+design/TridiagonalSolver
 
 design/Template
 ```
