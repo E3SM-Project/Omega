@@ -101,6 +101,14 @@ reading of variable metadata. For writing, a FillValue is supplied to fill
 undefined locations in an array and the variable ID must have been assigned
 in a prior defineVar call prior to the write as described below.
 
+Writing or reading multiple time slices (where there in an unlimited time
+dimension) is also possible and an additional optional Frame argument
+specifies the time index along that dimension that should be read/written:
+```c++
+int Err = IO::readArray (&Array, Size, VariableName, FileID, DecompID, VarID, Frame);
+int Err = IO::writeArray(&Array, Size, &FillValue,   FileID, DecompID, VarID, Frame);
+```
+
 For arrays or scalars that are not distributed, the non-distributed variable
 interface must be used:
 ```c++
@@ -110,6 +118,17 @@ int Err = IO::writeNDVar(&Array, FileID, VarID);
 with arguments similar to the distributed array calls above. Note that
 when defining dimensions for these fields, the dimensions must be
 non-distributed. For scalars, the number of dimensions should be zero.
+Multiple time slices can be also be read/written for non-distributed fields,
+but require two additional arguments. As in the distributed array, the
+Frame (index of the time slice) must be provided. In addition, a vector
+``std::vector<int> DimLengths`` containing the length of the non-time
+dimensions must be provided:
+```c++
+int Err = IO::readNDVar(&Array, VariableName, FileID, VarID, Frame, DimLengths);
+int Err = IO::writeNDVar(&Array, FileID, VarID, Frame, DimLengths);
+```
+Note that the full arrays in this case are written so if any masking or
+pruning of points is required, it should be performed before the call.
 
 The IO subsystem must know how the data is laid out in the parallel
 decomposition. Both the dimensions of the array and the decomposition
@@ -201,7 +220,12 @@ the MetaValue is the value of the MetaData. All supported Omega data types are
 allowed except boolean which must be converted to an integer type. The FileID
 is once again the ID of the open data file and VarID is the variable to which
 this metadata is attached. For global file and simulation metadata not attached
-to a variable, the ID ``IO::GlobalID`` is used to denote global metadata.
+to a variable, the ID ``IO::GlobalID`` is used to denote global metadata. If
+data is being appended to a file (eg for multiple time slices), writeMeta will
+check first to see if metadata already exists with the same value. If the
+entry is absent, new metadata will be written. If it exists but with a
+different value, the writeMeta function will replace the current entry with
+the new value.
 
 For an example of the full read/write process, the IO unit test contains
 the full reading and writing of a data file and associated metadata. We

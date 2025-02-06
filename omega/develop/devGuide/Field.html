@@ -196,7 +196,8 @@ See <a class="reference internal" href="Dimension.html#omega-dev-dimension"><spa
 <span class="w">                 </span><span class="n">FillValue</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] scalar used for undefined entries</span>
 <span class="w">                 </span><span class="n">NumDims</span><span class="p">,</span><span class="w">     </span><span class="c1">///&lt; [in] number of dimensions (int)</span>
 <span class="w">                 </span><span class="n">Dimensions</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in] dim names (vector of strings)</span>
-<span class="w">                 </span><span class="n">InTimeDependent</span><span class="w"> </span><span class="c1">///&lt; [in] (opt, default true) if time varying</span>
+<span class="w">                 </span><span class="n">TimeDependent</span><span class="w">   </span><span class="c1">///&lt; [in] (opt, default true) if time varying</span>
+<span class="w">                 </span><span class="n">RetainPrecision</span><span class="w"> </span><span class="c1">///&lt; [in] (opt, false) retain full prec in IO</span>
 <span class="w">   </span><span class="p">);</span>
 </pre></div>
 </div>
@@ -212,7 +213,14 @@ to be true by default. Fields with this attribute will be output with the
 unlimited time dimension added. Time should not be added explicitly in the
 dimension list since it will be added during I/O. Fields that do not change
 with time should include this argument with the value false so that the time
-dimension is not added. Actual field data stored in an array is attached in a
+dimension is not added. The argument RetainPrecision is also optional and should
+be used if the full precision of the field needs to be retained during IO even
+if it is a part of an IO stream that requests reduced precision. An example is
+the time field that can require full precision to represent the seconds from a
+reference time far in the past. The default is false and the argument does not
+need to be supplied in most cases. However, if it is needed, then the
+TimeDependent argument must also be explicitly included due to the language
+rules on argument ordering. Actual field data stored in an array is attached in a
 separate call as described below. Scalar fields can be added by setting the
 NumDims to zero (the Dimensions vector is ignored but an empty vector
 must still be supplied in the argument list). Scalar data is attached using

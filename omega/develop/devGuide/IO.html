@@ -254,6 +254,13 @@ supplied and the variable ID (VarID) is returned in case it is needed for
 reading of variable metadata. For writing, a FillValue is supplied to fill
 undefined locations in an array and the variable ID must have been assigned
 in a prior defineVar call prior to the write as described below.</p>
+<p>Writing or reading multiple time slices (where there in an unlimited time
+dimension) is also possible and an additional optional Frame argument
+specifies the time index along that dimension that should be read/written:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IO</span><span class="o">::</span><span class="n">readArray</span><span class="w"> </span><span class="p">(</span><span class="o">&amp;</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">Size</span><span class="p">,</span><span class="w"> </span><span class="n">VariableName</span><span class="p">,</span><span class="w"> </span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">DecompID</span><span class="p">,</span><span class="w"> </span><span class="n">VarID</span><span class="p">,</span><span class="w"> </span><span class="n">Frame</span><span class="p">);</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IO</span><span class="o">::</span><span class="n">writeArray</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">Size</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">FillValue</span><span class="p">,</span><span class="w">   </span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">DecompID</span><span class="p">,</span><span class="w"> </span><span class="n">VarID</span><span class="p">,</span><span class="w"> </span><span class="n">Frame</span><span class="p">);</span>
+</pre></div>
+</div>
 <p>For arrays or scalars that are not distributed, the non-distributed variable
 interface must be used:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IO</span><span class="o">::</span><span class="n">readNDVar</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">VariableName</span><span class="p">,</span><span class="w"> </span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">VarID</span><span class="p">);</span>
@@ -262,7 +269,18 @@ interface must be used:</p>
 </div>
 <p>with arguments similar to the distributed array calls above. Note that
 when defining dimensions for these fields, the dimensions must be
-non-distributed. For scalars, the number of dimensions should be zero.</p>
+non-distributed. For scalars, the number of dimensions should be zero.
+Multiple time slices can be also be read/written for non-distributed fields,
+but require two additional arguments. As in the distributed array, the
+Frame (index of the time slice) must be provided. In addition, a vector
+<code class="docutils literal notranslate"><span class="pre">std::vector&lt;int&gt;</span> <span class="pre">DimLengths</span></code> containing the length of the non-time
+dimensions must be provided:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IO</span><span class="o">::</span><span class="n">readNDVar</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">VariableName</span><span class="p">,</span><span class="w"> </span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">VarID</span><span class="p">,</span><span class="w"> </span><span class="n">Frame</span><span class="p">,</span><span class="w"> </span><span class="n">DimLengths</span><span class="p">);</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IO</span><span class="o">::</span><span class="n">writeNDVar</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">VarID</span><span class="p">,</span><span class="w"> </span><span class="n">Frame</span><span class="p">,</span><span class="w"> </span><span class="n">DimLengths</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Note that the full arrays in this case are written so if any masking or
+pruning of points is required, it should be performed before the call.</p>
 <p>The IO subsystem must know how the data is laid out in the parallel
 decomposition. Both the dimensions of the array and the decomposition
 across tasks must be defined. For each dimension, a dimension must be
@@ -350,7 +368,12 @@ the MetaValue is the value of the MetaData. All supported Omega data types are
 allowed except boolean which must be converted to an integer type. The FileID
 is once again the ID of the open data file and VarID is the variable to which
 this metadata is attached. For global file and simulation metadata not attached
-to a variable, the ID <code class="docutils literal notranslate"><span class="pre">IO::GlobalID</span></code> is used to denote global metadata.</p>
+to a variable, the ID <code class="docutils literal notranslate"><span class="pre">IO::GlobalID</span></code> is used to denote global metadata. If
+data is being appended to a file (eg for multiple time slices), writeMeta will
+check first to see if metadata already exists with the same value. If the
+entry is absent, new metadata will be written. If it exists but with a
+different value, the writeMeta function will replace the current entry with
+the new value.</p>
 <p>For an example of the full read/write process, the IO unit test contains
 the full reading and writing of a data file and associated metadata. We
 will repeat again that users and developers are not expected to learn and

@@ -40,7 +40,8 @@ Fields are created with standard metadata using
                  FillValue,   ///< [in] scalar used for undefined entries
                  NumDims,     ///< [in] number of dimensions (int)
                  Dimensions,  ///< [in] dim names (vector of strings)
-                 InTimeDependent ///< [in] (opt, default true) if time varying
+                 TimeDependent   ///< [in] (opt, default true) if time varying
+                 RetainPrecision ///< [in] (opt, false) retain full prec in IO
    );
 ```
 This interface enforces a list of required metadata. If a CF standard name does
@@ -55,7 +56,14 @@ to be true by default. Fields with this attribute will be output with the
 unlimited time dimension added. Time should not be added explicitly in the
 dimension list since it will be added during I/O. Fields that do not change
 with time should include this argument with the value false so that the time
-dimension is not added. Actual field data stored in an array is attached in a
+dimension is not added. The argument RetainPrecision is also optional and should
+be used if the full precision of the field needs to be retained during IO even
+if it is a part of an IO stream that requests reduced precision. An example is
+the time field that can require full precision to represent the seconds from a
+reference time far in the past. The default is false and the argument does not
+need to be supplied in most cases. However, if it is needed, then the
+TimeDependent argument must also be explicitly included due to the language
+rules on argument ordering. Actual field data stored in an array is attached in a
 separate call as described below. Scalar fields can be added by setting the
 NumDims to zero (the Dimensions vector is ignored but an empty vector
 must still be supplied in the argument list). Scalar data is attached using
