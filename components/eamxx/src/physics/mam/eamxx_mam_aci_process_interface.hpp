@@ -41,8 +41,9 @@ class MAMAci final : public scream::AtmosphereProcess {
   // ACI runtime ( or namelist) options
   //------------------------------------------------------------------------
 
-  Real wsubmin_;  // Minimum subgrid vertical velocity
-  int top_lev_;   // Top level for MAM4xx
+  Real wsubmin_;                   // Minimum subgrid vertical velocity
+  bool enable_aero_vertical_mix_;  // To enable vertical mixing of aerosols
+  int top_lev_;                    // Top level for MAM4xx
 
   //------------------------------------------------------------------------
   // END: ACI runtime ( or namelist) options
@@ -159,7 +160,9 @@ class MAMAci final : public scream::AtmosphereProcess {
   MAMAci(const ekat::Comm &comm, const ekat::ParameterList &params);
 
   // Process metadata: Return type of the process
-  AtmosphereProcessType type() const override { return AtmosphereProcessType::Physics; }
+  AtmosphereProcessType type() const override {
+    return AtmosphereProcessType::Physics;
+  }
 
   // Return name of the process
   std::string name() const override { return "mam4_aci"; }
@@ -178,7 +181,7 @@ class MAMAci final : public scream::AtmosphereProcess {
   // process behavior
   void initialize_impl(const RunType run_type) override;
   void run_impl(const double dt) override;
-  void finalize_impl() override {/*DO NOTHING*/};
+  void finalize_impl() override{/*DO NOTHING*/};
 
   // Atmosphere processes often have a pre-processing step that constructs
   // required variables from the set of fields stored in the field manager.
@@ -212,7 +215,9 @@ class MAMAci final : public scream::AtmosphereProcess {
       // for atmosphere
       compute_vertical_layer_heights(team, dry_atm_pre_, i);
       compute_updraft_velocities(team, wet_atm_pre_, dry_atm_pre_, i);
-    }  // operator()
+      set_min_background_mmr(team, dry_aero_pre_,
+                             i);  // dry_atm_pre_ is the output
+    }                             // operator()
 
     // local variables for preprocess struct
     // number of horizontal columns and vertical levels

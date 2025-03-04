@@ -35,6 +35,9 @@ void P3Microphysics::set_grids(const std::shared_ptr<const GridsManager> grids_m
   m_num_cols = m_grid->get_num_local_dofs(); // Number of columns on this rank
   m_num_levs = m_grid->get_num_vertical_levels();  // Number of levels per column
 
+  // Gather runtime options from file
+  runtime_options.load_runtime_options_from_file(m_params);
+
   // --Infrastructure
   // dt is passed as an argument to run_impl
   infrastructure.it  = 0;
@@ -90,6 +93,25 @@ void P3Microphysics::set_grids(const std::shared_ptr<const GridsManager> grids_m
   add_field<Required>("pseudo_density_dry", scalar3d_layout_mid, Pa,           grid_name, ps);
   add_field<Updated> ("qv_prev_micro_step", scalar3d_layout_mid, kg/kg,        grid_name, ps);
   add_field<Updated> ("T_prev_micro_step",  scalar3d_layout_mid, K,            grid_name, ps);
+
+  // Input from MAM4xx-ACI for heterogeneous freezing calculations
+  if (runtime_options.use_hetfrz_classnuc){
+    constexpr auto cm = m / 100;
+
+    // units of number mixing ratios of tracers
+    constexpr auto frz_unit = 1 / (cm * cm * cm * s);
+    //  heterogeneous freezing by immersion nucleation [cm^-3 s^-1]
+    add_field<Required>("hetfrz_immersion_nucleation_tend", scalar3d_layout_mid,
+                        frz_unit, grid_name, ps);
+
+    // heterogeneous freezing by contact nucleation [cm^-3 s^-1]
+    add_field<Required>("hetfrz_contact_nucleation_tend", scalar3d_layout_mid, frz_unit,
+                        grid_name, ps);
+
+    // heterogeneous freezing by deposition nucleation [cm^-3 s^-1]
+    add_field<Required>("hetfrz_deposition_nucleation_tend", scalar3d_layout_mid,
+                        frz_unit, grid_name, ps);
+  }
 
   // Diagnostic Outputs: (all fields are just outputs w.r.t. P3)
   add_field<Updated>("precip_liq_surf_mass", scalar2d_layout,     kg/m2,     grid_name, "ACCUMULATED");
@@ -217,8 +239,6 @@ void P3Microphysics::init_buffers(const ATMBufferManager &buffer_manager)
 // =========================================================================================
 void P3Microphysics::initialize_impl (const RunType /* run_type */)
 {
-  // Gather runtime options from file
-  runtime_options.load_runtime_options_from_file(m_params);
 
   // Set property checks for fields in this process
   add_invariant_check<FieldWithinIntervalCheck>(get_field_out("T_mid"),m_grid,100.0,500.0,false);
@@ -241,8 +261,8 @@ void P3Microphysics::initialize_impl (const RunType /* run_type */)
   add_postcondition_check<FieldWithinIntervalCheck>(get_field_out("eff_radius_qr"),m_grid,0.0,5.0e3,false);
 
   // Initialize p3
-  P3F::p3_init(/* write_tables = */ false,
-               this->get_comm().am_i_root());
+  lookup_tables = P3F::p3_init(/* write_tables = */ false,
+                               this->get_comm().am_i_root());
 
   // Initialize all of the structures that are passed to p3_main in run_impl.
   // Note: Some variables in the structures are not stored in the field manager.  For these
@@ -280,7 +300,7 @@ void P3Microphysics::initialize_impl (const RunType /* run_type */)
   p3_preproc.set_variables(m_num_cols,nk_pack,pmid,pmid_dry,pseudo_density,pseudo_density_dry,
                         T_atm,cld_frac_t,
                         qv, qc, nc, qr, nr, qi, qm, ni, bm, qv_prev,
-                        inv_exner, th_atm, cld_frac_l, cld_frac_i, cld_frac_r, dz);
+                        inv_exner, th_atm, cld_frac_l, cld_frac_i, cld_frac_r, dz, runtime_options);
   // --Prognostic State Variables:
   prog_state.qc     = p3_preproc.qc;
   prog_state.nc     = p3_preproc.nc;
@@ -313,6 +333,20 @@ void P3Microphysics::initialize_impl (const RunType /* run_type */)
   diag_inputs.cld_frac_r      = p3_preproc.cld_frac_r;
   diag_inputs.dz              = p3_preproc.dz;
   diag_inputs.inv_exner       = p3_preproc.inv_exner;
+  
+  // Inputs for the heteogeneous freezing
+  if (runtime_options.use_hetfrz_classnuc){
+    diag_inputs.hetfrz_immersion_nucleation_tend  = get_field_in("hetfrz_immersion_nucleation_tend").get_view<const Pack**>();
+    diag_inputs.hetfrz_contact_nucleation_tend    = get_field_in("hetfrz_contact_nucleation_tend").get_view<const Pack**>();
+    diag_inputs.hetfrz_deposition_nucleation_tend = get_field_in("hetfrz_deposition_nucleation_tend").get_view<const Pack**>();
+  }
+  else {
+    // set to unused, double check if this has any side effects (testing should catch this)
+    diag_inputs.hetfrz_immersion_nucleation_tend  = m_buffer.unused;
+    diag_inputs.hetfrz_contact_nucleation_tend    = m_buffer.unused;
+    diag_inputs.hetfrz_deposition_nucleation_tend = m_buffer.unused;
+  }
+
   // --Diagnostic Outputs
   diag_outputs.diag_eff_radius_qc = get_field_out("eff_radius_qc").get_view<Pack**>();
   diag_outputs.diag_eff_radius_qi = get_field_out("eff_radius_qi").get_view<Pack**>();
@@ -410,12 +444,6 @@ void P3Microphysics::initialize_impl (const RunType /* run_type */)
     const auto& heat_flux  = get_field_out("heat_flux").get_view<Real*>();
     p3_postproc.set_mass_and_energy_fluxes(vapor_flux, water_flux, ice_flux, heat_flux);
   }
-
-  // Load tables
-  P3F::init_kokkos_ice_lookup_tables(lookup_tables.ice_table_vals, lookup_tables.collect_table_vals);
-  P3F::init_kokkos_tables(lookup_tables.vn_table_vals, lookup_tables.vm_table_vals,
-                          lookup_tables.revap_table_vals, lookup_tables.mu_r_table_vals,
-                          lookup_tables.dnu_table_vals);
 
   // Setup WSM for internal local variables
   const auto policy = ekat::ExeSpaceUtils<KT::ExeSpace>::get_default_team_policy(m_num_cols, nk_pack);

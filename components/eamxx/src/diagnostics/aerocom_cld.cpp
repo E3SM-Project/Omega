@@ -4,7 +4,7 @@
 #include <string>
 
 #include "diagnostics/aerocom_cld_util.hpp"
-#include "share/util/scream_common_physics_functions.hpp"
+#include "share/util/eamxx_common_physics_functions.hpp"
 
 namespace scream {
 
@@ -21,8 +21,6 @@ AeroComCld::AeroComCld(const ekat::Comm &comm,
                    "Error! AeroComCld requires 'AeroComCld Kind' "
                    "to be 'Bot' or 'Top' in its input parameters.\n");
 }
-
-std::string AeroComCld::name() const { return "AeroComCld" + m_topbot; }
 
 void AeroComCld::set_grids(
     const std::shared_ptr<const GridsManager> grids_manager) {
@@ -76,7 +74,8 @@ void AeroComCld::set_grids(
   m_dz.allocate_view();
 
   // Construct and allocate the output field
-  FieldIdentifier fid(name(), vector1d_layout, nondim, grid_name);
+
+  FieldIdentifier fid("AeroComCld"+m_topbot, vector1d_layout, nondim, grid_name);
   m_diagnostic_output = Field(fid);
   m_diagnostic_output.allocate_view();
 

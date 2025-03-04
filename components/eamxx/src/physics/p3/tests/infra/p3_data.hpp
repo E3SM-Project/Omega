@@ -1,7 +1,7 @@
 #ifndef SCREAM_P3_DATA_HPP
 #define SCREAM_P3_DATA_HPP
 
-#include "share/scream_types.hpp"
+#include "share/eamxx_types.hpp"
 
 #include <memory>
 #include <vector>
@@ -16,12 +16,13 @@ struct P3Data {
   using KT     = KokkosTypes<HostDevice>;
   using Scalar = Real;
 
-  using Array1 = typename KT::template lview<Scalar*>;
-  using Array2 = typename KT::template lview<Scalar**>;
-  using Array3 = typename KT::template lview<Scalar***>;
+  using Array1 = typename KT::template view_1d<Scalar>;
+  using Array2 = typename KT::template view_2d<Scalar>;
+  using Array3 = typename KT::template view_3d<Scalar>;
 
   bool do_predict_nc;
   bool do_prescribed_CCN;
+  bool use_hetfrz_classnuc;
   const Int ncol, nlev;
 
   // In
@@ -29,6 +30,7 @@ struct P3Data {
   Int it;
   Array2 qv, th_atm, pres, dz, nc_nuceat_tend, nccn_prescribed, ni_activated, inv_qc_relvar, qc, nc, qr, nr,  qi,
     ni, qm, bm, dpres, inv_exner, qv_prev, t_prev;
+  Array2 hetfrz_immersion_nucleation_tend, hetfrz_contact_nucleation_tend, hetfrz_deposition_nucleation_tend;
   // Out
   Array1 precip_liq_surf, precip_ice_surf;
   Array2 diag_eff_radius_qc, diag_eff_radius_qi, diag_eff_radius_qr, rho_qi, qv2qi_depos_tend,

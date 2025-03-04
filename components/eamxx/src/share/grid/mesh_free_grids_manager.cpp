@@ -1,10 +1,9 @@
 #include "share/grid/mesh_free_grids_manager.hpp"
 #include "share/grid/point_grid.hpp"
 #include "share/grid/se_grid.hpp"
-#include "share/grid/remap/do_nothing_remapper.hpp"
 #include "share/property_checks/field_nan_check.hpp"
 #include "share/property_checks/field_within_interval_check.hpp"
-#include "share/io/scream_scorpio_interface.hpp"
+#include "share/io/eamxx_scorpio_interface.hpp"
 #include "share/io/scorpio_input.hpp"
 
 #include "physics/share/physics_constants.hpp"
@@ -26,10 +25,11 @@ MeshFreeGridsManager (const ekat::Comm& comm, const ekat::ParameterList& p)
 
 MeshFreeGridsManager::remapper_ptr_type
 MeshFreeGridsManager::
-do_create_remapper (const grid_ptr_type from_grid,
-                    const grid_ptr_type to_grid) const
+do_create_remapper (const grid_ptr_type /* from_grid */,
+                    const grid_ptr_type /* to_grid */) const
 {
-  return std::make_shared<DoNothingRemapper>(from_grid,to_grid);
+  EKAT_ERROR_MSG ("Error! MeshFreeGridsManager does not offer any remapper.\n");
+  return nullptr;
 }
 
 void MeshFreeGridsManager::
@@ -106,7 +106,7 @@ build_se_grid (const std::string& name, ekat::ParameterList& params)
   se_grid->m_short_name = "se";
   add_geo_data(se_grid);
 
-  add_grid(se_grid);
+  add_nonconst_grid(se_grid);
 }
 
 void MeshFreeGridsManager::
@@ -132,7 +132,7 @@ build_point_grid (const std::string& name, ekat::ParameterList& params)
   add_geo_data(pt_grid);
   pt_grid->m_short_name = "pt";
 
-  add_grid(pt_grid);
+  add_nonconst_grid(pt_grid);
 }
 
 void MeshFreeGridsManager::

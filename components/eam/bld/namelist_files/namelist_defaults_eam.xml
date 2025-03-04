@@ -112,9 +112,11 @@
 <ncdata dyn="se" hgrid="ne30np4x8arm"                     nlev="26" ocn="aquaplanet">atm/cam/inic/homme/cami_0003-01-01_arm30x8_L26_ape_c000000.nc</ncdata>
 <ncdata dyn="se" hgrid="ne0np4_arm_x8v3_lowcon"           nlev="30"                 >atm/cam/inic/homme/cami-mam3_0000-01-01_arm_x8v3_lowcon_np4_L30_c000000.nc</ncdata>
 <ncdata dyn="se" hgrid="ne0np4_arm_x8v3_lowcon"           nlev="26" ocn="aquaplanet">atm/cam/inic/homme/cami_0003-01-01_arm_x8v3_lowcon_np4_L26_ape_c000000.nc</ncdata>
+<ncdata dyn="se" hgrid="ne0np4_conus_x4v1_lowcon"         nlev="80"                 >atm/cam/inic/homme/v3.LR_mapped_conusx4v1np4-topoadj.eam.i.2010-01-01.nc</ncdata>
 <ncdata dyn="se" hgrid="ne0np4_conus_x4v1_lowcon"         nlev="72"                 >atm/cam/inic/homme/cami_0002-01-01-00000_conusx4v1np4_L72_c160719.nc</ncdata>
 <ncdata dyn="se" hgrid="ne0np4_conus_x4v1_lowcon"         nlev="30"                 >atm/cam/inic/homme/cami-mam3_0000-01-01_conusx4v1np4_L30_c141106.nc</ncdata>
 <ncdata dyn="se" hgrid="ne0np4_conus_x4v1_lowcon"         nlev="30" ocn="aquaplanet">atm/cam/inic/homme/cami_0003-01-01_conusx4v1np4_L30_ape_c000000.nc</ncdata>
+<ncdata dyn="se" hgrid="ne0np4_northamericax4v1"          nlev="80"                 >atm/cam/inic/homme/v3.LR_mapped_northamericax4v1np4-topoadj.eam.i.2010-01-01.nc</ncdata>
 <ncdata dyn="se" hgrid="ne0np4_northamericax4v1"          nlev="72"                 >atm/cam/inic/homme/cami_0001-01-01_northamericax4v1_c190709.nc</ncdata>
 <ncdata dyn="se" hgrid="ne0np4_antarcticax4v1"            nlev="72"                 >atm/cam/inic/homme/cami_mam3_Linoz_0000-01-antarcticax4v1_L72_topoadj_c20200507.nc</ncdata>
 <ncdata dyn="se" hgrid="ne0np4_arcticx4v1"                nlev="72"                 >atm/cam/inic/homme/eam_i_mam4_Linoz_0011-01-arcticx4v1np4_L72_c20220127.nc</ncdata>
@@ -127,7 +129,6 @@
 
 <!-- Topography -->
 <bnd_topo hgrid="64x128"  >atm/cam/topo/USGS-gtopo30_64x128_c050520.nc</bnd_topo>
-
 <bnd_topo hgrid="ne4np4"   npg="0">atm/cam/topo/USGS-gtopo30_ne4np4_16x.c20160612.nc</bnd_topo>
 <bnd_topo hgrid="ne4np4"   npg="2">atm/cam/topo/USGS-gtopo30_ne4np4pg2_16x_converted.c20200527.nc</bnd_topo>
 <bnd_topo hgrid="ne11np4"  npg="0">atm/cam/topo/USGS-gtopo30_ne11np4_16xconsistentSGH.c20160612.nc</bnd_topo>
@@ -827,7 +828,7 @@
 <shoc_length_fac             > 0.5D0 </shoc_length_fac>
 <shoc_c_diag_3rd_mom         > 7.0D0 </shoc_c_diag_3rd_mom>
 <shoc_lambda_low             > 0.001D0 </shoc_lambda_low>
-<shoc_lambda_high            > 0.04D0 </shoc_lambda_high>
+<shoc_lambda_high            > 0.08D0 </shoc_lambda_high>
 <shoc_lambda_slope           > 2.65D0 </shoc_lambda_slope>
 <shoc_lambda_thresh          > 0.02D0 </shoc_lambda_thresh>
 <shoc_Ckh                    > 0.1D0 </shoc_Ckh>
@@ -1895,6 +1896,9 @@ with se_tstep, dt_remap_factor, dt_tracer_factor set to -1
 <gw_convect_plev_src_wind   phys="default">70000</gw_convect_plev_src_wind>
 <effgw_oro phys="default"> 0.375      </effgw_oro>
 <use_gw_energy_fix phys="default"> .true.      </use_gw_energy_fix>
+<od_ls_ncleff  phys="default"> 3.D0 </od_ls_ncleff>
+<od_bl_ncd     phys="default"> 3.D0 </od_bl_ncd>
+<od_ss_sncleff phys="default"> 1.D0 </od_ss_sncleff>
 <clubb_C14 phys="default"> 2.5D0      </clubb_C14>
 <clubb_tk1 phys="default"> 268.15D0   </clubb_tk1>
 <dust_emis_fact phys="default"> 13.8D0     </dust_emis_fact>

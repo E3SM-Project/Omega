@@ -27,10 +27,10 @@
 #include "dynamics/homme/physics_dynamics_remapper.hpp"
 #include "dynamics/homme/homme_dimensions.hpp"
 #include "dynamics/homme/homme_dynamics_helpers.hpp"
-#include "dynamics/homme/interface/scream_homme_interface.hpp"
+#include "dynamics/homme/interface/eamxx_homme_interface.hpp"
 #include "physics/share/physics_constants.hpp"
-#include "share/util/scream_common_physics_functions.hpp"
-#include "share/util/scream_column_ops.hpp"
+#include "share/util/eamxx_common_physics_functions.hpp"
+#include "share/util/eamxx_column_ops.hpp"
 #include "share/property_checks/field_lower_bound_check.hpp"
 
 // Ekat includes
@@ -426,11 +426,6 @@ void HommeDynamics::initialize_impl (const RunType run_type)
   if (run_type==RunType::Initial) {
     initialize_homme_state ();
   } else {
-    if (m_iop) {
-      // We need to reload IOP data after restarting
-      m_iop->read_iop_file_data(timestamp());
-    }
-
     restart_homme_state ();
   }
 
@@ -605,7 +600,7 @@ void HommeDynamics::homme_pre_process (const double dt) {
     fv_phys_pre_process();
   } else {
     // Remap FT, FM, and Q->FQ
-    m_p2d_remapper->remap(true);
+    m_p2d_remapper->remap_fwd();
   }
 
   auto& tl = c.get<TimeLevel>();
@@ -669,10 +664,6 @@ void HommeDynamics::homme_post_process (const double dt) {
     get_internal_field("w_int_dyn").get_header().get_alloc_properties().reset_subview_idx(tl.n0);
   }
 
-  if (m_iop) {
-    apply_iop_forcing(dt);
-  }
-
   if (fv_phys_active()) {
     fv_phys_post_process();
     // Apply Rayleigh friction to update temperature and horiz_winds
@@ -682,7 +673,7 @@ void HommeDynamics::homme_post_process (const double dt) {
   }
 
   // Remap outputs to ref grid
-  m_d2p_remapper->remap(true);
+  m_d2p_remapper->remap_fwd();
 
   using ColOps = ColumnOps<DefaultDevice,Real>;
   using PF = PhysicsFunctions<DefaultDevice>;
@@ -1028,7 +1019,7 @@ void HommeDynamics::restart_homme_state () {
     *qv_prev_ref = m_helper_fields.at("qv_prev_phys");
   }
   m_ic_remapper->registration_ends();
-  m_ic_remapper->remap(/*forward = */false);
+  m_ic_remapper->remap_bwd();
   m_ic_remapper = nullptr; // Can clean up the IC remapper now.
 
   // Now that we have dp_ref, we can recompute pressure
@@ -1117,7 +1108,7 @@ void HommeDynamics::initialize_homme_state () {
   m_ic_remapper->register_field(get_field_in("T_mid",rgn),get_internal_field("vtheta_dp_dyn"));
   m_ic_remapper->register_field(*get_group_in("tracers",rgn).m_bundle,m_helper_fields.at("Q_dyn"));
   m_ic_remapper->registration_ends();
-  m_ic_remapper->remap(true);
+  m_ic_remapper->remap_fwd();
 
   // Wheter w_int is computed or not, Homme still does some global reduction on w_int when
   // printing the state, so we need to make sure it doesn't contain NaNs

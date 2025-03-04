@@ -1,6 +1,6 @@
-#include "share/scream_types.hpp"
-#include "share/scream_session.hpp"
-#include "share/util/scream_utils.hpp"
+#include "share/eamxx_types.hpp"
+#include "share/eamxx_session.hpp"
+#include "share/util/eamxx_utils.hpp"
 
 #include "p3_main_wrap.hpp"
 #include "p3_test_data.hpp"
@@ -260,18 +260,18 @@ int main (int argc, char** argv) {
   std::string predict_nc = "both";
   std::string prescribed_ccn = "both";
   std::string baseline_fn;
-  for (int i = 1; i < argc-1; ++i) {
+  for (int i = 1; i < argc; ++i) {
     if (ekat::argv_matches(argv[i], "-g", "--generate")) { generate = true; no_baseline = false; }
     if (ekat::argv_matches(argv[i], "-c", "--compare"))  { no_baseline = false; }
-    if (ekat::argv_matches(argv[i], "-t", "--tol")) {
-      expect_another_arg(i, argc);
-      ++i;
-      tol = std::atof(argv[i]);
-    }
     if (ekat::argv_matches(argv[i], "-b", "--baseline-file")) {
       expect_another_arg(i, argc);
       ++i;
       baseline_fn = argv[i];
+    }
+    if (ekat::argv_matches(argv[i], "-t", "--tol")) {
+      expect_another_arg(i, argc);
+      ++i;
+      tol = std::atof(argv[i]);
     }
     if (ekat::argv_matches(argv[i], "-s", "--steps")) {
       expect_another_arg(i, argc);
@@ -301,9 +301,6 @@ int main (int argc, char** argv) {
       expect_another_arg(i, argc);
       ++i;
       repeat = std::atoi(argv[i]);
-      if (repeat > 0) {
-        generate = true;
-      }
     }
     if (ekat::argv_matches(argv[i], "-pn", "--predict-nc")) {
       expect_another_arg(i, argc);
@@ -324,7 +321,7 @@ int main (int argc, char** argv) {
   // Compute full baseline file name with precision.
   baseline_fn += "/p3_run_and_cmp.baseline" + std::to_string(sizeof(scream::Real));
 
-  scream::initialize_scream_session(argc, argv);
+  scream::initialize_eamxx_session(argc, argv);
   {
     Baseline bln(timesteps, static_cast<Real>(dt), ncol, nlev, repeat, predict_nc, prescribed_ccn);
     if (generate) {
@@ -338,9 +335,8 @@ int main (int argc, char** argv) {
       printf("Comparing with %s at tol %1.1e\n", baseline_fn.c_str(), tol);
       nerr += bln.run_and_cmp(baseline_fn, tol, no_baseline);
     }
-    P3GlobalForFortran::deinit();
   }
-  scream::finalize_scream_session();
+  scream::finalize_eamxx_session();
 
   return nerr != 0 ? 1 : 0;
 }
