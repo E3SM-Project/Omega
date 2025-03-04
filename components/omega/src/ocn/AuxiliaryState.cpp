@@ -18,6 +18,7 @@ AuxiliaryState::AuxiliaryState(const std::string &Name, const HorzMesh *Mesh,
       LayerThicknessAux(Name, Mesh, NVertLevels),
       VorticityAux(Name, Mesh, NVertLevels),
       VelocityDel2Aux(Name, Mesh, NVertLevels),
+      WindForcingAux(Name, Mesh, NVertLevels),
       TracerAux(Name, Mesh, NVertLevels, NTracers) {
 
    GroupName = "AuxiliaryState";
@@ -32,6 +33,7 @@ AuxiliaryState::AuxiliaryState(const std::string &Name, const HorzMesh *Mesh,
    LayerThicknessAux.registerFields(GroupName, AuxMeshName);
    VorticityAux.registerFields(GroupName, AuxMeshName);
    VelocityDel2Aux.registerFields(GroupName, AuxMeshName);
+   WindForcingAux.registerFields(GroupName, AuxMeshName);
    TracerAux.registerFields(GroupName, AuxMeshName);
 }
 
@@ -42,6 +44,7 @@ AuxiliaryState::~AuxiliaryState() {
    LayerThicknessAux.unregisterFields();
    VorticityAux.unregisterFields();
    VelocityDel2Aux.unregisterFields();
+   WindForcingAux.unregisterFields();
    TracerAux.unregisterFields();
 
    int Err = FieldGroup::destroy(GroupName);
@@ -64,6 +67,7 @@ void AuxiliaryState::computeMomAux(const OceanState *State, int ThickTimeLevel,
    OMEGA_SCOPE(LocLayerThicknessAux, LayerThicknessAux);
    OMEGA_SCOPE(LocVorticityAux, VorticityAux);
    OMEGA_SCOPE(LocVelocityDel2Aux, VelocityDel2Aux);
+   OMEGA_SCOPE(LocWindForcingAux, WindForcingAux);
 
    parallelFor(
        "vertexAuxState1", {Mesh->NVerticesAll, NChunks},
@@ -76,6 +80,7 @@ void AuxiliaryState::computeMomAux(const OceanState *State, int ThickTimeLevel,
        "cellAuxState1", {Mesh->NCellsAll, NChunks},
        KOKKOS_LAMBDA(int ICell, int KChunk) {
           LocKineticAux.computeVarsOnCell(ICell, KChunk, NormalVelEdge);
+          LocWindForcingAux.computeVarsOnCell(ICell, KChunk, NormalVelEdge);
        });
 
    const auto &VelocityDivCell = KineticAux.VelocityDivCell;
