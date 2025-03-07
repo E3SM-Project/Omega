@@ -1,3 +1,4 @@
+(omega-design-shallow-water-omega0)=
 # Omega V0: Shallow Water
 
 **Table of Contents**
@@ -126,7 +127,7 @@ $$
 \frac{\partial h \phi}{\partial t} + \nabla \cdot \left(h \boldsymbol{u} \phi\right) = \kappa_2 h \nabla^2 \phi - \kappa_4 h \nabla^4 \phi.
 \hspace{1cm}   (3)
 $$
-These are typically referred to as the momentum equation (or velocity equation), the thickness equation, and the tracer equation. 
+These are typically referred to as the momentum equation (or velocity equation), the thickness equation, and the tracer equation.
 
 The additional momentum terms in (1) are viscous dissipation (del2 and del4), and drag and forcing are as follows:
 $$
@@ -154,10 +155,10 @@ The Omega-0 governing equations (1-3) do not include any vertical advection or d
 
 Further details of these derivations are given in [Thuburn et al. 2009](https://www.sciencedirect.com/science/article/pii/S0021999109004434) and [Ringler et al. 2010](https://www.sciencedirect.com/science/article/pii/S0021999109006780) eqns. (2) and (7), and [Bishnu et al. 2024](https://doi.org/10.1029/2022MS003545), Section 2.1.
 Additional information on governing equations may be found in chapter 8 of the MPAS User's Guide ([Petersen et al. 2024](https://zenodo.org/records/11098080)).
-Publications that evaluate TRiSK against alternative formulations include [Weller et al. 2012](http://journals.ametsoc.org/doi/10.1175/MWR-D-11-00193.1), 
-[Thuburn and Cotter 2012](https://epubs.siam.org/doi/10.1137/110850293), 
-[Calandrini et al. 2021](https://www.sciencedirect.com/science/article/pii/S146350032100161X) and 
-[Lapolli et al. 2024](https://www.sciencedirect.com/science/article/pii/S1463500324000222). 
+Publications that evaluate TRiSK against alternative formulations include [Weller et al. 2012](http://journals.ametsoc.org/doi/10.1175/MWR-D-11-00193.1),
+[Thuburn and Cotter 2012](https://epubs.siam.org/doi/10.1137/110850293),
+[Calandrini et al. 2021](https://www.sciencedirect.com/science/article/pii/S146350032100161X) and
+[Lapolli et al. 2024](https://www.sciencedirect.com/science/article/pii/S1463500324000222).
 
 #### 3.1.2 Discrete Equations
 
@@ -229,7 +230,7 @@ Table 1. Definition of variables
 | $\kappa_4$          | biharmonic tracer diffusion | m$^4$/s    | cell     |   |                                                              |
 | $\nu_2$             | viscosity                   | m$^2$/s    | edge     |   |                                                              |
 | $\nu_4$             | biharmonic viscosity        | m$^4$/s    | edge     |   |                                                              |
-| $\phi$              | tracer                      | varies | cell     |   | units may be kg/m$^3$ or similar | 
+| $\phi$              | tracer                      | varies | cell     |   | units may be kg/m$^3$ or similar |
 | $\omega$             | relative vorticity          | 1/s      | vertex   |  RelativeVorticity | $\omega={\boldsymbol k} \cdot \left( \nabla \times {\boldsymbol u}\right)$ |
 
 <!--- Note: Table created with [markdown table generator](https://www.tablesgenerator.com/markdown_tables) and original [google sheet](https://docs.google.com/spreadsheets/d/1rz-QXDiwfemq5NpSR1XsvomI7aSKQ1myTNweCY4afcE/edit#gid=0). --->
@@ -257,7 +258,7 @@ Figure 2. Areas for MPAS mesh specification.
 
 Table 3. Definition of element groups used to build the discrete system.
 
-| Syntax              | Definition                  | MPAS mesh name | 
+| Syntax              | Definition                  | MPAS mesh name |
 |---------------------|-----------------------------|---|
 | $e\in EC(i)$ |  Set of edges that define the boundary of $P_i$ | EdgesOnCell |
 | $e\in EV(v)$ |  Set of edges that define the boundary of $D_v$ | EdgesOnVertex |
@@ -268,9 +269,9 @@ Table 3. Definition of element groups used to build the discrete system.
 | $e\in ECP(e)$ |  Edges of cell pair meeting at edge $e$ | EdgesOnEdge |
 | $e\in EVC(v,i)$ | Edge pair associated with vertex v and mesh cell $i$ | |
 
-The definitions of geometric variables may be found in 
-[Thuburn et al. 2009](http://www.sciencedirect.com/science/article/pii/S0021999109004434), 
-[Ringler et al. 2010](https://www.sciencedirect.com/science/article/pii/S0021999109006780), and 
+The definitions of geometric variables may be found in
+[Thuburn et al. 2009](http://www.sciencedirect.com/science/article/pii/S0021999109004434),
+[Ringler et al. 2010](https://www.sciencedirect.com/science/article/pii/S0021999109006780), and
 [Thuburn and Cotter 2012](https://epubs.siam.org/doi/10.1137/110850293).
 
 ### 3.2 Operator Formulation
@@ -290,7 +291,7 @@ where $A_i$ is the area of cell $i$. The indicator function $n_{e,i}=1$ when the
 The notation $e\in EC(i)$ indicates all the edges surrounding cell $i$.
 In the TRiSK formulation we assume that the divergence always occurs at the cell center, so the subscript $i$ is dropped and we simply write  $\left( \nabla \cdot {\bf F}\right)_i$ as $\nabla \cdot F_e$.
 
-The divergence operator above is applied to a general vector field $\bf F$. 
+The divergence operator above is applied to a general vector field $\bf F$.
 In the actual formulations below, we substitute the velocity at the edge $F_e = u_e$ for the divergence variable in the momentum equation, and the thickness-weighted tracer
 $F_e = u_e [h_i \phi_i]_e$
  in the tracer advection term. To be clear, when we refer to the divergence variable, rather than the operator, this means
@@ -304,7 +305,7 @@ $$
 #### 3.2.2. Gradient
 
 The gradient operator maps a cell-centered scalar to an edge-normal vector component
-([Ringler et al. 2010](https://www.sciencedirect.com/science/article/pii/S0021999109006780) eqn 22), 
+([Ringler et al. 2010](https://www.sciencedirect.com/science/article/pii/S0021999109006780) eqn 22),
 
 $$
 \left( \nabla h \right)_e
@@ -343,7 +344,7 @@ $$
  {\bf F}^\perp \equiv
  {\bf k} \times {\bf F}
 $$
-so that it points 90$^o$ to the left of ${\bf F}$ in a right-handed coordinate system. 
+so that it points 90$^o$ to the left of ${\bf F}$ in a right-handed coordinate system.
 
 In TRiSK, the native component for the prognostic velocity field is the edge-normal velocity $u_e$. The perpendicular component is also positioned at the middle of the edge, but points 90$^o$ to the left, tangential to the edge, from one vertex to another. The perpendicular velocity component is also called the tangential velocity, with the variable name `TangentialVelocity`. It is computed diagnostically as
 ([Ringler et al. 2010](https://www.sciencedirect.com/science/article/pii/S0021999109006780) eqn 24)
@@ -359,7 +360,7 @@ and
 
 In the code, the cell indices are ordered such that the edge-normal vector (like $u_e$) points positively from the lower to higher cell index value. Likewise, the vertex indices are ordered such that the edge-tangent vector (like $u_e^\perp$) points from the lower to higher vertex index value.
 
-In order to reduce redundant operations, the weights in the standard MPAS mesh files are pre-multiplied by the edge length ratio $l_{e'}/d_e$. Thus the MPAS variable `WeightsOnEdge` is 
+In order to reduce redundant operations, the weights in the standard MPAS mesh files are pre-multiplied by the edge length ratio $l_{e'}/d_e$. Thus the MPAS variable `WeightsOnEdge` is
 $$
 {\tilde w}_{e,e'} = \frac{l_{e'}}{d_e} w_{e,e'}
 $$
@@ -440,7 +441,7 @@ Here ${\bar A}_{e}$ is the rectangle about the edge defined by ${\bar A}_{e} = l
 $$
 A_i = \sum_{e\in EC(i)} \frac{{\bar A}_{e}}{4}
 $$
-as stated in 
+as stated in
 [Ringler et al. 2010](https://www.sciencedirect.com/science/article/pii/S0021999109006780) equations 48, 64, and footnote 4.
 
 One might expect an additional factor of one-half in the $K_i$ formula, as in the standard formula for kinetic energy, $K = \tfrac{1}{2} m v^2$. However, the one-half is missing because $u_e$ is only one component of the velocity vector on the edge. One could replace $u_e^2$ with $\tfrac{1}{2}(u_e^2 + {u_e^{\perp}}^2)$, but $u^\perp_e$ is already computed from the surrounding values of $u_e$, so we don't do that because it would just add redundant information. As a side note, the mass $m$ is missing because the mass is already divided out of the momentum equation (1).
@@ -505,7 +506,7 @@ $$
 $$
 where the ordering of indices $\{i_i, i_2\}$ and $\{v_1, v_2\}$ are explained in the gradient operator sections above.
 
-An alternative formulation for the Del2 dissipation on an unstructured mesh is presented in section 4.2 and Appendix B of 
+An alternative formulation for the Del2 dissipation on an unstructured mesh is presented in section 4.2 and Appendix B of
 [Gassman 2018](https://onlinelibrary.wiley.com/doi/10.1002/qj.3294).
 
 #### 3.3.5. Del4 momentum dissipation
@@ -540,7 +541,7 @@ $$
 
 #### 3.4.1. Tracer advection
 
-There are many schemes available for tracer advection. Simple schemes include centered advection and upstream. MPAS-Ocean uses Flux Corrected Transport, which is fourth order under normal conditions, and reduces to third order to preserve monotonicity. 
+There are many schemes available for tracer advection. Simple schemes include centered advection and upstream. MPAS-Ocean uses Flux Corrected Transport, which is fourth order under normal conditions, and reduces to third order to preserve monotonicity.
 
 The tracer advection term is
 $$
@@ -561,7 +562,7 @@ More details of the tracer advection scheme will be given in a future design doc
 Tracer diffusion is applied with a Laplacian operator on the cell-centered tracer phi, and the product of the operator is also at the cell center. The Laplacian may be written as the divergence of the gradient,
 
 $$
-\kappa_2 h_i \nabla^2 \phi_i 
+\kappa_2 h_i \nabla^2 \phi_i
 =
 \kappa_2 h_i \nabla \cdot \left( \nabla \phi_i \right).
 $$

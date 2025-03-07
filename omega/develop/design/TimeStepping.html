@@ -193,7 +193,7 @@
 </ol>
 <section id="overview">
 <h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
-<p>The solution methods for a partial differential equation come in two categories: the spatial discretizations and the temporal discretizations. Here we present the methods of solving the time derivative, <span class="math notranslate nohighlight">\(\partial / \partial t\)</span>, in the Omega-0 shallow water equations. The spatial discretizations are presented in the <span class="xref std std-ref">omega-design-shallow-water-omega0</span> design document.</p>
+<p>The solution methods for a partial differential equation come in two categories: the spatial discretizations and the temporal discretizations. Here we present the methods of solving the time derivative, <span class="math notranslate nohighlight">\(\partial / \partial t\)</span>, in the Omega-0 shallow water equations. The spatial discretizations are presented in the <a class="reference internal" href="OmegaV0ShallowWater.html#omega-design-shallow-water-omega0"><span class="std std-ref">Omega V0: Shallow Water</span></a> design document.</p>
 </section>
 <section id="requirements">
 <h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
@@ -207,7 +207,7 @@
 </section>
 <section id="requirement-performance">
 <h3>2.3 Requirement: Performance<a class="headerlink" href="#requirement-performance" title="Permalink to this heading"></a></h3>
-<p>The time stepping scheme must follow the scaling and performance criteria outlined in the <span class="xref std std-ref">omega-design-shallow-water-omega0</span> design document. It will be tested with metrics for:</p>
+<p>The time stepping scheme must follow the scaling and performance criteria outlined in the <a class="reference internal" href="OmegaV0ShallowWater.html#omega-design-shallow-water-omega0"><span class="std std-ref">Omega V0: Shallow Water</span></a> design document. It will be tested with metrics for:</p>
 <ol class="arabic simple">
 <li><p>Single CPU throughput</p></li>
 <li><p>Parallel CPU scalability to high node counts</p></li>
@@ -233,7 +233,7 @@
 <section id="forward-backward-scheme">
 <h3>3.1 Forward-Backward Scheme<a class="headerlink" href="#forward-backward-scheme" title="Permalink to this heading"></a></h3>
 <p>The primary time stepping scheme will be forward-backward. This scheme is commonly used in shallow water models and the barotropic mode of layered models. It suits the design requirements because it is second order, is stable for reasonably long time steps compared to competing schemes, and may be implemented in a performant manner.</p>
-<p>Given the shallow water equations introduced in the <span class="xref std std-ref">omega-design-shallow-water-omega0</span> design document, we may consolidate the right-hand-side tendency terms to express them as</p>
+<p>Given the shallow water equations introduced in the <a class="reference internal" href="OmegaV0ShallowWater.html#omega-design-shallow-water-omega0"><span class="std std-ref">Omega V0: Shallow Water</span></a> design document, we may consolidate the right-hand-side tendency terms to express them as</p>
 <div class="math notranslate nohighlight">
 \[
 \frac{\partial \boldsymbol{u}}{\partial t} = \mathcal{RHS}_u \left( \boldsymbol{u},h,t \right),
@@ -295,7 +295,7 @@ One might argue that the tracer equation could use <span class="math notranslate
 \hspace{1cm}   (3)
 \]</div>
 <p>Where the initial conditions for <span class="math notranslate nohighlight">\(\boldsymbol{u}\)</span> and <span class="math notranslate nohighlight">\(\phi\)</span> are uniformly one, the tracer restoring value in this case is <span class="math notranslate nohighlight">\(\phi_0=0\)</span>, and the solution is simply exponential decay to zero.</p>
-<p>The timestepping is an intrinsic part of the Omega-0 model, so the verification and testing are identical to those in the <span class="xref std std-ref">omega-design-shallow-water-omega0</span> design document. The timestepping will be tested with convergence tests in time using the manufactured solution test case.</p>
+<p>The timestepping is an intrinsic part of the Omega-0 model, so the verification and testing are identical to those in the <a class="reference internal" href="OmegaV0ShallowWater.html#omega-design-shallow-water-omega0"><span class="std std-ref">Omega V0: Shallow Water</span></a> design document. The timestepping will be tested with convergence tests in time using the manufactured solution test case.</p>
 </section>
 </section>
 
