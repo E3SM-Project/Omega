@@ -62,10 +62,9 @@ enum class ExchangeHalos { Yes, No };
 
 // set scalar field on chosen elements (cells/vertices/edges) based on
 // analytical formula and optionally exchange halos
-template <class Functor>
-int setScalar(const Functor &Fun, const Array2DReal &ScalarElement,
-              Geometry Geom, const HorzMesh *Mesh, MeshElement Element,
-              int NVertLevels,
+template <class Functor, class Array>
+int setScalar(const Functor &Fun, const Array &ScalarElement, Geometry Geom,
+              const HorzMesh *Mesh, MeshElement Element,
               ExchangeHalos ExchangeHalosOpt = ExchangeHalos::Yes) {
 
    int Err = 0;
@@ -102,83 +101,55 @@ int setScalar(const Functor &Fun, const Array2DReal &ScalarElement,
       return 1;
    }
 
-   parallelFor(
-       {NElementsOwned, NVertLevels}, KOKKOS_LAMBDA(int IElement, int K) {
-          if (Geom == Geometry::Planar) {
-             const Real X               = XElement(IElement);
-             const Real Y               = YElement(IElement);
-             ScalarElement(IElement, K) = Fun(X, Y);
-          } else {
-             const Real Lon             = LonElement(IElement);
-             const Real Lat             = LatElement(IElement);
-             ScalarElement(IElement, K) = Fun(Lon, Lat);
-          }
-       });
-
-   if (ExchangeHalosOpt == ExchangeHalos::Yes) {
-      auto MyHalo = Halo::getDefault();
-      Err         = MyHalo->exchangeFullArrayHalo(ScalarElement, Element);
-      if (Err != 0)
-         LOG_ERROR("setScalarElement: error in halo exchange");
-   }
-   return Err;
-}
-
-// set scalar field on chosen elements (cells/vertices/edges) based on
-// analytical formula and optionally exchange halos
-template <class Functor>
-int setScalar(const Functor &Fun, const Array3DReal &ScalarElement,
-              Geometry Geom, const HorzMesh *Mesh, MeshElement Element,
-              int NVertLevels, int NTracers,
-              ExchangeHalos ExchangeHalosOpt = ExchangeHalos::Yes) {
-
-   int Err = 0;
-
-   int NElementsOwned;
-   Array1DReal XElement, YElement;
-   Array1DReal LonElement, LatElement;
-
-   switch (Element) {
-   case OnCell:
-      NElementsOwned = Mesh->NCellsOwned;
-      XElement       = createDeviceMirrorCopy(Mesh->XCellH);
-      YElement       = createDeviceMirrorCopy(Mesh->YCellH);
-      LonElement     = createDeviceMirrorCopy(Mesh->LonCellH);
-      LatElement     = createDeviceMirrorCopy(Mesh->LatCellH);
-      break;
-   case OnVertex:
-      NElementsOwned = Mesh->NVerticesOwned;
-      XElement       = createDeviceMirrorCopy(Mesh->XVertexH);
-      YElement       = createDeviceMirrorCopy(Mesh->YVertexH);
-      LonElement     = createDeviceMirrorCopy(Mesh->LonVertexH);
-      LatElement     = createDeviceMirrorCopy(Mesh->LatVertexH);
-      break;
-   case OnEdge:
-      NElementsOwned = Mesh->NEdgesOwned;
-      XElement       = createDeviceMirrorCopy(Mesh->XEdgeH);
-      YElement       = createDeviceMirrorCopy(Mesh->YEdgeH);
-      LonElement     = createDeviceMirrorCopy(Mesh->LonEdgeH);
-      LatElement     = createDeviceMirrorCopy(Mesh->LatEdgeH);
-      break;
-   default:
-      LOG_ERROR("setScalar: element needs to be one of (OnCell, OnVertex, "
-                "OnEdge)");
-      return 1;
+   if constexpr (Array::rank == 1) {
+      parallelFor(
+          {NElementsOwned}, KOKKOS_LAMBDA(int IElement) {
+             if (Geom == Geometry::Planar) {
+                const Real X            = XElement(IElement);
+                const Real Y            = YElement(IElement);
+                ScalarElement(IElement) = Fun(X, Y);
+             } else {
+                const Real Lon          = LonElement(IElement);
+                const Real Lat          = LatElement(IElement);
+                ScalarElement(IElement) = Fun(Lon, Lat);
+             }
+          });
    }
 
-   parallelFor(
-       {NTracers, NElementsOwned, NVertLevels},
-       KOKKOS_LAMBDA(int L, int IElement, int K) {
-          if (Geom == Geometry::Planar) {
-             const Real X                  = XElement(IElement);
-             const Real Y                  = YElement(IElement);
-             ScalarElement(L, IElement, K) = Fun(X, Y);
-          } else {
-             const Real Lon                = LonElement(IElement);
-             const Real Lat                = LatElement(IElement);
-             ScalarElement(L, IElement, K) = Fun(Lon, Lat);
-          }
-       });
+   if constexpr (Array::rank == 2) {
+      const int NVertLevels = ScalarElement.extent_int(1);
+
+      parallelFor(
+          {NElementsOwned, NVertLevels}, KOKKOS_LAMBDA(int IElement, int K) {
+             if (Geom == Geometry::Planar) {
+                const Real X               = XElement(IElement);
+                const Real Y               = YElement(IElement);
+                ScalarElement(IElement, K) = Fun(X, Y);
+             } else {
+                const Real Lon             = LonElement(IElement);
+                const Real Lat             = LatElement(IElement);
+                ScalarElement(IElement, K) = Fun(Lon, Lat);
+             }
+          });
+   }
+
+   if constexpr (Array::rank == 3) {
+      const int NTracers    = ScalarElement.extent_int(0);
+      const int NVertLevels = ScalarElement.extent_int(2);
+      parallelFor(
+          {NTracers, NElementsOwned, NVertLevels},
+          KOKKOS_LAMBDA(int L, int IElement, int K) {
+             if (Geom == Geometry::Planar) {
+                const Real X                  = XElement(IElement);
+                const Real Y                  = YElement(IElement);
+                ScalarElement(L, IElement, K) = Fun(X, Y);
+             } else {
+                const Real Lon                = LonElement(IElement);
+                const Real Lat                = LatElement(IElement);
+                ScalarElement(L, IElement, K) = Fun(Lon, Lat);
+             }
+          });
+   }
 
    if (ExchangeHalosOpt == ExchangeHalos::Yes) {
       auto MyHalo = Halo::getDefault();
@@ -193,10 +164,9 @@ enum class CartProjection { Yes, No };
 
 // set vector field on edges based on analytical formula and optionally
 // exchange halos
-template <class Functor>
-int setVectorEdge(const Functor &Fun, const Array2DReal &VectorFieldEdge,
+template <class Functor, class Array>
+int setVectorEdge(const Functor &Fun, const Array &VectorFieldEdge,
                   EdgeComponent EdgeComp, Geometry Geom, const HorzMesh *Mesh,
-                  int NVertLevels,
                   ExchangeHalos ExchangeHalosOpt   = ExchangeHalos::Yes,
                   CartProjection CartProjectionOpt = CartProjection::Yes) {
 
@@ -221,84 +191,98 @@ int setVectorEdge(const Functor &Fun, const Array2DReal &VectorFieldEdge,
    auto &CellsOnEdge    = Mesh->CellsOnEdge;
    auto &VerticesOnEdge = Mesh->VerticesOnEdge;
 
-   parallelFor(
-       {Mesh->NEdgesOwned, NVertLevels}, KOKKOS_LAMBDA(int IEdge, int K) {
-          Real VecFieldEdge;
-          if (Geom == Geometry::Planar) {
-             const Real XE = XEdge(IEdge);
-             const Real YE = YEdge(IEdge);
+   auto ProjectVector = KOKKOS_LAMBDA(int IEdge) {
+      Real VecFieldEdge;
+      if (Geom == Geometry::Planar) {
+         const Real XE = XEdge(IEdge);
+         const Real YE = YEdge(IEdge);
 
-             Real VecField[2];
-             Fun(VecField, XE, YE);
+         Real VecField[2];
+         Fun(VecField, XE, YE);
 
-             if (EdgeComp == EdgeComponent::Normal) {
-                const Real EdgeNormalX = std::cos(AngleEdge(IEdge));
-                const Real EdgeNormalY = std::sin(AngleEdge(IEdge));
-                VecFieldEdge =
-                    EdgeNormalX * VecField[0] + EdgeNormalY * VecField[1];
-             }
+         if (EdgeComp == EdgeComponent::Normal) {
+            const Real EdgeNormalX = std::cos(AngleEdge(IEdge));
+            const Real EdgeNormalY = std::sin(AngleEdge(IEdge));
+            VecFieldEdge =
+                EdgeNormalX * VecField[0] + EdgeNormalY * VecField[1];
+         }
 
-             if (EdgeComp == EdgeComponent::Tangential) {
-                const Real EdgeTangentX = -std::sin(AngleEdge(IEdge));
-                const Real EdgeTangentY = std::cos(AngleEdge(IEdge));
-                VecFieldEdge =
-                    EdgeTangentX * VecField[0] + EdgeTangentY * VecField[1];
-             }
-          } else {
-             const Real LonE = LonEdge(IEdge);
-             const Real LatE = LatEdge(IEdge);
+         if (EdgeComp == EdgeComponent::Tangential) {
+            const Real EdgeTangentX = -std::sin(AngleEdge(IEdge));
+            const Real EdgeTangentY = std::cos(AngleEdge(IEdge));
+            VecFieldEdge =
+                EdgeTangentX * VecField[0] + EdgeTangentY * VecField[1];
+         }
+      } else {
+         const Real LonE = LonEdge(IEdge);
+         const Real LatE = LatEdge(IEdge);
 
-             Real VecField[2];
-             Fun(VecField, LonE, LatE);
+         Real VecField[2];
+         Fun(VecField, LonE, LatE);
 
-             if (CartProjectionOpt == CartProjection::Yes) {
-                Real VecFieldCart[3];
-                sphereToCartVec(VecFieldCart, VecField, LonE, LatE);
+         if (CartProjectionOpt == CartProjection::Yes) {
+            Real VecFieldCart[3];
+            sphereToCartVec(VecFieldCart, VecField, LonE, LatE);
 
-                const Real EdgeCoords[3] = {XEdge[IEdge], YEdge[IEdge],
-                                            ZEdge[IEdge]};
+            const Real EdgeCoords[3] = {XEdge[IEdge], YEdge[IEdge],
+                                        ZEdge[IEdge]};
 
-                if (EdgeComp == EdgeComponent::Normal) {
-                   const int JCell1         = CellsOnEdge(IEdge, 1);
-                   const Real CellCoords[3] = {XCell(JCell1), YCell(JCell1),
-                                               ZCell(JCell1)};
+            if (EdgeComp == EdgeComponent::Normal) {
+               const int JCell1         = CellsOnEdge(IEdge, 1);
+               const Real CellCoords[3] = {XCell(JCell1), YCell(JCell1),
+                                           ZCell(JCell1)};
 
-                   Real EdgeNormal[3];
-                   tangentVector(EdgeNormal, EdgeCoords, CellCoords);
-                   VecFieldEdge = EdgeNormal[0] * VecFieldCart[0] +
-                                  EdgeNormal[1] * VecFieldCart[1] +
-                                  EdgeNormal[2] * VecFieldCart[2];
-                }
+               Real EdgeNormal[3];
+               tangentVector(EdgeNormal, EdgeCoords, CellCoords);
+               VecFieldEdge = EdgeNormal[0] * VecFieldCart[0] +
+                              EdgeNormal[1] * VecFieldCart[1] +
+                              EdgeNormal[2] * VecFieldCart[2];
+            }
 
-                if (EdgeComp == EdgeComponent::Tangential) {
-                   const int JVertex1         = VerticesOnEdge(IEdge, 1);
-                   const Real VertexCoords[3] = {
-                       XVertex(JVertex1), YVertex(JVertex1), ZVertex(JVertex1)};
+            if (EdgeComp == EdgeComponent::Tangential) {
+               const int JVertex1         = VerticesOnEdge(IEdge, 1);
+               const Real VertexCoords[3] = {
+                   XVertex(JVertex1), YVertex(JVertex1), ZVertex(JVertex1)};
 
-                   Real EdgeTangent[3];
-                   tangentVector(EdgeTangent, EdgeCoords, VertexCoords);
-                   VecFieldEdge = EdgeTangent[0] * VecFieldCart[0] +
-                                  EdgeTangent[1] * VecFieldCart[1] +
-                                  EdgeTangent[2] * VecFieldCart[2];
-                }
-             } else {
-                if (EdgeComp == EdgeComponent::Normal) {
-                   const Real EdgeNormalX = std::cos(AngleEdge(IEdge));
-                   const Real EdgeNormalY = std::sin(AngleEdge(IEdge));
-                   VecFieldEdge =
-                       EdgeNormalX * VecField[0] + EdgeNormalY * VecField[1];
-                }
+               Real EdgeTangent[3];
+               tangentVector(EdgeTangent, EdgeCoords, VertexCoords);
+               VecFieldEdge = EdgeTangent[0] * VecFieldCart[0] +
+                              EdgeTangent[1] * VecFieldCart[1] +
+                              EdgeTangent[2] * VecFieldCart[2];
+            }
+         } else {
+            if (EdgeComp == EdgeComponent::Normal) {
+               const Real EdgeNormalX = std::cos(AngleEdge(IEdge));
+               const Real EdgeNormalY = std::sin(AngleEdge(IEdge));
+               VecFieldEdge =
+                   EdgeNormalX * VecField[0] + EdgeNormalY * VecField[1];
+            }
 
-                if (EdgeComp == EdgeComponent::Tangential) {
-                   const Real EdgeTangentX = -std::sin(AngleEdge(IEdge));
-                   const Real EdgeTangentY = std::cos(AngleEdge(IEdge));
-                   VecFieldEdge =
-                       EdgeTangentX * VecField[0] + EdgeTangentY * VecField[1];
-                }
-             }
-          }
-          VectorFieldEdge(IEdge, K) = VecFieldEdge;
-       });
+            if (EdgeComp == EdgeComponent::Tangential) {
+               const Real EdgeTangentX = -std::sin(AngleEdge(IEdge));
+               const Real EdgeTangentY = std::cos(AngleEdge(IEdge));
+               VecFieldEdge =
+                   EdgeTangentX * VecField[0] + EdgeTangentY * VecField[1];
+            }
+         }
+      }
+      return VecFieldEdge;
+   };
+
+   if constexpr (Array::rank == 1) {
+      parallelFor(
+          {Mesh->NEdgesOwned}, KOKKOS_LAMBDA(int IEdge) {
+             VectorFieldEdge(IEdge) = ProjectVector(IEdge);
+          });
+   }
+
+   if constexpr (Array::rank == 2) {
+      const int NVertLevels = VectorFieldEdge.extent_int(1);
+      parallelFor(
+          {Mesh->NEdgesOwned, NVertLevels}, KOKKOS_LAMBDA(int IEdge, int K) {
+             VectorFieldEdge(IEdge, K) = ProjectVector(IEdge);
+          });
+   }
 
    if (ExchangeHalosOpt == ExchangeHalos::Yes) {
       auto MyHalo = Halo::getDefault();
@@ -307,6 +291,19 @@ int setVectorEdge(const Functor &Fun, const Array2DReal &VectorFieldEdge,
          LOG_ERROR("setVectorEdge: error in halo exchange");
    }
    return Err;
+}
+
+inline Real maxVal(const Array1DReal &Arr) {
+   Real MaxVal;
+
+   parallelReduce(
+       {Arr.extent_int(0)},
+       KOKKOS_LAMBDA(int I, Real &Accum) {
+          Accum = Kokkos::max(Arr(I), Accum);
+       },
+       Kokkos::Max<Real>(MaxVal));
+
+   return MaxVal;
 }
 
 inline Real maxVal(const Array2DReal &Arr) {
@@ -334,6 +331,17 @@ inline Real maxVal(const Array3DReal &Arr) {
 
    return MaxVal;
 }
+
+inline Real sum(const Array1DReal &Arr, int Extent0) {
+   Real Sum;
+
+   parallelReduce(
+       {Extent0}, KOKKOS_LAMBDA(int I, Real &Accum) { Accum += Arr(I); }, Sum);
+
+   return Sum;
+}
+
+inline Real sum(const Array1DReal &Arr) { return sum(Arr, Arr.extent_int(0)); }
 
 inline Real sum(const Array2DReal &Arr, int Extent0, int Extent1) {
    Real Sum;
@@ -385,11 +393,10 @@ struct ErrorMeasures {
 
 // compute global normalized error measures based on the difference
 // between two fields
-inline int computeErrors(ErrorMeasures &ErrorMeasures,
-                         const Array2DReal &NumFieldElement,
-                         const Array2DReal &ExactFieldElement,
-                         const HorzMesh *Mesh, MeshElement Element,
-                         int NVertLevels) {
+template <class Array>
+int computeErrors(ErrorMeasures &ErrorMeasures, const Array &NumFieldElement,
+                  const Array &ExactFieldElement, const HorzMesh *Mesh,
+                  MeshElement Element) {
 
    int Err = 0;
 
@@ -425,134 +432,92 @@ inline int computeErrors(ErrorMeasures &ErrorMeasures,
       return 1;
    }
 
-   // Compute element-wise errors
-   Array2DReal LInfElement("LInfElement", NElementsOwned, NVertLevels);
-   Array2DReal L2Element("L2Element", NElementsOwned, NVertLevels);
-
-   Array2DReal LInfScaleElement("LInfScaleElement", NElementsOwned,
-                                NVertLevels);
-   Array2DReal L2ScaleElement("L2ScaleElement", NElementsOwned, NVertLevels);
-
-   parallelFor(
-       {NElementsOwned, NVertLevels}, KOKKOS_LAMBDA(int IElement, int K) {
-          const Real NumValElement   = NumFieldElement(IElement, K);
-          const Real ExactValElement = ExactFieldElement(IElement, K);
-
-          // Errors
-          LInfElement(IElement, K) = std::abs(NumValElement - ExactValElement);
-          LInfScaleElement(IElement, K) = std::abs(ExactValElement);
-          L2Element(IElement, K)        = AreaElement(IElement) *
-                                   LInfElement(IElement, K) *
-                                   LInfElement(IElement, K);
-          L2ScaleElement(IElement, K) = AreaElement(IElement) *
-                                        LInfScaleElement(IElement, K) *
-                                        LInfScaleElement(IElement, K);
-       });
-
-   // Compute global normalized error norms
-   const Real LInfErrorLoc = maxVal(LInfElement);
-   const Real L2ErrorLoc   = sum(L2Element);
-   const Real LInfScaleLoc = maxVal(LInfScaleElement);
-   const Real L2ScaleLoc   = sum(L2ScaleElement);
-
-   MPI_Comm Comm = MachEnv::getDefault()->getComm();
-   Real LInfError, LInfScale;
-   Err +=
-       MPI_Allreduce(&LInfErrorLoc, &LInfError, 1, MPI_RealKind, MPI_MAX, Comm);
-   Err +=
-       MPI_Allreduce(&LInfScaleLoc, &LInfScale, 1, MPI_RealKind, MPI_MAX, Comm);
-   if (LInfScale > 0) {
-      LInfError /= LInfScale;
-   }
-
-   Real L2Error, L2Scale;
-   Err += MPI_Allreduce(&L2ErrorLoc, &L2Error, 1, MPI_RealKind, MPI_SUM, Comm);
-   Err += MPI_Allreduce(&L2ScaleLoc, &L2Scale, 1, MPI_RealKind, MPI_SUM, Comm);
-
-   if (Err != 0)
-      LOG_ERROR("computeErrors: MPI Allreduce error");
-
-   if (L2Scale > 0) {
-      L2Error = std::sqrt(L2Error / L2Scale);
-   } else {
-      L2Error = std::sqrt(L2Error);
-   }
-
-   ErrorMeasures.L2   = L2Error;
-   ErrorMeasures.LInf = LInfError;
-
-   return Err;
-}
-
-// compute global normalized error measures based on the difference
-// between two fields
-inline int computeErrors(ErrorMeasures &ErrorMeasures,
-                         const Array3DReal &NumFieldElement,
-                         const Array3DReal &ExactFieldElement,
-                         const HorzMesh *Mesh, MeshElement Element,
-                         int NVertLevels, int NTracers) {
-
-   int Err = 0;
-
-   int NElementsOwned;
-   Array1DReal AreaElement;
-
-   switch (Element) {
-   case OnCell:
-      NElementsOwned = Mesh->NCellsOwned;
-      AreaElement    = Mesh->AreaCell;
-      break;
-   case OnVertex:
-      NElementsOwned = Mesh->NVerticesOwned;
-      AreaElement    = Mesh->AreaTriangle;
-      break;
-   case OnEdge:
-      NElementsOwned = Mesh->NEdgesOwned;
-      // need to compute areas associated with edges since we don't store those
-      // in the mesh class
-      {
-         auto &DcEdge = Mesh->DcEdge;
-         auto &DvEdge = Mesh->DvEdge;
-         AreaElement  = Array1DReal("AreaEdge", Mesh->NEdgesOwned);
-         parallelFor(
-             {Mesh->NEdgesOwned}, KOKKOS_LAMBDA(int IEdge) {
-                AreaElement(IEdge) = DcEdge(IEdge) * DvEdge(IEdge) / 2;
-             });
-      }
-      break;
-   default:
-      LOG_ERROR("computeErrors: element needs to be one of (OnCell, OnVertex, "
-                "OnEdge)");
-      return 1;
-   }
+   Array LInfElement;
+   Array L2Element;
+   Array LInfScaleElement;
+   Array L2ScaleElement;
 
    // Compute element-wise errors
-   Array3DReal LInfElement("LInfElement", NTracers, NElementsOwned,
-                           NVertLevels);
-   Array3DReal L2Element("L2Element", NTracers, NElementsOwned, NVertLevels);
+   if constexpr (Array::rank == 1) {
+      LInfElement = Array("LInfElement", NElementsOwned);
+      L2Element   = Array("L2Element", NElementsOwned);
 
-   Array3DReal LInfScaleElement("LInfScaleElement", NTracers, NElementsOwned,
-                                NVertLevels);
-   Array3DReal L2ScaleElement("L2ScaleElement", NTracers, NElementsOwned,
-                              NVertLevels);
+      LInfScaleElement = Array("LInfScaleElement", NElementsOwned);
+      L2ScaleElement   = Array("L2ScaleElement", NElementsOwned);
 
-   parallelFor(
-       {NTracers, NElementsOwned, NVertLevels},
-       KOKKOS_LAMBDA(int L, int IElement, int K) {
-          const Real NumValElement   = NumFieldElement(L, IElement, K);
-          const Real ExactValElement = ExactFieldElement(L, IElement, K);
+      parallelFor(
+          {NElementsOwned}, KOKKOS_LAMBDA(int IElement) {
+             const Real NumValElement   = NumFieldElement(IElement);
+             const Real ExactValElement = ExactFieldElement(IElement);
 
-          // Errors
-          LInfElement(L, IElement, K) =
-              std::abs(NumValElement - ExactValElement);
-          LInfScaleElement(L, IElement, K) = std::abs(ExactValElement);
-          L2Element(L, IElement, K)        = AreaElement(IElement) *
-                                      LInfElement(L, IElement, K) *
-                                      LInfElement(L, IElement, K);
-          L2ScaleElement(L, IElement, K) = AreaElement(IElement) *
-                                           LInfScaleElement(L, IElement, K) *
-                                           LInfScaleElement(L, IElement, K);
-       });
+             // Errors
+             LInfElement(IElement) = std::abs(NumValElement - ExactValElement);
+             LInfScaleElement(IElement) = std::abs(ExactValElement);
+             L2Element(IElement)        = AreaElement(IElement) *
+                                   LInfElement(IElement) *
+                                   LInfElement(IElement);
+             L2ScaleElement(IElement) = AreaElement(IElement) *
+                                        LInfScaleElement(IElement) *
+                                        LInfScaleElement(IElement);
+          });
+   }
+   if constexpr (Array::rank == 2) {
+      const int NVertLevels = NumFieldElement.extent_int(1);
+
+      LInfElement = Array("LInfElement", NElementsOwned, NVertLevels);
+      L2Element   = Array("L2Element", NElementsOwned, NVertLevels);
+
+      LInfScaleElement = Array("LInfScaleElement", NElementsOwned, NVertLevels);
+      L2ScaleElement   = Array("L2ScaleElement", NElementsOwned, NVertLevels);
+
+      parallelFor(
+          {NElementsOwned, NVertLevels}, KOKKOS_LAMBDA(int IElement, int K) {
+             const Real NumValElement   = NumFieldElement(IElement, K);
+             const Real ExactValElement = ExactFieldElement(IElement, K);
+
+             // Errors
+             LInfElement(IElement, K) =
+                 std::abs(NumValElement - ExactValElement);
+             LInfScaleElement(IElement, K) = std::abs(ExactValElement);
+             L2Element(IElement, K)        = AreaElement(IElement) *
+                                      LInfElement(IElement, K) *
+                                      LInfElement(IElement, K);
+             L2ScaleElement(IElement, K) = AreaElement(IElement) *
+                                           LInfScaleElement(IElement, K) *
+                                           LInfScaleElement(IElement, K);
+          });
+   }
+
+   if constexpr (Array::rank == 3) {
+      const int NTracers    = NumFieldElement.extent_int(0);
+      const int NVertLevels = NumFieldElement.extent_int(2);
+
+      LInfElement = Array("LInfElement", NTracers, NElementsOwned, NVertLevels);
+      L2Element   = Array("L2Element", NTracers, NElementsOwned, NVertLevels);
+
+      LInfScaleElement =
+          Array("LInfScaleElement", NTracers, NElementsOwned, NVertLevels);
+      L2ScaleElement =
+          Array("L2ScaleElement", NTracers, NElementsOwned, NVertLevels);
+
+      parallelFor(
+          {NTracers, NElementsOwned, NVertLevels},
+          KOKKOS_LAMBDA(int L, int IElement, int K) {
+             const Real NumValElement   = NumFieldElement(L, IElement, K);
+             const Real ExactValElement = ExactFieldElement(L, IElement, K);
+
+             // Errors
+             LInfElement(L, IElement, K) =
+                 std::abs(NumValElement - ExactValElement);
+             LInfScaleElement(L, IElement, K) = std::abs(ExactValElement);
+             L2Element(L, IElement, K)        = AreaElement(IElement) *
+                                         LInfElement(L, IElement, K) *
+                                         LInfElement(L, IElement, K);
+             L2ScaleElement(L, IElement, K) = AreaElement(IElement) *
+                                              LInfScaleElement(L, IElement, K) *
+                                              LInfScaleElement(L, IElement, K);
+          });
+   }
 
    // Compute global normalized error norms
    const Real LInfErrorLoc = maxVal(LInfElement);

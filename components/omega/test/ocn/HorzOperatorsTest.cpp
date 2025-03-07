@@ -184,13 +184,13 @@ int testDivergence(Real RTol) {
           VecField[0] = Setup.exactVecX(X, Y);
           VecField[1] = Setup.exactVecY(X, Y);
        },
-       VecEdge, EdgeComponent::Normal, Geom, Mesh, NVertLevels);
+       VecEdge, EdgeComponent::Normal, Geom, Mesh);
 
    // Compute exact result
    Array2DReal ExactDivCell("ExactDivCell", Mesh->NCellsOwned, NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.exactDivVec(X, Y); },
-       ExactDivCell, Geom, Mesh, OnCell, NVertLevels, ExchangeHalos::No);
+       ExactDivCell, Geom, Mesh, OnCell, ExchangeHalos::No);
 
    // Compute numerical result
    Array2DReal NumDivCell("NumDivCell", Mesh->NCellsOwned, NVertLevels);
@@ -202,8 +202,7 @@ int testDivergence(Real RTol) {
 
    // Compute error measures
    ErrorMeasures DivErrors;
-   Err += computeErrors(DivErrors, NumDivCell, ExactDivCell, Mesh, OnCell,
-                        NVertLevels);
+   Err += computeErrors(DivErrors, NumDivCell, ExactDivCell, Mesh, OnCell);
    // Check error values
    Err += checkErrors("OperatorsTest", "Divergence", DivErrors,
                       Setup.ExpectedDivErrors, RTol);
@@ -228,7 +227,7 @@ int testGradient(Real RTol) {
        KOKKOS_LAMBDA(Real Coord1, Real Coord2) {
           return Setup.exactScalar(Coord1, Coord2);
        },
-       ScalarCell, Geom, Mesh, OnCell, NVertLevels);
+       ScalarCell, Geom, Mesh, OnCell);
 
    // Compute exact result
    Array2DReal ExactGradEdge("ExactGradEdge", Mesh->NEdgesOwned, NVertLevels);
@@ -237,8 +236,7 @@ int testGradient(Real RTol) {
           VecField[0] = Setup.exactGradScalarX(X, Y);
           VecField[1] = Setup.exactGradScalarY(X, Y);
        },
-       ExactGradEdge, EdgeComponent::Normal, Geom, Mesh, NVertLevels,
-       ExchangeHalos::No);
+       ExactGradEdge, EdgeComponent::Normal, Geom, Mesh, ExchangeHalos::No);
 
    // Compute numerical result
    GradientOnEdge GradientEdge(Mesh);
@@ -250,8 +248,7 @@ int testGradient(Real RTol) {
 
    // Compute error measures
    ErrorMeasures GradErrors;
-   Err += computeErrors(GradErrors, NumGradEdge, ExactGradEdge, Mesh, OnEdge,
-                        NVertLevels);
+   Err += computeErrors(GradErrors, NumGradEdge, ExactGradEdge, Mesh, OnEdge);
    // Check error values
    Err += checkErrors("OperatorsTest", "Gradient", GradErrors,
                       Setup.ExpectedGradErrors, RTol);
@@ -276,14 +273,14 @@ int testCurl(Real RTol) {
           VecField[0] = Setup.exactVecX(X, Y);
           VecField[1] = Setup.exactVecY(X, Y);
        },
-       VecEdge, EdgeComponent::Normal, Geom, Mesh, NVertLevels);
+       VecEdge, EdgeComponent::Normal, Geom, Mesh);
 
    // Compute exact result
    Array2DReal ExactCurlVertex("ExactCurlVertex", Mesh->NVerticesOwned,
                                NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.exactCurlVec(X, Y); },
-       ExactCurlVertex, Geom, Mesh, OnVertex, NVertLevels, ExchangeHalos::No);
+       ExactCurlVertex, Geom, Mesh, OnVertex, ExchangeHalos::No);
 
    // Compute numerical result
    Array2DReal NumCurlVertex("NumCurlVertex", Mesh->NVerticesOwned,
@@ -297,7 +294,7 @@ int testCurl(Real RTol) {
    // Compute error measures
    ErrorMeasures CurlErrors;
    Err += computeErrors(CurlErrors, NumCurlVertex, ExactCurlVertex, Mesh,
-                        OnVertex, NVertLevels);
+                        OnVertex);
    // Check error values
    Err += checkErrors("OperatorsTest", "Curl", CurlErrors,
                       Setup.ExpectedCurlErrors, RTol);
@@ -323,7 +320,7 @@ int testRecon(Real RTol) {
           VecField[0] = Setup.exactVecX(X, Y);
           VecField[1] = Setup.exactVecY(X, Y);
        },
-       VecEdge, EdgeComponent::Normal, Geom, Mesh, NVertLevels);
+       VecEdge, EdgeComponent::Normal, Geom, Mesh);
 
    // Compute exact result
    Array2DReal ExactReconEdge("ExactReconEdge", Mesh->NEdgesOwned, NVertLevels);
@@ -333,7 +330,7 @@ int testRecon(Real RTol) {
           VecField[0] = Setup.exactVecX(X, Y);
           VecField[1] = Setup.exactVecY(X, Y);
        },
-       ExactReconEdge, EdgeComponent::Tangential, Geom, Mesh, NVertLevels,
+       ExactReconEdge, EdgeComponent::Tangential, Geom, Mesh,
        ExchangeHalos::No);
 
    // Compute numerical result
@@ -346,8 +343,8 @@ int testRecon(Real RTol) {
 
    // Compute error measures
    ErrorMeasures ReconErrors;
-   Err += computeErrors(ReconErrors, NumReconEdge, ExactReconEdge, Mesh, OnEdge,
-                        NVertLevels);
+   Err +=
+       computeErrors(ReconErrors, NumReconEdge, ExactReconEdge, Mesh, OnEdge);
    // Check error values
    Err += checkErrors("OperatorsTest", "Recon", ReconErrors,
                       Setup.ExpectedReconErrors, RTol);

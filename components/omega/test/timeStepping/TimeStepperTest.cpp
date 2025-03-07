@@ -131,8 +131,7 @@ ErrorMeasures computeErrors() {
 
    // Only velocity errors matters, because thickness remains constant
    ErrorMeasures VelErrors;
-   computeErrors(VelErrors, NormalVelEdge, ExactNormalVelEdge, DefMesh, OnEdge,
-                 NVertLevels);
+   computeErrors(VelErrors, NormalVelEdge, ExactNormalVelEdge, DefMesh, OnEdge);
 
    return VelErrors;
 }
