@@ -37,20 +37,22 @@ struct TestSetupPlane {
    Real Lx = 1;
    Real Ly = std::sqrt(3) / 2;
 
-   ErrorMeasures ExpectedDivErrors     = {0.00124886886594453264,
-                                          0.00124886886590977139};
-   ErrorMeasures ExpectedPVErrors      = {0.00807347170900282914,
-                                          0.00794755105765788429};
-   ErrorMeasures ExpectedGradErrors    = {0.00125026071878537952,
-                                          0.00134354611117262161};
-   ErrorMeasures ExpectedLaplaceErrors = {0.00113090174765822192,
-                                          0.00134324628763667899};
-   ErrorMeasures ExpectedTrHAdvErrors  = {0.00205864372747571571,
-                                          0.00172418025417940784};
-   ErrorMeasures ExpectedTrDel2Errors  = {0.00334357193650093847,
-                                          0.00290978146207349032};
-   ErrorMeasures ExpectedTrDel4Errors  = {0.00508833446725232875,
-                                          0.00523080740758275625};
+   ErrorMeasures ExpectedDivErrors         = {0.00124886886594453264,
+                                              0.00124886886590977139};
+   ErrorMeasures ExpectedPVErrors          = {0.00807347170900282914,
+                                              0.00794755105765788429};
+   ErrorMeasures ExpectedGradErrors        = {0.00125026071878537952,
+                                              0.00134354611117262161};
+   ErrorMeasures ExpectedLaplaceErrors     = {0.00113090174765822192,
+                                              0.00134324628763667899};
+   ErrorMeasures ExpectedTrHAdvErrors      = {0.00205864372747571571,
+                                              0.00172418025417940784};
+   ErrorMeasures ExpectedTrDel2Errors      = {0.00334357193650093847,
+                                              0.00290978146207349032};
+   ErrorMeasures ExpectedTrDel4Errors      = {0.00508833446725232875,
+                                              0.00523080740758275625};
+   ErrorMeasures ExpectedWindForcingErrors = {0.0030769158453121193,
+                                              0.0032838019738754025};
 
    KOKKOS_FUNCTION Real vectorX(Real X, Real Y) const {
       return std::sin(2 * Pi * X / Lx) * std::cos(2 * Pi * Y / Ly);
@@ -146,6 +148,18 @@ struct TestSetupPlane {
               std::cos(4 * Pi * Y / Ly) / Ly / Ly);
    }
 
+   KOKKOS_FUNCTION Real windForcingX(Real X, Real Y, Real Coeff) const {
+      const Real UVel  = vectorX(X, Y);
+      const Real UWind = vectorY(X, Y);
+      return Coeff * scalarA(X, Y) / scalarB(X, Y) * (UWind - UVel);
+   }
+
+   KOKKOS_FUNCTION Real windForcingY(Real X, Real Y, Real Coeff) const {
+      const Real VVel  = vectorY(X, Y);
+      const Real VWind = vectorX(X, Y);
+      return Coeff * scalarA(X, Y) / scalarB(X, Y) * (VWind - VVel);
+   }
+
 }; // end TestSetupPlane
 
 struct TestSetupSphere {
@@ -155,20 +169,22 @@ struct TestSetupSphere {
 
    Real Pi = M_PI;
 
-   ErrorMeasures ExpectedDivErrors     = {0.0136595773989796766,
-                                          0.00367052484586384131};
-   ErrorMeasures ExpectedPVErrors      = {0.0219217796608757037,
-                                          0.0122537418367830303};
-   ErrorMeasures ExpectedGradErrors    = {0.00187912292540623471,
-                                          0.00149841802817334935};
-   ErrorMeasures ExpectedLaplaceErrors = {0.281930203304510130,
-                                          0.270530313560271740};
-   ErrorMeasures ExpectedTrHAdvErrors  = {0.0132310202299444034,
-                                          0.0038523368564029538};
-   ErrorMeasures ExpectedTrDel2Errors  = {0.0486107109846934185,
-                                          0.00507514214194892694};
-   ErrorMeasures ExpectedTrDel4Errors  = {0.000819552466009620408,
-                                          0.00064700084412871962};
+   ErrorMeasures ExpectedDivErrors         = {0.0136595773989796766,
+                                              0.00367052484586384131};
+   ErrorMeasures ExpectedPVErrors          = {0.0219217796608757037,
+                                              0.0122537418367830303};
+   ErrorMeasures ExpectedGradErrors        = {0.00187912292540623471,
+                                              0.00149841802817334935};
+   ErrorMeasures ExpectedLaplaceErrors     = {0.281930203304510130,
+                                              0.270530313560271740};
+   ErrorMeasures ExpectedTrHAdvErrors      = {0.0132310202299444034,
+                                              0.0038523368564029538};
+   ErrorMeasures ExpectedTrDel2Errors      = {0.0486107109846934185,
+                                              0.00507514214194892694};
+   ErrorMeasures ExpectedTrDel4Errors      = {0.000819552466009620408,
+                                              0.00064700084412871962};
+   ErrorMeasures ExpectedWindForcingErrors = {0.0015226266963213346,
+                                              0.001328746858062973};
 
    KOKKOS_FUNCTION Real vectorX(Real Lon, Real Lat) const {
       return -Radius * std::pow(std::sin(Lon), 2) * std::pow(std::cos(Lat), 3);
@@ -262,6 +278,18 @@ struct TestSetupSphere {
 
    KOKKOS_FUNCTION Real tracerHyperDiff(Real Lon, Real Lat) const {
       return std::sqrt(3 / 2 / Pi) * std::cos(Lat) * std::cos(Lon) / Radius;
+   }
+
+   KOKKOS_FUNCTION Real windForcingX(Real Lon, Real Lat, Real Coeff) const {
+      const Real UVel  = vectorX(Lon, Lat);
+      const Real UWind = vectorY(Lon, Lat);
+      return Coeff * scalarA(Lon, Lat) / scalarB(Lon, Lat) * (UWind - UVel);
+   }
+
+   KOKKOS_FUNCTION Real windForcingY(Real Lon, Real Lat, Real Coeff) const {
+      const Real VVel  = vectorY(Lon, Lat);
+      const Real VWind = vectorX(Lon, Lat);
+      return Coeff * scalarA(Lon, Lat) / scalarB(Lon, Lat) * (VWind - VVel);
    }
 
 }; // end TestSetupSphere
@@ -640,6 +668,87 @@ int testVelHyperDiff(int NVertLevels, Real RTol) {
    return Err;
 } // end testVelHyperDiff
 
+int testWindForcing(int NVertLevels, Real RTol) {
+
+   int Err = 0;
+   TestSetup Setup;
+
+   const auto Mesh = HorzMesh::getDefault();
+
+   const Real Coeff = 1.123456789;
+
+   // Compute exact result
+   Array2DReal ExactWindForcing("ExactWindForcing", Mesh->NEdgesOwned,
+                                NVertLevels);
+
+   // Note: this computes wind forcing at every level
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+          VecField[0] = Setup.windForcingX(X, Y, Coeff);
+          VecField[1] = Setup.windForcingY(X, Y, Coeff);
+       },
+       ExactWindForcing, EdgeComponent::Normal, Geom, Mesh, ExchangeHalos::No);
+
+   // Reset wind forcing to zero below the surface
+   deepCopy(Kokkos::subview(ExactWindForcing, Kokkos::ALL,
+                            Kokkos::make_pair(1, NVertLevels)),
+            0);
+
+   // Set input arrays
+   Array2DReal NormalVelEdge("NormalVelEdge", Mesh->NEdgesSize, NVertLevels);
+
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+          VecField[0] = Setup.vectorX(X, Y);
+          VecField[1] = Setup.vectorY(X, Y);
+       },
+       NormalVelEdge, EdgeComponent::Normal, Geom, Mesh);
+
+   Array1DReal NormalWindEdge("NormalWindEdge", Mesh->NEdgesSize);
+
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+          VecField[0] = Setup.vectorY(X, Y);
+          VecField[1] = Setup.vectorX(X, Y);
+       },
+       NormalWindEdge, EdgeComponent::Normal, Geom, Mesh);
+
+   Array1DReal WindRelNormCell("WindRelNormCell", Mesh->NCellsSize);
+
+   Err += setScalar(
+       KOKKOS_LAMBDA(Real X, Real Y) { return Setup.scalarA(X, Y); },
+       WindRelNormCell, Geom, Mesh, OnCell);
+
+   Array2DReal LayerThickEdge("LayerThickEdge", Mesh->NEdgesSize, NVertLevels);
+
+   Err += setScalar(
+       KOKKOS_LAMBDA(Real X, Real Y) { return Setup.scalarB(X, Y); },
+       LayerThickEdge, Geom, Mesh, OnEdge);
+
+   // Compute numerical result
+   Array2DReal NumWindForcing("NumWindForcing", Mesh->NEdgesOwned, NVertLevels);
+
+   WindForcingOnEdge WindForcingOnE(Mesh);
+   WindForcingOnE.Coeff = Coeff;
+
+   parallelFor(
+       {Mesh->NEdgesOwned, NVertLevels}, KOKKOS_LAMBDA(int IEdge, int KLevel) {
+          WindForcingOnE(NumWindForcing, IEdge, KLevel, NormalVelEdge,
+                         NormalWindEdge, WindRelNormCell, LayerThickEdge);
+       });
+
+   // Compute errors
+   ErrorMeasures WindForcingErrors;
+   Err += computeErrors(WindForcingErrors, NumWindForcing, ExactWindForcing,
+                        Mesh, OnEdge);
+
+   // Check error values
+   Err += checkErrors("TendencyTermsTest", "WindForcing", WindForcingErrors,
+                      Setup.ExpectedWindForcingErrors, RTol);
+
+   return Err;
+} // end testWindForcing
+
 int testTracerHorzAdvOnCell(int NVertLevels, int NTracers, Real RTol) {
 
    I4 Err = 0;
@@ -880,6 +989,8 @@ int tendencyTermsTest(const std::string &mesh = DefaultMeshFile) {
    Err += testVelDiff(NVertLevels, RTol);
 
    Err += testVelHyperDiff(NVertLevels, RTol);
+
+   Err += testWindForcing(NVertLevels, RTol);
 
    Err += testTracerHorzAdvOnCell(NVertLevels, NTracers, RTol);
 
