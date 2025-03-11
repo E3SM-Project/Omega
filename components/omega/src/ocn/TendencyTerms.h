@@ -272,6 +272,42 @@ class VelocityHyperDiffOnEdge {
    Array2DReal EdgeMask;
 };
 
+/// Wind forcing
+class WindForcingOnEdge {
+ public:
+   bool Enabled;
+   Real Coeff;
+
+   /// constructor declaration
+   WindForcingOnEdge(const HorzMesh *Mesh);
+
+   /// The functor takes the edge index, vertical chunk index, and arrays for
+   /// horizontal velocity, wind velocity, the norm of wind-relative velocity,
+   /// and edge layer thickness, outputs tendency array
+   KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge, I4 KChunk,
+                                   const Array2DReal &NormalVelEdge,
+                                   const Array1DReal &NormalWindEdge,
+                                   const Array1DReal &WindRelNormCell,
+                                   const Array2DReal &LayerThickEdge) const {
+      if (KChunk == 0) {
+         const I4 K = 0;
+
+         const I4 JCell0 = CellsOnEdge(IEdge, 0);
+         const I4 JCell1 = CellsOnEdge(IEdge, 1);
+
+         const Real WindRelNormEdge =
+             0.5_Real * (WindRelNormCell(JCell0) + WindRelNormCell(JCell1));
+
+         const Real InvThickEdge = 1._Real / LayerThickEdge(IEdge, K);
+         Tend(IEdge, K) += Coeff * WindRelNormEdge * InvThickEdge *
+                           (NormalWindEdge(IEdge) - NormalVelEdge(IEdge, K));
+      }
+   }
+
+ private:
+   Array2DI4 CellsOnEdge;
+};
+
 // Tracer horizontal advection term
 class TracerHorzAdvOnCell {
  public:
