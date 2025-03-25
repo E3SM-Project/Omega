@@ -12,10 +12,28 @@ namespace OMEGA {
 class WindForcingAuxVars {
  public:
    Array1DReal NormalWindEdge;
+   Array1DReal ZonalWindCell;
+   Array1DReal MeridWindCell;
    Array1DReal WindRelNormCell;
 
    WindForcingAuxVars(const std::string &AuxStateSuffix, const HorzMesh *Mesh,
                       int NVertLevels);
+
+   KOKKOS_FUNCTION void
+   computeVarsOnEdge(int IEdge, int KChunk, const Array1DReal &ZonalWindCell,
+                     const Array1DReal &MeridWindCell) const {
+      if (KChunk == 0) {
+         const int JCell0 = CellsOnEdge(IEdge, 0);
+         const int JCell1 = CellsOnEdge(IEdge, 1);
+         const Real ZonalWindEdge =
+             0.5_Real * (ZonalWindCell(JCell0) + ZonalWindCell(JCell1));
+         const Real MeridWindEdge =
+             0.5_Real * (MeridWindCell(JCell0) + MeridWindCell(JCell1));
+
+         NormalWindEdge(IEdge) = Kokkos::cos(AngleEdge(IEdge)) * ZonalWindEdge +
+                                 Kokkos::sin(AngleEdge(IEdge)) * MeridWindEdge;
+      }
+   }
 
    KOKKOS_FUNCTION void
    computeVarsOnCell(int ICell, int KChunk,
@@ -44,8 +62,10 @@ class WindForcingAuxVars {
  private:
    Array1DI4 NEdgesOnCell;
    Array2DI4 EdgesOnCell;
+   Array2DI4 CellsOnEdge;
    Array1DReal DcEdge;
    Array1DReal DvEdge;
+   Array1DReal AngleEdge;
    Array1DReal AreaCell;
 };
 
