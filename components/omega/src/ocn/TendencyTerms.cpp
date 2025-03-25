@@ -46,6 +46,10 @@ VelocityHyperDiffOnEdge::VelocityHyperDiffOnEdge(const HorzMesh *Mesh)
 WindForcingOnEdge::WindForcingOnEdge(const HorzMesh *Mesh)
     : Coeff(0), CellsOnEdge(Mesh->CellsOnEdge) {}
 
+BottomDragOnEdge::BottomDragOnEdge(const HorzMesh *Mesh)
+    : Coeff(0), CellsOnEdge(Mesh->CellsOnEdge), NVertLevels(Mesh->NVertLevels) {
+}
+
 TracerHorzAdvOnCell::TracerHorzAdvOnCell(const HorzMesh *Mesh)
     : NEdgesOnCell(Mesh->NEdgesOnCell), EdgesOnCell(Mesh->EdgesOnCell),
       CellsOnEdge(Mesh->CellsOnEdge), EdgeSignOnCell(Mesh->EdgeSignOnCell),
