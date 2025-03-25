@@ -53,6 +53,8 @@ struct TestSetupPlane {
                                               0.00523080740758275625};
    ErrorMeasures ExpectedWindForcingErrors = {0.0030769158453121193,
                                               0.0032838019738754025};
+   ErrorMeasures ExpectedBottomDragErrors  = {0.033848740052302935,
+                                              0.01000133508329411};
 
    KOKKOS_FUNCTION Real vectorX(Real X, Real Y) const {
       return std::sin(2 * Pi * X / Lx) * std::cos(2 * Pi * Y / Ly);
@@ -160,6 +162,16 @@ struct TestSetupPlane {
       return Coeff * scalarA(X, Y) / scalarB(X, Y) * (VWind - VVel);
    }
 
+   KOKKOS_FUNCTION Real bottomDragX(Real X, Real Y, Real Coeff) const {
+      const Real UVel = vectorX(X, Y);
+      return -Coeff * std::abs(scalarA(X, Y)) / scalarB(X, Y) * UVel;
+   }
+
+   KOKKOS_FUNCTION Real bottomDragY(Real X, Real Y, Real Coeff) const {
+      const Real VVel = vectorY(X, Y);
+      return -Coeff * std::abs(scalarA(X, Y)) / scalarB(X, Y) * VVel;
+   }
+
 }; // end TestSetupPlane
 
 struct TestSetupSphere {
@@ -185,6 +197,8 @@ struct TestSetupSphere {
                                               0.00064700084412871962};
    ErrorMeasures ExpectedWindForcingErrors = {0.0015226266963213346,
                                               0.001328746858062973};
+   ErrorMeasures ExpectedBottomDragErrors  = {0.0015333449035655053,
+                                              0.0014897009917655022};
 
    KOKKOS_FUNCTION Real vectorX(Real Lon, Real Lat) const {
       return -Radius * std::pow(std::sin(Lon), 2) * std::pow(std::cos(Lat), 3);
@@ -290,6 +304,16 @@ struct TestSetupSphere {
       const Real VVel  = vectorY(Lon, Lat);
       const Real VWind = vectorX(Lon, Lat);
       return Coeff * scalarA(Lon, Lat) / scalarB(Lon, Lat) * (VWind - VVel);
+   }
+
+   KOKKOS_FUNCTION Real bottomDragX(Real Lon, Real Lat, Real Coeff) const {
+      const Real UVel = vectorX(Lon, Lat);
+      return -Coeff * std::abs(scalarA(Lon, Lat)) / scalarB(Lon, Lat) * UVel;
+   }
+
+   KOKKOS_FUNCTION Real bottomDragY(Real Lon, Real Lat, Real Coeff) const {
+      const Real VVel = vectorY(Lon, Lat);
+      return -Coeff * std::abs(scalarA(Lon, Lat)) / scalarB(Lon, Lat) * VVel;
    }
 
 }; // end TestSetupSphere
@@ -749,6 +773,80 @@ int testWindForcing(int NVertLevels, Real RTol) {
    return Err;
 } // end testWindForcing
 
+int testBottomDrag(int NVertLevels, Real RTol) {
+
+   int Err = 0;
+   TestSetup Setup;
+
+   const auto Mesh = HorzMesh::getDefault();
+
+   const Real Coeff = 1.123456789;
+
+   // Compute exact result
+   Array2DReal ExactBottomDrag("ExactBottomDrag", Mesh->NEdgesOwned,
+                               NVertLevels);
+
+   // Note: this computes bottom drag at every level
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+          VecField[0] = Setup.bottomDragX(X, Y, Coeff);
+          VecField[1] = Setup.bottomDragY(X, Y, Coeff);
+       },
+       ExactBottomDrag, EdgeComponent::Normal, Geom, Mesh, ExchangeHalos::No);
+
+   // Reset bottom drag to zero above the lowest level
+   deepCopy(Kokkos::subview(ExactBottomDrag, Kokkos::ALL,
+                            Kokkos::make_pair(0, NVertLevels - 1)),
+            0);
+
+   // Set input arrays
+   Array2DReal NormalVelEdge("NormalVelEdge", Mesh->NEdgesSize, NVertLevels);
+
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+          VecField[0] = Setup.vectorX(X, Y);
+          VecField[1] = Setup.vectorY(X, Y);
+       },
+       NormalVelEdge, EdgeComponent::Normal, Geom, Mesh);
+
+   Array2DReal KECell("KECell", Mesh->NCellsSize, NVertLevels);
+
+   Err += setScalar(
+       KOKKOS_LAMBDA(Real X, Real Y) {
+          return Setup.scalarA(X, Y) * Setup.scalarA(X, Y) / 2;
+       },
+       KECell, Geom, Mesh, OnCell);
+
+   Array2DReal LayerThickEdge("LayerThickEdge", Mesh->NEdgesSize, NVertLevels);
+
+   Err += setScalar(
+       KOKKOS_LAMBDA(Real X, Real Y) { return Setup.scalarB(X, Y); },
+       LayerThickEdge, Geom, Mesh, OnEdge);
+
+   // Compute numerical result
+   Array2DReal NumBottomDrag("NumBottomDrag", Mesh->NEdgesOwned, NVertLevels);
+
+   BottomDragOnEdge BottomDragOnE(Mesh);
+   BottomDragOnE.Coeff = Coeff;
+
+   parallelFor(
+       {Mesh->NEdgesOwned, NVertLevels}, KOKKOS_LAMBDA(int IEdge, int KLevel) {
+          BottomDragOnE(NumBottomDrag, IEdge, KLevel, NormalVelEdge, KECell,
+                        LayerThickEdge);
+       });
+
+   // Compute errors
+   ErrorMeasures BottomDragErrors;
+   Err += computeErrors(BottomDragErrors, NumBottomDrag, ExactBottomDrag, Mesh,
+                        OnEdge);
+
+   // Check error values
+   Err += checkErrors("TendencyTermsTest", "BottomDrag", BottomDragErrors,
+                      Setup.ExpectedBottomDragErrors, RTol);
+
+   return Err;
+} // end testBottomDrag
+
 int testTracerHorzAdvOnCell(int NVertLevels, int NTracers, Real RTol) {
 
    I4 Err = 0;
@@ -909,7 +1007,7 @@ int testTracerHyperDiffOnCell(int NVertLevels, int NTracers, Real RTol) {
    return Err;
 } // end testTracerHyperDiffOnCell
 
-int initTendTest(const std::string &mesh) {
+int initTendTest(const std::string &MeshFile, int NVertLevels) {
 
    I4 Err = 0;
 
@@ -928,13 +1026,27 @@ int initTendTest(const std::string &mesh) {
       return Err;
    }
 
+   // Reset NVertLevels to the test value
+   Config *OmegaConfig = Config::getOmegaConfig();
+   Config DimConfig("Dimension");
+   Err = OmegaConfig->get(DimConfig);
+   if (Err != 0) {
+      LOG_CRITICAL("TendencyTermsTest: Dimension group not found in Config");
+      return Err;
+   }
+   Err = DimConfig.set("NVertLevels", NVertLevels);
+   if (Err != 0) {
+      LOG_CRITICAL("TendencyTermsTest: Unable to reset NVertLevels in Config");
+      return Err;
+   }
+
    I4 IOErr = IO::init(DefComm);
    if (IOErr != 0) {
       Err++;
       LOG_ERROR("TendencyTermsTest: error initializing parallel IO");
    }
 
-   int DecompErr = Decomp::init(mesh);
+   int DecompErr = Decomp::init(MeshFile);
    if (DecompErr != 0) {
       Err++;
       LOG_ERROR("TendencyTermsTest: error initializing default decomposition");
@@ -965,15 +1077,15 @@ void finalizeTendTest() {
 
 } // end finalizeTendTest
 
-int tendencyTermsTest(const std::string &mesh = DefaultMeshFile) {
+int tendencyTermsTest(const std::string &MeshFile = DefaultMeshFile) {
+   int NVertLevels = 16;
 
-   int Err = initTendTest(mesh);
+   int Err = initTendTest(MeshFile, NVertLevels);
    if (Err != 0) {
       LOG_CRITICAL("TendencyTermsTest: Error initializing");
    }
 
    const auto &Mesh = HorzMesh::getDefault();
-   int NVertLevels  = 16;
    int NTracers     = 3;
 
    const Real RTol = sizeof(Real) == 4 ? 2e-2 : 1e-5;
@@ -991,6 +1103,8 @@ int tendencyTermsTest(const std::string &mesh = DefaultMeshFile) {
    Err += testVelHyperDiff(NVertLevels, RTol);
 
    Err += testWindForcing(NVertLevels, RTol);
+
+   Err += testBottomDrag(NVertLevels, RTol);
 
    Err += testTracerHorzAdvOnCell(NVertLevels, NTracers, RTol);
 
