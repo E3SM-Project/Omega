@@ -11,8 +11,9 @@
 namespace OMEGA {
 
 // check if two real numbers are equal with a given relative tolerance
-inline bool isApprox(Real X, Real Y, Real RTol) {
-   return std::abs(X - Y) <= RTol * std::max(std::abs(X), std::abs(Y));
+inline bool isApprox(Real X, Real Y, Real RTol, Real ATol = 0) {
+   return std::abs(X - Y) <=
+          std::max(ATol, RTol * std::max(std::abs(X), std::abs(Y)));
 }
 
 // convert spherical components of a vector to Cartesian
@@ -556,14 +557,15 @@ int computeErrors(ErrorMeasures &ErrorMeasures, const Array &NumFieldElement,
 
 inline int checkErrors(const std::string &TestSuite,
                        const std::string &Variable, const ErrorMeasures &Errors,
-                       const ErrorMeasures &ExpectedErrors, Real RTol) {
+                       const ErrorMeasures &ExpectedErrors, Real RTol,
+                       Real ATol = 0) {
    int Err = 0;
-   if (!isApprox(Errors.LInf, ExpectedErrors.LInf, RTol)) {
+   if (!isApprox(Errors.LInf, ExpectedErrors.LInf, RTol, ATol)) {
       Err++;
       LOG_ERROR("{}: {} LInf FAIL, expected {}, got {}", TestSuite, Variable,
                 ExpectedErrors.LInf, Errors.LInf);
    }
-   if (!isApprox(Errors.L2, ExpectedErrors.L2, RTol)) {
+   if (!isApprox(Errors.L2, ExpectedErrors.L2, RTol, ATol)) {
       Err++;
       LOG_ERROR("{}: {} L2 FAIL, expected {}, got {}", TestSuite, Variable,
                 ExpectedErrors.L2, Errors.L2);
