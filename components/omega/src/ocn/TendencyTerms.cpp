@@ -44,7 +44,7 @@ VelocityHyperDiffOnEdge::VelocityHyperDiffOnEdge(const HorzMesh *Mesh)
       MeshScalingDel4(Mesh->MeshScalingDel4), EdgeMask(Mesh->EdgeMask) {}
 
 WindForcingOnEdge::WindForcingOnEdge(const HorzMesh *Mesh)
-    : Coeff(0), CellsOnEdge(Mesh->CellsOnEdge) {}
+    : SaltWaterDensity(1.026e3) {}
 
 BottomDragOnEdge::BottomDragOnEdge(const HorzMesh *Mesh)
     : Coeff(0), CellsOnEdge(Mesh->CellsOnEdge), NVertLevels(Mesh->NVertLevels) {

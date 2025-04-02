@@ -28,6 +28,7 @@
 #include "mpi.h"
 
 #include <cmath>
+#include <limits>
 
 using namespace OMEGA;
 
@@ -51,8 +52,7 @@ struct TestSetupPlane {
                                               0.00290978146207349032};
    ErrorMeasures ExpectedTrDel4Errors      = {0.00508833446725232875,
                                               0.00523080740758275625};
-   ErrorMeasures ExpectedWindForcingErrors = {0.0030769158453121193,
-                                              0.0032838019738754025};
+   ErrorMeasures ExpectedWindForcingErrors = {0, 0};
    ErrorMeasures ExpectedBottomDragErrors  = {0.033848740052302935,
                                               0.01000133508329411};
 
@@ -150,16 +150,18 @@ struct TestSetupPlane {
               std::cos(4 * Pi * Y / Ly) / Ly / Ly);
    }
 
-   KOKKOS_FUNCTION Real windForcingX(Real X, Real Y, Real Coeff) const {
-      const Real UVel  = vectorX(X, Y);
-      const Real UWind = vectorY(X, Y);
-      return Coeff * scalarA(X, Y) / scalarB(X, Y) * (UWind - UVel);
+   KOKKOS_FUNCTION Real windForcingX(Real X, Real Y,
+                                     Real SaltWaterDensity) const {
+      const Real StressU = vectorX(X, Y);
+      const Real Thick   = scalarB(X, Y);
+      return StressU / (Thick * SaltWaterDensity);
    }
 
-   KOKKOS_FUNCTION Real windForcingY(Real X, Real Y, Real Coeff) const {
-      const Real VVel  = vectorY(X, Y);
-      const Real VWind = vectorX(X, Y);
-      return Coeff * scalarA(X, Y) / scalarB(X, Y) * (VWind - VVel);
+   KOKKOS_FUNCTION Real windForcingY(Real X, Real Y,
+                                     Real SaltWaterDensity) const {
+      const Real StressV = vectorY(X, Y);
+      const Real Thick   = scalarB(X, Y);
+      return StressV / (Thick * SaltWaterDensity);
    }
 
    KOKKOS_FUNCTION Real bottomDragX(Real X, Real Y, Real Coeff) const {
@@ -195,8 +197,7 @@ struct TestSetupSphere {
                                               0.00507514214194892694};
    ErrorMeasures ExpectedTrDel4Errors      = {0.000819552466009620408,
                                               0.00064700084412871962};
-   ErrorMeasures ExpectedWindForcingErrors = {0.0015226266963213346,
-                                              0.001328746858062973};
+   ErrorMeasures ExpectedWindForcingErrors = {0, 0};
    ErrorMeasures ExpectedBottomDragErrors  = {0.0015333449035655053,
                                               0.0014897009917655022};
 
@@ -294,16 +295,18 @@ struct TestSetupSphere {
       return std::sqrt(3 / 2 / Pi) * std::cos(Lat) * std::cos(Lon) / Radius;
    }
 
-   KOKKOS_FUNCTION Real windForcingX(Real Lon, Real Lat, Real Coeff) const {
-      const Real UVel  = vectorX(Lon, Lat);
-      const Real UWind = vectorY(Lon, Lat);
-      return Coeff * scalarA(Lon, Lat) / scalarB(Lon, Lat) * (UWind - UVel);
+   KOKKOS_FUNCTION Real windForcingX(Real Lon, Real Lat,
+                                     Real SaltWaterDensity) const {
+      const Real StressU = vectorX(Lon, Lat);
+      const Real Thick   = scalarB(Lon, Lat);
+      return StressU / (Thick * SaltWaterDensity);
    }
 
-   KOKKOS_FUNCTION Real windForcingY(Real Lon, Real Lat, Real Coeff) const {
-      const Real VVel  = vectorY(Lon, Lat);
-      const Real VWind = vectorX(Lon, Lat);
-      return Coeff * scalarA(Lon, Lat) / scalarB(Lon, Lat) * (VWind - VVel);
+   KOKKOS_FUNCTION Real windForcingY(Real Lon, Real Lat,
+                                     Real SaltWaterDensity) const {
+      const Real StressV = vectorY(Lon, Lat);
+      const Real Thick   = scalarB(Lon, Lat);
+      return StressV / (Thick * SaltWaterDensity);
    }
 
    KOKKOS_FUNCTION Real bottomDragX(Real Lon, Real Lat, Real Coeff) const {
@@ -692,14 +695,14 @@ int testVelHyperDiff(int NVertLevels, Real RTol) {
    return Err;
 } // end testVelHyperDiff
 
-int testWindForcing(int NVertLevels, Real RTol) {
+int testWindForcing(int NVertLevels) {
 
    int Err = 0;
    TestSetup Setup;
 
    const auto Mesh = HorzMesh::getDefault();
 
-   const Real Coeff = 1.123456789;
+   const Real SaltWaterDensity = 0.987654321;
 
    // Compute exact result
    Array2DReal ExactWindForcing("ExactWindForcing", Mesh->NEdgesOwned,
@@ -708,8 +711,8 @@ int testWindForcing(int NVertLevels, Real RTol) {
    // Note: this computes wind forcing at every level
    Err += setVectorEdge(
        KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
-          VecField[0] = Setup.windForcingX(X, Y, Coeff);
-          VecField[1] = Setup.windForcingY(X, Y, Coeff);
+          VecField[0] = Setup.windForcingX(X, Y, SaltWaterDensity);
+          VecField[1] = Setup.windForcingY(X, Y, SaltWaterDensity);
        },
        ExactWindForcing, EdgeComponent::Normal, Geom, Mesh, ExchangeHalos::No);
 
@@ -719,29 +722,14 @@ int testWindForcing(int NVertLevels, Real RTol) {
             0);
 
    // Set input arrays
-   Array2DReal NormalVelEdge("NormalVelEdge", Mesh->NEdgesSize, NVertLevels);
+   Array1DReal NormalStressEdge("NormalStressEdge", Mesh->NEdgesSize);
 
    Err += setVectorEdge(
        KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
           VecField[0] = Setup.vectorX(X, Y);
           VecField[1] = Setup.vectorY(X, Y);
        },
-       NormalVelEdge, EdgeComponent::Normal, Geom, Mesh);
-
-   Array1DReal NormalWindEdge("NormalWindEdge", Mesh->NEdgesSize);
-
-   Err += setVectorEdge(
-       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
-          VecField[0] = Setup.vectorY(X, Y);
-          VecField[1] = Setup.vectorX(X, Y);
-       },
-       NormalWindEdge, EdgeComponent::Normal, Geom, Mesh);
-
-   Array1DReal WindRelNormCell("WindRelNormCell", Mesh->NCellsSize);
-
-   Err += setScalar(
-       KOKKOS_LAMBDA(Real X, Real Y) { return Setup.scalarA(X, Y); },
-       WindRelNormCell, Geom, Mesh, OnCell);
+       NormalStressEdge, EdgeComponent::Normal, Geom, Mesh);
 
    Array2DReal LayerThickEdge("LayerThickEdge", Mesh->NEdgesSize, NVertLevels);
 
@@ -753,12 +741,12 @@ int testWindForcing(int NVertLevels, Real RTol) {
    Array2DReal NumWindForcing("NumWindForcing", Mesh->NEdgesOwned, NVertLevels);
 
    WindForcingOnEdge WindForcingOnE(Mesh);
-   WindForcingOnE.Coeff = Coeff;
+   WindForcingOnE.SaltWaterDensity = SaltWaterDensity;
 
    parallelFor(
        {Mesh->NEdgesOwned, NVertLevels}, KOKKOS_LAMBDA(int IEdge, int KLevel) {
-          WindForcingOnE(NumWindForcing, IEdge, KLevel, NormalVelEdge,
-                         NormalWindEdge, WindRelNormCell, LayerThickEdge);
+          WindForcingOnE(NumWindForcing, IEdge, KLevel, NormalStressEdge,
+                         LayerThickEdge);
        });
 
    // Compute errors
@@ -767,8 +755,10 @@ int testWindForcing(int NVertLevels, Real RTol) {
                         Mesh, OnEdge);
 
    // Check error values
+   const Real RTol = 0;
+   const Real ATol = 100 * std::numeric_limits<Real>::epsilon();
    Err += checkErrors("TendencyTermsTest", "WindForcing", WindForcingErrors,
-                      Setup.ExpectedWindForcingErrors, RTol);
+                      Setup.ExpectedWindForcingErrors, RTol, ATol);
 
    return Err;
 } // end testWindForcing
@@ -1102,7 +1092,7 @@ int tendencyTermsTest(const std::string &MeshFile = DefaultMeshFile) {
 
    Err += testVelHyperDiff(NVertLevels, RTol);
 
-   Err += testWindForcing(NVertLevels, RTol);
+   Err += testWindForcing(NVertLevels);
 
    Err += testBottomDrag(NVertLevels, RTol);
 

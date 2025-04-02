@@ -80,7 +80,6 @@ void AuxiliaryState::computeMomAux(const OceanState *State, int ThickTimeLevel,
        "cellAuxState1", {Mesh->NCellsAll, NChunks},
        KOKKOS_LAMBDA(int ICell, int KChunk) {
           LocKineticAux.computeVarsOnCell(ICell, KChunk, NormalVelEdge);
-          LocWindForcingAux.computeVarsOnCell(ICell, KChunk, NormalVelEdge);
        });
 
    const auto &VelocityDivCell = KineticAux.VelocityDivCell;
@@ -94,6 +93,7 @@ void AuxiliaryState::computeMomAux(const OceanState *State, int ThickTimeLevel,
                                                  NormalVelEdge);
           LocVelocityDel2Aux.computeVarsOnEdge(IEdge, KChunk, VelocityDivCell,
                                                RelVortVertex);
+          LocWindForcingAux.computeVarsOnEdge(IEdge, KChunk);
        });
 
    parallelFor(
