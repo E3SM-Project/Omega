@@ -38,3 +38,5 @@ implemented:
 - `TracerHorzAdvOnCell`
 - `TracerDiffOnCell`
 - `TracerHyperDiffOnCell`
+- `WindForcingOnEdge`
+- `BottomDragOnEdge`
