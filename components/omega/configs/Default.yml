@@ -94,7 +94,7 @@ Omega:
       Contents:
         - Tracers
         - State
-        - SshCellDefault
+        - SshCell
     Highfreq:
       UsePointerFile: false
       Filename: ocn.hifreq.$Y-$M

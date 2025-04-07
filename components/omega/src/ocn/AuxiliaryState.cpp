@@ -10,16 +10,21 @@ AuxiliaryState *AuxiliaryState::DefaultAuxState = nullptr;
 std::map<std::string, std::unique_ptr<AuxiliaryState>>
     AuxiliaryState::AllAuxStates;
 
+static std::string stripDefault(const std::string &Name) {
+   return Name != "Default" ? Name : "";
+}
+
 // Constructor. Constructs the member auxiliary variables and registers their
 // fields with IOStreams
 AuxiliaryState::AuxiliaryState(const std::string &Name, const HorzMesh *Mesh,
                                int NVertLevels, int NTracers)
-    : Mesh(Mesh), Name(Name), KineticAux(Name, Mesh, NVertLevels),
-      LayerThicknessAux(Name, Mesh, NVertLevels),
-      VorticityAux(Name, Mesh, NVertLevels),
-      VelocityDel2Aux(Name, Mesh, NVertLevels),
-      WindForcingAux(Name, Mesh, NVertLevels),
-      TracerAux(Name, Mesh, NVertLevels, NTracers) {
+    : Mesh(Mesh), Name(stripDefault(Name)),
+      KineticAux(stripDefault(Name), Mesh, NVertLevels),
+      LayerThicknessAux(stripDefault(Name), Mesh, NVertLevels),
+      VorticityAux(stripDefault(Name), Mesh, NVertLevels),
+      VelocityDel2Aux(stripDefault(Name), Mesh, NVertLevels),
+      WindForcingAux(stripDefault(Name), Mesh, NVertLevels),
+      TracerAux(stripDefault(Name), Mesh, NVertLevels, NTracers) {
 
    GroupName = "AuxiliaryState";
    if (Name != "Default") {
