@@ -170,8 +170,9 @@ int testAuxState() {
    }
 
    const auto *Mesh = HorzMesh::getDefault();
+   auto *MeshHalo   = Halo::getDefault();
    // test creation of another auxiliary state
-   AuxiliaryState::create("AnotherAuxState", Mesh, 12, 3);
+   AuxiliaryState::create("AnotherAuxState", Mesh, MeshHalo, 12, 3);
 
    // test retrievel of another
    if (AuxiliaryState::get("AnotherAuxState")) {

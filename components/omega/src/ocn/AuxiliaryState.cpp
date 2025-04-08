@@ -17,8 +17,8 @@ static std::string stripDefault(const std::string &Name) {
 // Constructor. Constructs the member auxiliary variables and registers their
 // fields with IOStreams
 AuxiliaryState::AuxiliaryState(const std::string &Name, const HorzMesh *Mesh,
-                               int NVertLevels, int NTracers)
-    : Mesh(Mesh), Name(stripDefault(Name)),
+                               Halo *MeshHalo, int NVertLevels, int NTracers)
+    : Mesh(Mesh), MeshHalo(MeshHalo), Name(stripDefault(Name)),
       KineticAux(stripDefault(Name), Mesh, NVertLevels),
       LayerThicknessAux(stripDefault(Name), Mesh, NVertLevels),
       VorticityAux(stripDefault(Name), Mesh, NVertLevels),
@@ -89,6 +89,10 @@ void AuxiliaryState::computeMomAux(const OceanState *State, int ThickTimeLevel,
 
    const auto &VelocityDivCell = KineticAux.VelocityDivCell;
    const auto &RelVortVertex   = VorticityAux.RelVortVertex;
+
+   auto MeshHalo = Halo::getDefault();
+   MeshHalo->exchangeFullArrayHalo(LocWindForcingAux.ZonalStressCell, OnCell);
+   MeshHalo->exchangeFullArrayHalo(LocWindForcingAux.MeridStressCell, OnCell);
 
    parallelFor(
        "edgeAuxState1", {Mesh->NEdgesAll, NChunks},
@@ -163,8 +167,8 @@ void AuxiliaryState::computeAll(const OceanState *State,
 
 // Create a non-default auxiliary state
 AuxiliaryState *AuxiliaryState::create(const std::string &Name,
-                                       const HorzMesh *Mesh, int NVertLevels,
-                                       const int NTracers) {
+                                       const HorzMesh *Mesh, Halo *MeshHalo,
+                                       int NVertLevels, const int NTracers) {
    if (AllAuxStates.find(Name) != AllAuxStates.end()) {
       LOG_ERROR("Attempted to create a new AuxiliaryState with name {} but it "
                 "already exists",
@@ -172,7 +176,8 @@ AuxiliaryState *AuxiliaryState::create(const std::string &Name,
       return nullptr;
    }
 
-   auto *NewAuxState = new AuxiliaryState(Name, Mesh, NVertLevels, NTracers);
+   auto *NewAuxState =
+       new AuxiliaryState(Name, Mesh, MeshHalo, NVertLevels, NTracers);
    AllAuxStates.emplace(Name, NewAuxState);
 
    return NewAuxState;
@@ -183,12 +188,13 @@ AuxiliaryState *AuxiliaryState::create(const std::string &Name,
 int AuxiliaryState::init() {
    int Err                 = 0;
    const HorzMesh *DefMesh = HorzMesh::getDefault();
+   Halo *DefHalo           = Halo::getDefault();
 
    int NVertLevels = DefMesh->NVertLevels;
    int NTracers    = Tracers::getNumTracers();
 
-   AuxiliaryState::DefaultAuxState =
-       AuxiliaryState::create("Default", DefMesh, NVertLevels, NTracers);
+   AuxiliaryState::DefaultAuxState = AuxiliaryState::create(
+       "Default", DefMesh, DefHalo, NVertLevels, NTracers);
 
    Config *OmegaConfig = Config::getOmegaConfig();
    Err                 = DefaultAuxState->readConfigOptions(OmegaConfig);
@@ -276,5 +282,20 @@ int AuxiliaryState::readConfigOptions(Config *OmegaConfig) {
 
    return Err;
 }
+
+//------------------------------------------------------------------------------
+// Perform auxiliary state halo exchange
+// Note that only non-computed auxiliary variables needs to be exchanged
+I4 AuxiliaryState::exchangeHalo() {
+   I4 Err = 0;
+
+   Err +=
+       MeshHalo->exchangeFullArrayHalo(WindForcingAux.ZonalStressCell, OnCell);
+   Err +=
+       MeshHalo->exchangeFullArrayHalo(WindForcingAux.MeridStressCell, OnCell);
+
+   return Err;
+
+} // end exchangeHalo
 
 } // namespace OMEGA

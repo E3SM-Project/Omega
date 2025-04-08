@@ -254,8 +254,8 @@ int initTimeStepperTest(const std::string &mesh) {
       LOG_ERROR("TimeStepperTest: error creating test state");
    }
 
-   auto *TestAuxState =
-       AuxiliaryState::create("TestAuxState", DefMesh, NVertLevels, NTracers);
+   auto *TestAuxState = AuxiliaryState::create("TestAuxState", DefMesh, DefHalo,
+                                               NVertLevels, NTracers);
    if (!TestAuxState) {
       Err++;
       LOG_ERROR("TimeStepperTest: error creating test auxiliary state");
