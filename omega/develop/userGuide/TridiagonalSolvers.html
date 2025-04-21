@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Global Reductions &mdash; Omega develop documentation</title>
+  <title>Tridiagonal Solvers &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Tracers" href="Tracers.html" />
-    <link rel="prev" title="Time stepping" href="TimeStepping.html" />
+    <link rel="next" title="Quick Start for Developers" href="../devGuide/QuickStart.html" />
+    <link rel="prev" title="Tracers" href="Tracers.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -70,9 +70,9 @@
 <li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time stepping</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tridiagonal Solvers</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
@@ -154,9 +154,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Global Reductions</li>
+      <li class="breadcrumb-item active">Tridiagonal Solvers</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/userGuide/Reductions.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/userGuide/TridiagonalSolvers.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -164,21 +164,26 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section class="tex2jax_ignore mathjax_ignore" id="global-reductions">
-<span id="omega-user-reductions"></span><h1>Global Reductions<a class="headerlink" href="#global-reductions" title="Permalink to this heading"></a></h1>
-<p>Global reductions are global collective operations to reduce distributed
-data to a scalar value using either sum, min or max operators.</p>
-<p>The details and various interfaces to global reduction operations
-are described in the <a class="reference internal" href="../devGuide/Reductions.html#omega-dev-reductions"><span class="std std-ref">Reductions</span></a>
-section of the Developer’s Guide.</p>
+  <section id="tridiagonal-solvers">
+<span id="omega-user-tridiagonal"></span><h1>Tridiagonal Solvers<a class="headerlink" href="#tridiagonal-solvers" title="Permalink to this heading"></a></h1>
+<p>OMEGA provides two types of solvers for solving many tridiagonal systems of equations
+in one go:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TriDiagSolver</span></code> for general tridiagonal systems</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TriDiagDiffSolver</span></code> for diffusion-type tridiagonal systems</p></li>
+</ul>
+<p>Different solver algorithms are used on CPU and GPU platforms.
+The optimal solver algorithm for a given platform is chosen automatically.
+There are no user-configurable parameters.
+The <a class="reference internal" href="../devGuide/TridiagonalSolvers.html#omega-dev-tridiagonal"><span class="std std-ref">dev guide</span></a> provides instructions on how to use the solvers.</p>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="TimeStepping.html" class="btn btn-neutral float-left" title="Time stepping" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="Tracers.html" class="btn btn-neutral float-right" title="Tracers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="Tracers.html" class="btn btn-neutral float-left" title="Tracers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../devGuide/QuickStart.html" class="btn btn-neutral float-right" title="Quick Start for Developers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
