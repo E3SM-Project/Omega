@@ -30,6 +30,7 @@ userGuide/Logging
 userGuide/Driver
 userGuide/Decomp
 userGuide/Dimension
+userGuide/Error
 userGuide/Field
 userGuide/IO
 userGuide/IOStreams
@@ -65,6 +66,7 @@ devGuide/CMakeBuild
 devGuide/Logging
 devGuide/Decomp
 devGuide/Dimension
+devGuide/Error
 devGuide/Field
 devGuide/IO
 devGuide/IOStreams

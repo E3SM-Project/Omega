@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quick Start for Users &mdash; Omega develop documentation</title>
+  <title>Error handling &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="CMake-based Omega Build" href="OmegaBuild.html" />
-    <link rel="prev" title="Omega" href="../index.html" />
+    <link rel="next" title="Fields and Metadata (Field)" href="Field.html" />
+    <link rel="prev" title="Dimension" href="Dimension.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -46,7 +46,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Users</a></li>
 <li class="toctree-l1"><a class="reference internal" href="OmegaBuild.html">CMake-based Omega Build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
 <li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
@@ -56,7 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Error.html">Error handling</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Error handling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
@@ -152,9 +152,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Quick Start for Users</li>
+      <li class="breadcrumb-item active">Error handling</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/userGuide/QuickStart.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/userGuide/Error.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -162,21 +162,35 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section class="tex2jax_ignore mathjax_ignore" id="quick-start-for-users">
-<span id="omega-quick-start"></span><h1>Quick Start for Users<a class="headerlink" href="#quick-start-for-users" title="Permalink to this heading"></a></h1>
-<div class="admonition-quick-start-for-users-is-coming-soon admonition">
-<p class="admonition-title">Quick Start for Users is coming soon</p>
-<p>Omega is still in the early stages of development, so we are not yet ready for
-outside users.  For now, please refer to the <a class="reference internal" href="../devGuide/QuickStart.html#omega-dev-quick-start"><span class="std std-ref">Quick Start for Developers</span></a>.</p>
+  <section class="tex2jax_ignore mathjax_ignore" id="error-handling">
+<span id="omega-user-error"></span><h1>Error handling<a class="headerlink" href="#error-handling" title="Permalink to this heading"></a></h1>
+<p>Omega includes an error handling facility that checks for potential errors
+and responds to those errors when encountered.
+It uses the <a class="reference internal" href="../devGuide/Logging.html#omega-dev-logging"><span class="std std-ref">Logging</span></a> facility for writing the error
+messages so its behavior follows that of Logging. In particular, the error
+messages will be output to a single log file (omega.log) unless the option
+to write a log file for each MPI task is enabled at build time. Each message
+will have the format</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="o">*</span><span class="n">level</span><span class="p">]</span> <span class="p">[</span><span class="n">file</span><span class="p">:</span><span class="n">line</span> <span class="n">number</span><span class="p">]</span> <span class="n">error</span> <span class="n">message</span>
+</pre></div>
 </div>
+<p>where level is the severity (warn, error, critical) and file and line number
+refer to the source code line where the error occurs. The error facility
+sometimes accumulates multiple error messages before aborting. In
+these cases, the most recent error in these accumulated errors will be printed
+first and the other error messages in the chain will be printed in reverse
+order and indented.  For critical errors, a full stack trace is generated
+if debug information is available, either with the <code class="docutils literal notranslate"><span class="pre">-g</span></code> compiler
+option or a DEBUG build using <code class="docutils literal notranslate"><span class="pre">-DOMEGA_BUILD_TYPE=Debug</span></code> during the Cmake
+configuration.</p>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="../index.html" class="btn btn-neutral float-left" title="Omega" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="OmegaBuild.html" class="btn btn-neutral float-right" title="CMake-based Omega Build" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="Dimension.html" class="btn btn-neutral float-left" title="Dimension" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Field.html" class="btn btn-neutral float-right" title="Fields and Metadata (Field)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -81,7 +81,7 @@ In the Omega branch you would like to build, first update the submodules that
 Omega requires:
 ```sh
 git submodule update --init --recursive externals/ekat \
-    externals/scorpio cime
+    externals/scorpio cime externals/cpptrace
 ```
 
 Since some systems require tests to be run on in a scratch space, it is a good
