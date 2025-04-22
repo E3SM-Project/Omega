@@ -96,6 +96,7 @@ design/Config
 design/DataTypes
 design/Decomp
 design/Driver
+design/EOS
 design/Error
 design/Halo
 design/HorzMeshClass
