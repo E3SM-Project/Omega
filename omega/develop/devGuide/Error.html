@@ -194,10 +194,11 @@ macros:</p>
 <span class="n">OMEGA_REQUIRE</span><span class="p">(</span><span class="n">Condition</span><span class="p">,</span><span class="w"> </span><span class="n">Message</span><span class="p">,</span><span class="w"> </span><span class="n">addition</span><span class="w"> </span><span class="n">args</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">message</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>These emulate the behavior of the C++ assert function.  The <code class="docutils literal notranslate"><span class="pre">ASSERT</span></code> macro
-is only evaluated in debug builds while the <code class="docutils literal notranslate"><span class="pre">REQUIRE</span></code> macro is always
-evaluated. These have identical behavior to the critical error macro, but
-take the additional boolean argument of the condition to be checked.</p>
+<p>These emulate the behavior of the C++ assert function in which the condition
+is checked and a critical error is thrown if the condition is not met (false).
+The <code class="docutils literal notranslate"><span class="pre">ASSERT</span></code> macro is only evaluated in debug builds while the <code class="docutils literal notranslate"><span class="pre">REQUIRE</span></code>
+macro is always evaluated. These have identical behavior to the critical error
+macro, but take the additional boolean argument of the condition to be checked.</p>
 <p>The remaining macros operate on or with an Error class that contains an error
 code and an error message. These can be used as a return code, as in:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Error</span><span class="w"> </span><span class="n">MyError</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">callMyFunction</span><span class="p">();</span>

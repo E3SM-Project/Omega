@@ -31,10 +31,11 @@ macros:
 OMEGA_ASSERT(Condition, Message, addition args for message);
 OMEGA_REQUIRE(Condition, Message, addition args for message);
 ```
-These emulate the behavior of the C++ assert function.  The `ASSERT` macro
-is only evaluated in debug builds while the `REQUIRE` macro is always
-evaluated. These have identical behavior to the critical error macro, but
-take the additional boolean argument of the condition to be checked.
+These emulate the behavior of the C++ assert function in which the condition
+is checked and a critical error is thrown if the condition is not met (false).
+The `ASSERT` macro is only evaluated in debug builds while the `REQUIRE`
+macro is always evaluated. These have identical behavior to the critical error
+macro, but take the additional boolean argument of the condition to be checked.
 
 The remaining macros operate on or with an Error class that contains an error
 code and an error message. These can be used as a return code, as in:
