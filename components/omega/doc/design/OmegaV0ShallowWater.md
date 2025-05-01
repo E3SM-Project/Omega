@@ -109,7 +109,7 @@ Next we replace the non-linear advection term with the right-hand side of the ve
 $$
 \boldsymbol{u} \cdot \nabla \boldsymbol{u} &= (\nabla \times \boldsymbol{u}) \times \boldsymbol{u} + \nabla \frac{|\boldsymbol{u}|^2}{2} \\
 &= \{\boldsymbol{k} \cdot (\nabla \times \boldsymbol{u})\} \boldsymbol{k} \times \boldsymbol{u} + \nabla \frac{|\boldsymbol{u}|^2}{2} \\
-&= \omega \boldsymbol{u}^{\perp} + \nabla K.
+&= \zeta \boldsymbol{u}^{\perp} + \nabla K.
 $$
 
 The governing equations for Omega-0 in continuous form are then
@@ -141,10 +141,10 @@ The drag consists of simple Rayleigh drag for spin-up as well as quadratic botto
 
 Here $q$ is the potential vorticity, so that the term
 $$
-q\left(h\boldsymbol{u}^{\perp}\right) = \frac{\omega + f}{h}\left(h\boldsymbol{u}^{\perp}\right)
- = \omega \boldsymbol{u}^{\perp} + f \boldsymbol{u}^{\perp}
+q\left(h\boldsymbol{u}^{\perp}\right) = \frac{\zeta + f}{h}\left(h\boldsymbol{u}^{\perp}\right)
+ = \zeta \boldsymbol{u}^{\perp} + f \boldsymbol{u}^{\perp}
 $$
-is composed of the rotational part of the advection $\omega \boldsymbol{u}^{\perp}$ and the Coriolis term $f \boldsymbol{u}^{\perp}$. This term is discussed in [Ringler et al. 2010](https://www.sciencedirect.com/science/article/pii/S0021999109006780) sections 2.1 and 2.2.
+is composed of the rotational part of the advection $\zeta \boldsymbol{u}^{\perp}$ and the Coriolis term $f \boldsymbol{u}^{\perp}$. This term is discussed in [Ringler et al. 2010](https://www.sciencedirect.com/science/article/pii/S0021999109006780) sections 2.1 and 2.2.
 
 The thickness equation (2) is derived from conservation of mass for a fluid with constant density, which reduces to conservation of volume. The model domain uses fixed horizontal cells with horizontal areas that are constant in time, so the area drops out and only the layer thickness $h$ remains as the prognostic variable.
 
@@ -215,7 +215,7 @@ Table 1. Definition of variables
 | $K$                 | kinetic energy              | m$^2$/s$^2$  | cell     | KineticEnergyCell  | $K = \left\| {\boldsymbol u} \right\|^2 / 2$ |
 | $l_e $      | edge length (vertex span) | m    | edge     | DvEdge  |                                                              |
 | $n_{e,i}$ | edge normal sign | unitless | edge | EdgeSignOnCell| also by index ordering of CellsOnEdge |
-| $q$                 | potential vorticity         | 1/m/s    | vertex   |   | $q = \eta/h = \left(\omega+f\right)/h$                                                 |
+| $q$                 | potential vorticity         | 1/m/s    | vertex   |   | $q = \left(\zeta+f\right)/h$                                                 |
 | $Ra$                | Rayleigh drag coefficient   | 1/s      | constant |   |                                                              |
 | $t$                 | time                        | s        | none     |   |                                                              |
 | $t_{e,v}$ | edge tangential sign | unitless | edge | EdgeSignOnVertex | also by index ordering of VerticesOnEdge |
@@ -225,13 +225,12 @@ Table 1. Definition of variables
 | ${\boldsymbol u}_W$ | wind velocity               | m/s      | edge     |   |                                                              |
 | $w_{e,e'}$ | tangential edge weights| unitless | edge     |   | weights defined in [Ringler et al. 2010](https://www.sciencedirect.com/science/article/pii/S0021999109006780) eqn 24 |
 |${\tilde w}_{e,e'}$ | normalized tangential edge weights| unitless | edge     | WeightsOnEdge   | normalized weights, ${\tilde w}_{e,e'} = \tfrac{l_{e'}}{d_e} w_{e,e'}$ |
-| $\eta$              | absolute vorticity          | 1/s      | vertex   |   | $\eta=\omega + f$ |
 | $\kappa_2$          | tracer diffusion            | m$^2$/s    | cell     |   |                                                              |
 | $\kappa_4$          | biharmonic tracer diffusion | m$^4$/s    | cell     |   |                                                              |
 | $\nu_2$             | viscosity                   | m$^2$/s    | edge     |   |                                                              |
 | $\nu_4$             | biharmonic viscosity        | m$^4$/s    | edge     |   |                                                              |
 | $\phi$              | tracer                      | varies | cell     |   | units may be kg/m$^3$ or similar |
-| $\omega$             | relative vorticity          | 1/s      | vertex   |  RelativeVorticity | $\omega={\boldsymbol k} \cdot \left( \nabla \times {\boldsymbol u}\right)$ |
+| $\zeta$             | relative vorticity          | 1/s      | vertex   |  RelativeVorticity | $\zeta={\boldsymbol k} \cdot \left( \nabla \times {\boldsymbol u}\right)$ |
 
 <!--- Note: Table created with [markdown table generator](https://www.tablesgenerator.com/markdown_tables) and original [google sheet](https://docs.google.com/spreadsheets/d/1rz-QXDiwfemq5NpSR1XsvomI7aSKQ1myTNweCY4afcE/edit#gid=0). --->
 
@@ -375,11 +374,11 @@ The gradient of a scalar at the middle of an edge, pointing tangentially along t
 
 The perpendicular gradient maps a scalar at vertices to an edge-tangential vector component,
 $$
-\left(\nabla \omega_v\right)_e^\perp = \frac{1}{l_e} \sum_{v\in VE(e)} -t_{e,v}\omega_v.
+\left(\nabla \zeta_v\right)_e^\perp = \frac{1}{l_e} \sum_{v\in VE(e)} -t_{e,v}\zeta_v.
 $$
 Like the standard gradient, in practice we drop the sign indicator $t_{e,v}$ and rewrite it using the index ordering,
 $$
-\left(\nabla \omega_v\right)_e^\perp = \frac{\omega_{v2} - \omega_{v1}}{l_e},
+\left(\nabla \zeta_v\right)_e^\perp = \frac{\zeta_{v2} - \zeta_{v1}}{l_e},
 $$
 where the positive vector ${\bf n}^\perp$ is 90$^o$ to the left of ${\bf n}$. The indices are ordered such that ${\bf n}^\perp$ points from $v_1$ to $v_2$, which corresponds to `VerticesOnEdge(IEdge, 0)` and `VerticesOnEdge(IEdge, 1)` in the code.
 
@@ -393,7 +392,7 @@ In a Voronoi tessellation the edge is defined to be at the mid-point between the
 #### 3.2.7. Vertex to Edge Interpolation
 The mid-point average of a scalar from vertices to the middle of the connecting edge is
 $$
-[\omega_v]_e = \frac{1}{2} \sum_{v\in VE(e)} \omega_v.
+[\zeta_v]_e = \frac{1}{2} \sum_{v\in VE(e)} \zeta_v.
 $$
 The is a distance-weighted average, since the edge quantity lives at the mid-point between the vertices. One could alternatively compute an area-weighted average using the dual-mesh cell area ${\hat A}_v$ surrounding each vertex, but that is not done and would result in very small differences.
 
@@ -470,11 +469,11 @@ See [Calandrini et al. 2021](https://www.sciencedirect.com/science/article/pii/S
 The potential vorticity term, $q\left(h\boldsymbol{u}^{\perp}\right)$, includes the rotational part of the advection. It may be computed in two ways,
 
 $$
-\text{Option 1:  } \left[ \frac{\omega_v +f_v}{[h_i]_v}\right]_e\left([h_i]_e u_e^{\perp}\right)
+\text{Option 1:  } \left[ \frac{\zeta_v +f_v}{[h_i]_v}\right]_e\left([h_i]_e u_e^{\perp}\right)
 $$
 
 $$
-\text{Option 2:  }([\omega_v]_e +f_e) u_e^\perp
+\text{Option 2:  }([\zeta_v]_e +f_e) u_e^\perp
 $$
 
 The first computes the potential vorticity $q_v$ at the vertex and interpolates that quantity to the edge, which is what is done in MPAS-Ocean. One may also cancel the thickness $h$ (ignoring the interpolated locations) and use option 2. Additional interpolation options and results are presented in [Calandrini et al. 2021](https://www.sciencedirect.com/science/article/pii/S146350032100161X)
@@ -492,17 +491,17 @@ The Del2, or Laplacian operator, viscous momentum dissipation maps edge-normal v
 
 $$
 \nabla^2 {\bf u} &=  \nabla \left( \nabla\cdot{\bf u}\right) - \nabla \times \left( \nabla \times {\bf u} \right) \\
- &=  \nabla {\bf D} - \nabla \times \omega \\
- &=  \nabla {\bf D} - {\bf k} \times \nabla \omega \\
- &=  \nabla {\bf D} - \nabla^\perp \omega.
+ &=  \nabla {\bf D} - \nabla \times \zeta \\
+ &=  \nabla {\bf D} - {\bf k} \times \nabla \zeta \\
+ &=  \nabla {\bf D} - \nabla^\perp \zeta.
 $$
 This formulation is also mentioned in [Gassmann 2011](https://linkinghub.elsevier.com/retrieve/pii/S0021999111000325) (equation 17), [Gassman 2018](https://onlinelibrary.wiley.com/doi/10.1002/qj.3294) (equation 44) and [Lapolli et al. 2024](https://www.sciencedirect.com/science/article/pii/S1463500324000222) (section 4.5.2).
 
 For our discretization, the full Del2 term is written as
 $$
-\nu_2 \nabla^2 u_e &= \nu_2 \left( \nabla D_i - \nabla^\perp \omega_v\right) \\
-&= \nu_2 \left( \frac{1}{d_e} \sum_{i\in CE(e)} -n_{e,i}D_i - \frac{1}{l_e} \sum_{v\in VE(e)} -t_{e,v}\omega_v\right) \\
-&= \nu_2 \left( \frac{D_{i2} - D_{i1}}{d_e} - \frac{\omega_{v2} - \omega_{v1}}{l_e} \right),
+\nu_2 \nabla^2 u_e &= \nu_2 \left( \nabla D_i - \nabla^\perp \zeta_v\right) \\
+&= \nu_2 \left( \frac{1}{d_e} \sum_{i\in CE(e)} -n_{e,i}D_i - \frac{1}{l_e} \sum_{v\in VE(e)} -t_{e,v}\zeta_v\right) \\
+&= \nu_2 \left( \frac{D_{i2} - D_{i1}}{d_e} - \frac{\zeta_{v2} - \zeta_{v1}}{l_e} \right),
 $$
 where the ordering of indices $\{i_i, i_2\}$ and $\{v_1, v_2\}$ are explained in the gradient operator sections above.
 
