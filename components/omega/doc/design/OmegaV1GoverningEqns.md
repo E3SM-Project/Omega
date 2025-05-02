@@ -43,7 +43,7 @@ See forthcoming design documents on the pressure gradient, vertical mixing, and 
 
 ## 3. Continuous Equations
 
-The continuous form of the conservation equations are as follows [Kundu et al. 2024](https://www.amazon.com/Fluid-Mechanics-Pijush-K-Kundu/dp/012405935X), chapter 4, eqns 4.7 and 4.22. This is before any assumptions are made, so this is a compressible, non-hydrostatic, non-Boussinesq fluid. Here all variables are a function of $(x,y,z)$, ${\bf u}_{3D}$ denotes the three-dimensional velocity vector, ${\bf u}_{3D} \otimes {\bf u}_{3D} = {\bf u}_{3D}{\bf u}_{3D}^T$ is the tensor product, $\nabla_{3D}$ is the three-dimensional gradient, $D/Dt$ is the material derivative, and other variables defined in the [Variable Definition Section below](#variable-definitions).
+The continuous form of the conservation equations are as follows [Kundu et al. 2024](https://www.amazon.com/Fluid-Mechanics-Pijush-K-Kundu/dp/012405935X), chapter 4, eqns 4.7 and 4.22. This is before any assumptions are made, so this is a compressible, non-hydrostatic, non-Boussinesq fluid. Here all variables are a function of $(x,y,z)$, ${\bf u}_{3D}$ denotes the three-dimensional velocity vector, ${\bf u}_{3D} \otimes {\bf u}_{3D} = {\bf u}_{3D}{\bf u}_{3D}^T$ is the tensor product, $\nabla_{3D}$ is the three-dimensional gradient, $D/Dt$ is the material derivative, and other variables defined in the [Variable Definition Section](#variable-definitions) below.
 
 momentum:
 
@@ -83,7 +83,7 @@ $$
 + {\bf D}^u + {\bf F}^u
 $$ (continuous-momentum-rho)
 
-Geophysical fluids such as the ocean and atmosphere are rotating and stratified, and horizontal velocities are orders of magnitude larger than vertical velocities. It is therefore convenient to separate the horizontal and vertical as ${\bf u}_{3D} = \left( {\bf u}, w \right)$ and $\nabla_{3D} = \left( \nabla_z, d/dz \right)$ where $z$ is the vertical direction in a local coordinate frame on the earth's surface and $w$ is the vertical velocity. The $z$ subscript on $\nabla_z$ is to remind us that this is the true horizontal gradient (perpendicular to $z$), as opposed to gradients within tilted layers used in the following section. The gravitational force $g {\bf k}$ is added in the vertical. The rotating frame of reference results in the Coriolis force $f {\bf k} \times {\bf u} \equiv f {\bf u}^\perp$, where $f$ is the Coriolis parameter and ${\bf u}^\perp$ is the horizontal velocity rotated $90^o$ from $\bf u$. See any textbook in the [References](#references) for a full derivation.
+Geophysical fluids such as the ocean and atmosphere are rotating and stratified, and horizontal velocities are orders of magnitude larger than vertical velocities. It is therefore convenient to separate the horizontal and vertical as ${\bf u}_{3D} = \left( {\bf u}, w \right)$ and $\nabla_{3D} = \left( \nabla_z, d/dz \right)$ where $z$ is the vertical direction in a local coordinate frame on the Earth's surface and $w$ is the vertical velocity. The $z$ subscript on $\nabla_z$ is to remind us that this is the true horizontal gradient (perpendicular to $z$), as opposed to gradients within tilted layers used in the following section. The gravitational force $g {\bf k}$ is added in the vertical. The rotating frame of reference results in the Coriolis force $f {\bf k} \times {\bf u} \equiv f {\bf u}^\perp$, where $f$ is the Coriolis parameter and ${\bf u}^\perp$ is the horizontal velocity rotated $90^o$ from $\bf u$. See any textbook in the [References](#references) for a full derivation.
 
 The horizontal parts of the advective term may be replaced with the vector identity
 
@@ -120,10 +120,10 @@ $$
 \frac{\partial p}{\partial z}
   = - \rho g.
 $$ (hydrostatic-balance)
-We then integrate from $z$ to the surface $\eta$ to obtain the hydrostatic pressure equation,
+We then integrate from $z$ to the surface $z^{surf}$ to obtain the hydrostatic pressure equation,
 
 $$
-p(x,y,z) = p^{surf}(x,y) + \int_{z}^{\eta} \rho g dz'.
+p(x,y,z) = p^{surf}(x,y) + \int_{z}^{z^{surf}} \rho g dz'.
 $$ (continuous-hydrostatic-pressure)
 
 The constitutive equation is the equation of state,
@@ -131,7 +131,8 @@ The constitutive equation is the equation of state,
 $$
 \rho = f_{eos}(p,\Theta,S).
 $$ (continuous-eos)
-where potential temperature, $\Theta$, and salinity ,$S$, are examples of tracers $\varphi$.
+
+where conservative temperature, $\Theta$, and salinity, $S$, are examples of tracers $\varphi$.
 
 #### Final Continuous Equations
 
@@ -175,7 +176,7 @@ $$ (continuous-eos-final)
 hydrostatic pressure:
 
 $$
-p(x,y,z) = p^{surf}(x,y) + \int_{z}^{\eta} \rho g dz'.
+p(x,y,z) = p^{surf}(x,y) + \int_{z}^{z^{surf}} \rho g dz'.
 $$ (continuous-hydrostatic-pressure-final)
 
 Here the $\nabla$ operators are exactly horizontal; we expand terms for tilted layers in the following section. The momentum diffusion terms include Laplacian (del2), biharmonic (del4), and vertical viscosity,
@@ -229,10 +230,10 @@ $$(depth-pressure-integral-conversion)
 We can convert from an interfacial depth surface $z^{top}$ to a pressure surface $p^{top}$ with the hydrostatic equation [](continuous-hydrostatic-pressure-final):
 
 $$
-p^{top}(x,y) =  p^{surf}(x,y) + \int_{z^{top}(x,y)}^{\eta(x,y)} \rho g dz
+p^{top}(x,y) =  p^{surf}(x,y) + \int_{z^{top}(x,y)}^{z^{surf}(x,y)} \rho g dz
 $$ (def-p-surf)
 
-where $\eta$ is the sea surface height and $p^{surf}$ is the surface pressure at $\eta$ imposed by the atmosphere or floating ice. Note that pressure increases with depth.  This means that positive $p$ points downward, so that the $top$ and $bot$ extents of the integration limits are flipped in [](#depth-pressure-integral-conversion).
+where $z^{surf}$ is the sea surface height and $p^{surf}$ is the surface pressure at $z^{surf}$ imposed by the atmosphere or floating ice. Note that pressure increases with depth.  This means that positive $p$ points downward, so that the $top$ and $bot$ extents of the integration limits are flipped in [](#depth-pressure-integral-conversion).
 
 For any three-dimensional quantity $\varphi(x,y,z,t)$, the mass-thickness-averaged quantity in layer $k$ is defined as
 
@@ -307,6 +308,7 @@ This states that the change in mass in the layer is the incoming mass from below
 ### Questions
 
 1. How do integrals in  [](#z-integration-momentum) to [](#z-integration-tracers) turn into the layered form [](layered-momentum-1) to [](layered-tracer-1) when there are products in the terms? For example, $\zeta_k {\bf u}^\perp_k$, $\nabla K$ and $\rho \varphi {\bf u}$.
+1. Using the definition of the layer average, the momentum equation [](layered-momentum-1) should also be thickness-weighted. Perhaps that goes away with conservation of mass?
 1. How do I justify changing from $\nabla_z$ to $\nabla_r$ for terms other than the pressure gradient? Particularly $\nabla K$?
 
 ### General Vertical Coordinate
@@ -355,10 +357,10 @@ $$
 -\frac{1}{\rho} \nabla_z p
 =-\frac{1}{\rho}  \nabla_r p +\frac{1}{\rho}  \frac{\partial p}{\partial z} \nabla_r z \\
 =-\frac{1}{\rho}  \nabla_r p - g \nabla_r z \\
-= -\frac{1}{\rho} \nabla_r p -   \nabla_r \Phi
+= - v \nabla_r p -   \nabla_r \Phi
 $$ (gradp)
 
-where we have substituted hydrostatic balance [](hydrostatic-balance). The geopoential due to a constant gravitational field is $d \Phi/dz=g$, so that $\Phi = gz + c$ where $c$ is an arbitrary constant. Thus in the equation above, $\nabla_r \Phi = g \nabla_r z$. The geopotential is a more general form than a constant $g$, and allows for alterations in the gravitational field due to self attraction and loading and tidal forces. Further details will be provided in the forthcoming pressure gradient design document.
+where we have substituted hydrostatic balance [](hydrostatic-balance) and specific volume $v\equiv 1/\rho$. The geopoential due to a constant gravitational field is $d \Phi/dz=g$, so that $\Phi = gz + c$ where $c$ is an arbitrary constant. Thus in the equation above, $\nabla_r \Phi = g \nabla_r z$. The geopotential is a more general form than a constant $g$, and allows for alterations in the gravitational field due to self attraction and loading and tidal forces. Further details will be provided in the forthcoming pressure gradient design document.
 
 See [Adcroft and Hallberg 2006](https://www.sciencedirect.com/science/article/pii/S1463500305000090) eqn. 1 and [Griffies et al](http://sciencedirect.com/science/article/pii/S1463500300000147) eqn 2 for an example of the pressure gradient in tilted coordinates. The additional terms due to the expansion of $\nabla_z$ to $\nabla_r$ in the rest of the equations are small and are ignored.
 
@@ -375,7 +377,7 @@ $$
 + q_k h_k {\bf u}_k^{\perp}
 + \omega_k^{top} {\bf u}_k^{top} - \omega_k^{bot}{\bf u}_k^{bot}
 =
-- \frac{1}{\rho} \nabla_r p_k - \nabla_r \Phi_k
+- v_k \nabla_r p_k - \nabla_r \Phi_k
 - \nabla_r K_k
 + {\bf D}_k^u + {\bf F}_k^u
 $$ (layered-momentum)
@@ -405,13 +407,13 @@ Surface fluxes $Q^h_k$ have been added to the mass equation for precipitation, e
 
 ## 5. Discrete Equations
 
-The horizontally discretized version of the layered equations are as follows. We have dropped the $r$ in $\nabla_r$ for conciseness, and the operator $\nabla$ from here on means within-layer.
+The horizontally discretized layered equations are as follows. We have dropped the $r$ in $\nabla_r$ for conciseness, and the operator $\nabla$ from here on means within-layer.
 
 $$
 \frac{\partial u_{e,k}}{\partial t} + \left[ \frac{{\bf k} \cdot \nabla \times u_{e,k} +f_v}{[h_{i,k}]_v}\right]_e\left([h_{i,k}]_e u_{e,k}^{\perp}\right)
 + \left[ \omega_{i,k}^{top} \right]_e u_{e,k}^{top} - \left[ \omega_{i,k}^{bot} \right]_e u_{e,k}^{bot}
 =
-- \frac{1}{\rho_{i,k}} \nabla p_{i,k} - \nabla \Phi_{i,k}
+- v_{i,k} \nabla p_{i,k} - \nabla \Phi_{i,k}
 - \nabla K_{i,k} +  { \bf D}^u_{e,k} + {\bf F}^u_{e,k}
 $$ (discrete-momentum)
 
@@ -428,7 +430,7 @@ $$
 $$ (discrete-tracer)
 
 $$
-\rho_{i,k} = f_{eos}(p_{i,k},\Theta_{i,k},S_{i,k})
+v_{i,k} = f_{eos}(p_{i,k},\Theta_{i,k},S_{i,k})
 $$ (discrete-eos)
 
 $$
@@ -436,10 +438,10 @@ p_{i,k} = p_{i}^{surf} + \sum_{k'=1}^{k-1} g h_{i,k'} + \frac{1}{2} g h_{i,k}
 $$ (discrete-pressure)
 
 $$
-z_{i,k}^{top} = z_{i}^{floor} + \sum_{k'=k}^{K_{max}} \frac{h_{i,k'}}{\rho_{i,k'}}
+z_{i,k}^{top} = z_{i}^{floor} + \sum_{k'=k}^{K_{max}} v_{i,k'}h_{i,k'}
 $$ (discrete-z)
 
-The subscripts $i$, $e$, and $v$ indicate cell, edge, and vertex locations and subscript $k$ is the layer.  Square brackets $[\cdot]_e$ and $[\cdot]_v$ are quantities that are interpolated to edge and vertex locations. For vector quantities, $u_{e,k}$ denotes the normal component at the center of the edge, while $u_{e,k}^\perp$ denotes the tangential component. The superscripts $top$ and $bot$ refer to individual layers, while $surf$ and $floor$ are the surface and floor of the full ocean column.
+The subscripts $i$, $e$, and $v$ indicate cell, edge, and vertex locations and subscript $k$ is the layer.  Square brackets $[\cdot]_e$ and $[\cdot]_v$ are quantities that are interpolated to edge and vertex locations. For vector quantities, $u_{e,k}$ denotes the normal component at the center of the edge, while $u_{e,k}^\perp$ denotes the tangential component. The superscripts $top$ and $bot$ refer to the top and bottom of individual layers, while $surf$ and $floor$ are the surface and floor of the full ocean column. All variables without these superscripts indicate that they are layer-averaged, as defined in [](def-mass-thickness-average), and can be considered to represent a mid-layer value in the vertical. The mid-layer location is equivalently the average in $z$, $p$, or $h$ (mass), since density $\rho_{i,k}$ is considered constant in the cell.
 
 The horizontal operators $\nabla$, $\nabla\cdot$, and $\nabla \times$ are now in their discrete form. In the TRiSK design, gradients ($\nabla$) map cell centers to edges; divergence ($\nabla \cdot$) maps edge quantities to cells; and curl ($\nabla \times$) maps edges to vertices. The exact form of operators and interpolation stencils remain the same as those given in [Omega-0 design document](OmegaV0ShallowWater.md#operator-formulation). The discrete version of terms common with Omega-0, such as advection, potential vorticity, and $\nabla K$, can be found in [Omega-0 Momentum Terms](OmegaV0ShallowWater.md#momentum-terms) and [Omega-0 Thickness and Tracer Terms](OmegaV0ShallowWater.md#thickness-and-tracer-terms).
 
@@ -471,12 +473,12 @@ $$
 $$ (discrete-mom-del4)
 
 #### Vertical momentum diffusion
-Vertical derivatives may be computed with either $z$ or $p$ as the independent variable:
+Vertical derivatives may be computed with either $z$ or $p$ as the independent variable,
 
 $$
-\frac{\partial }{\partial z} \left( \nu_v \frac{\partial u_{e,k}}{\partial z} \right)
-= \frac{\partial }{\partial p}\frac{\partial p}{\partial z} \left( \nu_v \frac{\partial u_{e,k}}{\partial p} \frac{\partial p}{\partial z}\right)
-= \rho g^2\frac{\partial }{\partial p} \left( \nu_v \rho \frac{\partial u_{e,k}}{\partial p} \right)
+\frac{\partial }{\partial z} \left( \nu_v \frac{\partial u}{\partial z} \right)
+= \frac{\partial }{\partial p}\frac{\partial p}{\partial z} \left( \nu_v \frac{\partial u}{\partial p} \frac{\partial p}{\partial z}\right)
+= \rho g^2\frac{\partial }{\partial p} \left( \nu_v \rho \frac{\partial u}{\partial p} \right).
 $$ (mom-vert-diff-z-p)
 
 We choose to use $z$ values for simplicity. A single vertical derivative of an arbitrary variable $\varphi$ at mid-layer is
@@ -533,10 +535,10 @@ where $\tau$ is the wind stress in Pa. Since the mass-thickness $h$ is in kg/s/m
 Bottom Drag is applied as a bottom boundary condition during implicit vertical mixing as
 
 $$
-- C_D \frac{u_{e,k}\left|u_{e,k}\right|[\rho_{i,k}]_e}{[h_{i,k}]_e} .
+- C_D \frac{u_{e,k}\left|u_{e,k}\right|}{[v_{i,k}h_{i,k}]_e} .
 $$ (discrete-mom-bottom)
 
-The units of $h/\rho$ are length (m), so that the full term has units of m/s$^2$.
+The units of specific volume times mass-thickness $vh$ are length (m), so that the full term has units of m/s$^2$.
 
 #### Rayleigh Drag
 
@@ -581,8 +583,8 @@ Each of these operators are written as horizontal stencils in the [Omega V0 Oper
 As discussed above in the [momentum section](#vertical-momentum-diffusion), vertical derivatives may be written in terms of $z$ or $p$,
 
 $$
-h_{i,k} \frac{\partial }{\partial z} \left( \kappa_v \frac{\partial {\bf \varphi}_{i,k}}{\partial z} \right)
-= h_{i,k} \rho g^2 \frac{\partial }{\partial p} \left( \kappa_v \rho \frac{\partial {\bf \varphi}_{i,k}}{\partial p} \right)
+\frac{\partial }{\partial z} \left( \kappa_v \frac{\partial {\bf \varphi}}{\partial z} \right)
+= \rho g^2 \frac{\partial }{\partial p} \left( \kappa_v \rho \frac{\partial {\bf \varphi}}{\partial p} \right)
 $$ (discrete-tracer-vertdiff)
 and $z$ is chosen. The second derivative stencil is
 
@@ -643,8 +645,8 @@ Table 1. Definition of variables. Geometric variables may be found in the [Omega
 |$ D_{e,k}^\varphi$ | tracer diffusion terms | | cell | |see [Tracer Diffusion Section](#tracer-diffusion) | 
 |$f_v$       | Coriolis parameter| 1/s      | vertex   | FVertex  |  $f = 2\Omega sin(\phi)$, $\Omega$ rotation rate, $\phi$ latitude|
 |${\bf F}^u_{k} $, $ F^u_{e,k} $      | momentum forcing | m/s$^2$    | edge     |   | see [Momentum Forcing Section](#momentum-forcing) | 
-|$f_{eos}$ | equation of state | kg/m$^3$  | any | function call |
-|$g$ | grav. acceleration | m/s$^2$ | constant  | Gravity |
+|$f_{eos}$ | equation of state | -  | any | function call | may produce density or specific volume |
+|$g$ | gravitational acceleration | m/s$^2$ | constant  | Gravity |
 |$h_{i,k}$ | layer mass-thickness | kg/m$^2$  | cell | LayerThickness | see [](def-h) |
 |$k$ | vertical index |  |
 |${\bf k}$ | vertical unit vector |  |
@@ -663,13 +665,14 @@ Table 1. Definition of variables. Geometric variables may be found in the [Omega
 |${\bf u}_k$   | velocity, vector form       | m/s      | - |   |  |
 |$u_{e,k}$   | velocity, normal to edge      | m/s      | edge     | NormalVelocity  | |
 |$u^\perp_{e,k}$   | velocity, tangential to edge      | m/s      | edge     | TangentialVelocity  |${\bf u}^\perp = {\bf k} \times {\bf u}$|
+|$v_{i,k}$ | specific volume | m$^3$/kg | cell  | SpecificVolume | $v = 1/\rho$ |
 |$w_{i,k}$ | vertical velocity | m/s | cell  | VerticalVelocity | volume transport per m$^2$ |
 |$z$ | vertical coordinate | m | - | | positive upward |
 |$z^{top}_{i,k}$ | layer top z-location | m | cell | ZTop | see [](discrete-z) |
 |$z^{mid}_{i,k}$ | layer mid-depth z-location | m | cell | ZMid |
+|$z^{surf}_{i}$ | ocean surface, i.e. sea surface height  | m | cell | ZSurface | same as SSH in MPAS-Ocean |
 |$z^{floor}_{i}$ | ocean floor z-location | m | cell | ZFloor | -bottomDepth from MPAS-Ocean |
 |$\zeta_{v,k}$   | relative vorticity| 1/s      | vertex   |  RelativeVorticity |$\zeta={\bf k} \cdot \left( \nabla \times {\bf u}\right)$ |
-|$\eta_i$ | sea surface height | m | cell   | ZSurface |
 |$\Theta_{i,k}$ | conservative temperature | C | cell  | Temperature  | a tracer $\varphi$ |
 |$\kappa_2$| tracer diffusion  | m$^2$/s    | cell     |   |  |
 |$\kappa_4$| biharmonic tracer diffusion | m$^4$/s    | cell     |   |  |
