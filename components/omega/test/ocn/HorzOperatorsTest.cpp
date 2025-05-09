@@ -372,12 +372,8 @@ int initOperatorsTest(const std::string &MeshFile) {
    initLogging(DefEnv);
 
    // Open config file
-   OMEGA::Config("Omega");
-   Err = OMEGA::Config::readAll("omega.yml");
-   if (Err != 0) {
-      LOG_CRITICAL("OperatorsTest: Error reading config file");
-      return Err;
-   }
+   Config("Omega");
+   Config::readAll("omega.yml");
 
    int IOErr = IO::init(DefComm);
    if (IOErr != 0) {
@@ -385,11 +381,7 @@ int initOperatorsTest(const std::string &MeshFile) {
       LOG_ERROR("OperatorsTest: error initializing parallel IO");
    }
 
-   int DecompErr = Decomp::init(MeshFile);
-   if (DecompErr != 0) {
-      Err++;
-      LOG_ERROR("OperatorsTest: error initializing default decomposition");
-   }
+   Decomp::init(MeshFile);
 
    int HaloErr = Halo::init();
    if (HaloErr != 0) {
@@ -397,11 +389,7 @@ int initOperatorsTest(const std::string &MeshFile) {
       LOG_ERROR("OperatorsTest: error initializing default halo");
    }
 
-   int MeshErr = HorzMesh::init();
-   if (MeshErr != 0) {
-      Err++;
-      LOG_ERROR("OperatorsTest: error initializing default mesh");
-   }
+   HorzMesh::init();
 
    return Err;
 }

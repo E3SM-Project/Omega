@@ -10,6 +10,7 @@
 
 #include "Tendencies.h"
 #include "CustomTendencyTerms.h"
+#include "Error.h"
 #include "Tracers.h"
 
 namespace OMEGA {
@@ -19,8 +20,8 @@ std::map<std::string, std::unique_ptr<Tendencies>> Tendencies::AllTendencies;
 
 //------------------------------------------------------------------------------
 // Initialize the tendencies. Assumes that HorzMesh as alread been initialized.
-int Tendencies::init() {
-   int Err = 0;
+void Tendencies::init() {
+   Error Err; // error code
 
    HorzMesh *DefHorzMesh = HorzMesh::getDefault();
 
@@ -30,45 +31,28 @@ int Tendencies::init() {
    // Get TendConfig group
    Config *OmegaConfig = Config::getOmegaConfig();
    Config TendConfig("Tendencies");
-   Err = OmegaConfig->get(TendConfig);
-   if (Err != 0) {
-      LOG_CRITICAL("Tendencies: Tendencies group not found in Config");
-      return Err;
-   }
+   Err += OmegaConfig->get(TendConfig);
+   CHECK_ERROR_ABORT(Err, "Tendencies: Tendencies group not found in Config");
 
-   // Check if use the customized tendencies
+   // Check if use the customized tendencies. If it is not found in the
+   // config, we assume it is not used (false)
    bool UseCustomTendency = false;
-   Err = TendConfig.get("UseCustomTendency", UseCustomTendency);
-   if (Err != 0) {
-      LOG_ERROR("Tendencies:: UseCustomTendency not found in Config");
-      return Err;
-   }
+   Err += TendConfig.get("UseCustomTendency", UseCustomTendency);
 
    /// Instances of custom tendencies - empty by default
    CustomTendencyType CustomThickTend;
    CustomTendencyType CustomVelTend;
 
    if (UseCustomTendency) {
-      // Check if use manufactured tendency terms
+      // Check if use manufactured tendency terms if it is not found in
+      // the config file, we will assume it is not used (false)
       bool ManufacturedTend = false;
-      I4 ManufacturedTendErr =
+      Error ManufacturedTendErr =
           TendConfig.get("ManufacturedSolutionTendency", ManufacturedTend);
-
-      if (ManufacturedTendErr != 0 && ManufacturedTend) {
-         LOG_CRITICAL("Tendencies: ManufacturedSolutionTendency "
-                      "not found in TendConfig");
-         return ManufacturedTendErr;
-      }
 
       if (ManufacturedTend) {
          ManufacturedSolution ManufacturedSol;
-         I4 ManufacturedInitErr = ManufacturedSol.init();
-
-         if (ManufacturedInitErr != 0) {
-            LOG_CRITICAL("Error in initializing the manufactured solution "
-                         "tendency terms");
-            return ManufacturedInitErr;
-         }
+         ManufacturedSol.init();
 
          CustomThickTend = ManufacturedSol.ManufacturedThickTend;
          CustomVelTend   = ManufacturedSol.ManufacturedVelTend;
@@ -82,9 +66,7 @@ int Tendencies::init() {
        create("Default", DefHorzMesh, NVertLevels, NTracers, &TendConfig,
               CustomThickTend, CustomVelTend);
 
-   Err = DefaultTendencies->readTendConfig(&TendConfig);
-
-   return Err;
+   DefaultTendencies->readTendConfig(&TendConfig);
 
 } // end init
 
@@ -136,115 +118,74 @@ Tendencies *Tendencies::get(const std::string &Name ///< [in] Name of tendencies
 
 //------------------------------------------------------------------------------
 // read and set config options
-int Tendencies::readTendConfig(Config *TendConfig ///< [in] Tendencies subconfig
+void Tendencies::readTendConfig(Config *TendConfig ///< [in] Tendencies subconfig
 ) {
-   int Err = 0;
+   Error Err; // error code
 
-   I4 TendGroupErr = TendConfig->get("ThicknessFluxTendencyEnable",
-                                     this->ThicknessFluxDiv.Enabled);
-   if (TendGroupErr != 0) {
-      LOG_CRITICAL("Tendencies: ThicknessFluxTendencyEnable not found in "
-                   "TendConfig");
-      return TendGroupErr;
+   Err += TendConfig->get("ThicknessFluxTendencyEnable",
+                          this->ThicknessFluxDiv.Enabled);
+   CHECK_ERROR_ABORT(Err,
+            "Tendencies: ThicknessFluxTendencyEnable not found in TendConfig");
+
+   Err += TendConfig->get("PVTendencyEnable", this->PotientialVortHAdv.Enabled);
+   CHECK_ERROR_ABORT(Err,
+                       "Tendencies: PVTendencyEnable not found in TendConfig");
+
+   Err += TendConfig->get("KETendencyEnable", this->KEGrad.Enabled);
+   CHECK_ERROR_ABORT(Err,
+                       "Tendencies: KETendencyEnable not found in TendConfig");
+
+   Err += TendConfig->get("SSHTendencyEnable", this->SSHGrad.Enabled);
+   CHECK_ERROR_ABORT(Err,
+                      "Tendencies: SSHTendencyEnable not found in TendConfig");
+
+   Err += TendConfig->get("VelDiffTendencyEnable",
+                          this->VelocityDiffusion.Enabled);
+   CHECK_ERROR_ABORT(Err,
+                  "Tendencies: VelDiffTendencyEnable not found in TendConfig");
+
+   Err += TendConfig->get("VelHyperDiffTendencyEnable",
+                          this->VelocityHyperDiff.Enabled);
+   CHECK_ERROR_ABORT(Err,
+           "Tendencies: VelHyperDiffTendencyEnable not found in TendConfig");
+
+   if (this->VelocityDiffusion.Enabled) {
+      Err += TendConfig->get("ViscDel2", this->VelocityDiffusion.ViscDel2);
+      CHECK_ERROR_ABORT(Err, "Tendencies: ViscDel2 not found in TendConfig");
    }
 
-   I4 PotVortErr =
-       TendConfig->get("PVTendencyEnable", this->PotientialVortHAdv.Enabled);
-   if (PotVortErr != 0) {
-      LOG_CRITICAL("Tendencies: PVTendencyEnable not found in TendConfig");
-      return PotVortErr;
+   if (this->VelocityHyperDiff.Enabled) {
+      Err += TendConfig->get("ViscDel4", this->VelocityHyperDiff.ViscDel4);
+      CHECK_ERROR_ABORT(Err, "Tendencies: ViscDel4 not found in TendConfig");
+      Err += TendConfig->get("DivFactor", this->VelocityHyperDiff.DivFactor);
+      CHECK_ERROR_ABORT(Err, "Tendencies: DivFactor not found in TendConfig");
    }
 
-   I4 KEGradErr = TendConfig->get("KETendencyEnable", this->KEGrad.Enabled);
-   if (KEGradErr != 0) {
-      LOG_CRITICAL("Tendencies: KETendencyEnable not found in TendConfig");
-      return KEGradErr;
+   Err += TendConfig->get("TracerHorzAdvTendencyEnable",
+                          this->TracerHorzAdv.Enabled);
+   CHECK_ERROR_ABORT(Err,
+          "Tendencies: TracerHorzAdvTendencyEnable not found in TendConfig");
+
+   Err += TendConfig->get("TracerDiffTendencyEnable",
+                          this->TracerDiffusion.Enabled);
+   CHECK_ERROR_ABORT(Err,
+          "Tendencies: TracerDiffTendencyEnable not found in TendConfig");
+
+   if (this->TracerDiffusion.Enabled) {
+      Err += TendConfig->get("EddyDiff2", this->TracerDiffusion.EddyDiff2);
+      CHECK_ERROR_ABORT(Err, "Tendencies: EddyDiff2 not found in TendConfig");
    }
 
-   I4 SSHGradErr = TendConfig->get("SSHTendencyEnable", this->SSHGrad.Enabled);
-   if (SSHGradErr != 0) {
-      LOG_CRITICAL("Tendencies: SSHTendencyEnable not found in TendConfig");
-      return SSHGradErr;
+   Err += TendConfig->get("TracerHyperDiffTendencyEnable",
+                          this->TracerHyperDiff.Enabled);
+   CHECK_ERROR_ABORT(Err,
+         "Tendencies: TracerHyperDiffTendencyEnable not found in TendConfig");
+
+   if (this->TracerHyperDiff.Enabled) {
+      Err += TendConfig->get("EddyDiff4", this->TracerHyperDiff.EddyDiff4);
+      CHECK_ERROR_ABORT(Err, "Tendencies: EddyDiff4 not found in TendConfig");
    }
 
-   I4 VelDiffErr = TendConfig->get("VelDiffTendencyEnable",
-                                   this->VelocityDiffusion.Enabled);
-   if (VelDiffErr != 0) {
-      LOG_CRITICAL("Tendencies: VelDiffTendencyEnable not found in TendConfig");
-      return VelDiffErr;
-   }
-
-   I4 ViscDel2Err =
-       TendConfig->get("ViscDel2", this->VelocityDiffusion.ViscDel2);
-   if (ViscDel2Err != 0 && this->VelocityDiffusion.Enabled) {
-      LOG_CRITICAL("Tendencies: ViscDel2 not found in TendConfig");
-      return ViscDel2Err;
-   }
-
-   I4 VelHyperErr = TendConfig->get("VelHyperDiffTendencyEnable",
-                                    this->VelocityHyperDiff.Enabled);
-   if (VelHyperErr != 0) {
-      LOG_CRITICAL("Tendencies: VelHyperDiffTendencyEnable not found in "
-                   "TendConfig");
-      return VelHyperErr;
-   }
-
-   I4 ViscDel4Err =
-       TendConfig->get("ViscDel4", this->VelocityHyperDiff.ViscDel4);
-   if (ViscDel4Err != 0 && this->VelocityHyperDiff.Enabled) {
-      LOG_CRITICAL("Tendencies: ViscDel4 not found in TendConfig");
-      return ViscDel4Err;
-   }
-
-   I4 DivFactorErr =
-       TendConfig->get("DivFactor", this->VelocityHyperDiff.DivFactor);
-   if (DivFactorErr != 0 && this->VelocityHyperDiff.Enabled) {
-      LOG_CRITICAL("Tendencies: DivFactor not found in TendConfig");
-      return DivFactorErr;
-   }
-
-   I4 TrHAdvErr = TendConfig->get("TracerHorzAdvTendencyEnable",
-                                  this->TracerHorzAdv.Enabled);
-   if (TrHAdvErr != 0) {
-      LOG_CRITICAL("Tendencies: TracerHorzAdvTendencyEnable not found in "
-                   "TendConfig");
-      return TrHAdvErr;
-   }
-
-   I4 TrDiffErr = TendConfig->get("TracerDiffTendencyEnable",
-                                  this->TracerDiffusion.Enabled);
-
-   if (TrDiffErr != 0) {
-      LOG_CRITICAL("Tendencies: TracerDiffTendencyEnable not found in "
-                   "TendConfig");
-      return TrDiffErr;
-   }
-
-   I4 EddyDiff2Err =
-       TendConfig->get("EddyDiff2", this->TracerDiffusion.EddyDiff2);
-   if (EddyDiff2Err != 0 && this->TracerDiffusion.Enabled) {
-      LOG_CRITICAL("Tendencies: EddyDiff2 not found in TendConfig");
-      return EddyDiff2Err;
-   }
-
-   I4 TrHyperDiffErr = TendConfig->get("TracerHyperDiffTendencyEnable",
-                                       this->TracerHyperDiff.Enabled);
-
-   if (TrHyperDiffErr != 0) {
-      LOG_CRITICAL("Tendencies: TracerHyperDiffTendencyEnable not found in "
-                   "TendConfig");
-      return TrHyperDiffErr;
-   }
-
-   I4 EddyDiff4Err =
-       TendConfig->get("EddyDiff4", this->TracerHyperDiff.EddyDiff4);
-
-   if (EddyDiff4Err != 0 && this->TracerHyperDiff.Enabled) {
-      LOG_CRITICAL("Tendencies: EddyDiff4 not found in TendConfig");
-      return EddyDiff4Err;
-   }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------

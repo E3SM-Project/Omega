@@ -93,17 +93,9 @@ int initAuxStateTest(const std::string &mesh) {
 
    // Open config file
    Config("Omega");
-   Err = Config::readAll("omega.yml");
-   if (Err != 0) {
-      LOG_CRITICAL("AuxStateTest: Error reading config file");
-      return Err;
-   }
+   Config::readAll("omega.yml");
 
-   int TimeStepperErr = TimeStepper::init1();
-   if (TimeStepperErr != 0) {
-      Err++;
-      LOG_ERROR("AuxStateTest: error initializing default time stepper");
-   }
+   TimeStepper::init1();
 
    int IOErr = IO::init(DefComm);
    if (IOErr != 0) {
@@ -111,11 +103,7 @@ int initAuxStateTest(const std::string &mesh) {
       LOG_ERROR("AuxStateTest: error initializing parallel IO");
    }
 
-   int DecompErr = Decomp::init(mesh);
-   if (DecompErr != 0) {
-      Err++;
-      LOG_ERROR("AuxStateTest: error initializing default decomposition");
-   }
+   Decomp::init(mesh);
 
    int HaloErr = Halo::init();
    if (HaloErr != 0) {
@@ -123,17 +111,8 @@ int initAuxStateTest(const std::string &mesh) {
       LOG_ERROR("AuxStateTest: error initializing default halo");
    }
 
-   int MeshErr = HorzMesh::init();
-   if (MeshErr != 0) {
-      Err++;
-      LOG_ERROR("AuxStateTest: error initializing default mesh");
-   }
-
-   int TracerErr = Tracers::init();
-   if (TracerErr != 0) {
-      Err++;
-      LOG_ERROR("AuxStateTest: error initializing tracer infrastructure");
-   }
+   HorzMesh::init();
+   Tracers::init();
 
    const auto &Mesh = HorzMesh::getDefault();
    // Horz dimensions created in HorzMesh
@@ -152,11 +131,7 @@ int testAuxState() {
    int Err = 0;
 
    // test initialization
-   int AuxStateErr = AuxiliaryState::init();
-   if (AuxStateErr != 0) {
-      Err++;
-      LOG_ERROR("AuxStateTest: error initializing default aux state");
-   }
+   AuxiliaryState::init();
 
    // test retrievel of default
    AuxiliaryState *DefAuxState = AuxiliaryState::getDefault();

@@ -11,6 +11,7 @@
 #include "IOStream.h"
 #include "DataTypes.h"
 #include "Dimension.h"
+#include "Error.h"
 #include "Field.h"
 #include "IO.h"
 #include "Logging.h"
@@ -39,19 +40,17 @@ std::map<std::string, std::shared_ptr<IOStream>> IOStream::AllStreams;
 // Initializes all streams defined in the input configuration file. This
 // does not validate the contents of the streams since the relevant Fields
 // may not have been defined yet. Returns an error code.
-int IOStream::init(Clock *&ModelClock //< [inout] Omega model clock
+void IOStream::init(Clock *&ModelClock //< [inout] Omega model clock
 ) {
 
-   int Err = Success;
+   Error Err;
 
    // Retrieve the model configuration and get the streams sub-config
    Config *OmegaConfig = Config::getOmegaConfig();
    Config StreamsCfgAll("IOStreams");
    Err = OmegaConfig->get(StreamsCfgAll);
-   if (Err != 0) { // could not find the streams configuration
-      LOG_ERROR("Could not find Streams configuration in Omega input file");
-      return Fail;
-   }
+   CHECK_ERROR_ABORT(
+       Err, "Could not find Streams configuration in Omega input file");
 
    // Loop over all streams in the subconfiguration and create them
    for (auto It = StreamsCfgAll.begin(); It != StreamsCfgAll.end(); ++It) {
@@ -60,21 +59,17 @@ int IOStream::init(Clock *&ModelClock //< [inout] Omega model clock
       std::string StreamName = It->first.as<std::string>();
       Config StreamCfg(StreamName);
       Err = StreamsCfgAll.get(StreamCfg);
-      if (Err != 0) {
-         LOG_ERROR("Error retrieving configuration for stream {}", StreamName);
-         return Fail;
-      }
+      CHECK_ERROR_ABORT(Err, "Error retrieving configuration for stream {}",
+                        StreamName);
 
       // Call the create routine to create the stream
       Err = create(StreamName, StreamCfg, ModelClock);
-      if (Err != 0) {
-         LOG_ERROR("Error creating stream {}", StreamName);
-         return Fail;
-      }
+      CHECK_ERROR_WARN(Err,
+                       "Errors encountered creating stream {}."
+                       "Stream will be ignored",
+                       StreamName);
 
    } // end loop over all streams
-
-   return Err;
 
 } // End initialize
 
@@ -341,18 +336,19 @@ IOStream::IOStream() {
 // the IOStreams initialize function. It requires an initialized model
 // clock and stream alarms are attached to this clock during creation.
 
-int IOStream::create(const std::string &StreamName, //< [in] name of stream
-                     Config &StreamConfig, //< [in] input stream configuration
-                     Clock *&ModelClock    //< [inout] Omega model clock
+Error IOStream::create(const std::string &StreamName, //< [in] name of stream
+                       Config &StreamConfig, //< [in] input stream configuration
+                       Clock *&ModelClock    //< [inout] Omega model clock
 ) {
 
-   int Err = 0;
+   Error Err; // returned error code
 
    // Check whether the stream already exists
    if (AllStreams.find(StreamName) != AllStreams.end()) {
       // Stream already exists, return error
-      LOG_ERROR("Attempt to create stream {} that already exists", StreamName);
-      return Fail;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Attempt to create stream {} that already exists",
+                   StreamName);
    }
 
    // Create a new pointer and set name
@@ -361,28 +357,23 @@ int IOStream::create(const std::string &StreamName, //< [in] name of stream
 
    // Set file mode (Read/Write)
    std::string StreamMode;
-   Err             = StreamConfig.get("Mode", StreamMode);
+   Err += StreamConfig.get("Mode", StreamMode);
    NewStream->Mode = IO::ModeFromString(StreamMode);
-   if ((Err != 0) or (NewStream->Mode == IO::ModeUnknown)) {
-      LOG_ERROR("Bad or non-existent Mode for stream {}", StreamName);
-      return Fail;
-   }
+   if (Err.isFail() or (NewStream->Mode == IO::ModeUnknown))
+      ABORT_ERROR("Bad or non-existent Mode for IO stream {}", StreamName);
 
    // Set file name
    // First check if using a pointer file
-   Err = StreamConfig.get("UsePointerFile", NewStream->UsePointer);
-   if (Err != 0) {
-      LOG_ERROR("UsePointerFile flag not found in stream {}", StreamName);
-      return Fail;
-   }
+   Err += StreamConfig.get("UsePointerFile", NewStream->UsePointer);
+   CHECK_ERROR_ABORT(Err, "UsePointerFile flag not found in IO stream {}",
+                     StreamName);
+
    // If the stream uses a pointer file, get the pointer filename
    if (NewStream->UsePointer) {
       NewStream->PtrFilename = ""; // initialize to blank filename
-      Err = StreamConfig.get("PointerFilename", NewStream->PtrFilename);
-      if (Err != 0) { // pointer filename not found
-         LOG_ERROR("Pointer filename not found for stream {}", StreamName);
-         return Fail;
-      }
+      Err += StreamConfig.get("PointerFilename", NewStream->PtrFilename);
+      CHECK_ERROR_ABORT(Err, "Pointer filename not found for stream {}",
+                        StreamName);
    }
 
    // For file reads that are using a pointer file, the filename is
@@ -391,12 +382,11 @@ int IOStream::create(const std::string &StreamName, //< [in] name of stream
    // Otherwise, read filename from config
    std::string StreamFilename = "";
    if (NewStream->Mode != IO::ModeRead or !(NewStream->UsePointer)) {
-      Err = StreamConfig.get("Filename", StreamFilename);
-      if (Err != 0) {
-         LOG_ERROR("Error getting Filename for stream {} from Config",
-                   StreamName);
-         return Fail;
-      }
+      Err += StreamConfig.get("Filename", StreamFilename);
+      CHECK_ERROR_ABORT(Err,
+                        "Error getting Filename for IO stream {} from Config",
+                        StreamName);
+
       // Check to see if filename is a template and needs to be constructed
       // later with time information
       auto TemplateFound = StreamFilename.find("$");
@@ -412,8 +402,8 @@ int IOStream::create(const std::string &StreamName, //< [in] name of stream
    // Set flag to reduce precision for double precision reals. If no flag
    // present, assume full (double) precision
    std::string PrecisionString;
-   Err = StreamConfig.get("Precision", PrecisionString);
-   if (Err != 0)
+   Err += StreamConfig.get("Precision", PrecisionString);
+   if (Err.isFail())
       PrecisionString = "double";
    NewStream->setPrecisionFlag(PrecisionString);
 
@@ -422,8 +412,8 @@ int IOStream::create(const std::string &StreamName, //< [in] name of stream
    NewStream->ExistAction = IO::IfExists::Fail; // default is to fail
    if (NewStream->Mode == IO::ModeWrite) {
       std::string ExistAct;
-      Err = StreamConfig.get("IfExists", ExistAct);
-      if (Err == 0)
+      Err += StreamConfig.get("IfExists", ExistAct);
+      if (Err.isSuccess())
          NewStream->ExistAction = IO::IfExistsFromString(ExistAct);
    }
 
@@ -436,21 +426,15 @@ int IOStream::create(const std::string &StreamName, //< [in] name of stream
 
    // Read frequency of input/output
    int IOFreq;
-   Err = StreamConfig.get("Freq", IOFreq);
-   if (Err != 0) {
-      LOG_ERROR("Frequency missing for stream {}", StreamName);
-      return Fail;
-   }
+   Err += StreamConfig.get("Freq", IOFreq);
+   CHECK_ERROR_ABORT(Err, "Frequency missing for stream {}", StreamName);
+
    if (IOFreq < 1) {
-      LOG_ERROR("Invalid frequency {} for IO stream {} ", StreamName);
-      return Fail;
+      ABORT_ERROR("Invalid frequency {} for IO stream {} ", StreamName);
    }
    std::string IOFreqUnits;
-   Err = StreamConfig.get("FreqUnits", IOFreqUnits);
-   if (Err != 0) {
-      LOG_ERROR("FreqUnits missing for stream {}", StreamName);
-      return Fail;
-   }
+   Err += StreamConfig.get("FreqUnits", IOFreqUnits);
+   CHECK_ERROR_ABORT(Err, "FreqUnits missing for stream {}", StreamName);
 
    // convert string to lower case for easier comparison
    std::transform(IOFreqUnits.begin(), IOFreqUnits.end(), IOFreqUnits.begin(),
@@ -484,38 +468,36 @@ int IOStream::create(const std::string &StreamName, //< [in] name of stream
       // A one-time event for this stream - use the StartTime string
       // as the time instant to use
       std::string StrtTime;
-      Err = StreamConfig.get("StartTime", StrtTime);
-      if (Err == 0) {
+      Err += StreamConfig.get("StartTime", StrtTime);
+      if (Err.isSuccess()) {
          TimeInstant AlarmTime(StrtTime);
          NewStream->MyAlarm = Alarm(AlarmName, AlarmTime);
          HasAlarm           = true;
       } else {
-         LOG_ERROR("Stream {} requests a one-time read/write but StartTime"
-                   "not provided",
-                   StreamName);
-         return Fail;
+         ABORT_ERROR("Stream {} requests a one-time read/write but StartTime"
+                     "not provided",
+                     StreamName);
       }
 
    } else if (IOFreqUnits == "never") { // special never case
 
-      LOG_WARN("Stream {} has IO frequency of never and will be skipped",
-               StreamName);
-      return Success;
+      RETURN_ERROR(Err, ErrorCode::Warn,
+                   "Stream {} has IO frequency of never and will be skipped",
+                   StreamName);
 
    } else { // default error
 
       if (!NewStream->OnStartup and !NewStream->OnShutdown) {
-         LOG_ERROR("Unknown IOFreqUnits option for stream {}", StreamName);
-         return Fail;
+         ABORT_ERROR("Unknown IOFreqUnits option for stream {}", StreamName);
       }
-   }
+
+   } // end if IOFreqUnits
    // If an alarm is set, attach it to the model clock
    if (HasAlarm) {
-      Err = ModelClock->attachAlarm(&(NewStream->MyAlarm));
-      if (Err != 0) {
-         LOG_ERROR("Error attaching alarm to model clock for stream {}",
-                   StreamName);
-         return Fail;
+      int AlarmErr = ModelClock->attachAlarm(&(NewStream->MyAlarm));
+      if (AlarmErr != 0) {
+         ABORT_ERROR("Error attaching alarm to model clock for stream {}",
+                     StreamName);
       }
    }
 
@@ -525,41 +507,36 @@ int IOStream::create(const std::string &StreamName, //< [in] name of stream
    int FileFreq          = 0;
    std::string FileUnitStr;
 
-   int Err1            = StreamConfig.get("FileFreq", FileFreq);
-   int Err2            = StreamConfig.get("FileFreqUnits", FileUnitStr);
+   Error Err1          = StreamConfig.get("FileFreq", FileFreq);
+   Error Err2          = StreamConfig.get("FileFreqUnits", FileUnitStr);
    TimeUnits FileUnits = TimeUnitsFromString(FileUnitStr);
 
    // Various error checks
-   if (Err1 == 0 or Err2 == 0) {
+   if (Err1.isSuccess() or Err2.isSuccess()) {
       // file freq variable present, assume Multiframe and check validity
       NewStream->Multiframe = true;
 
-      if (Err1 != 0) {
-         LOG_CRITICAL("File frequency units provided but file freq missing "
-                      "for stream {}",
-                      StreamName);
-         return Fail;
+      if (!Err1.isSuccess()) {
+         ABORT_ERROR("File frequency units provided but file freq missing "
+                     "for stream {}",
+                     StreamName);
       }
-      if (Err2 != 0) {
-         LOG_CRITICAL("File frequency provided but file freq units missing "
-                      "for stream {}",
-                      StreamName);
-         return Fail;
+      if (!Err2.isSuccess()) {
+         ABORT_ERROR("File frequency provided but file freq units missing "
+                     "for stream {}",
+                     StreamName);
       }
       if (FileFreq < 1) {
-         LOG_ERROR("Invalid file frequency {} for IO stream {} ", StreamName);
-         return Fail;
+         ABORT_ERROR("Invalid file frequency {} for IO stream {} ", StreamName);
       }
       if (FileUnits == TimeUnits::None) {
-         LOG_CRITICAL("Bad units for file frequency in IO stream {} ",
-                      StreamName);
-         return Fail;
+         ABORT_ERROR("Bad units for file frequency in IO stream {} ",
+                     StreamName);
       }
       if (NewStream->Mode == IO::ModeRead) {
-         LOG_CRITICAL("Multiple time slices currently not supported for input "
-                      "stream {} ",
-                      StreamName);
-         return Fail;
+         ABORT_ERROR("Multiple time slices currently not supported for input "
+                     "stream {} ",
+                     StreamName);
       }
    }
 
@@ -582,67 +559,56 @@ int IOStream::create(const std::string &StreamName, //< [in] name of stream
       // create and attach alarm
       std::string FileAlarmName = StreamName + "File";
       NewStream->FileAlarm      = Alarm(FileAlarmName, FileInt, ClockStart);
-      Err = ModelClock->attachAlarm(&(NewStream->FileAlarm));
-      if (Err != 0) {
-         LOG_ERROR("Error attaching file alarm to model clock for stream {}",
-                   StreamName);
-         return Fail;
+      int AlarmErr = ModelClock->attachAlarm(&(NewStream->FileAlarm));
+      if (AlarmErr != 0) {
+         ABORT_ERROR("Error attaching file alarm to model clock for stream {}",
+                     StreamName);
       }
 
       // Check for
    } // end multiframe
 
    // Use a start and end time to define an interval in which stream is active
-   Err = StreamConfig.get("UseStartEnd", NewStream->UseStartEnd);
-   if (Err != 0) { // Start end flag not in config, assume false
+   Err += StreamConfig.get("UseStartEnd", NewStream->UseStartEnd);
+   if (Err.isFail()) { // Start end flag not in config, assume false
       NewStream->UseStartEnd = false;
-      Err                    = 0;
+      Err.reset();
    }
 
    // Set Alarms for start and end time
    if (NewStream->UseStartEnd) {
       std::string StartTimeStr;
       std::string EndTimeStr;
-      int Err = StreamConfig.get("StartTime", StartTimeStr);
-      if (Err != 0) {
-         LOG_ERROR("Stream {} requests UseStartEnd but no start time provided",
-                   StreamName);
-         return Fail;
-      }
-      Err = StreamConfig.get("EndTime", EndTimeStr);
-      if (Err != 0) {
-         LOG_ERROR("Stream {} requests UseStartEnd but no end time provided",
-                   StreamName);
-         return Fail;
-      }
+      Err += StreamConfig.get("StartTime", StartTimeStr);
+      CHECK_ERROR_ABORT(
+          Err, "Stream {} requests UseStartEnd but no start time provided",
+          StreamName);
+      Err += StreamConfig.get("EndTime", EndTimeStr);
+      CHECK_ERROR_ABORT(
+          Err, "Stream {} requests UseStartEnd but no end time provided",
+          StreamName);
+
       TimeInstant Start(StartTimeStr);
       TimeInstant End(EndTimeStr);
       std::string StartName = StreamName + "Start";
       std::string EndName   = StreamName + "End";
       NewStream->StartAlarm = Alarm(StartName, Start);
       NewStream->EndAlarm   = Alarm(EndName, End);
-      Err                   = ModelClock->attachAlarm(&(NewStream->StartAlarm));
-      if (Err != 0) {
-         LOG_ERROR("Error attaching start alarm to model clock for stream {}",
-                   StreamName);
-         return Fail;
-      }
-      Err = ModelClock->attachAlarm(&(NewStream->EndAlarm));
-      if (Err != 0) {
-         LOG_ERROR("Error attaching end alarm to model clock for stream {}",
-                   StreamName);
-         return Fail;
-      }
+      int AlarmErr          = ModelClock->attachAlarm(&(NewStream->StartAlarm));
+      if (AlarmErr != 0)
+         ABORT_ERROR("Error attaching start alarm to model clock for stream {}",
+                     StreamName);
+      AlarmErr = ModelClock->attachAlarm(&(NewStream->EndAlarm));
+      if (AlarmErr != 0)
+         ABORT_ERROR("Error attaching end alarm to model clock for stream {}",
+                     StreamName);
    } // endif UseStartEnd
 
    // Now we add the list of field names to the stream
    // First get the contents list
    std::vector<std::string> FieldContents;
    Err = StreamConfig.get("Contents", FieldContents);
-   if (Err != 0) {
-      LOG_ERROR("Can not find contents for stream {}", StreamName);
-      return Fail;
-   }
+   CHECK_ERROR_ABORT(Err, "Can not find contents for stream {}", StreamName);
 
    // If this is a write stream, add the time field for CF compliant
    // time information

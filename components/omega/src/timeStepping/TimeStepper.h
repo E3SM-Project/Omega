@@ -7,6 +7,33 @@
 ///
 /// The TimeStepper class defines the interface of a time stepper and contains
 /// data and methods common to all time steppers
+/// TimeStepper options are set in the TimeIntegration configuration:
+/// \ConfigInput
+/// # Example time integration configuration (for default config)
+/// TimeIntegration:
+///    # Calendar to use for integration. Supported options are:
+///    # Gregorian, No Leap, Julian, Julian Day, Modified Julian Day,
+///    # 360 Day, Custom, No Calendar
+///    # These options are described in more detail in the UserGuide  
+///    # Default is the No Leap (Gregorian calendar with no leap years)
+///    CalendarType: No Leap
+///    # Algorithm to use for the dynamics time integration
+///    # Supported options are Forward-Backward (default), RungeKutta2 and
+///    # RungeKutta4
+///    TimeStepper: Forward-Backward
+///    # Time step to use, in form of DDDD_hh:mm:ss (days, hours, minutes, secs)
+///    TimeStep: 0000_00:10:00
+///    # Start time of full simulation (YYYY-MM-DD_hh:mm:ss)
+///    StartTime: 0001-01-01_00:00:00
+///    # Either stop time or run duration must be supplied with Duration
+///    # used if both are present. Duration is also preferred for long runs
+///    # that involve multiple job submissions with restarts so that the
+///    # configuration does not need to be modified.
+///    # Stop time for this run (YYYY-MM-DD_hh:mm:ss)
+///    StopTime: 0001-01-01_02:00:00
+///    # Duration of this run segment in form dddd_hh:mm:ss
+///    RunDuration: none
+/// \EndConfigInput
 //
 //===----------------------------------------------------------------------===//
 
@@ -57,7 +84,7 @@ class TimeStepper {
    ) const = 0;
 
    /// 1st phase of Initialization for the default time stepper
-   static int init1();
+   static void init1();
 
    /// 2nd phase of Initialization for the default time stepper
    static int init2();

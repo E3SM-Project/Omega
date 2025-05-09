@@ -22,6 +22,8 @@
 
 #include <iostream>
 
+using namespace OMEGA;
+
 //------------------------------------------------------------------------------
 // The initialization routine for Decomp testing. It calls various
 // init routines, including the creation of the default decomposition.
@@ -33,29 +35,23 @@ int initDecompTest() {
    // Initialize the Machine Environment class - this also creates
    // the default MachEnv. Then retrieve the default environment and
    // some needed data members.
-   OMEGA::MachEnv::init(MPI_COMM_WORLD);
-   OMEGA::MachEnv *DefEnv = OMEGA::MachEnv::getDefault();
+   MachEnv::init(MPI_COMM_WORLD);
+   MachEnv *DefEnv = MachEnv::getDefault();
    MPI_Comm DefComm       = DefEnv->getComm();
 
-   OMEGA::initLogging(DefEnv);
+   initLogging(DefEnv);
 
    // Open config file
-   OMEGA::Config("Omega");
-   Err = OMEGA::Config::readAll("omega.yml");
-   if (Err != 0) {
-      LOG_CRITICAL("DecompTest: Error reading config file");
-      return Err;
-   }
+   Config("Omega");
+   Config::readAll("omega.yml");
 
    // Initialize the IO system
-   Err = OMEGA::IO::init(DefComm);
+   Err = IO::init(DefComm);
    if (Err != 0)
       LOG_ERROR("DecompTest: error initializing parallel IO");
 
    // Create the default decomposition (initializes the decomposition)
-   Err = OMEGA::Decomp::init();
-   if (Err != 0)
-      LOG_ERROR("DecompTest: error initializing default decomposition");
+   Decomp::init();
 
    return Err;
 }
@@ -80,14 +76,14 @@ int main(int argc, char *argv[]) {
          LOG_CRITICAL("DecompTest: Error initializing");
 
       // Get MPI vars if needed
-      OMEGA::MachEnv *DefEnv = OMEGA::MachEnv::getDefault();
-      MPI_Comm Comm          = DefEnv->getComm();
-      OMEGA::I4 MyTask       = DefEnv->getMyTask();
-      OMEGA::I4 NumTasks     = DefEnv->getNumTasks();
-      bool IsMaster          = DefEnv->isMasterTask();
+      MachEnv *DefEnv = MachEnv::getDefault();
+      MPI_Comm Comm   = DefEnv->getComm();
+      I4 MyTask       = DefEnv->getMyTask();
+      I4 NumTasks     = DefEnv->getNumTasks();
+      bool IsMaster   = DefEnv->isMasterTask();
 
       // Test retrieval of the default decomposition
-      OMEGA::Decomp *DefDecomp = OMEGA::Decomp::getDefault();
+      Decomp *DefDecomp = Decomp::getDefault();
       if (DefDecomp) { // true if non-null ptr
          LOG_INFO("DecompTest: Default decomp retrieval PASS");
       } else {
@@ -98,30 +94,30 @@ int main(int argc, char *argv[]) {
       // Test that all Cells, Edges, Vertices are accounted for by
       // summing the list of owned values by all tasks. The result should
       // be the sum of the integers from 1 to NCellsGlobal (or edges, vertices).
-      OMEGA::I4 RefSumCells    = 0;
-      OMEGA::I4 RefSumEdges    = 0;
-      OMEGA::I4 RefSumVertices = 0;
+      I4 RefSumCells    = 0;
+      I4 RefSumEdges    = 0;
+      I4 RefSumVertices = 0;
       for (int n = 0; n < DefDecomp->NCellsGlobal; ++n)
          RefSumCells += n + 1;
       for (int n = 0; n < DefDecomp->NEdgesGlobal; ++n)
          RefSumEdges += n + 1;
       for (int n = 0; n < DefDecomp->NVerticesGlobal; ++n)
          RefSumVertices += n + 1;
-      OMEGA::I4 LocSumCells          = 0;
-      OMEGA::I4 LocSumEdges          = 0;
-      OMEGA::I4 LocSumVertices       = 0;
-      OMEGA::HostArray1DI4 CellIDH   = DefDecomp->CellIDH;
-      OMEGA::HostArray1DI4 EdgeIDH   = DefDecomp->EdgeIDH;
-      OMEGA::HostArray1DI4 VertexIDH = DefDecomp->VertexIDH;
+      I4 LocSumCells          = 0;
+      I4 LocSumEdges          = 0;
+      I4 LocSumVertices       = 0;
+      HostArray1DI4 CellIDH   = DefDecomp->CellIDH;
+      HostArray1DI4 EdgeIDH   = DefDecomp->EdgeIDH;
+      HostArray1DI4 VertexIDH = DefDecomp->VertexIDH;
       for (int n = 0; n < DefDecomp->NCellsOwned; ++n)
          LocSumCells += CellIDH(n);
       for (int n = 0; n < DefDecomp->NEdgesOwned; ++n)
          LocSumEdges += EdgeIDH(n);
       for (int n = 0; n < DefDecomp->NVerticesOwned; ++n)
          LocSumVertices += VertexIDH(n);
-      OMEGA::I4 SumCells    = 0;
-      OMEGA::I4 SumEdges    = 0;
-      OMEGA::I4 SumVertices = 0;
+      I4 SumCells    = 0;
+      I4 SumEdges    = 0;
+      I4 SumVertices = 0;
       Err =
           MPI_Allreduce(&LocSumCells, &SumCells, 1, MPI_INT32_T, MPI_SUM, Comm);
       Err =
@@ -152,8 +148,8 @@ int main(int argc, char *argv[]) {
       }
 
       // Clean up
-      OMEGA::Decomp::clear();
-      OMEGA::MachEnv::removeAll();
+      Decomp::clear();
+      MachEnv::removeAll();
 
       if (Err == 0)
          LOG_INFO("DecompTest: Successful completion");

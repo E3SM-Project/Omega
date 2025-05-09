@@ -15,66 +15,49 @@ namespace OMEGA {
 //===-----------------------------------------------------------------------===/
 // Initialize the manufactured solution tendency terms.
 //===-----------------------------------------------------------------------===/
-int ManufacturedSolution::init() {
-   int Err;
+void ManufacturedSolution::init() {
+   Error Err; // error code
 
    // Get ManufacturedSolConfig group
    Config *OmegaConfig = Config::getOmegaConfig();
    Config ManufacturedSolConfig("ManufacturedSolution");
-   Err = OmegaConfig->get(ManufacturedSolConfig);
-   if (Err != 0) {
-      LOG_CRITICAL("ManufacturedSolution:: ManufacturedSolution group "
-                   "not found in Config");
-      return Err;
-   }
+   Err += OmegaConfig->get(ManufacturedSolConfig);
+   CHECK_ERROR_ABORT(Err,
+       "ManufacturedSolution: ManufacturedSolution group not found in Config");
 
    // Get TendConfig group
    Config TendConfig("Tendencies");
-   Err = OmegaConfig->get(TendConfig);
-   if (Err != 0) {
-      LOG_CRITICAL("ManufacturedSolution:: Tendencies group "
-                   "not found in Config");
-      return Err;
-   }
+   Err += OmegaConfig->get(TendConfig);
+   CHECK_ERROR_ABORT(Err,
+                  "ManufacturedSolution: Tendencies group not found in Config");
 
    // Get manufactured solution parameters from Config
    R8 WavelengthX;
    R8 WavelengthY;
    R8 Amplitude;
 
-   Err = ManufacturedSolConfig.get("WavelengthX", WavelengthX);
-   if (Err != 0) {
-      LOG_ERROR("ManufacturedSolution:: WavelengthX not found in "
-                "ManufacturedSolConfig");
-      return Err;
-   }
+   Err += ManufacturedSolConfig.get("WavelengthX", WavelengthX);
+   CHECK_ERROR_ABORT(Err,
+        "ManufacturedSolution: WavelengthX not found in ManufacturedSolConfig");
 
-   Err = ManufacturedSolConfig.get("WavelengthY", WavelengthY);
-   if (Err != 0) {
-      LOG_ERROR("ManufacturedSolution:: WavelengthY not found in "
-                "ManufacturedSolConfig");
-      return Err;
-   }
+   Err += ManufacturedSolConfig.get("WavelengthY", WavelengthY);
+   CHECK_ERROR_ABORT(Err,
+        "ManufacturedSolution: WavelengthY not found in ManufacturedSolConfig");
 
-   Err = ManufacturedSolConfig.get("Amplitude", Amplitude);
-   if (Err != 0) {
-      LOG_ERROR("ManufacturedSolution:: Amplitude not found in "
-                "ManufacturedSolConfig");
-      return Err;
-   }
+   Err += ManufacturedSolConfig.get("Amplitude", Amplitude);
+   CHECK_ERROR_ABORT(Err,
+          "ManufacturedSolution: Amplitude not found in ManufacturedSolConfig");
 
    // Get Tendendices parameters for del2 and del4 source terms
-   Err = TendConfig.get("VelDiffTendencyEnable",
-                        ManufacturedVelTend.VelDiffTendencyEnable);
+   Err += TendConfig.get("VelDiffTendencyEnable",
+                         ManufacturedVelTend.VelDiffTendencyEnable);
    Err += TendConfig.get("VelHyperDiffTendencyEnable",
                          ManufacturedVelTend.VelHyperDiffTendencyEnable);
    Err += TendConfig.get("ViscDel2", ManufacturedVelTend.ViscDel2);
    Err += TendConfig.get("ViscDel4", ManufacturedVelTend.ViscDel4);
 
-   if (Err != 0) {
-      LOG_ERROR("ManufacturedSolution::Error reading Tendencies config");
-      return Err;
-   }
+   CHECK_ERROR_ABORT(Err,
+        "ManufacturedSolution: Could not find del2, del4 parameters in Config");
 
    // Get the reference time to compute the model elapsed time
    /// Get model clock from time stepper
@@ -110,8 +93,6 @@ int ManufacturedSolution::init() {
    ManufacturedVelTend.Kx      = Kx;
    ManufacturedVelTend.Ky      = Ky;
    ManufacturedVelTend.AngFreq = AngFreq;
-
-   return Err;
 
 } // end ManufacturedSolution init
 

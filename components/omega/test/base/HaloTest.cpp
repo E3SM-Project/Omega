@@ -118,11 +118,7 @@ int initHaloTest() {
 
    // Open config file
    Config("Omega");
-   IErr = Config::readAll("omega.yml");
-   if (IErr != 0) {
-      LOG_CRITICAL("HaloTest: Error reading config file");
-      return IErr;
-   }
+   Config::readAll("omega.yml");
 
    // Initialize the IO system
    IErr = IO::init(DefComm);
@@ -130,9 +126,7 @@ int initHaloTest() {
       LOG_ERROR("HaloTest: error initializing parallel IO");
 
    // Create the default decomposition (initializes the decomposition)
-   IErr = Decomp::init();
-   if (IErr != 0)
-      LOG_ERROR("HaloTest: error initializing default decomposition");
+   Decomp::init();
 
    // Initialize the default halo
    IErr = Halo::init();

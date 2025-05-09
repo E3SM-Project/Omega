@@ -1,5 +1,4 @@
-//===-- OMEGA Tracers Implementation -----------------------------*- C++
-//-*-===//
+//===-- OMEGA Tracers Implementation ----------------------------*- C++ -*-===//
 //
 /// \file
 /// \brief OMEGA Tracers Implementation
@@ -8,7 +7,9 @@
 //===-----------------------------------------------------------------------===/
 
 #include "Tracers.h"
+#include "Config.h"
 #include "Decomp.h"
+#include "Error.h"
 #include "IO.h"
 #include "Logging.h"
 #include "TimeStepper.h"
@@ -39,9 +40,10 @@ I4 Tracers::NumTracers   = 0;
 //---------------------------------------------------------------------------
 // Initialization
 //---------------------------------------------------------------------------
-I4 Tracers::init() {
+void Tracers::init() {
 
-   I4 Err = 0;
+   int ErrFlag = 0; // back-compatible error to be removed later
+   Error Err; // error code
 
    // Retrieve mesh cell/edge/vertex totals from Decomp
    HorzMesh *DefHorzMesh = HorzMesh::getDefault();
@@ -55,14 +57,12 @@ I4 Tracers::init() {
 
    auto *DefTimeStepper = TimeStepper::getDefault();
    if (!DefTimeStepper) {
-      LOG_ERROR("TimeStepper needs to be initialized before Tracers");
-      return -1;
+      ABORT_ERROR("TimeStepper needs to be initialized before Tracers");
    }
    NTimeLevels = DefTimeStepper->getNTimeLevels();
 
    if (NTimeLevels < 2) {
-      LOG_ERROR("Tracers: the number of time level is lower than 2");
-      return -2;
+      ABORT_ERROR("Tracers: the number of time level is lower than 2");
    }
 
    CurTimeIndex = 0;
@@ -70,11 +70,8 @@ I4 Tracers::init() {
    // load Tracers configs
    Config *OmegaConfig = Config::getOmegaConfig();
    Config TracersConfig("Tracers");
-   Err = OmegaConfig->get(TracersConfig);
-   if (Err != 0) {
-      LOG_ERROR("Tracers: Tracers group not found in Config");
-      return -3;
-   }
+   Err += OmegaConfig->get(TracersConfig);
+   CHECK_ERROR_ABORT(Err, "Tracers: Tracers group not found in Config");
 
    NumTracers     = 0;
    I4 TracerIndex = 0;
@@ -85,20 +82,13 @@ I4 Tracers::init() {
       I4 GroupStartIndex = TracerIndex;
 
       std::string GroupName;
-      I4 GroupNameErr = OMEGA::Config::getName(It, GroupName);
-      if (GroupNameErr != 0) {
-         LOG_ERROR("Tracers: {} tracer group name not found in TracersConfig",
-                   GroupName);
-         return -4;
-      }
+      Err += Config::getName(It, GroupName);
+      CHECK_ERROR_ABORT(Err, "Tracers: error retrieving tracer group name");
 
       std::vector<std::string> _TracerNames;
-      I4 TracerNamesErr = TracersConfig.get(GroupName, _TracerNames);
-      if (TracerNamesErr != 0) {
-         LOG_ERROR("Tracers: {} group tracers not found in TracersConfig",
-                   GroupName);
-         return -5;
-      }
+      Err += TracersConfig.get(GroupName, _TracerNames);
+      CHECK_ERROR_ABORT(Err,
+             "Tracers: error retrieving tracer names for group {}", GroupName);
 
       for (auto _TracerName : _TracerNames) {
          TracerIndexes[_TracerName] = TracerIndex;
@@ -137,8 +127,7 @@ I4 Tracers::init() {
 
    // Check if all tracers defined in config file are loaded
    if (TracerIndexes.size() != TracerNames.size()) {
-      LOG_ERROR("Tracer: not all tracers defined in config file is loaded.");
-      return -6;
+      ABORT_ERROR("Tracer: not all tracers defined in config file is loaded.");
    }
 
    // Add Fields to FieldGroup
@@ -153,31 +142,30 @@ I4 Tracers::init() {
       auto TracerFieldGroup            = FieldGroup::get(TracerFieldGroupName);
 
       std::vector<std::string> _TracerNames;
-      TracersConfig.get(GroupName, _TracerNames);
+      Err += TracersConfig.get(GroupName, _TracerNames);
+      CHECK_ERROR_ABORT(Err,
+            "Tracers: error retrieving tracer names for group {}", GroupName);
 
       for (auto _TracerName : _TracerNames) {
          std::string TracerFieldName = _TracerName;
 
          // add tracer Field to field group
-         Err = TracerFieldGroup->addField(TracerFieldName);
-         if (Err != 0) {
-            LOG_ERROR("Error adding {} to field group {}", TracerFieldName,
-                      TracerFieldGroupName);
-            return -7;
+         ErrFlag = TracerFieldGroup->addField(TracerFieldName);
+         if (ErrFlag != 0) {
+            ABORT_ERROR("Error adding {} to field group {}", TracerFieldName,
+                        TracerFieldGroupName);
          }
 
          // Add tracer Field to all tracer group
-         Err = AllTracerGrp->addField(TracerFieldName);
-         if (Err != 0) {
-            LOG_ERROR("Error adding {} to All Tracer group", TracerFieldName);
-            return 8;
+         ErrFlag = AllTracerGrp->addField(TracerFieldName);
+         if (ErrFlag != 0) {
+            ABORT_ERROR("Error adding {} to All Tracer group", TracerFieldName);
          }
 
          // Add tracer Field to restart group
-         Err = FieldGroup::addFieldToGroup(TracerFieldName, "Restart");
-         if (Err != 0) {
-            LOG_ERROR("Error adding {} to Restart group", TracerFieldName);
-            return 8;
+         ErrFlag = FieldGroup::addFieldToGroup(TracerFieldName, "Restart");
+         if (ErrFlag != 0) {
+            ABORT_ERROR("Error adding {} to Restart group", TracerFieldName);
          }
 
          // Associate Field with data
@@ -187,16 +175,15 @@ I4 Tracers::init() {
          // Create a 2D subview by fixing the first dimension (TracerIndex)
          Array2DReal TracerSubview = Kokkos::subview(
              TracerArrays[CurTimeIndex], TracerIndex, Kokkos::ALL, Kokkos::ALL);
-         Err = TracerField->attachData<Array2DReal>(TracerSubview);
-         if (Err != 0) {
-            LOG_ERROR("Error attaching data array to field {}",
-                      TracerFieldName);
-            return -8;
+         ErrFlag = TracerField->attachData<Array2DReal>(TracerSubview);
+         if (ErrFlag != 0) {
+            ABORT_ERROR("Error attaching data array to field {}",
+                        TracerFieldName);
          }
       }
    }
 
-   return 0;
+   return;
 }
 
 //---------------------------------------------------------------------------

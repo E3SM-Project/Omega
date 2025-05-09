@@ -10,6 +10,15 @@
 /// (https://doi.org/10.1029/2022MS003545) and the manufactured solution test
 /// case in Polaris. The Polaris package leverages this feature to validate
 /// an expected order of convergence of Omega.
+/// To add customized tendencies, you must add the appropriate group to the
+/// input configuration file:
+/// \ConfigInput
+/// # Example custom tendencies (for the default configuration)
+/// ManufacturedSolution:
+///    WavelengthX: 5.0e6
+///    WavelengthY: 4.33013e6
+///    Amplitude: 1.0
+/// \EndConfigInput
 //
 //===----------------------------------------------------------------------===//
 
@@ -70,7 +79,7 @@ class ManufacturedSolution {
    ManufacturedThicknessTendency ManufacturedThickTend;
    ManufacturedVelocityTendency ManufacturedVelTend;
 
-   int init();
+   void init();
 
 }; // end class ManufacturedSolution
 

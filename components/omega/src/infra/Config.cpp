@@ -12,8 +12,10 @@
 #include "Config.h"
 #include "Broadcast.h"
 #include "DataTypes.h"
+#include "Error.h"
 #include "Logging.h"
 #include "MachEnv.h"
+#include "Pacer.h"
 #include "mpi.h"
 #include "yaml-cpp/yaml.h"
 
@@ -80,9 +82,11 @@ Config::Config() {} // end Config constructor
 // only read by the master task.  The accessor functions (get/set) will
 // broadcast or communicate the data as needed to/from other MPI tasks.
 
-int Config::readAll(const std::string ConfigFile // [in] input YAML config file
+void Config::readAll(const std::string &ConfigFile // [in] input YAML file
 ) {
-   int Err = 0;
+
+   // Start a timer for config file reads
+   Pacer::start("ConfigReadAll");
 
    // Now give the full config the omega name and extract the
    // top-level omega node from the Root.
@@ -100,7 +104,8 @@ int Config::readAll(const std::string ConfigFile // [in] input YAML config file
       MPI_Barrier(ConfigComm);
    }
 
-   return Err;
+   Pacer::stop("ConfigReadAll");
+   return;
 
 } // end Config::readAll
 
@@ -121,18 +126,18 @@ Config *Config::getOmegaConfig() { return &ConfigAll; }
 //------------------------------------------------------------------------------
 // Retrieves a sub-configuration from a parent Config. An empty SubConfig must
 // have already been created with a name.
-// Returns an error code that is non-zero if the group does not exist
-int Config::get(Config &SubConfig // [inout] sub-configuration to retrieve
+// Returns a fail error code if the group does not exist
+Error Config::get(Config &SubConfig // [inout] sub-configuration to retrieve
 ) {
 
-   int Err = 0;
+   Error Err; // default success error code
 
    std::string GroupName = SubConfig.Name;
    if (Node[GroupName]) { // the group exists
       SubConfig.Node = Node[GroupName];
    } else {
-      LOG_ERROR("Config get group: could not find group {}", GroupName);
-      Err = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Config get group: could not find group {}", GroupName);
    }
 
    return Err;
@@ -143,18 +148,18 @@ int Config::get(Config &SubConfig // [inout] sub-configuration to retrieve
 // used when iterating through a configuration so takes the iterator as input.
 // This assumes the Config is a name-value pair (map).
 
-int Config::getName(Config::Iter ConfigIter, // [in] input iterator
-                    std::string &ConfigName  // [out] name of a configuration
+Error Config::getName(Config::Iter ConfigIter, // [in] input iterator
+                      std::string &ConfigName  // [out] name of a configuration
 ) {
 
    // Initialize return values
-   int Err    = 0;
+   Error Err;
    ConfigName = "unknown";
 
    ConfigName = ConfigIter->first.as<std::string>();
 
    if (ConfigName == "unknown")
-      Err = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail, "Could not retrieve Config name");
 
    return Err;
 
@@ -162,19 +167,19 @@ int Config::getName(Config::Iter ConfigIter, // [in] input iterator
 
 //------------------------------------------------------------------------------
 // Retrieves a 4-byte integer value from the Config based on name
-// Returns a non-zero error code if the variable does not exist
-int Config::get(const std::string VarName, // [in] name of variable to get
-                I4 &Value                  // [out] value of the variable
+// Returns a fail error code if the variable does not exist
+Error Config::get(const std::string &VarName, // [in] name of variable to get
+                  I4 &Value                   // [out] value of the variable
 ) {
-   int Err = 0;
+   Error Err; // success error code
 
    // Extract variable from config
    if (Node[VarName]) { // the variable exists
-      Value = Node[VarName].as<OMEGA::I4>();
+      Value = Node[VarName].as<I4>();
    } else {
-      LOG_ERROR("Config get I4: could not find variable {}", VarName);
       Value = -999;
-      Err   = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Config get I4: could not find variable {}", VarName);
    }
 
    return Err;
@@ -182,19 +187,19 @@ int Config::get(const std::string VarName, // [in] name of variable to get
 
 //------------------------------------------------------------------------------
 // Retrieves an 8-byte integer value from the Config based on name
-// Returns a non-zero error code if the variable does not exist
-int Config::get(const std::string VarName, // [in] name of variable to get
-                I8 &Value                  // [out] value of the variable
+// Returns a fail error code if the variable does not exist
+Error Config::get(const std::string &VarName, // [in] name of variable to get
+                  I8 &Value                   // [out] value of the variable
 ) {
-   int Err = 0;
+   Error Err; // success error code
 
    // Extract variable from config
    if (Node[VarName]) { // the variable exists
-      Value = Node[VarName].as<OMEGA::I8>();
+      Value = Node[VarName].as<I8>();
    } else {
-      LOG_ERROR("Config get I8: could not find variable {}", VarName);
       Value = -999;
-      Err   = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Config get I8: could not find variable {}", VarName);
    }
 
    return Err;
@@ -202,19 +207,19 @@ int Config::get(const std::string VarName, // [in] name of variable to get
 
 //------------------------------------------------------------------------------
 // Retrieves a 4-byte real value from the Config based on name
-// Returns a non-zero error code if the variable does not exist
-int Config::get(const std::string VarName, // [in] name of variable to get
-                R4 &Value                  // [out] value of the variable
+// Returns a fail error code if the variable does not exist
+Error Config::get(const std::string &VarName, // [in] name of variable to get
+                  R4 &Value                   // [out] value of the variable
 ) {
-   int Err = 0;
+   Error Err; // success error code
 
    // Extract variable from config
    if (Node[VarName]) { // the variable exists
-      Value = Node[VarName].as<OMEGA::R4>();
+      Value = Node[VarName].as<R4>();
    } else {
-      LOG_ERROR("Config get R4: could not find variable {}", VarName);
       Value = -999.999;
-      Err   = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Config get R4: could not find variable {}", VarName);
    }
 
    return Err;
@@ -222,19 +227,19 @@ int Config::get(const std::string VarName, // [in] name of variable to get
 
 //------------------------------------------------------------------------------
 // Retrieves an 8-byte real value from the Config based on name
-// Returns a non-zero error code if the variable does not exist
-int Config::get(const std::string VarName, // [in] name of variable to get
-                R8 &Value                  // [out] value of the variable
+// Returns a fail error code if the variable does not exist
+Error Config::get(const std::string &VarName, // [in] name of variable to get
+                  R8 &Value                   // [out] value of the variable
 ) {
-   int Err = 0;
+   Error Err; // success error code
 
    // Extract variable from config
    if (Node[VarName]) { // the variable exists
-      Value = Node[VarName].as<OMEGA::R8>();
+      Value = Node[VarName].as<R8>();
    } else {
-      LOG_ERROR("Config get R8: could not find variable {}", VarName);
       Value = -99999.999;
-      Err   = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Config get R8: could not find variable {}", VarName);
    }
 
    return Err;
@@ -242,19 +247,19 @@ int Config::get(const std::string VarName, // [in] name of variable to get
 
 //------------------------------------------------------------------------------
 // Retrieves a logical/boolean value from the Config based on name
-// Returns a non-zero error code if the variable does not exist
-int Config::get(const std::string VarName, // [in] name of variable to get
-                bool &Value                // [out] value of the variable
+// Returns a fail error code if the variable does not exist
+Error Config::get(const std::string &VarName, // [in] name of variable to get
+                  bool &Value                 // [out] value of the variable
 ) {
-   int Err = 0;
+   Error Err; // success error code
 
    // Extract variable from config
    if (Node[VarName]) { // the variable exists
       Value = Node[VarName].as<bool>();
    } else {
-      LOG_ERROR("Config get bool: could not find variable {}", VarName);
       Value = false;
-      Err   = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Config get bool: could not find variable {}", VarName);
    }
 
    return Err;
@@ -262,20 +267,20 @@ int Config::get(const std::string VarName, // [in] name of variable to get
 
 //------------------------------------------------------------------------------
 // Retrieves a string value from the Config based on name
-// Returns a non-zero error code if the variable does not exist
-int Config::get(const std::string VarName, // [in] name of variable to get
-                std::string &Value         // [out] value of the variable
+// Returns a fail error code if the variable does not exist
+Error Config::get(const std::string &VarName, // [in] name of variable to get
+                  std::string &Value          // [out] value of the variable
 ) {
-   int Err = 0;
+   Error Err; // success error code
 
    // Extract variable from config on master task
    std::string TmpVal;
    if (Node[VarName]) { // the variable exists
       Value = Node[VarName].as<std::string>();
    } else {
-      LOG_ERROR("Config get string: could not find variable {}", VarName);
       Value = "ConfigError";
-      Err   = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Config get string: could not find variable {}", VarName);
    }
 
    return Err;
@@ -283,11 +288,11 @@ int Config::get(const std::string VarName, // [in] name of variable to get
 
 //------------------------------------------------------------------------------
 // Retrieves a 4-byte integer vector from the Config based on name
-// Returns a non-zero error code if the variable does not exist
-int Config::get(const std::string VarName, // [in] name of variable to get
-                std::vector<I4> &Vector    // [out] vector of values retrieved
+// Returns a fail error code if the variable does not exist
+Error Config::get(const std::string &VarName, // [in] name of variable to get
+                  std::vector<I4> &Vector     // [out] vector to retrieve
 ) {
-   int Err = 0;
+   Error Err; // success error code
 
    // Extract variable from config
    // First check if it exists and verify that it is a sequence node
@@ -307,12 +312,12 @@ int Config::get(const std::string VarName, // [in] name of variable to get
          }
 
       } else { // not a sequence (vector) node so log an error
-         LOG_ERROR("Config get I4 vector: entry not a sequence {}", VarName);
-         Err = -2;
+         RETURN_ERROR(Err, ErrorCode::Fail,
+                      "Config get I4 vector: entry not a sequence {}", VarName);
       }
    } else { // node with that name does not exist
-      LOG_ERROR("Config get I4 vector: could not find variable {}", VarName);
-      Err = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Config get I4 vector: could not find variable {}", VarName);
    }
 
    return Err;
@@ -321,11 +326,11 @@ int Config::get(const std::string VarName, // [in] name of variable to get
 
 //------------------------------------------------------------------------------
 // Retrieves an 8-byte integer vector from the Config based on name
-// Returns a non-zero error code if the variable does not exist
-int Config::get(const std::string VarName, // [in] name of variable to get
-                std::vector<I8> &Vector    // [out] vector of values retrieved
+// Returns a fail error code if the variable does not exist
+Error Config::get(const std::string &VarName, // [in] name of variable to get
+                  std::vector<I8> &Vector     // [out] vector to retrieve
 ) {
-   int Err = 0;
+   Error Err; // success error code
 
    // Extract variable from config
    // First check if it exists and verify that it is a sequence node
@@ -345,12 +350,12 @@ int Config::get(const std::string VarName, // [in] name of variable to get
          }
 
       } else { // not a sequence (vector) so log an error
-         LOG_ERROR("Config get I8 vector: entry not a sequence {}", VarName);
-         Err = -2;
+         RETURN_ERROR(Err, ErrorCode::Fail,
+                      "Config get I8 vector: entry not a sequence {}", VarName);
       }
    } else { // Node with that name does not exist
-      LOG_ERROR("Config get I8 vector: could not find variable {}", VarName);
-      Err = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Config get I8 vector: could not find variable {}", VarName);
    }
 
    return Err;
@@ -359,11 +364,11 @@ int Config::get(const std::string VarName, // [in] name of variable to get
 
 //------------------------------------------------------------------------------
 // Retrieves a 4-byte real vector from the Config based on name
-// Returns a non-zero error code if the variable does not exist
-int Config::get(const std::string VarName, // [in] name of variable to get
-                std::vector<R4> &Vector    // [out] vector of values retrieved
+// Returns a fail error code if the variable does not exist
+Error Config::get(const std::string &VarName, // [in] name of variable to get
+                  std::vector<R4> &Vector     // [out] vector to retrieve
 ) {
-   int Err = 0;
+   Error Err; // success error code
 
    // Extract variable from config
    // First check if it exists and verify that it is a sequence node
@@ -383,12 +388,12 @@ int Config::get(const std::string VarName, // [in] name of variable to get
          }
 
       } else { // not a sequence (vector) so log an error
-         LOG_ERROR("Config get R4 vector: entry not a sequence {}", VarName);
-         Err = -2;
+         RETURN_ERROR(Err, ErrorCode::Fail,
+                      "Config get R4 vector: entry not a sequence {}", VarName);
       }
    } else { // Node with that name does not exist
-      LOG_ERROR("Config get R4 vector: could not find variable {}", VarName);
-      Err = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Config get R4 vector: could not find variable {}", VarName);
    }
 
    return Err;
@@ -397,11 +402,11 @@ int Config::get(const std::string VarName, // [in] name of variable to get
 
 //------------------------------------------------------------------------------
 // Retrieves an 8-byte real vector from the Config based on name
-// Returns a non-zero error code if the variable does not exist
-int Config::get(const std::string VarName, // [in] name of variable to get
-                std::vector<R8> &Vector    // [out] vector of values retrieved
+// Returns a fail error code if the variable does not exist
+Error Config::get(const std::string &VarName, // [in] name of variable to get
+                  std::vector<R8> &Vector     // [out] vector to retrieve
 ) {
-   int Err = 0;
+   Error Err; // success error code
 
    // Extract variable from config
    // First check if it exists and verify that it is a sequence node
@@ -421,12 +426,12 @@ int Config::get(const std::string VarName, // [in] name of variable to get
          }
 
       } else { // not a sequence (vector) so log an error
-         LOG_ERROR("Config get R8 vector: entry not a sequence {}", VarName);
-         Err = -2;
+         RETURN_ERROR(Err, ErrorCode::Fail,
+                      "Config get R8 vector: entry not a sequence {}", VarName);
       }
    } else { // Node with that name does not exist
-      LOG_ERROR("Config get R8 vector: could not find variable {}", VarName);
-      Err = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Config get R8 vector: could not find variable {}", VarName);
    }
 
    return Err;
@@ -435,11 +440,11 @@ int Config::get(const std::string VarName, // [in] name of variable to get
 
 //------------------------------------------------------------------------------
 // Retrieves a boolean vector from the Config based on name
-// Returns a non-zero error code if the variable does not exist
-int Config::get(const std::string VarName, // [in] name of variable to get
-                std::vector<bool> &Vector  // [out] vector of values retrieved
+// Returns a fail error code if the variable does not exist
+Error Config::get(const std::string &VarName, // [in] name of variable to get
+                  std::vector<bool> &Vector   // [out] vector to retrieve
 ) {
-   int Err = 0;
+   Error Err; // success error code
 
    // Extract variable from config
    // First check if it exists and verify that it is a sequence node
@@ -459,12 +464,14 @@ int Config::get(const std::string VarName, // [in] name of variable to get
          }
 
       } else { // not a sequence (vector) so log an error
-         LOG_ERROR("Config get bool vector: entry not a sequence {}", VarName);
-         Err = -2;
+         RETURN_ERROR(Err, ErrorCode::Fail,
+                      "Config get bool vector: entry not a sequence {}",
+                      VarName);
       }
    } else { // Node with that name does not exist
-      LOG_ERROR("Config get bool vector: could not find variable {}", VarName);
-      Err = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Config get bool vector: could not find variable {}",
+                   VarName);
    }
 
    return Err;
@@ -473,11 +480,11 @@ int Config::get(const std::string VarName, // [in] name of variable to get
 
 //------------------------------------------------------------------------------
 // Retrieves a list of strings from the Config based on name
-// Returns a non-zero error code if the variable does not exist
-int Config::get(const std::string VarName,     // [in] name of variable to get
-                std::vector<std::string> &List // [out] string list retrieved
+// Returns a fail error code if the variable does not exist
+Error Config::get(const std::string &VarName,    // [in] name of variable to get
+                  std::vector<std::string> &List // [out] string list retrieved
 ) {
-   int Err     = 0;
+   Error Err; // success error code
    int VecSize = 0;
 
    // Extract variable from config
@@ -498,12 +505,14 @@ int Config::get(const std::string VarName,     // [in] name of variable to get
          }
 
       } else { // not a sequence (list) so log an error
-         LOG_ERROR("Config get string list: entry not a sequence {}", VarName);
-         Err = -2;
+         RETURN_ERROR(Err, ErrorCode::Fail,
+                      "Config get string list: entry not a sequence {}",
+                      VarName);
       }
    } else { // Node with that name does not exist
-      LOG_ERROR("Config get string list: could not find variable {}", VarName);
-      Err = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Config get string list: could not find variable {}",
+                   VarName);
    }
 
    return Err;
@@ -513,394 +522,265 @@ int Config::get(const std::string VarName,     // [in] name of variable to get
 //------------------------------------------------------------------------------
 // Set functions
 //------------------------------------------------------------------------------
-// Resets the value of a variable in the config
-// Returns a non-zero error code if variable is not found.
-int Config::set(const std::string VarName, // [in] name of variable to set
-                I4 Value                   // [in] new value of the variable
+// Resets the value of a variable in the config.
+// Aborts if the variable is not found.
+void Config::set(const std::string &VarName, // [in] name of variable to set
+                 I4 Value                    // [in] new value of the variable
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable exists
       Node[VarName] = Value;
    } else {
-      LOG_ERROR("Config set I4: could not find variable {}", VarName);
-      Err = -1;
+      ABORT_ERROR("Config set I4: could not find variable {}", VarName);
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Resets the value of a variable in the config
-// Returns a non-zero error code if variable is not found.
-int Config::set(const std::string VarName, // [in] name of variable to set
-                I8 Value                   // [in] new value of the variable
+// Aborts if the variable is not found.
+void Config::set(const std::string &VarName, // [in] name of variable to set
+                 I8 Value                    // [in] new value of the variable
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable exists
       Node[VarName] = Value;
    } else {
-      LOG_ERROR("Config set I8: could not find variable {}", VarName);
-      Err = -1;
+      ABORT_ERROR("Config set I8: could not find variable {}", VarName);
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Resets the value of a variable in the config
-// Returns a non-zero error code if variable is not found.
-int Config::set(const std::string VarName, // [in] name of variable to set
-                R4 Value                   // [in] new value of the variable
+// Aborts if the variable is not found.
+void Config::set(const std::string &VarName, // [in] name of variable to set
+                 R4 Value                    // [in] new value of the variable
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable exists
       Node[VarName] = Value;
    } else {
-      LOG_ERROR("Config set R4: could not find variable {}", VarName);
-      Err = -1;
+      ABORT_ERROR("Config set R4: could not find variable {}", VarName);
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Resets the value of a variable in the config
-// Returns a non-zero error code if variable is not found.
-int Config::set(const std::string VarName, // [in] name of variable to set
-                R8 Value                   // [in] new value of the variable
+// Aborts if the variable is not found.
+void Config::set(const std::string &VarName, // [in] name of variable to set
+                 R8 Value                    // [in] new value of the variable
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable exists
       Node[VarName] = Value;
    } else {
-      LOG_ERROR("Config set R8: could not find variable {}", VarName);
-      Err = -1;
+      ABORT_ERROR("Config set R8: could not find variable {}", VarName);
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Resets the value of a variable in the config
-// Returns a non-zero error code if variable is not found.
-int Config::set(const std::string VarName, // [in] name of variable to set
-                bool Value                 // [in] new value of the variable
+// Aborts if the variable is not found.
+void Config::set(const std::string &VarName, // [in] name of variable to set
+                 bool Value                  // [in] new value of the variable
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable exists
       Node[VarName] = Value;
    } else {
-      LOG_ERROR("Config set bool: could not find variable {}", VarName);
-      Err = -1;
+      ABORT_ERROR("Config set bool: could not find variable {}", VarName);
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Resets the value of a variable in the config
-// Returns a non-zero error code if variable is not found.
-int Config::set(const std::string VarName, // [in] name of variable to set
-                std::string Value          // [in] new value of the variable
+// Aborts if the variable is not found.
+void Config::set(const std::string &VarName, // [in] name of variable to set
+                 const std::string &Value    // [in] new value of the variable
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable exists
       Node[VarName] = Value;
    } else {
-      LOG_ERROR("Config set string: could not find variable {}", VarName);
-      Err = -1;
+      ABORT_ERROR("Config set string: could not find variable {}", VarName);
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Resets the value of a vector/list in the config
-// Returns a non-zero error code if variable is not found.
-int Config::set(const std::string VarName, // [in] name of variable to set
-                std::vector<I4> Vector     // [in] new value of the vector
+// Aborts if the variable is not found.
+void Config::set(const std::string &VarName,   // [in] name of variable to set
+                 const std::vector<I4> &Vector // [in] new value of the vector
 ) {
-   int Err = 0;
-
    // Because the vector length may also change, it is best to just
    // remove and replace the entire vector
-   Err = this->remove(VarName);
-   if (Err != 0)
-      LOG_ERROR("Config set I4 vector: could not remove old variable {}",
-                VarName);
-   Err = this->add(VarName, Vector);
-   if (Err != 0)
-      LOG_ERROR("Config set I4 vector: could not re-add variable {}", VarName);
-
-   return Err;
+   this->remove(VarName);
+   this->add(VarName, Vector);
 }
 
 //------------------------------------------------------------------------------
 // Resets the value of a vector/list in the config
-// Returns a non-zero error code if variable is not found.
-int Config::set(const std::string VarName, // [in] name of variable to set
-                std::vector<I8> Vector     // [in] new value of the vector
+// Aborts if the variable is not found.
+void Config::set(const std::string &VarName,   // [in] name of variable to set
+                 const std::vector<I8> &Vector // [in] new value of the vector
 ) {
-   int Err = 0;
-
    // Because the vector length may also change, it is best to just
    // remove and replace the entire vector
-   Err = this->remove(VarName);
-   if (Err != 0)
-      LOG_ERROR("Config set I8 vector: could not remove old variable {}",
-                VarName);
-
-   Err = this->add(VarName, Vector);
-   if (Err != 0)
-      LOG_ERROR("Config set I8 vector: could not re-add variable {}", VarName);
-
-   return Err;
+   this->remove(VarName);
+   this->add(VarName, Vector);
 }
 
 //------------------------------------------------------------------------------
 // Resets the value of a vector/list in the config
-// Returns a non-zero error code if variable is not found.
-int Config::set(const std::string VarName, // [in] name of variable to set
-                std::vector<R4> Vector     // [in] new value of the vector
+// Aborts if the variable is not found.
+void Config::set(const std::string &VarName,   // [in] name of variable to set
+                 const std::vector<R4> &Vector // [in] new value of the vector
 ) {
-   int Err = 0;
-
    // Because the vector length may also change, it is best to just
    // remove and replace the entire vector
-   Err = this->remove(VarName);
-   if (Err != 0)
-      LOG_ERROR("Config set R4 vector: could not remove old variable {}",
-                VarName);
-
-   Err = this->add(VarName, Vector);
-   if (Err != 0)
-      LOG_ERROR("Config set R4 vector: could not re-add variable {}", VarName);
-
-   return Err;
+   this->remove(VarName);
+   this->add(VarName, Vector);
 }
 
 //------------------------------------------------------------------------------
 // Resets the value of a vector/list in the config
-// Returns a non-zero error code if variable is not found.
-int Config::set(const std::string VarName, // [in] name of variable to set
-                std::vector<R8> Vector     // [in] new value of the vector
+// Aborts if the variable is not found.
+void Config::set(const std::string &VarName,   // [in] name of variable to set
+                 const std::vector<R8> &Vector // [in] new value of the vector
 ) {
-   int Err = 0;
-
    // Because the vector length may also change, it is best to just
    // remove and replace the entire vector
-   Err = this->remove(VarName);
-   if (Err != 0)
-      LOG_ERROR("Config set R8 vector: could not remove old variable {}",
-                VarName);
-
-   Err = this->add(VarName, Vector);
-   if (Err != 0)
-      LOG_ERROR("Config set R8 vector: could not re-add variable {}", VarName);
-
-   return Err;
+   this->remove(VarName);
+   this->add(VarName, Vector);
 }
 
 //------------------------------------------------------------------------------
 // Resets the value of a vector/list in the config
-// Returns a non-zero error code if variable is not found.
-int Config::set(const std::string VarName, // [in] name of variable to set
-                std::vector<bool> Vector   // [in] new value of the vector
+// Aborts if the variable is not found.
+void Config::set(const std::string &VarName,     // [in] name of variable to set
+                 const std::vector<bool> &Vector // [in] new vector values
 ) {
-   int Err = 0;
-
    // Because the vector length may also change, it is best to just
    // remove and replace the entire vector
-   Err = this->remove(VarName);
-   if (Err != 0)
-      LOG_ERROR("Config set bool vector: could not remove old variable {}",
-                VarName);
-
-   Err = this->add(VarName, Vector);
-   if (Err != 0)
-      LOG_ERROR("Config set bool vector: could not re-add variable {}",
-                VarName);
-
-   return Err;
+   this->remove(VarName);
+   this->add(VarName, Vector);
 }
 
 //------------------------------------------------------------------------------
 // Resets the value of a vector/list in the config
-// Returns a non-zero error code if variable is not found.
-int Config::set(const std::string VarName,      // [in] name of variable to set
-                std::vector<std::string> Vector // [in] new value of the vector
+// Aborts if the variable is not found.
+void Config::set(const std::string &VarName,            // [in] name of var
+                 const std::vector<std::string> &Vector // [in] new values
 ) {
-   int Err = 0;
-
    // Because the vector length may also change, it is best to just
    // remove and replace the entire vector
-   Err = this->remove(VarName);
-   if (Err != 0)
-      LOG_ERROR("Config set string list: could not remove old variable {}",
-                VarName);
-
-   Err = this->add(VarName, Vector);
-   if (Err != 0)
-      LOG_ERROR("Config set string list: could not re-add variable {}",
-                VarName);
-
-   return Err;
+   this->remove(VarName);
+   this->add(VarName, Vector);
 }
 
 //------------------------------------------------------------------------------
 // Add functions
 //------------------------------------------------------------------------------
 // Adds a complete subconfiguration to an existing configuration
-// Returns a non-zero error code if group already exists
-int Config::add(const Config SubConfig // [in] Config to add
+// Aborts if the group already exists
+void Config::add(const Config SubConfig // [in] Config to add
 ) {
-   int Err = 0;
-
    std::string LocName = SubConfig.Name;
    if (Node[LocName]) { // the variable exists
-      LOG_ERROR("Config add group: cannot add, group {} already exists",
-                LocName);
-      Err = -1;
+      ABORT_ERROR("Config add group: cannot add, group {} already exists",
+                  LocName);
    } else {
       Node[LocName] = SubConfig.Node;
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Adds a new variable to a configuration
-// Returns a non-zero error code if variable already exists
-int Config::add(const std::string VarName, // [in] name of variable to add
-                I4 Value                   // [in] value of the variable
+// Aborts if the variable already exists
+void Config::add(const std::string &VarName, // [in] name of variable to add
+                 I4 Value                    // [in] value of the variable
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable exists
-      LOG_ERROR("Config add I4: variable {} already exists use set instead",
-                VarName);
-      Err = -1;
+      ABORT_ERROR("Config add I4: variable {} already exists use set instead",
+                  VarName);
    } else {
       Node[VarName] = Value;
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Adds a new variable to a configuration
-// Returns a non-zero error code if variable already exists
-int Config::add(const std::string VarName, // [in] name of variable to add
-                I8 Value                   // [in] value of the variable
+// Aborts if the variable already exists
+void Config::add(const std::string &VarName, // [in] name of variable to add
+                 I8 Value                    // [in] value of the variable
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable exists
-      LOG_ERROR("Config add I8: variable {} already exists use set instead",
-                VarName);
-      Err = -1;
+      ABORT_ERROR("Config add I8: variable {} already exists use set instead",
+                  VarName);
    } else {
       Node[VarName] = Value;
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Adds a new variable to a configuration
-// Returns a non-zero error code if variable already exists
-int Config::add(const std::string VarName, // [in] name of variable to add
-                R4 Value                   // [in] value of the variable
+// Aborts if the variable already exists
+void Config::add(const std::string &VarName, // [in] name of variable to add
+                 R4 Value                    // [in] value of the variable
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable exists
-      LOG_ERROR("Config add R4: variable {} already exists use set instead",
-                VarName);
-      Err = -1;
+      ABORT_ERROR("Config add R4: variable {} already exists use set instead",
+                  VarName);
    } else {
       Node[VarName] = Value;
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Adds a new variable to a configuration
-// Returns a non-zero error code if variable already exists
-int Config::add(const std::string VarName, // [in] name of variable to add
-                R8 Value                   // [in] value of the variable
+// Aborts if the variable already exists
+void Config::add(const std::string &VarName, // [in] name of variable to add
+                 R8 Value                    // [in] value of the variable
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable exists
-      LOG_ERROR("Config add R8: variable {} already exists use set instead",
-                VarName);
-      Err = -1;
+      ABORT_ERROR("Config add R8: variable {} already exists use set instead",
+                  VarName);
    } else {
       Node[VarName] = Value;
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Adds a new variable to a configuration
-// Returns a non-zero error code if variable already exists
-int Config::add(const std::string VarName, // [in] name of variable to add
-                bool Value                 // [in] value of the variable
+// Aborts if the variable already exists
+void Config::add(const std::string &VarName, // [in] name of variable to add
+                 bool Value                  // [in] value of the variable
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable exists
-      LOG_ERROR("Config add bool: variable {} already exists use set instead",
-                VarName);
-      Err = -1;
+      ABORT_ERROR("Config add bool: variable {} already exists use set instead",
+                  VarName);
    } else {
       Node[VarName] = Value;
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Adds a new variable to a configuration
-// Returns a non-zero error code if variable already exists
-int Config::add(const std::string VarName, // [in] name of variable to add
-                std::string Value          // [in] value of the variable
+// Aborts if the variable already exists
+void Config::add(const std::string &VarName, // [in] name of variable to add
+                 const std::string &Value    // [in] value of the variable
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable exists
-      LOG_ERROR("Config add string: variable {} already exists - use set",
-                VarName);
-      Err = -1;
+      ABORT_ERROR("Config add string: variable {} already exists - use set",
+                  VarName);
    } else {
       Node[VarName] = Value;
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Adds a new I4 vector to a configuration
-// Returns a non-zero error code if variable already exists
-int Config::add(const std::string VarName, // [in] name of vector to add
-                std::vector<I4> Vector     // [in] vector to add
+// Aborts if the variable already exists
+void Config::add(const std::string &VarName,   // [in] name of vector to add
+                 const std::vector<I4> &Vector // [in] vector to add
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable already exists
-      LOG_ERROR(
+      ABORT_ERROR(
           "Config add I4 vector: variable {} already exists use set instead",
           VarName);
-      Err = -1;
 
    } else { // create new sequence node for vector
 
@@ -909,23 +789,18 @@ int Config::add(const std::string VarName, // [in] name of vector to add
          Node[VarName].push_back(Vector[i]);
       }
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Adds a new I8 vector to a configuration
-// Returns a non-zero error code if variable already exists
-int Config::add(const std::string VarName, // [in] name of vector to add
-                std::vector<I8> Vector     // [in] vector to add
+// Aborts if the variable already exists
+void Config::add(const std::string &VarName,   // [in] name of vector to add
+                 const std::vector<I8> &Vector // [in] vector to add
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable already exists
-      LOG_ERROR(
+      ABORT_ERROR(
           "Config add I8 vector: variable {} already exists use set instead",
           VarName);
-      Err = -1;
 
    } else { // create new sequence node for vector
 
@@ -934,23 +809,18 @@ int Config::add(const std::string VarName, // [in] name of vector to add
          Node[VarName].push_back(Vector[i]);
       }
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Adds a new R4 vector to a configuration
-// Returns a non-zero error code if variable already exists
-int Config::add(const std::string VarName, // [in] name of vector to add
-                std::vector<R4> Vector     // [in] vector to add
+// Aborts if the variable already exists
+void Config::add(const std::string &VarName,   // [in] name of vector to add
+                 const std::vector<R4> &Vector // [in] vector to add
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable already exists
-      LOG_ERROR(
+      ABORT_ERROR(
           "Config add R4 vector: variable {} already exists use set instead",
           VarName);
-      Err = -1;
 
    } else { // create new sequence node for vector
 
@@ -959,23 +829,18 @@ int Config::add(const std::string VarName, // [in] name of vector to add
          Node[VarName].push_back(Vector[i]);
       }
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Adds a new R8 vector to a configuration
-// Returns a non-zero error code if variable already exists
-int Config::add(const std::string VarName, // [in] name of vector to add
-                std::vector<R8> Vector     // [in] vector to add
+// Aborts if the variable already exists
+void Config::add(const std::string &VarName,   // [in] name of vector to add
+                 const std::vector<R8> &Vector // [in] vector to add
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable already exists
-      LOG_ERROR(
+      ABORT_ERROR(
           "Config add R8 vector: variable {} already exists use set instead",
           VarName);
-      Err = -1;
 
    } else { // create new sequence node for vector
 
@@ -984,22 +849,18 @@ int Config::add(const std::string VarName, // [in] name of vector to add
          Node[VarName].push_back(Vector[i]);
       }
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Adds a new bool vector to a configuration
-// Returns a non-zero error code if variable already exists
-int Config::add(const std::string VarName, // [in] name of vector to add
-                std::vector<bool> Vector   // [in] vector to add
+// Aborts if the variable already exists
+void Config::add(const std::string &VarName,     // [in] name of vector to add
+                 const std::vector<bool> &Vector // [in] vector to add
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable already exists
-      LOG_ERROR("Config add bool vector: variable {} already exists - use set",
-                VarName);
-      Err = -1;
+      ABORT_ERROR(
+          "Config add bool vector: variable {} already exists - use set",
+          VarName);
 
    } else { // create new sequence node for vector
 
@@ -1009,22 +870,18 @@ int Config::add(const std::string VarName, // [in] name of vector to add
          Node[VarName].push_back(Tmp);
       }
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Adds a new string list to a configuration
-// Returns a non-zero error code if variable already exists
-int Config::add(const std::string VarName,      // [in] name of vector to add
-                std::vector<std::string> Vector // [in] vector to add
+// Aborts if the variable already exists
+void Config::add(const std::string &VarName,            // [in] name of vector
+                 const std::vector<std::string> &Vector // [in] vector to add
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable already exists
-      LOG_ERROR("Config add string list: variable {} already exists - use set",
-                VarName);
-      Err = -1;
+      ABORT_ERROR(
+          "Config add string list: variable {} already exists - use set",
+          VarName);
 
    } else { // create new sequence node for vector
 
@@ -1033,23 +890,17 @@ int Config::add(const std::string VarName,      // [in] name of vector to add
          Node[VarName].push_back(Vector[i]);
       }
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Remove functions
 //------------------------------------------------------------------------------
 // Removes a variable from a configuration
-int Config::remove(const std::string VarName // [in] name of variable to remove
+void Config::remove(const std::string &VarName // [in] name of var to remove
 ) {
-   int Err = 0;
-
    if (Node[VarName]) { // the variable exists
       Node.remove(VarName);
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
@@ -1057,7 +908,7 @@ int Config::remove(const std::string VarName // [in] name of variable to remove
 //------------------------------------------------------------------------------
 
 // Checks to see if a configuration group exists in the configuration
-bool Config::existsGroup(std::string GroupName // [in] name of group to find
+bool Config::existsGroup(const std::string &GroupName // [in] group to find
 ) {
    bool result = false;
    if (Node[GroupName])
@@ -1066,7 +917,7 @@ bool Config::existsGroup(std::string GroupName // [in] name of group to find
 }
 
 // Checks to see if a variable exists in the configuration
-bool Config::existsVar(std::string VarName // [in] name of variable to find
+bool Config::existsVar(const std::string &VarName // [in] name of var to find
 ) {
    bool result = false;
    if (Node[VarName])
@@ -1078,10 +929,10 @@ bool Config::existsVar(std::string VarName // [in] name of variable to find
 // Write function
 //------------------------------------------------------------------------------
 // Writes a configuration to a file
-// Returns a non-zero error code if not successful
-int Config::write(std::string FileName /// name of file for config
+// Returns a fail error code if not successful
+void Config::write(const std::string &FileName /// name of file for config
 ) {
-   int Err = 0;
+   int Err = 0; // temp integer flag for error broadcast
 
    MachEnv *DefEnv = MachEnv::getDefault();
    if (DefEnv->isMasterTask()) {
@@ -1095,7 +946,11 @@ int Config::write(std::string FileName /// name of file for config
    }
 
    Broadcast(Err);
-   return Err;
+
+   if (Err != 0)
+      ABORT_ERROR("Error writing ConfigFile {}", FileName);
+
+   return;
 }
 
 } // end namespace OMEGA

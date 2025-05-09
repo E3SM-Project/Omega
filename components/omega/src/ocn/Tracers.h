@@ -1,13 +1,24 @@
 #ifndef OMEGA_TRACERS_H
 #define OMEGA_TRACERS_H
-//===-- ocn/Tracers.h - tracers --------------------*- C++ -*-===//
+//===-- Tracers.h - tracer class definition ---------------------*- C++ -*-===//
 //
 /// \file
 /// \brief Define Tracers class
 ///
-/// Tracers class define tracer arrays for host and device memories and
+/// The Tracers class define tracer arrays for host and device memories and
 /// methods to handle the arrays. All of variables and methods are static
 /// because once tracers are created, they never change.
+/// The full list of tracers is defined in an include file TracerDefs.inc
+/// and the specific tracers to use in a simulation are selected from that
+/// list using the input configuration:
+/// \ConfigInput
+/// # List of requested tracers for a run
+///  Tracers:
+///    # Tracer group, list of individual tracers
+///    Base: [Temperature, Salinity]
+///    Debug: [Debug1, Debug2, Debug3]
+/// \EndConfigInput
+//
 //===----------------------------------------------------------------------===//
 
 #include "DataTypes.h"
@@ -21,51 +32,47 @@ namespace OMEGA {
 class Tracers {
 
  private:
-   // total number of tracers defined at intialization
-   static I4 NumTracers;
-
+   static I4 NumTracers;  ///< Total number of tracers defined at intialization
    static I4 NTimeLevels; ///< Number of time levels in tracer variable arrays
-   static I4
-       NVertLevels; ///< Number of vertical levels in tracer variable arrays
+   static I4 NVertLevels; ///< Number of vertical levels in tracer arrays
    static I4 NCellsOwned; ///< Number of cells owned by this task
    static I4 NCellsAll;   ///< Total number of local cells (owned + all halo)
-   static I4
-       NCellsSize; ///< Array size (incl padding, bndy cell) for cell arrays
+   static I4 NCellsSize;  ///< Array size (incl padding, bndy cell)
 
    inline static I4 IndxInvalid = -1;
 
-   // static storage of the tracer arrays for device and host memory spaces
-   // The arrays are 3 dimensional arrays with Tracer, Cell, and Vertical
-   // dimensions in order
+   /// static storage of the tracer arrays for device and host memory spaces
+   /// The arrays are 3 dimensional arrays with Tracer, Cell, and Vertical
+   /// dimensions in order
    static std::vector<Array3DReal>
        TracerArrays; ///< TimeLevels -> [Tracer, Cell, Vert]
    static std::vector<HostArray3DReal>
        TracerArraysH; ///< TimeLevels -> [Tracer, Cell, Vert]
 
-   // maps for managing tracer groups
-   // Key of this map is a group name and
-   // Value is a pair of GroupStartIndex and GroupLength
+   /// maps for managing tracer groups
+   /// Key of this map is a group name and
+   /// Value is a pair of GroupStartIndex and GroupLength
    static std::map<std::string, std::pair<I4, I4>> TracerGroups;
 
-   // maps for matching tracer names with indices (both directions)
+   /// maps for matching tracer names with indices (both directions)
    static std::map<std::string, I4> TracerIndexes;
    static std::map<I4, std::string> TracerNames;
 
-   // for halo exchange
+   /// for halo exchange
    static Halo *MeshHalo;
 
-   // Tracer dimension names
+   /// Tracer dimension names
    static std::vector<std::string> TracerDimNames;
 
-   // Current time index
-   // this index is circular so that it returns to index 0
-   // if it is over max index
+   /// Current time index
+   /// this index is circular so that it returns to index 0
+   /// if it is over max index
    static I4 CurTimeIndex; ///< Time dimension array index for current level
 
-   // get the time level index
+   /// get the time level index
    static I4 getTimeIndex(I4 &TimeIndex, const I4 TimeLevel);
 
-   // locally defines all tracers but do not allocates memory
+   /// locally defines all tracers but do not allocates memory
    static I4
    define(const std::string &Name,        ///< [in] Name of tracer
           const std::string &Description, ///< [in] Long name or description
@@ -83,7 +90,7 @@ class Tracers {
    //---------------------------------------------------------------------------
    /// read tracer defintions, allocate tracer arrays and initializes the
    /// tracers
-   static I4 init();
+   static void init();
 
 #include "TracerDefs.inc"
 
@@ -94,63 +101,63 @@ class Tracers {
    // Query tracers
    //---------------------------------------------------------------------------
 
-   // get total number of tracers
+   /// get total number of tracers
    static I4 getNumTracers();
 
-   // get tracer index from tracer name
+   /// get tracer index from tracer name
    static I4 getIndex(I4 &TracerIndex,              ///< [out] tracer index
                       const std::string &TracerName ///< [in] tracer name
    );
 
-   // get tracer name from tracer index
+   /// get tracer name from tracer index
    static I4 getName(std::string &TracerName, ///< [out] tracer name
                      const I4 TracerIndex     ///< [in] tracer index
    );
 
-   // get a device array for all tracers
+   /// get a device array for all tracers
    static I4 getAll(Array3DReal &TracerArray, ///< [out] tracer device array
                     const I4 TimeLevel        ///< [in] time level index
    );
 
-   // get a device array by tracer index
+   /// get a device array by tracer index
    static I4 getByIndex(Array2DReal &TracerArray, ///< [out] tracer device array
                         const I4 TimeLevel,       ///< [in] time level index
                         const I4 TracerIndex      ///< [in] global tracer index
    );
 
-   // get a device array by tracer name
+   /// get a device array by tracer name
    static I4
    getByName(Array2DReal &TracerArray,     ///< [out] tracer device array
              const I4 TimeLevel,           ///< [in] time level index
              const std::string &TracerName ///< [in] global tracer name
    );
 
-   // get a host array for all tracers
+   /// get a host array for all tracers
    static I4
    getAllHost(HostArray3DReal &TracerArrayH, ///< [out] tracer host array
               const I4 TimeLevel             ///< [in] time level index
    );
 
-   // get a host array by tracer index
+   /// get a host array by tracer index
    static I4
    getHostByIndex(HostArray2DReal &TracerArrayH, ///< [out] tracer host array
                   const I4 TimeLevel,            ///< [in] time level index
                   const I4 TracerIndex           ///< [in] global tracer index
    );
 
-   // get a host array by tracer name
+   /// get a host array by tracer name
    static I4
    getHostByName(HostArray2DReal &TracerArrayH, ///< [out] tracer host array
                  const I4 TimeLevel,            ///< [in] time level index
                  const std::string &TracerName  ///< [in] global tracer name
    );
 
-   // get a field by tracer index. If not found, returns nullptr
+   /// get a field by tracer index. If not found, returns nullptr
    static std::shared_ptr<Field>
    getFieldByIndex(const I4 TracerIndex ///< [in] global tracer index
    );
 
-   // get a field by tracer name. If not found, returns nullptr
+   /// get a field by tracer name. If not found, returns nullptr
    static std::shared_ptr<Field>
    getFieldByName(const std::string &TracerName ///< [in] global tracer name
    );
@@ -159,21 +166,21 @@ class Tracers {
    // Tracer group query
    //---------------------------------------------------------------------------
 
-   // return a vector of group names.
+   /// return a vector of group names.
    static std::vector<std::string> getGroupNames();
 
-   // get a pair of (group start index, group length)
+   /// get a pair of (group start index, group length)
    static I4 getGroupRange(std::pair<I4, I4> &GroupRange, ///< [out] group range
                            const std::string &GroupName   ///< [in] group name
    );
 
-   // check if a tracer is a member of group by tracer index
+   /// check if a tracer is a member of group by tracer index
    static bool
    isGroupMemberByIndex(const I4 TracerIndex,       ///< [in] tracer index
                         const std::string GroupName ///< [in] group name
    );
 
-   // check if a tracer is a member of group by tracer name
+   /// check if a tracer is a member of group by tracer name
    static bool isGroupMemberByName(
        const std::string &TracerName, ///< [in] global tracer name
        const std::string &GroupName   ///< [in] group name

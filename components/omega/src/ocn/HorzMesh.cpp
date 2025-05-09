@@ -14,6 +14,7 @@
 #include "DataTypes.h"
 #include "Decomp.h"
 #include "Dimension.h"
+#include "Error.h"
 #include "IO.h"
 #include "Logging.h"
 #include "MachEnv.h"
@@ -28,9 +29,9 @@ std::map<std::string, std::unique_ptr<HorzMesh>> HorzMesh::AllHorzMeshes;
 //------------------------------------------------------------------------------
 // Initialize the mesh. Assumes that Decomp has already been initialized.
 
-int HorzMesh::init() {
+void HorzMesh::init() {
 
-   int Err = 0; // default successful return code
+   Error Err; // default successful error code
 
    // Retrieve the default decomposition
    Decomp *DefDecomp = Decomp::getDefault();
@@ -39,21 +40,16 @@ int HorzMesh::init() {
    I4 NVertLevels;
    Config *OmegaConfig = Config::getOmegaConfig();
    Config DimConfig("Dimension");
-   Err = OmegaConfig->get(DimConfig);
-   if (Err != 0) {
-      LOG_CRITICAL("HorzMesh: Dimension group not found in Config");
-      return Err;
-   }
-   Err = DimConfig.get("NVertLevels", NVertLevels);
-   if (Err != 0) {
-      LOG_CRITICAL("HorzMesh: NVertLevels not found in Dimension Config");
-      return Err;
-   }
+   Err += OmegaConfig->get(DimConfig);
+   CHECK_ERROR_ABORT(Err, "HorzMesh: Dimension group not found in Config");
+
+   Err += DimConfig.get("NVertLevels", NVertLevels);
+   CHECK_ERROR_ABORT(Err,
+                    "HorzMesh: NVertLevels not found in Dimension Config");
 
    // Create the default mesh and set pointer to it
    HorzMesh::DefaultHorzMesh = create("Default", DefDecomp, NVertLevels);
 
-   return Err;
 }
 
 //------------------------------------------------------------------------------
