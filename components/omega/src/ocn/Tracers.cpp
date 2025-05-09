@@ -43,7 +43,7 @@ I4 Tracers::NumTracers   = 0;
 void Tracers::init() {
 
    int ErrFlag = 0; // back-compatible error to be removed later
-   Error Err; // error code
+   Error Err;       // error code
 
    // Retrieve mesh cell/edge/vertex totals from Decomp
    HorzMesh *DefHorzMesh = HorzMesh::getDefault();
@@ -88,7 +88,8 @@ void Tracers::init() {
       std::vector<std::string> _TracerNames;
       Err += TracersConfig.get(GroupName, _TracerNames);
       CHECK_ERROR_ABORT(Err,
-             "Tracers: error retrieving tracer names for group {}", GroupName);
+                        "Tracers: error retrieving tracer names for group {}",
+                        GroupName);
 
       for (auto _TracerName : _TracerNames) {
          TracerIndexes[_TracerName] = TracerIndex;
@@ -144,7 +145,8 @@ void Tracers::init() {
       std::vector<std::string> _TracerNames;
       Err += TracersConfig.get(GroupName, _TracerNames);
       CHECK_ERROR_ABORT(Err,
-            "Tracers: error retrieving tracer names for group {}", GroupName);
+                        "Tracers: error retrieving tracer names for group {}",
+                        GroupName);
 
       for (auto _TracerName : _TracerNames) {
          std::string TracerFieldName = _TracerName;

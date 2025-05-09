@@ -49,7 +49,8 @@ int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
 
    // initialize remaining Omega modules
    Err = initOmegaModules(Comm);
-   if (Err != 0) ABORT_ERROR("ocnInit: Error initializing Omega modules");
+   if (Err != 0)
+      ABORT_ERROR("ocnInit: Error initializing Omega modules");
 
    return Err;
 
@@ -99,8 +100,8 @@ int initOmegaModules(MPI_Comm Comm) {
 
    I4 NVertLevels;
    ConfigErr += DimConfig.get("NVertLevels", NVertLevels);
-   CHECK_ERROR_ABORT(ConfigErr, 
-                         "ocnInit: NVertLevels not found in Dimension Config");
+   CHECK_ERROR_ABORT(ConfigErr,
+                     "ocnInit: NVertLevels not found in Dimension Config");
 
    auto VertDim = OMEGA::Dimension::create("NVertLevels", NVertLevels);
 

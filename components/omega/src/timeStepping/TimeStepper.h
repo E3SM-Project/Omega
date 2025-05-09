@@ -14,7 +14,7 @@
 ///    # Calendar to use for integration. Supported options are:
 ///    # Gregorian, No Leap, Julian, Julian Day, Modified Julian Day,
 ///    # 360 Day, Custom, No Calendar
-///    # These options are described in more detail in the UserGuide  
+///    # These options are described in more detail in the UserGuide
 ///    # Default is the No Leap (Gregorian calendar with no leap years)
 ///    CalendarType: No Leap
 ///    # Algorithm to use for the dynamics time integration

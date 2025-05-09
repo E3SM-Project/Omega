@@ -181,7 +181,6 @@ void AuxiliaryState::init() {
 
    Config *OmegaConfig = Config::getOmegaConfig();
    DefaultAuxState->readConfigOptions(OmegaConfig);
-
 }
 
 // Get the default auxiliary state
@@ -226,8 +225,8 @@ void AuxiliaryState::readConfigOptions(Config *OmegaConfig) {
 
    std::string FluxThickTypeStr;
    Err += AdvectConfig.get("FluxThicknessType", FluxThickTypeStr);
-   CHECK_ERROR_ABORT(Err,
-         "AuxiliaryState: FluxThicknessType not found in AdvectConfig");
+   CHECK_ERROR_ABORT(
+       Err, "AuxiliaryState: FluxThicknessType not found in AdvectConfig");
 
    if (FluxThickTypeStr == "Center") {
       this->LayerThicknessAux.FluxThickEdgeChoice = FluxThickEdgeOption::Center;
@@ -239,8 +238,8 @@ void AuxiliaryState::readConfigOptions(Config *OmegaConfig) {
 
    std::string FluxTracerTypeStr;
    Err += AdvectConfig.get("FluxTracerType", FluxTracerTypeStr);
-   CHECK_ERROR_ABORT(Err,
-                   "AuxiliaryState: FluxTracerType not found in AdvectConfig");
+   CHECK_ERROR_ABORT(
+       Err, "AuxiliaryState: FluxTracerType not found in AdvectConfig");
 
    if (FluxTracerTypeStr == "Center") {
       this->TracerAux.TracersOnEdgeChoice = FluxTracerEdgeOption::Center;
@@ -249,7 +248,6 @@ void AuxiliaryState::readConfigOptions(Config *OmegaConfig) {
    } else {
       ABORT_ERROR("AuxiliaryState: Unknown FluxTracerType requested");
    }
-
 }
 
 } // namespace OMEGA

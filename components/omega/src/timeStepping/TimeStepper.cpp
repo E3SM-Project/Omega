@@ -250,7 +250,7 @@ void TimeStepper::init1() {
    // Either the StopTime or RunDuration will be used to set the StopTime
    std::string StopTimeStr;
    std::string DurationStr;
-   Err       += TimeIntConfig.get("StopTime", StopTimeStr);
+   Err += TimeIntConfig.get("StopTime", StopTimeStr);
    Error Err1 = TimeIntConfig.get("RunDuration", DurationStr);
 
    // Check for empty or none strings for either choice
@@ -289,7 +289,6 @@ void TimeStepper::init1() {
    // pointers will be attached in phase 2 initialization
    TimeStepper::DefaultTimeStepper =
        create("Default", TimeStepperChoice, StartTime, StopTime, TimeStep);
-
 }
 
 //------------------------------------------------------------------------------

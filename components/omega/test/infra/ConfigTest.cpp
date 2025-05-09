@@ -106,8 +106,8 @@ int main(int argc, char *argv[]) {
    std::vector<I8> RefVecI8{123456789, 234567890, 345678901, 456789012,
                             567890123};
    std::vector<R4> RefVecR4{1.2345, 2.3456, 3.4567, 4.5678, 5.6789};
-   std::vector<R8> RefVecR8{1.23456789, 2.34567890, 3.45678901,
-                            4.56789012, 5.67890123};
+   std::vector<R8> RefVecR8{1.23456789, 2.34567890, 3.45678901, 4.56789012,
+                            5.67890123};
    std::vector<bool> RefVecLog{true, false, true, false, true};
    std::vector<std::string> RefList{"first", "second", "third", "fourth",
                                     "fifth"};

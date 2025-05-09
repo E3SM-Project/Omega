@@ -22,14 +22,15 @@ void ManufacturedSolution::init() {
    Config *OmegaConfig = Config::getOmegaConfig();
    Config ManufacturedSolConfig("ManufacturedSolution");
    Err += OmegaConfig->get(ManufacturedSolConfig);
-   CHECK_ERROR_ABORT(Err,
+   CHECK_ERROR_ABORT(
+       Err,
        "ManufacturedSolution: ManufacturedSolution group not found in Config");
 
    // Get TendConfig group
    Config TendConfig("Tendencies");
    Err += OmegaConfig->get(TendConfig);
-   CHECK_ERROR_ABORT(Err,
-                  "ManufacturedSolution: Tendencies group not found in Config");
+   CHECK_ERROR_ABORT(
+       Err, "ManufacturedSolution: Tendencies group not found in Config");
 
    // Get manufactured solution parameters from Config
    R8 WavelengthX;
@@ -37,16 +38,19 @@ void ManufacturedSolution::init() {
    R8 Amplitude;
 
    Err += ManufacturedSolConfig.get("WavelengthX", WavelengthX);
-   CHECK_ERROR_ABORT(Err,
-        "ManufacturedSolution: WavelengthX not found in ManufacturedSolConfig");
+   CHECK_ERROR_ABORT(
+       Err,
+       "ManufacturedSolution: WavelengthX not found in ManufacturedSolConfig");
 
    Err += ManufacturedSolConfig.get("WavelengthY", WavelengthY);
-   CHECK_ERROR_ABORT(Err,
-        "ManufacturedSolution: WavelengthY not found in ManufacturedSolConfig");
+   CHECK_ERROR_ABORT(
+       Err,
+       "ManufacturedSolution: WavelengthY not found in ManufacturedSolConfig");
 
    Err += ManufacturedSolConfig.get("Amplitude", Amplitude);
-   CHECK_ERROR_ABORT(Err,
-          "ManufacturedSolution: Amplitude not found in ManufacturedSolConfig");
+   CHECK_ERROR_ABORT(
+       Err,
+       "ManufacturedSolution: Amplitude not found in ManufacturedSolConfig");
 
    // Get Tendendices parameters for del2 and del4 source terms
    Err += TendConfig.get("VelDiffTendencyEnable",
@@ -56,8 +60,9 @@ void ManufacturedSolution::init() {
    Err += TendConfig.get("ViscDel2", ManufacturedVelTend.ViscDel2);
    Err += TendConfig.get("ViscDel4", ManufacturedVelTend.ViscDel4);
 
-   CHECK_ERROR_ABORT(Err,
-        "ManufacturedSolution: Could not find del2, del4 parameters in Config");
+   CHECK_ERROR_ABORT(
+       Err,
+       "ManufacturedSolution: Could not find del2, del4 parameters in Config");
 
    // Get the reference time to compute the model elapsed time
    /// Get model clock from time stepper

@@ -45,11 +45,10 @@ void HorzMesh::init() {
 
    Err += DimConfig.get("NVertLevels", NVertLevels);
    CHECK_ERROR_ABORT(Err,
-                    "HorzMesh: NVertLevels not found in Dimension Config");
+                     "HorzMesh: NVertLevels not found in Dimension Config");
 
    // Create the default mesh and set pointer to it
    HorzMesh::DefaultHorzMesh = create("Default", DefDecomp, NVertLevels);
-
 }
 
 //------------------------------------------------------------------------------

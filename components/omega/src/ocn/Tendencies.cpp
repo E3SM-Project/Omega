@@ -118,36 +118,37 @@ Tendencies *Tendencies::get(const std::string &Name ///< [in] Name of tendencies
 
 //------------------------------------------------------------------------------
 // read and set config options
-void Tendencies::readTendConfig(Config *TendConfig ///< [in] Tendencies subconfig
+void Tendencies::readTendConfig(
+    Config *TendConfig ///< [in] Tendencies subconfig
 ) {
    Error Err; // error code
 
    Err += TendConfig->get("ThicknessFluxTendencyEnable",
                           this->ThicknessFluxDiv.Enabled);
-   CHECK_ERROR_ABORT(Err,
-            "Tendencies: ThicknessFluxTendencyEnable not found in TendConfig");
+   CHECK_ERROR_ABORT(
+       Err, "Tendencies: ThicknessFluxTendencyEnable not found in TendConfig");
 
    Err += TendConfig->get("PVTendencyEnable", this->PotientialVortHAdv.Enabled);
    CHECK_ERROR_ABORT(Err,
-                       "Tendencies: PVTendencyEnable not found in TendConfig");
+                     "Tendencies: PVTendencyEnable not found in TendConfig");
 
    Err += TendConfig->get("KETendencyEnable", this->KEGrad.Enabled);
    CHECK_ERROR_ABORT(Err,
-                       "Tendencies: KETendencyEnable not found in TendConfig");
+                     "Tendencies: KETendencyEnable not found in TendConfig");
 
    Err += TendConfig->get("SSHTendencyEnable", this->SSHGrad.Enabled);
    CHECK_ERROR_ABORT(Err,
-                      "Tendencies: SSHTendencyEnable not found in TendConfig");
+                     "Tendencies: SSHTendencyEnable not found in TendConfig");
 
    Err += TendConfig->get("VelDiffTendencyEnable",
                           this->VelocityDiffusion.Enabled);
-   CHECK_ERROR_ABORT(Err,
-                  "Tendencies: VelDiffTendencyEnable not found in TendConfig");
+   CHECK_ERROR_ABORT(
+       Err, "Tendencies: VelDiffTendencyEnable not found in TendConfig");
 
    Err += TendConfig->get("VelHyperDiffTendencyEnable",
                           this->VelocityHyperDiff.Enabled);
-   CHECK_ERROR_ABORT(Err,
-           "Tendencies: VelHyperDiffTendencyEnable not found in TendConfig");
+   CHECK_ERROR_ABORT(
+       Err, "Tendencies: VelHyperDiffTendencyEnable not found in TendConfig");
 
    if (this->VelocityDiffusion.Enabled) {
       Err += TendConfig->get("ViscDel2", this->VelocityDiffusion.ViscDel2);
@@ -163,13 +164,13 @@ void Tendencies::readTendConfig(Config *TendConfig ///< [in] Tendencies subconfi
 
    Err += TendConfig->get("TracerHorzAdvTendencyEnable",
                           this->TracerHorzAdv.Enabled);
-   CHECK_ERROR_ABORT(Err,
-          "Tendencies: TracerHorzAdvTendencyEnable not found in TendConfig");
+   CHECK_ERROR_ABORT(
+       Err, "Tendencies: TracerHorzAdvTendencyEnable not found in TendConfig");
 
    Err += TendConfig->get("TracerDiffTendencyEnable",
                           this->TracerDiffusion.Enabled);
-   CHECK_ERROR_ABORT(Err,
-          "Tendencies: TracerDiffTendencyEnable not found in TendConfig");
+   CHECK_ERROR_ABORT(
+       Err, "Tendencies: TracerDiffTendencyEnable not found in TendConfig");
 
    if (this->TracerDiffusion.Enabled) {
       Err += TendConfig->get("EddyDiff2", this->TracerDiffusion.EddyDiff2);
@@ -178,14 +179,14 @@ void Tendencies::readTendConfig(Config *TendConfig ///< [in] Tendencies subconfi
 
    Err += TendConfig->get("TracerHyperDiffTendencyEnable",
                           this->TracerHyperDiff.Enabled);
-   CHECK_ERROR_ABORT(Err,
-         "Tendencies: TracerHyperDiffTendencyEnable not found in TendConfig");
+   CHECK_ERROR_ABORT(
+       Err,
+       "Tendencies: TracerHyperDiffTendencyEnable not found in TendConfig");
 
    if (this->TracerHyperDiff.Enabled) {
       Err += TendConfig->get("EddyDiff4", this->TracerHyperDiff.EddyDiff4);
       CHECK_ERROR_ABORT(Err, "Tendencies: EddyDiff4 not found in TendConfig");
    }
-
 }
 
 //------------------------------------------------------------------------------

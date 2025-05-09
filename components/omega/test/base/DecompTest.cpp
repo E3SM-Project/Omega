@@ -36,8 +36,8 @@ int initDecompTest() {
    // the default MachEnv. Then retrieve the default environment and
    // some needed data members.
    MachEnv::init(MPI_COMM_WORLD);
-   MachEnv *DefEnv = MachEnv::getDefault();
-   MPI_Comm DefComm       = DefEnv->getComm();
+   MachEnv *DefEnv  = MachEnv::getDefault();
+   MPI_Comm DefComm = DefEnv->getComm();
 
    initLogging(DefEnv);
 

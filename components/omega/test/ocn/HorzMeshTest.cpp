@@ -38,8 +38,8 @@ int initHorzMeshTest() {
    // the default MachEnv. Then retrieve the default environment and
    // some needed data members.
    MachEnv::init(MPI_COMM_WORLD);
-   MachEnv *DefEnv = MachEnv::getDefault();
-   MPI_Comm DefComm       = DefEnv->getComm();
+   MachEnv *DefEnv  = MachEnv::getDefault();
+   MPI_Comm DefComm = DefEnv->getComm();
 
    // Initialize the Logging system
    initLogging(DefEnv);
@@ -156,10 +156,10 @@ int main(int argc, char *argv[]) {
 
       // Get MPI vars if needed
       MachEnv *DefEnv = MachEnv::getDefault();
-      MPI_Comm Comm          = DefEnv->getComm();
+      MPI_Comm Comm   = DefEnv->getComm();
       I4 MyTask       = DefEnv->getMyTask();
       I4 NumTasks     = DefEnv->getNumTasks();
-      bool IsMaster          = DefEnv->isMasterTask();
+      bool IsMaster   = DefEnv->isMasterTask();
 
       // Test retrieval of the default decomposition
       Decomp *DefDecomp = Decomp::getDefault();
