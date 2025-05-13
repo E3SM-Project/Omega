@@ -280,6 +280,27 @@ int AuxiliaryState::readConfigOptions(Config *OmegaConfig) {
       return Err;
    }
 
+   Config WindStressConfig("WindStress");
+   Err = OmegaConfig->get(WindStressConfig);
+
+   std::string WindStressInterpTypeStr;
+   Err = WindStressConfig.get("InterpType", WindStressInterpTypeStr);
+   if (Err != 0) {
+      LOG_CRITICAL("AuxiliaryState: InterpType not found in "
+                   "WindStressConfig");
+      return Err;
+   }
+
+   if (WindStressInterpTypeStr == "Isotropic") {
+      this->WindForcingAux.InterpChoice = InterpCellToEdgeOption::Isotropic;
+   } else if (WindStressInterpTypeStr == "Anisotropic") {
+      this->WindForcingAux.InterpChoice = InterpCellToEdgeOption::Anisotropic;
+   } else {
+      LOG_CRITICAL("AuxiliaryState: Unknown InterpType requested");
+      Err = -1;
+      return Err;
+   }
+
    return Err;
 }
 

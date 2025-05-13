@@ -12,7 +12,8 @@ WindForcingAuxVars::WindForcingAuxVars(const std::string &AuxStateSuffix,
       ZonalStressCell("WindStressZonal" + AuxStateSuffix, Mesh->NCellsSize),
       MeridStressCell("WindStressMeridional" + AuxStateSuffix,
                       Mesh->NCellsSize),
-      CellsOnEdge(Mesh->CellsOnEdge), AngleEdge(Mesh->AngleEdge) {}
+      CellsOnEdge(Mesh->CellsOnEdge), AngleEdge(Mesh->AngleEdge), Interp(Mesh) {
+}
 
 void WindForcingAuxVars::registerFields(
     const std::string &AuxGroupName, // name of Auxiliary field group

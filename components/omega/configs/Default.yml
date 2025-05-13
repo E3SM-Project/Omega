@@ -16,6 +16,8 @@ Omega:
   Advection:
     FluxThicknessType: Center
     FluxTracerType: Center
+  WindStress:
+    InterpType: Isotropic
   Tendencies:
     ThicknessFluxTendencyEnable: true
     PVTendencyEnable: true

@@ -412,6 +412,7 @@ int testWindForcingAuxVars(const Array2DReal &LayerThicknessCell,
        ExchangeHalos::No);
 
    WindForcingAuxVars WindForcingAux("", Mesh, NVertLevels);
+   WindForcingAux.InterpChoice = InterpCellToEdgeOption::Anisotropic;
 
    // Set inputs
    Err += setScalar(

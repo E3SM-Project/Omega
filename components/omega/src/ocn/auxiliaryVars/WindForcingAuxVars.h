@@ -3,6 +3,7 @@
 
 #include "DataTypes.h"
 #include "HorzMesh.h"
+#include "HorzOperators.h"
 #include "OmegaKokkos.h"
 
 #include <string>
@@ -14,18 +15,17 @@ class WindForcingAuxVars {
    Array1DReal NormalStressEdge;
    Array1DReal ZonalStressCell;
    Array1DReal MeridStressCell;
+   InterpCellToEdgeOption InterpChoice;
 
    WindForcingAuxVars(const std::string &AuxStateSuffix, const HorzMesh *Mesh,
                       int NVertLevels);
 
    KOKKOS_FUNCTION void computeVarsOnEdge(int IEdge, int KChunk) const {
       if (KChunk == 0) {
-         const int JCell0 = CellsOnEdge(IEdge, 0);
-         const int JCell1 = CellsOnEdge(IEdge, 1);
          const Real ZonalStressEdge =
-             0.5_Real * (ZonalStressCell(JCell0) + ZonalStressCell(JCell1));
+             Interp(IEdge, ZonalStressCell, InterpChoice);
          const Real MeridStressEdge =
-             0.5_Real * (MeridStressCell(JCell0) + MeridStressCell(JCell1));
+             Interp(IEdge, MeridStressCell, InterpChoice);
 
          NormalStressEdge(IEdge) =
              Kokkos::cos(AngleEdge(IEdge)) * ZonalStressEdge +
@@ -38,6 +38,7 @@ class WindForcingAuxVars {
    void unregisterFields() const;
 
  private:
+   InterpCellToEdge Interp;
    Array2DI4 CellsOnEdge;
    Array1DReal AngleEdge;
 };
