@@ -21,4 +21,10 @@ TangentialReconOnEdge::TangentialReconOnEdge(HorzMesh const *Mesh)
     : NEdgesOnEdge(Mesh->NEdgesOnEdge), EdgesOnEdge(Mesh->EdgesOnEdge),
       WeightsOnEdge(Mesh->WeightsOnEdge) {}
 
+InterpCellToEdge::InterpCellToEdge(const HorzMesh *Mesh)
+    : CellsOnEdge(Mesh->CellsOnEdge), VerticesOnEdge(Mesh->VerticesOnEdge),
+      CellsOnVertex(Mesh->CellsOnVertex),
+      KiteAreasOnVertex(Mesh->KiteAreasOnVertex),
+      VertexDegree(Mesh->VertexDegree) {}
+
 } // namespace OMEGA

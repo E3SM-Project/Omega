@@ -132,5 +132,57 @@ class TangentialReconOnEdge {
    Array2DReal WeightsOnEdge;
 };
 
+enum class InterpCellToEdgeOption { Anisotropic, Isotropic };
+
+class InterpCellToEdge {
+ public:
+   InterpCellToEdge(const HorzMesh *Mesh);
+
+   KOKKOS_FUNCTION Real operator()(int IEdge, const Array1DReal &ArrayCell,
+                                   InterpCellToEdgeOption Option) const {
+      switch (Option) {
+      case InterpCellToEdgeOption::Anisotropic:
+         return interpolateAnisotropic(IEdge, ArrayCell);
+      case InterpCellToEdgeOption::Isotropic:
+         return interpolateIsotropic(IEdge, ArrayCell);
+      }
+   };
+
+   KOKKOS_FUNCTION Real
+   interpolateAnisotropic(int IEdge, const Array1DReal &ArrayCell) const {
+      const int JCell0 = CellsOnEdge(IEdge, 0);
+      const int JCell1 = CellsOnEdge(IEdge, 1);
+
+      return 0.5_Real * (ArrayCell(JCell0) + ArrayCell(JCell1));
+   };
+
+   KOKKOS_FUNCTION Real
+   interpolateIsotropic(int IEdge, const Array1DReal &ArrayCell) const {
+
+      Real Accum     = 0;
+      Real AreaAccum = 0;
+      for (int J = 0; J < 2; ++J) {
+         const int JVertex = VerticesOnEdge(IEdge, J);
+         for (int L = 0; L < VertexDegree; ++L) {
+            const Real KiteArea = KiteAreasOnVertex(JVertex, L);
+            const int LCell     = CellsOnVertex(JVertex, L);
+
+            Accum += ArrayCell(LCell) * KiteArea;
+            AreaAccum += KiteArea;
+         }
+      }
+
+      const Real InvAreaAccum = 1._Real / AreaAccum;
+      return Accum * InvAreaAccum;
+   };
+
+ private:
+   Array2DI4 CellsOnEdge;
+   Array2DI4 VerticesOnEdge;
+   Array2DI4 CellsOnVertex;
+   Array2DReal KiteAreasOnVertex;
+   I4 VertexDegree;
+};
+
 } // namespace OMEGA
 #endif
