@@ -101,6 +101,6 @@ The following auxiliary variable groups are currently implemented:
 ||  Del2RelVortVertex ||
 | TracerAuxVars | HTracersEdge | Center or Upwind|
 || Del2TracersCell ||
-| WindForcingAuxVars |  ZonalStressEdge ||
+| WindForcingAuxVars |  ZonalStressCell ||
 ||  MeridStressCell ||
-||  NormalStressCell ||
+||  NormalStressEdge ||
