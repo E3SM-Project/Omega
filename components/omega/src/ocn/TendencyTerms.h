@@ -278,9 +278,6 @@ class WindForcingOnEdge {
    bool Enabled;
    Real SaltWaterDensity;
 
-   /// constructor declaration
-   WindForcingOnEdge(const HorzMesh *Mesh);
-
    /// The functor takes the edge index, vertical chunk index, and arrays for
    /// normal wind stress and edge layer thickness, outputs tendency array
    KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge, I4 KChunk,

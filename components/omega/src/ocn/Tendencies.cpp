@@ -211,6 +211,13 @@ int Tendencies::readTendConfig(Config *TendConfig ///< [in] Tendencies subconfig
       return WindForcingErr;
    }
 
+   I4 WindForcingDensityErr =
+       TendConfig->get("Density0", this->WindForcing.SaltWaterDensity);
+   if (WindForcingDensityErr != 0 && this->WindForcing.Enabled) {
+      LOG_CRITICAL("Tendencies: Density0 not found in TendConfig");
+      return WindForcingDensityErr;
+   }
+
    I4 BottomDragErr =
        TendConfig->get("BottomDragTendencyEnable", this->BottomDrag.Enabled);
    if (BottomDragErr != 0) {
@@ -281,9 +288,8 @@ Tendencies::Tendencies(const std::string &Name, ///< [in] Name for tendencies
                        CustomTendencyType InCustomVelocityTend)
     : ThicknessFluxDiv(Mesh), PotientialVortHAdv(Mesh), KEGrad(Mesh),
       SSHGrad(Mesh), VelocityDiffusion(Mesh), VelocityHyperDiff(Mesh),
-      WindForcing(Mesh), BottomDrag(Mesh), TracerHorzAdv(Mesh),
-      TracerDiffusion(Mesh), TracerHyperDiff(Mesh),
-      CustomThicknessTend(InCustomThicknessTend),
+      BottomDrag(Mesh), TracerHorzAdv(Mesh), TracerDiffusion(Mesh),
+      TracerHyperDiff(Mesh), CustomThicknessTend(InCustomThicknessTend),
       CustomVelocityTend(InCustomVelocityTend) {
 
    // Tendency arrays
