@@ -90,10 +90,6 @@ void AuxiliaryState::computeMomAux(const OceanState *State, int ThickTimeLevel,
    const auto &VelocityDivCell = KineticAux.VelocityDivCell;
    const auto &RelVortVertex   = VorticityAux.RelVortVertex;
 
-   auto MeshHalo = Halo::getDefault();
-   MeshHalo->exchangeFullArrayHalo(LocWindForcingAux.ZonalStressCell, OnCell);
-   MeshHalo->exchangeFullArrayHalo(LocWindForcingAux.MeridStressCell, OnCell);
-
    parallelFor(
        "edgeAuxState1", {Mesh->NEdgesAll, NChunks},
        KOKKOS_LAMBDA(int IEdge, int KChunk) {
