@@ -447,9 +447,9 @@ void Tendencies::computeVelocityTendenciesOnly(
    // Compute bottom drag
    if (LocBottomDrag.Enabled) {
       parallelFor(
-          {NEdgesAll, NChunks}, KOKKOS_LAMBDA(int IEdge, int KChunk) {
-             LocBottomDrag(LocNormalVelocityTend, IEdge, KChunk, NormalVelEdge,
-                           KECell, MeanLayerThickEdge);
+          {NEdgesAll}, KOKKOS_LAMBDA(int IEdge) {
+             LocBottomDrag(LocNormalVelocityTend, IEdge, NormalVelEdge, KECell,
+                           MeanLayerThickEdge);
           });
    }
 

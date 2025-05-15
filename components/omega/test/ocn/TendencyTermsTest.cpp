@@ -820,8 +820,8 @@ int testBottomDrag(int NVertLevels, Real RTol) {
    BottomDragOnE.Coeff = Coeff;
 
    parallelFor(
-       {Mesh->NEdgesOwned, NVertLevels}, KOKKOS_LAMBDA(int IEdge, int KLevel) {
-          BottomDragOnE(NumBottomDrag, IEdge, KLevel, NormalVelEdge, KECell,
+       {Mesh->NEdgesOwned}, KOKKOS_LAMBDA(int IEdge) {
+          BottomDragOnE(NumBottomDrag, IEdge, NormalVelEdge, KECell,
                         LayerThickEdge);
        });
 

@@ -302,26 +302,24 @@ class BottomDragOnEdge {
    /// constructor declaration
    BottomDragOnEdge(const HorzMesh *Mesh);
 
-   /// The functor takes the edge index, vertical chunk index, and arrays for
+   /// The functor takes the edge index and arrays for
    /// horizontal velocity, kinetic energy,
    /// and edge layer thickness, outputs tendency array
-   KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge, I4 KChunk,
+   KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge,
                                    const Array2DReal &NormalVelEdge,
                                    const Array2DReal &KECell,
                                    const Array2DReal &LayerThickEdge) const {
-      if (KChunk == 0) {
-         const I4 K = NVertLevels - 1;
+      const I4 KBot = NVertLevels - 1;
 
-         const I4 JCell0 = CellsOnEdge(IEdge, 0);
-         const I4 JCell1 = CellsOnEdge(IEdge, 1);
+      const I4 JCell0 = CellsOnEdge(IEdge, 0);
+      const I4 JCell1 = CellsOnEdge(IEdge, 1);
 
-         const Real VelNormEdge =
-             Kokkos::sqrt(KECell(JCell0, K) + KECell(JCell1, K));
+      const Real VelNormEdge =
+          Kokkos::sqrt(KECell(JCell0, KBot) + KECell(JCell1, KBot));
 
-         const Real InvThickEdge = 1._Real / LayerThickEdge(IEdge, K);
-         Tend(IEdge, K) -=
-             Coeff * VelNormEdge * InvThickEdge * NormalVelEdge(IEdge, K);
-      }
+      const Real InvThickEdge = 1._Real / LayerThickEdge(IEdge, KBot);
+      Tend(IEdge, KBot) -=
+          Coeff * VelNormEdge * InvThickEdge * NormalVelEdge(IEdge, KBot);
    }
 
  private:
