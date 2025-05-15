@@ -27,6 +27,7 @@
 #include "MachEnv.h"
 #include "OceanState.h"
 #include "OmegaKokkos.h"
+#include "Pacer.h"
 #include "TendencyTerms.h"
 #include "TimeMgr.h"
 #include "Tracers.h"
@@ -442,6 +443,8 @@ int main(int argc, char *argv[]) {
 
    MPI_Init(&argc, &argv);
    Kokkos::initialize(argc, argv);
+   Pacer::initialize(MPI_COMM_WORLD);
+   Pacer::setPrefix("Omega:");
 
    LOG_INFO("----- Time Stepper Unit Test -----");
 
