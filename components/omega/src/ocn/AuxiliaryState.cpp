@@ -23,7 +23,7 @@ AuxiliaryState::AuxiliaryState(const std::string &Name, const HorzMesh *Mesh,
       LayerThicknessAux(stripDefault(Name), Mesh, NVertLevels),
       VorticityAux(stripDefault(Name), Mesh, NVertLevels),
       VelocityDel2Aux(stripDefault(Name), Mesh, NVertLevels),
-      WindForcingAux(stripDefault(Name), Mesh, NVertLevels),
+      WindForcingAux(stripDefault(Name), Mesh),
       TracerAux(stripDefault(Name), Mesh, NVertLevels, NTracers) {
 
    GroupName = "AuxiliaryState";
@@ -91,14 +91,18 @@ void AuxiliaryState::computeMomAux(const OceanState *State, int ThickTimeLevel,
    const auto &RelVortVertex   = VorticityAux.RelVortVertex;
 
    parallelFor(
-       "edgeAuxState1", {Mesh->NEdgesAll, NChunks},
+       "edgeAuxState1", {Mesh->NEdgesAll}, KOKKOS_LAMBDA(int IEdge) {
+          LocWindForcingAux.computeVarsOnEdge(IEdge);
+       });
+
+   parallelFor(
+       "edgeAuxState2", {Mesh->NEdgesAll, NChunks},
        KOKKOS_LAMBDA(int IEdge, int KChunk) {
           LocVorticityAux.computeVarsOnEdge(IEdge, KChunk);
           LocLayerThicknessAux.computeVarsOnEdge(IEdge, KChunk, LayerThickCell,
                                                  NormalVelEdge);
           LocVelocityDel2Aux.computeVarsOnEdge(IEdge, KChunk, VelocityDivCell,
                                                RelVortVertex);
-          LocWindForcingAux.computeVarsOnEdge(IEdge, KChunk);
        });
 
    parallelFor(

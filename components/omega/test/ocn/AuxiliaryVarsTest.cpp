@@ -392,8 +392,7 @@ int testKineticAuxVars(const Array2DReal &LayerThicknessCell,
    return Err;
 }
 
-int testWindForcingAuxVars(const Array2DReal &LayerThicknessCell,
-                           const Array2DReal &NormalVelocityEdge, Real RTol) {
+int testWindForcingAuxVars(Real RTol) {
    int Err = 0;
    TestSetup Setup;
 
@@ -411,7 +410,7 @@ int testWindForcingAuxVars(const Array2DReal &LayerThicknessCell,
        ExactNormalStressEdge, EdgeComponent::Normal, Geom, Mesh,
        ExchangeHalos::No);
 
-   WindForcingAuxVars WindForcingAux("", Mesh, NVertLevels);
+   WindForcingAuxVars WindForcingAux("", Mesh);
    WindForcingAux.InterpChoice = InterpCellToEdgeOption::Anisotropic;
 
    // Set inputs
@@ -425,10 +424,8 @@ int testWindForcingAuxVars(const Array2DReal &LayerThicknessCell,
 
    // Compute numerical result
    parallelFor(
-       {Mesh->NEdgesOwned}, KOKKOS_LAMBDA(int IEdge) {
-          const int K = 0;
-          WindForcingAux.computeVarsOnEdge(IEdge, K);
-       });
+       {Mesh->NEdgesOwned},
+       KOKKOS_LAMBDA(int IEdge) { WindForcingAux.computeVarsOnEdge(IEdge); });
    const auto &NumNormalStressEdge = WindForcingAux.NormalStressEdge;
 
    // Compute error measures and check error values
@@ -880,7 +877,7 @@ int auxVarsTest(const std::string &mesh = DefaultMeshFile) {
 
    Err += testTracerAuxVars(LayerThickCell, NormalVelEdge, RTol);
 
-   Err += testWindForcingAuxVars(LayerThickCell, NormalVelEdge, RTol);
+   Err += testWindForcingAuxVars(RTol);
 
    if (Err == 0) {
       LOG_INFO("AuxVarsTest: Successful completion");

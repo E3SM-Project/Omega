@@ -7,7 +7,7 @@
 namespace OMEGA {
 
 WindForcingAuxVars::WindForcingAuxVars(const std::string &AuxStateSuffix,
-                                       const HorzMesh *Mesh, int NVertLevels)
+                                       const HorzMesh *Mesh)
     : NormalStressEdge("NormalStressEdge" + AuxStateSuffix, Mesh->NEdgesSize),
       ZonalStressCell("WindStressZonal" + AuxStateSuffix, Mesh->NCellsSize),
       MeridStressCell("WindStressMeridional" + AuxStateSuffix,

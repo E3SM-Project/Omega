@@ -17,20 +17,15 @@ class WindForcingAuxVars {
    Array1DReal MeridStressCell;
    InterpCellToEdgeOption InterpChoice;
 
-   WindForcingAuxVars(const std::string &AuxStateSuffix, const HorzMesh *Mesh,
-                      int NVertLevels);
+   WindForcingAuxVars(const std::string &AuxStateSuffix, const HorzMesh *Mesh);
 
-   KOKKOS_FUNCTION void computeVarsOnEdge(int IEdge, int KChunk) const {
-      if (KChunk == 0) {
-         const Real ZonalStressEdge =
-             Interp(IEdge, ZonalStressCell, InterpChoice);
-         const Real MeridStressEdge =
-             Interp(IEdge, MeridStressCell, InterpChoice);
+   KOKKOS_FUNCTION void computeVarsOnEdge(int IEdge) const {
+      const Real ZonalStressEdge = Interp(IEdge, ZonalStressCell, InterpChoice);
+      const Real MeridStressEdge = Interp(IEdge, MeridStressCell, InterpChoice);
 
-         NormalStressEdge(IEdge) =
-             Kokkos::cos(AngleEdge(IEdge)) * ZonalStressEdge +
-             Kokkos::sin(AngleEdge(IEdge)) * MeridStressEdge;
-      }
+      NormalStressEdge(IEdge) =
+          Kokkos::cos(AngleEdge(IEdge)) * ZonalStressEdge +
+          Kokkos::sin(AngleEdge(IEdge)) * MeridStressEdge;
    }
 
    void registerFields(const std::string &AuxGroupName,
