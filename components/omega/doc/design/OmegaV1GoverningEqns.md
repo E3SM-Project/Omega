@@ -53,7 +53,7 @@ $$
  + \nabla_{3D} \cdot \left( \rho {\bf u}_{3D} \otimes {\bf u}_{3D}  \right)
   = - \nabla_{3D} p
    - \rho \nabla_{3D} \Phi 
-+ \rho {\bf D}^u + \rho {\bf F}^u
++ \rho {\bf D}^u_{3D} + \rho {\bf F}^u_{3D}
 $$ (continuous-momentum)
 
 mass:
@@ -74,40 +74,10 @@ $$
 = D^\varphi + Q^\varphi
 $$ (continuous-tracer)
 
-Here we have express the following terms as a general operators, with examples of specific forms provided below: the dissipation ${\bf D}^u$, momentum forcing ${\bf F}^u$, tracer diffusion $D^\varphi$, and tracer sources and sinks $Q^\varphi$. The graviational potential, $\Phi$, is written in a general form, and may include Earth's gravity, tidal forces, and self attraction and loading. The momentum equation can be rewritten using the product rule on $\rho {\bf u}$, mass conservation, and dividing by $\rho$, as:
-
-$$
-\frac{D {\bf u}_{3D} }{D t} \equiv
-\frac{\partial {\bf u}_{3D}}{\partial t}
-+ {\bf u}_{3D}\cdot \nabla_{3D} {\bf u}_{3D}
-  = - \frac{1}{\rho} \nabla_{3D} p
-   -  \nabla_{3D} \Phi 
-+ {\bf D}^u + {\bf F}^u
-$$ (continuous-momentum-rho)
+Here we have express the following terms as a general operators, with examples of specific forms provided below: the dissipation ${\bf D}^u$, momentum forcing ${\bf F}^u$, tracer diffusion $D^\varphi$, and tracer sources and sinks $Q^\varphi$. The graviational potential, $\Phi$, is written in a general form, and may include Earth's gravity, tidal forces, and self attraction and loading. 
 
 Geophysical fluids such as the ocean and atmosphere are rotating and stratified, and horizontal velocities are orders of magnitude larger than vertical velocities. It is therefore convenient to separate the horizontal and vertical as ${\bf u}_{3D} = \left( {\bf u}, w \right)$ and $\nabla_{3D} = \left( \nabla_z, d/dz \right)$ where $z$ is the vertical direction in a local Cartesian coordinate system aligned with gravity (approximately normal to Earth's surface), and $w$ is the vertical velocity. The $z$ subscript on $\nabla_z$ is to remind us that this is the true horizontal gradient (perpendicular to $z$), as opposed to gradients within tilted layers used in the following section. The Earth's gravitational force is included as $\Phi_{gravity} = gz $ so that $ \nabla_{3D} \Phi_{gravity} =  g{\bf k}$. The rotating frame of reference results in the Coriolis force $f {\bf k} \times {\bf u} \equiv f {\bf u}^\perp$, where $f$ is the Coriolis parameter and ${\bf u}^\perp$ is the horizontal velocity vector rotated $90^\circ$ counterclockwise from $\bf u$ in the horizontal plane. See any textbook in the [References](#references) for a full derivation.
 
-The advection term may be separated into horizontal and vertical parts as
-
-$$
-{\bf u}_{3D}\cdot \nabla_{3D} {\bf u}_{3D}
-=
-{\bf u} \cdot \nabla_z {\bf u} + w \frac{\partial {\bf u}}{\partial z}.
-$$ (advection-3d2d)
-
-The horizontal component may be replaced with the vector identity
-
-$$
-\begin{aligned}
-{\bf u} \cdot \nabla_z {\bf u}
-&= (\nabla_z \times {\bf u}) \times {\bf u} + \nabla_z \frac{|{\bf u}|^2}{2} \\
-&= \left( \boldsymbol{k} \cdot (\nabla_z \times {\bf u})\right)
-\left( \boldsymbol{k} \times {\bf u} \right) + \nabla_z \frac{|{\bf u}|^2}{2} \\
-&= \zeta {\bf u}^{\perp} + \nabla_z K,
-\end{aligned}
-$$ (advection-identity)
-
-where $\zeta$ is relative vorticity and $K$ is kinetic energy. This step separates the horizontal advection into non-divergent and non-rotational components, which is useful in the final TRiSK formulation.
 
 #### Assumptions
 
@@ -116,9 +86,9 @@ For a primitive equation ocean model, we assume the fluid is hydrostatic. For Om
 **Hydrostatic:** Beginning with the vertical momentum equation,
 
 $$
-\frac{D w }{D t}
+\frac{D \rho w }{D t}
   =
-  - \frac{1}{\rho} \frac{\partial p}{\partial z} - g + {\bf D}^u \cdot {\bf k} + {\bf F}^u \cdot {\bf k}
+  -  \frac{\partial p}{\partial z} - \rho g + \rho {\bf k} \cdot {\bf D}^u_{3D} + \rho {\bf k} \cdot {\bf F}^u_{3D}
 $$ (continuous-vert-mom)
 
 assume that advection of vertical momentum $Dw/Dt$, dissipation, and forcing are small, and that the first order balance is between pressure gradient and buoyancy,
@@ -152,13 +122,13 @@ The final form of the continuous conservation equations for a non-Boussinesq, hy
 momentum:
 
 $$
-\frac{\partial {\bf u}}{\partial t}
-+ \zeta {\bf u}^\perp + f {\bf u}^\perp
-+ w\frac{\partial {\bf u}}{\partial z}
-  = - \frac{1}{\rho} \nabla_z p
-  - \nabla_z \Phi 
-  - \nabla_z K
-+ {\bf D}^u + {\bf F}^u
+\frac{\partial (\rho \mathbf{u})}{\partial t}
++ \nabla \cdot (\rho \mathbf{u} \otimes \mathbf{u})
++ \partial_z (\rho \mathbf{u} w)
++ f \rho {\bf u}^\perp 
+  = -  \nabla_z p
+  - \rho\nabla_z \Phi 
++ \rho{\bf D}^u + \rho{\bf F}^u
 $$ (continuous-momentum-final)
 
 mass:
@@ -260,12 +230,14 @@ At this point our derivation has not made any assumptions about density, and may
 We can now derive the layered equations. Integrate the continuous equations [](continuous-momentum-final), [](continuous-mass-final), [](continuous-tracer-final) in $z$ from $z_k^{bot}$ to $z_k^{top}$,
 
 $$
-\frac{\partial }{\partial t} \int_{z_k^{bot}}^{z_k^{top}} {\bf u} dz
-+  \int_{z_k^{bot}}^{z_k^{top}}  \left( \zeta + f \right){\bf u}^\perp dz
-+  \int_{z_k^{bot}}^{z_k^{top}} \frac{\partial }{\partial z} \left(  w{\bf u} \right) dz
-  =  \int_{z_k^{bot}}^{z_k^{top}}  \left[- \frac{1}{\rho}\nabla_z p 
-  - \nabla_z \Phi - \nabla_z K
-+ {\bf D}^u + {\bf F}^u \right] dz
+\frac{\partial }{\partial t} \int_{z_k^{bot}}^{z_k^{top}} \rho {\bf u} dz
++  \int_{z_k^{bot}}^{z_k^{top}} \nabla \cdot (\rho \mathbf{u} \otimes \mathbf{u}) dz
++  \int_{z_k^{bot}}^{z_k^{top}} \frac{\partial }{\partial z} \left(  \rho w{\bf u} \right) dz
++  \int_{z_k^{bot}}^{z_k^{top}} 
+ f \rho {\bf u}^\perp dz
+  =  \int_{z_k^{bot}}^{z_k^{top}}  \left[- \nabla_z p 
+  - \rho \nabla_z \Phi - \rho \nabla_z K
++ \rho {\bf D}^u + \rho {\bf F}^u \right] dz
 $$ (z-integration-momentum)
 
 $$
@@ -285,15 +257,15 @@ $$ (z-integration-tracers)
 This results in conservation equations that are valid over the layer. The momentum variables are simply vertically averaged. Tracer variables are vertically mass-averaged, as defined in [](def-mass-thickness-average). We assume that variables such as ${\bf u}$, $\zeta$, and $K$ are constant in the vertical so that they may be taken out of the integral where products occur.  The subscript $k$ denotes a variable average over layer $k$. This system is now discrete in the vertical, but remains continuous in the horizontal and in time.
 
 $$
-\frac{\partial {\bf u}_k}{\partial t}
-+ \zeta_k {\bf u}_k^{\perp}
-+ f {\bf u}_k^{\perp}
-+ \left[ w_k {\bf u}_k \right]^{top} - \left[  w_k {\bf u}_k \right]^{bot}
+\frac{\partial h_k {\bf u}_k}{\partial t}
++ \nabla_z \cdot (h_k \mathbf{u}_k \otimes \mathbf{u}_k)
++ \left[ h_k w_k {\bf u}_k \right]^{top} - \left[ h_k w_k {\bf u}_k \right]^{bot}
++ f h_k {\bf u}_k^{\perp}
 =
-- \frac{1}{\rho} \nabla_z p_k
-- \nabla_z \Phi
-- \nabla_z K_k
-+ {\bf D}_k^u + {\bf F}_k^u
+- \nabla_z p_k
+- h_k \nabla_z \Phi_k
+- h_k \nabla_z K_k
++ h_k {\bf D}_k^u + h_k {\bf F}_k^u
 $$ (layered-momentum-1)
 
 $$
@@ -411,6 +383,42 @@ The integration in [](#z-integration-momentum) to [](#z-integration-tracers) cha
 
 ### Final Layered Equations
 
+mrp temp:
+
+The momentum equation can be rewritten using the product rule on $\rho {\bf u}$, mass conservation, and dividing by $\rho$, as:
+
+$$
+\frac{D {\bf u}_{3D} }{D t} \equiv
+\frac{\partial {\bf u}_{3D}}{\partial t}
++ {\bf u}_{3D}\cdot \nabla_{3D} {\bf u}_{3D}
+  = - \frac{1}{\rho} \nabla_{3D} p
+   -  \nabla_{3D} \Phi 
++ {\bf D}^u + {\bf F}^u
+$$ (continuous-momentum-rho)
+
+mrp temp:
+
+The advection term may be separated into horizontal and vertical parts as
+
+$$
+{\bf u}_{3D}\cdot \nabla_{3D} {\bf u}_{3D}
+=
+{\bf u} \cdot \nabla_z {\bf u} + w \frac{\partial {\bf u}}{\partial z}.
+$$ (advection-3d2d)
+
+The horizontal component may be replaced with the vector identity
+
+$$
+\begin{aligned}
+{\bf u} \cdot \nabla_z {\bf u}
+&= (\nabla_z \times {\bf u}) \times {\bf u} + \nabla_z \frac{|{\bf u}|^2}{2} \\
+&= \left( \boldsymbol{k} \cdot (\nabla_z \times {\bf u})\right)
+\left( \boldsymbol{k} \times {\bf u} \right) + \nabla_z \frac{|{\bf u}|^2}{2} \\
+&= \zeta {\bf u}^{\perp} + \nabla_z K,
+\end{aligned}
+$$ (advection-identity)
+
+where $\zeta$ is relative vorticity and $K$ is kinetic energy. This step separates the horizontal advection into non-divergent and non-rotational components, which is useful in the final TRiSK formulation.
 momentum:
 
 $$
