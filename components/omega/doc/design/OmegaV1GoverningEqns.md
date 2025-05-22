@@ -53,7 +53,7 @@ $$
  + \nabla_{3D} \cdot \left( \rho {\bf u}_{3D} \otimes {\bf u}_{3D}  \right)
   = - \nabla_{3D} p
    - \rho \nabla_{3D} \Phi 
-+ \rho {\bf D}^u + \rho {\bf F}^u
++ \rho {\bf D}^u_{3D} + \rho {\bf F}^u_{3D}
 $$ (continuous-momentum)
 
 mass:
@@ -78,64 +78,17 @@ Here we have express the following terms as a general operators, with examples o
 
 Geophysical fluids such as the ocean and atmosphere are rotating and stratified, and horizontal velocities are orders of magnitude larger than vertical velocities. It is therefore convenient to separate the horizontal and vertical as ${\bf u}_{3D} = \left( {\bf u}, w \right)$ and $\nabla_{3D} = \left( \nabla_z, d/dz \right)$ where $z$ is the vertical direction in a local Cartesian coordinate system aligned with gravity (approximately normal to Earth's surface), and $w$ is the vertical velocity. The $z$ subscript on $\nabla_z$ is to remind us that this is the true horizontal gradient (perpendicular to $z$), as opposed to gradients within tilted layers used in the following section. The Earth's gravitational force is included as $\Phi_{gravity} = gz $ so that $ \nabla_{3D} \Phi_{gravity} =  g{\bf k}$. The rotating frame of reference results in the Coriolis force $f {\bf k} \times {\bf u} \equiv f {\bf u}^\perp$, where $f$ is the Coriolis parameter and ${\bf u}^\perp$ is the horizontal velocity vector rotated $90^\circ$ counterclockwise from $\bf u$ in the horizontal plane. See any textbook in the [References](#references) for a full derivation.
 
-#### Advection
 
-The momentum equation may be rewritten using the product rule on the material derivative,
+#### Assumptions
 
-$$
-\frac{D \rho {\bf u}_{3D} }{D t} =
-\rho \frac{D {\bf u}_{3D} }{D t} +
-{\bf u}_{3D}\frac{D \rho  }{D t}.
-$$ (material-der-product-rule)
+For a primitive equation ocean model, we assume the fluid is hydrostatic. For Omega we are not making the Boussinesq assumption, so all density-dependent terms use the full density. In particular, the density coefficient of the pressure gradient in [](#continuous-momentum) is not a constant, as it is in primitive equation models like POP and MPAS-Ocean.
 
-The second term is zero by conservation of mass [](continuous-mass). Dividing by $\rho$, the momentum equation is
+**Hydrostatic:** Beginning with the vertical momentum equation,
 
 $$
-\frac{\partial {\bf u}_{3D}}{\partial t}
-+ \nabla_{3D} \cdot \left( {\bf u}_{3D} \otimes {\bf u}_{3D}  \right)
-  = - \frac{1}{\rho} \nabla_{3D} p
-   -  \nabla_{3D} \Phi 
-+ {\bf D}^u_{3D} + {\bf F}^u_{3D}.
-$$ (continuous-momentum-rho)
-
-The advection term may be written equivalently as
-
-$$
-\nabla_{3D} \cdot \left( {\bf u}_{3D} \otimes {\bf u}_{3D}  \right) 
-=
-{\bf u}_{3D}\cdot \nabla_{3D} {\bf u}_{3D}.
-$$ (advection-3d)
-
-Taking only the advection terms in the horizontal components of the momentum equation and then separating them into horizontal and vertical parts,
-
-$$
-{\bf u}_{3D}\cdot \nabla_{3D} {\bf u} 
-=
-{\bf u} \cdot \nabla_z {\bf u} + w \frac{\partial {\bf u}}{\partial z}.
-$$ (advection-3d2d)
-
-The horizontal portion may be replaced with the vector identity
-
-$$
-\begin{aligned}
-{\bf u} \cdot \nabla_z {\bf u}
-&= (\nabla_z \times {\bf u}) \times {\bf u} + \nabla_z \frac{|{\bf u}|^2}{2} \\
-&= \left( \boldsymbol{k} \cdot (\nabla_z \times {\bf u})\right)
-\left( \boldsymbol{k} \times {\bf u} \right) + \nabla_z \frac{|{\bf u}|^2}{2} \\
-&= \zeta {\bf u}^{\perp} + \nabla_z K,
-\end{aligned}
-$$ (advection-identity)
-
-where $\zeta$ is relative vorticity and $K$ is kinetic energy. This step separates the horizontal advection into non-divergent and non-rotational components, which is useful in the final TRiSK formulation.
-
-#### Hydrostatic Assumption
-
-For a primitive equation ocean model, we assume the fluid is hydrostatic. For Omega we are not making the Boussinesq assumption, so all density-dependent terms use the full density. In particular, the density coefficient of the pressure gradient in [](#continuous-momentum) is not a constant, as it is in primitive equation models like POP and MPAS-Ocean. Beginning with the vertical momentum equation,
-
-$$
-\frac{D w }{D t}
+\frac{D \rho w }{D t}
   =
-  - \frac{1}{\rho} \frac{\partial p}{\partial z} - g +  {\bf k} \cdot {\bf D}^u  + {\bf k} \cdot {\bf F}^u,
+  -  \frac{\partial p}{\partial z} - \rho g + \rho {\bf k} \cdot {\bf D}^u_{3D} + \rho {\bf k} \cdot {\bf F}^u_{3D}
 $$ (continuous-vert-mom)
 
 assume that advection of vertical momentum $Dw/Dt$, dissipation, and forcing are small, and that the first order balance is between pressure gradient and buoyancy,
@@ -153,29 +106,79 @@ $$ (continuous-hydrostatic-pressure)
 The constitutive equation is the equation of state,
 
 $$
-v = f_{eos}(p,\Theta,S),
+\rho = f_{eos}(p,\Theta,S).
 $$ (continuous-eos)
 
-where conservative temperature, $\Theta$, and absolute salinity, $S$, are examples of tracers $\varphi$. We use specific volume $v\equiv 1/\rho$ to avoid divisions in the final equations.
+where conservative temperature, $\Theta$, and absolute salinity, $S$, are examples of tracers $\varphi$.
 
 The Boussinesq primitive equations also make an incompressibility assumption, which is identical to an assumption of constant density. Non-Boussinesq models do not make that assumption and are not explicitly incompressible. However, the mass conservation equation [](continuous-mass), along with an equation of state for sea water where density only varies slightly, results in a fluid that is nearly incompressible.
 
 A concern when using the full, compressible continuity equation is that this might support acoustic waves with wave speeds on the order of 1500 m/s, requiring an extremely small time step. According to [Griffies and Adcroft (2008)](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/177GM18) and [de Szoeke and Samelson (2002)](https://doi.org/10.1175/1520-0485(2002)032%3C2194:TDBTBA%3E2.0.CO;2), the hydrostatic approximation removes vertical sound waves, leaving only barotropic acoustic modes called Lamb waves.  Fortunately, the Lamb waves can be "subsumed" into the external gravity mode because the scale height of the ocean is much larger (200 km) than its depth (~5 km).  This suggests that Lamb waves should not produce any additional constraints on our barotropic time step (though we should keep an eye on this).  For more details on Lamb waves, see [Dukowicz (2013)](https://doi.org/10.1175/MWR-D-13-00148.1)
 
+#### Momentum Advection
+
+Here we expand the momentum advection in continuous form. This will be a useful reference when we expand the layered version in a later section. The momentum advection,
+
+$$
+\nabla_{3D} \cdot \left( \rho {\bf u}_{3D} \otimes {\bf u}_{3D}  \right)
+ = \nabla_{3D} \cdot \left( \rho {\bf u}_{3D}  {\bf u}_{3D}^T  \right),
+$$ (advection)
+
+may be written out fully as the three $(x,y,z)$ cartesian components coordinates as
+
+$$
+&\partial_x \left( \rho u u\right) + \partial_y \left( \rho v u\right) + \partial_z \left( \rho w u\right) \\
+&\partial_x \left( \rho u v\right) + \partial_y \left( \rho v v\right) + \partial_z \left( \rho w v\right) \\
+&\partial_x \left( \rho u w\right) + \partial_y \left( \rho v w\right) + \partial_z \left( \rho w w\right) .
+$$ (advection-written-out)
+
+The third line is the vertical component, and was assumed to be small in the previous section. The first two lines are the horizontal components may be written as
+
+$$
+\nabla_z \cdot \left( \rho {\bf u} \otimes {\bf u}  \right) + \partial_z \left( \rho w {\bf u}\right)
+$$ (adv2d)
+
+where ${\bf u} = (u,v)$ is the horizontal velocity vector and $\nabla_z=(\partial_x,\partial_y)$ is the horizontal gradient, and the tensor product ${\bf u} \otimes {\bf u}={\bf u}  {\bf u}^T$. Using the product rule, this can be expanded as
+
+$$
+\nabla_z \cdot \left( \rho {\bf u} \otimes {\bf u}  \right) + \partial_z \left( \rho w {\bf u}\right)
+&= \left( \nabla_z \cdot  {\bf u}  \right) \rho {\bf u} 
++  {\bf u} \cdot \nabla_z \left( \rho {\bf u} \right) 
++ \partial_z \left( \rho w {\bf u}\right) \\
+&= \left( \nabla_z \cdot   {\bf u}  \right) \rho {\bf u} 
++ \left( {\bf u} \cdot \nabla_z  \rho  \right) {\bf u} 
++ \left( {\bf u} \cdot \nabla_z  {\bf u} \right)  \rho
++ \partial_z \left( \rho w {\bf u}\right) 
+$$ (adv2d-prod)
+
+The term ${\bf u} \cdot \nabla_z {\bf u}$ may be replaced with the vector identity
+
+$$
+\begin{aligned}
+{\bf u} \cdot \nabla_z {\bf u}
+&= (\nabla_z \times {\bf u}) \times {\bf u} + \nabla_z \frac{|{\bf u}|^2}{2} \\
+&= \left( \boldsymbol{k} \cdot (\nabla_z \times {\bf u})\right)
+\left( \boldsymbol{k} \times {\bf u} \right) + \nabla_z \frac{|{\bf u}|^2}{2} \\
+&= \zeta {\bf u}^{\perp} + \nabla_z K,
+\end{aligned}
+$$ (advection-identity)
+
+where $\zeta$ is relative vorticity and $K$ is kinetic energy. This step separates the horizontal advection into non-divergent and non-rotational components, which is useful in the final TRiSK formulation.
+
 #### Final Continuous Equations
 
-Putting the previous sections together, the final form of the continuous conservation equations for a non-Boussinesq, hydrostatic ocean are
+The final form of the continuous conservation equations for a non-Boussinesq, hydrostatic ocean are
 
 momentum:
 
 $$
-\frac{\partial {\bf u}}{\partial t}
-+ \zeta {\bf u}^\perp + f {\bf u}^\perp
-+ w\frac{\partial {\bf u}}{\partial z}
-  = - v \nabla_z p
-  - \nabla_z \Phi 
-  - \nabla_z K
-+ {\bf D}^u + {\bf F}^u
+\frac{\partial (\rho \mathbf{u})}{\partial t}
++ \nabla \cdot (\rho \mathbf{u} \otimes \mathbf{u})
++ \partial_z (\rho \mathbf{u} w)
++ f \rho {\bf u}^\perp 
+  = -  \nabla_z p
+  - \rho\nabla_z \Phi 
++ \rho{\bf D}^u + \rho{\bf F}^u
 $$ (continuous-momentum-final)
 
 mass:
@@ -199,7 +202,7 @@ $$ (continuous-tracer-final)
 equation of state:
 
 $$
-v = f_{eos}(p,\Theta,S)
+\rho = f_{eos}(p,\Theta,S).
 $$ (continuous-eos-final)
 
 hydrostatic pressure:
@@ -227,13 +230,11 @@ $$ (continuous-v_tr_diff)
 and may also include a biharmonic (del4) term and parameterizations such as Redi mixing. Sources and sinks include surface fluxes from the atmosphere and land, and bio-geo-chemical reactions.
 All of the diffusion and forcing terms are written in more detail with the [Discrete Equations](#discrete-equations) below.
 
-## 4. Vertical Discretization
+## 4. Layered Equations
 
-Here we derive the layered equations by discretizing in the vertical, while the horizontal remains continuous. First, we select lower and upper surfaces $z=z_k^{bot}(x,y,t)$ and  $z=z_k^{top}(x,y,t)$ for each layer $k$. The momentum equation is discretized with standard finite volume methods. We discretize the mass and tracer equations by integrating in the vertical from $z=z_k^{bot}$ to $z=z_k^{top}$, as described in [Ringler et al. 2013](https://www.sciencedirect.com/science/article/pii/S1463500313000760) Appendix A.2. 
+Here we derive the layered equations by discretizing in the vertical, while the horizontal remains continuous. We discretize by integrating in the vertical from the lower surface $z=z_k^{bot}(x,y)$ to $z=z_k^{top}(x,y)$ for the layer with index $k$, as described in [Ringler et al. 2013](https://www.sciencedirect.com/science/article/pii/S1463500313000760) Appendix A.2. Equivalently, we can vertically integrate from a deeper pressure surface $p=p_k^{bot}(x,y)$ (higher pressure) to $p=p_k^{top}(x,y)$ where $p$ and $z$ are related by the hydrostatic pressure equation [](#continuous-hydrostatic-pressure).
 
-
-
-### Layered Equations
+### Layer Integration
 
 For non-Boussinesq layered equations we begin by defining the mass-thickness of layer $k$ as
 
@@ -271,21 +272,22 @@ For any three-dimensional quantity $\varphi(x,y,z,t)$, the mass-thickness-averag
 $$
 \varphi_k(x,y,t)
 \equiv \frac{\int_{z_k^{bot}}^{z_k^{top}} \rho \varphi dz}{\int_{z_k^{bot}}^{z_k^{top}} \rho dz}
-= \frac{\int_{z_k^{bot}}^{z_k^{top}} \rho \varphi dz}{h_k}.
+= \frac{\int_{z_k^{bot}}^{z_k^{top}} \rho \varphi dz}{h_k}
 $$(def-mass-thickness-average)
-
 
 At this point our derivation has not made any assumptions about density, and may be used for both Boussinesq and non-Boussinesq fluids. A Boussinesq derivation would now assume small variations in density and replace $\rho(x,y,z,t)$ with a constant $\rho_0$ everywhere but the pressure gradient coefficient. In that case $\rho$ divides out in [](#def-mass-thickness-average) the Boussinesq layer quantities would simply be thickness-weighted averages.
 
 We can now derive the layered equations. Integrate the continuous equations [](continuous-momentum-final), [](continuous-mass-final), [](continuous-tracer-final) in $z$ from $z_k^{bot}$ to $z_k^{top}$,
 
 $$
-\frac{\partial }{\partial t} \int_{z_k^{bot}}^{z_k^{top}} {\bf u} dz
-+  \int_{z_k^{bot}}^{z_k^{top}}  \left( \zeta + f \right){\bf u}^\perp dz
-+  \int_{z_k^{bot}}^{z_k^{top}} \frac{\partial }{\partial z} \left(  w{\bf u} \right) dz
-  =  \int_{z_k^{bot}}^{z_k^{top}}  \left[- v \nabla_z p
-  - \nabla_z \Phi - \nabla_z K
-+ {\bf D}^u + {\bf F}^u \right] dz
+\frac{\partial }{\partial t} \int_{z_k^{bot}}^{z_k^{top}} \rho {\bf u} dz
++  \int_{z_k^{bot}}^{z_k^{top}} \nabla \cdot (\rho \mathbf{u} \otimes \mathbf{u}) dz
++  \int_{z_k^{bot}}^{z_k^{top}} \frac{\partial }{\partial z} \left(  \rho w{\bf u} \right) dz
++  \int_{z_k^{bot}}^{z_k^{top}} 
+ f \rho {\bf u}^\perp dz
+  =  \int_{z_k^{bot}}^{z_k^{top}}  \left[- \nabla_z p 
+  - \rho \nabla_z \Phi 
++ \rho {\bf D}^u + \rho {\bf F}^u \right] dz
 $$ (z-integration-momentum)
 
 $$
@@ -301,8 +303,8 @@ $$
  + \int_{z_k^{bot}}^{z_k^{top}} \frac{\partial}{\partial z} \left(  \rho \varphi w \right) dz
 = \int_{z_k^{bot}}^{z_k^{top}} \left( D^\varphi + Q^\varphi \right) dz
 $$ (z-integration-tracers)
-
-This results in conservation equations that are valid over the layer. The momentum variables are simply vertically averaged. Tracer variables are vertically mass-averaged, as defined in [](def-mass-thickness-average). 
+ 
+This results in conservation equations that are valid over the layer. The momentum variables are simply vertically averaged. Tracer variables are vertically mass-averaged, as defined in [](def-mass-thickness-average).
 
 In order to deal with nonlinear terms where we take the integrals of products, we may assume that the variables are piecewise constant in the vertical within each layer, i.e.
 
@@ -313,7 +315,7 @@ $$ (discrete-a)
 Then variables may come out of the integral as needed. For example,
 
 $$
-\int_{z_k^{bot}}^{z_k^{top}}   \zeta {\bf u}^\perp dz 
+\int_{z_k^{bot}}^{z_k^{top}}   \zeta {\bf u}^\perp dz
 &= \int_{z_k^{bot}}^{z_k^{top}}   \zeta_k {\bf u}^\perp_k dz \\
 &= \zeta_k {\bf u}^\perp_k \int_{z_k^{bot}}^{z_k^{top}}  dz \\
 &= \zeta_k {\bf u}^\perp_k \Delta z_k,
@@ -323,22 +325,22 @@ where $\Delta z_k\equiv z_k^{top}-z_k^{bot}$. In the momentum equation this resu
 
 Our governing equations are now discrete in the vertical, but remain continuous in the horizontal and in time.
 
+
+This results in conservation equations that are valid over the layer. The momentum variables are simply vertically averaged. Tracer variables are vertically mass-averaged, as defined in [](def-mass-thickness-average). We assume that variables such as ${\bf u}$, $\zeta$, and $K$ are constant in the vertical so that they may be taken out of the integral where products occur.  The subscript $k$ denotes a variable average over layer $k$. This system is now discrete in the vertical, but remains continuous in the horizontal and in time.
+
 $$
-\frac{\partial {\bf u}_k}{\partial t}
-+ \zeta_k {\bf u}_k^{\perp}
-+ f {\bf u}_k^{\perp}
-+ \frac{\left[ w_k {\bf u}_k \right]^{top} - \left[ w_k {\bf u}_k\right]^{bot}}{\Delta z_k}
+\frac{\partial h_k {\bf u}_k}{\partial t}
++ \nabla_z \cdot (h_k \mathbf{u}_k \otimes \mathbf{u}_k)
++ \left[ \rho_k w_k {\bf u}_k \right]^{top} - \left[ \rho_k w_k {\bf u}_k \right]^{bot}
++ f h_k {\bf u}_k^{\perp}
 =
-- v_k  \nabla_z p_k
-- \nabla_z \Phi_k
-- \nabla_z K_k
-+ {\bf D}_k^u + {\bf F}_k^u
+- \nabla_z p_k
+- h_k \nabla_z \Phi_k
++ h_k {\bf D}_k^u + h_k {\bf F}_k^u
 $$ (layered-momentum-1)
 
 $$
-\frac{\partial h_k}{\partial t} 
-+ \nabla_z \cdot \left(h_k {\bf u}_k\right) 
-+ \left[ \rho_k w_k \right]^{top} - \left[ \rho_k w_k \right]^{bot}= Q^h_k
+\frac{\partial h_k}{\partial t} + \nabla_z \cdot \left(h_k {\bf u}_k\right) + \left[ \rho_k w_k \right]^{top} - \left[ \rho_k w_k \right]^{bot}= Q^h_k
 $$ (layered-mass-1)
 
 $$
@@ -359,6 +361,12 @@ $$
 $$ (layered-mass-vert-adv)
 
 This states that the change in mass in the layer is the incoming mass from below minus the outgoing mass above, since the vertical velocity $w$ is positive upwards. The vertical advection of momentum and tracers have a similar interpretation.
+
+### Questions
+
+1. How do integrals in  [](#z-integration-momentum) to [](#z-integration-tracers) turn into the layered form [](layered-momentum-1) to [](layered-tracer-1) when there are products in the terms? For example, $\zeta_k {\bf u}^\perp_k$, $\nabla K$ and $\rho \varphi {\bf u}$.
+1. Using the definition of the layer average, the momentum equation [](layered-momentum-1) should also be thickness-weighted. Perhaps that goes away with conservation of mass?
+1. How do I justify changing from $\nabla_z$ to $\nabla_r$ for terms other than the pressure gradient? Particularly $\nabla K$?
 
 ### General Vertical Coordinate
 
@@ -435,15 +443,9 @@ $$
 $$ (gradp-gradphi)
 
 On the first line, note that $\nabla_z \Phi_{gravity}=\nabla_z gz=0$. For tides and SAL we assume that these forces do not vary in the vertical due to the small aspect ratio of the ocean, so that the vertical derivative in the expansion [](dvarphidnabla) is zero. This means that $\nabla_z \Phi_{tides}=\nabla_r \Phi_{tides}$ and $\nabla_z \Phi_{SAL}=\nabla_r \Phi_{SAL}$.
-For versions 1.0 and 2.0 of Omega we only consider a constant gravitational force, and will not include tides and SAL.  Further details will be provided in the forthcoming pressure gradient design document.  See [Adcroft and Hallberg 2006](https://www.sciencedirect.com/science/article/pii/S1463500305000090) eqn. 1 and [Griffies et al](http://sciencedirect.com/science/article/pii/S1463500300000147) eqn 2 for additional examples of the pressure gradient in tilted coordinates. 
+For versions 1.0 and 2.0 of Omega we only consider a constant gravitational force, and will not include tides and SAL.  Further details will be provided in the forthcoming pressure gradient design document.
 
-In all other terms with horizontal operators we make the approximation that the within-layer operator is the same as the horizontal operator. For example, for the kinetic energy gradient
-
-$$
-\nabla_z K = \nabla_r K - \frac{\partial K}{\partial z} \nabla_r z 
-$$ (gradk)
-
-we assume that the second term is small so that $\nabla_z K = \nabla_r K$. 
+See [Adcroft and Hallberg 2006](https://www.sciencedirect.com/science/article/pii/S1463500305000090) eqn. 1 and [Griffies et al](http://sciencedirect.com/science/article/pii/S1463500300000147) eqn 2 for additional examples of the pressure gradient in tilted coordinates. The additional terms due to the expansion of $\nabla_z$ to $\nabla_r$ in the rest of the equations are small and are ignored.
 
 Some publications state that the transition from Boussinesq to non-Boussinesq equations is accompanied by a change from z-coordinate to pressure-coordinates. However, we use a general vertical coordinate, so the vertical may be referenced to $z$ or $p$. In a purely z-coordinate model like POP, only the $\nabla p$ term is used in [](gradp). In a purely p-coordinate model, only $\nabla z$ remains, as described in  [de Szoeke and Samelson 2002](https://journals.ametsoc.org/view/journals/phoc/32/7/1520-0485_2002_032_2194_tdbtba_2.0.co_2.xml). In a general vertical coordinate model the layer interface placement is up to the user's specification, and so both terms are kept.
 
@@ -452,12 +454,48 @@ The integration in [](#z-integration-momentum) to [](#z-integration-tracers) cha
 
 ### Final Layered Equations
 
+mrp temp:
+
+The momentum equation can be rewritten using the product rule on $\rho {\bf u}$, mass conservation, and dividing by $\rho$, as:
+
+$$
+\frac{D {\bf u}_{3D} }{D t} \equiv
+\frac{\partial {\bf u}_{3D}}{\partial t}
++ {\bf u}_{3D}\cdot \nabla_{3D} {\bf u}_{3D}
+  = - \frac{1}{\rho} \nabla_{3D} p
+   -  \nabla_{3D} \Phi 
++ {\bf D}^u + {\bf F}^u
+$$ (continuous-momentum-rho)
+
+mrp temp:
+
+The advection term may be separated into horizontal and vertical parts as
+
+$$
+{\bf u}_{3D}\cdot \nabla_{3D} {\bf u}_{3D}
+=
+{\bf u} \cdot \nabla_z {\bf u} + w \frac{\partial {\bf u}}{\partial z}.
+$$ (advection-3d2d)
+
+The horizontal component may be replaced with the vector identity
+
+$$
+\begin{aligned}
+{\bf u} \cdot \nabla_z {\bf u}
+&= (\nabla_z \times {\bf u}) \times {\bf u} + \nabla_z \frac{|{\bf u}|^2}{2} \\
+&= \left( \boldsymbol{k} \cdot (\nabla_z \times {\bf u})\right)
+\left( \boldsymbol{k} \times {\bf u} \right) + \nabla_z \frac{|{\bf u}|^2}{2} \\
+&= \zeta {\bf u}^{\perp} + \nabla_z K,
+\end{aligned}
+$$ (advection-identity)
+
+where $\zeta$ is relative vorticity and $K$ is kinetic energy. This step separates the horizontal advection into non-divergent and non-rotational components, which is useful in the final TRiSK formulation.
 momentum:
 
 $$
 \frac{\partial {\bf u}_k}{\partial t}
 + q_k h_k {\bf u}_k^{\perp}
-+ \frac{v_k^{top}\omega_k^{top} {\bf u}_k^{top} - v_k^{bot}\omega_k^{bot}{\bf u}_k^{bot}}{v_k h_k}
++ v_k^{top}\omega_k^{top} {\bf u}_k^{top} - v_k^{bot}\omega_k^{bot}{\bf u}_k^{bot}
 =
 - v_k \nabla_r p_k - \nabla_r \Phi_k
 - \nabla_r K_k
@@ -487,14 +525,13 @@ $$ (potential-vort-adv)
 Surface fluxes $Q^h_k$ have been added to the mass equation for precipitation, evaporation, and river runoff.  These fluxes, like mass transport $\omega$, are in units of kg/s/m$^2$.
 
 
-## 5. Horizontal Discretization
+## 5. Discrete Equations
 
 The horizontally discretized layered equations are as follows. We have dropped the $r$ in $\nabla_r$ for conciseness, and the operator $\nabla$ from here on means within-layer.
 
 $$
 \frac{\partial u_{e,k}}{\partial t} + \left[ \frac{{\bf k} \cdot \nabla \times u_{e,k} +f_v}{[h_{i,k}]_v}\right]_e\left([h_{i,k}]_e u_{e,k}^{\perp}\right)
-+ \frac{\left[ v_{i,k}^{top}\omega_{i,k}^{top} \right]_e u_{e,k}^{top} - \left[ v_{i,k+1}^{top}\omega_{i,k+1}^{top} \right]_e u_{e,k+1}^{top}}
-  {\left[v_{i,k}h_{i,k}\right]_e}
++ \left[ v_{i,k}^{top}\omega_{i,k}^{top} \right]_e u_{e,k}^{top} - \left[ v_{i,k+1}^{top}\omega_{i,k+1}^{top} \right]_e u_{e,k+1}^{top}
 =
 - \left[ v_{i,k} \right]_e \nabla p_{i,k} - \nabla \Phi_{i,k}
 - \nabla K_{i,k} +  { \bf D}^u_{e,k} + {\bf F}^u_{e,k}
@@ -696,7 +733,8 @@ $$
 + \frac{1}{2}\nabla \left| {\bf u}_k \right|^2
 + ( {\bf k} \cdot \nabla \times {\bf u}_k) {\bf u}^\perp_k
 + f{\bf u}^{\perp}_k
-+ w \frac{d{\bf u}_k}{dz} = 
++ w_k^{bot}{\bf u}_k^{bot}
+- w_k^{top}{\bf u}_k^{top} =
 - \frac{1}{\rho_0}\nabla p_k
 - \frac{\rho g}{\rho_0}\nabla z^{mid}_k
 + \nu_h\nabla^2{\bf u}_k
