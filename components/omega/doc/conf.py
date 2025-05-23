@@ -36,7 +36,6 @@ language = "en"
 extensions = [
     "myst_parser",
     "sphinx_rtd_theme",
-    "sphinx_multiversion",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
