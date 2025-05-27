@@ -179,7 +179,7 @@ or related functions must include the <code class="docutils literal notranslate"
 <p>All IOStreams are initialized in a two-step process. A call to the
 init routine should take place early in the Omega initialization after
 the ModelClock has been initialized using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IOStream</span><span class="o">::</span><span class="n">init</span><span class="p">(</span><span class="n">ModelClock</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">IOStream</span><span class="o">::</span><span class="n">init</span><span class="p">(</span><span class="n">ModelClock</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>This routine extracts all the stream definitions from the input configuration
