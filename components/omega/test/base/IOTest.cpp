@@ -42,11 +42,7 @@ int initIOTest() {
 
    // Open config file
    Config("Omega");
-   Err = Config::readAll("omega.yml");
-   if (Err != 0) {
-      LOG_CRITICAL("IOTest: Error reading config file");
-      return Err;
-   }
+   Config::readAll("omega.yml");
 
    // Initialize the IO system
    Err = IO::init(DefComm);
@@ -54,9 +50,7 @@ int initIOTest() {
       LOG_ERROR("IOTest: error initializing parallel IO");
 
    // Create the default decomposition (initializes the decomposition)
-   Err = Decomp::init();
-   if (Err != 0)
-      LOG_ERROR("IOTest: error initializing default decomposition");
+   Decomp::init();
 
    return Err;
 }

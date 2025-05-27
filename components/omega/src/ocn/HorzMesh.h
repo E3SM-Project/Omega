@@ -266,7 +266,7 @@ class HorzMesh {
    // Methods
 
    /// Initialize Omega local mesh
-   static int init();
+   static void init();
 
    /// Creates a new mesh by calling the constructor and puts it in the
    /// AllHorzMeshes map

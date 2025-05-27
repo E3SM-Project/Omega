@@ -13,6 +13,7 @@
 #include "DataTypes.h"
 #include "Decomp.h"
 #include "Dimension.h"
+#include "Error.h"
 #include "Field.h"
 #include "Halo.h"
 #include "HorzMesh.h"
@@ -37,6 +38,7 @@ using namespace OMEGA;
 int initStateTest() {
 
    int Err = 0;
+   Error Err1;
 
    // Initialize the Machine Environment class - this also creates
    // the default MachEnv. Then retrieve the default environment and
@@ -50,17 +52,10 @@ int initStateTest() {
 
    // Read Omega config file
    Config("Omega");
-   Err = Config::readAll("omega.yml");
-   if (Err != 0) {
-      LOG_CRITICAL("State: Error reading config file");
-      return Err;
-   }
+   Config::readAll("omega.yml");
 
    // Initialize the default time stepper and retrieve the model clock
-   Err = TimeStepper::init1();
-   if (Err != 0)
-      LOG_ERROR("State: error initializing default time stepper");
-
+   TimeStepper::init1();
    TimeStepper *DefStepper = TimeStepper::getDefault();
    Clock *ModelClock       = DefStepper->getClock();
 
@@ -71,11 +66,7 @@ int initStateTest() {
 
    // Initialize IOStreams - this does not yet validate the contents
    // of each file, only creates streams from Config
-   Err = IOStream::init(ModelClock);
-   if (Err != 0) {
-      LOG_CRITICAL("State: Error initializing IOStreams");
-      return Err;
-   }
+   IOStream::init(ModelClock);
 
    // Initialize Field infrastructure
    Err = Field::init(ModelClock);
@@ -85,9 +76,7 @@ int initStateTest() {
    }
 
    // Create the default decomposition (initializes the decomposition)
-   Err = Decomp::init();
-   if (Err != 0)
-      LOG_ERROR("State: error initializing default decomposition");
+   Decomp::init();
 
    // Initialize the default halo
    Err = Halo::init();
@@ -95,47 +84,29 @@ int initStateTest() {
       LOG_ERROR("State: error initializing default halo");
 
    // Initialize the default mesh
-   Err = HorzMesh::init();
-   if (Err != 0)
-      LOG_ERROR("State: error initializing default mesh");
+   HorzMesh::init();
 
    // Get the number of vertical levels from Config
    Config *OmegaConfig = Config::getOmegaConfig();
    Config DimConfig("Dimension");
-   Err = OmegaConfig->get(DimConfig);
-   if (Err != 0) {
-      LOG_CRITICAL("State: Dimension group not found in Config");
-      return Err;
-   }
+   Err1 += OmegaConfig->get(DimConfig);
+   CHECK_ERROR_ABORT(Err1, "State: Dimension group not found in Config");
+
    I4 NVertLevels;
-   Err = DimConfig.get("NVertLevels", NVertLevels);
-   if (Err != 0) {
-      LOG_CRITICAL("State: NVertLevels not found in Dimension Config");
-      return Err;
-   }
+   Err1 += DimConfig.get("NVertLevels", NVertLevels);
+   CHECK_ERROR_ABORT(Err1, "State: NVertLevels not found in Dimension Config");
+
    // Create vertical dimension
    auto VertDim = Dimension::create("NVertLevels", NVertLevels);
 
    // Initialize tracers
-   Err = Tracers::init();
-   if (Err != 0) {
-      LOG_CRITICAL("State: Error initializing tracers infrastructure");
-      return Err;
-   }
+   Tracers::init();
 
    // Initialize Aux State variables
-   Err = AuxiliaryState::init();
-   if (Err != 0) {
-      LOG_CRITICAL("State: Error initializing default aux state");
-      return Err;
-   }
+   AuxiliaryState::init();
 
    // Create tendencies
-   Err = Tendencies::init();
-   if (Err != 0) {
-      LOG_CRITICAL("State: Error initializing default tendencies");
-      return Err;
-   }
+   Tendencies::init();
 
    // Finish time stepper initialization
    Err = TimeStepper::init2();

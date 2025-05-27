@@ -204,10 +204,12 @@ Error::Error(ErrorCode ErrCode,        // [in] error code to assign
 // and preserve the line number at which an error occurs.
 
 ///  The critical error macro prints an error message and aborts the simulation
-#define ABORT_ERROR(_Msg, ...)         \
-   LOG_CRITICAL(_Msg, ##__VA_ARGS__);  \
-   cpptrace::generate_trace().print(); \
-   OMEGA::Error::abort();
+#define ABORT_ERROR(_Msg, ...)            \
+   {                                      \
+      LOG_CRITICAL(_Msg, ##__VA_ARGS__);  \
+      cpptrace::generate_trace().print(); \
+      OMEGA::Error::abort();              \
+   }
 
 /// The assert macro checks for a required condition and exits if not met
 /// It is only active for debug builds.
@@ -233,9 +235,12 @@ Error::Error(ErrorCode ErrCode,        // [in] error code to assign
 
 /// This macro adds an error to the return code and returns this code to the
 /// calling routine.
-#define RETURN_ERROR(_ReturnErr, _ErrCode, _ErrMsg, ...)                       \
-   OMEGA::Error _NewErr(_ErrCode, __LINE__, __FILE__, _ErrMsg, ##__VA_ARGS__); \
-   return (_ReturnErr += _NewErr);
+#define RETURN_ERROR(_ReturnErr, _ErrCode, _ErrMsg, ...)          \
+   {                                                              \
+      OMEGA::Error _NewErr(_ErrCode, __LINE__, __FILE__, _ErrMsg, \
+                           ##__VA_ARGS__);                        \
+      return (_ReturnErr += _NewErr);                             \
+   }
 
 /// This macro checks an existing error code and if it is not success, it
 /// prints the error message, resets the code and continues the simulation.

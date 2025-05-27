@@ -42,7 +42,7 @@ class AuxiliaryState {
    // Methods
 
    // Initialize the default auxiliary state
-   static int init();
+   static void init();
 
    // Create a non-default auxiliary state
    static AuxiliaryState *create(const std::string &Name, const HorzMesh *Mesh,
@@ -61,7 +61,7 @@ class AuxiliaryState {
    static void clear();
 
    /// Read and set config options
-   int readConfigOptions(Config *OmegaConfig);
+   void readConfigOptions(Config *OmegaConfig);
 
    // Compute all auxiliary variables needed for momentum equation
    void computeMomAux(const OceanState *State, int ThickTimeLevel,

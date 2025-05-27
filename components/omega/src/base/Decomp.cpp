@@ -17,6 +17,7 @@
 #include "Decomp.h"
 #include "Config.h"
 #include "DataTypes.h"
+#include "Error.h"
 #include "IO.h"
 #include "Logging.h"
 #include "MachEnv.h"
@@ -420,10 +421,10 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
 // Initialize the decomposition and create the default decomposition with
 // (currently) one partition per MPI task using a ParMetis KWay method.
 
-int Decomp::init(const std::string &MeshFileName) {
+void Decomp::init(const std::string &MeshFileName) {
 
    bool TimerFlag = Pacer::start("Decomp init");
-   int Err        = 0; // default successful return code
+   Error Err; // default successful return code
 
    I4 InHaloWidth;
    std::string DecompMethodStr;
@@ -433,22 +434,13 @@ int Decomp::init(const std::string &MeshFileName) {
 
    Config DecompConfig("Decomp");
    Err = OmegaConfig->get(DecompConfig);
-   if (Err != 0) {
-      LOG_CRITICAL("Decomp: Decomp group not found in Config");
-      return Err;
-   }
+   CHECK_ERROR_ABORT(Err, "Decomp: Decomp group not found in Config");
 
    Err = DecompConfig.get("HaloWidth", InHaloWidth);
-   if (Err != 0) {
-      LOG_CRITICAL("Decomp: HaloWidth not found in Decomp Config");
-      return Err;
-   }
+   CHECK_ERROR_ABORT(Err, "Decomp: HaloWidth not found in Decomp Config");
 
    Err = DecompConfig.get("DecompMethod", DecompMethodStr);
-   if (Err != 0) {
-      LOG_CRITICAL("Decomp: DecompMethod not found in Decomp Config");
-      return Err;
-   }
+   CHECK_ERROR_ABORT(Err, "Decomp: DecompMethod not found in Decomp Config");
 
    PartMethod Method = getPartMethodFromStr(DecompMethodStr);
 
@@ -463,7 +455,6 @@ int Decomp::init(const std::string &MeshFileName) {
                                           InHaloWidth, MeshFileName);
 
    TimerFlag = Pacer::stop("Decomp init");
-   return Err;
 
 } // End init decomposition
 

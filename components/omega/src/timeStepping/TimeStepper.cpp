@@ -6,6 +6,7 @@
 
 #include "TimeStepper.h"
 #include "Config.h"
+#include "Error.h"
 #include "ForwardBackwardStepper.h"
 #include "RungeKutta2Stepper.h"
 #include "RungeKutta4Stepper.h"
@@ -35,9 +36,9 @@ TimeStepperType getTimeStepperFromStr(const std::string &InString) {
    } else if (InString == "RungeKutta2") {
       TimeStepperChoice = TimeStepperType::RungeKutta2;
    } else {
-      LOG_CRITICAL("TimeStepper should be one of 'Forward-Backward', "
-                   "'RungeKutta4' or 'RungeKutta2' but got {}:",
-                   InString);
+      ABORT_ERROR("TimeStepper should be one of 'Forward-Backward', "
+                  "'RungeKutta4' or 'RungeKutta2' but got {}:",
+                  InString);
    }
 
    return TimeStepperChoice;
@@ -70,7 +71,7 @@ TimeStepper::TimeStepper(
    EndAlarm = std::make_unique<Alarm>(Alarm(AlarmName, InStopTime));
    int Err  = StepClock->attachAlarm(EndAlarm.get());
    if (Err != 0)
-      LOG_CRITICAL("Error attaching EndAlarm to TimeStep Clock");
+      ABORT_ERROR("Error attaching EndAlarm to TimeStep Clock");
 }
 
 //------------------------------------------------------------------------------
@@ -179,13 +180,13 @@ void TimeStepper::attachData(
 ) {
 
    if (!InTend)
-      LOG_CRITICAL("Tend pointer not defined");
+      ABORT_ERROR("Tend pointer not defined");
    if (!InAuxState)
-      LOG_CRITICAL("AuxState pointer not defined");
+      ABORT_ERROR("AuxState pointer not defined");
    if (!InMesh)
-      LOG_CRITICAL("HorzMesh pointer not defined");
+      ABORT_ERROR("HorzMesh pointer not defined");
    if (!InMeshHalo)
-      LOG_CRITICAL("MeshHalo pointer not defined");
+      ABORT_ERROR("MeshHalo pointer not defined");
 
    Tend     = InTend;
    AuxState = InAuxState;
@@ -212,98 +213,82 @@ void TimeStepper::clear() { AllTimeSteppers.clear(); }
 
 // Begin initialization of the default time stepper (phase 1)
 // This is primarily the time information.
-int TimeStepper::init1() {
-   int Err = 0;
+void TimeStepper::init1() {
+
+   Error Err; // error code - default to success
 
    // Retrieve TimeStepper options from Config if available
    Config *OmegaConfig = Config::getOmegaConfig();
    Config TimeIntConfig("TimeIntegration");
    Err = OmegaConfig->get(TimeIntConfig);
-   if (Err != 0) {
-      LOG_CRITICAL("TimeIntegration group not found in Config");
-      return Err;
-   }
+   CHECK_ERROR_ABORT(Err, "TimeIntegration group not found in Config");
 
    // Must initialize the calendar first
    std::string CalendarStr;
-   Err = TimeIntConfig.get("CalendarType", CalendarStr);
-   if (Err != 0) {
-      LOG_CRITICAL("CalendarType not found in TimeIntegration Config");
-      return Err;
-   }
+   Err += TimeIntConfig.get("CalendarType", CalendarStr);
+   CHECK_ERROR_ABORT(Err, "CalendarType not found in TimeIntegration Config");
    Calendar::init(CalendarStr);
 
    // Initialize choice of time stepper
    std::string TimeStepperStr;
-   Err = TimeIntConfig.get("TimeStepper", TimeStepperStr);
-   if (Err != 0) {
-      LOG_CRITICAL("TimeStepper not found in TimeIntegration Config");
-      return Err;
-   }
+   Err += TimeIntConfig.get("TimeStepper", TimeStepperStr);
+   CHECK_ERROR_ABORT(Err, "TimeStepper not found in TimeIntegration Config");
    TimeStepperType TimeStepperChoice = getTimeStepperFromStr(TimeStepperStr);
 
    // Initialize time step
    std::string TimeStepStr;
-   Err = TimeIntConfig.get("TimeStep", TimeStepStr);
-   if (Err != 0) {
-      LOG_CRITICAL("TimeStep not found in TimeIntegration Config");
-      return Err;
-   }
+   Err += TimeIntConfig.get("TimeStep", TimeStepStr);
+   CHECK_ERROR_ABORT(Err, "TimeStep not found in TimeIntegration Config");
    TimeInterval TimeStep(TimeStepStr);
 
    // Initialize start time
    std::string StartTimeStr;
    Err = TimeIntConfig.get("StartTime", StartTimeStr);
-   if (Err != 0) {
-      LOG_CRITICAL("StartTime not found in TimeIntConfig");
-      return Err;
-   }
+   CHECK_ERROR_ABORT(Err, "StartTime not found in TimeIntConfig");
    TimeInstant StartTime(StartTimeStr);
 
    // Either the StopTime or RunDuration will be used to set the StopTime
-   int Err1 = 0;
    std::string StopTimeStr;
    std::string DurationStr;
-   Err  = TimeIntConfig.get("StopTime", StopTimeStr);
-   Err1 = TimeIntConfig.get("RunDuration", DurationStr);
+   Err += TimeIntConfig.get("StopTime", StopTimeStr);
+   Error Err1 = TimeIntConfig.get("RunDuration", DurationStr);
 
    // Check for empty or none strings for either choice
-   if (Err == 0) {
+   bool ValidStopTime = false;
+   bool ValidDuration = false;
+   if (Err.isSuccess()) { // stop time was read from config
+      ValidStopTime = true;
       if (StopTimeStr == "" or StopTimeStr == " " or StopTimeStr == "none" or
           StopTimeStr == "None")
-         Err = 1;
+         ValidStopTime = false;
    }
-   if (Err1 == 0) {
+   if (Err1.isSuccess()) { // duration was read from config
+      ValidDuration = true;
       if (DurationStr == "" or DurationStr == " " or DurationStr == "none" or
           DurationStr == "None")
-         Err1 = 1;
+         ValidDuration = false;
    }
-   if (Err != 0 and Err1 != 0) {
-      LOG_CRITICAL("Either StopTime or RunDuration must be supplied in"
-                   "TimeIntegration Config");
-      return Err + Err1;
+   if (!ValidStopTime and !ValidDuration) {
+      ABORT_ERROR("Either StopTime or RunDuration must be supplied in"
+                  "TimeIntegration Config");
    }
 
    // Set stop time if a valid value is present. If both are present and
    // valid, we use the RunDuration, so compute stop time based on that first
    TimeInstant StopTime;
-   if (Err1 == 0) { // valid RunDuration supplied
+   if (ValidDuration) { // valid RunDuration supplied
       TimeInterval Duration(DurationStr);
       StopTime = StartTime + Duration;
-   }
-   if (Err == 0 and Err1 != 0) { // only valid StopTime supplied
+   } else { // only valid StopTime supplied
       TimeInstant StopTime2(StopTimeStr);
       StopTime = StopTime2;
    }
-   Err = 0; // reset return code
 
    // Now that all the inputs are defined, create the default time stepper
    // Use the partial creation function for only the time info. Data
    // pointers will be attached in phase 2 initialization
    TimeStepper::DefaultTimeStepper =
        create("Default", TimeStepperChoice, StartTime, StopTime, TimeStep);
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
@@ -329,7 +314,7 @@ void TimeStepper::changeTimeStep(const TimeInterval &TimeStepIn) {
    TimeStep = TimeStepIn;
    int Err  = StepClock->changeTimeStep(TimeStepIn);
    if (Err != 0)
-      LOG_CRITICAL("Error changing clock time step");
+      ABORT_ERROR("Error changing clock time step");
 }
 
 //------------------------------------------------------------------------------
