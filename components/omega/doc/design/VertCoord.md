@@ -6,9 +6,9 @@ The vertical coordinate module will be responsible for computing and storing inf
 Since Omega will be a non-Boussinesq model, the vertical independent variable will be pressure- as opposed to $z$-based.
 Similar to MPAS-Ocean's support for tilted height ($z^\star$) coordinates, Omega V1 will support a general ($p^\star$) vertical coordinate, where mass thickness $h$ varies in proportion to the total mass thickness of the water column. 
 The prognostic variable in the layered continuity equation is mass thickness, which can be used to calculate the total pressure at a given vertical level.
-The vertical height of a given level is still necessary in the model to compute sea level, the geopotential, and derivatives with respect to $z$ (vertical mixing, etc).
+The vertical height of a given level is still necessary in the model to compute sea level, the geopotential, and derivatives with respect to $z$.
 The height of a layer ($\Delta z$) can be found using the mass thickness, density and known bottom elevation relative to the geoid (positive up).
-The vertical coordinate module will also serve as a container for information related to the variable number of vertical levels for a given ocean column due to variations in bottom elevation and ice shelf cavities.
+The vertical coordinate module will also serve as a container for information related to the variable number of active vertical levels for a given ocean column (due to variations in bottom elevation and ice shelf cavities).
 
 
 ## 2 Requirements
@@ -31,13 +31,14 @@ The variable will be registered with the `IOStreams` framework to enable it to b
 ### 2.3 Requirement: Compute and store the vertical level bounds for each horizontal cell
 
 All tendency terms require a variable vertical loop range to account for variation in bottom elevation and ice shelf cavities.
-These bounds will be computed in the vertical coordinate module and used for setting masking arrays that will be used to determine where calculations are valid in the vertical.
+These bounds will be computed on construction in the vertical coordinate module and used for setting the loop bounds for active levels in calculations over the vertical.
 
 ### 2.4 Requirement: Compute and store the geopotential
 
 The geopotential will be computed and stored within the vertical coordinate module.
 Initially this will be calculated by summing together the $z$ location times $g$.
-In the future, tidal potential and self attraction and loading will also have contributions to the geopotential.
+In the future, tidal potential and self attraction and loading will also have optional (default off) contributions to the geopotential.
+
 
 ### 2.5 Requirement: Compute and store the desired thickness used in the $p^\star$ vertical coordinate
 
@@ -46,11 +47,11 @@ This involves adding a vertically-weighted bottom pressure perturbation to the r
 This desired thickness will be computed and stored within the vertical coordinate module.
 The vertical advection algorithm will use this desired thickness to compute the vertical transport.
 
-### Desired: General Arbitrary Lagrangian Eulerian (ALE) coordinate support
+### 2.6 Desired: General Arbitrary Lagrangian Eulerian (ALE) coordinate support
 
 In future versions of Omega, the $p^\star$ coordinate will be extended to a more general ALE coordinate
 
-### Desired: Vertical Lagrangian remapping (VLR) support
+### 2.7 Desired: Vertical Lagrangian remapping (VLR) support
 
 The vertical coordinate module should retain flexibility to support VLR in future versions of Omega.
 
@@ -61,7 +62,7 @@ $$
 \frac{D \mathbf{u}_h}{D t } + f\boldsymbol{k}\times \mathbf{u}_h + \left(\alpha\nabla_A p + \nabla_A \Phi \right) = \boldsymbol{\mathcal{F}},
 $$
 
-where $\mathbf{u}_h$ is the horizontal velocity, $f$ is the Coriolis parameter, $\alpha = \frac{1}{\rho}$ is the specific volume, $\rho = \rho(\Theta,S,p)$ is the density, $p$ is the hydrostatic pressure, $\Phi$ is the geopotential, and $\boldsymbol{\mathcal{F}}$ are the dissipative terms.
+where $\mathbf{u}_h$ is the horizontal velocity, $f$ is the Coriolis parameter, $\alpha$ = $\frac{1}{\rho}$ is the specific volume, $\rho = \rho(\Theta,S,p)$ is the density, $p$ is the hydrostatic pressure, $\Phi$ is the geopotential, and $\boldsymbol{\mathcal{F}}$ are the dissipative terms.
 The operator $\nabla_A$ is the gradient along a constant surface, $A$, and the total derivative is
 
 $$ \frac{D \mathbf{u}_h}{D t } = \left( \frac{\partial}{\partial t} \right)_A  + \mathbf{u}_h\cdot \nabla_A + \omega\frac{\partial}{\partial A}, $$
@@ -172,6 +173,7 @@ class VertCoord{
 #### 4.2.1 Creation
 
 The constructor will be responsible for storing any static mesh information as private variables and handling the selection any user-specified options.
+It will also compute the vertical loop bounds on edges and vertices.
 ```c++
 VertCoord::VertCoord(const HorzMesh *Mesh,
                      int NVertLevels,
@@ -216,8 +218,8 @@ void VertCoord::computePressure(const Array2DReal &PressureInterface,
 }                                
 ```
 
-The public `computeZHeight` will sum the mass thicknesses times $\alpha$ from the bottom later up, starting with the bottom elevation
-This will be done with a `parallel_scan` inside a `parallal_for over the mesh cells using hierarchical parallelism.
+The public `computeZHeight` will sum the mass thicknesses times $\alpha$ from the bottom later up, starting with the bottom elevation.
+This will be done with a `parallel_scan` inside a `parallel_for` over the mesh cells using hierarchical parallelism.
 ```c++
 void VertCoord::computeZHeight(const Array2DReal &ZInterface,
                                const Array2DReal &ZMid,
@@ -249,33 +251,13 @@ void VertCoord::computePStarThickness(const Array2DReal &LayerThicknessPStar,
 } 
 ```
 
-The private `minMaxLevelEdge` will determine the various vertical loop bounds on edges:
+The private `minMaxLevel` will determine the various vertical loop bounds on edges and vertices.
+It will compute the class member variables: `MinLevelEdgeTop`, `MaxLevelEdgeTop`, `MinLevelEdgeBot`, `MaxLevelEdgeBot`, `MinLevelVertexTop`, `MaxLevelVertexTop`, `MinLevelVertexBot`, and `MaxLevelVertexBot` from `MinLevelCell`, `MaxLevelCell`, `CellsOnEdge`, and `CellsOnVertex`.
 ```c++
-void VertCoord::minMaxLevelEdge(const Array2DI4 &MinLevelEdgeTop,
-                                const Array2DI4 &MaxLevelEdgeTop,
-                                const Array2DI4 &MinLevelEdgeBot,
-                                const Array2DI4 &MaxLevelEdgeBot,
-                                const Array2DI4 &MinLevelCell,
-                                const Array2DI4 &MaxLevelCell,
-                                const Array2DI4 &CellsOnEdge) {
+void VertCoord::minMaxLevel( ) {
 
 }
 ```
-
-The private `minMaxLevelVertex` will determine the various vertical loop bounds on vertices:
-```c++
-void VertCoord::minMaxLevelVertex(const Array2DI4 &MinLevelVertexTop,
-                                  const Array2DI4 &MaxLevelVertexTop,
-                                  const Array2DI4 &MinLevelVertexBot,
-                                  const Array2DI4 &MaxLevelVertexBot,
-                                  const Array2DI4 &MinLevelCell,
-                                  const Array2DI4 &MaxLevelCell,
-                                  const Array2DI4 &CellsOnVertex) {
-                                  
-} 
-```
-
-
 
 #### 4.2.5 Destruction and removal
 
