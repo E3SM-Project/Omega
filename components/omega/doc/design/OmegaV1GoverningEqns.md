@@ -76,6 +76,74 @@ $$ (continuous-tracer)
 
 Here we have express the following terms as a general operators, with examples of specific forms provided below: the dissipation ${\bf D}^u$, momentum forcing ${\bf F}^u$, tracer diffusion $D^\varphi$, and tracer sources and sinks $Q^\varphi$. The graviational potential, $\Phi$, is written in a general form, and may include Earth's gravity, tidal forces, and self attraction and loading. 
 
+## 3. Tracer and Mass Equations
+
+
+Here, we closely follow Appendix A2 from Ringler et al. (2013). They state, "The variable $\phi(x, y, z, t)$ may be the fluid density q or the density-weighted concentration of some tracer, in units of tracer mass per volume." This means that $\phi = \rho \varphi$, where $\varphi$ is what we are using as the definition of a tracer.
+
+We begin with their equations (A.10)-(A.13) which are agnostic to our choice of mass-thickness:
+
+$$
+h(x, y, t) = \int_{s^{\text{bot}}}^{s^{\text{top}}} \rho \, dz = \frac{1}{g} \left[ p^{\text{bot}}(x, y, t) - p^{\text{top}} (x, y, t) \right].
+$$
+
+Instead of geometric thickness to define our layers. Starting at their (A.14), it is useful to write the equation in terms of vertical mass flux $\omega = \rho w$ instead of vertical velocity $w$:
+
+$$
+\frac{d}{dt} \int_{V(t)} \rho \varphi \, dV + \int_{\partial V_{\text{side}}} \rho \varphi \mathbf{u} \cdot \mathbf{n} \, dA + \int_{\partial V_{\text{top}}(t)} \varphi (\omega - \omega_r) \, dA 
+- \int_{\partial V_{\text{bot}}(t)} \varphi (\omega - \omega_r) \, dA = 0,
+$$
+
+Their (A.15) becomes:
+
+$$
+\frac{d}{dt} \int_{A} \int_{s^{\text{bot}}}^{s^{\text{top}}} \rho \varphi \, dz \, dA + \int_{\partial A} \left( \int_{s^{\text{bot}}}^{s^{\text{top}}} \rho \varphi \mathbf{u} \, dz \right) \cdot d\mathbf{l} + \int_{A} [\varphi (\omega - \omega_r)]_{z = s^{\text{top}}} \, dA 
+- \int_{A} [\varphi (\omega - \omega_r)]_{z = s^{\text{bot}}} \, dA = 0.
+$$
+
+The equivalent of their (A.16) is our equation for mass-thickness above. The vertical average of a variable, their (A.17) becomes:
+
+$$
+\bar{\varphi}^z(x, y, t) = \frac{1}{h} \int_{s^{\text{bot}}}^{s^{\text{top}}} \varphi(x, y, z, t) \rho \, dz.
+$$
+
+The conservation equation now becomes:
+
+$$
+\frac{d}{dt} \int_{A} h \, \overline{\varphi}^z \, dA
++ \int_{\partial A} h \, \overline{\varphi}^z \, \mathbf{u} \cdot d\mathbf{l}
++ \int_{A} [\varphi \omega_{tr}]_{z = s^{\text{top}}} \, dA
+- \int_{A} [\varphi \omega_{tr}]_{z = s^{\text{bot}}} \, dA = 0,
+$$
+
+where $\omega_{\text{tr}}$ is the mass transport through the top and bottom surfaces. Making use of their (A.19) and (A.20), we arrive at:
+
+$$
+\frac{d}{dt} \overline{h \, \overline{\varphi}^z}^A
++ \frac{1}{\tilde{A}} \int_{\partial A} h \, \overline{\varphi}^z \, \mathbf{u} \cdot d\mathbf{l}
++ \left. \overline{\varphi \omega_{tr}}^A \right|_{z = s^{\text{top}}}
+- \left. \overline{\varphi \omega_{tr}}^A \right|_{z = s^{\text{bot}}} = 0,
+$$
+
+which is their (A.21), except with $\phi = \rho \varphi$ and $w \rightarrow \omega$. Taking the limit $\tilde{A} \rightarrow 0$, we get:
+
+$$
+\frac{\partial}{\partial t} h \, \overline{\varphi}^z + \nabla \cdot (h \, \overline{\varphi}^z \, \mathbf{u}) + [\varphi \omega_{tr}]_{z = s^{\text{top}}} - [\varphi \omega_{tr}]_{z = s^{\text{bot}}} = 0.
+$$
+
+We get mass conservation by substituting $\varphi \rightarrow 1$:
+
+$$
+\frac{\partial}{\partial t} h + \nabla \cdot (h \mathbf{u}) + \left.\omega_{tr}\right|_{z = s^{\text{top}}} - \left.\omega_{tr}\right|_{z = s^{\text{bot}}} = 0.
+$$
+
+This is nearly identical to their (A.25) but with the mass-thickness and $\omega$.
+
+
+
+
+## 4. Momentum Equations
+
 Geophysical fluids such as the ocean and atmosphere are rotating and stratified, and horizontal velocities are orders of magnitude larger than vertical velocities. It is therefore convenient to separate the horizontal and vertical as ${\bf u}_{3D} = \left( {\bf u}, w \right)$ and $\nabla_{3D} = \left( \nabla_z, d/dz \right)$ where $z$ is the vertical direction in a local Cartesian coordinate system aligned with gravity (approximately normal to Earth's surface), and $w$ is the vertical velocity. The $z$ subscript on $\nabla_z$ is to remind us that this is the true horizontal gradient (perpendicular to $z$), as opposed to gradients within tilted layers used in the following section. The Earth's gravitational force is included as $\Phi_g = gz $ so that $ \nabla_{3D} \Phi_g =  g{\bf k}$. The rotating frame of reference results in the Coriolis force $f {\bf k} \times {\bf u} \equiv f {\bf u}^\perp$, where $f$ is the Coriolis parameter and ${\bf u}^\perp$ is the horizontal velocity vector rotated $90^\circ$ counterclockwise from $\bf u$ in the horizontal plane. See any textbook in the [References](#references) for a full derivation.
 
 
