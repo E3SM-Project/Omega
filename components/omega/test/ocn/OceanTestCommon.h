@@ -11,9 +11,9 @@
 namespace OMEGA {
 
 // check if two real numbers are equal with a given relative tolerance
-inline bool isApprox(Real X, Real Y, Real RTol, Real ATol = 0) {
-   return std::abs(X - Y) <=
-          std::max(ATol, RTol * std::max(std::abs(X), std::abs(Y)));
+KOKKOS_INLINE_FUNCTION bool isApprox(Real X, Real Y, Real RTol, Real ATol = 0) {
+   return Kokkos::abs(X - Y) <=
+          Kokkos::max(ATol, RTol * Kokkos::max(Kokkos::abs(X), Kokkos::abs(Y)));
 }
 
 // convert spherical components of a vector to Cartesian

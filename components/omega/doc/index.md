@@ -30,6 +30,7 @@ userGuide/Logging
 userGuide/Driver
 userGuide/Decomp
 userGuide/Dimension
+userGuide/EOS
 userGuide/Error
 userGuide/Field
 userGuide/IO
@@ -62,6 +63,7 @@ devGuide/DataTypes
 devGuide/MachEnv
 devGuide/Config
 devGuide/Driver
+devGuide/EOS
 devGuide/Broadcast
 devGuide/CMakeBuild
 devGuide/Logging

@@ -2,7 +2,7 @@
 
 ## 1 Overview
 
-Representation of unresolved vertical fluxes of momentum, heat, salt, and biogeochemical tracers in ocean models is essential to simulations fidelity. Models of turbulent fluxes spans a wide range of complexity, but the models generally fall into a few categories: simply polynomial relationships, equilibrium turbulence models, and prognostic turbulence models.  
+Representation of unresolved vertical fluxes of momentum, heat, salt, and biogeochemical tracers in ocean models is essential to simulations fidelity. Models of turbulent fluxes spans a wide range of complexity, but the models generally fall into a few categories: simply polynomial relationships, equilibrium turbulence models, and prognostic turbulence models.
 
 ## 2 Requirements
 
@@ -18,7 +18,7 @@ $$
 \overline{w' \phi'}\approx \kappa(\overline{\rho},\overline{u},\overline{v}) \left(\frac{\partial \overline{\phi}}{\partial z} + \gamma(\overline{\rho},\overline{u},\overline{v}) \right)\,.
 $$
 
-Here, $\phi$ is a generic tracer, $\overline{w'\phi'}$ is the vertical turbulent flux of that tracer, $\kappa$ is the vertical diffusivity, and $\gamma$ is the gradient free portion of the flux (often referred to as 'non-local'). The vertical diffusivity $\kappa$ can be as simple as a constant value, to complex functions of quantities like shear and stratification. A similar equation can be written for turbulent momentum fluxes and vertical viscosity ($\nu$). 
+Here, $\phi$ is a generic tracer, $\overline{w'\phi'}$ is the vertical turbulent flux of that tracer, $\kappa$ is the vertical diffusivity, and $\gamma$ is the gradient free portion of the flux (often referred to as 'non-local'). The vertical diffusivity $\kappa$ can be as simple as a constant value, to complex functions of quantities like shear and stratification. A similar equation can be written for turbulent momentum fluxes and vertical viscosity ($\nu$).
 
 Invocation of the gradient diffusion hypothesis is a simplifying assumption for turbulence closures that casts turbulence as a purely diffusive process and allows the mixing problem to be cast implicitly in a tridagonal solve.  For more physical mixing closures, other methods can be explored, e.g., direct and iterative implicit solvers or subcycling.
 
@@ -100,7 +100,7 @@ So that homogenization only occurs for unstable stratification (assuming $N^2_{c
 
 ## 4 Design
 
-Vertical chunking, as is, does not work well for vertical derivatives, so a first design of the vertical mixing coefficients computation does not do vertical chunking and just computes with the full-depth column. 
+Vertical chunking, as is, does not work well for vertical derivatives, so a first design of the vertical mixing coefficients computation does not do vertical chunking and just computes with the full-depth column.
 
 Additionally, to start, only the down gradient contribution to vertical mixing will be added, with contributions to the vertical viscosity and diffusivity coming from the shear (Richardson number mixing), convective, and background mixing models detailed in the prior section. However, in future developments, the K Profile Parameterization [(KPP; Large et al., 1994)](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94rg01872) and other non-local and/or higher-order mixing models will be added. Some of these parameterizations require vertical derivatives, full-depth integrals, and/or formulate $\kappa$ and $\gamma$ in Eq. (1) Section 2.1 as functions of surface forcing, which require either full-depth column or surface forcing information at depth, thus we design the mixing coefficients routine with this in mind. A solution that allows chunking with vertical operations such as derivatives and integrals and/or surface forcing values would be advantageous, but is outside of the scope of this design document.
 
@@ -139,11 +139,11 @@ It is assumed that viscosity and diffusivity will be stored at cell centers. Add
 parallelFor(
     {NCellsAll, NVertLevels}, KOKKOS_LAMBDA(int ICell, int K) {
 
-        // Add background contribution to viscosity and diffusivity 
+        // Add background contribution to viscosity and diffusivity
         VertViscosity(ICell, K) = BackgroundViscosity;
         VertDiffusivity(ICell, K) = BackgroundDiffusivity;
 
-        // If shear mixing true, add shear contribution to viscosity and diffusivity 
+        // If shear mixing true, add shear contribution to viscosity and diffusivity
         if (EnableShearMix) {
             const Real InvAreaCell = 1._Real / AreaCell(ICell);
             // Calculate the square of the shear
@@ -163,7 +163,7 @@ parallelFor(
             VertDiffusivity(ICell, K) = VertDiffusivity(ICell, K) + VertViscosity(ICell, K) / (1 + ShearAlpha * RichardsonNum(ICell, K));
         }
 
-        // If conv mixing true, add conv contribution to viscosity and diffusivity 
+        // If conv mixing true, add conv contribution to viscosity and diffusivity
         if (EnableConvectiveMix) {
             if (BruntVaisalaFreq(ICell, K) < ConvectiveTriggerBVF) {
                 VertViscosity(ICell, K) = VertViscosity(ICell, K) + ConvectiveDiffusivity;
@@ -181,4 +181,3 @@ A no-flux condition should be applied to both the vertical mixing of momentum an
 Unit tests can be initialized with linear-with-depth initial conditions (velocity and density) and use a linear equation of state. Expected values of the Richardson number, vertical viscosity, and vertical diffusion coefficients can be computed and compared to. Tests for both the shear, convective, and combined mixing contributions should be made to test requirement (2.1).
 
 This assumes that the displaced density has already been tested. Vertical fluxes of momentum and tracers will be tested separately with the [tridiagonal solver](./TridiagonalSolver.md).
-
