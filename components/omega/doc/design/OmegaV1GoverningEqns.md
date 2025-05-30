@@ -15,7 +15,7 @@ Add later, if it seems necessary. There is a toc on the left bar.
 
 This design document describes the governing equations for Omega, the Ocean Model for E3SM Global Applications. Overall, Omega is an unstructured-mesh ocean model based on TRiSK numerical methods ([Thuburn et al. 2009](https://www.sciencedirect.com/science/article/pii/S0021999109004434)) that is specifically designed for modern exascale computing architectures. The algorithms in Omega will be mostly identical to those in MPAS-Ocean, but it will be written in c++ rather than Fortran in order to take advantage of the Kokkos performance portability library to run on GPUs ([Trott et al. 2022](https://ieeexplore.ieee.org/document/9485033)). Significant differences between MPAS-Ocean and Omega are:
 
-1. Omega is non-Boussinesq. This means that the full 3D density is used everywhere, and results in a mass-conserving model. MPAS-Ocean and POP were Boussinesq, so that a reference density $\rho_0$ is used in the pressure gradient term, and were therefore volume-conserving models. In Omega the layered mass-conservation equation is in terms of mass-thickness ($h=\rho \Delta z$). In MPAS-Ocean the simple thickness ($h=\Delta z$) is the prognostic volume variable (normalized by horizontal cell area).
+1. Omega is non-Boussinesq. This means that the full 3D density is used everywhere, and results in a mass-conserving model. MPAS-Ocean and POP were Boussinesq, so that a reference density $\rho_0$ is used in the pressure gradient term, and were therefore volume-conserving models. In Omega the layered mass-conservation equation is in terms of pressure-thickness ($h=\rho g \Delta z$). In MPAS-Ocean the simple thickness ($h=\Delta z$) is the prognostic volume variable (normalized by horizontal cell area).
 1. Omega will use the updated equation of state TEOS10, while MPAS-Ocean used the Jackett-McDougall equation of state.
 
 The planned versions of Omega are:
@@ -33,7 +33,7 @@ This document describes the governing equations for the layered ocean model, whi
 The requirements in the [Omega-0 design document](OmegaV0ShallowWater) still apply. Additional design requirements for Omega-1 are:
 
 ### Omega will be a hydrostatic, non-Boussinesq ocean model.
-See discussion in introduction. The non-Boussinesq formulation uses the full density throughout resulting in governing equations that conserve mass rather than volume. The substantial change is that the "thickness" variable, $h$, is now a mass-thickness, $h = \rho \Delta z$. This is explained in the derivation of the [layered equations below](#layered-equations).
+See discussion in introduction. The non-Boussinesq formulation uses the full density throughout resulting in governing equations that conserve mass rather than volume. The substantial change is that the "thickness" variable, $h$, is now a pressure-thickness, $h = \rho g \Delta z$. This is explained in the derivation of the [layered equations below](#layered-equations).
 
 ### Omega will use TEOS10 for the equation of state.
 See additional [EOS design document](EOS)
@@ -81,63 +81,72 @@ Here we have express the following terms as a general operators, with examples o
 
 Here, we closely follow Appendix A2 from Ringler et al. (2013). They state, "The variable $\phi(x, y, z, t)$ may be the fluid density q or the density-weighted concentration of some tracer, in units of tracer mass per volume." This means that $\phi = \rho \varphi$, where $\varphi$ is what we are using as the definition of a tracer.
 
-We begin with their equations (A.10)-(A.13) which are agnostic to our choice of mass-thickness:
+We begin with their equations (A.10)-(A.13) which are agnostic to our choice of pressure-thickness:
 
 $$
-h(x, y, t) = \int_{s^{\text{bot}}}^{s^{\text{top}}} \rho \, dz = \frac{1}{g} \left[ p^{\text{bot}}(x, y, t) - p^{\text{top}} (x, y, t) \right].
-$$
+h(x, y, t) = \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho g \, dz =  p^{\text{bot}}(x, y, t) - p^{\text{top}} (x, y, t).
+$$ (def-pressure-thickness)
 
-Instead of geometric thickness to define our layers. Starting at their (A.14), it is useful to write the equation in terms of vertical mass flux $\omega = \rho w$ instead of vertical velocity $w$:
+Instead of geometric thickness to define our layers. Starting at their (A.14), it is useful to write the equation in terms of vertical pressure (mass) flux $\omega = \rho g w$ instead of vertical velocity $w$:
 
 $$
-\frac{d}{dt} \int_{V(t)} \rho \varphi \, dV + \int_{\partial V_{\text{side}}} \rho \varphi \mathbf{u} \cdot \mathbf{n} \, dA + \int_{\partial V_{\text{top}}(t)} \varphi (\omega - \omega_r) \, dA 
-- \int_{\partial V_{\text{bot}}(t)} \varphi (\omega - \omega_r) \, dA = 0,
-$$
+\frac{d}{dt} \int_{V(t)} \rho g \varphi \, dV + \int_{\partial V_{\text{side}}} \rho g \varphi \mathbf{u} \cdot \mathbf{n} \, dA + \int_{\partial V_{\text{top}}(t)} \varphi (\omega - \omega_r) \, dA 
+- \int_{\partial V_{\text{bot}}(t)} \varphi (\omega - \omega_r) \, dA = 0.
+$$ (tracer-V-int)
 
 Their (A.15) becomes:
 
 $$
-\frac{d}{dt} \int_{A} \int_{s^{\text{bot}}}^{s^{\text{top}}} \rho \varphi \, dz \, dA + \int_{\partial A} \left( \int_{s^{\text{bot}}}^{s^{\text{top}}} \rho \varphi \mathbf{u} \, dz \right) \cdot d\mathbf{l} + \int_{A} [\varphi (\omega - \omega_r)]_{z = s^{\text{top}}} \, dA 
-- \int_{A} [\varphi (\omega - \omega_r)]_{z = s^{\text{bot}}} \, dA = 0.
-$$
+\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho g \varphi \, dz \, dA + \int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho g \varphi \mathbf{u} \, dz \right) \cdot \mathbf{n} \, dl + \int_{A} [\varphi (\omega - \omega_r)]_{p = p^{\text{top}}} \, dA 
+- \int_{A} [\varphi (\omega - \omega_r)]_{p = p^{\text{bot}}} \, dA = 0.
+$$ (tracer-Az-int)
 
-The equivalent of their (A.16) is our equation for mass-thickness above. The vertical average of a variable, their (A.17) becomes:
+The assumption of hydostatic balance allows a change of coordinate. This may be written with differentials as $dp = \rho g dz$. Tracer conservation may be rewritten as
 
 $$
-\bar{\varphi}^z(x, y, t) = \frac{1}{h} \int_{s^{\text{bot}}}^{s^{\text{top}}} \varphi(x, y, z, t) \rho \, dz.
+\frac{d}{dt} \int_{A} \int_{p^{\text{bot}}}^{p^{\text{top}}} \varphi \, dp \, dA + \int_{\partial A} \left( \int_{p^{\text{bot}}}^{p^{\text{top}}} \varphi \mathbf{u} \, dp \right) \cdot \mathbf{n} \, dl + \int_{A} [\varphi (\omega - \omega_r)]_{p = p^{\text{top}}} \, dA 
+- \int_{A} [\varphi (\omega - \omega_r)]_{p = p^{\text{bot}}} \, dA = 0,
+$$ (tracer-Ap-int)
+
+where we define the pressure surfaces $p^{\text{top}}\equiv p(z^{\text{top}})$ and $p^{\text{bot}}\equiv p(z^{\text{bot}})$.
+The equivalent of their (A.16) is our equation for pressure-thickness above. The vertical average of a variable, their (A.17) becomes:
+
 $$
+\overline{\varphi}^p(x, y, t) = \frac{1}{h} \int_{z^{\text{bot}}}^{z^{\text{top}}} \varphi(x, y, z, t) \rho g \, dz \\
+ = \frac{1}{h} \int_{p^{\text{bot}}}^{p^{\text{top}}} \varphi(x, y, z, t)  \, dp.
+$$ (def-tracer-avg)
 
 The conservation equation now becomes:
 
 $$
-\frac{d}{dt} \int_{A} h \, \overline{\varphi}^z \, dA
-+ \int_{\partial A} h \, \overline{\varphi}^z \, \mathbf{u} \cdot d\mathbf{l}
-+ \int_{A} [\varphi \omega_{tr}]_{z = s^{\text{top}}} \, dA
-- \int_{A} [\varphi \omega_{tr}]_{z = s^{\text{bot}}} \, dA = 0,
-$$
+\frac{d}{dt} \int_{A} h \, \overline{\varphi}^p \, dA
++ \int_{\partial A} h \, \overline{\varphi\mathbf{u}}^p \cdot \mathbf{n} \, dl
++ \int_{A} [\varphi \omega_{tr}]_{p = p^{\text{top}}} \, dA
+- \int_{A} [\varphi \omega_{tr}]_{p = p^{\text{bot}}} \, dA = 0,
+$$ (tracer-Aint-pavg)
 
 where $\omega_{\text{tr}}$ is the mass transport through the top and bottom surfaces. Making use of their (A.19) and (A.20), we arrive at:
 
 $$
-\frac{d}{dt} \overline{h \, \overline{\varphi}^z}^A
-+ \frac{1}{\tilde{A}} \int_{\partial A} h \, \overline{\varphi}^z \, \mathbf{u} \cdot d\mathbf{l}
-+ \left. \overline{\varphi \omega_{tr}}^A \right|_{z = s^{\text{top}}}
-- \left. \overline{\varphi \omega_{tr}}^A \right|_{z = s^{\text{bot}}} = 0,
-$$
+\frac{d}{dt} \overline{h \, \overline{\varphi}^p}^A
++ \frac{1}{\tilde{A}} \int_{\partial A} h \, \overline{\varphi\mathbf{u}}^p \cdot \mathbf{n} \, dl
++ \left. \overline{\varphi \omega_{tr}}^A \right|_{p = p^{\text{top}}}
+- \left. \overline{\varphi \omega_{tr}}^A \right|_{p = p^{\text{bot}}} = 0,
+$$ (tracer-Aavg-pavg)
 
-which is their (A.21), except with $\phi = \rho \varphi$ and $w \rightarrow \omega$. Taking the limit $\tilde{A} \rightarrow 0$, we get:
+which is their (A.21), except with $\phi = \rho g \varphi$ and $w \rightarrow \omega$. Taking the limit $\tilde{A} \rightarrow 0$, we get:
 
 $$
-\frac{\partial}{\partial t} h \, \overline{\varphi}^z + \nabla \cdot (h \, \overline{\varphi}^z \, \mathbf{u}) + [\varphi \omega_{tr}]_{z = s^{\text{top}}} - [\varphi \omega_{tr}]_{z = s^{\text{bot}}} = 0.
-$$
+\frac{\partial}{\partial t} h \, \overline{\varphi}^p + \nabla \cdot (h \, \overline{\varphi\mathbf{u}}^p ) + [\varphi \omega_{tr}]_{p = p^{\text{top}}} - [\varphi \omega_{tr}]_{p = p^{\text{bot}}} = 0.
+$$ (tracer-layered)
 
 We get mass conservation by substituting $\varphi \rightarrow 1$:
 
 $$
-\frac{\partial}{\partial t} h + \nabla \cdot (h \mathbf{u}) + \left.\omega_{tr}\right|_{z = s^{\text{top}}} - \left.\omega_{tr}\right|_{z = s^{\text{bot}}} = 0.
-$$
+\frac{\partial}{\partial t} h + \nabla \cdot (h \overline{\mathbf{u}}^p ) + \left.\omega_{tr}\right|_{p = p^{\text{top}}} - \left.\omega_{tr}\right|_{p = p^{\text{bot}}} = 0.
+$$ (mass-layered)
 
-This is nearly identical to their (A.25) but with the mass-thickness and $\omega$.
+This is nearly identical to their (A.25) but with the pressure-thickness and $\omega$.
 
 
 
@@ -305,7 +314,7 @@ Here we derive the layered equations by discretizing in the vertical, while the 
 
 ### Layer Integration
 
-For non-Boussinesq layered equations we begin by defining the mass-thickness of layer $k$ as
+For non-Boussinesq layered equations we begin by defining the pressure-thickness of layer $k$ as
 
 $$
 h_k(x,y,t)
