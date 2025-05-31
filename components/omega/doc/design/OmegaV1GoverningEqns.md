@@ -52,7 +52,7 @@ $$
 \frac{\partial \rho {\bf u}_{3D}}{\partial t}
  + \nabla_{3D} \cdot \left( \rho {\bf u}_{3D} \otimes {\bf u}_{3D}  \right)
   = - \nabla_{3D} p
-   - \rho \nabla_{3D} \Phi 
+   - \rho \nabla_{3D} \Phi
 + \rho {\bf D}^u_{3D} + \rho {\bf F}^u_{3D}
 $$ (continuous-momentum)
 
@@ -74,76 +74,123 @@ $$
 = D^\varphi + Q^\varphi
 $$ (continuous-tracer)
 
-Here we have express the following terms as a general operators, with examples of specific forms provided below: the dissipation ${\bf D}^u$, momentum forcing ${\bf F}^u$, tracer diffusion $D^\varphi$, and tracer sources and sinks $Q^\varphi$. The graviational potential, $\Phi$, is written in a general form, and may include Earth's gravity, tidal forces, and self attraction and loading. 
+Here we have express the following terms as a general operators, with examples of specific forms provided below: the dissipation ${\bf D}^u$, momentum forcing ${\bf F}^u$, tracer diffusion $D^\varphi$, and tracer sources and sinks $Q^\varphi$. The graviational potential, $\Phi$, is written in a general form, and may include Earth's gravity, tidal forces, and self attraction and loading.
 
-## 3. Tracer and Mass Equations
+
+## 3 Pseudo-Height Coordinate
+
+In our non-Boussinesq hydrostatic framework, we adopt a vertical coordinate based on **pseudo-height**, denoted by $\tilde{z}$. This coordinate measures the mass per unit area between the ocean surface and a given depth, and is defined by:
+
+$$
+\tilde{z}(z) = -\int_z^{z_s} \rho(z') \, dz',
+$$ (def-pseudo-height)
+
+where $z$ is the geometric height (positive upward), $\rho$ is the in-situ density, and $z_s$ is the ocean surface elevation. Pseudo-height $\tilde{z}$ is therefore **zero at the surface** and becomes **increasingly negative downward**, with units of $\mathrm{kg\,m^{-2}}$. The total column mass per unit area is defined as:
+
+$$
+M = \int_{z_b}^{z_s} \rho(z') \, dz' > 0,
+$$ (def-column-mass)
+
+where $z_b$ is the bottom elevation. The bottom of the domain corresponds to:
+
+$$
+\tilde{z}(z_b) = -M.
+$$ (def-total-pseudo-height)
+
+Under hydrostatic balance, we have:
+
+$$
+\frac{dp}{dz} = -\rho g \quad \Rightarrow \quad dp = -\rho g\,dz \quad \Rightarrow \quad \rho\,dz = -\frac{dp}{g},
+$$ (hydrostatic-balance)
+
+which allows us to express pseudo-height in terms of pressure:
+
+$$
+\tilde{z} = -\frac{p - p_s}{g}, \quad \text{or equivalently,} \quad p = p_s - g\tilde{z},
+$$ (pseudo-height-pressure)
+
+where $p_s$ is the pressure at the ocean surface. This makes $\tilde{z}$ a natural coordinate for tracer and mass budgets when $\rho$ is known as a function of pressure, as is the case in TEOS-10, our proposed equation of state.
+
+Given $\rho(\tilde{z})$, we can recover geometric height via:
+
+$$
+z(\tilde{z}) = z_s + \int_{0}^{\tilde{z}} \frac{1}{\rho(\tilde{z}')} \, d\tilde{z}',
+$$ (invert-z-from-pseudo)
+
+noting that the integral moves downward in the column (i.e., toward more negative $\tilde{z}$).
+
+We now formulate the mass and tracer conservation equations in a finite volume using $\tilde{z}$ as the vertical coordinate.
+
+
+
+## 4. Tracer and Mass Equations
 
 
 Here, we closely follow Appendix A2 from Ringler et al. (2013). They state, "The variable $\phi(x, y, z, t)$ may be the fluid density q or the density-weighted concentration of some tracer, in units of tracer mass per volume." This means that $\phi = \rho \varphi$, where $\varphi$ is what we are using as the definition of a tracer.
 
-We begin with their equations (A.10)-(A.13) which are agnostic to our choice of pressure-thickness:
+We begin with their equations (A.10)-(A.13) which are agnostic to our choice of mass-thickness:
 
 $$
-h(x, y, t) = \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho g \, dz =  p^{\text{bot}}(x, y, t) - p^{\text{top}} (x, y, t).
+h(x, y, t) = \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, dz =  \tilde{z}^{\text{top}}(x, y, t) - \tilde{z}^{\text{bot}} (x, y, t).
 $$ (def-pressure-thickness)
 
-Instead of geometric thickness to define our layers. Starting at their (A.14), it is useful to write the equation in terms of vertical pressure (mass) flux $\omega = \rho g w$ instead of vertical velocity $w$:
+Instead of geometric thickness to define our layers. Starting at their (A.14), it is useful to write the equation in terms of vertical mass flux per unit area $\omega = \rho w$ instead of vertical velocity $w$:
 
 $$
-\frac{d}{dt} \int_{V(t)} \rho g \varphi \, dV + \int_{\partial V_{\text{side}}} \rho g \varphi \mathbf{u} \cdot \mathbf{n} \, dA + \int_{\partial V_{\text{top}}(t)} \varphi (\omega - \omega_r) \, dA 
+\frac{d}{dt} \int_{V(t)} \rho \varphi \, dV + \int_{\partial V_{\text{side}}} \rho \varphi \mathbf{u} \cdot \mathbf{n} \, dA + \int_{\partial V_{\text{top}}(t)} \varphi (\omega - \omega_r) \, dA
 - \int_{\partial V_{\text{bot}}(t)} \varphi (\omega - \omega_r) \, dA = 0.
 $$ (tracer-V-int)
 
 Their (A.15) becomes:
 
 $$
-\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho g \varphi \, dz \, dA + \int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho g \varphi \mathbf{u} \, dz \right) \cdot \mathbf{n} \, dl + \int_{A} [\varphi (\omega - \omega_r)]_{p = p^{\text{top}}} \, dA 
-- \int_{A} [\varphi (\omega - \omega_r)]_{p = p^{\text{bot}}} \, dA = 0.
+\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \varphi \, dz \, dA + \int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \varphi \mathbf{u} \, dz \right) \cdot \mathbf{n} \, dl + \int_{A} [\varphi (\omega - \omega_r)]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+- \int_{A} [\varphi (\omega - \omega_r)]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA = 0.
 $$ (tracer-Az-int)
 
-The assumption of hydostatic balance allows a change of coordinate. This may be written with differentials as $dp = \rho g dz$. Tracer conservation may be rewritten as
+The assumption of hydostatic balance allows a change of coordinate to the pseudo-height described in the previous section. Tracer conservation may be rewritten as
 
 $$
-\frac{d}{dt} \int_{A} \int_{p^{\text{bot}}}^{p^{\text{top}}} \varphi \, dp \, dA + \int_{\partial A} \left( \int_{p^{\text{bot}}}^{p^{\text{top}}} \varphi \mathbf{u} \, dp \right) \cdot \mathbf{n} \, dl + \int_{A} [\varphi (\omega - \omega_r)]_{p = p^{\text{top}}} \, dA 
-- \int_{A} [\varphi (\omega - \omega_r)]_{p = p^{\text{bot}}} \, dA = 0,
+\frac{d}{dt} \int_{A} \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \varphi \, d\tilde{z} \, dA + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \varphi \mathbf{u} \, d\tilde{z} \right) \cdot \mathbf{n} \, dl + \int_{A} [\varphi (\omega - \omega_r)]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+- \int_{A} [\varphi (\omega - \omega_r)]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA = 0,
 $$ (tracer-Ap-int)
 
-where we define the pressure surfaces $p^{\text{top}}\equiv p(z^{\text{top}})$ and $p^{\text{bot}}\equiv p(z^{\text{bot}})$.
-The equivalent of their (A.16) is our equation for pressure-thickness above. The vertical average of a variable, their (A.17) becomes:
+where we define the pressure surfaces $\tilde{z}^{\text{top}}\equiv \tilde{z}(z^{\text{top}})$ and $\tilde{z}^{\text{bot}}\equiv \tilde{z}(z^{\text{bot}})$.
+The equivalent of their (A.16) is our equation for mass-thickness above. The vertical average of a variable, their (A.17) becomes:
 
 $$
-\overline{\varphi}^p(x, y, t) = \frac{1}{h} \int_{z^{\text{bot}}}^{z^{\text{top}}} \varphi(x, y, z, t) \rho g \, dz \\
- = \frac{1}{h} \int_{p^{\text{bot}}}^{p^{\text{top}}} \varphi(x, y, z, t)  \, dp.
+\overline{\varphi}^{\tilde{z}}(x, y, t) = \frac{1}{h} \int_{z^{\text{bot}}}^{z^{\text{top}}} \varphi(x, y, z, t) \rho g \, dz \\
+ = \frac{1}{h} \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \varphi(x, y, z, t)  \, d\tilde{z}.
 $$ (def-tracer-avg)
 
 The conservation equation now becomes:
 
 $$
-\frac{d}{dt} \int_{A} h \, \overline{\varphi}^p \, dA
-+ \int_{\partial A} h \, \overline{\varphi\mathbf{u}}^p \cdot \mathbf{n} \, dl
-+ \int_{A} [\varphi \omega_{tr}]_{p = p^{\text{top}}} \, dA
-- \int_{A} [\varphi \omega_{tr}]_{p = p^{\text{bot}}} \, dA = 0,
+\frac{d}{dt} \int_{A} h \, \overline{\varphi}^{\tilde{z}} \, dA
++ \int_{\partial A} h \, \overline{\varphi\mathbf{u}}^{\tilde{z}} \cdot \mathbf{n} \, dl
++ \int_{A} [\varphi \omega_{tr}]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+- \int_{A} [\varphi \omega_{tr}]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA = 0,
 $$ (tracer-Aint-pavg)
 
-where $\omega_{\text{tr}}$ is the mass transport through the top and bottom surfaces. Making use of their (A.19) and (A.20), we arrive at:
+where $\omega_{\text{tr}}$ is the mass transport per unit area through the top and bottom surfaces. Making use of their (A.19) and (A.20), we arrive at:
 
 $$
-\frac{d}{dt} \overline{h \, \overline{\varphi}^p}^A
-+ \frac{1}{\tilde{A}} \int_{\partial A} h \, \overline{\varphi\mathbf{u}}^p \cdot \mathbf{n} \, dl
-+ \left. \overline{\varphi \omega_{tr}}^A \right|_{p = p^{\text{top}}}
-- \left. \overline{\varphi \omega_{tr}}^A \right|_{p = p^{\text{bot}}} = 0,
+\frac{d}{dt} \overline{h \, \overline{\varphi}^{\tilde{z}}}^A
++ \frac{1}{\tilde{A}} \int_{\partial A} h \, \overline{\varphi\mathbf{u}}^{\tilde{z}} \cdot \mathbf{n} \, dl
++ \left. \overline{\varphi \omega_{tr}}^A \right|_{\tilde{z} = \tilde{z}^{\text{top}}}
+- \left. \overline{\varphi \omega_{tr}}^A \right|_{\tilde{z} = \tilde{z}^{\text{bot}}} = 0,
 $$ (tracer-Aavg-pavg)
 
 which is their (A.21), except with $\phi = \rho g \varphi$ and $w \rightarrow \omega$. Taking the limit $\tilde{A} \rightarrow 0$, we get:
 
 $$
-\frac{\partial}{\partial t} h \, \overline{\varphi}^p + \nabla \cdot (h \, \overline{\varphi\mathbf{u}}^p ) + [\varphi \omega_{tr}]_{p = p^{\text{top}}} - [\varphi \omega_{tr}]_{p = p^{\text{bot}}} = 0.
+\frac{\partial}{\partial t} h \, \overline{\varphi}^{\tilde{z}} + \nabla \cdot (h \, \overline{\varphi\mathbf{u}}^{\tilde{z}} ) + [\varphi \omega_{tr}]_{\tilde{z} = \tilde{z}^{\text{top}}} - [\varphi \omega_{tr}]_{\tilde{z} = \tilde{z}^{\text{bot}}} = 0.
 $$ (tracer-layered)
 
 We get mass conservation by substituting $\varphi \rightarrow 1$:
 
 $$
-\frac{\partial}{\partial t} h + \nabla \cdot (h \overline{\mathbf{u}}^p ) + \left.\omega_{tr}\right|_{p = p^{\text{top}}} - \left.\omega_{tr}\right|_{p = p^{\text{bot}}} = 0.
+\frac{\partial}{\partial t} h + \nabla \cdot (h \overline{\mathbf{u}}^{\tilde{z}} ) + \left.\omega_{tr}\right|_{\tilde{z} = \tilde{z}^{\text{top}}} - \left.\omega_{tr}\right|_{\tilde{z} = \tilde{z}^{\text{bot}}} = 0.
 $$ (mass-layered)
 
 This is nearly identical to their (A.25) but with the pressure-thickness and $\omega$.
@@ -151,7 +198,7 @@ This is nearly identical to their (A.25) but with the pressure-thickness and $\o
 
 
 
-## 4. Momentum Equations
+## 5. Momentum Equations
 
 Geophysical fluids such as the ocean and atmosphere are rotating and stratified, and horizontal velocities are orders of magnitude larger than vertical velocities. It is therefore convenient to separate the horizontal and vertical as ${\bf u}_{3D} = \left( {\bf u}, w \right)$ and $\nabla_{3D} = \left( \nabla_z, d/dz \right)$ where $z$ is the vertical direction in a local Cartesian coordinate system aligned with gravity (approximately normal to Earth's surface), and $w$ is the vertical velocity. The $z$ subscript on $\nabla_z$ is to remind us that this is the true horizontal gradient (perpendicular to $z$), as opposed to gradients within tilted layers used in the following section. The Earth's gravitational force is included as $\Phi_g = gz $ so that $ \nabla_{3D} \Phi_g =  g{\bf k}$. The rotating frame of reference results in the Coriolis force $f {\bf k} \times {\bf u} \equiv f {\bf u}^\perp$, where $f$ is the Coriolis parameter and ${\bf u}^\perp$ is the horizontal velocity vector rotated $90^\circ$ counterclockwise from $\bf u$ in the horizontal plane. See any textbook in the [References](#references) for a full derivation.
 
@@ -219,13 +266,13 @@ where ${\bf u} = (u,v)$ is the horizontal velocity vector and $\nabla_z=(\partia
 
 $$
 \nabla_z \cdot \left( \rho {\bf u} \otimes {\bf u}  \right) + \partial_z \left( w \rho {\bf u}\right)
-&= \left( \nabla_z \cdot  {\bf u}  \right) \rho {\bf u} 
-+  {\bf u} \cdot \nabla_z \left( \rho {\bf u} \right) 
+&= \left( \nabla_z \cdot  {\bf u}  \right) \rho {\bf u}
++  {\bf u} \cdot \nabla_z \left( \rho {\bf u} \right)
 + \partial_z \left( w \rho {\bf u}\right) \\
-&= \left( \nabla_z \cdot   {\bf u}  \right) \rho {\bf u} 
-+ \left( {\bf u} \cdot \nabla_z  \rho  \right) {\bf u} 
+&= \left( \nabla_z \cdot   {\bf u}  \right) \rho {\bf u}
++ \left( {\bf u} \cdot \nabla_z  \rho  \right) {\bf u}
 + \left( {\bf u} \cdot \nabla_z  {\bf u} \right)  \rho
-+ \partial_z \left( w \rho {\bf u}\right) 
++ \partial_z \left( w \rho {\bf u}\right)
 $$ (adv2d-prod)
 
 The term ${\bf u} \cdot \nabla_z {\bf u}$ may be replaced with the vector identity
@@ -250,12 +297,12 @@ momentum:
 
 $$
 \frac{\partial (\rho \mathbf{u})}{\partial t}
-+ \left( \nabla_z \cdot  {\bf u}  \right) \rho {\bf u} 
-+  {\bf u} \cdot \nabla_z \left( \rho {\bf u} \right) 
++ \left( \nabla_z \cdot  {\bf u}  \right) \rho {\bf u}
++  {\bf u} \cdot \nabla_z \left( \rho {\bf u} \right)
 + \partial_z \left( w \rho \mathbf{u} \right)
-+ f \rho {\bf u}^\perp 
++ f \rho {\bf u}^\perp
   = -  \nabla_z p
-  - \rho\nabla_z \Phi 
+  - \rho\nabla_z \Phi
 + \rho{\bf D}^u + \rho{\bf F}^u
 $$ (continuous-momentum-final)
 
@@ -362,10 +409,10 @@ $$
 +  \int_{z_k^{bot}}^{z_k^{top}}  \left( \nabla_z \cdot  {\bf u}  \right) \rho {\bf u} dz
 +  \int_{z_k^{bot}}^{z_k^{top}}  {\bf u} \cdot \nabla_z \left( \rho {\bf u} \right) dz
 +  \int_{z_k^{bot}}^{z_k^{top}} \frac{\partial }{\partial z} \left(  \rho {\bf u} w \right) dz
-+  \int_{z_k^{bot}}^{z_k^{top}} 
++  \int_{z_k^{bot}}^{z_k^{top}}
  f \rho {\bf u}^\perp dz
-  =  \int_{z_k^{bot}}^{z_k^{top}}  \left[- \nabla_z p 
-  - \rho \nabla_z \Phi 
+  =  \int_{z_k^{bot}}^{z_k^{top}}  \left[- \nabla_z p
+  - \rho \nabla_z \Phi
 + \rho {\bf D}^u + \rho {\bf F}^u \right] dz
 $$ (z-integration-momentum)
 
@@ -382,7 +429,7 @@ $$
  + \int_{z_k^{bot}}^{z_k^{top}} \frac{\partial}{\partial z} \left(  \rho \varphi w \right) dz
 = \int_{z_k^{bot}}^{z_k^{top}} \left( D^\varphi + Q^\varphi \right) dz
 $$ (z-integration-tracers)
- 
+
 This results in conservation equations that are valid over the layer. The momentum variables are simply vertically averaged. Tracer variables are vertically mass-averaged, as defined in [](def-mass-thickness-average).
 
 In order to deal with nonlinear terms where we take the integrals of products, we may assume that the variables are piecewise constant in the vertical within each layer, i.e.
@@ -404,7 +451,7 @@ Likewise, for the horizontal momentum advection,
 
 $$
 \int_{z_k^{bot}}^{z_k^{top}}  \left( \nabla_z \cdot  {\bf u}  \right) \rho {\bf u} dz
-+  \int_{z_k^{bot}}^{z_k^{top}}  {\bf u} \cdot \nabla_z \left( \rho {\bf u} \right) dz 
++  \int_{z_k^{bot}}^{z_k^{top}}  {\bf u} \cdot \nabla_z \left( \rho {\bf u} \right) dz
 &=   \left( \nabla_z \cdot  {\bf u}_k  \right) \int_{z_k^{bot}}^{z_k^{top}}  \rho {\bf u} dz
 +    {\bf u}_k \cdot \nabla_z \left( \int_{z_k^{bot}}^{z_k^{top}}\rho {\bf u} dz\right)  \\
 &=   \left( \nabla_z \cdot  {\bf u}_k  \right) h_k {\bf u}_k
@@ -419,7 +466,7 @@ This results in the layered conservation equations. This system is now discrete 
 $$
 \frac{\partial h_k {\bf u}_k}{\partial t}
 +   \left( \nabla_z \cdot  {\bf u}_k  \right) h_k {\bf u}_k
-+    {\bf u}_k \cdot \nabla_z \left( h_k {\bf u}_k \right) 
++    {\bf u}_k \cdot \nabla_z \left( h_k {\bf u}_k \right)
 + \left[ \rho_k w_k {\bf u}_k \right]^{top} - \left[ \rho_k w_k {\bf u}_k \right]^{bot}
 + f h_k {\bf u}_k^{\perp}
 =
@@ -442,14 +489,14 @@ The term $\left( \nabla_z \cdot  {\bf u}_k  \right) h_k {\bf u}_k$ is assumed to
 
 $$
 \frac{\partial h_k {\bf u}_k}{\partial t}
-+    {\bf u}_k \cdot \nabla_z \left( h_k {\bf u}_k \right) 
++    {\bf u}_k \cdot \nabla_z \left( h_k {\bf u}_k \right)
 &= h_k \frac{\partial {\bf u}_k}{\partial t}
 + {\bf u}_k\frac{\partial h_k} {\partial t}
-+  h_k  {\bf u}_k \cdot \nabla_z \left(  {\bf u}_k \right) 
++  h_k  {\bf u}_k \cdot \nabla_z \left(  {\bf u}_k \right)
 +    {\bf u}_k \cdot \nabla_z \left( h_k  \right) {\bf u}_k\\
 &= h_k \frac{\partial {\bf u}_k}{\partial t}
 + {\bf u}_k\frac{\partial h_k} {\partial t}
-+  h_k  {\bf u}_k \cdot \nabla_z {\bf u}_k 
++  h_k  {\bf u}_k \cdot \nabla_z {\bf u}_k
 +    {\bf u}_k \cdot \nabla_z \left( h_k  \right) {\bf u}_k \\
 &= h_k \left[ \frac{\partial {\bf u}_k}{\partial t}
 +   {\bf u}_k \cdot \nabla_z {\bf u}_k \right]
@@ -529,7 +576,7 @@ $$ (dvarphidnabla)
 
 ### Pressure Gradient
 
-For most terms, we can safely assume $\nabla_z \approx \nabla_r$ because the vertical to horizontal aspect ratio even at very high horizontal resolution is on the order of $\epsilon ~ 10^{-3}$ (thought may need to re-assess this assumption if we decide to use strongly sloped layers). This applies, for example, to the curl operator uset to compute the relative vorticity and the gradient applied to the kinetic energy in [](z-integration-momentum).  
+For most terms, we can safely assume $\nabla_z \approx \nabla_r$ because the vertical to horizontal aspect ratio even at very high horizontal resolution is on the order of $\epsilon ~ 10^{-3}$ (thought may need to re-assess this assumption if we decide to use strongly sloped layers). This applies, for example, to the curl operator uset to compute the relative vorticity and the gradient applied to the kinetic energy in [](z-integration-momentum).
 
 The exception is the pressure gradient term.  This is becasue strong vertical and week horizontal pressure gradients mean that both terms in the chain rule [](dvarphidnabla) are of the same order and must be retained.  Substituting pressure for $\varphi$ in [](#dvarphidnabla),
 
@@ -582,7 +629,7 @@ $$
 \frac{\partial {\bf u}_{3D}}{\partial t}
 + {\bf u}_{3D}\cdot \nabla_{3D} {\bf u}_{3D}
   = - \frac{1}{\rho} \nabla_{3D} p
-   -  \nabla_{3D} \Phi 
+   -  \nabla_{3D} \Phi
 + {\bf D}^u + {\bf F}^u
 $$ (continuous-momentum-rho)
 
