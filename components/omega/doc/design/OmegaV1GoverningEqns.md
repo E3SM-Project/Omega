@@ -76,6 +76,7 @@ $$ (continuous-tracer)
 
 Here we have express the following terms as a general operators, with examples of specific forms provided below: the dissipation ${\bf D}^u$, momentum forcing ${\bf F}^u$, tracer diffusion $D^\varphi$, and tracer sources and sinks $Q^\varphi$. The graviational potential, $\Phi$, is written in a general form, and may include Earth's gravity, tidal forces, and self attraction and loading.
 
+(pseudo-height)=
 
 ## 3 Pseudo-Height Coordinate
 
@@ -96,6 +97,12 @@ where $z_b$ is the bottom elevation. The bottom of the domain corresponds to:
 $$
 \tilde{z}(z_b) = -M.
 $$ (def-total-pseudo-height)
+
+**Note:** Because $z$ appears as the *lower bound* of the integral in equation [](#def-pseudo-height), we have
+$$
+\frac{d\tilde{z}}{dz} = \rho(z), \quad \text{so} \quad d\tilde{z} = \rho(z)\,dz.
+$$
+This means that pseudo-height $\tilde{z}$ increases in the same direction as $z$: both are **zero at the surface** (or close to it) and become **increasingly negative with depth**.
 
 Under hydrostatic balance, we have:
 
@@ -153,7 +160,7 @@ The assumption of hydostatic balance allows a change of coordinate to the pseudo
 $$
 \frac{d}{dt} \int_{A} \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \varphi \, d\tilde{z} \, dA + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \varphi \mathbf{u} \, d\tilde{z} \right) \cdot \mathbf{n} \, dl + \int_{A} [\varphi (\omega - \omega_r)]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
 - \int_{A} [\varphi (\omega - \omega_r)]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA = 0,
-$$ (tracer-Ap-int)
+$$ (tracer-Aztilde-int)
 
 where we define the pressure surfaces $\tilde{z}^{\text{top}}\equiv \tilde{z}(z^{\text{top}})$ and $\tilde{z}^{\text{bot}}\equiv \tilde{z}(z^{\text{bot}})$.
 The equivalent of their (A.16) is our equation for mass-thickness above. The vertical average of a variable, their (A.17) becomes:
@@ -170,7 +177,7 @@ $$
 + \int_{\partial A} h \, \overline{\varphi\mathbf{u}}^{\tilde{z}} \cdot \mathbf{n} \, dl
 + \int_{A} [\varphi \omega_{tr}]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
 - \int_{A} [\varphi \omega_{tr}]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA = 0,
-$$ (tracer-Aint-pavg)
+$$ (tracer-Aint-ztildeavg)
 
 where $\omega_{\text{tr}}$ is the mass transport per unit area through the top and bottom surfaces. Making use of their (A.19) and (A.20), we arrive at:
 
@@ -179,7 +186,7 @@ $$
 + \frac{1}{\tilde{A}} \int_{\partial A} h \, \overline{\varphi\mathbf{u}}^{\tilde{z}} \cdot \mathbf{n} \, dl
 + \left. \overline{\varphi \omega_{tr}}^A \right|_{\tilde{z} = \tilde{z}^{\text{top}}}
 - \left. \overline{\varphi \omega_{tr}}^A \right|_{\tilde{z} = \tilde{z}^{\text{bot}}} = 0,
-$$ (tracer-Aavg-pavg)
+$$ (tracer-Aavg-ztildeavg)
 
 which is their (A.21), except with $\phi = \rho g \varphi$ and $w \rightarrow \omega$. Taking the limit $\tilde{A} \rightarrow 0$, we get:
 
@@ -196,6 +203,167 @@ $$ (mass-layered)
 This is nearly identical to their (A.25) but with the pressure-thickness and $\omega$.
 
 
+## 5. Horizontal Momentum Equation
+
+We now derive the horizontal momentum equation in our non-Boussinesq, hydrostatic framework, following the same finite-volume approach used for mass and tracer conservation. We work with a pseudo-height vertical coordinate $\tilde{z}$ as defined in [Pseudo-Height Coordinate Section](pseudo-height).
+
+We begin by considering conservation of horizontal momentum density $ \rho \mathbf{u} $ over a time-dependent control volume $ V(t) $, bounded horizontally by a fixed area $ A $, and vertically by surfaces $ \tilde{z}^{\text{top}}(x, y, t) $ and $ \tilde{z}^{\text{bot}}(x, y, t) $. The finite-volume balance reads:
+
+$$
+\frac{d}{dt} \int_{V(t)} \rho \mathbf{u} \, dV
++ \int_{\partial V(t)} \rho \mathbf{u} (\mathbf{v} - \mathbf{v}_r) \cdot \mathbf{n} \, dA
+= \mathbf{F}_\text{total}[V(t)],
+$$ (momentum-FV)
+
+with total forces given by:
+
+$$
+\mathbf{F}_\text{total}[V(t)] =
+- \int_{V(t)} \rho\, \mathbf{f} \times \mathbf{u} \, dV
+- \int_{V(t)} \rho\, \nabla \Phi \, dV
+- \int_{\partial V(t)} p \, \mathbf{n} \, dA
++ \int_{\partial V(t)} \boldsymbol{\tau}_h \cdot \mathbf{n} \, dA
++ \int_{\partial V(t)} \boldsymbol{\tau}_h^z \cdot \mathbf{n} \, dA.
+$$ (momentum-Ftotal)
+
+Each term on the right-hand side corresponds to a physically distinct force acting on the fluid within the control volume:
+
+- The first term is the **Coriolis force**, where $ \mathbf{f} $ is the vector Coriolis parameter (e.g., $ f \hat{\mathbf{z}} $ on the sphere).
+- The second term represents the **gravitational force**, expressed in terms of the gradient of the gravitational potential $ \Phi(x, y, z, t) $, which may include effects such as tides and self-attraction and loading.
+- The third term is the **pressure force**, which acts on the boundary surfaces and is naturally expressed as a surface integral. It gives rise to both horizontal pressure gradients and contributions from sloping surfaces.
+- The fourth term represents **horizontal stress forces** across the vertical sides of the control volume, such as those due to lateral friction or subgrid momentum transfer.
+- The final term represents **vertical stress forces** (e.g., wind stress at the ocean surface and bottom drag at the seafloor), projected into horizontal momentum and acting across the top and bottom surfaces.
+
+
+Converting to pseudo-height coordinates using $ d\tilde{z} = \rho \, dz $, and following the same structure as for tracers, we obtain the layer-integrated momentum equation:
+
+$$
+\begin{aligned}
+\frac{d}{dt} \int_A h\, \overline{\mathbf{u}}^{\tilde{z}} \, dA
+&+ \int_{\partial A} h\, \overline{\mathbf{u} \otimes \mathbf{u}}^{\tilde{z}} \cdot \mathbf{n} \, dl \\
+&+ \int_A \left[ \mathbf{u} (\omega - \omega_r) \right]_{\tilde{z}^{\text{top}}} \, dA
+- \int_A \left[ \mathbf{u} (\omega - \omega_r) \right]_{\tilde{z}^{\text{bot}}} \, dA \\
+&= \int_A h\, \overline{\mathbf{f} \times \mathbf{u} + \nabla \Phi}^{\tilde{z}} \, dA \\
+&\quad - \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p\, \mathbf{n} \, d\tilde{z} \right) dl \\
+&\quad - \int_A \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{top}}} \, dA
++ \int_A \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \, dA \\
+&\quad + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \cdot \mathbf{n} \, d\tilde{z} \right) dl \\
+&\quad + \int_A \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}} \, dA
+- \int_A \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}} \, dA
+\end{aligned}
+$$ (momentum-Aint-ztildeavg)
+
+Taking the limit as $A \rightarrow 0$, we arrive at the local, horizontally continuous form:
+
+$$
+\begin{aligned}
+\frac{\partial}{\partial t} \left( h\, \overline{\mathbf{u}}^{\tilde{z}} \right)
+&+ \nabla \cdot \left( h\, \overline{\mathbf{u} \otimes \mathbf{u}}^{\tilde{z}} \right) \\
+&+ \left[ \mathbf{u} (\omega - \omega_r) \right]_{\tilde{z}^{\text{top}}}
+- \left[ \mathbf{u} (\omega - \omega_r) \right]_{\tilde{z}^{\text{bot}}} \\
+&= h\, \overline{ \mathbf{f} \times \mathbf{u} + \nabla \Phi }^{\tilde{z}} \\
+&\quad - \nabla \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p \, d\tilde{z} \right)
+- \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{top}}}
++ \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
+&\quad + \nabla \cdot \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \, d\tilde{z} \right)
++ \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}}
+- \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}}
+\end{aligned}
+$$ (momentum-layered)
+
+This expression represents conservation of horizontal momentum in a vertical layer, including horizontal advection, vertical momentum fluxes, Coriolis and gravitational forces, pressure gradients (including slope contributions), and stress divergence.
+
+
+## 6. Horizontal Velocity Equation
+
+We now derive a prognostic equation for the layer-averaged horizontal velocity, starting from the horizontal momentum and mass conservation equations. The goal is to express the equation in terms of the velocity field $\overline{\mathbf{u}}^{\tilde{z}}$ and to isolate the nonlinear advection term in a standard form that can be further decomposed using vector identities.
+
+Let us define the layer-averaged velocity as
+
+$$
+\mathbf{U}(x, y, t) \equiv \overline{\mathbf{u}}^{\tilde{z}}.
+$$ (layer-avg-velocity)
+
+We begin with the horizontally continuous, layer-integrated horizontal momentum equation [](momentum-layered):
+
+$$
+\begin{aligned}
+\frac{\partial}{\partial t} \left( h\, \mathbf{U} \right)
+&+ \nabla \cdot \left( h\, \overline{\mathbf{u} \otimes \mathbf{u}}^{\tilde{z}} \right) \\
+&+ \left[ \mathbf{u} (\omega - \omega_r) \right]_{\tilde{z}^{\text{top}}}
+- \left[ \mathbf{u} (\omega - \omega_r) \right]_{\tilde{z}^{\text{bot}}} \\
+&= h\, \overline{ \mathbf{f} \times \mathbf{u} + \nabla \Phi }^{\tilde{z}} \\
+&\quad - \nabla \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p \, d\tilde{z} \right)
+- \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{top}}}
++ \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
+&\quad + \nabla \cdot \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \, d\tilde{z} \right)
++ \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}}
+- \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}}
+\end{aligned}
+$$ (momentum-velocity-start)
+
+We also have the mass conservation equation [](mass-layered):
+
+$$
+\frac{\partial h}{\partial t}
++ \nabla \cdot (h \mathbf{U})
++ \left[ \omega - \omega_r \right]_{\tilde{z}^{\text{top}}}
+- \left[ \omega - \omega_r \right]_{\tilde{z}^{\text{bot}}}
+= 0.
+$$ (mass-conservation-repeated)
+
+Multiplying the mass conservation equation by $\mathbf{U}$ and subtracting it from the momentum equation eliminates time derivatives of $h$ and isolates the evolution of velocity. After simplification, we obtain:
+
+$$
+\begin{aligned}
+h \left(
+\frac{\partial \mathbf{U}}{\partial t}
++ \mathbf{U} \cdot \nabla \mathbf{U}
+\right)
+&+ \left[ \mathbf{u} (\omega - \omega_r) \right]_{\tilde{z}^{\text{top}}}
+- \mathbf{U} \left[ \omega - \omega_r \right]_{\tilde{z}^{\text{top}}} \\
+&- \left[ \mathbf{u} (\omega - \omega_r) \right]_{\tilde{z}^{\text{bot}}}
++ \mathbf{U} \left[ \omega - \omega_r \right]_{\tilde{z}^{\text{bot}}}
+= \text{(forces)}
+\end{aligned}
+$$ (velocity-eq-general)
+
+The term $ \mathbf{U} \cdot \nabla \mathbf{U} $ may be rewritten using a standard vector identity:
+
+$$
+\mathbf{U} \cdot \nabla \mathbf{U}
+= \nabla \left( \frac{1}{2} |\mathbf{U}|^2 \right)
++ (\nabla \times \mathbf{U}) \times \mathbf{U} = \nabla K + \zeta \times \mathbf{U},
+$$ (velocity-vector-identity)
+where $K$ is the kinetic energy per unit mass and $\zeta$ is the relative voriticity.
+
+This decomposition splits the nonlinear advection into a **potential** component (gradient of kinetic energy) and a **rotational** component (advection by relative vorticity).
+
+We now combine the relative vorticity term $\zeta \times \mathbf{U}$ with the vertically averaged Coriolis force term $\overline{\mathbf{f} \times \mathbf{u}}^{\tilde{z}}$. If we assume that the Coriolis vector $\mathbf{f}$ is uniform within the layer or varies slowly enough to justify replacing $\mathbf{u}$ with its vertical average $\mathbf{U}$, then the two terms may be added directly. This gives rise to a term of the form $\boldsymbol{\eta} \times \mathbf{U}$, where the **absolute vorticity** is defined as
+
+$$
+\boldsymbol{\eta} = \zeta + \mathbf{f}.
+$$ (absolute-vorticity)
+
+This substitution makes the rotational part of the velocity equation appear in its familiar form from geophysical fluid dynamics, emphasizing the role of absolute vorticity in governing the curvature and rotation of horizontal flow. Substituting into [](velocity-eq-general) and returning to the $\overline{\mathbf{u}}^{\tilde{z}}$ notation yields:
+
+$$
+\begin{aligned}
+\frac{\partial \overline{\mathbf{u}}^{\tilde{z}}}{\partial t}
++ \nabla K
++ \boldsymbol{\eta} \times \overline{\mathbf{u}}^{\tilde{z}}
+&= \overline{ \nabla \Phi }^{\tilde{z}} \\
+&\quad - \frac{1}{h} \nabla \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p\, d\tilde{z} \right)
+- \frac{1}{h} \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{top}}}
++ \frac{1}{h} \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
+&\quad + \frac{1}{h} \nabla \cdot \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \, d\tilde{z} \right)
++ \frac{1}{h} \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}}
+- \frac{1}{h} \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}} \\
+&\quad + \frac{1}{h} \sum_{i = \text{top, bot}} \left[ (\mathbf{u} - \overline{\mathbf{u}}^{\tilde{z}}) (\omega - \omega_r) \right]_i
+\end{aligned}
+$$ (velocity-layered)
+
+This is a diagnostic equation for the layer-averaged horizontal velocity, written in a form familiar from geophysical fluid dynamics. The right-hand side includes the horizontal pressure gradient, gravitational body force, divergence of horizontal and vertical stresses, and corrections due to unresolved vertical momentum exchange.
 
 
 ## 5. Momentum Equations
