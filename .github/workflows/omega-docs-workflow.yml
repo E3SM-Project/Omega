@@ -49,6 +49,7 @@ jobs:
           conda list
 
       - name: Build Sphinx Docs
+        # Use 'make html' (not html-strict) so docs always update, even if warnings exist.
         run: |
           conda activate omega_dev
           cd components/omega/doc

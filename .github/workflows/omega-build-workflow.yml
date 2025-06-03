@@ -93,4 +93,4 @@ jobs:
         run: |
           conda activate omega_dev
           cd components/omega/doc
-          make html
+          make html-strict
