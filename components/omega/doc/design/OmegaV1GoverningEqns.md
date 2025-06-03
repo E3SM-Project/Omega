@@ -366,7 +366,333 @@ $$ (velocity-layered)
 This is a diagnostic equation for the layer-averaged horizontal velocity, written in a form familiar from geophysical fluid dynamics. The right-hand side includes the horizontal pressure gradient, gravitational body force, divergence of horizontal and vertical stresses, and corrections due to unresolved vertical momentum exchange.
 
 
-## 5. Momentum Equations
+## 7. Discrete Equations
+
+The horizontally discretized layered equations are as follows. We have dropped the $r$ in $\nabla_r$ for conciseness, and the operator $\nabla$ from here on means within-layer.
+
+$$
+\frac{\partial u_{e,k}}{\partial t} + \left[ \frac{{\bf k} \cdot \nabla \times u_{e,k} +f_v}{[h_{i,k}]_v}\right]_e\left([h_{i,k}]_e u_{e,k}^{\perp}\right)
++ \frac{ \left[ \omega_{i,k}^{top}   \right]_e u_{e,k}^{top}
+-        \left[ \omega_{i,k+1}^{top} \right]_e u_{e,k+1}^{top}}{ \left[h_{i,k}\right]_e }
+=
+- \left[ \alpha_{i,k} \right]_e \nabla p_{i,k} - \nabla \Phi_{i,k}
+- \nabla K_{i,k} +  { \bf D}^u_{e,k} + {\bf F}^u_{e,k}
+$$ (discrete-momentum)
+
+$$
+\frac{\partial h_{i,k}}{\partial t} + \nabla \cdot \left([h_{i,k}]_e u_{e,k}\right)
++ \omega_{i,k}^{top} - \omega_{i,k+1}^{top}
+= Q^h_{i,k}
+$$ (discrete-thickness)
+
+$$
+\frac{\partial h_{i,k} \varphi_{i,k}}{\partial t} + \nabla \cdot \left(u_{e,k} [h_{i,k} \varphi_{i,k}]_e \right)
++ \varphi_{i,k}^{top} \omega_{i,k}^{top} - \varphi_{i,k+1}^{top}\omega_{i,k+1}^{top}
+= D^\varphi_{i,k} + Q^\varphi_{i,k}
+$$ (discrete-tracer)
+
+$$
+p_{i,k} = p_{i}^{surf} + \sum_{k'=1}^{k-1} g h_{i,k'} + \frac{1}{2} g h_{i,k}
+$$ (discrete-pressure)
+
+$$
+\alpha_{i,k} = f_{eos}(p_{i,k},\Theta_{i,k},S_{i,k})
+$$ (discrete-eos)
+
+$$
+z_{i,k}^{top} = z_{i}^{floor} + \sum_{k'=k}^{K_{max}} \alpha_{i,k'}h_{i,k'}
+$$ (discrete-z)
+
+The subscripts $i$, $e$, and $v$ indicate cell, edge, and vertex locations and subscript $k$ is the layer.  Square brackets $[\cdot]_e$ and $[\cdot]_v$ are quantities that are interpolated to edge and vertex locations. For vector quantities, $u_{e,k}$ denotes the normal component at the center of the edge, while $u_{e,k}^\perp$ denotes the tangential component. We have switched from $\varphi_{i,k}^{bot}$ to the identical $\varphi_{i,k+1}^{top}$ for all variables in order for the notation to match the array names in the code.  The superscripts $surf$ and $floor$ are the surface and floor of the full ocean column. All variables without these superscripts indicate that they are layer-averaged, as defined in [](def-mass-thickness-average), and can be considered to represent a mid-layer value in the vertical. The mid-layer location is equivalently the average in $z$, $p$, or $h$ (mass), since density $\rho_{i,k}$ is considered constant in the cell.
+
+We refer to these as the discrete equations, but time derivatives remain continuous. The time discretization is described in the [time stepping design document](TimeStepping.md). The velocity, mass-thickness, and tracers are solved prognostically using [](discrete-momentum), [](discrete-thickness), [](discrete-tracer). At the new time, these variables are used to compute pressure [](discrete-pressure), specific volume [](discrete-eos), and z-locations [](discrete-z). Additional variables are computed diagnostically at the new time: $u^{\perp}$, $K$, $\omega$, $z^{mid}$, $\Phi$, etc. The initial geopotential is simply $\Phi=gz$, but additional gravitational terms may be added later.
+
+The horizontal operators $\nabla$, $\nabla\cdot$, and $\nabla \times$ are now in their discrete form. In the TRiSK design, gradients ($\nabla$) map cell centers to edges; divergence ($\nabla \cdot$) maps edge quantities to cells; and curl ($\nabla \times$) maps edges to vertices. The exact form of operators and interpolation stencils remain the same as those given in [Omega-0 design document](OmegaV0ShallowWater.md#operator-formulation). The discrete version of terms common with Omega-0, such as advection, potential vorticity, and $\nabla K$, can be found in [Omega-0 Momentum Terms](OmegaV0ShallowWater.md#momentum-terms) and [Omega-0 Thickness and Tracer Terms](OmegaV0ShallowWater.md#thickness-and-tracer-terms).
+
+
+### Momentum Dissipation
+
+The discretized momentum dissipation ${ \bf D}^u_{e,k}$ may include these terms, which are detailed in the subsections below.
+
+$$
+{ \bf D}^u_{e,k} =  \nu_2 \nabla^2 u_{e,k} - \nu_4 \nabla^4 u_{e,k} +
+\frac{\partial }{\partial z} \left( \nu_v \frac{\partial u_{e,k}}{\partial z} \right)
+$$ (discrete-mom-del2)
+
+#### Laplacian dissipation (del2)
+
+$$
+ \nu_2 \nabla^2 u_{e,k} = \nu_2 \left( \nabla D_{i,k} - \nabla^{\perp} \zeta_{v,k} \right)
+$$ (discrete-mom-del2)
+
+where $D$ is divergence and $\zeta$ is relative vorticity. See [Omega V0 Section 3.3.4](OmegaV0ShallowWater.md#del2-momentum-dissipation)
+
+#### Biharmonic dissipation (del4)
+As in [Omega V0 Section 3.3.5](OmegaV0ShallowWater.md#del4-momentum-dissipation), biharmonic momentum dissipation is computed with two applications of the Del2 operator above.
+
+$$
+ - \nu_4 \nabla^4 u_{e,k}
+= - \nu_4 \nabla^2 \left( \nabla^2 u_{e,k} \right)
+$$ (discrete-mom-del4)
+
+#### Vertical momentum diffusion
+Vertical derivatives may be computed with either $z$ or $p$ as the independent variable,
+
+$$
+\frac{\partial }{\partial z} \left( \nu_v \frac{\partial u}{\partial z} \right)
+= \frac{\partial }{\partial p}\frac{\partial p}{\partial z} \left( \nu_v \frac{\partial u}{\partial p} \frac{\partial p}{\partial z}\right)
+= \rho g^2\frac{\partial }{\partial p} \left( \nu_v \rho \frac{\partial u}{\partial p} \right).
+$$ (mom-vert-diff-z-p)
+
+We choose to use $z$ values for simplicity. A single vertical derivative of an arbitrary variable $\varphi$ at mid-layer is
+
+$$
+\frac{\partial \varphi_k}{\partial z}
+= \frac{\varphi_k^{top} - \varphi_k^{bot} }{z_k^{top} - z_k^{bot}}
+$$ (vertderiv1)
+
+and a second derivative is
+
+$$
+\frac{\partial }{\partial z} \left(
+\frac{\partial \varphi_k}{\partial z} \right)
+=
+\frac{1}{z_{k}^{top} - z_{k+1}^{top}} \left(
+\frac{\varphi_{k-1} - \varphi_k }{z_{k-1}^{mid} - z_k^{mid}}
+ -
+\frac{\varphi_{k} - \varphi_{k+1} }{z_{k}^{mid} - z_{k+1}^{mid}}
+\right)
+$$ (vertderiv2)
+
+Thus, the vertical momentum diffusion is
+
+$$
+\frac{\partial }{\partial z} \left( \nu_v \frac{\partial u_{e,k}}{\partial z} \right)
+=
+\frac{1}{z_{e,k}^{top} - z_{e,k+1}^{top}} \left(
+\nu_{e,k}^{top}
+\frac{u_{e,k-1} - u_k }{z_{e,k-1}^{mid} - z_k^{mid}}
+ -
+\nu_{e,k+1}^{top}
+\frac{u_{e,k} - u_{e,k+1} }{z_{e,k}^{mid} - z_{e,k+1}^{mid}}
+\right)
+$$ (discrete-mom-vert-diff)
+
+This stencil is applied as an implicit tri-diagonal solve at the end of the time step. See details in the [tridiagonal solver design document](TridiagonalSolver) and forthcoming vertical mixing design document.
+
+### Momentum Forcing
+The discretized momentum forcing ${ \bf F}^u_{e,k}$ may include:
+
+#### Wind Forcing
+
+The wind forcing is applied as a top boundary condition during implicit vertical mixing as
+
+$$
+\frac{\tau_{e}}{[ h_{i,k}]_e}
+$$
+
+where $\tau$ is the wind stress in Pa. Since the mass-thickness $h$ is in kg/s/m$^2$, this results in the desired units of m/s$^2$ for a momentum tendency term.
+
+#### Bottom Drag
+
+Bottom Drag is applied as a bottom boundary condition during implicit vertical mixing as
+
+$$
+- C_D \frac{u_{e,k}\left|u_{e,k}\right|}{[\alpha_{i,k}h_{i,k}]_e} .
+$$ (discrete-mom-bottom)
+
+The units of specific volume times mass-thickness $\alpha h$ are length (m), so that the full term has units of m/s$^2$.
+
+#### Rayleigh Drag
+
+Rayleigh drag is a simple drag applied to every cell.  It is used to ensure stability during spin-up.
+
+$$
+- Ra \, u_{e,k}
+$$ (discrete-mom-Ra)
+
+### Tracer Diffusion
+
+The discretized tracer diffusion $ D^\varphi_{i,k}$ may include these terms, which are detailed below. Here $\kappa_2$ and $\kappa_4$ are written in front of the operator for simplicity.
+
+$$
+D^\varphi_{i,k} =  \kappa_2 \nabla^2 \varphi_{i,k} - \kappa_4 \nabla^4 \varphi_{i,k} +
+\frac{\partial }{\partial z} \left( \kappa_v \frac{\partial \varphi_{i,k}}{\partial z} \right)
+$$ (discrete-tracer-diff)
+
+#### Laplacian diffusion (del2)
+The Laplacian may be written as the divergence of the gradient,
+
+$$
+ h_{i,k} \nabla \cdot \left( \kappa_{2,e,k} \nabla \varphi_{i,k} \right).
+$$ (discrete-tracer-del2)
+
+See [Omega V0 Section 3.3.2](OmegaV0ShallowWater.md#del2-tracer-diffusion) for details of this calculation.
+
+#### Biharmonic diffusion (del4)
+The biharmonic is a Laplacian operator applied twice,
+
+$$
+ - h_{i,k} \nabla \cdot \left( \kappa_{4,e,k} \nabla
+\right[
+\nabla \cdot \left(  \nabla \varphi_{i,k} \right)
+\left]
+ \right).
+$$ (discrete-tracer-del4)
+
+Each of these operators are written as horizontal stencils in the [Omega V0 Operator Formulation Section](OmegaV0ShallowWater.md#operator-formulation)
+
+#### Vertical tracer diffusion
+As discussed above in the [momentum section](#vertical-momentum-diffusion), vertical derivatives may be written in terms of $z$ or $p$,
+
+$$
+\frac{\partial }{\partial z} \left( \kappa_v \frac{\partial {\bf \varphi}}{\partial z} \right)
+= \rho g^2 \frac{\partial }{\partial p} \left( \kappa_v \rho \frac{\partial {\bf \varphi}}{\partial p} \right)
+$$ (discrete-tracer-vertdiff)
+and $z$ is chosen. The second derivative stencil is
+
+$$
+h_{i,k} \frac{\partial }{\partial z} \left( \kappa_v \frac{\partial \varphi_{i,k}}{\partial z} \right)
+=
+\frac{h_{i,k}}{z_{i,k}^{top} - z_{i,k+1}^{top}} \left(
+\kappa_{i,k}^{top}
+\frac{\varphi_{i,k-1} - \varphi_k }{z_{i,k-1}^{mid} - z_k^{mid}}
+ -
+\kappa_{i,k+1}^{top}
+\frac{\varphi_{i,k} - \varphi_{i,k+1} }{z_{i,k}^{mid} - z_{i,k+1}^{mid}}
+\right).
+$$ (discrete-tracer-vert-diff)
+
+Like the momentum term, this is applied using a tridiagonal solver in the
+[tridiagonal solver](TridiagonalSolver) in the implicit vertical mixing step.
+
+### MPAS-Ocean Equations of Motion
+
+The MPAS-Ocean layered formulation are provided here for reference. MPAS-Ocean solves for momentum, thickness, and tracers at layer $k$. These are continuous in the horizontal and discrete in the vertical.
+
+$$
+\frac{\partial {\bf u}_k}{\partial t}
++ \frac{1}{2}\nabla \left| {\bf u}_k \right|^2
++ ( {\bf k} \cdot \nabla \times {\bf u}_k) {\bf u}^\perp_k
++ f{\bf u}^{\perp}_k
++ \frac{w_k^{bot}{\bf u}_k^{bot} - w_k^{top}{\bf u}_k^{top}}{h_k}
+=
+- \frac{1}{\rho_0}\nabla p_k
+- \frac{\rho g}{\rho_0}\nabla z^{mid}_k
++ \nu_h\nabla^2{\bf u}_k
++ \frac{\partial }{\partial z} \left( \nu_v \frac{\partial {\bf u}_k}{\partial z} \right),
+$$ (mpaso-continuous-momentum)
+
+$$
+\frac{\partial h_k}{\partial t} + \nabla \cdot \left( h_k^e {\bf u}_k \right) + w_k^{bot} - w_k^{top} = 0,
+$$ (mpaso-continuous-thickness)
+
+$$
+\frac{\partial h_k\varphi_k}{\partial t} + \nabla \cdot \left( h_k^e\varphi_k^e {\bf u}_k \right)
++ \varphi_k^{bot} w_k^{bot} - \varphi_k^{top} w_k^{top}
+= \nabla\cdot\left(h_k^e \kappa_h \nabla\varphi_k \right)
++ h_k \frac{\partial }{\partial z} \left( \kappa_v \frac{\partial \varphi_k}{\partial z} \right).
+$$ (mpaso-continuous-tracer)
+
+The layer thickness $h$, vertical velocity $w$, pressure $p$, and tracer $\varphi$, are cell-centered quantities, while the horizontal velocity ${\bf u}$ and $e$ superscript are variables interpolated to the cell edges.
+
+
+## 8. Variable Definitions
+
+Table 1. Definition of variables. Geometric variables may be found in the [Omega V0 design document, Table 1](OmegaV0ShallowWater.md#variable-definitions)
+
+| symbol  | name   | units    | location | name in code | notes  |
+|---------------------|-----------------------------|----------|-|---------|-------------------------------------------------------|
+|$D_{i,k}$   | divergence | 1/s      | cell | Divergence  |$D=\nabla\cdot\bf u$ |
+|${\bf D}^u_{k} $, $ D^u_{e,k} $ | momentum dissipation terms | m/s$^2$ | edge | |see [Momentum Dissipation Section](#momentum-dissipation) |
+|$ D_{e,k}^\varphi$ | tracer diffusion terms | | cell | |see [Tracer Diffusion Section](#tracer-diffusion) |
+|$f_v$       | Coriolis parameter| 1/s      | vertex   | FVertex  |  $f = 2\Omega sin(\phi)$, $\Omega$ rotation rate, $\phi$ latitude|
+|${\bf F}^u_{k} $, $ F^u_{e,k} $      | momentum forcing | m/s$^2$    | edge     |   | see [Momentum Forcing Section](#momentum-forcing) |
+|$f_{eos}$ | equation of state | -  | any | function call | |
+|$g$ | gravitational acceleration | m/s$^2$ | constant  | Gravity |
+|$h_{i,k}$ | layer mass-thickness | kg/m$^2$  | cell | LayerThickness | see [](def-h) |
+|$k$ | vertical index |  |
+|${\bf k}$ | vertical unit vector |  |
+|$K_{min}$ | shallowest active layer |  |
+|$K_{max}$ | deepest active layer |  |
+|$K_{i,k}$  | kinetic energy    | m$^2$/s$^2$  | cell     | KineticEnergyCell  |$K = \left\| {\bf u} \right\|^2 / 2$ |
+|$p_{i,k}$ | pressure | Pa | cell | Pressure | see [](discrete-pressure) |
+|$p^{floor}_i$ | bottom pressure | Pa | cell | PFloor | pressure at ocean floor
+|$p^{surf}_i$ | surface pressure | Pa | cell | PSurface | due to atm. pressure, sea ice, ice shelves
+|$q_{v,k}$ | potential vorticity         | 1/m/s    | vertex   | PotentialVorticity  |$q = \left(\zeta+f\right)/h$ |
+|$Q^h_{i,k}$ | mass source and sink terms| kg/s/m$^2$ | cell |   |
+|$Q^\varphi_{i,k}$ | tracer source and sink terms|kg/s/m$^2$ or similar| cell |   |
+|$Ra$      | Rayleigh drag coefficient   | 1/s      | constant |   |  |
+|$S_{i,k}$ | salinity | PSU | cell | Salinity | a tracer $\varphi$  |
+|$t$       | time    | s        | none     |   |  |
+|${\bf u}_k$   | velocity, vector form       | m/s      | - |   |  |
+|$u_{e,k}$   | velocity, normal to edge      | m/s      | edge     | NormalVelocity  | |
+|$u^\perp_{e,k}$   | velocity, tangential to edge      | m/s      | edge     | TangentialVelocity  |${\bf u}^\perp = {\bf k} \times {\bf u}$|
+|$\alpha_{i,k}$ | specific volume | m$^3$/kg | cell  | SpecificVolume | $v = 1/\rho$ |
+|$w_{i,k}$ | vertical velocity | m/s | cell  | VerticalVelocity | volume transport per m$^2$ |
+|$z$ | vertical coordinate | m | - | | positive upward |
+|$z^{top}_{i,k}$ | layer top z-location | m | cell | ZTop | see [](discrete-z) |
+|$z^{mid}_{i,k}$ | layer mid-depth z-location | m | cell | ZMid |
+|$z^{surf}_{i}$ | ocean surface, i.e. sea surface height  | m | cell | ZSurface | same as SSH in MPAS-Ocean |
+|$z^{floor}_{i}$ | ocean floor z-location | m | cell | ZFloor | -bottomDepth from MPAS-Ocean |
+|$\zeta_{v,k}$   | relative vorticity| 1/s      | vertex   |  RelativeVorticity |$\zeta={\bf k} \cdot \left( \nabla \times {\bf u}\right)$ |
+|$\Theta_{i,k}$ | conservative temperature | C | cell  | Temperature  | a tracer $\varphi$ |
+|$\kappa_2$| tracer diffusion  | m$^2$/s    | cell     |   |  |
+|$\kappa_4$| biharmonic tracer diffusion | m$^4$/s    | cell     |   |  |
+|$\kappa_v$| vertical tracer diffusion | m$^2$/s    | cell     |   |  |
+|$\nu_2$   | horizontal del2 viscosity         | m$^2$/s    | edge     |   | |
+|$\nu_4$   | horizontal biharmonic (del4) viscosity        | m$^4$/s    | edge     |   |  |
+|$\nu_v$| vertical momentum diffusion | m$^2$/s    | edge       |   |  |
+|$\varphi_{i,k}$ | tracer | kg/m$^3$ or similar | cell | | e.g. $\Theta$, $S$ |
+|$\rho_{i,k}$ | density | kg/m$^3$ | cell  | Density |
+|$\rho_0$ | Boussinesq reference density | kg/m$^3$ | |  constant |
+|$\tau_i$ | wind stress | Pa=N/m$^2$ | edge |  SurfaceStress |
+|$\Phi_{i,k}$ | geopotential| | cell | Geopotential |$\partial \Phi / \partial z = g$ for gravity |
+|$\omega$   | mass transport | kg/s/m^2      | cell | VerticalTransport |$\omega=\rho w$|
+
+
+## 9. Verification and Testing
+
+Capability and testing are similar to [Petersen et al. 2015](http://www.sciencedirect.com/science/article/pii/S1463500314001796). The following tests are in idealized domains and do not require surface fluxes or surface restoring. For the following tests to show results comparable to those published with other models, the full dynamic sequence of density, pressure, momentum, and advection must work correctly. The successful completion of the following tests is a validation of the primitive equation functions in Omega 1.0. All of the following tests may exercise a linear equation of state or the nonlinear TEOS10. The first four tests quantify the anomalous mixing caused by the numerical schemes. The first five are on cartesian planes with regular hexagon meshes.
+
+### Lock Exchange (Optional)
+The Lock Exchange is the simplest possible test of a primitive equation model. There is an analytic formulation for the wave propagation speed. It is listed as optional because the Overflow tests the same dynamics.
+See [Petersen et al. 2015](http://www.sciencedirect.com/science/article/pii/S1463500314001796) and the compass `lock_exchange` case.
+
+### Overflow
+The Overflow test case adds bathymetry to the Lock Exchange. It is a particularly effective test of vertical mass and tracer advection, and vertical mixing. It is useful to compare different vertical coordinates, like level (z- or p-level) versus terrain-following (sigma).
+See [Petersen et al. 2015](http://www.sciencedirect.com/science/article/pii/S1463500314001796) and the compass `overflow` case.
+
+
+### Internal Gravity Wave
+The internal gravity wave tests horizontal and vertical advection.
+See [Petersen et al. 2015](http://www.sciencedirect.com/science/article/pii/S1463500314001796) and the `internal_wave` case in both compass and polaris.
+
+### Baroclinic Channel
+This is the first test to add the Coriolis force and uses a three-dimensional domain. It is designed to result in an eddying simulation at sufficiently high resolution. This tests the combination of Coriolis and pressure gradient forces that produce geostrophic balance, as well as horizontal advection and dissipation for numerical stability.
+See [Petersen et al. 2015](http://www.sciencedirect.com/science/article/pii/S1463500314001796) and the `baroclinic_channel` case in both compass and polaris.
+
+### Seamount with zero velocity.
+This is a 3D domain with a seamount in the center, where temperature and salinity are stratified in the vertical and constant in the horizontal. The test is simply that an initial velocity field of zero remains zero. For z-level layers the velocity trivially remains zero because the horizontal pressure gradient is zero. For tilted layers, this is a test of the pressure gradient error and the velocity is never exactly zero. This is a common test for sigma-coordinate models like ROMS because the bottom layers are extremely tilted along the seamount, but it is a good test for any model with tilted layers. Omega will use slightly tilted layers in p-star mode (pressure layers oscillating with SSH) and severely tilted layers below ice shelves, just like MPAS-Ocean. See [Ezer et al. 2002](https://www.sciencedirect.com/science/article/pii/S1463500302000033), [Haidvogel et al. 1993](https://journals.ametsoc.org/view/journals/phoc/23/11/1520-0485_1993_023_2373_nsofaa_2_0_co_2.xml), [Shchepetkin and McWilliams 2003](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2001JC001047), and previous MPAS-Ocean [confluence page](https://acme-climate.atlassian.net/wiki/spaces/OCNICE/blog/2015/11/19/40501447/MPAS-O+Sigma+coordinate+test+sea+mount).
+
+### Cosine Bell on the Sphere
+This test uses a fixed horizontal velocity field to test horizontal tracer advection. It is repeated from [Omega-0 design document](OmegaV0ShallowWater) and is important to conduct again as we convert Omega to a layered primitive-equation model. See `cosine_bell` case in both compass and polaris.
+
+### Merry-Go-Round
+This is an exact test for horizontal and vertical tracer advection. A fixed velocity field is provided, and a tracer distribution is advected around a vertical plane. See the `merry_go_round` test in compass, and the results on the [merry-go-round pull request](https://github.com/MPAS-Dev/compass/pull/108) and [compass port pull request](https://github.com/MPAS-Dev/compass/pull/452).
+
+
+## References
+This section is for references without webpage links. These are mostly textbooks.
+
+- Cushman‐Roisin, B., & Beckers, J.M. (2011). Introduction to Geophysical Fluid Dynamics: Physical and Numerical Aspects. Academic Press.
+- Gill, A. E. (2016). Atmosphere—Ocean dynamics. Elsevier.
+- Kundu, P.K., Cohen, I.M., Dowling D.R. (2016) Fluid Mechanics 6th Edition, Academic Press.
+- Pedlosky, J. (1987). Geophysical Fluid Dynamics (Vol. 710). Springer.
+- Vallis, G. K. (2017). Atmospheric and oceanic fluid dynamics. Cambridge University Press.
+
+
+## OLD: Momentum Equations
 
 Geophysical fluids such as the ocean and atmosphere are rotating and stratified, and horizontal velocities are orders of magnitude larger than vertical velocities. It is therefore convenient to separate the horizontal and vertical as ${\bf u}_{3D} = \left( {\bf u}, w \right)$ and $\nabla_{3D} = \left( \nabla_z, d/dz \right)$ where $z$ is the vertical direction in a local Cartesian coordinate system aligned with gravity (approximately normal to Earth's surface), and $w$ is the vertical velocity. The $z$ subscript on $\nabla_z$ is to remind us that this is the true horizontal gradient (perpendicular to $z$), as opposed to gradients within tilted layers used in the following section. The Earth's gravitational force is included as $\Phi_g = gz $ so that $ \nabla_{3D} \Phi_g =  g{\bf k}$. The rotating frame of reference results in the Coriolis force $f {\bf k} \times {\bf u} \equiv f {\bf u}^\perp$, where $f$ is the Coriolis parameter and ${\bf u}^\perp$ is the horizontal velocity vector rotated $90^\circ$ counterclockwise from $\bf u$ in the horizontal plane. See any textbook in the [References](#references) for a full derivation.
 
@@ -523,7 +849,7 @@ $$ (continuous-v_tr_diff)
 and may also include a biharmonic (del4) term and parameterizations such as Redi mixing. Sources and sinks include surface fluxes from the atmosphere and land, and bio-geo-chemical reactions.
 All of the diffusion and forcing terms are written in more detail with the [Discrete Equations](#discrete-equations) below.
 
-## 4. Layered Equations
+## OLD: Layered Equations
 
 Here we derive the layered equations by discretizing in the vertical, while the horizontal remains continuous. We discretize by integrating in the vertical from the lower surface $z=z_k^{bot}(x,y)$ to $z=z_k^{top}(x,y)$ for the layer with index $k$, as described in [Ringler et al. 2013](https://www.sciencedirect.com/science/article/pii/S1463500313000760) Appendix A.2. Equivalently, we can vertically integrate from a deeper pressure surface $p=p_k^{bot}(x,y)$ (higher pressure) to $p=p_k^{top}(x,y)$ where $p$ and $z$ are related by the hydrostatic pressure equation [](#continuous-hydrostatic-pressure).
 
@@ -858,332 +1184,6 @@ $$
 $$ (potential-vort-adv)
 
 Surface fluxes $Q^h_k$ have been added to the mass equation for precipitation, evaporation, and river runoff.  These fluxes, like mass transport $\omega$, are in units of kg/s/m$^2$.
-
-
-## 5. Discrete Equations
-
-The horizontally discretized layered equations are as follows. We have dropped the $r$ in $\nabla_r$ for conciseness, and the operator $\nabla$ from here on means within-layer.
-
-$$
-\frac{\partial u_{e,k}}{\partial t} + \left[ \frac{{\bf k} \cdot \nabla \times u_{e,k} +f_v}{[h_{i,k}]_v}\right]_e\left([h_{i,k}]_e u_{e,k}^{\perp}\right)
-+ \left[ \frac{ \alpha_{i,k}^{top}\omega_{i,k}^{top}} {h_{i,k}}\right]_e u_{e,k}^{top}
-- \left[ \frac{ \alpha_{i,k+1}^{top}\omega_{i,k+1}^{top}} {h_{i,k}} \right]_e u_{e,k+1}^{top}
-=
-- \left[ \alpha_{i,k} \right]_e \nabla p_{i,k} - \nabla \Phi_{i,k}
-- \nabla K_{i,k} +  { \bf D}^u_{e,k} + {\bf F}^u_{e,k}
-$$ (discrete-momentum)
-
-$$
-\frac{\partial h_{i,k}}{\partial t} + \nabla \cdot \left([h_{i,k}]_e u_{e,k}\right)
-+ \omega_{i,k}^{top} - \omega_{i,k+1}^{top}
-= Q^h_{i,k}
-$$ (discrete-thickness)
-
-$$
-\frac{\partial h_{i,k} \varphi_{i,k}}{\partial t} + \nabla \cdot \left(u_{e,k} [h_{i,k} \varphi_{i,k}]_e \right)
-+ \varphi_{i,k}^{top} \omega_{i,k}^{top} - \varphi_{i,k+1}^{top}\omega_{i,k+1}^{top}
-= D^\varphi_{i,k} + Q^\varphi_{i,k}
-$$ (discrete-tracer)
-
-$$
-p_{i,k} = p_{i}^{surf} + \sum_{k'=1}^{k-1} g h_{i,k'} + \frac{1}{2} g h_{i,k}
-$$ (discrete-pressure)
-
-$$
-\alpha_{i,k} = f_{eos}(p_{i,k},\Theta_{i,k},S_{i,k})
-$$ (discrete-eos)
-
-$$
-z_{i,k}^{top} = z_{i}^{floor} + \sum_{k'=k}^{K_{max}} \alpha_{i,k'}h_{i,k'}
-$$ (discrete-z)
-
-The subscripts $i$, $e$, and $v$ indicate cell, edge, and vertex locations and subscript $k$ is the layer.  Square brackets $[\cdot]_e$ and $[\cdot]_v$ are quantities that are interpolated to edge and vertex locations. For vector quantities, $u_{e,k}$ denotes the normal component at the center of the edge, while $u_{e,k}^\perp$ denotes the tangential component. We have switched from $\varphi_{i,k}^{bot}$ to the identical $\varphi_{i,k+1}^{top}$ for all variables in order for the notation to match the array names in the code.  The superscripts $surf$ and $floor$ are the surface and floor of the full ocean column. All variables without these superscripts indicate that they are layer-averaged, as defined in [](def-mass-thickness-average), and can be considered to represent a mid-layer value in the vertical. The mid-layer location is equivalently the average in $z$, $p$, or $h$ (mass), since density $\rho_{i,k}$ is considered constant in the cell.
-
-We refer to these as the discrete equations, but time derivatives remain continuous. The time discretization is described in the [time stepping design document](TimeStepping.md). The velocity, mass-thickness, and tracers are solved prognostically using [](discrete-momentum), [](discrete-thickness), [](discrete-tracer). At the new time, these variables are used to compute pressure [](discrete-pressure), specific volume [](discrete-eos), and z-locations [](discrete-z). Additional variables are computed diagnostically at the new time: $u^{\perp}$, $K$, $\omega$, $z^{mid}$, $\Phi$, etc. The initial geopotential is simply $\Phi=gz$, but additional gravitational terms may be added later.
-
-The horizontal operators $\nabla$, $\nabla\cdot$, and $\nabla \times$ are now in their discrete form. In the TRiSK design, gradients ($\nabla$) map cell centers to edges; divergence ($\nabla \cdot$) maps edge quantities to cells; and curl ($\nabla \times$) maps edges to vertices. The exact form of operators and interpolation stencils remain the same as those given in [Omega-0 design document](OmegaV0ShallowWater.md#operator-formulation). The discrete version of terms common with Omega-0, such as advection, potential vorticity, and $\nabla K$, can be found in [Omega-0 Momentum Terms](OmegaV0ShallowWater.md#momentum-terms) and [Omega-0 Thickness and Tracer Terms](OmegaV0ShallowWater.md#thickness-and-tracer-terms).
-
-
-### Momentum Dissipation
-
-The discretized momentum dissipation ${ \bf D}^u_{e,k}$ may include these terms, which are detailed in the subsections below.
-
-$$
-{ \bf D}^u_{e,k} =  \nu_2 \nabla^2 u_{e,k} - \nu_4 \nabla^4 u_{e,k} +
-\frac{\partial }{\partial z} \left( \nu_v \frac{\partial u_{e,k}}{\partial z} \right)
-$$ (discrete-mom-del2)
-
-#### Laplacian dissipation (del2)
-
-$$
- \nu_2 \nabla^2 u_{e,k} = \nu_2 \left( \nabla D_{i,k} - \nabla^{\perp} \zeta_{v,k} \right)
-$$ (discrete-mom-del2)
-
-where $D$ is divergence and $\zeta$ is relative vorticity. See [Omega V0 Section 3.3.4](OmegaV0ShallowWater.md#del2-momentum-dissipation)
-
-#### Biharmonic dissipation (del4)
-As in [Omega V0 Section 3.3.5](OmegaV0ShallowWater.md#del4-momentum-dissipation), biharmonic momentum dissipation is computed with two applications of the Del2 operator above.
-
-$$
- - \nu_4 \nabla^4 u_{e,k}
-= - \nu_4 \nabla^2 \left( \nabla^2 u_{e,k} \right)
-$$ (discrete-mom-del4)
-
-#### Vertical momentum diffusion
-Vertical derivatives may be computed with either $z$ or $p$ as the independent variable,
-
-$$
-\frac{\partial }{\partial z} \left( \nu_v \frac{\partial u}{\partial z} \right)
-= \frac{\partial }{\partial p}\frac{\partial p}{\partial z} \left( \nu_v \frac{\partial u}{\partial p} \frac{\partial p}{\partial z}\right)
-= \rho g^2\frac{\partial }{\partial p} \left( \nu_v \rho \frac{\partial u}{\partial p} \right).
-$$ (mom-vert-diff-z-p)
-
-We choose to use $z$ values for simplicity. A single vertical derivative of an arbitrary variable $\varphi$ at mid-layer is
-
-$$
-\frac{\partial \varphi_k}{\partial z}
-= \frac{\varphi_k^{top} - \varphi_k^{bot} }{z_k^{top} - z_k^{bot}}
-$$ (vertderiv1)
-
-and a second derivative is
-
-$$
-\frac{\partial }{\partial z} \left(
-\frac{\partial \varphi_k}{\partial z} \right)
-=
-\frac{1}{z_{k}^{top} - z_{k+1}^{top}} \left(
-\frac{\varphi_{k-1} - \varphi_k }{z_{k-1}^{mid} - z_k^{mid}}
- -
-\frac{\varphi_{k} - \varphi_{k+1} }{z_{k}^{mid} - z_{k+1}^{mid}}
-\right)
-$$ (vertderiv2)
-
-Thus, the vertical momentum diffusion is
-
-$$
-\frac{\partial }{\partial z} \left( \nu_v \frac{\partial u_{e,k}}{\partial z} \right)
-=
-\frac{1}{z_{e,k}^{top} - z_{e,k+1}^{top}} \left(
-\nu_{e,k}^{top}
-\frac{u_{e,k-1} - u_k }{z_{e,k-1}^{mid} - z_k^{mid}}
- -
-\nu_{e,k+1}^{top}
-\frac{u_{e,k} - u_{e,k+1} }{z_{e,k}^{mid} - z_{e,k+1}^{mid}}
-\right)
-$$ (discrete-mom-vert-diff)
-
-This stencil is applied as an implicit tri-diagonal solve at the end of the time step. See details in the [tridiagonal solver design document](TridiagonalSolver) and forthcoming vertical mixing design document.
-
-### Momentum Forcing
-The discretized momentum forcing ${ \bf F}^u_{e,k}$ may include:
-
-#### Wind Forcing
-
-The wind forcing is applied as a top boundary condition during implicit vertical mixing as
-
-$$
-\frac{\tau_{e}}{[ h_{i,k}]_e}
-$$
-
-where $\tau$ is the wind stress in Pa. Since the mass-thickness $h$ is in kg/s/m$^2$, this results in the desired units of m/s$^2$ for a momentum tendency term.
-
-#### Bottom Drag
-
-Bottom Drag is applied as a bottom boundary condition during implicit vertical mixing as
-
-$$
-- C_D \frac{u_{e,k}\left|u_{e,k}\right|}{[\alpha_{i,k}h_{i,k}]_e} .
-$$ (discrete-mom-bottom)
-
-The units of specific volume times mass-thickness $\alpha h$ are length (m), so that the full term has units of m/s$^2$.
-
-#### Rayleigh Drag
-
-Rayleigh drag is a simple drag applied to every cell.  It is used to ensure stability during spin-up.
-
-$$
-- Ra \, u_{e,k}
-$$ (discrete-mom-Ra)
-
-### Tracer Diffusion
-
-The discretized tracer diffusion $ D^\varphi_{i,k}$ may include these terms, which are detailed below. Here $\kappa_2$ and $\kappa_4$ are written in front of the operator for simplicity.
-
-$$
-D^\varphi_{i,k} =  \kappa_2 \nabla^2 \varphi_{i,k} - \kappa_4 \nabla^4 \varphi_{i,k} +
-\frac{\partial }{\partial z} \left( \kappa_v \frac{\partial \varphi_{i,k}}{\partial z} \right)
-$$ (discrete-tracer-diff)
-
-#### Laplacian diffusion (del2)
-The Laplacian may be written as the divergence of the gradient,
-
-$$
- h_{i,k} \nabla \cdot \left( \kappa_{2,e,k} \nabla \varphi_{i,k} \right).
-$$ (discrete-tracer-del2)
-
-See [Omega V0 Section 3.3.2](OmegaV0ShallowWater.md#del2-tracer-diffusion) for details of this calculation.
-
-#### Biharmonic diffusion (del4)
-The biharmonic is a Laplacian operator applied twice,
-
-$$
- - h_{i,k} \nabla \cdot \left( \kappa_{4,e,k} \nabla
-\right[
-\nabla \cdot \left(  \nabla \varphi_{i,k} \right)
-\left]
- \right).
-$$ (discrete-tracer-del4)
-
-Each of these operators are written as horizontal stencils in the [Omega V0 Operator Formulation Section](OmegaV0ShallowWater.md#operator-formulation)
-
-#### Vertical tracer diffusion
-As discussed above in the [momentum section](#vertical-momentum-diffusion), vertical derivatives may be written in terms of $z$ or $p$,
-
-$$
-\frac{\partial }{\partial z} \left( \kappa_v \frac{\partial {\bf \varphi}}{\partial z} \right)
-= \rho g^2 \frac{\partial }{\partial p} \left( \kappa_v \rho \frac{\partial {\bf \varphi}}{\partial p} \right)
-$$ (discrete-tracer-vertdiff)
-and $z$ is chosen. The second derivative stencil is
-
-$$
-h_{i,k} \frac{\partial }{\partial z} \left( \kappa_v \frac{\partial \varphi_{i,k}}{\partial z} \right)
-=
-\frac{h_{i,k}}{z_{i,k}^{top} - z_{i,k+1}^{top}} \left(
-\kappa_{i,k}^{top}
-\frac{\varphi_{i,k-1} - \varphi_k }{z_{i,k-1}^{mid} - z_k^{mid}}
- -
-\kappa_{i,k+1}^{top}
-\frac{\varphi_{i,k} - \varphi_{i,k+1} }{z_{i,k}^{mid} - z_{i,k+1}^{mid}}
-\right).
-$$ (discrete-tracer-vert-diff)
-
-Like the momentum term, this is applied using a tridiagonal solver in the
-[tridiagonal solver](TridiagonalSolver) in the implicit vertical mixing step.
-
-### MPAS-Ocean Equations of Motion
-
-The MPAS-Ocean layered formulation are provided here for reference. MPAS-Ocean solves for momentum, thickness, and tracers at layer $k$. These are continuous in the horizontal and discrete in the vertical.
-
-$$
-\frac{\partial {\bf u}_k}{\partial t}
-+ \frac{1}{2}\nabla \left| {\bf u}_k \right|^2
-+ ( {\bf k} \cdot \nabla \times {\bf u}_k) {\bf u}^\perp_k
-+ f{\bf u}^{\perp}_k
-+ w_k^{bot}{\bf u}_k^{bot}
-- w_k^{top}{\bf u}_k^{top} =
-- \frac{1}{\rho_0}\nabla p_k
-- \frac{\rho g}{\rho_0}\nabla z^{mid}_k
-+ \nu_h\nabla^2{\bf u}_k
-+ \frac{\partial }{\partial z} \left( \nu_v \frac{\partial {\bf u}_k}{\partial z} \right),
-$$ (mpaso-continuous-momentum)
-
-$$
-\frac{\partial h_k}{\partial t} + \nabla \cdot \left( h_k^e {\bf u}_k \right) + w_k^{bot} - w_k^{top} = 0,
-$$ (mpaso-continuous-thickness)
-
-$$
-\frac{\partial h_k\varphi_k}{\partial t} + \nabla \cdot \left( h_k^e\varphi_k^e {\bf u}_k \right)
-+ \varphi_k^{bot} w_k^{bot} - \varphi_k^{top} w_k^{top}
-= \nabla\cdot\left(h_k^e \kappa_h \nabla\varphi_k \right)
-+ h_k \frac{\partial }{\partial z} \left( \kappa_v \frac{\partial \varphi_k}{\partial z} \right).
-$$ (mpaso-continuous-tracer)
-
-The layer thickness $h$, vertical velocity $w$, pressure $p$, and tracer $\varphi$, are cell-centered quantities, while the horizontal velocity ${\bf u}$ and $e$ superscript are variables interpolated to the cell edges.
-
-
-## 6. Variable Definitions
-
-Table 1. Definition of variables. Geometric variables may be found in the [Omega V0 design document, Table 1](OmegaV0ShallowWater.md#variable-definitions)
-
-| symbol  | name   | units    | location | name in code | notes  |
-|---------------------|-----------------------------|----------|-|---------|-------------------------------------------------------|
-|$D_{i,k}$   | divergence | 1/s      | cell | Divergence  |$D=\nabla\cdot\bf u$ |
-|${\bf D}^u_{k} $, $ D^u_{e,k} $ | momentum dissipation terms | m/s$^2$ | edge | |see [Momentum Dissipation Section](#momentum-dissipation) |
-|$ D_{e,k}^\varphi$ | tracer diffusion terms | | cell | |see [Tracer Diffusion Section](#tracer-diffusion) |
-|$f_v$       | Coriolis parameter| 1/s      | vertex   | FVertex  |  $f = 2\Omega sin(\phi)$, $\Omega$ rotation rate, $\phi$ latitude|
-|${\bf F}^u_{k} $, $ F^u_{e,k} $      | momentum forcing | m/s$^2$    | edge     |   | see [Momentum Forcing Section](#momentum-forcing) |
-|$f_{eos}$ | equation of state | -  | any | function call | |
-|$g$ | gravitational acceleration | m/s$^2$ | constant  | Gravity |
-|$h_{i,k}$ | layer mass-thickness | kg/m$^2$  | cell | LayerThickness | see [](def-h) |
-|$k$ | vertical index |  |
-|${\bf k}$ | vertical unit vector |  |
-|$K_{min}$ | shallowest active layer |  |
-|$K_{max}$ | deepest active layer |  |
-|$K_{i,k}$  | kinetic energy    | m$^2$/s$^2$  | cell     | KineticEnergyCell  |$K = \left\| {\bf u} \right\|^2 / 2$ |
-|$p_{i,k}$ | pressure | Pa | cell | Pressure | see [](discrete-pressure) |
-|$p^{floor}_i$ | bottom pressure | Pa | cell | PFloor | pressure at ocean floor
-|$p^{surf}_i$ | surface pressure | Pa | cell | PSurface | due to atm. pressure, sea ice, ice shelves
-|$q_{v,k}$ | potential vorticity         | 1/m/s    | vertex   | PotentialVorticity  |$q = \left(\zeta+f\right)/h$ |
-|$Q^h_{i,k}$ | mass source and sink terms| kg/s/m$^2$ | cell |   |
-|$Q^\varphi_{i,k}$ | tracer source and sink terms|kg/s/m$^2$ or similar| cell |   |
-|$Ra$      | Rayleigh drag coefficient   | 1/s      | constant |   |  |
-|$S_{i,k}$ | salinity | PSU | cell | Salinity | a tracer $\varphi$  |
-|$t$       | time    | s        | none     |   |  |
-|${\bf u}_k$   | velocity, vector form       | m/s      | - |   |  |
-|$u_{e,k}$   | velocity, normal to edge      | m/s      | edge     | NormalVelocity  | |
-|$u^\perp_{e,k}$   | velocity, tangential to edge      | m/s      | edge     | TangentialVelocity  |${\bf u}^\perp = {\bf k} \times {\bf u}$|
-|$\alpha_{i,k}$ | specific volume | m$^3$/kg | cell  | SpecificVolume | $v = 1/\rho$ |
-|$w_{i,k}$ | vertical velocity | m/s | cell  | VerticalVelocity | volume transport per m$^2$ |
-|$z$ | vertical coordinate | m | - | | positive upward |
-|$z^{top}_{i,k}$ | layer top z-location | m | cell | ZTop | see [](discrete-z) |
-|$z^{mid}_{i,k}$ | layer mid-depth z-location | m | cell | ZMid |
-|$z^{surf}_{i}$ | ocean surface, i.e. sea surface height  | m | cell | ZSurface | same as SSH in MPAS-Ocean |
-|$z^{floor}_{i}$ | ocean floor z-location | m | cell | ZFloor | -bottomDepth from MPAS-Ocean |
-|$\zeta_{v,k}$   | relative vorticity| 1/s      | vertex   |  RelativeVorticity |$\zeta={\bf k} \cdot \left( \nabla \times {\bf u}\right)$ |
-|$\Theta_{i,k}$ | conservative temperature | C | cell  | Temperature  | a tracer $\varphi$ |
-|$\kappa_2$| tracer diffusion  | m$^2$/s    | cell     |   |  |
-|$\kappa_4$| biharmonic tracer diffusion | m$^4$/s    | cell     |   |  |
-|$\kappa_v$| vertical tracer diffusion | m$^2$/s    | cell     |   |  |
-|$\nu_2$   | horizontal del2 viscosity         | m$^2$/s    | edge     |   | |
-|$\nu_4$   | horizontal biharmonic (del4) viscosity        | m$^4$/s    | edge     |   |  |
-|$\nu_v$| vertical momentum diffusion | m$^2$/s    | edge       |   |  |
-|$\varphi_{i,k}$ | tracer | kg/m$^3$ or similar | cell | | e.g. $\Theta$, $S$ |
-|$\rho_{i,k}$ | density | kg/m$^3$ | cell  | Density |
-|$\rho_0$ | Boussinesq reference density | kg/m$^3$ | |  constant |
-|$\tau_i$ | wind stress | Pa=N/m$^2$ | edge |  SurfaceStress |
-|$\Phi_{i,k}$ | geopotential| | cell | Geopotential |$\partial \Phi / \partial z = g$ for gravity |
-|$\omega$   | mass transport | kg/s/m^2      | cell | VerticalTransport |$\omega=\rho w$|
-
-
-## 7. Verification and Testing
-
-Capability and testing are similar to [Petersen et al. 2015](http://www.sciencedirect.com/science/article/pii/S1463500314001796). The following tests are in idealized domains and do not require surface fluxes or surface restoring. For the following tests to show results comparable to those published with other models, the full dynamic sequence of density, pressure, momentum, and advection must work correctly. The successful completion of the following tests is a validation of the primitive equation functions in Omega 1.0. All of the following tests may exercise a linear equation of state or the nonlinear TEOS10. The first four tests quantify the anomalous mixing caused by the numerical schemes. The first five are on cartesian planes with regular hexagon meshes.
-
-### Lock Exchange (Optional)
-The Lock Exchange is the simplest possible test of a primitive equation model. There is an analytic formulation for the wave propagation speed. It is listed as optional because the Overflow tests the same dynamics.
-See [Petersen et al. 2015](http://www.sciencedirect.com/science/article/pii/S1463500314001796) and the compass `lock_exchange` case.
-
-### Overflow
-The Overflow test case adds bathymetry to the Lock Exchange. It is a particularly effective test of vertical mass and tracer advection, and vertical mixing. It is useful to compare different vertical coordinates, like level (z- or p-level) versus terrain-following (sigma).
-See [Petersen et al. 2015](http://www.sciencedirect.com/science/article/pii/S1463500314001796) and the compass `overflow` case.
-
-
-### Internal Gravity Wave
-The internal gravity wave tests horizontal and vertical advection.
-See [Petersen et al. 2015](http://www.sciencedirect.com/science/article/pii/S1463500314001796) and the `internal_wave` case in both compass and polaris.
-
-### Baroclinic Channel
-This is the first test to add the Coriolis force and uses a three-dimensional domain. It is designed to result in an eddying simulation at sufficiently high resolution. This tests the combination of Coriolis and pressure gradient forces that produce geostrophic balance, as well as horizontal advection and dissipation for numerical stability.
-See [Petersen et al. 2015](http://www.sciencedirect.com/science/article/pii/S1463500314001796) and the `baroclinic_channel` case in both compass and polaris.
-
-### Seamount with zero velocity.
-This is a 3D domain with a seamount in the center, where temperature and salinity are stratified in the vertical and constant in the horizontal. The test is simply that an initial velocity field of zero remains zero. For z-level layers the velocity trivially remains zero because the horizontal pressure gradient is zero. For tilted layers, this is a test of the pressure gradient error and the velocity is never exactly zero. This is a common test for sigma-coordinate models like ROMS because the bottom layers are extremely tilted along the seamount, but it is a good test for any model with tilted layers. Omega will use slightly tilted layers in p-star mode (pressure layers oscillating with SSH) and severely tilted layers below ice shelves, just like MPAS-Ocean. See [Ezer et al. 2002](https://www.sciencedirect.com/science/article/pii/S1463500302000033), [Haidvogel et al. 1993](https://journals.ametsoc.org/view/journals/phoc/23/11/1520-0485_1993_023_2373_nsofaa_2_0_co_2.xml), [Shchepetkin and McWilliams 2003](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2001JC001047), and previous MPAS-Ocean [confluence page](https://acme-climate.atlassian.net/wiki/spaces/OCNICE/blog/2015/11/19/40501447/MPAS-O+Sigma+coordinate+test+sea+mount).
-
-### Cosine Bell on the Sphere
-This test uses a fixed horizontal velocity field to test horizontal tracer advection. It is repeated from [Omega-0 design document](OmegaV0ShallowWater) and is important to conduct again as we convert Omega to a layered primitive-equation model. See `cosine_bell` case in both compass and polaris.
-
-### Merry-Go-Round
-This is an exact test for horizontal and vertical tracer advection. A fixed velocity field is provided, and a tracer distribution is advected around a vertical plane. See the `merry_go_round` test in compass, and the results on the [merry-go-round pull request](https://github.com/MPAS-Dev/compass/pull/108) and [compass port pull request](https://github.com/MPAS-Dev/compass/pull/452).
-
-
-## References
-This section is for references without webpage links. These are mostly textbooks.
-
-- Cushman‐Roisin, B., & Beckers, J.M. (2011). Introduction to Geophysical Fluid Dynamics: Physical and Numerical Aspects. Academic Press.
-- Gill, A. E. (2016). Atmosphere—Ocean dynamics. Elsevier.
-- Kundu, P.K., Cohen, I.M., Dowling D.R. (2016) Fluid Mechanics 6th Edition, Academic Press.
-- Pedlosky, J. (1987). Geophysical Fluid Dynamics (Vol. 710). Springer.
-- Vallis, G. K. (2017). Atmospheric and oceanic fluid dynamics. Cambridge University Press.
 
 
 <!--
