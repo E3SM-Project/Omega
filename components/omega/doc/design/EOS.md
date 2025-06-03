@@ -10,10 +10,10 @@ The equation of state relates density to the prognostic state variables temperat
 Omega will use TEOS-10 as the primary equation of state. The reference implementation of TEOS-10 is contained in the Gibbs Sea Water (GSW) toolbox function. The Omega implementation will be equivalent to the computation in the GSW toolbox function: `gsw_specvol(sa,ct,p)`
 
 ### 2.2 Requirement: allow a choice of equations of state
-Omega-1 should include the option for two EOS options. The first is a linear eos, for benchmarking against MPAS-O and to use in simplified cases. The other option should be a well-established version of TEOS-10 (e.g. Roquet 75-term polynomial). 
+Omega-1 should include the option for two EOS options. The first is a linear eos, for benchmarking against MPAS-O and to use in simplified cases. The other option should be a well-established version of TEOS-10 (e.g. Roquet 75-term polynomial).
 
 ### 2.3 Requirement: computational efficiency
-As one of the most expensive kernels, the EOS must be as efficient as possible. Developers should be discouraged from calling the EOS too frequently. The fraction of compute time used be the EOS within Omega1 will be compared to fraction used in MPAS-Ocean. 
+As one of the most expensive kernels, the EOS must be as efficient as possible. Developers should be discouraged from calling the EOS too frequently. The fraction of compute time used be the EOS within Omega1 will be compared to fraction used in MPAS-Ocean.
 
 ### 2.4 Requirement: abide by license for the GSW Oceanographic Toolbox
 The GSW toolbox can only be used without modification, so a Omega-specific port of certain functions will be required to support Kokkos/GPU enabled computation. The toolbox without modifications can still be used for verification testing against the Omega implementation.
@@ -22,7 +22,7 @@ The GSW toolbox can only be used without modification, so a Omega-specific port 
 The Omega implementation should be compared with the test value published in Roquet et al 2015, and the official GSW Oceanographic Toolbox (supported by TEOS-10) to verify correctness.
 
 ### 2.6 Requirement: check value range
-The EOS code should include a check on the range of ocean properties to assess use of TEOS-10 (equivalent to the ``ocean funnel'' check), and a truncation of state variables to use the polynomial only in the valid range (similar to the truncation in MPAS-Ocean). 
+The EOS code should include a check on the range of ocean properties to assess use of TEOS-10 (equivalent to the ``ocean funnel'' check), and a truncation of state variables to use the polynomial only in the valid range (similar to the truncation in MPAS-Ocean).
 
 ### 2.7 Requirement: provide adiabatically-displaced density
 The EOS code should be able to be used to calculate density adiabatically displaced to i) the layer below, ii) the surface. This is needed to calculate the Brunt-Vaisala and for mixed-layer parameterizations. This operation should be done as efficiently as possible (e.g. we will explore reusing parts of the polynomial or leveraging Kernel Fusion).
@@ -31,31 +31,31 @@ The EOS code should be able to be used to calculate density adiabatically displa
 Later versions should include calculating the freezing temperature of seawater.
 
 ### 2.9 Desired: output in situ temperature
-Later versions should include calculating the in situ  temperature needed for coupling (at surface including at non-zero pressure). 
+Later versions should include calculating the in situ  temperature needed for coupling (at surface including at non-zero pressure).
 
 ### 2.10 Desired: output first derivatives
 The EOS will need to be able to produce alpha and beta (drho/dT and drho/dS) for linear expansions in the higher-order pressure gradient and for some mixing parameterizations.
 
 ### 2.11 Desired: variable conversion
-Later versions should include functions to convert between conservative and potential temperatures, and absolute and practical salinity. These will be used to convert the initial conditions or compare to ocean states from other sources (MPAS-Ocean, reanalysis, other models etc.) These functions may be used offline in pre- or post-processing but need to be consistent with the EOS implementation. 
+Later versions should include functions to convert between conservative and potential temperatures, and absolute and practical salinity. These will be used to convert the initial conditions or compare to ocean states from other sources (MPAS-Ocean, reanalysis, other models etc.) These functions may be used offline in pre- or post-processing but need to be consistent with the EOS implementation.
 
 ### 2.12 Desired: enthalpy conversion
-Later versions should include functions to calculate the layer potential enthalpy from enthalpy fluxes to convert coupling fluxes to changes in conservative temperature in a rigorous manner. 
+Later versions should include functions to calculate the layer potential enthalpy from enthalpy fluxes to convert coupling fluxes to changes in conservative temperature in a rigorous manner.
 
 ## 3 Algorithmic Formulation
-The formulation of the specific volume calculation will be the 75-term polynomial as documented in [Roquet et al. 2015](https://www.sciencedirect.com/science/article/pii/S1463500315000566). The implementation of the displaced density calculation may be altered to improve performance by reusing some polynomial coefficients, but should produce the same results as the full 75-term polynomial. 
+The formulation of the specific volume calculation will be the 75-term polynomial as documented in [Roquet et al. 2015](https://www.sciencedirect.com/science/article/pii/S1463500315000566). The implementation of the displaced density calculation may be altered to improve performance by reusing some polynomial coefficients, but should produce the same results as the full 75-term polynomial.
 
 ## 4 Design
-The GSW-C toolbox will be incorporated into Omega as a submodule. In order to abide by the license of the toolbox, the toolbox will only be used in testing to check our implementation. The coefficients for the Roquet et al. 2015 expansion will be based on the published values (Appendix). A Kokkos implementation of the function to compute specific volume will be ported to Omega. The GSW-C toolbox submodule will serve as a baseline reference for our ports in unit tests. 
+The GSW-C toolbox will be incorporated into Omega as a submodule. In order to abide by the license of the toolbox, the toolbox will only be used in testing to check our implementation. The coefficients for the Roquet et al. 2015 expansion will be based on the published values (Appendix). A Kokkos implementation of the function to compute specific volume will be ported to Omega. The GSW-C toolbox submodule will serve as a baseline reference for our ports in unit tests.
 
-To optimize performance, calls to the EOS function should be able to support whole array computation. The EOS class will include a public method that calculate specific volume given the state variables, and a public variable defining the chosen eos option (changeable by the user). 
+To optimize performance, calls to the EOS function should be able to support whole array computation. The EOS class will include a public method that calculate specific volume given the state variables, and a public variable defining the chosen eos option (changeable by the user).
 
 ### 4.1 Data types and parameters
-The `Eos` class will be used to perform the necessary eos operations such as calculating specific volume: 
+The `Eos` class will be used to perform the necessary eos operations such as calculating specific volume:
 ```c++
 class Eos{
     public:
-       Array SpecVol; 
+       Array SpecVol;
        Array SpecVolDisplaced;
        void computeSpecVol();
        static Eos *create();
@@ -64,8 +64,8 @@ class Eos{
        I4 NCellsAll;
        I4 NChunks = NVertLevels / VecLength;
        void computeSpecVolTEOS10Poly75t();
-       void computeSpecVolLinear(); 
-       void truncateTempSal(); 
+       void computeSpecVolLinear();
+       void truncateTempSal();
        static Eos *DefaultEos;
        static std::map<std::string, std::unique_ptr<Eos>> AllEos;
 
@@ -88,13 +88,13 @@ We assume that the call to the eos is in a timestepping routine where input trac
 ```c++
    Array2DReal ConservativeTemperature;
    Array2DReal AbsoluteSalinity;
-   Tracers->getByName(ConservativeTemperature, VelTimeLevel, 'temperature');
-   Tracers->getByName(AbsoluteSalinity, VelTimeLevel, 'salinity');
+   Tracers->getByName(ConservativeTemperature, VelTimeLevel, "temperature");
+   Tracers->getByName(AbsoluteSalinity, VelTimeLevel, "salinity");
 ```
 
 
 ### 4.2 Methods
-There will be a constructor and destructor for the class, as well as several public and private 
+There will be a constructor and destructor for the class, as well as several public and private
 methods. Modeled on the `Tendencies` class, the constructor will be private. A static `create` method is used to ensure every eos instance is properly stored in the static map of eos instances. This is to help ensure that the eos initialized in the `init` step of the model set-up is then retrievable during the `forward` step.
 
 
@@ -134,7 +134,7 @@ Eos *Eos::get(const std::string &Name);
 
 The public `computeSpecVol` method will rely on private methods for each specific EOS option (linear and TEOS-10).
 ```c++
-void Eos::computeSpecVol(const Array2DReal &SpecVol, 
+void Eos::computeSpecVol(const Array2DReal &SpecVol,
                          const Array2DReal &ConservativeTemperature,
                          const Array2DReal &AbsoluteSalinity,
                          const Array2DReal &Pressure) {
@@ -144,7 +144,7 @@ OMEGA_SCOPE(...)
        KOKKOS_LAMBDA(int ICell, int KChunk) {
           LocComputeSpecVolLinear(...);
        });
-    } 
+    }
     else if (eosChoice == EOSType::TEOS10Poly75t){
        parallelFor("eos-teos10", {NCellsAll, NChunks},
        KOKKOS_LAMBDA(int ICell, int KChunk) {
@@ -167,10 +167,10 @@ void Eos::clear();
 ## 5 Verification and Testing
 
 ### 5.1 Test: Verification of GSW-C submodule
-A unit test will verify that the result of the GSW-C toolbox (used as a submodule, without modifications) matches the expected value of specific volume published in Roquet et al. 2015 within machine precision. The publication only includes one data point (Sa, Ct, P) to check. 
+A unit test will verify that the result of the GSW-C toolbox (used as a submodule, without modifications) matches the expected value of specific volume published in Roquet et al. 2015 within machine precision. The publication only includes one data point (Sa, Ct, P) to check.
 
 ### 5.2 Test: Verification of our TEOS-10 75-term polynomial implementation
-A unit test will verify that the result of the Omega implementation of the Roquet et al. 2015 75-term polynomial calculation of the specific volume matches the expected value of specific volume published in Roquet et al. 2015 within machine precision. The publication only includes one data point (Sa, Ct, P) to check. 
+A unit test will verify that the result of the Omega implementation of the Roquet et al. 2015 75-term polynomial calculation of the specific volume matches the expected value of specific volume published in Roquet et al. 2015 within machine precision. The publication only includes one data point (Sa, Ct, P) to check.
 
 ### 5.3 Test: Verification of TEOS-10 with GSW-C toolbox
 A unit test will verify that the result of the Omega and GSW-C toolbox implementations for the Roquet et al. 2015 expansion are within machine precision over a range of conservative temperature, absolute salinity, and pressure ranges.
