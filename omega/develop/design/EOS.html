@@ -276,7 +276,7 @@
 <p>The <code class="docutils literal notranslate"><span class="pre">Eos</span></code> class will be used to perform the necessary eos operations such as calculating specific volume:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Eos</span><span class="p">{</span>
 <span class="w">    </span><span class="k">public</span><span class="o">:</span>
-<span class="w">       </span><span class="n">Array</span><span class="w"> </span><span class="n">SpecVol</span><span class="p">;</span><span class="w"> </span>
+<span class="w">       </span><span class="n">Array</span><span class="w"> </span><span class="n">SpecVol</span><span class="p">;</span>
 <span class="w">       </span><span class="n">Array</span><span class="w"> </span><span class="n">SpecVolDisplaced</span><span class="p">;</span>
 <span class="w">       </span><span class="kt">void</span><span class="w"> </span><span class="nf">computeSpecVol</span><span class="p">();</span>
 <span class="w">       </span><span class="k">static</span><span class="w"> </span><span class="n">Eos</span><span class="w"> </span><span class="o">*</span><span class="nf">create</span><span class="p">();</span>
@@ -285,8 +285,8 @@
 <span class="w">       </span><span class="n">I4</span><span class="w"> </span><span class="n">NCellsAll</span><span class="p">;</span>
 <span class="w">       </span><span class="n">I4</span><span class="w"> </span><span class="n">NChunks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NVertLevels</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">VecLength</span><span class="p">;</span>
 <span class="w">       </span><span class="kt">void</span><span class="w"> </span><span class="nf">computeSpecVolTEOS10Poly75t</span><span class="p">();</span>
-<span class="w">       </span><span class="kt">void</span><span class="w"> </span><span class="nf">computeSpecVolLinear</span><span class="p">();</span><span class="w"> </span>
-<span class="w">       </span><span class="kt">void</span><span class="w"> </span><span class="nf">truncateTempSal</span><span class="p">();</span><span class="w"> </span>
+<span class="w">       </span><span class="kt">void</span><span class="w"> </span><span class="nf">computeSpecVolLinear</span><span class="p">();</span>
+<span class="w">       </span><span class="kt">void</span><span class="w"> </span><span class="nf">truncateTempSal</span><span class="p">();</span>
 <span class="w">       </span><span class="k">static</span><span class="w"> </span><span class="n">Eos</span><span class="w"> </span><span class="o">*</span><span class="n">DefaultEos</span><span class="p">;</span>
 <span class="w">       </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">Eos</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">AllEos</span><span class="p">;</span>
 </pre></div>
@@ -304,10 +304,10 @@
 </pre></div>
 </div>
 <p>We assume that the call to the eos is in a timestepping routine where input tracers for this timestep are defined, eg.</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span>   Array2DReal ConservativeTemperature;
-   Array2DReal AbsoluteSalinity;
-   Tracers-&gt;getByName(ConservativeTemperature, VelTimeLevel, &#39;temperature&#39;);
-   Tracers-&gt;getByName(AbsoluteSalinity, VelTimeLevel, &#39;salinity&#39;);
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">ConservativeTemperature</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">AbsoluteSalinity</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Tracers</span><span class="o">-&gt;</span><span class="n">getByName</span><span class="p">(</span><span class="n">ConservativeTemperature</span><span class="p">,</span><span class="w"> </span><span class="n">VelTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;temperature&quot;</span><span class="p">);</span>
+<span class="w">   </span><span class="n">Tracers</span><span class="o">-&gt;</span><span class="n">getByName</span><span class="p">(</span><span class="n">AbsoluteSalinity</span><span class="p">,</span><span class="w"> </span><span class="n">VelTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;salinity&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 </section>
@@ -350,7 +350,7 @@ It will return a pointer to the newly created object.</p>
 <section id="computation">
 <h4>4.2.4 Computation<a class="headerlink" href="#computation" title="Permalink to this heading"></a></h4>
 <p>The public <code class="docutils literal notranslate"><span class="pre">computeSpecVol</span></code> method will rely on private methods for each specific EOS option (linear and TEOS-10).</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Eos::computeSpecVol</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">SpecVol</span><span class="p">,</span><span class="w"> </span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Eos::computeSpecVol</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">SpecVol</span><span class="p">,</span>
 <span class="w">                         </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ConservativeTemperature</span><span class="p">,</span>
 <span class="w">                         </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">AbsoluteSalinity</span><span class="p">,</span>
 <span class="w">                         </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Pressure</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
@@ -360,7 +360,7 @@ It will return a pointer to the newly created object.</p>
 <span class="w">       </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">          </span><span class="n">LocComputeSpecVolLinear</span><span class="p">(...);</span>
 <span class="w">       </span><span class="p">});</span>
-<span class="w">    </span><span class="p">}</span><span class="w"> </span>
+<span class="w">    </span><span class="p">}</span>
 <span class="w">    </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">eosChoice</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">EOSType</span><span class="o">::</span><span class="n">TEOS10Poly75t</span><span class="p">){</span>
 <span class="w">       </span><span class="n">parallelFor</span><span class="p">(</span><span class="s">&quot;eos-teos10&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="n">NCellsAll</span><span class="p">,</span><span class="w"> </span><span class="n">NChunks</span><span class="p">},</span>
 <span class="w">       </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
