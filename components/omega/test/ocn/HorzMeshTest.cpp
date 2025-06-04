@@ -13,6 +13,7 @@
 #include "DataTypes.h"
 #include "Decomp.h"
 #include "Dimension.h"
+#include "Error.h"
 #include "Halo.h"
 #include "IO.h"
 #include "Logging.h"
@@ -22,6 +23,8 @@
 #include "mpi.h"
 
 #include <iostream>
+
+using namespace OMEGA;
 
 //------------------------------------------------------------------------------
 // The initialization routine for Mesh testing. It calls various
@@ -34,49 +37,41 @@ int initHorzMeshTest() {
    // Initialize the Machine Environment class - this also creates
    // the default MachEnv. Then retrieve the default environment and
    // some needed data members.
-   OMEGA::MachEnv::init(MPI_COMM_WORLD);
-   OMEGA::MachEnv *DefEnv = OMEGA::MachEnv::getDefault();
-   MPI_Comm DefComm       = DefEnv->getComm();
+   MachEnv::init(MPI_COMM_WORLD);
+   MachEnv *DefEnv  = MachEnv::getDefault();
+   MPI_Comm DefComm = DefEnv->getComm();
 
    // Initialize the Logging system
-   OMEGA::initLogging(DefEnv);
+   initLogging(DefEnv);
 
    // Open config file
-   OMEGA::Config("Omega");
-   Err = OMEGA::Config::readAll("omega.yml");
-   if (Err != 0) {
-      LOG_CRITICAL("HorzMeshTest: Error reading config file");
-      return Err;
-   }
+   Config("Omega");
+   Config::readAll("omega.yml");
 
    // Initialize the IO system
-   Err = OMEGA::IO::init(DefComm);
+   Err = IO::init(DefComm);
    if (Err != 0)
       LOG_ERROR("HorzMeshTest: error initializing parallel IO");
 
    // Create the default decomposition (initializes the decomposition)
-   Err = OMEGA::Decomp::init();
-   if (Err != 0)
-      LOG_ERROR("HorzMeshTest: error initializing default decomposition");
+   Decomp::init();
 
    // Initialize the default halo
-   Err = OMEGA::Halo::init();
+   Err = Halo::init();
    if (Err != 0)
       LOG_ERROR("HorzMeshTest: error initializing default halo");
 
    // Initialize the default mesh
-   Err = OMEGA::HorzMesh::init();
-   if (Err != 0)
-      LOG_ERROR("HorzMeshTest: error initializing default mesh");
+   HorzMesh::init();
 
    return Err;
 }
 
 //------------------------------------------------------------------------------
 // Computes the distance of a x,y,z coordinate from the origin
-OMEGA::R8 distance(OMEGA::R8 x, OMEGA::R8 y, OMEGA::R8 z) {
+R8 distance(R8 x, R8 y, R8 z) {
 
-   OMEGA::R8 dist;
+   R8 dist;
 
    dist = sqrt(x * x + y * y + z * z);
 
@@ -85,10 +80,9 @@ OMEGA::R8 distance(OMEGA::R8 x, OMEGA::R8 y, OMEGA::R8 z) {
 
 //------------------------------------------------------------------------------
 // Computes the distance between two lon/lat points on the sphere
-OMEGA::R8 sphereDistance(OMEGA::R8 lon1, OMEGA::R8 lat1, OMEGA::R8 lon2,
-                         OMEGA::R8 lat2) {
+R8 sphereDistance(R8 lon1, R8 lat1, R8 lon2, R8 lat2) {
 
-   OMEGA::R8 arg;
+   R8 arg;
 
    arg = sqrt(pow(sin(0.5 * (lat1 - lat2)), 2) +
               cos(lat2) * cos(lat1) * pow(sin(0.5 * (lon1 - lon2)), 2));
@@ -97,12 +91,12 @@ OMEGA::R8 sphereDistance(OMEGA::R8 lon1, OMEGA::R8 lat1, OMEGA::R8 lon2,
 
 //------------------------------------------------------------------------------
 // Computes the longitude of a point given its Cartesian coordinates
-OMEGA::R8 computeLon(OMEGA::R8 x, OMEGA::R8 y, OMEGA::R8 z) {
+R8 computeLon(R8 x, R8 y, R8 z) {
 
-   OMEGA::R8 lon;
+   R8 lon;
    lon = atan2(y, x);
 
-   OMEGA::R8 pi;
+   R8 pi;
    pi = 4.0 * atan(1.0);
 
    if (lon < 0.0) {
@@ -114,12 +108,12 @@ OMEGA::R8 computeLon(OMEGA::R8 x, OMEGA::R8 y, OMEGA::R8 z) {
 
 //------------------------------------------------------------------------------
 // Computes the latitude of a point given its Cartesian coordinates
-OMEGA::R8 computeLat(OMEGA::R8 x, OMEGA::R8 y, OMEGA::R8 z) {
+R8 computeLat(R8 x, R8 y, R8 z) {
 
-   OMEGA::R8 dist;
+   R8 dist;
    dist = distance(x, y, z);
 
-   OMEGA::R8 lat;
+   R8 lat;
    lat = asin(z / dist);
 
    return lat;
@@ -127,10 +121,10 @@ OMEGA::R8 computeLat(OMEGA::R8 x, OMEGA::R8 y, OMEGA::R8 z) {
 
 //------------------------------------------------------------------------------
 // Computes coriolis parameter for a given latitude
-OMEGA::R8 coriolis(OMEGA::R8 lat) {
+R8 coriolis(R8 lat) {
 
-   OMEGA::R8 f;
-   OMEGA::R8 omega = 7.29212e-5;
+   R8 f;
+   R8 omega = 7.29212e-5;
 
    f = 2.0 * omega * sin(lat);
 
@@ -152,8 +146,8 @@ int main(int argc, char *argv[]) {
    Pacer::setPrefix("Omega:");
    {
 
-      OMEGA::R8 tol = 1e-6;
-      OMEGA::R8 pi  = 4.0 * atan(1.0);
+      R8 tol = 1e-6;
+      R8 pi  = 4.0 * atan(1.0);
 
       // Call initialization routine to create the default decomposition
       int Err = initHorzMeshTest();
@@ -161,14 +155,14 @@ int main(int argc, char *argv[]) {
          LOG_CRITICAL("HorzMeshTest: Error initializing");
 
       // Get MPI vars if needed
-      OMEGA::MachEnv *DefEnv = OMEGA::MachEnv::getDefault();
-      MPI_Comm Comm          = DefEnv->getComm();
-      OMEGA::I4 MyTask       = DefEnv->getMyTask();
-      OMEGA::I4 NumTasks     = DefEnv->getNumTasks();
-      bool IsMaster          = DefEnv->isMasterTask();
+      MachEnv *DefEnv = MachEnv::getDefault();
+      MPI_Comm Comm   = DefEnv->getComm();
+      I4 MyTask       = DefEnv->getMyTask();
+      I4 NumTasks     = DefEnv->getNumTasks();
+      bool IsMaster   = DefEnv->isMasterTask();
 
       // Test retrieval of the default decomposition
-      OMEGA::Decomp *DefDecomp = OMEGA::Decomp::getDefault();
+      Decomp *DefDecomp = Decomp::getDefault();
       if (DefDecomp) { // true if non-null ptr
          LOG_INFO("HorzMeshTest: Default decomp retrieval PASS");
       } else {
@@ -177,14 +171,14 @@ int main(int argc, char *argv[]) {
       }
 
       // Retrieve default mesh
-      OMEGA::HorzMesh *Mesh = OMEGA::HorzMesh::getDefault();
+      HorzMesh *Mesh = HorzMesh::getDefault();
 
       // Test sum of local mesh cells
       // Get the global sum of all local cell counts
       // Tests that the correct cell counts have been retrieved from the Decomp
       // object
-      OMEGA::I4 SumCells;
-      OMEGA::I4 LocCells;
+      I4 SumCells;
+      I4 LocCells;
       LocCells = Mesh->NCellsOwned;
       Err = MPI_Allreduce(&LocCells, &SumCells, 1, MPI_INT32_T, MPI_SUM, Comm);
 
@@ -200,10 +194,10 @@ int main(int argc, char *argv[]) {
       // Check that all cell centers are a uniform distance from the origin
       // Tests that the Cartesian coordinates for cell centers have been read in
       // corectly
-      OMEGA::R8 sphere_radius =
+      R8 sphere_radius =
           distance(Mesh->XCellH(0), Mesh->YCellH(0), Mesh->ZCellH(0));
-      OMEGA::R8 dist;
-      OMEGA::I4 count = 0;
+      R8 dist;
+      I4 count = 0;
       for (int Cell = 0; Cell < LocCells; Cell++) {
          dist = distance(Mesh->XCellH(Cell), Mesh->YCellH(Cell),
                          Mesh->ZCellH(Cell));
@@ -223,8 +217,8 @@ int main(int argc, char *argv[]) {
       // values that have been read in
       // Tests that the lon/lat coordinates for cell
       // centers have been read in correctly
-      OMEGA::R8 lon;
-      OMEGA::R8 lat;
+      R8 lon;
+      R8 lat;
       count = 0;
       for (int Cell = 0; Cell < LocCells; Cell++) {
 
@@ -250,8 +244,8 @@ int main(int argc, char *argv[]) {
       // Get the global sum of all local edge counts
       // Tests that the correct edge counts have been retrieved from the Decomp
       // object
-      OMEGA::I4 SumEdges;
-      OMEGA::I4 LocEdges;
+      I4 SumEdges;
+      I4 LocEdges;
       LocEdges = Mesh->NEdgesOwned;
       Err = MPI_Allreduce(&LocEdges, &SumEdges, 1, MPI_INT32_T, MPI_SUM, Comm);
 
@@ -314,8 +308,8 @@ int main(int argc, char *argv[]) {
       // Get the global sum of all local vertex counts
       // Tests that the correct vertex counts have been retrieved from the
       // Decomp object
-      OMEGA::I4 SumVertices;
-      OMEGA::I4 LocVertices;
+      I4 SumVertices;
+      I4 LocVertices;
       LocVertices = Mesh->NVerticesOwned;
       Err = MPI_Allreduce(&LocVertices, &SumVertices, 1, MPI_INT32_T, MPI_SUM,
                           Comm);
@@ -380,8 +374,8 @@ int main(int argc, char *argv[]) {
       // Find minimum and maximum values of the bottom depth
       // and compares to reasonable values
       // Tests that the bottom depth has been read in correctly
-      OMEGA::R8 MaxBathy = -1e10;
-      OMEGA::R8 MinBathy = 1e10;
+      R8 MaxBathy = -1e10;
+      R8 MinBathy = 1e10;
       for (int Cell = 0; Cell < LocCells; Cell++) {
          if (Mesh->BottomDepthH(Cell) < MinBathy) {
             MinBathy = Mesh->BottomDepthH(Cell);
@@ -402,15 +396,15 @@ int main(int argc, char *argv[]) {
       // Find the global sum of all the local cell areas
       // and compares to reasonable value for Earth's ocean area
       // Tests that cell areas have been read in correctly
-      OMEGA::R8 LocSumArea = 0;
-      OMEGA::R8 SumCellArea;
+      R8 LocSumArea = 0;
+      R8 SumCellArea;
       for (int Cell = 0; Cell < LocCells; Cell++) {
          LocSumArea += Mesh->AreaCellH(Cell);
       }
       Err = MPI_Allreduce(&LocSumArea, &SumCellArea, 1, MPI_DOUBLE, MPI_SUM,
                           Comm);
 
-      OMEGA::R8 OceanArea = 3.61e14;
+      R8 OceanArea = 3.61e14;
       if (abs(SumCellArea - OceanArea) / OceanArea < 0.05) {
          LOG_INFO("HorzMeshTest: Cell area test PASS");
       } else {
@@ -423,7 +417,7 @@ int main(int argc, char *argv[]) {
       // and compare to resonable value for the Earth's ocean area
       // Tests that the triangle areas have been read in correctly
       LocSumArea = 0;
-      OMEGA::R8 SumTriangleArea;
+      R8 SumTriangleArea;
       for (int Vertex = 0; Vertex < LocVertices; Vertex++) {
          LocSumArea += Mesh->AreaTriangleH(Vertex);
       }
@@ -442,7 +436,7 @@ int main(int argc, char *argv[]) {
       // and compare to reasonable value for the Earth's ocean area
       // Tests that the kite areas have been read in correctly
       LocSumArea = 0;
-      OMEGA::R8 SumKiteArea;
+      R8 SumKiteArea;
       for (int Vertex = 0; Vertex < LocVertices; Vertex++) {
          for (int i = 0; i < Mesh->VertexDegree; i++) {
             LocSumArea += Mesh->KiteAreasOnVertexH(Vertex, i);
@@ -469,7 +463,7 @@ int main(int argc, char *argv[]) {
 
          if ((Cell1 < DefDecomp->NCellsAll) && (Cell2 < DefDecomp->NCellsAll)) {
 
-            OMEGA::R8 dc =
+            R8 dc =
                 sphereDistance(Mesh->LonCellH(Cell1), Mesh->LatCellH(Cell1),
                                Mesh->LonCellH(Cell2), Mesh->LatCellH(Cell2));
             dc = sphere_radius * dc;
@@ -499,7 +493,7 @@ int main(int argc, char *argv[]) {
          if ((Vertex1 < DefDecomp->NVerticesAll) &&
              (Vertex2 < DefDecomp->NVerticesAll)) {
 
-            OMEGA::R8 dv = sphereDistance(
+            R8 dv = sphereDistance(
                 Mesh->LonVertexH(Vertex1), Mesh->LatVertexH(Vertex1),
                 Mesh->LonVertexH(Vertex2), Mesh->LatVertexH(Vertex2));
 
@@ -541,7 +535,7 @@ int main(int argc, char *argv[]) {
       // Tests that the cell Coriolis values were read in correctly
       count = 0;
       for (int Cell = 0; Cell < LocCells; Cell++) {
-         OMEGA::R8 f = coriolis(Mesh->LatCellH(Cell));
+         R8 f = coriolis(Mesh->LatCellH(Cell));
 
          if (abs(f - Mesh->FCellH(Cell)) > tol) {
             count++;
@@ -562,7 +556,7 @@ int main(int argc, char *argv[]) {
       count = 0;
       for (int Vertex = 0; Vertex < LocVertices; Vertex++) {
 
-         OMEGA::R8 f = coriolis(Mesh->LatVertexH(Vertex));
+         R8 f = coriolis(Mesh->LatVertexH(Vertex));
 
          if (abs(f - Mesh->FVertexH(Vertex)) > tol) {
             count++;
@@ -582,7 +576,7 @@ int main(int argc, char *argv[]) {
       // Tests that the edge Coriolis values were read in correctly
       count = 0;
       for (int Edge = 0; Edge < LocEdges; Edge++) {
-         OMEGA::R8 f = coriolis(Mesh->LatEdgeH(Edge));
+         R8 f = coriolis(Mesh->LatEdgeH(Edge));
 
          if (abs(f - Mesh->FEdgeH(Edge)) > tol) {
             count++;
@@ -694,15 +688,15 @@ int main(int argc, char *argv[]) {
       // Perform halo exhange on owned cell only array and compare
       // read values
       // Tests that halo values are read in correctly
-      OMEGA::Halo *DefHalo = OMEGA::Halo::getDefault();
-      OMEGA::HostArray1DR8 XCellTest("XCellTest", Mesh->NCellsSize);
+      Halo *DefHalo = Halo::getDefault();
+      HostArray1DR8 XCellTest("XCellTest", Mesh->NCellsSize);
       // Mesh->XCellH.deep_copy_to(XCellTest);
-      OMEGA::deepCopy(XCellTest, Mesh->XCellH);
+      deepCopy(XCellTest, Mesh->XCellH);
 
       for (int Cell = Mesh->NCellsOwned; Cell < Mesh->NCellsAll; Cell++) {
          XCellTest(Cell) = 0.0;
       }
-      DefHalo->exchangeFullArrayHalo(XCellTest, OMEGA::OnCell);
+      DefHalo->exchangeFullArrayHalo(XCellTest, OnCell);
 
       count = 0;
       for (int Cell = 0; Cell < Mesh->NCellsAll; Cell++) {
@@ -723,14 +717,14 @@ int main(int argc, char *argv[]) {
       // Perform halo exhange on owned edge only array and compare
       // read values
       // Tests that halo values are read in correctly
-      OMEGA::HostArray1DR8 XEdgeTest("XEdgeTest", Mesh->NEdgesSize);
+      HostArray1DR8 XEdgeTest("XEdgeTest", Mesh->NEdgesSize);
       // Mesh->XEdgeH.deep_copy_to(XEdgeTest);
-      OMEGA::deepCopy(XEdgeTest, Mesh->XEdgeH);
+      deepCopy(XEdgeTest, Mesh->XEdgeH);
 
       for (int Edge = Mesh->NEdgesOwned; Edge < Mesh->NEdgesAll; Edge++) {
          XEdgeTest(Edge) = 0.0;
       }
-      DefHalo->exchangeFullArrayHalo(XEdgeTest, OMEGA::OnEdge);
+      DefHalo->exchangeFullArrayHalo(XEdgeTest, OnEdge);
 
       count = 0;
       for (int Edge = 0; Edge < Mesh->NEdgesAll; Edge++) {
@@ -751,15 +745,15 @@ int main(int argc, char *argv[]) {
       // Perform halo exhange on owned vertex only array and compare
       // read values
       // Tests that halo values are read in correctly
-      OMEGA::HostArray1DR8 XVertexTest("XVertexTest", Mesh->NVerticesSize);
+      HostArray1DR8 XVertexTest("XVertexTest", Mesh->NVerticesSize);
       // Mesh->XVertexH.deep_copy_to(XVertexTest);
-      OMEGA::deepCopy(XVertexTest, Mesh->XVertexH);
+      deepCopy(XVertexTest, Mesh->XVertexH);
 
       for (int Vertex = Mesh->NVerticesOwned; Vertex < Mesh->NVerticesAll;
            Vertex++) {
          XVertexTest(Vertex) = 0.0;
       }
-      DefHalo->exchangeFullArrayHalo(XVertexTest, OMEGA::OnVertex);
+      DefHalo->exchangeFullArrayHalo(XVertexTest, OnVertex);
 
       count = 0;
       for (int Vertex = 0; Vertex < Mesh->NVerticesAll; Vertex++) {
@@ -776,11 +770,11 @@ int main(int argc, char *argv[]) {
          LOG_INFO("HorzMeshTest: vertex halo exhange FAIL");
       }
       // Finalize Omega objects
-      OMEGA::HorzMesh::clear();
-      OMEGA::Dimension::clear();
-      OMEGA::Halo::clear();
-      OMEGA::Decomp::clear();
-      OMEGA::MachEnv::removeAll();
+      HorzMesh::clear();
+      Dimension::clear();
+      Halo::clear();
+      Decomp::clear();
+      MachEnv::removeAll();
 
       // MPI_Status status;
       if (Err == 0)

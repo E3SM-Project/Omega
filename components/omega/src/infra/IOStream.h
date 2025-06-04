@@ -10,15 +10,93 @@
 /// information on the file location, the frequency of input/output, the
 /// fields to be read/written and other information necessary for file I/O.
 /// Note that this is different from the C++ stdlib iostreams
+/// Streams are added to the input configuration file as shown in this example
+/// \ConfigInput
+/// # IO Streams (examples for Default config)
+/// IOStreams:
+///    # InitialState should only be used when starting from scratch.
+///    # For restart runs, the frequency units should be changed from
+///    # "OnStartup" to "never" so that the initial state file is not read.
+///    InitialState:
+///      UsePointerFile: false
+///      Filename: OmegaMesh.nc
+///      Mode: read
+///      Precision: double
+///      Freq: 1
+///      FreqUnits: OnStartup
+///      UseStartEnd: false
+///      Contents:
+///        - State
+///        - Base
+///    # Restarts are used to initialize for all job submissions after the very
+///    # first startup job. We use UseStartEnd with a start time just after the
+///    # simulation start time so that omega does not attempt to use a restart
+///    # for the first startup job.
+///    RestartRead:
+///      UsePointerFile: true
+///      PointerFilename: ocn.pointer
+///      Mode: read
+///      Precision: double
+///      Freq: 1
+///      FreqUnits: OnStartup
+///      UseStartEnd: true
+///      StartTime: 0001-01-01_00:00:01
+///      EndTime: 99999-12-31_00:00:00
+///      Contents:
+///        - Restart
+///    # Sample restart output stream
+///    RestartWrite:
+///      UsePointerFile: true
+///      PointerFilename: ocn.pointer
+///      Filename: ocn.restart.$Y-$M-$D_$h.$m.$s
+///      Mode: write
+///      IfExists: replace
+///      Precision: double
+///      Freq: 6
+///      FreqUnits: months
+///      UseStartEnd: false
+///      Contents:
+///        - Restart
+///    # Sample history file - values at the specified time
+///    History:
+///      UsePointerFile: false
+///      Filename: ocn.hist.$SimTime
+///      Mode: write
+///      IfExists: replace
+///      Precision: double
+///      Freq: 1
+///      FreqUnits: months
+///      UseStartEnd: false
+///      Contents:
+///        - Tracers
+///        - State
+///        - SshCellDefault
+///    # Sample high-frequency output. Limited fields and time duration
+///    Highfreq:
+///      UsePointerFile: false
+///      Filename: ocn.hifreq.$Y-$M
+///      Mode: write
+///      IfExists: append
+///      Precision: single
+///      Freq: 10
+///      FreqUnits: days
+///      FileFreq: 1
+///      FileFreqUnits: months
+///      UseStartEnd: true
+///      StartTime: 0001-06-01_00:00:00
+///      EndTime: 0001-07-31_00:00:00
+///      Contents:
+///        - Tracers
+/// \EndConfigInput
 ///
 //===----------------------------------------------------------------------===//
 
 #include "Config.h"
 #include "DataTypes.h"
 #include "Dimension.h"
+#include "Error.h"
 #include "Field.h"
 #include "IO.h"
-#include "Logging.h"
 #include "TimeMgr.h" // need Alarms, TimeInstant
 #include <map>
 #include <memory>
@@ -72,9 +150,9 @@ class IOStream {
    /// options in the input model configuration. This routine is called by
    /// the IOStreams initialize function. It requires an initialized model
    /// clock so that stream alarm can be attached to this clock during creation.
-   static int create(const std::string &StreamName, ///< [in] name of stream
-                     Config &StreamConfig, ///< [in] input stream configuration
-                     Clock *&ModelClock    ///< [inout] Omega model clock
+   static Error create(const std::string &StreamName, ///< [in] name of stream
+                       Config &StreamConfig, ///< [in] stream configuration
+                       Clock *&ModelClock    ///< [inout] Omega model clock
    );
 
    /// Define all dimensions used. Returns an error code as well as a map
@@ -185,7 +263,7 @@ class IOStream {
    /// Creates all streams defined in the input configuration file. This does
    /// not validate the contents of the streams since the relevant Fields
    /// may not have been defined yet. Returns an error code.
-   static int init(Clock *&ModelClock ///< [inout] Omega model clock
+   static void init(Clock *&ModelClock ///< [inout] Omega model clock
    );
 
    //---------------------------------------------------------------------------

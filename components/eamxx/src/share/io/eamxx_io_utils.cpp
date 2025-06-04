@@ -15,6 +15,7 @@ std::string find_filename_in_rpointer (
     const bool model_restart,
     const ekat::Comm& comm,
     const util::TimeStamp& run_t0,
+    const bool allow_not_found,
     const OutputAvgType avg_type,
     const IOControl& control)
 {
@@ -64,7 +65,10 @@ std::string find_filename_in_rpointer (
   comm.broadcast(&ifound,1,0);
   found = bool(ifound);
 
-  if (not found) {
+  if (found) {
+    // Have the root rank communicate the nc filename
+    broadcast_string(filename,comm,comm.root_rank());
+  } else if (not allow_not_found) {
     broadcast_string(content,comm,comm.root_rank());
 
     if (model_restart) {
@@ -91,9 +95,6 @@ std::string find_filename_in_rpointer (
           " please rename it, so that the avg-type, freq, and freq_option reflect those of the output stream.\n");
     }
   }
-
-  // Have the root rank communicate the nc filename
-  broadcast_string(filename,comm,comm.root_rank());
 
   return filename;
 }
@@ -166,24 +167,24 @@ create_diagnostic (const std::string& diag_field_name,
     params.set<std::string>("precip_type",matches[1].str());
   } else if (std::regex_search(diag_field_name,matches,water_path)) {
     diag_name = "WaterPath";
-    params.set<std::string>("Water Kind",matches[1].str());
+    params.set<std::string>("water_kind",matches[1].str());
   } else if (std::regex_search(diag_field_name,matches,number_path)) {
     diag_name = "NumberPath";
-    params.set<std::string>("Number Kind",matches[1].str());
+    params.set<std::string>("number_kind",matches[1].str());
   } else if (std::regex_search(diag_field_name,matches,aerocom_cld)) {
     diag_name = "AeroComCld";
-    params.set<std::string>("AeroComCld Kind",matches[1].str());
+    params.set<std::string>("aero_com_cld_kind",matches[1].str());
   } else if (std::regex_search(diag_field_name,matches,vap_flux)) {
     diag_name = "VaporFlux";
-    params.set<std::string>("Wind Component",matches[1].str());
+    params.set<std::string>("wind_component",matches[1].str());
   } else if (std::regex_search(diag_field_name,matches,backtend)) {
     diag_name = "AtmBackTendDiag";
     // Set the grid_name
     params.set("grid_name",grid->name());
-    params.set<std::string>("Tendency Name",matches[1].str());
+    params.set<std::string>("tendency_name",matches[1].str());
   } else if (std::regex_search(diag_field_name,matches,pot_temp)) {
     diag_name = "PotentialTemperature";
-    params.set<std::string>("Temperature Kind", matches[1].str()!="" ? matches[1].str() : std::string("Tot"));
+    params.set<std::string>("temperature_kind", matches[1].str()!="" ? matches[1].str() : std::string("Tot"));
   } else if (std::regex_search(diag_field_name,matches,vert_layer)) {
     diag_name = "VerticalLayer";
     params.set<std::string>("diag_name",matches[1].str());

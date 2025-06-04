@@ -117,6 +117,18 @@ add_omega_test(
     "-n;8"
 )
 
+##################
+# Error test
+##################
+
+add_omega_test(
+    ERROR_TEST
+    testError.exe
+    infra/ErrorTest.cpp
+    "-n;8"
+)
+set_tests_properties(ERROR_TEST PROPERTIES WILL_FAIL true)
+
 ##########################
 # Decomp test using 1 task
 ##########################
@@ -409,4 +421,15 @@ add_omega_test(
     testTracers.exe
     ocn/TracersTest.cpp
     "-n;8"
+)
+
+##########################
+# Tridiagonal solvers test
+##########################
+
+add_omega_test(
+    TRIDIAGSOLVERS_TEST
+    testTriDiagSolvers.exe
+    base/TriDiagSolversTest.cpp
+    "-n;1"
 )

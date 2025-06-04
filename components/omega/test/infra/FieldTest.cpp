@@ -14,6 +14,7 @@
 #include "DataTypes.h"
 #include "Decomp.h"
 #include "Dimension.h"
+#include "Error.h"
 #include "IO.h"
 #include "Logging.h"
 #include "MachEnv.h"
@@ -65,11 +66,7 @@ int initFieldTest() {
 
    // Open config file
    OMEGA::Config("Omega");
-   Err = OMEGA::Config::readAll("omega.yml");
-   if (Err != 0) {
-      LOG_CRITICAL("FieldTest: Error reading config file");
-      return Err;
-   }
+   OMEGA::Config::readAll("omega.yml");
 
    // Initialize decomposition
    Decomp::init();

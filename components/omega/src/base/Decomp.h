@@ -16,6 +16,17 @@
 /// The Decomp class stores a number of index-space arrays that describe
 /// the partition, neighbor information, global IDs for cell, edge and
 /// vertex points in an Omega mesh.
+/// Some options are set via the input configuration file:
+/// \ConfigInput
+/// # Domain Decomposition Configuration
+/// Decomp:
+///    # Width of halo around local domain (Default = 3)
+///    HaloWidth: 3
+///    # Method to use for decomposing the horizontal domain
+///    # The only currently supported option is MetisKWay but others may
+///    # be added in the future
+///    DecompMethod: MetisKWay
+/// \EndConfigInput
 //
 //===----------------------------------------------------------------------===//
 
@@ -240,7 +251,7 @@ class Decomp {
    /// Initializes Omega decomposition info and creates the default
    /// decomposition based on the default MachEnv and configuration
    /// options.
-   static int init(const std::string &MeshFileName = "OmegaMesh.nc");
+   static void init(const std::string &MeshFileName = "OmegaMesh.nc");
 
    // Creates a new decomposition using the constructor and puts it in the
    // AllDecomps map

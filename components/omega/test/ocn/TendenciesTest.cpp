@@ -4,6 +4,7 @@
 #include "DataTypes.h"
 #include "Decomp.h"
 #include "Dimension.h"
+#include "Error.h"
 #include "Field.h"
 #include "Halo.h"
 #include "HorzMesh.h"
@@ -95,17 +96,9 @@ int initTendenciesTest(const std::string &mesh) {
 
    // Open config file
    Config("Omega");
-   Err = Config::readAll("omega.yml");
-   if (Err != 0) {
-      LOG_CRITICAL("TendenciesTest: Error reading config file");
-      return Err;
-   }
+   Config::readAll("omega.yml");
 
-   int TimeStepperErr = TimeStepper::init1();
-   if (TimeStepperErr != 0) {
-      Err++;
-      LOG_ERROR("TendenciesTest: error initializing default time stepper");
-   }
+   TimeStepper::init1();
 
    int IOErr = IO::init(DefComm);
    if (IOErr != 0) {
@@ -113,11 +106,7 @@ int initTendenciesTest(const std::string &mesh) {
       LOG_ERROR("TendenciesTest: error initializing parallel IO");
    }
 
-   int DecompErr = Decomp::init(mesh);
-   if (DecompErr != 0) {
-      Err++;
-      LOG_ERROR("TendenciesTest: error initializing default decomposition");
-   }
+   Decomp::init(mesh);
 
    int HaloErr = Halo::init();
    if (HaloErr != 0) {
@@ -125,17 +114,8 @@ int initTendenciesTest(const std::string &mesh) {
       LOG_ERROR("TendenciesTest: error initializing default halo");
    }
 
-   int MeshErr = HorzMesh::init();
-   if (MeshErr != 0) {
-      Err++;
-      LOG_ERROR("TendenciesTest: error initializing default mesh");
-   }
-
-   int TracerErr = Tracers::init();
-   if (TracerErr != 0) {
-      Err++;
-      LOG_ERROR("TendenciesTest: error initializing tracer infrastructure");
-   }
+   HorzMesh::init();
+   Tracers::init();
 
    const auto &Mesh = HorzMesh::getDefault();
    std::shared_ptr<Dimension> VertDim =
@@ -147,11 +127,7 @@ int initTendenciesTest(const std::string &mesh) {
       LOG_ERROR("TendenciesTest: error initializing default state");
    }
 
-   int AuxStateErr = AuxiliaryState::init();
-   if (AuxStateErr != 0) {
-      Err++;
-      LOG_ERROR("TendenciesTest: error initializing default aux state");
-   }
+   AuxiliaryState::init();
 
    return Err;
 }
@@ -160,11 +136,7 @@ int testTendencies() {
    int Err = 0;
 
    // test initialization
-   int TendenciesErr = Tendencies::init();
-   if (TendenciesErr != 0) {
-      Err++;
-      LOG_ERROR("TendenciesTest: error initializing default tendencies");
-   }
+   Tendencies::init();
 
    // test retrievel of default
    Tendencies *DefTendencies = Tendencies::getDefault();

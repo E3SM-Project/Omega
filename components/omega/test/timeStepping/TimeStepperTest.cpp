@@ -19,6 +19,7 @@
 #include "DataTypes.h"
 #include "Decomp.h"
 #include "Dimension.h"
+#include "Error.h"
 #include "Field.h"
 #include "Halo.h"
 #include "HorzMesh.h"
@@ -141,6 +142,7 @@ ErrorMeasures computeErrors() {
 // The initialization routine for time stepper testing
 int initTimeStepperTest(const std::string &mesh) {
    int Err = 0;
+   Error Err1;
 
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv  = MachEnv::getDefault();
@@ -152,25 +154,15 @@ int initTimeStepperTest(const std::string &mesh) {
 
    // Open config file
    Config("Omega");
-   Err = Config::readAll("omega.yml");
-   if (Err != 0) {
-      LOG_CRITICAL("TimeStepperTest: Error reading config file");
-      return Err;
-   }
+   Config::readAll("omega.yml");
 
    // Reset NVertLevels to 1 regardless of config value
    Config *OmegaConfig = Config::getOmegaConfig();
    Config DimConfig("Dimension");
-   Err = OmegaConfig->get(DimConfig);
-   if (Err != 0) {
-      LOG_CRITICAL("TimeStepperTest: Dimension group not found in Config");
-      return Err;
-   }
-   Err = DimConfig.set("NVertLevels", NVertLevels);
-   if (Err != 0) {
-      LOG_CRITICAL("TimeStepperTest: Unable to reset NVertLevels in Config");
-      return Err;
-   }
+   Err1 = OmegaConfig->get(DimConfig);
+   CHECK_ERROR_ABORT(Err1, "TimeStepperTest: Dimension group not in Config");
+
+   DimConfig.set("NVertLevels", NVertLevels);
 
    // Horz dimensions will be created in HorzMesh
    auto VertDim = Dimension::create("NVertLevels", NVertLevels);
@@ -179,11 +171,7 @@ int initTimeStepperTest(const std::string &mesh) {
    // but is initialized here because the number of time levels is needed
    // to initialize the Tracers. If a later timestepper test uses more time
    // levels than the default, this unit test may fail.
-   int TSErr = TimeStepper::init1();
-   if (TSErr != 0) {
-      Err++;
-      LOG_ERROR("TimeStepperTest: error initializing default time stepper");
-   }
+   TimeStepper::init1();
 
    int IOErr = IO::init(DefComm);
    if (IOErr != 0) {
@@ -191,11 +179,7 @@ int initTimeStepperTest(const std::string &mesh) {
       LOG_ERROR("TimeStepperTest: error initializing parallel IO");
    }
 
-   int DecompErr = Decomp::init(mesh);
-   if (DecompErr != 0) {
-      Err++;
-      LOG_ERROR("TimeStepperTest: error initializing default decomposition");
-   }
+   Decomp::init(mesh);
 
    int HaloErr = Halo::init();
    if (HaloErr != 0) {
@@ -203,32 +187,13 @@ int initTimeStepperTest(const std::string &mesh) {
       LOG_ERROR("TimeStepperTest: error initializing default halo");
    }
 
-   int MeshErr = HorzMesh::init();
-   if (MeshErr != 0) {
-      Err++;
-      LOG_ERROR("TimeStepperTest: error initializing default mesh");
-   }
-
-   int TracerErr = Tracers::init();
-   if (TracerErr != 0) {
-      Err++;
-      LOG_ERROR("TimeStepperTest: error initializing tracers infrastructure");
-   }
-
-   int AuxStateErr = AuxiliaryState::init();
-   if (AuxStateErr != 0) {
-      Err++;
-      LOG_ERROR("TimeStepperTest: error initializing default aux state");
-   }
-
-   Err = Tendencies::init();
-   if (Err != 0) {
-      LOG_CRITICAL("Error initializing default tendencies");
-      return Err;
-   }
+   HorzMesh::init();
+   Tracers::init();
+   AuxiliaryState::init();
+   Tendencies::init();
 
    // finish initializing default time stepper
-   TSErr = TimeStepper::init2();
+   int TSErr = TimeStepper::init2();
    if (TSErr != 0) {
       Err++;
       LOG_ERROR("error initializing default time stepper");

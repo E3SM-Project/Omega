@@ -13,6 +13,7 @@
 #include "Config.h"
 #include "DataTypes.h"
 #include "Decomp.h"
+#include "Error.h"
 #include "IO.h"
 #include "Logging.h"
 #include "MachEnv.h"
@@ -42,12 +43,8 @@ int initDimensionTest() {
    }
 
    // Open config file
-   OMEGA::Config("Omega");
-   Err = OMEGA::Config::readAll("omega.yml");
-   if (Err != 0) {
-      LOG_CRITICAL("DimensionTest: Error reading config file");
-      return Err;
-   }
+   Config("Omega");
+   Config::readAll("omega.yml");
 
    // Initialize decomposition
    Decomp::init();

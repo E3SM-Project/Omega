@@ -50,6 +50,7 @@ target_link_libraries(
     gptl
     pacer
     stdc++fs
+    cpptrace::cpptrace
 )
 
 if(GKlib_FOUND)

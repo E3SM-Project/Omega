@@ -18,6 +18,7 @@
 #include "DataTypes.h"
 #include "Decomp.h"
 #include "Dimension.h"
+#include "Error.h"
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
@@ -557,22 +558,20 @@ int testSSHGrad(int NVertLevels, Real RTol) {
 int testVelDiff(int NVertLevels, Real RTol) {
 
    int Err = 0;
+   Error Err1;
    TestSetup Setup;
 
    const auto Mesh = HorzMesh::getDefault();
 
    Config *OmegaConfig = Config::getOmegaConfig();
    Config TendConfig("Tendencies");
-   Err = OmegaConfig->get(TendConfig);
-   if (Err != 0) {
-      LOG_CRITICAL("Tendencies: Tendencies group not found in Config");
-   }
+   Err1 += OmegaConfig->get(TendConfig);
+   CHECK_ERROR_ABORT(Err1, "Tendencies: Tendencies group not found in Config");
 
    VelocityDiffusionOnEdge VelDiffOnE(Mesh);
-   Err = TendConfig.get("ViscDel2", VelDiffOnE.ViscDel2);
-   if (Err != 0) {
-      LOG_CRITICAL("Tendencies: ViscDel2 not found in TendConfig");
-   }
+   Err1 += TendConfig.get("ViscDel2", VelDiffOnE.ViscDel2);
+   CHECK_ERROR_ABORT(Err1, "Tendencies: ViscDel2 not found in TendConfig");
+
    const Real ViscDel2 = VelDiffOnE.ViscDel2;
 
    // Compute exact result
@@ -624,26 +623,23 @@ int testVelDiff(int NVertLevels, Real RTol) {
 int testVelHyperDiff(int NVertLevels, Real RTol) {
 
    int Err = 0;
+   Error Err1;
    TestSetup Setup;
 
    const auto Mesh = HorzMesh::getDefault();
 
    Config *OmegaConfig = Config::getOmegaConfig();
    Config TendConfig("Tendencies");
-   Err = OmegaConfig->get(TendConfig);
-   if (Err != 0) {
-      LOG_CRITICAL("Tendencies: Tendencies group not found in Config");
-   }
+   Err1 += OmegaConfig->get(TendConfig);
+   CHECK_ERROR_ABORT(Err1, "Tendencies: Tendencies group not found in Config");
 
    VelocityHyperDiffOnEdge VelHyperDiffOnE(Mesh);
-   Err = TendConfig.get("ViscDel4", VelHyperDiffOnE.ViscDel4);
-   if (Err != 0) {
-      LOG_CRITICAL("Tendencies: ViscDel4 not found in TendConfig");
-   }
-   Err = TendConfig.get("DivFactor", VelHyperDiffOnE.DivFactor);
-   if (Err != 0) {
-      LOG_CRITICAL("Tendencies: DivFactor not found in TendConfig");
-   }
+   Err1 += TendConfig.get("ViscDel4", VelHyperDiffOnE.ViscDel4);
+   CHECK_ERROR_ABORT(Err1, "Tendencies: ViscDel4 not found in TendConfig");
+
+   Err1 += TendConfig.get("DivFactor", VelHyperDiffOnE.DivFactor);
+   CHECK_ERROR_ABORT(Err1, "Tendencies: DivFactor not found in TendConfig");
+
    const Real ViscDel4 = VelHyperDiffOnE.ViscDel4;
 
    // Compute exact result
@@ -1010,11 +1006,7 @@ int initTendTest(const std::string &MeshFile, int NVertLevels) {
 
    // Open config file
    Config("Omega");
-   Err = Config::readAll("omega.yml");
-   if (Err != 0) {
-      LOG_CRITICAL("TendencyTermsTest: Error reading config file");
-      return Err;
-   }
+   Config::readAll("omega.yml");
 
    // Reset NVertLevels to the test value
    Config *OmegaConfig = Config::getOmegaConfig();
@@ -1036,11 +1028,7 @@ int initTendTest(const std::string &MeshFile, int NVertLevels) {
       LOG_ERROR("TendencyTermsTest: error initializing parallel IO");
    }
 
-   int DecompErr = Decomp::init(MeshFile);
-   if (DecompErr != 0) {
-      Err++;
-      LOG_ERROR("TendencyTermsTest: error initializing default decomposition");
-   }
+   Decomp::init(mesh);
 
    int HaloErr = Halo::init();
    if (HaloErr != 0) {
@@ -1048,11 +1036,7 @@ int initTendTest(const std::string &MeshFile, int NVertLevels) {
       LOG_ERROR("TendencyTermsTest: error initializing default halo");
    }
 
-   int MeshErr = HorzMesh::init();
-   if (MeshErr != 0) {
-      Err++;
-      LOG_ERROR("TendencyTermsTest: error initializing default mesh");
-   }
+   HorzMesh::init();
 
    return Err;
 } // end initTendTest

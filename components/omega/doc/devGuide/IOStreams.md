@@ -16,7 +16,7 @@ All IOStreams are initialized in a two-step process. A call to the
 init routine should take place early in the Omega initialization after
 the ModelClock has been initialized using:
 ```c++
-   int Err = IOStream::init(ModelClock);
+   IOStream::init(ModelClock);
 ```
 This routine extracts all the stream definitions from the input configuration
 file and creates all the Streams. This initialization also defines the

@@ -21,7 +21,7 @@
 #include "ekat/ekat_pack.hpp"
 #include "ekat/ekat_assert.hpp"
 
-#if defined(SCREAM_SYSTEM_WORKAROUND) && (SCREAM_SYSTEM_WORKAROUND == 1)
+#if defined(MPINIT_WORKAROUND) && (MPINIT_WORKAROUND == 1)
 #include <hip/hip_runtime.h>
 #endif
 
@@ -241,7 +241,7 @@ void scream_setup_surface_coupling (const char*& import_field_names, int*& impor
   });
 }
 
-#if defined(SCREAM_SYSTEM_WORKAROUND) && (SCREAM_SYSTEM_WORKAROUND == 1)
+#if defined(MPINIT_WORKAROUND) && (MPINIT_WORKAROUND == 1)
 void scream_init_hip_atm () {
     hipInit(0);
 }
@@ -300,7 +300,7 @@ int scream_get_num_local_cols () {
   fpe_guard_wrapper([&]() {
     const auto& ad = get_ad();
     const auto& gm = ad.get_grids_manager();
-    const auto& phys_grid = gm->get_grid("Physics");
+    const auto& phys_grid = gm->get_grid("physics");
 
     ncols = phys_grid->get_num_local_dofs();
   });
@@ -314,7 +314,7 @@ int scream_get_num_global_cols () {
   fpe_guard_wrapper([&]() {
     const auto& ad = get_ad();
     const auto& gm = ad.get_grids_manager();
-    const auto& phys_grid = gm->get_grid("Physics");
+    const auto& phys_grid = gm->get_grid("physics");
 
     ncols = phys_grid->get_num_global_dofs();
   });
@@ -329,7 +329,7 @@ void scream_get_local_cols_gids (void* const ptr) {
   fpe_guard_wrapper([&]() {
     auto gids_f = reinterpret_cast<int*>(ptr);
     const auto& ad = get_ad();
-    const auto& phys_grid = ad.get_grids_manager()->get_grid("Physics");
+    const auto& phys_grid = ad.get_grids_manager()->get_grid("physics");
 
     auto gids = phys_grid->get_dofs_gids();
     gids.sync_to_host();
@@ -346,7 +346,7 @@ void scream_get_cols_latlon (double* const& lat_ptr, double* const& lon_ptr) {
   using namespace scream;
   fpe_guard_wrapper([&]() {
     const auto& ad = get_ad();
-    const auto& phys_grid = ad.get_grids_manager()->get_grid("Physics");
+    const auto& phys_grid = ad.get_grids_manager()->get_grid("physics");
     const auto ncols = phys_grid->get_num_local_dofs();
 
     auto lat_cxx = phys_grid->get_geometry_data("lat").get_view<const Real*, Host>();
@@ -365,7 +365,7 @@ void scream_get_cols_area (double* const& area_ptr) {
   using namespace scream;
   fpe_guard_wrapper([&]() {
     const auto& ad = get_ad();
-    const auto& phys_grid = ad.get_grids_manager()->get_grid("Physics");
+    const auto& phys_grid = ad.get_grids_manager()->get_grid("physics");
     const auto ncols = phys_grid->get_num_local_dofs();
 
     auto area_cxx = phys_grid->get_geometry_data("area").get_view<const Real*, Host>();

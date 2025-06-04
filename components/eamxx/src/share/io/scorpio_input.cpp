@@ -34,9 +34,9 @@ AtmosphereInput (const std::string& filename,
 {
   // Create param list and field manager on the fly
   ekat::ParameterList params;
-  params.set("Filename",filename);
-  params.set("Skip_Grid_Checks",skip_grid_checks);
-  auto& names = params.get<std::vector<std::string>>("Field Names",{});
+  params.set("filename",filename);
+  params.set("skip_grid_checks",skip_grid_checks);
+  auto& names = params.get<std::vector<std::string>>("field_names",{});
 
   auto fm = std::make_shared<fm_type>(grid);
   for (auto& f : fields) {
@@ -69,14 +69,16 @@ void AtmosphereInput::
 init (const ekat::ParameterList& params,
       const std::shared_ptr<const fm_type>& field_mgr)
 {
+  EKAT_REQUIRE_MSG (field_mgr->get_grids_manager()->size()==1,
+      "Error! AtmosphereInput expects FieldManager defined only on a single grid.\n");
   EKAT_REQUIRE_MSG (not m_inited_with_views,
       "Error! Input class was already inited (with user-provided views).\n");
   EKAT_REQUIRE_MSG (not m_inited_with_fields,
       "Error! Input class was already inited (with fields).\n");
 
   m_params = params;
-  m_fields_names = m_params.get<decltype(m_fields_names)>("Field Names");
-  m_filename = m_params.get<std::string>("Filename");
+  m_fields_names = m_params.get<decltype(m_fields_names)>("field_names");
+  m_filename = m_params.get<std::string>("filename");
 
   // Sets the internal field mgr, and possibly sets up the remapper
   set_field_manager(field_mgr);
@@ -99,7 +101,7 @@ init (const ekat::ParameterList& params,
       "Error! Input class was already inited (with fields).\n");
 
   m_params = params;
-  m_filename = m_params.get<std::string>("Filename");
+  m_filename = m_params.get<std::string>("filename");
 
   // Set the grid associated with the input views
   set_grid(grid);
@@ -138,8 +140,8 @@ set_field_manager (const std::shared_ptr<const fm_type>& field_mgr)
 
   // If resetting a field manager we want to check that the layouts of all fields are the same.
   if (m_field_mgr) {
-    for (auto felem = m_field_mgr->begin(); felem != m_field_mgr->end(); felem++) {
-      auto name = felem->first;
+    for (auto felem : m_field_mgr->get_repo()) {
+      auto name = felem.second->name();
       auto field_curr = m_field_mgr->get_field(name);
       auto field_new  = field_mgr->get_field(name);
       // Check Layouts
@@ -199,7 +201,7 @@ reset_filename (const std::string& filename)
   if (m_filename!="") {
     scorpio::release_file(m_filename);
   }
-  m_params.set("Filename",filename);
+  m_params.set("filename",filename);
   m_filename = filename;
   init_scorpio_structures();
 }
@@ -210,7 +212,7 @@ set_grid (const std::shared_ptr<const AbstractGrid>& grid)
 {
   // Sanity checks
   EKAT_REQUIRE_MSG (grid, "Error! Input grid pointer is invalid.\n");
-  const bool skip_grid_chk = m_params.get<bool>("Skip_Grid_Checks",false);
+  const bool skip_grid_chk = m_params.get<bool>("skip_grid_checks",false);
   if (!skip_grid_chk) {
     EKAT_REQUIRE_MSG (grid->is_unique(),
         "Error! I/O only supports grids which are 'unique', meaning that the\n"
@@ -361,10 +363,10 @@ void AtmosphereInput::read_variables (const int time_index)
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(func_finish - func_start)/1000.0;
     m_atm_logger->info("  Done! Elapsed time: " + std::to_string(duration.count()) +" seconds");
   }
-} 
+}
 
 /* ---------------------------------------------------------- */
-void AtmosphereInput::finalize() 
+void AtmosphereInput::finalize()
 {
   scorpio::release_file(m_filename);
 
@@ -379,7 +381,7 @@ void AtmosphereInput::finalize()
 } // finalize
 
 /* ---------------------------------------------------------- */
-void AtmosphereInput::init_scorpio_structures() 
+void AtmosphereInput::init_scorpio_structures()
 {
   EKAT_REQUIRE_MSG (m_inited_with_views or m_inited_with_fields,
       "Error! Cannot init scorpio structures until fields/views have been set.\n");
@@ -486,7 +488,7 @@ void AtmosphereInput::set_decompositions()
     // If none of the input vars are decomposed on this grid,
     // then there's nothing to do here
     return;
-  } 
+  }
 
   // Set the decomposition for the partitioned dimension
   const int local_dim = m_io_grid->get_partitioned_dim_local_size();

@@ -7,6 +7,27 @@
 ///
 /// The Tendencies class contains the tendency data for state variables and
 /// tracers and provides methods for computing different tendency groups.
+/// Tendencies are configured in the input configuration file using:
+/// \ConfigInput
+/// # Sample tendencies input configuration (for Default config)
+/// Tendencies:
+///    ThicknessFluxTendencyEnable: true
+///    PVTendencyEnable: true
+///    KETendencyEnable: true
+///    SSHTendencyEnable: true
+///    VelDiffTendencyEnable: true
+///    ViscDel2: 1.0e3
+///    VelHyperDiffTendencyEnable: true
+///    ViscDel4: 1.2e11
+///    DivFactor: 1.0
+///    TracerHorzAdvTendencyEnable: true
+///    TracerDiffTendencyEnable: true
+///    EddyDiff2: 10.0
+///    TracerHyperDiffTendencyEnable: true
+///    EddyDiff4: 0.0
+///    UseCustomTendency: false
+///    ManufacturedSolutionTendency: false
+/// \EndConfigInput
 //
 //===----------------------------------------------------------------------===//
 
@@ -105,7 +126,7 @@ class Tendencies {
    ~Tendencies();
 
    // Initialize Omega tendencies
-   static int init();
+   static void init();
 
    // Deallocates arrays
    static void clear();
@@ -122,7 +143,7 @@ class Tendencies {
    );
 
    // read and set config options
-   int readTendConfig(Config *TendConfig);
+   void readTendConfig(Config *TendConfig);
 
  private:
    // Construct a new tendency object

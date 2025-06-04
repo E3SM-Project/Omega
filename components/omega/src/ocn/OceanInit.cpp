@@ -11,6 +11,7 @@
 #include "Config.h"
 #include "DataTypes.h"
 #include "Decomp.h"
+#include "Error.h"
 #include "Field.h"
 #include "Halo.h"
 #include "HorzMesh.h"
@@ -32,7 +33,7 @@ namespace OMEGA {
 int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
 ) {
 
-   I4 Err = 0; // Error code
+   I4 Err = 0; // return error code
 
    // Init the default machine environment based on input MPI communicator
    MachEnv::init(Comm);
@@ -43,131 +44,86 @@ int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
 
    // Read config file into Config object
    Config("Omega");
-   Err = Config::readAll("omega.yml");
-   if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error reading config file");
-      return Err;
-   }
+   Config::readAll("omega.yml");
    Config *OmegaConfig = Config::getOmegaConfig();
 
    // initialize remaining Omega modules
    Err = initOmegaModules(Comm);
-   if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error initializing Omega modules");
-      return Err;
-   }
+   if (Err != 0)
+      ABORT_ERROR("ocnInit: Error initializing Omega modules");
 
    return Err;
+
 } // end ocnInit
 
 // Call init routines for remaining Omega modules
 int initOmegaModules(MPI_Comm Comm) {
 
-   // error code
-   I4 Err = 0;
+   // error and return codes
+   int Err = 0;
 
    // Initialize the default time stepper (phase 1) that includes the
    // calendar, model clock and start/stop times and alarms
-   Err = TimeStepper::init1();
-   if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error phase 1 initializing default time stepper");
-      return Err;
-   }
-
+   TimeStepper::init1();
    TimeStepper *DefStepper = TimeStepper::getDefault();
    Clock *ModelClock       = DefStepper->getClock();
 
    // Initialize IOStreams - this does not yet validate the contents
    // of each file, only creates streams from Config
-   Err = IOStream::init(ModelClock);
-   if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error initializing IOStreams");
-      return Err;
-   }
+   IOStream::init(ModelClock);
 
    Err = IO::init(Comm);
    if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error initializing parallel IO");
-      return Err;
+      ABORT_ERROR("ocnInit: Error initializing parallel IO");
    }
 
    Err = Field::init(ModelClock);
    if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error initializing Fields");
-      return Err;
+      ABORT_ERROR("ocnInit: Error initializing Fields");
    }
 
-   Err = Decomp::init();
-   if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error initializing default decomposition");
-      return Err;
-   }
+   Decomp::init();
 
    Err = Halo::init();
    if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error initializing default halo");
-      return Err;
+      ABORT_ERROR("ocnInit: Error initializing default halo");
    }
 
-   Err = HorzMesh::init();
-   if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error initializing default mesh");
-      return Err;
-   }
+   HorzMesh::init();
 
    // Create the vertical dimension - this will eventually move to
    // a vertical mesh later
    Config *OmegaConfig = Config::getOmegaConfig();
    Config DimConfig("Dimension");
-   Err = OmegaConfig->get(DimConfig);
-   if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Dimension group not found in Config");
-      return Err;
-   }
+   Error ConfigErr = OmegaConfig->get(DimConfig);
+   CHECK_ERROR_ABORT(ConfigErr, "ocnInit: Dimension group not found in Config");
+
    I4 NVertLevels;
-   Err = DimConfig.get("NVertLevels", NVertLevels);
-   if (Err != 0) {
-      LOG_CRITICAL("ocnInit: NVertLevels not found in Dimension Config");
-      return Err;
-   }
+   ConfigErr += DimConfig.get("NVertLevels", NVertLevels);
+   CHECK_ERROR_ABORT(ConfigErr,
+                     "ocnInit: NVertLevels not found in Dimension Config");
+
    auto VertDim = OMEGA::Dimension::create("NVertLevels", NVertLevels);
 
-   Err = Tracers::init();
-   if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error initializing tracers infrastructure");
-      return Err;
-   }
-
-   Err = AuxiliaryState::init();
-   if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error initializing default aux state");
-      return Err;
-   }
-
-   Err = Tendencies::init();
-   if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error initializing default tendencies");
-      return Err;
-   }
+   Tracers::init();
+   AuxiliaryState::init();
+   Tendencies::init();
 
    Err = TimeStepper::init2();
    if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error phase 2 initializing default time stepper");
-      return Err;
+      ABORT_ERROR("ocnInit: Error phase 2 initializing default time stepper");
    }
 
    Err = OceanState::init();
    if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error initializing default state");
-      return Err;
+      ABORT_ERROR("ocnInit: Error initializing default state");
    }
 
    // Now that all fields have been defined, validate all the streams
    // contents
    bool StreamsValid = IOStream::validateAll();
    if (!StreamsValid) {
-      LOG_CRITICAL("ocnInit: Error validating IO Streams");
-      return Err;
+      ABORT_ERROR("ocnInit: Error validating IO Streams");
    }
 
    // Initialize data from Restart or InitialState files
@@ -189,8 +145,7 @@ int initOmegaModules(MPI_Comm Comm) {
    // One of the above two streams must be successful to initialize the
    // state and other fields used in the model
    if (Err1 != IOStream::Success and Err2 != IOStream::Success) {
-      LOG_CRITICAL("Error initializing ocean variables from input streams");
-      return Err1 + Err2;
+      ABORT_ERROR("Error initializing ocean variables from input streams");
    }
 
    // If reading from restart, reset the current time to the input time
@@ -198,8 +153,7 @@ int initOmegaModules(MPI_Comm Comm) {
       TimeInstant NewCurrentTime(SimTimeStr);
       Err = ModelClock->setCurrentTime(NewCurrentTime);
       if (Err != 0) {
-         LOG_CRITICAL("Error resetting the simulation time from restart");
-         return Err;
+         ABORT_ERROR("Error resetting the simulation time from restart");
       }
    }
 
@@ -217,13 +171,11 @@ int initOmegaModules(MPI_Comm Comm) {
    // Now update tracers - assume using same time level index
    Err = Tracers::exchangeHalo(CurTimeLevel);
    if (Err != 0) {
-      LOG_CRITICAL("Error updating tracer halo after restart");
-      return Err;
+      ABORT_ERROR("Error updating tracer halo after restart");
    }
    Err = Tracers::copyToHost(CurTimeLevel);
    if (Err != 0) {
-      LOG_CRITICAL("Error updating tracer device arrays after restart");
-      return Err;
+      ABORT_ERROR("Error updating tracer device arrays after restart");
    }
 
    return Err;

@@ -82,4 +82,6 @@
 [submodule "externals/mam4xx"]
 	path = externals/mam4xx
 	url = git@github.com:eagles-project/mam4xx.git
-
+[submodule "externals/cpptrace"]
+	path = externals/cpptrace
+	url = git@github.com:jeremy-rifkin/cpptrace

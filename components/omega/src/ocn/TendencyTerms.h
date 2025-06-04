@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "AuxiliaryState.h"
-#include "Config.h"
 #include "HorzMesh.h"
 #include "MachEnv.h"
 #include "OceanState.h"

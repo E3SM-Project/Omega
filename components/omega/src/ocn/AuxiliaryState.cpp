@@ -185,8 +185,7 @@ AuxiliaryState *AuxiliaryState::create(const std::string &Name,
 
 // Create the default auxiliary state. Assumes that HorzMesh has been
 // initialized.
-int AuxiliaryState::init() {
-   int Err                 = 0;
+void AuxiliaryState::init() {
    const HorzMesh *DefMesh = HorzMesh::getDefault();
    Halo *DefHalo           = Halo::getDefault();
 
@@ -197,9 +196,7 @@ int AuxiliaryState::init() {
        "Default", DefMesh, DefHalo, NVertLevels, NTracers);
 
    Config *OmegaConfig = Config::getOmegaConfig();
-   Err                 = DefaultAuxState->readConfigOptions(OmegaConfig);
-
-   return Err;
+   DefaultAuxState->readConfigOptions(OmegaConfig);
 }
 
 // Get the default auxiliary state
@@ -234,74 +231,56 @@ void AuxiliaryState::erase(const std::string &Name) {
 void AuxiliaryState::clear() { AllAuxStates.clear(); }
 
 // Read and set config options
-int AuxiliaryState::readConfigOptions(Config *OmegaConfig) {
+void AuxiliaryState::readConfigOptions(Config *OmegaConfig) {
 
-   int Err = 0;
+   Error Err; // error code
 
    Config AdvectConfig("Advection");
-   Err = OmegaConfig->get(AdvectConfig);
-   if (Err != 0) {
-      LOG_CRITICAL("AuxiliaryState: Advection group not found in Config");
-      return Err;
-   }
+   Err += OmegaConfig->get(AdvectConfig);
+   CHECK_ERROR_ABORT(Err, "AuxiliaryState: Advection group not in Config");
+
    std::string FluxThickTypeStr;
-   Err = AdvectConfig.get("FluxThicknessType", FluxThickTypeStr);
-   if (Err != 0) {
-      LOG_CRITICAL("AuxiliaryState: FluxThicknessType not found in "
-                   "AdvectConfig");
-      return Err;
-   }
+   Err += AdvectConfig.get("FluxThicknessType", FluxThickTypeStr);
+   CHECK_ERROR_ABORT(
+       Err, "AuxiliaryState: FluxThicknessType not found in AdvectConfig");
 
    if (FluxThickTypeStr == "Center") {
       this->LayerThicknessAux.FluxThickEdgeChoice = FluxThickEdgeOption::Center;
    } else if (FluxThickTypeStr == "Upwind") {
       this->LayerThicknessAux.FluxThickEdgeChoice = FluxThickEdgeOption::Upwind;
    } else {
-      LOG_CRITICAL("AuxiliaryState: Unknown FluxThicknessType requested");
-      Err = -1;
-      return Err;
+      ABORT_ERROR("AuxiliaryState: Unknown FluxThicknessType requested");
    }
 
    std::string FluxTracerTypeStr;
-   Err = AdvectConfig.get("FluxTracerType", FluxTracerTypeStr);
-   if (Err != 0) {
-      LOG_CRITICAL("AuxiliaryState: FluxTracerType not found in "
-                   "AdvectConfig");
-      return Err;
-   }
+   Err += AdvectConfig.get("FluxTracerType", FluxTracerTypeStr);
+   CHECK_ERROR_ABORT(
+       Err, "AuxiliaryState: FluxTracerType not found in AdvectConfig");
 
    if (FluxTracerTypeStr == "Center") {
       this->TracerAux.TracersOnEdgeChoice = FluxTracerEdgeOption::Center;
    } else if (FluxTracerTypeStr == "Upwind") {
       this->TracerAux.TracersOnEdgeChoice = FluxTracerEdgeOption::Upwind;
    } else {
-      LOG_CRITICAL("AuxiliaryState: Unknown FluxTracerType requested");
-      Err = -1;
-      return Err;
+      ABORT_ERROR("AuxiliaryState: Unknown FluxTracerType requested");
    }
 
    Config WindStressConfig("WindStress");
-   Err = OmegaConfig->get(WindStressConfig);
+   Err += OmegaConfig->get(WindStressConfig);
 
    std::string WindStressInterpTypeStr;
-   Err = WindStressConfig.get("InterpType", WindStressInterpTypeStr);
-   if (Err != 0) {
-      LOG_CRITICAL("AuxiliaryState: InterpType not found in "
-                   "WindStressConfig");
-      return Err;
-   }
+   Err += WindStressConfig.get("InterpType", WindStressInterpTypeStr);
+   CHECK_ERROR_ABORT(
+       Err, "AuxiliaryState: InterpType not found in WindStressConfig");
 
    if (WindStressInterpTypeStr == "Isotropic") {
       this->WindForcingAux.InterpChoice = InterpCellToEdgeOption::Isotropic;
    } else if (WindStressInterpTypeStr == "Anisotropic") {
       this->WindForcingAux.InterpChoice = InterpCellToEdgeOption::Anisotropic;
    } else {
-      LOG_CRITICAL("AuxiliaryState: Unknown InterpType requested");
-      Err = -1;
-      return Err;
+      ABORT_ERROR("AuxiliaryState: Unknown InterpType requested");
    }
 
-   return Err;
 }
 
 //------------------------------------------------------------------------------

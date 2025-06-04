@@ -26,7 +26,7 @@ so that the syntax is cleaner.
 Within Omega, the full configuration file is read just after the MachEnv
 initialization using:
 ```c++
-OMEGA::Config::readAll("omega.yml");
+Config::readAll("omega.yml");
 ```
 The full Omega configuration is stored in a static variable for later
 retrievals.
@@ -38,17 +38,18 @@ and finally retrieving the variable by name. The sequence might look like
 this for the example shown in the User Guide:
 ```c++
 // Get pointer to full configuration
-OMEGA::Config *OmegaConfig = OMEGA::Config::getOmegaConfig;
+Config *OmegaConfig = OMEGA::Config::getOmegaConfig;
 
-OMEGA::Config HmixConfig; // creates an empty config for Hmix
+Config HmixConfig; // creates an empty config for Hmix
 
 OmegaConfig->get("Hmix",HmixConfig); // extracts all Hmix config vars from omega
 
 // Get individual variables
-Err = HmixConfig.get("HmixScaleWithMesh", HmixScaleWithMesh);
-Err = HmixConfig.get("MaxMeshDensity"   , MaxMeshDensity);
-Err = HmixConfig.get("HmixUseRefWidth"  , HmixUseRefWidth);
-Err = HmixConfig.get("HmixRefWidth"     , HmixRefWidth);
+Error Err;
+Err += HmixConfig.get("HmixScaleWithMesh", HmixScaleWithMesh);
+Err += HmixConfig.get("MaxMeshDensity"   , MaxMeshDensity);
+Err += HmixConfig.get("HmixUseRefWidth"  , HmixUseRefWidth);
+Err += HmixConfig.get("HmixRefWidth"     , HmixRefWidth);
 ```
 All Config get/set/add functions support variables of all Omega data
 types (I4, I8, R4, R8, Real, bool, std::string) and also
@@ -58,9 +59,9 @@ under the Hmix module), you would need an additional call to extract
 the subconfiguration, like:
 ```c++
 OMEGA::Config HmixDel2Config; // creates and empty config for Hmix Del2
-Err = HmixConfig.get(HmixDel2Config);
+Err += HmixConfig.get(HmixDel2Config);
 ```
-If the variable cannot be found in the input configuration, a non-zero
+If the variable cannot be found in the input configuration, a failure
 error code is returned.  Existence can also be checked with the bool
 functions existsGroup or existsVar, where the variable name is provided.
 The developer will need to decide the action to take based on that
@@ -70,7 +71,7 @@ and set the value of the variable to an internal default.
 In this latter case, it is a good idea to add the variable and its value to
 the configuration using the add function. For example:
 ```c++
-Err = HmixConfig.add("HmixNewVar", value);
+HmixConfig.add("HmixNewVar", value);
 ```
 Then it will be included in any future writing of the configuration in
 order to save provenance. Similarly, an existing value can be changed using
@@ -79,7 +80,7 @@ function that can remove a variable or subconfiguration from any Config -
 only the name needs to be supplied. Finally, any configuration can be
 written using the write function with a filename supplied as in
 ```c++
-Err = OmegaConfig.write("FileName");
+OmegaConfig.write("FileName");
 ```
 
 In some cases, the variable or group name is not known prior to reading.
@@ -90,18 +91,18 @@ can be retrieved by name for further processing. The streams example might
 then look like:
 ```c++
 // extract streams sub-configuration from full Omega config
-OMEGA::Config StreamsConfig; // creates an empty config for streams
+Config StreamsConfig; // creates an empty config for streams
 OmegaConfig->get("Streams",StreamsConfig);
 
 // The iterator here is a Config::Iter (we use auto to save space)
 for (auto It=StreamsConfig->begin(); It != StreamsConfig->end(); ++It) {
    std::string NodeName;
-   Err = OMEGA::Config::getName(It, NodeName);
+   Err += Config::getName(It, NodeName);
 
    // Now we can get the specific configuration of each stream by name
    // and use it to process each stream
-   OMEGA::Config ThisStreamConfig;
-   Err = StreamsConfig->get(NodeName, ThisStreamConfig);
+   Config ThisStreamConfig;
+   Err += StreamsConfig->get(NodeName, ThisStreamConfig);
 
    // Extract info from ThisStreamConfig as needed
 }

@@ -97,3 +97,11 @@ if(GKlib_FOUND)
   set_target_properties(gklib PROPERTIES
      IMPORTED_LOCATION ${GKlib_LIBRARY})
 endif()
+
+# Add the cpptrace library
+if (NOT TARGET cpptrace::cpptrace)
+	add_subdirectory(
+	  ${E3SM_EXTERNALS_ROOT}/cpptrace
+	  ${CMAKE_CURRENT_BINARY_DIR}/cpptrace
+	)
+endif()

@@ -45,7 +45,7 @@ class AuxiliaryState {
    // Methods
 
    // Initialize the default auxiliary state
-   static int init();
+   static void init();
 
    // Create a non-default auxiliary state
    static AuxiliaryState *create(const std::string &Name, const HorzMesh *Mesh,
@@ -64,7 +64,7 @@ class AuxiliaryState {
    static void clear();
 
    /// Read and set config options
-   int readConfigOptions(Config *OmegaConfig);
+   void readConfigOptions(Config *OmegaConfig);
 
    /// Exchange halo
    I4 exchangeHalo();
