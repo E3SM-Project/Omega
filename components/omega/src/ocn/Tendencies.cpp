@@ -174,27 +174,25 @@ void Tendencies::readTendConfig(
 
    Err +=
        TendConfig->get("WindForcingTendencyEnable", this->WindForcing.Enabled);
-   CHECK_ERROR_ABORT(Err,
+   CHECK_ERROR_ABORT(
        Err, "Tendencies: WindForcingTendencyEnable not found in TendConfig");
 
    Err += TendConfig->get("Density0", this->WindForcing.SaltWaterDensity);
    CHECK_ERROR_ABORT(Err, "Tendencies: Density0 not found in TendConfig");
 
-   Err +=
-       TendConfig->get("BottomDragTendencyEnable", this->BottomDrag.Enabled);
+   Err += TendConfig->get("BottomDragTendencyEnable", this->BottomDrag.Enabled);
    CHECK_ERROR_ABORT(
        Err, "Tendencies: BottomDragTendencyEnable not found in TendConfig");
 
    Err += TendConfig->get("BottomDragCoeff", this->BottomDrag.Coeff);
-   CHECK_ERROR_ABORT(
-       Err, "Tendencies: BottomDragCoeff not found in TendConfig");
+   CHECK_ERROR_ABORT(Err,
+                     "Tendencies: BottomDragCoeff not found in TendConfig");
 
    Err += TendConfig->get("TracerHorzAdvTendencyEnable",
                           this->TracerHorzAdv.Enabled);
    CHECK_ERROR_ABORT(
        Err, "Tendencies: TracerHorzAdvTendencyEnable not found in TendConfig");
-      return TrHAdvErr;
-  
+
    if (this->TracerDiffusion.Enabled) {
       Err += TendConfig->get("EddyDiff2", this->TracerDiffusion.EddyDiff2);
       CHECK_ERROR_ABORT(Err, "Tendencies: EddyDiff2 not found in TendConfig");

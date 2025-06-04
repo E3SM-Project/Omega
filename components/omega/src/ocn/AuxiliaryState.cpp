@@ -280,7 +280,6 @@ void AuxiliaryState::readConfigOptions(Config *OmegaConfig) {
    } else {
       ABORT_ERROR("AuxiliaryState: Unknown InterpType requested");
    }
-
 }
 
 //------------------------------------------------------------------------------

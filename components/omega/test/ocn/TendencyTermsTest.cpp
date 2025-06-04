@@ -993,9 +993,9 @@ int testTracerHyperDiffOnCell(int NVertLevels, int NTracers, Real RTol) {
    return Err;
 } // end testTracerHyperDiffOnCell
 
-int initTendTest(const std::string &MeshFile, int NVertLevels) {
+void initTendTest(const std::string &MeshFile, int NVertLevels) {
 
-   I4 Err = 0;
+   Error Err;
 
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv  = MachEnv::getDefault();
@@ -1011,34 +1011,26 @@ int initTendTest(const std::string &MeshFile, int NVertLevels) {
    // Reset NVertLevels to the test value
    Config *OmegaConfig = Config::getOmegaConfig();
    Config DimConfig("Dimension");
-   Err = OmegaConfig->get(DimConfig);
-   if (Err != 0) {
-      LOG_CRITICAL("TendencyTermsTest: Dimension group not found in Config");
-      return Err;
-   }
-   Err = DimConfig.set("NVertLevels", NVertLevels);
-   if (Err != 0) {
-      LOG_CRITICAL("TendencyTermsTest: Unable to reset NVertLevels in Config");
-      return Err;
-   }
+   Err += OmegaConfig->get(DimConfig);
+   CHECK_ERROR_ABORT(Err,
+                     "TendencyTermsTest: Dimension group not found in Config");
+
+   DimConfig.set("NVertLevels", NVertLevels);
 
    I4 IOErr = IO::init(DefComm);
    if (IOErr != 0) {
-      Err++;
-      LOG_ERROR("TendencyTermsTest: error initializing parallel IO");
+      ABORT_ERROR("TendencyTermsTest: error initializing parallel IO");
    }
 
-   Decomp::init(mesh);
+   Decomp::init(MeshFile);
 
    int HaloErr = Halo::init();
    if (HaloErr != 0) {
-      Err++;
-      LOG_ERROR("TendencyTermsTest: error initializing default halo");
+      ABORT_ERROR("TendencyTermsTest: error initializing default halo");
    }
 
    HorzMesh::init();
 
-   return Err;
 } // end initTendTest
 
 void finalizeTendTest() {
@@ -1052,12 +1044,10 @@ void finalizeTendTest() {
 } // end finalizeTendTest
 
 int tendencyTermsTest(const std::string &MeshFile = DefaultMeshFile) {
+   int Err         = 0;
    int NVertLevels = 16;
 
-   int Err = initTendTest(MeshFile, NVertLevels);
-   if (Err != 0) {
-      LOG_CRITICAL("TendencyTermsTest: Error initializing");
-   }
+   initTendTest(MeshFile, NVertLevels);
 
    const auto &Mesh = HorzMesh::getDefault();
    int NTracers     = 3;
