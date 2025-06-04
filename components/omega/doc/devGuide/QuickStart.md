@@ -206,6 +206,8 @@ supported E3SM machines. The pattern is:
 +--------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Machine      | Compiler         | Parmetis path                                                                                                                                                             |
 +==============+==================+===========================================================================================================================================================================+
+| aurora       | oneapi-ifx       | /lus/flare/projects/E3SM_Dec/soft/polaris/aurora/spack/dev_polaris_0_8_0_oneapi-ifx_mpich/var/spack/environments/dev_polaris_0_8_0_oneapi-ifx_mpich/.spack-env/view       |
++--------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | chicoma-cpu  | gnu              | /usr/projects/e3sm/polaris/chicoma-cpu/spack/dev_polaris_0_8_0_gnu_mpich/var/spack/environments/dev_polaris_0_8_0_gnu_mpich/.spack-env/view                               |
 +--------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | chrysalis    | intel            | /lcrc/soft/climate/polaris/chrysalis/spack/dev_polaris_0_8_0_intel_openmpi/var/spack/environments/dev_polaris_0_8_0_intel_openmpi/.spack-env/view                         |
