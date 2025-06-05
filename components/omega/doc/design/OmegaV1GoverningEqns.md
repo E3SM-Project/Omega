@@ -41,40 +41,52 @@ See additional [EOS design document](EOS)
 ### Omega-1.0 will add new terms for the pressure gradient, vertical mixing, and vertical advection.
 See forthcoming design documents on the pressure gradient, vertical mixing, and vertical advection.
 
-## 3. Continuous Equations
+## 3. Conservation Equations
 
-The continuous form of the conservation equations are as follows. See [Kundu et al. 2024](https://www.amazon.com/Fluid-Mechanics-Pijush-K-Kundu/dp/012405935X), chapter 4, eqns 4.7 and 4.22 or the [MOM5 manual](https://mom-ocean.github.io/assets/pdfs/MOM5_manual.pdf) eqn 7.7. This is before any assumptions are made, so this is a compressible, non-hydrostatic, non-Boussinesq fluid. Here all variables are a function of $(x,y,z)$, ${\bf u}_{3D}$ denotes the three-dimensional velocity vector, ${\bf u}_{3D} \otimes {\bf u}_{3D} = {\bf u}_{3D}{\bf u}_{3D}^T$ is the tensor product, $\nabla_{3D}$ is the three-dimensional gradient, $D/Dt$ is the material derivative, and other variables defined in the [Variable Definition Section](#variable-definitions) below.
-
-momentum:
-
-$$
-\frac{D \rho {\bf u}_{3D} }{D t} \equiv
-\frac{\partial \rho {\bf u}_{3D}}{\partial t}
- + \nabla_{3D} \cdot \left( \rho {\bf u}_{3D} \otimes {\bf u}_{3D}  \right)
-  = - \nabla_{3D} p
-   - \rho \nabla_{3D} \Phi
-+ \rho {\bf D}^u_{3D} + \rho {\bf F}^u_{3D}
-$$ (continuous-momentum)
+We begin with the continuous, control-volume form of the conservation equations. Consider an arbitrary control volume $V^{*}(t)$ with a bounding control surface $A^{*}(t)$. The fluid has density $\rho({\bf x},t)$ and velocity ${\bf v}({\bf x},t)$. The control surface is moving at a velocity ${\bf v}_A({\bf x},t)$. The conservation equations are
 
 mass:
 
 $$
-\frac{D \rho}{D t} \equiv
-\frac{\partial \rho }{\partial t}
- + \nabla_{3D} \cdot \left( \rho  {\bf u}_{3D}  \right)
+\frac{d}{dt} \int_{V^{*}(t)} \rho({\bf x},t) \, dV
++ \int_{A^{*}(t)}\rho({\bf x},t)\left({\bf v}({\bf x},t) - {\bf v}_A \right) \cdot {\bf n} \, dA
 = 0
 $$ (continuous-mass)
 
 tracers:
 
 $$
-\frac{D \rho \varphi }{D t} \equiv
-\frac{\partial \rho \varphi}{\partial t}
- + \nabla_{3D} \cdot \left( \rho \varphi {\bf u}_{3D}  \right)
-= D^\varphi + Q^\varphi
+\frac{d}{dt} \int_{V^{*}(t)} \rho({\bf x},t) \, \varphi({\bf x},t) \, dV
++ \int_{A^{*}(t)}\rho({\bf x},t)\, \varphi({\bf x},t) \left({\bf v}({\bf x},t) - {\bf v}_A \right) \cdot {\bf n} \, dA
+= 0
 $$ (continuous-tracer)
 
-Here we have express the following terms as a general operators, with examples of specific forms provided below: the dissipation ${\bf D}^u$, momentum forcing ${\bf F}^u$, tracer diffusion $D^\varphi$, and tracer sources and sinks $Q^\varphi$. The graviational potential, $\Phi$, is written in a general form, and may include Earth's gravity, tidal forces, and self attraction and loading.
+momentum:
+
+$$
+&\frac{d}{dt} \int_{V^{*}(t)} \rho({\bf x},t)\,  {\bf v}({\bf x},t) \, dV
++ \int_{A^{*}(t)}\rho({\bf x},t)\, {\bf v}({\bf x},t) \left({\bf v}({\bf x},t) - {\bf v}_A \right) \cdot {\bf n} \, dA
+\\ & \;= 
+\frac{d}{dt} \int_{V^{*}(t)} \rho({\bf x},t) \, {\bf g}\, dV
++ \int_{A^{*}(t)}\rho({\bf x},t) \, {\bf v}({\bf x},t) \, {\bf f}({\bf n},{\bf x},t)  \, dA
+$$ (continuous-momentum)
+
+These equations are taken from [Kundu et al. 2016](https://www.amazon.com/dp/012405935X/) (4.5) for mass conservation and (4.17) for momentum conservation. 
+All notation is identical to Kundu, except that we use ${\bf v}$ for the three-dimensional velocity, as ${\bf u}$ will be used below for horizontal velocities. 
+The tracer equation is simply mass conservation, where the conserved quantity is the tracer mass $\rho \varphi$, as $\varphi$ is the tracer concentration per unit mass.
+
+
+In all three equations, the first term is the change of mass within the control volume; the second term is the flux through the moving boundary. 
+Kundu uses the star superscripts on the control volume and surface to indicate that it can move in an arbitrary fashion, rather than with the fluid. In that case ${\bf v}_A={\bf v}$ and the second term is zero.
+
+The momentum equation  is an expression of Newton's second law and has two additional terms on the right hand side.
+The first additional term is the body force, $\rho {\bf g} dV$, where ${\bf g}$ may be expressed as the gradient of a potential ${\bf g}= - \nabla_{3D} \Phi$ for for conservative body forces. 
+Note ${\bf g}$ is general here and not yet Earth's gravity. 
+Body forces also include forces from a rotating frame of reference, such as the Coriolis force. 
+The last term is due to all surface forces ${\bf f}$ that act on the surface of the fluid element, including pressure and viscous stresses.
+The momentum equation derivation may also be found in [Leishman 2025](https://eaglepubs.erau.edu/introductiontoaerospaceflightvehicles/chapter/conservation-of-momentum-momentum-equation/#chapter-260-section-2), Chapter 21, equation 10.
+
+
 
 (pseudo-height)=
 
@@ -691,6 +703,42 @@ This section is for references without webpage links. These are mostly textbooks
 - Pedlosky, J. (1987). Geophysical Fluid Dynamics (Vol. 710). Springer.
 - Vallis, G. K. (2017). Atmospheric and oceanic fluid dynamics. Cambridge University Press.
 
+## OLD: Continuous Equations
+
+The continuous form of the conservation equations are as follows. See [Kundu et al. 2024](https://www.amazon.com/Fluid-Mechanics-Pijush-K-Kundu/dp/012405935X), chapter 4, eqns 4.7 and 4.22 or the [MOM5 manual](https://mom-ocean.github.io/assets/pdfs/MOM5_manual.pdf) eqn 7.7. This is before any assumptions are made, so this is a compressible, non-hydrostatic, non-Boussinesq fluid. Here all variables are a function of $(x,y,z)$, ${\bf u}_{3D}$ denotes the three-dimensional velocity vector, ${\bf u}_{3D} \otimes {\bf u}_{3D} = {\bf u}_{3D}{\bf u}_{3D}^T$ is the tensor product, $\nabla_{3D}$ is the three-dimensional gradient, $D/Dt$ is the material derivative, and other variables defined in the [Variable Definition Section](#variable-definitions) below.
+
+momentum:
+
+$$
+\frac{D \rho {\bf u}_{3D} }{D t} \equiv
+\frac{\partial \rho {\bf u}_{3D}}{\partial t}
+ + \nabla_{3D} \cdot \left( \rho {\bf u}_{3D} \otimes {\bf u}_{3D}  \right)
+  = - \nabla_{3D} p
+   - \rho \nabla_{3D} \Phi
++ \rho {\bf D}^u_{3D} + \rho {\bf F}^u_{3D}
+$$ (continuous-momentum)
+
+mass:
+
+$$
+\frac{D \rho}{D t} \equiv
+\frac{\partial \rho }{\partial t}
+ + \nabla_{3D} \cdot \left( \rho  {\bf u}_{3D}  \right)
+= 0
+$$ (continuous-mass)
+
+tracers:
+
+$$
+\frac{D \rho \varphi }{D t} \equiv
+\frac{\partial \rho \varphi}{\partial t}
+ + \nabla_{3D} \cdot \left( \rho \varphi {\bf u}_{3D}  \right)
+= D^\varphi + Q^\varphi
+$$ (continuous-tracer)
+
+Here we have express the following terms as a general operators, with examples of specific forms provided below: the dissipation ${\bf D}^u$, momentum forcing ${\bf F}^u$, tracer diffusion $D^\varphi$, and tracer sources and sinks $Q^\varphi$. The graviational potential, $\Phi$, is written in a general form, and may include Earth's gravity, tidal forces, and self attraction and loading.
+
+(pseudo-height)=
 
 ## OLD: Momentum Equations
 
