@@ -141,7 +141,7 @@ $$
 h(x, y, t) = \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, dz =  \tilde{z}^{\text{top}}(x, y, t) - \tilde{z}^{\text{bot}} (x, y, t).
 $$ (def-pressure-thickness)
 
-Instead of geometric thickness to define our layers. Starting at their (A.14), it is useful to write the equation in terms of vertical mass flux per unit area $\omega = \rho w$ instead of vertical velocity $w$:
+Instead of geometric thickness to define our layers. Starting at their (A.14), it is useful to write the equation in terms of vertical mass flux per unit area $\omega$. Here $\omega = \rho w$ is computed from the Eulerian velocity $w$, and $\omega_r = \rho w_r$ is associated with $w_r$, which is the velocity of the boundary $\partial V_{\text{top}}$. One may consider $\omega$ to be a velocity, but in the transformed mass coordinate $\tilde{z}$.
 
 $$
 \frac{d}{dt} \int_{V(t)} \rho \varphi \, dV + \int_{\partial V_{\text{side}}} \rho \varphi \mathbf{u} \cdot \mathbf{n} \, dA + \int_{\partial V_{\text{top}}(t)} \varphi (\omega - \omega_r) \, dA
@@ -166,7 +166,7 @@ where we define the pressure surfaces $\tilde{z}^{\text{top}}\equiv \tilde{z}(z^
 The equivalent of their (A.16) is our equation for mass-thickness above. The vertical average of a variable, their (A.17) becomes:
 
 $$
-\overline{\varphi}^{\tilde{z}}(x, y, t) = \frac{1}{h} \int_{z^{\text{bot}}}^{z^{\text{top}}} \varphi(x, y, z, t) \rho g \, dz \\
+\overline{\varphi}^{\tilde{z}}(x, y, t) = \frac{1}{h} \int_{z^{\text{bot}}}^{z^{\text{top}}} \varphi(x, y, z, t) \rho \, dz \\
  = \frac{1}{h} \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \varphi(x, y, z, t)  \, d\tilde{z}.
 $$ (def-tracer-avg)
 
@@ -188,7 +188,7 @@ $$
 - \left. \overline{\varphi \omega_{tr}}^A \right|_{\tilde{z} = \tilde{z}^{\text{bot}}} = 0,
 $$ (tracer-Aavg-ztildeavg)
 
-which is their (A.21), except with $\phi = \rho g \varphi$ and $w \rightarrow \omega$. Taking the limit $\tilde{A} \rightarrow 0$, we get:
+which is their (A.21), except with $\phi = \rho \varphi$ and $w \rightarrow \omega$. Taking the limit $\tilde{A} \rightarrow 0$, we get:
 
 $$
 \frac{\partial}{\partial t} h \, \overline{\varphi}^{\tilde{z}} + \nabla \cdot (h \, \overline{\varphi\mathbf{u}}^{\tilde{z}} ) + [\varphi \omega_{tr}]_{\tilde{z} = \tilde{z}^{\text{top}}} - [\varphi \omega_{tr}]_{\tilde{z} = \tilde{z}^{\text{bot}}} = 0.
@@ -207,11 +207,11 @@ This is nearly identical to their (A.25) but with the pressure-thickness and $\o
 
 We now derive the horizontal momentum equation in our non-Boussinesq, hydrostatic framework, following the same finite-volume approach used for mass and tracer conservation. We work with a pseudo-height vertical coordinate $\tilde{z}$ as defined in [Pseudo-Height Coordinate Section](pseudo-height).
 
-We begin by considering conservation of horizontal momentum density $ \rho \mathbf{u} $ over a time-dependent control volume $ V(t) $, bounded horizontally by a fixed area $ A $, and vertically by surfaces $ \tilde{z}^{\text{top}}(x, y, t) $ and $ \tilde{z}^{\text{bot}}(x, y, t) $. The finite-volume balance reads:
+We begin by considering conservation of horizontal momentum density $ \rho \mathbf{u} $ over a time-dependent control volume $ V(t) $, bounded horizontally by a fixed area $ S $, and vertically by surfaces $ \tilde{z}^{\text{top}}(x, y, t) $ and $ \tilde{z}^{\text{bot}}(x, y, t) $. The finite-volume balance reads:
 
 $$
 \frac{d}{dt} \int_{V(t)} \rho \mathbf{u} \, dV
-+ \int_{\partial V(t)} \rho \mathbf{u} (\mathbf{v} - \mathbf{v}_r) \cdot \mathbf{n} \, dA
++ \int_{\partial V(t)} \rho \mathbf{u} (\mathbf{v} - \mathbf{v}_r) \cdot \mathbf{n} \, dS
 = \mathbf{F}_\text{total}[V(t)],
 $$ (momentum-FV)
 
@@ -221,9 +221,9 @@ $$
 \mathbf{F}_\text{total}[V(t)] =
 - \int_{V(t)} \rho\, \mathbf{f} \times \mathbf{u} \, dV
 - \int_{V(t)} \rho\, \nabla \Phi \, dV
-- \int_{\partial V(t)} p \, \mathbf{n} \, dA
-+ \int_{\partial V(t)} \boldsymbol{\tau}_h \cdot \mathbf{n} \, dA
-+ \int_{\partial V(t)} \boldsymbol{\tau}_h^z \cdot \mathbf{n} \, dA.
+- \int_{\partial V(t)} p \, \mathbf{n} \, dS
++ \int_{\partial V(t)} \boldsymbol{\tau}_h \cdot \mathbf{n} \, dS
++ \int_{\partial V(t)} \boldsymbol{\tau}_h^z \cdot \mathbf{n} \, dS.
 $$ (momentum-Ftotal)
 
 Each term on the right-hand side corresponds to a physically distinct force acting on the fluid within the control volume:
