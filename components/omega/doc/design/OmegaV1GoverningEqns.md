@@ -191,13 +191,13 @@ $$ (tracer-Aavg-ztildeavg)
 which is their (A.21), except with $\phi = \rho \varphi$ and $w \rightarrow \omega$. Taking the limit $\tilde{A} \rightarrow 0$, we get:
 
 $$
-\frac{\partial}{\partial t} h \, \overline{\varphi}^{\tilde{z}} + \nabla \cdot (h \, \overline{\varphi\mathbf{u}}^{\tilde{z}} ) + [\varphi \omega_{tr}]_{\tilde{z} = \tilde{z}^{\text{top}}} - [\varphi \omega_{tr}]_{\tilde{z} = \tilde{z}^{\text{bot}}} = 0.
+\frac{\partial}{\partial t} h \, \overline{\varphi}^{\tilde{z}} + \nabla_z \cdot (h \, \overline{\varphi\mathbf{u}}^{\tilde{z}} ) + [\varphi \omega_{tr}]_{\tilde{z} = \tilde{z}^{\text{top}}} - [\varphi \omega_{tr}]_{\tilde{z} = \tilde{z}^{\text{bot}}} = 0.
 $$ (tracer-layered)
 
 We get mass conservation by substituting $\varphi \rightarrow 1$:
 
 $$
-\frac{\partial}{\partial t} h + \nabla \cdot (h \overline{\mathbf{u}}^{\tilde{z}} ) + \left.\omega_{tr}\right|_{\tilde{z} = \tilde{z}^{\text{top}}} - \left.\omega_{tr}\right|_{\tilde{z} = \tilde{z}^{\text{bot}}} = 0.
+\frac{\partial}{\partial t} h + \nabla_z \cdot (h \overline{\mathbf{u}}^{\tilde{z}} ) + \left.\omega_{tr}\right|_{\tilde{z} = \tilde{z}^{\text{top}}} - \left.\omega_{tr}\right|_{\tilde{z} = \tilde{z}^{\text{bot}}} = 0.
 $$ (mass-layered)
 
 This is nearly identical to their (A.25) but with the pressure-thickness and $\omega$.
@@ -220,7 +220,7 @@ with total forces given by:
 $$
 \mathbf{F}_\text{total}[V(t)] =
 - \int_{V(t)} \rho\, \mathbf{f} \times \mathbf{u} \, dV
-- \int_{V(t)} \rho\, \nabla \Phi \, dV
+- \int_{V(t)} \rho\, \nabla_z \Phi \, dV
 - \int_{\partial V(t)} p \, \mathbf{n} \, dS
 + \int_{\partial V(t)} \boldsymbol{\tau}_h \cdot \mathbf{n} \, dS
 + \int_{\partial V(t)} \boldsymbol{\tau}_h^z \cdot \mathbf{n} \, dS.
@@ -243,10 +243,10 @@ $$
 &+ \int_{\partial A} h\, \overline{\mathbf{u} \otimes \mathbf{u}}^{\tilde{z}} \cdot \mathbf{n} \, dl \\
 &+ \int_A \left[ \mathbf{u} (\omega - \omega_r) \right]_{\tilde{z}^{\text{top}}} \, dA
 - \int_A \left[ \mathbf{u} (\omega - \omega_r) \right]_{\tilde{z}^{\text{bot}}} \, dA \\
-&= \int_A h\, \overline{\mathbf{f} \times \mathbf{u} + \nabla \Phi}^{\tilde{z}} \, dA \\
+&= \int_A h\, \overline{\mathbf{f} \times \mathbf{u} + \nabla_z \Phi}^{\tilde{z}} \, dA \\
 &\quad - \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p\, \mathbf{n} \, d\tilde{z} \right) dl \\
-&\quad - \int_A \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{top}}} \, dA
-+ \int_A \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \, dA \\
+&\quad - \int_A \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{top}}} \, dA
++ \int_A \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \, dA \\
 &\quad + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \cdot \mathbf{n} \, d\tilde{z} \right) dl \\
 &\quad + \int_A \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}} \, dA
 - \int_A \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}} \, dA
@@ -258,14 +258,14 @@ Taking the limit as $A \rightarrow 0$, we arrive at the local, horizontally cont
 $$
 \begin{aligned}
 \frac{\partial}{\partial t} \left( h\, \overline{\mathbf{u}}^{\tilde{z}} \right)
-&+ \nabla \cdot \left( h\, \overline{\mathbf{u} \otimes \mathbf{u}}^{\tilde{z}} \right) \\
+&+ \nabla_z \cdot \left( h\, \overline{\mathbf{u} \otimes \mathbf{u}}^{\tilde{z}} \right) \\
 &+ \left[ \mathbf{u} (\omega - \omega_r) \right]_{\tilde{z}^{\text{top}}}
 - \left[ \mathbf{u} (\omega - \omega_r) \right]_{\tilde{z}^{\text{bot}}} \\
-&= h\, \overline{ \mathbf{f} \times \mathbf{u} + \nabla \Phi }^{\tilde{z}} \\
-&\quad - \nabla \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p \, d\tilde{z} \right)
-- \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{top}}}
-+ \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
-&\quad + \nabla \cdot \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \, d\tilde{z} \right)
+&= h\, \overline{ \mathbf{f} \times \mathbf{u} + \nabla_z \Phi }^{\tilde{z}} \\
+&\quad - \nabla_z \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p \, d\tilde{z} \right)
+- \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{top}}}
++ \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
+&\quad + \nabla_z \cdot \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \, d\tilde{z} \right)
 + \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}}
 - \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}}
 \end{aligned}
@@ -289,14 +289,14 @@ We begin with the horizontally continuous, layer-integrated horizontal momentum 
 $$
 \begin{aligned}
 \frac{\partial}{\partial t} \left( h\, \mathbf{U} \right)
-&+ \nabla \cdot \left( h\, \overline{\mathbf{u} \otimes \mathbf{u}}^{\tilde{z}} \right) \\
+&+ \nabla_z \cdot \left( h\, \overline{\mathbf{u} \otimes \mathbf{u}}^{\tilde{z}} \right) \\
 &+ \left[ \mathbf{u} (\omega - \omega_r) \right]_{\tilde{z}^{\text{top}}}
 - \left[ \mathbf{u} (\omega - \omega_r) \right]_{\tilde{z}^{\text{bot}}} \\
-&= h\, \overline{ \mathbf{f} \times \mathbf{u} + \nabla \Phi }^{\tilde{z}} \\
-&\quad - \nabla \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p \, d\tilde{z} \right)
-- \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{top}}}
-+ \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
-&\quad + \nabla \cdot \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \, d\tilde{z} \right)
+&= h\, \overline{ \mathbf{f} \times \mathbf{u} + \nabla_z \Phi }^{\tilde{z}} \\
+&\quad - \nabla_z \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p \, d\tilde{z} \right)
+- \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{top}}}
++ \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
+&\quad + \nabla_z \cdot \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \, d\tilde{z} \right)
 + \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}}
 - \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}}
 \end{aligned}
@@ -306,7 +306,7 @@ We also have the mass conservation equation [](mass-layered):
 
 $$
 \frac{\partial h}{\partial t}
-+ \nabla \cdot (h \mathbf{U})
++ \nabla_z \cdot (h \mathbf{U})
 + \left[ \omega - \omega_r \right]_{\tilde{z}^{\text{top}}}
 - \left[ \omega - \omega_r \right]_{\tilde{z}^{\text{bot}}}
 = 0.
@@ -318,7 +318,7 @@ $$
 \begin{aligned}
 h \left(
 \frac{\partial \mathbf{U}}{\partial t}
-+ \mathbf{U} \cdot \nabla \mathbf{U}
++ \mathbf{U} \cdot \nabla_z \mathbf{U}
 \right)
 &+ \left[ \mathbf{u} (\omega - \omega_r) \right]_{\tilde{z}^{\text{top}}}
 - \mathbf{U} \left[ \omega - \omega_r \right]_{\tilde{z}^{\text{top}}} \\
@@ -328,12 +328,12 @@ h \left(
 \end{aligned}
 $$ (velocity-eq-general)
 
-The term $ \mathbf{U} \cdot \nabla \mathbf{U} $ may be rewritten using a standard vector identity:
+The term $ \mathbf{U} \cdot \nabla_z \mathbf{U} $ may be rewritten using a standard vector identity:
 
 $$
-\mathbf{U} \cdot \nabla \mathbf{U}
-= \nabla \left( \frac{1}{2} |\mathbf{U}|^2 \right)
-+ (\nabla \times \mathbf{U}) \times \mathbf{U} = \nabla K + \zeta \times \mathbf{U},
+\mathbf{U} \cdot \nabla_z \mathbf{U}
+= \nabla_z \left( \frac{1}{2} |\mathbf{U}|^2 \right)
++ (\nabla_z \times \mathbf{U}) \times \mathbf{U} = \nabla_z K + \zeta \times \mathbf{U},
 $$ (velocity-vector-identity)
 where $K$ is the kinetic energy per unit mass and $\zeta$ is the relative voriticity.
 
@@ -350,13 +350,13 @@ This substitution makes the rotational part of the velocity equation appear in i
 $$
 \begin{aligned}
 \frac{\partial \overline{\mathbf{u}}^{\tilde{z}}}{\partial t}
-+ \nabla K
++ \nabla_z K
 + \boldsymbol{\eta} \times \overline{\mathbf{u}}^{\tilde{z}}
-&= \overline{ \nabla \Phi }^{\tilde{z}} \\
-&\quad - \frac{1}{h} \nabla \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p\, d\tilde{z} \right)
-- \frac{1}{h} \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{top}}}
-+ \frac{1}{h} \left[ p \nabla \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
-&\quad + \frac{1}{h} \nabla \cdot \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \, d\tilde{z} \right)
+&= \overline{ \nabla_z \Phi }^{\tilde{z}} \\
+&\quad - \frac{1}{h} \nabla_z \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p\, d\tilde{z} \right)
+- \frac{1}{h} \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{top}}}
++ \frac{1}{h} \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
+&\quad + \frac{1}{h} \nabla_z \cdot \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \, d\tilde{z} \right)
 + \frac{1}{h} \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}}
 - \frac{1}{h} \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}} \\
 &\quad + \frac{1}{h} \sum_{i = \text{top, bot}} \left[ (\mathbf{u} - \overline{\mathbf{u}}^{\tilde{z}}) (\omega - \omega_r) \right]_i
