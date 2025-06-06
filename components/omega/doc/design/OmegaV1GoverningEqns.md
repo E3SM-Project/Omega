@@ -43,56 +43,219 @@ See forthcoming design documents on the pressure gradient, vertical mixing, and 
 
 ## 3. Conservation Equations
 
-We begin with the continuous, control-volume form of the conservation equations. Consider an arbitrary control volume $V^{*}(t)$ with a bounding control surface $A^{*}(t)$. The fluid has density $\rho({\bf x},t)$ and velocity ${\bf v}({\bf x},t)$. The control surface is moving at a velocity ${\bf v}_A({\bf x},t)$. The conservation equations are
+### Control Volume Formulation
+
+We begin with the continuous, control-volume form of the conservation equations. Consider an arbitrary control volume $V(t)$ with a bounding control surface $\partial V(t)$. The fluid has density $\rho({\bf x},t)$ and velocity ${\bf v}({\bf x},t)$. The control surface is moving at a velocity ${\bf v}_r({\bf x},t)$. The conservation equations are
 
 mass:
 
 $$
-\frac{d}{dt} \int_{V^{*}(t)} \rho({\bf x},t) \, dV
-+ \int_{A^{*}(t)}\rho({\bf x},t)\left({\bf v}({\bf x},t) - {\bf v}_A \right) \cdot {\bf n} \, dA
+\frac{d}{dt} \int_{V(t)} \rho({\bf x},t) \, dV
++ \int_{\partial V(t)}\rho({\bf x},t)\left({\bf v}({\bf x},t) - {\bf v}_r \right) \cdot {\bf n} \, dA
 = 0
 $$ (continuous-mass)
 
 tracers:
 
 $$
-\frac{d}{dt} \int_{V^{*}(t)} \rho({\bf x},t) \, \varphi({\bf x},t) \, dV
-+ \int_{A^{*}(t)}\rho({\bf x},t)\, \varphi({\bf x},t) \left({\bf v}({\bf x},t) - {\bf v}_A \right) \cdot {\bf n} \, dA
+\frac{d}{dt} \int_{V(t)} \rho({\bf x},t) \, \varphi({\bf x},t) \, dV
++ \int_{\partial V(t)}\rho({\bf x},t)\, \varphi({\bf x},t) \left({\bf v}({\bf x},t) - {\bf v}_r \right) \cdot {\bf n} \, dA
 = 0
 $$ (continuous-tracer)
 
 momentum:
 
 $$
-&\frac{d}{dt} \int_{V^{*}(t)} \rho({\bf x},t)\,  {\bf v}({\bf x},t) \, dV
-+ \int_{A^{*}(t)}\rho({\bf x},t)\, {\bf v}({\bf x},t) \left({\bf v}({\bf x},t) - {\bf v}_A \right) \cdot {\bf n} \, dA
-\\ & \;= 
-\frac{d}{dt} \int_{V^{*}(t)} \rho({\bf x},t) \, {\bf g}\, dV
-+ \int_{A^{*}(t)}\rho({\bf x},t) \, {\bf v}({\bf x},t) \, {\bf f}({\bf n},{\bf x},t)  \, dA
+&\frac{d}{dt} \int_{V(t)} \rho({\bf x},t)\,  {\bf v}({\bf x},t) \, dV
++ \int_{\partial V(t)}\rho({\bf x},t)\, {\bf v}({\bf x},t) \left({\bf v}({\bf x},t) - {\bf v}_r \right) \cdot {\bf n} \, dA
+\\ & \; \; \; =
+\int_{V(t)} \rho({\bf x},t) \, {\bf g}\, dV
++ \int_{\partial V(t)} {\bf f}({\bf n},{\bf x},t)  \, dA
 $$ (continuous-momentum)
 
-These equations are taken from [Kundu et al. 2016](https://www.amazon.com/dp/012405935X/) (4.5) for mass conservation and (4.17) for momentum conservation. 
-All notation is identical to Kundu, except that we use ${\bf v}$ for the three-dimensional velocity, as ${\bf u}$ will be used below for horizontal velocities. 
+These equations are taken from [Kundu et al. 2016](https://www.amazon.com/dp/012405935X/) (4.5) for mass conservation and (4.17) for momentum conservation.
+All notation is identical to Kundu, except that we use ${\bf v}$ for the three-dimensional velocity (${\bf u}$ will be used below for horizontal velocities) and ${\bf v}_r$ and $\partial V$ match the notation in [Ringler et al. 2013](https://www.sciencedirect.com/science/article/pii/S1463500313000760) Appendix A.2.
+
+
 The tracer equation is simply mass conservation, where the conserved quantity is the tracer mass $\rho \varphi$, as $\varphi$ is the tracer concentration per unit mass.
-
-
-In all three equations, the first term is the change of mass within the control volume; the second term is the flux through the moving boundary. 
+In all three equations, the first term is the change of mass within the control volume; the second term is the flux through the moving boundary.
 Kundu uses the star superscripts on the control volume and surface to indicate that it can move in an arbitrary fashion, rather than with the fluid. In that case ${\bf v}_A={\bf v}$ and the second term is zero.
 
 The momentum equation  is an expression of Newton's second law and has two additional terms on the right hand side.
-The first additional term is the body force, $\rho {\bf g} dV$, where ${\bf g}$ may be expressed as the gradient of a potential ${\bf g}= - \nabla_{3D} \Phi$ for for conservative body forces. 
-Note ${\bf g}$ is general here and not yet Earth's gravity. 
-Body forces also include forces from a rotating frame of reference, such as the Coriolis force. 
+The first additional term is the body force, $\rho {\bf g} dV$, where ${\bf g}$ may be expressed as the gradient of a potential ${\bf g}= - \nabla_{3D} \Phi$ for conservative body forces.
+Note ${\bf g}$ is general here and not yet Earth's gravity.
+Body forces also include forces from a rotating frame of reference, such as the Coriolis force.
 The last term is due to all surface forces ${\bf f}$ that act on the surface of the fluid element, including pressure and viscous stresses.
 The momentum equation derivation may also be found in [Leishman 2025](https://eaglepubs.erau.edu/introductiontoaerospaceflightvehicles/chapter/conservation-of-momentum-momentum-equation/#chapter-260-section-2), Chapter 21, equation 10.
 
+### Horizontal \& Vertical Separation
+
+In geophysical flows the vertical and horizontal directions are treated differently due to rotation and stratification, which lead to different scales of motion.
+To that end, assume that the control volume $V$ is bounded in the horizontal by a fixed wall $\partial V^{side}$ that does not vary in time or $z$.
+The top and bottom boundaries of $V$, $\partial V^{\text{top}}$ and $\partial V^{\text{bot}}$, occur at $z = z^{\text{top}}(x,y,t)$ and $z = z^{\text{bot}}(x,y,t)$.
+Taking the tracer equation as an example and dropping the explicit $({\bf x},t)$ dependance notation, we separate all integrals between horizontal and vertical,
+
+$$
+\frac{d}{dt} \int_{V(t)} \rho \, \varphi \, dV
+&+
+ \int_{\partial V(t)}\rho\, \varphi \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA
+= 0 \\
+\frac{d}{dt} \int_{V(t)} \rho \, \varphi \, dV
+&+
+   \int_{\partial V^{side}}\rho\, \varphi \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA
+ + \int_{\partial V^{\text{top}}(t)}\rho\, \varphi \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA
+ + \int_{\partial V^{\text{bot}}(t)}\rho\, \varphi \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA
+= 0 \\
+\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, \varphi \, dz \, dA
+&+
+   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, \varphi {\bf u} dz \right) \cdot {\bf n} \, dl
+ + \int_{A}\left[ \rho\, \varphi \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
+ - \int_{A}\left[ \rho\, \varphi \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
+= 0
+$$ (tr-v-h-separation)
+
+Here ${\bf v} = ({\bf u},w)$ is written using the horizontal velocity ${\bf u}$ and vertical velocity $w$.
+In the final equation, perpendicular velocity components drop out of each integral.
+Since $\partial V^{side}$ is fixed, ${\bf u}_r=0$ and drops out of the second term.
+Here $A$ is the horizontal region, i.e. the projection of ${\partial V^{\text{top}}(t)}$ and ${\partial V^{\text{top}}(t)}$ into the horizontal plane, which is fixed in time.
+
+Using this procedure of separating the horizontal from the vertical, the governing equations are
+
+mass:
+
+$$
+\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, dz \, dA
++
+   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, {\bf u} \, dz \right) \cdot {\bf n} \, dl
+ + \int_{A}\left[ \rho\, \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
+ - \int_{A}\left[ \rho\, \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
+= 0
+$$ (vh-mass)
+
+tracers:
+
+$$
+\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, \varphi \, dz \, dA
++
+   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, \varphi \, {\bf u} \, dz \right) \cdot {\bf n} \, dl
+ + \int_{A}\left[ \rho\, \varphi \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
+ - \int_{A}\left[ \rho\, \varphi \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
+= 0
+$$ (vh-tracer)
+
+momentum:
+
+$$
+& \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf v} \, dz \, dA
++
+   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, {\bf v} \otimes {\bf u} \, dz \right) \cdot {\bf n} \, dl
+ + \int_{A}\left[ \rho\, {\bf v} \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
+ - \int_{A}\left[ \rho\, {\bf v} \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
+\\ & \; =
+\int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf g} \, dz \, dA
++
+   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\,  {\bf f} \, dz \right) \, dl
+ + \int_{A}\left[  {\bf f} \right]_{z=z^{\text{top}}} \, dA
+ - \int_{A}\left[  {\bf f} \right]_{z=z^{\text{bot}}} \, dA
+$$ (vh-momentum)
+
+### Hydrostatic Approximation
+
+The momentum equation [](#vh-momentum) consists of three components for the $(x,y,z)$ directions. Thus we may rewrite it as
+
+horizontal momentum:
+
+$$
+& \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf u} \, dz \, dA
++
+   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, {\bf u} \otimes {\bf u} \, dz \right) \cdot {\bf n} \, dl
+ + \int_{A}\left[ \rho\, {\bf u} \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
+ - \int_{A}\left[ \rho\, {\bf u} \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
+\\ & \; =
+\int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf g}_\perp \, dz \, dA
++
+   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\,  {\bf f}_\perp \, dz \right) \, dl
+ + \int_{A}\left[  {\bf f}_\perp \right]_{z=z^{\text{top}}} \, dA
+ - \int_{A}\left[  {\bf f}_\perp \right]_{z=z^{\text{bot}}} \, dA
+$$ (h-momentum)
+
+vertical momentum:
+
+$$
+& \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, w \, dz \, dA
++
+   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, w \, {\bf u} \, dz \right) \cdot {\bf n} \, dl
+ + \int_{A}\left[ \rho\, w \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
+ - \int_{A}\left[ \rho\, w \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
+\\ & \; =
+\int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, g_z \, dz \, dA
++
+   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\,  f_z \, dz \right) \, dl
+ + \int_{A}\left[  f_z \right]_{z=z^{\text{top}}} \, dA
+ - \int_{A}\left[  f_z \right]_{z=z^{\text{bot}}} \, dA
+$$ (v-momentum)
+
+where the potential gradient vector is ${\bf g} = ({\bf g}_\perp, g_z)$ and the surface forces are ${\bf f} = ({\bf f}_\perp, f_z)$.
+
+The hydrostatic approximation assumes that the first order balance in vertical momentum is between the pressure gradient and buoyancy, and that all other terms are negligible (advection, dissipation, and other forces).
+Applying this assumption to [](#v-momentum),
+
+$$
+\int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, g_z \, dz \, dA
+ + \int_{A}\left[  f_z \right]_{z=z^{\text{top}}} \, dA
+ - \int_{A}\left[  f_z \right]_{z=z^{\text{bot}}} \, dA
+ = 0 \\
+\int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, g \, dz \, dA
+ + \int_{A}\left[  p \right]_{z=z^{\text{top}}} \, dA
+ - \int_{A}\left[  p \right]_{z=z^{\text{bot}}} \, dA
+ = 0 \\
+\int_{A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, g \, dz
+ + \left[  p \right]_{z=z^{\text{top}}}
+ - \left[  p \right]_{z=z^{\text{bot}}} \right) dA
+ = 0 ,
+$$ (v-hydrostatic)
+
+where $g$ is Earth's gravitational accelleration, and $p({\bf x},t)$ is the fluid pressure.
+Because this is valid for any horizontal region $A$, the integrand may be expressed as a general equation,
+
+$$
+ \left[  p \right]_{z=z^{\text{bot}}}
+ =
+ \left[  p \right]_{z=z^{\text{top}}}
+ + \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, g \, dz.
+$$ (integral-hydrostatic)
+
+Taking the limit as $dz \rightarrow 0$, we arrive at the typical form of the hydrostatic approximation,
+
+$$
+ \frac{\partial p}{\partial z}  = \rho g
+$$ (hydrostatic)
 
 
 (pseudo-height)=
 
 ## 3 Pseudo-Height Coordinate
 
-In our non-Boussinesq hydrostatic framework, we adopt a vertical coordinate based on **pseudo-height**, denoted by $\tilde{z}$. This coordinate measures the mass per unit area between the ocean surface and a given depth, and is defined by:
+### Definitions
+
+In our non-Boussinesq hydrostatic framework, we adopt a vertical coordinate based on **pseudo-height**, denoted by $\tilde{z}$.
+This coordinate measures the mass per unit area between the ocean surface and a given depth, and is defined by:
+
+pseudo-height
+
+$$
+\tilde{z}(p) = -\frac{p}{\rho_o g}
+$$ (def-z-tilde)
+
+
+
+$$
+\tilde{z}(p) = -\frac{p}{\rho_o g}
+$$ (def-z-tilde)
+
+
+
+## OLD: Xylar Pseudo-height
 
 $$
 \tilde{z}(z) = -\int_z^{z_s} \rho(z') \, dz',
