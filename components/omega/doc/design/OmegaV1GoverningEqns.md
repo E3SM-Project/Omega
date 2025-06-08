@@ -233,9 +233,7 @@ $$ (hydrostatic)
 
 
 
-## 3. Layered Equations
-
--(pseudo-height)=
+## 4. Layered Equations
 
 ### Pseudo-Height
 
@@ -245,13 +243,16 @@ $$
 \tilde{z}(p) = -\frac{1}{\rho_0 g} \, p
 $$ (def-pseudo-height)
 
-The pseudo-height is simply the pressure normalized by two constants, a reference density $\rho_0$ and gravitational acceleration $g$. A pseudo-height coordinate is effectively a pressure coordinate, but comes with the intuition and units of distance that people are familiar with. It is convenient to relate these variables using differentials as
+The pseudo-height is simply the pressure normalized by two constants, a reference density $\rho_0$ and gravitational acceleration $g$.
+A pseudo-height coordinate is effectively a pressure coordinate, but comes with the intuition and units of distance that people are familiar with.
+It is convenient to relate these variables using differentials as
 
 $$
 d\tilde{z} = -\frac{1}{\rho_0 g}\, dp = \frac{\rho}{\rho_0} \, dz
 $$ (def-dtildez)
 
-where the second equality uses the hydrostatic balance $dp = -\rho g dz$.  This shows that the pseudo-height is nearly the same as the physical height. Griffies XX argues for the use of pseudo-height for non-Boussinesq models for exactly this reason. Griffies recommends a value of $\rho_0=1037$ kg/m$^3$ because the Earth's oceans are with 2 percent blah blah. Note that the use of a constant $\rho_0$ in these definitions does not imply the Boussinesq approximation, which also uses a $\rho_0$. In that case, the full density $\rho$ is set to $\rho_0$ in all terms but the computation of pressure. Here we do not make the Boussinesq approximation, and $\rho_0$ is simply a convenient normalization constant so that $d\tilde{z} \approx dz$ when $\rho \approx \rho_0$. 
+where the second equality uses the hydrostatic balance $dp = -\rho g dz$.
+This shows that the pseudo-height is nearly the same as the physical height. 
 
 In order to convert from $z$ to ${\tilde z}$ the pressure must be computed,
 
@@ -272,7 +273,16 @@ $$
 \tilde{w} = \frac{d{\tilde z}}{dt} = \frac{\rho}{\rho_0}\frac{dz}{dt} = \frac{\rho}{\rho_0} \, w.
 $$ (def-pseudo-velocity)
 
-As above, $\tilde{w}$ has identical units and very similar values to $\tilde{w}$. But in a non-Boussinesq model, it is the vertical *mass* transport that is the physicall relavent quantity, not the volume transport. To this end, $\rho w$ is the mass transport per unit area in kg/m$^2$/s. The pseudo-velocity *is* the Eulerian mass transport, but with a convenient normalization of $\rho_0$.
+As above, $\tilde{w}$ has identical units and very similar values to $\tilde{w}$. But in a non-Boussinesq model, it is the vertical *mass* transport that is the physically relevant quantity, not the volume transport. To this end, $\rho w$ is the mass transport per unit area in kg/m$^2$/s. The pseudo-velocity *is* the Eulerian mass transport, but with a convenient normalization of $\rho_0$.
+
+[Griffies 2018](https://www.amazon.com/Fundamentals-Climate-Models-Stephen-Griffies-ebook/dp/B07DMWP8L7) p. 37  argues for the use of pseudo-velocities, which he calls the density-weighted velocity, for non-Boussinesq models.
+Griffies recommends a value of $\rho_0=1035$ kg/m$^3$, following p. 47 of [Gill (1982)](https://www.amazon.com/Atmosphere-Ocean-Dynamics-International-Geophysics-30/dp/0122835220), because ocean density varies less than 2% from that value.
+Note that the use of a constant $\rho_0$ in these definitions does not imply the Boussinesq approximation, which also uses a $\rho_0$.
+In that case, the full density $\rho$ is set to $\rho_0$ in all terms but the computation of pressure.
+Here we do not make the Boussinesq approximation, and $\rho_0$ is simply a convenient normalization constant so that $d\tilde{z} \approx dz$ when $\rho \approx \rho_0$. 
+
+Here we explain the reasoning for the choice of defining $\tilde{z}$ as directly proportional to pressure in [](#def-pseudo-height). 
+The differential form of the hydrostatic balance $dp = -\rho g dz$ implies that we could choose an arbitrary offset. One could set the offset such that $\tilde{z}=0$ at $z=0$, so that the equilibrium sea surface height matches. Or one could set $\tilde{z}^{\text{floor}} = z^{\text{floor}}$ at some reference depth. Our definition [](#def-pseudo-height), sets $\tilde{z}=0$ where $p=0$, which is at the top of the atmosphere. This choice was made so that $\tilde{z}$ is as close as possible to a pressure coordinate, and the additional normalization by $\rho_0 g$ was included so that units and values for $\tilde{z}$,  $\tilde{h}$,  and $\tilde{w}$ are intuitive and easy to work with. A major advantage of [](#def-pseudo-height) is that $\tilde{z}^{\text{floor}}$ is proportional to the bottom pressure, and can be used directly for the barotropic pressure gradient in time-split methods. A disadvantage is that $\tilde{z}^{\text{surf}}$ for the ocean's surface is displaced to a negative value due to the surface pressure from the overlaying atmosphere (as well as sea ice and land ice), which may be nonintuitive to a model user.
 
 ### Vertical Discretization
 
@@ -319,7 +329,7 @@ $$
 $$ (h-phi)
 
 
-## Layered Tracer & Mass 
+### Layered Tracer & Mass 
 
 Dividing the tracer equation [](#vh-tracer) for layer $k$ by the normalization constant $\rho_0$, and substituting [](#def-pseudo-velocity) and [](#h-phi), we have
 
@@ -373,8 +383,7 @@ $$
 = 0
 $$ (layer-tracer)
 
-
-## Layered Momentum
+### Layered Momentum
 
 We now derive the horizontal momentum equation in our non-Boussinesq, hydrostatic framework, following the same finite-volume approach used for mass and tracer conservation. We work with a pseudo-height vertical coordinate $\tilde{z}$ as defined in [Pseudo-Height Coordinate Section](pseudo-height).
 
@@ -486,7 +495,7 @@ Multiplying the mass conservation equation by $\mathbf{U}$ and subtracting it fr
 
 $$
 \begin{aligned}
-h \left(
+\tilde{h} \left(
 \frac{\partial \mathbf{U}}{\partial t}
 + \mathbf{U} \cdot \nabla_z \mathbf{U}
 \right)
@@ -523,19 +532,19 @@ $$
 + \nabla_z K
 + \boldsymbol{\eta} \times \overline{\mathbf{u}}^{\tilde{z}}
 &= \overline{ \nabla_z \Phi }^{\tilde{z}} \\
-&\quad - \frac{1}{h} \nabla_z \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p\, d\tilde{z} \right)
-- \frac{1}{h} \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{top}}}
-+ \frac{1}{h} \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
-&\quad + \frac{1}{h} \nabla_z \cdot \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \, d\tilde{z} \right)
-+ \frac{1}{h} \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}}
-- \frac{1}{h} \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}} \\
-&\quad + \frac{1}{h} \sum_{i = \text{top, bot}} \left[ (\mathbf{u} - \overline{\mathbf{u}}^{\tilde{z}}) \tilde{w}_{tr} \right]_i
+&\quad - \frac{1}{\tilde h} \nabla_z \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p\, d\tilde{z} \right)
+- \frac{1}{\tilde h} \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{top}}}
++ \frac{1}{\tilde h} \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
+&\quad + \frac{1}{\tilde h} \nabla_z \cdot \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \, d\tilde{z} \right)
++ \frac{1}{\tilde h} \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}}
+- \frac{1}{\tilde h} \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}} \\
+&\quad + \frac{1}{\tilde h} \sum_{i = \text{top, bot}} \left[ (\mathbf{u} - \overline{\mathbf{u}}^{\tilde{z}}) \tilde{w}_{tr} \right]_i
 \end{aligned}
 $$ (velocity-layered)
 
 This is a prognostic equation for the layer-averaged horizontal velocity, written in a form familiar from geophysical fluid dynamics. The right-hand side includes the horizontal pressure gradient, gravitational body force, divergence of horizontal and vertical stresses, and corrections due to unresolved vertical momentum exchange.
 
-## 7. Discrete Equations
+## 5. Discrete Equations
 
 The horizontally discretized layered equations are as follows. We have dropped the $r$ in $\nabla_r$ for conciseness, and the operator $\nabla$ from here on means within-layer.
 
@@ -766,7 +775,7 @@ $$ (mpaso-continuous-tracer)
 The layer thickness $h$, vertical velocity $w$, pressure $p$, and tracer $\varphi$, are cell-centered quantities, while the horizontal velocity ${\bf u}$ and $e$ superscript are variables interpolated to the cell edges.
 
 
-## 8. Variable Definitions
+## 6. Variable Definitions
 
 Table 1. Definition of variables. Geometric variables may be found in the [Omega V0 design document, Table 1](OmegaV0ShallowWater.md#variable-definitions)
 
@@ -820,7 +829,7 @@ Table 1. Definition of variables. Geometric variables may be found in the [Omega
 |$\omega$   | mass transport | kg/s/m^2      | cell | VerticalTransport |$\omega=\rho w$|
 
 
-## 9. Verification and Testing
+## 7. Verification and Testing
 
 Capability and testing are similar to [Petersen et al. 2015](http://www.sciencedirect.com/science/article/pii/S1463500314001796). The following tests are in idealized domains and do not require surface fluxes or surface restoring. For the following tests to show results comparable to those published with other models, the full dynamic sequence of density, pressure, momentum, and advection must work correctly. The successful completion of the following tests is a validation of the primitive equation functions in Omega 1.0. All of the following tests may exercise a linear equation of state or the nonlinear TEOS10. The first four tests quantify the anomalous mixing caused by the numerical schemes. The first five are on cartesian planes with regular hexagon meshes.
 
