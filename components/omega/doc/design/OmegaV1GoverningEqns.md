@@ -228,32 +228,168 @@ $$ (integral-hydrostatic)
 Taking the limit as $dz \rightarrow 0$, we arrive at the typical form of the hydrostatic approximation,
 
 $$
- \frac{\partial p}{\partial z}  = \rho g
+ \frac{\partial p}{\partial z}  = - \rho g
 $$ (hydrostatic)
 
 
 (pseudo-height)=
 
-## 3 Pseudo-Height Coordinate
+## 3. Layered Equations
 
-### Definitions
+### Pseudo-Height
 
-In our non-Boussinesq hydrostatic framework, we adopt a vertical coordinate based on **pseudo-height**, denoted by $\tilde{z}$.
-This coordinate measures the mass per unit area between the ocean surface and a given depth, and is defined by:
-
-pseudo-height
+In our non-Boussinesq hydrostatic framework, we adopt a vertical coordinate based on **pseudo-height**, 
 
 $$
-\tilde{z}(p) = -\frac{p}{\rho_o g}
-$$ (def-z-tilde)
+\tilde{z}(p) = -\frac{1}{\rho_0 g} \, p
+$$ (def-pseudo-height)
 
-
+The pseudo-height is simply the pressure normalized by two constants, a reference density $\rho_0$ and gravitational acceleration $g$. A pseudo-height coordinate is effectively a pressure coordinate, but comes with the intuition and units of distance that people are familiar with. It is convenient to relate these variables using differentials as
 
 $$
-\tilde{z}(p) = -\frac{p}{\rho_o g}
-$$ (def-z-tilde)
+d\tilde{z} = -\frac{1}{\rho_0 g}\, dp = \frac{\rho}{\rho_0} \, dz
+$$ (def-dtildez)
+
+where the second equality uses the hydrostatic balance $dp = -\rho g dz$.  This shows that the pseudo-height is nearly the same as the physical height. Griffies XX argues for the use of pseudo-height for non-Boussinesq models for exactly this reason. Griffies recommends a value of $\rho_0=1037$ kg/m$^3$ because the Earth's oceans are with 2 percent blah blah. Note that the use of a constant $\rho_0$ in these definitions does not imply the Boussinesq approximation, which also uses a $\rho_0$. In that case, the full density $\rho$ is set to $\rho_0$ in all terms but the computation of pressure. Here we do not make the Boussinesq approximation, and $\rho_0$ is simply a convenient normalization constant so that $d\tilde{z} \approx dz$ when $\rho \approx \rho_0$. 
+
+In order to convert from $z$ to ${\tilde z}$ the pressure must be computed,
+
+$$
+\tilde{z}(z) = -\frac{1}{\rho_0 g} \, p(z) = -\frac{1}{\rho_0 g}\left( p^\text{surf} + \int_{z}^{z^\text{surf}} \rho(z') g dz'\right).
+$$ (formula-pseudo-height)
 
 
+The pseudo-velocity in the vertical is
+
+$$
+\tilde{w} = \frac{\rho}{\rho_0} \, w.
+$$ (def-pseudo-velocity)
+
+This simply falls out of the definitions above, as 
+
+$$
+\tilde{w} = \frac{d{\tilde z}}{dt} = \frac{\rho}{\rho_0}\frac{dz}{dt} = \frac{\rho}{\rho_0} \, w.
+$$ (def-pseudo-velocity)
+
+As above, $\tilde{w}$ has identical units and very similar values to $\tilde{w}$. But in a non-Boussinesq model, it is the vertical *mass* transport that is the physicall relavent quantity, not the volume transport. To this end, $\rho w$ is the mass transport per unit area in kg/m$^2$/s. The pseudo-velocity *is* the Eulerian mass transport, but with a convenient normalization of $\rho_0$.
+
+### Vertical Discretization
+
+The previous equation set [](#vh-mass) to [](#vh-momentum) is for an arbitrary layer bounded by $z^{\text{top}}$ above and $z^{\text{bot}}$ below. 
+We now provide the details of the vertical discretization. 
+The ocean is divided vertically into $K_{max}$ layers, with $k=1$ at the top and increasing downwards (opposite from $z$).
+Layer $k$ is bounded between $z_k^{\text{top}}$ above and $z_{k+1}^{\text{top}}$ below.
+
+The layer thickness of layer k, used in MPAS-Ocean, is
+
+$$
+h_k = \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} dz.
+$$ (def-thickness)
+
+In Omega we will use the pseudo-thickness,
+
+$$
+{\tilde h}_k(x,y,t) = \int_{{\tilde z}_{k+1}^{\text{top}}}^{{\tilde z}_k^{\text{top}}} d{\tilde z}
+= \frac{1}{\rho_0} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho dz,
+$$ (def-pseudo-thickness)
+
+which is the mass per unit area in the layer, normalized by $\rho_0$. The mass-weighted average of any variable $\phi({\bf x},t)$ in layer $k$ is
+
+$$
+{\overline \phi}^{\tilde{z}}_k(x,y,t) = 
+\frac{\int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho \phi dz}
+     {\int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho dz}
+     =
+\frac{\frac{1}{\rho_0}\int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho \phi dz}
+     {\frac{1}{\rho_0}\int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho dz}
+     =
+\frac{\int_{{\tilde z}_{k+1}^{\text{top}}}^{{\tilde z}_k^{\text{top}}} \phi d{\tilde z}}
+     {\int_{{\tilde z}_{k+1}^{\text{top}}}^{{\tilde z}_k^{\text{top}}} d{\tilde z}}
+=
+\frac{1}{{\tilde h}_k}\int_{{\tilde z}_{k+1}^{\text{top}}}^{{\tilde z}_k^{\text{top}}} \phi d{\tilde z}.
+$$ (def-layer-average)
+
+Rearranging, is it useful to note that
+
+$$
+\frac{1}{\rho_0}\int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho \phi dz
+ = 
+{\tilde h}_k {\overline \phi}^{\tilde{z}}_k(x,y,t).
+$$ (h-phi)
+
+
+## Layered Tracer & Mass 
+
+Dividing the tracer equation [](#vh-tracer) for layer $k$ by the normalization constant $\rho_0$, and substituting [](#def-pseudo-velocity) and [](#h-phi), we have
+
+$$
+\frac{d}{dt} \int_{A} {\tilde h}_k {\overline \varphi}^{\tilde{z}}_k  \, dA
++
+   \int_{\partial A}\left({\tilde h}_k \overline{\varphi {\bf u}}^{\tilde{z}}_k  \right) \cdot {\bf n} \, dl
+ + \int_{A}\left[ \varphi \left({\tilde w} - {\tilde w}_r \right) \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} \, dA
+ - \int_{A}\left[ \varphi \left({\tilde w} - {\tilde w}_r \right) \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}} \, dA
+= 0
+$$ (Aintegral-tracer)
+
+where we converted to pseudo-height for the last two terms using [](#formula-pseudo-height).
+Taking the limit as $A \rightarrow 0$ and using Gauss's theorem for the horizontal advection,
+
+$$
+\frac{d{\tilde h}_k {\overline \varphi}^{\tilde{z}}_k  }{dt} 
++
+   \nabla \cdot \left({\tilde h}_k \overline{\varphi {\bf u}}^{\tilde{z}}_k  \right) 
+ + \left[ \varphi {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} 
+ - \left[ \varphi {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
+= 0.
+$$ (layer-tracer-pre)
+
+Here ${\tilde w}_{tr}={\tilde w} - {\tilde w}_r$ is the normalized vertical mass transport through the layer interface. 
+It is a pseudo-transport velocity in units of m/s. 
+Equation [](#layer-tracer-pre) is identical to [Ringler et al. 2013](https://www.sciencedirect.com/science/article/pii/S1463500313000760) (A.24), and further explanation can be found in that appendix.
+
+As a final step, we substitute the approximation $\overline{\varphi {\bf u}}^{\tilde{z}}_k \approx \overline{\varphi }^{\tilde{z}}_k \overline{{\bf u}}^{\tilde{z}}_k$. 
+The mass equation is identical to the tracer equation with $\varphi=1$. Dropping the overbars for simpler notation, the layered version of mass and tracer conservation are
+
+mass:
+
+$$
+\frac{d{\tilde h}_k }{dt} 
++
+   \nabla \cdot \left({\tilde h}_k{\bf u}_k \right) 
+ + \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} 
+ - \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
+= 0
+$$ (layer-mass)
+
+tracer:
+
+$$
+\frac{d{\tilde h}_k \varphi_k  }{dt} 
++
+   \nabla \cdot \left({\tilde h}_k \varphi_k {\bf u}_k \right) 
+ + \left[ \varphi {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} 
+ - \left[ \varphi {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
+= 0
+$$ (layer-tracer)
+
+
+## Layered Momentum
+
+We now follow the same procedure in the last section for the momentum equation. Beginning with horizontal momentum conservation [](#h-momentum),
+
+$$
+& \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf u} \, dz \, dA
++
+   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, {\bf u} \otimes {\bf u} \, dz \right) \cdot {\bf n} \, dl
+ + \int_{A}\left[ \rho\, {\bf u} \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
+ - \int_{A}\left[ \rho\, {\bf u} \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
+\\ & \; =
+\int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf g}_\perp \, dz \, dA
++
+   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\,  {\bf f}_\perp \, dz \right) \, dl
+ + \int_{A}\left[  {\bf f}_\perp \right]_{z=z^{\text{top}}} \, dA
+ - \int_{A}\left[  {\bf f}_\perp \right]_{z=z^{\text{bot}}} \, dA
+$$ (h-momentum2)
 
 ## OLD: Xylar Pseudo-height
 
