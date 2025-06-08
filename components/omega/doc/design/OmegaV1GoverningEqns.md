@@ -423,10 +423,10 @@ $$
 &+ \int_A \left[ \mathbf{u} (\tilde{w} - \tilde{w}_r) \right]_{\tilde{z}^{\text{top}}} \, dA
 - \int_A \left[ \mathbf{u} (\tilde{w} - \tilde{w}_r) \right]_{\tilde{z}^{\text{bot}}} \, dA \\
 &= \int_A \tilde{h}\, \overline{\mathbf{f} \times \mathbf{u} + \nabla_z \Phi}^{\tilde{z}} \, dA \\
-&\quad - \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p\, \mathbf{n} \, d\tilde{z} \right) dl \\
+&\quad - \int_{\partial A} \left( \int_{{z}^{\text{bot}}}^{{z}^{\text{top}}} p\, \mathbf{n} \, d{z} \right) dl \\
 &\quad - \int_A \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{top}}} \, dA
 + \int_A \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \, dA \\
-&\quad + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \cdot \mathbf{n} \, d\tilde{z} \right) dl \\
+&\quad + \int_{\partial A} \left( \int_{{z}^{\text{bot}}}^{{z}^{\text{top}}} \boldsymbol{\tau}_h \cdot \mathbf{n} \, d{z} \right) dl \\
 &\quad + \int_A \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}} \, dA
 - \int_A \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}} \, dA
 \end{aligned}
@@ -441,10 +441,10 @@ $$
 &+ \left[ \mathbf{u} \tilde{w}_{tr} \right]_{\tilde{z}^{\text{top}}}
 - \left[ \mathbf{u} \tilde{w}_{tr} \right]_{\tilde{z}^{\text{bot}}} \\
 &= \tilde{h}\, \overline{ \mathbf{f} \times \mathbf{u} + \nabla_z \Phi }^{\tilde{z}} \\
-&\quad - \nabla_z \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p \, d\tilde{z} \right)
+&\quad - \nabla_z \left( \int_{{z}^{\text{bot}}}^{{z}^{\text{top}}} p \, d{z} \right)
 - \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{top}}}
 + \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
-&\quad + \nabla_z \cdot \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \, d\tilde{z} \right)
+&\quad + \nabla_z \cdot \left( \int_{{z}^{\text{bot}}}^{{z}^{\text{top}}} \boldsymbol{\tau}_h \, d{z} \right)
 + \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}}
 - \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}}
 \end{aligned}
@@ -472,10 +472,10 @@ $$
 &+ \left[ \mathbf{u} \tilde{w}_{tr} \right]_{\tilde{z}^{\text{top}}}
 - \left[ \mathbf{u} \tilde{w}_{tr} \right]_{\tilde{z}^{\text{bot}}} \\
 &=  \tilde{h}\, \overline{ \mathbf{f} \times \mathbf{u} + \nabla_z \Phi }^{\tilde{z}} \\
-&\quad - \nabla_z \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p \, d\tilde{z} \right)
+&\quad - \nabla_z \left( \int_{{z}^{\text{bot}}}^{{z}^{\text{top}}} p \, d{z} \right)
 - \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{top}}}
 + \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
-&\quad + \nabla_z \cdot \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \, d\tilde{z} \right)
+&\quad + \nabla_z \cdot \left( \int_{{z}^{\text{bot}}}^{{z}^{\text{top}}} \boldsymbol{\tau}_h \, d{z} \right)
 + \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}}
 - \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}}
 \end{aligned}
@@ -485,7 +485,7 @@ We also have the mass conservation equation [](layer-mass):
 
 $$
 \frac{\partial  \tilde{h}}{\partial t}
-+ \nabla_z \cdot (h \mathbf{U})
++ \nabla_z \cdot ({\tilde h} \mathbf{U})
 + \left[ \tilde{w}_{tr} \right]_{\tilde{z}^{\text{top}}}
 - \left[ \tilde{w}_{tr} \right]_{\tilde{z}^{\text{bot}}}
 = 0.
@@ -532,10 +532,10 @@ $$
 + \nabla_z K
 + \boldsymbol{\eta} \times \overline{\mathbf{u}}^{\tilde{z}}
 &= \overline{ \nabla_z \Phi }^{\tilde{z}} \\
-&\quad - \frac{1}{\tilde h} \nabla_z \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p\, d\tilde{z} \right)
+&\quad - \frac{1}{\tilde h} \nabla_z \left( \int_{{z}^{\text{bot}}}^{{z}^{\text{top}}} p\, d{z} \right)
 - \frac{1}{\tilde h} \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{top}}}
 + \frac{1}{\tilde h} \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
-&\quad + \frac{1}{\tilde h} \nabla_z \cdot \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \boldsymbol{\tau}_h \, d\tilde{z} \right)
+&\quad + \frac{1}{\tilde h} \nabla_z \cdot \left( \int_{{z}^{\text{bot}}}^{{z}^{\text{top}}} \boldsymbol{\tau}_h \, d{z} \right)
 + \frac{1}{\tilde h} \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}}
 - \frac{1}{\tilde h} \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}} \\
 &\quad + \frac{1}{\tilde h} \sum_{i = \text{top, bot}} \left[ (\mathbf{u} - \overline{\mathbf{u}}^{\tilde{z}}) \tilde{w}_{tr} \right]_i
