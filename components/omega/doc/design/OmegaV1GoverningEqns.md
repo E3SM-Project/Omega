@@ -78,8 +78,8 @@ All notation is identical to Kundu, except that we use ${\bf v}$ for the three-d
 
 
 The tracer equation is simply mass conservation, where the conserved quantity is the tracer mass $\rho \varphi$, as $\varphi$ is the tracer concentration per unit mass.
-In all three equations, the first term is the change of mass within the control volume; the second term is the flux through the moving boundary.
-Kundu uses the star superscripts on the control volume and surface to indicate that it can move in an arbitrary fashion, rather than with the fluid. In that case ${\bf v}_A={\bf v}$ and the second term is zero.
+In all three equations, the first term is the change of the quantity within the control volume; the second term is the flux through the moving boundary.
+If the control surface moves with the fluid in a Lagrangian fashion, then ${\bf v}_r={\bf v}$ and the second term is zero.
 
 The momentum equation  is an expression of Newton's second law and has two additional terms on the right hand side.
 The first additional term is the body force, $\rho {\bf g} dV$, where ${\bf g}$ may be expressed as the gradient of a potential ${\bf g}= - \nabla_{3D} \Phi$ for conservative body forces.
@@ -90,7 +90,7 @@ The momentum equation derivation may also be found in [Leishman 2025](https://ea
 
 ### Horizontal \& Vertical Separation
 
-In geophysical flows the vertical and horizontal directions are treated differently due to rotation and stratification, which lead to different scales of motion.
+In geophysical flows the vertical and horizontal directions are treated differently due to rotation and stratification, which leads to different scales of motion.
 To that end, assume that the control volume $V$ is bounded in the horizontal by a fixed wall $\partial V^{side}$ that does not vary in time or $z$.
 The top and bottom boundaries of $V$, $\partial V^{\text{top}}$ and $\partial V^{\text{bot}}$, occur at $z = z^{\text{top}}(x,y,t)$ and $z = z^{\text{bot}}(x,y,t)$.
 Taking the tracer equation as an example and dropping the explicit $({\bf x},t)$ dependance notation, we separate all integrals between horizontal and vertical,
@@ -158,6 +158,8 @@ $$
  + \int_{A}\left[  {\bf f} \right]_{z=z^{\text{top}}} \, dA
  - \int_{A}\left[  {\bf f} \right]_{z=z^{\text{bot}}} \, dA
 $$ (vh-momentum)
+
+The momentum advection contains ${\bf v} \otimes {\bf u}$, which is the outer product ${\bf v} {\bf u}^T$, and is also called the tensor product. The dimension of the tensor ${\bf v} \otimes {\bf u}$ is 3$\times$2, where the first is the dimension of the ${\bf v}$ equation in $(x,y,z)$. The second dimension is from ${\bf u}$, which associates with the dot product into the horizontal vector $\bf n$.
 
 ### Hydrostatic Approximation
 
@@ -273,7 +275,7 @@ $$
 \tilde{w} = \frac{d{\tilde z}}{dt} = \frac{\rho}{\rho_0}\frac{dz}{dt} = \frac{\rho}{\rho_0} \, w.
 $$ (def-pseudo-velocity)
 
-As above, $\tilde{w}$ has identical units and very similar values to $\tilde{w}$. But in a non-Boussinesq model, it is the vertical *mass* transport that is the physically relevant quantity, not the volume transport. To this end, $\rho w$ is the mass transport per unit area in kg/m$^2$/s. The pseudo-velocity *is* the Eulerian mass transport, but with a convenient normalization of $\rho_0$.
+As above, $\tilde{w}$ has identical units and very similar values to $w$. But in a non-Boussinesq model, it is the vertical *mass* transport that is the physically relevant quantity, not the volume transport. To this end, $\rho w$ is the mass transport per unit area in kg/m$^2$/s. The pseudo-velocity *is* the Eulerian mass transport, but with a convenient normalization of $\rho_0$.
 
 [Griffies 2018](https://www.amazon.com/Fundamentals-Climate-Models-Stephen-Griffies-ebook/dp/B07DMWP8L7) p. 37  argues for the use of pseudo-velocities, which he calls the density-weighted velocity, for non-Boussinesq models.
 Griffies recommends a value of $\rho_0=1035$ kg/m$^3$, following p. 47 of [Gill (1982)](https://www.amazon.com/Atmosphere-Ocean-Dynamics-International-Geophysics-30/dp/0122835220), because ocean density varies less than 2% from that value.
@@ -304,7 +306,7 @@ $$
 = \frac{1}{\rho_0} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho dz,
 $$ (def-pseudo-thickness)
 
-which is the mass per unit area in the layer, normalized by $\rho_0$. The mass-weighted average of any variable $\phi({\bf x},t)$ in layer $k$ is
+which is the mass per unit area in the layer, normalized by $\rho_0$. The density-weighted average of any variable $\phi({\bf x},t)$ in layer $k$ is
 
 $$
 {\overline \phi}^{\tilde{z}}_k(x,y,t) = 
