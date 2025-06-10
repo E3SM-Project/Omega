@@ -33,7 +33,9 @@ This document describes the governing equations for the layered ocean model, whi
 The requirements in the [Omega-0 design document](OmegaV0ShallowWater) still apply. Additional design requirements for Omega-1 are:
 
 ### Omega will be a hydrostatic, non-Boussinesq ocean model.
-See discussion in introduction. The non-Boussinesq formulation uses the full density throughout resulting in governing equations that conserve mass rather than volume. The substantial change is that the "thickness" variable, $h$, is now a pressure-thickness, $h = \rho g \Delta z$. This is explained in the derivation of the [layered equations below](#layered-equations).
+Omega will adopt a non-Boussinesq formulation, meaning it retains the full, spatially and temporally varying fluid density $\rho({\bf x}, t)$ in all governing equations. This ensures exact mass conservation, as opposed to volume conservation in Boussinesq models that approximate density as a constant reference value $\rho_0$ outside the pressure gradient. The equations are derived in terms of layer-integrated mass per unit area (see [layered equations](#layered-equations)), and no approximation is made that filters out compressibility or density variations.
+
+The model also assumes hydrostatic balance in the vertical momentum equation, which is a standard and well-justified simplification for large-scale geophysical flows. In such regimes, vertical accelerations are typically small compared to the vertical pressure gradient and gravitational forces. This assumption simplifies the dynamics and removes most sound waves while retaining fidelity for the mesoscale to planetary-scale ocean circulation that Omega is designed to simulate.
 
 ### Omega will use TEOS10 for the equation of state.
 See additional [EOS design document](EOS)
@@ -45,7 +47,7 @@ See forthcoming design documents on the pressure gradient, vertical mixing, and 
 
 ### Control Volume Formulation
 
-We begin with the continuous, control-volume form of the conservation equations. Consider an arbitrary control volume $V(t)$ with a bounding control surface $\partial V(t)$. The fluid has density $\rho({\bf x},t)$ and velocity ${\bf v}({\bf x},t)$. The control surface is moving at a velocity ${\bf v}_r({\bf x},t)$. The conservation equations are
+We begin with the continuous, control-volume form of the conservation equations. Consider an arbitrary control volume $V(t)$ with a bounding control surface $\partial V(t)$. The fluid has density $\rho({\bf x},t)$ and velocity ${\bf v}({\bf x},t)$. The control surface is moving at a velocity ${\bf v}_r({\bf x},t)$.  The vector ${\bf n}$ denotes the outward-facing unit normal vector on the control surface $\partial V(t)$, and is used in all surface integrals to represent the direction of fluxes across the boundary. The conservation equations are
 
 mass:
 
@@ -69,24 +71,25 @@ $$
 &\frac{d}{dt} \int_{V(t)} \rho({\bf x},t)\,  {\bf v}({\bf x},t) \, dV
 + \int_{\partial V(t)}\rho({\bf x},t)\, {\bf v}({\bf x},t) \left({\bf v}({\bf x},t) - {\bf v}_r \right) \cdot {\bf n} \, dA
 \\ & \; \; \; =
-\int_{V(t)} \rho({\bf x},t) \, {\bf g}\, dV
+\int_{V(t)} \rho({\bf x},t) \, {\bf b}({\bf x},t)\, dV
 + \int_{\partial V(t)} {\bf f}({\bf n},{\bf x},t)  \, dA
 $$ (continuous-momentum)
 
-These equations are taken from [Kundu et al. 2016](https://www.amazon.com/dp/012405935X/) (4.5) for mass conservation and (4.17) for momentum conservation.
+The operator $\frac{d}{dt}$ used here denotes the rate of change within a moving control volume, sometimes referred to as a Reynolds transport derivative. It differs from the partial derivative $\frac{\partial}{\partial t}$, which represents the local rate of change at a fixed point in space (Eulerian frame), and from the material derivative $\frac{D}{Dt}$, which follows an individual fluid parcel (Lagrangian frame). The use of $\frac{d}{dt}$ allows for conservation laws to be expressed in a general framework that includes both stationary and moving control volumes, consistent with the Reynolds transport theorem.
+
+These equations are taken from [Kundu et al. 2016](https://doi.org/10.1016/C2012-0-00611-4) (4.5) for mass conservation and (4.17) for momentum conservation.
 All notation is identical to Kundu, except that we use ${\bf v}$ for the three-dimensional velocity (${\bf u}$ will be used below for horizontal velocities) and ${\bf v}_r$ and $\partial V$ match the notation in [Ringler et al. 2013](https://www.sciencedirect.com/science/article/pii/S1463500313000760) Appendix A.2.
 
 
 The tracer equation is simply mass conservation, where the conserved quantity is the tracer mass $\rho \varphi$, as $\varphi$ is the tracer concentration per unit mass.
 In all three equations, the first term is the change of the quantity within the control volume; the second term is the flux through the moving boundary.
-If the control surface moves with the fluid in a Lagrangian fashion, then ${\bf v}_r={\bf v}$ and the second term is zero.
+If the control surface moves with the fluid in a Lagrangian fashion, then ${\bf v}_r={\bf v}$ and the second term (flux through the boundary) vanishes---there is no net mass, momentum, or tracer transport across the moving surface.
 
-The momentum equation  is an expression of Newton's second law and has two additional terms on the right hand side.
-The first additional term is the body force, $\rho {\bf g} dV$, where ${\bf g}$ may be expressed as the gradient of a potential ${\bf g}= - \nabla_{3D} \Phi$ for conservative body forces.
-Note ${\bf g}$ is general here and not yet Earth's gravity.
-Body forces also include forces from a rotating frame of reference, such as the Coriolis force.
-The last term is due to all surface forces ${\bf f}$ that act on the surface of the fluid element, including pressure and viscous stresses.
-The momentum equation derivation may also be found in [Leishman 2025](https://eaglepubs.erau.edu/introductiontoaerospaceflightvehicles/chapter/conservation-of-momentum-momentum-equation/#chapter-260-section-2), Chapter 21, equation 10.
+
+The momentum equation is an expression of Newton's second law and includes two types of external forces.
+The first is the body force, represented here as ${\bf b}({\bf x}, t)$, which encompasses any volumetric force acting throughout the fluid, such as gravitational acceleration or the Coriolis force. In some contexts, body forces may be expressible as the gradient of a potential, ${\bf b} = -\nabla_{3D} \Phi$, but this is not assumed in general.
+The second is the surface force ${\bf f}$, which acts on the boundary of the control volume and includes pressure and viscous stresses. These forces appear as surface integrals over the boundary and drive momentum exchange between adjacent fluid parcels or between the fluid and its environment.
+The derivation of the momentum equation may also be found in [Leishman 2025](https://eaglepubs.erau.edu/introductiontoaerospaceflightvehicles/chapter/conservation-of-momentum-momentum-equation/#chapter-260-section-2), Chapter 21, equation 10.
 
 ### Horizontal \& Vertical Separation
 
@@ -234,15 +237,54 @@ $$
 $$ (hydrostatic)
 
 
+## 4. Favre Averaging
 
-## 4. Layered Equations
+The most common approach to determine the structure of the small scale stresses in ocean modeling is through Reynolds' averaging.  In this approach, a generic field $\phi$ is broken into a mean and deviatoric component, i.e.
+
+$$
+\phi = \overline{\phi} + \phi^\prime
+$$
+
+When deriving the Reynolds' averaged equations, averages of terms with a single prime are discarded by construction.  This is an attractive approach for Boussinesq ocean models since the density is assumed constant in all equations.  When the ocean model is non Boussinesq, this leads to difficulties.  For example, consider the first term in equation [](#h-momentum), if a Reynolds' decomposition and averaging is performed,
+
+$$
+\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \,  {\bf u}  \, dz \, dA = \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} (\overline{\rho {\bf u}} +  \,  \overline{\rho^\prime {\bf u}^\prime})  \, dz \, dA
+$$
+
+In this equation, the products of prime and average drop out by construction.  The $\overline{\rho^\prime {\mathbf u}^\prime}$ term is an unnecessary complication and difficult to parameterize.  To circumvent this complication, Omega will adopt Favre averaging [Pope 2000](https://elmoukrie.com/wp-content/uploads/2022/04/pope-s.b.-turbulent-flows-cambridge-university-press-2000.pdf), which for the generic variable $\phi$ is
+
+$$
+\phi = \hat{\phi} + \phi^"
+$$
+
+Where $\hat{\phi} \equiv \frac{\overline{\rho \phi}}{\overline{\rho}}$, and the double prime indicates deviations from this density weighted mean.  In the definition, the overbar is an averaging operator with identical properties to a Reynolds' average.  Using this relation, we can relate Reynolds' average to Favre average by considering a the average of $\rho \phi$.  The standard Reynolds' approach gives
+
+$$
+\overline{\rho \phi} = \overline{\rho}\overline{\phi} + \overline{\rho^\prime \phi^\prime}
+$$
+
+Isolating $\overline{\phi}$,
+
+$$
+\overline{\phi} = \frac{\overline{\rho \phi}}{\overline{\rho}} + \frac{\overline{\rho^\prime \phi^\prime}}{\overline{\rho}}
+$$
+
+The first term on the right side of the equation is the definition of a Favre average, which yields
+
+$$
+\overline{\phi} = \hat{\phi} + \frac{\overline{\rho^\prime \phi^\prime}}{\overline{\rho}}
+$$
+
+Throughout much of the ocean, we expect the second term to be $O(10^{-3})$ but could be large in highly turbulent regions.  With the adoption, all Omega variables will be interpreted as Favre averaged, but these variables will be very similar to the traditional Reynolds' average for most flows.
+
+## 5. Layered Equations
 
 ### Pseudo-Height
 
-In our non-Boussinesq hydrostatic framework, we adopt a vertical coordinate based on pseudo-height, 
+In our non-Boussinesq hydrostatic framework, we adopt a vertical coordinate based on pseudo-height,
 
 $$
-\tilde{z}(p) = -\frac{1}{\rho_0 g} \, p
+\tilde{z}(\hat{p}) = -\frac{1}{\rho_0 g} \, \hat{p}
 $$ (def-pseudo-height)
 
 The pseudo-height is simply the pressure normalized by two constants, a reference density $\rho_0$ and gravitational acceleration $g$.
@@ -250,11 +292,12 @@ A pseudo-height coordinate is effectively a pressure coordinate, but comes with 
 It is convenient to relate these variables using differentials as
 
 $$
-d\tilde{z} = -\frac{1}{\rho_0 g}\, dp = \frac{\rho}{\rho_0} \, dz
+d\tilde{z} = -\frac{1}{\rho_0 g}\, d\hat{p} = \frac{\hat{\rho}}{\rho_0} \, dz
 $$ (def-dtildez)
 
-where the second equality uses the hydrostatic balance $dp = -\rho g dz$.
-This shows that the pseudo-height is nearly the same as the physical height. 
+where the second equality uses the hydrostatic balance $d\hat{p} = -\hat{\rho} g dz$.  We note that hydrostatic balance applies equivalently to Favre averaged variables.
+
+This shows that the pseudo-height is nearly the same as the physical height.
 
 In order to convert from $z$ to ${\tilde z}$ the pressure must be computed,
 
@@ -269,7 +312,7 @@ $$
 \tilde{w} = \frac{\rho}{\rho_0} \, w.
 $$ (def-pseudo-velocity)
 
-This simply falls out of the definitions above, as 
+This simply falls out of the definitions above, as
 
 $$
 \tilde{w} = \frac{d{\tilde z}}{dt} = \frac{\rho}{\rho_0}\frac{dz}{dt} = \frac{\rho}{\rho_0} \, w.
@@ -281,15 +324,15 @@ As above, $\tilde{w}$ has identical units and very similar values to $w$. But in
 Griffies recommends a value of $\rho_0=1035$ kg/m$^3$, following p. 47 of [Gill (1982)](https://www.amazon.com/Atmosphere-Ocean-Dynamics-International-Geophysics-30/dp/0122835220), because ocean density varies less than 2% from that value.
 Note that the use of a constant $\rho_0$ in these definitions does not imply the Boussinesq approximation, which also uses a $\rho_0$.
 In that case, the full density $\rho$ is set to $\rho_0$ in all terms but the computation of pressure.
-Here we do not make the Boussinesq approximation, and $\rho_0$ is simply a convenient normalization constant so that $d\tilde{z} \approx dz$ when $\rho \approx \rho_0$. 
+Here we do not make the Boussinesq approximation, and $\rho_0$ is simply a convenient normalization constant so that $d\tilde{z} \approx dz$ when $\rho \approx \rho_0$.
 
-Here we explain the reasoning for the choice of defining $\tilde{z}$ as directly proportional to pressure in [](#def-pseudo-height). 
+Here we explain the reasoning for the choice of defining $\tilde{z}$ as directly proportional to pressure in [](#def-pseudo-height).
 The differential form of the hydrostatic balance $dp = -\rho g dz$ implies that we could choose an arbitrary offset. One could set the offset such that $\tilde{z}=0$ at $z=0$, so that the equilibrium sea surface height matches. Or one could set $\tilde{z}^{\text{floor}} = z^{\text{floor}}$ at some reference depth. Our definition [](#def-pseudo-height), sets $\tilde{z}=0$ where $p=0$, which is at the top of the atmosphere. This choice was made so that $\tilde{z}$ is as close as possible to a pressure coordinate, and the additional normalization by $\rho_0 g$ was included so that units and values for $\tilde{z}$,  $\tilde{h}$,  and $\tilde{w}$ are intuitive and easy to work with. A major advantage of [](#def-pseudo-height) is that $\tilde{z}^{\text{floor}}$ is proportional to the bottom pressure, and can be used directly for the barotropic pressure gradient in time-split methods.
 
 ### Vertical Discretization
 
-The previous equation set [](#vh-mass) to [](#vh-momentum) is for an arbitrary layer bounded by $z^{\text{top}}$ above and $z^{\text{bot}}$ below. 
-We now provide the details of the vertical discretization. 
+The previous equation set [](#vh-mass) to [](#vh-momentum) is for an arbitrary layer bounded by $z^{\text{top}}$ above and $z^{\text{bot}}$ below.
+We now provide the details of the vertical discretization.
 The ocean is divided vertically into $K_{max}$ layers, with $k=1$ at the top and increasing downwards (opposite from $z$).
 Layer $k$ is bounded between $z_k^{\text{top}}$ above and $z_{k+1}^{\text{top}}$ below.
 
@@ -309,7 +352,7 @@ $$ (def-pseudo-thickness)
 which is the mass per unit area in the layer, normalized by $\rho_0$. The density-weighted average of any variable $\phi({\bf x},t)$ in layer $k$ is
 
 $$
-{\overline \phi}^{\tilde{z}}_k(x,y,t) = 
+{\overline \phi}^{\tilde{z}}_k(x,y,t) =
 \frac{\int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho \phi dz}
      {\int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho dz}
      =
@@ -326,50 +369,80 @@ Rearranging, is it useful to note that
 
 $$
 \frac{1}{\rho_0}\int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho \phi dz
- = 
+ =
 {\tilde h}_k {\overline \phi}^{\tilde{z}}_k(x,y,t).
 $$ (h-phi)
 
 
-### Layered Tracer & Mass 
+### Layered Tracer & Mass
 
-Dividing the tracer equation [](#vh-tracer) for layer $k$ by the normalization constant $\rho_0$, and substituting [](#def-pseudo-velocity) and [](#h-phi), we have
+Dividing the tracer equation [](#vh-tracer) for layer $k$ by the normalization constant $\rho_0$, and substituting [](#def-pseudo-velocity), we have
 
 $$
-\frac{d}{dt} \int_{A} {\tilde h}_k {\overline \varphi}^{\tilde{z}}_k  \, dA
+\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, \varphi \, dz \, dA
 +
-   \int_{\partial A}\left({\tilde h}_k \overline{\varphi {\bf u}}^{\tilde{z}}_k  \right) \cdot {\bf n} \, dl
+   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, \varphi \, {\bf u} \, dz \right) \cdot {\bf n} \, dl
  + \int_{A}\left[ \varphi \left({\tilde w} - {\tilde w}_r \right) \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} \, dA
  - \int_{A}\left[ \varphi \left({\tilde w} - {\tilde w}_r \right) \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}} \, dA
 = 0
 $$ (Aintegral-tracer)
 
-where we converted to pseudo-height for the last two terms using [](#formula-pseudo-height).
-Taking the limit as $A \rightarrow 0$ and using Gauss's theorem for the horizontal advection,
+where we converted to pseudo-height for the last two terms using [](#formula-pseudo-height).  Applying this same relation to the first two terms,
 
 $$
-\frac{d{\tilde h}_k {\overline \varphi}^{\tilde{z}}_k  }{dt} 
+\frac{d}{dt} \int_{A} {\tilde h}_k {\overline \varphi}^{\tilde{z}}_k   \, dA
 +
-   \nabla \cdot \left({\tilde h}_k \overline{\varphi {\bf u}}^{\tilde{z}}_k  \right) 
- + \left[ \varphi {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} 
- - \left[ \varphi {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
+   \int_{\partial A}\left( {\tilde h}_k \, {\overline{\varphi \, {\bf u}}}^{\tilde{z}}_k  \, \right) \cdot {\bf n} \, dl
+ + \int_{A}\left[ \varphi \left({\tilde w} - {\tilde w}_r \right) \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} \, dA
+ - \int_{A}\left[ \varphi \left({\tilde w} - {\tilde w}_r \right) \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}} \, dA
 = 0.
+$$ (Aintegral-tracer2)
+
+The horizontal tracer flux term is expanded using $\varphi \equiv \overline{\varphi}^{\tilde{z}}_k + \delta \varphi$ and ${\bf u} \equiv \overline{\bf u}^{\tilde{z}}_k + \delta {\bf u}$ to yield
+
+$$
+\frac{d}{dt} \int_{A} {\tilde h}_k {\overline \varphi}^{\tilde{z}}_k   \, dA
++
+   \int_{\partial A}\left( {\tilde h}_k \, \left(\left(\overline{\varphi}^{\tilde{z}}_k + \delta \varphi\right)\left(\overline{\bf u}^{\tilde{z}}_k + \delta {\bf u}\right)\right) \, \right) \cdot {\bf n} \, dl
+ + \int_{A}\left[ \varphi \left({\tilde w} - {\tilde w}_r \right) \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} \, dA
+ - \int_{A}\left[ \varphi \left({\tilde w} - {\tilde w}_r \right) \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}} \, dA
+= 0.
+$$
+
+$$
+\frac{1}{\rho} \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \overline{\rho} \, \hat{\varphi} \, dz \, dA
++
+   \frac{1}{\rho} \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \overline{\rho}\, (\hat{\varphi}\hat{\bf u} + \overline{\varphi^{\prime \prime} {\bf u}^{\prime \prime}}) \, dz \right) \cdot {\bf n} \, dl
+ + \int_{A}\left[ \hat{\varphi} \hat{\tilde w}_{tr} + \overline{\varphi^{\prime \prime} {\tilde w}_{tr}^{\prime \prime}} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} \, dA
+ - \int_{A}\left[ \hat{\varphi} \hat{\tilde w}_{tr} + \overline{\varphi^{\prime \prime} {\tilde w}_{tr}^{\prime \prime}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}} \, dA
+= 0
+$$ (Aintegral-tracer2)
+
+Applying [](#formula-pseudo-height) to the first two terms and taking the limit as $A \rightarrow 0$ and using Gauss's theorem for the horizontal advection,
+
+$$
+\frac{d{\tilde h}_k {\overline \varphi}^{\tilde{z}}_k  }{dt}
++
+   \nabla \cdot \left({\tilde h}_k \overline{\varphi {\bf u}}^{\tilde{z}}_k  \right)
+ + \left[ \varphi {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}}
+ - \left[ \varphi {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
+= -\left(\nabla \cdot \left({\tilde h}_k \overline{\varphi {\bf u}}^{\tilde{z}}_k  \right) + \left[\overline{\varphi^{\prime \prime} {\tilde w}_{tr}^{\prime \prime}}\right]_{{\tilde z}={\tilde z}_k^{\text{top}}} - \left[\overline{\varphi^{\prime \prime} {\tilde w}_{tr}^{\prime \prime}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}\right).
 $$ (layer-tracer-pre)
 
-Here ${\tilde w}_{tr}={\tilde w} - {\tilde w}_r$ is the normalized vertical mass transport through the layer interface. 
-It is a pseudo-transport velocity in units of m/s. 
+Here ${\tilde w}_{tr}={\tilde w} - {\tilde w}_r$ is the normalized vertical mass transport through the layer interface.
+It is a pseudo-transport velocity in units of m/s.
 Equation [](#layer-tracer-pre) is identical to [Ringler et al. 2013](https://www.sciencedirect.com/science/article/pii/S1463500313000760) (A.24), and further explanation can be found in that appendix.
 
-As a final step, we substitute the approximation $\overline{\varphi {\bf u}}^{\tilde{z}}_k \approx \overline{\varphi }^{\tilde{z}}_k \overline{{\bf u}}^{\tilde{z}}_k$. 
+As a final step, we substitute the approximation $\overline{\varphi {\bf u}}^{\tilde{z}}_k \approx \overline{\varphi }^{\tilde{z}}_k \overline{{\bf u}}^{\tilde{z}}_k$.
 The mass equation is identical to the tracer equation with $\varphi=1$. Dropping the overlines for simpler notation, the layered version of mass and tracer conservation are
 
 mass:
 
 $$
-\frac{d{\tilde h}_k }{dt} 
+\frac{d{\tilde h}_k }{dt}
 +
-   \nabla \cdot \left({\tilde h}_k{\bf u}_k \right) 
- + \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} 
+   \nabla \cdot \left({\tilde h}_k{\bf u}_k \right)
+ + \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}}
  - \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
 = 0
 $$ (layer-mass)
@@ -377,10 +450,10 @@ $$ (layer-mass)
 tracer:
 
 $$
-\frac{d{\tilde h}_k \varphi_k  }{dt} 
+\frac{d{\tilde h}_k \varphi_k  }{dt}
 +
-   \nabla \cdot \left({\tilde h}_k \varphi_k {\bf u}_k \right) 
- + \left[ \varphi {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} 
+   \nabla \cdot \left({\tilde h}_k \varphi_k {\bf u}_k \right)
+ + \left[ \varphi {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}}
  - \left[ \varphi {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
 = 0
 $$ (layer-tracer)
@@ -420,7 +493,7 @@ They also include **vertical stress forces** (e.g., wind stress at the ocean sur
 The pressure force term may be converted from the boundary to the interior with Gauss' divergence theorem (see [Kundu et al. 2016](https://www.amazon.com/dp/012405935X/) p. 119),
 
 $$
-- \int_{\partial V(t)} p \, \mathbf{n} \, dA 
+- \int_{\partial V(t)} p \, \mathbf{n} \, dA
 = - \int_{V(t)} \nabla_{3D} p \, dV .
 $$ (gradp-Gauss)
 
@@ -428,7 +501,7 @@ Considering only the horizontal components, we have
 
 $$
  - \int_{V(t)} \nabla_{\perp} p \, dV
-= - \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} 
+= - \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}}
   \nabla_{\perp} p \, dz \, dA
 = - \int_{A}   \overline{\nabla_{\perp} p}^{z}  \, dA.
 $$ (gradp-h)
@@ -453,10 +526,10 @@ Taking only the horizontal ($j$=1,2),
 
 $$
  \int_{V(t)} \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) \, dV
-= \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} 
- \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) 
+= \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}}
+ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right)
 \, dz \, dA
-=  \int_{A} 
+=  \int_{A}
   \overline{
  \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z dA
 $$ (gradp-h)
@@ -474,10 +547,10 @@ $$
 \\ & \; =
 - \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \,  \mathbf{f} \times \mathbf{u} \, dz \, dA
 - \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, \nabla_\perp \Phi \, dz \, dA
- - \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} 
+ - \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}}
   \nabla_{\perp} p \, dz \, dA
-+ \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} 
- \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) 
++ \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}}
+ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right)
 \, dz \, dA.
 $$ (h-momentum-p-tau)
 
@@ -499,93 +572,93 @@ $$ (h-momentum-p-tau)
 Taking the limit as $A \rightarrow 0$, we arrive at the local, horizontally continuous form:
 
 $$
-\frac{\partial \tilde{h}\, \overline{  {\bf u} }^{\tilde z} }{\partial t} 
+\frac{\partial \tilde{h}\, \overline{  {\bf u} }^{\tilde z} }{\partial t}
 & +
-   \nabla_\perp \cdot \left( \tilde{h}\, \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) 
- + \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{top}}} 
- - \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{bot}}} 
+   \nabla_\perp \cdot \left( \tilde{h}\, \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right)
+ + \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{top}}}
+ - \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{bot}}}
 \\ & =
--  \tilde{h} \,\overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} 
--  \tilde{h} \,\overline{  \nabla_\perp \Phi }^{\tilde z} 
--  \frac{1}{\rho_0} \overline{\nabla_{\perp} p}^{z}  
-+  \frac{1}{\rho_0} \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z 
+-  \tilde{h} \,\overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z}
+-  \tilde{h} \,\overline{  \nabla_\perp \Phi }^{\tilde z}
+-  \frac{1}{\rho_0} \overline{\nabla_{\perp} p}^{z}
++  \frac{1}{\rho_0} \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z
 $$ (momentum-layered-differential-1)
 
 The first two terms are the material derivative, confined within the horizontal layer. Using the product rule, and layered mass conservation [](#layer-mass),
 
 $$
-\frac{\partial \tilde{h}\, \overline{  {\bf u} }^{\tilde z} }{\partial t} 
-+ \nabla_\perp \cdot \left( \tilde{h}\, \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) 
-&= 
+\frac{\partial \tilde{h}\, \overline{  {\bf u} }^{\tilde z} }{\partial t}
++ \nabla_\perp \cdot \left( \tilde{h}\, \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right)
+&=
 \frac{D_\perp \tilde{h}\, \overline{  {\bf u} }^{\tilde z} }{D t} \\
 &=
-\tilde{h}\frac{D_\perp  \overline{  {\bf u} }^{\tilde z} }{D t} 
+\tilde{h}\frac{D_\perp  \overline{  {\bf u} }^{\tilde z} }{D t}
 +
 \overline{ {\bf u} }^{\tilde z} \frac{D_\perp \tilde{h}}{D t} \\
-&= 
+&=
 \tilde{h}\left(
-  \frac{\partial  \overline{  {\bf u} }^{\tilde z} }{\partial t} 
+  \frac{\partial  \overline{  {\bf u} }^{\tilde z} }{\partial t}
 + \nabla_\perp \cdot \left( \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right)  \right)
-- \overline{ {\bf u} }^{\tilde z} \left( 
-   \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} 
+- \overline{ {\bf u} }^{\tilde z} \left(
+   \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}}
  - \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
-\right) 
+\right)
 $$ (2D-material-der-product)
 
 We now substitute [](#2D-material-der-product) into [](#momentum-layered-differential-1) and divide by $\tilde h$ to get
 
 $$
- \frac{\partial \overline{  {\bf u} }^{\tilde z} }{\partial t} 
-+ \nabla_\perp \cdot \left(  \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) 
-& + \frac{\left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{top}}} 
+ \frac{\partial \overline{  {\bf u} }^{\tilde z} }{\partial t}
++ \nabla_\perp \cdot \left(  \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right)
+& + \frac{\left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{top}}}
  - \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{bot}}} }{\tilde h}
--   \frac{\overline{ {\bf u} }^{\tilde z}}{\tilde{h}}  \left( 
-   \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} 
+-   \frac{\overline{ {\bf u} }^{\tilde z}}{\tilde{h}}  \left(
+   \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}}
  - \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}\right)
 \\ &  =
--  \overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} 
--  \overline{  \nabla_\perp \Phi }^{\tilde z} 
--  \frac{1}{\rho_0 \, \tilde{h}} \overline{\nabla_{\perp} p}^{z}  
-+  \frac{1}{\rho_0 \, \tilde{h}} \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z 
+-  \overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z}
+-  \overline{  \nabla_\perp \Phi }^{\tilde z}
+-  \frac{1}{\rho_0 \, \tilde{h}} \overline{\nabla_{\perp} p}^{z}
++  \frac{1}{\rho_0 \, \tilde{h}} \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z
 $$ (momentum-layered-differential-2)
 
 Note that the coefficient of the pressure gradient and stress tensor can be rewritten as
 
 $$
-\frac{1}{\rho_0 \, \tilde{h}} = 
+\frac{1}{\rho_0 \, \tilde{h}} =
 \frac{1}{\rho_0 \,\frac{1}{\rho_0} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho dz}
 = \frac{1} {\overline{\rho}^z}
 = \overline{\alpha}^z,
 $$ (grad-p-coeff)
 
-where $\alpha$ is the specific volume. 
+where $\alpha$ is the specific volume.
 Gathering the vertical advection terms, [](#momentum-layered-differential-2) becomes
 
 $$
- \frac{\partial \overline{  {\bf u} }^{\tilde z} }{\partial t} 
- + \nabla_\perp \cdot \left(  \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) 
-& 
+ \frac{\partial \overline{  {\bf u} }^{\tilde z} }{\partial t}
+ + \nabla_\perp \cdot \left(  \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right)
+&
 + \left( \nabla_\perp \cdot  {\bf u}  \right) {\bf u}
 + \frac{1}{\tilde h}\left(
- \left[ {\bf u}\right]_{z=z^{\text{top}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{top}}} 
- - 
+ \left[ {\bf u}\right]_{z=z^{\text{top}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{top}}}
+ -
   \frac{1}{\tilde h}\left(
- \left[ {\bf u}\right]_{z=z^{\text{bot}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{bot}}} 
+ \left[ {\bf u}\right]_{z=z^{\text{bot}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{bot}}}
 \\ &  =
--  \overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} 
--  \overline{  \nabla_\perp \Phi }^{\tilde z} 
--  \overline{\alpha}^z \overline{\nabla_{\perp} p}^{z}  
-+  \overline{\alpha}^z \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z 
+-  \overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z}
+-  \overline{  \nabla_\perp \Phi }^{\tilde z}
+-  \overline{\alpha}^z \overline{\nabla_{\perp} p}^{z}
++  \overline{\alpha}^z \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z
 $$ (momentum-layered-differential-3)
 
 In addition, the horizontal advection may be rewritten as
 
 $$
-\nabla_\perp \cdot \left( {\bf u} \otimes {\bf u}  \right) 
-&= 
+\nabla_\perp \cdot \left( {\bf u} \otimes {\bf u}  \right)
+&=
 \nabla_\perp \cdot \left( {\bf u} {\bf u}^T  \right) \\
 &= \left( \nabla_\perp \cdot  {\bf u}  \right) {\bf u}
-+  {\bf u} \cdot \nabla_\perp {\bf u} 
++  {\bf u} \cdot \nabla_\perp {\bf u}
 $$ (adv2d-prod)
 
 The term ${\bf u} \cdot \nabla_\perp {\bf u}$ may be replaced with the vector identity
@@ -601,32 +674,32 @@ $$
 $$ (advection-identity)
 
 where $\zeta$ is relative vorticity and $K$ is kinetic energy.
-This step separates the horizontal advection into non-divergent and non-rotational components, which is useful in the final TRiSK formulation. 
+This step separates the horizontal advection into non-divergent and non-rotational components, which is useful in the final TRiSK formulation.
 
 Now [](#momentum-layered-differential-3) becomes
 
 $$
- \frac{\partial \overline{  {\bf u} }^{\tilde z} }{\partial t} 
+ \frac{\partial \overline{  {\bf u} }^{\tilde z} }{\partial t}
  +
    \left(  \zeta + f  \right) {\overline{  {\bf u} }^{\tilde z}}^\perp
-& 
+&
 + \left( \nabla_\perp \cdot  {\bf u}  \right) {\bf u}
 + \frac{1}{\tilde h}\left(
- \left[ {\bf u}\right]_{z=z^{\text{top}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{top}}} 
- - 
+ \left[ {\bf u}\right]_{z=z^{\text{top}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{top}}}
+ -
   \frac{1}{\tilde h}\left(
- \left[ {\bf u}\right]_{z=z^{\text{bot}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{bot}}} 
+ \left[ {\bf u}\right]_{z=z^{\text{bot}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{bot}}}
 \\ &  =
-- \nabla_\perp K 
--  \overline{  \nabla_\perp \Phi }^{\tilde z} 
--  \overline{\alpha}^z \overline{\nabla_{\perp} p}^{z}  
-+  \overline{\alpha}^z \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z 
+- \nabla_\perp K
+-  \overline{  \nabla_\perp \Phi }^{\tilde z}
+-  \overline{\alpha}^z \overline{\nabla_{\perp} p}^{z}
++  \overline{\alpha}^z \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z
 $$ (momentum-layered-differential-4)
 
 Notes from Mark:
 
 1. I don't know what to do with the z-average in the advection term of [](#momentum-layered-differential-2) and here. In the mean time, I'll just skip to the layer-averaged terms.
-2. I don't know what to make of the $\left( \nabla_\perp \cdot  {\bf u}  \right) {\bf u}$ term, and whether it cancels with some of those odd vertical transport terms. 
+2. I don't know what to make of the $\left( \nabla_\perp \cdot  {\bf u}  \right) {\bf u}$ term, and whether it cancels with some of those odd vertical transport terms.
 
 
 
@@ -648,7 +721,7 @@ $$
 &+ \nabla_z \cdot \left(  \tilde{h}\, \overline{\mathbf{u} \otimes \mathbf{u}}^{\tilde{z}} \right) \\
 &+ \left[ \mathbf{u} \tilde{w}_{tr} \right]_{\tilde{z}^{\text{top}}}
 - \left[ \mathbf{u} \tilde{w}_{tr} \right]_{\tilde{z}^{\text{bot}}} \\
-&= 
+&=
 - \int_{V(t)} \rho\, \mathbf{f} \times \mathbf{u} \, dV
 - \tilde{h}\, \overline{ \mathbf{f} \times \mathbf{u} + \nabla_z \Phi }^{\tilde{z}} \\
 &\quad - \frac{1}{\rho_0}\nabla_z \left( \int_{{z}^{\text{bot}}}^{{z}^{\text{top}}} p \, d{z} \right)
