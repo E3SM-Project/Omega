@@ -222,6 +222,9 @@ int initTimeStepperTest(const std::string &mesh) {
 
    auto *TestAuxState = AuxiliaryState::create("TestAuxState", DefMesh, DefHalo,
                                                NVertLevels, NTracers);
+
+   TestAuxState->readConfigOptions(OmegaConfig);
+
    if (!TestAuxState) {
       Err++;
       LOG_ERROR("TimeStepperTest: error creating test auxiliary state");
