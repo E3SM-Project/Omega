@@ -4,10 +4,10 @@
 ## 1 Overview
 The vertical coordinate module will be responsible for computing and storing information related to the vertical mesh in Omega.
 Since Omega will be a non-Boussinesq model, the vertical independent variable will be pressure- as opposed to $z$-based.
-Similar to MPAS-Ocean's support for tilted height ($z^\star$) coordinates, Omega V1 will support a general ($p^\star$) vertical coordinate, where mass thickness $h$ varies in proportion to the total mass thickness of the water column. 
-The prognostic variable in the layered continuity equation is mass thickness, which can be used to calculate the total pressure at a given vertical level.
+Similar to MPAS-Ocean's support for tilted height ($z^\star$) coordinates, Omega V1 will support a general vertical coordinate, where pseudo thickness $h$ varies in proportion to the total pseudo thickness of the water column. 
+The prognostic variable in the layered continuity equation is pseudo thickness, which can be used to calculate the total pressure at a given vertical level.
 The vertical height of a given level is still necessary in the model to compute sea level, the geopotential, and derivatives with respect to $z$.
-The height of a layer ($\Delta z$) can be found using the mass thickness, density and known bottom elevation relative to the geoid (positive up).
+The height of a layer ($\Delta z$) can be found using the pseudo thickness, density, reference density, and known bottom elevation relative to the geoid (positive up).
 The vertical coordinate module will also serve as a container for information related to the variable number of active vertical levels for a given ocean column (due to variations in bottom elevation and ice shelf cavities).
 
 
@@ -16,7 +16,7 @@ The vertical coordinate module will also serve as a container for information re
 ### 2.1 Requirement: Compute and store the total pressure at a given level
 
 The total pressure at the bottom of each level will be computed and stored within the vertical coordinate module.
-This involves a surface-down summation of the mass thickness variable times the gravitational acceleration, $g$, starting with the surface pressure.
+This involves a surface-down summation of the pseudo thickness variable times the gravitational acceleration, $g$, and the reference density, $\rho_0$, starting with the surface pressure.
 The pressure variable will be needed in the computation of the TEOS-10 equation of state and the pressure gradient.
 The variable will be registered with the `IOStreams` framework to enable it to be output during runtime.
 
@@ -24,7 +24,7 @@ The variable will be registered with the `IOStreams` framework to enable it to b
 
 The $z$ location at the top of each level will be computed and stored within the vertical coordinate module.
 In the model, $z$ is defined as being positive up from the geoid.
-The $z$ location is calculated in a bottom-up summation of the mass thickness times the specific volume, starting with the known bottom elevation.
+The $z$ location is calculated in a bottom-up summation of the pseudo thickness times the specific volume and reference density, starting with the known bottom elevation.
 The $z$ location of the interfaces is needed to compute the geopotential gradient and the sea level.
 The variable will be registered with the `IOStreams` framework to enable it to be output during runtime.
 
@@ -68,39 +68,39 @@ The operator $\nabla_A$ is the gradient along a constant surface, $A$, and the t
 $$ \frac{D \mathbf{u}_h}{D t } = \left( \frac{\partial}{\partial t} \right)_A  + \mathbf{u}_h\cdot \nabla_A + \omega\frac{\partial}{\partial A}, $$
 
 where $\omega$ is the cross coordinate flow.
-In the layered non-Boussinesq equations, the prognostic variable for cell $i$ and layer $k$ is the mass thickness, $h_{i,k}$, so that the geometric thickness (in meters) is a diagnostic variable defined as:
+In the layered non-Boussinesq equations, the prognostic variable for cell $i$ and layer $k$ is the pseudo thickness, $h_{i,k}$, so that the geometric thickness (in meters) is a diagnostic variable defined as:
 
-$$ \Delta z_{i,k} = \alpha_{i,k} h_{i,k}. $$
+$$ \Delta z_{i,k} = \rho_0 \alpha_{i,k} h_{i,k}. $$
 
-The pressure at vertical cell interfaces is the found by summing the mass thicknesses:
+The pressure at vertical cell interfaces is the found by summing the pseudo thicknesses:
 
-$$  p_{i,k+1/2} = p_{i}^{surf} + g\sum_{k^\prime=1}^k h_{i,k^\prime}. $$
+$$  p_{i,k+1/2} = p_{i}^{surf} + g\rho_0 \sum_{k^\prime=1}^k h_{i,k^\prime}. $$
 
 and at the midpoint by
 
-$$ p_{i,k} = p_{i}^{surf} + \sum_{k'=1}^{k-1} g h_{i,k'} + \frac{1}{2} g h_{i,k} $$
+$$ p_{i,k} = p_{i}^{surf} + g\rho_0 \sum_{k'=1}^{k-1} h_{i,k'} + \frac{1}{2} g\rho_0 h_{i,k} $$
 
-The $z$ location of cell interfaces is found by summing the mass thicknesses from the bottom multiplied by the specific volume:
+The $z$ location of cell interfaces is found by summing the pseudo thicknesses from the bottom multiplied by the specific volume:
 
-$$ z_{i,k+1/2} = z_i^{floor} + \sum_{k=k^\prime}^{N} \alpha_{i,k^\prime} h_{i,k^\prime}, $$
+$$ z_{i,k}^{top} = z_i^{floor} + \rho_0 \sum_{k^\prime=k}^{K_{max}} \alpha_{i,k^\prime} h_{i,k^\prime}, $$
 
 where $z_i^{floor}$ is the (positive-up) bottom elevation.
 The $z$ location of cell centers is given by: 
 
-$$ z_{i,k} = z_i^{floor} + \frac{1}{2} \alpha_{i,k} h_{i,k} + \sum_{k^\prime= k+1}^{N} \alpha_{i,k^\prime} h_{i,k^\prime}. $$
+$$ z_{i,k} = z_i^{floor} + \frac{1}{2} \rho_0\alpha_{i,k} h_{i,k} + \rho_0\sum_{k^\prime= k+1}^{K_{max}} \alpha_{i,k^\prime} h_{i,k^\prime}. $$
 
 Initially, the geopotential is the sum of the $z$ height times $g$. 
 In the future, it will include contributions from the tidal potential ($\Phi_{tp}$) and self attraction and loading ($\Phi_{SAL}$):
 
 $$ \Phi_{i,k} = \left( gz_{i,k} + \Phi_{tp} + \Phi_{SAL} \right). $$
 
-The desired mass thickness used for the $p^\star$ coordinate is:
+The desired pseudo thickness used for the $p^\star$ coordinate is:
 
 $$h_k^{p^\star} = h_k^{rest} + h_k^{p}, $$
 
 where the pressure alteration, $h_k^{p}$, is given by:
 
-$$ h_k^{p} =\frac{(p_B-p_{surf})}{g} \frac{W_kh_k^{rest}}{\sum_{k^\prime=1}^K W_{k^\prime}h_{k^\prime}^{rest}}.$$
+$$ h_k^{p} =\frac{(p_B-p_{surf})}{g\rho_0} \frac{W_kh_k^{rest}}{\sum_{k^\prime=1}^K W_{k^\prime}h_{k^\prime}^{rest}}.$$
 
 ## 4 Design
 
@@ -207,7 +207,7 @@ VertCoord *VertCoord::get(const std::string &Name);
 
 #### 4.2.4 Computation
 
-The public `computePressure` will sum the mass thicknesses times $g$ from the top layer down, starting with the surface pressure.
+The public `computePressure` will sum the pseudo thicknesses times $g$ from the top layer down, starting with the surface pressure.
 This will be done with a `parallel_scan` inside a `parallel_for` over the mesh cells using hierarchical parallelism.
 ```c++
 void VertCoord::computePressure(const Array2DReal &PressureInterface,
@@ -218,7 +218,7 @@ void VertCoord::computePressure(const Array2DReal &PressureInterface,
 }                                
 ```
 
-The public `computeZHeight` will sum the mass thicknesses times $\alpha$ from the bottom later up, starting with the bottom elevation.
+The public `computeZHeight` will sum the pseudo thicknesses times $\alpha$ from the bottom later up, starting with the bottom elevation.
 This will be done with a `parallel_scan` inside a `parallel_for` over the mesh cells using hierarchical parallelism.
 ```c++
 void VertCoord::computeZHeight(const Array2DReal &ZInterface,
@@ -242,7 +242,7 @@ void VertCoord::computeGeopotential(const Array2DReal &GeopotentialMid,
 Tidal potential forcing and self attraction and loading will be default-off features.
 The will be added to (or excluded from) the geopotential based on config flags.
 
-The public `computePStarThickness` will determine the desired mass thickness used for the $p^\star$ vertical coordinate:
+The public `computePStarThickness` will determine the desired pseudo thickness used for the $p^\star$ vertical coordinate:
 ```c++
 void VertCoord::computePStarThickness(const Array2DReal &LayerThicknessPStar,
                                       const Array2DReal &VertCoordMovementWeights,
@@ -273,4 +273,4 @@ void VertCoord::clear();
 ## Verification and Testing
 
 ### Test: 
-Unit tests will be used to test each of the computations (computePressure, computeZHeight, computeGeopotential, computePStarThickness) for a given mass thickness array. Comparison will be made to a ''truth'' vertical mesh that includes spatially varying `minLevelCell` and `maxLevelCell`.
+Unit tests will be used to test each of the computations (computePressure, computeZHeight, computeGeopotential, computePStarThickness) for a given pseudo thickness array. Comparison will be made to a ''truth'' vertical mesh that includes spatially varying `minLevelCell` and `maxLevelCell`.
