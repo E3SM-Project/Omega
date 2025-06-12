@@ -205,6 +205,12 @@ tendency terms are currently implemented:</p>
 <tr class="row-even"><td><p>TracerHyperDiffOnCell</p></td>
 <td><p>biharmonic horizontal mixing of thickness-weighted tracers</p></td>
 </tr>
+<tr class="row-odd"><td><p>WindForcingOnEdge</p></td>
+<td><p>forcing by wind stress, defined on edges</p></td>
+</tr>
+<tr class="row-even"><td><p>BottomDragOnEdge</p></td>
+<td><p>bottom drag, defined on edges</p></td>
+</tr>
 </tbody>
 </table>
 <p>Among the internal data stored by each functor is a <code class="docutils literal notranslate"><span class="pre">bool</span></code> which can enable or
@@ -280,6 +286,18 @@ the currently available tendency terms:</p>
 <tr class="row-odd"><td><p></p></td>
 <td><p>EddyDiff4</p></td>
 <td><p>biharmonic horizontal mixing coeffienct for tracers</p></td>
+</tr>
+<tr class="row-even"><td><p>WindForcingOnEdge</p></td>
+<td><p>WindForcingTendencyEnable</p></td>
+<td><p>enable/disable term</p></td>
+</tr>
+<tr class="row-odd"><td><p>BottomDragOnEdge</p></td>
+<td><p>BottomDragTendencyEnable</p></td>
+<td><p>enable/disable term</p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p>BottomDragCoeff</p></td>
+<td><p>bottom drag coefficient</p></td>
 </tr>
 </tbody>
 </table>
