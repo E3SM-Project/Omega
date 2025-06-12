@@ -87,10 +87,10 @@ TEST_CASE("io_remap_test","io_remap_test")
   const Real wgt = 0.4;
   for (int ii=0; ii<ncols_tgt_l; ii++) {
     const int src_col = 2*ii + ncols_src_l*io_comm.rank();
-    row.push_back(1+ii+ncols_tgt_l*io_comm.rank());
-    row.push_back(1+ii+ncols_tgt_l*io_comm.rank());
-    col.push_back(1+src_col);
-    col.push_back(1+src_col+1);
+    row.push_back(ii+ncols_tgt_l*io_comm.rank());
+    row.push_back(ii+ncols_tgt_l*io_comm.rank());
+    col.push_back(src_col);
+    col.push_back(src_col+1);
     S.push_back(wgt);
     S.push_back(1.0-wgt);
   }
@@ -620,7 +620,6 @@ std::shared_ptr<FieldManager> get_test_fm(std::shared_ptr<const AbstractGrid> gr
 
   // Register fields with fm
   // Make sure packsize isn't bigger than the packsize for this machine, but not so big that we end up with only 1 pack.
-  fm->registration_begins();
   fm->register_field(FR{fid_ps,"output"});
   fm->register_field(FR{fid_pm,"output",Pack::n});
   fm->register_field(FR{fid_pi,"output",Pack::n});

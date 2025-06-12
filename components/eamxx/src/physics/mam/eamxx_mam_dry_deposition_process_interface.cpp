@@ -52,7 +52,7 @@ void MAMDryDep::set_grids(
   // layout for 2D (ncol, pcnst)
   constexpr int pcnst = mam4::aero_model::pcnst;
   const FieldLayout vector2d_pcnst =
-      grid_->get_2d_vector_layout(pcnst, "num_phys_constants");
+      grid_->get_2d_vector_layout(pcnst, "num_phys_constituents");
   const FieldLayout vector2d_class =
       grid_->get_2d_vector_layout(n_land_type, "class");
 
@@ -73,6 +73,10 @@ void MAMDryDep::set_grids(
 
   add_tracers_wet_atm();
   add_fields_dry_atm();
+  
+  // cloud liquid number mixing ratio [1/kg]
+  auto n_unit           = 1 / kg;   // units of number mixing ratios of tracers
+  add_tracer<Required>("nc", grid_, n_unit);
 
   static constexpr auto m2 = m * m;
   static constexpr auto s2 = s * s;

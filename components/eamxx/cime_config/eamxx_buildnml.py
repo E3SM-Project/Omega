@@ -15,7 +15,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__f
 
 # SCREAM imports
 from eamxx_buildnml_impl import get_valid_selectors, get_child, refine_type, \
-        resolve_all_inheritances, gen_atm_proc_group, check_all_values, find_node
+        resolve_all_inheritances, gen_atm_proc_group, check_all_values
 from atm_manip import apply_atm_procs_list_changes_from_buffer, apply_non_atm_procs_list_changes_from_buffer
 
 from utils import ensure_yaml # pylint: disable=no-name-in-module
@@ -29,7 +29,6 @@ sys.path.append(os.path.join(_CIMEROOT, "CIME", "Tools"))
 # Cime imports
 from standard_script_setup import * # pylint: disable=wildcard-import
 from CIME.utils import expect, safe_copy, SharedArea
-from CIME.test_status import TestStatus, RUN_PHASE
 
 logger = logging.getLogger(__name__) # pylint: disable=undefined-variable
 
@@ -106,121 +105,6 @@ def do_cime_vars(entry, case, refine=False, extra=None):
     return entry
 
 ###############################################################################
-def perform_consistency_checks(case, xml):
-###############################################################################
-    """
-    There may be separate parts of the xml that must satisfy some consistency
-    Here, we run any such check, so we can catch errors before submit time
-
-    >>> from eamxx_buildnml_impl import MockCase
-    >>> xml_str = '''
-    ... <params>
-    ...   <rrtmgp>
-    ...     <rad_frequency type="integer">3</rad_frequency>
-    ...   </rrtmgp>
-    ... </params>
-    ... '''
-    >>> import xml.etree.ElementTree as ET
-    >>> xml = ET.fromstring(xml_str)
-    >>> case = MockCase({'ATM_NCPL':'24', 'REST_N':24, 'REST_OPTION':'nsteps'})
-    >>> perform_consistency_checks(case,xml)
-    >>> case = MockCase({'ATM_NCPL':'24', 'REST_N':2, 'REST_OPTION':'nsteps'})
-    >>> perform_consistency_checks(case,xml)
-    Traceback (most recent call last):
-    CIME.utils.CIMEError: ERROR: rrtmgp::rad_frequency (3 steps) incompatible with restart frequency (2 steps).
-     Please, ensure restart happens on a step when rad is ON
-    >>> case = MockCase({'ATM_NCPL':'24', 'REST_N':10800, 'REST_OPTION':'nseconds'})
-    >>> perform_consistency_checks(case,xml)
-    >>> case = MockCase({'ATM_NCPL':'24', 'REST_N':7200, 'REST_OPTION':'nseconds'})
-    >>> perform_consistency_checks(case,xml)
-    Traceback (most recent call last):
-    CIME.utils.CIMEError: ERROR: rrtmgp::rad_frequency incompatible with restart frequency.
-     Please, ensure restart happens on a step when rad is ON
-      rest_tstep: 7200
-      rad_testep: 10800.0
-    >>> case = MockCase({'ATM_NCPL':'24', 'REST_N':180, 'REST_OPTION':'nminutes'})
-    >>> perform_consistency_checks(case,xml)
-    >>> case = MockCase({'ATM_NCPL':'24', 'REST_N':120, 'REST_OPTION':'nminutes'})
-    >>> perform_consistency_checks(case,xml)
-    Traceback (most recent call last):
-    CIME.utils.CIMEError: ERROR: rrtmgp::rad_frequency incompatible with restart frequency.
-     Please, ensure restart happens on a step when rad is ON
-      rest_tstep: 7200
-      rad_testep: 10800.0
-    >>> case = MockCase({'ATM_NCPL':'24', 'REST_N':6, 'REST_OPTION':'nhours'})
-    >>> perform_consistency_checks(case,xml)
-    >>> case = MockCase({'ATM_NCPL':'24', 'REST_N':8, 'REST_OPTION':'nhours'})
-    >>> perform_consistency_checks(case,xml)
-    Traceback (most recent call last):
-    CIME.utils.CIMEError: ERROR: rrtmgp::rad_frequency incompatible with restart frequency.
-     Please, ensure restart happens on a step when rad is ON
-      rest_tstep: 28800
-      rad_testep: 10800.0
-    >>> case = MockCase({'ATM_NCPL':'12', 'REST_N':2, 'REST_OPTION':'ndays'})
-    >>> perform_consistency_checks(case,xml)
-    >>> case = MockCase({'ATM_NCPL':'10', 'REST_N':2, 'REST_OPTION':'ndays'})
-    >>> perform_consistency_checks(case,xml)
-    Traceback (most recent call last):
-    CIME.utils.CIMEError: ERROR: rrtmgp::rad_frequency incompatible with restart frequency.
-     Please, ensure restart happens on a step when rad is ON
-     For daily (or less frequent) restart, rad_frequency must divide ATM_NCPL
-    """
-
-    # RRTMGP can be supercycled. Restarts cannot fall in the middle
-    # of a rad superstep
-    rrtmgp = find_node(xml,"rrtmgp")
-    rest_opt = case.get_value("REST_OPTION")
-    is_test = case.get_value("TEST")
-    caseraw = case.get_value("CASE")
-    caseroot = case.get_value("CASEROOT")
-    casebaseid  = case.get_value("CASEBASEID")
-    if rrtmgp is not None and rest_opt is not None and rest_opt not in ["never","none"]:
-        rest_n = int(case.get_value("REST_N"))
-        rad_freq = int(find_node(rrtmgp,"rad_frequency").text)
-        atm_ncpl = int(case.get_value("ATM_NCPL"))
-        atm_tstep = 86400 / atm_ncpl
-        rad_tstep = atm_tstep * rad_freq
-
-        # Some tests (ERS) make late (run-phase) changes, so we cannot validate restart
-        # settings until RUN phase
-        is_test_not_yet_run = False
-        if is_test:
-            test_name = casebaseid if casebaseid is not None else caseraw
-            ts = TestStatus(test_dir=caseroot, test_name=test_name)
-            phase = ts.get_latest_phase()
-            if phase != RUN_PHASE:
-                is_test_not_yet_run = True
-
-        if rad_freq==1 or is_test_not_yet_run:
-            pass
-        elif rest_opt in ["nsteps", "nstep"]:
-            expect (rest_n % rad_freq == 0,
-                    f"rrtmgp::rad_frequency ({rad_freq} steps) incompatible with "
-                    f"restart frequency ({rest_n} steps).\n"
-                    " Please, ensure restart happens on a step when rad is ON")
-        elif rest_opt in ["nseconds", "nsecond", "nminutes", "nminute", "nhours", "nhour"]:
-            if rest_opt in ["nseconds", "nsecond"]:
-                factor = 1
-            elif rest_opt in ["nminutes", "nminute"]:
-                factor = 60
-            else:
-                factor = 3600
-
-            rest_tstep = factor*rest_n
-            expect (rest_tstep % rad_tstep == 0,
-                    "rrtmgp::rad_frequency incompatible with restart frequency.\n"
-                    " Please, ensure restart happens on a step when rad is ON\n"
-                    f"  rest_tstep: {rest_tstep}\n"
-                    f"  rad_testep: {rad_tstep}")
-
-        else:
-            # for "very infrequent" restarts, we request rad_freq to divide atm_ncpl
-            expect (atm_ncpl % rad_freq ==0,
-                    "rrtmgp::rad_frequency incompatible with restart frequency.\n"
-                    " Please, ensure restart happens on a step when rad is ON\n"
-                    " For daily (or less frequent) restart, rad_frequency must divide ATM_NCPL")
-
-###############################################################################
 def ordered_dump(data, item, Dumper=yaml.SafeDumper, **kwds):
 ###############################################################################
     """
@@ -248,6 +132,66 @@ def ordered_dump(data, item, Dumper=yaml.SafeDumper, **kwds):
             return yaml.dump(data, fd, OrderedDumper, **kwds)
     else:
         return yaml.dump(data, item, OrderedDumper, **kwds)
+
+###############################################################################
+def evaluate_selector(sel_name, sel_value, ez_selectors, case, child_name):
+###############################################################################
+    # Parse and and ors into separate statements
+    and_syntax = " @@ "
+    or_syntax  = " || "
+    statements = []
+    if and_syntax in sel_value:
+        expect(or_syntax not in sel_value, "Cannot mix @@ and ||")
+        statements = sel_value.split(and_syntax)
+    elif or_syntax in sel_value:
+        statements = sel_value.split(or_syntax)
+    else:
+        statements = [sel_value]
+
+    # Get relevant value from case
+    if sel_name in ez_selectors:
+        ez_env, ez_regex = ez_selectors[sel_name]
+        case_val = case.get_value(ez_env)
+        expect(case_val is not None,
+              "Bad easy selector '{}' definition. Relies on unknown case value '{}'".format(sel_name, ez_env))
+
+        ez_regex_re = re.compile(ez_regex)
+        m = ez_regex_re.match(case_val)
+        if m:
+            groups = m.groups()
+            expect(len(groups) == 1,
+                    "Selector '{}' has invalid custom regex '{}' which does not capture exactly 1 group".format(sel_name, ez_regex))
+            val = groups[0]
+        else:
+            # If the regex doesn't even match the case val, always fail the selector
+            return False
+
+    else:
+        val = case.get_value(sel_name)
+        expect(val is not None,
+               "Bad selector '{0}' for child '{1}'. '{0}' is not a valid case value or easy selector".format(sel_name, child_name))
+
+    # Check value for matches with statements
+    result = False if or_syntax in sel_value else True
+    for statement in statements:
+        is_negation = statement.startswith("!")
+        if is_negation:
+            statement = statement.lstrip("!")
+
+        val_re = re.compile(statement)
+
+        found_match   = val_re.match(val) is not None # check if regex yielded a match
+        desired_match = not is_negation # whether we want to match regex or not
+        curr_result   = found_match == desired_match # check if the match was desired or not
+
+        if and_syntax in sel_value:
+            result &= curr_result
+        elif or_syntax in sel_value:
+            result |= curr_result
+        else:
+            result = curr_result
+
+    return result
 
 ###############################################################################
 def evaluate_selectors(element, case, ez_selectors):
@@ -283,6 +227,24 @@ def evaluate_selectors(element, case, ez_selectors):
     ...   <var3 foo="ON">foo_on</var3>
     ...   <var4>bar_off</var4>
     ...   <var4 bar="ON">bar_on</var4>
+    ...   <var5>regex_wrong</var5>
+    ...   <var5 SCREAM_CMAKE_OPTIONS=".*BAR=OFF">regex_right</var5>
+    ...   <var6>and_right</var6>
+    ...   <var6 SCREAM_CMAKE_OPTIONS=".*BAR=OFF @@ .*64">and_wrong</var6>
+    ...   <var6a>and_wrong</var6a>
+    ...   <var6a SCREAM_CMAKE_OPTIONS=".*BAR=OFF @@ .*128">and_right</var6a>
+    ...   <var6b>or_right</var6b>
+    ...   <var6b SCREAM_CMAKE_OPTIONS=".*BAR=ON || .*64">or_wrong</var6b>
+    ...   <var6c>and_wrong</var6c>
+    ...   <var6c SCREAM_CMAKE_OPTIONS=".*BAR=OFF || .*64">or_right</var6c>
+    ...   <var7>negation_right</var7>
+    ...   <var7 grid="!ne4ne4">negation_wrong</var7>
+    ...   <var8>negation_wrong</var8>
+    ...   <var8 grid="!pg2">negation_right</var8>
+    ...   <var9>negation_right</var9>
+    ...   <var9 grid="!.*ne4">negation_wrong</var9>
+    ...   <var10>negation_wrong</var10>
+    ...   <var10 grid="!.*pg2">negation_right</var10>
     ... </namelist_defaults>
     ... '''
     >>> import xml.etree.ElementTree as ET
@@ -297,6 +259,24 @@ def evaluate_selectors(element, case, ez_selectors):
     >>> get_child(good,'var3').text=="foo_on"
     True
     >>> get_child(good,'var4').text=="bar_off"
+    True
+    >>> get_child(good,'var5').text=="regex_right"
+    True
+    >>> get_child(good,'var6').text=="and_right"
+    True
+    >>> get_child(good,'var6a').text=="and_right"
+    True
+    >>> get_child(good,'var6b').text=="or_right"
+    True
+    >>> get_child(good,'var6c').text=="or_right"
+    True
+    >>> get_child(good,'var7').text=="negation_right"
+    True
+    >>> get_child(good,'var8').text=="negation_right"
+    True
+    >>> get_child(good,'var9').text=="negation_right"
+    True
+    >>> get_child(good,'var10').text=="negation_right"
     True
     >>> ############## BAD SELECTOR DEFINITION #####################
     >>> xml_sel_bad1 = '''
@@ -393,42 +373,18 @@ def evaluate_selectors(element, case, ez_selectors):
             if selectors:
                 all_match = True
                 had_case_selectors = False
-                for k, v in selectors.items():
+                for sel_name, sel_value in selectors.items():
                     # Metadata attributes are used only when it's time to generate the input files
-                    if k in METADATA_ATTRIBS:
-                        if k=="type" and child_name in selected_child.keys():
+                    if sel_name in METADATA_ATTRIBS:
+                        if sel_name=="type" and child_name in selected_child.keys():
                             if "type" in selected_child[child_name].attrib:
-                                expect (v==selected_child[child_name].attrib["type"],
+                                expect (sel_value==selected_child[child_name].attrib["type"],
                                         f"The 'type' attribute of {child_name} is not consistent across different selectors")
                         continue
 
                     had_case_selectors = True
-                    val_re = re.compile(v)
-
-                    if k in ez_selectors:
-                        ez_env, ez_regex = ez_selectors[k]
-                        case_val = case.get_value(ez_env)
-                        expect(case_val is not None,
-                              "Bad easy selector '{}' definition. Relies on unknown case value '{}'".format(k, ez_env))
-
-                        ez_regex_re = re.compile(ez_regex)
-                        m = ez_regex_re.match(case_val)
-                        if m:
-                            groups = m.groups()
-                            expect(len(groups) == 1,
-                                    "Selector '{}' has invalid custom regex '{}' which does not capture exactly 1 group".format(k, ez_regex))
-                            val = groups[0]
-                        else:
-                            # If the regex doesn't even match the case val, then we consider
-                            # string below should ensure the selector will never match.
-                            val = None
-
-                    else:
-                        val = case.get_value(k)
-                        expect(val is not None,
-                               "Bad selector '{0}' for child '{1}'. '{0}' is not a valid case value or easy selector".format(k, child_name))
-
-                    if val is None or val_re.match(val) is None:
+                    selectors_matched = evaluate_selector(sel_name, sel_value, ez_selectors, case, child_name)
+                    if not selectors_matched:
                         all_match = False
                         children_to_remove.append(child)
                         break
@@ -670,8 +626,6 @@ def _create_raw_xml_file_impl(case, xml, filepath=None):
             print(f"Error during XML creation, writing {dbg_xml_path}")
 
         raise e
-
-    perform_consistency_checks (case, xml)
 
     return xml
 
