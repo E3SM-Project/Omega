@@ -284,7 +284,7 @@ In that case, the full density $\rho$ is set to $\rho_0$ in all terms but the co
 Here we do not make the Boussinesq approximation, and $\rho_0$ is simply a convenient normalization constant so that $d\tilde{z} \approx dz$ when $\rho \approx \rho_0$. 
 
 Here we explain the reasoning for the choice of defining $\tilde{z}$ as directly proportional to pressure in [](#def-pseudo-height). 
-The differential form of the hydrostatic balance $dp = -\rho g dz$ implies that we could choose an arbitrary offset. One could set the offset such that $\tilde{z}=0$ at $z=0$, so that the equilibrium sea surface height matches. Or one could set $\tilde{z}^{\text{floor}} = z^{\text{floor}}$ at some reference depth. Our definition [](#def-pseudo-height), sets $\tilde{z}=0$ where $p=0$, which is at the top of the atmosphere. This choice was made so that $\tilde{z}$ is as close as possible to a pressure coordinate, and the additional normalization by $\rho_0 g$ was included so that units and values for $\tilde{z}$,  $\tilde{h}$,  and $\tilde{w}$ are intuitive and easy to work with. A major advantage of [](#def-pseudo-height) is that $\tilde{z}^{\text{floor}}$ is proportional to the bottom pressure, and can be used directly for the barotropic pressure gradient in time-split methods. A disadvantage is that $\tilde{z}^{\text{surf}}$ for the ocean's surface is displaced to a negative value due to the surface pressure from the overlaying atmosphere (as well as sea ice and land ice), which may be nonintuitive to a model user.
+The differential form of the hydrostatic balance $dp = -\rho g dz$ implies that we could choose an arbitrary offset. One could set the offset such that $\tilde{z}=0$ at $z=0$, so that the equilibrium sea surface height matches. Or one could set $\tilde{z}^{\text{floor}} = z^{\text{floor}}$ at some reference depth. Our definition [](#def-pseudo-height), sets $\tilde{z}=0$ where $p=0$, which is at the top of the atmosphere. This choice was made so that $\tilde{z}$ is as close as possible to a pressure coordinate, and the additional normalization by $\rho_0 g$ was included so that units and values for $\tilde{z}$,  $\tilde{h}$,  and $\tilde{w}$ are intuitive and easy to work with. A major advantage of [](#def-pseudo-height) is that $\tilde{z}^{\text{floor}}$ is proportional to the bottom pressure, and can be used directly for the barotropic pressure gradient in time-split methods.
 
 ### Vertical Discretization
 
@@ -361,7 +361,7 @@ It is a pseudo-transport velocity in units of m/s.
 Equation [](#layer-tracer-pre) is identical to [Ringler et al. 2013](https://www.sciencedirect.com/science/article/pii/S1463500313000760) (A.24), and further explanation can be found in that appendix.
 
 As a final step, we substitute the approximation $\overline{\varphi {\bf u}}^{\tilde{z}}_k \approx \overline{\varphi }^{\tilde{z}}_k \overline{{\bf u}}^{\tilde{z}}_k$. 
-The mass equation is identical to the tracer equation with $\varphi=1$. Dropping the overbars for simpler notation, the layered version of mass and tracer conservation are
+The mass equation is identical to the tracer equation with $\varphi=1$. Dropping the overlines for simpler notation, the layered version of mass and tracer conservation are
 
 mass:
 
@@ -389,23 +389,22 @@ $$ (layer-tracer)
 
 We now derive the horizontal momentum equation in our non-Boussinesq, hydrostatic framework, following the same finite-volume approach used for mass and tracer conservation. We work with a pseudo-height vertical coordinate $\tilde{z}$ as defined in [Pseudo-Height Coordinate Section](pseudo-height).
 
-We begin by considering conservation of horizontal momentum density $ \rho \mathbf{u} $ over a time-dependent control volume $ V(t) $, bounded horizontally by a fixed area $ S $, and vertically by surfaces $ \tilde{z}^{\text{top}}(x, y, t) $ and $ \tilde{z}^{\text{bot}}(x, y, t) $. The finite-volume balance reads:
+We begin by specifying the forces in the full three-dimensional momentum equation [](#continuous-momentum),
 
 $$
-\frac{d}{dt} \int_{V(t)} \rho \mathbf{u} \, dV
-+ \int_{\partial V(t)} \rho \mathbf{u} (\mathbf{v} - \mathbf{v}_r) \cdot \mathbf{n} \, dS
+\frac{d}{dt} \int_{V(t)} \rho\,  {\bf v} \, dV
++ \int_{\partial V(t)}\rho\, {\bf v} \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA
 = \mathbf{F}_\text{total}[V(t)],
-$$ (momentum-FV)
+$$ (continuous-momentum2)
 
 with total forces given by:
 
 $$
 \mathbf{F}_\text{total}[V(t)] =
 - \int_{V(t)} \rho\, \mathbf{f} \times \mathbf{u} \, dV
-- \int_{V(t)} \rho\, \nabla_z \Phi \, dV
-- \int_{\partial V(t)} p \, \mathbf{n} \, dS
-+ \int_{\partial V(t)} \boldsymbol{\tau}_h \cdot \mathbf{n} \, dS
-+ \int_{\partial V(t)} \boldsymbol{\tau}_h^z \cdot \mathbf{n} \, dS.
+- \int_{V(t)} \rho\, \nabla_{3D} \Phi \, dV
+- \int_{\partial V(t)} p \, \mathbf{n} \, dA
++ \int_{\partial V(t)} \boldsymbol{\tau} \cdot \mathbf{n} \, dA
 $$ (momentum-Ftotal)
 
 Each term on the right-hand side corresponds to a physically distinct force acting on the fluid within the control volume:
@@ -413,43 +412,103 @@ Each term on the right-hand side corresponds to a physically distinct force acti
 - The first term is the **Coriolis force**, where $ \mathbf{f} $ is the vector Coriolis parameter (e.g., $ f \hat{\mathbf{z}} $ on the sphere).
 - The second term represents the **gravitational force**, expressed in terms of the gradient of the gravitational potential $ \Phi(x, y, z, t) $, which may include effects such as tides and self-attraction and loading.
 - The third term is the **pressure force**, which acts on the boundary surfaces and is naturally expressed as a surface integral. It gives rise to both horizontal pressure gradients and contributions from sloping surfaces.
-- The fourth term represents **horizontal stress forces** across the vertical sides of the control volume, such as those due to lateral friction or subgrid momentum transfer.
-- The final term represents **vertical stress forces** (e.g., wind stress at the ocean surface and bottom drag at the seafloor), projected into horizontal momentum and acting across the top and bottom surfaces.
+- The fourth term represents the surface stresses. They include **horizontal stress forces** across the vertical sides of the control volume, such as those due to lateral friction or subgrid momentum transfer.
+They also include **vertical stress forces** (e.g., wind stress at the ocean surface and bottom drag at the seafloor), projected into horizontal momentum and acting across the top and bottom surfaces.
 
-We convert to pseudo-height coordinates by dividing by $\rho_0$, using $ d\tilde{z} = \frac{\rho}{\rho_0} \, dz $ from [](#def-dtildez), and following the same process as for tracers. The layer-integrated momentum equation is then
+#### Pressure Term
+
+The pressure force term may be converted from the boundary to the interior with Gauss' divergence theorem (see [Kundu et al. 2016](https://www.amazon.com/dp/012405935X/) p. 119),
 
 $$
-\begin{aligned}
-\frac{d}{dt} \int_A \tilde{h}\, \overline{\mathbf{u}}^{\tilde{z}} \, dA
-&+ \int_{\partial A} \tilde{h}\, \overline{\mathbf{u} \otimes \mathbf{u}}^{\tilde{z}} \cdot \mathbf{n} \, dl \\
-&+ \int_A \left[ \mathbf{u} (\tilde{w} - \tilde{w}_r) \right]_{\tilde{z}^{\text{top}}} \, dA
-- \int_A \left[ \mathbf{u} (\tilde{w} - \tilde{w}_r) \right]_{\tilde{z}^{\text{bot}}} \, dA \\
-&= \int_A \tilde{h}\, \overline{\mathbf{f} \times \mathbf{u} + \nabla_z \Phi}^{\tilde{z}} \, dA \\
-&\quad - \frac{1}{\rho_0}\int_{\partial A} \left( \int_{{z}^{\text{bot}}}^{{z}^{\text{top}}} p\, \mathbf{n} \, d{z} \right) dl \\
-&\quad - \frac{1}{\rho_0}\int_A \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{top}}} \, dA
-+ \frac{1}{\rho_0}\int_A \left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \, dA \\
-&\quad + \frac{1}{\rho_0}\int_{\partial A} \left( \int_{{z}^{\text{bot}}}^{{z}^{\text{top}}} \boldsymbol{\tau}_h \cdot \mathbf{n} \, d{z} \right) dl \\
-&\quad + \frac{1}{\rho_0}\int_A \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}} \, dA
-- \frac{1}{\rho_0}\int_A \left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}} \, dA
-\end{aligned}
-$$ (momentum-Aint-ztildeavg)
+- \int_{\partial V(t)} p \, \mathbf{n} \, dA 
+= - \int_{V(t)} \nabla_{3D} p \, dV .
+$$ (gradp-Gauss)
+
+Considering only the horizontal components, we have
+
+$$
+ - \int_{V(t)} \nabla_{\perp} p \, dV
+= - \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} 
+  \nabla_{\perp} p \, dz \, dA
+= - \int_{A}   \overline{\nabla_{\perp} p}^{z}  \, dA.
+$$ (gradp-h)
+
+#### Stress Term
+
+Likewise, the stress tensor integrated over the surface may be converted to a volume integral with Gauss' theorem ([Kundu et al. 2016](https://www.amazon.com/dp/012405935X/) p. 125 eqn 4.20b),
+
+$$
+\int_{\partial V(t)} \boldsymbol{\tau} \cdot \mathbf{n} \, dA
+= \int_{V(t)} \nabla \cdot \boldsymbol{\tau} \, dV
+$$ (stress-Gauss)
+
+for clarity, this can be written in index notation as
+
+$$
+\int_{\partial V(t)} n_i \tau_{ij} \, dA
+= \int_{V(t)} \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) \, dV
+$$ (stress-Gauss-index)
+
+Taking only the horizontal ($j$=1,2),
+
+$$
+ \int_{V(t)} \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) \, dV
+= \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} 
+ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) 
+\, dz \, dA
+=  \int_{A} 
+  \overline{
+ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z dA
+$$ (gradp-h)
+
+#### Horizontal momentum
+
+Putting the pressure and stress term into [](h-momentum), and using Gauss' Theorem on the advection, the horizontal momentum equation is
+
+$$
+& \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf u} \, dz \, dA
++
+   \int_{A}\nabla \cdot \left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, {\bf u} \otimes {\bf u} \, dz \right) dA
+ + \int_{A}\left[ \rho\, {\bf u} \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
+ - \int_{A}\left[ \rho\, {\bf u} \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
+\\ & \; =
+- \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \,  \mathbf{f} \times \mathbf{u} \, dz \, dA
+- \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, \nabla_\perp \Phi \, dz \, dA
+ - \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} 
+  \nabla_{\perp} p \, dz \, dA
++ \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} 
+ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) 
+\, dz \, dA.
+$$ (h-momentum-p-tau)
+
+Dividing by $\rho_0$ and taking vertical averages using [](#def-thickness) and [](#def-pseudo-thickness),
+
+$$
+& \frac{d}{dt} \int_{A} \tilde{h}\, \overline{  {\bf u} }^{\tilde z} \, dA
++
+   \int_{A}\nabla \cdot \left( \tilde{h}\, \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) dA
+ + \int_{A}\left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{top}}} \, dA
+ - \int_{A}\left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{bot}}} \, dA
+\\ & \; =
+- \int_{A} \tilde{h} \,\overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} \, dA
+- \int_{A} \tilde{h} \,\overline{  \nabla_\perp \Phi }^{\tilde z} \, dA
+- \int_{A} \frac{1}{\rho_0} \overline{\nabla_{\perp} p}^{z}  \, dA
++ \int_{A} \frac{1}{\rho_0} \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z dA
+$$ (h-momentum-p-tau)
 
 Taking the limit as $A \rightarrow 0$, we arrive at the local, horizontally continuous form:
 
 $$
-\begin{aligned}
-\frac{\partial}{\partial t} \left( \tilde{h}\, \overline{\mathbf{u}}^{\tilde{z}} \right)
-&+ \nabla_z \cdot \left( \tilde{h}\, \overline{\mathbf{u} \otimes \mathbf{u}}^{\tilde{z}} \right) \\
-&+ \left[ \mathbf{u} \tilde{w}_{tr} \right]_{\tilde{z}^{\text{top}}}
-- \left[ \mathbf{u} \tilde{w}_{tr} \right]_{\tilde{z}^{\text{bot}}} \\
-&= \tilde{h}\, \overline{ \mathbf{f} \times \mathbf{u} + \nabla_z \Phi }^{\tilde{z}} \\
-&\quad - \frac{1}{\rho_0}\nabla_z \left( \int_{{z}^{\text{bot}}}^{{z}^{\text{top}}} p \, d{z} \right)
-- \frac{1}{\rho_0}\left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{top}}}
-+ \frac{1}{\rho_0}\left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
-&\quad + \frac{1}{\rho_0}\nabla_z \cdot \left( \int_{{z}^{\text{bot}}}^{{z}^{\text{top}}} \boldsymbol{\tau}_h \, d{z} \right)
-+ \frac{1}{\rho_0}\left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{top}}}
-- \frac{1}{\rho_0}\left[ \boldsymbol{\tau}_h^z \right]_{\tilde{z}^{\text{bot}}}
-\end{aligned}
+& \frac{d\,\tilde{h}\, \overline{  {\bf u} }^{\tilde z} }{dt} 
++
+   \nabla \cdot \left( \tilde{h}\, \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) 
+ + \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{top}}} 
+ - \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{bot}}} 
+\\ & \; =
+-  \tilde{h} \,\overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} 
+-  \tilde{h} \,\overline{  \nabla_\perp \Phi }^{\tilde z} 
+-  \frac{1}{\rho_0} \overline{\nabla_{\perp} p}^{z}  
++  \frac{1}{\rho_0} \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z 
 $$ (momentum-layered)
 
 This expression represents conservation of horizontal momentum in a vertical layer, including horizontal advection, vertical momentum fluxes, Coriolis and gravitational forces, pressure gradients (including slope contributions), and stress divergence.
@@ -473,7 +532,9 @@ $$
 &+ \nabla_z \cdot \left(  \tilde{h}\, \overline{\mathbf{u} \otimes \mathbf{u}}^{\tilde{z}} \right) \\
 &+ \left[ \mathbf{u} \tilde{w}_{tr} \right]_{\tilde{z}^{\text{top}}}
 - \left[ \mathbf{u} \tilde{w}_{tr} \right]_{\tilde{z}^{\text{bot}}} \\
-&=  \tilde{h}\, \overline{ \mathbf{f} \times \mathbf{u} + \nabla_z \Phi }^{\tilde{z}} \\
+&= 
+- \int_{V(t)} \rho\, \mathbf{f} \times \mathbf{u} \, dV
+- \tilde{h}\, \overline{ \mathbf{f} \times \mathbf{u} + \nabla_z \Phi }^{\tilde{z}} \\
 &\quad - \frac{1}{\rho_0}\nabla_z \left( \int_{{z}^{\text{bot}}}^{{z}^{\text{top}}} p \, d{z} \right)
 - \frac{1}{\rho_0}\left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{top}}}
 + \frac{1}{\rho_0}\left[ p \nabla_z \tilde{z} \right]_{\tilde{z}^{\text{bot}}} \\
@@ -873,7 +934,7 @@ This section is for references without webpage links. These are mostly textbooks
 
 ## OLD: Continuous Equations
 
-The continuous form of the conservation equations are as follows. See [Kundu et al. 2024](https://www.amazon.com/Fluid-Mechanics-Pijush-K-Kundu/dp/012405935X), chapter 4, eqns 4.7 and 4.22 or the [MOM5 manual](https://mom-ocean.github.io/assets/pdfs/MOM5_manual.pdf) eqn 7.7. This is before any assumptions are made, so this is a compressible, non-hydrostatic, non-Boussinesq fluid. Here all variables are a function of $(x,y,z)$, ${\bf u}_{3D}$ denotes the three-dimensional velocity vector, ${\bf u}_{3D} \otimes {\bf u}_{3D} = {\bf u}_{3D}{\bf u}_{3D}^T$ is the tensor product, $\nabla_{3D}$ is the three-dimensional gradient, $D/Dt$ is the material derivative, and other variables defined in the [Variable Definition Section](#variable-definitions) below.
+The continuous form of the conservation equations are as follows. See [Kundu et al. 2016](https://www.amazon.com/dp/012405935X/), chapter 4, eqns 4.7 and 4.22 or the [MOM5 manual](https://mom-ocean.github.io/assets/pdfs/MOM5_manual.pdf) eqn 7.7. This is before any assumptions are made, so this is a compressible, non-hydrostatic, non-Boussinesq fluid. Here all variables are a function of $(x,y,z)$, ${\bf u}_{3D}$ denotes the three-dimensional velocity vector, ${\bf u}_{3D} \otimes {\bf u}_{3D} = {\bf u}_{3D}{\bf u}_{3D}^T$ is the tensor product, $\nabla_{3D}$ is the three-dimensional gradient, $D/Dt$ is the material derivative, and other variables defined in the [Variable Definition Section](#variable-definitions) below.
 
 momentum:
 
