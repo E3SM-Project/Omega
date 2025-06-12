@@ -157,12 +157,16 @@ int initOmegaModules(MPI_Comm Comm) {
       }
    }
 
-   // Update Halos and Host arrays with new state and tracer fields
+   // Update Halos and Host arrays with new state, auxiliary state, and tracer
+   // fields
 
    OceanState *DefState = OceanState::getDefault();
    I4 CurTimeLevel      = 0;
    DefState->exchangeHalo(CurTimeLevel);
    DefState->copyToHost(CurTimeLevel);
+
+   AuxiliaryState *DefAuxState = AuxiliaryState::getDefault();
+   DefAuxState->exchangeHalo();
 
    // Now update tracers - assume using same time level index
    Err = Tracers::exchangeHalo(CurTimeLevel);

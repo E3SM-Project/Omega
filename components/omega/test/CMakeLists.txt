@@ -317,6 +317,11 @@ add_omega_test(
     "-n 8;"
     single_precision
 )
+target_compile_definitions(
+  testTendencyTermsPlaneSinglePrecision.exe
+  PRIVATE
+  TENDENCYTERMS_TEST_PLANE
+)
 
 add_omega_test(
   TEND_SPHERE_TEST

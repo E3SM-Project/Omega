@@ -3,6 +3,7 @@
 
 #include "Config.h"
 #include "DataTypes.h"
+#include "Halo.h"
 #include "HorzMesh.h"
 #include "OceanState.h"
 #include "Tracers.h"
@@ -11,6 +12,7 @@
 #include "auxiliaryVars/TracerAuxVars.h"
 #include "auxiliaryVars/VelocityDel2AuxVars.h"
 #include "auxiliaryVars/VorticityAuxVars.h"
+#include "auxiliaryVars/WindForcingAuxVars.h"
 
 #include <memory>
 #include <string>
@@ -36,6 +38,7 @@ class AuxiliaryState {
    TracerAuxVars TracerAux;
    VorticityAuxVars VorticityAux;
    VelocityDel2AuxVars VelocityDel2Aux;
+   WindForcingAuxVars WindForcingAux;
 
    ~AuxiliaryState();
 
@@ -46,7 +49,7 @@ class AuxiliaryState {
 
    // Create a non-default auxiliary state
    static AuxiliaryState *create(const std::string &Name, const HorzMesh *Mesh,
-                                 int NVertLevels, int NTracers);
+                                 Halo *MeshHalo, int NVertLevels, int NTracers);
 
    /// Get the default auxiliary state
    static AuxiliaryState *getDefault();
@@ -63,6 +66,9 @@ class AuxiliaryState {
    /// Read and set config options
    void readConfigOptions(Config *OmegaConfig);
 
+   /// Exchange halo
+   I4 exchangeHalo();
+
    // Compute all auxiliary variables needed for momentum equation
    void computeMomAux(const OceanState *State, int ThickTimeLevel,
                       int VelTimeLevel) const;
@@ -75,13 +81,14 @@ class AuxiliaryState {
                    int TimeLevel) const;
 
  private:
-   AuxiliaryState(const std::string &Name, const HorzMesh *Mesh,
+   AuxiliaryState(const std::string &Name, const HorzMesh *Mesh, Halo *MeshHalo,
                   int NVertLevels, int NTracers);
 
    AuxiliaryState(const AuxiliaryState &) = delete;
    AuxiliaryState(AuxiliaryState &&)      = delete;
 
    const HorzMesh *Mesh;
+   Halo *MeshHalo;
    static AuxiliaryState *DefaultAuxState;
    static std::map<std::string, std::unique_ptr<AuxiliaryState>> AllAuxStates;
 };

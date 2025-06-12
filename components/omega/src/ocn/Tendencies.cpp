@@ -172,6 +172,27 @@ void Tendencies::readTendConfig(
    CHECK_ERROR_ABORT(
        Err, "Tendencies: TracerDiffTendencyEnable not found in TendConfig");
 
+   Err +=
+       TendConfig->get("WindForcingTendencyEnable", this->WindForcing.Enabled);
+   CHECK_ERROR_ABORT(
+       Err, "Tendencies: WindForcingTendencyEnable not found in TendConfig");
+
+   Err += TendConfig->get("Density0", this->WindForcing.SaltWaterDensity);
+   CHECK_ERROR_ABORT(Err, "Tendencies: Density0 not found in TendConfig");
+
+   Err += TendConfig->get("BottomDragTendencyEnable", this->BottomDrag.Enabled);
+   CHECK_ERROR_ABORT(
+       Err, "Tendencies: BottomDragTendencyEnable not found in TendConfig");
+
+   Err += TendConfig->get("BottomDragCoeff", this->BottomDrag.Coeff);
+   CHECK_ERROR_ABORT(Err,
+                     "Tendencies: BottomDragCoeff not found in TendConfig");
+
+   Err += TendConfig->get("TracerHorzAdvTendencyEnable",
+                          this->TracerHorzAdv.Enabled);
+   CHECK_ERROR_ABORT(
+       Err, "Tendencies: TracerHorzAdvTendencyEnable not found in TendConfig");
+
    if (this->TracerDiffusion.Enabled) {
       Err += TendConfig->get("EddyDiff2", this->TracerDiffusion.EddyDiff2);
       CHECK_ERROR_ABORT(Err, "Tendencies: EddyDiff2 not found in TendConfig");
@@ -200,8 +221,8 @@ Tendencies::Tendencies(const std::string &Name, ///< [in] Name for tendencies
                        CustomTendencyType InCustomVelocityTend)
     : ThicknessFluxDiv(Mesh), PotientialVortHAdv(Mesh), KEGrad(Mesh),
       SSHGrad(Mesh), VelocityDiffusion(Mesh), VelocityHyperDiff(Mesh),
-      TracerHorzAdv(Mesh), TracerDiffusion(Mesh), TracerHyperDiff(Mesh),
-      CustomThicknessTend(InCustomThicknessTend),
+      BottomDrag(Mesh), TracerHorzAdv(Mesh), TracerDiffusion(Mesh),
+      TracerHyperDiff(Mesh), CustomThicknessTend(InCustomThicknessTend),
       CustomVelocityTend(InCustomVelocityTend) {
 
    // Tendency arrays
@@ -280,8 +301,12 @@ void Tendencies::computeVelocityTendenciesOnly(
    OMEGA_SCOPE(LocSSHGrad, SSHGrad);
    OMEGA_SCOPE(LocVelocityDiffusion, VelocityDiffusion);
    OMEGA_SCOPE(LocVelocityHyperDiff, VelocityHyperDiff);
+   OMEGA_SCOPE(LocWindForcing, WindForcing);
+   OMEGA_SCOPE(LocBottomDrag, BottomDrag);
 
    deepCopy(LocNormalVelocityTend, 0);
+
+   const Array2DReal &NormalVelEdge = State->NormalVelocity[VelTimeLevel];
 
    // Compute potential vorticity horizontal advection
    const Array2DReal &FluxLayerThickEdge =
@@ -337,6 +362,27 @@ void Tendencies::computeVelocityTendenciesOnly(
           {NEdgesAll, NChunks}, KOKKOS_LAMBDA(int IEdge, int KChunk) {
              LocVelocityHyperDiff(LocNormalVelocityTend, IEdge, KChunk,
                                   Del2DivCell, Del2RVortVertex);
+          });
+   }
+
+   // Compute wind forcing
+   const auto &NormalStressEdge = AuxState->WindForcingAux.NormalStressEdge;
+   const auto &MeanLayerThickEdge =
+       AuxState->LayerThicknessAux.MeanLayerThickEdge;
+   if (LocWindForcing.Enabled) {
+      parallelFor(
+          {NEdgesAll, NChunks}, KOKKOS_LAMBDA(int IEdge, int KChunk) {
+             LocWindForcing(LocNormalVelocityTend, IEdge, KChunk,
+                            NormalStressEdge, MeanLayerThickEdge);
+          });
+   }
+
+   // Compute bottom drag
+   if (LocBottomDrag.Enabled) {
+      parallelFor(
+          {NEdgesAll}, KOKKOS_LAMBDA(int IEdge) {
+             LocBottomDrag(LocNormalVelocityTend, IEdge, NormalVelEdge, KECell,
+                           MeanLayerThickEdge);
           });
    }
 

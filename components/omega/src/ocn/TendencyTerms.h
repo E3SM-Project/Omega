@@ -271,6 +271,61 @@ class VelocityHyperDiffOnEdge {
    Array2DReal EdgeMask;
 };
 
+/// Wind forcing
+class WindForcingOnEdge {
+ public:
+   bool Enabled;
+   Real SaltWaterDensity;
+
+   /// The functor takes the edge index, vertical chunk index, and arrays for
+   /// normal wind stress and edge layer thickness, outputs tendency array
+   KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge, I4 KChunk,
+                                   const Array1DReal &NormalStressEdge,
+                                   const Array2DReal &LayerThickEdge) const {
+      if (KChunk == 0) {
+         const I4 K = 0;
+
+         const Real InvThickEdge = 1._Real / LayerThickEdge(IEdge, K);
+         Tend(IEdge, K) +=
+             InvThickEdge * NormalStressEdge(IEdge) / SaltWaterDensity;
+      }
+   }
+};
+
+/// Bottom drag
+class BottomDragOnEdge {
+ public:
+   bool Enabled;
+   Real Coeff;
+
+   /// constructor declaration
+   BottomDragOnEdge(const HorzMesh *Mesh);
+
+   /// The functor takes the edge index and arrays for
+   /// horizontal velocity, kinetic energy,
+   /// and edge layer thickness, outputs tendency array
+   KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge,
+                                   const Array2DReal &NormalVelEdge,
+                                   const Array2DReal &KECell,
+                                   const Array2DReal &LayerThickEdge) const {
+      const I4 KBot = NVertLevels - 1;
+
+      const I4 JCell0 = CellsOnEdge(IEdge, 0);
+      const I4 JCell1 = CellsOnEdge(IEdge, 1);
+
+      const Real VelNormEdge =
+          Kokkos::sqrt(KECell(JCell0, KBot) + KECell(JCell1, KBot));
+
+      const Real InvThickEdge = 1._Real / LayerThickEdge(IEdge, KBot);
+      Tend(IEdge, KBot) -=
+          Coeff * VelNormEdge * InvThickEdge * NormalVelEdge(IEdge, KBot);
+   }
+
+ private:
+   I4 NVertLevels;
+   Array2DI4 CellsOnEdge;
+};
+
 // Tracer horizontal advection term
 class TracerHorzAdvOnCell {
  public:

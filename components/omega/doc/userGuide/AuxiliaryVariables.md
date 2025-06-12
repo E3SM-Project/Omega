@@ -29,3 +29,6 @@ The following auxiliary variables are currently available:
 | VelDel2RelVortVertex | curl of laplacian of horizontal velocity on cells
 | HTracersEdge | thickness-weighted tracers used for fluxes through edges. May be centered, upwinded or a combination of the two
 | Del2TracersCell | laplacian of tracers on cells
+| ZonalStressCell | zonal component of wind stress on cells
+| MeridStressCell | meridional component of wind stress on cells
+| NormalStressEdge | normal component of wind stress on edge

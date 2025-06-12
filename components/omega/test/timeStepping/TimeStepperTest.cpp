@@ -28,6 +28,7 @@
 #include "MachEnv.h"
 #include "OceanState.h"
 #include "OmegaKokkos.h"
+#include "Pacer.h"
 #include "TendencyTerms.h"
 #include "TimeMgr.h"
 #include "Tracers.h"
@@ -132,8 +133,7 @@ ErrorMeasures computeErrors() {
 
    // Only velocity errors matters, because thickness remains constant
    ErrorMeasures VelErrors;
-   computeErrors(VelErrors, NormalVelEdge, ExactNormalVelEdge, DefMesh, OnEdge,
-                 NVertLevels);
+   computeErrors(VelErrors, NormalVelEdge, ExactNormalVelEdge, DefMesh, OnEdge);
 
    return VelErrors;
 }
@@ -220,8 +220,11 @@ int initTimeStepperTest(const std::string &mesh) {
       LOG_ERROR("TimeStepperTest: error creating test state");
    }
 
-   auto *TestAuxState =
-       AuxiliaryState::create("TestAuxState", DefMesh, NVertLevels, NTracers);
+   auto *TestAuxState = AuxiliaryState::create("TestAuxState", DefMesh, DefHalo,
+                                               NVertLevels, NTracers);
+
+   TestAuxState->readConfigOptions(OmegaConfig);
+
    if (!TestAuxState) {
       Err++;
       LOG_ERROR("TimeStepperTest: error creating test auxiliary state");
@@ -248,6 +251,8 @@ int initTimeStepperTest(const std::string &mesh) {
    TestTendencies->TracerHorzAdv.Enabled      = false;
    TestTendencies->TracerDiffusion.Enabled    = false;
    TestTendencies->TracerHyperDiff.Enabled    = false;
+   TestTendencies->WindForcing.Enabled        = false;
+   TestTendencies->BottomDrag.Enabled         = false;
 
    return Err;
 }
@@ -408,6 +413,8 @@ int main(int argc, char *argv[]) {
 
    MPI_Init(&argc, &argv);
    Kokkos::initialize(argc, argv);
+   Pacer::initialize(MPI_COMM_WORLD);
+   Pacer::setPrefix("Omega:");
 
    LOG_INFO("----- Time Stepper Unit Test -----");
 

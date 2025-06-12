@@ -16,6 +16,7 @@
 #include "auxiliaryVars/TracerAuxVars.h"
 #include "auxiliaryVars/VelocityDel2AuxVars.h"
 #include "auxiliaryVars/VorticityAuxVars.h"
+#include "auxiliaryVars/WindForcingAuxVars.h"
 #include "mpi.h"
 
 #include <cmath>
@@ -63,6 +64,9 @@ struct TestSetupPlane {
    ErrorMeasures ExpectedDel2TracerErrors = {0.0033346711042859123,
                                              0.0029202923731303323};
 
+   ErrorMeasures ExpectedNormalStressErrors = {0.0033910709836867704,
+                                               0.0039954090464502795};
+
    KOKKOS_FUNCTION Real layerThickness(Real X, Real Y) const {
       return 2 + std::cos(2 * Pi * X / Lx) * std::cos(2 * Pi * Y / Ly);
    }
@@ -73,6 +77,14 @@ struct TestSetupPlane {
 
    KOKKOS_FUNCTION Real velocityY(Real X, Real Y) const {
       return std::cos(2 * Pi * X / Lx) * std::sin(2 * Pi * Y / Ly);
+   }
+
+   KOKKOS_FUNCTION Real windStressX(Real X, Real Y) const {
+      return std::cos(2 * Pi * X / Lx) * std::sin(2 * Pi * Y / Ly);
+   }
+
+   KOKKOS_FUNCTION Real windStressY(Real X, Real Y) const {
+      return std::sin(2 * Pi * X / Lx) * std::cos(2 * Pi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real divergence(Real X, Real Y) const {
@@ -179,6 +191,9 @@ struct TestSetupSphere {
    ErrorMeasures ExpectedDel2TracerErrors = {0.0081206665417422382,
                                              0.004917863312407276};
 
+   ErrorMeasures ExpectedNormalStressErrors = {0.0038588958862868362,
+                                               0.003813760171030077};
+
    KOKKOS_FUNCTION Real layerThickness(Real Lon, Real Lat) const {
       return (2 + std::cos(Lon) * std::pow(std::cos(Lat), 4));
    }
@@ -190,6 +205,14 @@ struct TestSetupSphere {
    KOKKOS_FUNCTION Real velocityY(Real Lon, Real Lat) const {
       return -4 * std::sin(Lon) * std::cos(Lon) * std::pow(std::cos(Lat), 3) *
              std::sin(Lat);
+   }
+   KOKKOS_FUNCTION Real windStressX(Real Lon, Real Lat) const {
+      return -4 * std::sin(Lon) * std::cos(Lon) * std::pow(std::cos(Lat), 3) *
+             std::sin(Lat);
+   }
+
+   KOKKOS_FUNCTION Real windStressY(Real Lon, Real Lat) const {
+      return -std::pow(std::sin(Lon), 2) * std::pow(std::cos(Lat), 3);
    }
 
    KOKKOS_FUNCTION Real relativeVorticity(Real Lon, Real Lat) const {
@@ -297,40 +320,21 @@ int initState(const Array2DReal &LayerThickCell,
 
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.layerThickness(X, Y); },
-       LayerThickCell, Geom, Mesh, OnCell, NVertLevels);
+       LayerThickCell, Geom, Mesh, OnCell);
 
    Err += setVectorEdge(
        KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
           VecField[0] = Setup.velocityX(X, Y);
           VecField[1] = Setup.velocityY(X, Y);
        },
-       NormalVelEdge, EdgeComponent::Normal, Geom, Mesh, NVertLevels);
+       NormalVelEdge, EdgeComponent::Normal, Geom, Mesh);
 
    // need to override FVertex with prescribed values
-   // cannot use setScalar because it doesn't support setting 1D arrays
    const auto &FVertex = Mesh->FVertex;
 
-   auto XVertex = createDeviceMirrorCopy(Mesh->XVertexH);
-   auto YVertex = createDeviceMirrorCopy(Mesh->YVertexH);
-
-   auto LonVertex = createDeviceMirrorCopy(Mesh->LonVertexH);
-   auto LatVertex = createDeviceMirrorCopy(Mesh->LatVertexH);
-
-   parallelFor(
-       {Mesh->NVerticesOwned}, KOKKOS_LAMBDA(int IVertex) {
-          if (Geom == Geometry::Planar) {
-             const Real XV    = XVertex(IVertex);
-             const Real YV    = YVertex(IVertex);
-             FVertex(IVertex) = Setup.planetaryVorticity(XV, YV);
-          } else {
-             const Real XV    = LonVertex(IVertex);
-             const Real YV    = LatVertex(IVertex);
-             FVertex(IVertex) = Setup.planetaryVorticity(XV, YV);
-          }
-       });
-
-   auto MyHalo = Halo::getDefault();
-   Err += MyHalo->exchangeFullArrayHalo(FVertex, OnVertex);
+   Err += setScalar(
+       KOKKOS_LAMBDA(Real X, Real Y) { return Setup.planetaryVorticity(X, Y); },
+       FVertex, Geom, Mesh, OnVertex);
 
    return Err;
 }
@@ -348,15 +352,13 @@ int testKineticAuxVars(const Array2DReal &LayerThicknessCell,
                                       Mesh->NCellsOwned, NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.kineticEnergy(X, Y); },
-       ExactKineticEnergyCell, Geom, Mesh, OnCell, NVertLevels,
-       ExchangeHalos::No);
+       ExactKineticEnergyCell, Geom, Mesh, OnCell, ExchangeHalos::No);
 
    Array2DReal ExactVelocityDivCell("ExactVelocityDivCell", Mesh->NCellsOwned,
                                     NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.divergence(X, Y); },
-       ExactVelocityDivCell, Geom, Mesh, OnCell, NVertLevels,
-       ExchangeHalos::No);
+       ExactVelocityDivCell, Geom, Mesh, OnCell, ExchangeHalos::No);
 
    // Compute numerical result
 
@@ -373,18 +375,69 @@ int testKineticAuxVars(const Array2DReal &LayerThicknessCell,
 
    ErrorMeasures KineticEnergyErrors;
    Err += computeErrors(KineticEnergyErrors, NumKineticEnergyCell,
-                        ExactKineticEnergyCell, Mesh, OnCell, NVertLevels);
+                        ExactKineticEnergyCell, Mesh, OnCell);
    Err += checkErrors("AuxVarsTest", "KineticEnergy", KineticEnergyErrors,
                       Setup.ExpectedKineticEnergyErrors, RTol);
 
    ErrorMeasures VelocityDivErrors;
    Err += computeErrors(VelocityDivErrors, NumVelocityDivCell,
-                        ExactVelocityDivCell, Mesh, OnCell, NVertLevels);
+                        ExactVelocityDivCell, Mesh, OnCell);
    Err += checkErrors("AuxVarsTest", "VelocityDiv", VelocityDivErrors,
                       Setup.ExpectedVelocityDivErrors, RTol);
 
    if (Err == 0) {
       LOG_INFO("AuxVarsTest: KineticAuxVars PASS");
+   }
+
+   return Err;
+}
+
+int testWindForcingAuxVars(Real RTol) {
+   int Err = 0;
+   TestSetup Setup;
+
+   const auto Mesh = HorzMesh::getDefault();
+
+   // Compute exact result
+
+   Array1DReal ExactNormalStressEdge("ExactNormalStressEdge",
+                                     Mesh->NEdgesOwned);
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+          VecField[0] = Setup.windStressX(X, Y);
+          VecField[1] = Setup.windStressY(X, Y);
+       },
+       ExactNormalStressEdge, EdgeComponent::Normal, Geom, Mesh,
+       ExchangeHalos::No);
+
+   WindForcingAuxVars WindForcingAux("", Mesh);
+   WindForcingAux.InterpChoice = InterpCellToEdgeOption::Anisotropic;
+
+   // Set inputs
+   Err += setScalar(
+       KOKKOS_LAMBDA(Real X, Real Y) { return Setup.windStressX(X, Y); },
+       WindForcingAux.ZonalStressCell, Geom, Mesh, OnCell);
+
+   Err += setScalar(
+       KOKKOS_LAMBDA(Real X, Real Y) { return Setup.windStressY(X, Y); },
+       WindForcingAux.MeridStressCell, Geom, Mesh, OnCell);
+
+   // Compute numerical result
+   parallelFor(
+       {Mesh->NEdgesOwned},
+       KOKKOS_LAMBDA(int IEdge) { WindForcingAux.computeVarsOnEdge(IEdge); });
+   const auto &NumNormalStressEdge = WindForcingAux.NormalStressEdge;
+
+   // Compute error measures and check error values
+   ErrorMeasures NormalStressErrors;
+   Err += computeErrors(NormalStressErrors, NumNormalStressEdge,
+                        ExactNormalStressEdge, Mesh, OnEdge);
+
+   Err += checkErrors("AuxVarsTest", "NormalStress", NormalStressErrors,
+                      Setup.ExpectedNormalStressErrors, RTol);
+
+   if (Err == 0) {
+      LOG_INFO("AuxVarsTest: WindForcingAuxVars PASS");
    }
 
    return Err;
@@ -402,7 +455,7 @@ int testLayerThicknessAuxVars(const Array2DReal &LayerThickCell,
    Array2DReal ExactThickEdge("ExactThickEdge", Mesh->NEdgesOwned, NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.layerThickness(X, Y); },
-       ExactThickEdge, Geom, Mesh, OnEdge, NVertLevels, ExchangeHalos::No);
+       ExactThickEdge, Geom, Mesh, OnEdge, ExchangeHalos::No);
 
    // Compute numerical result
 
@@ -421,13 +474,13 @@ int testLayerThicknessAuxVars(const Array2DReal &LayerThickCell,
 
    ErrorMeasures FluxThickErrors;
    Err += computeErrors(FluxThickErrors, NumFluxLayerThickEdge, ExactThickEdge,
-                        Mesh, OnEdge, NVertLevels);
+                        Mesh, OnEdge);
    Err += checkErrors("AuxVarsTest", "FluxThick", FluxThickErrors,
                       Setup.ExpectedFluxThickErrors, RTol);
 
    ErrorMeasures MeanThickErrors;
    Err += computeErrors(MeanThickErrors, NumMeanLayerThickEdge, ExactThickEdge,
-                        Mesh, OnEdge, NVertLevels);
+                        Mesh, OnEdge);
    Err += checkErrors("AuxVarsTest", "MeanThick", MeanThickErrors,
                       Setup.ExpectedMeanThickErrors, RTol);
 
@@ -453,8 +506,7 @@ int testVorticityAuxVars(const Array2DReal &LayerThickCell,
                                   NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.relativeVorticity(X, Y); },
-       ExactRelVortVertex, Geom, Mesh, OnVertex, NVertLevels,
-       ExchangeHalos::No);
+       ExactRelVortVertex, Geom, Mesh, OnVertex, ExchangeHalos::No);
 
    Array2DReal ExactNormRelVortVertex("ExactNormRelVortVertex",
                                       Mesh->NVerticesOwned, NVertLevels);
@@ -462,8 +514,7 @@ int testVorticityAuxVars(const Array2DReal &LayerThickCell,
        KOKKOS_LAMBDA(Real X, Real Y) {
           return Setup.normalizedRelativeVorticity(X, Y);
        },
-       ExactNormRelVortVertex, Geom, Mesh, OnVertex, NVertLevels,
-       ExchangeHalos::No);
+       ExactNormRelVortVertex, Geom, Mesh, OnVertex, ExchangeHalos::No);
 
    Array2DReal ExactNormPlanetVortVertex("ExactNormPlanetVortVertex",
                                          Mesh->NVerticesOwned, NVertLevels);
@@ -471,8 +522,7 @@ int testVorticityAuxVars(const Array2DReal &LayerThickCell,
        KOKKOS_LAMBDA(Real X, Real Y) {
           return Setup.normalizedPlanetaryVorticity(X, Y);
        },
-       ExactNormPlanetVortVertex, Geom, Mesh, OnVertex, NVertLevels,
-       ExchangeHalos::No);
+       ExactNormPlanetVortVertex, Geom, Mesh, OnVertex, ExchangeHalos::No);
 
    // Compute numerical results for vertex variables
 
@@ -491,20 +541,20 @@ int testVorticityAuxVars(const Array2DReal &LayerThickCell,
 
    ErrorMeasures RelVortVertexErrors;
    Err += computeErrors(RelVortVertexErrors, NumRelVortVertex,
-                        ExactRelVortVertex, Mesh, OnVertex, NVertLevels);
+                        ExactRelVortVertex, Mesh, OnVertex);
    Err += checkErrors("AuxVarsTest", "RelVortVertex", RelVortVertexErrors,
                       Setup.ExpectedRelVortVertexErrors, RTol);
 
    ErrorMeasures NormRelVortVertexErrors;
    Err += computeErrors(NormRelVortVertexErrors, NumNormRelVortVertex,
-                        ExactNormRelVortVertex, Mesh, OnVertex, NVertLevels);
+                        ExactNormRelVortVertex, Mesh, OnVertex);
    Err +=
        checkErrors("AuxVarsTest", "NormRelVortVertex", NormRelVortVertexErrors,
                    Setup.ExpectedNormRelVortVertexErrors, RTol);
 
    ErrorMeasures NormPlanetVortVertexErrors;
    Err += computeErrors(NormPlanetVortVertexErrors, NumNormPlanetVortVertex,
-                        ExactNormPlanetVortVertex, Mesh, OnVertex, NVertLevels);
+                        ExactNormPlanetVortVertex, Mesh, OnVertex);
    Err += checkErrors("AuxVarsTest", "NormPlanetVortVertex",
                       NormPlanetVortVertexErrors,
                       Setup.ExpectedNormPlanetVortVertexErrors, RTol);
@@ -517,8 +567,7 @@ int testVorticityAuxVars(const Array2DReal &LayerThickCell,
        KOKKOS_LAMBDA(Real X, Real Y) {
           return Setup.normalizedRelativeVorticity(X, Y);
        },
-       ExactNormRelVortEdge, Geom, Mesh, OnEdge, NVertLevels,
-       ExchangeHalos::No);
+       ExactNormRelVortEdge, Geom, Mesh, OnEdge, ExchangeHalos::No);
 
    Array2DReal ExactNormPlanetVortEdge("ExactNormPlanetVortEdge",
                                        Mesh->NEdgesOwned, NVertLevels);
@@ -526,8 +575,7 @@ int testVorticityAuxVars(const Array2DReal &LayerThickCell,
        KOKKOS_LAMBDA(Real X, Real Y) {
           return Setup.normalizedPlanetaryVorticity(X, Y);
        },
-       ExactNormPlanetVortEdge, Geom, Mesh, OnEdge, NVertLevels,
-       ExchangeHalos::No);
+       ExactNormPlanetVortEdge, Geom, Mesh, OnEdge, ExchangeHalos::No);
 
    // Compute numerical results for vertex variables
 
@@ -542,13 +590,13 @@ int testVorticityAuxVars(const Array2DReal &LayerThickCell,
 
    ErrorMeasures NormRelVortEdgeErrors;
    Err += computeErrors(NormRelVortEdgeErrors, NumNormRelVortEdge,
-                        ExactNormRelVortEdge, Mesh, OnEdge, NVertLevels);
+                        ExactNormRelVortEdge, Mesh, OnEdge);
    Err += checkErrors("AuxVarsTest", "NormRelVortEdge", NormRelVortEdgeErrors,
                       Setup.ExpectedNormRelVortEdgeErrors, RTol);
 
    ErrorMeasures NormPlanetVortEdgeErrors;
    Err += computeErrors(NormPlanetVortEdgeErrors, NumNormPlanetVortEdge,
-                        ExactNormPlanetVortEdge, Mesh, OnEdge, NVertLevels);
+                        ExactNormPlanetVortEdge, Mesh, OnEdge);
    Err += checkErrors("AuxVarsTest", "NormPlanetVortEdge",
                       NormPlanetVortEdgeErrors,
                       Setup.ExpectedNormPlanetVortEdgeErrors, RTol);
@@ -574,13 +622,13 @@ int testVelocityDel2AuxVars(Real RTol) {
                                     NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.divergence(X, Y); },
-       ExactVelocityDivCell, Geom, Mesh, OnCell, NVertLevels);
+       ExactVelocityDivCell, Geom, Mesh, OnCell);
 
    Array2DReal ExactRelVortVertex("ExactRelVortVertex", Mesh->NVerticesSize,
                                   NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.relativeVorticity(X, Y); },
-       ExactRelVortVertex, Geom, Mesh, OnVertex, NVertLevels);
+       ExactRelVortVertex, Geom, Mesh, OnVertex);
 
    // Compute exact Del2
 
@@ -590,8 +638,7 @@ int testVelocityDel2AuxVars(Real RTol) {
           VecField[0] = Setup.velocityDel2X(X, Y);
           VecField[1] = Setup.velocityDel2Y(X, Y);
        },
-       ExactDel2Edge, EdgeComponent::Normal, Geom, Mesh, NVertLevels,
-       ExchangeHalos::No);
+       ExactDel2Edge, EdgeComponent::Normal, Geom, Mesh, ExchangeHalos::No);
 
    // Compute numerical Del2
 
@@ -606,8 +653,7 @@ int testVelocityDel2AuxVars(Real RTol) {
    // Compute error measures and check errors for Del2
 
    ErrorMeasures Del2Errors;
-   Err += computeErrors(Del2Errors, NumDel2Edge, ExactDel2Edge, Mesh, OnEdge,
-                        NVertLevels);
+   Err += computeErrors(Del2Errors, NumDel2Edge, ExactDel2Edge, Mesh, OnEdge);
 
    Err += checkErrors("AuxVarsTest", "Del2", Del2Errors,
                       Setup.ExpectedDel2Errors, RTol);
@@ -618,7 +664,7 @@ int testVelocityDel2AuxVars(Real RTol) {
                                 NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.velocityDel2Div(X, Y); },
-       ExactDel2DivCell, Geom, Mesh, OnCell, NVertLevels, ExchangeHalos::No);
+       ExactDel2DivCell, Geom, Mesh, OnCell, ExchangeHalos::No);
 
    // Compute numerical Del2Div
 
@@ -632,7 +678,7 @@ int testVelocityDel2AuxVars(Real RTol) {
 
    ErrorMeasures Del2DivErrors;
    Err += computeErrors(Del2DivErrors, NumDel2DivCell, ExactDel2DivCell, Mesh,
-                        OnCell, NVertLevels);
+                        OnCell);
    Err += checkErrors("AuxVarsTest", "Del2Div", Del2DivErrors,
                       Setup.ExpectedDel2DivErrors, RTol);
 
@@ -642,8 +688,7 @@ int testVelocityDel2AuxVars(Real RTol) {
                                       Mesh->NVerticesOwned, NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.velocityDel2Curl(X, Y); },
-       ExactDel2RelVortVertex, Geom, Mesh, OnVertex, NVertLevels,
-       ExchangeHalos::No);
+       ExactDel2RelVortVertex, Geom, Mesh, OnVertex, ExchangeHalos::No);
 
    // Compute numerical Del2RelVort
 
@@ -658,7 +703,7 @@ int testVelocityDel2AuxVars(Real RTol) {
 
    ErrorMeasures Del2RelVortErrors;
    Err += computeErrors(Del2RelVortErrors, NumDel2RelVortVertex,
-                        ExactDel2RelVortVertex, Mesh, OnVertex, NVertLevels);
+                        ExactDel2RelVortVertex, Mesh, OnVertex);
    Err += checkErrors("AuxVarsTest", "Del2RelVort", Del2RelVortErrors,
                       Setup.ExpectedDel2RelVortErrors, RTol);
 
@@ -686,12 +731,12 @@ int testTracerAuxVars(const Array2DReal &LayerThickCell,
                              NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.tracer(X, Y); },
-       TracersOnCell, Geom, Mesh, OnCell, NVertLevels, NTracers);
+       TracersOnCell, Geom, Mesh, OnCell);
 
    Array2DReal LayerThickEdge("LayerThickEdge", Mesh->NEdgesSize, NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.layerThickness(X, Y); },
-       LayerThickEdge, Geom, Mesh, OnEdge, NVertLevels);
+       LayerThickEdge, Geom, Mesh, OnEdge);
 
    // Compute exact HTracerEdge
 
@@ -699,8 +744,7 @@ int testTracerAuxVars(const Array2DReal &LayerThickCell,
                             NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.thickTracer(X, Y); },
-       ExactHTrEdge, Geom, Mesh, OnEdge, NVertLevels, NTracers,
-       ExchangeHalos::No);
+       ExactHTrEdge, Geom, Mesh, OnEdge, ExchangeHalos::No);
 
    // Compute numerical HTracersEdge
 
@@ -716,8 +760,7 @@ int testTracerAuxVars(const Array2DReal &LayerThickCell,
    const auto &NumHTrEdge = TracerAux.HTracersEdge;
 
    ErrorMeasures HTracerErrors;
-   Err += computeErrors(HTracerErrors, NumHTrEdge, ExactHTrEdge, Mesh, OnEdge,
-                        NVertLevels, NTracers);
+   Err += computeErrors(HTracerErrors, NumHTrEdge, ExactHTrEdge, Mesh, OnEdge);
    Err += checkErrors("AuxVarsTest", "HTracers", HTracerErrors,
                       Setup.ExpectedHTracerErrors, RTol);
 
@@ -727,8 +770,7 @@ int testTracerAuxVars(const Array2DReal &LayerThickCell,
                                NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.del2Tracer(X, Y); },
-       ExactDel2TrCell, Geom, Mesh, OnCell, NVertLevels, NTracers,
-       ExchangeHalos::No);
+       ExactDel2TrCell, Geom, Mesh, OnCell, ExchangeHalos::No);
 
    // Compute numerical Del2TracerCell
 
@@ -745,7 +787,7 @@ int testTracerAuxVars(const Array2DReal &LayerThickCell,
 
    ErrorMeasures Del2TracerErrors;
    Err += computeErrors(Del2TracerErrors, NumDel2TrCell, ExactDel2TrCell, Mesh,
-                        OnCell, NVertLevels, NTracers);
+                        OnCell);
    Err += checkErrors("AuxVarsTest", "Del2Tracers", Del2TracerErrors,
                       Setup.ExpectedDel2TracerErrors, RTol);
 
@@ -822,6 +864,8 @@ int auxVarsTest(const std::string &mesh = DefaultMeshFile) {
    Err += testVelocityDel2AuxVars(RTol);
 
    Err += testTracerAuxVars(LayerThickCell, NormalVelEdge, RTol);
+
+   Err += testWindForcingAuxVars(RTol);
 
    if (Err == 0) {
       LOG_INFO("AuxVarsTest: Successful completion");

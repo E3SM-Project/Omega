@@ -29,14 +29,18 @@ struct TestSetupPlane {
    Real Lx = 1;
    Real Ly = std::sqrt(3) / 2;
 
-   ErrorMeasures ExpectedDivErrors   = {0.00124886886594427027,
-                                        0.00124886886590974385};
-   ErrorMeasures ExpectedGradErrors  = {0.00125026071878537952,
-                                        0.00134354611117262204};
-   ErrorMeasures ExpectedCurlErrors  = {0.161365663569699946,
-                                        0.161348016897141039};
-   ErrorMeasures ExpectedReconErrors = {0.00450897496974901352,
-                                        0.00417367308684470691};
+   ErrorMeasures ExpectedDivErrors         = {0.00124886886594427027,
+                                              0.00124886886590974385};
+   ErrorMeasures ExpectedGradErrors        = {0.00125026071878537952,
+                                              0.00134354611117262204};
+   ErrorMeasures ExpectedCurlErrors        = {0.161365663569699946,
+                                              0.161348016897141039};
+   ErrorMeasures ExpectedReconErrors       = {0.00450897496974901352,
+                                              0.00417367308684470691};
+   ErrorMeasures ExpectedAnisoInterpErrors = {0.0026762081503380526,
+                                              0.003058198461518835};
+   ErrorMeasures ExpectedIsoInterpErrors   = {0.004279097382993937,
+                                              0.004200067675522098};
 
    KOKKOS_FUNCTION Real exactScalar(Real X, Real Y) const {
       return std::sin(2 * Pi * X / Lx) * std::sin(2 * Pi * Y / Ly);
@@ -76,14 +80,18 @@ struct TestSetupSphere1 {
    // TODO: get this from the mesh
    Real Radius = 6371220;
 
-   ErrorMeasures ExpectedDivErrors   = {0.013659577398978353,
-                                        0.00367052484586382743};
-   ErrorMeasures ExpectedGradErrors  = {0.00187912292540628936,
-                                        0.00149841802817334306};
-   ErrorMeasures ExpectedCurlErrors  = {0.0271404735181308317,
-                                        0.025202316610921989};
-   ErrorMeasures ExpectedReconErrors = {0.0206375134079833517,
-                                        0.00692590524910695858};
+   ErrorMeasures ExpectedDivErrors         = {0.013659577398978353,
+                                              0.00367052484586382743};
+   ErrorMeasures ExpectedGradErrors        = {0.00187912292540628936,
+                                              0.00149841802817334306};
+   ErrorMeasures ExpectedCurlErrors        = {0.0271404735181308317,
+                                              0.025202316610921989};
+   ErrorMeasures ExpectedReconErrors       = {0.0206375134079833517,
+                                              0.00692590524910695858};
+   ErrorMeasures ExpectedAnisoInterpErrors = {0.0024015775047603197,
+                                              0.0018490649516209202};
+   ErrorMeasures ExpectedIsoInterpErrors   = {0.007438367234983312,
+                                              0.0029921955942401697};
 
    KOKKOS_FUNCTION Real exactScalar(Real Lon, Real Lat) const {
       return Radius * std::cos(Lon) * std::pow(std::cos(Lat), 4);
@@ -122,14 +130,18 @@ struct TestSetupSphere2 {
    // TODO: get this from the mesh
    Real Radius = 6371220;
 
-   ErrorMeasures ExpectedDivErrors   = {1.37734693033362766e-10,
-                                        0.000484370621558727582};
-   ErrorMeasures ExpectedGradErrors  = {0.000906351303388669991,
-                                        0.000949206041390823676};
-   ErrorMeasures ExpectedCurlErrors  = {0.00433205620592059647,
-                                        0.00204725417666192042};
-   ErrorMeasures ExpectedReconErrors = {0.0254271921029878764,
-                                        0.00419630561428921064};
+   ErrorMeasures ExpectedDivErrors         = {1.37734693033362766e-10,
+                                              0.000484370621558727582};
+   ErrorMeasures ExpectedGradErrors        = {0.000906351303388669991,
+                                              0.000949206041390823676};
+   ErrorMeasures ExpectedCurlErrors        = {0.00433205620592059647,
+                                              0.00204725417666192042};
+   ErrorMeasures ExpectedReconErrors       = {0.0254271921029878764,
+                                              0.00419630561428921064};
+   ErrorMeasures ExpectedAnisoInterpErrors = {0.0014465229922953644,
+                                              0.001643777653612931};
+   ErrorMeasures ExpectedIsoInterpErrors   = {0.004755875091568591,
+                                              0.0025556382734782538};
 
    KOKKOS_FUNCTION Real exactScalar(Real Lon, Real Lat) const {
       return -Radius * std::pow(std::sin(Lat), 2);
@@ -184,13 +196,13 @@ int testDivergence(Real RTol) {
           VecField[0] = Setup.exactVecX(X, Y);
           VecField[1] = Setup.exactVecY(X, Y);
        },
-       VecEdge, EdgeComponent::Normal, Geom, Mesh, NVertLevels);
+       VecEdge, EdgeComponent::Normal, Geom, Mesh);
 
    // Compute exact result
    Array2DReal ExactDivCell("ExactDivCell", Mesh->NCellsOwned, NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.exactDivVec(X, Y); },
-       ExactDivCell, Geom, Mesh, OnCell, NVertLevels, ExchangeHalos::No);
+       ExactDivCell, Geom, Mesh, OnCell, ExchangeHalos::No);
 
    // Compute numerical result
    Array2DReal NumDivCell("NumDivCell", Mesh->NCellsOwned, NVertLevels);
@@ -202,8 +214,7 @@ int testDivergence(Real RTol) {
 
    // Compute error measures
    ErrorMeasures DivErrors;
-   Err += computeErrors(DivErrors, NumDivCell, ExactDivCell, Mesh, OnCell,
-                        NVertLevels);
+   Err += computeErrors(DivErrors, NumDivCell, ExactDivCell, Mesh, OnCell);
    // Check error values
    Err += checkErrors("OperatorsTest", "Divergence", DivErrors,
                       Setup.ExpectedDivErrors, RTol);
@@ -228,7 +239,7 @@ int testGradient(Real RTol) {
        KOKKOS_LAMBDA(Real Coord1, Real Coord2) {
           return Setup.exactScalar(Coord1, Coord2);
        },
-       ScalarCell, Geom, Mesh, OnCell, NVertLevels);
+       ScalarCell, Geom, Mesh, OnCell);
 
    // Compute exact result
    Array2DReal ExactGradEdge("ExactGradEdge", Mesh->NEdgesOwned, NVertLevels);
@@ -237,8 +248,7 @@ int testGradient(Real RTol) {
           VecField[0] = Setup.exactGradScalarX(X, Y);
           VecField[1] = Setup.exactGradScalarY(X, Y);
        },
-       ExactGradEdge, EdgeComponent::Normal, Geom, Mesh, NVertLevels,
-       ExchangeHalos::No);
+       ExactGradEdge, EdgeComponent::Normal, Geom, Mesh, ExchangeHalos::No);
 
    // Compute numerical result
    GradientOnEdge GradientEdge(Mesh);
@@ -250,8 +260,7 @@ int testGradient(Real RTol) {
 
    // Compute error measures
    ErrorMeasures GradErrors;
-   Err += computeErrors(GradErrors, NumGradEdge, ExactGradEdge, Mesh, OnEdge,
-                        NVertLevels);
+   Err += computeErrors(GradErrors, NumGradEdge, ExactGradEdge, Mesh, OnEdge);
    // Check error values
    Err += checkErrors("OperatorsTest", "Gradient", GradErrors,
                       Setup.ExpectedGradErrors, RTol);
@@ -276,14 +285,14 @@ int testCurl(Real RTol) {
           VecField[0] = Setup.exactVecX(X, Y);
           VecField[1] = Setup.exactVecY(X, Y);
        },
-       VecEdge, EdgeComponent::Normal, Geom, Mesh, NVertLevels);
+       VecEdge, EdgeComponent::Normal, Geom, Mesh);
 
    // Compute exact result
    Array2DReal ExactCurlVertex("ExactCurlVertex", Mesh->NVerticesOwned,
                                NVertLevels);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.exactCurlVec(X, Y); },
-       ExactCurlVertex, Geom, Mesh, OnVertex, NVertLevels, ExchangeHalos::No);
+       ExactCurlVertex, Geom, Mesh, OnVertex, ExchangeHalos::No);
 
    // Compute numerical result
    Array2DReal NumCurlVertex("NumCurlVertex", Mesh->NVerticesOwned,
@@ -297,7 +306,7 @@ int testCurl(Real RTol) {
    // Compute error measures
    ErrorMeasures CurlErrors;
    Err += computeErrors(CurlErrors, NumCurlVertex, ExactCurlVertex, Mesh,
-                        OnVertex, NVertLevels);
+                        OnVertex);
    // Check error values
    Err += checkErrors("OperatorsTest", "Curl", CurlErrors,
                       Setup.ExpectedCurlErrors, RTol);
@@ -323,7 +332,7 @@ int testRecon(Real RTol) {
           VecField[0] = Setup.exactVecX(X, Y);
           VecField[1] = Setup.exactVecY(X, Y);
        },
-       VecEdge, EdgeComponent::Normal, Geom, Mesh, NVertLevels);
+       VecEdge, EdgeComponent::Normal, Geom, Mesh);
 
    // Compute exact result
    Array2DReal ExactReconEdge("ExactReconEdge", Mesh->NEdgesOwned, NVertLevels);
@@ -333,7 +342,7 @@ int testRecon(Real RTol) {
           VecField[0] = Setup.exactVecX(X, Y);
           VecField[1] = Setup.exactVecY(X, Y);
        },
-       ExactReconEdge, EdgeComponent::Tangential, Geom, Mesh, NVertLevels,
+       ExactReconEdge, EdgeComponent::Tangential, Geom, Mesh,
        ExchangeHalos::No);
 
    // Compute numerical result
@@ -346,14 +355,70 @@ int testRecon(Real RTol) {
 
    // Compute error measures
    ErrorMeasures ReconErrors;
-   Err += computeErrors(ReconErrors, NumReconEdge, ExactReconEdge, Mesh, OnEdge,
-                        NVertLevels);
+   Err +=
+       computeErrors(ReconErrors, NumReconEdge, ExactReconEdge, Mesh, OnEdge);
    // Check error values
    Err += checkErrors("OperatorsTest", "Recon", ReconErrors,
                       Setup.ExpectedReconErrors, RTol);
 
    if (Err == 0) {
       LOG_INFO("OperatorsTest: Recon PASS");
+   }
+
+   return Err;
+}
+
+int testInterpCellToEdge(Real RTol) {
+   int Err = 0;
+   TestSetup Setup;
+   const auto &Mesh = HorzMesh::getDefault();
+
+   // Prepare operator input
+   Array1DReal ScalarCell("ScalarCell", Mesh->NCellsSize);
+   Err += setScalar(
+       KOKKOS_LAMBDA(Real Coord1, Real Coord2) {
+          return Setup.exactScalar(Coord1, Coord2);
+       },
+       ScalarCell, Geom, Mesh, OnCell);
+
+   // Compute exact result
+   Array1DReal ExactScalarEdge("ExactScalarEdge", Mesh->NEdgesOwned);
+   Err += setScalar(
+       KOKKOS_LAMBDA(Real Coord1, Real Coord2) {
+          return Setup.exactScalar(Coord1, Coord2);
+       },
+       ExactScalarEdge, Geom, Mesh, OnEdge, ExchangeHalos::No);
+
+   // Compute numerical result
+   Array1DReal IsoNumScalarEdge("IsoNumScalarEdge", Mesh->NEdgesOwned);
+   Array1DReal AnisoNumScalarEdge("AnisoNumScalarEdge", Mesh->NEdgesOwned);
+   InterpCellToEdge Interp(Mesh);
+   parallelFor(
+       {Mesh->NEdgesOwned}, KOKKOS_LAMBDA(int IEdge) {
+          AnisoNumScalarEdge(IEdge) =
+              Interp(IEdge, ScalarCell, InterpCellToEdgeOption::Anisotropic);
+          IsoNumScalarEdge(IEdge) =
+              Interp(IEdge, ScalarCell, InterpCellToEdgeOption::Isotropic);
+       });
+
+   // Compute error measures
+   ErrorMeasures AnisoInterpErrors;
+   Err += computeErrors(AnisoInterpErrors, AnisoNumScalarEdge, ExactScalarEdge,
+                        Mesh, OnEdge);
+
+   ErrorMeasures IsoInterpErrors;
+   Err += computeErrors(IsoInterpErrors, IsoNumScalarEdge, ExactScalarEdge,
+                        Mesh, OnEdge);
+
+   // Check error values
+   Err += checkErrors("OperatorsTest", "AnisoInterpCellToEdge",
+                      AnisoInterpErrors, Setup.ExpectedAnisoInterpErrors, RTol);
+
+   Err += checkErrors("OperatorsTest", "IsoInterpCellToEdge", IsoInterpErrors,
+                      Setup.ExpectedIsoInterpErrors, RTol);
+
+   if (Err == 0) {
+      LOG_INFO("OperatorsTest: InterpCellToEdge PASS");
    }
 
    return Err;
@@ -414,6 +479,7 @@ int operatorsTest(const std::string &MeshFile = DefaultMeshFile) {
    Err += testGradient(RTol);
    Err += testCurl(RTol);
    Err += testRecon(RTol);
+   Err += testInterpCellToEdge(RTol);
 
    if (Err == 0) {
       LOG_INFO("OperatorsTest: Successful completion");
