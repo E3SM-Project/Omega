@@ -102,7 +102,7 @@ class PotentialVortHAdvOnEdge {
 
       for (int KVec = 0; KVec < VecLength; ++KVec) {
          const I4 K = KStart + KVec;
-         Tend(IEdge, K) += VortTmp[KVec];
+         Tend(IEdge, K) += EdgeMask(IEdge, K) * VortTmp[KVec];
       }
    }
 
@@ -110,6 +110,7 @@ class PotentialVortHAdvOnEdge {
    Array1DI4 NEdgesOnEdge;
    Array2DI4 EdgesOnEdge;
    Array2DReal WeightsOnEdge;
+   Array2DReal EdgeMask;
 };
 
 /// Gradient of kinetic energy defined on edges, for momentum equation
@@ -132,13 +133,15 @@ class KEGradOnEdge {
 
       for (int KVec = 0; KVec < VecLength; ++KVec) {
          const I4 K = KStart + KVec;
-         Tend(IEdge, K) -= (KECell(JCell1, K) - KECell(JCell0, K)) * InvDcEdge;
+         Tend(IEdge, K) -= EdgeMask(IEdge, K) *
+                           (KECell(JCell1, K) - KECell(JCell0, K)) * InvDcEdge;
       }
    }
 
  private:
    Array2DI4 CellsOnEdge;
    Array1DReal DcEdge;
+   Array2DReal EdgeMask;
 };
 
 /// Gradient of sea surface height defined on edges multipled by gravitational
@@ -162,8 +165,9 @@ class SSHGradOnEdge {
 
       for (int KVec = 0; KVec < VecLength; ++KVec) {
          const I4 K = KStart + KVec;
-         Tend(IEdge, K) -=
-             Grav * (SshCell(ICell1, K) - SshCell(ICell0, K)) * InvDcEdge;
+         Tend(IEdge, K) -= EdgeMask(IEdge, K) * Grav *
+                           (SshCell(ICell1, K) - SshCell(ICell0, K)) *
+                           InvDcEdge;
       }
    }
 
@@ -171,6 +175,7 @@ class SSHGradOnEdge {
    Real Grav = 9.80665_Real;
    Array2DI4 CellsOnEdge;
    Array1DReal DcEdge;
+   Array2DReal EdgeMask;
 };
 
 /// Laplacian horizontal mixing, for momentum equation
@@ -277,6 +282,9 @@ class WindForcingOnEdge {
    bool Enabled;
    Real SaltWaterDensity;
 
+   /// constructor declaration
+   WindForcingOnEdge(const HorzMesh *Mesh);
+
    /// The functor takes the edge index, vertical chunk index, and arrays for
    /// normal wind stress and edge layer thickness, outputs tendency array
    KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge, I4 KChunk,
@@ -286,10 +294,13 @@ class WindForcingOnEdge {
          const I4 K = 0;
 
          const Real InvThickEdge = 1._Real / LayerThickEdge(IEdge, K);
-         Tend(IEdge, K) +=
-             InvThickEdge * NormalStressEdge(IEdge) / SaltWaterDensity;
+         Tend(IEdge, K) += EdgeMask(IEdge, K) * InvThickEdge *
+                           NormalStressEdge(IEdge) / SaltWaterDensity;
       }
    }
+
+ private:
+   Array2DReal EdgeMask;
 };
 
 /// Bottom drag
@@ -317,13 +328,14 @@ class BottomDragOnEdge {
           Kokkos::sqrt(KECell(JCell0, KBot) + KECell(JCell1, KBot));
 
       const Real InvThickEdge = 1._Real / LayerThickEdge(IEdge, KBot);
-      Tend(IEdge, KBot) -=
-          Coeff * VelNormEdge * InvThickEdge * NormalVelEdge(IEdge, KBot);
+      Tend(IEdge, KBot) -= EdgeMask(IEdge, KBot) * Coeff * VelNormEdge *
+                           InvThickEdge * NormalVelEdge(IEdge, KBot);
    }
 
  private:
    I4 NVertLevels;
    Array2DI4 CellsOnEdge;
+   Array2DReal EdgeMask;
 };
 
 // Tracer horizontal advection term
@@ -347,7 +359,8 @@ class TracerHorzAdvOnCell {
 
          for (int KVec = 0; KVec < VecLength; ++KVec) {
             const I4 K = KStart + KVec;
-            HAdvTmp[KVec] -= DvEdge(JEdge) * EdgeSignOnCell(ICell, J) *
+            HAdvTmp[KVec] -= EdgeMask(JEdge, K) * DvEdge(JEdge) *
+                             EdgeSignOnCell(ICell, J) *
                              HTracersOnEdge(L, JEdge, K) *
                              NormVelEdge(JEdge, K) * InvAreaCell;
          }
@@ -365,6 +378,7 @@ class TracerHorzAdvOnCell {
    Array2DReal EdgeSignOnCell;
    Array1DReal DvEdge;
    Array1DReal AreaCell;
+   Array2DReal EdgeMask;
 };
 
 // Tracer horizontal diffusion term
@@ -400,8 +414,8 @@ class TracerDiffOnCell {
             const Real TracerGrad =
                 (TracerCell(L, JCell1, K) - TracerCell(L, JCell0, K));
 
-            DiffTmp[KVec] -= EdgeSignOnCell(ICell, J) * RTemp *
-                             MeanLayerThickEdge(JEdge, K) * TracerGrad;
+            DiffTmp[KVec] -= EdgeMask(JEdge, K) * EdgeSignOnCell(ICell, J) *
+                             RTemp * MeanLayerThickEdge(JEdge, K) * TracerGrad;
          }
       }
       for (int KVec = 0; KVec < VecLength; ++KVec) {
@@ -419,6 +433,7 @@ class TracerDiffOnCell {
    Array1DReal DcEdge;
    Array1DReal AreaCell;
    Array1DReal MeshScalingDel2;
+   Array2DReal EdgeMask;
 };
 
 // Tracer biharmonic horizontal mixing term
@@ -453,7 +468,8 @@ class TracerHyperDiffOnCell {
             const Real Del2TrGrad =
                 (TrDel2Cell(L, JCell1, K) - TrDel2Cell(L, JCell0, K));
 
-            HypTmp[KVec] -= EdgeSignOnCell(ICell, J) * RTemp * Del2TrGrad;
+            HypTmp[KVec] -= EdgeMask(JEdge, K) * EdgeSignOnCell(ICell, J) *
+                            RTemp * Del2TrGrad;
          }
       }
       for (int KVec = 0; KVec < VecLength; ++KVec) {
@@ -471,6 +487,7 @@ class TracerHyperDiffOnCell {
    Array1DReal DcEdge;
    Array1DReal AreaCell;
    Array1DReal MeshScalingDel4;
+   Array2DReal EdgeMask;
 };
 
 } // namespace OMEGA

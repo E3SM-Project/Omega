@@ -736,7 +736,7 @@ int testWindForcing(int NVertLevels) {
    // Compute numerical result
    Array2DReal NumWindForcing("NumWindForcing", Mesh->NEdgesOwned, NVertLevels);
 
-   WindForcingOnEdge WindForcingOnE;
+   WindForcingOnEdge WindForcingOnE(Mesh);
    WindForcingOnE.SaltWaterDensity = SaltWaterDensity;
 
    parallelFor(
