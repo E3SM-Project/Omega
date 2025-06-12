@@ -14,7 +14,8 @@ TracerAuxVars::TracerAuxVars(const std::string &AuxStateSuffix,
                       Mesh->NCellsSize, NVertLevels),
       NEdgesOnCell(Mesh->NEdgesOnCell), EdgesOnCell(Mesh->EdgesOnCell),
       CellsOnEdge(Mesh->CellsOnEdge), EdgeSignOnCell(Mesh->EdgeSignOnCell),
-      DcEdge(Mesh->DcEdge), DvEdge(Mesh->DvEdge), AreaCell(Mesh->AreaCell) {}
+      DcEdge(Mesh->DcEdge), DvEdge(Mesh->DvEdge), AreaCell(Mesh->AreaCell),
+      EdgeMask(Mesh->EdgeMask) {}
 
 void TracerAuxVars::registerFields(const std::string &AuxGroupName,
                                    const std::string &MeshName) const {
