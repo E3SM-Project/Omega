@@ -637,15 +637,16 @@ void HorzMesh::setMasks(int NVertLevels) {
 
    OMEGA_SCOPE(LocEdgeMask, EdgeMask);
    OMEGA_SCOPE(LocCellsOnEdge, CellsOnEdge);
+   OMEGA_SCOPE(LocNCellsAll, NCellsAll);
 
    deepCopy(EdgeMask, 1.0);
    parallelFor(
        {NEdgesAll, NVertLevels}, KOKKOS_LAMBDA(int Edge, int K) {
           const I4 Cell1 = LocCellsOnEdge(Edge, 0);
           const I4 Cell2 = LocCellsOnEdge(Edge, 1);
-          if (!(Cell1 >= 0 and Cell1 < NCellsAll) or
-              !(Cell2 >= 0 and Cell2 < NCellsAll)) {
-             LocEdgeMask(Edge, K) = 1.0;
+          if (!(Cell1 >= 0 and Cell1 < LocNCellsAll) or
+              !(Cell2 >= 0 and Cell2 < LocNCellsAll)) {
+             LocEdgeMask(Edge, K) = 0.0;
           }
        });
 
