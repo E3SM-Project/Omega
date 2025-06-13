@@ -439,7 +439,7 @@ Likewise, the stress tensor integrated over the surface may be converted to a vo
 
 $$
 \int_{\partial V(t)} \boldsymbol{\tau} \cdot \mathbf{n} \, dA
-= \int_{V(t)} \nabla \cdot \boldsymbol{\tau} \, dV
+= \int_{V(t)} \nabla_{3D} \cdot \boldsymbol{\tau} \, dV
 $$ (stress-Gauss)
 
 for clarity, this can be written in index notation as
@@ -468,7 +468,7 @@ Putting the pressure and stress term into [](h-momentum), and using Gauss' Theor
 $$
 & \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf u} \, dz \, dA
 +
-   \int_{A}\nabla \cdot \left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, {\bf u} \otimes {\bf u} \, dz \right) dA
+   \int_{A}\nabla_\perp \cdot \left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, {\bf u} \otimes {\bf u} \, dz \right) dA
  + \int_{A}\left[ \rho\, {\bf u} \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
  - \int_{A}\left[ \rho\, {\bf u} \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
 \\ & \; =
@@ -484,10 +484,10 @@ $$ (h-momentum-p-tau)
 Dividing by $\rho_0$ and taking vertical averages using [](#def-thickness) and [](#def-pseudo-thickness),
 
 $$
-& \frac{d}{dt} \int_{A} \tilde{h}\, \overline{  {\bf u} }^{\tilde z} \, dA
+\frac{d}{dt} \int_{A} \tilde{h}\, \overline{  {\bf u} }^{\tilde z} \, dA
 +
-   \int_{A}\nabla \cdot \left( \tilde{h}\, \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) dA
- + \int_{A}\left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{top}}} \, dA
+   \int_{A}\nabla_\perp \cdot \left( \tilde{h}\, \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) dA
+& + \int_{A}\left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{top}}} \, dA
  - \int_{A}\left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{bot}}} \, dA
 \\ & \; =
 - \int_{A} \tilde{h} \,\overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} \, dA
@@ -499,17 +499,84 @@ $$ (h-momentum-p-tau)
 Taking the limit as $A \rightarrow 0$, we arrive at the local, horizontally continuous form:
 
 $$
-& \frac{d\,\tilde{h}\, \overline{  {\bf u} }^{\tilde z} }{dt} 
-+
-   \nabla \cdot \left( \tilde{h}\, \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) 
+\frac{\partial \tilde{h}\, \overline{  {\bf u} }^{\tilde z} }{\partial t} 
+& +
+   \nabla_\perp \cdot \left( \tilde{h}\, \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) 
  + \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{top}}} 
  - \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{bot}}} 
-\\ & \; =
+\\ & =
 -  \tilde{h} \,\overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} 
 -  \tilde{h} \,\overline{  \nabla_\perp \Phi }^{\tilde z} 
 -  \frac{1}{\rho_0} \overline{\nabla_{\perp} p}^{z}  
 +  \frac{1}{\rho_0} \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z 
-$$ (momentum-layered)
+$$ (momentum-layered-differential-1)
+
+The first two terms are the material derivative, confined within the horizontal layer. Using the product rule, and layered mass conservation [](#layer-mass),
+
+$$
+\frac{\partial \tilde{h}\, \overline{  {\bf u} }^{\tilde z} }{\partial t} 
++ \nabla_\perp \cdot \left( \tilde{h}\, \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) 
+&= 
+\frac{D_\perp \tilde{h}\, \overline{  {\bf u} }^{\tilde z} }{D t} \\
+&=
+\tilde{h}\frac{D_\perp  \overline{  {\bf u} }^{\tilde z} }{D t} 
++
+\overline{ {\bf u} }^{\tilde z} \frac{D_\perp \tilde{h}}{D t} \\
+&= 
+\tilde{h}\left(
+  \frac{\partial  \overline{  {\bf u} }^{\tilde z} }{\partial t} 
++ \nabla_\perp \cdot \left( \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right)  \right)
+- \overline{ {\bf u} }^{\tilde z} \left( 
+   \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} 
+ - \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
+\right) 
+$$ (2D-material-der-product)
+
+We now substitute [](#2D-material-der-product) into [](#momentum-layered-differential-1) and divide by $\tilde h$ to get
+
+$$
+ \frac{\partial \overline{  {\bf u} }^{\tilde z} }{\partial t} 
++
+   \nabla_\perp \cdot \left(  \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) 
+& + \frac{\left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{top}}} 
+ - \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{bot}}} }{\tilde h}
+-   \frac{\overline{ {\bf u} }^{\tilde z}}{\tilde{h}}  \left( 
+   \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} 
+ - \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}\right)
+\\ &  =
+-  \overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} 
+-  \overline{  \nabla_\perp \Phi }^{\tilde z} 
+-  \frac{1}{\rho_0 \, \tilde{h}} \overline{\nabla_{\perp} p}^{z}  
++  \frac{1}{\rho_0 \, \tilde{h}} \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z 
+$$ (momentum-layered-differential-2)
+
+Note that the coefficient of the pressure gradient and stress tensor can be rewritten as
+
+$$
+\frac{1}{\rho_0 \, \tilde{h}} = 
+\frac{1}{\rho_0 \,\frac{1}{\rho_0} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho dz}
+= \frac{1} {\overline{\rho}^z}
+= \overline{\alpha}^z,
+$$ (grad-p-coeff)
+
+where $\alpha$ is the specific volume. Now [](#momentum-layered-differential-2) becomes
+
+$$
+ \frac{\partial \overline{  {\bf u} }^{\tilde z} }{\partial t} 
+ +
+   \nabla_\perp \cdot \left(  \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) 
+& + \frac{1}{\tilde h}\left(
+ \left[ {\bf u}\right]_{z=z^{\text{top}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{top}}} 
+ - 
+  \frac{1}{\tilde h}\left(
+ \left[ {\bf u}\right]_{z=z^{\text{bot}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{bot}}} 
+\\ &  =
+-  \overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} 
+-  \overline{  \nabla_\perp \Phi }^{\tilde z} 
+-  \overline{\alpha}^z \overline{\nabla_{\perp} p}^{z}  
++  \overline{\alpha}^z \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z 
+$$ (momentum-layered-differential-3)
+
 
 This expression represents conservation of horizontal momentum in a vertical layer, including horizontal advection, vertical momentum fluxes, Coriolis and gravitational forces, pressure gradients (including slope contributions), and stress divergence.
 
