@@ -536,8 +536,7 @@ We now substitute [](#2D-material-der-product) into [](#momentum-layered-differe
 
 $$
  \frac{\partial \overline{  {\bf u} }^{\tilde z} }{\partial t} 
-+
-   \nabla_\perp \cdot \left(  \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) 
++ \nabla_\perp \cdot \left(  \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) 
 & + \frac{\left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{top}}} 
  - \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{bot}}} }{\tilde h}
 -   \frac{\overline{ {\bf u} }^{\tilde z}}{\tilde{h}}  \left( 
@@ -559,13 +558,15 @@ $$
 = \overline{\alpha}^z,
 $$ (grad-p-coeff)
 
-where $\alpha$ is the specific volume. Now [](#momentum-layered-differential-2) becomes
+where $\alpha$ is the specific volume. 
+Gathering the vertical advection terms, [](#momentum-layered-differential-2) becomes
 
 $$
  \frac{\partial \overline{  {\bf u} }^{\tilde z} }{\partial t} 
- +
-   \nabla_\perp \cdot \left(  \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) 
-& + \frac{1}{\tilde h}\left(
+ + \nabla_\perp \cdot \left(  \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) 
+& 
++ \left( \nabla_\perp \cdot  {\bf u}  \right) {\bf u}
++ \frac{1}{\tilde h}\left(
  \left[ {\bf u}\right]_{z=z^{\text{top}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{top}}} 
  - 
   \frac{1}{\tilde h}\left(
@@ -577,11 +578,59 @@ $$
 +  \overline{\alpha}^z \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z 
 $$ (momentum-layered-differential-3)
 
+In addition, the horizontal advection may be rewritten as
 
-This expression represents conservation of horizontal momentum in a vertical layer, including horizontal advection, vertical momentum fluxes, Coriolis and gravitational forces, pressure gradients (including slope contributions), and stress divergence.
+$$
+\nabla_\perp \cdot \left( {\bf u} \otimes {\bf u}  \right) 
+&= 
+\nabla_\perp \cdot \left( {\bf u} {\bf u}^T  \right) \\
+&= \left( \nabla_\perp \cdot  {\bf u}  \right) {\bf u}
++  {\bf u} \cdot \nabla_\perp {\bf u} 
+$$ (adv2d-prod)
+
+The term ${\bf u} \cdot \nabla_\perp {\bf u}$ may be replaced with the vector identity
+
+$$
+\begin{aligned}
+{\bf u} \cdot \nabla_\perp{\bf u}
+&= (\nabla_\perp\times {\bf u}) \times {\bf u} + \nabla_\perp\frac{|{\bf u}|^2}{2} \\
+&= \left( \boldsymbol{k} \cdot (\nabla_\perp\times {\bf u})\right)
+\left( \boldsymbol{k} \times {\bf u} \right) + \nabla_\perp\frac{|{\bf u}|^2}{2} \\
+&= \zeta {\bf u}^{\perp} + \nabla_\perp K,
+\end{aligned}
+$$ (advection-identity)
+
+where $\zeta$ is relative vorticity and $K$ is kinetic energy.
+This step separates the horizontal advection into non-divergent and non-rotational components, which is useful in the final TRiSK formulation. 
+
+Now [](#momentum-layered-differential-3) becomes
+
+$$
+ \frac{\partial \overline{  {\bf u} }^{\tilde z} }{\partial t} 
+ +
+   \left(  \zeta + f  \right) {\overline{  {\bf u} }^{\tilde z}}^\perp
+& 
++ \left( \nabla_\perp \cdot  {\bf u}  \right) {\bf u}
++ \frac{1}{\tilde h}\left(
+ \left[ {\bf u}\right]_{z=z^{\text{top}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{top}}} 
+ - 
+  \frac{1}{\tilde h}\left(
+ \left[ {\bf u}\right]_{z=z^{\text{bot}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{bot}}} 
+\\ &  =
+- \nabla_\perp K 
+-  \overline{  \nabla_\perp \Phi }^{\tilde z} 
+-  \overline{\alpha}^z \overline{\nabla_{\perp} p}^{z}  
++  \overline{\alpha}^z \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z 
+$$ (momentum-layered-differential-4)
+
+Notes from Mark:
+
+1. I don't know what to do with the z-average in the advection term of [](#momentum-layered-differential-2) and here. In the mean time, I'll just skip to the layer-averaged terms.
+2. I don't know what to make of the $\left( \nabla_\perp \cdot  {\bf u}  \right) {\bf u}$ term, and whether it cancels with some of those odd vertical transport terms. 
 
 
-### Horizontal Velocity Equation
+
+### Xylar: Horizontal Velocity Equation
 
 We now derive a prognostic equation for the layer-averaged horizontal velocity, starting from the horizontal momentum and mass conservation equations. The goal is to express the equation in terms of the velocity field $\overline{\mathbf{u}}^{\tilde{z}}$ and to isolate the nonlinear advection term in a standard form that can be further decomposed using vector identities.
 
@@ -673,6 +722,87 @@ $$
 $$ (velocity-layered)
 
 This is a prognostic equation for the layer-averaged horizontal velocity, written in a form familiar from geophysical fluid dynamics. The right-hand side includes the horizontal pressure gradient, gravitational body force, divergence of horizontal and vertical stresses, and corrections due to unresolved vertical momentum exchange.
+
+### General Vertical Coordinate
+
+The vertical layer interfaces $(z_k^{bot}, z_k^{top})$ (or equivalently $(p_k^{bot}, p_k^{top})$) can vary as a function of $(x,y,t)$. Thus, these equations describe a general vertical coordinate, and these interface surfaces may be chosen arbitrarily by the user. See [Adcroft and Hallberg 2006](https://www.sciencedirect.com/science/article/pii/S1463500305000090) Section 2 and [Griffies et al (2000)](http://sciencedirect.com/science/article/pii/S1463500300000147) Section 2.  It is convenient to introduce a new variable, the coordinate $r(x,y,z,t)$, where $r$ is constant at the middle of each layer. To be specific, we could design $r$ to be the layer index $k$ at the mid-depth of the layer. That is, define the mid-depth as
+
+$$
+z_k^{mid}(x,y,t) = \frac{z_k^{bot}(x,y,t) +  z_k^{top}(x,y,t)}{2}
+$$ (def-z)
+and generate the function $r$ such that
+
+$$
+r(x,y,z_k^{mid}(x,y,t),t) = k
+$$ (def-r)
+and interpolate linearly in the vertical between mid-layers. When we write the layered form of the equations, we must take into account of the tilted layers using the chain rule.
+
+We now rewrite derivatives in order to convert from horizontal coordinates to tilted coordinates. Let $(x,y)$ be the original horizontal coordinates, which are perpendicular to $z$, and the horizontal gradient be written as $\nabla_z=(\partial/\partial x, \partial/\partial y)$, as above. Now define a tilted coordinate system using the layers defined by $r$, where the within-layer horizontal coordinates are $(x',y')$ and the along-layer gradient is written as $\nabla_r=(\partial/\partial x', \partial/\partial y')$. We construct $r$ to be monotonic in $z$, so we can invert it as $z(x',y',r,t)$. Now horizontal derivatives along the tilted direction $x'$ for any field $\varphi(x,y,z,t)$ can be expanded using the chain rule as
+
+$$
+\frac{\partial }{\partial x'} \left[ \varphi(x(x'),y(y'),z(x',y',r,t),t) \right]
+= \frac{\partial \varphi}{\partial x}\frac{\partial x}{\partial x'} +  \frac{\partial \varphi}{\partial z} \frac{\partial z}{\partial x'}
+$$ (dvarphidx)
+
+We may define the tilted horizontal variable $x'$ as we please. The simplest definition is $x'(x)\equiv x$. Then $\partial x / \partial x'=1$. Rearranging [](#dvarphidx) and repeating for $y$,
+
+$$
+\begin{aligned}
+\frac{\partial \varphi}{\partial x} &=
+\frac{\partial \varphi}{\partial x'}
+- \frac{\partial \varphi}{\partial z} \frac{\partial z}{\partial x'}\\
+\frac{\partial \varphi}{\partial y} &=
+\frac{\partial \varphi}{\partial y'}
+- \frac{\partial \varphi}{\partial z} \frac{\partial z}{\partial y'}.
+\end{aligned}
+$$ (dvarphidxy)
+
+This may be written in vector form as
+
+$$
+\nabla_z \varphi = \nabla_r \varphi - \frac{\partial \varphi}{\partial z} \nabla_r z.
+$$ (dvarphidnabla)
+
+### Pressure Gradient
+
+For most terms, we can safely assume $\nabla_z \approx \nabla_r$ because the vertical to horizontal aspect ratio even at very high horizontal resolution is on the order of $\epsilon ~ 10^{-3}$ (thought may need to re-assess this assumption if we decide to use strongly sloped layers). This applies, for example, to the curl operator uset to compute the relative vorticity and the gradient applied to the kinetic energy in [](z-integration-momentum).
+
+The exception is the pressure gradient term.  This is becasue strong vertical and week horizontal pressure gradients mean that both terms in the chain rule [](dvarphidnabla) are of the same order and must be retained.  Substituting pressure for $\varphi$ in [](#dvarphidnabla),
+
+$$
+\begin{aligned}
+-\frac{1}{\rho} \nabla_z p
+&=-\frac{1}{\rho}  \nabla_r p +\frac{1}{\rho}  \frac{\partial p}{\partial z} \nabla_r z \\
+&=-\frac{1}{\rho} \nabla_r p - g \nabla_r z \\
+&=-v \nabla_r p - \nabla_r \Phi_g\\
+\end{aligned}
+$$ (gradp)
+
+where we have substituted hydrostatic balance [](hydrostatic-balance), specific volume $\alpha\equiv 1/\rho$, and $\Phi_g=gz$.
+
+The general form of the geopotential may include the Earth's gravity, tidal forces, and self attraction and loading (SAL), and may be written as
+
+$$
+\Phi = \Phi_g + \Phi_{tides} + \Phi_{SAL} + c
+$$ (def-geopotential)
+
+where $c$ is an arbitrary constant. Therefore, the pressure gradient and geopotential gradient may be written together as
+
+$$
+\begin{aligned}
+-v \nabla_z p - \nabla_z \Phi
+&= -v \nabla_z p - \nabla_z \Phi_{tides} - \nabla_z \Phi_{SAL}\\
+&=-v  \nabla_r p - \nabla_r \Phi_g - \nabla_r \Phi_{tides} - \nabla_r \Phi_{SAL}\\
+&=-v  \nabla_r p - \nabla_r \Phi. \\
+\end{aligned}
+$$ (gradp-gradphi)
+
+On the first line, note that $\nabla_z \Phi_g=\nabla_z gz=0$. For tides and SAL we assume that these forces do not vary in the vertical due to the small aspect ratio of the ocean, so that the vertical derivative in the expansion [](dvarphidnabla) is zero. This means that $\nabla_z \Phi_{tides}=\nabla_r \Phi_{tides}$ and $\nabla_z \Phi_{SAL}=\nabla_r \Phi_{SAL}$.
+For versions 1.0 and 2.0 of Omega we only consider a constant gravitational force, and will not include tides and SAL.  Further details will be provided in the forthcoming pressure gradient design document.
+
+See [Adcroft and Hallberg 2006](https://www.sciencedirect.com/science/article/pii/S1463500305000090) eqn. 1 and [Griffies et al](http://sciencedirect.com/science/article/pii/S1463500300000147) eqn 2 for additional examples of the pressure gradient in tilted coordinates. The additional terms due to the expansion of $\nabla_z$ to $\nabla_r$ in the rest of the equations are small and are ignored.
+
+Some publications state that the transition from Boussinesq to non-Boussinesq equations is accompanied by a change from z-coordinate to pressure-coordinates. However, we use a general vertical coordinate, so the vertical may be referenced to $z$ or $p$. In a purely z-coordinate model like POP, only the $\nabla p$ term is used in [](gradp). In a purely p-coordinate model, only $\nabla z$ remains, as described in  [de Szoeke and Samelson 2002](https://journals.ametsoc.org/view/journals/phoc/32/7/1520-0485_2002_032_2194_tdbtba_2.0.co_2.xml). In a general vertical coordinate model the layer interface placement is up to the user's specification, and so both terms are kept.
 
 ## 5. Discrete Equations
 
@@ -1369,87 +1499,6 @@ $$
 $$ (layered-mass-vert-adv)
 
 This states that the change in mass in the layer is the incoming mass from below minus the outgoing mass above, since the vertical velocity $w$ is positive upwards. The vertical advection of momentum and tracers have a similar interpretation.
-
-### General Vertical Coordinate
-
-The vertical layer interfaces $(z_k^{bot}, z_k^{top})$ (or equivalently $(p_k^{bot}, p_k^{top})$) can vary as a function of $(x,y,t)$. Thus, these equations describe a general vertical coordinate, and these interface surfaces may be chosen arbitrarily by the user. See [Adcroft and Hallberg 2006](https://www.sciencedirect.com/science/article/pii/S1463500305000090) Section 2 and [Griffies et al (2000)](http://sciencedirect.com/science/article/pii/S1463500300000147) Section 2.  It is convenient to introduce a new variable, the coordinate $r(x,y,z,t)$, where $r$ is constant at the middle of each layer. To be specific, we could design $r$ to be the layer index $k$ at the mid-depth of the layer. That is, define the mid-depth as
-
-$$
-z_k^{mid}(x,y,t) = \frac{z_k^{bot}(x,y,t) +  z_k^{top}(x,y,t)}{2}
-$$ (def-z)
-and generate the function $r$ such that
-
-$$
-r(x,y,z_k^{mid}(x,y,t),t) = k
-$$ (def-r)
-and interpolate linearly in the vertical between mid-layers. When we write the layered form of the equations, we must take into account of the tilted layers using the chain rule.
-
-We now rewrite derivatives in order to convert from horizontal coordinates to tilted coordinates. Let $(x,y)$ be the original horizontal coordinates, which are perpendicular to $z$, and the horizontal gradient be written as $\nabla_z=(\partial/\partial x, \partial/\partial y)$, as above. Now define a tilted coordinate system using the layers defined by $r$, where the within-layer horizontal coordinates are $(x',y')$ and the along-layer gradient is written as $\nabla_r=(\partial/\partial x', \partial/\partial y')$. We construct $r$ to be monotonic in $z$, so we can invert it as $z(x',y',r,t)$. Now horizontal derivatives along the tilted direction $x'$ for any field $\varphi(x,y,z,t)$ can be expanded using the chain rule as
-
-$$
-\frac{\partial }{\partial x'} \left[ \varphi(x(x'),y(y'),z(x',y',r,t),t) \right]
-= \frac{\partial \varphi}{\partial x}\frac{\partial x}{\partial x'} +  \frac{\partial \varphi}{\partial z} \frac{\partial z}{\partial x'}
-$$ (dvarphidx)
-
-We may define the tilted horizontal variable $x'$ as we please. The simplest definition is $x'(x)\equiv x$. Then $\partial x / \partial x'=1$. Rearranging [](#dvarphidx) and repeating for $y$,
-
-$$
-\begin{aligned}
-\frac{\partial \varphi}{\partial x} &=
-\frac{\partial \varphi}{\partial x'}
-- \frac{\partial \varphi}{\partial z} \frac{\partial z}{\partial x'}\\
-\frac{\partial \varphi}{\partial y} &=
-\frac{\partial \varphi}{\partial y'}
-- \frac{\partial \varphi}{\partial z} \frac{\partial z}{\partial y'}.
-\end{aligned}
-$$ (dvarphidxy)
-
-This may be written in vector form as
-
-$$
-\nabla_z \varphi = \nabla_r \varphi - \frac{\partial \varphi}{\partial z} \nabla_r z.
-$$ (dvarphidnabla)
-
-### Pressure Gradient
-
-For most terms, we can safely assume $\nabla_z \approx \nabla_r$ because the vertical to horizontal aspect ratio even at very high horizontal resolution is on the order of $\epsilon ~ 10^{-3}$ (thought may need to re-assess this assumption if we decide to use strongly sloped layers). This applies, for example, to the curl operator uset to compute the relative vorticity and the gradient applied to the kinetic energy in [](z-integration-momentum).
-
-The exception is the pressure gradient term.  This is becasue strong vertical and week horizontal pressure gradients mean that both terms in the chain rule [](dvarphidnabla) are of the same order and must be retained.  Substituting pressure for $\varphi$ in [](#dvarphidnabla),
-
-$$
-\begin{aligned}
--\frac{1}{\rho} \nabla_z p
-&=-\frac{1}{\rho}  \nabla_r p +\frac{1}{\rho}  \frac{\partial p}{\partial z} \nabla_r z \\
-&=-\frac{1}{\rho} \nabla_r p - g \nabla_r z \\
-&=-v \nabla_r p - \nabla_r \Phi_g\\
-\end{aligned}
-$$ (gradp)
-
-where we have substituted hydrostatic balance [](hydrostatic-balance), specific volume $\alpha\equiv 1/\rho$, and $\Phi_g=gz$.
-
-The general form of the geopotential may include the Earth's gravity, tidal forces, and self attraction and loading (SAL), and may be written as
-
-$$
-\Phi = \Phi_g + \Phi_{tides} + \Phi_{SAL} + c
-$$ (def-geopotential)
-
-where $c$ is an arbitrary constant. Therefore, the pressure gradient and geopotential gradient may be written together as
-
-$$
-\begin{aligned}
--v \nabla_z p - \nabla_z \Phi
-&= -v \nabla_z p - \nabla_z \Phi_{tides} - \nabla_z \Phi_{SAL}\\
-&=-v  \nabla_r p - \nabla_r \Phi_g - \nabla_r \Phi_{tides} - \nabla_r \Phi_{SAL}\\
-&=-v  \nabla_r p - \nabla_r \Phi. \\
-\end{aligned}
-$$ (gradp-gradphi)
-
-On the first line, note that $\nabla_z \Phi_g=\nabla_z gz=0$. For tides and SAL we assume that these forces do not vary in the vertical due to the small aspect ratio of the ocean, so that the vertical derivative in the expansion [](dvarphidnabla) is zero. This means that $\nabla_z \Phi_{tides}=\nabla_r \Phi_{tides}$ and $\nabla_z \Phi_{SAL}=\nabla_r \Phi_{SAL}$.
-For versions 1.0 and 2.0 of Omega we only consider a constant gravitational force, and will not include tides and SAL.  Further details will be provided in the forthcoming pressure gradient design document.
-
-See [Adcroft and Hallberg 2006](https://www.sciencedirect.com/science/article/pii/S1463500305000090) eqn. 1 and [Griffies et al](http://sciencedirect.com/science/article/pii/S1463500300000147) eqn 2 for additional examples of the pressure gradient in tilted coordinates. The additional terms due to the expansion of $\nabla_z$ to $\nabla_r$ in the rest of the equations are small and are ignored.
-
-Some publications state that the transition from Boussinesq to non-Boussinesq equations is accompanied by a change from z-coordinate to pressure-coordinates. However, we use a general vertical coordinate, so the vertical may be referenced to $z$ or $p$. In a purely z-coordinate model like POP, only the $\nabla p$ term is used in [](gradp). In a purely p-coordinate model, only $\nabla z$ remains, as described in  [de Szoeke and Samelson 2002](https://journals.ametsoc.org/view/journals/phoc/32/7/1520-0485_2002_032_2194_tdbtba_2.0.co_2.xml). In a general vertical coordinate model the layer interface placement is up to the user's specification, and so both terms are kept.
 
 ### Vertical Transport
 The integration in [](#z-integration-momentum) to [](#z-integration-tracers) changes the vertical velocity $w$ in m/s to a vertical mass-thickness transport $\omega=\rho w$ in kg/s/m$^2$. Here $w$ is the Latin letter and $\omega$ is the Greek letter omega.  One can think of fluid velocity $w$ as a volume transport, normalized by area, in units of length per time. Analogously, $\omega$ is mass-thickness transport, which is mass transport per unit area (kg/s/m$^2$). The variables $w$ and $\omega$ have the same sign convention of upward (positive $z$) for positive transport.
