@@ -79,7 +79,8 @@ class TracerAuxVars {
          for (int KVec = 0; KVec < VecLength; ++KVec) {
             const int K           = KStart + KVec;
             const Real TracerGrad = TrCell(L, JCell1, K) - TrCell(L, JCell0, K);
-            Del2TrCellTmp[KVec] -= EdgeSignOnCell(ICell, J) * DvDcEdge *
+            Del2TrCellTmp[KVec] -= EdgeMask(JEdge, K) *
+                                   EdgeSignOnCell(ICell, J) * DvDcEdge *
                                    LayerThickEdgeMean(JEdge, K) * TracerGrad;
          }
       }
@@ -101,6 +102,7 @@ class TracerAuxVars {
    Array1DReal DcEdge;
    Array1DReal DvEdge;
    Array1DReal AreaCell;
+   Array2DReal EdgeMask;
 };
 
 } // namespace OMEGA

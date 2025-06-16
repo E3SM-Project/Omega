@@ -221,8 +221,9 @@ Tendencies::Tendencies(const std::string &Name, ///< [in] Name for tendencies
                        CustomTendencyType InCustomVelocityTend)
     : ThicknessFluxDiv(Mesh), PotientialVortHAdv(Mesh), KEGrad(Mesh),
       SSHGrad(Mesh), VelocityDiffusion(Mesh), VelocityHyperDiff(Mesh),
-      BottomDrag(Mesh), TracerHorzAdv(Mesh), TracerDiffusion(Mesh),
-      TracerHyperDiff(Mesh), CustomThicknessTend(InCustomThicknessTend),
+      WindForcing(Mesh), BottomDrag(Mesh), TracerHorzAdv(Mesh),
+      TracerDiffusion(Mesh), TracerHyperDiff(Mesh),
+      CustomThicknessTend(InCustomThicknessTend),
       CustomVelocityTend(InCustomVelocityTend) {
 
    // Tendency arrays
