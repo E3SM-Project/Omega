@@ -56,38 +56,26 @@ In future versions of Omega, the $p^\star$ coordinate will be extended to a more
 The vertical coordinate module should retain flexibility to support VLR in future versions of Omega.
 
 ## 3 Algorithmic Formulation
-The non-Boussinesq momentum equation is
+In the layered non-Boussinesq equations solved in Omega (see [V0 governing equation document](OmegaV1GoverningEqns) for details), the prognostic variable for cell $i$ and layer $k$ is the pseudo thickness, $\tilde{h}_{i,k}$, so that the geometric thickness (in meters) is a diagnostic variable defined as:
 
-$$ 
-\frac{D \mathbf{u}_h}{D t } + f\boldsymbol{k}\times \mathbf{u}_h + \left(\alpha\nabla_A p + \nabla_A \Phi \right) = \boldsymbol{\mathcal{F}},
-$$
-
-where $\mathbf{u}_h$ is the horizontal velocity, $f$ is the Coriolis parameter, $\alpha$ = $\frac{1}{\rho}$ is the specific volume, $\rho = \rho(\Theta,S,p)$ is the density, $p$ is the hydrostatic pressure, $\Phi$ is the geopotential, and $\boldsymbol{\mathcal{F}}$ are the dissipative terms.
-The operator $\nabla_A$ is the gradient along a constant surface, $A$, and the total derivative is
-
-$$ \frac{D \mathbf{u}_h}{D t } = \left( \frac{\partial}{\partial t} \right)_A  + \mathbf{u}_h\cdot \nabla_A + \omega\frac{\partial}{\partial A}, $$
-
-where $\omega$ is the cross coordinate flow.
-In the layered non-Boussinesq equations, the prognostic variable for cell $i$ and layer $k$ is the pseudo thickness, $h_{i,k}$, so that the geometric thickness (in meters) is a diagnostic variable defined as:
-
-$$ \Delta z_{i,k} = \rho_0 \alpha_{i,k} h_{i,k}. $$
+$$ \Delta z_{i,k} = \rho_0 \alpha_{i,k} \tilde{h}_{i,k}. $$
 
 The pressure at vertical cell interfaces is the found by summing the pseudo thicknesses:
 
-$$  p_{i,k+1/2} = p_{i}^{surf} + g\rho_0 \sum_{k^\prime=1}^k h_{i,k^\prime}. $$
+$$  p_{i,k+1/2} = p_{i}^{surf} + g\rho_0 \sum_{k^\prime=1}^k \tilde{h}_{i,k^\prime}. $$
 
 and at the midpoint by
 
-$$ p_{i,k} = p_{i}^{surf} + g\rho_0 \sum_{k'=1}^{k-1} h_{i,k'} + \frac{1}{2} g\rho_0 h_{i,k} $$
+$$ p_{i,k} = p_{i}^{surf} + g\rho_0 \sum_{k'=1}^{k-1} \tilde{h}_{i,k'} + \frac{1}{2} g\rho_0 \tilde{h}_{i,k} $$
 
 The $z$ location of cell interfaces is found by summing the pseudo thicknesses from the bottom multiplied by the specific volume:
 
-$$ z_{i,k}^{top} = z_i^{floor} + \rho_0 \sum_{k^\prime=k}^{K_{max}} \alpha_{i,k^\prime} h_{i,k^\prime}, $$
+$$ z_{i,k}^{top} = z_i^{floor} + \rho_0 \sum_{k^\prime=k}^{K_{max}} \alpha_{i,k^\prime} \tilde{h}_{i,k^\prime}, $$
 
 where $z_i^{floor}$ is the (positive-up) bottom elevation.
 The $z$ location of cell centers is given by: 
 
-$$ z_{i,k} = z_i^{floor} + \frac{1}{2} \rho_0\alpha_{i,k} h_{i,k} + \rho_0\sum_{k^\prime= k+1}^{K_{max}} \alpha_{i,k^\prime} h_{i,k^\prime}. $$
+$$ z_{i,k} = z_i^{floor} + \frac{1}{2} \rho_0\alpha_{i,k} \tilde{h}_{i,k} + \rho_0\sum_{k^\prime= k+1}^{K_{max}} \alpha_{i,k^\prime} \tilde{h}_{i,k^\prime}. $$
 
 Initially, the geopotential is the sum of the $z$ height times $g$. 
 In the future, it will include contributions from the tidal potential ($\Phi_{tp}$) and self attraction and loading ($\Phi_{SAL}$):
@@ -96,11 +84,11 @@ $$ \Phi_{i,k} = \left( gz_{i,k} + \Phi_{tp} + \Phi_{SAL} \right). $$
 
 The desired pseudo thickness used for the $p^\star$ coordinate is:
 
-$$h_k^{p^\star} = h_k^{rest} + h_k^{p}, $$
+$$\tilde{h}_k^{p^\star} = \tilde{h}_k^{rest} + \tilde{h}_k^{p}, $$
 
-where the pressure alteration, $h_k^{p}$, is given by:
+where the pressure alteration, $\tilde{h}_k^{p}$, is given by:
 
-$$ h_k^{p} =\frac{(p_B-p_{surf})}{g\rho_0} \frac{W_kh_k^{rest}}{\sum_{k^\prime=1}^K W_{k^\prime}h_{k^\prime}^{rest}}.$$
+$$ \tilde{h}_k^{p} =\frac{(p_B-p_{surf})}{g\rho_0} \frac{W_k\tilde{h}_k^{rest}}{\sum_{k^\prime=1}^K W_{k^\prime}\tilde{h}_{k^\prime}^{rest}}.$$
 
 ## 4 Design
 
