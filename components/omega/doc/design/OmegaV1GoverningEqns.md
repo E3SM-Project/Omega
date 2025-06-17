@@ -93,34 +93,73 @@ The derivation of the momentum equation may also be found in [Leishman 2025](htt
 
 ### Horizontal \& Vertical Separation
 
-In geophysical flows the vertical and horizontal directions are treated differently due to rotation and stratification, which leads to different scales of motion.
-To that end, assume that the control volume $V$ is bounded in the horizontal by a fixed wall $\partial V^{side}$ that does not vary in time or $z$.
-The top and bottom boundaries of $V$, $\partial V^{\text{top}}$ and $\partial V^{\text{bot}}$, occur at $z = z^{\text{top}}(x,y,t)$ and $z = z^{\text{bot}}(x,y,t)$.
-Taking the tracer equation as an example and dropping the explicit notation for spatial and temporal dependence, i.e., writing $\rho$, $\varphi$, and ${\bf v}$ instead of $\rho({\bf x},t)$, $\varphi({\bf x},t)$, etc., we separate all integrals between horizontal and vertical,
+In geophysical flows, the vertical and horizontal directions are treated differently due to rotation and stratification, which leads to different characteristic scales of motion.
+To make this distinction explicit, we reformulate the conservation equations in a geometry that separates horizontal and vertical fluxes.
+We partition the surface integral into contributions from the fixed side walls $\partial V^{\text{side}}$ and the time-varying upper and lower surfaces, $\partial V^{\text{top}}(t)$ and $\partial V^{\text{bot}}(t)$.
+The top and bottom surfaces are not necessarily flat, so we retain their full geometry.
+
+As an example, we consider the tracer equation and drop the explicit notation for spatial and temporal dependence for clarity. We write the control-volume form as:
 
 $$
 \frac{d}{dt} \int_{V(t)} \rho \, \varphi \, dV
 &+
- \int_{\partial V(t)}\rho\, \varphi \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA
-= 0 \\
-\frac{d}{dt} \int_{V(t)} \rho \, \varphi \, dV
+\int_{\partial V^{\text{side}}} \rho \varphi \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA \\
 &+
-   \int_{\partial V^{side}}\rho\, \varphi \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA
- + \int_{\partial V^{\text{top}}(t)}\rho\, \varphi \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA
- + \int_{\partial V^{\text{bot}}(t)}\rho\, \varphi \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA
-= 0 \\
-\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, \varphi \, dz \, dA
+\int_{\partial V^{\text{top}}(t)} \rho \varphi \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA
++
+\int_{\partial V^{\text{bot}}(t)} \rho \varphi \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA
+= 0
+$$ (tr-v-h-split)
+
+The unit normals on the top and bottom surfaces are given by:
+
+$$
+{\bf n}^{\text{top}} = \frac{(-\nabla z^{\text{top}}, 1)}{\sqrt{1 + |\nabla z^{\text{top}}|^2}}, \quad
+{\bf n}^{\text{bot}} = \frac{(-\nabla z^{\text{bot}}, 1)}{\sqrt{1 + |\nabla z^{\text{bot}}|^2}}
+$$ (top-bot-normal)
+
+In typical Omega configurations, the slope of the top and bottom surfaces will be small, i.e., $|\nabla z^{\text{top}}| \ll 1$ and $|\nabla z^{\text{bot}}| \ll 1$. Under this small-slope approximation, we neglect the square root in the denominator of the unit normal, and write:
+
+$$
+{\bf n}^{\text{top}} \approx (-\nabla z^{\text{top}}, 1), \quad
+{\bf n}^{\text{bot}} \approx (-\nabla z^{\text{bot}}, 1)
+$$
+
+This allows sloping-surface contributions such as $\nabla z^{\text{top}}$ to be retained while avoiding more complex metric factors. The approximation is accurate to leading order in slope and consistent with hydrostatic and layered modeling frameworks.
+
+Thus, the flux integrals across sloping boundaries retain contributions from both the vertical and horizontal components of ${\bf v} - {\bf v}_r$, and include the slope terms $\nabla z^{\text{top}}$ and $\nabla z^{\text{bot}}$.
+
+This formulation keeps the geometry fully general and allows for future manipulation or approximations. Subsequent approximations---such as retaining only the vertical component---can be applied explicitly where appropriate in later sections.
+
+To facilitate integration over a fixed horizontal domain, we introduce the following notation:
+
+- $A$ is the horizontal footprint (in the $x$–$y$ plane) of the control volume $V(t)$.
+- $dA$ is the horizontal area element.
+- $\partial A$ is the boundary of $A$, and $dl$ is the line element along this boundary.
+- ${\bf n}_\perp$ is the outward-pointing unit normal vector in the horizontal plane, defined on $\partial A$. It lies in the $x$–$y$ plane and is orthogonal to $dl$.
+
+We now project the tracer equation [](#tr-v-h-split) onto a horizontal domain $A$ (the footprint of the control volume), over which the top and bottom boundaries vary in height. The side walls remain fixed in time and space. Using this projection, we obtain:
+
+$$
+\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}(x,y,t)}^{z^{\text{top}}(x,y,t)} \rho \, \varphi \, dz \, dA
 &+
-   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, \varphi {\bf u} dz \right) \cdot {\bf n} \, dl
- + \int_{A}\left[ \rho\, \varphi \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
- - \int_{A}\left[ \rho\, \varphi \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
+\int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \varphi \, {\bf u} \, dz \right) \cdot {\bf n}_\perp \, dl \\
+&+
+\int_A \rho \varphi \left[
+  (w - w_r) - {\bf u} \cdot \nabla z^{\text{top}}
+\right]_{z = z^{\text{top}}} dA \\
+&-
+\int_A \rho \varphi \left[
+  (w - w_r) - {\bf u} \cdot \nabla z^{\text{bot}}
+\right]_{z = z^{\text{bot}}} dA
 = 0
 $$ (tr-v-h-separation)
 
-Here ${\bf v} = ({\bf u},w)$ is written using the horizontal velocity ${\bf u}$ and vertical velocity $w$.
-In the final equation, perpendicular velocity components drop out of each integral.
-Since $\partial V^{side}$ is fixed, ${\bf u}_r=0$ and drops out of the second term.
-Here $A$ is the horizontal region, i.e. the projection of ${\partial V^{\text{top}}(t)}$ and ${\partial V^{\text{top}}(t)}$ into the horizontal plane, which is fixed in time.
+
+Here ${\bf v} = ({\bf u},w)$ separates the three-dimensional velocity into horizontal velocity ${\bf u}$ and vertical velocity $w$.
+In the final equation, only velocity components aligned with the boundary normals contribute to each integral, so perpendicular components drop out.
+Since the side boundary $\partial V^{\text{side}}$ is fixed in space, ${\bf v}_r = 0$ there and drops out of the corresponding term.
+The domain $A$ is the fixed horizontal footprint of the control volume in the $x$–$y$ plane, over which the top and bottom surfaces $z^{\text{top}}(x,y,t)$ and $z^{\text{bot}}(x,y,t)$ may vary in space and time.
 
 Using this procedure of separating the horizontal from the vertical, the governing equations are
 
@@ -128,10 +167,12 @@ mass:
 
 $$
 \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, dz \, dA
-+
-   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, {\bf u} \, dz \right) \cdot {\bf n} \, dl
- + \int_{A}\left[ \rho\, \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
- - \int_{A}\left[ \rho\, \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
+&+
+\int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, {\bf u} \, dz \right) \cdot {\bf n}_\perp \, dl \\
+&+
+\int_{A} \rho \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{top}} \right]_{z=z^{\text{top}}} \, dA
+-
+\int_{A} \rho \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{bot}} \right]_{z=z^{\text{bot}}} \, dA
 = 0
 $$ (vh-mass)
 
@@ -139,30 +180,35 @@ tracers:
 
 $$
 \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, \varphi \, dz \, dA
-+
-   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, \varphi \, {\bf u} \, dz \right) \cdot {\bf n} \, dl
- + \int_{A}\left[ \rho\, \varphi \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
- - \int_{A}\left[ \rho\, \varphi \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
+&+
+\int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, \varphi \, {\bf u} \, dz \right) \cdot {\bf n}_\perp \, dl \\
+&+
+\int_{A} \rho \varphi \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{top}} \right]_{z=z^{\text{top}}} \, dA
+-
+\int_{A} \rho \varphi \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{bot}} \right]_{z=z^{\text{bot}}} \, dA
 = 0
 $$ (vh-tracer)
 
 momentum:
 
 $$
-& \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf v} \, dz \, dA
+\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf v} \, dz \, dA
+&+
+\int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf v} \otimes {\bf u} \, dz \right) \cdot {\bf n}_\perp \, dl \\
+&+
+\int_A \rho \, {\bf v} \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{top}} \right]_{z=z^{\text{top}}} \, dA
+-
+\int_A \rho \, {\bf v} \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{bot}} \right]_{z=z^{\text{bot}}} \, dA \\
+&=
+\int_A \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf b} \, dz \, dA
 +
-   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, {\bf v} \otimes {\bf u} \, dz \right) \cdot {\bf n} \, dl
- + \int_{A}\left[ \rho\, {\bf v} \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
- - \int_{A}\left[ \rho\, {\bf v} \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
-\\ & \; =
-\int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf g} \, dz \, dA
-+
-   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\,  {\bf f} \, dz \right) \, dl
- + \int_{A}\left[  {\bf f} \right]_{z=z^{\text{top}}} \, dA
- - \int_{A}\left[  {\bf f} \right]_{z=z^{\text{bot}}} \, dA
+\int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} {\bf f} \, dz \right) dl \\
+&\quad
++ \int_A \left[ {\bf f} \right]_{z = z^{\text{top}}} \, dA
+- \int_A \left[ {\bf f} \right]_{z = z^{\text{bot}}} \, dA
 $$ (vh-momentum)
 
-The momentum advection contains ${\bf v} \otimes {\bf u}$, which is the outer product ${\bf v} {\bf u}^T$, and is also called the tensor product. The dimension of the tensor ${\bf v} \otimes {\bf u}$ is 3$\times$2, where the first is the dimension of the ${\bf v}$ equation in $(x,y,z)$. The second dimension is from ${\bf u}$, which associates with the dot product into the horizontal vector $\bf n$.
+The momentum advection term contains ${\bf v} \otimes {\bf u}$, the outer (or tensor) product of the full velocity ${\bf v} = ({\bf u}, w)$ with the horizontal velocity ${\bf u}$. This object is a 3×2 tensor: the three rows correspond to the components of momentum being advected (in $x$, $y$, and $z$), and the two columns correspond to the directions of horizontal transport. This structure naturally arises in the surface integral over $\partial A$, where the tensor is contracted with the horizontal unit normal vector ${\bf n}_\perp$ to yield a vector flux through the vertical sides of the control volume.
 
 ### Hydrostatic Approximation
 
