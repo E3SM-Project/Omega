@@ -392,6 +392,45 @@ The use of a constant $\rho_0$ in defining pseudo-height does not imply the Bous
 Here we explain the reasoning for the choice of defining $\tilde{z}$ as directly proportional to pressure in [](#def-pseudo-height).
 The differential form of the hydrostatic balance $dp = -\rho g dz$ implies that we could choose an arbitrary offset. One could set the offset such that $\tilde{z}=0$ at $z=0$, so that the equilibrium sea surface height matches. Or one could set $\tilde{z}^{\text{floor}} = z^{\text{floor}}$ at some reference depth. Our definition [](#def-pseudo-height) was made so that $\tilde{z}$ varies in space and time in the same way as pressure, and the additional normalization by $\rho_0 g$ was included so that units and values for $\tilde{z}$,  $\tilde{h}$,  and $\tilde{w}$ are intuitive and easy to work with. A major advantage of [](#def-pseudo-height) is that $\tilde{z}^{\text{floor}}$ is proportional to the bottom pressure, and can be used directly for the barotropic pressure gradient in time-split methods.
 
+#### Slope Terms and the Limits of the Pseudo-Height Transformation
+
+While pseudo-height provides a convenient vertical coordinate for discretization and conservation, it does not eliminate all geometric complexity from the governing equations. In particular, the sloping geometry of layer interfaces must still be described using their geometric height $z(x, y, t)$, not their pseudo-height $\tilde{z}$. This distinction is important when computing vertical mass and tracer fluxes across moving, sloping layers, where the normal transport includes a contribution from the slope of the interface.
+
+Although it may be tempting to replace terms involving $\nabla z^{\text{top}}$ with $\nabla \tilde{z}^{\text{top}}$, the two quantities are not equivalent. Differentiating the definition of pseudo-height under hydrostatic balance yields a relationship between the geometric slope and pseudo-height slope of the layer interface:
+
+$$
+\rho(z^{\text{top}}) \nabla z^{\text{top}} = \rho_0 \left( \nabla \tilde{z}^{\text{top}} - \nabla \tilde{z}^{\text{surf}} \right)
+$$ (grad-z-top)
+
+To derive this relationship, we begin with [](#def-pseudo-height), the definition of pseudo-height, under hydrostatic balance:
+$$
+\tilde{z}(z) = -\frac{\hat{p}(z)}{\rho_0 g}, \quad \text{with} \quad \frac{d\hat{p}}{dz} = -\rho g.
+$$
+
+Taking a horizontal gradient of the pressure at the top of a layer, we write:
+$$
+\hat{p}^{\text{top}} = \hat{p}^{\text{surf}} + \int_{z^{\text{top}}}^{z^{\text{surf}}} \rho(z') g \, dz',
+$$
+and therefore:
+$$
+\nabla \hat{p}^{\text{top}} = \nabla \hat{p}^{\text{surf}} + \rho(z^{\text{top}}) g \nabla z^{\text{top}}.
+$$
+
+Substituting into the gradient of pseudo-height:
+$$
+\nabla \tilde{z}^{\text{top}} = -\frac{1}{\rho_0 g} \nabla \hat{p}^{\text{top}}
+= -\frac{1}{\rho_0 g} \left( \nabla \hat{p}^{\text{surf}} + \rho(z^{\text{top}}) g \nabla z^{\text{top}} \right).
+$$
+
+Rearranging:
+$$
+\rho(z^{\text{top}}) \nabla z^{\text{top}} = \rho_0 \left( \nabla \tilde{z}^{\text{top}} - \nabla \tilde{z}^{\text{surf}} \right).
+$$
+
+This shows that the density-weighted geometric slope differs from the pseudo-height slope by a correction involving the horizontal gradient of surface pressure.
+
+An analogous expression holds for the slope of the bottom interface, $\nabla z^{\text{bot}}$. Together, these slopes determine the projection of horizontal velocity into vertical fluxes in the Arbitray Lagrangian-Eulerian (ALE) framework and remain essential for correctly evaluating mass and tracer conservation across layers.
+
 ### Vertical Discretization
 
 The previous equation set [](#vh-mass) to [](#vh-momentum) is for an arbitrary layer bounded by $z^{\text{top}}$ above and $z^{\text{bot}}$ below.
@@ -445,16 +484,16 @@ This relation is frequently used in discretized fluxes and conservation equation
 
 ### Layered Tracer & Mass
 
-Substituting [](#def-pseudo-velocity) into the tracer equation [](#vh-tracer) for layer $k$, we have
+Substituting [](#def-pseudo-velocity) and [](#grad-z-top) into the tracer equation [](#vh-tracer) for layer $k$, we have
 
 $$
 \frac{d}{dt} \int_{A} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho \, \varphi \, dz \, dA
 +
 \int_{\partial A} \left( \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho \, \varphi \, {\bf u} \, dz \right) \cdot {\bf n}_\perp \, dl & \\
 +
-\int_{A} \left[ \rho_0 \varphi (\tilde{w} - \tilde{w}_r) - \rho \varphi {\bf u} \cdot \nabla z^{\text{top}} \right]_{z = z^{\text{top}}} \, dA & \\
+\int_{A} \left\{ \rho_0 \varphi \left[\tilde{w} - \tilde{w}_r - {\bf u} \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right) \right] \right\}_{z = z^{\text{top}}} \, dA & \\
 -
-\int_{A} \left[ \rho_0 \varphi (\tilde{w} - \tilde{w}_r) - \rho \varphi {\bf u} \cdot \nabla z^{\text{bot}} \right]_{z = z^{\text{bot}}} \, dA
+\int_{A} \left\{ \rho_0 \varphi \left[\tilde{w} - \tilde{w}_r - {\bf u} \cdot \nabla \left( \tilde{z}^{\text{bot}} - \tilde{z}^{\text{surf}} \right) \right] \right\}_{z = z^{\text{bot}}}\, dA
 & = 0
 $$ (Aintegral-tracer)
 
@@ -475,9 +514,9 @@ $$
 +
 \int_{\partial A} \left( \tilde{h}_k \, \overline{\varphi {\bf u}}^{\tilde{z}}_k \right) \cdot {\bf n}_\perp \, dl & \\
 +
-\int_A \left[ \varphi (\tilde{w} - \tilde{w}_r) - \frac{\rho}{\rho_0} \varphi {\bf u} \cdot \nabla z^{\text{top}} \right]_{z = z^{\text{top}}} \, dA & \\
+\int_A \left\{ \varphi \left[\tilde{w} - \tilde{w}_r - {\bf u} \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right) \right] \right\}_{z = z^{\text{top}}} \, dA & \\
 -
-\int_A \left[ \varphi (\tilde{w} - \tilde{w}_r) - \frac{\rho}{\rho_0} \varphi {\bf u} \cdot \nabla z^{\text{bot}} \right]_{z = z^{\text{bot}}} \, dA
+\int_A \left\{ \varphi \left[\tilde{w} - \tilde{w}_r - {\bf u} \cdot \nabla \left( \tilde{z}^{\text{bot}} - \tilde{z}^{\text{surf}} \right) \right] \right\}_{z = z^{\text{bot}}} \, dA
 & = 0
 $$ (Aintegral-tracer2)
 
