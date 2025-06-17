@@ -219,15 +219,19 @@ horizontal momentum:
 $$
 & \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf u} \, dz \, dA
 +
-   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, {\bf u} \otimes {\bf u} \, dz \right) \cdot {\bf n} \, dl
- + \int_{A}\left[ \rho\, {\bf u} \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
- - \int_{A}\left[ \rho\, {\bf u} \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
-\\ & \; =
-\int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf g}_\perp \, dz \, dA
+\int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf u} \otimes {\bf u} \, dz \right) \cdot {\bf n}_\perp \, dl \\
+& +
+\int_{A} \rho \, {\bf u} \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{top}} \right]_{z = z^{\text{top}}} \, dA
+-
+\int_{A} \rho \, {\bf u} \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{bot}} \right]_{z = z^{\text{bot}}} \, dA \\
+& =
+\int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf b}_\perp \, dz \, dA
 +
-   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\,  {\bf f}_\perp \, dz \right) \, dl
- + \int_{A}\left[  {\bf f}_\perp \right]_{z=z^{\text{top}}} \, dA
- - \int_{A}\left[  {\bf f}_\perp \right]_{z=z^{\text{bot}}} \, dA
+\int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} {\bf f}_\perp \, dz \right) \, dl \\
+& +
+\int_{A} \left[ {\bf f}_\perp \right]_{z = z^{\text{top}}} \, dA
+-
+\int_{A} \left[ {\bf f}_\perp \right]_{z = z^{\text{bot}}} \, dA
 $$ (h-momentum)
 
 vertical momentum:
@@ -235,39 +239,51 @@ vertical momentum:
 $$
 & \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, w \, dz \, dA
 +
-   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, w \, {\bf u} \, dz \right) \cdot {\bf n} \, dl
- + \int_{A}\left[ \rho\, w \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
- - \int_{A}\left[ \rho\, w \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
-\\ & \; =
-\int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, g_z \, dz \, dA
+\int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, w \, {\bf u} \, dz \right) \cdot {\bf n}_\perp \, dl \\
+& +
+\int_{A} \rho \, w \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{top}} \right]_{z = z^{\text{top}}} \, dA
+-
+\int_{A} \rho \, w \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{bot}} \right]_{z = z^{\text{bot}}} \, dA \\
+& =
+\int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, b_z \, dz \, dA
 +
-   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\,  f_z \, dz \right) \, dl
- + \int_{A}\left[  f_z \right]_{z=z^{\text{top}}} \, dA
- - \int_{A}\left[  f_z \right]_{z=z^{\text{bot}}} \, dA
+\int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} f_z \, dz \right) \, dl \\
+& +
+\int_{A} \left[ f_z \right]_{z = z^{\text{top}}} \, dA
+-
+\int_{A} \left[ f_z \right]_{z = z^{\text{bot}}} \, dA
 $$ (v-momentum)
 
-where the potential gradient vector is ${\bf g} = ({\bf g}_\perp, g_z)$ and the surface forces are ${\bf f} = ({\bf f}_\perp, f_z)$.
+where the potential gradient vector is ${\bf b} = ({\bf b}_\perp, b_z)$ and the surface forces are ${\bf f} = ({\bf f}_\perp, f_z)$.
 
-The hydrostatic approximation assumes that the first order balance in vertical momentum is between the pressure gradient and buoyancy, and that all other terms are negligible (advection, dissipation, and other forces).
+The hydrostatic approximation applies to the vertical component of the momentum equation and assumes that the leading-order balance is between the vertical pressure gradient and the gravitational body force. All other terms---such as vertical acceleration, advection, and viscous or turbulent stresses---are assumed to be negligible in comparison.
 Applying this assumption to [](#v-momentum),
 
 $$
-\int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, g_z \, dz \, dA
- + \int_{A}\left[  f_z \right]_{z=z^{\text{top}}} \, dA
- - \int_{A}\left[  f_z \right]_{z=z^{\text{bot}}} \, dA
- = 0 \\
-\int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, g \, dz \, dA
- + \int_{A}\left[  p \right]_{z=z^{\text{top}}} \, dA
- - \int_{A}\left[  p \right]_{z=z^{\text{bot}}} \, dA
- = 0 \\
-\int_{A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, g \, dz
- + \left[  p \right]_{z=z^{\text{top}}}
- - \left[  p \right]_{z=z^{\text{bot}}} \right) dA
- = 0 ,
+\int_A \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, b_z \, dz \, dA
++ \int_A \left[ f_z \right]_{z = z^{\text{top}}} \, dA
+- \int_A \left[ f_z \right]_{z = z^{\text{bot}}} \, dA = 0
+$$ (v-hydrostatic1)
+
+Assuming the vertical body force is gravity, $b_z = -g$, and the vertical surface stress is from pressure, $f_z = -p$, the equation becomes:
+
+$$
+- \int_A \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho g \, dz \, dA
+- \int_A \left[ p \right]_{z = z^{\text{top}}} \, dA
++ \int_A \left[ p \right]_{z = z^{\text{bot}}} \, dA = 0
+$$ (v-hydrostatic2)
+
+Although the top and bottom surfaces may be sloping, the vertical component of the pressure force simplifies to $\pm p \, dA$ to leading order. This is because the projection of the pressure force onto the vertical direction introduces a factor of $\hat{\bf n} \cdot \hat{\bf z} \approx 1 - \tfrac{1}{2}|\nabla z|^2$, while the sloping surface area element adds a compensating factor of $\sqrt{1 + |\nabla z|^2} \approx 1 + \tfrac{1}{2}|\nabla z|^2$. These cancel to second order, and the net vertical pressure force is simply the pressure value multiplied by the horizontal area element $dA$. Thus, no explicit slope terms appear in the hydrostatic balance.
+
+Rewriting:
+
+$$
+\int_A \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho g \, dz
++ \left[ p \right]_{z = z^{\text{top}}}
+- \left[ p \right]_{z = z^{\text{bot}}} \right) dA = 0
 $$ (v-hydrostatic)
 
-where $g$ is Earth's gravitational accelleration, and $p({\bf x},t)$ is the fluid pressure.
-Because this is valid for any horizontal region $A$, the integrand may be expressed as a general equation,
+Because this equation holds for any horizontal region $A$, the integrand must vanish, yielding the hydrostatic pressure relation:
 
 $$
  \left[  p \right]_{z=z^{\text{bot}}}
@@ -297,13 +313,13 @@ $$
 \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \,  {\bf u}  \, dz \, dA = \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} (\overline{\rho {\bf u}} +  \,  \overline{\rho^\prime {\bf u}^\prime})  \, dz \, dA
 $$
 
-In this equation, the products of prime and average drop out by construction.  The $\overline{\rho^\prime {\mathbf u}^\prime}$ term is an unnecessary complication and difficult to parameterize.  To circumvent this complication, Omega will adopt Favre averaging [Pope 2000](https://elmoukrie.com/wp-content/uploads/2022/04/pope-s.b.-turbulent-flows-cambridge-university-press-2000.pdf), which for the generic variable $\phi$ is
+In this equation, the products of prime and average drop out by construction.  The $\overline{\rho^\prime {\mathbf u}^\prime}$ term is an unnecessary complication and difficult to parameterize.  To circumvent this complication, Omega will adopt Favre averaging [(Pope 2000)](https://elmoukrie.com/wp-content/uploads/2022/04/pope-s.b.-turbulent-flows-cambridge-university-press-2000.pdf), which for the generic variable $\phi$ is
 
 $$
 \phi = \hat{\phi} + \phi^"
 $$
 
-Where $\hat{\phi} \equiv \frac{\overline{\rho \phi}}{\overline{\rho}}$, and the double prime indicates deviations from this density weighted mean.  In the definition, the overbar is an averaging operator with identical properties to a Reynolds' average.  Using this relation, we can relate Reynolds' average to Favre average by considering a the average of $\rho \phi$.  The standard Reynolds' approach gives
+Where $\hat{\phi} \equiv \frac{\overline{\rho \phi}}{\overline{\rho}}$, and the double prime indicates deviations from this density weighted mean.  In the definition, the overbar is an averaging operator with identical properties to a Reynolds' average.  Using this relation, we can relate Reynolds' average to Favre average by considering the average of $\rho \phi$.  The standard Reynolds' approach gives
 
 $$
 \overline{\rho \phi} = \overline{\rho}\overline{\phi} + \overline{\rho^\prime \phi^\prime}
@@ -321,7 +337,8 @@ $$
 \overline{\phi} = \hat{\phi} + \frac{\overline{\rho^\prime \phi^\prime}}{\overline{\rho}}
 $$
 
-Throughout much of the ocean, we expect the second term to be $O(10^{-3})$ but could be large in highly turbulent regions.  With the adoption, all Omega variables will be interpreted as Favre averaged, but these variables will be very similar to the traditional Reynolds' average for most flows.
+Throughout much of the ocean, we expect the second term to be $O(10^{-3})$ smaller than the first, but could be large in highly turbulent regions. With this adoption, all prognostic and diagnostic variables in Omega are interpreted as Favre averages.
+This choice ensures that the governing equations are closed in terms of density-weighted means, avoiding the need to model second-order density fluctuations like $\overline{\rho' \phi'}$ that would otherwise arise in a Reynolds framework.
 
 ## 5. Layered Equations
 
@@ -351,6 +368,7 @@ $$
 \tilde{z}(z) = -\frac{1}{\rho_0 g} \, p(z) = -\frac{1}{\rho_0 g}\left( p^\text{surf} + \int_{z}^{z^\text{surf}} \rho(z') g dz'\right).
 $$ (formula-pseudo-height)
 
+Here, $z'$ is a dummy variable of integration.
 
 The pseudo-velocity in the vertical is
 
@@ -366,21 +384,20 @@ $$ (def-pseudo-velocity)
 
 As above, $\tilde{w}$ has identical units and very similar values to $w$. But in a non-Boussinesq model, it is the vertical *mass* transport that is the physically relevant quantity, not the volume transport. To this end, $\rho w$ is the mass transport per unit area in kg/m$^2$/s. The pseudo-velocity *is* the Eulerian mass transport, but with a convenient normalization of $\rho_0$.
 
-[Griffies 2018](https://www.amazon.com/Fundamentals-Climate-Models-Stephen-Griffies-ebook/dp/B07DMWP8L7) p. 37  argues for the use of pseudo-velocities, which he calls the density-weighted velocity, for non-Boussinesq models.
-Griffies recommends a value of $\rho_0=1035$ kg/m$^3$, following p. 47 of [Gill (1982)](https://www.amazon.com/Atmosphere-Ocean-Dynamics-International-Geophysics-30/dp/0122835220), because ocean density varies less than 2% from that value.
-Note that the use of a constant $\rho_0$ in these definitions does not imply the Boussinesq approximation, which also uses a $\rho_0$.
-In that case, the full density $\rho$ is set to $\rho_0$ in all terms but the computation of pressure.
-Here we do not make the Boussinesq approximation, and $\rho_0$ is simply a convenient normalization constant so that $d\tilde{z} \approx dz$ when $\rho \approx \rho_0$.
+[Griffies 2018](https://doi.org/10.2307/j.ctv301gzg) p. 37  argues for the use of pseudo-velocities, which he calls the density-weighted velocity, for non-Boussinesq models.
+Griffies recommends a value of $\rho_0=1035$ kg/m$^3$, following p. 47 of [Gill (1982)](https://doi.org/10.1016/S0074-6142(08)60028-5), because ocean density varies less than 2% from that value.
+
+The use of a constant $\rho_0$ in defining pseudo-height does not imply the Boussinesq approximation. In Boussinesq models, $\rho$ is set to $\rho_0$ everywhere except in the buoyancy term (i.e., the vertical pressure gradient or gravitational forcing). Here, by contrast, we retain the full $\rho$ in all terms, and use $\rho_0$ only as a normalization constant—for example, so that $d\tilde{z} \approx dz$ when $\rho \approx \rho_0$. This preserves full mass conservation while making vertical units more intuitive.
 
 Here we explain the reasoning for the choice of defining $\tilde{z}$ as directly proportional to pressure in [](#def-pseudo-height).
-The differential form of the hydrostatic balance $dp = -\rho g dz$ implies that we could choose an arbitrary offset. One could set the offset such that $\tilde{z}=0$ at $z=0$, so that the equilibrium sea surface height matches. Or one could set $\tilde{z}^{\text{floor}} = z^{\text{floor}}$ at some reference depth. Our definition [](#def-pseudo-height), sets $\tilde{z}=0$ where $p=0$, which is at the top of the atmosphere. This choice was made so that $\tilde{z}$ is as close as possible to a pressure coordinate, and the additional normalization by $\rho_0 g$ was included so that units and values for $\tilde{z}$,  $\tilde{h}$,  and $\tilde{w}$ are intuitive and easy to work with. A major advantage of [](#def-pseudo-height) is that $\tilde{z}^{\text{floor}}$ is proportional to the bottom pressure, and can be used directly for the barotropic pressure gradient in time-split methods.
+The differential form of the hydrostatic balance $dp = -\rho g dz$ implies that we could choose an arbitrary offset. One could set the offset such that $\tilde{z}=0$ at $z=0$, so that the equilibrium sea surface height matches. Or one could set $\tilde{z}^{\text{floor}} = z^{\text{floor}}$ at some reference depth. Our definition [](#def-pseudo-height) was made so that $\tilde{z}$ varies in space and time in the same way as pressure, and the additional normalization by $\rho_0 g$ was included so that units and values for $\tilde{z}$,  $\tilde{h}$,  and $\tilde{w}$ are intuitive and easy to work with. A major advantage of [](#def-pseudo-height) is that $\tilde{z}^{\text{floor}}$ is proportional to the bottom pressure, and can be used directly for the barotropic pressure gradient in time-split methods.
 
 ### Vertical Discretization
 
 The previous equation set [](#vh-mass) to [](#vh-momentum) is for an arbitrary layer bounded by $z^{\text{top}}$ above and $z^{\text{bot}}$ below.
 We now provide the details of the vertical discretization.
-The ocean is divided vertically into $K_{max}$ layers, with $k=1$ at the top and increasing downwards (opposite from $z$).
-Layer $k$ is bounded between $z_k^{\text{top}}$ above and $z_{k+1}^{\text{top}}$ below.
+The ocean is divided vertically into $K_{max}$ layers, with $k=0$ at the top and increasing downwards (opposite from $z$).
+Layer $k$ is bounded between $z_k^{\text{top}}$ above and $z_{k+1}^{\text{top}}$ below (i.e. $z_k^{\text{bot}} = z_{k+1}^{\text{top}}$).
 
 The layer thickness of layer k, used in MPAS-Ocean, is
 
@@ -391,11 +408,16 @@ $$ (def-thickness)
 In Omega we will use the pseudo-thickness,
 
 $$
-{\tilde h}_k(x,y,t) = \int_{{\tilde z}_{k+1}^{\text{top}}}^{{\tilde z}_k^{\text{top}}} d{\tilde z}
-= \frac{1}{\rho_0} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho dz,
+{\tilde h}_k(x,y,t)
+&= \int_{{\tilde z}_{k+1}^{\text{top}}}^{{\tilde z}_k^{\text{top}}} d\tilde{z} \\
+&= \frac{1}{\rho_0} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho \, dz \\
+&= \frac{1}{\rho_0 g} \left( \hat{p}_{k+1}^{\text{top}} - \hat{p}_k^{\text{top}} \right)
 $$ (def-pseudo-thickness)
 
-which is the mass per unit area in the layer, normalized by $\rho_0$. The density-weighted average of any variable $\phi({\bf x},t)$ in layer $k$ is
+which is the mass per unit area in the layer, normalized by $\rho_0$. This pseudo-thickness and layer-averaging will be used to express conservation laws in a mass-weighted coordinate system.  Pseudo-thickness, rather than geometric
+thickness will be the prognostic variable in Omega.
+
+The density-weighted average of any variable $\phi({\bf x},t)$ in layer $k$ is
 
 $$
 {\overline \phi}^{\tilde{z}}_k(x,y,t) =
@@ -419,6 +441,7 @@ $$
 {\tilde h}_k {\overline \phi}^{\tilde{z}}_k(x,y,t).
 $$ (h-phi)
 
+This relation is frequently used in discretized fluxes and conservation equations to replace integrals with layer-mean quantities.
 
 ### Layered Tracer & Mass
 
@@ -536,7 +559,7 @@ They also include **vertical stress forces** (e.g., wind stress at the ocean sur
 
 #### Pressure Term
 
-The pressure force term may be converted from the boundary to the interior with Gauss' divergence theorem (see [Kundu et al. 2016](https://www.amazon.com/dp/012405935X/) p. 119),
+The pressure force term may be converted from the boundary to the interior with Gauss' divergence theorem (see [Kundu et al. 2016](https://doi.org/10.1016/C2012-0-00611-4) p. 119),
 
 $$
 - \int_{\partial V(t)} p \, \mathbf{n} \, dA
@@ -554,7 +577,7 @@ $$ (gradp-h)
 
 #### Stress Term
 
-Likewise, the stress tensor integrated over the surface may be converted to a volume integral with Gauss' theorem ([Kundu et al. 2016](https://www.amazon.com/dp/012405935X/) p. 125 eqn 4.20b),
+Likewise, the stress tensor integrated over the surface may be converted to a volume integral with Gauss' theorem ([Kundu et al. 2016](https://doi.org/10.1016/C2012-0-00611-4) p. 125 eqn 4.20b),
 
 $$
 \int_{\partial V(t)} \boldsymbol{\tau} \cdot \mathbf{n} \, dA
@@ -1250,7 +1273,7 @@ This section is for references without webpage links. These are mostly textbooks
 
 ## OLD: Continuous Equations
 
-The continuous form of the conservation equations are as follows. See [Kundu et al. 2016](https://www.amazon.com/dp/012405935X/), chapter 4, eqns 4.7 and 4.22 or the [MOM5 manual](https://mom-ocean.github.io/assets/pdfs/MOM5_manual.pdf) eqn 7.7. This is before any assumptions are made, so this is a compressible, non-hydrostatic, non-Boussinesq fluid. Here all variables are a function of $(x,y,z)$, ${\bf u}_{3D}$ denotes the three-dimensional velocity vector, ${\bf u}_{3D} \otimes {\bf u}_{3D} = {\bf u}_{3D}{\bf u}_{3D}^T$ is the tensor product, $\nabla_{3D}$ is the three-dimensional gradient, $D/Dt$ is the material derivative, and other variables defined in the [Variable Definition Section](#variable-definitions) below.
+The continuous form of the conservation equations are as follows. See [Kundu et al. 2016](https://doi.org/10.1016/C2012-0-00611-4), chapter 4, eqns 4.7 and 4.22 or the [MOM5 manual](https://mom-ocean.github.io/assets/pdfs/MOM5_manual.pdf) eqn 7.7. This is before any assumptions are made, so this is a compressible, non-hydrostatic, non-Boussinesq fluid. Here all variables are a function of $(x,y,z)$, ${\bf u}_{3D}$ denotes the three-dimensional velocity vector, ${\bf u}_{3D} \otimes {\bf u}_{3D} = {\bf u}_{3D}{\bf u}_{3D}^T$ is the tensor product, $\nabla_{3D}$ is the three-dimensional gradient, $D/Dt$ is the material derivative, and other variables defined in the [Variable Definition Section](#variable-definitions) below.
 
 momentum:
 
