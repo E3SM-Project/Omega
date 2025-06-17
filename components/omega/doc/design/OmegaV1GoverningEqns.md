@@ -360,22 +360,22 @@ $$ (grad-z-top)
 
 To derive this relationship, we begin with [](#def-pseudo-height), the definition of pseudo-height, under hydrostatic balance:
 $$
-\tilde{z}(z) = -\frac{p(z)}{\rho_0 g}, \quad \text{with} \quad \frac{dp}{dz} = -\rho g.
+\tilde{z}(z) = -\frac{\hat{p}(z)}{\rho_0 g}, \quad \text{with} \quad \frac{d\hat{p}}{dz} = -\rho g.
 $$
 
 Taking a horizontal gradient of the pressure at the top of a layer, we write:
 $$
-p^{\text{top}} = p^{\text{surf}} + \int_{z^{\text{top}}}^{z^{\text{surf}}} \rho(z') g \, dz',
+\hat{p}^{\text{top}} = \hat{p}^{\text{surf}} + \int_{z^{\text{top}}}^{z^{\text{surf}}} \rho(z') g \, dz',
 $$
 and therefore:
 $$
-\nabla p^{\text{top}} = \nabla p^{\text{surf}} + \rho(z^{\text{top}}) g \nabla z^{\text{top}}.
+\nabla \hat{p}^{\text{top}} = \nabla \hat{p}^{\text{surf}} + \rho(z^{\text{top}}) g \nabla z^{\text{top}}.
 $$
 
 Substituting into the gradient of pseudo-height:
 $$
-\nabla \tilde{z}^{\text{top}} = -\frac{1}{\rho_0 g} \nabla p^{\text{top}}
-= -\frac{1}{\rho_0 g} \left( \nabla p^{\text{surf}} + \rho(z^{\text{top}}) g \nabla z^{\text{top}} \right).
+\nabla \tilde{z}^{\text{top}} = -\frac{1}{\rho_0 g} \nabla \hat{p}^{\text{top}}
+= -\frac{1}{\rho_0 g} \left( \nabla \hat{p}^{\text{surf}} + \rho(z^{\text{top}}) g \nabla z^{\text{top}} \right).
 $$
 
 Rearranging:
