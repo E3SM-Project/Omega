@@ -445,26 +445,40 @@ This relation is frequently used in discretized fluxes and conservation equation
 
 ### Layered Tracer & Mass
 
-Dividing the tracer equation [](#vh-tracer) for layer $k$ by the normalization constant $\rho_0$, and substituting [](#def-pseudo-velocity), we have
+Substituting [](#def-pseudo-velocity) into the tracer equation [](#vh-tracer) for layer $k$, we have
 
 $$
-\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, \varphi \, dz \, dA
+\frac{d}{dt} \int_{A} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho \, \varphi \, dz \, dA
 +
-   \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, \varphi \, {\bf u} \, dz \right) \cdot {\bf n} \, dl
- + \int_{A}\left[ \varphi \left({\tilde w} - {\tilde w}_r \right) \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} \, dA
- - \int_{A}\left[ \varphi \left({\tilde w} - {\tilde w}_r \right) \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}} \, dA
-= 0
+\int_{\partial A} \left( \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho \, \varphi \, {\bf u} \, dz \right) \cdot {\bf n}_\perp \, dl & \\
++
+\int_{A} \left[ \rho_0 \varphi (\tilde{w} - \tilde{w}_r) - \rho \varphi {\bf u} \cdot \nabla z^{\text{top}} \right]_{z = z^{\text{top}}} \, dA & \\
+-
+\int_{A} \left[ \rho_0 \varphi (\tilde{w} - \tilde{w}_r) - \rho \varphi {\bf u} \cdot \nabla z^{\text{bot}} \right]_{z = z^{\text{bot}}} \, dA
+& = 0
 $$ (Aintegral-tracer)
 
-where we converted to pseudo-height for the last two terms using [](#formula-pseudo-height).  Applying this same relation to the first two terms,
+where we converted to pseudo-height for the last two terms using [](#formula-pseudo-height).
+
+While working in pseudo-height coordinates, vertical transport across a sloping layer interface must still be expressed in terms of the slope of the geometric height, $\nabla z^{\text{top}}$, of that interface. Although it may be tempting to rewrite this slope as $\nabla \tilde{z}^{\text{top}}$, the two are not exactly equivalent due to the nonlinear transformation between pressure and height. Differentiating the pseudo-height definition under hydrostatic balance yields:
 
 $$
-\frac{d}{dt} \int_{A} {\tilde h}_k {\overline \varphi}^{\tilde{z}}_k   \, dA
+\nabla z^{\text{top}} = \frac{\rho_0}{\rho(z^{\text{top}})} \nabla \tilde{z}^{\text{top}} + \frac{1}{\rho(z^{\text{top}}) g} \nabla p^{\text{surf}}
+$$
+
+This shows that the geometric slope differs from the pseudo-height slope by a correction term involving the horizontal gradient of surface pressure. Under typical oceanographic conditions—where density is close to the reference $\rho_0$ and surface pressure gradients are modest—this correction may be small. However, we retain $\nabla z^{\text{top}}$ explicitly in the vertical transport terms to avoid introducing assumptions that may not hold in all regimes.
+
+Substituting [](#h-phi) into the first two terms in [](#Aintegral-tracer) and dividing by $\rho_0$,
+
+$$
+\frac{d}{dt} \int_A \tilde{h}_k \, \overline{\varphi}^{\tilde{z}}_k \, dA
 +
-   \int_{\partial A}\left( {\tilde h}_k \, {\overline{\varphi \, {\bf u}}}^{\tilde{z}}_k  \, \right) \cdot {\bf n} \, dl
- + \int_{A}\left[ \varphi \left({\tilde w} - {\tilde w}_r \right) \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} \, dA
- - \int_{A}\left[ \varphi \left({\tilde w} - {\tilde w}_r \right) \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}} \, dA
-= 0.
+\int_{\partial A} \left( \tilde{h}_k \, \overline{\varphi {\bf u}}^{\tilde{z}}_k \right) \cdot {\bf n}_\perp \, dl & \\
++
+\int_A \left[ \varphi (\tilde{w} - \tilde{w}_r) - \frac{\rho}{\rho_0} \varphi {\bf u} \cdot \nabla z^{\text{top}} \right]_{z = z^{\text{top}}} \, dA & \\
+-
+\int_A \left[ \varphi (\tilde{w} - \tilde{w}_r) - \frac{\rho}{\rho_0} \varphi {\bf u} \cdot \nabla z^{\text{bot}} \right]_{z = z^{\text{bot}}} \, dA
+& = 0
 $$ (Aintegral-tracer2)
 
 The horizontal tracer flux term is expanded using $\varphi \equiv \overline{\varphi}^{\tilde{z}}_k + \delta \varphi$ and ${\bf u} \equiv \overline{\bf u}^{\tilde{z}}_k + \delta {\bf u}$ to yield
