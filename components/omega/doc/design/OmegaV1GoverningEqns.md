@@ -298,56 +298,14 @@ $$
  \frac{\partial p}{\partial z}  = - \rho g
 $$ (hydrostatic)
 
-
-## 4. Favre Averaging
-
-The most common approach to determine the structure of the small scale stresses in ocean modeling is through Reynolds' averaging.  In this approach, a generic field $\phi$ is broken into a mean and deviatoric component, i.e.
-
-$$
-\phi = \overline{\phi} + \phi^\prime
-$$
-
-When deriving the Reynolds' averaged equations, averages of terms with a single prime are discarded by construction.  This is an attractive approach for Boussinesq ocean models since the density is assumed constant in all equations.  When the ocean model is non Boussinesq, this leads to difficulties.  For example, consider the first term in equation [](#h-momentum), if a Reynolds' decomposition and averaging is performed,
-
-$$
-\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \,  {\bf u}  \, dz \, dA = \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} (\overline{\rho {\bf u}} +  \,  \overline{\rho^\prime {\bf u}^\prime})  \, dz \, dA
-$$
-
-In this equation, the products of prime and average drop out by construction.  The $\overline{\rho^\prime {\mathbf u}^\prime}$ term is an unnecessary complication and difficult to parameterize.  To circumvent this complication, Omega will adopt Favre averaging [(Pope 2000)](https://elmoukrie.com/wp-content/uploads/2022/04/pope-s.b.-turbulent-flows-cambridge-university-press-2000.pdf), which for the generic variable $\phi$ is
-
-$$
-\phi = \hat{\phi} + \phi^"
-$$
-
-Where $\hat{\phi} \equiv \frac{\overline{\rho \phi}}{\overline{\rho}}$, and the double prime indicates deviations from this density weighted mean.  In the definition, the overbar is an averaging operator with identical properties to a Reynolds' average.  Using this relation, we can relate Reynolds' average to Favre average by considering the average of $\rho \phi$.  The standard Reynolds' approach gives
-
-$$
-\overline{\rho \phi} = \overline{\rho}\overline{\phi} + \overline{\rho^\prime \phi^\prime}
-$$
-
-Isolating $\overline{\phi}$,
-
-$$
-\overline{\phi} = \frac{\overline{\rho \phi}}{\overline{\rho}} + \frac{\overline{\rho^\prime \phi^\prime}}{\overline{\rho}}
-$$
-
-The first term on the right side of the equation is the definition of a Favre average, which yields
-
-$$
-\overline{\phi} = \hat{\phi} + \frac{\overline{\rho^\prime \phi^\prime}}{\overline{\rho}}
-$$
-
-Throughout much of the ocean, we expect the second term to be $O(10^{-3})$ smaller than the first, but could be large in highly turbulent regions. With this adoption, all prognostic and diagnostic variables in Omega are interpreted as Favre averages.
-This choice ensures that the governing equations are closed in terms of density-weighted means, avoiding the need to model second-order density fluctuations like $\overline{\rho' \phi'}$ that would otherwise arise in a Reynolds framework.
-
-## 5. Layered Equations
+## 4. Vertical Coordinate
 
 ### Pseudo-Height
 
 In our non-Boussinesq hydrostatic framework, we adopt a vertical coordinate based on pseudo-height,
 
 $$
-\tilde{z}(\hat{p}) = -\frac{1}{\rho_0 g} \, \hat{p}
+\tilde{z}(p) = -\frac{1}{\rho_0 g} \, p
 $$ (def-pseudo-height)
 
 The pseudo-height is simply the pressure normalized by two constants, a reference density $\rho_0$ and gravitational acceleration $g$.
@@ -355,12 +313,10 @@ A pseudo-height coordinate is effectively a pressure coordinate, but comes with 
 It is convenient to relate these variables using differentials as
 
 $$
-d\tilde{z} = -\frac{1}{\rho_0 g}\, d\hat{p} = \frac{\hat{\rho}}{\rho_0} \, dz
+d\tilde{z} = -\frac{1}{\rho_0 g}\, dp = \frac{\rho}{\rho_0} \, dz
 $$ (def-dtildez)
 
-where the second equality uses the hydrostatic balance $d\hat{p} = -\hat{\rho} g dz$.  We note that hydrostatic balance applies equivalently to Favre averaged variables.
-
-This shows that the pseudo-height is nearly the same as the physical height.
+where the second equality uses the hydrostatic balance $dp = -\rho g dz$.  This shows that the pseudo-height is nearly the same as the physical height.
 
 In order to convert from $z$ to ${\tilde z}$ the pressure must be computed,
 
@@ -404,22 +360,22 @@ $$ (grad-z-top)
 
 To derive this relationship, we begin with [](#def-pseudo-height), the definition of pseudo-height, under hydrostatic balance:
 $$
-\tilde{z}(z) = -\frac{\hat{p}(z)}{\rho_0 g}, \quad \text{with} \quad \frac{d\hat{p}}{dz} = -\rho g.
+\tilde{z}(z) = -\frac{p(z)}{\rho_0 g}, \quad \text{with} \quad \frac{dp}{dz} = -\rho g.
 $$
 
 Taking a horizontal gradient of the pressure at the top of a layer, we write:
 $$
-\hat{p}^{\text{top}} = \hat{p}^{\text{surf}} + \int_{z^{\text{top}}}^{z^{\text{surf}}} \rho(z') g \, dz',
+p^{\text{top}} = p^{\text{surf}} + \int_{z^{\text{top}}}^{z^{\text{surf}}} \rho(z') g \, dz',
 $$
 and therefore:
 $$
-\nabla \hat{p}^{\text{top}} = \nabla \hat{p}^{\text{surf}} + \rho(z^{\text{top}}) g \nabla z^{\text{top}}.
+\nabla p^{\text{top}} = \nabla p^{\text{surf}} + \rho(z^{\text{top}}) g \nabla z^{\text{top}}.
 $$
 
 Substituting into the gradient of pseudo-height:
 $$
-\nabla \tilde{z}^{\text{top}} = -\frac{1}{\rho_0 g} \nabla \hat{p}^{\text{top}}
-= -\frac{1}{\rho_0 g} \left( \nabla \hat{p}^{\text{surf}} + \rho(z^{\text{top}}) g \nabla z^{\text{top}} \right).
+\nabla \tilde{z}^{\text{top}} = -\frac{1}{\rho_0 g} \nabla p^{\text{top}}
+= -\frac{1}{\rho_0 g} \left( \nabla p^{\text{surf}} + \rho(z^{\text{top}}) g \nabla z^{\text{top}} \right).
 $$
 
 Rearranging:
@@ -482,6 +438,105 @@ $$ (h-phi)
 
 This relation is frequently used in discretized fluxes and conservation equations to replace integrals with layer-mean quantities.
 
+
+## 5. Favre Averaging
+
+To determine the subgrid scale (SGS) fluxes and stresses in ocean models, it is most common to utilize a Reynolds' decomposition and averaging.  In this approach, a generic field $\phi$ is broken into a mean and deviatoric component, i.e.
+
+$$
+\varphi = \left<\varphi\right> + \varphi^\prime
+$$
+
+To disambiguate from the definition of the bar as the vertical density weighted average, the Reynolds' average will be denoted by $< . >$, instead of the more common overbar. When deriving the Reynolds' averaged equations, averages of terms with a single prime are discarded by construction.  This is an attractive approach for Boussinesq ocean models since the fundamental equations do not include products of spatially variable density and tracer, pressure, or momentum.  When the ocean model is non Boussinesq, these products arise and create difficulties.  For example, consider the first term in equation [](#h-momentum), if a Reynolds' decomposition and averaging is performed,
+
+$$
+\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \,  {\bf u}  \, dz \, dA = \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} (\left<\rho {\bf u}\right> +  \,  \left<\rho^\prime {\bf u}^\prime\right>)  \, dz \, dA
+$$
+
+In this equation, the products of prime and average drop out by construction.  The $\left<\rho^\prime {\mathbf u}^\prime\right>$ term is an unnecessary complication and difficult to parameterize.  To circumvent this complication, Omega will also adopt Favre averaging [(e.g., Greatbatch et al, 2001)](https://journals.ametsoc.org/view/journals/atot/18/11/1520-0426_2001_018_1911_rtbaio_2_0_co_2.xml), which for the generic variable $\phi$ is
+
+$$
+\varphi = \widehat{\varphi} + \varphi^"
+$$
+
+Where $\widehat{\varphi} \equiv \frac{\left<\rho \varphi\right>}{\left<\rho\right>}$, and the double prime indicates deviations from this density weighted mean.  In the definition, the hat is an averaging operator with identical properties to a Reynolds' average.  Using this relation, we can relate Reynolds' average to Favre average by considering a the average of $\rho \varphi$.  The standard Reynolds' approach gives
+
+$$
+\left<\rho \varphi\right> = \left<\rho\right>\left<\varphi\right> + \left<\rho^\prime \varphi^\prime\right>
+$$
+
+Isolating $\left<\varphi\right>$, 
+
+$$
+\left<\varphi\right> = \frac{\left<\rho \varphi\right>}{\left<\rho\right>} + \frac{\left<\rho^\prime \varphi^\prime\right>}{\left<\rho\right>}
+$$
+
+The first term on the right side of the equation is the definition of a Favre average, which yields
+
+$$
+\left<\varphi\right> = \widehat{\varphi} + \frac{\left<\rho^\prime \varphi^\prime\right>}{\left<\rho\right>}
+$$ (favre-reynolds-relation)
+
+Throughout much of the ocean, we expect the second term to be very small as the numerator is most often three orders of magnitude smaller than the denominator, but could be large in highly turbulent regions. With this adoption, all prognostic and diagnostic variables in Omega are interpreted as Favre averages.
+
+This choice ensures that the governing equations are closed in terms of density-weighted means, avoiding the need to model second-order density correlations like $\left<\rho' \phi'\right>$ that would otherwise arise in a Reynolds framework.
+
+### Managing Multiple Decompositions
+
+Within Omega, two distinct decompositions are critical.  The first decomposition is the deviation from the density weighted average of a generic variable $\varphi$.  We decompose the continuous variable $\phi$ following
+
+$$
+\varphi \equiv \overline{\varphi}^{\tilde{z}}_k + \delta \varphi
+$$ (averaging-decomp-definition)
+
+where this has been specified for our chosen $\tilde{z}$ framework.  In our $\tilde{z}$ coordinate system, it is important to note that the Favre average, while similar in structure, is different from the vertical density weighted average given by [](#def-layer-average).
+
+The density weighted average is the quantity predicted by Omega, but the deviation from this value is potentially critical for operations like reconstruction of variables at layer interfaces or horizontal boundaries.  As will become clear, inclusion of the Reynolds' average will also be important for the derivation.  
+
+The Favre decomposition is defined as above as $\overline{\varphi}^{\tilde{z}}_k \equiv \widehat{\overline{\varphi}^{\tilde{z}}_k} + \varphi^{\prime \prime}$.  When performing Favre decomposition and averaging (as with the more traditional Reynolds' approach), the fluctuating quantity is defined relative to a sufficent time or ensemble mean of the model predicted quantity.  In this context, sufficient most commonly means a time average over a statistically significant number of eddy turnover times for the quantity being modeled or for the turbulence to equilibrate.
+
+As discussed below, Omega will predict density weighted average variables, which have been Favre averaged and the turbulent fluxes are deviations from this quantity unless denoted by $< . >$ for Reynolds' averaged turbulent fluxes and stresses.  Again we note that the Favre average is very close, but not exactly the same, to the Reynolds' average [](#favre-reynolds-relation).
+
+### Useful Averaging Relationships
+
+Most equations that will be Favre averaged will contain terms of the form $\rho \varphi$.  This can be written as
+
+$$
+\left<\rho \phi\right> = \left<\rho\right>\widehat{\varphi}.
+$$ (Favre-relation1)
+
+Here we have utilized the definition of the Favre average of $\varphi$.  Equation [](#Favre-relation1) implies that the model predicted variables in Omega should be interpreted as Favre averaged.  Given this, turbulent fluxes should also be Favre averaged.  As can be seen in equation [](#vh-tracer), we will have flux terms of the form $\rho \varphi {\mathbf u}$.  To gain an intuition for how these terms are treated, we first perform a Favre decomposition, but leave the density as full field.
+
+$$
+\rho \varphi {\mathbf u} &= \rho \left(\widehat{\varphi} + \varphi^{\prime \prime}\right)\left(\widehat{\mathbf u} + {\mathbf u}^{\prime \prime}\right) \\
+                         &= \rho \left( \widehat{\varphi}\widehat{\mathbf u} + \varphi^{\prime \prime}\widehat{\mathbf u} + \widehat{\varphi}{\mathbf u}^{\prime \prime} + \varphi^{\prime \prime}{\mathbf u}^{\prime \prime} \right)
+$$
+
+Following in the spirit of [](#Favre-relation1) and using the fact that a Reynolds' average of a product of perturbation and average is zero, we find
+
+$$
+\left<\rho \varphi {\mathbf u}\right> &= \left<\rho\widehat{\varphi}\widehat{\mathbf u}\right> + \left<\rho\varphi^{\prime \prime}{\mathbf u}^{\prime \prime}\right> \\
+                                    &= \left<\rho\right>\widehat{\varphi}\widehat{\mathbf u} + \left<\rho\right>\widehat{\varphi^{\prime \prime}{\mathbf u}^{\prime \prime}}
+$$ (Favre-relation2)
+
+Where we have also used the fact that $\left<\widehat{\varphi}\widehat{\mathbf u}\right> = \widehat{\varphi}\widehat{\mathbf u}$ by construction of the Reynolds' averaging operator and definition of the Favre average.  The second term utilizes [](#Favre-relation1) to arrive at this form.
+
+The form in [](#Favre-relation2) allows us to use fluxes that appear similar to a traditional Reynolds' average, but again is distinct although close in magnitude (See [](#favre-reynolds-relation)).
+
+For the decomposition related to vertical averaging, we will encounter terms such as ${\overline \varphi}^{\tilde{z}}_k \delta\varphi$ that need to be vertical averaged.  Using [](#def-layer-average) we have
+
+$$
+\overline{{\overline \varphi}^{\tilde{z}}_k \delta\varphi}^{\tilde{z}}_k &= \frac{\int_{{\tilde z}_{k+1}^{\text{top}}}^{{\tilde z}_k^{\text{top}}} {\overline \varphi}^{\tilde{z}}_k \delta \varphi d{\tilde z}}
+     {\int_{{\tilde z}_{k+1}^{\text{top}}}^{{\tilde z}_k^{\text{top}}} d{\tilde z}} \\
+     &= {\overline \varphi}^{\tilde{z}}_k \frac{\int_{{\tilde z}_{k+1}^{\text{top}}}^{{\tilde z}_k^{\text{top}}} \delta \varphi d{\tilde z}}
+     {\int_{{\tilde z}_{k+1}^{\text{top}}}^{{\tilde z}_k^{\text{top}}} d{\tilde z}} \\
+     &= 0,
+$$ (delta-vert-average)
+
+where the last equality is true by definition.
+
+## 6. Layer Equations
+
 ### Layered Tracer & Mass
 
 Substituting [](#def-pseudo-velocity) and [](#grad-z-top) into the tracer equation [](#vh-tracer) for layer $k$, we have
@@ -499,6 +554,47 @@ $$ (Aintegral-tracer)
 
 where we converted to pseudo-height for the last two terms using [](#formula-pseudo-height).
 
+We first Reynolds' average this equation and given the definition of the operator we can move the averaging past the derivatives and integrals without correction terms to yield
+
+$$
+\frac{d}{dt} \int_{A} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \left<\rho \, \varphi\right> \, dz \, dA
++
+\int_{\partial A} \left( \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \left<\rho \, \varphi \, {\bf u} \right> \, dz \right) \cdot {\bf n}_\perp \, dl & \\
++
+\int_{A} \left<\left\{ \rho_0 \varphi \left[\tilde{w}_{tr} - {\bf u} \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right) \right] \right\}\right>_{z = z^{\text{top}}} \, dA & \\
+-
+\int_{A} \left<\left\{ \rho_0 \varphi \left[\tilde{w}_{tr} - {\bf u} \cdot \nabla \left( \tilde{z}^{\text{bot}} - \tilde{z}^{\text{surf}} \right) \right] \right\}\right>_{z = z^{\text{bot}}}\, dA
+& = 0.
+$$ (Aintegral-tracer-reynolds)
+
+In this equation we have also invoked the definition of vertical transport velocity, $\tilde{w}_{tr} \equiv \tilde{w} - \tilde{w}_r$.
+
+Next we use the definition of the Favre average on the first two terms 
+
+$$
+\frac{d}{dt} \int_{A} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \left<\rho\right> \, \widehat{\varphi}\, dz \, dA
++
+\int_{\partial A} \left( \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \left<\rho\right> \, \widehat{\varphi \, {\bf u}} \, dz \right) \cdot {\bf n}_\perp \, dl & \\
++
+\int_{A} \left<\left\{ \rho_0 \varphi \left[\tilde{w}_{tr} - {\bf u} \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right) \right] \right\}\right>_{z = z^{\text{top}}} \, dA & \\
+-
+\int_{A} \left<\left\{ \rho_0 \varphi \left[\tilde{w}_{tr} - {\bf u} \cdot \nabla \left( \tilde{z}^{\text{bot}} - \tilde{z}^{\text{surf}} \right) \right] \right\}\right>_{z = z^{\text{bot}}}\, dA
+& = 0.
+$$ (Aintegral-tracer-reynolds2)
+
+Next, we use a Favre decomposition on any products of terms that are Favre averaged and use the Reynolds' decomposition on products of terms that are Reynolds' averaged.
+
+$$
+\frac{d}{dt} \int_{A} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \left<\rho\right> \, \widehat{\varphi}\, dz \, dA
++
+\int_{\partial A} \left( \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \left<\rho\right> \, \left(\widehat{\varphi}\widehat{\bf u} + \widehat{\varphi^{\prime \prime}{\bf u}^{\prime \prime}} \right) \right) \, \cdot {\bf n}_\perp \, dl & \\
++
+\int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right) \right\}_{z = z^{\text{top}}} \, dA & \\
+-
+\int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right) \right\}_{z = z^{\text{bot}}}\, dA
+& = 0.
+$$ (Aintegral-tracer-favre-reynolds)
+
 While working in pseudo-height coordinates, vertical transport across a sloping layer interface must still be expressed in terms of the slope of the geometric height, $\nabla z^{\text{top}}$, of that interface. Although it may be tempting to rewrite this slope as $\nabla \tilde{z}^{\text{top}}$, the two are not exactly equivalent due to the nonlinear transformation between pressure and height. Differentiating the pseudo-height definition under hydrostatic balance yields:
 
 $$
@@ -507,7 +603,7 @@ $$
 
 This shows that the geometric slope differs from the pseudo-height slope by a correction term involving the horizontal gradient of surface pressure. Under typical oceanographic conditions—where density is close to the reference $\rho_0$ and surface pressure gradients are modest—this correction may be small. However, we retain $\nabla z^{\text{top}}$ explicitly in the vertical transport terms to avoid introducing assumptions that may not hold in all regimes.
 
-Substituting [](#h-phi) into the first two terms in [](#Aintegral-tracer) and dividing by $\rho_0$,
+Given that the hydrostatic relation doesn't change form if Reynolds' averaged and reinterpreting the density weighted vertical average ([](#h-phi)) to utilize Reynolds' averaged density, and dividing by $\rho_0$ the first two terms in [](#Aintegral-tracer) can be rewritten as,
 
 $$
 \frac{d}{dt} \int_A \tilde{h}_k \, \overline{\varphi}^{\tilde{z}}_k \, dA
@@ -520,65 +616,81 @@ $$
 & = 0
 $$ (Aintegral-tracer2)
 
-The horizontal tracer flux term is expanded using $\varphi \equiv \overline{\varphi}^{\tilde{z}}_k + \delta \varphi$ and ${\bf u} \equiv \overline{\bf u}^{\tilde{z}}_k + \delta {\bf u}$ to yield
+Next we utilize the definition of the transport vertical velocity $\tilde{w}_{tr} \equiv \tilde{w} - \tilde{w}_r$ and perform the averaging expansion [](#averaging-decomp-definition) on the second term, 
 
 $$
 \frac{d}{dt} \int_{A} {\tilde h}_k {\overline \varphi}^{\tilde{z}}_k   \, dA
 +
-   \int_{\partial A}\left( {\tilde h}_k \, \left(\left(\overline{\varphi}^{\tilde{z}}_k + \delta \varphi\right)\left(\overline{\bf u}^{\tilde{z}}_k + \delta {\bf u}\right)\right) \, \right) \cdot {\bf n} \, dl
- + \int_{A}\left[ \varphi \left({\tilde w} - {\tilde w}_r \right) \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} \, dA
- - \int_{A}\left[ \varphi \left({\tilde w} - {\tilde w}_r \right) \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}} \, dA
+   \int_{\partial A}\left\{ {\tilde h}_k \, \left[\overline{\left(\overline{\varphi}^{\tilde{z}}_k + \delta \varphi\right)\left(\overline{\bf u}^{\tilde{z}}_k + \delta {\bf u}\right)}^{\tilde{z}}_k \right] \, \right\} \cdot {\bf n} \, dl & \\
+ + \int_{A}\left[ \varphi {\tilde w}_{tr} - {\bf u} \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right)\right]_{{\tilde z}={\tilde z}_k^{\text{top}}} \, dA & \\
+ - \int_{A}\left[ \varphi {\tilde w}_{tr}  - {\bf u} \cdot \nabla \left( \tilde{z}^{\text{bot}} - \tilde{z}^{\text{surf}} \right)\right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}} \, dA
 = 0.
 $$
 
-$$
-\frac{1}{\rho} \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \overline{\rho} \, \hat{\varphi} \, dz \, dA
-+
-   \frac{1}{\rho} \int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \overline{\rho}\, (\hat{\varphi}\hat{\bf u} + \overline{\varphi^{\prime \prime} {\bf u}^{\prime \prime}}) \, dz \right) \cdot {\bf n} \, dl
- + \int_{A}\left[ \hat{\varphi} \hat{\tilde w}_{tr} + \overline{\varphi^{\prime \prime} {\tilde w}_{tr}^{\prime \prime}} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} \, dA
- - \int_{A}\left[ \hat{\varphi} \hat{\tilde w}_{tr} + \overline{\varphi^{\prime \prime} {\tilde w}_{tr}^{\prime \prime}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}} \, dA
-= 0
-$$ (Aintegral-tracer2)
-
-Applying [](#formula-pseudo-height) to the first two terms and taking the limit as $A \rightarrow 0$ and using Gauss's theorem for the horizontal advection,
+The second term is simplified using [](#delta-vert-average)
 
 $$
-\frac{d{\tilde h}_k {\overline \varphi}^{\tilde{z}}_k  }{dt}
+\frac{d}{dt} \int_{A} {\tilde h}_k {\overline \varphi}^{\tilde{z}}_k   \, dA
 +
-   \nabla \cdot \left({\tilde h}_k \overline{\varphi {\bf u}}^{\tilde{z}}_k  \right)
- + \left[ \varphi {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}}
- - \left[ \varphi {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
-= -\left(\nabla \cdot \left({\tilde h}_k \overline{\varphi {\bf u}}^{\tilde{z}}_k  \right) + \left[\overline{\varphi^{\prime \prime} {\tilde w}_{tr}^{\prime \prime}}\right]_{{\tilde z}={\tilde z}_k^{\text{top}}} - \left[\overline{\varphi^{\prime \prime} {\tilde w}_{tr}^{\prime \prime}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}\right).
-$$ (layer-tracer-pre)
+   \int_{\partial A}\left\{ {\tilde h}_k \, \left[\left(\overline{\varphi}^{\tilde{z}}_k \overline{\bf u}^{\tilde{z}}_k + \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k \right)\right] \, \right\} \cdot {\bf n} \, dl & \\
+ + \int_{A}\left[ \varphi {\tilde w}_{tr} - {\bf u} \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right)\right]_{{\tilde z}={\tilde z}_k^{\text{top}}} \, dA & \\
+ - \int_{A}\left[ \varphi {\tilde w}_{tr}  - {\bf u} \cdot \nabla \left( \tilde{z}^{\text{bot}} - \tilde{z}^{\text{surf}} \right)\right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}} \, dA
+= 0.
+$$
 
-Here ${\tilde w}_{tr}={\tilde w} - {\tilde w}_r$ is the normalized vertical mass transport through the layer interface.
-It is a pseudo-transport velocity in units of m/s.
-Equation [](#layer-tracer-pre) is identical to [Ringler et al. 2013](https://www.sciencedirect.com/science/article/pii/S1463500313000760) (A.24), and further explanation can be found in that appendix.
+Next, a Favre decomposition is used for the layer averaged variables and a Reynolds' decomposition is used for the full variable reconstructions at the top and bottom of the model layers.
 
-As a final step, we substitute the approximation $\overline{\varphi {\bf u}}^{\tilde{z}}_k \approx \overline{\varphi }^{\tilde{z}}_k \overline{{\bf u}}^{\tilde{z}}_k$.
-The mass equation is identical to the tracer equation with $\varphi=1$. Dropping the overlines for simpler notation, the layered version of mass and tracer conservation are
+$$
+\frac{d}{dt} \int_{A} {\tilde h}_k {\overline \varphi}^{\tilde{z}}_k   \, dA
++
+   \int_{\partial A}\left\{ {\tilde h}_k \, \left[\left(\widehat{\overline{\varphi}^{\tilde{z}}_k} + \varphi^{\prime \prime}\right) \left(\widehat{\overline{\bf u}^{\tilde{z}}_k} + {\bf u}^{\prime \prime}\right) + \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k \right] \, \right\} \cdot {\bf n} \, dl & \\
+ + \int_{A}\left[ \left(\left<\varphi\right> + \varphi^\prime \right) \left\{\left(\left<{\tilde w}_{tr}\right> + {\tilde w}_{tr}^{\prime} \right) - \left(\left<{\bf u}\right> + {\bf u}^{\prime} \right) \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right)\right\}\right]_{{\tilde z}={\tilde z}_k^{\text{top}}} \, dA & \\
+ - \int_{A}\left[ \left(\left<\varphi\right> + \varphi^\prime \right) \left\{\left(\left<{\tilde w}_{tr}\right> + {\tilde w}_{tr}^{\prime} \right) - \left(\left<{\bf u}\right> + {\bf u}^{\prime} \right) \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right)\right\}\right]_{{\tilde z}={\tilde z}_k^{\text{bot}}} \, dA & \\
+= 0.
+$$ (favre-full-expansion)
+
+The terms on the first line are next Favre averaged and the terms on the second and third lines are expanded and then Reynolds' averaged to yield
+
+$$
+\frac{d}{dt} \int_{A} {\tilde h}_k {\overline \varphi}^{\tilde{z}}_k   \, dA
++
+   \int_{\partial A}\left\{ {\tilde h}_k \, \left[\widehat{\overline{\varphi}^{\tilde{z}}_k} \widehat{\overline{\bf u}^{\tilde{z}}_k} + \widehat{\varphi^{\prime \prime}{\bf u}^{\prime \prime}} + \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k \right] \, \right\} \cdot {\bf n} \, dl & \\
+ + \int_{A}\left[ \left<\varphi\right> \left<{\tilde w}_{tr}\right> + \left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> - \left(\left<\varphi\right>\left<{\bf u}\right> + \left< \varphi^\prime {\bf u}^{\prime}\right> \right) \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right)\right]_{{\tilde z}={\tilde z}_k^{\text{top}}} \, dA & \\
+-  \int_{A}\left[ \left<\varphi\right> \left<{\tilde w}_{tr}\right> + \left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> - \left(\left<\varphi\right>\left<{\bf u}\right> + \left< \varphi^\prime {\bf u}^{\prime}\right> \right) \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right)\right]_{{\tilde z}={\tilde z}_k^{\text{bot}}} \, dA & \\
+= 0.
+$$ (favre-reynolds-tracer-final)
+
+A few comments on the last two integrals.  If only the first two terms of the integrals are retained, this represents the vertical advective and turbulent fluxes for a finite volume framework.  The second two terms represent the projection of the horizontal advective and turbulent fluxes into the direction normal to the sloping surface.  When the coordinate surfaces are flat $\tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} = 0$ and the vertical fluxes are aligned with the normal to the coordinate surface reducing the equation to the expected z-coordinate, finite volume, formulation.  
+
+Finally, we take the limit as $A \rightarrow 0$ and using Gauss' theorem for the horizontal advection to arrive at the final tracer equation
+
+tracer: 
+
+$$
+\frac{\partial {\tilde h}_k \widehat{\overline \varphi^{\tilde{z}}_k}  }{dt} 
++
+   \nabla \cdot \left({\tilde h}_k \widehat{\overline{\varphi}^{\tilde{z}}_k} \widehat{\overline{\bf u}^{\tilde{z}}_k}\right) 
+ + \left[ \left<\varphi\right> \left<{\tilde w}_{tr}\right> - \left<\varphi\right>\left<{\bf u}\right>  \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right) \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} & \\
+ - \left[ \left<\varphi\right> \left<{\tilde w}_{tr}\right> - \left<\varphi\right>\left<{\bf u}\right>  \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right) \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
+= & \\
+- \nabla \cdot \left({\tilde h}_k \widehat{{\overline{\varphi}^{\tilde{z}}_k}^{\prime \prime} {\overline{\bf u}^{\tilde{z}}_k}^{\prime \prime}} \, + {\tilde h}_k \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k \right) & \\
+- \left\{\left[\left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> - \left< \varphi^\prime {\bf u}^{\prime}\right> \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right)\right]_{{\tilde z}={\tilde z}_{k+1}^{\text{top}}} - \left[\left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> - \left< \varphi^\prime {\bf u}^{\prime}\right> \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} \right)\right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}\right\}.
+$$ (layer-tracer)
+
+A few notes on the layer averaged tracer equation.  In this complete form, it includes three types of fluctuating quantities that must be dealt with: (1) the Favre averaged turbulent flux $\left(\widehat{{\overline{\varphi}^{\tilde{z}}_k}^{\prime \prime} {\overline{\bf u}^{\tilde{z}}_k}^{\prime \prime}}\right)$, (2) the Reynolds' average turbulent flux $\left( \left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> \right)$, and (3) the vertical integral of the product of deviations from the layer integrated variables $\left(\overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k \right)$.  The details of the first two quantities will be discussed later in this document and follow on design documents. The terms involving perturbations from the layer integrated quantity are necessary to extend beyond piecewise constant represenation of variables.  In this equation, variables with no overline are the full field variable at the interfaces.
+
+The mass equation is identical to the tracer equation with $\varphi=1$.
 
 mass:
 
 $$
-\frac{d{\tilde h}_k }{dt}
+\frac{\partial {\tilde h}_k }{dt} 
 +
-   \nabla \cdot \left({\tilde h}_k{\bf u}_k \right)
- + \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}}
- - \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
+   \nabla \cdot \left({\tilde h}_k \widehat{\overline{\bf u}^{\tilde{z}}_k}\right) 
+ + \left[ \left<{\tilde w}_{tr}\right> - \left<{\bf u}\right> \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}}\right) \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} 
+ - \left[ \left<{\tilde w}_{tr}\right> - \left<{\bf u}\right> \cdot \nabla \left( \tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}}\right) \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
 = 0
 $$ (layer-mass)
-
-tracer:
-
-$$
-\frac{d{\tilde h}_k \varphi_k  }{dt}
-+
-   \nabla \cdot \left({\tilde h}_k \varphi_k {\bf u}_k \right)
- + \left[ \varphi {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}}
- - \left[ \varphi {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
-= 0
-$$ (layer-tracer)
 
 ### Layered Momentum
 
@@ -587,7 +699,7 @@ We now derive the horizontal momentum equation in our non-Boussinesq, hydrostati
 We begin by specifying the forces in the full three-dimensional momentum equation [](#continuous-momentum),
 
 $$
-\frac{d}{dt} \int_{V(t)} \rho\,  {\bf v} \, dV
+\frac{\partial}{\partial t} \int_{V(t)} \rho\,  {\bf v} \, dV
 + \int_{\partial V(t)}\rho\, {\bf v} \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA
 = \mathbf{F}_\text{total}[V(t)],
 $$ (continuous-momentum2)
@@ -607,8 +719,7 @@ Each term on the right-hand side corresponds to a physically distinct force acti
 - The first term is the **Coriolis force**, where $ \mathbf{f} $ is the vector Coriolis parameter (e.g., $ f \hat{\mathbf{z}} $ on the sphere).
 - The second term represents the **gravitational force**, expressed in terms of the gradient of the gravitational potential $ \Phi(x, y, z, t) $, which may include effects such as tides and self-attraction and loading.
 - The third term is the **pressure force**, which acts on the boundary surfaces and is naturally expressed as a surface integral. It gives rise to both horizontal pressure gradients and contributions from sloping surfaces.
-- The fourth term represents the surface stresses. They include **horizontal stress forces** across the vertical sides of the control volume, such as those due to lateral friction or subgrid momentum transfer.
-They also include **vertical stress forces** (e.g., wind stress at the ocean surface and bottom drag at the seafloor), projected into horizontal momentum and acting across the top and bottom surfaces.
+- The fourth term represents resolved stresses.  Wind stress, drag, and horizontal boundary conditions are turbulent stresses and are not included in this term.  For Omega, the fourth term is zero.
 
 #### Pressure Term
 
@@ -628,34 +739,6 @@ $$
 = - \int_{A}   \overline{\nabla_{\perp} p}^{z}  \, dA.
 $$ (gradp-h)
 
-#### Stress Term
-
-Likewise, the stress tensor integrated over the surface may be converted to a volume integral with Gauss' theorem ([Kundu et al. 2016](https://doi.org/10.1016/C2012-0-00611-4) p. 125 eqn 4.20b),
-
-$$
-\int_{\partial V(t)} \boldsymbol{\tau} \cdot \mathbf{n} \, dA
-= \int_{V(t)} \nabla_{3D} \cdot \boldsymbol{\tau} \, dV
-$$ (stress-Gauss)
-
-for clarity, this can be written in index notation as
-
-$$
-\int_{\partial V(t)} n_i \tau_{ij} \, dA
-= \int_{V(t)} \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) \, dV
-$$ (stress-Gauss-index)
-
-Taking only the horizontal ($j$=1,2),
-
-$$
- \int_{V(t)} \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) \, dV
-= \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}}
- \frac{\partial}{\partial x_i} \left( \tau_{ij} \right)
-\, dz \, dA
-=  \int_{A}
-  \overline{
- \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z dA
-$$ (gradp-h)
-
 #### Horizontal momentum
 
 Putting the pressure and stress term into [](h-momentum), and using Gauss' Theorem on the advection, the horizontal momentum equation is
@@ -669,11 +752,8 @@ $$
 \\ & \; =
 - \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \,  \mathbf{f} \times \mathbf{u} \, dz \, dA
 - \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, \nabla_\perp \Phi \, dz \, dA
- - \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}}
-  \nabla_{\perp} p \, dz \, dA
-+ \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}}
- \frac{\partial}{\partial x_i} \left( \tau_{ij} \right)
-\, dz \, dA.
+ - \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} 
+  \nabla_{\perp} p \, dz \, dA.
 $$ (h-momentum-p-tau)
 
 Dividing by $\rho_0$ and taking vertical averages using [](#def-thickness) and [](#def-pseudo-thickness),
@@ -688,7 +768,6 @@ $$
 - \int_{A} \tilde{h} \,\overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} \, dA
 - \int_{A} \tilde{h} \,\overline{  \nabla_\perp \Phi }^{\tilde z} \, dA
 - \int_{A} \frac{1}{\rho_0} \overline{\nabla_{\perp} p}^{z}  \, dA
-+ \int_{A} \frac{1}{\rho_0} \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z dA
 $$ (h-momentum-p-tau)
 
 Taking the limit as $A \rightarrow 0$, we arrive at the local, horizontally continuous form:
@@ -700,10 +779,9 @@ $$
  + \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{top}}}
  - \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{bot}}}
 \\ & =
--  \tilde{h} \,\overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z}
--  \tilde{h} \,\overline{  \nabla_\perp \Phi }^{\tilde z}
--  \frac{1}{\rho_0} \overline{\nabla_{\perp} p}^{z}
-+  \frac{1}{\rho_0} \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z
+-  \tilde{h} \,\overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} 
+-  \tilde{h} \,\overline{  \nabla_\perp \Phi }^{\tilde z} 
+-  \frac{1}{\rho_0} \overline{\nabla_{\perp} p}^{z}  
 $$ (momentum-layered-differential-1)
 
 The first two terms are the material derivative, confined within the horizontal layer. Using the product rule, and layered mass conservation [](#layer-mass),
@@ -738,10 +816,9 @@ $$
    \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}}
  - \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}\right)
 \\ &  =
--  \overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z}
--  \overline{  \nabla_\perp \Phi }^{\tilde z}
--  \frac{1}{\rho_0 \, \tilde{h}} \overline{\nabla_{\perp} p}^{z}
-+  \frac{1}{\rho_0 \, \tilde{h}} \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z
+-  \overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} 
+-  \overline{  \nabla_\perp \Phi }^{\tilde z} 
+-  \frac{1}{\rho_0 \, \tilde{h}} \overline{\nabla_{\perp} p}^{z}  
 $$ (momentum-layered-differential-2)
 
 Note that the coefficient of the pressure gradient and stress tensor can be rewritten as
@@ -767,10 +844,9 @@ $$
   \frac{1}{\tilde h}\left(
  \left[ {\bf u}\right]_{z=z^{\text{bot}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{bot}}}
 \\ &  =
--  \overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z}
--  \overline{  \nabla_\perp \Phi }^{\tilde z}
--  \overline{\alpha}^z \overline{\nabla_{\perp} p}^{z}
-+  \overline{\alpha}^z \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z
+-  \overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} 
+-  \overline{  \nabla_\perp \Phi }^{\tilde z} 
+-  \overline{\alpha}^z \overline{\nabla_{\perp} p}^{z}  
 $$ (momentum-layered-differential-3)
 
 In addition, the horizontal advection may be rewritten as
@@ -812,10 +888,9 @@ $$
   \frac{1}{\tilde h}\left(
  \left[ {\bf u}\right]_{z=z^{\text{bot}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{bot}}}
 \\ &  =
-- \nabla_\perp K
--  \overline{  \nabla_\perp \Phi }^{\tilde z}
--  \overline{\alpha}^z \overline{\nabla_{\perp} p}^{z}
-+  \overline{\alpha}^z \overline{ \frac{\partial}{\partial x_i} \left( \tau_{ij} \right) }^z
+- \nabla_\perp K 
+-  \overline{  \nabla_\perp \Phi }^{\tilde z} 
+-  \overline{\alpha}^z \overline{\nabla_{\perp} p}^{z}  
 $$ (momentum-layered-differential-4)
 
 Notes from Mark:
@@ -1337,7 +1412,7 @@ $$
   = - \nabla_{3D} p
    - \rho \nabla_{3D} \Phi
 + \rho {\bf D}^u_{3D} + \rho {\bf F}^u_{3D}
-$$ (continuous-momentum)
+$$
 
 mass:
 
@@ -1346,7 +1421,7 @@ $$
 \frac{\partial \rho }{\partial t}
  + \nabla_{3D} \cdot \left( \rho  {\bf u}_{3D}  \right)
 = 0
-$$ (continuous-mass)
+$$ 
 
 tracers:
 
@@ -1355,7 +1430,7 @@ $$
 \frac{\partial \rho \varphi}{\partial t}
  + \nabla_{3D} \cdot \left( \rho \varphi {\bf u}_{3D}  \right)
 = D^\varphi + Q^\varphi
-$$ (continuous-tracer)
+$$
 
 Here we have express the following terms as a general operators, with examples of specific forms provided below: the dissipation ${\bf D}^u$, momentum forcing ${\bf F}^u$, tracer diffusion $D^\varphi$, and tracer sources and sinks $Q^\varphi$. The graviational potential, $\Phi$, is written in a general form, and may include Earth's gravity, tidal forces, and self attraction and loading.
 
