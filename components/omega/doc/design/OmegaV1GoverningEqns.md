@@ -96,7 +96,7 @@ The derivation of the momentum equation may also be found in [Leishman 2025](htt
 In geophysical flows the vertical and horizontal directions are treated differently due to rotation and stratification, which leads to different scales of motion.
 To that end, assume that the control volume $V$ is bounded in the horizontal by a fixed wall $\partial V^{side}$ that does not vary in time or $z$.
 The top and bottom boundaries of $V$, $\partial V^{\text{top}}$ and $\partial V^{\text{bot}}$, occur at $z = z^{\text{top}}(x,y,t)$ and $z = z^{\text{bot}}(x,y,t)$.
-Taking the tracer equation as an example and dropping the explicit $({\bf x},t)$ dependance notation, we separate all integrals between horizontal and vertical,
+Taking the tracer equation as an example and dropping the explicit notation for spatial and temporal dependence, i.e., writing $\rho$, $\varphi$, and ${\bf v}$ instead of $\rho({\bf x},t)$, $\varphi({\bf x},t)$, etc., we separate all integrals between horizontal and vertical,
 
 $$
 \frac{d}{dt} \int_{V(t)} \rho \, \varphi \, dV
