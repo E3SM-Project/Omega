@@ -674,8 +674,6 @@ macro(update_variables)
     add_definitions(-DOMEGA_MPI_ON_DEVICE)
   endif()
 
-  file(APPEND ${_EnvScript} "$*\n")
-
   # Include the findParmetis script
   list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
   find_package(Parmetis REQUIRED)

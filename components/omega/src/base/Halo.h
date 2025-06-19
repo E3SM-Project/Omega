@@ -784,7 +784,7 @@ class Halo {
 
       // Determine the number of array elements per cell, edge, or vertex
       // in the input array
-      I4 NDims = Array.Rank;
+      I4 NDims = Array.rank();
       if (NDims == 1) {
          TotSize = 1;
       } else if (NDims == 2) {
