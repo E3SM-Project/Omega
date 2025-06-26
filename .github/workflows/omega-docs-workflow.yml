@@ -1,11 +1,19 @@
-name: CI/CD Release Workflow
+name: omega-release
 
 on:
   push:
     branches: [develop]
+    # But only if Omega docs-related files are touched
+    paths:
+      - components/omega/doc/**
+
+env:
+  PYTHON_VERSION: "3.13"
 
 jobs:
   publish-docs:
+    if: ${{ github.repository == 'E3SM-Project/E3SM' }} or \
+        ${{ github.repository == 'E3SM-Project/Omega' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -17,38 +25,24 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        name: Cache Conda
-        uses: actions/cache@v3
-        env:
-          # Increase this value to reset cache if conda-dev-spec.template has not changed in the workflow
-          CACHE_NUMBER: 0
-        with:
-          path: ~/conda_pkgs_dir
-          key:
-            ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{
-            hashFiles('components/omega/dev-conda.txt') }}
-
-      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        name: Set up Conda Environment
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Set up Conda Environment
+        uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: "omega_ci"
           miniforge-version: latest
-          channels: conda-forge,defaults
+          channels: conda-forge
           channel-priority: strict
           auto-update-conda: true
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ env.PYTHON_VERSION }}
 
-      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        name: Install dependencies
+      - name: Install dependencies
         run: |
           conda create -n omega_dev --file components/omega/dev-conda.txt \
-              python=${{ matrix.python-version }}
+              python=${{ env.PYTHON_VERSION }}
           conda activate omega_dev
           conda list
 
-      - name: Build Sphinx Docs
+      - name: Build Omega Docs with Sphinx
         # Use 'make html' (not html-strict) so docs always update, even if warnings exist.
         run: |
           conda activate omega_dev
@@ -59,19 +53,13 @@ jobs:
           conda activate omega_dev
           cd components/omega/doc
           # gh-pages branch must already exist
-          git clone https://github.com/E3SM-Project/Omega.git --branch gh-pages --single-branch gh-pages
+          git clone https://github.com/${{ github.repository }}.git --branch gh-pages --single-branch gh-pages
           # Make sure we're in the gh-pages directory.
           cd gh-pages
-          # Create `.nojekyll` (if it doesn't already exist) for proper GH Pages configuration.
-          touch .nojekyll
-          # Create an omega directory to store the documentation
-          mkdir -p omega
-          # Add `index.html` to point to the `main` branch automatically.
-          printf '<meta http-equiv="refresh" content="0; url=./develop/index.html" />' > omega/index.html
-          # Replace `develop` docs with latest changes
-          rm -rf omega/develop
-          mkdir omega/develop
-          cp -r ../_build/html/* omega/develop/
+          # Replace `Omega` docs with latest changes
+          rm -rf Omega
+          mkdir Omega
+          cp -r ../_build/html/* Omega/
           # Configure git using GitHub Actions credentials.
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"

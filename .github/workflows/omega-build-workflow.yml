@@ -1,95 +1,65 @@
-name: CI/CD Build Workflow
+name: omega-pr
 
 on:
   push:
     branches: [develop]
+    paths:
+      - 'components/omega/**'
 
   pull_request:
     branches: [develop]
+    paths:
+      - 'components/omega/**'
 
   workflow_dispatch:
 
 env:
   CANCEL_OTHERS: false
   PATHS_IGNORE: '["**/README.md", "**/doc/**"]'
+  PYTHON_VERSION: "3.13"
 
 jobs:
   build:
-    name: lint with pre-commit and build docs
+    if: ${{ github.repository == 'E3SM-Project/E3SM' }} or \
+        ${{ github.repository == 'E3SM-Project/Omega' }}
+    name: lint and test docs
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
       run:
         shell: bash -l {0}
-    strategy:
-      matrix:
-        python-version: ["3.10",]
     steps:
-      - id: skip_check
-        uses: fkirc/skip-duplicate-actions@master
-        with:
-          cancel_others: ${{ env.CANCEL_OTHERS }}
-          paths_ignore: ${{ env.PATHS_IGNORE }}
-
-      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        name: Checkout Code Repository
+      - name: Checkout Code Repository
         uses: actions/checkout@v3
 
-      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        name: Cache Conda
-        uses: actions/cache@v3
-        env:
-          # Increase this value to reset cache if conda-dev-spec.template has not changed in the workflow
-          CACHE_NUMBER: 0
-        with:
-          path: ~/conda_pkgs_dir
-          key:
-            ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{
-            hashFiles('components/omega/dev-conda.txt') }}
-
-      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        name: Set up Conda Environment
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Set up Conda Environment
+        uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: "omega_ci"
           miniforge-version: latest
-          channels: conda-forge,defaults
+          channels: conda-forge
           channel-priority: strict
           auto-update-conda: true
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ env.PYTHON_VERSION }}
 
-      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        name: Install dependencies
+      - name: Install dependencies
         run: |
           conda create -n omega_dev --file components/omega/dev-conda.txt \
-              python=${{ matrix.python-version }}
+              python=${{ env.PYTHON_VERSION }}
           conda activate omega_dev
           conda list
 
-      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        id: file_changes
+      - id: file_changes
         uses: trilom/file-changes-action@v1.2.4
         with:
           output: ' '
 
-      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        name: Cache pre-commit
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pre-commit/
-          key: ${{ runner.os }}-${{ matrix.python-version }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
-
-      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        # Run all pre-commit hooks on all the files.
-        # Getting only staged files can be tricky in case a new PR is opened
-        # since the action is run on a branch in detached head state
-        name: Run pre-commit
+      - name: Run pre-commit
         run: |
           conda activate omega_dev
           pre-commit run --show-diff-on-failure --files ${{ steps.file_changes.outputs.files}}
 
-      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        name: Build Sphinx Docs
+      - name: Build Sphinx Docs
         run: |
           conda activate omega_dev
           cd components/omega/doc
