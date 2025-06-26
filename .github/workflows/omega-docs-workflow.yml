@@ -1,4 +1,4 @@
-name: Build and Publish Omega Documentation
+name: omega-release
 
 on:
   push:
@@ -12,6 +12,8 @@ env:
 
 jobs:
   publish-docs:
+    if: ${{ github.repository == 'E3SM-Project/E3SM' }} or \
+        ${{ github.repository == 'E3SM-Project/Omega' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -24,11 +26,11 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Conda Environment
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: "omega_ci"
           miniforge-version: latest
-          channels: conda-forge,defaults
+          channels: conda-forge
           channel-priority: strict
           auto-update-conda: true
           python-version: ${{ env.PYTHON_VERSION }}
@@ -51,7 +53,7 @@ jobs:
           conda activate omega_dev
           cd components/omega/doc
           # gh-pages branch must already exist
-          git clone https://github.com/E3SM-Project/Omega.git --branch gh-pages --single-branch gh-pages
+          git clone https://github.com/${{ github.repository }}.git --branch gh-pages --single-branch gh-pages
           # Make sure we're in the gh-pages directory.
           cd gh-pages
           # Replace `Omega` docs with latest changes
