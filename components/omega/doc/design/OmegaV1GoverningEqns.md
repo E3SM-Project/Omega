@@ -358,34 +358,91 @@ $$
 \rho(z^{\text{top}}) \nabla z^{\text{top}} = \rho_0 \left( \nabla \tilde{z}^{\text{top}} - \nabla \tilde{z}^{\text{surf}} \right)
 $$ (grad-z-top)
 
-To derive this relationship, we begin with [](#def-pseudo-height), the definition of pseudo-height, under hydrostatic balance:
+To derive this relationship, we begin with [](#def-pseudo-height), the definition of pseudo-height under hydrostatic balance:
+
 $$
 \tilde{z}(z) = -\frac{\hat{p}(z)}{\rho_0 g}, \quad \text{with} \quad \frac{d\hat{p}}{dz} = -\rho g.
-$$
+$$ (pseudo-height-hydrostatic)
 
-Taking a horizontal gradient of the pressure at the top of a layer, we write:
-$$
-\hat{p}^{\text{top}} = \hat{p}^{\text{surf}} + \int_{z^{\text{top}}}^{z^{\text{surf}}} \rho(z') g \, dz',
-$$
-and therefore:
-$$
-\nabla \hat{p}^{\text{top}} = \nabla \hat{p}^{\text{surf}} + \rho(z^{\text{top}}) g \nabla z^{\text{top}}.
-$$
+We now consider the pressure at the top of a layer:
 
-Substituting into the gradient of pseudo-height:
+$$
+\hat{p}^{\text{top}}(x,y,t) = \hat{p}(x, y, z^{\text{top}}(x,y,t), t) = \hat{p}^{\text{surf}} + \int_{z^{\text{top}}}^{z^{\text{surf}}} \rho(z') g \, dz'.
+$$ (p-hat-top)
+
+Here, the superscript notation denotes evaluation of the full 3D pressure field $\hat{p}(x, y, z, t)$ at a specific vertical level:
+- $\hat{p}^{\text{surf}} \equiv \hat{p}(x, y, z^{\text{surf}}(x,y,t), t)$ is the pressure at the ocean surface,
+- $\hat{p}^{\text{top}} \equiv \hat{p}(x, y, z^{\text{top}}(x,y,t), t)$ is the pressure at the top of the layer.
+
+Because $z^{\text{surf}}$ and $z^{\text{top}}$ both vary in space, taking horizontal gradients of these quantities involves applying the chain rule.
+
+Taking the horizontal gradient of $\hat{p}^{\text{top}}$:
+
+$$
+\nabla \hat{p}^{\text{top}} = \nabla \hat{p}^{\text{surf}} + \nabla \left( \int_{z^{\text{top}}}^{z^{\text{surf}}} \rho(z') g \, dz' \right).
+$$ (grad-p-hat-top1)
+
+Using the Leibniz rule:
+
+$$
+\nabla \left( \int_{z^{\text{top}}}^{z^{\text{surf}}} \rho(z') g \, dz' \right)
+= \rho(z^{\text{surf}}) g \nabla z^{\text{surf}} - \rho(z^{\text{top}}) g \nabla z^{\text{top}}.
+$$ (grad-hydrostatic-integral)
+
+Meanwhile, applying the chain rule to $\hat{p}^{\text{surf}} = \hat{p}(x, y, z^{\text{surf}}(x,y,t), t)$ gives:
+
+$$
+\nabla \hat{p}^{\text{surf}} = \left. \nabla \hat{p} \right|_{z} + \left( \frac{\partial \hat{p}}{\partial z} \right) \nabla z^{\text{surf}}.
+$$ (grad-p-hat-surf1)
+
+Under hydrostatic balance, $\partial \hat{p} / \partial z = -\rho g$, so:
+
+$$
+\nabla \hat{p}^{\text{surf}} = \nabla \hat{p} - \rho(z^{\text{surf}}) g \nabla z^{\text{surf}}.
+$$ (grad-p-hat-surf2)
+
+Substituting this back in, we find:
+
+$$
+\nabla \hat{p}^{\text{top}} =
+\left( \nabla \hat{p} - \rho(z^{\text{surf}}) g \nabla z^{\text{surf}} \right)
++ \left( \rho(z^{\text{surf}}) g \nabla z^{\text{surf}} - \rho(z^{\text{top}}) g \nabla z^{\text{top}} \right).
+$$ (grad-p-hat-top2)
+
+The $\rho(z^{\text{surf}}) g \nabla z^{\text{surf}}$ terms cancel exactly, leaving:
+
+$$
+\nabla \hat{p}^{\text{top}} = \nabla \hat{p} - \rho(z^{\text{top}}) g \nabla z^{\text{top}}.
+$$ (grad-p-hat-top-final)
+
+We now substitute into the definition of the pseudo-height gradient:
+
 $$
 \nabla \tilde{z}^{\text{top}} = -\frac{1}{\rho_0 g} \nabla \hat{p}^{\text{top}}
-= -\frac{1}{\rho_0 g} \left( \nabla \hat{p}^{\text{surf}} + \rho(z^{\text{top}}) g \nabla z^{\text{top}} \right).
-$$
+= -\frac{1}{\rho_0 g} \left( \nabla \hat{p} - \rho(z^{\text{top}}) g \nabla z^{\text{top}} \right).
+$$ (grad-z-tilde-top1)
 
-Rearranging:
-$$
-\rho(z^{\text{top}}) \nabla z^{\text{top}} = \rho_0 \left( \nabla \tilde{z}^{\text{top}} - \nabla \tilde{z}^{\text{surf}} \right).
-$$
+Rearranging terms:
 
-This shows that the density-weighted geometric slope differs from the pseudo-height slope by a correction involving the horizontal gradient of surface pressure.
+$$
+\rho(z^{\text{top}}) \nabla z^{\text{top}} = \rho_0 \left( \nabla \tilde{z}^{\text{top}} + \frac{1}{\rho_0 g} \nabla \hat{p} \right).
+$$ (rho-grad-z-top)
 
-An analogous expression holds for the slope of the bottom interface, $\nabla z^{\text{bot}}$. Together, these slopes determine the projection of horizontal velocity into vertical fluxes in the Arbitray Lagrangian-Eulerian (ALE) framework and remain essential for correctly evaluating mass and tracer conservation across layers.
+But from the definition $\tilde{z}^{\text{surf}} = -\hat{p}^{\text{surf}} / (\rho_0 g)$, we have:
+
+$$
+\nabla \tilde{z}^{\text{surf}} = -\frac{1}{\rho_0 g} \nabla \hat{p},
+$$ (grad-z-tilde-surf)
+
+so we finally arrive at:
+
+$$
+\rho(z^{\text{top}}) \nabla z^{\text{top}} = \rho_0 \left( \nabla \tilde{z}^{\text{top}} - \nabla \tilde{z}^{\text{surf}} \right),
+$$ (grad-z-tilde-top-final)
+
+as stated in equation [](#grad-z-top). This confirms that the slope of the interface in geometric coordinates cannot be entirely expressed in terms of pseudo-height coordinates alone.
+
+An analogous expression holds for the slope of the bottom interface, $\nabla z^{\text{bot}}$. Together, these slopes determine the projection of horizontal velocity into vertical fluxes in the Arbitrary Lagrangian-Eulerian (ALE) framework and remain essential for correctly evaluating mass and tracer conservation across layers.
 
 ### Vertical Discretization
 
