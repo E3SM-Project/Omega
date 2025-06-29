@@ -91,372 +91,242 @@ The first is the body force, represented here as ${\bf b}({\bf x}, t)$, which en
 The second is the surface force ${\bf f}$, which acts on the boundary of the control volume and includes pressure and viscous stresses. These forces appear as surface integrals over the boundary and drive momentum exchange between adjacent fluid parcels or between the fluid and its environment.
 The derivation of the momentum equation may also be found in [Leishman 2025](https://eaglepubs.erau.edu/introductiontoaerospaceflightvehicles/chapter/conservation-of-momentum-momentum-equation/#chapter-260-section-2), Chapter 21, equation 10.
 
-### Horizontal \& Vertical Separation
+## 4. Hydrostatic Approximation
 
-In geophysical flows, the vertical and horizontal directions are treated differently due to rotation and stratification, which leads to different characteristic scales of motion.
-To make this distinction explicit, we reformulate the conservation equations in a geometry that separates horizontal and vertical fluxes.
-We partition the surface integral into contributions from the fixed side walls $\partial V^{\text{side}}$ and the time-varying upper and lower surfaces, $\partial V^{\text{top}}(t)$ and $\partial V^{\text{bot}}(t)$.
-The top and bottom surfaces are not necessarily flat, so we retain their full geometry.
-
-As an example, we consider the tracer equation and drop the explicit notation for spatial and temporal dependence for clarity. We write the control-volume form as:
+In large-scale geophysical flows, vertical accelerations are typically much smaller than the vertical pressure gradient and gravitational forces. As a result, we adopt the **hydrostatic approximation**, which simplifies the vertical momentum equation by assuming a leading-order balance between pressure and gravity:
 
 $$
-\frac{d}{dt} \int_{V(t)} \rho \, \varphi \, dV
-&+
-\int_{\partial V^{\text{side}}} \rho \varphi \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA \\
-&+
-\int_{\partial V^{\text{top}}(t)} \rho \varphi \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA
-+
-\int_{\partial V^{\text{bot}}(t)} \rho \varphi \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA
-= 0
-$$ (tr-v-h-split)
-
-The unit normals on the top and bottom surfaces are given by:
-
-$$
-{\bf n}^{\text{top}} = \frac{(-\nabla z^{\text{top}}, 1)}{\sqrt{1 + |\nabla z^{\text{top}}|^2}}, \quad
-{\bf n}^{\text{bot}} = \frac{(-\nabla z^{\text{bot}}, 1)}{\sqrt{1 + |\nabla z^{\text{bot}}|^2}}
-$$ (top-bot-normal)
-
-In typical Omega configurations, the slope of the top and bottom surfaces will be small, i.e., $|\nabla z^{\text{top}}| \ll 1$ and $|\nabla z^{\text{bot}}| \ll 1$. Under this small-slope approximation, we neglect the square root in the denominator of the unit normal, and write:
-
-$$
-{\bf n}^{\text{top}} \approx (-\nabla z^{\text{top}}, 1), \quad
-{\bf n}^{\text{bot}} \approx (-\nabla z^{\text{bot}}, 1)
-$$
-
-This allows sloping-surface contributions such as $\nabla z^{\text{top}}$ to be retained while avoiding more complex metric factors. The approximation is accurate to leading order in slope and consistent with hydrostatic and layered modeling frameworks.
-
-Thus, the flux integrals across sloping boundaries retain contributions from both the vertical and horizontal components of ${\bf v} - {\bf v}_r$, and include the slope terms $\nabla z^{\text{top}}$ and $\nabla z^{\text{bot}}$.
-
-This formulation keeps the geometry fully general and allows for future manipulation or approximations. Subsequent approximations---such as retaining only the vertical component---can be applied explicitly where appropriate in later sections.
-
-To facilitate integration over a fixed horizontal domain, we introduce the following notation:
-
-- $A$ is the horizontal footprint (in the $x$–$y$ plane) of the control volume $V(t)$.
-- $dA$ is the horizontal area element.
-- $\partial A$ is the boundary of $A$, and $dl$ is the line element along this boundary.
-- ${\bf n}_\perp$ is the outward-pointing unit normal vector in the horizontal plane, defined on $\partial A$. It lies in the $x$–$y$ plane and is orthogonal to $dl$.
-
-We now project the tracer equation [](#tr-v-h-split) onto a horizontal domain $A$ (the footprint of the control volume), over which the top and bottom boundaries vary in height. The side walls remain fixed in time and space. Using this projection, we obtain:
-
-$$
-\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}(x,y,t)}^{z^{\text{top}}(x,y,t)} \rho \, \varphi \, dz \, dA
-&+
-\int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \varphi \, {\bf u} \, dz \right) \cdot {\bf n}_\perp \, dl \\
-&+
-\int_A \rho \varphi \left[
-  (w - w_r) - {\bf u} \cdot \nabla z^{\text{top}}
-\right]_{z = z^{\text{top}}} dA \\
-&-
-\int_A \rho \varphi \left[
-  (w - w_r) - {\bf u} \cdot \nabla z^{\text{bot}}
-\right]_{z = z^{\text{bot}}} dA
-= 0
-$$ (tr-v-h-separation)
-
-
-Here ${\bf v} = ({\bf u},w)$ separates the three-dimensional velocity into horizontal velocity ${\bf u}$ and vertical velocity $w$.
-In the final equation, only velocity components aligned with the boundary normals contribute to each integral, so perpendicular components drop out.
-Since the side boundary $\partial V^{\text{side}}$ is fixed in space, ${\bf v}_r = 0$ there and drops out of the corresponding term.
-The domain $A$ is the fixed horizontal footprint of the control volume in the $x$–$y$ plane, over which the top and bottom surfaces $z^{\text{top}}(x,y,t)$ and $z^{\text{bot}}(x,y,t)$ may vary in space and time.
-
-Using this procedure of separating the horizontal from the vertical, the governing equations are
-
-mass:
-
-$$
-\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, dz \, dA
-&+
-\int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, {\bf u} \, dz \right) \cdot {\bf n}_\perp \, dl \\
-&+
-\int_{A} \rho \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{top}} \right]_{z=z^{\text{top}}} \, dA
--
-\int_{A} \rho \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{bot}} \right]_{z=z^{\text{bot}}} \, dA
-= 0
-$$ (vh-mass)
-
-tracers:
-
-$$
-\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, \varphi \, dz \, dA
-&+
-\int_{\partial A}\left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, \varphi \, {\bf u} \, dz \right) \cdot {\bf n}_\perp \, dl \\
-&+
-\int_{A} \rho \varphi \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{top}} \right]_{z=z^{\text{top}}} \, dA
--
-\int_{A} \rho \varphi \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{bot}} \right]_{z=z^{\text{bot}}} \, dA
-= 0
-$$ (vh-tracer)
-
-momentum:
-
-$$
-\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf v} \, dz \, dA
-&+
-\int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf v} \otimes {\bf u} \, dz \right) \cdot {\bf n}_\perp \, dl \\
-&+
-\int_A \rho \, {\bf v} \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{top}} \right]_{z=z^{\text{top}}} \, dA
--
-\int_A \rho \, {\bf v} \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{bot}} \right]_{z=z^{\text{bot}}} \, dA \\
-&=
-\int_A \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf b} \, dz \, dA
-+
-\int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} {\bf f} \, dz \right) dl \\
-&\quad
-+ \int_A \left[ {\bf f} \right]_{z = z^{\text{top}}} \, dA
-- \int_A \left[ {\bf f} \right]_{z = z^{\text{bot}}} \, dA
-$$ (vh-momentum)
-
-The momentum advection term contains ${\bf v} \otimes {\bf u}$, the outer (or tensor) product of the full velocity ${\bf v} = ({\bf u}, w)$ with the horizontal velocity ${\bf u}$. This object is a 3×2 tensor: the three rows correspond to the components of momentum being advected (in $x$, $y$, and $z$), and the two columns correspond to the directions of horizontal transport. This structure naturally arises in the surface integral over $\partial A$, where the tensor is contracted with the horizontal unit normal vector ${\bf n}_\perp$ to yield a vector flux through the vertical sides of the control volume.
-
-### Hydrostatic Approximation
-
-The momentum equation [](#vh-momentum) consists of three components for the $(x,y,z)$ directions. Thus we may rewrite it as
-
-horizontal momentum:
-
-$$
-& \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf u} \, dz \, dA
-+
-\int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf u} \otimes {\bf u} \, dz \right) \cdot {\bf n}_\perp \, dl \\
-& +
-\int_{A} \rho \, {\bf u} \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{top}} \right]_{z = z^{\text{top}}} \, dA
--
-\int_{A} \rho \, {\bf u} \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{bot}} \right]_{z = z^{\text{bot}}} \, dA \\
-& =
-\int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf b}_\perp \, dz \, dA
-+
-\int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} {\bf f}_\perp \, dz \right) \, dl \\
-& +
-\int_{A} \left[ {\bf f}_\perp \right]_{z = z^{\text{top}}} \, dA
--
-\int_{A} \left[ {\bf f}_\perp \right]_{z = z^{\text{bot}}} \, dA
-$$ (h-momentum)
-
-vertical momentum:
-
-$$
-& \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, w \, dz \, dA
-+
-\int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, w \, {\bf u} \, dz \right) \cdot {\bf n}_\perp \, dl \\
-& +
-\int_{A} \rho \, w \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{top}} \right]_{z = z^{\text{top}}} \, dA
--
-\int_{A} \rho \, w \left[ (w - w_r) - {\bf u} \cdot \nabla z^{\text{bot}} \right]_{z = z^{\text{bot}}} \, dA \\
-& =
-\int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, b_z \, dz \, dA
-+
-\int_{\partial A} \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} f_z \, dz \right) \, dl \\
-& +
-\int_{A} \left[ f_z \right]_{z = z^{\text{top}}} \, dA
--
-\int_{A} \left[ f_z \right]_{z = z^{\text{bot}}} \, dA
-$$ (v-momentum)
-
-where the potential gradient vector is ${\bf b} = ({\bf b}_\perp, b_z)$ and the surface forces are ${\bf f} = ({\bf f}_\perp, f_z)$.
-
-The hydrostatic approximation applies to the vertical component of the momentum equation and assumes that the leading-order balance is between the vertical pressure gradient and the gravitational body force. All other terms---such as vertical acceleration, advection, and viscous or turbulent stresses---are assumed to be negligible in comparison.
-Applying this assumption to [](#v-momentum),
-
-$$
-\int_A \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, b_z \, dz \, dA
-+ \int_A \left[ f_z \right]_{z = z^{\text{top}}} \, dA
-- \int_A \left[ f_z \right]_{z = z^{\text{bot}}} \, dA = 0
-$$ (v-hydrostatic1)
-
-Assuming the vertical body force is gravity, $b_z = -g$, and the vertical surface stress is from pressure, $f_z = -p$, the equation becomes:
-
-$$
-- \int_A \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho g \, dz \, dA
-- \int_A \left[ p \right]_{z = z^{\text{top}}} \, dA
-+ \int_A \left[ p \right]_{z = z^{\text{bot}}} \, dA = 0
-$$ (v-hydrostatic2)
-
-Although the top and bottom surfaces may be sloping, the vertical component of the pressure force simplifies to $\pm p \, dA$ to leading order. This is because the projection of the pressure force onto the vertical direction introduces a factor of $\hat{\bf n} \cdot \hat{\bf z} \approx 1 - \tfrac{1}{2}|\nabla z|^2$, while the sloping surface area element adds a compensating factor of $\sqrt{1 + |\nabla z|^2} \approx 1 + \tfrac{1}{2}|\nabla z|^2$. These cancel to second order, and the net vertical pressure force is simply the pressure value multiplied by the horizontal area element $dA$. Thus, no explicit slope terms appear in the hydrostatic balance.
-
-Rewriting:
-
-$$
-\int_A \left( \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho g \, dz
-+ \left[ p \right]_{z = z^{\text{top}}}
-- \left[ p \right]_{z = z^{\text{bot}}} \right) dA = 0
-$$ (v-hydrostatic)
-
-Because this equation holds for any horizontal region $A$, the integrand must vanish, yielding the hydrostatic pressure relation:
-
-$$
- \left[  p \right]_{z=z^{\text{bot}}}
- =
- \left[  p \right]_{z=z^{\text{top}}}
- + \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, g \, dz.
-$$ (integral-hydrostatic)
-
-Taking the limit as $dz \rightarrow 0$, we arrive at the typical form of the hydrostatic approximation,
-
-$$
- \frac{\partial p}{\partial z}  = - \rho g
+\frac{\partial p}{\partial z} = -\rho g
 $$ (hydrostatic)
 
-## 4. Vertical Coordinate
-
-### Pseudo-Height
-
-In our non-Boussinesq hydrostatic framework, we adopt a vertical coordinate based on pseudo-height,
+This balance allows us to express the pressure at any depth $z$ in terms of an integral over the density field above:
 
 $$
-\tilde{z}(p) = -\frac{1}{\rho_0 g} \, p
-$$ (def-pseudo-height)
+p(x,y,z,t) = p^{\text{surf}}(x,y,t) + \int_{z}^{z^{\text{surf}}} \rho(x,y,z',t) g \, dz'
+$$ (pressure)
 
-The pseudo-height is simply the pressure normalized by two constants, a reference density $\rho_0$ and gravitational acceleration $g$.
-A pseudo-height coordinate is effectively a pressure coordinate, but comes with the intuition and units of distance that people are familiar with.
-It is convenient to relate these variables using differentials as
+Here, $p^{\text{surf}}$ is the pressure at the free surface $z^{\text{surf}}(x, y, t)$, and $\rho(z')$ is the local fluid density. This relation holds pointwise in space and time and provides a foundation for defining vertical coordinates based on pressure.
 
-$$
-d\tilde{z} = -\frac{1}{\rho_0 g}\, dp = \frac{\rho}{\rho_0} \, dz
-$$ (def-dtildez)
-
-where the second equality uses the hydrostatic balance $dp = -\rho g dz$.  This shows that the pseudo-height is nearly the same as the physical height.
-
-In order to convert from $z$ to ${\tilde z}$ the pressure must be computed,
+The hydrostatic approximation also simplifies vertical pressure forces in control-volume integrations. For example, in a finite-volume cell bounded above and below by sloping surfaces, the vertical pressure force reduces to:
 
 $$
-\tilde{z}(z) = -\frac{1}{\rho_0 g} \, p(z) = -\frac{1}{\rho_0 g}\left( p^\text{surf} + \int_{z}^{z^\text{surf}} \rho(z') g dz'\right).
-$$ (formula-pseudo-height)
+- p|_{z = z^{\text{top}}} + p|_{z = z^{\text{bot}}}
+$$ (vert-pressure-balance)
 
-Here, $z'$ is a dummy variable of integration.
+because the area correction from the slope and the projection of the pressure gradient into the vertical direction cancel to leading order.
 
-The pseudo-velocity in the vertical is
+This hydrostatic balance underlies the definition of **pseudo-height**, introduced next, and ensures consistency between the prognostic vertical coordinate and the model’s vertical force balance.
+
+## 5. Pseudo-Height
+
+In our non-Boussinesq, hydrostatic ocean model, we adopt **pseudo-height** $\tilde{z}$ as the prognostic vertical coordinate. This choice is motivated directly by the hydrostatic approximation introduced in [](#hydrostatic).
+Under this balance, we define the pseudo-height as a normalized pressure:
 
 $$
-\tilde{w} = \frac{\rho}{\rho_0} \, w.
-$$ (def-pseudo-velocity)
+\tilde{z}(x, y, z, t) = -\frac{1}{\rho_0 g} \, p(x, y, z, t)
+$$ (pseudo-height)
 
-This simply falls out of the definitions above, as
+Here, $\rho_0$ is a constant reference density and $g$ is gravitational acceleration. Although $\tilde{z}$ is essentially a pressure coordinate, the normalization ensures it has units of length and retains an intuitive geometric interpretation.
+
+The inverse relation, giving $\tilde{z}$ in terms of geometric height, follows from the hydrostatic pressure integral:
 
 $$
-\tilde{w} = \frac{d{\tilde z}}{dt} = \frac{\rho}{\rho_0}\frac{dz}{dt} = \frac{\rho}{\rho_0} \, w.
-$$ (def-pseudo-velocity)
+\tilde{z}(z) = -\frac{1}{\rho_0 g} \left( p^{\text{surf}} + \int_{z}^{z^{\text{surf}}} \rho(z') g \, dz' \right)
+$$ (pseudo-heigh-from-z)
 
-As above, $\tilde{w}$ has identical units and very similar values to $w$. But in a non-Boussinesq model, it is the vertical *mass* transport that is the physically relevant quantity, not the volume transport. To this end, $\rho w$ is the mass transport per unit area in kg/m$^2$/s. The pseudo-velocity *is* the Eulerian mass transport, but with a convenient normalization of $\rho_0$.
+This expression shows that pseudo-height varies in space and time like pressure. It also makes clear that $z$ is no longer a prognostic variable but a derived quantity, recoverable via hydrostatic inversion.
+
+Taking a differential, we relate pseudo-height and geometric height:
+
+$$
+d\tilde{z} = -\frac{1}{\rho_0 g} \, dp = \frac{\rho}{\rho_0} \, dz
+$$ (d-z-tilde)
+
+This motivates the definition of **pseudo-velocity** in the vertical direction:
+
+$$
+\tilde{w} \equiv \frac{d\tilde{z}}{dt} = \frac{\rho}{\rho_0} \, w
+$$ (w-tilde)
+
+In this formulation:
+- $\tilde{w}$ is the vertical **mass flux per unit reference density**, a key variable in a non-Boussinesq framework.
+- Vertical transport of mass, tracers, and momentum will use $\tilde{w}$ rather than volume flux $w$.
 
 [Griffies 2018](https://doi.org/10.2307/j.ctv301gzg) p. 37  argues for the use of pseudo-velocities, which he calls the density-weighted velocity, for non-Boussinesq models.
 Griffies recommends a value of $\rho_0=1035$ kg/m$^3$, following p. 47 of [Gill (1982)](https://doi.org/10.1016/S0074-6142(08)60028-5), because ocean density varies less than 2% from that value.
 
 The use of a constant $\rho_0$ in defining pseudo-height does not imply the Boussinesq approximation. In Boussinesq models, $\rho$ is set to $\rho_0$ everywhere except in the buoyancy term (i.e., the vertical pressure gradient or gravitational forcing). Here, by contrast, we retain the full $\rho$ in all terms, and use $\rho_0$ only as a normalization constant—for example, so that $d\tilde{z} \approx dz$ when $\rho \approx \rho_0$. This preserves full mass conservation while making vertical units more intuitive.
 
-Here we explain the reasoning for the choice of defining $\tilde{z}$ as directly proportional to pressure in [](#def-pseudo-height).
-The differential form of the hydrostatic balance $dp = -\rho g dz$ implies that we could choose an arbitrary offset. One could set the offset such that $\tilde{z}=0$ at $z=0$, so that the equilibrium sea surface height matches. Or one could set $\tilde{z}^{\text{floor}} = z^{\text{floor}}$ at some reference depth. Our definition [](#def-pseudo-height) was made so that $\tilde{z}$ varies in space and time in the same way as pressure, and the additional normalization by $\rho_0 g$ was included so that units and values for $\tilde{z}$,  $\tilde{h}$,  and $\tilde{w}$ are intuitive and easy to work with. A major advantage of [](#def-pseudo-height) is that $\tilde{z}^{\text{floor}}$ is proportional to the bottom pressure, and can be used directly for the barotropic pressure gradient in time-split methods.
+This approach ensures consistency with mass conservation and simplifies vertical discretization.
 
-#### Slope Terms and the Limits of the Pseudo-Height Transformation
+> **Note:** This definition does not invoke the Boussinesq approximation. The full, time- and space-dependent density $\rho(x, y, z, t)$ is retained in all conservation laws. The use of $\rho_0$ is solely for normalization.
 
-While pseudo-height provides a convenient vertical coordinate for discretization and conservation, it does not eliminate all geometric complexity from the governing equations. In particular, the sloping geometry of layer interfaces must still be described using their geometric height $z(x, y, t)$, not their pseudo-height $\tilde{z}$. This distinction is important when computing vertical mass and tracer fluxes across moving, sloping layers, where the normal transport includes a contribution from the slope of the interface.
+### 5.1. Justification for Pseudo-Height Definition
 
-Although it may be tempting to replace terms involving $\nabla z^{\text{top}}$ with $\nabla \tilde{z}^{\text{top}}$, the two quantities are not equivalent. Differentiating the definition of pseudo-height under hydrostatic balance yields a relationship between the geometric slope and pseudo-height slope of the layer interface:
-
-$$
-\rho(x, y, z^{\text{top}}, t) \nabla z^{\text{top}} = \rho_0 \left( \nabla \tilde{z}^{\text{top}} - \nabla \tilde{z}^{\text{surf}} \right)
-- \int_{z^{\text{top}}}^{z^{\text{surf}}} \nabla \rho(x, y, z', t) \, dz'.
-$$ (grad-z-top)
-
-To derive this relationship, we begin with [](#def-pseudo-height), the definition of pseudo-height under hydrostatic balance:
+Alternative definitions could add an arbitrary offset, e.g., setting $\tilde{z} = 0$ at mean sea level. However, the adopted form:
 
 $$
-\tilde{z}(x, y, z, t) = -\frac{\hat{p}(x,y,z,t)}{\rho_0 g}, \quad \text{with} \quad \frac{ \partial \hat{p}}{\partial z} = -\rho g.
-$$ (pseudo-height-hydrostatic)
+\tilde{z} = -\frac{1}{\rho_0 g} \, p
+$$
 
-We now consider the pressure at the top of a layer:
+was chosen for its practical advantages:
+- It ensures that $\tilde{z}$ varies identically to pressure.
+- Units of $\tilde{z}$, $\tilde{h}$, and $\tilde{w}$ are intuitive.
+- It aligns layer thickness with pressure thickness: $\tilde{h} = \Delta \tilde{z} \propto \Delta p$
+- $\tilde{z}^{\text{floor}} \propto p^{\text{bot}}$, which aids barotropic pressure gradient calculation.
+
+This makes $\tilde{z}$ a natural coordinate for a mass-conserving hydrostatic model.
+
+## 6. Horizontal and Vertical Flux Separation in Pseudo-Height Coordinates
+
+In geophysical flows, the vertical and horizontal directions are treated differently due to rotation and stratification, which lead to distinct characteristic scales of motion. To reflect this, we separate horizontal and vertical fluxes explicitly in the governing equations.
+
+We partition the control surface of a finite-volume cell into the side walls $\partial V^{\text{side}}$ (which are fixed in space) and the upper and lower pseudo-height surfaces $\partial V^{\text{top}}(t)$ and $\partial V^{\text{bot}}(t)$, which evolve in time.
+
+As an example, we consider the tracer equation and drop explicit notation for spatial and temporal dependence for clarity. We write the control-volume form as:
 
 $$
-\hat{p}^{\text{top}}(x,y,t) = \hat{p}(x, y, z^{\text{top}}(x,y,t), t) = \hat{p}^{\text{surf}} + \int_{z^{\text{top}}}^{z^{\text{surf}}} \rho(x, y, z', t) g \, dz'.
-$$ (p-hat-top)
+\frac{d}{dt} \int_{V(t)} \rho \, \varphi \, dV
+& + \int_{\partial V^{\text{side}}} \rho \varphi ({\bf v} - {\bf v}_r) \cdot {\bf n} \, dA \\
+& + \int_{\partial V^{\text{top}}(t)} \rho \varphi ({\bf v} - {\bf v}_r) \cdot {\bf n} \, dA
++ \int_{\partial V^{\text{bot}}(t)} \rho \varphi ({\bf v} - {\bf v}_r) \cdot {\bf n} \, dA
+= 0
+$$ (tr-vh-split-pseudo)
 
-Here, the superscript notation denotes evaluation of the full 3D pressure field $\hat{p}(x, y, z, t)$ at a specific vertical level:
-- $\hat{p}^{\text{surf}} \equiv \hat{p}(x, y, z^{\text{surf}}(x,y,t), t)$ is the pressure at the ocean surface,
-- $\hat{p}^{\text{top}} \equiv \hat{p}(x, y, z^{\text{top}}(x,y,t), t)$ is the pressure at the top of the layer.
-
-Because $z^{\text{surf}}$ and $z^{\text{top}}$ vary in space, their gradients contribute via the chain rule.
-
-Taking the horizontal gradient of $\hat{p}^{\text{top}}$:
+We now express the top and bottom surfaces using the pseudo-height variable $\tilde{z}(x,y,t)$ rather than geometric height $z$. The unit normals are therefore:
 
 $$
-\nabla \hat{p}^{\text{top}} = \nabla \hat{p}^{\text{surf}} + \nabla \left( \int_{z^{\text{top}}}^{z^{\text{surf}}} \rho(x, y, z', t) g \, dz' \right).
-$$ (grad-p-hat-top1)
+{\bf n}^{\text{top}} \approx (-\nabla \tilde{z}^{\text{top}}, 1), \quad
+{\bf n}^{\text{bot}} \approx (-\nabla \tilde{z}^{\text{bot}}, 1)
+$$ (top-bot-normal-pseudo)
 
-Applying the multivariate Leibniz rule:
+Here we apply a small-slope approximation, assuming $|\nabla \tilde{z}| \ll 1$, and omit normalization factors for clarity. This approximation retains leading-order effects of slope while simplifying the surface geometry.
+
+To facilitate integration over a fixed horizontal domain, we introduce the following notation:
+- $A$ is the horizontal footprint (in the $x$–$y$ plane) of the control volume $V(t)$.
+- $dA$ is the horizontal area element.
+- $\partial A$ is the boundary of $A$, and $dl$ is the line element along this boundary.
+- ${\bf n}_\perp$ is the outward-pointing unit normal vector in the horizontal plane, defined on $\partial A$. It lies in the $x$–$y$ plane and is orthogonal to $dl$.
+
+We now project the tracer equation [](#tr-v-h-split-pseudo) onto a horizontal domain $A$ (the footprint of the control volume), over which the top and bottom boundaries vary in height. The side walls remain fixed in time and space.
+
+
+The pseudo-height surfaces $\tilde{z}^{\text{top}}(x,y,t)$ and $\tilde{z}^{\text{bot}}(x,y,t)$ are not fixed in time, so their motion must be accounted for when computing vertical fluxes. We define $\tilde{w}_r$ as the pseudo-height velocity of the interface:
 
 $$
-\nabla \left( \int_{z^{\text{top}}}^{z^{\text{surf}}} \rho(x, y, z', t) g \, dz' \right)
-=
-\rho(x, y, z^{\text{surf}}, t) g \nabla z^{\text{surf}}
+\tilde{w}_{r} = \left.\frac{d\tilde{z}}{dt}\right |_{\text interface}
+$$ (interface-velocity)
+
+The **net vertical transport** through a moving surface is then
+
+$$
+\tilde{w}_{tr} = \tilde{w} - \tilde{w}_r
+$$ (w-tilde-tr)
+
+This gives the relative pseudo-mass flux through the interface per unit reference density. Vertical flux terms are written using this difference to ensure conservation in the presence of interface motion.
+
+In the flux integrals below, we express all surface-normal transport using $\tilde{w}_{tr}$, i.e.,
+
+$$
+\rho_0 \varphi \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right]
+= \rho_0 \varphi \left[ \tilde{w} - \tilde{w}_r - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right]
+$$ (vertical-flux)
+
+so that the vertical flux terms correctly account for both the local motion of the fluid and the motion of the interface itself.
+
+The quantity $\tilde{w}$ from equation [](#w-tilde) is the pseudo-velocity. The second term, ${\bf u} \cdot \nabla \tilde{z}^{\text{top}}$, captures the component of horizontal velocity advecting material across a sloping pseudo-height interface. Together, the expression in brackets represents the **net vertical transport** through a surface of constant $\tilde{z}$.
+
+Because both terms are scaled by $1/\rho_0$, the full flux is multiplied by $\rho_0$ to recover a physical mass flux. This ensures dimensional consistency and physical equivalence to the traditional form $\rho w - \rho {\bf u} \cdot \nabla z$ expressed in geometric-height coordinates.
+
+Using this projection, we obtain:
+
+$$
+\frac{d}{dt} \int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, \varphi \, d\tilde{z} \, dA
+& + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \varphi \, {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
+& + \int_A \rho_0 \varphi \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} dA \\
+& - \int_A \rho_0 \varphi \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} dA
+= 0
+$$ (tr-vh-separation-pseudo)
+
+This equation is structurally identical to its $z$-based counterpart but with all references to geometric height replaced by pseudo-height quantities.
+
+This formulation allows vertical mass and tracer transport to be computed directly in terms of prognostic variables, without reconstructing $\rho$ or $z$ explicitly.
+
+Similar expressions to [](#tr-vh-separation-pseudo) hold for mass and momentum:
+
+**Mass:**
+
+$$
+\frac{d}{dt} \int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, d\tilde{z} \, dA
+& + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
+& + \int_A \rho_0 \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right] dA \\
+& - \int_A \rho_0 \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right] dA
+= 0
+$$ (vh-mass-pseudo)
+
+**Momentum:**
+
+$$
+\frac{d}{dt} \int_{A} \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, {\bf v} \, d\tilde{z} \, dA
+&+
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, {\bf v} \otimes {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
+&+
+\int_A \rho_0 \, {\bf v} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
 -
-\rho(x, y, z^{\text{top}}, t) g \nabla z^{\text{top}}
+\int_A \rho_0 \, {\bf v} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA \\
+&=
+\int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, {\bf b} \, d\tilde{z} \, dA
 +
-\int_{z^{\text{top}}}^{z^{\text{surf}}} \nabla \rho(x, y, z', t) g \, dz'.
-$$ (grad-hydrostatic-integral)
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} {\bf f} \, d\tilde{z} \right) dl \\
+&\quad
++ \int_A \left[ {\bf f} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+- \int_A \left[ {\bf f} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA
+$$ (vh-momentum-pseudo)
 
-Meanwhile, applying the chain rule to $\hat{p}^{\text{surf}} = \hat{p}(x, y, z^{\text{surf}}(x,y,t), t)$ gives:
+These equations express horizontal and vertical fluxes naturally in terms of pseudo-height, enabling fully consistent discretization in the vertical coordinate used for prognostic evolution.
 
-$$
-\nabla \hat{p}^{\text{surf}} = \left. \nabla \hat{p} \right|_{z} + \left( \frac{\partial \hat{p}}{\partial z} \right) \nabla z^{\text{surf}}.
-$$ (grad-p-hat-surf1)
+## 7. Favre Averaging
 
-Under hydrostatic balance, $\partial \hat{p} / \partial z = -\rho g$, so:
-
-$$
-\nabla \hat{p}^{\text{surf}} = \nabla \hat{p} - \rho(x, y, z^{\text{surf}}, t) g \nabla z^{\text{surf}}.
-$$ (grad-p-hat-surf2)
-
-Substituting this and equation [](#grad-hydrostatic-integral) into [](#grad-p-hat-top1), we obtain:
+The most common approach to determine the structure of the small scale stresses in ocean modeling is through Reynolds' averaging.  In this approach, a generic field $\phi$ is broken into a mean and deviatoric component, i.e.
 
 $$
-\nabla \hat{p}^{\text{top}} =
-\nabla \hat{p}
-- \rho(x, y, z^{\text{top}}, t) g \nabla z^{\text{top}}
-+ \int_{z^{\text{top}}}^{z^{\text{surf}}} \nabla \rho(x, y, z', t) g \, dz'.
-$$ (grad-p-hat-top2)
-
-Substituting into the pseudo-height gradient:
-
-$$
-\nabla \tilde{z}^{\text{top}} = -\frac{1}{\rho_0 g} \nabla \hat{p}^{\text{top}} =
--\frac{1}{\rho_0 g} \left( \nabla \hat{p}
-- \rho(x, y, z^{\text{top}}, t) g \nabla z^{\text{top}}
-+ \int_{z^{\text{top}}}^{z^{\text{surf}}} \nabla \rho(x, y, z', t) g \, dz' \right).
-$$ (grad-z-tilde-top1)
-
-Rearranging:
-
-$$
-\rho(x, y, z^{\text{top}}, t) \nabla z^{\text{top}} =
-\rho_0 \nabla \tilde{z}^{\text{top}}
-+ \frac{1}{g} \nabla \hat{p}
-- \int_{z^{\text{top}}}^{z^{\text{surf}}} \nabla \rho(x, y, z', t) \, dz'.
-$$ (rho-grad-z-top)
-
-Now, from the definition $\tilde{z}^{\text{surf}} = -\hat{p}^{\text{surf}} / (\rho_0 g)$, we have:
-
-$$
-\nabla \tilde{z}^{\text{surf}} = -\frac{1}{\rho_0 g} \nabla \hat{p}^{\text{surf}}.
-$$ (grad-z-tilde-surf)
-
-Substituting in $\nabla \hat{p}^{\text{surf}} = \nabla \hat{p} - \rho(x, y, z^{\text{surf}}, t) g \nabla z^{\text{surf}}$ from [](#grad-p-hat-surf2), we get:
-
-$$
-\nabla \tilde{z}^{\text{surf}} = -\frac{1}{\rho_0 g} \left( \nabla \hat{p} - \rho(x, y, z^{\text{surf}}, t) g \nabla z^{\text{surf}} \right).
+\phi = \overline{\phi} + \phi^\prime
 $$
 
-So finally:
+When deriving the Reynolds' averaged equations, averages of terms with a single prime are discarded by construction.  This is an attractive approach for Boussinesq ocean models since the density is assumed constant in all equations.  When the ocean model is non Boussinesq, this leads to difficulties.  For example, consider the first term in equation [](#h-momentum), if a Reynolds' decomposition and averaging is performed,
 
 $$
-\rho(x, y, z^{\text{top}}, t) \nabla z^{\text{top}} =
-\rho_0 \left( \nabla \tilde{z}^{\text{top}} - \nabla \tilde{z}^{\text{surf}} \right)
-- \int_{z^{\text{top}}}^{z^{\text{surf}}} \nabla \rho(x, y, z', t) \, dz'.
-$$ (grad-z-tilde-top-final)
+\frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \,  {\bf u}  \, dz \, dA = \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} (\overline{\rho {\bf u}} +  \,  \overline{\rho^\prime {\bf u}^\prime})  \, dz \, dA
+$$
 
-This is the fully general expression for the geometric slope in terms of pseudo-height, including horizontal density variations. If $\nabla \rho$ is small within the vertical column, the last term may be neglected, recovering the simpler form of equation [](#grad-z-top).
+In this equation, the products of prime and average drop out by construction.  The $\overline{\rho^\prime {\mathbf u}^\prime}$ term is an unnecessary complication and difficult to parameterize.  To circumvent this complication, Omega will adopt Favre averaging [(Pope 2000)](https://elmoukrie.com/wp-content/uploads/2022/04/pope-s.b.-turbulent-flows-cambridge-university-press-2000.pdf), which for the generic variable $\phi$ is
 
-An analogous expression holds for the slope of the bottom interface, $\nabla z^{\text{bot}}$. Together, these slopes determine the projection of horizontal velocity into vertical fluxes in the Arbitrary Lagrangian-Eulerian (ALE) framework and remain essential for correctly evaluating mass and tracer conservation across layers.
+$$
+\phi = \hat{\phi} + \phi^"
+$$
+
+Where $\hat{\phi} \equiv \frac{\overline{\rho \phi}}{\overline{\rho}}$, and the double prime indicates deviations from this density weighted mean.  In the definition, the overbar is an averaging operator with identical properties to a Reynolds' average.  Using this relation, we can relate Reynolds' average to Favre average by considering the average of $\rho \phi$.  The standard Reynolds' approach gives
+
+$$
+\overline{\rho \phi} = \overline{\rho}\overline{\phi} + \overline{\rho^\prime \phi^\prime}
+$$
+
+Isolating $\overline{\phi}$,
+
+$$
+\overline{\phi} = \frac{\overline{\rho \phi}}{\overline{\rho}} + \frac{\overline{\rho^\prime \phi^\prime}}{\overline{\rho}}
+$$
+
+The first term on the right side of the equation is the definition of a Favre average, which yields
+
+$$
+\overline{\phi} = \hat{\phi} + \frac{\overline{\rho^\prime \phi^\prime}}{\overline{\rho}}
+$$
+
+Throughout much of the ocean, we expect the second term to be $O(10^{-3})$ smaller than the first, but could be large in highly turbulent regions. With this adoption, all prognostic and diagnostic variables in Omega are interpreted as Favre averages.
+This choice ensures that the governing equations are closed in terms of density-weighted means, avoiding the need to model second-order density fluctuations like $\overline{\rho' \phi'}$ that would otherwise arise in a Reynolds framework.
+
+## 8. Layered Equations
 
 ### Vertical Discretization
 
