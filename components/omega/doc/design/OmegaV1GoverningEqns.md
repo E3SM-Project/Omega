@@ -438,28 +438,61 @@ $$ (h-phi)
 
 This relation is frequently used in discretized fluxes and conservation equations to replace integrals with layer-mean quantities.
 
+**NOTE:** The quantity being averaged in [](#def-layer-average) is arbitrary.  For example, this equation would apply equally to a Favre or Reynolds' averaged quantity.  We also choose to alter the density-weighted vertical average to use the Reynolds' averaged density, i.e.,
 
-## 5. Favre Averaging
+$$
+{\overline \phi}^{\tilde{z}}_k(x,y,t) =
+\frac{\int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \left<\rho\right> \phi dz}
+     {\int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \left<\rho\right> dz}.
+$$ (def-layer-average-reynolds)
 
-To determine the subgrid scale (SGS) fluxes and stresses in ocean models, it is most common to utilize a Reynolds' decomposition and averaging.  In this approach, a generic field $\phi$ is broken into a mean and deviatoric component, i.e.
+Given that density fluctuations are small relative to the mean density, we expect the Reynolds' averaged density to be very close to the full density.  Finally, we note that utilizing a Reynolds' average does not alter the hydrostatic approximation or the pseudo-height discussion.
+
+## 5. Turbulent fluxes
+
+For implementation in Omega, the fundamental equations are most often Reynolds' averaged and each variable is decomposed into an average and a fluctuating component, i.e., 
 
 $$
 \varphi = \left<\varphi\right> + \varphi^\prime
-$$
+$$ (reynolds-definition)
 
-To disambiguate from the definition of the bar as the vertical density weighted average, the Reynolds' average will be denoted by $< . >$, instead of the more common overbar. When deriving the Reynolds' averaged equations, averages of terms with a single prime are discarded by construction.  This is an attractive approach for Boussinesq ocean models since the fundamental equations do not include products of spatially variable density and tracer, pressure, or momentum.  When the ocean model is non Boussinesq, these products arise and create difficulties.  For example, consider the first term in equation [](#h-momentum), if a Reynolds' decomposition and averaging is performed,
+The averaging operator is defined such that it can be passed through derivatives and integrals without corrections and an average of products with a single perturbation quantity is zero.
+
+The Reynolds' average is most commonly denoted by an overbar, to disambiguate from the definition of the bar as the vertical density weighted average, the Reynolds' average herein is denoted by $< . >$. 
+
+The Reynolds' approach is an attractive approach for Boussinesq ocean models since the fundamental equations do not include products of spatially variable density and tracer, pressure, or momentum.  When the ocean model is non Boussinesq, products of spatially varying density and other fields (e.g., tracer) arise and create difficulties.  For example, consider the first term in equation [](#h-momentum), if a Reynolds' decomposition and averaging is performed,
 
 $$
 \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \,  {\bf u}  \, dz \, dA = \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} (\left<\rho {\bf u}\right> +  \,  \left<\rho^\prime {\bf u}^\prime\right>)  \, dz \, dA
+$$ (reynolds-example)
+
+In this equation, the products of prime and average drop out by construction.  The $\left<\rho^\prime {\mathbf u}^\prime\right>$ term is an unnecessary complication and difficult to parameterize.  
+
+## 6. Favre Averaging
+
+Favre averaging is common in compressible turbulence literature and has been leveraged for other non Boussinesq ocean modeling efforts [(e.g., Greatbatch et al, 2001)](https://journals.ametsoc.org/view/journals/atot/18/11/1520-0426_2001_018_1911_rtbaio_2_0_co_2.xml).  As will be shown, a Favre decomposition and averaging will circumvent the complication, discussed in the previous section, that arises when using a Reynolds' approach in a non Boussinesq model.
+
+The Favre average and decomposition follows closely with the Reynolds' approach.  For a generic variable $\varphi$, the Favre decomposition is given by 
+
+$$
+\varphi = \widehat{\varphi} + \varphi^{\prime \prime}
 $$
 
-In this equation, the products of prime and average drop out by construction.  The $\left<\rho^\prime {\mathbf u}^\prime\right>$ term is an unnecessary complication and difficult to parameterize.  To circumvent this complication, Omega will also adopt Favre averaging [(e.g., Greatbatch et al, 2001)](https://journals.ametsoc.org/view/journals/atot/18/11/1520-0426_2001_018_1911_rtbaio_2_0_co_2.xml), which for the generic variable $\phi$ is
+where the Favre average $\widehat{\varphi}$ is defined as
 
 $$
-\varphi = \widehat{\varphi} + \varphi^"
+\widehat{\varphi} = \frac{\left<\rho \varphi\right>}{\left<\rho \right>}.
+$$ (favre-defn)
+
+The Favre average has many properties in common with with the Reynolds' average, but we note the averages are not interchangable, i.e. $\widehat{\varphi^\prime} \neq 0$. The term in [](#reynolds-example) can now be simplified with [](#favre-defn), i.e.
+
+$$
+\left<\rho {\bf u}\right> = \left<\rho\right>\widehat{\bf u}.
 $$
 
-Where $\widehat{\varphi} \equiv \frac{\left<\rho \varphi\right>}{\left<\rho\right>}$, and the double prime indicates deviations from this density weighted mean.  In the definition, the hat is an averaging operator with identical properties to a Reynolds' average.  Using this relation, we can relate Reynolds' average to Favre average by considering a the average of $\rho \varphi$.  The standard Reynolds' approach gives
+The Favre approach removes the second term that emerges from the traditional Reynolds' approach.  Therefore, we adopt Favre averaged variables as the model predicted variables in Omega.
+
+To help gain an intuition for Favre averaged variables and fluxes, we can relate the Reynolds' average to Favre average by considering the average of $\rho \varphi$.  The standard Reynolds' approach gives
 
 $$
 \left<\rho \varphi\right> = \left<\rho\right>\left<\varphi\right> + \left<\rho^\prime \varphi^\prime\right>
@@ -471,31 +504,27 @@ $$
 \left<\varphi\right> = \frac{\left<\rho \varphi\right>}{\left<\rho\right>} + \frac{\left<\rho^\prime \varphi^\prime\right>}{\left<\rho\right>}
 $$
 
-The first term on the right side of the equation is the definition of a Favre average, which yields
+The first term on the right side of the equation is the definition of a Favre average ([](#favre-defn)), which yields
 
 $$
 \left<\varphi\right> = \widehat{\varphi} + \frac{\left<\rho^\prime \varphi^\prime\right>}{\left<\rho\right>}
 $$ (favre-reynolds-relation)
 
-Throughout much of the ocean, we expect the second term to be very small as the numerator is most often three orders of magnitude smaller than the denominator, but could be large in highly turbulent regions. With this adoption, all prognostic and diagnostic variables in Omega are interpreted as Favre averages.
-
-This choice ensures that the governing equations are closed in terms of density-weighted means, avoiding the need to model second-order density correlations like $\left<\rho' \phi'\right>$ that would otherwise arise in a Reynolds framework.
+Throughout much of the ocean, we expect the second term to be very small as the numerator is most often three orders of magnitude smaller than the denominator, but could be large in highly turbulent regions.  
 
 ### Managing Multiple Decompositions
 
-Within Omega, two distinct decompositions are critical.  The first decomposition is the deviation from the density weighted average of a generic variable $\varphi$.  We decompose the continuous variable $\phi$ following
+Within Omega, three distinct decompositions are critical.  In the derivation to follow, any term involving a product of spatially varying density and some other quanitity (e.g., $\rho \varphi$) will use a Favre average, terms without the density factor will use the Reynolds' decomposition.  The final decomposition is the deviation from the density weighted vertical integral of a generic variable $\varphi$.  We decompose the continuous variable $\phi$ following
 
 $$
 \varphi \equiv \overline{\varphi}^{\tilde{z}}_k + \delta \varphi
 $$ (averaging-decomp-definition)
 
-where this has been specified for our chosen $\tilde{z}$ framework.  In our $\tilde{z}$ coordinate system, it is important to note that the Favre average, while similar in structure, is different from the vertical density weighted average given by [](#def-layer-average).
+The density weighted vertical average ([](#def-layer-average)) is the quantity predicted by Omega, but the deviation from this value is potentially critical for operations like reconstruction of variables at layer interfaces or horizontal boundaries.  As will become clear, inclusion of the Reynolds' average will also be important for the derivation.  
 
-The density weighted average is the quantity predicted by Omega, but the deviation from this value is potentially critical for operations like reconstruction of variables at layer interfaces or horizontal boundaries.  As will become clear, inclusion of the Reynolds' average will also be important for the derivation.  
+In our $\tilde{z}$ coordinate system, it is important to note that the Favre average, while apparently similar in structure, is different from the vertical density weighted average given by [](#def-layer-average). The average in the Favre approach is defined relative to a sufficent time or ensemble mean of the model predicted quantity.  In this context, sufficient most commonly means a time average over a statistically significant number of eddy turnover times for the quantity being modeled or for the turbulence to equilibrate.
 
-The Favre decomposition is defined as above as $\overline{\varphi}^{\tilde{z}}_k \equiv \widehat{\overline{\varphi}^{\tilde{z}}_k} + \varphi^{\prime \prime}$.  When performing Favre decomposition and averaging (as with the more traditional Reynolds' approach), the fluctuating quantity is defined relative to a sufficent time or ensemble mean of the model predicted quantity.  In this context, sufficient most commonly means a time average over a statistically significant number of eddy turnover times for the quantity being modeled or for the turbulence to equilibrate.
-
-As discussed below, Omega will predict density weighted average variables, which have been Favre averaged and the turbulent fluxes are deviations from this quantity unless denoted by $< . >$ for Reynolds' averaged turbulent fluxes and stresses.  Again we note that the Favre average is very close, but not exactly the same, to the Reynolds' average [](#favre-reynolds-relation).
+Omega will predict Favre averaged, density weighted vertically integrated variables and the turbulent fluxes are deviations from this quantity unless denoted by $< . >$ for Reynolds' averaged turbulent fluxes and stresses.  
 
 ### Useful Averaging Relationships
 
@@ -534,6 +563,28 @@ $$
 $$ (delta-vert-average)
 
 where the last equality is true by definition.
+
+### Summary
+
+In the derivations to follow, the equations will first be Reynolds' averaged and [](#Favre-relation1) will be used.  Thus, three decompositions will be critical in this document.  The decompositions are summarized as
+
+$$
+\varphi = \overline{\varphi}^{\tilde{z}}_k + \delta \varphi
+$$
+
+which is a density weighted vertical integral and the deviation from this value.  The second decomposition is
+
+$$
+\varphi = \left<\varphi\right> + \varphi^\prime
+$$
+
+which is the traditional Reynolds' decomposition.  This will apply to quantities that don't include the full spatially variable density.  The final decomposition is
+
+$$
+\varphi = \widehat{\varphi} + \varphi^{\prime \prime}
+$$
+
+which is the Favre decomposition.  It is important to recall that the prime and double prime variables are different as they are fluctuations relative to different averages.
 
 ## 6. Layer Equations
 
