@@ -31,19 +31,10 @@ int main(int argc, char *argv[]) {
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
    {
-
-      // declare variables of each supported type
-      I4 MyInt4   = 1;
-      I8 MyInt8   = 2;
-      R4 MyR4     = 3.0;
-      R8 MyR8     = 4.0000000000001;
-      Real MyReal = 5.000001;
-      // using operator""_Real;
-      auto MyRealLiteral = 1._Real;
-      int SizeTmp        = 0;
+      int SizeTmp = 0;
 
       // Check expected size (in bytes) for data types
-      SizeTmp = sizeof(MyInt4);
+      SizeTmp = sizeof(I4);
       if (SizeTmp == 4)
          std::cout << "Size of I4: PASS" << std::endl;
       else {
@@ -51,7 +42,7 @@ int main(int argc, char *argv[]) {
          std::cout << "Size of I4: FAIL " << SizeTmp << std::endl;
       }
 
-      SizeTmp = sizeof(MyInt8);
+      SizeTmp = sizeof(I8);
       if (SizeTmp == 8)
          std::cout << "Size of I8: PASS" << std::endl;
       else {
@@ -59,7 +50,7 @@ int main(int argc, char *argv[]) {
          std::cout << "Size of I8: FAIL " << SizeTmp << std::endl;
       }
 
-      SizeTmp = sizeof(MyR4);
+      SizeTmp = sizeof(R4);
       if (SizeTmp == 4)
          std::cout << "Size of R4: PASS" << std::endl;
       else {
@@ -67,7 +58,7 @@ int main(int argc, char *argv[]) {
          std::cout << "Size of R4: FAIL " << SizeTmp << std::endl;
       }
 
-      SizeTmp = sizeof(MyR8);
+      SizeTmp = sizeof(R8);
       if (SizeTmp == 8)
          std::cout << "Size of R8: PASS" << std::endl;
       else {
@@ -75,7 +66,7 @@ int main(int argc, char *argv[]) {
          std::cout << "Size of R8: FAIL " << SizeTmp << std::endl;
       }
 
-      SizeTmp = sizeof(MyReal);
+      SizeTmp = sizeof(Real);
 #ifdef SINGLE_PRECISION
       if (SizeTmp == 4)
          std::cout << "Size of Real is 4: PASS" << std::endl;
@@ -92,7 +83,7 @@ int main(int argc, char *argv[]) {
       }
 #endif
 
-      SizeTmp = sizeof(MyRealLiteral);
+      SizeTmp = sizeof(1._Real);
       if (SizeTmp == sizeof(Real))
          std::cout << "Size of Real literal: PASS" << std::endl;
       else {
