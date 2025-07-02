@@ -285,7 +285,7 @@ $$ (vh-momentum-pseudo)
 
 These equations express horizontal and vertical fluxes naturally in terms of pseudo-height, enabling fully consistent discretization in the vertical coordinate used for prognostic evolution.
 
-## 8. Vertical Discretization for the Layered Equations
+## 7. Vertical Discretization for the Layered Equations
 
 The previous equation set [](#vh-mass) to [](#vh-momentum) is for an arbitrary layer bounded by $z^{\text{top}}$ above and $z^{\text{bot}}$ below.
 We now provide the details of the vertical discretization.
@@ -344,9 +344,9 @@ $$
      {\int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \left<\rho\right> dz}.
 $$ (def-layer-average-reynolds)
 
-Given that density fluctuations are small relative to the mean density, we expect the Reynolds' averaged density to be very close to the full density.  Finally, we note that utilizing a Reynolds' average does not alter the hydrostatic approximation or the pseudo-height discussion.
+Given that density fluctuations are small relative to the mean density, we expect the Reynolds' averaged density to be very close to the full density.  [](#def-layer-average) is also valid for any quantity, e.g., it is equally valid for a Reynolds' averaged quantity ($\varphi = \left<\varphi \right>$).
 
-## 9. Turbulent fluxes
+## 8. Turbulent fluxes
 
 ### Reynolds' Average
 
@@ -434,7 +434,7 @@ $$
 \left<\rho \phi\right> = \left<\rho\right>\widehat{\varphi}.
 $$ (Favre-relation1)
 
-Here we have utilized the definition of the Favre average of $\varphi$.  Equation [](#Favre-relation1) implies that the model predicted variables in Omega should be interpreted as Favre averaged.  Given this, turbulent fluxes should also be Favre averaged.  As can be seen in equation [](#vh-tracer), we will have flux terms of the form $\rho \varphi {\mathbf u}$.  To gain an intuition for how these terms are treated, we first perform a Favre decomposition, but leave the density as full field.
+Here we have utilized the definition of the Favre average of $\varphi$.  Equation [](#Favre-relation1) implies that the model predicted variables in Omega should be interpreted as Favre averaged.  Given this, turbulent fluxes should also be Favre averaged.  As can be seen in equation [](#tr-vh-split-pseudo), we will have flux terms of the form $\rho \varphi {\mathbf u}$.  To gain an intuition for how these terms are treated, we first perform a Favre decomposition, but leave the density as full field.
 
 $$
 \rho \varphi {\mathbf u} &= \rho \left(\widehat{\varphi} + \varphi^{\prime \prime}\right)\left(\widehat{\mathbf u} + {\mathbf u}^{\prime \prime}\right) \\
@@ -494,11 +494,11 @@ $$
 
 which is the Favre decomposition.  It is important to recall that the prime and double prime variables are different as they are fluctuations relative to different averages.
 
-## 10. Layer Equations
+## 9. Layer Equations
 
 ### Tracer & Mass
 
-Substituting [](#def-pseudo-velocity) and [](#grad-z-top) into the tracer equation [](#vh-tracer) for layer $k$, we have
+Substituting [](#w-tilde) into the tracer equation [](#tr-vh-split-pseudo) for layer $k$, we have
 
 $$
 \frac{d}{dt} \int_{A} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho \, \varphi \, dz \, dA
@@ -508,10 +508,8 @@ $$
 \int_{A} \left\{ \rho_0 \varphi \left[\tilde{w} - \tilde{w}_r - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right] \right\}_{z = z^{\text{top}}} \, dA & \\
 -
 \int_{A} \left\{ \rho_0 \varphi \left[\tilde{w} - \tilde{w}_r - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right] \right\}_{z = z^{\text{bot}}}\, dA
-& = 0
+& = 0.
 $$ (Aintegral-tracer)
-
-where we converted to pseudo-height for the last two terms using [](#formula-pseudo-height).
 
 We first Reynolds' average this equation and given the definition of the operator we can move the averaging past the derivatives and integrals without correction terms to yield
 
@@ -563,7 +561,7 @@ $$
 +
 \int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{z = z^{\text{top}}} \, dA & \\
 -
-\int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{z = z^{\text{bot}}}\, dA
+\int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{bot}} \right\}_{z = z^{\text{bot}}}\, dA
 & = 0
 $$ (Aintegral-tracer2)
 
@@ -576,7 +574,7 @@ $$
 +
 \int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{z = z^{\text{top}}} \, dA & \\
 -
-\int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{z = z^{\text{bot}}}\, dA
+\int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{bot}} \right\}_{z = z^{\text{bot}}}\, dA
 & = 0
 $$ (Aintegral-tracer2)
 
@@ -589,18 +587,32 @@ $$
 +
 \int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{z = z^{\text{top}}} \, dA & \\
 -
-\int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{z = z^{\text{bot}}}\, dA
+\int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{bot}} \right\}_{z = z^{\text{bot}}}\, dA
+& = 0
+$$
+
+Given that the horizontal area is not changing in time, we can move the time derivative through the first integral.  We also invoke Green's Theorem for the second integral to convert that from a surface integral to an area integral.  With these changes, the equation becomes
+
+$$
+\int_A  \frac{\partial \tilde{h}_k \, \overline{\widehat{\varphi}}^{\tilde{z}}_k}{\partial t} 
++
+\nabla \cdot \left[ \tilde{h}_k \, \left(\overline{\widehat{\varphi}}^{\tilde{z}}_k \overline{\widehat{\bf u}}^{\tilde{z}}_k + \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k + \overline{\widehat{\varphi^{\prime \prime}{\bf u}^{\prime \prime}}}^{\tilde{z}}_k \right)\right] & \\
++
+\left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{z = z^{\text{top}}} & \\
+-
+\left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{bot}} \right\}_{z = z^{\text{bot}}}  \, dA
 & = 0
 $$ (favre-reynolds-tracer-final)
 
-A few comments on the last two integrals.  If only the first two terms of the integrals are retained, this represents the vertical advective and turbulent fluxes for a finite volume framework.  The second two terms represent the projection of the horizontal advective and turbulent fluxes into the direction normal to the sloping surface.  When the coordinate surfaces are flat $\tilde{z}^{\text{top}} - \tilde{z}^{\text{surf}} = 0$ and the vertical fluxes are aligned with the normal to the coordinate surface reducing the equation to the expected z-coordinate, finite volume, formulation.  
 
-Finally, we take the limit as $A \rightarrow 0$ and using Gauss' theorem for the horizontal advection to arrive at the final tracer equation
+A few comments on the last two lines of [](#favre-reynolds-tracer-final).  If only the first two terms of the integrals are retained, this represents the vertical advective and turbulent fluxes for a finite volume framework.  The second two terms represent the projection of the horizontal advective and turbulent fluxes into the direction normal to the sloping surface.  When the coordinate surfaces are flat $\nabla \tilde{z}^{\text{top}} = \nabla \tilde{z}^{\text{bot}} = 0$ and the vertical fluxes are aligned with the normal to the coordinate surface reducing the equation to the expected z-coordinate, finite volume, formulation.  
+
+Finally, given that the area integral operates on the entire equation, it is valid for any area and we can take the limit as $A \rightarrow 0$ to arrive at the final tracer equation
 
 tracer: 
 
 $$
-\frac{\partial {\tilde h}_k \overline{\widehat{\varphi}^{\tilde{z}}_k}  }{dt} 
+\frac{\partial {\tilde h}_k \overline{\widehat{\varphi}^{\tilde{z}}_k}  }{\partial t} 
 +
    \nabla \cdot \left({\tilde h}_k \overline{\widehat{\varphi}}^{\tilde{z}}_k \overline{\widehat{\bf u}}^{\tilde{z}}_k\right) 
  + \left[ \left<\varphi\right> \left<{\tilde w}_{tr}\right> - \left<\varphi\right>\left<{\bf u}\right>  \cdot \nabla \tilde{z}^{\text{top}} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} & \\
@@ -610,14 +622,16 @@ $$
 - \left\{\left[\left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> - \left< \varphi^\prime {\bf u}^{\prime}\right> \cdot \nabla \tilde{z}^{\text{top}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{top}}} - \left[\left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> - \left< \varphi^\prime {\bf u}^{\prime}\right> \cdot \nabla \tilde{z}^{\text{top}}\right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}\right\}.
 $$ (layer-tracer)
 
-A few notes on the layer averaged tracer equation.  In this complete form, it includes three types of fluctuating quantities that must be dealt with: (1) the Favre averaged turbulent flux $\left(\widehat{{\overline{\varphi}^{\tilde{z}}_k}^{\prime \prime} {\overline{\bf u}^{\tilde{z}}_k}^{\prime \prime}}\right)$, (2) the Reynolds' average turbulent flux $\left( \left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> \right)$, and (3) the vertical integral of the product of deviations from the layer integrated variables $\left(\overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k \right)$.  The details of the first two quantities will be discussed later in this document and follow on design documents. The terms involving perturbations from the layer integrated quantity are necessary to extend beyond piecewise constant represenation of variables.  In this equation, variables with no overline are the full field variable at the interfaces.
+A few notes on the layer averaged tracer equation.  In this complete form, it includes three types of fluctuating quantities that must be dealt with: (1) the vertically density weighted, Favre averaged turbulent flux $\left(\overline{\widehat{\varphi^{\prime \prime} {\bf u}^{\prime \prime}}}^{\tilde{z}}_k \right)$, (2) the Reynolds' average turbulent flux $\left( \left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> \right)$, and (3) the vertical integral of the product of deviations from the layer integrated variables $\left(\overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k \right)$.  The details of the first two quantities will be discussed later in this document and follow on design documents. The terms involving perturbations from the layer integrated quantity are necessary to extend beyond piecewise constant represenation of variables.  In this equation, variables with no overline are the full field variable at the interfaces.
+
+In the parameterization of the horizontal Favre turbulent flux, it will be important to keep in mind that it is also the density weighted vertical average that could cause complications.  This is discussed further later in this document.
 
 The mass equation is identical to the tracer equation with $\varphi=1$.
 
 mass:
 
 $$
-\frac{\partial {\tilde h}_k }{\partial t} 
+\frac{d {\tilde h}_k }{d t} 
 +
    \nabla \cdot \left({\tilde h}_k \overline{\widehat{\bf u}}^{\tilde{z}}_k\right) 
  + \left[ \left<{\tilde w}_{tr}\right> - \left<{\bf u}\right> \cdot \nabla \tilde{z}^{\text{top}} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} 
