@@ -594,13 +594,13 @@ $$
 Given that the horizontal area is not changing in time, we can move the time derivative through the first integral.  We also invoke Green's Theorem for the second integral to convert that from a surface integral to an area integral.  With these changes, the equation becomes
 
 $$
-\int_A  \frac{\partial \tilde{h}_k \, \overline{\widehat{\varphi}}^{\tilde{z}}_k}{\partial t} 
+\int_A  \bigl\{ \frac{\partial \tilde{h}_k \, \overline{\widehat{\varphi}}^{\tilde{z}}_k}{\partial t} 
 +
 \nabla \cdot \left[ \tilde{h}_k \, \left(\overline{\widehat{\varphi}}^{\tilde{z}}_k \overline{\widehat{\bf u}}^{\tilde{z}}_k + \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k + \overline{\widehat{\varphi^{\prime \prime}{\bf u}^{\prime \prime}}}^{\tilde{z}}_k \right)\right] & \\
 +
 \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{z = z^{\text{top}}} & \\
 -
-\left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{bot}} \right\}_{z = z^{\text{bot}}}  \, dA
+\left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{bot}} \right\}_{z = z^{\text{bot}}} \bigr\}  \, dA
 & = 0
 $$ (favre-reynolds-tracer-final)
 
@@ -619,7 +619,7 @@ $$
  - \left[ \left<\varphi\right> \left<{\tilde w}_{tr}\right> - \left<\varphi\right>\left<{\bf u}\right>  \cdot \nabla \tilde{z}^{\text{top}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
 = & \\
 - \nabla \cdot \left({\tilde h}_k \overline{\widehat{\varphi^{\prime \prime} {\bf u}^{\prime \prime}}}^{\tilde{z}}_k \, + {\tilde h}_k \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k \right) & \\
-- \left\{\left[\left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> - \left< \varphi^\prime {\bf u}^{\prime}\right> \cdot \nabla \tilde{z}^{\text{top}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{top}}} - \left[\left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> - \left< \varphi^\prime {\bf u}^{\prime}\right> \cdot \nabla \tilde{z}^{\text{top}}\right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}\right\}.
+- \left\{\left[\left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> - \left< \varphi^\prime {\bf u}^{\prime}\right> \cdot \nabla \tilde{z}^{\text{top}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{top}}} - \left[\left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> - \left< \varphi^\prime {\bf u}^{\prime}\right> \cdot \nabla \tilde{z}^{\text{bot}}\right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}\right\}.
 $$ (layer-tracer)
 
 A few notes on the layer averaged tracer equation.  In this complete form, it includes three types of fluctuating quantities that must be dealt with: (1) the vertically density weighted, Favre averaged turbulent flux $\left(\overline{\widehat{\varphi^{\prime \prime} {\bf u}^{\prime \prime}}}^{\tilde{z}}_k \right)$, (2) the Reynolds' average turbulent flux $\left( \left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> \right)$, and (3) the vertical integral of the product of deviations from the layer integrated variables $\left(\overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k \right)$.  The details of the first two quantities will be discussed later in this document and follow on design documents. The terms involving perturbations from the layer integrated quantity are necessary to extend beyond piecewise constant represenation of variables.  In this equation, variables with no overline are the full field variable at the interfaces.
@@ -635,7 +635,7 @@ $$
 +
    \nabla \cdot \left({\tilde h}_k \overline{\widehat{\bf u}}^{\tilde{z}}_k\right) 
  + \left[ \left<{\tilde w}_{tr}\right> - \left<{\bf u}\right> \cdot \nabla \tilde{z}^{\text{top}} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} 
- - \left[ \left<{\tilde w}_{tr}\right> - \left<{\bf u}\right> \cdot \nabla  \tilde{z}^{\text{top}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
+ - \left[ \left<{\tilde w}_{tr}\right> - \left<{\bf u}\right> \cdot \nabla  \tilde{z}^{\text{bot}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
 = 0
 $$ (layer-mass)
 
@@ -643,50 +643,57 @@ $$ (layer-mass)
 
 We now derive the horizontal momentum equation in our non-Boussinesq, hydrostatic framework, following the same finite-volume approach used for mass and tracer conservation. We work with a pseudo-height vertical coordinate $\tilde{z}$ as defined in [Pseudo-Height Coordinate Section](pseudo-height).
 
-We begin by specifying the forces in the full three-dimensional momentum equation [](#continuous-momentum),
+We begin from [](#vh-momentum-pseudo) and specify the body forces ${\bf b}$ and surface forces ${\bf f}$
 
 $$
-\frac{\partial}{\partial t} \int_{V(t)} \rho\,  {\bf v} \, dV
-+ \int_{\partial V(t)}\rho\, {\bf v} \left({\bf v} - {\bf v}_r \right) \cdot {\bf n} \, dA
-= \mathbf{F}_\text{total}[V(t)],
-$$ (continuous-momentum2)
+\frac{d}{dt} \int_{A} \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, {\bf v} \, d\tilde{z} \, dA
+&+
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, {\bf v} \otimes {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
+&+
+\int_A \rho_0 \, {\bf v} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+-
+\int_A \rho_0 \, {\bf v} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA \\
+&=
+-\int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, \left({\bf f} \times \mathbf{u} + \nabla \Phi \right) \, d\tilde{z} \, dA
++
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p \, d\tilde{z} \right) dl \\
+&\quad
++ \int_A \left[ p \nabla \tilde{z} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+- \int_A \left[ p \nabla \tilde{z} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA.
+$$ (vh-momentum-forces)
 
-with total forces given by:
+In this equation:
 
-$$
-\mathbf{F}_\text{total}[V(t)] =
-- \int_{V(t)} \rho\, \mathbf{f} \times \mathbf{u} \, dV
-- \int_{V(t)} \rho\, \nabla_{3D} \Phi \, dV
-- \int_{\partial V(t)} p \, \mathbf{n} \, dA
-+ \int_{\partial V(t)} \boldsymbol{\tau} \cdot \mathbf{n} \, dA
-$$ (momentum-Ftotal)
+- The first term on the right hand side is the **Coriolis force**, where $ \mathbf{f} $ is the vector Coriolis parameter (e.g., $ f \hat{\mathbf{z}} $ on the sphere).
+- The second term on the right hand side represents the **gravitational force**, expressed in terms of the gradient of the gravitational potential $ \Phi(x, y, z, t) $, which may include effects such as tides and self-attraction and loading.
+- The final terms are the **pressure force**, which acts on the boundary surfaces and is naturally expressed as a surface integral. It gives rise to both horizontal pressure gradients and contributions from sloping surfaces.
 
-Each term on the right-hand side corresponds to a physically distinct force acting on the fluid within the control volume:
-
-- The first term is the **Coriolis force**, where $ \mathbf{f} $ is the vector Coriolis parameter (e.g., $ f \hat{\mathbf{z}} $ on the sphere).
-- The second term represents the **gravitational force**, expressed in terms of the gradient of the gravitational potential $ \Phi(x, y, z, t) $, which may include effects such as tides and self-attraction and loading.
-- The third term is the **pressure force**, which acts on the boundary surfaces and is naturally expressed as a surface integral. It gives rise to both horizontal pressure gradients and contributions from sloping surfaces.
-- The fourth term represents resolved stresses.  Wind stress, drag, and horizontal boundary conditions are turbulent stresses and are not included in this term.  For Omega, the fourth term is zero.
-
-#### Pressure Term
-
-The pressure force term may be converted from the boundary to the interior with Gauss' divergence theorem (see [Kundu et al. 2016](https://doi.org/10.1016/C2012-0-00611-4) p. 119),
+As with the tracer derivation, we next Reynolds' average [](#vh-momentum-forces),
 
 $$
-- \int_{\partial V(t)} p \, \mathbf{n} \, dA
-= - \int_{V(t)} \nabla_{3D} p \, dV .
-$$ (gradp-Gauss)
+\frac{d}{dt} \int_{A} \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \left< \rho \, {\bf v} \right> \, d\tilde{z} \, dA
+&+
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \left< \rho \, {\bf v} \otimes {\bf u} \right> \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
+&+
+\int_A \rho_0 \,\left< {\bf v} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \right> \, dA
+-
+\int_A \rho_0 \, \left< {\bf v} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \right> \, dA \\
+&=
+-\int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, \left( \left< {\bf f} \times \mathbf{u} \right> + \left< \nabla \Phi \right> \right) \, d\tilde{z} \, dA
++
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \left< p \right> \, d\tilde{z} \right) dl \\
+&\quad
++ \int_A \left[ \left< p \nabla \tilde{z} \right> \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+- \int_A \left[ \left< p \nabla \tilde{z} \right> \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA.
+$$ (vh-momentum-reynolds1)
 
-Considering only the horizontal components, we have
+Here we have also moved the Reynolds' average through the spatial integrals given the properties of the averaging.
 
-$$
- - \int_{V(t)} \nabla_{\perp} p \, dV
-= - \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}}
-  \nabla_{\perp} p \, dz \, dA
-= - \int_{A}   \overline{\nabla_{\perp} p}^{z}  \, dA.
-$$ (gradp-h)
 
-#### Horizontal momentum
+
+
+
+
 
 Putting the pressure and stress term into [](h-momentum), and using Gauss' Theorem on the advection, the horizontal momentum equation is
 
