@@ -241,8 +241,8 @@ Because both terms are scaled by $1/\rho_0$, the full flux is multiplied by $\rh
 Using this projection, we obtain:
 
 $$
-\frac{d}{dt} \int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, \varphi \, d\tilde{z} \, dA
-& + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \varphi \, {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
+\frac{d}{dt} \int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \, \varphi \, d\tilde{z} \, dA
+& + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \varphi \, {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
 & + \int_A \rho_0 \varphi \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} dA \\
 & - \int_A \rho_0 \varphi \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} dA
 = 0
@@ -257,8 +257,8 @@ Similar expressions to [](#tr-vh-separation-pseudo) hold for mass and momentum:
 **Mass:**
 
 $$
-\frac{d}{dt} \int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, d\tilde{z} \, dA
-& + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
+\frac{d}{dt} \int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \, d\tilde{z} \, dA
+& + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \, {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
 & + \int_A \rho_0 \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right] dA \\
 & - \int_A \rho_0 \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right] dA
 = 0
@@ -267,20 +267,20 @@ $$ (vh-mass-pseudo)
 **Momentum:**
 
 $$
-\frac{d}{dt} \int_{A} \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, {\bf v} \, d\tilde{z} \, dA
+\frac{d}{dt} \int_{A} \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \, {\bf u} \, d\tilde{z} \, dA
 &+
-\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, {\bf v} \otimes {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \, {\bf u} \otimes {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
 &+
-\int_A \rho_0 \, {\bf v} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+\int_A \rho_0 \, {\bf u} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
 -
-\int_A \rho_0 \, {\bf v} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA \\
+\int_A \rho_0 \, {\bf u} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA \\
 &=
-\int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, {\bf b} \, d\tilde{z} \, dA
+\int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho_0 {\bf b}_{\perp} \, d\tilde{z} \, dA
 +
-\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} {\bf f} \, d\tilde{z} \right) dl \\
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \frac{\rho_0 {\bf f}}{\rho} \, d\tilde{z} \right) dl \\
 &\quad
-+ \int_A \left[ {\bf f} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
-- \int_A \left[ {\bf f} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA
++ \int_A \left[ \frac{\rho_0 {\bf f}}{\rho} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+- \int_A \left[ \frac{\rho_0 {\bf f}}{\rho} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA
 $$ (vh-momentum-pseudo)
 
 These equations express horizontal and vertical fluxes naturally in terms of pseudo-height, enabling fully consistent discretization in the vertical coordinate used for prognostic evolution.
@@ -368,89 +368,7 @@ $$ (reynolds-example)
 
 In this equation, the products of prime and average drop out by construction.  The $\left<\rho^\prime {\mathbf u}^\prime\right>$ term is an unnecessary complication and difficult to parameterize.  
 
-### Favre Averaging
-
-Favre averaging is common in compressible turbulence literature and has been leveraged for other non Boussinesq ocean modeling efforts [(e.g., Greatbatch et al, 2001)](https://journals.ametsoc.org/view/journals/atot/18/11/1520-0426_2001_018_1911_rtbaio_2_0_co_2.xml).  As will be shown, a Favre decomposition and averaging will circumvent the complication, discussed in the previous section, that arises when using a Reynolds' approach in a non Boussinesq model.
-
-The Favre average and decomposition follows closely with the Reynolds' approach.  For a generic variable $\varphi$, the Favre decomposition is given by 
-
-$$
-\varphi = \widehat{\varphi} + \varphi^{\prime \prime}
-$$
-
-where the Favre average $\widehat{\varphi}$ is defined as
-
-$$
-\widehat{\varphi} = \frac{\left<\rho \varphi\right>}{\left<\rho \right>}.
-$$ (favre-defn)
-
-The Favre average has many properties in common with with the Reynolds' average, but we note the averages are not interchangable, i.e. $\widehat{\varphi^\prime} \neq 0$. The term in [](#reynolds-example) can now be simplified with [](#favre-defn), i.e.
-
-$$
-\left<\rho {\bf u}\right> = \left<\rho\right>\widehat{\bf u}.
-$$
-
-The Favre approach removes the second term that emerges from the traditional Reynolds' approach.  Therefore, we adopt Favre averaged variables as the model predicted variables in Omega.
-
-To help gain an intuition for Favre averaged variables and fluxes, we can relate the Reynolds' average to Favre average by considering the average of $\rho \varphi$.  The standard Reynolds' approach gives
-
-$$
-\left<\rho \varphi\right> = \left<\rho\right>\left<\varphi\right> + \left<\rho^\prime \varphi^\prime\right>
-$$
-
-Isolating $\left<\varphi\right>$, 
-
-$$
-\left<\varphi\right> = \frac{\left<\rho \varphi\right>}{\left<\rho\right>} + \frac{\left<\rho^\prime \varphi^\prime\right>}{\left<\rho\right>}
-$$
-
-The first term on the right side of the equation is the definition of a Favre average ([](#favre-defn)), which yields
-
-$$
-\left<\varphi\right> = \widehat{\varphi} + \frac{\left<\rho^\prime \varphi^\prime\right>}{\left<\rho\right>}
-$$ (favre-reynolds-relation)
-
-Throughout much of the ocean, we expect the second term to be very small as the numerator is most often three orders of magnitude smaller than the denominator, but could be large in highly turbulent regions.  
-
-### Managing Multiple Decompositions
-
-Within Omega, three distinct decompositions are critical.  In the derivation to follow, any term involving a product of spatially varying density and some other quanitity (e.g., $\rho \varphi$) will use a Favre average, terms without the density factor will use the Reynolds' decomposition.  The final decomposition is the deviation from the density weighted vertical integral of a generic variable $\varphi$.  We decompose the continuous variable $\phi$ following
-
-$$
-\varphi \equiv \overline{\varphi}^{\tilde{z}}_k + \delta \varphi
-$$ (averaging-decomp-definition)
-
-The density weighted vertical average ([](#def-layer-average)) is the quantity predicted by Omega, but the deviation from this value is potentially critical for operations like reconstruction of variables at layer interfaces or horizontal boundaries.  As will become clear, inclusion of the Reynolds' average will also be important for the derivation.  
-
-In our $\tilde{z}$ coordinate system, it is important to note that the Favre average, while apparently similar in structure, is different from the vertical density weighted average given by [](#def-layer-average). The average in the Favre approach is defined relative to a sufficent time or ensemble mean of the model predicted quantity.  In this context, sufficient most commonly means a time average over a statistically significant number of eddy turnover times for the quantity being modeled or for the turbulence to equilibrate.
-
-Omega will predict Favre averaged, density weighted vertically integrated variables and the turbulent fluxes are deviations from this quantity unless denoted by $< . >$ for Reynolds' averaged turbulent fluxes and stresses.  
-
 ### Useful Averaging Relationships
-
-Most equations that will be Favre averaged will contain terms of the form $\rho \varphi$.  This can be written as
-
-$$
-\left<\rho \phi\right> = \left<\rho\right>\widehat{\varphi}.
-$$ (Favre-relation1)
-
-Here we have utilized the definition of the Favre average of $\varphi$.  Equation [](#Favre-relation1) implies that the model predicted variables in Omega should be interpreted as Favre averaged.  Given this, turbulent fluxes should also be Favre averaged.  As can be seen in equation [](#tr-vh-split-pseudo), we will have flux terms of the form $\rho \varphi {\mathbf u}$.  To gain an intuition for how these terms are treated, we first perform a Favre decomposition, but leave the density as full field.
-
-$$
-\rho \varphi {\mathbf u} &= \rho \left(\widehat{\varphi} + \varphi^{\prime \prime}\right)\left(\widehat{\mathbf u} + {\mathbf u}^{\prime \prime}\right) \\
-                         &= \rho \left( \widehat{\varphi}\widehat{\mathbf u} + \varphi^{\prime \prime}\widehat{\mathbf u} + \widehat{\varphi}{\mathbf u}^{\prime \prime} + \varphi^{\prime \prime}{\mathbf u}^{\prime \prime} \right)
-$$
-
-Following in the spirit of [](#Favre-relation1) and using the fact that a Reynolds' average of a product of perturbation and average is zero, we find
-
-$$
-\left<\rho \varphi {\mathbf u}\right> &= \left<\rho\widehat{\varphi}\widehat{\mathbf u}\right> + \left<\rho\varphi^{\prime \prime}{\mathbf u}^{\prime \prime}\right> \\
-                                    &= \left<\rho\right>\widehat{\varphi}\widehat{\mathbf u} + \left<\rho\right>\widehat{\varphi^{\prime \prime}{\mathbf u}^{\prime \prime}}
-$$ (Favre-relation2)
-
-Where we have also used the fact that $\left<\widehat{\varphi}\widehat{\mathbf u}\right> = \widehat{\varphi}\widehat{\mathbf u}$ by construction of the Reynolds' averaging operator and definition of the Favre average.  The second term utilizes [](#Favre-relation1) to arrive at this form.
-
-The form in [](#Favre-relation2) allows us to use fluxes that appear similar to a traditional Reynolds' average, but again is distinct although close in magnitude (See [](#favre-reynolds-relation)).
 
 For the decomposition related to vertical averaging, we will encounter terms such as ${\overline \varphi}^{\tilde{z}}_k \delta\varphi$ that need to be vertical averaged.  Using [](#def-layer-average) we have
 
@@ -466,17 +384,13 @@ where the last equality is true by definition.
 
 ### Summary
 
-In the derivations to follow, the equations will first be Reynolds' averaged and [](#Favre-relation1) will be used.  Thus, three decompositions will be critical in this document.  The decompositions are summarized as
+In this document, two decompositions will be critical in this document.  The decompositions are summarized as
 
 $$
 \varphi = \overline{\varphi}^{\tilde{z}}_k + \delta \varphi
 $$
 
-which is a density weighted vertical integral and the deviation from this value.  We again note that in the Omega equations, the Favre averaged field will be the quantity that is density weighted vertically averaged.  Hence we rewrite the previous equation as
-
-$$
-\widehat{\varphi} = \overline{\widehat{\varphi}}^{\tilde{z}}_k + \delta \varphi
-$$ (vertical-decomposition-favre)
+which is a density weighted vertical integral and the deviation from this value. 
 
 The second decomposition is
 
@@ -484,15 +398,7 @@ $$
 \varphi = \left<\varphi\right> + \varphi^\prime
 $$
 
-which is the traditional Reynolds' decomposition.  This will apply to quantities that don't include the full spatially variable density.  
-
-The final decomposition is
-
-$$
-\varphi = \widehat{\varphi} + \varphi^{\prime \prime}
-$$
-
-which is the Favre decomposition.  It is important to recall that the prime and double prime variables are different as they are fluctuations relative to different averages.
+which is the traditional Reynolds' decomposition.  
 
 ## 9. Layer Equations
 
@@ -501,52 +407,39 @@ which is the Favre decomposition.  It is important to recall that the prime and 
 Substituting [](#w-tilde) into the tracer equation [](#tr-vh-split-pseudo) for layer $k$, we have
 
 $$
-\frac{d}{dt} \int_{A} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho \, \varphi \, dz \, dA
+\frac{d}{dt} \int_{A} \int_{\tilde{z}_{k+1}^{\text{top}}}^{\tilde{z}_k^{\text{top}}}  \varphi \, d\tilde{z} \, dA
 +
-\int_{\partial A} \left( \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho \, \varphi \, {\bf u} \, dz \right) \cdot {\bf n}_\perp \, dl & \\
+\int_{\partial A} \left( \int_{\tilde{z}_{k+1}^{\text{top}}}^{\tilde{z}_k^{\text{top}}}  \varphi \, {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl & \\
 +
-\int_{A} \left\{ \rho_0 \varphi \left[\tilde{w} - \tilde{w}_r - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right] \right\}_{z = z^{\text{top}}} \, dA & \\
+\int_{A} \left\{ \rho_0 \varphi \left[\tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right] \right\}_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA & \\
 -
-\int_{A} \left\{ \rho_0 \varphi \left[\tilde{w} - \tilde{w}_r - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right] \right\}_{z = z^{\text{bot}}}\, dA
+\int_{A} \left\{ \rho_0 \varphi \left[\tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right] \right\}_{\tilde{z} = \tilde{z}^{\text{bot}}}\, dA
 & = 0.
 $$ (Aintegral-tracer)
 
 We first Reynolds' average this equation and given the definition of the operator we can move the averaging past the derivatives and integrals without correction terms to yield
 
 $$
-\frac{d}{dt} \int_{A} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \left<\rho \, \varphi\right> \, dz \, dA
+\frac{d}{dt} \int_{A} \int_{\tilde{z}_{k+1}^{\text{top}}}^{\tilde{z}_k^{\text{top}}} \left<\varphi\right> \, d\tilde{z} \, dA
 +
-\int_{\partial A} \left( \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \left<\rho \, \varphi \, {\bf u} \right> \, dz \right) \cdot {\bf n}_\perp \, dl & \\
+\int_{\partial A} \left( \int_{\tilde{z}_{k+1}^{\text{top}}}^{\tilde{z}_k^{\text{top}}} \left<\varphi \, {\bf u} \right> \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl & \\
 +
-\int_{A} \left<\left\{ \rho_0 \varphi \left[\tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right] \right\}\right>_{z = z^{\text{top}}} \, dA & \\
+\int_{A} \left<\left\{ \rho_0 \varphi \left[\tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right] \right\}\right>_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA & \\
 -
-\int_{A} \left<\left\{ \rho_0 \varphi \left[\tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right] \right\}\right>_{z = z^{\text{bot}}}\, dA
+\int_{A} \left<\left\{ \rho_0 \varphi \left[\tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right] \right\}\right>_{\tilde{z} = \tilde{z}^{\text{bot}}}\, dA
 & = 0.
 $$ (Aintegral-tracer-reynolds)
 
 In this equation we have also invoked the definition of vertical transport velocity, $\tilde{w}_{tr} \equiv \tilde{w} - \tilde{w}_r$.
 
-Next we use the definition of the Favre average on the first two terms 
+Next, we use a Reynolds' decomposition on any terms involving products inside a Reynolds' averaged,
 
 $$
-\frac{d}{dt} \int_{A} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \left<\rho\right> \, \widehat{\varphi}\, dz \, dA
+\frac{d}{dt} \int_{A} \int_{\tilde{z}_{k+1}^{\text{top}}}^{\tilde{z}_k^{\text{top}}} \left<\varphi \right> \, d\tilde{z} \, dA
 +
-\int_{\partial A} \left( \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \left<\rho\right> \, \widehat{\varphi \, {\bf u}} \, dz \right) \cdot {\bf n}_\perp \, dl & \\
+\int_{\partial A} \left( \int_{\tilde{z}_{k+1}^{\text{top}}}^{\tilde{z}_k^{\text{top}}} \left(\left<{\varphi}\right>\left<{\bf u}\right> + \left<\varphi^{\prime}{\bf u}^{\prime}\right> \right) d\tilde{z} \right) \, \cdot {\bf n}_\perp \, dl & \\
 +
-\int_{A} \left<\left\{ \rho_0 \varphi \left[\tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right] \right\}\right>_{z = z^{\text{top}}} \, dA & \\
--
-\int_{A} \left<\left\{ \rho_0 \varphi \left[\tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right] \right\}\right>_{z = z^{\text{bot}}}\, dA
-& = 0.
-$$ (Aintegral-tracer-reynolds2)
-
-Next, we use a Favre decomposition on any products of terms that are Favre averaged and use the Reynolds' decomposition on products of terms that are Reynolds' averaged.
-
-$$
-\frac{d}{dt} \int_{A} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \left<\rho\right> \, \widehat{\varphi}\, dz \, dA
-+
-\int_{\partial A} \left( \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \left<\rho\right> \, \left(\widehat{\varphi}\widehat{\bf u} + \widehat{\varphi^{\prime \prime}{\bf u}^{\prime \prime}} \right) \right) \, \cdot {\bf n}_\perp \, dl & \\
-+
-\int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{z = z^{\text{top}}} \, dA & \\
+\int_{A} \left\{ \rho_0 \left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{z = z^{\text{top}}} \, dA & \\
 -
 \int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{z = z^{\text{bot}}}\, dA
 & = 0.
@@ -555,9 +448,9 @@ $$ (Aintegral-tracer-favre-reynolds)
 We can rewrite the first two terms in [](#Aintegral-tracer-favre-reynolds) using [](#def-layer-average) and [](#def-layer-average-reynolds)
 
 $$
-\frac{d}{dt} \int_A \tilde{h}_k \, \overline{\widehat{\varphi}}^{\tilde{z}}_k \, dA
+\frac{d}{dt} \int_A \tilde{h}_k \, \overline{\left<\varphi\right>}^{\tilde{z}}_k \, dA
 +
-\int_{\partial A} \left( \tilde{h}_k \, \overline{\widehat{\varphi} \widehat{{\bf u}} + \widehat{\varphi^{\prime \prime}{\bf u}^{\prime \prime}}}^{\tilde{z}}_k \right) \cdot {\bf n}_\perp \, dl & \\
+\int_{\partial A} \left( \tilde{h}_k \, \overline{\left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime}{\bf u}^{\prime}\right>}^{\tilde{z}}_k d\tilde{z} d\tilde{z} \right) \cdot {\bf n}_\perp \, dl & \\
 +
 \int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{z = z^{\text{top}}} \, dA & \\
 -
@@ -568,22 +461,22 @@ $$ (Aintegral-tracer2)
 The second term is expanded utilizing [](#vertical-decomposition-favre)
 
 $$
-\frac{d}{dt} \int_A \tilde{h}_k \, \overline{\widehat{\varphi}}^{\tilde{z}}_k \, dA
+\frac{d}{dt} \int_A \tilde{h}_k \, \overline{\left<\varphi\right>}^{\tilde{z}}_k \, dA
 +
-\int_{\partial A} \left( \tilde{h}_k \, \overline{\left(\overline{\widehat{\varphi}}^{\tilde{z}}_k + \delta \varphi\right)\left(\overline{\widehat{\bf u}}^{\tilde{z}}_k + \delta {\bf u}\right)}^{\tilde{z}}_k + \tilde{h}_k \overline{\widehat{\varphi^{\prime \prime}{\bf u}^{\prime \prime}}}^{\tilde{z}}_k \right) \cdot {\bf n}_\perp \, dl & \\
+\int_{\partial A} \left( \tilde{h}_k \, \overline{\left(\overline{\left<\varphi\right>}^{\tilde{z}}_k + \delta \varphi\right)\left(\overline{\left<{\bf u}\right>}^{\tilde{z}}_k + \delta {\bf u}\right)}^{\tilde{z}}_k + \tilde{h}_k \overline{\left<\varphi^{\prime}{\bf u}^{\prime}\right>}^{\tilde{z}}_k \right) \cdot {\bf n}_\perp \, dl & \\
 +
-\int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{z = z^{\text{top}}} \, dA & \\
+\int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA & \\
 -
-\int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{bot}} \right\}_{z = z^{\text{bot}}}\, dA
+\int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{bot}} \right\}_{\tilde{z} = \tilde{z}^{\text{bot}}}\, dA
 & = 0
 $$ (Aintegral-tracer2)
 
 The second term is simplified using [](#delta-vert-average)
 
 $$
-\frac{d}{dt} \int_A \tilde{h}_k \, \overline{\widehat{\varphi}}^{\tilde{z}}_k \, dA
+\frac{d}{dt} \int_A \tilde{h}_k \, \overline{\left<\varphi\right>}^{\tilde{z}}_k \, dA
 +
-\int_{\partial A} \left[ \tilde{h}_k \, \left(\overline{\widehat{\varphi}}^{\tilde{z}}_k \overline{\widehat{\bf u}}^{\tilde{z}}_k + \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k + \overline{\widehat{\varphi^{\prime \prime}{\bf u}^{\prime \prime}}}^{\tilde{z}}_k \right)\right] \cdot {\bf n}_\perp \, dl & \\
+\int_{\partial A} \left[ \tilde{h}_k \, \left(\overline{\left<\varphi\right>}^{\tilde{z}}_k \overline{\left<{\bf u}\right>}^{\tilde{z}}_k + \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k + \overline{\left<\varphi^{\prime}{\bf u}^{\prime}\right>}^{\tilde{z}}_k \right)\right] \cdot {\bf n}_\perp \, dl & \\
 +
 \int_{A} \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{z = z^{\text{top}}} \, dA & \\
 -
@@ -594,9 +487,9 @@ $$
 Given that the horizontal area is not changing in time, we can move the time derivative through the first integral.  We also invoke Green's Theorem for the second integral to convert that from a surface integral to an area integral.  With these changes, the equation becomes
 
 $$
-\int_A  \bigl\{ \frac{\partial \tilde{h}_k \, \overline{\widehat{\varphi}}^{\tilde{z}}_k}{\partial t} 
+\int_A  \bigl\{ \frac{\partial \tilde{h}_k \, \overline{\left<\varphi\right>}^{\tilde{z}}_k}{\partial t} 
 +
-\nabla \cdot \left[ \tilde{h}_k \, \left(\overline{\widehat{\varphi}}^{\tilde{z}}_k \overline{\widehat{\bf u}}^{\tilde{z}}_k + \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k + \overline{\widehat{\varphi^{\prime \prime}{\bf u}^{\prime \prime}}}^{\tilde{z}}_k \right)\right] & \\
+\nabla \cdot \left[ \tilde{h}_k \, \left(\overline{\left<\varphi\right>}^{\tilde{z}}_k \overline{\left<{\bf u}\right>}^{\tilde{z}}_k + \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k + \overline{\left<\varphi^{\prime}{\bf u}^{\prime}\right>}^{\tilde{z}}_k \right)\right] & \\
 +
 \left\{ \rho_0 \left<\varphi\right>\left<\tilde{w}_{tr}\right> + \rho_0 \left<\varphi^{\prime} \tilde{w}_{tr}^\prime \right> - \rho_0\left[ \left<\varphi\right> \left<{\bf u}\right> + \left<\varphi^{\prime} {\bf u}^{\prime}\right> \right] \cdot \nabla \tilde{z}^{\text{top}} \right\}_{z = z^{\text{top}}} & \\
 -
@@ -612,14 +505,14 @@ Finally, given that the area integral operates on the entire equation, it is val
 tracer: 
 
 $$
-\frac{\partial {\tilde h}_k \overline{\widehat{\varphi}^{\tilde{z}}_k}  }{\partial t} 
+\frac{\partial {\tilde h}_k \overline{\left<\varphi\right>}^{\tilde{z}}_k  }{\partial t} 
 +
-   \nabla \cdot \left({\tilde h}_k \overline{\widehat{\varphi}}^{\tilde{z}}_k \overline{\widehat{\bf u}}^{\tilde{z}}_k\right) 
- + \left[ \left<\varphi\right> \left<{\tilde w}_{tr}\right> - \left<\varphi\right>\left<{\bf u}\right>  \cdot \nabla \tilde{z}^{\text{top}} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} & \\
- - \left[ \left<\varphi\right> \left<{\tilde w}_{tr}\right> - \left<\varphi\right>\left<{\bf u}\right>  \cdot \nabla \tilde{z}^{\text{top}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
+   \nabla \cdot \left({\tilde h}_k \overline{\left<\varphi\right>}^{\tilde{z}}_k \overline{\left<{\bf u}\right>}^{\tilde{z}}_k\right) 
+ + \rho_0 \left[ \left<\varphi\right> \left<{\tilde w}_{tr}\right> - \left<\varphi\right>\left<{\bf u}\right>  \cdot \nabla \tilde{z}^{\text{top}} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} & \\
+ - \rho_0 \left[ \left<\varphi\right> \left<{\tilde w}_{tr}\right> - \left<\varphi\right>\left<{\bf u}\right>  \cdot \nabla \tilde{z}^{\text{bot}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
 = & \\
-- \nabla \cdot \left({\tilde h}_k \overline{\widehat{\varphi^{\prime \prime} {\bf u}^{\prime \prime}}}^{\tilde{z}}_k \, + {\tilde h}_k \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k \right) & \\
-- \left\{\left[\left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> - \left< \varphi^\prime {\bf u}^{\prime}\right> \cdot \nabla \tilde{z}^{\text{top}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{top}}} - \left[\left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> - \left< \varphi^\prime {\bf u}^{\prime}\right> \cdot \nabla \tilde{z}^{\text{bot}}\right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}\right\}.
+- \nabla \cdot \left({\tilde h}_k \overline{\left<\varphi^{\prime} {\bf u}^{\prime}\right>}^{\tilde{z}}_k \, + {\tilde h}_k \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k \right) & \\
+- \rho_0 \left\{ \left[\left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> - \left< \varphi^\prime {\bf u}^{\prime}\right> \cdot \nabla \tilde{z}^{\text{top}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{top}}} - \left[\left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> - \left< \varphi^\prime {\bf u}^{\prime}\right> \cdot \nabla \tilde{z}^{\text{bot}}\right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}\right\}.
 $$ (layer-tracer)
 
 A few notes on the layer averaged tracer equation.  In this complete form, it includes three types of fluctuating quantities that must be dealt with: (1) the vertically density weighted, Favre averaged turbulent flux $\left(\overline{\widehat{\varphi^{\prime \prime} {\bf u}^{\prime \prime}}}^{\tilde{z}}_k \right)$, (2) the Reynolds' average turbulent flux $\left( \left< \varphi^\prime {\tilde w}_{tr}^{\prime} \right> \right)$, and (3) the vertical integral of the product of deviations from the layer integrated variables $\left(\overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k \right)$.  The details of the first two quantities will be discussed later in this document and follow on design documents. The terms involving perturbations from the layer integrated quantity are necessary to extend beyond piecewise constant represenation of variables.  In this equation, variables with no overline are the full field variable at the interfaces.
@@ -631,35 +524,35 @@ The mass equation is identical to the tracer equation with $\varphi=1$.
 mass:
 
 $$
-\frac{d {\tilde h}_k }{d t} 
+\frac{\partial {\tilde h}_k }{\partial t} 
 +
-   \nabla \cdot \left({\tilde h}_k \overline{\widehat{\bf u}}^{\tilde{z}}_k\right) 
- + \left[ \left<{\tilde w}_{tr}\right> - \left<{\bf u}\right> \cdot \nabla \tilde{z}^{\text{top}} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} 
- - \left[ \left<{\tilde w}_{tr}\right> - \left<{\bf u}\right> \cdot \nabla  \tilde{z}^{\text{bot}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
+   \nabla \cdot \left({\tilde h}_k \overline{\left<{\bf u}\right>}^{\tilde{z}}_k\right) 
+ + \rho_0 \left[ \left<{\tilde w}_{tr}\right> - \left<{\bf u}\right> \cdot \nabla \tilde{z}^{\text{top}} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} 
+ - \rho_0 \left[ \left<{\tilde w}_{tr}\right> - \left<{\bf u}\right> \cdot \nabla  \tilde{z}^{\text{bot}} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
 = 0
 $$ (layer-mass)
 
-### Layered Momentum
+### Momentum
 
 We now derive the horizontal momentum equation in our non-Boussinesq, hydrostatic framework, following the same finite-volume approach used for mass and tracer conservation. We work with a pseudo-height vertical coordinate $\tilde{z}$ as defined in [Pseudo-Height Coordinate Section](pseudo-height).
 
 We begin from [](#vh-momentum-pseudo) and specify the body forces ${\bf b}$ and surface forces ${\bf f}$
 
 $$
-\frac{d}{dt} \int_{A} \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, {\bf v} \, d\tilde{z} \, dA
+\frac{d}{dt} \int_{A} \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} {\bf u} \, d\tilde{z} \, dA
 &+
-\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, {\bf v} \otimes {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} {\bf u} \otimes {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
 &+
-\int_A \rho_0 \, {\bf v} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+\int_A \rho_0 \, {\bf u} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
 -
-\int_A \rho_0 \, {\bf v} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA \\
+\int_A \rho_0 \, {\bf u} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA \\
 &=
--\int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, \left({\bf f} \times \mathbf{u} + \nabla \Phi \right) \, d\tilde{z} \, dA
+-\int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho_0 \left({\bf f} \times \mathbf{u} + \nabla \Phi \right) \, d\tilde{z} \, dA
 +
-\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} p \, d\tilde{z} \right) dl \\
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \frac{\rho_0 p}{\rho} \, d\tilde{z} \right) dl \\
 &\quad
-+ \int_A \left[ p \nabla \tilde{z} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
-- \int_A \left[ p \nabla \tilde{z} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA.
++ \int_A \left[ \frac{\rho_0 p}{\rho} \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+- \int_A \left[ \frac{\rho_0 p}{\rho} \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA.
 $$ (vh-momentum-forces)
 
 In this equation:
@@ -671,186 +564,194 @@ In this equation:
 As with the tracer derivation, we next Reynolds' average [](#vh-momentum-forces),
 
 $$
-\frac{d}{dt} \int_{A} \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \left< \rho \, {\bf v} \right> \, d\tilde{z} \, dA
+\frac{d}{dt} \int_{A} \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \left< {\bf u} \right> \, d\tilde{z} \, dA
 &+
-\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \left< \rho \, {\bf v} \otimes {\bf u} \right> \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \left< {\bf u} \otimes {\bf u} \right> \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
 &+
-\int_A \rho_0 \,\left< {\bf v} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \right> \, dA
+\int_A \rho_0 \,\left< {\bf u} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \right> \, dA
 -
-\int_A \rho_0 \, \left< {\bf v} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \right> \, dA \\
+\int_A \rho_0 \, \left< {\bf u} \left[ \tilde{w}_{tr} - {\bf u} \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \right> \, dA \\
 &=
--\int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho \, \left( \left< {\bf f} \times \mathbf{u} \right> + \left< \nabla \Phi \right> \right) \, d\tilde{z} \, dA
+-\int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho_0 \, \left<\left( {\bf f} \times \mathbf{u} + \nabla \Phi \right) \right> \, d\tilde{z} \, dA
 +
-\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \left< p \right> \, d\tilde{z} \right) dl \\
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho_0 \left< \frac{p}{\rho} \right> \, d\tilde{z} \right) dl \\
 &\quad
-+ \int_A \left[ \left< p \nabla \tilde{z} \right> \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
-- \int_A \left[ \left< p \nabla \tilde{z} \right> \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA.
++ \int_A \left[ \rho_0 \left< \frac{p}{\rho} \nabla \tilde{z}^{\text{top}} \right> \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+- \int_A \left[ \rho_0 \left< \frac{p}{\rho} \nabla \tilde{z}^{\text{top}} \right> \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA.
 $$ (vh-momentum-reynolds1)
 
-Here we have also moved the Reynolds' average through the spatial integrals given the properties of the averaging.
-
-
-
-
-
-
-
-Putting the pressure and stress term into [](h-momentum), and using Gauss' Theorem on the advection, the horizontal momentum equation is
+Here we have also moved the Reynolds' average through the spatial integrals given the properties of the averaging.  Next we do a Reynolds' decomposition, and again assume that $\nabla \tilde{z}$ terms do not contribute to turbulent correlations, this yields
 
 $$
-& \frac{d}{dt} \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, {\bf u} \, dz \, dA
-+
-   \int_{A}\nabla_\perp \cdot \left( \int_{z^{\text{bot}}}^{z^{\text{top}}}\rho\, {\bf u} \otimes {\bf u} \, dz \right) dA
- + \int_{A}\left[ \rho\, {\bf u} \left(w - w_r \right) \right]_{z=z^{\text{top}}} \, dA
- - \int_{A}\left[ \rho\, {\bf u} \left(w - w_r \right) \right]_{z=z^{\text{bot}}} \, dA
-\\ & \; =
-- \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \,  \mathbf{f} \times \mathbf{u} \, dz \, dA
-- \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} \rho \, \nabla_\perp \Phi \, dz \, dA
- - \int_{A} \int_{z^{\text{bot}}}^{z^{\text{top}}} 
-  \nabla_{\perp} p \, dz \, dA.
-$$ (h-momentum-p-tau)
-
-Dividing by $\rho_0$ and taking vertical averages using [](#def-thickness) and [](#def-pseudo-thickness),
-
-$$
-\frac{d}{dt} \int_{A} \tilde{h}\, \overline{  {\bf u} }^{\tilde z} \, dA
-+
-   \int_{A}\nabla_\perp \cdot \left( \tilde{h}\, \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right) dA
-& + \int_{A}\left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{top}}} \, dA
- - \int_{A}\left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{bot}}} \, dA
-\\ & \; =
-- \int_{A} \tilde{h} \,\overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} \, dA
-- \int_{A} \tilde{h} \,\overline{  \nabla_\perp \Phi }^{\tilde z} \, dA
-- \int_{A} \frac{1}{\rho_0} \overline{\nabla_{\perp} p}^{z}  \, dA
-$$ (h-momentum-p-tau)
-
-Taking the limit as $A \rightarrow 0$, we arrive at the local, horizontally continuous form:
-
-$$
-\frac{\partial \tilde{h}\, \overline{  {\bf u} }^{\tilde z} }{\partial t}
-& +
-   \nabla_\perp \cdot \left( \tilde{h}\, \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right)
- + \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{top}}}
- - \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{bot}}}
-\\ & =
--  \tilde{h} \,\overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} 
--  \tilde{h} \,\overline{  \nabla_\perp \Phi }^{\tilde z} 
--  \frac{1}{\rho_0} \overline{\nabla_{\perp} p}^{z}  
-$$ (momentum-layered-differential-1)
-
-The first two terms are the material derivative, confined within the horizontal layer. Using the product rule, and layered mass conservation [](#layer-mass),
-
-$$
-\frac{\partial \tilde{h}\, \overline{  {\bf u} }^{\tilde z} }{\partial t}
-+ \nabla_\perp \cdot \left( \tilde{h}\, \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right)
+\frac{d}{dt} \int_{A} \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \left< {\bf u} \right> \, d\tilde{z} \, dA
+&+
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \left( \left< {\bf u} \right> \otimes \left< {\bf u} \right> + \left< {\bf u}^\prime \otimes {\bf u}^\prime \right> \right) \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
+&+
+\int_A \rho_0 \, \left[ \left(\left< {\bf u} \right> \left< \tilde{w}_{tr} \right> + \left<{\bf u}^\prime \tilde{w}_{tr}^\prime \right> \right) - \left(\left<{\bf u}\right> \left<{\bf u}\right> + \left< {\bf u}^\prime {\bf u}^\prime \right> \right) \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA \\
+&-
+\int_A \rho_0 \, \left[ \left(\left< {\bf u} \right> \left< \tilde{w}_{tr} \right> + \left<{\bf u}^\prime \tilde{w}_{tr}^\prime \right> \right) - \left(\left<{\bf u}\right> \left<{\bf u}\right> + \left< {\bf u}^\prime {\bf u}^\prime \right> \right) \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA  \\
 &=
-\frac{D_\perp \tilde{h}\, \overline{  {\bf u} }^{\tilde z} }{D t} \\
+-\int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho_0 \, \left( {\bf f} \times \left<\mathbf{u}\right> + \nabla \left<\Phi\right> \right) \, d\tilde{z} \, dA \\
+&+
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \rho_0 \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \, d\tilde{z} \right) dl \\
+&\quad
++ \int_A \left[ \rho_0 \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+- \int_A \left[ \rho_0 \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA.
+$$ (vh-momentum-reynolds2)
+
+In [](#vh-momentum-reynolds2) we have also used $\alpha = \frac{1}{\rho}$ for notation conciseness.  The definition of the layer average ([](#def-layer-average)) is now utilized on terms with vertical integrals to yield
+
+$$
+\frac{d}{dt} \int_{A} \tilde{h}_k \overline{\left< {\bf u} \right>}^{\tilde{z}}_k  \, dA
+&+
+\int_{\partial A} \tilde{h}_k \left( \overline{\left< {\bf u} \right> \otimes \left< {\bf u} \right>}^{\tilde{z}}_k + \overline{\left< {\bf u}^\prime \otimes {\bf u}^\prime \right>}^{\tilde{z}}_k  \right) \cdot {\bf n}_\perp \, dl \\
+&+
+\int_A \rho_0 \, \left[ \left(\left< {\bf u} \right> \left< \tilde{w}_{tr} \right> + \left<{\bf u}^\prime \tilde{w}_{tr}^\prime \right> \right) - \left(\left<{\bf u}\right> \left<{\bf u}\right> + \left< {\bf u}^\prime {\bf u}^\prime \right> \right) \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA \\
+&-
+\int_A \rho_0 \, \left[ \left(\left< {\bf u} \right> \left< \tilde{w}_{tr} \right> + \left<{\bf u}^\prime \tilde{w}_{tr}^\prime \right> \right) - \left(\left<{\bf u}\right> \left<{\bf u}\right> + \left< {\bf u}^\prime {\bf u}^\prime \right> \right) \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA  \\
 &=
-\tilde{h}\frac{D_\perp  \overline{  {\bf u} }^{\tilde z} }{D t}
-+
-\overline{ {\bf u} }^{\tilde z} \frac{D_\perp \tilde{h}}{D t} \\
+-\int_A \rho_0 \, \tilde{h}_k \overline{\left( {\bf f} \times \left<\mathbf{u}\right> + \nabla \left<\Phi\right> \right)}^{\tilde{z}}_k \, dA \\
+&+
+\int_{\partial A} \left[ \rho_0 \tilde{h}_k \left( \overline{\left< \alpha \right> \left<p \right>}^{\tilde{z}}_k + \overline{\left<\alpha^\prime p^\prime\right>}^{\tilde{z}}_k \right] \right) dl \\
+&\quad
++ \int_A \left[ \rho_0 \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+- \int_A \left[ \rho_0 \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA.
+$$ (vh-momentum-reynolds-lay-avg)
+
+The next step is to decompose vertical averages of products. This yields
+
+$$
+\frac{d}{dt} \int_{A} \tilde{h}_k \overline{\left< {\bf u} \right>}^{\tilde{z}}_k  \, dA
+&+
+\int_{\partial A} \tilde{h}_k \left( \overline{\left< {\bf u} \right>}^{\tilde{z}}_k \otimes \overline{\left< {\bf u} \right>}^{\tilde{z}}_k + \overline{\delta {\bf u} \otimes \delta {\bf u}}^{\tilde{z}}_k + \overline{\left< {\bf u}^\prime \otimes {\bf u}^\prime \right>}^{\tilde{z}}_k  \right) \cdot {\bf n}_\perp \, dl \\
+&+
+\int_A \rho_0 \, \left[ \left(\left< {\bf u} \right> \left< \tilde{w}_{tr} \right> + \left<{\bf u}^\prime \tilde{w}_{tr}^\prime \right> \right) - \left(\left<{\bf u}\right> \left<{\bf u}\right> + \left< {\bf u}^\prime {\bf u}^\prime \right> \right) \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA \\
+&-
+\int_A \rho_0 \, \left[ \left(\left< {\bf u} \right> \left< \tilde{w}_{tr} \right> + \left<{\bf u}^\prime \tilde{w}_{tr}^\prime \right> \right) - \left(\left<{\bf u}\right> \left<{\bf u}\right> + \left< {\bf u}^\prime {\bf u}^\prime \right> \right) \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA  \\
 &=
-\tilde{h}\left(
-  \frac{\partial  \overline{  {\bf u} }^{\tilde z} }{\partial t}
-+ \nabla_\perp \cdot \left( \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right)  \right)
-- \overline{ {\bf u} }^{\tilde z} \left(
-   \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}}
- - \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}
-\right)
-$$ (2D-material-der-product)
+-\int_A \rho_0 \, \tilde{h}_k \overline{\left( {\bf f} \times \left<\mathbf{u}\right> + \nabla \left<\Phi\right> \right)}^{\tilde{z}}_k \, dA \\
+&+
+\int_{\partial A} \left[ \rho_0 \tilde{h}_k \left( \overline{\left< \alpha \right>}^{\tilde{z}}_k \overline{\left<p \right>}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left<\alpha^\prime p^\prime\right>}^{\tilde{z}}_k \right) \right] dl \\
+&\quad
++ \int_A \left[ \rho_0 \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+- \int_A \left[ \rho_0 \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA.
+$$ (vh-momentum-reynolds-lay-avg2)
 
-We now substitute [](#2D-material-der-product) into [](#momentum-layered-differential-1) and divide by $\tilde h$ to get
-
-$$
- \frac{\partial \overline{  {\bf u} }^{\tilde z} }{\partial t}
-+ \nabla_\perp \cdot \left(  \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right)
-& + \frac{\left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{top}}}
- - \left[ {\bf u}\, \tilde{w}_{tr} \right]_{z=z^{\text{bot}}} }{\tilde h}
--   \frac{\overline{ {\bf u} }^{\tilde z}}{\tilde{h}}  \left(
-   \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}}
- - \left[ {\tilde w}_{tr} \right]_{{\tilde z}={\tilde z}_{k+1}^{\text{bot}}}\right)
-\\ &  =
--  \overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} 
--  \overline{  \nabla_\perp \Phi }^{\tilde z} 
--  \frac{1}{\rho_0 \, \tilde{h}} \overline{\nabla_{\perp} p}^{z}  
-$$ (momentum-layered-differential-2)
-
-Note that the coefficient of the pressure gradient and stress tensor can be rewritten as
+We next use the Divergence theorem on the surface integrals and combine terms into fewer integrals on each side of the equation.
 
 $$
-\frac{1}{\rho_0 \, \tilde{h}} =
-\frac{1}{\rho_0 \,\frac{1}{\rho_0} \int_{z_{k+1}^{\text{top}}}^{z_k^{\text{top}}} \rho dz}
-= \frac{1} {\overline{\rho}^z}
-= \overline{\alpha}^z,
-$$ (grad-p-coeff)
-
-where $\alpha$ is the specific volume.
-Gathering the vertical advection terms, [](#momentum-layered-differential-2) becomes
-
-$$
- \frac{\partial \overline{  {\bf u} }^{\tilde z} }{\partial t}
- + \nabla_\perp \cdot \left(  \overline{{\bf u} \otimes {\bf u} }^{\tilde z} \right)
-&
-+ \left( \nabla_\perp \cdot  {\bf u}  \right) {\bf u}
-+ \frac{1}{\tilde h}\left(
- \left[ {\bf u}\right]_{z=z^{\text{top}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{top}}}
- -
-  \frac{1}{\tilde h}\left(
- \left[ {\bf u}\right]_{z=z^{\text{bot}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{bot}}}
-\\ &  =
--  \overline{  \mathbf{f} \times \mathbf{u} }^{\tilde z} 
--  \overline{  \nabla_\perp \Phi }^{\tilde z} 
--  \overline{\alpha}^z \overline{\nabla_{\perp} p}^{z}  
-$$ (momentum-layered-differential-3)
-
-In addition, the horizontal advection may be rewritten as
-
-$$
-\nabla_\perp \cdot \left( {\bf u} \otimes {\bf u}  \right)
+\int_{A} \bigl\{ \frac{\partial\tilde{h}_k \overline{\left< {\bf u} \right>}^{\tilde{z}}_k}{\partial t}
+&+
+\nabla \cdot \left[ \tilde{h}_k \left(\overline{\left< {\bf u} \right>}^{\tilde{z}}_k \otimes \overline{\left< {\bf u} \right>}^{\tilde{z}}_k + \overline{\delta {\bf u} \otimes \delta {\bf u}}^{\tilde{z}}_k + \overline{\left< {\bf u}^\prime \otimes {\bf u}^\prime \right>}^{\tilde{z}}_k  \right) \right] \\
+&+
+\rho_0 \left[ \left(\left< {\bf u} \right> \left< \tilde{w}_{tr} \right> + \left<{\bf u}^\prime \tilde{w}_{tr}^\prime \right> \right) - \left(\left<{\bf u}\right> \left<{\bf u}\right> + \left< {\bf u}^\prime {\bf u}^\prime \right> \right) \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \\
+&-
+\rho_0 \left[ \left(\left< {\bf u} \right> \left< \tilde{w}_{tr} \right> + \left<{\bf u}^\prime \tilde{w}_{tr}^\prime \right> \right) - \left(\left<{\bf u}\right> \left<{\bf u}\right> + \left< {\bf u}^\prime {\bf u}^\prime \right> \right) \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \bigr\} \, dA \\
 &=
-\nabla_\perp \cdot \left( {\bf u} {\bf u}^T  \right) \\
-&= \left( \nabla_\perp \cdot  {\bf u}  \right) {\bf u}
-+  {\bf u} \cdot \nabla_\perp {\bf u}
-$$ (adv2d-prod)
+-\int_A \bigl\{ \rho_0 \, \tilde{h}_k \overline{\left( {\bf f} \times \left<\mathbf{u}\right> + \nabla \left<\Phi\right> \right)}^{\tilde{z}}_k \\
+&+
+\nabla \left[ \rho_0 \tilde{h}_k \left( \overline{\left< \alpha \right>}^{\tilde{z}}_k \overline{\left<p \right>}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left<\alpha^\prime p^\prime\right>}^{\tilde{z}}_k \right) \right] \\
+&\quad
++ \left[ \rho_0 \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} 
+-  \left[ \rho_0 \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}}\bigr\} \, dA.
+$$ (vh-momentum-reynolds-lay-avg3)
 
-The term ${\bf u} \cdot \nabla_\perp {\bf u}$ may be replaced with the vector identity
+Since the equation is fully inside the integral, the equation is true for any area and therefore we can write the layer averaged momentum equation as 
+
+$$
+\frac{\partial\tilde{h}_k \overline{\left< {\bf u} \right>}^{\tilde{z}}_k}{\partial t}
+&+
+\nabla \cdot \left[ \tilde{h}_k \left( \overline{\left< {\bf u} \right>}^{\tilde{z}}_k \otimes \overline{\left< {\bf u} \right>}^{\tilde{z}}_k + \overline{\delta {\bf u} \otimes \delta {\bf u}}^{\tilde{z}}_k + \overline{\left< {\bf u}^\prime \otimes {\bf u}^\prime \right>}^{\tilde{z}}_k  \right) \right] \\
+&+
+\rho_0 \left[ \left(\left< {\bf u} \right> \left< \tilde{w}_{tr} \right> + \left<{\bf u}^\prime \tilde{w}_{tr}^\prime \right> \right) - \left(\left<{\bf u}\right> \left<{\bf u}\right> + \left< {\bf u}^\prime {\bf u}^\prime \right> \right) \cdot \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \\
+&-
+\rho_0 \left[ \left(\left< {\bf u} \right> \left< \tilde{w}_{tr} \right> + \left<{\bf u}^\prime \tilde{w}_{tr}^\prime \right> \right) - \left(\left<{\bf u}\right> \left<{\bf u}\right> + \left< {\bf u}^\prime {\bf u}^\prime \right> \right) \cdot \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \\
+&=
+\rho_0 \, \tilde{h}_k \overline{\left( {\bf f} \times \left<\mathbf{u}\right> + \nabla \left<\Phi\right> \right)}^{\tilde{z}}_k \\
+&+
+\nabla \left[ \rho_0 \tilde{h}_k \left( \overline{\left< \alpha \right>}^{\tilde{z}}_k \overline{\left<p \right>}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left<\alpha^\prime p^\prime\right>}^{\tilde{z}}_k \right) \right] \\
+&\quad
++ \left[ \rho_0 \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} 
+-  \left[ \rho_0 \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}}.
+$$ (vh-momentum-v1)
+
+The product rule is used on the first two terms of [](#vh-momentum-v1) and then we multiply [](#layer-mass) by $\overline{\mathbf{u}}^{\tilde{z}}_k$ and subtract it from [](#vh-momentum-v1).  This yields
+
+$$
+\tilde{h}_k \frac{\partial \overline{\left< {\bf u} \right>}^{\tilde{z}}_k}{\partial t}
+&+
+\tilde{h}_k \overline{\left< {\bf u} \right>}^{\tilde{z}}_k \cdot \nabla \overline{\left< {\bf u} \right>}^{\tilde{z}}_k + \nabla \cdot \left[ \tilde{h}_k \left(\overline{\delta {\bf u} \otimes \delta {\bf u}}^{\tilde{z}}_k + \overline{\left< {\bf u}^\prime \otimes {\bf u}^\prime \right>}^{\tilde{z}}_k  \right) \right] \\
+&+
+\rho_0 \left(\left<\mathbf{u}\right> - \overline{\left<\mathbf{u}\right>}^{\tilde{z}}_k\right) \left\{ \left[ \left<\tilde{w}_{tr}\right> - \left<\mathbf{u}\right> \cdot \nabla \tilde{z}^{top} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} - \left[ \left<\tilde{w}_{tr}\right> - \left<\mathbf{u}\right> \cdot \nabla \tilde{z}^{bot} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \right\} \\
+&+
+\rho_0 \left\{ \left[ \left<\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right> - \left< \mathbf{u}^\prime \mathbf{u}^\prime \right> \cdot \nabla \tilde{z}^{top}\right]_{\tilde{z} = \tilde{z}^{\text{top}}} - \left[ \left<\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right> - \left< \mathbf{u}^\prime \mathbf{u}^\prime \right> \cdot \nabla \tilde{z}^{bot}\right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \right\} \\
+&=
+\rho_0 \, \tilde{h}_k \overline{\left( {\bf f} \times \left<\mathbf{u}\right> + \nabla \left<\Phi\right> \right)}^{\tilde{z}}_k \\
+&+
+\nabla \left[ \rho_0 \tilde{h}_k \left( \overline{\left< \alpha \right>}^{\tilde{z}}_k \overline{\left<p \right>}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left<\alpha^\prime p^\prime\right>}^{\tilde{z}}_k \right) \right] \\
+&\quad
++ \left[ \rho_0 \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} 
+-  \left[ \rho_0 \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}}.
+$$ (vh-momentum-v2)
+
+The previous equation is divided by $\tilde{h}_k$,
+
+$$
+\frac{\partial \overline{\left< {\bf u} \right>}^{\tilde{z}}_k}{\partial t}
+&+
+\overline{\left< {\bf u} \right>}^{\tilde{z}}_k \cdot \nabla \overline{\left< {\bf u} \right>}^{\tilde{z}}_k + \frac{1}{\tilde{h}_k} \nabla \cdot \left[ \tilde{h}_k \left(\overline{\delta {\bf u} \otimes \delta {\bf u}}^{\tilde{z}}_k + \overline{\left< {\bf u}^\prime \otimes {\bf u}^\prime \right>}^{\tilde{z}}_k  \right) \right] \\
+&+
+\frac{\rho_0}{\tilde{h}_k} \left(\left<\mathbf{u}\right> - \overline{\left<\mathbf{u}\right>}^{\tilde{z}}_k\right) \left\{ \left[ \left<\tilde{w}_{tr}\right> - \left<\mathbf{u}\right> \cdot \nabla \tilde{z}^{top} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} - \left[ \left<\tilde{w}_{tr}\right> - \left<\mathbf{u}\right> \cdot \nabla \tilde{z}^{bot} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \right\} \\
+&+
+\frac{\rho_0}{\tilde{h}_k}  \left\{ \left[ \left<\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right> - \left< \mathbf{u}^\prime \mathbf{u}^\prime \right> \cdot \nabla \tilde{z}^{top}\right]_{\tilde{z} = \tilde{z}^{\text{top}}} - \left[ \left<\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right> - \left< \mathbf{u}^\prime \mathbf{u}^\prime \right> \cdot \nabla \tilde{z}^{bot}\right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \right\} \\
+&=
+\rho_0 \, \overline{\left( {\bf f} \times \left<\mathbf{u}\right> + \nabla \left<\Phi\right> \right)}^{\tilde{z}}_k \\
+&+
+\frac{1}{\tilde{h}_k} \nabla \left[ \rho_0 \tilde{h}_k \left( \overline{\left< \alpha \right>}^{\tilde{z}}_k \overline{\left<p \right>}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left<\alpha^\prime p^\prime\right>}^{\tilde{z}}_k \right) \right] \\
+&\quad
++ \left[ \frac{\rho_0}{\tilde{h}_k}  \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} 
+-  \left[ \frac{\rho_0}{\tilde{h}_k} \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}}.
+$$ (vh-momentum-v3)
+
+
+The $\overline{\bf u}^{\tilde{z}}_k \cdot \nabla \overline{\bf u}^{\tilde{z}}_k$ may be replaced with the vector identity
 
 $$
 \begin{aligned}
-{\bf u} \cdot \nabla_\perp{\bf u}
-&= (\nabla_\perp\times {\bf u}) \times {\bf u} + \nabla_\perp\frac{|{\bf u}|^2}{2} \\
-&= \left( \boldsymbol{k} \cdot (\nabla_\perp\times {\bf u})\right)
-\left( \boldsymbol{k} \times {\bf u} \right) + \nabla_\perp\frac{|{\bf u}|^2}{2} \\
-&= \zeta {\bf u}^{\perp} + \nabla_\perp K,
+\overline{\left<{\bf u}\right>}^{\tilde{z}}_k \cdot \nabla \overline{\left<{\bf u}\right>}^{\tilde{z}}_k
+&= (\nabla \times \overline{\left<{\bf u}\right>}^{\tilde{z}}_k) \times \overline{\left<{\bf u}\right>}^{\tilde{z}}_k + \nabla \frac{\left|\overline{\left<{\bf u}\right>}^{\tilde{z}}_k\right|^2}{2} \\
+&= \left( \hat{k} \cdot (\nabla_\perp\times \overline{\left<{\bf u}\right>}^{\tilde{z}}_k)\right)
+\left( \hat{k} \times \overline{\left<{\bf u}\right>}^{\tilde{z}}_k \right) + \nabla_\perp\frac{\left|\overline{\left<{\bf u}\right>}^{\tilde{z}}_k\right|^2}{2} \\
+&= \zeta {\overline{\left<{\bf u}\right>}^{\tilde{z}}_k}^{\perp} + \nabla K.
 \end{aligned}
 $$ (advection-identity)
 
-where $\zeta$ is relative vorticity and $K$ is kinetic energy.
-This step separates the horizontal advection into non-divergent and non-rotational components, which is useful in the final TRiSK formulation.
+where $\zeta$ is relative vorticity and $K$ is kinetic energy.  This step separates the horizontal advection into non-divergent and non-rotational components, which is useful in the final TRiSK formulation.
 
-Now [](#momentum-layered-differential-3) becomes
+The Coriolis term in [](#vh-momentum-v3), when projected into a local coordinate system can be written as 
 
 $$
- \frac{\partial \overline{  {\bf u} }^{\tilde z} }{\partial t}
- +
-   \left(  \zeta + f  \right) {\overline{  {\bf u} }^{\tilde z}}^\perp
-&
-+ \left( \nabla_\perp \cdot  {\bf u}  \right) {\bf u}
-+ \frac{1}{\tilde h}\left(
- \left[ {\bf u}\right]_{z=z^{\text{top}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{top}}}
- -
-  \frac{1}{\tilde h}\left(
- \left[ {\bf u}\right]_{z=z^{\text{bot}}}-\overline{ {\bf u} }^{\tilde z}\right) \, \left[\tilde{w}_{tr} \right]_{z=z^{\text{bot}}}
-\\ &  =
-- \nabla_\perp K 
--  \overline{  \nabla_\perp \Phi }^{\tilde z} 
--  \overline{\alpha}^z \overline{\nabla_{\perp} p}^{z}  
-$$ (momentum-layered-differential-4)
+{\bf f} \times \left<\mathbf{u}\right> = f \left<\mathbf{u}\right>^\perp + 2 \Omega \tilde{w}_{tr} \cos \phi
+$$ (coriolis-expansion)
 
-Notes from Mark:
+We expect the second term above to be negligible for the ocean.  Ocean vertical velocities are largest ($\approx 10$ cm) in the high latitudes, where $\cos \phi$ is small.  Further, these large vertical velocities only arise in non-hydrostatic ocean models.  Therefore we expect this second term to always be small in Omega and will neglect it.
 
-1. I don't know what to do with the z-average in the advection term of [](#momentum-layered-differential-2) and here. In the mean time, I'll just skip to the layer-averaged terms.
-2. I don't know what to make of the $\left( \nabla_\perp \cdot  {\bf u}  \right) {\bf u}$ term, and whether it cancels with some of those odd vertical transport terms.
+Defining the absolute vorticity $\zeta_a$ as $\zeta + f$, where $f$ is the Coriolis parameter, which results from [](#coriolis-expansion), [](#vh-momentum-v3) becomes,
+
+$$
+\frac{\partial \overline{\left< {\bf u} \right>}^{\tilde{z}}_k}{\partial t}
+&+
+ \zeta_a {\overline{\left<{\bf u}\right>}^{\tilde{z}}_k}^{\perp} + \nabla K + \frac{1}{\tilde{h}_k} \nabla \cdot \left[ \tilde{h}_k \left(\overline{\delta {\bf u} \otimes \delta {\bf u}}^{\tilde{z}}_k + \overline{\left< {\bf u}^\prime \otimes {\bf u}^\prime \right>}^{\tilde{z}}_k  \right) \right] \\
+&+
+\frac{\rho_0}{\tilde{h}_k} \left(\left<\mathbf{u}\right> - \overline{\left<\mathbf{u}\right>}^{\tilde{z}}_k\right) \left\{ \left[ \left<\tilde{w}_{tr}\right> - \left<\mathbf{u}\right> \cdot \nabla \tilde{z}^{top} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} - \left[ \left<\tilde{w}_{tr}\right> - \left<\mathbf{u}\right> \cdot \nabla \tilde{z}^{bot} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \right\} \\
+&+
+\frac{\rho_0}{\tilde{h}_k}  \left\{ \left[ \left<\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right> - \left< \mathbf{u}^\prime \mathbf{u}^\prime \right> \cdot \nabla \tilde{z}^{top}\right]_{\tilde{z} = \tilde{z}^{\text{top}}} - \left[ \left<\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right> - \left< \mathbf{u}^\prime \mathbf{u}^\prime \right> \cdot \nabla \tilde{z}^{bot}\right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \right\} \\
+&=
+\rho_0 \, \overline{\nabla \left<\Phi\right>}^{\tilde{z}}_k + \frac{1}{\tilde{h}_k} \nabla \left[ \rho_0 \tilde{h}_k \left( \overline{\left< \alpha \right>}^{\tilde{z}}_k \overline{\left<p \right>}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left<\alpha^\prime p^\prime\right>}^{\tilde{z}}_k \right) \right] \\
+&\quad
++ \left[ \frac{\rho_0}{\tilde{h}_k}  \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{top}} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} 
+-  \left[ \frac{\rho_0}{\tilde{h}_k} \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}}.
+$$ (layer-momentum-final)
 
 
 
