@@ -3,35 +3,35 @@
 
 ## 1 Overview
 The vertical coordinate module will be responsible for computing and storing information related to the vertical mesh in Omega.
-Since Omega will be a non-Boussinesq model, the vertical independent variable will be pressure- as opposed to $z$-based.
-Similar to MPAS-Ocean's support for tilted height ($z^\star$) coordinates, Omega V1 will support a general vertical coordinate, where pseudo thickness $h$ varies in proportion to the total pseudo thickness of the water column. 
-The prognostic variable in the layered continuity equation is pseudo thickness, which can be used to calculate the total pressure at a given vertical level.
-The vertical height of a given level is still necessary in the model to compute sea level, the geopotential, and derivatives with respect to $z$.
-The height of a layer ($\Delta z$) can be found using the pseudo thickness, density, reference density, and known bottom elevation relative to the geoid (positive up).
-The vertical coordinate module will also serve as a container for information related to the variable number of active vertical levels for a given ocean column (due to variations in bottom elevation and ice shelf cavities).
+Since Omega will be a non-Boussinesq model, the vertical independent variable will be pressure-based (expressed in terms of the pseudo-height) as opposed to $z$-based.
+Similar to MPAS-Ocean's support for tilted height ($z^\star$) coordinates, Omega V1 will support a general vertical coordinate, where pseudo thickness $\tilde{h}$ varies in proportion to the total pseudo thickness of the water column. 
+The prognostic variable in the layered continuity equation is pseudo thickness, which can be used to calculate the total pressure at a given vertical layer interface.
+The geometric height of a given layer interface is still necessary in the model to compute sea level, the geopotential, and derivatives with respect to $z$.
+The geometric thickness of a layer ($\Delta z$) can be found using the pseudo thickness, density, reference density, and known bottom elevation (positive up) relative to the reference geoid.
+The vertical coordinate module will also serve as a container for information related to the variable number of active vertical layers for a given ocean column (due to variations in bottom elevation and ice shelf cavities).
 
 
 ## 2 Requirements
 
-### 2.1 Requirement: Compute and store the total pressure at a given level
+### 2.1 Requirement: Compute and store the total pressure at a given layer interface
 
-The total pressure at the bottom of each level will be computed and stored within the vertical coordinate module.
+The total pressure at each layer interface will be computed and stored within the vertical coordinate module.
 This involves a surface-down summation of the pseudo thickness variable times the gravitational acceleration, $g$, and the reference density, $\rho_0$, starting with the surface pressure.
 The pressure variable will be needed in the computation of the TEOS-10 equation of state and the pressure gradient.
 The variable will be registered with the `IOStreams` framework to enable it to be output during runtime.
 
-### 2.2 Requirement: Compute and store the $z$ location of a given level
+### 2.2 Requirement: Compute and store the $z$ location of a given layer interface
 
-The $z$ location at the top of each level will be computed and stored within the vertical coordinate module.
+The $z$ location at each layer interface will be computed and stored within the vertical coordinate module.
 In the model, $z$ is defined as being positive up from the geoid.
 The $z$ location is calculated in a bottom-up summation of the pseudo thickness times the specific volume and reference density, starting with the known bottom elevation.
 The $z$ location of the interfaces is needed to compute the geopotential gradient and the sea level.
 The variable will be registered with the `IOStreams` framework to enable it to be output during runtime.
 
-### 2.3 Requirement: Compute and store the vertical level bounds for each horizontal cell
+### 2.3 Requirement: Compute and store the vertical layer bounds for each horizontal cell
 
 All tendency terms require a variable vertical loop range to account for variation in bottom elevation and ice shelf cavities.
-These bounds will be computed on construction in the vertical coordinate module and used for setting the loop bounds for active levels in calculations over the vertical.
+These bounds will be computed on construction in the vertical coordinate module and used for setting the loop bounds for active layers in calculations over the vertical.
 
 ### 2.4 Requirement: Compute and store the geopotential
 
@@ -70,10 +70,10 @@ $$ p_{i,k} = p_{i}^{surf} + g\rho_0 \sum_{k'=1}^{k-1} \tilde{h}_{i,k'} + \frac{1
 
 The $z$ location of cell interfaces is found by summing the pseudo thicknesses from the bottom multiplied by the specific volume:
 
-$$ z_{i,k}^{top} = z_i^{floor} + \rho_0 \sum_{k^\prime=k}^{K_{max}} \alpha_{i,k^\prime} \tilde{h}_{i,k^\prime}, $$
+$$ z_{i,k+1/2} = z_i^{floor} + \rho_0 \sum_{k^\prime=k}^{K_{max}} \alpha_{i,k^\prime} \tilde{h}_{i,k^\prime}, $$
 
 where $z_i^{floor}$ is the (positive-up) bottom elevation.
-The $z$ location of cell centers is given by: 
+The $z$ location of a layer midpoint is given by: 
 
 $$ z_{i,k} = z_i^{floor} + \frac{1}{2} \rho_0\alpha_{i,k} \tilde{h}_{i,k} + \rho_0\sum_{k^\prime= k+1}^{K_{max}} \alpha_{i,k^\prime} \tilde{h}_{i,k^\prime}. $$
 
@@ -84,11 +84,12 @@ $$ \Phi_{i,k} = \left( gz_{i,k} + \Phi_{tp} + \Phi_{SAL} \right). $$
 
 The desired pseudo thickness used for the $p^\star$ coordinate is:
 
-$$\tilde{h}_k^{p^\star} = \tilde{h}_k^{rest} + \tilde{h}_k^{p}, $$
+$$\tilde{h}_k^{p^\star} = \frac{(p_B-p_{surf})}{g\rho_0} \frac{W_k\tilde{h}_k^{ref}}{\sum_{k^\prime=1}^K W_{k^\prime}\tilde{h}_{k^\prime}^{ref}}, $$
 
-where the pressure alteration, $\tilde{h}_k^{p}$, is given by:
+where $\tilde{h}_k^{ref}$ is the initial reference pseudo thickness and the weights $W_k$ determine how pressure perturbations are distributed amongst the layers.
+Setting all $W_k$ values to a constant, corresponds to uniform stretching of the layers.
+Different weight values can be chosen such that perturbations are distributed unequally.
 
-$$ \tilde{h}_k^{p} =\frac{(p_B-p_{surf})}{g\rho_0} \frac{W_k\tilde{h}_k^{rest}}{\sum_{k^\prime=1}^K W_{k^\prime}\tilde{h}_{k^\prime}^{rest}}.$$
 
 ## 4 Design
 
@@ -108,7 +109,7 @@ class VertCoord {
         Array2DReal ZInterface;
         Array2DReal ZMid;
         Array2DReal GeopotentialMid;
-        Array2DReal LayerThicknessPStar;
+        Array2DReal LayerThicknessTarget;
 
         // Vertical loop bounds
         Array1DI4 MinLevelCell;
@@ -151,7 +152,7 @@ class VertCoord{
         void computePressure();
         void computeZHeight();
         void computeGeopotential();
-        void computePStarThickness();
+        void computeTargetThickness();
     private:
         void minMaxLevelEdge();
         void minMaxLevelVertex();
@@ -230,11 +231,11 @@ void VertCoord::computeGeopotential(const Array2DReal &GeopotentialMid,
 Tidal potential forcing and self attraction and loading will be default-off features.
 The will be added to (or excluded from) the geopotential based on config flags.
 
-The public `computePStarThickness` will determine the desired pseudo thickness used for the $p^\star$ vertical coordinate:
+The public `computeTargetThickness` will determine the desired pseudo thickness used for the $p^\star$ vertical coordinate:
 ```c++
-void VertCoord::computePStarThickness(const Array2DReal &LayerThicknessPStar,
-                                      const Array2DReal &VertCoordMovementWeights,
-                                      const Array2DReal &RefLayerThickness) {
+void VertCoord::computeTargetThickness(const Array2DReal &LayerThicknessPStar,
+                                       const Array2DReal &VertCoordMovementWeights,
+                                       const Array2DReal &RefLayerThickness) {
                                   
 } 
 ```
