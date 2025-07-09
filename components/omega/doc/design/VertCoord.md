@@ -4,7 +4,7 @@
 ## 1 Overview
 The vertical coordinate module will be responsible for computing and storing information related to the vertical mesh in Omega.
 Since Omega will be a non-Boussinesq model, the vertical independent variable will be pressure-based (expressed in terms of the pseudo-height) as opposed to $z$-based.
-Similar to MPAS-Ocean's support for tilted height ($z^\star$) coordinates, Omega V1 will support a general vertical coordinate, where pseudo thickness $\tilde{h}$ varies in proportion to the total pseudo thickness of the water column. 
+Similar to MPAS-Ocean's support for tilted height ($z^\star$) coordinates, Omega V1 will support a general vertical coordinate, where pseudo thickness $\tilde{h}$ varies in proportion to the total pseudo thickness of the water column.
 The prognostic variable in the layered continuity equation is pseudo thickness, which can be used to calculate the total pressure at a given vertical layer interface.
 The geometric height of a given layer interface is still necessary in the model to compute sea level, the geopotential, and derivatives with respect to $z$.
 The geometric thickness of a layer ($\Delta z$) can be found using the pseudo thickness, density, reference density, and known bottom elevation (positive up) relative to the reference geoid.
@@ -73,11 +73,11 @@ The $z$ location of cell interfaces is found by summing the pseudo thicknesses f
 $$ z_{i,k+1/2} = z_i^{floor} + \rho_0 \sum_{k^\prime=k}^{K_{max}} \alpha_{i,k^\prime} \tilde{h}_{i,k^\prime}, $$
 
 where $z_i^{floor}$ is the (positive-up) bottom elevation.
-The $z$ location of a layer midpoint is given by: 
+The $z$ location of a layer midpoint is given by:
 
 $$ z_{i,k} = z_i^{floor} + \frac{1}{2} \rho_0\alpha_{i,k} \tilde{h}_{i,k} + \rho_0\sum_{k^\prime= k+1}^{K_{max}} \alpha_{i,k^\prime} \tilde{h}_{i,k^\prime}. $$
 
-Initially, the geopotential is the sum of the $z$ height times $g$. 
+Initially, the geopotential is the sum of the $z$ height times $g$.
 In the future, it will include contributions from the tidal potential ($\Phi_{tp}$) and self attraction and loading ($\Phi_{SAL}$):
 
 $$ \Phi_{i,k} = \left( gz_{i,k} + \Phi_{tp} + \Phi_{SAL} \right). $$
@@ -103,9 +103,9 @@ class VertCoord {
         I4 NVertLevels;
         I4 NVertLevelsP1;
 
-        // Variables computed 
+        // Variables computed
         Array2DReal PressureInterface;
-        Array2DReal PressureMid;        
+        Array2DReal PressureMid;
         Array2DReal ZInterface;
         Array2DReal ZMid;
         Array2DReal GeopotentialMid;
@@ -116,10 +116,10 @@ class VertCoord {
         Array1DI4 MaxLevelCell;
         Array1DI4 MinLevelEdgeTop;
         Array1DI4 MaxLevelEdgeTop;
-        Array1DI4 MinLevelEdgeBot;     
+        Array1DI4 MinLevelEdgeBot;
         Array1DI4 MaxLevelEdgeBot;
         Array1DI4 MinLevelVertexTop;
-        Array1DI4 MaxLevelVertexTop;     
+        Array1DI4 MaxLevelVertexTop;
         Array1DI4 MinLevelVertexBot;
         Array1DI4 MaxLevelVertexBot;
 
@@ -204,7 +204,7 @@ void VertCoord::computePressure(const Array2DReal &PressureInterface,
                                 const Array2DReal &LayerThickness,
                                 const Array2DReal &SurfacePressure) {
 
-}                                
+}
 ```
 
 The public `computeZHeight` will sum the pseudo thicknesses times $\alpha$ from the bottom later up, starting with the bottom elevation.
@@ -216,7 +216,7 @@ void VertCoord::computeZHeight(const Array2DReal &ZInterface,
                                const Array2DReal &SpecVol,
                                const Array2DReal &BottomDepth) {
 
-}    
+}
 ```
 
 The public `computeGeopotential` will sum together the $z$ height times $g$, the tidal potential, and self attraction and loading:
@@ -225,8 +225,8 @@ void VertCoord::computeGeopotential(const Array2DReal &GeopotentialMid,
                                     const Array2DReal &ZMid,
                                     const Array2DReal &TidalPotential
                                     const Array2DReal &SelfAttractionLoading) {
-                                  
-} 
+
+}
 ```
 Tidal potential forcing and self attraction and loading will be default-off features.
 The will be added to (or excluded from) the geopotential based on config flags.
@@ -236,8 +236,8 @@ The public `computeTargetThickness` will determine the desired pseudo thickness 
 void VertCoord::computeTargetThickness(const Array2DReal &LayerThicknessPStar,
                                        const Array2DReal &VertCoordMovementWeights,
                                        const Array2DReal &RefLayerThickness) {
-                                  
-} 
+
+}
 ```
 
 The private `minMaxLevel` will determine the various vertical loop bounds on edges and vertices.
@@ -252,7 +252,7 @@ void VertCoord::minMaxLevel( ) {
 
 No operations are needed in the destructor.
 The erase method will remove a named vertical coordinate instance, whereas the clear method will remove all of
-them. 
+them.
 Both will call the destructor in the process.
 ```c++
 void VertCoord::erase(const std::string &Name);
@@ -261,5 +261,5 @@ void VertCoord::clear();
 
 ## Verification and Testing
 
-### Test: 
+### Test:
 Unit tests will be used to test each of the computations (computePressure, computeZHeight, computeGeopotential, computePStarThickness) for a given pseudo thickness array. Comparison will be made to a ''truth'' vertical mesh that includes spatially varying `minLevelCell` and `maxLevelCell`.
