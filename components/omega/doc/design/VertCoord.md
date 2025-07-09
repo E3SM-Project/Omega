@@ -6,7 +6,7 @@ The vertical coordinate module will be responsible for computing and storing inf
 Since Omega will be a non-Boussinesq model, the vertical independent variable will be pressure-based (expressed in terms of the pseudo-height) as opposed to $z$-based.
 Similar to MPAS-Ocean's support for tilted height ($z^\star$) coordinates, Omega V1 will support a general vertical coordinate, where pseudo thickness $\tilde{h}$ varies in proportion to the total pseudo thickness of the water column.
 The prognostic variable in the layered continuity equation is pseudo thickness, which can be used to calculate the total pressure at a given vertical layer interface.
-The geometric height of a given layer interface is still necessary in the model to compute sea level, the geopotential, and derivatives with respect to $z$.
+The geometric height of a given layer interface is still necessary in the model to compute sea level, the geopotential, and derivatives with respect to $z$, all of which affect the dynamics.
 The geometric thickness of a layer ($\Delta z$) can be found using the pseudo thickness, density, reference density, and known bottom elevation (positive up) relative to the reference geoid.
 The vertical coordinate module will also serve as a container for information related to the variable number of active vertical layers for a given ocean column (due to variations in bottom elevation and ice shelf cavities).
 
@@ -111,7 +111,7 @@ class VertCoord {
         Array2DReal GeopotentialMid;
         Array2DReal LayerThicknessTarget;
 
-        // Vertical loop bounds
+        // Vertical loop bounds (computed on construction)
         Array1DI4 MinLevelCell;
         Array1DI4 MaxLevelCell;
         Array1DI4 MinLevelEdgeTop;
@@ -123,11 +123,12 @@ class VertCoord {
         Array1DI4 MinLevelVertexBot;
         Array1DI4 MaxLevelVertexBot;
 
-        // p star coordinate variables
+        // Variables read in from vert coord stream
+        /// p star coordinate variables
         Array2DReal VertCoordMovementWeights;
         Array2DReal RefLayerThickness;
 
-        // Variables from HorzMesh
+        /// Variables read in from mesh file
         Array2DReal BottomDepth;
     private:
 
@@ -178,6 +179,7 @@ VertCoord *VertCoord::create(const std::string &Name,
                              int NVertLevels,
                              Config *Options);
 ```
+A vertical coordinate `IOStream` will be defined to read in the `BottomDepth`, `VertCoordMovementWeights` and `RefLayerThickness` variables.
 
 #### 4.2.2 Initialization
 
