@@ -753,6 +753,10 @@ $$
 -  \left[ \frac{\rho_0}{\tilde{h}_k} \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \nabla \tilde{z}^{\text{bot}} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}}.
 $$ (layer-momentum-final)
 
+### Simplifying Assumptions
+
+In [](#layer-momentum-final), if we assume a piecewise constant representation of variables in Omega, then all the $\deltaX$ variables would be zero.  However, in general, piecewise constant representations are not recommended (e.g., [White and Adcroft (2008)](https://www.sciencedirect.com/science/article/pii/S0021999108002593)), thus we keep these terms for Omega.  They will be based on the order of reconstruction assumed for the model.  More details are given in the following section.  In addition to simplifying the product of $\delta$ terms based on reconstruction order in the vertical, we will assume that $\left<\alpha^\prime p^\prime \right>$ is small.  We would only expect this term to be large in nonhydrostatic codes in regions of vigorous convection.
+
 ## 10. Discrete Equations
 
 Next things to do --
