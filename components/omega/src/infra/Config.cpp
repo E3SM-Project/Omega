@@ -485,7 +485,6 @@ Error Config::get(const std::string &VarName,    // [in] name of variable to get
                   std::vector<std::string> &List // [out] string list retrieved
 ) {
    Error Err; // success error code
-   int VecSize = 0;
 
    // Extract variable from config
    // First check if it exists and verify that it is a sequence node

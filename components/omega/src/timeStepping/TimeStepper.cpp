@@ -114,6 +114,10 @@ TimeStepper *TimeStepper::create(
       NewTimeStepper =
           new RungeKutta2Stepper(InName, InStartTime, InStopTime, InTimeStep);
       break;
+   case TimeStepperType::Invalid:
+      ABORT_ERROR("Invalid time stepping method");
+   default:
+      ABORT_ERROR("Unknown time stepping method");
    }
 
    // Attach data pointers
@@ -161,6 +165,10 @@ TimeStepper *TimeStepper::create(
       NewTimeStepper =
           new RungeKutta2Stepper(InName, InStartTime, InStopTime, InTimeStep);
       break;
+   case TimeStepperType::Invalid:
+      ABORT_ERROR("Invalid time stepping method");
+   default:
+      ABORT_ERROR("Unknown time stepping method");
    }
 
    // Store instance

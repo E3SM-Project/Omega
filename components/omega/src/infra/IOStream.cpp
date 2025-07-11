@@ -909,6 +909,7 @@ int IOStream::writeFieldMeta(
 
       } else if (MetaVal.type() == typeid(bool)) {
          bool MetaValBool = std::any_cast<bool>(MetaVal);
+         // bool is coerced to int in write
          Err = IO::writeMeta(MetaName, MetaValBool, FileID, FieldID);
 
       } else if (MetaVal.type() == typeid(std::string)) {
@@ -1696,15 +1697,23 @@ int IOStream::readFieldData(
    case ArrayDataType::I4:
       DataI4.resize(LocSize);
       DataPtr = DataI4.data();
+      break;
    case ArrayDataType::I8:
       DataI8.resize(LocSize);
       DataPtr = DataI8.data();
+      break;
    case ArrayDataType::R4:
       DataR4.resize(LocSize);
       DataPtr = DataR4.data();
+      break;
    case ArrayDataType::R8:
       DataR8.resize(LocSize);
       DataPtr = DataR8.data();
+      break;
+   case ArrayDataType::Unknown:
+      ABORT_ERROR("Unknown data array type");
+   default:
+      ABORT_ERROR("Invalid data array type");
    }
 
    // read data into vector
@@ -2388,6 +2397,15 @@ int IOStream::readStream(
       } else if (MetaTmp.type() == typeid(R4)) {
          ErrRead = IO::readMeta(MetaName, MetaValR4, InFileID, IO::GlobalID);
          ReqMetadata[MetaName] = MetaValR4;
+      } else if (MetaTmp.type() == typeid(bool)) {
+         // bool must be read as int
+         ErrRead = IO::readMeta(MetaName, MetaValI4, InFileID, IO::GlobalID);
+         if (MetaValI4 == 0) {
+            MetaValBool = false;
+         } else {
+            MetaValBool = true;
+         }
+         ReqMetadata[MetaName] = MetaValBool;
       } else if (MetaTmp.type() == typeid(std::string)) {
          ErrRead = IO::readMeta(MetaName, MetaValStr, InFileID, IO::GlobalID);
          ReqMetadata[MetaName] = MetaValStr;

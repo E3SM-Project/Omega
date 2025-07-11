@@ -54,10 +54,10 @@ int Field::init(const Clock *ModelClock // [in] default model clock
    std::string UnitString   = "seconds since " + StartTimeStr;
    CalendarKind CalKind     = Calendar::getKind();
    std::string CalName      = CalendarCFName[CalKind];
-   std::vector<std::string> DimNames; // empty dim names vector
+   std::vector<std::string> DimNamesTmp; // empty dim names vector
    std::shared_ptr<Field> TimeField =
        create("time", "time", UnitString, "time", 0.0, 1.e20, -9.99e30, 0,
-              DimNames, true, true);
+              DimNamesTmp, true, true);
    TimeField->addMetadata("calendar", CalName);
 
    return Err;
@@ -110,9 +110,6 @@ Field::create(const std::string &FieldName,   // [in] Name of variable/field
    // Add field name to the instance (also added as metadata below)
    ThisField->FldName = FieldName;
 
-   // Create empty metadata map: (name, value) pairs
-   ThisField->FieldMeta;
-
    // Add standard metadata. For some CF standard attributes, we
    // also duplicate the metadata under the CF standard attribute name
    ThisField->FieldMeta["Name"]          = FieldName;
@@ -145,7 +142,6 @@ Field::create(const std::string &FieldName,   // [in] Name of variable/field
    // Also determine whether this is a distributed field - true if any of
    // the dimensions are distributed.
    ThisField->Distributed = false;
-   ThisField->DimNames;
    if (NumDims > 0) {
       ThisField->DimNames.resize(NumDims);
       for (int I = 0; I < NumDims; ++I) {
@@ -191,14 +187,8 @@ Field::create(const std::string &FieldName // [in] Name of field
    // Field name
    ThisField->FldName = FieldName;
 
-   // Metadata (name, value) pairs for descriptive metadata
-   ThisField->FieldMeta;
-
-   /// Number of dimensions is 0 for this field
+   // Number of dimensions is 0 for this field
    ThisField->NDims = 0;
-
-   // Dimension name vector is empty
-   ThisField->DimNames;
 
    // Initialize to Unknown or null - no data is attached
    ThisField->DataType  = ArrayDataType::Unknown;

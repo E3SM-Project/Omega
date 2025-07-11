@@ -35,14 +35,6 @@
 using namespace OMEGA;
 
 //------------------------------------------------------------------------------
-// Set some constant reference values for simplicity
-const I4 RefI4           = 3;
-const I8 RefI8           = 400000000;
-const R4 RefR4           = 5.1;
-const R8 RefR8           = 6.123456789;
-const std::string RefStr = "Reference String";
-
-//------------------------------------------------------------------------------
 // A simple test evaluation function
 template <typename T>
 void TestEval(const std::string &TestName, T TestVal, T ExpectVal, int &Error) {
@@ -106,7 +98,6 @@ int initIOStreamTest(Clock *&ModelClock // Model clock
    // Initialize HorzMesh - this should read Mesh stream
    HorzMesh::init();
    HorzMesh *DefMesh = HorzMesh::getDefault();
-   I4 NCellsSize     = DefMesh->NCellsSize;
 
    // Set vertical levels and time levels
    I4 NVertLevels = 60;
