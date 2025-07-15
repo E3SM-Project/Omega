@@ -19,7 +19,6 @@
 #include "DataTypes.h"
 #include "Error.h"
 #include "IO.h"
-#include "Logging.h"
 #include "MachEnv.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
@@ -105,22 +104,22 @@ I4 srchVector(HostArray1DI4 InVector, // vector to search
 // These are initially read into a uniform linear distribution across MPI tasks
 // and redistributed later after the decomposition is complete.
 
-int readMesh(const int MeshFileID, // file ID for open mesh file
-             const MachEnv *InEnv, // input machine environment for MPI layout
-             I4 &NCellsGlobal,     // total number of cells
-             I4 &NEdgesGlobal,     // total number of edges
-             I4 &NVerticesGlobal,  // total number of vertices
-             I4 &MaxEdges,         // max number of edges on a cell
-             I4 &MaxCellsOnEdge,   // max number of cells sharing edge
-             I4 &VertexDegree,     // number of cells/edges sharing vrtx
-             std::vector<I4> &CellsOnCellInit, // cell neighbors for each cell
-             std::vector<I4> &EdgesOnCellInit, // edge IDs for each cell edge
-             std::vector<I4> &VerticesOnCellInit, // vertices around each cell
-             std::vector<I4> &CellsOnEdgeInit,    // cell IDs sharing edge
-             std::vector<I4> &EdgesOnEdgeInit,    // all edges neighboring edge
-             std::vector<I4> &VerticesOnEdgeInit, // vertices on ends of edge
-             std::vector<I4> &CellsOnVertexInit,  // cells meeting at each vrtx
-             std::vector<I4> &EdgesOnVertexInit   // edges meeting at each vrtx
+void readMesh(const int MeshFileID, // file ID for open mesh file
+              const MachEnv *InEnv, // input machine environment for MPI layout
+              I4 &NCellsGlobal,     // total number of cells
+              I4 &NEdgesGlobal,     // total number of edges
+              I4 &NVerticesGlobal,  // total number of vertices
+              I4 &MaxEdges,         // max number of edges on a cell
+              I4 &MaxCellsOnEdge,   // max number of cells sharing edge
+              I4 &VertexDegree,     // number of cells/edges sharing vrtx
+              std::vector<I4> &CellsOnCellInit, // cell neighbors for each cell
+              std::vector<I4> &EdgesOnCellInit, // edge IDs for each cell edge
+              std::vector<I4> &VerticesOnCellInit, // vertices around each cell
+              std::vector<I4> &CellsOnEdgeInit,    // cell IDs sharing edge
+              std::vector<I4> &EdgesOnEdgeInit,    // all edges neighboring edge
+              std::vector<I4> &VerticesOnEdgeInit, // vertices on ends of edge
+              std::vector<I4> &CellsOnVertexInit,  // cells meeting at each vrtx
+              std::vector<I4> &EdgesOnVertexInit   // edges meeting at each vrtx
 ) {
 
    int Err = 0;
@@ -142,7 +141,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
    if (Err != 0) { // dim not found, try again with older MPAS name
       Err = IO::getDimFromFile(MeshFileID, DimNameOld, NCellsID, NCellsGlobal);
       if (Err != 0 or NCellsGlobal <= 0)
-         LOG_CRITICAL("Decomp: error reading nCells");
+         ABORT_ERROR("Decomp: error reading nCells");
    }
 
    DimName    = "NEdges";
@@ -152,7 +151,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
    if (Err != 0) { // dim not found, try again with older MPAS name
       Err = IO::getDimFromFile(MeshFileID, DimNameOld, NEdgesID, NEdgesGlobal);
       if (Err != 0 or NEdgesGlobal <= 0)
-         LOG_CRITICAL("Decomp: error reading NEdges");
+         ABORT_ERROR("Decomp: error reading NEdges");
    }
 
    DimName    = "NVertices";
@@ -163,7 +162,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::getDimFromFile(MeshFileID, DimNameOld, NVerticesID,
                                NVerticesGlobal);
       if (Err != 0 or NVerticesGlobal <= 0)
-         LOG_CRITICAL("Decomp: error reading NVertices");
+         ABORT_ERROR("Decomp: error reading NVertices");
    }
 
    DimName    = "MaxEdges";
@@ -173,7 +172,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
    if (Err != 0) { // dim not found, try again with older MPAS name
       Err = IO::getDimFromFile(MeshFileID, DimNameOld, MaxEdgesID, MaxEdges);
       if (Err != 0 or MaxEdges <= 0)
-         LOG_CRITICAL("Decomp: error reading MaxEdges");
+         ABORT_ERROR("Decomp: error reading MaxEdges");
    }
 
    DimName    = "VertexDegree";
@@ -184,7 +183,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::getDimFromFile(MeshFileID, DimNameOld, VertexDegreeID,
                                VertexDegree);
       if (Err != 0 or VertexDegree <= 0)
-         LOG_CRITICAL("Decomp: error reading VertexDegree");
+         ABORT_ERROR("Decomp: error reading VertexDegree");
    }
 
    DimName    = "MaxCellsOnEdge";
@@ -196,7 +195,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::getDimFromFile(MeshFileID, DimName, MaxCellsOnEdgeID,
                                MaxCellsOnEdge);
       if (Err != 0 or MaxCellsOnEdge <= 0)
-         LOG_CRITICAL("Decomp: error reading MaxCellsOnEdge");
+         ABORT_ERROR("Decomp: error reading MaxCellsOnEdge");
    }
    I4 MaxEdgesOnEdge = 2 * MaxEdges; // 2*MaxCellsOnEdge
 
@@ -278,19 +277,19 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
    Err = IO::createDecomp(OnCellDecomp, IO::IOTypeI4, NDims, OnCellDims,
                           OnCellSize, OnCellOffset, Rearr);
    if (Err != 0)
-      LOG_CRITICAL("Decomp: error creating OnCell IO decomposition");
+      ABORT_ERROR("Decomp: error creating OnCell IO decomposition");
    Err = IO::createDecomp(OnEdgeDecomp, IO::IOTypeI4, NDims, OnEdgeDims,
                           OnEdgeSize, OnEdgeOffset, Rearr);
    if (Err != 0)
-      LOG_CRITICAL("Decomp: error creating OnEdge IO decomposition");
+      ABORT_ERROR("Decomp: error creating OnEdge IO decomposition");
    Err = IO::createDecomp(OnEdgeDecomp2, IO::IOTypeI4, NDims, OnEdgeDims2,
                           OnEdgeSize2, OnEdgeOffset2, Rearr);
    if (Err != 0)
-      LOG_CRITICAL("Decomp: error creating OnEdg2 IO decomposition");
+      ABORT_ERROR("Decomp: error creating OnEdg2 IO decomposition");
    Err = IO::createDecomp(OnVertexDecomp, IO::IOTypeI4, NDims, OnVertexDims,
                           OnVertexSize, OnVertexOffset, Rearr);
    if (Err != 0)
-      LOG_CRITICAL("Decomp: error creating Vertex IO decomposition");
+      ABORT_ERROR("Decomp: error creating Vertex IO decomposition");
 
    // Now read the connectivity arrays. Try reading under the new Omega
    // name convention and the older MPAS mesh names.
@@ -312,7 +311,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&CellsOnCellInit[0], OnCellSize, VarNameOld,
                           MeshFileID, OnCellDecomp, CellsOnCellID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading CellsOnCell");
+         ABORT_ERROR("Decomp: error reading CellsOnCell");
    }
 
    VarName    = "EdgesOnCell";
@@ -324,7 +323,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&EdgesOnCellInit[0], OnCellSize, VarNameOld,
                           MeshFileID, OnCellDecomp, EdgesOnCellID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading EdgesOnCell");
+         ABORT_ERROR("Decomp: error reading EdgesOnCell");
    }
 
    VarName    = "VerticesOnCell";
@@ -336,7 +335,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&VerticesOnCellInit[0], OnCellSize, VarNameOld,
                           MeshFileID, OnCellDecomp, VerticesOnCellID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading VerticesOnCell");
+         ABORT_ERROR("Decomp: error reading VerticesOnCell");
    }
 
    VarName    = "CellsOnEdge";
@@ -348,7 +347,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&CellsOnEdgeInit[0], OnEdgeSize, VarNameOld,
                           MeshFileID, OnEdgeDecomp, CellsOnEdgeID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading CellsOnEdge");
+         ABORT_ERROR("Decomp: error reading CellsOnEdge");
    }
 
    VarName    = "EdgesOnEdge";
@@ -360,7 +359,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&EdgesOnEdgeInit[0], OnEdgeSize2, VarNameOld,
                           MeshFileID, OnEdgeDecomp2, EdgesOnEdgeID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading EdgesOnEdge");
+         ABORT_ERROR("Decomp: error reading EdgesOnEdge");
    }
 
    VarName    = "VerticesOnEdge";
@@ -372,7 +371,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&VerticesOnEdgeInit[0], OnEdgeSize, VarNameOld,
                           MeshFileID, OnEdgeDecomp, VerticesOnEdgeID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading VerticesOnEdge");
+         ABORT_ERROR("Decomp: error reading VerticesOnEdge");
    }
 
    VarName    = "CellsOnVertex";
@@ -384,7 +383,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&CellsOnVertexInit[0], OnVertexSize, VarNameOld,
                           MeshFileID, OnVertexDecomp, CellsOnVertexID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading CellsOnVertex");
+         ABORT_ERROR("Decomp: error reading CellsOnVertex");
    }
 
    VarName    = "EdgesOnVertex";
@@ -396,24 +395,24 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&EdgesOnVertexInit[0], OnVertexSize, VarNameOld,
                           MeshFileID, OnVertexDecomp, EdgesOnVertexID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading EdgesOnVertex");
+         ABORT_ERROR("Decomp: error reading EdgesOnVertex");
    }
 
    // Initial decompositions are no longer needed so remove them now
    Err = IO::destroyDecomp(OnCellDecomp);
    if (Err != 0)
-      LOG_ERROR("Decomp: error destroying OnCell decomposition");
+      ABORT_ERROR("Decomp: error destroying OnCell decomposition");
    Err = IO::destroyDecomp(OnEdgeDecomp);
    if (Err != 0)
-      LOG_ERROR("Decomp: error destroying OnEdge decomposition");
+      ABORT_ERROR("Decomp: error destroying OnEdge decomposition");
    Err = IO::destroyDecomp(OnEdgeDecomp2);
    if (Err != 0)
-      LOG_ERROR("Decomp: error destroying OnEdge2 decomposition");
+      ABORT_ERROR("Decomp: error destroying OnEdge2 decomposition");
    Err = IO::destroyDecomp(OnVertexDecomp);
    if (Err != 0)
-      LOG_ERROR("Decomp: error destroying OnVertex decomposition");
+      ABORT_ERROR("Decomp: error destroying OnVertex decomposition");
 
-   return Err;
+   return;
 
 } // end readMesh
 
@@ -489,7 +488,7 @@ Decomp::Decomp(
    MeshFileName = MeshFileName_;
    Err          = IO::openFile(FileID, MeshFileName, IO::ModeRead);
    if (Err != 0)
-      LOG_CRITICAL("Decomp: error opening mesh file");
+      ABORT_ERROR("Decomp: error opening mesh file");
 
    // Read mesh size and connectivity information
    std::vector<I4> CellsOnCellInit;
@@ -502,13 +501,11 @@ Decomp::Decomp(
    std::vector<I4> EdgesOnVertexInit;
    HaloWidth = InHaloWidth;
 
-   Err = readMesh(FileID, InEnv, NCellsGlobal, NEdgesGlobal, NVerticesGlobal,
-                  MaxEdges, MaxCellsOnEdge, VertexDegree, CellsOnCellInit,
-                  EdgesOnCellInit, VerticesOnCellInit, CellsOnEdgeInit,
-                  EdgesOnEdgeInit, VerticesOnEdgeInit, CellsOnVertexInit,
-                  EdgesOnVertexInit);
-   if (Err != 0)
-      LOG_CRITICAL("Decomp: Error reading mesh connectivity");
+   readMesh(FileID, InEnv, NCellsGlobal, NEdgesGlobal, NVerticesGlobal,
+            MaxEdges, MaxCellsOnEdge, VertexDegree, CellsOnCellInit,
+            EdgesOnCellInit, VerticesOnCellInit, CellsOnEdgeInit,
+            EdgesOnEdgeInit, VerticesOnEdgeInit, CellsOnVertexInit,
+            EdgesOnVertexInit);
 
    // Close file
    Err       = IO::closeFile(FileID);
@@ -525,24 +522,17 @@ Decomp::Decomp(
       // Use the mesh adjacency information to create a partition of cells
       switch (Method) { // branch depending on method chosen
 
-      //---------------------------------------------------------------------------
+      //------------------------------------------------------------------------
       // ParMetis KWay method
-      case PartMethodMetisKWay: {
+      case PartMethodMetisKWay:
 
-         Err = partCellsKWay(InEnv, CellsOnCellInit);
-         if (Err != 0) {
-            LOG_CRITICAL("Decomp: Error partitioning cells KWay");
-            return;
-         }
+         partCellsKWay(InEnv, CellsOnCellInit);
          break;
-      } // end case MethodKWay
 
-         //---------------------------------------------------------------------------
-         // Unknown partitioning method
-
+      //------------------------------------------------------------------------
+      // Unknown partitioning method
       default:
-         LOG_CRITICAL("Decomp: Unknown or unsupported decomposition method");
-         return;
+         ABORT_ERROR("Decomp: Unknown or unsupported decomposition method");
 
       } // End switch on Method
    }
@@ -552,51 +542,31 @@ Decomp::Decomp(
    // Cell partitioning complete. Redistribute the initial XXOnCell arrays
    // to their final locations.
    TimerFlag = Pacer::start("Decomp rearrange cells") && TimerFlag;
-   Err       = rearrangeCellArrays(InEnv, CellsOnCellInit, EdgesOnCellInit,
-                                   VerticesOnCellInit);
-   if (Err != 0) {
-      LOG_CRITICAL("Decomp: Error rearranging XxOnCell arrays");
-      return;
-   }
+   rearrangeCellArrays(InEnv, CellsOnCellInit, EdgesOnCellInit,
+                       VerticesOnCellInit);
    TimerFlag = Pacer::stop("Decomp rearrange cells") && TimerFlag;
 
    // Partition the edges
    TimerFlag = Pacer::start("Decomp part edges") && TimerFlag;
-   Err       = partEdges(InEnv, CellsOnEdgeInit);
-   if (Err != 0) {
-      LOG_CRITICAL("Decomp: Error partitioning edges");
-      return;
-   }
+   partEdges(InEnv, CellsOnEdgeInit);
    TimerFlag = Pacer::stop("Decomp part edges") && TimerFlag;
 
    // Edge partitioning complete. Redistribute the initial XXOnEdge arrays
    // to their final locations.
    TimerFlag = Pacer::start("Decomp rearrange edges") && TimerFlag;
-   Err       = rearrangeEdgeArrays(InEnv, CellsOnEdgeInit, EdgesOnEdgeInit,
-                                   VerticesOnEdgeInit);
-   if (Err != 0) {
-      LOG_CRITICAL("Decomp: Error rearranging XxOnEdge arrays");
-      return;
-   }
+   rearrangeEdgeArrays(InEnv, CellsOnEdgeInit, EdgesOnEdgeInit,
+                       VerticesOnEdgeInit);
    TimerFlag = Pacer::stop("Decomp rearrange edges") && TimerFlag;
 
    // Partition the vertices
    TimerFlag = Pacer::start("Decomp part vertices") && TimerFlag;
-   Err       = partVertices(InEnv, CellsOnVertexInit);
-   if (Err != 0) {
-      LOG_CRITICAL("Decomp: Error partitioning vertices");
-      return;
-   }
+   partVertices(InEnv, CellsOnVertexInit);
    TimerFlag = Pacer::stop("Decomp part vertices") && TimerFlag;
 
    // Vertex partitioning complete. Redistribute the initial XXOnVertex arrays
    // to their final locations.
    TimerFlag = Pacer::start("Decomp rearrange vertices") && TimerFlag;
-   Err = rearrangeVertexArrays(InEnv, CellsOnVertexInit, EdgesOnVertexInit);
-   if (Err != 0) {
-      LOG_CRITICAL("Decomp: Error rearranging XxOnVertex arrays");
-      return;
-   }
+   rearrangeVertexArrays(InEnv, CellsOnVertexInit, EdgesOnVertexInit);
    TimerFlag = Pacer::stop("Decomp rearrange vertices") && TimerFlag;
 
    // Convert global addresses to local addresses. Create the global to
@@ -811,10 +781,9 @@ Decomp *Decomp::create(
    // Check to see if a decomposition of the same name already exists and
    // if so, exit with an error
    if (AllDecomps.find(Name) != AllDecomps.end()) {
-      LOG_ERROR("Attempted to create a Decomp with name {} but a Decomp of "
-                "that name already exists",
-                Name);
-      return nullptr;
+      ABORT_ERROR("Attempted to create a Decomp with name {} but a Decomp of "
+                  "that name already exists",
+                  Name);
    }
 
    // create a new decomp on the heap and put it in a map of
@@ -879,9 +848,9 @@ Decomp *Decomp::get(const std::string Name ///< [in] Name of environment
 
       // otherwise print an error and return a null pointer
    } else {
-      LOG_ERROR("Decomp::get: Attempt to retrieve non-existent Decomposition:");
-      LOG_ERROR(" {} has not been defined or has been removed", Name);
-      return nullptr;
+      ABORT_ERROR(
+          "Decomp::get: Attempt to retrieve non-existent Decomposition: {}",
+          Name);
    }
 
 } // end get Decomposition
@@ -918,12 +887,12 @@ void Decomp::partCellsSingleTask() {
 // CellLocator arrays have been set as well as the class NCells size variables
 // (owned, halo, all).
 
-int Decomp::partCellsKWay(
+void Decomp::partCellsKWay(
     const MachEnv *InEnv, // [in] input machine environment with MPI info
     const std::vector<I4> &CellsOnCellInit // [in] cell nbrs in linear distrb
 ) {
 
-   int Err = 0; // initialize return code
+   int Err = 0; // internal error code for MPI and Metis/ParMetis
 
    // Retrieve some info on the MPI layout
    MPI_Comm Comm = InEnv->getComm();
@@ -965,10 +934,8 @@ int Decomp::partCellsKWay(
       } // end if this is MyTask
       Err = MPI_Bcast(&CellsOnCellBuf[0], CellsOnCellSize, MPI_INT32_T, Task,
                       Comm);
-      if (Err != 0) {
-         LOG_CRITICAL("Decomp: Error communicating CellsOnCell info");
-         return Err;
-      }
+      if (Err != 0)
+         ABORT_ERROR("Decomp: Error communicating CellsOnCell info");
 
       // Create the adjacency graph by aggregating the individual
       // chunks. Prune edges that don't have neighbors.
@@ -1038,11 +1005,8 @@ int Decomp::partCellsKWay(
                                       EdgeWgtPtr, &NumTasksMetis, TpWgts, Ubvec,
                                       Options, &Edgecut, &CellTask[0]);
 
-   if (MetisErr != METIS_OK) {
-      LOG_CRITICAL("Decomp: Error in ParMETIS");
-      Err = -1;
-      return Err;
-   }
+   if (MetisErr != METIS_OK)
+      ABORT_ERROR("Decomp: Error in ParMETIS");
    TimerFlag = Pacer::stop("Metis partitioning") && TimerFlag;
 
    // Determine the initial sizes needed by address arrays
@@ -1173,7 +1137,7 @@ int Decomp::partCellsKWay(
    // All done
    if (!TimerFlag)
       LOG_WARN("Decomp::partCellsKWay: Error in timers");
-   return Err;
+   return;
 
 } // end function partCellsKWay
 
@@ -1181,7 +1145,7 @@ int Decomp::partCellsKWay(
 // Partition the edges based on the cell decomposition. The first cell ID in
 // the CellsOnEdge array for a given edge is assigned ownership of the edge.
 
-int Decomp::partEdges(
+void Decomp::partEdges(
     const MachEnv *InEnv, ///< [in] input machine environment with MPI info
     const std::vector<I4> &CellsOnEdgeInit // [in] cell nbrs for each edge
 ) {
@@ -1442,7 +1406,7 @@ int Decomp::partEdges(
 
    if (!TimerFlag)
       LOG_WARN("Decomp::partEdges: Error encountered in timers");
-   return Err;
+   return;
 
 } // end function partEdges
 
@@ -1451,7 +1415,7 @@ int Decomp::partEdges(
 // in the CellsOnVertex array for a given vertex is assigned ownership of the
 // vertex.
 
-int Decomp::partVertices(
+void Decomp::partVertices(
     const MachEnv *InEnv, ///< [in] input machine environment with MPI info
     const std::vector<I4> &CellsOnVertexInit // [in] cell nbrs for each vrtx
 ) {
@@ -1713,7 +1677,7 @@ int Decomp::partVertices(
 
    if (!TimerFlag)
       LOG_WARN("Decomp::partVertices: error in timers");
-   return Err;
+   return;
 
 } // end function partVertices
 
@@ -1723,7 +1687,7 @@ int Decomp::partVertices(
 // initial linear distribution. On exit, all the XxOnCell arrays are
 // in the correct final domain decomposition.
 
-int Decomp::rearrangeCellArrays(
+void Decomp::rearrangeCellArrays(
     const MachEnv *InEnv, // input machine environment for MPI layout
     const std::vector<I4> &CellsOnCellInit,   //< [in] cell nbrs on each edge
     const std::vector<I4> &EdgesOnCellInit,   //< [in] edges around each cell
@@ -1792,10 +1756,8 @@ int Decomp::rearrangeCellArrays(
          }
       }
       Err = MPI_Bcast(&CellBuf[0], BufSize, MPI_INT32_T, Task, Comm);
-      if (Err != 0) {
-         LOG_CRITICAL("rearrangeCellArrays: Error broadcasting cell buffer");
-         return Err;
-      }
+      if (Err != 0)
+         ABORT_ERROR("rearrangeCellArrays: Error broadcasting cell buffer");
       TimerFlag = Pacer::stop("rearrangeCellsBcast") && TimerFlag;
 
       // For each cell needed locally, we can compute the task and address
@@ -1847,9 +1809,7 @@ int Decomp::rearrangeCellArrays(
 
    // All done
    TimerFlag = Pacer::stop("rearrangeCellArrays") && TimerFlag;
-   if (!TimerFlag)
-      LOG_WARN("Decomp::rearrangeCellArrays: Error in timers");
-   return Err;
+   return;
 
 } // end function rearrangeCellArrays
 
@@ -1859,7 +1819,7 @@ int Decomp::rearrangeCellArrays(
 // initial linear distribution. On exit, all the XxOnEdge arrays are
 // in the correct final domain decomposition.
 
-int Decomp::rearrangeEdgeArrays(
+void Decomp::rearrangeEdgeArrays(
     const MachEnv *InEnv, // input machine environment for MPI layout
     const std::vector<I4> &CellsOnEdgeInit,   //< [in] cell nbrs on each edge
     const std::vector<I4> &EdgesOnEdgeInit,   //< [in] edges around nbr cells
@@ -1938,10 +1898,8 @@ int Decomp::rearrangeEdgeArrays(
          }
       }
       Err = MPI_Bcast(&EdgeBuf[0], BufSize, MPI_INT32_T, Task, Comm);
-      if (Err != 0) {
-         LOG_CRITICAL("rearrangeEdgeArrays: Error broadcasting edge buffer");
-         return Err;
-      }
+      if (Err != 0)
+         ABORT_ERROR("rearrangeEdgeArrays: Error broadcasting edge buffer");
       TimerFlag = Pacer::stop("rearrangeEdgeArraysBcast") && TimerFlag;
 
       // If the local Edge array has points in this buffer, extract the
@@ -1993,7 +1951,7 @@ int Decomp::rearrangeEdgeArrays(
    // All done
    if (!TimerFlag)
       LOG_WARN("Decomp::rearrangeEdgeArrays: Error in timers");
-   return Err;
+   return;
 
 } // end function rearrangeEdgeArrays
 
@@ -2003,7 +1961,7 @@ int Decomp::rearrangeEdgeArrays(
 // initial linear distribution. On exit, all the XxOnVertex arrays are
 // in the correct final domain decomposition.
 
-int Decomp::rearrangeVertexArrays(
+void Decomp::rearrangeVertexArrays(
     const MachEnv *InEnv, // input machine environment for MPI layout
     const std::vector<I4> &CellsOnVertexInit, //< [in] cells at each vrtx
     const std::vector<I4> &EdgesOnVertexInit  //< [in] edges joined at vrtx
@@ -2072,10 +2030,8 @@ int Decomp::rearrangeVertexArrays(
          }
       }
       Err = MPI_Bcast(&VrtxBuf[0], BufSize, MPI_INT32_T, Task, Comm);
-      if (Err != 0) {
-         LOG_CRITICAL("rearrangeVertexArrays: Error broadcasting buffer");
-         return Err;
-      }
+      if (Err != 0)
+         ABORT_ERROR("rearrangeVertexArrays: Error broadcasting buffer");
       TimerFlag = Pacer::stop("rearrangeVertexArraysBcast") && TimerFlag;
 
       // For each local vertex in the distribution, determine whether the
@@ -2110,7 +2066,7 @@ int Decomp::rearrangeVertexArrays(
    // All done
    if (!TimerFlag)
       LOG_WARN("Decomp::rearrangeVertexArrays: Error in timers");
-   return Err;
+   return;
 
 } // end function rearrangeVertexArrays
 

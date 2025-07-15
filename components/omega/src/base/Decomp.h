@@ -81,7 +81,7 @@ class Decomp {
    /// On output, it has defined all the NCells sizes (NCellsOwned,
    /// NCellsHalo array, NCellsAll and NCellsSize) and the final CellID
    /// and CellLoc arrays
-   int partCellsKWay(
+   void partCellsKWay(
        const MachEnv *InEnv,                  ///< [in] MachEnv with MPI info
        const std::vector<I4> &CellsOnCellInit ///< [in] cell nbrs in init dstrb
    );
@@ -99,7 +99,7 @@ class Decomp {
    /// linear distribution. On return, this function populates all of the
    /// NEdge sizes, edge halo indices, and final edge-related connectivity
    /// arrays.
-   int partEdges(
+   void partEdges(
        const MachEnv *InEnv,                  ///< [in] MachEnv with MPI info
        const std::vector<I4> &CellsOnEdgeInit ///< [in] cell nbrs on each edge
    );
@@ -111,7 +111,7 @@ class Decomp {
    /// linear distribution. On return, this function populates all of the
    /// NVertex sizes, vertex halo indices, and final vertex-related connectivity
    /// arrays.
-   int partVertices(
+   void partVertices(
        const MachEnv *InEnv,                    ///< [in] MachEnv with MPI info
        const std::vector<I4> &CellsOnVertexInit ///< [in] cells at each vertex
    );
@@ -120,7 +120,7 @@ class Decomp {
    /// decomposition. The inputs are the various XxOnCell arrays in the
    /// initial linear distribution. On exit, all the XxOnCell arrays are
    /// in the correct final domain decomposition.
-   int rearrangeCellArrays(
+   void rearrangeCellArrays(
        const MachEnv *InEnv, ///< [in] MachEnv for the new partition
        const std::vector<I4> &CellsOnCellInit, ///< [in] cell nbrs on each edge
        const std::vector<I4> &EdgesOnCellInit, ///< [in] edges around each cell
@@ -131,7 +131,7 @@ class Decomp {
    /// decomposition. The inputs are the various XxOnEdge arrays in the
    /// initial linear distribution. On exit, all the XxOnEdge arrays are
    /// in the correct final domain decomposition.
-   int rearrangeEdgeArrays(
+   void rearrangeEdgeArrays(
        const MachEnv *InEnv, ///< [in] MachEnv for the new partition
        const std::vector<I4> &CellsOnEdgeInit, ///< [in] cell nbrs on each edge
        const std::vector<I4> &EdgesOnEdgeInit, ///< [in] edges around each cell
@@ -142,7 +142,7 @@ class Decomp {
    /// decomposition. The inputs are the various XxOnVertex arrays in the
    /// initial linear distribution. On exit, all the XxOnVertex arrays are
    /// in the correct final domain decomposition.
-   int rearrangeVertexArrays(
+   void rearrangeVertexArrays(
        const MachEnv *InEnv, ///< [in] MachEnv for the new partition
        const std::vector<I4> &CellsOnVertexInit, ///< [in] cells at each vertex
        const std::vector<I4> &EdgesOnVertexInit  ///< [in] edges at each vertex
