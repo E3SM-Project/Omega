@@ -135,7 +135,7 @@ Error::Error(ErrorCode ErrCode, // [in] error code to assign
 
    // Strip pathname from file argument
    std::string Filename;
-   int Pos = FileWPath.find_last_of("\\/");
+   auto Pos = FileWPath.find_last_of("\\/");
    if (Pos != std::string::npos) {
       Filename = FileWPath.substr(Pos + 1);
    } else {

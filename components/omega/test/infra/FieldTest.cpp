@@ -850,8 +850,6 @@ int main(int argc, char **argv) {
                    if (Data3DI4(Cell, K, Trcr) != RefI4 + Cell + K + Trcr)
                       ++LCount;
                    for (int TimeLvl = 0; TimeLvl < NTime; ++TimeLvl) {
-                      int Add4 =
-                          TimeLvl * NTracers * NCellsSize * NVertLevels + Add3;
                       if (Data4DI8(Cell, K, Trcr, TimeLvl) !=
                           RefI8 + Cell + K + Trcr + TimeLvl)
                          ++LCount;
