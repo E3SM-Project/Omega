@@ -69,12 +69,6 @@ int main(int argc, char *argv[]) {
    MPI_Comm_rank(MPI_COMM_WORLD, &WorldTask);
    MPI_Comm_size(MPI_COMM_WORLD, &WorldSize);
    int WorldMaster = 0;
-   bool IsWorldMaster;
-   if (WorldTask == WorldMaster) {
-      IsWorldMaster = true;
-   } else {
-      IsWorldMaster = false;
-   }
 
    // The subset environments create 4-task sub-environments so
    // make sure the unit test is run with at least 8 to adequately

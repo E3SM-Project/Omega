@@ -14,6 +14,7 @@
 
 #include "Dimension.h"
 #include "DataTypes.h"
+#include "Error.h"
 #include "Logging.h"
 #include "OmegaKokkos.h"
 #include <map>
@@ -246,16 +247,15 @@ HostArray1DI4
 Dimension::getDimOffset(const std::string &Name // [in] name of dimension
 ) {
 
-   // Make sure dimension exists
-   if (exists(Name)) {
-      std::shared_ptr<Dimension> ThisDim = AllDims[Name];
-      return ThisDim->Offset;
+   // Abort if the dimension does not exist
+   if (!exists(Name))
+      ABORT_ERROR("Cannot get offset array for dimension {}: "
+                  "dimension does not exist or has not been defined",
+                  Name);
 
-   } else {
-      LOG_ERROR("Cannot get offset array for dimension {}: "
-                "dimension does not exist or has not been defined",
-                Name);
-   }
+   // Retrieve offset
+   std::shared_ptr<Dimension> ThisDim = AllDims[Name];
+   return ThisDim->Offset;
 
 } // end getDimOffset
 

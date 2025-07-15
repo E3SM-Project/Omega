@@ -782,8 +782,6 @@ int main(int argc, char **argv) {
          if (Data1DI4H(Cell) != RefI4 + Cell)
             ++DataCount1;
          for (int K = 0; K < NVertLevels; ++K) {
-            I4 I4Ref = RefI4 + Cell + K;
-            R8 R8Ref = RefR8 + Cell + K;
             if (Data2DI4H(Cell, K) != RefI4 + Cell + K)
                ++DataCount2;
             if (Data2DR8H(Cell, K) != RefR8 + Cell + K)
@@ -852,15 +850,10 @@ int main(int argc, char **argv) {
                    if (Data3DI4(Cell, K, Trcr) != RefI4 + Cell + K + Trcr)
                       ++LCount;
                    for (int TimeLvl = 0; TimeLvl < NTime; ++TimeLvl) {
-                      int Add4 =
-                          TimeLvl * NTracers * NCellsSize * NVertLevels + Add3;
                       if (Data4DI8(Cell, K, Trcr, TimeLvl) !=
                           RefI8 + Cell + K + Trcr + TimeLvl)
                          ++LCount;
                       for (int Stf = 0; Stf < NStuff; ++Stf) {
-                         int Add5 =
-                             Stf * NTime * NTracers * NCellsSize * NVertLevels +
-                             Add4;
                          if (Data5DR4(Cell, K, Trcr, TimeLvl, Stf) !=
                              RefR4 + Cell + K + Trcr + TimeLvl + Stf)
                             ++LCount;
@@ -879,7 +872,6 @@ int main(int argc, char **argv) {
              if (Data1DI8(Edge) != RefI8 + Edge)
                 ++LCount;
              for (int K = 0; K < NVertLevels; ++K) {
-                int Add = Edge * NVertLevels + K;
                 if (Data2DI8(Edge, K) != RefI8 + Edge + K)
                    ++LCount;
                 if (Data2DR8(Edge, K) != RefR8 + Edge + K)
@@ -896,7 +888,6 @@ int main(int argc, char **argv) {
              if (Data1DR4(Vrtx) != RefR4 + Vrtx)
                 ++LCount;
              for (int K = 0; K < NVertLevels; ++K) {
-                int Add = Vrtx * NVertLevels + K;
                 if (Data2DR4(Vrtx, K) != RefR4 + Vrtx + K)
                    ++LCount;
              }
