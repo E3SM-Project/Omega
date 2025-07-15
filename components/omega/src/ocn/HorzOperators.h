@@ -145,9 +145,12 @@ class InterpCellToEdge {
          return interpolateAnisotropic(IEdge, ArrayCell);
       case InterpCellToEdgeOption::Isotropic:
          return interpolateIsotropic(IEdge, ArrayCell);
+      default:
+         return interpolateIsotropic(IEdge, ArrayCell);
       }
    };
 
+ private:
    KOKKOS_FUNCTION Real
    interpolateAnisotropic(int IEdge, const Array1DReal &ArrayCell) const {
       const int JCell0 = CellsOnEdge(IEdge, 0);
@@ -176,7 +179,6 @@ class InterpCellToEdge {
       return Accum * InvAreaAccum;
    };
 
- private:
    Array2DI4 CellsOnEdge;
    Array2DI4 VerticesOnEdge;
    Array2DI4 CellsOnVertex;
