@@ -85,3 +85,6 @@
 [submodule "externals/cpptrace"]
 	path = externals/cpptrace
 	url = git@github.com:jeremy-rifkin/cpptrace
+[submodule "components/omega/external/yaml-cpp"]
+	path = components/omega/external/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git

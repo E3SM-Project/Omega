@@ -20,7 +20,6 @@ int main(int argc, char **argv) {
    int RetVal  = 0;
    int N       = 4096;
    int M       = 1024;
-   int S       = 4194304;
    int nrepeat = 100;
 
    try {
@@ -36,38 +35,6 @@ int main(int argc, char **argv) {
          deepCopy(y, 1);
          deepCopy(x, 1);
          deepCopy(A, 1);
-         /*
-         #ifdef OMEGA_TARGET_DEVICE
-               // Create host mirrors of device views.
-               Array1DR8::HostMirror h_y = createHostMirror( d_y );
-               Array1DR8::HostMirror h_x = createHostMirror( d_x );
-               Array2DR8::HostMirror h_A = createHostMirror( d_A );
-         #endif
-
-               // Initialize y vector on host.
-               for ( int i = 0; i < N; ++i ) {
-                 y( i ) = 1;
-               }
-
-               // Initialize x vector on host.
-               for ( int i = 0; i < M; ++i ) {
-                 x( i ) = 1;
-               }
-
-               // Initialize A matrix on host.
-               for ( int j = 0; j < N; ++j ) {
-                 for ( int i = 0; i < M; ++i ) {
-                   A( j, i ) = 1;
-                 }
-               }
-
-         #ifdef OMEGA_TARGET_DEVICE
-               // Deep copy host views to device views.
-               Kokkos::deep_copy( d_y, y );
-               Kokkos::deep_copy( d_x, x );
-               Kokkos::deep_copy( d_A, A );
-         #endif
-         */
 
          // Timer products.
          Kokkos::Timer timer;

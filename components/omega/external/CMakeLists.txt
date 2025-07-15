@@ -11,8 +11,8 @@ endif()
 # Add the yaml-cpp library
 if (NOT TARGET yaml-cpp::yaml-cpp)
 	add_subdirectory(
-	  ${E3SM_EXTERNALS_ROOT}/ekat/extern/yaml-cpp
-	  ${CMAKE_CURRENT_BINARY_DIR}/ekat/extern/yaml-cpp
+	  ${OMEGA_SOURCE_DIR}/external/yaml-cpp
+	  ${CMAKE_CURRENT_BINARY_DIR}/external/yaml-cpp
 	)
 endif()
 
