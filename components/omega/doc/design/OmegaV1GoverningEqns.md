@@ -686,7 +686,7 @@ $$
 = 0.
 $$ (layer-mass-final-simple)
 
-**Momentum:**
+**Velocity:**
 
 $$
 \frac{\partial {\bf u}_k}{\partial t}
@@ -723,7 +723,7 @@ $$ (discrete-tracer)
 
 In the tracer equation, we note that surface fluxes (e.g. latent heat fluxes) will appear in the surface value of the vertical turbulent tracer flux (e.g., $\left<\varphi^\prime \tilde{w}_{tr}^\prime\right>_{k=0}$).  The terms on the second line represent the small scale turbulence and the form used in Omega to represent these terms will be discussed in the next section.
 
-**Momentum:**
+**Velocity:**
 
 Omega will only predict the layer average normal velocity, so we drop the bold face on the $u$ terms except for the product of primes, which is specified in the next section.
 
@@ -813,7 +813,53 @@ $$
 \frac{1}{\left[\tilde{h}_{i,k}\right]_{e,k}}  \left\{ \left[ \nu_v \left[\frac{\partial u}{\partial \tilde{z}}\right]_{e,k} \right]_{e,k} - \left[ \nu_v \left[\frac{\partial u}{\partial \tilde{z}}\right]_{e,k} \right]_{e,k+1}  \right\}
 $$ (discrete-mom-vert-diff)
 
-**NOTE: further thought is needed, a standard derivative does not respect finite volume - should probably go back and redirve the heat flux equation** -If [](#discrete-mom-vert-diff) is discretized with a standard centered derivative around the top and bottom of the cell, this stencil is applied as an implicit tri-diagonal solve at the end of the time step.  However, this approach to the derivative may not be correct / fully consistent with a finite volume approach
+##### Vertical derivatives in a finte volume framework
+
+Omega will predict layer average quantities (e.g., $u_k$) as such it's not immediately cleear that a traditional discretization is appropriate as there is a discontinuity in the predicted variables at the layer edge.  To circumvent this problem, we turn to weak derivatives instead of traditional pointwise forms.  A weak derivative of $\phi$ is defined as
+
+$$
+\int_{\tilde{z}_{k+1/2}^{\text{top}}}^{\tilde{z}_{k-1/2}^{\text{top}}} \phi^\prime \psi d\tilde{z} = \phi \psi - \int_{\tilde{z}_{k+1/2}^{\text{top}}}^{\tilde{z}_{k-1/2}^{\text{top}}} \phi \psi^\prime d\tilde{z}.
+$$ (weak-derivative-defn)
+
+Here $\psi$ is a smooth test function.  If we choose $\psi$ such that it has compact support on the interval $(\tilde{z}_{k+1/2}^{\text{top}},\tilde{z}_{k-1/2}^{\text{top}})$ then the first term on the right hand side of [](#weak-derivative-defn) is zero.  Using the fact that Omega predicts layer averages, the integral on the right hand side can be broken into
+
+$$
+-\int_{\tilde{z}_{k+1/2}^{\text{top}}}^{\tilde{z}_{k-1/2}^{\text{top}}} \phi \psi^\prime d\tilde{z} = - \int_{\tilde{z}_{k+1/2}^{\text{top}}}^{\tilde{z}_{k}^{\text{top}}} \phi_{k+1} \psi(z)^\prime d\tilde{z} - \int_{\tilde{z}_{k}^{\text{top}}}^{\tilde{z}_{k-1/2}^{\text{top}}} \phi_k \psi(z)^\prime d\tilde{z}.
+$$
+
+Since $\phi$ is constant over the integral domain, it can be pulled outside the integral and we use the fundamental theorem to yield
+
+$$
+-\phi_{k+1} (\psi(k)-\psi(k+1/2)) - \phi_k (\psi(k-1/2) - \psi(k)).
+$$
+
+Since we have assumed $\psi$ has compact support within the interval but not including the endpoints, $\psi(k-1/2) = \psi(k+1/2) = 0$ and we are lift with
+
+$$
+\int_{\tilde{z}_{k+1/2}^{\text{top}}}^{\tilde{z}_{k-1/2}^{\text{top}}} \phi^\prime \psi d\tilde{z} = \psi(k) \left(\phi_k - \phi_{k+1}\right).
+$$
+
+Since we are able to pick any test function that satisfies our assumptions, we choose the dirac delta function and rewrite the previous equation as
+
+$$
+\phi^\prime(z) = \left(\phi_k - \phi_{k+1}\right) \delta \left(z-\tilde{z}_{k}^{\text{top}}\right).
+$$ (weak-derivative)
+
+If [](#weak-derivative) is averaged between $\tilde{z}_{k-1/2}^{\text{top}}$ and $\tilde{z}_{k+1/2}^{\text{top}}$, we arrive at the expected form of the gradient
+
+$$
+\left[\frac{\partial \phi}{\partial z}\right]_{avg} = \frac{\left(\phi_k - \phi_{k+1}\right)}{0.5 \left(\tilde{h}_k + \tilde{h}_{k+1}\right)}
+$$ (weak-deriv-final)
+
+where $0.5 \left(\tilde{h}_k + \tilde{h}_{k+1}\right)$ is the distance between $\tilde{z}_{k-1/2}^{\text{top}}$ and $\tilde{z}_{k+1/2}^{\text{top}}$.  A similar derivation can be followed to compute gradients across layer centers.  This will form discrete derivatives in Omega.
+
+With this, we can now fully discretize [](#discrete-mom-vert-diff) as
+
+$$
+-\frac{\rho_0}{\left[\tilde{h}_k\right]_e} \left\{ \left[\left<u^\prime \tilde{w}_{tr}^\prime\right> \right]_{e,k} - \left[\left<u^\prime \tilde{w}_{tr}^\prime\right> \right]_{e,k+1} \right\} = -\frac{\rho_0}{\left[\tilde{h}_k\right]_e} \left\{ \frac{\left(u_{e,k-1} - u_{e,k}\right)}{0.5 \left(\tilde{h}_k-1 + \tilde{h}_{k}\right)} - \frac{\left(u_{e,k} - u_{e,k+1}\right)}{0.5 \left(\tilde{h}_k + \tilde{h}_{k+1}\right)} \right\}.
+$$
+
+This form can be interfaced with the Omega [tridiagongal solver](TridiagonalSolver.md) routine.
 
 ### Forcing at the top and bottom of the ocean
 
@@ -901,8 +947,20 @@ $$
 While this is similar in form, this uses the reconstruction at the top of the layer and not the layer averages directly as in [](#discrete-tracer-del2).
 
 #### Vertical tracer diffusion
-The vertical tracer diffusion arises from the $\rho_0\left(\left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right> \right]_k - \left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right> \right]_{k+1} \right)$ term.  Again, if a traditional down gradient parameterization is used $\kappa \frac{\partial \varphi}{\partial z}$ the vertical turbulent flux can be applied using a tridiagonal solver in the
-[tridiagonal solver](TridiagonalSolver) in the implicit vertical mixing step.
+The vertical tracer diffusion arises from the $\rho_0\left(\left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right> \right]_k - \left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right> \right]_{k+1} \right)$ term.  In an equation for $\tilde{h}_k \varphi$, this term is different than in the velocity equation for vertical turbulent diffusion.  In Omega, we will follow the same approach as in MPAS-Ocean and solve the tracer diffusion after the main tracer update.  Roughly Omega will compute a temporarily updated tracer as
+
+$$
+\varphi^{new} = \tilde{h}_k^{old} \varphi^{old} + dt \frac{Adv + Hdiff}{\tilde{h}_k^{new}}.
+$$
+
+The non mass weighted tracer is then used to compute the diffusive tendency and compute the final tracer at the next timestep.  Given diffusion is done on the non mass weighted tracer, the diffusive term is written as
+
+$$
+\frac{rho_0}{\tilde{h}_k} \left\{\left[<\varphi^\prime \tilde{w}_{tr}^\prime \right>\right]_k - \left[<\varphi^\prime \tilde{w}_{tr}^\prime \right>\right]_{k+1} \right\}
+$$
+
+Taking a traditional down gradient approximation and using [](#weak-deriv-final) the vertical turbulent flux can be applied using a tridiagonal solver in the
+[tridiagonal solver](TridiagonalSolver) in the implicit vertical mixing step.  Additional enhancements, such as non local tracer fluxes will be discused in future design documents.
 
 ### MPAS-Ocean Equations of Motion
 
