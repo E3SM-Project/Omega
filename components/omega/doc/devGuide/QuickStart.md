@@ -140,8 +140,10 @@ script that you can run to build Omega:
 (omega-dev-quick-start-getting-meshes)=
 ### Getting test meshes
 
-Some tests require a valid Omega mesh file. Different tests require different meshes. At the moment, mesh files need
-to be copied or linked to specifically named files under the `test` directory. Appropriate mesh files can be downloaded from:
+Some tests require a valid Omega mesh file. Different tests require different
+meshes. At the moment, mesh files need to be copied or linked to specifically
+named files under the `test` directory. Appropriate mesh files can be
+downloaded from:
 - [Ocean Mesh](https://web.lcrc.anl.gov/public/e3sm/inputdata/ocn/mpas-o/oQU240/ocean.QU.240km.151209.nc)
 - [Global Mesh](https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/polaris_cache/global_convergence/icos/cosine_bell/Icos480/init/initial_state.230220.nc)
 - [Planar Mesh](https://gist.github.com/mwarusz/f8caf260398dbe140d2102ec46a41268/raw/e3c29afbadc835797604369114321d93fd69886d/PlanarPeriodic48x48.nc)
@@ -158,7 +160,8 @@ cd ..
 
 ### Running CTests
 
-Omega includes several unit tests that run through CTest. The unit tests need to be run on a compute node.
+Omega includes several unit tests that run through CTest. The unit tests need
+to be run on a compute node.
 
 To run the tests:
 ```sh
