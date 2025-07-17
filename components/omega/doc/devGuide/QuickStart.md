@@ -62,6 +62,13 @@ conda activate omega_dev
 (You can reuse `omega_dev` for other branches as long as `dev-conda.txt` has
 not changed between branchs.)
 
+The first time you set up the environment, you need to initiate `pre-commit`:
+```sh
+pre-commit install
+```
+This needs to be done once per environment, so re-run it as necessary if you
+re-create the development environment.
+
 Please activate this environment each time you commit code.  This will ensure
 that `pre-commit` and the associated linting utilities are available and that
 they check your code as it is committed (rather than requiring fix-up commits
