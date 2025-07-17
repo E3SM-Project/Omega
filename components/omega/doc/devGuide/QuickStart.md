@@ -8,7 +8,7 @@
 
 We ask developers to make their own fork of the E3SM to use for development
 branches.  To do this, go to the page for the
-[E3SM-Project/E3SM](https://github.com/E3SM-Project/E3SM) respository and
+[E3SM-Project/E3SM](https://github.com/E3SM-Project/E3SM) repository and
 click on the `fork` button near the upper right corner.  Set "owner" to your
 GitHub username (this should be the default) and click "Create fork".
 
@@ -60,7 +60,7 @@ conda create -n omega_dev --file dev-conda.txt
 conda activate omega_dev
 ```
 (You can reuse `omega_dev` for other branches as long as `dev-conda.txt` has
-not changed between branchs.)
+not changed between branches.)
 
 The first time you set up the environment, you need to initiate `pre-commit`:
 ```sh
@@ -196,7 +196,7 @@ Total Test time (real) =   8.91 sec
 
 If Omega CTests are failing or simulations are crashing, setting
 `OMEGA_BUILD_TYPE` to `Debug` can be helpful for debugging purposes. If you
-need to identify which test has failed, it may be useful to examin the CMake
+need to identify which test has failed, it may be useful to examine the CMake
 ctest log file located at `$BUILD_DIR/Testing/Temporary/LastTest.log`.
 
 (omega-dev-parmetis-libs)=
@@ -253,7 +253,7 @@ used to but the hope is that it leads to a coherent code style in Omega.
 
 ### VS Code
 
-You may wish to condier using an integrated development environment (IDE) to
+You may wish to consider using an integrated development environment (IDE) to
 develop your code.  A convenient option for developing on HPC is
 [Visual Studio Code (VS Code)](https://code.visualstudio.com/).  It has plugins
 for [c++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools),
