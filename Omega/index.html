@@ -1,0 +1,413 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Omega &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+
+  
+      <script src="_static/jquery.js"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+      <script src="_static/doctools.js"></script>
+      <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Quick Start for Users" href="userGuide/QuickStart.html" />
+    <link href="_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="design/OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Omega</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="omega">
+<span id="omega-home"></span><h1>Omega<a class="headerlink" href="#omega" title="Permalink to this heading"></a></h1>
+<p>The Ocean Model for E3SM Global Applications (Omega) initially is an eddy-resolving,
+global ocean model in the early stages of development by the
+<a class="reference external" href="https://e3sm.org/">E3SM</a> ocean team.  The first release is planned for
+Summer 2026.  A non-eddying configuration will be released in early 2027.</p>
+<p>The model is written in c++ using the <a class="reference external" href="https://github.com/kokkos">Kokkos</a>
+framework for performance portability.  Omega is based on the
+<a class="reference external" href="https://doi.org/10.1016/j.jcp.2009.08.006">TRSK formulation</a> for geophysical
+models on unstructured meshes. The first version of Omega will primarily be a direct port
+of the <a class="reference external" href="https://e3sm.org/model/e3sm-model-description/v1-description/v1-ocean-sea-ice-land-ice/">MPAS-Ocean</a>
+component of E3SM for comparison purposes.</p>
+<p>Development is taking place at https://github.com/E3SM-Project/Omega.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/OmegaBuild.html">CMake-based Omega Build</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/OmegaBuild.html#standalone-build">Standalone Build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/OmegaBuild.html#e3sm-component-build">E3SM Component Build</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Broadcast.html">Omega Broadcast</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/Broadcast.html#broadcasting-functions">Broadcasting Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/Broadcast.html#non-blocking-broadcasting-functions">Non-blocking Broadcasting Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Logging.html">Omega Logging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/Logging.html#logging-in-standalone-build-mode">Logging in Standalone Build mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/Logging.html#e3sm-component-build">E3SM Component Build</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Tracers.html">Tracers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/Tracers.html#updating-tracer-defintions-in-tracerdefs-inc-file">Updating tracer defintions in <code class="docutils literal notranslate"><span class="pre">TracerDefs.inc</span></code> file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/Tracers.html#selecting-tracers-using-yaml-configuration-file">Selecting tracers using YAML configuration file</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/QuickStart.html">Quick Start for Developers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/QuickStart.html#getting-set-up">Getting set up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/QuickStart.html#building-and-testing-omega">Building and testing Omega</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/QuickStart.html#code-development">Code development</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/CondaEnv.html">Development Conda Environment</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/CondaEnv.html#installing-miniforge3">Installing Miniforge3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/CondaEnv.html#creating-the-conda-environment">Creating the Conda Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/CondaEnv.html#updating-the-conda-environment">Updating the Conda Environment</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Linting.html">Linting Code</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Linting.html#enabling-lint-checks">Enabling Lint Checks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Linting.html#bypassing-linting">Bypassing Linting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Linting.html#linting-c-code">Linting C++ Code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Linting.html#linting-python-code">Linting Python Code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Linting.html#updating-the-linting-pacakge">Updating the linting pacakge</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Driver.html">Driver</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Driver.html#ocninit">ocnInit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Driver.html#ocnrun">ocnRun</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Driver.html#ocnfinalize">ocnFinalize</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Broadcast.html">Omega Broadcast</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Broadcast.html#code-structure">Code Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Broadcast.html#ibroadcast-interface">IBroadcast Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Broadcast.html#integration-with-mpi">Integration with MPI</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/CMakeBuild.html">Omega Build with CMake</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/CMakeBuild.html#step-1-setup">Step 1: Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/CMakeBuild.html#step-2-update">Step 2: Update</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/CMakeBuild.html#step-3-build">Step 3: Build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/CMakeBuild.html#step-4-output">Step 4: Output</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Logging.html">Developing Omega Logging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Logging.html#initializing-omega-logger">Initializing Omega Logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Logging.html#creating-logging-macros">Creating Logging Macros</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Logging.html#customer-formatter-for-kokkos">Customer formatter for Kokkos</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/AuxiliaryVariables.html">Auxiliary Variables</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/AuxiliaryVariables.html#basic-class-structure">Basic class structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/AuxiliaryVariables.html#configuration-enums">Configuration enums</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/AuxiliaryVariables.html#constructor">Constructor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/AuxiliaryVariables.html#compute-member-functions">Compute member functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/AuxiliaryVariables.html#implemented-groups">Implemented groups</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/AuxiliaryState.html">Auxiliary State</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/AuxiliaryState.html#initialization">Initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/AuxiliaryState.html#creation-of-non-default-auxiliary-states">Creation of non-default auxiliary states</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/AuxiliaryState.html#computation-of-auxiliary-variables">Computation of auxiliary variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/AuxiliaryState.html#removal-of-auxiliary-states">Removal of auxiliary states</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Tendencies.html">Tendencies</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Tendencies.html#initialization">Initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Tendencies.html#creation-of-non-default-tendencies">Creation of non-default tendencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Tendencies.html#computation-of-tendencies">Computation of tendencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Tendencies.html#removal-of-tendencies">Removal of tendencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/TimeMgr.html">Time Manager (TimeMgr)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/TimeMgr.html#class-descriptions">Class Descriptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/TimeMgr.html#implementation">Implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/TimeStepping.html">Time stepping</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/TimeStepping.html#time-stepper-type">Time stepper type</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/TimeStepping.html#timestepper-base-class">TimeStepper base class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/TimeStepping.html#implemented-time-steppers">Implemented time steppers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Reductions.html">Global Reductions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Reductions.html#global-sum">Global sum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Reductions.html#global-sum-with-product">Global sum with product</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Reductions.html#global-sum-multi-field">Global sum multi-field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Reductions.html#global-sum-multi-field-with-product">Global sum multi-field with product</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Reductions.html#global-minval-and-maxval">Global minval and maxval</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Reductions.html#utility-functions-globalmin-globalmax">Utility functions globalMin globalMax</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Tracers.html">Tracers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Tracers.html#concepts">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Tracers.html#initialization-and-finalization">Initialization and Finalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Tracers.html#key-apis">Key APIs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/TridiagonalSolvers.html#representations-of-tridiagonal-systems">Representations of tridiagonal systems</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/TridiagonalSolvers.html#using-tridiagonal-solvers">Using tridiagonal solvers</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="design/OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Template.html">Template</a></li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="userGuide/QuickStart.html" class="btn btn-neutral float-right" title="Quick Start for Users" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

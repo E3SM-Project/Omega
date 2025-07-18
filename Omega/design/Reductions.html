@@ -1,0 +1,534 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Global Reductions &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="State" href="State.html" />
+    <link rel="prev" title="IOStreams" href="IOStreams.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Global Reductions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-global-sums">2.1 Requirement: Global sums</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-global-min-max">2.2 Requirement: Global min/max</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-data-types">2.3 Requirement: Data types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-sums-with-product">2.4 Requirement: Sums with product</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-restricted-address-space">2.5 Requirement: Restricted address space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-multiple-fields-arrays">2.6 Requirement: Multiple fields/arrays</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-other-environments-decompositions">2.7 Requirement: Other environments/decompositions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-reproducibility">2.8 Requirement: Reproducibility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-accelerators-and-location">2.9 Requirement: Accelerators and location</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-cpu-threading">2.10 Requirement: CPU threading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-other-reduction-operations">2.11 Desired: Other reduction operations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#global-sum">4.2.1 Global sum</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#global-sum-with-product">4.2.2 Global sum with product</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#global-sum-multi-field">4.2.3 Global sum multi-field</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#global-sum-multi-field-with-product">4.2.4 Global sum multi-field with product</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#global-minval">4.2.5 Global minval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#global-maxval">4.2.6 Global maxval</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-basics">5.1 Test basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reproducibility">5.2 Reproducibility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#restricted-index-range">5.3 Restricted index range</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sum-with-product">5.4 Sum with product</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multi-field-sums">5.5 Multi-field sums</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#min-max">5.6 Min/Max</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Global Reductions</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/Reductions.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <!--- OMEGA global reductions requirements and design ------------------------->
+<section class="tex2jax_ignore mathjax_ignore" id="global-reductions">
+<span id="omega-design-global-reductions"></span><h1>Global Reductions<a class="headerlink" href="#global-reductions" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>In a parallel application like OMEGA, it is often necessary to perform
+averages, sums or other global collective operations on the distributed
+data. These reductions are described here.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-global-sums">
+<h3>2.1 Requirement: Global sums<a class="headerlink" href="#requirement-global-sums" title="Permalink to this heading"></a></h3>
+<p>The ability to perform the sum of all elements of a distributed array
+is required</p>
+</section>
+<section id="requirement-global-min-max">
+<h3>2.2 Requirement: Global min/max<a class="headerlink" href="#requirement-global-min-max" title="Permalink to this heading"></a></h3>
+<p>The ability to find the minimum or maximum value in a distributed
+array is required.</p>
+</section>
+<section id="requirement-data-types">
+<h3>2.3 Requirement: Data types<a class="headerlink" href="#requirement-data-types" title="Permalink to this heading"></a></h3>
+<p>There must be reductions for all supported arithmetic types
+(integers, floating point) and all array dimensions from
+0-d (scalars) to 5-d.</p>
+</section>
+<section id="requirement-sums-with-product">
+<h3>2.4 Requirement: Sums with product<a class="headerlink" href="#requirement-sums-with-product" title="Permalink to this heading"></a></h3>
+<p>In many cases, a global sum is often performed on a product of two
+arrays. For example, a sum can be performed with a multiplicative
+mask or a sum may be a dot product of two vectors within a solver.
+A global sum interface that multiplies two arrays before the sum
+is required.</p>
+</section>
+<section id="requirement-restricted-address-space">
+<h3>2.5 Requirement: Restricted address space<a class="headerlink" href="#requirement-restricted-address-space" title="Permalink to this heading"></a></h3>
+<p>In order to compute reductions over only owned and active
+cells/edges or for regional diagnostics, there must be an option
+to restrict the address space over which the local portion of sums
+are computed.</p>
+</section>
+<section id="requirement-multiple-fields-arrays">
+<h3>2.6 Requirement: Multiple fields/arrays<a class="headerlink" href="#requirement-multiple-fields-arrays" title="Permalink to this heading"></a></h3>
+<p>For performance reasons, it is often beneficial to compute reductions
+for multiple arrays at the same time to reduce the number of
+messages and associated message latency. An interface for computing
+independent reductions for multiple arrays at once is needed. Note
+that the size of the arrays and any associated options must be the
+same for all arrays in a multi-field reduction. It would be possible
+to relax this restriction in the future.</p>
+</section>
+<section id="requirement-other-environments-decompositions">
+<h3>2.7 Requirement: Other environments/decompositions<a class="headerlink" href="#requirement-other-environments-decompositions" title="Permalink to this heading"></a></h3>
+<p>Because OMEGA supports multiple machine environments (communicators
+and processor sets) and decompositions, the reductions must be
+callable from environments other than the default.</p>
+</section>
+<section id="requirement-reproducibility">
+<h3>2.8 Requirement: Reproducibility<a class="headerlink" href="#requirement-reproducibility" title="Permalink to this heading"></a></h3>
+<p>The results (esp sums) must be bit-for-bit reproducible on a given
+machine with respect to processor and thread count</p>
+</section>
+<section id="requirement-accelerators-and-location">
+<h3>2.9 Requirement: Accelerators and location<a class="headerlink" href="#requirement-accelerators-and-location" title="Permalink to this heading"></a></h3>
+<p>When running on accelerated architectures, the ability to specify
+whether the reduction occurs on host or device is needed.</p>
+</section>
+<section id="requirement-cpu-threading">
+<h3>2.10 Requirement: CPU threading<a class="headerlink" href="#requirement-cpu-threading" title="Permalink to this heading"></a></h3>
+<p>For reductions performed on the CPU, the operations must support
+and MPI+OpenMP model while still meeting reproducibility requirements.</p>
+</section>
+<section id="desired-other-reduction-operations">
+<h3>2.11 Desired: Other reduction operations<a class="headerlink" href="#desired-other-reduction-operations" title="Permalink to this heading"></a></h3>
+<p>It will be desireable in the future to add other reduction operations
+like minloc/maxloc.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>For integers, the sum is straightforward. For single-precision floating
+point, we will perform sums in double precision and convert back to
+single before returning. In each of the above cases, the local Kokkos
+versions of sum, minval, maxval will be used for the local sum before
+accumulating the MPI sum across ranks.</p>
+<p>For double-precision sums, we will begin with
+a version of the double-double (DDPDD) algorithm of Donald Knuth,
+further improved by David A Bailey and outlined in He and Ding (2001
+J. of Supercomputing, 18, 259). In the future, we will also support
+the more robust version by Pat Worley in the E3SM reprosum routines.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>In the future, if we support multiple reproducible algorithms,
+we will need an enum to define choice of algorithm.</p>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>There are no new classes or data types associated with this
+functionality.</p>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<section id="global-sum">
+<h4>4.2.1 Global sum<a class="headerlink" href="#global-sum" title="Permalink to this heading"></a></h4>
+<p>For each supported array type ArrayTTDD (where TT is the data
+type I4, I8, R4, R8, Real and DD is the dimension 1D thru 5D)
+or supported scalar data type, there will be a sum function
+aliased to the globalSum interface:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array</span><span class="p">,</span>
+<span class="w">                    </span><span class="k">const</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">mpiComm</span><span class="p">,</span>
+<span class="w">                    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="n">indxRange</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where mpiComm is the MPI communicator extracted from the
+relevant MachEnv (eg defaultEnv.comm) and indxRange is a
+<code class="docutils literal notranslate"><span class="pre">std::vector</span></code> of length 2x the number of array dimensions.
+The entries of this vector will be the min, max index of
+each array dimension. So, for example an array dimensioned
+<code class="docutils literal notranslate"><span class="pre">(nCellsAll+1,</span> <span class="pre">nVertLevels+1)</span></code> might need to be summed over
+the <code class="docutils literal notranslate"><span class="pre">indxRange{0,</span> <span class="pre">nCellsOwned-1,</span> <span class="pre">0,</span> <span class="pre">nVertLevels-1}</span></code>. Note
+that the indxRange supports a constant scalar values only so
+does not support a variable index range like
+minLevelCell/maxLevelCell. That is best managed either
+by masking with the sum-product interface below or
+ensuring the array has been set to zero in non-active
+entries.</p>
+<p>For scalar sums, the interface is the same with the
+indxRange argument absent.</p>
+<p>We will assume that Kokkos host arrays will be summed on the
+host and device arrays will be summed on the device.</p>
+</section>
+<section id="global-sum-with-product">
+<h4>4.2.2 Global sum with product<a class="headerlink" href="#global-sum-with-product" title="Permalink to this heading"></a></h4>
+<p>There will be a similar interface for a sum with product:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array1</span><span class="p">,</span>
+<span class="w">                    </span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array2</span><span class="p">,</span>
+<span class="w">                    </span><span class="k">const</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">mpiComm</span><span class="p">,</span>
+<span class="w">                    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="n">indxRange</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>that returns the sum of <code class="docutils literal notranslate"><span class="pre">array1*array2</span></code>. The two arrays
+must be of the same data type. It is not required that
+the two arrays be of exactly the same size but both arrays
+must be of appropriate size to accomodate the indxRange
+and the indices must align appropriately. This typically
+means that if the sizes differ, any extra entries occur
+at the end of the respective dimension.</p>
+</section>
+<section id="global-sum-multi-field">
+<h4>4.2.3 Global sum multi-field<a class="headerlink" href="#global-sum-multi-field" title="Permalink to this heading"></a></h4>
+<p>To sum multiple fields at once, a <code class="docutils literal notranslate"><span class="pre">std::vector</span></code> of
+arrays must be constructed and the result will be
+stored in a <code class="docutils literal notranslate"><span class="pre">std::vector</span></code> of appropriate type:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">type</span><span class="o">&gt;</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span>
+<span class="w">         </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ArrayTTDD</span><span class="o">&gt;</span><span class="w"> </span><span class="n">arrays</span><span class="p">,</span>
+<span class="w">                   </span><span class="k">const</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">mpiComm</span><span class="p">,</span>
+<span class="w">                   </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="n">indxRange</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As is the case with sum-product, each array must be
+of the same data type but can have slightly different
+sizes as long as the dimension lengths can accomodate
+the indxRange and that the indices align appropriately
+with the indxRange requested.</p>
+</section>
+<section id="global-sum-multi-field-with-product">
+<h4>4.2.4 Global sum multi-field with product<a class="headerlink" href="#global-sum-multi-field-with-product" title="Permalink to this heading"></a></h4>
+<p>The multi-field sum with product is still to be determined, but
+should have an interface like:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">type</span><span class="o">&gt;</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span>
+<span class="w">         </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ArrayTTDD</span><span class="o">&gt;</span><span class="w"> </span><span class="n">arrays1</span><span class="p">,</span>
+<span class="w">                   </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ArrayTTDD</span><span class="o">&gt;</span><span class="w"> </span><span class="n">arrays2</span><span class="p">,</span>
+<span class="w">                   </span><span class="k">const</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">mpiComm</span><span class="p">,</span>
+<span class="w">                   </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="n">indxRange</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The implementation detail that needs to be determined is how
+to manage two use cases. A typical use case is for the second
+array in the product to be the same for all fields (eg a mask or
+an area array), but we may wish to support a case where each
+array product has a different array for both operands.
+Because Kokkos arrays contain metadata and a pointer to
+the data, it may be possible to create a std::vector of
+the same array, allowing both the case of a fixed array
+to be used for all or for all the array products to have
+different arrays. This requires some testing of approaches.</p>
+</section>
+<section id="global-minval">
+<h4>4.2.5 Global minval<a class="headerlink" href="#global-minval" title="Permalink to this heading"></a></h4>
+<p>The global minval will support interfaces similar to the
+global sums, but will return the minimum value instead.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="n">varMin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalMinval</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array</span><span class="p">,</span>
+<span class="w">                          </span><span class="k">const</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">mpiComm</span><span class="p">,</span>
+<span class="w">                          </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="n">indxRange</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">varMin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalMinval</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array1</span><span class="p">,</span>
+<span class="w">                          </span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array2</span><span class="p">,</span>
+<span class="w">                          </span><span class="k">const</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">mpiComm</span><span class="p">,</span>
+<span class="w">                          </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="n">indxRange</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">type</span><span class="o">&gt;</span><span class="w"> </span><span class="n">varMin</span><span class="w"> </span><span class="o">=</span>
+<span class="w">         </span><span class="n">globalMinval</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ArrayTTDD</span><span class="o">&gt;</span><span class="w"> </span><span class="n">arrays</span><span class="p">,</span>
+<span class="w">                      </span><span class="k">const</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">mpiComm</span><span class="p">,</span>
+<span class="w">                      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="n">indxRange</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that the minval routine will not be cognizant of any
+special values so any inactive entries should either be
+masked or set to an appropriately high value.</p>
+</section>
+<section id="global-maxval">
+<h4>4.2.6 Global maxval<a class="headerlink" href="#global-maxval" title="Permalink to this heading"></a></h4>
+<p>The maxval will have the identical form of minval but will
+return the maximum value. The same restrictions and comments
+on special values apply.</p>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test-basics">
+<h3>5.1 Test basics<a class="headerlink" href="#test-basics" title="Permalink to this heading"></a></h3>
+<p>For each data type, a set of reference arrays will be created
+with random numbers that extend across the entire range of that
+type (for later reproducibility tests). A reference sum will
+be computed serially using the same reproducible algorithm
+as the global implementation. The basic test will compare the
+global sum with the reference serial sum. Because the data types
+include both host and device arrays, this will also test reductions
+on either location.</p>
+<ul class="simple">
+<li><p>tests requirement 2.1, 2.3, part of 2.8, 2.9</p></li>
+</ul>
+</section>
+<section id="reproducibility">
+<h3>5.2 Reproducibility<a class="headerlink" href="#reproducibility" title="Permalink to this heading"></a></h3>
+<p>A MachEnv and decomposition for a subset of MPI ranks will be
+created and the reference arrays above will be distributed across
+the new decomposition. Global sums in each case will be compared
+to the serial reference value and the full MPI rank case
+for bit reproducibility. Similarly, a test with CPU threading
+on will test reproducibility under threading.</p>
+<ul class="simple">
+<li><p>tests requirement 2.7, 2.8, 2.10</p></li>
+</ul>
+</section>
+<section id="restricted-index-range">
+<h3>5.3 Restricted index range<a class="headerlink" href="#restricted-index-range" title="Permalink to this heading"></a></h3>
+<p>The sums will be tested with a reduced index range on the same
+reference arrays from above and compared with the
+similarly-restricted serial reference sums.</p>
+<ul class="simple">
+<li><p>tests requirement 2.5</p></li>
+</ul>
+</section>
+<section id="sum-with-product">
+<h3>5.4 Sum with product<a class="headerlink" href="#sum-with-product" title="Permalink to this heading"></a></h3>
+<p>A mask array will be defined for each type and used with the
+sum-with-product interface and compared against a serial
+version of the same.</p>
+<ul class="simple">
+<li><p>tests requirement 2.4</p></li>
+</ul>
+</section>
+<section id="multi-field-sums">
+<h3>5.5 Multi-field sums<a class="headerlink" href="#multi-field-sums" title="Permalink to this heading"></a></h3>
+<p>Additional arrays similar to the reference arrays will be created
+with reference serial sums. Then the multi-field interface will
+be tested against these reference sums.</p>
+<ul class="simple">
+<li><p>tests requirement 2.6</p></li>
+</ul>
+</section>
+<section id="min-max">
+<h3>5.6 Min/Max<a class="headerlink" href="#min-max" title="Permalink to this heading"></a></h3>
+<p>A similar approach to the sums above will be used to test the
+min and max functions in all combinations of interfaces.</p>
+<ul class="simple">
+<li><p>tests requirement 2.2</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="IOStreams.html" class="btn btn-neutral float-left" title="IOStreams" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="State.html" class="btn btn-neutral float-right" title="State" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

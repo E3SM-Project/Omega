@@ -1,0 +1,259 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Development Conda Environment &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Linting Code" href="Linting.html" />
+    <link rel="prev" title="Quick Start for Developers" href="QuickStart.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Development Conda Environment</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installing-miniforge3">Installing Miniforge3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-the-conda-environment">Creating the Conda Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#updating-the-conda-environment">Updating the Conda Environment</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Development Conda Environment</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/devGuide/CondaEnv.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="development-conda-environment">
+<span id="omega-dev-conda-env"></span><h1>Development Conda Environment<a class="headerlink" href="#development-conda-environment" title="Permalink to this heading"></a></h1>
+<p>As a developer, if you want to build the documentation locally or lint the
+code, you will need your own
+<a class="reference external" href="https://conda.io/projects/conda/en/latest/index.html">conda</a> environment with
+the necessary packages.</p>
+<section id="installing-miniforge3">
+<span id="omega-dev-install-miniforge3"></span><h2>Installing Miniforge3<a class="headerlink" href="#installing-miniforge3" title="Permalink to this heading"></a></h2>
+<p>If you have not already done so, you will install
+<a class="reference external" href="https://github.com/conda-forge/miniforge#miniforge3">Miniforge3</a>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-L<span class="w"> </span>-O<span class="w"> </span><span class="s2">&quot;https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-</span><span class="k">$(</span>uname<span class="k">)</span><span class="s2">-</span><span class="k">$(</span>uname<span class="w"> </span>-m<span class="k">)</span><span class="s2">.sh&quot;</span>
+bash<span class="w"> </span>Miniforge3-<span class="k">$(</span>uname<span class="k">)</span>-<span class="k">$(</span>uname<span class="w"> </span>-m<span class="k">)</span>.sh
+</pre></div>
+</div>
+<p>If you have the space to do so, we recommend installing Miniforge3 somewhere in
+our home directory.  Typically, this file system will be faster than on a
+scratch space spaces.  Also, a conda environment will be rendered useless if
+its contents get purged.  However, conda environments each require several GB
+of space, which may quickly use up your disk quota so you will need to weigh
+these trade-offs for yourself.</p>
+<p>In what follows, we assume you have Miniforge3 installed in
+<code class="docutils literal notranslate"><span class="pre">${HOME}/miniforge3</span></code>.</p>
+<p>You may wish to skip the step in the Miniforge3 installation where it
+wants to modify your <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code>.  If you allow it to, it will add activation of
+the <code class="docutils literal notranslate"><span class="pre">conda</span></code> command and the <code class="docutils literal notranslate"><span class="pre">base</span></code> conda environment, and this may not be
+something you want.</p>
+<p>If you opt not to allow Miniforge3 to update your <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code>, it may be helpful
+to add an alias like the following to your <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">alias</span><span class="w"> </span><span class="nv">conda_base</span><span class="o">=</span><span class="s1">&#39;</span>
+<span class="s1">source ${HOME}/miniforge3/etc/profile.d/conda.sh</span>
+<span class="s1">conda activate&#39;</span>
+</pre></div>
+</div>
+<p>Anytime you need <code class="docutils literal notranslate"><span class="pre">conda</span></code> command, you can first run <code class="docutils literal notranslate"><span class="pre">conda_base</span></code>to get it.</p>
+</section>
+<section id="creating-the-conda-environment">
+<span id="omega-dev-create-conda-env"></span><h2>Creating the Conda Environment<a class="headerlink" href="#creating-the-conda-environment" title="Permalink to this heading"></a></h2>
+<p>With Miniforge3 installed and the <code class="docutils literal notranslate"><span class="pre">conda</span></code> command available, you can create the
+Omega development environment, starting from the root
+of an Omega branch, with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>components/omega/
+conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>omega_dev<span class="w"> </span>--file<span class="w"> </span>dev-conda.txt
+conda<span class="w"> </span>activate<span class="w"> </span>omega_dev
+</pre></div>
+</div>
+</section>
+<section id="updating-the-conda-environment">
+<span id="omega-dev-update-conda-env"></span><h2>Updating the Conda Environment<a class="headerlink" href="#updating-the-conda-environment" title="Permalink to this heading"></a></h2>
+<p>If you need to update the <code class="docutils literal notranslate"><span class="pre">omega_dev</span></code> conda environment, the easiest way to
+do that is just to recreate it by following the same instructions as above.
+You will be prompted about whether you want to delete the old environment
+unless you include the <code class="docutils literal notranslate"><span class="pre">-y</span></code> flag (to say “yes” to all prompts).</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="QuickStart.html" class="btn btn-neutral float-left" title="Quick Start for Developers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Linting.html" class="btn btn-neutral float-right" title="Linting Code" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

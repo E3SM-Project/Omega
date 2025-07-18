@@ -1,0 +1,392 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time stepping &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Global Reductions" href="Reductions.html" />
+    <link rel="prev" title="Time Manager (TimeMgr)" href="TimeMgr.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Time stepping</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#time-stepper-type">Time stepper type</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#timestepper-base-class">TimeStepper base class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#do-step-method">Do step method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#time-stepper-management-methods">Time stepper management methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#initialization">Initialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#creation-of-non-default-time-steppers">Creation of non-default time steppers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#changing-the-time-step">Changing the time step</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#getters">Getters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#removal-of-time-steppers">Removal of time steppers</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#utility-methods">Utility methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#implemented-time-steppers">Implemented time steppers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Time stepping</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/devGuide/TimeStepping.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="time-stepping">
+<span id="omega-dev-time-stepping"></span><h1>Time stepping<a class="headerlink" href="#time-stepping" title="Permalink to this heading"></a></h1>
+<p>Omega supports choice of multiple time stepping schemes. The time stepping
+module provides implementations of different time stepping schemes and general
+infrastructure for managing time steppers. To achieve modularity, each time
+stepper is implemented as a separate class. To ensure common interface and
+enable sharing of common code and data, every time stepper inherits from the
+<code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code> base class.</p>
+<section id="time-stepper-type">
+<h2>Time stepper type<a class="headerlink" href="#time-stepper-type" title="Permalink to this heading"></a></h2>
+<p>An enumeration listing all implemented schemes is provided. It needs to be extended every time a new time stepper
+is added. It is used to identify a time stepper at run time.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">TimeStepperType</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">ForwardBackward</span><span class="p">,</span><span class="w"> </span><span class="n">RungeKutta4</span><span class="p">,</span><span class="w"> </span><span class="n">RungeKutta2</span><span class="w"> </span><span class="p">};</span>
+</pre></div>
+</div>
+</section>
+<section id="timestepper-base-class">
+<h2>TimeStepper base class<a class="headerlink" href="#timestepper-base-class" title="Permalink to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code> class is a base class for all Omega time steppers. It stores
+as members common data needed by every time stepper. These include a name and
+time stepping method as well as some time tracking variables, including
+StartTime, StopTime, TimeStep, a Clock and an EndAlarm. Its <code class="docutils literal notranslate"><span class="pre">doStep</span></code> method
+defines the interface that every time stepper needs to implement. In addition to this
+method, it provides a number of other methods that can divided into two groups.
+The first group is for general time stepper management. The second group is
+utility functions that provide common functionality that can be re-used in
+implementation of different time steppers.</p>
+<section id="do-step-method">
+<h3>Do step method<a class="headerlink" href="#do-step-method" title="Permalink to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">doStep</span></code> method is the main method of every time stepper class. It exists
+in the base class as a pure virtual method, meaning it defines an interface but
+has no implementation. Its signature is</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">TimeStepper::doStep</span><span class="p">(</span><span class="n">OceanState</span><span class="w"> </span><span class="o">*</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">SimTime</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>It is meant to advance <code class="docutils literal notranslate"><span class="pre">State</span></code> by one time step, from <code class="docutils literal notranslate"><span class="pre">Time</span></code> to <code class="docutils literal notranslate"><span class="pre">Time</span> <span class="pre">+</span> <span class="pre">TimeStep</span></code>. Classes implementing concrete time stepping schemes need to provide
+implementations of this method. As part of the time step, this routine advances
+the Clock associated with the time stepper and returns the current simulation
+time. For the default time stepper, this is advances the primary model clock.</p>
+</section>
+<section id="time-stepper-management-methods">
+<h3>Time stepper management methods<a class="headerlink" href="#time-stepper-management-methods" title="Permalink to this heading"></a></h3>
+<section id="initialization">
+<h4>Initialization<a class="headerlink" href="#initialization" title="Permalink to this heading"></a></h4>
+<p>Two static methods:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TimeStepper</span><span class="o">::</span><span class="n">init1</span><span class="p">();</span>
+<span class="n">TimeStepper</span><span class="o">::</span><span class="n">init2</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>initialize the default time stepper in two phases. The first phase must be
+called early in the initialization process. It creates and time stepper
+instance, fills it with various time quantities (StartTime, EndTime, TimeStep)
+and creates a Clock (the Model Clock for the simulation) and an EndAlarm to
+ring when this portion of the simulation should stop. The second phase is
+called after the default tendency, auxiliary state, horizontal mesh, and halo
+objects have been initialized. It attaches pointers to these objects for later
+use during the time stop phase. A pointer to the default time stepper can be
+retrieved at any time using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TimeStepper</span><span class="o">*</span><span class="w"> </span><span class="n">DefTimeStepper</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TimeStepper</span><span class="o">::</span><span class="n">getDefault</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+<section id="creation-of-non-default-time-steppers">
+<h4>Creation of non-default time steppers<a class="headerlink" href="#creation-of-non-default-time-steppers" title="Permalink to this heading"></a></h4>
+<p>A non-default time stepper can be created from a string <code class="docutils literal notranslate"><span class="pre">Name</span></code>, time stepper
+type <code class="docutils literal notranslate"><span class="pre">Type</span></code>, <code class="docutils literal notranslate"><span class="pre">TimeStep</span></code>, <code class="docutils literal notranslate"><span class="pre">StartTime</span></code>, <code class="docutils literal notranslate"><span class="pre">EndTime</span></code>, tendencies <code class="docutils literal notranslate"><span class="pre">Tend</span></code>,
+auxiliary state <code class="docutils literal notranslate"><span class="pre">AuxState</span></code>, horizontal mesh <code class="docutils literal notranslate"><span class="pre">Mesh</span></code>, and halo layer <code class="docutils literal notranslate"><span class="pre">MyHalo</span></code></p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TimeStepper</span><span class="o">*</span><span class="w">  </span><span class="n">NewTimeStepper</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TimeStepper</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">Type</span><span class="p">,</span><span class="w"> </span><span class="n">StartTime</span><span class="p">,</span>
+<span class="w">         </span><span class="n">EndTime</span><span class="p">,</span><span class="w"> </span><span class="n">TimeStep</span><span class="p">,</span><span class="w"> </span><span class="n">Tend</span><span class="p">,</span><span class="w"> </span><span class="n">AuxState</span><span class="p">,</span><span class="w"> </span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="n">MyHalo</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>For convenience, this returns a pointer to the newly created time stepper.
+Given its name, a pointer to a named time stepper can be obtained at any time
+by calling the static <code class="docutils literal notranslate"><span class="pre">get</span></code> method:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TimeStepper</span><span class="o">*</span><span class="w"> </span><span class="n">NewTimeStepper</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TimeStepper</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">Name</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="changing-the-time-step">
+<h4>Changing the time step<a class="headerlink" href="#changing-the-time-step" title="Permalink to this heading"></a></h4>
+<p>The time step is set on creation, but if the time step must change, the
+function</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Stepper</span><span class="o">-&gt;</span><span class="n">changeTimeStep</span><span class="p">(</span><span class="n">TimeStep</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>can be used where <code class="docutils literal notranslate"><span class="pre">TimeStep</span></code> is an instance of <code class="docutils literal notranslate"><span class="pre">TimeInterval</span></code> class.</p>
+</section>
+<section id="getters">
+<h4>Getters<a class="headerlink" href="#getters" title="Permalink to this heading"></a></h4>
+<p>Given a pointer to a <code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code> you can obtain various class members.
+Pointers to the associated Clock and EndAlarm can also be retrieved.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TimeStepperType</span><span class="w"> </span><span class="n">Type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Stepper</span><span class="o">-&gt;</span><span class="n">getType</span><span class="p">();</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">NTimeLevels</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Stepper</span><span class="o">-&gt;</span><span class="n">getNTimeLevels</span><span class="p">();</span>
+<span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Stepper</span><span class="o">-&gt;</span><span class="n">getName</span><span class="p">();</span>
+<span class="n">TimeInterval</span><span class="w"> </span><span class="n">TimeStep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Stepper</span><span class="o">-&gt;</span><span class="n">getTimeStep</span><span class="p">();</span>
+<span class="n">TimeInstant</span><span class="w"> </span><span class="n">StartTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Stepper</span><span class="o">-&gt;</span><span class="n">getStartTime</span><span class="p">();</span>
+<span class="n">TimeInstant</span><span class="w"> </span><span class="n">StopTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Stepper</span><span class="o">-&gt;</span><span class="n">getStopTime</span><span class="p">();</span>
+<span class="n">Clock</span><span class="w"> </span><span class="o">*</span><span class="n">ModelClock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Stepper</span><span class="o">-&gt;</span><span class="n">getClock</span><span class="p">();</span>
+<span class="n">Alarm</span><span class="w"> </span><span class="o">*</span><span class="n">EndAlarm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Stepper</span><span class="o">-&gt;</span><span class="n">getEndAlarm</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+<section id="removal-of-time-steppers">
+<h4>Removal of time steppers<a class="headerlink" href="#removal-of-time-steppers" title="Permalink to this heading"></a></h4>
+<p>To erase a specific named time stepper use <code class="docutils literal notranslate"><span class="pre">erase</span></code></p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TimeStepper</span><span class="o">::</span><span class="n">erase</span><span class="p">(</span><span class="n">Name</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>To clear all instances do:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TimeStepper</span><span class="o">::</span><span class="n">clear</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="utility-methods">
+<h3>Utility methods<a class="headerlink" href="#utility-methods" title="Permalink to this heading"></a></h3>
+<p>In addition to the above management methods, the base class provides common
+functions that are useful in implementing different time steppers. Given two
+pointers to <code class="docutils literal notranslate"><span class="pre">OceanState</span></code> objects <code class="docutils literal notranslate"><span class="pre">State1</span></code> and <code class="docutils literal notranslate"><span class="pre">State2</span></code>, two integers
+representing two time levels <code class="docutils literal notranslate"><span class="pre">TimeLevel1</span></code> and <code class="docutils literal notranslate"><span class="pre">TimeLevel2</span></code>, and coefficient
+<code class="docutils literal notranslate"><span class="pre">Coeff</span></code> of type <code class="docutils literal notranslate"><span class="pre">TimeInterval</span></code> calling</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">updateStateByTend</span><span class="p">(</span><span class="n">State1</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel1</span><span class="p">,</span><span class="w"> </span><span class="n">State2</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel2</span><span class="p">,</span><span class="w"> </span><span class="n">Coeff</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>conceptually performs the following update
+<code class="docutils literal notranslate"><span class="pre">State1(TimeLevel1)</span> <span class="pre">=</span> <span class="pre">State2(TimeLevel2)</span> <span class="pre">+</span> <span class="pre">Coeff</span> <span class="pre">*</span> <span class="pre">Tend</span></code>
+element-wise for every state variable. To perform this update only for
+layer thickness do</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">updateThicknessByTend</span><span class="p">(</span><span class="n">State1</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel1</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">State2</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel2</span><span class="p">,</span><span class="w"> </span><span class="n">Coeff</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>and only for normal velocity do</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">updateVelocityByTend</span><span class="p">(</span><span class="n">State1</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel1</span><span class="p">,</span><span class="w"> </span><span class="n">State2</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel2</span><span class="p">,</span><span class="w"> </span><span class="n">Coeff</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Similarly for tracers, the method for updating tracers is</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">updateTracersByTend</span><span class="p">(</span><span class="n">NextTracers</span><span class="p">,</span><span class="w"> </span><span class="n">CurTracers</span><span class="p">,</span><span class="w"> </span><span class="n">State1</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel1</span><span class="p">,</span><span class="w"> </span><span class="n">State2</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel2</span><span class="p">,</span><span class="w"> </span><span class="n">Coeff</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Additionally, for the RK4 method, there are methods for initializing, accumulating, and
+finalizing the tracer integration for a given time step</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">weightTracers</span><span class="p">(</span><span class="n">NextTracers</span><span class="p">,</span><span class="w"> </span><span class="n">CurTracers</span><span class="p">,</span><span class="w"> </span><span class="n">CurState</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel1</span><span class="p">);</span>
+<span class="n">accumulateTracersUpdate</span><span class="p">(</span><span class="n">AccumTracer</span><span class="p">,</span><span class="w"> </span><span class="n">Coeff</span><span class="p">);</span>
+<span class="n">finalizeTracersUpdate</span><span class="p">(</span><span class="n">NextTracers</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="implemented-time-steppers">
+<h2>Implemented time steppers<a class="headerlink" href="#implemented-time-steppers" title="Permalink to this heading"></a></h2>
+<p>The following time steppers are currently implemented</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Class name</p></th>
+<th class="head"><p>Enum value</p></th>
+<th class="head"><p>Scheme</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ForwardBackwardStepper</p></td>
+<td><p>TimeStepperType::ForwardBackward</p></td>
+<td><p>forward-backward</p></td>
+</tr>
+<tr class="row-odd"><td><p>RungeKutta2Stepper</p></td>
+<td><p>TimeStepperType::RungeKutta2</p></td>
+<td><p>second-order two-stage midpoint Runge Kutta method</p></td>
+</tr>
+<tr class="row-even"><td><p>RungeKutta4Stepper</p></td>
+<td><p>TimeStepperType::RungeKutta4</p></td>
+<td><p>classic fourth-order four-stage Runge Kutta method</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="TimeMgr.html" class="btn btn-neutral float-left" title="Time Manager (TimeMgr)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Reductions.html" class="btn btn-neutral float-right" title="Global Reductions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

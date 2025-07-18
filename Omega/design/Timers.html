@@ -1,0 +1,513 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timers &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Time Stepping" href="TimeStepping.html" />
+    <link rel="prev" title="TimeManager" href="TimeMgr.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Timers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-timers">2.1 Requirement: Timers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-timing-statistics">2.2 Requirement: Timing statistics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-timing-context">2.3 Requirement: Timing context</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-call-sequence">2.4 Requirement: Call sequence</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-output-and-e3sm-compatibility">2.5 Requirement: Output and E3SM compatibility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-full-coverage">2.6 Requirement: Full coverage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-mpi-context">2.7 Requirement: MPI context</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-support-for-multiple-devices">2.8 Desired: Support for multiple devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-other-hardware-counters">2.9 Desired: Other hardware counters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-thread-support">2.10 Desired: Thread support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-memory-profiling">2.11 Desired: Memory profiling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-interaction-with-other-profiling-tools">2.12 Desired: Interaction with other profiling tools</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#start">4.2.1 Start</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stop">4.2.2 Stop</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#print">4.2.3 Print</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#initialize-finalize">4.2.5 Initialize, Finalize</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-all-internal-timers">5.1 Test all internal timers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-all-timers-with-gptl-library">5.2 Test all timers with GPTL library</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Timers</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/Timers.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="timers">
+<span id="omega-design-timers"></span><h1>Timers<a class="headerlink" href="#timers" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>Within OMEGA, we will need a method for profiling aspects
+of code performance. In the most simple form, this requires
+the ability to report the time spent in various sections of
+code. It may also be desirable to track other aspects of
+performance or to access hardware timers, though there may be
+external tools more appropriate for more detailed profiling.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-timers">
+<h3>2.1 Requirement: Timers<a class="headerlink" href="#requirement-timers" title="Permalink to this heading"></a></h3>
+<p>We require the ability to track the time spent in a selected
+code section. This requires the ability to start, stop and
+accumulate time in a timer with a given name.</p>
+</section>
+<section id="requirement-timing-statistics">
+<h3>2.2 Requirement: Timing statistics<a class="headerlink" href="#requirement-timing-statistics" title="Permalink to this heading"></a></h3>
+<p>For tracking load balance, we require the timers to report
+minimum, maximum and avg time across MPI tasks in a parallel
+simulation.</p>
+</section>
+<section id="requirement-timing-context">
+<h3>2.3 Requirement: Timing context<a class="headerlink" href="#requirement-timing-context" title="Permalink to this heading"></a></h3>
+<p>Related to the statistics requirement, timers may be called
+from a code region that is operating within a subset of the
+default MPI environment so must track the context in which
+they are called.</p>
+</section>
+<section id="requirement-call-sequence">
+<h3>2.4 Requirement: Call sequence<a class="headerlink" href="#requirement-call-sequence" title="Permalink to this heading"></a></h3>
+<p>Because some utility functions and related timers may be
+called from multiple sections of code, we require the timers
+to track where in the call sequence the timer occurs and to
+report the time separately when called from a different
+location in the code. When reporting, it is desirable to
+format timer output with indentation reflecting the level of
+the call tree where the timer is called.</p>
+</section>
+<section id="requirement-output-and-e3sm-compatibility">
+<h3>2.5 Requirement: Output and E3SM compatibility<a class="headerlink" href="#requirement-output-and-e3sm-compatibility" title="Permalink to this heading"></a></h3>
+<p>We require timer output to be compatible with existing
+E3SM performance tools. Output in other common formats
+for performance tools is also desired. Output in
+human-readable form is also required and it is often useful
+for at least a summary profile in readable form be
+included in the Log file output.  For consistency with
+other E3SM components, we may wish to support the General
+Purpose Timing Library (GPTL) as a timer option.</p>
+</section>
+<section id="requirement-full-coverage">
+<h3>2.6 Requirement: Full coverage<a class="headerlink" href="#requirement-full-coverage" title="Permalink to this heading"></a></h3>
+<p>Timers must cover all code within Omega to provide a
+complete profile. Granularity should be at least at the
+function/routine level, though finer granularity may
+be desired for larger routines. It may be desireable
+to provide a preprocessor option to support very fine
+granularity and more detail if desired.</p>
+</section>
+<section id="requirement-mpi-context">
+<h3>2.7 Requirement: MPI context<a class="headerlink" href="#requirement-mpi-context" title="Permalink to this heading"></a></h3>
+<p>Because OMEGA allows portions of code to run on a subset
+of processors or alternative parallel decompositions, the
+timers must be able to distinguish the context so that
+statistics across MPI tasks are computed correctly.</p>
+</section>
+<section id="desired-support-for-multiple-devices">
+<h3>2.8 Desired: Support for multiple devices<a class="headerlink" href="#desired-support-for-multiple-devices" title="Permalink to this heading"></a></h3>
+<p>It is useful to track performance aspects of hybrid
+computing nodes, including kernel launch times and
+device timers. However, it is likely that that external
+profiling tools are a better way to access this information.</p>
+</section>
+<section id="desired-other-hardware-counters">
+<h3>2.9 Desired: Other hardware counters<a class="headerlink" href="#desired-other-hardware-counters" title="Permalink to this heading"></a></h3>
+<p>It may be desirable in the future to access other hardware
+counters in addition to simple timers (eg flops, memory ops,
+cache misses, etc.) to provide additional detail in diagnosing
+performance bottlenecks. There are interfaces like PAPI that
+may provide a portable means of accessing counters when
+available, but this profiling may be better performed with
+other tools.</p>
+</section>
+<section id="desired-thread-support">
+<h3>2.10 Desired: Thread support<a class="headerlink" href="#desired-thread-support" title="Permalink to this heading"></a></h3>
+<p>We do not anticipate having large on-node CPU threaded
+regions (threads are currently loop-level), so we anticipate
+all timers will be called outside of threaded regions.
+However, such a capability might be needed in the future.</p>
+</section>
+<section id="desired-memory-profiling">
+<h3>2.11 Desired: Memory profiling<a class="headerlink" href="#desired-memory-profiling" title="Permalink to this heading"></a></h3>
+<p>It would be nice to have the capability of tracking
+memory use (eg high-water mark) to diagnose memory leaks
+or overall memory use by the model. Other memory metrics
+are also useful but may fall under 2.9 above or be tracked
+via external profiling tools.</p>
+</section>
+<section id="desired-interaction-with-other-profiling-tools">
+<h3>2.12 Desired: Interaction with other profiling tools<a class="headerlink" href="#desired-interaction-with-other-profiling-tools" title="Permalink to this heading"></a></h3>
+<p>We will likely make use of external profiling tools for
+additional diagnostics. While some tools use sampling, others
+may require inserting code to assist profiling. It may be
+beneficial to have generic interfaces that could support
+profiling calls and be optionally activated.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>There are no specific algorithms associated with this capability.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>The initial implementation will include only a timer class.
+We will support both a reference implementation using C++
+stdlib timers as well as a GPTL (General Purpose Timing Library)
+option that can be selected at compile time.</p>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>At compile time, the user can optionally select the GPTL
+timers as a pre-processor option (USE_GPTL). In the future,
+a TIMER_LEVEL pre-processor option might be provided to
+identify the granularity of timers, but this is not currently
+implemented.</p>
+<p>Currently the only timer option set in the run time configuration
+is the filename (or filename template) where the timers will
+be printed - a blank entry, None or Log will send the output
+to the standard Logging output.  Other options may be added
+in the future.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Timers</span><span class="p">:</span>
+<span class="w">   </span><span class="nt">TimerFile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MyFilename.$YYYY$MM$DD</span>
+</pre></div>
+</div>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>The timers are implemented with a single timer class. For
+the reference implementation, this will contain:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Timer</span>
+
+<span class="w"> </span><span class="k">private</span><span class="o">:</span>
+<span class="w">   </span><span class="c1">/// Timer name</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">TimerName</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">/// Context in which this timer is called</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MachEnv</span><span class="o">&gt;</span><span class="w"> </span><span class="n">Context</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">/// Flag to determine when the timer is running</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">IsRunning</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">/// Number of times the timer is started/called</span>
+<span class="w">   </span><span class="c1">/// Used for timer statistics</span>
+<span class="w">   </span><span class="n">I8</span><span class="w"> </span><span class="n">NumCalls</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">/// Start time for the current timer interval</span>
+<span class="w">   </span><span class="n">R8</span><span class="w"> </span><span class="n">StartTime</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">/// Accumulated time for this timer</span>
+<span class="w">   </span><span class="n">R8</span><span class="w"> </span><span class="n">AccumTime</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">/// Track child and parent timers</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Timer</span><span class="o">&gt;</span><span class="w"> </span><span class="n">ParentTimer</span><span class="p">;</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Timer</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">ChildTimers</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">/// Current active timer</span>
+<span class="w">   </span><span class="c1">/// Used with the above to keep track of call sequence</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Timer</span><span class="o">&gt;</span><span class="w"> </span><span class="n">CurTimer</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">/// Level in the timer call hierarchy</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">CallLevel</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">/// Timers will be output with this filename or the</span>
+<span class="w">   </span><span class="c1">/// constructed filename based on this template</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">TimerFile</span><span class="p">;</span>
+
+<span class="w"> </span><span class="k">public</span><span class="o">:</span>
+<span class="w">    </span><span class="c1">// see methods described later</span>
+</pre></div>
+</div>
+<p>When using external libraries (eg GPTL), those libraries
+typically manage the timers internally and the above class will
+be largely empty of data but will retain the interfaces
+and some of the static members that remain relevant
+(eg the output filename).</p>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<p>All of the methods below are static functions.
+The user will be responsible for inserting any needed or desired
+synchronization like MPI barriers or Kokkos fences before
+timer calls.</p>
+<section id="start">
+<h4>4.2.1 Start<a class="headerlink" href="#start" title="Permalink to this heading"></a></h4>
+<p>The start method is used to either create a new timer with a
+given name or start an existing timer of that name:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Timer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TimerName</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This assumes the timer is called from the default machine
+environment. If the timer is started in a different context
+than the default machine environment (eg from a defined subset
+of tasks), then the relevant MachEnv name must also be passed:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Timer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TimerName</span><span class="p">,</span>
+<span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">MachEnvName</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="stop">
+<h4>4.2.2 Stop<a class="headerlink" href="#stop" title="Permalink to this heading"></a></h4>
+<p>The stop method stops a running timer and accumulates the
+time in a running sum.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Timer</span><span class="o">::</span><span class="n">stop</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TimerName</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="print">
+<h4>4.2.3 Print<a class="headerlink" href="#print" title="Permalink to this heading"></a></h4>
+<p>The timer print method stops all timers, computes timer
+statistics and prints the results of all timers either to a
+file or to stdout. The output will be formatted based
+on the call sequence with child timers indented
+from their parents. Statistics will include the number of
+calls to the timer, the min, max and mean across MPI tasks,
+the percentage of total run time and the percentage of the
+parent timers’ run time.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Timer</span><span class="o">::</span><span class="n">print</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+<section id="initialize-finalize">
+<h4>4.2.5 Initialize, Finalize<a class="headerlink" href="#initialize-finalize" title="Permalink to this heading"></a></h4>
+<p>An initialize function will set any run-time options from
+the configuration and start a top-level timer named Total.
+If an external timing library is used, it will initialize
+that library and its options.</p>
+<p>A finalize method will stop all timers (including Total),
+call the print method to output the timing data, and
+clear all defined timers.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Timer</span><span class="o">::</span><span class="n">initialize</span><span class="p">();</span>
+<span class="n">Timer</span><span class="o">::</span><span class="n">finalize</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test-all-internal-timers">
+<h3>5.1 Test all internal timers<a class="headerlink" href="#test-all-internal-timers" title="Permalink to this heading"></a></h3>
+<p>A unit test with routines and loops of varying run
+times will be used to test multiple timers and timer
+statistics across MPI tasks. Visual inspection of the
+timer output will be used to determine compliance with
+formatting.</p>
+<ul class="simple">
+<li><p>tests requirements 2.1-2.5</p></li>
+</ul>
+</section>
+<section id="test-all-timers-with-gptl-library">
+<h3>5.2 Test all timers with GPTL library<a class="headerlink" href="#test-all-timers-with-gptl-library" title="Permalink to this heading"></a></h3>
+<p>The above test code will be repeated after building
+and linking with the GPTL library</p>
+<ul class="simple">
+<li><p>tests requirements 2.1-2.5</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="TimeMgr.html" class="btn btn-neutral float-left" title="TimeManager" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="TimeStepping.html" class="btn btn-neutral float-right" title="Time Stepping" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,1291 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TimeManager &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Timers" href="Timers.html" />
+    <link rel="prev" title="AuxiliaryState" href="AuxiliaryState.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">TimeManager</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#required-simulation-time">2.1 Required: Simulation time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#required-no-accumulation-roundoff">2.2 Required: No accumulation roundoff</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#required-calendar-support">2.3 Required: Calendar support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#required-time-intervals">2.4 Required: Time intervals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#required-events-or-alarms">2.5 Required: Events or alarms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#required-long-times">2.6 Required: Long times</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#required-time-string-representation">2.7 Required: Time string representation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">4.2.1 TimeFrac class</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">4.2.2 Calendar class</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">4.2.3 TimeInstant class</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">4.2.4 TimeInterval class</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">4.2.5 Alarm Class</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id6">4.2.6 Clock Class</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-timefrac">5.1 Test TimeFrac</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-timeinstant">5.2 Test TimeInstant</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-calendar">5.3 Test Calendar</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-time-intervals">5.4 Test Time Intervals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-alarms">5.5 Test Alarms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-clock">5.6 Test Clock</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">TimeManager</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/TimeMgr.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="timemanager">
+<span id="omega-design-time-manager"></span><h1>TimeManager<a class="headerlink" href="#timemanager" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>When simulating the Earth System, a model must track the simulation time
+as it steps forward with a given time step. Time must be kept in the
+appropriate calendar system, accounting for leap years and other
+adjustments as needed. Because these simulations may extend over
+millions of time steps or more, time must be accumulated without roundoff
+so that accumulated time does not drift and events will occur at precise
+time intervals. This document describes various classes needed to track the
+model’s simulation time accurately and manage events in the appropriate
+calendar conventions.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="required-simulation-time">
+<h3>2.1 Required: Simulation time<a class="headerlink" href="#required-simulation-time" title="Permalink to this heading"></a></h3>
+<p>The time manager must be able to track the current simulation time
+as the model integration steps forward.</p>
+</section>
+<section id="required-no-accumulation-roundoff">
+<h3>2.2 Required: No accumulation roundoff<a class="headerlink" href="#required-no-accumulation-roundoff" title="Permalink to this heading"></a></h3>
+<p>Because integrations may extend over millions of time steps or
+longer, the model must track time without accumulating roundoff.</p>
+</section>
+<section id="required-calendar-support">
+<h3>2.3 Required: Calendar support<a class="headerlink" href="#required-calendar-support" title="Permalink to this heading"></a></h3>
+<p>The time manager must be able to track time in supported calendars,
+starting with:</p>
+<ul class="simple">
+<li><p>Gregorian</p></li>
+<li><p>Gregorian with no leap year</p></li>
+<li><p>Idealized 360-day calendar with equal 30-day months</p></li>
+<li><p>No calendar (some test cases only need elapsed time in sec)
+Time for standard calendars will assume Coordinated Universal
+Time (UTC).</p></li>
+</ul>
+</section>
+<section id="required-time-intervals">
+<h3>2.4 Required: Time intervals<a class="headerlink" href="#required-time-intervals" title="Permalink to this heading"></a></h3>
+<p>The model must be able to compute time intervals, not only to
+represent the model time step itself, but also to be able to
+compute time between events, track periodic events or perform
+time averaging. These intervals can be both absolute time (seconds)
+or represented as calendar intervals (monthly, yearly, number of
+days). Conversion from a calendar interval to absolute interval
+(in seconds) will be needed to compute time-related quantities
+like time averaging.</p>
+</section>
+<section id="required-events-or-alarms">
+<h3>2.5 Required: Events or alarms<a class="headerlink" href="#required-events-or-alarms" title="Permalink to this heading"></a></h3>
+<p>The time manager must be able to trigger events that occur
+at specific times or at specified periodic time intervals.
+This requires being able to compare time instants and trigger an
+alarm if a time instant or interval has been reached. It will
+also be useful to track when a previous or next event occurs in a
+periodic sequence.</p>
+</section>
+<section id="required-long-times">
+<h3>2.6 Required: Long times<a class="headerlink" href="#required-long-times" title="Permalink to this heading"></a></h3>
+<p>To support very long time integrations or potential paleoclimate
+simulations, the model must support years that extend beyond the
+4-digit representation and support negative years to represent
+years Before the Common Era (BCE)</p>
+</section>
+<section id="required-time-string-representation">
+<h3>2.7 Required: Time string representation<a class="headerlink" href="#required-time-string-representation" title="Permalink to this heading"></a></h3>
+<p>For model output or metadata, the model must be able to
+represent a time in accepted formats. Following ISO standards
+(eg ISO 8601 and prior), these will typically represent time
+in decreasing intervals, eg <code class="docutils literal notranslate"><span class="pre">YYYYYY-MM-DD</span> <span class="pre">HH:MM:SS.SSSSS</span></code> though
+variations on this format can be supported to use, for example,
+different separators and different widths for years and fractional
+seconds.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>The requirement for no roundoff accumulation implies the need to
+use an integer fraction representation as in the ESMF time
+manager. Similarly, calendar days are best tracked using the
+Julian Day that counts days since a specified start time
+(Noon UTC on 1 Jan, 4713 BCE in the Gregorian calendar -
+a beautiful Monday by most accounts) with conversion to
+various calendars following the algorithms in:</p>
+<p>Fliegel, H. F., and Van Flandern, T. C., 1968, A Machine Algorithm
+for Processing Calendar Dates, Communications of the Association of
+Computing Machines, 11, 657.</p>
+<p>Hatcher, D.A., 1984. Simple Formulae for Julian Day Numbers and
+Calendar Dates, Quart. J. of R. Astr. Soc., 25, 53-55.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>The time manager design will follow an ESMF-like approach,
+though simplified and not requiring linking to the full
+ESMF library. Previous simplifications were performed for
+WRF by John Michalakes in Fortran and are used in MPAS, E3SM.
+A similar simplification was performed by Phil Jones from the
+ESMF C++ version for the SciDAC CANGA project and will be used
+here.</p>
+<p>The time manager will consist of a number of classes/modules:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TimeFrac</span></code>: a base fraction representation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TimeInstant</span></code>: representation of a point in time</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TimeInterval</span></code>: a time step or difference between time instants</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Calendar</span></code>: support for various calendars</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Alarm</span></code>: alarms that trigger at time instants or periodic intervals</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Clock</span></code>: a clock that keeps track of model time as it marches forward</p></li>
+</ul>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>A number of parameters are defined among the above classes. For
+all classes, it will be useful to define times and intervals with
+a number and units, so we define an enum class for time units:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">TimeUnits</span><span class="p">{</span>
+<span class="w">                 </span><span class="n">None</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; value for undefined units</span>
+<span class="w">                 </span><span class="n">Seconds</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; time units in seconds (typical)</span>
+<span class="w">                 </span><span class="n">Minutes</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; time units in minutes</span>
+<span class="w">                 </span><span class="n">Hours</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; time units in hours</span>
+<span class="w">                 </span><span class="n">Days</span><span class="p">,</span><span class="w">     </span><span class="c1">///&lt; time units in days</span>
+<span class="w">                 </span><span class="n">Months</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; time units in months</span>
+<span class="w">                 </span><span class="n">Years</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; time units in years</span>
+<span class="w">                 </span><span class="p">};</span>
+</pre></div>
+</div>
+<p>For calendars, there will be an enum for supported calendars as
+well as a string name for each.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#define NUM_SUPPORTED_CALENDARS=9</span>
+
+<span class="k">enum</span><span class="w"> </span><span class="nc">CalendarKind</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="n">CalendarGregorian</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; usual Gregorian calendar</span>
+<span class="w">   </span><span class="n">CalendarNoLeap</span><span class="p">,</span><span class="w">        </span><span class="c1">///&lt; Gregorian, but without leap yrs</span>
+<span class="w">   </span><span class="n">CalendarJulian</span><span class="p">,</span><span class="w">        </span><span class="c1">///&lt; Julian</span>
+<span class="w">   </span><span class="n">CalendarJulianDay</span><span class="p">,</span><span class="w">     </span><span class="c1">///&lt; Julian day</span>
+<span class="w">   </span><span class="n">CalendarModJulianDay</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; modified Julian day</span>
+<span class="w">   </span><span class="n">Calendar360Day</span><span class="p">,</span><span class="w">        </span><span class="c1">///&lt; 12 months, 30 days each</span>
+<span class="w">   </span><span class="n">CalendarCustom</span><span class="p">,</span><span class="w">        </span><span class="c1">///&lt; user defined</span>
+<span class="w">   </span><span class="n">CalendarNoCalendar</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; track elapsed time only</span>
+<span class="w">   </span><span class="n">CalendarUnknown</span><span class="p">};</span><span class="w">      </span><span class="c1">///&lt; uninitialized or invalid</span>
+
+<span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">CalendarKindName</span><span class="p">[</span><span class="n">CALENDAR_KIND_COUNT</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="s">&quot;Gregorian&quot;</span><span class="p">,</span>
+<span class="w">     </span><span class="s">&quot;No Leap&quot;</span><span class="p">,</span>
+<span class="w">     </span><span class="s">&quot;Julian&quot;</span><span class="p">,</span>
+<span class="w">     </span><span class="s">&quot;Julian Day&quot;</span><span class="p">,</span>
+<span class="w">     </span><span class="s">&quot;Modified Julian Day&quot;</span><span class="p">,</span>
+<span class="w">     </span><span class="s">&quot;360 Day&quot;</span><span class="p">,</span>
+<span class="w">     </span><span class="s">&quot;Custom&quot;</span><span class="p">,</span>
+<span class="w">     </span><span class="s">&quot;No Calendar&quot;</span><span class="p">,</span>
+<span class="w">     </span><span class="s">&quot;Invalid&quot;</span><span class="w"> </span><span class="p">};</span>
+</pre></div>
+</div>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>There are six classes that will make up the time interval.</p>
+<section id="timefrac-class">
+<h5>4.1.2.1 TimeFrac class<a class="headerlink" href="#timefrac-class" title="Permalink to this heading"></a></h5>
+<p>There will be a TimeFrac class for the base fractional time
+representation:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">TimeFrac</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="c1">// private variables</span>
+<span class="w">   </span><span class="k">private</span><span class="o">:</span>
+<span class="w">      </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">whole</span><span class="p">;</span><span class="w">  </span><span class="c1">///&lt; whole seconds</span>
+<span class="w">      </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">numer</span><span class="p">;</span><span class="w">  </span><span class="c1">///&lt; fractional second (n/d) numerator</span>
+<span class="w">      </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">denom</span><span class="p">;</span><span class="w">  </span><span class="c1">///&lt; fractional second (n/d) denominator</span>
+
+<span class="w">   </span><span class="k">public</span><span class="o">:</span>
+<span class="w">      </span><span class="p">[</span><span class="n">methods</span><span class="w"> </span><span class="n">described</span><span class="w"> </span><span class="n">below</span><span class="p">]</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
+<section id="calendar-class">
+<h5>4.1.2.2 Calendar class<a class="headerlink" href="#calendar-class" title="Permalink to this heading"></a></h5>
+<p>The calendar class holds useful information for the calendar to be
+used:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#define MONTHS_PER_YEAR=12</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Calendar</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">  </span><span class="c1">// private variables</span>
+<span class="w">  </span><span class="k">private</span><span class="o">:</span>
+
+<span class="w">     </span><span class="kt">int</span><span class="w"> </span><span class="n">id</span><span class="p">;</span><span class="w">                   </span><span class="c1">///&lt; unique id for quick checks</span>
+<span class="w">     </span><span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">numCalendars</span><span class="p">;</span><span class="w">  </span><span class="c1">///&lt; number of calendars created</span>
+<span class="w">     </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="p">;</span><span class="w">         </span><span class="c1">///&lt; name of calendar</span>
+<span class="w">     </span><span class="n">CalendarKind</span><span class="w"> </span><span class="n">calKind</span><span class="p">;</span><span class="w">     </span><span class="c1">///&lt; enum for calendar kind</span>
+<span class="w">     </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">calKindName</span><span class="p">;</span><span class="w">  </span><span class="c1">///&lt; name of calendar kind</span>
+
+<span class="w">     </span><span class="c1">// variables defining calendar characteristics for time</span>
+<span class="w">     </span><span class="kt">int</span><span class="w"> </span><span class="n">daysPerMonth</span><span class="p">[</span><span class="n">MONTHS_PER_YEAR</span><span class="p">];</span><span class="w"> </span><span class="c1">///&lt; days in each month</span>
+<span class="w">     </span><span class="kt">int</span><span class="w"> </span><span class="n">monthsPerYear</span><span class="p">;</span><span class="w">             </span><span class="c1">///&lt; num months in year</span>
+<span class="w">     </span><span class="kt">int</span><span class="w"> </span><span class="n">secondsPerDay</span><span class="p">;</span><span class="w">             </span><span class="c1">///&lt; seconds per day</span>
+<span class="w">     </span><span class="kt">int</span><span class="w"> </span><span class="n">secondsPerYear</span><span class="p">;</span><span class="w">            </span><span class="c1">///&lt; seconds per normal year</span>
+<span class="w">     </span><span class="kt">int</span><span class="w"> </span><span class="n">daysPerYear</span><span class="p">;</span><span class="w">               </span><span class="c1">///&lt; days per normal year</span>
+
+<span class="w">     </span><span class="c1">// public methods</span>
+<span class="w">     </span><span class="k">public</span><span class="o">:</span>
+<span class="w">        </span><span class="p">[</span><span class="n">methods</span><span class="w"> </span><span class="n">described</span><span class="w"> </span><span class="n">below</span><span class="p">]</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
+<section id="timeinstant-class">
+<h5>4.1.2.3 TimeInstant class<a class="headerlink" href="#timeinstant-class" title="Permalink to this heading"></a></h5>
+<p>The time instant class represents a point in time within a
+given calendar:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">TimeInstant</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="c1">// private variables</span>
+<span class="w">   </span><span class="k">private</span><span class="o">:</span>
+<span class="w">      </span><span class="n">TimeFrac</span><span class="w"> </span><span class="n">elapsedTime</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Fractional seconds since reference time</span>
+<span class="w">      </span><span class="n">Calendar</span><span class="w"> </span><span class="o">*</span><span class="n">calPtr</span><span class="p">;</span><span class="w">  </span><span class="c1">///&lt; Pointer to calendar in which time is based</span>
+
+<span class="w">   </span><span class="k">public</span><span class="o">:</span>
+<span class="w">      </span><span class="p">[</span><span class="n">methods</span><span class="w"> </span><span class="n">described</span><span class="w"> </span><span class="n">below</span><span class="p">]</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
+<section id="timeinterval-class">
+<h5>4.1.2.4 TimeInterval class<a class="headerlink" href="#timeinterval-class" title="Permalink to this heading"></a></h5>
+<p>The time interval is used for both time steps and to compute
+differences between time instants. The time interval can either
+be an time interval in seconds or it can be used to hold a
+time interval in calendar units (eg number of days, months or
+years). The latter is useful for periodic events that occur
+once per year, month or ndays.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">TimeInterval</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="c1">// private variables</span>
+<span class="w">   </span><span class="k">private</span><span class="o">:</span>
+<span class="w">      </span><span class="n">TimeFrac</span><span class="w"> </span><span class="n">interval</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Non-calendar interval in fractional seconds</span>
+<span class="w">      </span><span class="kt">bool</span><span class="w"> </span><span class="n">isCalendar</span><span class="p">;</span><span class="w">       </span><span class="c1">///&lt; True if calendar interval</span>
+<span class="w">      </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">calInterval</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Calendar interval length</span>
+<span class="w">      </span><span class="n">TimeUnits</span><span class="w"> </span><span class="n">units</span><span class="p">;</span><span class="w">       </span><span class="c1">///&lt; Calendar interval units</span>
+
+<span class="w">   </span><span class="k">public</span><span class="o">:</span>
+<span class="w">      </span><span class="p">[</span><span class="n">methods</span><span class="w"> </span><span class="n">described</span><span class="w"> </span><span class="n">below</span><span class="p">]</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
+<section id="alarm-class">
+<h5>4.1.2.5 Alarm class<a class="headerlink" href="#alarm-class" title="Permalink to this heading"></a></h5>
+<p>The alarm class allows a user to set either one-time or periodic
+alarms to trigger events, like forcing updates, I/O, etc. that
+occur at specific times.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Alarm</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="c1">// private variables</span>
+<span class="w">   </span><span class="k">private</span><span class="o">:</span>
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; name for the alarm</span>
+
+<span class="w">      </span><span class="kt">bool</span><span class="w"> </span><span class="n">ringing</span><span class="p">;</span><span class="w">   </span><span class="c1">///&lt; alarm is currently ringing</span>
+<span class="w">      </span><span class="kt">bool</span><span class="w"> </span><span class="n">periodic</span><span class="p">;</span><span class="w">  </span><span class="c1">///&lt; alarm rings periodically on interval</span>
+<span class="w">      </span><span class="kt">bool</span><span class="w"> </span><span class="n">stopped</span><span class="p">;</span><span class="w">   </span><span class="c1">///&lt; alarm has been stopped and not reset</span>
+
+<span class="w">      </span><span class="n">TimeInstant</span><span class="w">  </span><span class="n">ringTime</span><span class="p">;</span><span class="w">     </span><span class="c1">///&lt; time at/after which alarm rings</span>
+<span class="w">      </span><span class="n">TimeInterval</span><span class="w"> </span><span class="n">ringInterval</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; interval at which this alarm rings</span>
+<span class="w">      </span><span class="n">TimeInstant</span><span class="w">  </span><span class="n">ringTimePrev</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; previous alarm time for interval alarms</span>
+
+<span class="w">   </span><span class="k">public</span><span class="o">:</span>
+<span class="w">      </span><span class="p">[</span><span class="n">methods</span><span class="w"> </span><span class="n">described</span><span class="w"> </span><span class="n">below</span><span class="p">]</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
+<section id="clock-class">
+<h5>4.1.2.6 Clock class<a class="headerlink" href="#clock-class" title="Permalink to this heading"></a></h5>
+<p>The clock class is meant to track and manage the time for a model
+advancing in time. Alarms can be attached to the clock so that
+the ringing status can be updated as the clock marches forward.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Clock</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="c1">// private variables</span>
+<span class="w">   </span><span class="k">private</span><span class="o">:</span>
+
+<span class="w">      </span><span class="n">TimeInstant</span><span class="w">  </span><span class="n">startTime</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; initial time for this clock</span>
+<span class="w">      </span><span class="n">TimeInstant</span><span class="w">  </span><span class="n">currTime</span><span class="p">;</span><span class="w">  </span><span class="c1">///&lt; current time</span>
+<span class="w">      </span><span class="n">TimeInstant</span><span class="w">  </span><span class="n">prevTime</span><span class="p">;</span><span class="w">  </span><span class="c1">///&lt; time at previous timestep</span>
+<span class="w">      </span><span class="n">TimeInstant</span><span class="w">  </span><span class="n">nextTime</span><span class="p">;</span><span class="w">  </span><span class="c1">///&lt; time at next timestep</span>
+<span class="w">      </span><span class="n">TimeInterval</span><span class="w"> </span><span class="n">timeStep</span><span class="p">;</span><span class="w">  </span><span class="c1">///&lt; interval at which this clock advances</span>
+
+<span class="w">      </span><span class="kt">int</span><span class="w"> </span><span class="n">numAlarms</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; current number of attached alarms</span>
+
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Alarm</span><span class="w"> </span><span class="o">*&gt;</span><span class="w"> </span><span class="n">alarms</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; pointers to alarms associated with this clock</span>
+
+<span class="w">   </span><span class="k">public</span><span class="o">:</span>
+<span class="w">      </span><span class="p">[</span><span class="n">methods</span><span class="w"> </span><span class="n">described</span><span class="w"> </span><span class="n">below</span><span class="p">]</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<p>The classes above have a number of methods associated with them for
+managing time.</p>
+<section id="id1">
+<h4>4.2.1 TimeFrac class<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h4>
+<p>The TimeFrac class is a base class that is not meant to be
+accessed by users but provides the integer fraction time
+capability needed for accumulating time. It contains a number
+of operators to perform arithmetic on fractional integers
+and a number of accessor functions to convert units into
+a fractional time.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Accessor methods</span>
+
+<span class="c1">/// Single call to set all native base time components</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">whole</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] whole seconds</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">numer</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] fractional second numerator</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">denom</span><span class="w">  </span><span class="c1">///&lt; [in] fractional second denominator</span>
+<span class="w">        </span><span class="p">);</span>
+<span class="c1">/// Set base time by converting from integer hours, minutes, seconds</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">setHMS</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">hours</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] integer hours</span>
+<span class="w">           </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">minutes</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] integer minutes</span>
+<span class="w">           </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">seconds</span><span class="w">  </span><span class="c1">///&lt; [in] integer seconds</span>
+
+<span class="c1">/// Set base time by converting from a real number of seconds</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">setSeconds</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">seconds</span><span class="w"> </span><span class="c1">///&lt; [in] Time in real seconds</span>
+<span class="w">              </span><span class="p">);</span>
+<span class="c1">/// Set base time by converting from a real number of hours</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">setHours</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">hours</span><span class="w"> </span><span class="c1">///&lt; [in] Time in real hours</span>
+<span class="w">            </span><span class="p">);</span>
+<span class="c1">/// Set base time by converting from a real number of minutes</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">setMinutes</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">minutes</span><span class="w"> </span><span class="c1">///&lt; [in] Time in real minutes</span>
+<span class="w">              </span><span class="p">);</span>
+
+<span class="c1">/// Set whole seconds separately</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">setWhole</span><span class="p">(</span>
+<span class="w">       </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">whole</span><span class="w"> </span><span class="c1">///&lt; [in] Whole number of seconds</span>
+<span class="w">       </span><span class="p">);</span>
+<span class="c1">/// Set numerator of fractional seconds separately</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">setNumer</span><span class="p">(</span>
+<span class="w">       </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">numer</span><span class="w"> </span><span class="c1">///&lt; [in] Numerator of fractional seconds</span>
+<span class="w">       </span><span class="p">);</span>
+<span class="c1">/// Set denominator of fractional seconds separately</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">setDenom</span><span class="p">(</span>
+<span class="w">       </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">denom</span><span class="w"> </span><span class="c1">///&lt; [in] Denominator of fractional seconds</span>
+<span class="w">       </span><span class="p">);</span>
+
+<span class="c1">/// Single call to retrieve native base time components</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">whole</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] whole seconds</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">numer</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] fractional second numerator</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">denom</span><span class="w">  </span><span class="c1">///&lt; [out] fractional second denominator</span>
+<span class="w">        </span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Get base time converted to integer hours, minutes, seconds</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">getHMS</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="o">&amp;</span><span class="n">hours</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [out] integer hours</span>
+<span class="w">           </span><span class="kt">int</span><span class="w"> </span><span class="o">&amp;</span><span class="n">minutes</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] integer minutes</span>
+<span class="w">           </span><span class="kt">int</span><span class="w"> </span><span class="o">&amp;</span><span class="n">seconds</span><span class="w">  </span><span class="c1">///&lt; [out] integer seconds</span>
+<span class="w">           </span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Get base time and convert to a real number of seconds</span>
+<span class="c1">/// \return Time in real seconds</span>
+<span class="kt">double</span><span class="w"> </span><span class="nf">getSeconds</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Get base time and convert to a real number of hours</span>
+<span class="c1">/// \return Time in real hours</span>
+<span class="kt">double</span><span class="w"> </span><span class="nf">getHours</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Get base time and convert to a real number of minutes</span>
+<span class="c1">/// \return Time in real minutes</span>
+<span class="kt">double</span><span class="w"> </span><span class="nf">getMinutes</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Retrieve the whole seconds component of base time</span>
+<span class="c1">/// \return Whole number of seconds</span>
+<span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="nf">getWhole</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Retrieve the numerator component of fractional base time</span>
+<span class="c1">/// \return Numerator of fractional seconds</span>
+<span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="nf">getNumer</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Retrieve the denominator component of fractional base time</span>
+<span class="c1">/// \return Denominator of fractional seconds</span>
+<span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="nf">getDenom</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">// constructors/destructors</span>
+<span class="c1">/// Default base time constructor</span>
+<span class="n">TimeFrac</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="c1">/// Copy constructor for base time</span>
+<span class="n">TimeFrac</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="o">&amp;</span><span class="w"> </span><span class="c1">///&lt; [in] existing base time to be copied</span>
+<span class="w">        </span><span class="p">);</span>
+<span class="c1">/// Construct base time by component</span>
+<span class="n">TimeFrac</span><span class="p">(</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">whole</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] whole seconds</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">numer</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] fractional second numerator</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">denom</span><span class="w">  </span><span class="c1">///&lt; [in] fractional second denominator</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="c1">/// Construct base time by converting from a real number of seconds</span>
+<span class="n">TimeFrac</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">seconds</span><span class="w"> </span><span class="c1">///&lt; [in] Time in real seconds</span>
+<span class="w">        </span><span class="p">);</span>
+<span class="c1">/// Destructor for base time</span>
+<span class="o">~</span><span class="n">TimeFrac</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="c1">// operators</span>
+<span class="c1">/// Equivalence comparison operator for TimeFrac</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">==</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Non-equivalence comparison operator for TimeFrac</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">!=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Less than comparison operator for TimeFrac</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">&lt;</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Greater than comparison operator for TimeFrac</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">&gt;</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Less than or equal comparison operator for TimeFrac</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">&lt;=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Greater than or equal comparison operator for TimeFrac</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">&gt;=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Addition operator for TimeFrac</span>
+<span class="n">TimeFrac</span><span class="w">  </span><span class="k">operator</span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Subtraction operator for TimeFrac</span>
+<span class="n">TimeFrac</span><span class="w">  </span><span class="k">operator</span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Increment operator for TimeFrac</span>
+<span class="n">TimeFrac</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">+=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="w"> </span><span class="o">&amp;</span><span class="p">);</span>
+<span class="c1">/// Decrement operator for TimeFrac</span>
+<span class="n">TimeFrac</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">-=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="w"> </span><span class="o">&amp;</span><span class="p">);</span>
+<span class="c1">/// Multiplication by integer scalar</span>
+<span class="n">TimeFrac</span><span class="w">  </span><span class="k">operator</span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">multiplier</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Multiplication in place by integer scalar</span>
+<span class="n">TimeFrac</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">*=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">multiplier</span><span class="p">);</span>
+<span class="c1">/// Multiplication by real scalar</span>
+<span class="n">TimeFrac</span><span class="w">  </span><span class="k">operator</span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">multiplier</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Multiplication in place by real scalar</span>
+<span class="n">TimeFrac</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">*=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">multiplier</span><span class="p">);</span>
+<span class="c1">/// Divide TimeFrac by integer scalar</span>
+<span class="n">TimeFrac</span><span class="w">  </span><span class="k">operator</span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">divisor</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Divide TimeFrac in place by integer scalar</span>
+<span class="n">TimeFrac</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">/=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">divisor</span><span class="p">);</span>
+<span class="c1">/// Divide two TimeFracs and return a real result</span>
+<span class="kt">double</span><span class="w">   </span><span class="k">operator</span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Modulus method for TimeFrac</span>
+<span class="n">TimeFrac</span><span class="w">  </span><span class="k">operator</span><span class="o">%</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Modulus method in place</span>
+<span class="n">TimeFrac</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">%=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="w"> </span><span class="o">&amp;</span><span class="p">);</span>
+<span class="c1">/// Assignment operator for TimeFrac</span>
+<span class="n">TimeFrac</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="w"> </span><span class="o">&amp;</span><span class="p">);</span>
+
+<span class="c1">// Other utility methods</span>
+<span class="c1">/// Convert a time fraction to new denominator</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">convert</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">denom</span><span class="w"> </span><span class="c1">///&lt; [in] new denominator</span>
+<span class="w">           </span><span class="p">);</span>
+<span class="c1">/// Reduce a time fraction to simplest form</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">simplify</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="id2">
+<h4>4.2.2 Calendar class<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h4>
+<p>The calendar class is a mostly immutable class that
+holds information about the chosen calendar for use by other
+time manager classes. It mostly constructs an instance based
+on the user-selected calendar. Retrieval functions and query
+functions are provided. An equivalence/non-equivalence operator
+is needed for the later TimeInstant equivalence. Utility functions
+to convert between elapsed time and calendar dates and incrementing
+calendar time are supplied for use by other time manager routines.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// accessor functions</span>
+<span class="c1">// this is (mostly) an immutable class so use constructors</span>
+<span class="c1">// and provide only one set accessor for renaming</span>
+
+<span class="c1">// the only set function is for renaming</span>
+<span class="c1">/// Renames a Calendar to the input string</span>
+<span class="c1">/// \return Error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">rename</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">inName</span><span class="w"> </span><span class="c1">///&lt; [in] name to use for calendar</span>
+<span class="w">           </span><span class="p">);</span>
+
+<span class="c1">/// Retrieve any/all calendar properties</span>
+<span class="c1">/// \return Error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="kt">int</span><span class="w">           </span><span class="o">*</span><span class="n">outId</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [out] id assigned to calendar</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w">   </span><span class="o">*</span><span class="n">outName</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] Name of calendar</span>
+<span class="w">        </span><span class="n">CalendarKind</span><span class="w">  </span><span class="o">*</span><span class="n">outKind</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] Kind of calendar</span>
+<span class="w">        </span><span class="kt">int</span><span class="w">           </span><span class="o">*</span><span class="n">outDaysPerMonth</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [out] Days per month</span>
+<span class="w">        </span><span class="kt">int</span><span class="w">           </span><span class="o">*</span><span class="n">outMonthsPerYear</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] Months per year</span>
+<span class="w">        </span><span class="kt">int</span><span class="w">           </span><span class="o">*</span><span class="n">outSecondsPerDay</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] Seconds per day</span>
+<span class="w">        </span><span class="kt">int</span><span class="w">           </span><span class="o">*</span><span class="n">outSecondsPerYear</span><span class="p">,</span><span class="c1">///&lt; [out] Seconds per year</span>
+<span class="w">        </span><span class="kt">int</span><span class="w">           </span><span class="o">*</span><span class="n">outDaysPerYear</span><span class="w">    </span><span class="o">///&lt;</span><span class="w"> </span><span class="p">[</span><span class="n">out</span><span class="p">]</span><span class="w"> </span><span class="n">Days</span><span class="w"> </span><span class="n">per</span><span class="w"> </span><span class="n">year</span><span class="w"> </span><span class="p">(</span><span class="n">DPY</span><span class="p">)</span>
+<span class="w">        </span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">// Might also add specific retrievals for individual</span>
+<span class="c1">// components, eg seconds per day/year?</span>
+
+<span class="c1">/// Default constructor</span>
+<span class="n">Calendar</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="c1">/// Copy constructor</span>
+<span class="n">Calendar</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Calendar</span><span class="w"> </span><span class="o">&amp;</span><span class="n">calendar</span><span class="p">);</span>
+<span class="c1">/// Constructor based on kind of calendar</span>
+<span class="n">Calendar</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">inName</span><span class="p">,</span><span class="w">       </span><span class="c1">///&lt; [in] name of calendar</span>
+<span class="w">         </span><span class="n">CalendarKind</span><span class="w"> </span><span class="n">calKind</span><span class="w">      </span><span class="c1">///&lt; [in] choice of calendar kind</span>
+<span class="w">         </span><span class="p">);</span>
+<span class="c1">/// Constructs custom calendar based in inputs</span>
+<span class="n">Calendar</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">inName</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] name of calendar</span>
+<span class="w">         </span><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">inDaysPerMonth</span><span class="p">,</span><span class="w">      </span><span class="c1">///&lt; [in] array of days per month</span>
+<span class="w">         </span><span class="kt">int</span><span class="w"> </span><span class="n">inSecondsPerDay</span><span class="p">,</span><span class="w">      </span><span class="c1">///&lt; [in] seconds per day</span>
+<span class="w">         </span><span class="kt">int</span><span class="w"> </span><span class="n">inSecondsPerYear</span><span class="p">,</span><span class="w">     </span><span class="c1">///&lt; [in] seconds per year</span>
+<span class="w">         </span><span class="kt">int</span><span class="w"> </span><span class="n">inDaysPerYear</span><span class="w">         </span><span class="c1">///&lt; [in] days per year (dpy)</span>
+<span class="w">         </span><span class="p">);</span>
+<span class="c1">/// Calendar destructor</span>
+<span class="o">~</span><span class="n">Calendar</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="c1">/// Calendar equivalence operator</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">==</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Calendar</span><span class="w"> </span><span class="o">&amp;</span><span class="n">calendar</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Calendar non-equivalence operator</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">!=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Calendar</span><span class="w"> </span><span class="o">&amp;</span><span class="n">calendar</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">/// Checks whether input year is a leap year</span>
+<span class="c1">/// \return true if year is a leap year, false otherwise</span>
+<span class="kt">bool</span><span class="w"> </span><span class="nf">isLeapYear</span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">year</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in]  year to check</span>
+<span class="w">                </span><span class="kt">int</span><span class="w"> </span><span class="o">&amp;</span><span class="n">rc</span><span class="w">         </span><span class="c1">///&lt; [out] return code to flag errors</span>
+<span class="w">                </span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">/// Computes the total elapsed time in seconds (in TimeFrac form)</span>
+<span class="c1">/// since the calendar reference time, given a calendar date, time.</span>
+<span class="c1">/// \return Elapsed time in TimeFrac form</span>
+<span class="n">TimeFrac</span><span class="w"> </span><span class="n">getElapsedTime</span><span class="p">(</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">year</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] calendar year</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">month</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in] calendar month</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">day</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; [in] calendar day</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">hour</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] time of day-hour</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">minute</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] time of day-min</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">whole</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in] time of day-whole seconds</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">numer</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in] time of day-frac secs (numerator)</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">denom</span><span class="w">   </span><span class="c1">///&lt; [in] time of day-frac secs (denom)</span>
+<span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">/// Determines the calendar date and time of day, given an</span>
+<span class="c1">/// elapsed time since the calendar reference time.</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">getDateTime</span><span class="p">(</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">TimeFrac</span><span class="w"> </span><span class="n">elapsedTime</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] time in secs from ref time</span>
+<span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">year</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [out] calendar year</span>
+<span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">month</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [out] calendar month</span>
+<span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">day</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; [out] calendar day</span>
+<span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">hour</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [out] time of day-hours</span>
+<span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">minute</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] time of day-minutes</span>
+<span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">whole</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [out] time of day-whole seconds</span>
+<span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">numer</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [out] time of day-frac secs (numerator)</span>
+<span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">denom</span><span class="w">   </span><span class="c1">///&lt; [out] time of day-frac secs (denom)</span>
+<span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">/// Increments (or decrements) a calendar date by a specified</span>
+<span class="c1">/// interval, supplied by an integer interval in given time units.</span>
+<span class="c1">/// Only calendar based intervals (years, months or days) are</span>
+<span class="c1">/// supported. This is primarily meant to be called by other time</span>
+<span class="c1">/// manager routines (eg to add/subtract time instants) for those</span>
+<span class="c1">/// time intervals that are dependent on date and sensitive to</span>
+<span class="c1">/// calendar features like leap years and varying days of the month.</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">incrementDate</span><span class="p">(</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">interval</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] time interval to advance date</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">TimeUnits</span><span class="w"> </span><span class="n">units</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; [in] time units for interval</span>
+<span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">year</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in,out] calendar year of time to be changed</span>
+<span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">month</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in,out] calendar month of ...</span>
+<span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">day</span><span class="w">     </span><span class="c1">///&lt; [in,out] calendar day</span>
+<span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h4>4.2.3 TimeInstant class<a class="headerlink" href="#id3" title="Permalink to this heading"></a></h4>
+<p>The time instant class represents a single instant in time.
+Most of the methods are accessor methods for getting/setting
+a time instant or its components. In addition, a number of
+operators are defined for performing basic arithmetic with
+time instants and time intervals (see following interval class).
+Finally, a method for creating a time string for a time
+instant is supplied.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// constructors/destructors</span>
+<span class="c1">/// Default constructor creates empty time instant</span>
+<span class="n">TimeInstant</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="c1">/// Construct time instant from date, time, calendar</span>
+<span class="c1">/// Where seconds is supplied as real number.</span>
+<span class="n">TimeInstant</span><span class="p">(</span><span class="n">Calendar</span><span class="w">       </span><span class="o">*</span><span class="n">Cal</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; [in] Calendar to use</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">year</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] year</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">month</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in] month</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">day</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; [in] day</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">hour</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] hour</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">minute</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] minute</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w">    </span><span class="n">rSecond</span><span class="w"> </span><span class="c1">///&lt; [in] second (real)</span>
+<span class="w">            </span><span class="p">);</span>
+
+<span class="c1">/// Construct time instant from date, time, calendar</span>
+<span class="c1">/// Where seconds is supplied in integer fractional seconds.</span>
+<span class="n">TimeInstant</span><span class="p">(</span><span class="w">      </span><span class="n">Calendar</span><span class="w"> </span><span class="o">*</span><span class="n">Cal</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; [in] Calendar to use</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">year</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] year</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">month</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in] month</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">day</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; [in] day</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">hour</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] hour</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">minute</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] minute</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">whole</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in] second (whole integer)</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">numer</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in] second (fraction numerator)</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">denom</span><span class="w">   </span><span class="c1">///&lt; [in] second (fraction denominator)</span>
+<span class="w">            </span><span class="p">);</span>
+
+<span class="c1">/// Destructor for time interval</span>
+<span class="o">~</span><span class="n">TimeInstant</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="c1">// Accessor methods</span>
+<span class="c1">/// Set time instant calendar</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="n">Calendar</span><span class="w"> </span><span class="o">*</span><span class="n">Cal</span><span class="w">   </span><span class="c1">///&lt; [in] Calendar to use for this time</span>
+<span class="w">        </span><span class="p">);</span>
+
+<span class="c1">/// Set time instant from date and time, where seconds is supplied</span>
+<span class="c1">/// as a real number.</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">year</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] year</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">month</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in] month</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">day</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; [in] day</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">hour</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] hour</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">minute</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] minute</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w">    </span><span class="n">rSecond</span><span class="w"> </span><span class="o">///&lt;</span><span class="w"> </span><span class="p">[</span><span class="n">in</span><span class="p">]</span><span class="w"> </span><span class="n">second</span><span class="w"> </span><span class="p">(</span><span class="n">real</span><span class="p">)</span>
+<span class="w">        </span><span class="p">);</span>
+
+<span class="c1">/// Set time instant from date and time, where seconds is supplied</span>
+<span class="c1">/// in integer fractional seconds.</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">set</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">year</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] year</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">month</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in] month</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">day</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; [in] day</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">hour</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] hour</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">minute</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] minute</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">whole</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in] second (whole integer)</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">numer</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in] second (fraction numerator)</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">denom</span><span class="w">   </span><span class="c1">///&lt; [in] second (fraction denominator)</span>
+<span class="w">        </span><span class="p">);</span>
+
+<span class="c1">/// Retrieve calendar from time instant</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="n">Calendar</span><span class="w"> </span><span class="o">*&amp;</span><span class="n">cal</span><span class="w"> </span><span class="c1">///&lt; [out] Calendar ptr in which instant defined</span>
+<span class="w">        </span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">/// Retrieve time in date, time form with real seconds.</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">year</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [out] year   of this time instant</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">month</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [out] month  of this time instant</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">day</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; [out] day    of this time instant</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">hour</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [out] hour   of this time instant</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">minute</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] minute of this time instant</span>
+<span class="w">        </span><span class="kt">double</span><span class="w">    </span><span class="o">&amp;</span><span class="n">second</span><span class="w">  </span><span class="c1">///&lt; [out] second of this time instant</span>
+<span class="w">        </span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">/// Retrieve time in date, time form with fractional integer seconds.</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">year</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [out] year   of this time instant</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">month</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [out] month  of this time instant</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">day</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; [out] day    of this time instant</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">hour</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [out] hour   of this time instant</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">minute</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] minute of this time instant</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">whole</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [out] whole seconds of this time</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">numer</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [out] frac second numerator</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">denom</span><span class="w">   </span><span class="c1">///&lt; [out] frac second denominator</span>
+<span class="w">        </span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">// Operators on time instants</span>
+<span class="c1">/// Equivalence comparison for TimeInstant</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">==</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Non-equivalence comparison operator for TimeInstant</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">!=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Less than comparison operator for TimeInstant</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">&lt;</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Greater than comparison operator for TimeInstant</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">&gt;</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Less than or equal comparison operator for TimeInstant</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">&lt;=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Greater than or equal comparison operator for TimeInstant</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">&gt;=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Increment time by adding a time interval</span>
+<span class="n">TimeInstant</span><span class="w">  </span><span class="k">operator</span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Decrement time by subtracting a time interval</span>
+<span class="n">TimeInstant</span><span class="w">  </span><span class="k">operator</span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Create a time interval by subtracting two time instants</span>
+<span class="n">TimeInterval</span><span class="w"> </span><span class="k">operator</span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Increment time in place by adding time interval</span>
+<span class="c1">/// Increment time in place by adding time interval</span>
+<span class="n">TimeInstant</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">+=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">);</span>
+<span class="c1">/// Decrement time in place by subtracting time interval</span>
+<span class="n">TimeInstant</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">-=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">);</span>
+
+<span class="c1">// Other utility methods</span>
+<span class="c1">/// Get time as a string in the format</span>
+<span class="c1">/// &#39;YYYYYY-MM-DD{separator}HH:MM:SS.SSSSSS&#39; where the number</span>
+<span class="c1">/// of digits in year, number of digits after the decimal in</span>
+<span class="c1">/// seconds and the character to use as separator are all input</span>
+<span class="c1">/// by the user.</span>
+<span class="c1">/// \return time string</span>
+<span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">getString</span><span class="p">(</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">yearWidth</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] number of digits in year</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">secondWidth</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] num digits after decimal in seconds</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">separator</span><span class="w">  </span><span class="c1">///&lt; [in] string(char) to separate date/time</span>
+<span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h4>4.2.4 TimeInterval class<a class="headerlink" href="#id4" title="Permalink to this heading"></a></h4>
+<p>The time interval class manages differences or increments in time.
+The user can create or set a time interval with a value and units.
+Retrieval functions for the time interval in various forms are
+also supplied. A number of operators are defined for a variety
+of mathematical operations on time intervals (add, subtract,
+multiply, equivalence, absolute value). Finally, the time instant
+class is treated as a friend class so that time instants can
+be incremented by a time interval and time intervals can be created
+by subtracting two time instants.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// constructors/destructors</span>
+<span class="c1">/// Default time interval constructor</span>
+<span class="n">TimeInterval</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="c1">/// Construct time interval from base time fractional integer seconds</span>
+<span class="n">TimeInterval</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">whole</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; Whole integer seconds</span>
+<span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">numer</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; Fractional seconds numerator</span>
+<span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">denom</span><span class="w">  </span><span class="c1">///&lt; Fractional seconds denominator</span>
+<span class="w">             </span><span class="p">);</span>
+
+<span class="c1">/// Construct time interval from an integer length and units</span>
+<span class="n">TimeInterval</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w">       </span><span class="n">length</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; length of time interval</span>
+<span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="n">TimeUnits</span><span class="w"> </span><span class="n">units</span><span class="w">   </span><span class="c1">///&lt; unit of time for interval</span>
+<span class="w">             </span><span class="p">);</span>
+
+<span class="c1">/// Construct time interval from a long long integer length and units</span>
+<span class="n">TimeInterval</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">length</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; length of time interval</span>
+<span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="n">TimeUnits</span><span class="w"> </span><span class="n">units</span><span class="w">   </span><span class="c1">///&lt; unit of time for interval</span>
+<span class="w">             </span><span class="p">);</span>
+
+<span class="c1">/// Construct time interval from an real length and units</span>
+<span class="n">TimeInterval</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">length</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; length of time interval</span>
+<span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="n">TimeUnits</span><span class="w"> </span><span class="n">units</span><span class="w">   </span><span class="c1">///&lt; unit of time for interval</span>
+<span class="w">             </span><span class="p">);</span>
+
+<span class="c1">/// Destructor for time interval</span>
+<span class="o">~</span><span class="n">TimeInterval</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="c1">// Accessor methods</span>
+<span class="c1">/// Set a non-calendar interval in native fractional integer seconds</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">whole</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; Whole integer seconds</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">numer</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; Fractional seconds numerator</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">denom</span><span class="w">  </span><span class="c1">///&lt; Fractional seconds denominator</span>
+<span class="w">        </span><span class="p">);</span>
+
+<span class="c1">/// Set a time interval from integer length and units</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w">       </span><span class="n">length</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; length of time interval</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="n">TimeUnits</span><span class="w"> </span><span class="n">units</span><span class="w">   </span><span class="c1">///&lt; unit of time for interval</span>
+<span class="w">        </span><span class="p">);</span>
+
+<span class="c1">/// Set a time interval from long long integer length and units</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">length</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; length of time interval</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="n">TimeUnits</span><span class="w"> </span><span class="n">units</span><span class="w">   </span><span class="c1">///&lt; unit of time for interval</span>
+<span class="w">        </span><span class="p">);</span>
+
+<span class="c1">/// Set a time interval from an real length and units</span>
+<span class="c1">/// Real length is only supported for non-calendar intervals since</span>
+<span class="c1">/// a non-integral length has ambiguous meaning when months, years</span>
+<span class="c1">/// have variable length.</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">length</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; length of time interval</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="n">TimeUnits</span><span class="w"> </span><span class="n">units</span><span class="w">   </span><span class="c1">///&lt; unit of time for interval</span>
+<span class="w">        </span><span class="p">);</span>
+
+<span class="c1">/// Retrieve non-calendar interval in native fractional integer form</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">whole</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] whole seconds</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">numer</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] fractional second numerator</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">denom</span><span class="w">  </span><span class="c1">///&lt; [out] fractional second denominator</span>
+<span class="w">        </span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">/// Retrieve a time interval in integer length in specified units.</span>
+<span class="c1">/// To avoid roundoff issues during conversions, integer retrieval</span>
+<span class="c1">/// is only permitted in the same units in which the interval was</span>
+<span class="c1">/// defined.</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="o">&amp;</span><span class="n">length</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] requested integer length of interval</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="n">TimeUnits</span><span class="w"> </span><span class="n">units</span><span class="w"> </span><span class="c1">///&lt; [in] unit of time for interval</span>
+<span class="w">        </span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">/// Retrieve a time interval in real length and specified units.</span>
+<span class="c1">/// For calendar intervals, the units must match the units in which</span>
+<span class="c1">/// the interval was defined. For non-calendar intervals, only conversions</span>
+<span class="c1">/// between hours, minutes and seconds are allowed.</span>
+<span class="c1">/// \return error code</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="kt">double</span><span class="w"> </span><span class="o">&amp;</span><span class="n">length</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] Requested time interval length</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="n">TimeUnits</span><span class="w"> </span><span class="n">units</span><span class="w"> </span><span class="c1">///&lt; [in] unit of time for interval</span>
+<span class="w">       </span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">/// Equivalence comparison operator for TimeInterval</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">==</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Non-equivalence comparison operator for TimeInterval</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">!=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Less than comparison operator for TimeInterval</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">&lt;</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Greater than comparison operator for TimeInterval</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">&gt;</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Less than or equal comparison operator for TimeInterval</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">&lt;=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Greater than or equal comparison operator for TimeInterval</span>
+<span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="o">&gt;=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Addition operator for TimeInterval</span>
+<span class="n">TimeInterval</span><span class="w">  </span><span class="k">operator</span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Subtraction operator for TimeInterval</span>
+<span class="n">TimeInterval</span><span class="w">  </span><span class="k">operator</span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Increment operator for TimeInterval</span>
+<span class="n">TimeInterval</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">+=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">);</span>
+<span class="c1">/// Decrement operator for TimeInterval</span>
+<span class="n">TimeInterval</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">-=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">);</span>
+<span class="c1">/// Multiplication by integer scalar</span>
+<span class="n">TimeInterval</span><span class="w">  </span><span class="k">operator</span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">multiplier</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Multiplication by real scalar</span>
+<span class="c1">/// This is primarily meant for non-calendar intervals, but</span>
+<span class="c1">/// for calendar intervals, it will multiply the year, month or</span>
+<span class="c1">/// day interval and convert to the nearest integer.</span>
+<span class="n">TimeInterval</span><span class="w">  </span><span class="k">operator</span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">multiplier</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Multiplication in place by integer scalar</span>
+<span class="n">TimeInterval</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">*=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">multiplier</span><span class="p">);</span>
+<span class="c1">/// Multiplication in place by real scalar</span>
+<span class="c1">/// This is primarily meant for non-calendar intervals, but</span>
+<span class="c1">/// for calendar intervals, it will multiply the year, month or</span>
+<span class="c1">/// day interval and convert to the nearest integer.</span>
+<span class="n">TimeInterval</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">*=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">multiplier</span><span class="p">);</span>
+<span class="c1">/// Divide interval by integer scalar</span>
+<span class="n">TimeInterval</span><span class="w">  </span><span class="k">operator</span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">divisor</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="c1">/// Divide interval in place by integer scalar</span>
+<span class="n">TimeInterval</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="o">/=</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">divisor</span><span class="p">);</span>
+
+<span class="c1">/// Absolute value</span>
+<span class="k">static</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="nf">absValue</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">);</span>
+<span class="c1">/// Negative absolute value</span>
+<span class="k">static</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="nf">negAbsValue</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="p">);</span>
+
+<span class="c1">// Other utility methods</span>
+<span class="c1">/// Check whether a time interval is positive</span>
+<span class="kt">bool</span><span class="w"> </span><span class="nf">isPositive</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="c1">/// Give the Time Instant access to Time Interval so</span>
+<span class="c1">/// that incrementing/decrementing time is easier.</span>
+<span class="k">friend</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">TimeInstant</span><span class="p">;</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h4>4.2.5 Alarm Class<a class="headerlink" href="#id5" title="Permalink to this heading"></a></h4>
+<p>The alarm class allows the creation of both one-time and
+periodic alarms. There are also methods for querying the
+state of an alarm and for resetting.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// constructors/destructors</span>
+<span class="c1">/// Constructs a one-time alarm using the input ring time.</span>
+<span class="n">Alarm</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">inName</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] Name of alarm</span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="n">alarmTime</span><span class="w"> </span><span class="c1">///&lt; [in] Time at/after which alarm rings</span>
+<span class="w">     </span><span class="p">);</span>
+
+<span class="c1">/// Constructs a periodic/interval alarm based on an input periodic</span>
+<span class="c1">/// time interval and a start time for the interval period.</span>
+<span class="n">Alarm</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w">  </span><span class="n">inName</span><span class="p">,</span><span class="w">        </span><span class="c1">///&lt; [in] Name of alarm</span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="n">alarmInterval</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] interval at which alarm rings</span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w">  </span><span class="n">intervalStart</span><span class="w">  </span><span class="c1">///&lt; [in] start time of first interval</span>
+<span class="w">     </span><span class="p">);</span>
+
+<span class="c1">/// Destructor for alarm</span>
+<span class="o">~</span><span class="n">Alarm</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="c1">/// Check whether an alarm is ringing</span>
+<span class="c1">/// \return true if alarm is ringing, false otherwise</span>
+<span class="kt">bool</span><span class="w"> </span><span class="nf">isRinging</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="c1">/// Checks whether the alarm should ring based on the current</span>
+<span class="c1">/// (or supplied) time instant (returns error code)</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">updateStatus</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="n">currentTime</span><span class="w"> </span><span class="c1">///&lt; [in] current time</span>
+<span class="w">                </span><span class="p">);</span>
+
+<span class="c1">/// Stops a ringing alarm and sets next a new ring time. If the alarm</span>
+<span class="c1">/// is a periodic/interval alarm, the next ring time is set to be the</span>
+<span class="c1">/// next interval boundary after the input time.  If the alarm is a</span>
+<span class="c1">/// single instance, the input time is used as the next alarm time.</span>
+<span class="c1">/// (returns error code)</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="n">inTime</span><span class="w"> </span><span class="c1">///&lt; [in] new basis for alarm time</span>
+<span class="w">         </span><span class="p">);</span>
+
+<span class="c1">/// Stops a ringing alarm (returns error code).</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="c1">/// Rename an alarm (returns error code)</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">rename</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">newName</span><span class="w"> </span><span class="c1">///&lt; [in] new name for alarm</span>
+<span class="w">          </span><span class="p">);</span>
+
+<span class="c1">/// Get alarm name</span>
+<span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="nf">getName</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h4>4.2.6 Clock Class<a class="headerlink" href="#id6" title="Permalink to this heading"></a></h4>
+<p>The Clock class defines the model clock and is created based
+on a start time and time step. There are a number of retrieval
+functions to get the current, past, and next times. A number
+of alarms can be attached to a clock. Finally, there is
+a method to advance the clock one time and update the state
+of all attached alarms.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// constructors/destructors</span>
+<span class="c1">/// Construct a clock from start time and time step</span>
+<span class="n">Clock</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w">  </span><span class="n">startTime</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] Start time for clock</span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="n">timeStep</span><span class="w">   </span><span class="c1">///&lt; [in] Time step to advance clock</span>
+<span class="w">     </span><span class="p">);</span>
+
+<span class="c1">/// Destructor for clocks</span>
+<span class="o">~</span><span class="n">Clock</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="c1">// Accessor Methods</span>
+<span class="c1">/// Set the current time (returns error code)</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">setCurrentTime</span><span class="p">(</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="n">currTime</span><span class="w"> </span><span class="c1">///&lt; [in] new value for current time</span>
+<span class="w">    </span><span class="p">);</span>
+
+<span class="c1">/// Changes the time step for this clock (returns error code)</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">changeTimeStep</span><span class="p">(</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="n">newTimeStep</span><span class="w"> </span><span class="c1">///&lt; [in] new value for time step</span>
+<span class="w">    </span><span class="p">);</span>
+
+<span class="c1">/// Retrieves current time of this clock</span>
+<span class="n">TimeInstant</span><span class="w"> </span><span class="nf">getCurrentTime</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">/// Retrieves time at the previous time step</span>
+<span class="n">TimeInstant</span><span class="w"> </span><span class="nf">getPreviousTime</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">/// Retrieves time at the next time step</span>
+<span class="n">TimeInstant</span><span class="w"> </span><span class="nf">getNextTime</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">/// Retrieves start time for this clock</span>
+<span class="n">TimeInstant</span><span class="w"> </span><span class="nf">getStartTime</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">/// Retrieves time step for clock</span>
+<span class="n">TimeInterval</span><span class="w"> </span><span class="nf">getTimeStep</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="c1">/// Attaches an alarm to this clock. The clock simply stores a</span>
+<span class="c1">/// pointer to this alarm. (returns error code)</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">attachAlarm</span><span class="p">(</span><span class="n">Alarm</span><span class="o">*</span><span class="w"> </span><span class="n">inAlarm</span><span class="w"> </span><span class="c1">///&lt; [in] pointer to alarm to attach</span>
+<span class="w">               </span><span class="p">);</span>
+
+<span class="c1">/// Advance a clock one timestep and update status of any attached</span>
+<span class="c1">/// alarms. (returns error code)</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">advance</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test-timefrac">
+<h3>5.1 Test TimeFrac<a class="headerlink" href="#test-timefrac" title="Permalink to this heading"></a></h3>
+<p>We will test the base TimeFrac class by creating some reference
+times, one of which will be a fractional time that cannot be
+exactly represented by a float (eg 1/3 seconds). Constructors and
+set functions will be paired with get functions to make sure both
+set/get are working. All operators (equivalence, relational,
+algebraic) operators will be tested with known values. We will
+try to anticipate values that could fail.</p>
+<ul class="simple">
+<li><p>tests parts of requirement 2.2, 2.5, 2.6</p></li>
+</ul>
+</section>
+<section id="test-timeinstant">
+<h3>5.2 Test TimeInstant<a class="headerlink" href="#test-timeinstant" title="Permalink to this heading"></a></h3>
+<p>Similar to TimeFrac, create reference times in each of the
+supported calendars using constructor and set functions. Test
+retrievals (get) to verify they return the reference value.
+Test all the supported TimeInstant operators with known values
+in each of the calendars.</p>
+<ul class="simple">
+<li><p>tests parts of requirement 2.1, 2.3</p></li>
+</ul>
+</section>
+<section id="test-calendar">
+<h3>5.3 Test Calendar<a class="headerlink" href="#test-calendar" title="Permalink to this heading"></a></h3>
+<p>For each of the supported calendars (including a custom
+calendar), create an instance of the calendar and use
+the retrieval (get) functions to verify that various
+calendar properties are as expected (eg days per year,
+days per month, leap years/days, etc.). For some calendars,
+known reference dates exist from the references above and
+we will verify that these result in correct elapsed time
+or Julian day. Test the few operators (equivalence, copy
+constructors).</p>
+<ul class="simple">
+<li><p>tests most of requirement 2.3</p></li>
+</ul>
+</section>
+<section id="test-time-intervals">
+<h3>5.4 Test Time Intervals<a class="headerlink" href="#test-time-intervals" title="Permalink to this heading"></a></h3>
+<p>As in the others, test constructors and set functions by
+pairing with retrieval (get) functions for a given
+reference time interval. Test assignment constructors
+by creating a time interval for a given time step in
+various time units (seconds, hours, days, etc.). Test
+equivalence/non-equivalence by comparing known time intervals.
+Test algebraic operators (addition, subtraction, increment,
+decrement, multiply, divide, etc.) using reference values.
+Test creation of time interval by subtraction of time instants.</p>
+<ul class="simple">
+<li><p>tests requirement 2.4, parts of 2.1</p></li>
+</ul>
+</section>
+<section id="test-alarms">
+<h3>5.5 Test Alarms<a class="headerlink" href="#test-alarms" title="Permalink to this heading"></a></h3>
+<p>Test both one-time and periodic alarms at various supported
+intervals, including annual, monthly/nmonths, daily/ndays,
+hourly/nhours, nminutes, seconds. This is accomplished by
+choosing a start time in a calendar and integrating over a
+time period that covers the alarm. Use the Gregorian calendar
+(as most complex) and choose an interval that includes leap
+years/days. Also verify that alarms are not ringing at arbitrary
+selected times in between. Check the reset function and verify
+alarms are reset appropriately.</p>
+<ul class="simple">
+<li><p>tests requirement 2.5</p></li>
+</ul>
+</section>
+<section id="test-clock">
+<h3>5.6 Test Clock<a class="headerlink" href="#test-clock" title="Permalink to this heading"></a></h3>
+<p>This is the primary test of putting it all together and
+verifying that we can advance a model clock. Construct a
+clock with a given calendar and time step. Test various
+retrieval functions to get known quantities - also test
+the ability to change time step with set/get pair. Set a
+number of alarms at various times and periodic intervals.
+Integrate forward in time for N years and verify all alarms
+are triggered at proper times. Also verify that the final
+time is exact with no roundoff error accumulated. Create
+another clock with large time steps (years) that extend over a
+potential paleoclimate interval to test large number
+representations are supported correctly.</p>
+<ul class="simple">
+<li><p>tests requirement 2.1, 2.2, 2.3, 2.4, 2.5, 2.6</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="AuxiliaryState.html" class="btn btn-neutral float-left" title="AuxiliaryState" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Timers.html" class="btn btn-neutral float-right" title="Timers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

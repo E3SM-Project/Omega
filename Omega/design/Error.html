@@ -1,0 +1,551 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ErrorHandler (Error) &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Halo" href="Halo.html" />
+    <link rel="prev" title="Equation of State" href="EOS.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ErrorHandler (Error)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-logging-errors">2.1 Requirement: Logging errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-levels-of-error-severity">2.2 Requirement: Levels of error severity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-abort-on-error">2.3 Requirement: Abort on error</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-generate-stack-trace">2.4 Requirement: Generate stack trace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-identify-task-id">2.5 Requirement: Identify task id</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-output-location">2.6 Requirement: Output location</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-success-fail-error-codes">2.7 Requirement: Success/fail error codes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-error-messages-and-formatting">2.8 Requirement: Error messages and formatting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-accumulated-error">2.9 Requirement: Accumulated error</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-compact-error-checking">2.10 Desired: Compact error checking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-registering-error-codes-and-messages">2.11 Desired: Registering error codes and messages</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#macros">4.2.1 Macros</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#other-error-methods">4.2.2 Other Error methods</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-all-failure-modes">5.1 Test all failure modes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ErrorHandler (Error)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/Error.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="errorhandler-error">
+<span id="omega-design-error"></span><h1>ErrorHandler (Error)<a class="headerlink" href="#errorhandler-error" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>Any simulation code requires a means to check for errors,
+report errors and abort if the error is critical. Omega
+includes a logging facility that can perform some of these
+functions. However, we desire a facility that can check
+for errors in a manner that improves code readability and
+that also provides a stack trace to better understand the
+path taken that resulted in the error.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-logging-errors">
+<h3>2.1 Requirement: Logging errors<a class="headerlink" href="#requirement-logging-errors" title="Permalink to this heading"></a></h3>
+<p>We require the ability to log an error with an error message
+that includes the routine and line number. Note that the
+current Omega Logging facility already supports this and
+should be leveraged for this purpose.</p>
+</section>
+<section id="requirement-levels-of-error-severity">
+<h3>2.2 Requirement: Levels of error severity<a class="headerlink" href="#requirement-levels-of-error-severity" title="Permalink to this heading"></a></h3>
+<p>Omega must support several levels of error severity. The
+Logging facility already supports a common hierarchy with
+debug, info, warn, error and critical levels. Because the
+debug and info simply write information, they will continue
+to be managed by the Logging interfaces.</p>
+<p>The warn level may be shared by both the Logging facility and
+error handler. For example, if only a warning message is required,
+the Logging facility should manage the message. If we wish to
+inform the calling routine that an error at the warning level
+has occurred, the Error handler should manage the warning.</p>
+<p>The error handler should be the primary interface for the more
+severe errors at the error and critical levels. In a canonical
+hierarchy, critical errors are those that cause the application
+to fail, while the error level refers to errors that are severe
+enough to be addressed but still allow the application to proceed
+without crashing. In Omega, these latter errors typically cause
+incorrect or unintended simulation results and are considered
+an application failure. We prefer to use critical errors that
+abort the simulation for most such errors. The error level
+should be reserved for cases in which an error is encountered
+but we must pass error information back to the calling routine
+(eg through a return code) to judge the response to the error.</p>
+<p>Note that at the initial creation of this document, many of
+the current errors reported by Omega are treated at the error
+level and should be promoted to critical errors following the
+description above.</p>
+</section>
+<section id="requirement-abort-on-error">
+<h3>2.3 Requirement: Abort on error<a class="headerlink" href="#requirement-abort-on-error" title="Permalink to this heading"></a></h3>
+<p>When a critical error is encountered, we must have the ability
+to abort the simulation.</p>
+</section>
+<section id="requirement-generate-stack-trace">
+<h3>2.4 Requirement: Generate stack trace<a class="headerlink" href="#requirement-generate-stack-trace" title="Permalink to this heading"></a></h3>
+<p>The error log must include a stack trace to determine and
+output the calling sequence that resulted in the error being
+reported.</p>
+</section>
+<section id="requirement-identify-task-id">
+<h3>2.5 Requirement: Identify task id<a class="headerlink" href="#requirement-identify-task-id" title="Permalink to this heading"></a></h3>
+<p>We require a means of determining which parallel task is
+encountering this error.</p>
+</section>
+<section id="requirement-output-location">
+<h3>2.6 Requirement: Output location<a class="headerlink" href="#requirement-output-location" title="Permalink to this heading"></a></h3>
+<p>We require errors and the related stack trace to be logged
+in an error log file. A separate error log file for each MPI
+task may be desirable both for ease of implementation and to
+better satisfy requirements 2.4 and 2.5 above. An abort error
+message should also be sent to the default log file when
+possible so that users know to look for an error log for
+details.</p>
+</section>
+<section id="requirement-success-fail-error-codes">
+<h3>2.7 Requirement: Success/fail error codes<a class="headerlink" href="#requirement-success-fail-error-codes" title="Permalink to this heading"></a></h3>
+<p>The error handler should include a public success error code
+(typically zero) to standardize a successful return code for
+Omega routines. Any return code not equal to success should
+be interpreted as a failure. However, a standard Fail code
+can also be provided as a default failure code.</p>
+</section>
+<section id="requirement-error-messages-and-formatting">
+<h3>2.8 Requirement: Error messages and formatting<a class="headerlink" href="#requirement-error-messages-and-formatting" title="Permalink to this heading"></a></h3>
+<p>We require the ability to define an error message that will
+be output to an error log for any error encountered. We also
+require the ability to include some variable or run-time
+information as part of the the logged message to better
+describe the cause of the error, similar to the existing
+Logging capability (eg “Value of MyVar is {} but expected
+{}”). Ideally, the formatting would be identical to that
+provided by the Logging facility and would leverage that
+facility for the logging of error messages.</p>
+</section>
+<section id="requirement-accumulated-error">
+<h3>2.9 Requirement: Accumulated error<a class="headerlink" href="#requirement-accumulated-error" title="Permalink to this heading"></a></h3>
+<p>In some cases, we wish to accumulate (sum) non-critical errors
+encountered within a routine rather than returning or aborting
+immediately. For example, a unit test might prefer to report
+all errors rather than aborting on the first error encountered.
+Among other things, this is a requirment that error codes must
+all have the same sign to avoid summing to zero (the nominal
+success code).</p>
+</section>
+<section id="desired-compact-error-checking">
+<h3>2.10 Desired: Compact error checking<a class="headerlink" href="#desired-compact-error-checking" title="Permalink to this heading"></a></h3>
+<p>We desire error checking to be very concise - ideally a
+single line of code - so that the error checking does
+not impair code readability.</p>
+</section>
+<section id="desired-registering-error-codes-and-messages">
+<h3>2.11 Desired: Registering error codes and messages<a class="headerlink" href="#desired-registering-error-codes-and-messages" title="Permalink to this heading"></a></h3>
+<p>To facilitate 2.10 or to provide unique error codes, it may
+be desirable to pre-register an error code and related error
+message during initialization of a module so that it can
+be used later and referred to simply by the assigned code.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>No algorithms are needed.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>We will build the error handler on the existing Logging
+functionality, the spdlog library and the cpptrace library
+that provides a stack trace capability. Similar to the
+Logging facility, we will make use of defined cpp macros
+for many interfaces. These macros allow us to both condense
+multi-line patterns into a single-line interface, but also
+allow us to incorporate the LINE and FILE macros at the
+actual line where the error is encountered.</p>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>There will be two public integer parameters (constexpr)
+<code class="docutils literal notranslate"><span class="pre">Err::Success</span></code> and <code class="docutils literal notranslate"><span class="pre">Err::Fail</span></code>. Success will be the only
+identifier for success and will be equal to zero. Any error code
+not equal to success will denote failure. This allows multiple
+failure error codes and accumulation of error. The <code class="docutils literal notranslate"><span class="pre">Err::Fail</span></code>
+code is defined to provide a default failure code if one is
+not defined or if a specific value is not required.</p>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>There will be an Error class that primarily holds defined
+error codes and associated messages.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="k">public</span><span class="o">:</span>
+
+<span class="w">      </span><span class="k">static</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">Success</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">      </span><span class="k">static</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">Fail</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+
+<span class="w">      </span><span class="c1">// public methods (see below)</span>
+
+<span class="w">   </span><span class="k">private</span><span class="o">:</span>
+
+<span class="w">      </span><span class="c1">// container for pre-defined error codes/messages</span>
+<span class="w">      </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">AllCodes</span><span class="p">;</span>
+
+<span class="w">      </span><span class="c1">// private methods (see below)</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<section id="macros">
+<h4>4.2.1 Macros<a class="headerlink" href="#macros" title="Permalink to this heading"></a></h4>
+<p>We provide a number of macros for error checking. As described
+in section 2.2, we expect the most common interface should be
+the critical error macro:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ERROR_CRITICAL</span><span class="p">(</span><span class="n">ErrCode</span><span class="p">,</span><span class="w"> </span><span class="n">ErrMsg</span><span class="p">,</span><span class="w"> </span><span class="n">additional</span><span class="w"> </span><span class="n">args</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">ErrMsg</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The error message (ErrMsg) can be either a simple string or
+can follow the format of the Logging facility in which <code class="docutils literal notranslate"><span class="pre">{}</span></code>
+placeholders can be used with additional arguments to
+include variable information
+(see the <a class="reference internal" href="../userGuide/Logging.html#omega-user-logging"><span class="std std-ref">Logging documentation</span></a>).
+If the input ErrCode is <code class="docutils literal notranslate"><span class="pre">Err::Success</span></code> nothing happens and
+the code continues. If the ErrCode matches a code predefined
+using the <code class="docutils literal notranslate"><span class="pre">defineCode</span></code> function described below, the ErrMsg
+from that predefined code is used with any of the additional
+arguments to fill in any <code class="docutils literal notranslate"><span class="pre">{}</span></code> placeholders. Finally, if the
+ErrCode is not equal to Success and is not a predefined code,
+the ErrMsg is used, again with the subsequent arguments to print
+an error message. For the failure modes, the macro also prints
+a stack trace using cpptrace calls and then aborts the
+simulation using the <code class="docutils literal notranslate"><span class="pre">Err::abort</span></code> function described below.
+Typical use cases might be:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Checking an error condition</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">MyFailCondition</span><span class="p">)</span><span class="w"> </span><span class="n">ERROR_CRITICAL</span><span class="p">(</span><span class="n">Err</span><span class="o">::</span><span class="n">Fail</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;MySimpleMessage&quot;</span><span class="p">);</span>
+
+<span class="c1">// or</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">MyFailCondition</span><span class="p">)</span>
+<span class="w">   </span><span class="n">ERROR_CRITICAL</span><span class="p">(</span><span class="n">Err</span><span class="o">::</span><span class="n">Fail</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Variable {} has value {}&quot;</span><span class="p">,</span>
+<span class="w">                  </span><span class="n">MyVarName</span><span class="p">,</span><span class="w"> </span><span class="n">Value</span><span class="p">);</span>
+
+<span class="c1">// or if the code is predefined</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">MyFailCondition</span><span class="p">)</span><span class="w"> </span><span class="n">ERROR_CRITICAL</span><span class="p">(</span><span class="n">DefinedCode</span><span class="p">,</span><span class="w"> </span><span class="s">&quot; &quot;</span><span class="p">);</span>
+
+<span class="c1">// Checking a return code from another routine</span>
+<span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyFunction</span><span class="p">(...);</span>
+<span class="n">ERROR_CRITICAL</span><span class="p">(</span><span class="n">Err</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Error encountered in MyFunction&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Two interfaces are provided in which a condition can be checked,
+rather than the error code:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ERROR_REQUIRE</span><span class="p">(</span><span class="n">condition</span><span class="p">,</span><span class="w"> </span><span class="n">ErrMsg</span><span class="p">,</span><span class="w"> </span><span class="n">additional</span><span class="w"> </span><span class="n">args</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">msg</span><span class="p">);</span>
+<span class="n">ERROR_ASSERT</span><span class="p">(</span><span class="n">condition</span><span class="p">,</span><span class="w"> </span><span class="n">ErrMsg</span><span class="p">,</span><span class="w"> </span><span class="n">additional</span><span class="w"> </span><span class="n">args</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">msg</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where condition is any conditional expression that evaluates to
+true/false. These have the same behavior as the critical errors
+above with a false condition treated as an <code class="docutils literal notranslate"><span class="pre">Err::Fail</span></code>. The
+REQUIRE interface is always evaluated; the ASSERT interface behaves
+similarly to the C++ assert function and is only checked for DEBUG
+builds.</p>
+<p>For less severe errors, we provide several different macros
+to match the behavior desired when continuing the simulation.
+The first interface is similar to the critical interface above:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ERROR_CHECK</span><span class="p">(</span><span class="n">ErrCode</span><span class="p">,</span><span class="w"> </span><span class="n">ErrMsg</span><span class="p">,</span><span class="w"> </span><span class="n">addition</span><span class="w"> </span><span class="n">args</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">message</span><span class="p">);</span>
+<span class="n">ERROR_WARN</span><span class="p">(</span><span class="n">ErrCode</span><span class="p">,</span><span class="w"> </span><span class="n">ErrMsg</span><span class="p">,</span><span class="w"> </span><span class="n">addition</span><span class="w"> </span><span class="n">args</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">message</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>which simply prints the message when the ErrCode is not
+equal to Success. The <code class="docutils literal notranslate"><span class="pre">ERROR_WARN</span></code> interface is used when
+only a warning message is desired. Predefined
+error codes can be used here as well. Unlike the
+critical interface, this does not print a stack trace or abort
+the simulation and the behavior is more similar to the
+<code class="docutils literal notranslate"><span class="pre">LOG_ERROR</span></code> or <code class="docutils literal notranslate"><span class="pre">LOG_WARN</span></code> macros.</p>
+<p>If a routine has a return code and a return-on-error is
+desired, we provide an interface:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ERROR_RETURN</span><span class="p">(</span><span class="n">ReturnCode</span><span class="p">,</span><span class="w"> </span><span class="n">ErrCode</span><span class="p">,</span><span class="w"> </span><span class="n">ErrMsg</span><span class="p">,</span><span class="w"> </span><span class="n">added</span><span class="w"> </span><span class="n">vars</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">needed</span><span class="p">);</span>
+<span class="n">ERROR_RETURN_WARN</span><span class="p">(</span><span class="n">ReturnCode</span><span class="p">,</span><span class="w"> </span><span class="n">ErrCode</span><span class="p">,</span><span class="w"> </span><span class="n">ErrMsg</span><span class="p">,</span><span class="w"> </span><span class="n">added</span><span class="w"> </span><span class="n">vars</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This behaves similar to the <code class="docutils literal notranslate"><span class="pre">ERROR_CHECK</span></code> except that after
+the message is printed, the error code is added to the return
+code and a return statement is executed to exit the routine.
+A use case might be:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">MyFailCondition</span><span class="p">)</span><span class="w"> </span><span class="n">ERROR_RETURN</span><span class="p">(</span><span class="n">ReturnCode</span><span class="p">,</span><span class="w"> </span><span class="n">Err</span><span class="o">::</span><span class="n">Fail</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;MyErrMsg&quot;</span><span class="p">);</span>
+
+<span class="c1">// which is equivalent to:</span>
+
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">MyFailCondition</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="n">LOG_ERROR</span><span class="p">(</span><span class="s">&quot;MyErrMsg&quot;</span><span class="p">);</span>
+<span class="w">   </span><span class="n">ReturnCode</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">Err</span><span class="o">::</span><span class="n">Fail</span><span class="p">;</span>
+<span class="w">   </span><span class="k">return</span><span class="w"> </span><span class="n">ReturnCode</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Finally, a macro is provided to accumulate errors:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ERROR_SUM</span><span class="p">(</span><span class="n">ErrSum</span><span class="p">,</span><span class="w"> </span><span class="n">ErrCode</span><span class="p">,</span><span class="w"> </span><span class="n">ErrMsg</span><span class="p">,</span><span class="w"> </span><span class="n">added</span><span class="w"> </span><span class="n">vars</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">needed</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>which after printing the messages, adds the most recent
+error code to the running sum stored in <code class="docutils literal notranslate"><span class="pre">ErrSum</span></code>.</p>
+<p>Note that in the latter two cases, care must be taken so that
+the accumulated error or return codes do not match a
+predefined code and cause confustion in a later use of the
+code in an <code class="docutils literal notranslate"><span class="pre">ERROR_CRITICAL</span></code> or <code class="docutils literal notranslate"><span class="pre">ERROR_CHECK</span></code> call.</p>
+</section>
+<section id="other-error-methods">
+<h4>4.2.2 Other Error methods<a class="headerlink" href="#other-error-methods" title="Permalink to this heading"></a></h4>
+<p>Some additional functions are needed to complement the macros
+described above.</p>
+<p>To allow more concise error checking, developers can pre-define
+and error code and associated error message using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Error</span><span class="o">::</span><span class="n">defineCode</span><span class="p">(</span><span class="n">ErrCode</span><span class="p">,</span><span class="w"> </span><span class="n">ErrMsg</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This routine addes the ErrMsg to a map of predefined messages
+and returns the new ErrCode assigned to that message for later
+use in the macros described above. This function should be
+called at some point during model (or module) initialization
+and the ErrCode saved for use during the run sequence.</p>
+<p>The abort routine:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Error</span><span class="o">::</span><span class="n">abort</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>is provided to abort a simulation. A minimal version would
+simply call the MPI abort function, but it is possible to
+add additional cleanup tasks.</p>
+<p>A finalize routine:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Error</span><span class="o">::</span><span class="n">finalize</span><span class="p">(</span><span class="n">ErrCode</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>will clean up all of the predefined error codes. If the
+ErrCode is not equal to success, it will set the error code
+to the standard abnormal termination exit code (1) and avoid other
+standard c++ exit codes for other run-time errors.</p>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test-all-failure-modes">
+<h3>5.1 Test all failure modes<a class="headerlink" href="#test-all-failure-modes" title="Permalink to this heading"></a></h3>
+<p>A unit test will test all non-critical error interfaces first
+and then end with a critical failure. The <code class="docutils literal notranslate"><span class="pre">WILL_FAIL</span></code> property
+in ctest will ensure the expected unit test failure will pass.
+An inspection of the log and error files will be used to verify
+messages are printed as expected.</p>
+<ul class="simple">
+<li><p>tests all requirement</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="EOS.html" class="btn btn-neutral float-left" title="Equation of State" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Halo.html" class="btn btn-neutral float-right" title="Halo" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

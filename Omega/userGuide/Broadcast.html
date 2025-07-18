@@ -1,0 +1,305 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Omega Broadcast &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Omega Logging" href="Logging.html" />
+    <link rel="prev" title="Model Configuration (Config)" href="Config.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Omega Broadcast</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#broadcasting-functions">Broadcasting Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#blocking-broadcasting-functions">Blocking Broadcasting Functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#including-the-broadcasting-functions-in-your-code">Including the Broadcasting Functions in Your Code</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#broadcasting-scalar-or-array-values">Broadcasting Scalar or Array Values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#specifying-broadcasting-task-and-or-environment-in-omega">Specifying broadcasting task and/or environment in Omega</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#broadcasting-array-values">Broadcasting Array Values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#supported-data-types-for-broadcasting">Supported Data Types for Broadcasting</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#non-blocking-broadcasting-functions">Non-blocking Broadcasting Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Omega Broadcast</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/userGuide/Broadcast.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="omega-broadcast">
+<span id="omega-user-broadcast"></span><h1>Omega Broadcast<a class="headerlink" href="#omega-broadcast" title="Permalink to this heading"></a></h1>
+<section id="broadcasting-functions">
+<h2>Broadcasting Functions<a class="headerlink" href="#broadcasting-functions" title="Permalink to this heading"></a></h2>
+<p>Omega’s broadcasting functions offer developers a streamlined method for
+disseminating scalar and array values among MPI tasks. These functions are
+categorized into two types: Blocking and Non-blocking.</p>
+<section id="blocking-broadcasting-functions">
+<h3>Blocking Broadcasting Functions<a class="headerlink" href="#blocking-broadcasting-functions" title="Permalink to this heading"></a></h3>
+<p>When it comes to MPI broadcast operations, a blocking broadcast would imply
+that the function call to broadcast data to all processes in a group does
+not return until the data has been sent and correctly received by all the
+target processes.</p>
+</section>
+<section id="including-the-broadcasting-functions-in-your-code">
+<h3>Including the Broadcasting Functions in Your Code<a class="headerlink" href="#including-the-broadcasting-functions-in-your-code" title="Permalink to this heading"></a></h3>
+<p>To leverage Omega’s broadcasting functions, you must include the Broadcast.h
+header file in your source code:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;Broadcast.h&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="broadcasting-scalar-or-array-values">
+<h3>Broadcasting Scalar or Array Values<a class="headerlink" href="#broadcasting-scalar-or-array-values" title="Permalink to this heading"></a></h3>
+<p>For broadcasting either scalar or array values, utilize the Broadcast
+function as demonstrated below:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">I4</span><span class="w"> </span><span class="n">MyVal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+
+<span class="c1">// Broadcasting from the master task</span>
+<span class="n">OMEGA</span><span class="o">::</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">MyVal</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The above example illustrates the broadcasting of an OMEGA::I4 type scalar
+value from the master task of the default Omega environment.</p>
+</section>
+<section id="specifying-broadcasting-task-and-or-environment-in-omega">
+<h3>Specifying broadcasting task and/or environment in Omega<a class="headerlink" href="#specifying-broadcasting-task-and-or-environment-in-omega" title="Permalink to this heading"></a></h3>
+<p>For developers seeking to modify the sending task or the Omega environment
+during broadcasting, Omega offers flexible syntax options. These additional
+arguments to the Broadcast function enable customization, while maintaining
+the simplicity of the basic broadcasting operation.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">I4</span><span class="w"> </span><span class="n">MyVal</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">RootTask</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+
+<span class="c1">// Get a specific Omega Machine Environment</span>
+<span class="n">OMEGA</span><span class="o">::</span><span class="n">MachEnv</span><span class="w"> </span><span class="o">*</span><span class="n">SubsetEnv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">MachEnv</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;Subset&quot;</span><span class="p">);</span>
+
+<span class="c1">// broadcast from the master task of SubsetEnv environment</span>
+<span class="n">OMEGA</span><span class="o">::</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">MyVal</span><span class="p">,</span><span class="w"> </span><span class="n">SubsetEnv</span><span class="p">);</span>
+
+<span class="c1">// broadcast from task 1 of SubsetEnv environment</span>
+<span class="n">OMEGA</span><span class="o">::</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">MyVal</span><span class="p">,</span><span class="w"> </span><span class="n">SubsetEnv</span><span class="p">,</span><span class="w"> </span><span class="n">RootTask</span><span class="p">);</span>
+
+<span class="c1">// broadcast from task 1 of the default environment</span>
+<span class="n">OMEGA</span><span class="o">::</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">MyVal</span><span class="p">,</span><span class="w"> </span><span class="n">RootTask</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="broadcasting-array-values">
+<h3>Broadcasting Array Values<a class="headerlink" href="#broadcasting-array-values" title="Permalink to this heading"></a></h3>
+<p>The syntax for broadcasting arrays is analogous to that used
+for scalar values:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">OMEGA</span><span class="o">::</span><span class="n">R8</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyVector</span><span class="p">;</span>
+
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">MyVector</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="mf">1.0</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">OMEGA</span><span class="o">::</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">MyVector</span><span class="p">,</span><span class="w"> </span><span class="n">RootTask</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This example shows how to broadcast an array of OMEGA::R8 type values,
+specifying the root task for broadcasting.</p>
+</section>
+<section id="supported-data-types-for-broadcasting">
+<h3>Supported Data Types for Broadcasting<a class="headerlink" href="#supported-data-types-for-broadcasting" title="Permalink to this heading"></a></h3>
+<p>The Broadcast functions are compatible with the following data types:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">OMEGA::I4</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">OMEGA::I8</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">OMEGA::R4</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">OMEGA::R8</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bool</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">std::string</span></code> (NOTE: array of strings are not supported)</p></li>
+</ul>
+</section>
+</section>
+<section id="non-blocking-broadcasting-functions">
+<h2>Non-blocking Broadcasting Functions<a class="headerlink" href="#non-blocking-broadcasting-functions" title="Permalink to this heading"></a></h2>
+<p>This feature is currently under development and will offer asynchronous
+broadcasting capabilities.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Config.html" class="btn btn-neutral float-left" title="Model Configuration (Config)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Logging.html" class="btn btn-neutral float-right" title="Omega Logging" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,492 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fields and Metadata (Field) &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Parallel IO (IO)" href="IO.html" />
+    <link rel="prev" title="Error Handler" href="Error.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">Error Handler</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Fields and Metadata (Field)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/devGuide/Field.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fields-and-metadata-field">
+<span id="omega-dev-field"></span><h1>Fields and Metadata (Field)<a class="headerlink" href="#fields-and-metadata-field" title="Permalink to this heading"></a></h1>
+<p>Omega includes a Field class that registers available fields and associated
+metadata for use in IO (or any other part of Omega that may require the field
+metadata). The module owning the field will define the Field together
+with some required metadata for compliance with the Climate and Forecast
+<a class="reference external" href="http://cfconventions.org/">(CF) metadata conventios.</a>. Groups of Fields
+can also be defined to provide a short cut to groups that are commonly used
+together, like the model state and tracer groups. Two special Fields, CodeMeta
+and SimMeta (with default names “code” and “simulation”, respectively), are
+defined on initialization to store global metadata or scalars needed for
+provenance or for restarting. The arrays containing Field data can be attached,
+retrieved or updated as needed, typically during IO. The Field class is not
+meant to be used during computations - the native Omega array types without
+metadata are more appropriate for that context.</p>
+<p>To use the Field class, the Field header file must be included and as part of
+the application initialization, there should be a call to the init method:
+Fields initialized with the init method:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">::</span><span class="n">init</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>which primarily defines the CodeMeta and SimMeta fields for later use.
+For array fields, the appropriate Dimensions must be defined. The default
+dimensions (eg NCells, NEdges, NVertLevels) will be defined by the relevant
+Mesh initialization and should be done before any Fields are defined.
+See <a class="reference internal" href="Dimension.html#omega-dev-dimension"><span class="std std-ref">Dimension</span></a>.</p>
+<p>Fields are created with standard metadata using</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Field</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyField</span><span class="w"> </span><span class="o">=</span>
+<span class="w">   </span><span class="n">Field</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="n">FieldName</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] Name of variable/field (string)</span>
+<span class="w">                 </span><span class="n">Description</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] long Name or description (string)</span>
+<span class="w">                 </span><span class="n">Units</span><span class="p">,</span><span class="w">       </span><span class="c1">///&lt; [in] units (string)</span>
+<span class="w">                 </span><span class="n">StdName</span><span class="p">,</span><span class="w">     </span><span class="c1">///&lt; [in] CF standard Name (string)</span>
+<span class="w">                 </span><span class="n">ValidMin</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; [in] min valid field value (same type as</span>
+<span class="w">                 </span><span class="n">ValidMax</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; [in] max valid field value  field data)</span>
+<span class="w">                 </span><span class="n">FillValue</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] scalar used for undefined entries</span>
+<span class="w">                 </span><span class="n">NumDims</span><span class="p">,</span><span class="w">     </span><span class="c1">///&lt; [in] number of dimensions (int)</span>
+<span class="w">                 </span><span class="n">Dimensions</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in] dim names (vector of strings)</span>
+<span class="w">                 </span><span class="n">TimeDependent</span><span class="w">   </span><span class="c1">///&lt; [in] (opt, default true) if time varying</span>
+<span class="w">                 </span><span class="n">RetainPrecision</span><span class="w"> </span><span class="c1">///&lt; [in] (opt, false) retain full prec in IO</span>
+<span class="w">   </span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This interface enforces a list of required metadata. If a CF standard name does
+not exist, an empty string can be provided. This is uncommon for most fields
+since the CF conventions maintain a fairly complete list, but can be the case
+for some intermediate calculations or unique analyses. If there is no
+restriction on valid range, an appropriately large range should be provided for
+the data type. Similarly, if a FillValue is not being used, a very unique
+number should be supplied to prevent accidentally treating valid data as a
+FillValue. The optional TimeDependent argument can be omitted and is assumed
+to be true by default. Fields with this attribute will be output with the
+unlimited time dimension added. Time should not be added explicitly in the
+dimension list since it will be added during I/O. Fields that do not change
+with time should include this argument with the value false so that the time
+dimension is not added. The argument RetainPrecision is also optional and should
+be used if the full precision of the field needs to be retained during IO even
+if it is a part of an IO stream that requests reduced precision. An example is
+the time field that can require full precision to represent the seconds from a
+reference time far in the past. The default is false and the argument does not
+need to be supplied in most cases. However, if it is needed, then the
+TimeDependent argument must also be explicitly included due to the language
+rules on argument ordering. Actual field data stored in an array is attached in a
+separate call as described below. Scalar fields can be added by setting the
+NumDims to zero (the Dimensions vector is ignored but an empty vector
+must still be supplied in the argument list). Scalar data is attached using
+a 1D array with size 1. Fields without a data array can be created with:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Field</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyField</span><span class="w"> </span><span class="o">=</span>
+<span class="w">   </span><span class="n">Field</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="n">FieldName</span><span class="w"> </span><span class="c1">///&lt; [in] Name of field</span>
+<span class="w">   </span><span class="p">);</span>
+</pre></div>
+</div>
+<p>but this interface should generally be not be used and global metadata
+should be added to the existing CodeMeta or SimMeta fields for this
+purpose.</p>
+<p>Additional metadata in the form of a name-value pair can be added using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">addMetadata</span><span class="p">(</span>
+<span class="w">                         </span><span class="n">MetaName</span><span class="p">,</span><span class="w"> </span><span class="c1">// [in] Name of new metadata (string)</span>
+<span class="w">                         </span><span class="n">Value</span><span class="w">     </span><span class="c1">// [in] Value of new metadata</span>
+<span class="w">   </span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where Value can be any supported data type (I4, I8, R4, R8, bool, string).
+Multiple pairs can be added in a single call using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SimField</span><span class="o">-&gt;</span><span class="n">addMetadata</span><span class="p">(</span>
+<span class="w">         </span><span class="p">{</span><span class="n">std</span><span class="o">::</span><span class="n">make_pair</span><span class="p">(</span><span class="s">&quot;Name1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Val1</span><span class="p">),</span>
+<span class="w">          </span><span class="n">std</span><span class="o">::</span><span class="n">make_pair</span><span class="p">(</span><span class="s">&quot;Name2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Val2</span><span class="p">),</span>
+<span class="w">          </span><span class="n">std</span><span class="o">::</span><span class="n">make_pair</span><span class="p">(</span><span class="s">&quot;Name3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Val3</span><span class="p">),</span>
+<span class="w">          </span><span class="n">std</span><span class="o">::</span><span class="n">make_pair</span><span class="p">(</span><span class="s">&quot;Name4&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Val4</span><span class="p">)});</span>
+</pre></div>
+</div>
+<p>where any number of pairs can be included and the values can be any supported
+type.</p>
+<p>As mentioned above, the actual data array is attached in a separate call
+using a templated form. If the pointer to the Field is available, use the
+member function:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">attachData</span><span class="o">&lt;</span><span class="n">ArrayType</span><span class="o">&gt;</span><span class="p">(</span><span class="n">InDataArray</span><span class="p">);</span>
+<span class="w">   </span><span class="c1">// for example:</span>
+<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">attachData</span><span class="o">&lt;</span><span class="n">HostArray1DI4</span><span class="o">&gt;</span><span class="p">(</span><span class="n">CellID</span><span class="p">);</span>
+<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">attachData</span><span class="o">&lt;</span><span class="n">Array2DR8</span><span class="o">&gt;</span><span class="p">(</span><span class="n">NormalVelocity</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where ArrayType is one of the supported array types (Array1DI4, etc. or
+HostArray1DI4, etc.). If the Field pointer has not been retrieved, an interface
+is provided using the field name:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">::</span><span class="n">attachFieldData</span><span class="o">&lt;</span><span class="n">ArrayType</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">                    </span><span class="n">FieldName</span><span class="p">,</span><span class="w">   </span><span class="c1">// [in] Name of Field (string)</span>
+<span class="w">                    </span><span class="n">InDataArray</span><span class="w">  </span><span class="c1">// [in] Array with data to attach</span>
+<span class="w">                    </span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Note that the data is assumed to reside in only one location so if a mirror
+array exists (eg if replicated on host and device), a separate Field may be
+needed. However, it is is better to define only one location and allow the
+IO or other modules to determine whether a transfer of data or mirror is needed.
+If the data resides in an array whose location does not change (ie the
+pointer always points to a fixed location), the attach can be performed when
+the Field and array have been created and any updates to the data will be
+captured correctly. If the location of the data changes (eg the time
+level changes and the pointer points to a different time slice), the data must
+be updated by calling the attach routine to replace the pointer to the new
+location. It is up to the developer to insert the appropriate call to reattach
+the data. As mentioned previously, scalar data should be attached using the
+appropriate 1D HostArray with a size of 1. The attach function primarily sets
+the pointer to the data location but it also sets the data type of the variable
+and its memory location using two enum classes:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">FieldType</span><span class="w"> </span><span class="p">{</span><span class="n">Unknown</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="p">,</span><span class="w"> </span><span class="n">I8</span><span class="p">,</span><span class="w"> </span><span class="n">R4</span><span class="p">,</span><span class="w"> </span><span class="n">R8</span><span class="p">};</span>
+<span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">FieldMemLoc</span><span class="w"> </span><span class="p">{</span><span class="n">Unknown</span><span class="p">,</span><span class="w"> </span><span class="n">Device</span><span class="p">,</span><span class="w"> </span><span class="n">Host</span><span class="p">,</span><span class="w"> </span><span class="n">Both</span><span class="p">};</span>
+</pre></div>
+</div>
+<p>These provide a simple way to query these properties when needed in some cases
+(eg IO) where the type or location are unknown and need to be determined before
+the field data is retrieved. The “Both” memory location is used in CPU-only
+configurations where the host and device are the same or in future cases where
+both may share a memory space. These are determined based on the data type of
+the attached data array.</p>
+<p>Once a field is defined, various query functions are available. The existence
+of a field with a given name can be determined with:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Field</span><span class="o">::</span><span class="n">exists</span><span class="p">(</span><span class="n">FieldName</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="n">stuff</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Other queries have two forms. If the Field pointer has already been retrieved,
+a member function can be used. If not, a query by field name can be used
+instead. The data type and memory location can be determined using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">FieldType</span><span class="w"> </span><span class="n">MyType1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">getType</span><span class="p">();</span><span class="w"> </span><span class="c1">// member function</span>
+<span class="w">   </span><span class="n">FieldType</span><span class="w"> </span><span class="n">MyType2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">::</span><span class="n">getFieldType</span><span class="p">(</span><span class="n">FieldName</span><span class="p">);</span><span class="w"> </span><span class="c1">// name version</span>
+
+<span class="w">   </span><span class="n">FieldMemLoc</span><span class="w"> </span><span class="n">MyLoc1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">getMemoryLocation</span><span class="p">();</span><span class="w"> </span><span class="c1">// member function</span>
+<span class="w">   </span><span class="n">FieldMemLoc</span><span class="w"> </span><span class="n">MyLoc2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">::</span><span class="n">getFieldMemoryLocation</span><span class="p">(</span><span class="n">FieldName</span><span class="p">);</span><span class="w"> </span><span class="c1">// name vers</span>
+</pre></div>
+</div>
+<p>Sometimes it is only necessary to query whether the data exists on the
+host rather than retrieving the full memory location.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">isOnHost</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="n">stuff</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="c1">// member function</span>
+<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Field</span><span class="o">::</span><span class="n">isFieldOnHost</span><span class="p">(</span><span class="n">FieldName</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="n">stuff</span><span class="w"> </span><span class="p">};</span><span class="w"> </span><span class="c1">// name version</span>
+</pre></div>
+</div>
+<p>When looping through all defined fields, it is handy to have a query for the
+field name, so we provide:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">FieldName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">getName</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>The dimension information can be retrieved using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">NDims</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">getNumDims</span><span class="p">();</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyDimNames</span><span class="p">(</span><span class="n">NDims</span><span class="p">);</span>
+<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">getDimNames</span><span class="p">(</span><span class="n">MyDimNames</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Once the dimension names have been retrieved, the Dimension class API can be
+used to extract further dimension information. Two other field quantities
+can be retrieved, but are used only by the IOStream capability:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">IsTimeDependent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">isTimeDependent</span><span class="p">();</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">IsDistributed</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">isDistributed</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>The first determines whether the unlimited time dimension should be added
+during IO operations. The second determines whether any of the dimensions
+are distributed across MPI tasks so that parallel IO is required.</p>
+<p>The data and metadata stored in a field can be retrieved using several
+functions.  To retrieve a pointer to the full Field, use:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Field</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyField</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">MyFieldName</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>With this pointer all the member functions above can be used.
+The Metadata associated with a field can be retrieved individually using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">getMetadata</span><span class="p">(</span><span class="n">MetadataName</span><span class="p">,</span><span class="w"> </span><span class="n">MetaValue</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where the MetaValue can be a scalar of any supported data type (I4, I8, R4, R8,
+bool, std::string). If the value of a metadata entry needs to be changed,
+an update function is provided:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">updateMetadata</span><span class="p">(</span><span class="n">MetadataName</span><span class="p">,</span><span class="w"> </span><span class="n">NewMetaValue</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The existence of a metadata entry can be determined with:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">MetaExists</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">hasMetadata</span><span class="p">(</span><span class="n">MetadataName</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The entire group of metadata is stored in a Metadata type which is simply an
+alias for a <code class="docutils literal notranslate"><span class="pre">std::map&lt;std::string,</span> <span class="pre">std::any&gt;</span></code>. This collection of metadata
+can be retrieved using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Metadata</span><span class="o">&gt;</span><span class="w"> </span><span class="n">ThisMeta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ThisField</span><span class="o">-&gt;</span><span class="n">getAllMetadata</span><span class="p">();</span>
+<span class="w">   </span><span class="c1">// or</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Metadata</span><span class="o">&gt;</span><span class="w"> </span><span class="n">ThisMeta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">::</span><span class="n">getFieldMeta</span><span class="p">(</span><span class="n">FieldName</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This can be useful if we need to extract all the metadata at once (eg during
+the IO write phase). However, because the value is stored as a <code class="docutils literal notranslate"><span class="pre">std::any</span></code>,
+it must be coerced to the proper data type using the <code class="docutils literal notranslate"><span class="pre">std::any</span></code> type query
+and the <code class="docutils literal notranslate"><span class="pre">std::any_cast</span></code> coercion function.</p>
+<p>To retrieve the field data arrays, there are a few methods available. If the
+array forms are needed, there are templated retrievals by either a member
+function or a by-name interface:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">HostArray1DI4</span><span class="w"> </span><span class="n">MyData1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">getDataArray</span><span class="o">&lt;</span><span class="n">HostArray1DI4</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="w">   </span><span class="n">Array2DR8</span><span class="w"> </span><span class="n">MyData2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">::</span><span class="n">getFieldDataArray</span><span class="o">&lt;</span><span class="n">Array2DR8</span><span class="o">&gt;</span><span class="p">(</span><span class="n">FieldName</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where all of the array and host array types are supported. If the array type
+is not known in advance, the field can be queried for both type and memory
+location as described previously.</p>
+<p>Metadata can be removed from a Field using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">removeMetadata</span><span class="p">(</span><span class="n">MetaName</span><span class="p">);</span>
+<span class="w">   </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">removeAllMetadata</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>depending on whether a single metadata entry or all metadata entries need to
+be deleted. Entire fields can be removed using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">::</span><span class="n">destroy</span><span class="p">(</span><span class="n">FieldName</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>and before exiting, all fields should be removed using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Field</span><span class="o">::</span><span class="n">clear</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>As mentioned above, Fields can be assigned to groups to provide an easy way
+to reference fields that commonly appear together, especially when listing
+contents of fields in IO files. Internally, a field group is implemented as
+a simple set of field names stored as a <code class="docutils literal notranslate"><span class="pre">std::set&lt;std::string&gt;</span></code>. A group
+is created by first creating an empty group with the desired name:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">FieldGroup</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyGroup</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FieldGroup</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="n">GroupName</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Fields can then be added either through a member function if the group
+pointer is available, or by group name:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyGroup</span><span class="o">-&gt;</span><span class="n">addField</span><span class="p">(</span><span class="n">FieldName</span><span class="p">);</span>
+<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FieldGroup</span><span class="o">::</span><span class="n">addFieldToGroup</span><span class="p">(</span><span class="n">FieldName</span><span class="p">,</span><span class="w"> </span><span class="n">GroupName</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The latter is useful especially if the group was created elsewhere. If the
+field has already been added to the group, no additional entries are created.
+To determine whether a group exists or whether a field is in a group, several
+forms of these queries are available:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">MyGroupExists</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FieldGroup</span><span class="o">::</span><span class="n">exists</span><span class="p">(</span><span class="n">GroupName</span><span class="p">);</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">FieldIsInGroup</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyGroup</span><span class="o">-&gt;</span><span class="n">hasField</span><span class="p">(</span><span class="n">FieldName</span><span class="p">);</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">FieldIsInGroup</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FieldGroup</span><span class="o">::</span><span class="n">isFieldInGroup</span><span class="p">(</span><span class="n">FieldName</span><span class="p">,</span><span class="n">GroupName</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>In addition, the entire list of fields current assigned to a group can be
+retrieved using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">set</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyFieldList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyGroup</span><span class="o">-&gt;</span><span class="n">getFieldList</span><span class="p">();</span>
+<span class="w">   </span><span class="c1">// or</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">set</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyFieldList</span><span class="w"> </span><span class="o">=</span>
+<span class="w">                   </span><span class="n">FieldGroup</span><span class="o">::</span><span class="n">getFieldListFromGroup</span><span class="p">(</span><span class="n">GroupName</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>While this list can be used with the Field interfaces above to retrieve the
+Field, we also provide a shortcut to retrieve a full field pointer from a
+FieldGroup:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Field</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyField</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyGroup</span><span class="o">-&gt;</span><span class="n">getField</span><span class="p">(</span><span class="n">FieldName</span><span class="p">);</span>
+<span class="w">   </span><span class="c1">// or</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Field</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyField</span><span class="w"> </span><span class="o">=</span>
+<span class="w">         </span><span class="n">FieldGroup</span><span class="o">::</span><span class="n">getFieldFromGroup</span><span class="p">(</span><span class="n">FieldName</span><span class="p">,</span><span class="w"> </span><span class="n">GroupName</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The FieldGroup pointer can also be retrieved:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">FieldGroup</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyGroup</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FieldGroup</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">GroupName</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>A field can be removed from a field group using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FieldGroup</span><span class="o">::</span><span class="n">removeField</span><span class="p">(</span><span class="n">FieldName</span><span class="p">);</span>
+<span class="w">   </span><span class="c1">// or</span>
+<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">removeFieldFromGroup</span><span class="p">(</span><span class="n">FieldName</span><span class="p">,</span><span class="w"> </span><span class="n">GroupName</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The removal of a field from a group does not remove the field itself, it only
+removes the field name from the list of fields assigned to the group.
+The entire group can be removed with:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FieldGroup</span><span class="o">::</span><span class="n">destroy</span><span class="p">(</span><span class="n">GroupName</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>and the usual <code class="docutils literal notranslate"><span class="pre">FieldGroup::clear();</span></code> should be used to remove all field
+groups before exiting.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Error.html" class="btn btn-neutral float-left" title="Error Handler" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="IO.html" class="btn btn-neutral float-right" title="Parallel IO (IO)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

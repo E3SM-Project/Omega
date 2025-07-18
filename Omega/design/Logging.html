@@ -1,0 +1,425 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logging &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="MachineEnv" href="MachEnv.html" />
+    <link rel="prev" title="Horizontal Mesh" href="HorzMeshClass.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Logging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-basic-logging">2.1 Requirement: Basic logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-inter-operability-with-e3sm">2.2 Requirement: Inter-operability with E3SM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-multi-processing">2.3 Requirement: Multi-processing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-multi-threading">2.4 Requirement: Multi-threading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-omega-data-types">2.5 Requirement: Omega data types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-buffered-file-input-output">2.6 Requirement: Buffered file input/output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-formatter">2.7 Desired: Formatter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-output-sinks">2.8 Desired: Output sinks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-local-logging">2.9 Desired: Local logging</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#log-write">4.2.1 Log write</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-omega-logging-capabilities">5.1 Test OMEGA logging capabilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-omega-data-type-support">5.2 Test OMEGA data type support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-e3sm-inter-operability">5.3 Test E3SM inter-operability</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Logging</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/Logging.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="logging">
+<span id="omega-design-logging"></span><h1>Logging<a class="headerlink" href="#logging" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>The OMEGA logging system offers a standardized Application Programming
+Interface (API) that facilitates the tracking of events occurring during
+the runtime of all Omega sub-components. Each event comprises a descriptive
+message along with an indicator denoting its severity level.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-basic-logging">
+<h3>2.1 Requirement: Basic logging<a class="headerlink" href="#requirement-basic-logging" title="Permalink to this heading"></a></h3>
+<p>It is a requirement for the OMEGA logging system to furnish Omega
+sub-components with a mechanism to store log messages onto a file system,
+based on their corresponding severity levels.</p>
+</section>
+<section id="requirement-inter-operability-with-e3sm">
+<h3>2.2 Requirement: Inter-operability with E3SM<a class="headerlink" href="#requirement-inter-operability-with-e3sm" title="Permalink to this heading"></a></h3>
+<p>It is a requirement for the OMEGA logging system to recognize the log root
+filename defined in E3SM as a part of the input configuration.</p>
+</section>
+<section id="requirement-multi-processing">
+<h3>2.3 Requirement: Multi-processing<a class="headerlink" href="#requirement-multi-processing" title="Permalink to this heading"></a></h3>
+<p>It is a requirement that each process should have the capability to generate
+log messages independently. Additionally, there should be a mechanism in
+place to control the number of processes generating log messages
+simultaneously. This functionality is desired to ensure efficient management
+of system logs and prevent potential system overloading due to excessive
+logging activities.</p>
+</section>
+<section id="requirement-multi-threading">
+<h3>2.4 Requirement: Multi-threading<a class="headerlink" href="#requirement-multi-threading" title="Permalink to this heading"></a></h3>
+<p>It is a requirement for the OMEGA logging system to provide thread-safe
+logging capabilities. This functionality is necessary to ensure that
+concurrent logging activities by multiple threads are executed in
+a synchronized manner, without causing data corruption or inconsistencies
+in the generated log files.</p>
+</section>
+<section id="requirement-omega-data-types">
+<h3>2.5 Requirement: Omega data types<a class="headerlink" href="#requirement-omega-data-types" title="Permalink to this heading"></a></h3>
+<p>It is a requirement for the OMEGA logging system to support a subset of
+Omega data types, in order to generate well-formatted log messages that
+include these data types. This functionality is crucial to ensure that all
+relevant information is captured in the logs and to facilitate effective
+debugging and troubleshooting activities.</p>
+</section>
+<section id="requirement-buffered-file-input-output">
+<h3>2.6 Requirement: Buffered file input/output<a class="headerlink" href="#requirement-buffered-file-input-output" title="Permalink to this heading"></a></h3>
+<p>It is a requirement for the OMEGA logging system to support both buffered
+and unbuffered file IO modes. Buffered mode reduces the overhead associated
+with file IO operations, improving performance and efficiency. Unbuffered mode
+is crucial for debugging purposes, as it allows for immediate writing of log
+messages to the file, preventing potential loss of unwritten messages that
+could lead to confusion. The API should provide an option for the user to
+choose between buffered and unbuffered modes.</p>
+</section>
+<section id="desired-formatter">
+<h3>2.7 Desired: Formatter<a class="headerlink" href="#desired-formatter" title="Permalink to this heading"></a></h3>
+<p>It is desired for the OMEGA logging system to support various use-cases of log
+files by generating log messages through one of the installed message
+formatters. These formatters should be switchable at both compile-time and
+runtime to accommodate changing requirements. The default formatter should
+generate an unstructured text output, while other possible formatters should
+be able to generate structured output such as JSON. This functionality is
+essential to ensure flexibility in the logging system, allowing users to
+tailor the output format to their specific needs.</p>
+</section>
+<section id="desired-output-sinks">
+<h3>2.8 Desired: Output sinks<a class="headerlink" href="#desired-output-sinks" title="Permalink to this heading"></a></h3>
+<p>It is desired for the OMEGA logging system to be capable of transporting log
+messages to various output sinks such as emails or databases. Thisfunctionality
+is crucial for ensuring the accessibility and availability of log data, enabling
+users to view and analyze the logs through multiple channels.</p>
+</section>
+<section id="desired-local-logging">
+<h3>2.9 Desired: Local logging<a class="headerlink" href="#desired-local-logging" title="Permalink to this heading"></a></h3>
+<p>It is desired for the OMEGA logging system to provide each sub-component with
+its own local logger, which can be used to set parameters such as “severity,”
+“message format,” and “sink type” independently from other sub-components. This
+functionality is necessary to ensure that each sub-component has full control
+over its own logging activities, allowing for more granular and targeted logging
+output.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>No algorithm is necessary for the logging system.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>The spdlog logging library has been chosen as the core logging capability for
+the OMEGA logging system. spdlog is a feature-rich, header-only C++ logging
+library that is widely used and highly regarded in the industry. It offers
+a comprehensive set of features that satisfy most of the requirements, but
+additional E3SM and Omega specific requirements must be addressed.</p>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>The software design will implement a global switch for setting the minimum log
+severity and message format using predefined global C++ defines. The severity
+level can be set at compile-time using <code class="docutils literal notranslate"><span class="pre">-D</span> <span class="pre">OMEGA_LOG_LEVEL=&lt;level&gt;</span></code>, where <code class="docutils literal notranslate"><span class="pre">&lt;level&gt;</span></code>
+can be one of the predefined levels: <code class="docutils literal notranslate"><span class="pre">TRACE</span></code>, <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code>, <code class="docutils literal notranslate"><span class="pre">INFO</span></code>, <code class="docutils literal notranslate"><span class="pre">WARN</span></code>, <code class="docutils literal notranslate"><span class="pre">ERROR</span></code>,
+or <code class="docutils literal notranslate"><span class="pre">CRITICAL</span></code>, where the severity increases from <code class="docutils literal notranslate"><span class="pre">TRACE</span></code> to <code class="docutils literal notranslate"><span class="pre">CRITICAL</span></code>. Log
+messages that have severity equal to or higher than the specified level will be
+stored in the log destination.</p>
+<p>Furthermore, the message format can be set using <code class="docutils literal notranslate"><span class="pre">-D</span> <span class="pre">OMEGA_LOG_PATTERN=&lt;pattern&gt;</span></code> at
+compile time, where <code class="docutils literal notranslate"><span class="pre">&lt;pattern&gt;</span></code> represents a format in the form of <code class="docutils literal notranslate"><span class="pre">%flag</span></code>,
+similar to the strftime function. This pattern defines the layout of the log
+message.</p>
+<p>Users can control which MPI ranks generate log files using
+<code class="docutils literal notranslate"><span class="pre">-D</span> <span class="pre">OMEGA_LOG_TASKS=&lt;tasks-pattern&gt;</span></code> at compile time. The <code class="docutils literal notranslate"><span class="pre">&lt;tasks-pattern&gt;</span></code> is
+either all for all tasks to generate log files, or comma-separated MPI rank
+numbers, or a range of MPI ranks with a dash. For example,
+<code class="docutils literal notranslate"><span class="pre">-D</span> <span class="pre">OMEGA_LOG_TASKS=0,2-3</span></code> indicates that MPI ranks 0, 2, and 3 generate log
+files.</p>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>No public data type is necessary for the logging system.</p>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<p>The OMEGA logging system includes multiple macros that allow for logging at
+various severity levels. These macros guarantee that log messages with severity
+levels lower than the specified <code class="docutils literal notranslate"><span class="pre">OMEGA_LOG_LEVEL</span></code> will not be compiled.</p>
+<section id="log-write">
+<h4>4.2.1 Log write<a class="headerlink" href="#log-write" title="Permalink to this heading"></a></h4>
+<p>The OMEGA logging system includes macros that allow the user to write log
+messages with different severity levels. These macros follow the naming
+convention <code class="docutils literal notranslate"><span class="pre">LOG_&lt;severity</span> <span class="pre">level&gt;</span></code>. For instance, the following macro can be
+used to write an informational log message:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">LOG_INFO</span><span class="p">(</span><span class="s">&quot;log message&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The OMEGA logging system provides the following macros for writing log messages
+with different severity levels:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">LOG_CRITICAL</span></code>: Used to indicate a critical error or issue that requires
+immediate attention and could potentially cause data loss or application
+failure.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LOG_ERROR</span></code>: Used to indicate an error or issue that could cause
+application instability or incorrect behavior.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LOG_WARN</span></code>: Used to indicate a warning or potential issue that should be
+addressed but does not necessarily require immediate attention.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LOG_INFO</span></code>: Used to provide general informational messages about the
+application’s operation or progress.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LOG_DEBUG</span></code>: Used to provide detailed debugging information for
+developers to track down issues or analyze behavior.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LOG_TRACE</span></code>: Used to provide the most detailed level of information,
+including function calls and variable values, and is typically used for deep
+analysis and debugging.</p></li>
+</ol>
+<p>In order to enhance the logging capabilities, OMEGA logging system provides
+each macro with an optional argument of an Omega data type. If the data type
+is recognized, it will be formatted automatically by the system and appended in
+the appropriate format to the log message. As an example, the following macro
+demonstrates how an argument of type <code class="docutils literal notranslate"><span class="pre">Array1DR8</span></code> can be appended to a log
+message:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Array1DR8</span><span class="w"> </span><span class="n">var</span><span class="p">;</span>
+<span class="p">...</span>
+<span class="n">LOG_INFO</span><span class="p">(</span><span class="s">&quot;log message {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">var</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test-omega-logging-capabilities">
+<h3>5.1 Test OMEGA logging capabilities<a class="headerlink" href="#test-omega-logging-capabilities" title="Permalink to this heading"></a></h3>
+<p>A unit test should be performed to verify all requirements, except for 2.2
+(E3SM interoperability). The unit test should create multiple MPI ranks with
+multiple threads to ensure that requirement coverage is complete. The unit
+test should also include tests for both buffered and unbuffered logging
+capability, with various log message sizes and frequencies, to ensure that both
+modes work correctly and without loss of data.</p>
+</section>
+<section id="test-omega-data-type-support">
+<h3>5.2 Test OMEGA data type support<a class="headerlink" href="#test-omega-data-type-support" title="Permalink to this heading"></a></h3>
+<p>A unit test should be performed to verify Requirement 2.5(Omega data types).</p>
+</section>
+<section id="test-e3sm-inter-operability">
+<h3>5.3 Test E3SM inter-operability<a class="headerlink" href="#test-e3sm-inter-operability" title="Permalink to this heading"></a></h3>
+<p>Requirement 2.2 will be tested as part of larger system tests and will not have
+a dedicated unit test.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="HorzMeshClass.html" class="btn btn-neutral float-left" title="Horizontal Mesh" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="MachEnv.html" class="btn btn-neutral float-right" title="MachineEnv" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

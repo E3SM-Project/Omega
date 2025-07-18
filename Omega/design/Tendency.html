@@ -1,0 +1,343 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tendency &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Tendencies" href="Tendencies.html" />
+    <link rel="prev" title="State" href="State.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tendency</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-tendencies-should-be-able-to-be-grouped-under-different-outer-loops-over-mesh-locations">2.1 Requirement: Tendencies should be able to be grouped under different outer loops over mesh locations.</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-tendency-operator-calls-should-have-simple-intuitive-calling-arguments">2.2 Requirement: Tendency operator calls should have simple, intuitive calling arguments.</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-tendencies-must-allow-for-vectorization-on-cpu-architectures">2.3 Requirement: Tendencies must allow for vectorization on CPU architectures.</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#constructor">4.2.1 Constructor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#operator">4.2.2 operator</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#unit-testing">5.1 Unit testing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#convergence-testing">5.2 Convergence testing</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Tendency</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/Tendency.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="tendency">
+<span id="omega-design-tendency"></span><h1>Tendency<a class="headerlink" href="#tendency" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>The tendency terms in OMEGA are implemented as functors, which define an operation over a number of vertical levels for particular a cell, edge, or vertex.
+Tendency functors take information which remains constant during the forward simulation (such as <code class="docutils literal notranslate"><span class="pre">HorzMesh</span></code> and <code class="docutils literal notranslate"><span class="pre">Config</span></code>)  as constructor arguments.
+The <code class="docutils literal notranslate"><span class="pre">operator()</span></code> method is overloaded with the relevant discrete /parameterization.
+This approach allows for a modularization of the tendency terms that enables flexible groupings of work within larger cell/edge/vertex loops.
+This type of flexibility will be important for optimizing the code across different device architectures.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-tendencies-should-be-able-to-be-grouped-under-different-outer-loops-over-mesh-locations">
+<h3>2.1 Requirement: Tendencies should be able to be grouped under different outer loops over mesh locations.<a class="headerlink" href="#requirement-tendencies-should-be-able-to-be-grouped-under-different-outer-loops-over-mesh-locations" title="Permalink to this heading"></a></h3>
+<p>The ability to fuse/separate tendency computations will allow for optimization across different device architectures.
+Each functor will implement a given tendency operation on a specific mesh location (cell, edge, vertex).</p>
+</section>
+<section id="requirement-tendency-operator-calls-should-have-simple-intuitive-calling-arguments">
+<h3>2.2 Requirement: Tendency operator calls should have simple, intuitive calling arguments.<a class="headerlink" href="#requirement-tendency-operator-calls-should-have-simple-intuitive-calling-arguments" title="Permalink to this heading"></a></h3>
+<p>Tendency functors take in constant data as constructor arguments, which simplifies the arguments used to call the operator method.</p>
+</section>
+<section id="requirement-tendencies-must-allow-for-vectorization-on-cpu-architectures">
+<h3>2.3 Requirement: Tendencies must allow for vectorization on CPU architectures.<a class="headerlink" href="#requirement-tendencies-must-allow-for-vectorization-on-cpu-architectures" title="Permalink to this heading"></a></h3>
+<p>Tendency operations have inner loops over a chunk of vertical levels.
+The chunk size will be set to the vector length on CPU machines and 1 for GPUs.
+This will allow for the possibility of vectorization on CPUs.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>The algorithmic formulation for each tendency can be found in the algorithms design document.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>The tendency functor is a class the overrides the <code class="docutils literal notranslate"><span class="pre">operator()</span></code> method.
+The class contains private member variables for any constant data that are defined by the constructor.
+Each tendency term will have a <code class="docutils literal notranslate"><span class="pre">bool</span></code> variable which can be set to enable/disable the computation of the tendency.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ThicknessFluxDivergenceOnCell</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">public</span><span class="o">:</span>
+
+<span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">ThicknessFluxDivergenceOnCell</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="n">Config</span><span class="w"> </span><span class="o">*</span><span class="n">Options</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">KOKKOS_FUNCTION</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="k">operator</span><span class="p">()(</span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Tend</span>
+<span class="w">                                    </span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span>
+<span class="w">                                    </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">,</span>
+<span class="w">                                    </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ThicknessFlux</span><span class="p">);</span>
+
+<span class="w">  </span><span class="k">private</span><span class="o">:</span>
+<span class="w">    </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">NEdgesOnCell</span><span class="p">;</span>
+<span class="w">    </span><span class="n">Array2DI4</span><span class="w"> </span><span class="n">EdgesOnCell</span><span class="p">;</span>
+<span class="w">    </span><span class="n">Array1DR8</span><span class="w"> </span><span class="n">DvEdge</span><span class="p">;</span>
+<span class="w">    </span><span class="n">Array1DR8</span><span class="w"> </span><span class="n">AreaCell</span><span class="p">;</span>
+<span class="w">    </span><span class="n">Array2DR8</span><span class="w"> </span><span class="n">EdgeSignOnCell</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<section id="constructor">
+<h4>4.2.1 Constructor<a class="headerlink" href="#constructor" title="Permalink to this heading"></a></h4>
+<p>Tendency functor constructors are responsible for initializing the private member variables:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ThicknessFluxDivergenceOnCell</span><span class="o">::</span><span class="n">ThicknessFluxDivergenceOnCell</span><span class="p">(</span><span class="n">HorzMesh</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="n">Config</span><span class="w"> </span><span class="o">*</span><span class="n">Options</span><span class="p">)</span>
+<span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="n">NEdgesOnCell</span><span class="p">(</span><span class="n">Mesh</span><span class="o">-&gt;</span><span class="n">NEdgesOnCell</span><span class="p">),</span><span class="w"> </span><span class="n">EdgesOnCell</span><span class="p">(</span><span class="n">Mesh</span><span class="o">-&gt;</span><span class="n">EdgesOnCell</span><span class="p">),</span>
+<span class="w">      </span><span class="n">DvEdge</span><span class="p">(</span><span class="n">Mesh</span><span class="o">-&gt;</span><span class="n">DvEdge</span><span class="p">),</span><span class="w"> </span><span class="n">AreaCell</span><span class="p">(</span><span class="n">Mesh</span><span class="o">-&gt;</span><span class="n">AreaCell</span><span class="p">),</span>
+<span class="w">      </span><span class="n">EdgeSignOnCell</span><span class="p">(</span><span class="n">Mesh</span><span class="o">-&gt;</span><span class="n">EdgeSignOnCell</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Options</span><span class="o">-&gt;</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;ThicknessFluxTendencyEnable&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="operator">
+<h4>4.2.2 operator<a class="headerlink" href="#operator" title="Permalink to this heading"></a></h4>
+<p>The operator method implements the tendency computation for a chunk of vertical levels at a given horizontal mesh location.
+The inner loop over a chunk of vertical levels enables CPU vectorization.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">KOKKOS_FUNCTION</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">ThicknessFluxDivergenceOnCell</span><span class="o">::</span><span class="k">operator</span><span class="p">()(</span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Tend</span>
+<span class="w">                                                               </span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span>
+<span class="w">                                                               </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">,</span>
+<span class="w">                                                               </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ThicknessFlux</span><span class="p">)</span><span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">InvAreaCell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">AreaCell</span><span class="p">(</span><span class="n">iCell</span><span class="p">);</span>
+<span class="w">   </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">J</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">J</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NEdgesOnCell</span><span class="p">(</span><span class="n">ICell</span><span class="p">);</span><span class="w"> </span><span class="o">++</span><span class="n">J</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">JEdge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">EdgesOnCell</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">J</span><span class="p">);</span>
+<span class="w">      </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">K</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">KChunk</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">VecLength</span><span class="p">;</span><span class="w"> </span><span class="n">K</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="p">(</span><span class="n">KChunk</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">VecLength</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="n">Tend</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">DvEdge</span><span class="p">(</span><span class="n">JEdge</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">EdgeSignOnCell</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">J</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">ThicknessFlux</span><span class="p">(</span><span class="n">JEdge</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">InvAreaCell</span><span class="p">;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">   </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="unit-testing">
+<h3>5.1 Unit testing<a class="headerlink" href="#unit-testing" title="Permalink to this heading"></a></h3>
+<p>Each tendency operator will be used in a CTest which will compare its result against a reference value.</p>
+</section>
+<section id="convergence-testing">
+<h3>5.2 Convergence testing<a class="headerlink" href="#convergence-testing" title="Permalink to this heading"></a></h3>
+<p>The tendency terms for the shallow water equations will be tested on existing test cases implemented in Polaris to verify they produce the correct convergence rates.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="State.html" class="btn btn-neutral float-left" title="State" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Tendencies.html" class="btn btn-neutral float-right" title="Tendencies" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

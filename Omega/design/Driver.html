@@ -1,0 +1,500 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Driver and Component Layer &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Equation of State" href="EOS.html" />
+    <link rel="prev" title="Decomp" href="Decomp.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Driver and Component Layer</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-component-interfaces">2.1 Requirement: Component interfaces</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-standalone-driver">2.2 Requirement: Standalone driver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-encapsulation-and-persistent-model-state">2.3 Requirement: Encapsulation and persistent model state</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-managing-environments">2.4 Requirement: Managing environments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-run-method">2.5 Requirement: Run method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-finalize-method">2.6 Requirement: Finalize method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-init-method">2.7 Requirement: Init method</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#init">4.2.1 Init</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#run">4.2.2 Run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#finalize">4.2.3 Finalize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#standalone-driver-main">4.2.4 Standalone driver (main)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#coupler-component-interfaces">4.2.5 Coupler-component interfaces</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-forward-model">5.1 Test forward model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#coupled-model-testing">5.2 Coupled model testing</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Driver and Component Layer</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/Driver.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="driver-and-component-layer">
+<span id="omega-design-driver"></span><h1>Driver and Component Layer<a class="headerlink" href="#driver-and-component-layer" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>OMEGA can be used as either a standalone ocean model or as
+the ocean component of E3SM. In either case, OMEGA requires a
+top-level driver and interface layer. Here we describe the
+requirements and design of both the standalone driver (main)
+and the component interface for coupled simulation.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-component-interfaces">
+<h3>2.1 Requirement: Component interfaces<a class="headerlink" href="#requirement-component-interfaces" title="Permalink to this heading"></a></h3>
+<p>When running as part of a larger coupled model, OMEGA must
+supply initialize, run and finalize methods. These routines
+must export all variables needed by the parent model while also
+importing all fields needed by OMEGA. In most cases, there will
+also need to be a thin wrapper to translate data types between
+the parent model and internal OMEGA data types.</p>
+</section>
+<section id="requirement-standalone-driver">
+<h3>2.2 Requirement: Standalone driver<a class="headerlink" href="#requirement-standalone-driver" title="Permalink to this heading"></a></h3>
+<p>When OMEGA is used as a standalone model, it must supply a
+driver or main routine. For consistency with coupled
+simulations, this driver must mimic a parent coupled model,
+calling the same init, run and finalize methods and supplying
+any needed data (eg surface forcing data).</p>
+</section>
+<section id="requirement-encapsulation-and-persistent-model-state">
+<h3>2.3 Requirement: Encapsulation and persistent model state<a class="headerlink" href="#requirement-encapsulation-and-persistent-model-state" title="Permalink to this heading"></a></h3>
+<p>Communication with the parent model or standalone driver must
+be through the component interfaces as method arguments. All
+other aspects of the OMEGA model and model state that need to
+be retained across component calls or subsequent run intervals
+must be stored internally within OMEGA as static variables.</p>
+</section>
+<section id="requirement-managing-environments">
+<h3>2.4 Requirement: Managing environments<a class="headerlink" href="#requirement-managing-environments" title="Permalink to this heading"></a></h3>
+<p>Initializing and exiting environments like MPI and Kokkos must
+take place at the driver level (standalone driver or coupled
+model driver) as these environments are shared by other
+components. The finalize method described below must clean up
+all of Omega memory and data types so that these environments
+can be exited cleanly.</p>
+</section>
+<section id="requirement-run-method">
+<h3>2.5 Requirement: Run method<a class="headerlink" href="#requirement-run-method" title="Permalink to this heading"></a></h3>
+<p>The run method must advance the model one specified time
+interval based on a set of inputs (the import state) and must
+return a set of outputs (the export state) at the end of the
+time interval. In a coupled simulation, this interval will be
+the coupling interval. In standalone simulations, this interval
+is typically the fastest forcing data interval.</p>
+</section>
+<section id="requirement-finalize-method">
+<h3>2.6 Requirement: Finalize method<a class="headerlink" href="#requirement-finalize-method" title="Permalink to this heading"></a></h3>
+<p>The finalize method must provide a graceful exit, checkpointing
+as needed and cleaning up all memory. It must not, however,
+exit the MPI or other shared environments (eg Kokkos) per
+requirement 2.4</p>
+</section>
+<section id="requirement-init-method">
+<h3>2.7 Requirement: Init method<a class="headerlink" href="#requirement-init-method" title="Permalink to this heading"></a></h3>
+<p>An initialization method must initialize all model state, mesh
+and other information needed by the model itself or the parent
+coupled system. Variables needed by the parent model will be
+returned as arguments while all other parts of the model state
+will be retained in static variables for later retrieval by the
+run method as described in Req 2.3. The model state on initialization
+must correspond to the initial time for the simulation integration.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>No algorithms are introduced.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>The design is essentially determined by the requirements above.
+We define an init, run and finalize method. There will actually
+be two layers of these functions. One will be the internal
+Omega inteface used by the Omega standalone driver. A second
+layer will be needed for translating between internal Omega
+data types and E3SM (or other parent model) data types and
+ensuring the model is synchronized correctly with the parent.</p>
+<p>Within the directory structure of OMEGA, the <code class="docutils literal notranslate"><span class="pre">src/driver</span></code>
+directory will contain two subdirectories called standalone
+and E3SM. The standalone subdirectory will contain the
+standalone driver (obviously) and the E3SM directory will
+contain the wrapper interfaces that translate between the
+E3SM components and data types and the Omega methods and data
+types. The CMake build system will determine which directory
+will be used in the build. The actual OcnInit, OcnRun, OcnFinalize
+routines described below will reside in the <code class="docutils literal notranslate"><span class="pre">src/ocean</span></code> directory.</p>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>There are currently no additional parameters needed for this level.
+Configuration is generally determined by other modules.</p>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>For standalone simulation, data types are determined by other modules
+(eg state and mesh). No new data types are needed here.</p>
+<p>E3SM data types are in flux (from MCT to MOAB). We will add the coupled
+model data types here in the future.</p>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<section id="init">
+<h4>4.2.1 Init<a class="headerlink" href="#init" title="Permalink to this heading"></a></h4>
+<p>The Init method (OcnInit) will call individual initialization
+routines for every module in Omega. On input, it requires the
+MPI communicator to use as the master ocean communicator
+(<code class="docutils literal notranslate"><span class="pre">MPI_COMM_WORLD</span></code> for standalone, a coupler-partitioned
+communicator for coupled simulations). On output, it will
+return mesh information, the current model state and the
+time instant associated with that state.</p>
+<p>The precise interface awaits the design of various other
+modules, but will look something like:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">OMEGA::OcnInit</span><span class="p">(</span>
+<span class="w">   </span><span class="n">MPIComm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] ocean MPI communicator</span>
+<span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">StartTime</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] sim start time</span>
+<span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="n">RunInterval</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] interval for run method</span>
+<span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">State</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CurrState</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] current model state</span>
+<span class="w">   </span><span class="n">other</span><span class="w"> </span><span class="n">args</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="n">needed</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>The routine will return the initial state, the start time and
+the run interval computed based on input options. An integer
+return value will be non-zero if errors are encountered and zero
+if successful.
+It is also possible that a multi-stage initialization may
+be needed, especially in coupled mode and would require
+additional OcnInit interfaces. This will be determined during
+integration with E3SM later.</p>
+</section>
+<section id="run">
+<h4>4.2.2 Run<a class="headerlink" href="#run" title="Permalink to this heading"></a></h4>
+<p>The run method will advance the model one time interval,
+typically the coupling time or the fastest forcing interval.
+The interface will look like:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">OcnRun</span><span class="p">(</span>
+<span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CurrTime</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [inout] current sim time</span>
+<span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="n">RunInterval</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] interval to advance model</span>
+<span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Alarm</span><span class="w"> </span><span class="o">&amp;</span><span class="n">EndAlarm</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] alarm to end simulation</span>
+<span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">State</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CurrState</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [inout] current model state</span>
+<span class="w">   </span><span class="n">other</span><span class="w"> </span><span class="n">args</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="n">needed</span><span class="w"> </span><span class="p">(</span><span class="n">eg</span><span class="w"> </span><span class="n">forcing</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The model state, current time and the time interval will be input.
+Other variables will be needed as well, like the surface forcing
+fields, and will be added as needed. On return, the time instant
+will contain the end time of the interval and the end alarm will
+be ringing if the end of the simulation has been reached. The
+CurrState will be the ocean state at the end of the run interval.
+An integer error code will be zero if successful and non-zero if an
+error was encountered. This interface will be modified as needed to
+include other fields.</p>
+</section>
+<section id="finalize">
+<h4>4.2.3 Finalize<a class="headerlink" href="#finalize" title="Permalink to this heading"></a></h4>
+<p>The finalize method will write a checkpoint/restart file
+(if not already written by driver or run method on the
+final timestep) and then clean up all arrays and classes by
+calling the relevant routines for all Omega modules. The
+interface is similar to the Init interface:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">OMEGA::OcnFinalize</span><span class="p">(</span>
+<span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CurrTime</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] current sim time</span>
+<span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">State</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CurrState</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] current model state</span>
+<span class="w">   </span><span class="n">other</span><span class="w"> </span><span class="n">args</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="n">needed</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">restart</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>An integer return value will be zero if successful and
+non-zero if an error is encountered either writing a
+restart or deallocating memory.</p>
+</section>
+<section id="standalone-driver-main">
+<h4>4.2.4 Standalone driver (main)<a class="headerlink" href="#standalone-driver-main" title="Permalink to this heading"></a></h4>
+<p>With the interfaces above, the standalone driver should look
+something like the code below (details subject to change during implementation).</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">**</span><span class="n">argv</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="n">MPI_Init</span><span class="p">();</span><span class="w"> </span><span class="c1">// initialize MPI</span>
+<span class="w">   </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">init</span><span class="p">();</span><span class="w"> </span><span class="c1">// initialize Kokkos</span>
+<span class="w">   </span><span class="p">{</span>
+
+<span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">State</span><span class="w"> </span><span class="n">CurrState</span><span class="p">;</span>
+<span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInstant</span><span class="w"> </span><span class="n">CurrTime</span><span class="p">;</span>
+<span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInterval</span><span class="w"> </span><span class="n">RunInterval</span><span class="p">;</span>
+<span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Alarm</span><span class="w"> </span><span class="n">EndAlarm</span><span class="p">;</span>
+
+<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OcnInit</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span><span class="w"> </span><span class="n">CurrTime</span><span class="p">,</span><span class="w"> </span><span class="n">RunInterval</span><span class="p">,</span><span class="w"> </span><span class="n">CurrState</span><span class="p">,</span>
+<span class="w">                     </span><span class="n">EndAlarm</span><span class="p">,</span><span class="w"> </span><span class="n">etc</span><span class="p">);</span>
+<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">LOG_ERROR</span><span class="p">(</span><span class="s">&quot;Error initializing OMEGA&quot;</span><span class="p">);</span>
+
+
+<span class="w">   </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">Err</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="p">(</span><span class="n">EndAlarm</span><span class="p">.</span><span class="n">isRinging</span><span class="p">())</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">      </span><span class="c1">// call routines for forcing and other inputs</span>
+
+<span class="w">      </span><span class="c1">// call run method</span>
+<span class="w">      </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">OcnRun</span><span class="p">(</span><span class="n">CurrTime</span><span class="p">,</span><span class="w"> </span><span class="n">RunInterval</span><span class="p">,</span><span class="w"> </span><span class="n">EndAlarm</span><span class="p">,</span>
+<span class="w">                          </span><span class="n">CurrState</span><span class="p">,</span><span class="w"> </span><span class="n">etc</span><span class="p">);</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">LOG_ERROR</span><span class="p">(</span><span class="s">&quot;Error advancing Omega one interval&quot;</span><span class="p">);</span>
+
+<span class="w">      </span><span class="c1">// Other tasks if needed (eg IO could occur here or within run</span>
+<span class="w">      </span><span class="c1">// method</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">OcnFinalize</span><span class="p">(</span><span class="n">CurrTime</span><span class="p">,</span><span class="w"> </span><span class="n">CurrState</span><span class="p">,</span><span class="w"> </span><span class="n">etc</span><span class="p">);</span>
+<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Err2</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">LOG_ERROR</span><span class="p">(</span><span class="s">&quot;Error finalizing Omega&quot;</span><span class="p">);</span>
+
+<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">ErrAll</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">Err</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">Err2</span><span class="p">);</span>
+<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ErrAll</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">){</span>
+<span class="w">      </span><span class="n">LOG_INFO</span><span class="p">(</span><span class="s">&quot;OMEGA successfully completed&quot;</span><span class="p">);</span>
+<span class="w">   </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">LOG_ERROR</span><span class="p">(</span><span class="s">&quot;OMEGA terminating due to error&quot;</span><span class="p">);</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">   </span><span class="p">}</span>
+<span class="w">   </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">finalize</span><span class="p">();</span><span class="w"> </span><span class="c1">// Exit Kokkos</span>
+<span class="w">   </span><span class="n">MPI</span><span class="o">::</span><span class="n">Finalize</span><span class="p">();</span><span class="w"> </span><span class="c1">// Exit MPI</span>
+
+<span class="w">   </span><span class="k">return</span><span class="w"> </span><span class="n">ErrAll</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="coupler-component-interfaces">
+<h4>4.2.5 Coupler-component interfaces<a class="headerlink" href="#coupler-component-interfaces" title="Permalink to this heading"></a></h4>
+<p>To be added later</p>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test-forward-model">
+<h3>5.1 Test forward model<a class="headerlink" href="#test-forward-model" title="Permalink to this heading"></a></h3>
+<p>A forward model smoke test is included as part of the CTest
+unit test suite. This test runs the standalone model in a
+minimal configuration and only tests for successful completion.
+Other forward model system testing (eg in Polaris) will be
+inherently testing the driver layers.</p>
+<ul class="simple">
+<li><p>tests requirements 2.2-2.7</p></li>
+</ul>
+</section>
+<section id="coupled-model-testing">
+<h3>5.2 Coupled model testing<a class="headerlink" href="#coupled-model-testing" title="Permalink to this heading"></a></h3>
+<p>Once Omega is integrated into E3SM, various E3SM system tests
+will be run regularly and will test all coupled interfaces.
+We will add an Omega developer test suite to include these tests.</p>
+<ul class="simple">
+<li><p>tests requirement 2.1</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Decomp.html" class="btn btn-neutral float-left" title="Decomp" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="EOS.html" class="btn btn-neutral float-right" title="Equation of State" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

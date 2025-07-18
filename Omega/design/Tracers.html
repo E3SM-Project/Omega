@@ -1,0 +1,650 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tracer Infrastructure &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Tridiagonal Solver" href="TridiagonalSolver.html" />
+    <link rel="prev" title="Time Stepping" href="TimeStepping.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tracer Infrastructure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-tracer-definition-and-metadata">2.1 Requirement: Tracer definition and metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-tracer-identification">2.2 Requirement: Tracer identification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-tracer-groups">2.3 Requirement: Tracer groups</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-tracer-selection">2.4 Requirement: Tracer selection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-tracer-restart-and-i-o">2.5 Requirement: Tracer restart and I/O</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-time-levels">2.6 Requirement: Time levels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-acceleration-or-supercycling">2.7 Requirement: Acceleration or supercycling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-per-tracer-group-algorithmic-requirements">2.8 Desired: Per-tracer/group algorithmic requirements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data Types and Parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#definition">4.1.1 Definition</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#configuration">4.1.2 Configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#classes-structs-data-types">4.1.3 Classes/Structs/Data Types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#init">4.2.1 <code class="docutils literal notranslate"><span class="pre">init</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#define">4.2.2 <code class="docutils literal notranslate"><span class="pre">define</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#getnumtracers">4.2.3 <code class="docutils literal notranslate"><span class="pre">getNumTracers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#getindex">4.2.4 <code class="docutils literal notranslate"><span class="pre">getIndex</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#getall">4.2.5 <code class="docutils literal notranslate"><span class="pre">getAll</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#getbyindex-single-tracer">4.2.6 <code class="docutils literal notranslate"><span class="pre">getByIndex</span></code> (Single Tracer)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#getgrouprange">4.2.7 <code class="docutils literal notranslate"><span class="pre">getGroupRange</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#isgroupmemberbyindex">4.2.8 <code class="docutils literal notranslate"><span class="pre">isGroupMemberByIndex</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#managing-time-levels">4.2.9 Managing Time Levels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#clear">4.2.10 <code class="docutils literal notranslate"><span class="pre">clear</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-all">5.1 Test All</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Tracer Infrastructure</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/Tracers.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="tracer-infrastructure">
+<span id="omega-design-tracers"></span><h1>Tracer Infrastructure<a class="headerlink" href="#tracer-infrastructure" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>Tracers refer to either heat (temperature) or material carried by a fluid
+parcel (e.g., salt, chemical, or biological constituents). This document
+describes a tracer module that manages the definition, description, storage,
+and access of tracers throughout OMEGA. For reasons outlined in the following
+requirements, specific methods or algorithms for transporting or mixing
+tracers are not addressed here. These algorithms will be covered in other
+design documents.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-tracer-definition-and-metadata">
+<h3>2.1 Requirement: Tracer definition and metadata<a class="headerlink" href="#requirement-tracer-definition-and-metadata" title="Permalink to this heading"></a></h3>
+<p>The tracer module must provide a centralized location where all supported
+tracers are defined. This definition includes all metadata associated with
+the tracers—see related documents for metadata and I/O. Where possible,
+CF-compliant metadata must be used.</p>
+</section>
+<section id="requirement-tracer-identification">
+<h3>2.2 Requirement: Tracer identification<a class="headerlink" href="#requirement-tracer-identification" title="Permalink to this heading"></a></h3>
+<p>The tracer module must provide a simple way to identify a tracer, either
+by name or by index. The latter may be preferred for performance reasons.</p>
+</section>
+<section id="requirement-tracer-groups">
+<h3>2.3 Requirement: Tracer groups<a class="headerlink" href="#requirement-tracer-groups" title="Permalink to this heading"></a></h3>
+<p>It is often convenient to select or define properties for tracers as
+a group. It must be possible to assign tracers to particular groups.
+Properties of the group should apply to all tracers assigned to that group.
+Tracers can belong to multiple groups, as long as properties of each group
+do not conflict. A group called “All” will include all selected tracers.
+For performance reasons, it may be desirable for some non-intersecting
+groups to be assigned contiguous memory or contiguous index space.</p>
+</section>
+<section id="requirement-tracer-selection">
+<h3>2.4 Requirement: Tracer selection<a class="headerlink" href="#requirement-tracer-selection" title="Permalink to this heading"></a></h3>
+<p>At the start of a simulation, users must be able to select which of the
+supported tracers are enabled for the experiment via the configuration
+input file. To simplify the configuration, tracers should be selectable
+by group as well as individually.</p>
+</section>
+<section id="requirement-tracer-restart-and-i-o">
+<h3>2.5 Requirement: Tracer restart and I/O<a class="headerlink" href="#requirement-tracer-restart-and-i-o" title="Permalink to this heading"></a></h3>
+<p>With few exceptions, tracers will generally be included in all restarts and
+often in other outputs for post-processing and analysis. Thus, it is
+essential for tracers to be registered as available I/O fields (see related
+I/O designs) so that they can be read from or written to a file.</p>
+</section>
+<section id="requirement-time-levels">
+<h3>2.6 Requirement: Time levels<a class="headerlink" href="#requirement-time-levels" title="Permalink to this heading"></a></h3>
+<p>Time integration schemes often require the storage of multiple time levels.
+Tracer storage must support multiple time levels, and a mechanism for
+specifying which time level is needed for a given calculation must be
+provided. Ideally, changing time levels at the end of a time step should
+avoid a memory copy and instead involve a simple change of time index or
+pointer.</p>
+</section>
+<section id="requirement-acceleration-or-supercycling">
+<h3>2.7 Requirement: Acceleration or supercycling<a class="headerlink" href="#requirement-acceleration-or-supercycling" title="Permalink to this heading"></a></h3>
+<p>Some tracers or tracer groups can be evolved using a longer time step. For
+performance reasons, it should be possible to advance these tracers with a
+longer time step and avoid computing tendencies at every dynamical time step.</p>
+</section>
+<section id="desired-per-tracer-group-algorithmic-requirements">
+<h3>2.8 Desired: Per-tracer/group algorithmic requirements<a class="headerlink" href="#desired-per-tracer-group-algorithmic-requirements" title="Permalink to this heading"></a></h3>
+<p>Different tracers may require different methods for their evolution to
+preserve desired properties. For example, temperature and salinity should
+maintain consistency with the continuity equation. Many tracers will require
+monotonic or positive-definite advection schemes to prevent negative
+concentrations. We may even use a different time-stepping scheme for
+supercycled tracers.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>The algorithms used to advect, mix, and evolve tracers in time are described
+elsewhere in the respective modules responsible for computing these tendencies.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>We will store all tracers in a vector of 3-dimensional device arrays.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Array3DReal</span><span class="o">&gt;</span><span class="w"> </span><span class="n">TracerArrays</span><span class="p">;</span><span class="w"> </span><span class="c1">// multiple time levels</span>
+</pre></div>
+</div>
+<p>Each device array in the vector has dimensions corresponding to the number
+of tracers, the number of all cells in the rank, and the vertical length.
+This allows parallelization over tracer and cell dimensions, with the vertical
+dimension either parallel or vectorized, depending on the architecture and
+computation involved. Many of the requirements for grouping, selecting, and
+swapping time levels can be achieved through the collection and manipulation
+of array indices. Individual tracers can still be extracted as arrays with
+contiguous memory.</p>
+<p>All tracers will be defined in a set of code blocks (described below) in
+a file named <code class="docutils literal notranslate"><span class="pre">TracerDefs.inc</span></code>, which will be directly included in the
+initialization routine to define all supported tracers and their metadata.
+Tracer groups are defined as sets of tracer indices in the OMEGA YAML
+configuration file.</p>
+<section id="data-types-and-parameters">
+<h3>4.1 Data Types and Parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="definition">
+<h4>4.1.1 Definition<a class="headerlink" href="#definition" title="Permalink to this heading"></a></h4>
+<p>All supported tracers are defined in a file called TracerDefs.inc, which
+includes the code blocks needed to define each tracer, its metadata, and
+tracer index variables. Tracer index variables, such as IndxTemp and
+IndxSalt shown below, keep the index value for each tracer, allowing users
+to easily access the corresponding tracer data using the variable. This
+file must include all tracers that might potentially be used in the model.
+The file will look something like this:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// At the top of the file, list all available tracers in a comment</span>
+<span class="c1">// to provide a sort of table of contents.</span>
+<span class="c1">// Tracers:</span>
+<span class="c1">//   Temp</span>
+<span class="c1">//   Salt</span>
+<span class="c1">//   [Others...]</span>
+
+<span class="c1">// Index defined for each tracer. The value of these tracer indices are still</span>
+<span class="c1">// set in Tracers::init()  and tracers that have not been selected would have</span>
+<span class="c1">// standard invalid value: Tracers::IndxInvalid = -1</span>
+<span class="kr">inline</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">IndxTemp</span><span class="w">             </span><span class="o">=</span><span class="w"> </span><span class="n">Tracers</span><span class="o">::</span><span class="n">IndxInvalid</span><span class="p">;</span>
+<span class="kr">inline</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">IndxSalt</span><span class="w">             </span><span class="o">=</span><span class="w"> </span><span class="n">Tracers</span><span class="o">::</span><span class="n">IndxInvalid</span><span class="p">;</span>
+<span class="kr">inline</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">IndxMyBGCTracer</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="n">Tracers</span><span class="o">::</span><span class="n">IndxInvalid</span><span class="p">;</span>
+
+<span class="c1">// Tracer definitions packaged in a defineAllTracers function</span>
+<span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">defineAllTracers</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="n">define</span><span class="p">(</span><span class="s">&quot;Temp&quot;</span><span class="p">,</span><span class="w">                            </span><span class="c1">///&lt; [in] Name of tracer</span>
+<span class="w">          </span><span class="s">&quot;Potential Temperature&quot;</span><span class="p">,</span><span class="w">           </span><span class="c1">///&lt; [in] Long name or description</span>
+<span class="w">          </span><span class="s">&quot;degree_C&quot;</span><span class="p">,</span><span class="w">                        </span><span class="c1">///&lt; [in] Units</span>
+<span class="w">          </span><span class="s">&quot;sea_water_potential_temperature&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] CF standard Name</span>
+<span class="w">          </span><span class="mf">-273.15</span><span class="p">,</span><span class="w">                           </span><span class="c1">///&lt; [in] min valid field value</span>
+<span class="w">          </span><span class="mf">100.0</span><span class="p">,</span><span class="w">                             </span><span class="c1">///&lt; [in] max valid field value</span>
+<span class="w">          </span><span class="mf">1.</span><span class="n">e33</span><span class="p">,</span><span class="w">                             </span><span class="c1">///&lt; [in] value for undef entries</span>
+<span class="w">          </span><span class="n">IndxTemp</span><span class="p">);</span><span class="w">                         </span><span class="c1">///&lt; [out] (optional) static index</span>
+
+<span class="w">   </span><span class="n">define</span><span class="p">(</span><span class="s">&quot;Salt&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Salinity&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;psu&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;sea_water_salinity&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">50.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.</span><span class="n">e33</span><span class="p">,</span>
+<span class="w">          </span><span class="n">IndxSalt</span><span class="p">);</span>
+<span class="w">   </span><span class="n">define</span><span class="p">(</span><span class="s">&quot;Debug1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Debug Tracer 1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;none&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;none&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">100.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.</span><span class="n">e33</span><span class="p">);</span>
+<span class="w">   </span><span class="n">define</span><span class="p">(</span><span class="s">&quot;Debug2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Debug Tracer 2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;none&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;none&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">100.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.</span><span class="n">e33</span><span class="p">);</span>
+<span class="w">   </span><span class="n">define</span><span class="p">(</span><span class="s">&quot;Debug3&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Debug Tracer 3&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;none&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;none&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">100.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.</span><span class="n">e33</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="configuration">
+<h4>4.1.2 Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading"></a></h4>
+<p>Users will select desired tracers either individually or by group. If a group
+is listed, it implies the entire group, but users can choose a subset of
+a group by specifying individual tracer names and omitting the group name.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">omega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Tracers</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Base</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Temp</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Salt</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">Debug</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Debug1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Debug2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Debug3</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="p p-Indicator">[</span><span class="nv">other individual tracers or groups as needed</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<p>For requirement 2.7 (per-tracer algorithm choice), the configuration might
+look something like this:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">omega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">TracerAdv</span><span class="p">:</span>
+<span class="w">    </span><span class="c1"># Start with default values for all tracers</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">All</span><span class="p">:</span>
+<span class="w">         </span><span class="nt">Method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard</span>
+<span class="w">         </span><span class="nt">SomeParameter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="w">    </span><span class="c1"># Specialized options - override default by group or tracer name</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">Ecosys</span><span class="p">:</span>
+<span class="w">         </span><span class="nt">Method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MyMonotoneMethod</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Other tracers or tracer groups</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">only if needed</span><span class="p p-Indicator">]:</span>
+<span class="w">         </span><span class="nt">Method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MyAdditionalOption</span>
+<span class="w">         </span><span class="nt">SomeParameter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+</pre></div>
+</div>
+</section>
+<section id="classes-structs-data-types">
+<h4>4.1.3 Classes/Structs/Data Types<a class="headerlink" href="#classes-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>There will be a single class that contains the static array for storing
+all tracers, along with several containers for managing tracer groups and
+indices. Methods are described in Section 4.2 below.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">/// The Tracers class provides a container for tracer arrays and methods</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Tracers</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w"> </span><span class="k">private</span><span class="o">:</span>
+
+<span class="w">   </span><span class="c1">// Total number of tracers defined at initialization</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">NumTracers</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">// Static storage of the tracer arrays for device and host memory spaces</span>
+<span class="w">   </span><span class="c1">// The arrays are 3-dimensional, with dimensions for Tracer, Cell, and</span>
+<span class="w">   </span><span class="c1">// Vertical layers</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Array3DReal</span><span class="o">&gt;</span>
+<span class="w">       </span><span class="n">TracerArrays</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Time levels -&gt; [Tracer, Cell, Vertical]</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">HostArray3DReal</span><span class="o">&gt;</span>
+<span class="w">       </span><span class="n">TracerArraysH</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Time levels -&gt; [Tracer, Cell, Vertical]</span>
+
+<span class="w">   </span><span class="c1">// Maps for managing tracer groups</span>
+<span class="w">   </span><span class="c1">// The key of this map is a group name and the value is a pair of</span>
+<span class="w">   </span><span class="c1">// GroupStartIndex and GroupLength</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">I4</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">TracerGroups</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">// Maps for matching tracer names with indices (in both directions)</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="n">TracerIndexes</span><span class="p">;</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">I4</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">TracerNames</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">// Halo exchange</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">Halo</span><span class="w"> </span><span class="o">*</span><span class="n">MeshHalo</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">// Tracer dimension names</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">TracerDimNames</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">// Current time index</span>
+<span class="w">   </span><span class="c1">// This index is circular, so it returns to index 0 when it exceeds the max</span>
+<span class="w">   </span><span class="c1">// index</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">CurTimeIndex</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Time dimension array index for the current level</span>
+
+<span class="w">   </span><span class="c1">// Pack tracer field name</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="nf">packTracerFieldName</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TracerName</span><span class="p">);</span>
+
+<span class="w">   </span><span class="c1">// locally defines all tracers but do not allocates memory</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">I4</span>
+<span class="w">   </span><span class="nf">define</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">,</span><span class="w">        </span><span class="c1">///&lt; [in] Name of tracer</span>
+<span class="w">          </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Description</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] Long name or description</span>
+<span class="w">          </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Units</span><span class="p">,</span><span class="w">       </span><span class="c1">///&lt; [in] Units</span>
+<span class="w">          </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">StdName</span><span class="p">,</span><span class="w">     </span><span class="c1">///&lt; [in] CF standard Name</span>
+<span class="w">          </span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">ValidMin</span><span class="p">,</span><span class="w">            </span><span class="c1">///&lt; [in] min valid field value</span>
+<span class="w">          </span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">ValidMax</span><span class="p">,</span><span class="w">            </span><span class="c1">///&lt; [in] max valid field value</span>
+<span class="w">          </span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">FillValue</span><span class="p">,</span><span class="w">           </span><span class="c1">///&lt; [in] value for undef entries</span>
+<span class="w">          </span><span class="n">I4</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IndxInvalid</span><span class="w">         </span><span class="o">///&lt;</span><span class="w"> </span><span class="p">[</span><span class="n">out</span><span class="p">]</span><span class="w"> </span><span class="p">(</span><span class="n">optional</span><span class="p">)</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="n">value</span>
+<span class="w">   </span><span class="p">);</span>
+
+<span class="w">  </span><span class="k">public</span><span class="o">:</span>
+<span class="w">    </span><span class="p">[</span><span class="n">methods</span><span class="w"> </span><span class="n">defined</span><span class="w"> </span><span class="n">below</span><span class="p">]</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Here is the corrected version with improved grammar and clarity:</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<section id="init">
+<h4>4.2.1 <code class="docutils literal notranslate"><span class="pre">init</span></code><a class="headerlink" href="#init" title="Permalink to this heading"></a></h4>
+<p>The initialization method defines all the tracers by including the
+<code class="docutils literal notranslate"><span class="pre">TracerDefs.inc</span></code> file. Once all fields are defined, it allocates the full
+tracer array based on the input configuration of selected tracers. The
+interface is as follows:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">init</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>Note that this function does not initialize the tracer values. The values
+will be filled either by input I/O streams or by individual modules
+associated with specific tracers and tracer groups.</p>
+</section>
+<section id="define">
+<h4>4.2.2 <code class="docutils literal notranslate"><span class="pre">define</span></code><a class="headerlink" href="#define" title="Permalink to this heading"></a></h4>
+<p>All tracers must be defined. This routine takes the name of the tracer and
+some required metadata as input. It uses this information to create
+a <code class="docutils literal notranslate"><span class="pre">MetaData</span></code> entry and an <code class="docutils literal notranslate"><span class="pre">IOField</span></code> entry, but only if the tracer is
+selected in the input configuration file. It also increments the number of
+tracers and assigns a tracer index if the tracer is selected. The function
+returns a non-zero error code if any of several possible error conditions
+are encountered.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="n">I4</span>
+<span class="nf">define</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">,</span><span class="w">        </span><span class="c1">///&lt; [in] Name of tracer</span>
+<span class="w">       </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Description</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] Long name or description</span>
+<span class="w">       </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Units</span><span class="p">,</span><span class="w">       </span><span class="c1">///&lt; [in] Units</span>
+<span class="w">       </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">StdName</span><span class="p">,</span><span class="w">     </span><span class="c1">///&lt; [in] CF standard Name</span>
+<span class="w">       </span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">ValidMin</span><span class="p">,</span><span class="w">            </span><span class="c1">///&lt; [in] min valid field value</span>
+<span class="w">       </span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">ValidMax</span><span class="p">,</span><span class="w">            </span><span class="c1">///&lt; [in] max valid field value</span>
+<span class="w">       </span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">FillValue</span><span class="p">,</span><span class="w">           </span><span class="c1">///&lt; [in] value for undef entries</span>
+<span class="w">       </span><span class="n">I4</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IndxInvalid</span><span class="w">         </span><span class="o">///&lt;</span><span class="w"> </span><span class="p">[</span><span class="n">out</span><span class="p">]</span><span class="w"> </span><span class="p">(</span><span class="n">optional</span><span class="p">)</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="n">value</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="getnumtracers">
+<h4>4.2.3 <code class="docutils literal notranslate"><span class="pre">getNumTracers</span></code><a class="headerlink" href="#getnumtracers" title="Permalink to this heading"></a></h4>
+<p>This function retrieves the total number of tracers activated for the current
+simulation.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="nf">getNumTracers</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+<section id="getindex">
+<h4>4.2.4 <code class="docutils literal notranslate"><span class="pre">getIndex</span></code><a class="headerlink" href="#getindex" title="Permalink to this heading"></a></h4>
+<p>This function retrieves the tracer index based on the tracer name.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Retrieves tracer index from tracer name</span>
+<span class="k">static</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="nf">getIndex</span><span class="p">(</span><span class="n">I4</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TracerIndex</span><span class="p">,</span><span class="w">              </span><span class="c1">///&lt; [out] Tracer index</span>
+<span class="w">                   </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TracerName</span><span class="w"> </span><span class="c1">///&lt; [in] Tracer name</span>
+
+<span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="getall">
+<h4>4.2.5 <code class="docutils literal notranslate"><span class="pre">getAll</span></code><a class="headerlink" href="#getall" title="Permalink to this heading"></a></h4>
+<p>This function retrieves the full array of all tracers at a specified time
+level. The current time level is specified by an integer value of 0, the
+previous time level is -1, and so on. If the requested time level does not
+exist, the function returns a negative integer.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// get a device array for all tracers</span>
+<span class="k">static</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="nf">getAll</span><span class="p">(</span><span class="n">Array3DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TracerArray</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] tracer device array</span>
+<span class="w">                 </span><span class="k">const</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">TimeLevel</span><span class="w">        </span><span class="c1">///&lt; [in] time level index</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="getbyindex-single-tracer">
+<h4>4.2.6 <code class="docutils literal notranslate"><span class="pre">getByIndex</span></code> (Single Tracer)<a class="headerlink" href="#getbyindex-single-tracer" title="Permalink to this heading"></a></h4>
+<p>This function retrieves a single tracer array by index and time level.
+Similar to <code class="docutils literal notranslate"><span class="pre">getAll</span></code>, the current time level is specified by an integer value
+of 0, and the previous time level is -1. If the requested time level does
+not exist, the function returns a negative integer.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// get a device array by tracer index</span>
+<span class="k">static</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="nf">getByIndex</span><span class="p">(</span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TracerArray</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] tracer device array</span>
+<span class="w">                     </span><span class="k">const</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">,</span><span class="w">       </span><span class="c1">///&lt; [in] time level index</span>
+<span class="w">                     </span><span class="k">const</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">TracerIndex</span><span class="w">      </span><span class="c1">///&lt; [in] global tracer index</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="getgrouprange">
+<h4>4.2.7 <code class="docutils literal notranslate"><span class="pre">getGroupRange</span></code><a class="headerlink" href="#getgrouprange" title="Permalink to this heading"></a></h4>
+<p>This function retrieves a pair of the group’s start index and group length.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Retrieves a pair of (group start index, group length)</span>
+<span class="k">static</span><span class="w"> </span><span class="n">I4</span>
+<span class="nf">getGroupRange</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">I4</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">GroupRange</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [out] Group range</span>
+<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">GroupName</span><span class="w">   </span><span class="c1">///&lt; [in] Group name</span>
+
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>A typical use of this function might look like:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Get group range</span>
+<span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">I4</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="n">GroupRange</span><span class="p">;</span>
+<span class="n">I4</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Tracers</span><span class="o">::</span><span class="n">getGroupRange</span><span class="p">(</span><span class="n">GroupRange</span><span class="p">,</span><span class="w"> </span><span class="n">GroupName</span><span class="p">);</span>
+
+<span class="c1">// Unpack group range</span>
+<span class="k">auto</span><span class="w"> </span><span class="p">[</span><span class="n">StartIndex</span><span class="p">,</span><span class="w"> </span><span class="n">GroupLength</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GroupRange</span><span class="p">;</span>
+
+<span class="c1">// Get all tracers at the current time level (0)</span>
+<span class="n">Array3DReal</span><span class="w"> </span><span class="n">TracerArray</span><span class="p">;</span>
+<span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Tracers</span><span class="o">::</span><span class="n">getAll</span><span class="p">(</span><span class="n">TracerArray</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<span class="w">   </span><span class="n">LOG_ERROR</span><span class="p">(</span><span class="s">&quot;getAll returns an error code: {}.&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Err</span><span class="p">);</span>
+
+<span class="n">OMEGA</span><span class="o">::</span><span class="n">parallelFor</span><span class="p">(</span>
+<span class="w">   </span><span class="s">&quot;ComputeGroupTendency&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="p">{</span><span class="n">GroupLength</span><span class="p">,</span><span class="w"> </span><span class="n">NCells</span><span class="p">,</span><span class="w"> </span><span class="n">NVertLayers</span><span class="p">},</span>
+<span class="w">   </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="n">Int</span><span class="w"> </span><span class="n">iIndex</span><span class="p">,</span><span class="w"> </span><span class="n">Int</span><span class="w"> </span><span class="n">iCell</span><span class="p">,</span><span class="w"> </span><span class="n">Int</span><span class="w"> </span><span class="n">iVert</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kt">int</span><span class="w"> </span><span class="n">iTracer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TracerArray</span><span class="p">[</span><span class="n">iIndex</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">StartIndex</span><span class="p">];</span>
+<span class="w">      </span><span class="c1">// Perform operations on TracerArray(iTracer, iCell, iVert);</span>
+<span class="w">   </span><span class="p">});</span>
+</pre></div>
+</div>
+</section>
+<section id="isgroupmemberbyindex">
+<h4>4.2.8 <code class="docutils literal notranslate"><span class="pre">isGroupMemberByIndex</span></code><a class="headerlink" href="#isgroupmemberbyindex" title="Permalink to this heading"></a></h4>
+<p>When looping over tracers, this function returns <code class="docutils literal notranslate"><span class="pre">true</span></code> if the current
+tracer index belongs to a group with a given name.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Checks if a tracer is a member of a group by tracer index</span>
+<span class="k">static</span><span class="w"> </span><span class="kt">bool</span>
+<span class="nf">isGroupMemberByIndex</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">TracerIndex</span><span class="p">,</span><span class="w">      </span><span class="c1">///&lt; [in] Tracer index</span>
+<span class="w">                     </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">GroupName</span><span class="w"> </span><span class="c1">///&lt; [in] Group name</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="managing-time-levels">
+<h4>4.2.9 Managing Time Levels<a class="headerlink" href="#managing-time-levels" title="Permalink to this heading"></a></h4>
+<p>The exact process for managing time integration is not yet clear. We
+assume a time integration module will assign and swap time indices (e.g.,
+CurTime, PrevTime) to point to the appropriate array index in all
+prognostic arrays like tracers. The current time is represented by
+an integer value of “0”, while the previous time is represented as “-1”,
+and so on.</p>
+</section>
+<section id="clear">
+<h4>4.2.10 <code class="docutils literal notranslate"><span class="pre">clear</span></code><a class="headerlink" href="#clear" title="Permalink to this heading"></a></h4>
+<p>This function clears all defined tracers and cleans up memory. It returns
+an error code if it is unable to deallocate or destroy all memory.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Clears all defined tracers and deallocates memory.</span>
+<span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">clear</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>Here is the corrected version with proper grammar:</p>
+</section>
+</section>
+</section>
+<hr class="docutils" />
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test-all">
+<h3>5.1 Test All<a class="headerlink" href="#test-all" title="Permalink to this heading"></a></h3>
+<p>A sample <code class="docutils literal notranslate"><span class="pre">TracerDefs.inc</span></code> file will be located in the source directory,
+containing the base tracers and three tracers in a Debug group. We will
+assume two time levels (Cur: 0, Prev: -1). A unit test driver will read an
+input configuration that requests these two tracer groups. The tracers will
+be initialized with artificial data, and basic arithmetic will be performed
+on the device. In one loop, we will perform arithmetic on one group using
+the vector of group tracer indices. In a second loop, we will perform
+operations on the second group using the <code class="docutils literal notranslate"><span class="pre">isMembers</span></code> function to select tracers.</p>
+<p>This test covers requirements 2.1–2.4 and 2.6.</p>
+<p>All other requirements will need to be tested in later system tests once
+I/O streams and time integration schemes have been implemented.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="TimeStepping.html" class="btn btn-neutral float-left" title="Time Stepping" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="TridiagonalSolver.html" class="btn btn-neutral float-right" title="Tridiagonal Solver" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

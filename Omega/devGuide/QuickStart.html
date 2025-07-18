@@ -1,0 +1,503 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Start for Developers &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Development Conda Environment" href="CondaEnv.html" />
+    <link rel="prev" title="Tridiagonal Solvers" href="../userGuide/TridiagonalSolvers.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start for Developers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#getting-set-up">Getting set up</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#creating-an-e3sm-fork">Creating an E3SM fork</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#check-out-the-code">Check out the code</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#create-a-conda-environment">Create a conda environment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#building-and-testing-omega">Building and testing Omega</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#polaris-ctest-utility">Polaris CTest Utility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-omega">Building Omega</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#getting-test-meshes">Getting test meshes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-ctests">Running CTests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#debugging-tips">Debugging tips</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#metis-and-parmetis-libraries">Metis and Parmetis libraries</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#code-development">Code development</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#code-style">Code style</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vs-code">VS Code</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Quick Start for Developers</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/devGuide/QuickStart.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="quick-start-for-developers">
+<span id="omega-dev-quick-start"></span><h1>Quick Start for Developers<a class="headerlink" href="#quick-start-for-developers" title="Permalink to this heading"></a></h1>
+<section id="getting-set-up">
+<h2>Getting set up<a class="headerlink" href="#getting-set-up" title="Permalink to this heading"></a></h2>
+<section id="creating-an-e3sm-fork">
+<h3>Creating an E3SM fork<a class="headerlink" href="#creating-an-e3sm-fork" title="Permalink to this heading"></a></h3>
+<p>We ask developers to make their own fork of the E3SM to use for development
+branches.  To do this, go to the page for the
+<a class="reference external" href="https://github.com/E3SM-Project/E3SM">E3SM-Project/E3SM</a> repository and
+click on the <code class="docutils literal notranslate"><span class="pre">fork</span></code> button near the upper right corner.  Set “owner” to your
+GitHub username (this should be the default) and click “Create fork”.</p>
+<p>There is no need to have a separate for for Omega, since the Omega repository
+is also a fork of E3SM.  Your E3SM fork will server for both E3SM and Omega
+development.  In fact, GitHub will not let you make an Omega fork if you
+already have an E3SM fork (or visa versa).</p>
+</section>
+<section id="check-out-the-code">
+<h3>Check out the code<a class="headerlink" href="#check-out-the-code" title="Permalink to this heading"></a></h3>
+<p>Make sure you have added the SSH key for the machine you are using to your
+GitHub account, see
+<a class="reference external" href="https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account">Adding a new SSH key to your GitHub account</a>.</p>
+<p>Clone the develop branch of the Omega repo:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:E3SM-Project/Omega.git<span class="w"> </span>develop
+</pre></div>
+</div>
+<p>You may wish to rename <code class="docutils literal notranslate"><span class="pre">origin</span></code> to <code class="docutils literal notranslate"><span class="pre">E3SM-Project/Omega</span></code> for clarity:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>remote<span class="w"> </span>rename<span class="w"> </span>origin<span class="w"> </span>E3SM-Project/Omega
+</pre></div>
+</div>
+<p>Consider adding some other remotes, e.g.:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>E3SM-Project/E3SM<span class="w"> </span>git@github.com:E3SM-Project/E3SM.git
+git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>&lt;github_username&gt;/E3SM<span class="w"> </span>git@github.com:&lt;github_username&gt;/E3SM.git
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">&lt;github_username&gt;</span></code> is your username or that of a collaborator.</p>
+<p>To sync your local clone with all the remotes, run:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>fetch<span class="w"> </span>--all<span class="w"> </span>-p
+</pre></div>
+</div>
+</section>
+<section id="create-a-conda-environment">
+<h3>Create a conda environment<a class="headerlink" href="#create-a-conda-environment" title="Permalink to this heading"></a></h3>
+<p>If you do not have conda set up in your own space yet, follow
+<a class="reference internal" href="CondaEnv.html#omega-dev-install-miniforge3"><span class="std std-ref">Installing Miniforge3</span></a> for instructions on how to install it.</p>
+<p>Activate the <code class="docutils literal notranslate"><span class="pre">base</span></code> conda environment.  Go to the base of the Omega branch you
+plan to develop and create conda environment for
+linting your code and building the documentation:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>components/omega/
+conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>omega_dev<span class="w"> </span>--file<span class="w"> </span>dev-conda.txt
+conda<span class="w"> </span>activate<span class="w"> </span>omega_dev
+</pre></div>
+</div>
+<p>(You can reuse <code class="docutils literal notranslate"><span class="pre">omega_dev</span></code> for other branches as long as <code class="docutils literal notranslate"><span class="pre">dev-conda.txt</span></code> has
+not changed between branches.)</p>
+<p>The first time you set up the environment, you need to initiate <code class="docutils literal notranslate"><span class="pre">pre-commit</span></code>:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>install
+</pre></div>
+</div>
+<p>This needs to be done once per environment, so re-run it as necessary if you
+re-create the development environment.</p>
+<p>Please activate this environment each time you commit code.  This will ensure
+that <code class="docutils literal notranslate"><span class="pre">pre-commit</span></code> and the associated linting utilities are available and that
+they check your code as it is committed (rather than requiring fix-up commits
+later on).</p>
+</section>
+</section>
+<section id="building-and-testing-omega">
+<h2>Building and testing Omega<a class="headerlink" href="#building-and-testing-omega" title="Permalink to this heading"></a></h2>
+<section id="polaris-ctest-utility">
+<h3>Polaris CTest Utility<a class="headerlink" href="#polaris-ctest-utility" title="Permalink to this heading"></a></h3>
+<p>If you are using Polaris, you may wish to use its
+<a class="reference external" href="https://github.com/E3SM-Project/polaris/tree/main/utils/omega/ctest">Omega CTest utility</a>
+to buid and test Omega. The utility automates many of the steps below.</p>
+</section>
+<section id="building-omega">
+<h3>Building Omega<a class="headerlink" href="#building-omega" title="Permalink to this heading"></a></h3>
+<p>In the Omega branch you would like to build, first update the submodules that
+Omega requires:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>submodule<span class="w"> </span>update<span class="w"> </span>--init<span class="w"> </span>--recursive<span class="w"> </span>externals/ekat<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>externals/scorpio<span class="w"> </span>cime<span class="w"> </span>externals/cpptrace
+</pre></div>
+</div>
+<p>Since some systems require tests to be run on in a scratch space, it is a good
+idea to build the code somewhere in your scratch space.  We will simply refer
+to the build directory as <code class="docutils literal notranslate"><span class="pre">$BUILD_DIR</span></code> and leave it up to you to decide where
+it is best to put it.  If you have previously built in <code class="docutils literal notranslate"><span class="pre">$BUILD_DIR</span></code>, you
+very likely need to remove it first and start fresh:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>rm<span class="w"> </span>-rf<span class="w"> </span><span class="nv">$BUILD_DIR</span>
+mkdir<span class="w"> </span><span class="nv">$BUILD_DIR</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$BUILD_DIR</span>
+</pre></div>
+</div>
+<p>Set <code class="docutils literal notranslate"><span class="pre">$PARMETIS_ROOT</span></code> to the appropriate location for Metis and Parmetis
+libraries built for your machine and compiler (see
+<a class="reference internal" href="#omega-dev-parmetis-libs"><span class="std std-ref">Metis and Parmetis libraries</span></a> below for some shared locations on some
+supported machines):</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">PARMETIS_ROOT</span><span class="o">=</span>&lt;parmetis_root&gt;
+</pre></div>
+</div>
+<p>Run CMake for the build type, machine and compiler you want:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-DOMEGA_BUILD_TYPE<span class="o">=</span>&lt;build_type&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-DOMEGA_CIME_COMPILER<span class="o">=</span>&lt;compiler&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-DOMEGA_CIME_MACHINE<span class="o">=</span>&lt;machine&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-DOMEGA_PARMETIS_ROOT<span class="o">=</span><span class="si">${</span><span class="nv">PARMETIS_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-DOMEGA_BUILD_TEST<span class="o">=</span>ON<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-Wno-dev<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-S<span class="w"> </span>&lt;omega_branch&gt;/components/omega<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-B<span class="w"> </span>.
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">&lt;build_type&gt;</span></code> is either <code class="docutils literal notranslate"><span class="pre">Debug</span></code> or <code class="docutils literal notranslate"><span class="pre">Release</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;omega_branch&gt;</span></code> is the
+path to the base of the Omega branch you want to build, and where <code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;</span></code>
+and <code class="docutils literal notranslate"><span class="pre">&lt;compiler&gt;</span></code> are the current machine and a compiler supported by E3SM on
+that machine (see
+<a class="reference external" href="https://github.com/E3SM-Project/Omega/blob/develop/cime_config/machines/config_machines.xml">config_machines.xml</a>).</p>
+<p>The command above will configure Omega to build CTests
+(<code class="docutils literal notranslate"><span class="pre">-DOMEGA_BUILD_TEST=ON</span></code>), which is recommended.</p>
+<p>If CMake configuration runs correctly, you should have an <code class="docutils literal notranslate"><span class="pre">omega_build.sh</span></code>
+script that you can run to build Omega:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>./omega_build.sh
+</pre></div>
+</div>
+</section>
+<section id="getting-test-meshes">
+<span id="omega-dev-quick-start-getting-meshes"></span><h3>Getting test meshes<a class="headerlink" href="#getting-test-meshes" title="Permalink to this heading"></a></h3>
+<p>Some tests require a valid Omega mesh file. Different tests require different
+meshes. At the moment, mesh files need to be copied or linked to specifically
+named files under the <code class="docutils literal notranslate"><span class="pre">test</span></code> directory. Appropriate mesh files can be
+downloaded from:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://web.lcrc.anl.gov/public/e3sm/inputdata/ocn/mpas-o/oQU240/ocean.QU.240km.151209.nc">Ocean Mesh</a></p></li>
+<li><p><a class="reference external" href="https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/polaris_cache/global_convergence/icos/cosine_bell/Icos480/init/initial_state.230220.nc">Global Mesh</a></p></li>
+<li><p><a class="reference external" href="https://gist.github.com/mwarusz/f8caf260398dbe140d2102ec46a41268/raw/e3c29afbadc835797604369114321d93fd69886d/PlanarPeriodic48x48.nc">Planar Mesh</a></p></li>
+</ul>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>-O<span class="w"> </span>ocean_test_mesh.nc<span class="w"> </span>https://web.lcrc.anl.gov/public/e3sm/inputdata/ocn/mpas-o/oQU240/ocean.QU.240km.151209.nc
+wget<span class="w"> </span>-O<span class="w"> </span>global_test_mesh.nc<span class="w"> </span>https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/polaris_cache/global_convergence/icos/cosine_bell/Icos480/init/initial_state.230220.nc
+wget<span class="w"> </span>-O<span class="w"> </span>planar_test_mesh.nc<span class="w"> </span>https://gist.github.com/mwarusz/f8caf260398dbe140d2102ec46a41268/raw/e3c29afbadc835797604369114321d93fd69886d/PlanarPeriodic48x48.nc
+<span class="nb">cd</span><span class="w"> </span><span class="nb">test</span>
+ln<span class="w"> </span>-sf<span class="w">  </span>../ocean_test_mesh.nc<span class="w"> </span>OmegaMesh.nc
+ln<span class="w"> </span>-sf<span class="w">  </span>../global_test_mesh.nc<span class="w"> </span>OmegaSphereMesh.nc
+ln<span class="w"> </span>-sf<span class="w">  </span>../planar_test_mesh.nc<span class="w"> </span>OmegaPlanarMesh.nc
+<span class="nb">cd</span><span class="w"> </span>..
+</pre></div>
+</div>
+</section>
+<section id="running-ctests">
+<h3>Running CTests<a class="headerlink" href="#running-ctests" title="Permalink to this heading"></a></h3>
+<p>Omega includes several unit tests that run through CTest. The unit tests need
+to be run on a compute node.</p>
+<p>To run the tests:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>./omega_ctest.sh
+</pre></div>
+</div>
+<p>The results should look something like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Test</span> <span class="n">project</span> <span class="o">/</span><span class="n">gpfs</span><span class="o">/</span><span class="n">fs1</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ac</span><span class="o">.</span><span class="n">xylar</span><span class="o">/</span><span class="n">e3sm_work</span><span class="o">/</span><span class="n">polaris</span><span class="o">/</span><span class="n">add</span><span class="o">-</span><span class="n">omega</span><span class="o">-</span><span class="n">ctest</span><span class="o">-</span><span class="n">util</span><span class="o">/</span><span class="n">build_omega</span><span class="o">/</span><span class="n">build_chrysalis_intel</span>
+    <span class="n">Start</span> <span class="mi">1</span><span class="p">:</span> <span class="n">DATA_TYPES_TEST</span>
+<span class="mi">1</span><span class="o">/</span><span class="mi">9</span> <span class="n">Test</span> <span class="c1">#1: DATA_TYPES_TEST ..................   Passed    0.38 sec</span>
+    <span class="n">Start</span> <span class="mi">2</span><span class="p">:</span> <span class="n">MACHINE_ENV_TEST</span>
+<span class="mi">2</span><span class="o">/</span><span class="mi">9</span> <span class="n">Test</span> <span class="c1">#2: MACHINE_ENV_TEST .................   Passed    0.98 sec</span>
+    <span class="n">Start</span> <span class="mi">3</span><span class="p">:</span> <span class="n">BROADCAST_TEST</span>
+<span class="mi">3</span><span class="o">/</span><span class="mi">9</span> <span class="n">Test</span> <span class="c1">#3: BROADCAST_TEST ...................   Passed    1.13 sec</span>
+    <span class="n">Start</span> <span class="mi">4</span><span class="p">:</span> <span class="n">LOGGING_TEST</span>
+<span class="mi">4</span><span class="o">/</span><span class="mi">9</span> <span class="n">Test</span> <span class="c1">#4: LOGGING_TEST .....................   Passed    0.03 sec</span>
+    <span class="n">Start</span> <span class="mi">5</span><span class="p">:</span> <span class="n">DECOMP_TEST</span>
+<span class="mi">5</span><span class="o">/</span><span class="mi">9</span> <span class="n">Test</span> <span class="c1">#5: DECOMP_TEST ......................   Passed    1.20 sec</span>
+    <span class="n">Start</span> <span class="mi">6</span><span class="p">:</span> <span class="n">HALO_TEST</span>
+<span class="mi">6</span><span class="o">/</span><span class="mi">9</span> <span class="n">Test</span> <span class="c1">#6: HALO_TEST ........................   Passed    1.08 sec</span>
+    <span class="n">Start</span> <span class="mi">7</span><span class="p">:</span> <span class="n">IO_TEST</span>
+<span class="mi">7</span><span class="o">/</span><span class="mi">9</span> <span class="n">Test</span> <span class="c1">#7: IO_TEST ..........................   Passed    2.94 sec</span>
+    <span class="n">Start</span> <span class="mi">8</span><span class="p">:</span> <span class="n">CONFIG_TEST</span>
+<span class="mi">8</span><span class="o">/</span><span class="mi">9</span> <span class="n">Test</span> <span class="c1">#8: CONFIG_TEST ......................   Passed    1.01 sec</span>
+    <span class="n">Start</span> <span class="mi">9</span><span class="p">:</span> <span class="n">KOKKOS_TEST</span>
+<span class="mi">9</span><span class="o">/</span><span class="mi">9</span> <span class="n">Test</span> <span class="c1">#9: KOKKOS_TEST ........................   Passed    0.03 sec</span>
+
+<span class="mi">100</span><span class="o">%</span> <span class="n">tests</span> <span class="n">passed</span><span class="p">,</span> <span class="mi">0</span> <span class="n">tests</span> <span class="n">failed</span> <span class="n">out</span> <span class="n">of</span> <span class="mi">9</span>
+
+<span class="n">Total</span> <span class="n">Test</span> <span class="n">time</span> <span class="p">(</span><span class="n">real</span><span class="p">)</span> <span class="o">=</span>   <span class="mf">8.91</span> <span class="n">sec</span>
+</pre></div>
+</div>
+</section>
+<section id="debugging-tips">
+<h3>Debugging tips<a class="headerlink" href="#debugging-tips" title="Permalink to this heading"></a></h3>
+<p>If Omega CTests are failing or simulations are crashing, setting
+<code class="docutils literal notranslate"><span class="pre">OMEGA_BUILD_TYPE</span></code> to <code class="docutils literal notranslate"><span class="pre">Debug</span></code> can be helpful for debugging purposes. If you
+need to identify which test has failed, it may be useful to examine the CMake
+ctest log file located at <code class="docutils literal notranslate"><span class="pre">$BUILD_DIR/Testing/Temporary/LastTest.log</span></code>.</p>
+</section>
+<section id="metis-and-parmetis-libraries">
+<span id="omega-dev-parmetis-libs"></span><h3>Metis and Parmetis libraries<a class="headerlink" href="#metis-and-parmetis-libraries" title="Permalink to this heading"></a></h3>
+<p>The following table shows locations for Metis and Parmetis libraries on
+supported E3SM machines. The pattern is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">polaris_base</span><span class="o">&gt;/&lt;</span><span class="n">machine</span><span class="o">&gt;/</span><span class="n">spack</span><span class="o">/</span><span class="n">dev_polaris_0_8_0_</span><span class="o">&lt;</span><span class="n">compiler</span><span class="o">&gt;</span><span class="n">_</span><span class="o">&lt;</span><span class="n">mpi</span><span class="o">&gt;/</span><span class="n">var</span><span class="o">/</span><span class="n">spack</span><span class="o">/</span><span class="n">environments</span><span class="o">/</span><span class="n">dev_polaris_0_8_0_</span><span class="o">&lt;</span><span class="n">compiler</span><span class="o">&gt;</span><span class="n">_</span><span class="o">&lt;</span><span class="n">mpi</span><span class="o">&gt;/.</span><span class="n">spack</span><span class="o">-</span><span class="n">env</span><span class="o">/</span><span class="n">view</span>
+</pre></div>
+</div>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Machine</p></th>
+<th class="head"><p>Compiler</p></th>
+<th class="head"><p>Parmetis path</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>aurora</p></td>
+<td><p>oneapi-ifx</p></td>
+<td><p>/lus/flare/projects/E3SM_Dec/soft/polaris/aurora/spack/dev_polaris_0_8_0_oneapi-ifx_mpich/var/spack/environments/dev_polaris_0_8_0_oneapi-ifx_mpich/.spack-env/view</p></td>
+</tr>
+<tr class="row-odd"><td><p>chicoma-cpu</p></td>
+<td><p>gnu</p></td>
+<td><p>/usr/projects/e3sm/polaris/chicoma-cpu/spack/dev_polaris_0_8_0_gnu_mpich/var/spack/environments/dev_polaris_0_8_0_gnu_mpich/.spack-env/view</p></td>
+</tr>
+<tr class="row-even"><td rowspan="2"><p>chrysalis</p></td>
+<td><p>intel</p></td>
+<td><p>/lcrc/soft/climate/polaris/chrysalis/spack/dev_polaris_0_8_0_intel_openmpi/var/spack/environments/dev_polaris_0_8_0_intel_openmpi/.spack-env/view</p></td>
+</tr>
+<tr class="row-odd"><td><p>gnu</p></td>
+<td><p>/lcrc/soft/climate/polaris/chrysalis/spack/dev_polaris_0_8_0_gnu_openmpi/var/spack/environments/dev_polaris_0_8_0_gnu_openmpi/.spack-env/view</p></td>
+</tr>
+<tr class="row-even"><td rowspan="6"><p>frontier</p></td>
+<td><p>craygnu</p></td>
+<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_8_0_craygnu_mpich/var/spack/environments/dev_polaris_0_8_0_craygnu_mpich/.spack-env/view</p></td>
+</tr>
+<tr class="row-odd"><td><p>craygnu-mphipcc</p></td>
+<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_8_0_craygnu-mphipcc_mpich/var/spack/environments/dev_polaris_0_8_0_craygnu-mphipcc_mpich/.spack-env/view</p></td>
+</tr>
+<tr class="row-even"><td><p>craycray</p></td>
+<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_8_0_craycray_mpich/var/spack/environments/dev_polaris_0_8_0_craycray_mpich/.spack-env/view</p></td>
+</tr>
+<tr class="row-odd"><td><p>craycray-mphipcc</p></td>
+<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_8_0_craycray-mphipcc_mpich/var/spack/environments/dev_polaris_0_8_0_craycray-mphipcc_mpich/.spack-env/view</p></td>
+</tr>
+<tr class="row-even"><td><p>crayamd</p></td>
+<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_8_0_crayamd_mpich/var/spack/environments/dev_polaris_0_8_0_crayamd_mpich/.spack-env/view</p></td>
+</tr>
+<tr class="row-odd"><td><p>crayamd-mphipcc</p></td>
+<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_8_0_crayamd-mphipcc_mpich/var/spack/environments/dev_polaris_0_8_0_crayamd-mphipcc_mpich/.spack-env/view</p></td>
+</tr>
+<tr class="row-even"><td rowspan="2"><p>pm-cpu</p></td>
+<td><p>gnu</p></td>
+<td><p>/global/cfs/cdirs/e3sm/software/polaris/pm-cpu/spack/dev_polaris_0_8_0_gnu_mpich/var/spack/environments/dev_polaris_0_8_0_gnu_mpich/.spack-env/view</p></td>
+</tr>
+<tr class="row-odd"><td><p>intel</p></td>
+<td><p>/global/cfs/cdirs/e3sm/software/polaris/pm-cpu/spack/dev_polaris_0_8_0_intel_mpich/var/spack/environments/dev_polaris_0_8_0_intel_mpich/.spack-env/view</p></td>
+</tr>
+<tr class="row-even"><td><p>pm-gpu</p></td>
+<td><p>gnugpu</p></td>
+<td><p>/global/cfs/cdirs/e3sm/software/polaris/pm-gpu/spack/dev_polaris_0_8_0_gnugpu_mpich/var/spack/environments/dev_polaris_0_8_0_gnugpu_mpich/.spack-env/view</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="code-development">
+<h2>Code development<a class="headerlink" href="#code-development" title="Permalink to this heading"></a></h2>
+<section id="code-style">
+<h3>Code style<a class="headerlink" href="#code-style" title="Permalink to this heading"></a></h3>
+<p>We require that the C++ code in Omega adhere to the
+<a class="reference external" href="https://llvm.org/docs/CodingStandards.html">LLVM code style</a>. These
+conventions are enforced using the linting tools described in
+<a class="reference internal" href="Linting.html#omega-dev-linting"><span class="std std-ref">Linting Code</span></a>.  This style may take new developers some time to get
+used to but the hope is that it leads to a coherent code style in Omega.</p>
+</section>
+<section id="vs-code">
+<h3>VS Code<a class="headerlink" href="#vs-code" title="Permalink to this heading"></a></h3>
+<p>You may wish to consider using an integrated development environment (IDE) to
+develop your code.  A convenient option for developing on HPC is
+<a class="reference external" href="https://code.visualstudio.com/">Visual Studio Code (VS Code)</a>.  It has plugins
+for <a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools">c++</a>,
+<a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools">CMake</a>,
+<a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=ms-python.python">Python</a>,
+and so on.  If configured correctly, it should help to enforce the
+<a class="reference external" href="https://code.visualstudio.com/docs/cpp/cpp-ide#_code-formatting">code formatting style</a>
+by recognizing Omega’s <code class="docutils literal notranslate"><span class="pre">.clang-format</span></code> file.</p>
+<p>A convenient feature is the ability to connect to edit code directly on HPC
+systems from your laptop or desktop
+<a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh">using a n SSH connection</a>.</p>
+<p>VS Code also provides a convenient way to preview the Markdown files used in
+the Omega documentation as you are writing them.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../userGuide/TridiagonalSolvers.html" class="btn btn-neutral float-left" title="Tridiagonal Solvers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="CondaEnv.html" class="btn btn-neutral float-right" title="Development Conda Environment" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

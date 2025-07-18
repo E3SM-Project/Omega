@@ -1,0 +1,367 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataTypes &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Decomp" href="Decomp.html" />
+    <link rel="prev" title="Config" href="Config.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">DataTypes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-both-flexible-and-fixed-floating-point">2.1 Requirement: Both flexible and fixed floating point</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-readability-for-array-types">2.2 Desired: Readability for array types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-fixed-width-integer-types">2.3 Desired: Fixed width integer types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-interoperability">2.4 Desired: Interoperability</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#future-floating-point-conversion">2.5 Future: Floating point conversion</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-explicit-types">5.1 Test explicit types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-global-switch-for-default-real-size">5.2 Test global switch for default real size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#kokkos-array-test">5.3 Kokkos array test</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">DataTypes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/DataTypes.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="datatypes">
+<span id="omega-design-data-types"></span><h1>DataTypes<a class="headerlink" href="#datatypes" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>Data type aliases are a useful means for managing precision within OMEGA and
+to improve readability for for Kokkos array data types. This header file
+defines a number of aliases to common data types used throughout OMEGA.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-both-flexible-and-fixed-floating-point">
+<h3>2.1 Requirement: Both flexible and fixed floating point<a class="headerlink" href="#requirement-both-flexible-and-fixed-floating-point" title="Permalink to this heading"></a></h3>
+<p>We wish to explore mixed precision and lower precision floating point within
+OMEGA so require both a generic floating point type that can be switched at
+compile time as well as explicit single and double-precision (32-bit, 64-bit)
+types to enforce precision where needed.</p>
+</section>
+<section id="desired-readability-for-array-types">
+<h3>2.2 Desired: Readability for array types<a class="headerlink" href="#desired-readability-for-array-types" title="Permalink to this heading"></a></h3>
+<p>OMEGA will be using Kokkos array data types which have a long syntax. For
+readability, these should be aliased to a shorter, intuitive data type.</p>
+</section>
+<section id="desired-fixed-width-integer-types">
+<h3>2.3 Desired: Fixed width integer types<a class="headerlink" href="#desired-fixed-width-integer-types" title="Permalink to this heading"></a></h3>
+<p>For better control over integer storage, it might be better to define
+fixed-width integer data types rather than the generic int, long.</p>
+</section>
+<section id="desired-interoperability">
+<h3>2.4 Desired: Interoperability<a class="headerlink" href="#desired-interoperability" title="Permalink to this heading"></a></h3>
+<p>As much as possible, data types should not inhibit interoperability
+with other codes (eg E3SM coupler, 3rd-party libs) or frameworks
+(eg other portability or AI/ML frameworks).</p>
+</section>
+<section id="future-floating-point-conversion">
+<h3>2.5 Future: Floating point conversion<a class="headerlink" href="#future-floating-point-conversion" title="Permalink to this heading"></a></h3>
+<p>Currently, language standard floating point conversion should be adequate,
+but future mixed-precision implementations may require more reproducible
+methods for implementation-dependent conversion.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>No algorithms needed yet, though reproducibility in type conversion may
+require reproducible algorithms in the future.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>Currently, the data types can be defined in a single header file that sets
+up aliases. Because the main data types are simply aliases to the standard
+data types, interoperability (Req 2.4) should not be an issue. For the
+Kokkos arrays, Kokkos provides means for interoperability with both other
+languages and other frameworks and will be incorporated into any
+interfaces with other codes.</p>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>We will use a global cpp define -D SINGLE_PRECISION at compile time as a
+global switch for using single precision as the default real data type.
+Otherwise, the default real will be double precision.</p>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>The data types will be defined using type aliases within a single header
+file DataTypes.h We will use the “using” syntax rather than
+the older typedef. For Kokkos arrays, we require both device arrays (default)
+and host array types and will use C-ordering.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Standard integer and floating point types</span>
+<span class="k">using</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="kt">int32_t</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="n">I8</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="kt">int64_t</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="n">R4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">float</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="n">R8</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">double</span><span class="p">;</span>
+<span class="cp">#ifdef SINGLE_PRECISION</span>
+<span class="k">using</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">float</span><span class="p">;</span>
+<span class="cp">#else</span>
+<span class="k">using</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">double</span><span class="p">;</span>
+<span class="cp">#endif</span>
+
+<span class="c1">// Aliases for Kokkos arrays - by default on device and in</span>
+<span class="c1">// C-ordering.</span>
+<span class="cp">#define MAKE_OMEGA_VIEW_DIMS(N, V, T, ML, MS)  \</span>
+<span class="cp">   using N##1D##T = Kokkos::V&lt;T *, ML, MS&gt;;    \</span>
+<span class="cp">   using N##2D##T = Kokkos::V&lt;T **, ML, MS&gt;;   \</span>
+<span class="cp">   using N##3D##T = Kokkos::V&lt;T ***, ML, MS&gt;;  \</span>
+<span class="cp">   using N##4D##T = Kokkos::V&lt;T ****, ML, MS&gt;; \</span>
+<span class="cp">   using N##5D##T = Kokkos::V&lt;T *****, ML, MS&gt;;</span>
+
+<span class="cp">#define MAKE_OMEGA_VIEW_TYPES(N, V, ML, MS) \</span>
+<span class="cp">   MAKE_OMEGA_VIEW_DIMS(N, V, I4, ML, MS)   \</span>
+<span class="cp">   MAKE_OMEGA_VIEW_DIMS(N, V, I8, ML, MS)   \</span>
+<span class="cp">   MAKE_OMEGA_VIEW_DIMS(N, V, R4, ML, MS)   \</span>
+<span class="cp">   MAKE_OMEGA_VIEW_DIMS(N, V, R8, ML, MS)   \</span>
+<span class="cp">   MAKE_OMEGA_VIEW_DIMS(N, V, Real, ML, MS)</span>
+
+<span class="c1">// Aliases for Kokkos device arrays of various dimensions and types</span>
+<span class="n">MAKE_OMEGA_VIEW_TYPES</span><span class="p">(</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">View</span><span class="p">,</span><span class="w"> </span><span class="n">MemLayout</span><span class="p">,</span><span class="w"> </span><span class="n">MemSpace</span><span class="p">)</span>
+
+<span class="c1">// Aliases for Kokkos host arrays of various dimensions and types</span>
+<span class="n">MAKE_OMEGA_VIEW_TYPES</span><span class="p">(</span><span class="n">HostArray</span><span class="p">,</span><span class="w"> </span><span class="n">View</span><span class="p">,</span><span class="w"> </span><span class="n">HostMemLayout</span><span class="p">,</span><span class="w"> </span><span class="n">HostMemSpace</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<p>No methods needed at this time.</p>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<p>Requirement 2.4 on interoperability will not have a unit test
+and will be tested as part of larger system tests where coupling
+with other codes is exercised.</p>
+<section id="test-explicit-types">
+<h3>5.1 Test explicit types<a class="headerlink" href="#test-explicit-types" title="Permalink to this heading"></a></h3>
+<p>For the fixed types, verify the expected size using sizeof</p>
+<ul class="simple">
+<li><p>tests requirement 2.3, 2.1 (explicit types)</p></li>
+</ul>
+</section>
+<section id="test-global-switch-for-default-real-size">
+<h3>5.2 Test global switch for default real size<a class="headerlink" href="#test-global-switch-for-default-real-size" title="Permalink to this heading"></a></h3>
+<p>Build test code with and without -D SINGLE_PRECISION and
+verify size is as expected using sizeof</p>
+<ul class="simple">
+<li><p>tests requirement 2.1</p></li>
+</ul>
+</section>
+<section id="kokkos-array-test">
+<h3>5.3 Kokkos array test<a class="headerlink" href="#kokkos-array-test" title="Permalink to this heading"></a></h3>
+<p>Create Kokkos arrays of each type on device. Create host arrays to
+mirror each. Initialize Kokkos arrays on device and copy to host
+using Kokkos. Create a non-Kokkos array on host initialized the same
+way and compare values from each on the host.</p>
+<ul class="simple">
+<li><p>tests requirement 2.2</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Config.html" class="btn btn-neutral float-left" title="Config" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Decomp.html" class="btn btn-neutral float-right" title="Decomp" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

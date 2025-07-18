@@ -1,0 +1,684 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Metadata &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Input/Output (IO)" href="IO.html" />
+    <link rel="prev" title="MachineEnv" href="MachEnv.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Metadata</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-data-types">2.1 Requirement: Data types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-global-and-variable-metadata">2.2 Requirement: Global and variable metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-metadata-conventions">2.3 Requirement: Metadata conventions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-required-metadata">2.4 Requirement: Required metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-dimensions">2.5 Requirement: Dimensions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-available-fields">2.6 Requirement: Available fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-metadata-groups">2.7 Desired: Metadata groups</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#metadata-container-creation">4.2.1 Metadata container creation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#add-remove-metadata">4.2.2 Add/remove metadata</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#retrieve-metadata">4.2.3 Retrieve metadata</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#create-dimension">4.2.4 Create dimension</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#retrieve-dim-length">4.2.5 Retrieve dim length</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#existence-inquiry">4.2.6 Existence inquiry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#existence-inquiry-for-metadata-container-and-metadim-container">4.2.6.1 Existence inquiry for metadata container and metadim container</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#existence-inquiry-for-metadata">4.2.6.2 Existence inquiry for metadata</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#metadata-groups">4.2.7 Metadata groups</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-creation-retrieval">5.1 Test creation/retrieval</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-global-metadata">5.2 Test global metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-inquiry-functions">5.3 Test inquiry functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-metadata-groups">5.4 Test metadata groups</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-cf-compliance">5.5 Test CF compliance</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Metadata</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/Metadata.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="metadata">
+<span id="omega-design-metadata"></span><h1>Metadata<a class="headerlink" href="#metadata" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>All data files from OMEGA and E3SM must be in a self-describing format
+to enable easier analysis, archiving and provenance. We describe here
+requirements and design for managing metadata within the OMEGA code
+itself to enable appropriate metadata in all model output. The capabilities
+described here must interact with other parts of the I/O within OMEGA,
+particularly the lower-level I/O interfaces that
+perform the actual reading/writing to disk and the management of
+files or streams and their contents.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-data-types">
+<h3>2.1 Requirement: Data types<a class="headerlink" href="#requirement-data-types" title="Permalink to this heading"></a></h3>
+<p>Metadata can be in all supported OMEGA data types (I4, I8, R4, R8,
+Boolean/logical, strings). Initially only scalar metadata
+is required, but extending to vectors/arrays may be desirable.</p>
+</section>
+<section id="requirement-global-and-variable-metadata">
+<h3>2.2 Requirement: Global and variable metadata<a class="headerlink" href="#requirement-global-and-variable-metadata" title="Permalink to this heading"></a></h3>
+<p>Metadata refers not only to field/variable metadata but
+also metadata associated with the model, code base, simulation
+or data file. This capability must be able to track metadata
+for these global/general metadata in addition to metadata
+attached to particular fields or variables.</p>
+</section>
+<section id="requirement-metadata-conventions">
+<h3>2.3 Requirement: Metadata conventions<a class="headerlink" href="#requirement-metadata-conventions" title="Permalink to this heading"></a></h3>
+<p>Where possible, all metadata must conform to the climate/forecast (CF)
+metadata conventions at https://cfconventions.org.</p>
+</section>
+<section id="requirement-required-metadata">
+<h3>2.4 Requirement: Required metadata<a class="headerlink" href="#requirement-required-metadata" title="Permalink to this heading"></a></h3>
+<p>To comply with conventions and E3SM practices, there will be a minimum
+set of required metadata and interfaces must enforce this minimum set.
+This minimum will be defined later, but for variables, this would
+typically include a name (short), units, long name/description,
+standard CF name (if exists), <code class="docutils literal notranslate"><span class="pre">_FillValue</span></code>, valid min/max and dimensions.</p>
+</section>
+<section id="requirement-dimensions">
+<h3>2.5 Requirement: Dimensions<a class="headerlink" href="#requirement-dimensions" title="Permalink to this heading"></a></h3>
+<p>For array variables, a definition of each dimension used is required.
+In an unstructured model like OMEGA, the dimension describes the
+global extent of the index space for each dimension that is then paired
+with mesh fields for the full description of OMEGA coordinate locations.
+For time dimensions, we require support for both a fixed length time
+dimension (e.g. to support multiple time levels in a restart) as well
+as an unlimited dimension to support time series.</p>
+</section>
+<section id="requirement-available-fields">
+<h3>2.6 Requirement: Available fields<a class="headerlink" href="#requirement-available-fields" title="Permalink to this heading"></a></h3>
+<p>To support other I/O components, we require a means for maintaining
+a list of fields available for I/O based on the requested model
+configuration. This enables the I/O streams to define contents of
+a given file as part of model configuration input by supplying a
+list of variable names to be included.</p>
+</section>
+<section id="desired-metadata-groups">
+<h3>2.7 Desired: Metadata groups<a class="headerlink" href="#desired-metadata-groups" title="Permalink to this heading"></a></h3>
+<p>Because lists of contents in the model config file can get long,
+it would be useful to define and maintain a metadata group that
+is simply a shorthand to a set of common fields (e.g. <code class="docutils literal notranslate"><span class="pre">meshFields</span></code> or
+<code class="docutils literal notranslate"><span class="pre">prognosticVars</span></code>). Note that these would only be for the purpose
+of shortening lists in the config file or managing lists internally.
+The full list of fields would still appear in output file metadata.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>No algorithms are used.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>The general philosophy is that modules will define the metadata for
+each field they own and add it to a list of available fields. This
+internally generated list ensures that the list of available fields
+remains consistent with the code base and specific model configuration.
+Note that this requires most initialization to occur before processing
+output streams so that the requested contents can be checked against
+the list of defined fields.</p>
+<p>Internally, the metadata class will make use of the C++
+<code class="docutils literal notranslate"><span class="pre">std::map</span></code> that provides a useful capability for name, value
+pairs of each data type.</p>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>To enable general metadata associated with the code,
+simulation or file, we define standard names for these
+to be used as the “field” name during metadata definition.
+For code and simulation metadata, we will use:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="k">constexpr</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">codeMeta</span><span class="p">{</span><span class="s">&quot;code&quot;</span><span class="p">};</span>
+<span class="w">   </span><span class="k">constexpr</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">simMeta</span><span class="w"> </span><span class="p">{</span><span class="s">&quot;simulation&quot;</span><span class="p">};</span>
+</pre></div>
+</div>
+<p>For file metadata (eg. time stamps, convention, etc.),
+we will use the stream name as the field name for metadata
+definition.</p>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>The metadata class holds the collection of metadata associated
+with a variable or the general category (code, sim, file) that we call a field.
+This class implemented as a map (name, value pairs) using <code class="docutils literal notranslate"><span class="pre">std::any</span></code>
+to accommodate all supported types. It also stores all the
+defined metadata in a static map so the metadata can be
+retrieved from anywhere.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="k">class</span><span class="w"> </span><span class="nc">MetaData</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="k">protected</span><span class="o">:</span>
+<span class="w">       </span><span class="c1">/// metadata stored in map</span>
+<span class="w">       </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">any</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MetaMap</span><span class="p">;</span>
+
+<span class="w">       </span><span class="c1">/// Store and maintain all defined metadata in this map</span>
+<span class="w">       </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MetaData</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">AllFields</span><span class="p">;</span>
+
+<span class="w">     </span><span class="k">public</span><span class="o">:</span>
+<span class="w">      </span><span class="c1">// [Methods described below]</span>
+<span class="w">   </span><span class="p">};</span>
+</pre></div>
+</div>
+<p>While the Metadata class provides a generic solution for storing/retrieving
+metadata, we also provide specific solutions for important variable types.
+ArrayMetaData is a class inherited from the Metadata class that helps users
+input the required metadata for array-type variables.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="k">class</span><span class="w"> </span><span class="nc">ArrayMetaData</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">MetaData</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">        </span><span class="k">public</span><span class="o">:</span>
+
+<span class="w">        </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MetaData</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="n">create</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Name</span><span class="p">,</span><span class="w">        </span><span class="c1">/// Name of var</span>
+<span class="w">               </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Description</span><span class="p">,</span><span class="w"> </span><span class="c1">/// long Name or description</span>
+<span class="w">               </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Units</span><span class="p">,</span><span class="w">       </span><span class="c1">/// units</span>
+<span class="w">               </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">StdName</span><span class="p">,</span><span class="w">     </span><span class="c1">/// CF standard Name</span>
+<span class="w">               </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">any</span><span class="w"> </span><span class="n">ValidMin</span><span class="p">,</span><span class="w">       </span><span class="c1">/// min valid field value</span>
+<span class="w">               </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">any</span><span class="w"> </span><span class="n">ValidMax</span><span class="p">,</span><span class="w">       </span><span class="c1">/// max valid field value</span>
+<span class="w">               </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">any</span><span class="w"> </span><span class="n">FillValue</span><span class="p">,</span><span class="w">      </span><span class="c1">/// scalar used for undefined entries</span>
+<span class="w">               </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NDims</span><span class="p">,</span><span class="w">               </span><span class="c1">/// number of dimensions</span>
+<span class="w">               </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MetaDim</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">Dimensions</span><span class="w"> </span><span class="c1">// dim pointers</span>
+<span class="w">        </span><span class="p">);</span>
+<span class="w">    </span><span class="p">};</span>
+</pre></div>
+</div>
+<p>Another class is needed to describe dimensions for arrays
+and vectors. Each is a name, length pair. Like the metadata
+above, all defined dimensions are stored and maintained as a
+static vector.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="k">class</span><span class="w"> </span><span class="nc">MetaDim</span><span class="p">{</span>
+
+<span class="w">      </span><span class="k">private</span><span class="o">:</span>
+<span class="w">         </span><span class="c1">/// The length of the dimension. Use 0 for unlimited length.</span>
+<span class="w">         </span><span class="n">I4</span><span class="w"> </span><span class="n">Length</span><span class="p">;</span>
+
+<span class="w">         </span><span class="c1">/// Store and maintain all defined dimensions</span>
+<span class="w">         </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MetaDim</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">AllDims</span><span class="p">;</span>
+
+<span class="w">      </span><span class="k">public</span><span class="o">:</span>
+<span class="w">         </span><span class="p">[</span><span class="n">methods</span><span class="w"> </span><span class="n">described</span><span class="w"> </span><span class="n">below</span><span class="p">]</span>
+<span class="w">   </span><span class="p">};</span>
+</pre></div>
+</div>
+<p>Finally, to support common groups of metadata, we define a simple
+class to define a list of variable names that are members of a
+group. Like the classes above, we store and manage the group
+definitions in a static map of defined groups.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="k">class</span><span class="w"> </span><span class="nc">MetaGroup</span><span class="p">{</span>
+<span class="w">      </span><span class="k">private</span><span class="o">:</span>
+<span class="w">         </span><span class="c1">/// map of fields in group</span>
+<span class="w">         </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MetaData</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">Fields</span><span class="p">;</span>
+
+<span class="w">         </span><span class="c1">/// Store and maintain all defined groups</span>
+<span class="w">         </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MetaGroup</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">AllGroups</span><span class="p">;</span>
+
+<span class="w">      </span><span class="k">public</span><span class="o">:</span>
+<span class="w">         </span><span class="p">[</span><span class="n">methods</span><span class="w"> </span><span class="n">described</span><span class="w"> </span><span class="n">below</span><span class="p">]</span>
+<span class="w">   </span><span class="p">};</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<section id="metadata-container-creation">
+<h4>4.2.1 Metadata container creation<a class="headerlink" href="#metadata-container-creation" title="Permalink to this heading"></a></h4>
+<p>There will be two methods for creating generic metadata container and
+one method for creating array-type metadata container. Because we
+are managing all instances of metadata container within the class, these
+are static functions rather than constructors. Also note in
+the comments below that empty or zero values can be provided
+in cases where input arguments don’t make sense.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="k">class</span><span class="w"> </span><span class="nc">MetaData</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="p">...</span>
+<span class="w">      </span><span class="k">public</span><span class="o">:</span>
+
+<span class="w">        </span><span class="c1">/// Create an empty metadata container instance by name, primarily</span>
+<span class="w">        </span><span class="c1">/// for global metadata not assigned to a variable/field. Returns a</span>
+<span class="w">        </span><span class="c1">/// shared_ptr object. An exception is thrown if metadata of the same</span>
+<span class="w">        </span><span class="c1">/// name already exists.</span>
+<span class="w">        </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MetaData</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="n">create</span><span class="p">(</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Name</span><span class="w"> </span><span class="c1">/// [in] Name to assign</span>
+<span class="w">        </span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">/// Create an instance by name and pairs of key-value.</span>
+<span class="w">        </span><span class="c1">/// Returns a shared_ptr object. An exception is thrown if metadata</span>
+<span class="w">        </span><span class="c1">/// of the same name already exists.</span>
+<span class="w">        </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MetaData</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="n">create</span><span class="p">(</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Name</span><span class="p">,</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">initializer_list</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">any</span><span class="o">&gt;&gt;&amp;</span><span class="w"> </span><span class="n">MetaPairs</span><span class="p">);</span>
+<span class="w">   </span><span class="p">}</span>
+</pre></div>
+</div>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="k">class</span><span class="w"> </span><span class="nc">ArrayMetaData</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">MetaData</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="p">...</span>
+<span class="w">   </span><span class="k">public</span>
+<span class="w">    </span><span class="c1">/// Create an metadata container instance for a variable using all</span>
+<span class="w">    </span><span class="c1">/// required metadata. Note that if input parameters don&#39;t exist</span>
+<span class="w">    </span><span class="c1">/// (eg stdName) or don&#39;t make sense (eg min/max or fill) for a</span>
+<span class="w">    </span><span class="c1">/// given field, empty or 0 entries can be provided. Similarly</span>
+<span class="w">    </span><span class="c1">/// for scalars, nDims can be 0 and an emtpy MetaDim vector can be</span>
+<span class="w">    </span><span class="c1">/// supplied.</span>
+<span class="w">    </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MetaData</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="n">create</span>
+<span class="w">         </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w">        </span><span class="c1">/// name of var</span>
+<span class="w">          </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">description</span><span class="p">,</span><span class="w"> </span><span class="c1">/// long name or description</span>
+<span class="w">          </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">units</span><span class="p">,</span><span class="w">       </span><span class="c1">/// units</span>
+<span class="w">          </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">stdName</span><span class="p">,</span><span class="w">     </span><span class="c1">/// CF standard name</span>
+<span class="w">          </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">any</span><span class="w">    </span><span class="n">validMin</span><span class="p">,</span><span class="w">    </span><span class="c1">/// min valid field value</span>
+<span class="w">          </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">any</span><span class="w">    </span><span class="n">validMax</span><span class="p">,</span><span class="w">    </span><span class="c1">/// max valid field value</span>
+<span class="w">          </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">any</span><span class="w">    </span><span class="n">fillValue</span><span class="p">,</span><span class="w">   </span><span class="c1">/// scalar used for undefined entries</span>
+<span class="w">          </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w">         </span><span class="n">nDims</span><span class="p">,</span><span class="w">       </span><span class="c1">/// number of dimensions</span>
+<span class="w">          </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MetaDims</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="c1">// dim pointers</span>
+<span class="w">          </span><span class="p">);</span>
+<span class="w">   </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>A destructor will be provided to free metadata container and remove from the
+defined list, though we anticipate most metadata will need to be
+persistent through a given simulation.</p>
+<p>In additiion, there will be a method to retrieve a metadata container, and
+another method to check if a metadata container exists by name.</p>
+</section>
+<section id="add-remove-metadata">
+<h4>4.2.2 Add/remove metadata<a class="headerlink" href="#add-remove-metadata" title="Permalink to this heading"></a></h4>
+<p>An interface for adding new metadata to a previously defined metadata
+container instance will be provided. This can be used to add global metadata to
+the code, simulation, file metadata, but also for variables if additional
+metadata is desired.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="nf">addEntry</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">MetaName</span><span class="p">,</span><span class="w">   </span><span class="c1">/// Name of new metadata to add</span>
+<span class="w">           </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">any</span><span class="w"> </span><span class="n">Value</span><span class="w">          </span><span class="c1">/// Value of new metadata to add</span>
+<span class="w">    </span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where MetaName and Value are the usual name/value pair for the metadata
+to be added. The value is a <code class="docutils literal notranslate"><span class="pre">std::any</span></code> type to support all types within
+within the metadata map. This function will return 0 if successful and an error
+if a metadata pair with that name already exists.</p>
+<p>For symmetry, we will supply a remove function, though the
+use case is likely rare.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="nf">removeEntry</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">MetaName</span><span class="w"> </span><span class="c1">/// Name of metadata to remove</span>
+<span class="w">    </span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="retrieve-metadata">
+<h4>4.2.3 Retrieve metadata<a class="headerlink" href="#retrieve-metadata" title="Permalink to this heading"></a></h4>
+<p>The most common use case will be retrieving metadata. For a single
+metadata entry, there will be an explicit get function:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="nf">getEntry</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">MetaName</span><span class="p">,</span><span class="w">   </span><span class="c1">/// Name of metadata to get</span>
+<span class="w">           </span><span class="n">I4</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Value</span><span class="w">                     </span><span class="c1">/// I4 Value of metadata</span>
+<span class="w">    </span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where MetaName is the name associated with the metadata
+to be retrieved. Value argument is passed by reference so that
+metadata value can be returned using the argument. This function is
+overloaded with Omega data types.</p>
+<p>During I/O stages, we will need a capability for retrieving
+all metadata for a defined field or global category. We will
+supply a function to retrieve the map associated with a given
+data type. The <code class="docutils literal notranslate"><span class="pre">std::map</span></code> iterators and functionality can then
+be used to extract all of the metadata for a given type. For
+example, to retrieve all metadata from a defined field:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="k">auto</span><span class="w"> </span><span class="n">MyVar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MetaData</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="s">&quot;MyVar&quot;</span><span class="p">);</span>
+<span class="w">   </span><span class="n">MyVar</span><span class="o">-&gt;</span><span class="n">addEntry</span><span class="p">(</span><span class="s">&quot;Name&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">any</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">VarMeta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyVar</span><span class="o">-&gt;</span><span class="n">getAllEntries</span><span class="p">();</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">MetaName</span><span class="p">;</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">any</span><span class="w">    </span><span class="n">MetaVal</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">// use std::map functionality to loop through all metadata</span>
+<span class="w">   </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Pair</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="o">*</span><span class="n">VarMeta</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">MetaName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Pair</span><span class="p">.</span><span class="n">first</span><span class="p">;</span><span class="w">  </span><span class="c1">// retrieve name part of meta pair</span>
+<span class="w">      </span><span class="n">MetaVal</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">Pair</span><span class="p">.</span><span class="n">second</span><span class="p">;</span><span class="w"> </span><span class="c1">// retrieve value part of meta pair</span>
+
+<span class="w">      </span><span class="c1">// do whatever needed with metadata</span>
+<span class="w">      </span><span class="c1">// metaVal can be cast into the appropriate type using</span>
+<span class="w">      </span><span class="c1">//   std::any_cast&lt;type&gt;(metaVal)</span>
+<span class="w">   </span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="create-dimension">
+<h4>4.2.4 Create dimension<a class="headerlink" href="#create-dimension" title="Permalink to this heading"></a></h4>
+<p>For the dimension class, there will be a create function that will
+both construct the instance and add it to the list of defined
+dimensions. It will return a <code class="docutils literal notranslate"><span class="pre">shared_ptr</span></code> to the instance. An exception
+will be thrown if the dimension is already defined.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MetaDim</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="n">create</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Name</span><span class="p">,</span><span class="w">     </span><span class="c1">/// name of dimension</span>
+<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">Length</span><span class="w">         </span><span class="c1">/// length of dimension</span>
+<span class="w">    </span><span class="p">);</span>
+</pre></div>
+</div>
+<p>A destroy function will be supplied as well.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="nf">MetaDim::destroy</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="c1">// name of dimension</span>
+<span class="w">                       </span><span class="p">);</span>
+</pre></div>
+</div>
+<p>We use create/destroy functions rather than constructors so
+that the class can store and manage all instances.</p>
+</section>
+<section id="retrieve-dim-length">
+<h4>4.2.5 Retrieve dim length<a class="headerlink" href="#retrieve-dim-length" title="Permalink to this heading"></a></h4>
+<p>The only other function for a dimension will be a retrieval for
+the dimension length:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">retcode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MetaDim</span><span class="o">::</span><span class="n">getLength</span><span class="p">(</span><span class="n">I4</span><span class="w"> </span><span class="o">&amp;</span><span class="n">MyLength</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="existence-inquiry">
+<h4>4.2.6 Existence inquiry<a class="headerlink" href="#existence-inquiry" title="Permalink to this heading"></a></h4>
+</section>
+<section id="existence-inquiry-for-metadata-container-and-metadim-container">
+<h4>4.2.6.1 Existence inquiry for metadata container and metadim container<a class="headerlink" href="#existence-inquiry-for-metadata-container-and-metadim-container" title="Permalink to this heading"></a></h4>
+<p>For both metadata and dimensions, a function will be provided
+to inquire whether the containers of metadata or dimensions
+with a given name have already been defined:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="nf">Metadata::has</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Name</span><span class="p">);</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="nf">MetaDim::has</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Name</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="existence-inquiry-for-metadata">
+<h4>4.2.6.2 Existence inquiry for metadata<a class="headerlink" href="#existence-inquiry-for-metadata" title="Permalink to this heading"></a></h4>
+<p>For metadata, a function will be provided to inquire whether metadata
+with a given name have already been defined:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="nf">Metadata::hasEntry</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Name</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="metadata-groups">
+<h4>4.2.7 Metadata groups<a class="headerlink" href="#metadata-groups" title="Permalink to this heading"></a></h4>
+<p>Common groups of fields can be defined as metadata groups (MetaGroup).
+We supply create/destroy functions for defining a group of a given
+name. Group names should start with GRP so that when groups are
+included as contents in input config files, we can distinguish
+a group from a field. Create will create an empty group to which
+field names can be added. The functions will return a <code class="docutils literal notranslate"><span class="pre">shared_ptr</span></code> to
+the MetaGroup instance.
+Note that in the case of groups, if a group of the same name
+already exists, no error is returned - the create does nothing.
+This is to support cases where multiple modules may be adding their
+fields to a group during initialization and these may be called
+in an arbitrary order.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="nf">MetaGroup::create</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="c1">/// name of group</span>
+<span class="w">                         </span><span class="p">);</span>
+<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="nf">MetaGroup::destroy</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="c1">/// name of group</span>
+<span class="w">                         </span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The members of a group can then be added individually. A remove
+function is provided though use cases are rare. As in create,
+if a field has already been added, the add function will do nothing.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="nf">MetaGroup::addField</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="c1">/// name of field to add</span>
+<span class="w">                      </span><span class="p">);</span>
+<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="nf">MetaGroup::removeField</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="c1">/// name of field to remove</span>
+<span class="w">                         </span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Finally, we will need to be able to extract the names of all
+fields that have been added to a group:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="k">auto</span><span class="w"> </span><span class="n">MyGroup</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MetaGroup</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="o">&lt;</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">&gt;</span><span class="p">);</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MetaData</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">FieldMap</span><span class="w"> </span><span class="o">=</span>
+<span class="w">        </span><span class="n">MyGroup</span><span class="o">-&gt;</span><span class="n">getAllFields</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test-creation-retrieval">
+<h3>5.1 Test creation/retrieval<a class="headerlink" href="#test-creation-retrieval" title="Permalink to this heading"></a></h3>
+<p>Create dimensions for a sample multi-dimensional field and then
+create field metadata with metadata entries for all supported types.
+Test by retrieving all meta data and dimension information and
+ensuring it is identical.</p>
+<ul class="simple">
+<li><p>tests requirement 2.1, 2.4, 2.5</p></li>
+</ul>
+</section>
+<section id="test-global-metadata">
+<h3>5.2 Test global metadata<a class="headerlink" href="#test-global-metadata" title="Permalink to this heading"></a></h3>
+<p>Add metadata to supported global metadata fields “code” and
+“simulation” and test by retrieving the same and comparing.</p>
+<ul class="simple">
+<li><p>tests requirement 2.2</p></li>
+</ul>
+</section>
+<section id="test-inquiry-functions">
+<h3>5.3 Test inquiry functions<a class="headerlink" href="#test-inquiry-functions" title="Permalink to this heading"></a></h3>
+<p>Test available field and available dimensions by inquiring if
+above metadata and dimensions have been defined. Also test names
+that don’t exist to test failure modes.</p>
+<ul class="simple">
+<li><p>tests requirement 2.6</p></li>
+</ul>
+</section>
+<section id="test-metadata-groups">
+<h3>5.4 Test metadata groups<a class="headerlink" href="#test-metadata-groups" title="Permalink to this heading"></a></h3>
+<p>Define one or two groups of metadata with both defined fields
+and non-existent fields (to check error modes). Retrieve the
+list of fields in each group and check against the expected
+names.</p>
+<ul class="simple">
+<li><p>tests requirement 2.7</p></li>
+</ul>
+</section>
+<section id="test-cf-compliance">
+<h3>5.5 Test CF compliance<a class="headerlink" href="#test-cf-compliance" title="Permalink to this heading"></a></h3>
+<p>To test CF compliance, we will test output files using a CF checking
+code. This may be a part of Polaris testing rather than the unit test
+framework.</p>
+<ul class="simple">
+<li><p>tests requirement 2.3</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="MachEnv.html" class="btn btn-neutral float-left" title="MachineEnv" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="IO.html" class="btn btn-neutral float-right" title="Input/Output (IO)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

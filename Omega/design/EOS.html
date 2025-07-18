@@ -1,0 +1,442 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Equation of State &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ErrorHandler (Error)" href="Error.html" />
+    <link rel="prev" title="Driver and Component Layer" href="Driver.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Equation of State</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-calculate-specific-volume-and-density-from-prognostic-temperature-and-salinity">2.1 Requirement: calculate specific volume and density from prognostic temperature and salinity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-allow-a-choice-of-equations-of-state">2.2 Requirement: allow a choice of equations of state</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-computational-efficiency">2.3 Requirement: computational efficiency</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-abide-by-license-for-the-gsw-oceanographic-toolbox">2.4 Requirement: abide by license for the GSW Oceanographic Toolbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-verification">2.5 Requirement: verification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-check-value-range">2.6 Requirement: check value range</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-provide-adiabatically-displaced-density">2.7 Requirement: provide adiabatically-displaced density</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-freezing-temperature-calculation">2.8 Desired: freezing temperature calculation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-output-in-situ-temperature">2.9 Desired: output in situ temperature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-output-first-derivatives">2.10 Desired: output first derivatives</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-variable-conversion">2.11 Desired: variable conversion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-enthalpy-conversion">2.12 Desired: enthalpy conversion</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#creation">4.2.1 Creation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#initialization">4.2.2 Initialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#retrieval">4.2.3 Retrieval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#computation">4.2.4 Computation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#destruction-and-removal">4.2.5 Destruction and removal</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-verification-of-gsw-c-submodule">5.1 Test: Verification of GSW-C submodule</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-verification-of-our-teos-10-75-term-polynomial-implementation">5.2 Test: Verification of our TEOS-10 75-term polynomial implementation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-verification-of-teos-10-with-gsw-c-toolbox">5.3 Test: Verification of TEOS-10 with GSW-C toolbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-verification-of-linear-eos">5.4 Test: Verification of linear EOS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-conservation-of-potential-enthalpy">5.5 Test: conservation of potential enthalpy</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Equation of State</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/EOS.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="equation-of-state">
+<span id="omega-design-eos"></span><h1>Equation of State<a class="headerlink" href="#equation-of-state" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>The equation of state relates density to the prognostic state variables temperature and salinity. In the case of a non-Boussinesq model, it is also dependent on prognostic pressure. The prognostic temperature, <span class="math notranslate nohighlight">\(\theta\)</span>, is either potential temperature or Conservative Temperature, depending on the chosen equation of state, and  <span class="math notranslate nohighlight">\(S\)</span> is the absolute salinity (linear eos could use practical salinity). Given that the Omega governing equations are  non-Boussinesq, the equation of state class will provide specific volume from the state variables. It will provide methods for computing the specific volume, and its first derivatives.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-calculate-specific-volume-and-density-from-prognostic-temperature-and-salinity">
+<h3>2.1 Requirement: calculate specific volume and density from prognostic temperature and salinity<a class="headerlink" href="#requirement-calculate-specific-volume-and-density-from-prognostic-temperature-and-salinity" title="Permalink to this heading"></a></h3>
+<p>Omega will use TEOS-10 as the primary equation of state. The reference implementation of TEOS-10 is contained in the Gibbs Sea Water (GSW) toolbox function. The Omega implementation will be equivalent to the computation in the GSW toolbox function: <code class="docutils literal notranslate"><span class="pre">gsw_specvol(sa,ct,p)</span></code></p>
+</section>
+<section id="requirement-allow-a-choice-of-equations-of-state">
+<h3>2.2 Requirement: allow a choice of equations of state<a class="headerlink" href="#requirement-allow-a-choice-of-equations-of-state" title="Permalink to this heading"></a></h3>
+<p>Omega-1 should include the option for two EOS options. The first is a linear eos, for benchmarking against MPAS-O and to use in simplified cases. The other option should be a well-established version of TEOS-10 (e.g. Roquet 75-term polynomial).</p>
+</section>
+<section id="requirement-computational-efficiency">
+<h3>2.3 Requirement: computational efficiency<a class="headerlink" href="#requirement-computational-efficiency" title="Permalink to this heading"></a></h3>
+<p>As one of the most expensive kernels, the EOS must be as efficient as possible. Developers should be discouraged from calling the EOS too frequently. The fraction of compute time used be the EOS within Omega1 will be compared to fraction used in MPAS-Ocean.</p>
+</section>
+<section id="requirement-abide-by-license-for-the-gsw-oceanographic-toolbox">
+<h3>2.4 Requirement: abide by license for the GSW Oceanographic Toolbox<a class="headerlink" href="#requirement-abide-by-license-for-the-gsw-oceanographic-toolbox" title="Permalink to this heading"></a></h3>
+<p>The GSW toolbox can only be used without modification, so a Omega-specific port of certain functions will be required to support Kokkos/GPU enabled computation. The toolbox without modifications can still be used for verification testing against the Omega implementation.</p>
+</section>
+<section id="requirement-verification">
+<h3>2.5 Requirement: verification<a class="headerlink" href="#requirement-verification" title="Permalink to this heading"></a></h3>
+<p>The Omega implementation should be compared with the test value published in Roquet et al 2015, and the official GSW Oceanographic Toolbox (supported by TEOS-10) to verify correctness.</p>
+</section>
+<section id="requirement-check-value-range">
+<h3>2.6 Requirement: check value range<a class="headerlink" href="#requirement-check-value-range" title="Permalink to this heading"></a></h3>
+<p>The EOS code should include a check on the range of ocean properties to assess use of TEOS-10 (equivalent to the ``ocean funnel’’ check), and a truncation of state variables to use the polynomial only in the valid range (similar to the truncation in MPAS-Ocean).</p>
+</section>
+<section id="requirement-provide-adiabatically-displaced-density">
+<h3>2.7 Requirement: provide adiabatically-displaced density<a class="headerlink" href="#requirement-provide-adiabatically-displaced-density" title="Permalink to this heading"></a></h3>
+<p>The EOS code should be able to be used to calculate density adiabatically displaced to i) the layer below, ii) the surface. This is needed to calculate the Brunt-Vaisala and for mixed-layer parameterizations. This operation should be done as efficiently as possible (e.g. we will explore reusing parts of the polynomial or leveraging Kernel Fusion).</p>
+</section>
+<section id="desired-freezing-temperature-calculation">
+<h3>2.8 Desired: freezing temperature calculation<a class="headerlink" href="#desired-freezing-temperature-calculation" title="Permalink to this heading"></a></h3>
+<p>Later versions should include calculating the freezing temperature of seawater.</p>
+</section>
+<section id="desired-output-in-situ-temperature">
+<h3>2.9 Desired: output in situ temperature<a class="headerlink" href="#desired-output-in-situ-temperature" title="Permalink to this heading"></a></h3>
+<p>Later versions should include calculating the in situ  temperature needed for coupling (at surface including at non-zero pressure).</p>
+</section>
+<section id="desired-output-first-derivatives">
+<h3>2.10 Desired: output first derivatives<a class="headerlink" href="#desired-output-first-derivatives" title="Permalink to this heading"></a></h3>
+<p>The EOS will need to be able to produce alpha and beta (drho/dT and drho/dS) for linear expansions in the higher-order pressure gradient and for some mixing parameterizations.</p>
+</section>
+<section id="desired-variable-conversion">
+<h3>2.11 Desired: variable conversion<a class="headerlink" href="#desired-variable-conversion" title="Permalink to this heading"></a></h3>
+<p>Later versions should include functions to convert between conservative and potential temperatures, and absolute and practical salinity. These will be used to convert the initial conditions or compare to ocean states from other sources (MPAS-Ocean, reanalysis, other models etc.) These functions may be used offline in pre- or post-processing but need to be consistent with the EOS implementation.</p>
+</section>
+<section id="desired-enthalpy-conversion">
+<h3>2.12 Desired: enthalpy conversion<a class="headerlink" href="#desired-enthalpy-conversion" title="Permalink to this heading"></a></h3>
+<p>Later versions should include functions to calculate the layer potential enthalpy from enthalpy fluxes to convert coupling fluxes to changes in conservative temperature in a rigorous manner.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>The formulation of the specific volume calculation will be the 75-term polynomial as documented in <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S1463500315000566">Roquet et al. 2015</a>. The implementation of the displaced density calculation may be altered to improve performance by reusing some polynomial coefficients, but should produce the same results as the full 75-term polynomial.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>The GSW-C toolbox will be incorporated into Omega as a submodule. In order to abide by the license of the toolbox, the toolbox will only be used in testing to check our implementation. The coefficients for the Roquet et al. 2015 expansion will be based on the published values (Appendix). A Kokkos implementation of the function to compute specific volume will be ported to Omega. The GSW-C toolbox submodule will serve as a baseline reference for our ports in unit tests.</p>
+<p>To optimize performance, calls to the EOS function should be able to support whole array computation. The EOS class will include a public method that calculate specific volume given the state variables, and a public variable defining the chosen eos option (changeable by the user).</p>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">Eos</span></code> class will be used to perform the necessary eos operations such as calculating specific volume:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Eos</span><span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="o">:</span>
+<span class="w">       </span><span class="n">Array</span><span class="w"> </span><span class="n">SpecVol</span><span class="p">;</span>
+<span class="w">       </span><span class="n">Array</span><span class="w"> </span><span class="n">SpecVolDisplaced</span><span class="p">;</span>
+<span class="w">       </span><span class="kt">void</span><span class="w"> </span><span class="nf">computeSpecVol</span><span class="p">();</span>
+<span class="w">       </span><span class="k">static</span><span class="w"> </span><span class="n">Eos</span><span class="w"> </span><span class="o">*</span><span class="nf">create</span><span class="p">();</span>
+<span class="w">    </span><span class="k">private</span><span class="o">:</span>
+<span class="w">       </span><span class="n">EOSType</span><span class="w"> </span><span class="n">eosChoice</span><span class="p">;</span>
+<span class="w">       </span><span class="n">I4</span><span class="w"> </span><span class="n">NCellsAll</span><span class="p">;</span>
+<span class="w">       </span><span class="n">I4</span><span class="w"> </span><span class="n">NChunks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NVertLevels</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">VecLength</span><span class="p">;</span>
+<span class="w">       </span><span class="kt">void</span><span class="w"> </span><span class="nf">computeSpecVolTEOS10Poly75t</span><span class="p">();</span>
+<span class="w">       </span><span class="kt">void</span><span class="w"> </span><span class="nf">computeSpecVolLinear</span><span class="p">();</span>
+<span class="w">       </span><span class="kt">void</span><span class="w"> </span><span class="nf">truncateTempSal</span><span class="p">();</span>
+<span class="w">       </span><span class="k">static</span><span class="w"> </span><span class="n">Eos</span><span class="w"> </span><span class="o">*</span><span class="n">DefaultEos</span><span class="p">;</span>
+<span class="w">       </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">Eos</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">AllEos</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>The user will select the EOS type at runtime in the input yaml file under an eos section:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="nt">eos</span><span class="p">:</span>
+<span class="w">       </span><span class="nt">eosType</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;teos10&#39;</span>
+</pre></div>
+</div>
+<p>An <code class="docutils literal notranslate"><span class="pre">enum</span> <span class="pre">class</span></code> will be used to specify options for the EOS used for an Omega simulation:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">EOSType</span><span class="p">{</span>
+<span class="w">   </span><span class="n">Linear</span><span class="p">,</span><span class="w">  </span><span class="c1">/// Linear equation of state</span>
+<span class="w">   </span><span class="n">TEOS10Poly75t</span><span class="w">  </span><span class="c1">/// Roquet et al. 2015 75 term expansion</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>We assume that the call to the eos is in a timestepping routine where input tracers for this timestep are defined, eg.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">ConservativeTemperature</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">AbsoluteSalinity</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Tracers</span><span class="o">-&gt;</span><span class="n">getByName</span><span class="p">(</span><span class="n">ConservativeTemperature</span><span class="p">,</span><span class="w"> </span><span class="n">VelTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;temperature&quot;</span><span class="p">);</span>
+<span class="w">   </span><span class="n">Tracers</span><span class="o">-&gt;</span><span class="n">getByName</span><span class="p">(</span><span class="n">AbsoluteSalinity</span><span class="p">,</span><span class="w"> </span><span class="n">VelTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;salinity&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<p>There will be a constructor and destructor for the class, as well as several public and private
+methods. Modeled on the <code class="docutils literal notranslate"><span class="pre">Tendencies</span></code> class, the constructor will be private. A static <code class="docutils literal notranslate"><span class="pre">create</span></code> method is used to ensure every eos instance is properly stored in the static map of eos instances. This is to help ensure that the eos initialized in the <code class="docutils literal notranslate"><span class="pre">init</span></code> step of the model set-up is then retrievable during the <code class="docutils literal notranslate"><span class="pre">forward</span></code> step.</p>
+<section id="creation">
+<h4>4.2.1 Creation<a class="headerlink" href="#creation" title="Permalink to this heading"></a></h4>
+<p>The constructor will be responsible for:</p>
+<ul class="simple">
+<li><p>determining the selected eos option</p></li>
+<li><p>allocating arrays</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Eos</span><span class="o">::</span><span class="n">Eos</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NVertLevels</span><span class="p">,</span><span class="w"> </span><span class="n">Config</span><span class="w"> </span><span class="o">*</span><span class="n">Options</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The create method will take the same arguments as the constructor plus a name. It calls the constructor to
+create a new eos instance, and put it in the static map of all eos.
+It will return a pointer to the newly created object.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Eos</span><span class="w"> </span><span class="o">*</span><span class="nf">Eos::create</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NVertLevels</span><span class="p">,</span><span class="w"> </span><span class="n">Config</span><span class="w"> </span><span class="o">*</span><span class="n">Options</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="initialization">
+<h4>4.2.2 Initialization<a class="headerlink" href="#initialization" title="Permalink to this heading"></a></h4>
+<p>The init method will create the default eos and return an error code:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">Eos::init</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+<section id="retrieval">
+<h4>4.2.3 Retrieval<a class="headerlink" href="#retrieval" title="Permalink to this heading"></a></h4>
+<p>There will be methods for getting the default and non-default eos instances:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Eos</span><span class="w"> </span><span class="o">*</span><span class="nf">Eos::getDefault</span><span class="p">();</span>
+<span class="n">Eos</span><span class="w"> </span><span class="o">*</span><span class="nf">Eos::get</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="computation">
+<h4>4.2.4 Computation<a class="headerlink" href="#computation" title="Permalink to this heading"></a></h4>
+<p>The public <code class="docutils literal notranslate"><span class="pre">computeSpecVol</span></code> method will rely on private methods for each specific EOS option (linear and TEOS-10).</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Eos::computeSpecVol</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">SpecVol</span><span class="p">,</span>
+<span class="w">                         </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ConservativeTemperature</span><span class="p">,</span>
+<span class="w">                         </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">AbsoluteSalinity</span><span class="p">,</span>
+<span class="w">                         </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Pressure</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="n">OMEGA_SCOPE</span><span class="p">(...)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">eosChoice</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">EOSType</span><span class="o">::</span><span class="n">Linear</span><span class="p">){</span>
+<span class="w">       </span><span class="n">parallelFor</span><span class="p">(</span><span class="s">&quot;eos-linear&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="n">NCellsAll</span><span class="p">,</span><span class="w"> </span><span class="n">NChunks</span><span class="p">},</span>
+<span class="w">       </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="n">LocComputeSpecVolLinear</span><span class="p">(...);</span>
+<span class="w">       </span><span class="p">});</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">eosChoice</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">EOSType</span><span class="o">::</span><span class="n">TEOS10Poly75t</span><span class="p">){</span>
+<span class="w">       </span><span class="n">parallelFor</span><span class="p">(</span><span class="s">&quot;eos-teos10&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="n">NCellsAll</span><span class="p">,</span><span class="w"> </span><span class="n">NChunks</span><span class="p">},</span>
+<span class="w">       </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="n">LocComputeSpecVolTEOS10Poly75t</span><span class="p">(...);</span>
+<span class="w">        </span><span class="p">});</span>
+<span class="w">    </span><span class="p">}...</span>
+</pre></div>
+</div>
+</section>
+<section id="destruction-and-removal">
+<h4>4.2.5 Destruction and removal<a class="headerlink" href="#destruction-and-removal" title="Permalink to this heading"></a></h4>
+<p>No operations are needed in the destructor as the Kokkos arrays are removed
+when they are no longer in scope. The erase method
+will remove a named eos instance, whereas the clear method will remove all of
+them. Both will call the destructor in the process.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Eos::erase</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">);</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">Eos::clear</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test-verification-of-gsw-c-submodule">
+<h3>5.1 Test: Verification of GSW-C submodule<a class="headerlink" href="#test-verification-of-gsw-c-submodule" title="Permalink to this heading"></a></h3>
+<p>A unit test will verify that the result of the GSW-C toolbox (used as a submodule, without modifications) matches the expected value of specific volume published in Roquet et al. 2015 within machine precision. The publication only includes one data point (Sa, Ct, P) to check.</p>
+</section>
+<section id="test-verification-of-our-teos-10-75-term-polynomial-implementation">
+<h3>5.2 Test: Verification of our TEOS-10 75-term polynomial implementation<a class="headerlink" href="#test-verification-of-our-teos-10-75-term-polynomial-implementation" title="Permalink to this heading"></a></h3>
+<p>A unit test will verify that the result of the Omega implementation of the Roquet et al. 2015 75-term polynomial calculation of the specific volume matches the expected value of specific volume published in Roquet et al. 2015 within machine precision. The publication only includes one data point (Sa, Ct, P) to check.</p>
+</section>
+<section id="test-verification-of-teos-10-with-gsw-c-toolbox">
+<h3>5.3 Test: Verification of TEOS-10 with GSW-C toolbox<a class="headerlink" href="#test-verification-of-teos-10-with-gsw-c-toolbox" title="Permalink to this heading"></a></h3>
+<p>A unit test will verify that the result of the Omega and GSW-C toolbox implementations for the Roquet et al. 2015 expansion are within machine precision over a range of conservative temperature, absolute salinity, and pressure ranges.</p>
+</section>
+<section id="test-verification-of-linear-eos">
+<h3>5.4 Test: Verification of linear EOS<a class="headerlink" href="#test-verification-of-linear-eos" title="Permalink to this heading"></a></h3>
+<p>The linear EOS should be close, but not equal to the TEOS-10 result. The calculated density should be exactly linear in T,S. It will be verified against known values from the MPAS-Ocean model for a range of temperature and salinity values.</p>
+</section>
+<section id="test-conservation-of-potential-enthalpy">
+<h3>5.5 Test: conservation of potential enthalpy<a class="headerlink" href="#test-conservation-of-potential-enthalpy" title="Permalink to this heading"></a></h3>
+<p>The total potential enthalpy, or equivalently, the conservative temperature should be conserved in the absence of external energy fluxes. This could be based on the tracer conservation test (e.g. merry-go-round), applied to active tracers.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Driver.html" class="btn btn-neutral float-left" title="Driver and Component Layer" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Error.html" class="btn btn-neutral float-right" title="ErrorHandler (Error)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

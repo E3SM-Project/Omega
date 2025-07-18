@@ -1,0 +1,372 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Horizontal Mesh &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Logging" href="Logging.html" />
+    <link rel="prev" title="Halo" href="Halo.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Horizontal Mesh</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-omega-will-use-the-previously-established-mpas-mesh-spec">2.1 Requirement: OMEGA will use the previously established MPAS Mesh Spec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-functionality-is-needed-to-read-the-mesh-on-the-host-and-transfer-relevant-data-to-the-device-for-computation">2.2 Requirement: Functionality is needed to read the mesh on the host and transfer relevant data to the device for computation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-zero-based-cell-edge-and-vertex-numbering">2.3 Requirement: Zero-based cell, edge, and vertex numbering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-work-with-decomp-class-to-decompose-mesh">2.4 Requirement: Work with Decomp class to decompose mesh</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-mesh-variables-will-be-associated-with-metadata-to-describe-data">2.5 Requirement: Mesh variables will be associated with metadata to describe data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-i-o-to-obtain-mesh-data">2.6 Requirement: I/O to obtain mesh data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-ability-to-support-multiple-independent-mesh-objects">2.7 Desired: Ability to support multiple independent mesh objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-omega-can-read-in-a-reduced-number-of-mesh-variables-and-compute-the-remaining-array-information-online">2.8 Desired: OMEGA can read in a reduced number of mesh variables and compute the remaining array information online.</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#constructor">4.2.1 Constructor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#destructor">4.2.2 Destructor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#read">4.2.2 Read</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#compute">4.2.3 Compute</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#device-copy-creation">4.2.4 Device copy creation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#metadata-registration">4.2.5 Metadata registration</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-mesh-compute-routines">5.1 Test mesh compute routines</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Horizontal Mesh</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/HorzMeshClass.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="horizontal-mesh">
+<span id="omega-design-horz-mesh"></span><h1>Horizontal Mesh<a class="headerlink" href="#horizontal-mesh" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>The mesh class will contain the Kokkos arrays which describe the horizontal mesh and are used in the computation of the tendency terms in the discrete governing equations. OMEGA will separate the horizontal mesh variables from the vertical mesh information.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-omega-will-use-the-previously-established-mpas-mesh-spec">
+<h3>2.1 Requirement: OMEGA will use the previously established MPAS Mesh Spec<a class="headerlink" href="#requirement-omega-will-use-the-previously-established-mpas-mesh-spec" title="Permalink to this heading"></a></h3>
+<p>The OMEGA mesh information should be compatible with the <a class="reference external" href="https://mpas-dev.github.io/files/documents/MPAS-MeshSpec.pdf">MPAS Mesh Specification</a>.</p>
+</section>
+<section id="requirement-functionality-is-needed-to-read-the-mesh-on-the-host-and-transfer-relevant-data-to-the-device-for-computation">
+<h3>2.2 Requirement: Functionality is needed to read the mesh on the host and transfer relevant data to the device for computation<a class="headerlink" href="#requirement-functionality-is-needed-to-read-the-mesh-on-the-host-and-transfer-relevant-data-to-the-device-for-computation" title="Permalink to this heading"></a></h3>
+<p>Not all mesh information is required in computing the tendency terms on the device, e.g. lonCell, latCell, etc.
+However, other arrays will need to be allocated and copied to the device for use in tendency computation.
+The mesh class will explicitly include host and device Kokkos arrays for each variable.
+A class method will be included to copy the relevant mesh information to the device.</p>
+</section>
+<section id="requirement-zero-based-cell-edge-and-vertex-numbering">
+<h3>2.3 Requirement: Zero-based cell, edge, and vertex numbering<a class="headerlink" href="#requirement-zero-based-cell-edge-and-vertex-numbering" title="Permalink to this heading"></a></h3>
+<p>Although the existing MPAS Mesh spec uses a one-based mesh numbering, zero-based mesh numbering is required to be compatible with the zero-based indexing used for Kokkos arrays.</p>
+</section>
+<section id="requirement-work-with-decomp-class-to-decompose-mesh">
+<h3>2.4 Requirement: Work with Decomp class to decompose mesh<a class="headerlink" href="#requirement-work-with-decomp-class-to-decompose-mesh" title="Permalink to this heading"></a></h3>
+<p>The mesh class will reference the partitioned connectivity arrays created by the Decomp class.</p>
+</section>
+<section id="requirement-mesh-variables-will-be-associated-with-metadata-to-describe-data">
+<h3>2.5 Requirement: Mesh variables will be associated with metadata to describe data<a class="headerlink" href="#requirement-mesh-variables-will-be-associated-with-metadata-to-describe-data" title="Permalink to this heading"></a></h3>
+<p>Following the Metadata and IO designs, the Kokkos arrays for the mesh variables will be associated with information about the represented values.</p>
+</section>
+<section id="requirement-i-o-to-obtain-mesh-data">
+<h3>2.6 Requirement: I/O to obtain mesh data<a class="headerlink" href="#requirement-i-o-to-obtain-mesh-data" title="Permalink to this heading"></a></h3>
+<p>The Mesh class will have a method to read in the mesh information not obtained by the Decomp class.</p>
+</section>
+<section id="desired-ability-to-support-multiple-independent-mesh-objects">
+<h3>2.7 Desired: Ability to support multiple independent mesh objects<a class="headerlink" href="#desired-ability-to-support-multiple-independent-mesh-objects" title="Permalink to this heading"></a></h3>
+<p>This flexibility is required to support future implementations of spatially split barotropic and baroclinic modes that are computed on different resolution meshes.
+Additionally, this flexibility can be used to support separate domain decompositions for the barotropic and baroclinic meshes, which can help optimize the communication frequency for the barotropic subcycling via wide barotropic halos.</p>
+</section>
+<section id="desired-omega-can-read-in-a-reduced-number-of-mesh-variables-and-compute-the-remaining-array-information-online">
+<h3>2.8 Desired: OMEGA can read in a reduced number of mesh variables and compute the remaining array information online.<a class="headerlink" href="#desired-omega-can-read-in-a-reduced-number-of-mesh-variables-and-compute-the-remaining-array-information-online" title="Permalink to this heading"></a></h3>
+<p>Many of the mesh variables are not independent, e.g.  areaCell, weightsOnEdge, etc., and can be computed from a reduced set of mesh variables.
+This functionality could be used to reduce mesh/restart file size for high resolution meshes.
+Building in this flexibility would allow for all mesh-related calculations to be available within the code base instead of spreading them amongst various utility programs in MPAS-Tools.
+This will improve the ability to maintain and unit test the mesh calculations in MPAS-Tools.
+The functions used to compute the dependent mesh information can also be used to verify any mesh information that is provided in the mesh input stream.</p>
+<p>As standard practice, all necessary internally computed mesh information will be output in a single file for post-processing purposes.
+A checksumming strategy will be implemented to avoid situations where simulation data and mesh information are mismatched during post processing.</p>
+<p>Where appropriate, some additional derived quantities (e.g. reciprocals) will also be included to improve the performance of device-side calculations.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>The algorithms required for computing dependent mesh quantities are currently implemented in the MPAS Mesh Converter utility.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>The horizontal mesh information will be organized in a class with public Kokkos arrays.
+Arrays that require a device copy will have a explicit variable.
+Connectivity arrays that are already contained in the Decomp class will be replicated in the horizontal mesh class via pointers.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">HorzMesh</span><span class="w"> </span><span class="p">{</span>
+
+<span class="k">public</span><span class="o">:</span>
+
+<span class="w">  </span><span class="n">Array1DR8</span><span class="w"> </span><span class="n">AreaCell</span><span class="p">;</span>
+<span class="w">  </span><span class="n">HostArray1DR8</span><span class="w"> </span><span class="n">AreaCellH</span><span class="p">;</span>
+
+<span class="w">  </span><span class="n">Array2DI4</span><span class="w"> </span><span class="n">CellsOnCell</span><span class="p">;</span>
+<span class="w">  </span><span class="n">HostArray2DI4</span><span class="w"> </span><span class="n">CellsOnCellH</span><span class="p">;</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<p>There will be a constructor and destructor for the class with the constructor being responsible for calling several private methods.</p>
+<section id="constructor">
+<h4>4.2.1 Constructor<a class="headerlink" href="#constructor" title="Permalink to this heading"></a></h4>
+<p>The constructor will also be responsible for:</p>
+<ul class="simple">
+<li><p>use Decomp object to create reference to the decomposed connectivity arrays.</p></li>
+<li><p>reading the other local mesh information.</p></li>
+<li><p>computing and dependent mesh quantities.</p></li>
+<li><p>creating device copies of mesh information</p></li>
+<li><p>registering metadata with the I/O infrastructure</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">HorzMesh</span><span class="p">(</span><span class="n">Decomp</span><span class="w"> </span><span class="n">decomp</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="destructor">
+<h4>4.2.2 Destructor<a class="headerlink" href="#destructor" title="Permalink to this heading"></a></h4>
+<p>A destructor will be available to release memory.</p>
+</section>
+<section id="read">
+<h4>4.2.2 Read<a class="headerlink" href="#read" title="Permalink to this heading"></a></h4>
+<p>The mesh class requires a method to read in all other available mesh information that has been provided in the mesh file, but has not been initialized by the decomposition. This will be a private method called by the constructor.</p>
+</section>
+<section id="compute">
+<h4>4.2.3 Compute<a class="headerlink" href="#compute" title="Permalink to this heading"></a></h4>
+<p>The compute method will be a private method called by the constructor. It will be resonsible for calculating any dependent mesh information that is not provided in the mesh input file.</p>
+</section>
+<section id="device-copy-creation">
+<h4>4.2.4 Device copy creation<a class="headerlink" href="#device-copy-creation" title="Permalink to this heading"></a></h4>
+<p>This method will be repsonsible for creating the device copies of the required mesh information on the host. It will be a private method called by the constructor.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">AreaCell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">createDeviceMirrorCopy</span><span class="p">(</span><span class="n">AreaCellH</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="metadata-registration">
+<h4>4.2.5 Metadata registration<a class="headerlink" href="#metadata-registration" title="Permalink to this heading"></a></h4>
+<p>The metadata associated with each mesh variable will be registred within the I/O infrastructure in a private method called by the constrctor.</p>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test-mesh-compute-routines">
+<h3>5.1 Test mesh compute routines<a class="headerlink" href="#test-mesh-compute-routines" title="Permalink to this heading"></a></h3>
+<p>The sample domain used for the Decomp test will be used to test obtaining the correct local values and the mesh computation routines.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Halo.html" class="btn btn-neutral float-left" title="Halo" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Logging.html" class="btn btn-neutral float-right" title="Logging" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

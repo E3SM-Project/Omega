@@ -1,0 +1,509 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decomp &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Driver and Component Layer" href="Driver.html" />
+    <link rel="prev" title="DataTypes" href="DataTypes.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Decomp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-mesh-partition">2.1 Requirement: Mesh partition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-metis-option">2.2 Requirement: Metis option</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#required-online-partitioning">2.3 Required: Online partitioning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#required-input-mesh-information">2.4 Required: Input mesh information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#required-all-mesh-locations">2.5 Required: All mesh locations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#required-halo">2.6 Required: Halo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#required-local-to-global-index-mapping">2.7 Required: Local to global index mapping</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#required-local-sorting">2.8 Required: Local sorting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#required-release-memory">2.9 Required: Release memory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-weighted-partitioning-option">2.10 Desired: Weighted partitioning option</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-multiple-partitions-of-same-mesh">2.11 Desired: Multiple partitions of same mesh</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-multiple-domains-sub-blocking-or-coloring">2.12 Desired: Multiple domains, sub-blocking or coloring</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#constructor">4.2.1 Constructor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#destructor">4.2.2 Destructor</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-metis">5.1 Test Metis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#back-compatibility">5.2 Back compatibility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#check-global-ids">5.3 Check global IDs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Decomp</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/Decomp.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="decomp">
+<span id="omega-design-decomp"></span><h1>Decomp<a class="headerlink" href="#decomp" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>For parallel execution, OMEGA will utilize a hierarchical parallelism with the
+coarse-grained parallelism achieved via message passing. An OMEGA mesh will be
+decomposed into subdomains so that computations on each sub domain can proceed
+in parallel and messages will be passed to communicate data between domains.
+This document describes the requirements and design of this domain
+decomposition.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-mesh-partition">
+<h3>2.1 Requirement: Mesh partition<a class="headerlink" href="#requirement-mesh-partition" title="Permalink to this heading"></a></h3>
+<p>The primary requirement is to be able to partition a mesh across a
+distributed memory machine. Many standard tools exist to perform
+this partitioning (eg metis, parmetis, zoltan) and their use is
+encouraged. This normally requires an input file with the primary
+mesh indices and adjacency (see Requirement 2.4).</p>
+</section>
+<section id="requirement-metis-option">
+<h3>2.2 Requirement: Metis option<a class="headerlink" href="#requirement-metis-option" title="Permalink to this heading"></a></h3>
+<p>For backward compatibility and to facilitate bit-for-bit comparisons
+with MPAS, at least one partition option must use the Metis library.</p>
+</section>
+<section id="required-online-partitioning">
+<h3>2.3 Required: Online partitioning<a class="headerlink" href="#required-online-partitioning" title="Permalink to this heading"></a></h3>
+<p>We require the partitioning to occur online (ie as part of model
+initialization rather than a separate pre-processing step).
+This is meant to avoid the past difficulties in maintaining a large
+number of partition input files for each MPI configuration. Experience
+has shown that even high-resolution partitioning is very inexpensive
+and can be performed as part of the model run and does not need this
+off-line step.</p>
+</section>
+<section id="required-input-mesh-information">
+<h3>2.4 Required: Input mesh information<a class="headerlink" href="#required-input-mesh-information" title="Permalink to this heading"></a></h3>
+<p>As input into the partitioning, we require a file with information
+on cell adjacency. There are at least two potential design approaches
+for this.  The first option is to use the global <code class="docutils literal notranslate"><span class="pre">graph.info</span></code> file
+which is already in Metis input format with a line for each cell
+listing the global indices of that cell’s neighbors. A second option
+is to use the input mesh netCDF file which has the same information
+in the global cellsOnCell array. This second option would enable us to
+eliminate all graph.info files after the mesh file has been created.</p>
+</section>
+<section id="required-all-mesh-locations">
+<h3>2.5 Required: All mesh locations<a class="headerlink" href="#required-all-mesh-locations" title="Permalink to this heading"></a></h3>
+<p>While the primary partition is based on the cells and cell
+adjacency, the decomposition must also partition the edge and vertex
+index spaces.</p>
+</section>
+<section id="required-halo">
+<h3>2.6 Required: Halo<a class="headerlink" href="#required-halo" title="Permalink to this heading"></a></h3>
+<p>For parallel efficiency, a halo containing copies of nearest neighbor
+points will be defined. A separate design document describes the
+capability needed for updating those halo points for field data.
+Within the decomp type, we simply keep the halo index information.</p>
+</section>
+<section id="required-local-to-global-index-mapping">
+<h3>2.7 Required: Local to global index mapping<a class="headerlink" href="#required-local-to-global-index-mapping" title="Permalink to this heading"></a></h3>
+<p>Once the mesh is decomposed, each parallel process has a set of
+local indices renumbered for the local space. The decomposition
+must provide the ability to return the global index given the
+processor’s local index. It must also be able to
+provide the location (MPI rank and local index) for all the
+neighbor or halo points to facilitate later setup of halos and
+other infrastructure. Some of this information may only be needed
+for initialization (see Requirement 2.8 on release of memory).</p>
+</section>
+<section id="required-local-sorting">
+<h3>2.8 Required: Local sorting<a class="headerlink" href="#required-local-sorting" title="Permalink to this heading"></a></h3>
+<p>At a minimum, the local addresses must be sorted with owned
+indices first and each level of halo following. This is needed
+for both optimal communication and for selectively computing
+only what is needed. Additional sorting within those blocks
+may be desireable for optimizing memory locality.</p>
+</section>
+<section id="required-release-memory">
+<h3>2.9 Required: Release memory<a class="headerlink" href="#required-release-memory" title="Permalink to this heading"></a></h3>
+<p>Once the partition information has been used to set up halos,
+mesh variables, I/O and other quantities that depend on the
+partition, all or parts of the partitioning data may be
+released to free memory. Note that some of the information
+may be transferred to mesh variables as part of later
+mesh initialization.</p>
+</section>
+<section id="desired-weighted-partitioning-option">
+<h3>2.10 Desired: Weighted partitioning option<a class="headerlink" href="#desired-weighted-partitioning-option" title="Permalink to this heading"></a></h3>
+<p>For better load-balancing, support for supplying or computing weights
+for each cell index based on estimated workload is desireable.</p>
+</section>
+<section id="desired-multiple-partitions-of-same-mesh">
+<h3>2.11 Desired: Multiple partitions of same mesh<a class="headerlink" href="#desired-multiple-partitions-of-same-mesh" title="Permalink to this heading"></a></h3>
+<p>In the future, it may be desireable to perform parts of the calculation
+(eg the communication-dominated barotropic mode) on a smaller
+partition. We may need to support multiple partitions of the
+same mesh on different numbers of MPI ranks.</p>
+</section>
+<section id="desired-multiple-domains-sub-blocking-or-coloring">
+<h3>2.12 Desired: Multiple domains, sub-blocking or coloring<a class="headerlink" href="#desired-multiple-domains-sub-blocking-or-coloring" title="Permalink to this heading"></a></h3>
+<p>For some future capabilities (eg local timestepping in regionally
+focused mesh locations), it may be desireable to decompose the
+global domain into smaller subdomains and over-subscribe subdomains
+to a rank, combining low- and high-resolution subdomains for load
+balancing. It is unclear whether this is best achieved with a multiple
+sub-block structure (as in older MPAS) or accomodating this within a
+weighted partitioning. Identifying the mesh regions using a coloring
+of the mesh may be helpful.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>Most of the algorithms required are embedded and documented in the
+relevant packages (eg Metis multi-level k-way partitioning).</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>The design presented here is initially for decomposing the global
+domain into a single block per MPI rank and does not yet include
+weighted decompositions. However, it should not prevent these
+options from being added later. The parmetis package will be
+used initially to provide metis back compatibility while reducing
+memory use over a serial metis approach. The cell mesh indices and
+adjacency will be read from the non-decomposed graph.info files in
+metis format, allowing the adjacency info to be read serially
+before the parallel IO is set up.</p>
+<p>Once the primary (cell) mesh is partitioned, the edge and vertex
+index spaces will be assigned based on the adjacency to the local
+cells, as in the current MPAS model. Because much of this information
+will be later replicated in a mesh class with Kokkos arrays, this
+decomposition structure will be destroyed after initialization and
+any related setup of halos and other infrastructure.</p>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>The decomposition includeds a public enum to define the
+supported partitioning method. Initially, this will support
+the default Metis method, but others can be added:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="k">enum</span><span class="w"> </span><span class="nc">partMethod</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="n">partMethodUnknown</span><span class="p">,</span><span class="w">        </span><span class="c1">///&lt; undefined for error checking</span>
+<span class="w">       </span><span class="n">partMethodMetisKWay</span><span class="p">,</span><span class="w">      </span><span class="c1">///&lt; default KWay method in metis</span>
+<span class="w">       </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Other methods, like the Metis GeomKWay (combination of space-filling
+curve with KWay) or Zoltan options may be added later.</p>
+<p>Eventually, an enum defining options for computing weights for
+weighted partitions may also be required, but will not appear in
+this initial implementation.</p>
+<p>Another parameter is the <code class="docutils literal notranslate"><span class="pre">haloWidth</span></code> that defines the width
+of the halo needed to provide neighbor information for all
+local operators. The minimum is typically 3 for current
+algorithms.</p>
+<p>These parameters and the mesh input file will be read as part of
+the input configuration file in a decomp configuration group:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="nt">decomp</span><span class="p">:</span>
+<span class="w">       </span><span class="nt">meshInputFilename</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;omegaMeshFile.nc&#39;</span>
+<span class="w">       </span><span class="nt">partitionMethod</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;MetisKWay&#39;</span>
+<span class="w">       </span><span class="nt">haloWidth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</pre></div>
+</div>
+<p>The Metis KWay partition method will be default and the haloWidth
+will initially default to 3.</p>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>There will be a Decomp class that stores and defines a partitioning
+of the address space.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="k">class</span><span class="w"> </span><span class="nc">Decomp</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">       </span><span class="k">private</span><span class="o">:</span>
+<span class="w">          </span><span class="n">partMethod</span><span class="w"> </span><span class="n">method</span><span class="p">;</span><span class="w">   </span><span class="c1">///&lt; method to use for partitioning</span>
+
+
+<span class="w">       </span><span class="k">public</span><span class="o">:</span>
+
+<span class="w">          </span><span class="n">I4</span><span class="w"> </span><span class="n">haloDepth</span><span class="p">;</span><span class="w">    </span><span class="c1">///&lt; depth of the halo</span>
+
+<span class="w">          </span><span class="n">I4</span><span class="w"> </span><span class="n">nCellsGlobal</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; num cells in the global domain</span>
+<span class="w">          </span><span class="n">I4</span><span class="w"> </span><span class="n">nCellsAll</span><span class="p">;</span><span class="w">    </span><span class="c1">///&lt; num cells on local rank (own+halos)</span>
+<span class="w">          </span><span class="n">I4</span><span class="w"> </span><span class="n">nCellsOwned</span><span class="p">;</span><span class="w">  </span><span class="c1">///&lt; num cells exclusively owned by local rank</span>
+
+<span class="w">          </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="p">[]</span><span class="w"> </span><span class="n">nCellsHalo</span><span class="p">[];</span><span class="w"> </span><span class="c1">///&lt; num of owned+halo points</span>
+<span class="w">                                          </span><span class="c1">///&lt; for each level of halo</span>
+
+<span class="w">          </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="p">[]</span><span class="w"> </span><span class="n">cellGlobalID</span><span class="p">[];</span><span class="w"> </span><span class="c1">///&lt; global index for each</span>
+<span class="w">                                            </span><span class="c1">///&lt; local cell (own+halo)</span>
+
+<span class="w">          </span><span class="c1">/// The adjacency (neighbor) info will be stored in the</span>
+<span class="w">          </span><span class="c1">/// compact form that Metis uses. In this form the neighbor</span>
+<span class="w">          </span><span class="c1">/// cell location for each owned and ghost cell in local cell</span>
+<span class="w">          </span><span class="c1">/// order is stored as a linear vector of integer pairs</span>
+<span class="w">          </span><span class="c1">/// (partition/processor number and local address). A second</span>
+<span class="w">          </span><span class="c1">/// vector stores the starting address in this list for the</span>
+<span class="w">          </span><span class="c1">/// neighbors associated with the local cell address.</span>
+
+<span class="w">          </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="p">[]</span><span class="w"> </span><span class="n">nbrStartCell</span><span class="w"> </span><span class="c1">///&lt; start addr in nbr array for cell</span>
+<span class="w">          </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="p">[]</span><span class="w"> </span><span class="n">nbrLocCell</span><span class="w">   </span><span class="c1">///&lt; list of nbr addresses</span>
+
+<span class="w">          </span><span class="p">[</span><span class="w"> </span><span class="n">repeat</span><span class="w"> </span><span class="n">identical</span><span class="w"> </span><span class="n">variables</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">edge</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="n">vertex</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="n">spaces</span><span class="w"> </span><span class="p">]</span>
+
+
+<span class="w">          </span><span class="c1">// methods described below</span>
+
+<span class="w">    </span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<p>Because most class members are public, only constructors and
+destructors are really needed.</p>
+<section id="constructor">
+<h4>4.2.1 Constructor<a class="headerlink" href="#constructor" title="Permalink to this heading"></a></h4>
+<p>The main method will be a constructor that decomposes the mesh and
+creates the public variables. The default decomposition will require
+no arguments and will read options from the input config file:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="n">Decomp</span><span class="w"> </span><span class="n">mainDecomp</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>For multiple decomposition of the same mesh, a second constructor
+will be needed that starts from the default decomposition and
+uses arguments for determining decomposition options. The exact form
+will be determined later, but might look something like:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="n">Decomp</span><span class="w"> </span><span class="nf">newDecomp</span><span class="p">(</span><span class="n">oldDecomp</span><span class="p">,</span><span class="w"> </span><span class="n">nParts</span><span class="p">,</span><span class="w"> </span><span class="n">method</span><span class="p">,</span><span class="w"> </span><span class="n">haloWidth</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="destructor">
+<h4>4.2.2 Destructor<a class="headerlink" href="#destructor" title="Permalink to this heading"></a></h4>
+<p>After most of the initialization is complete and the decomposition
+information has been used to initialize meshes, halo, I/O, etc.,
+we will supply a destructor to release the space in memory.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="k">delete</span><span class="w"> </span><span class="n">myDecomp</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test-metis">
+<h3>5.1 Test Metis<a class="headerlink" href="#test-metis" title="Permalink to this heading"></a></h3>
+<p>We will create a small sample graph/mesh for partitioning,
+similar to examples in Metis documention and create a partition.
+The resulting partition will be compared to that generated
+by the standalone gpmetis partition.</p>
+<ul class="simple">
+<li><p>tests requirement 2.1, 2.2, 2.3, 2.4</p></li>
+</ul>
+</section>
+<section id="back-compatibility">
+<h3>5.2 Back compatibility<a class="headerlink" href="#back-compatibility" title="Permalink to this heading"></a></h3>
+<p>We will create a decomposition based on an MPAS input mesh
+and verify that the decomposition is the same as the older
+MPAS Fortran code. This test should only be needed after initial
+development and will not need to be repeated as part of
+routine testing</p>
+</section>
+<section id="check-global-ids">
+<h3>5.3 Check global IDs<a class="headerlink" href="#check-global-ids" title="Permalink to this heading"></a></h3>
+<p>To make sure all cells, etc. are accounted for, we can do a global
+sum of the number of cells as well as a sum of global IDs across
+the partition and ensure they the expected sum.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="DataTypes.html" class="btn btn-neutral float-left" title="DataTypes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Driver.html" class="btn btn-neutral float-right" title="Driver and Component Layer" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

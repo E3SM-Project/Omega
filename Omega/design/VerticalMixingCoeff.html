@@ -1,0 +1,395 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vertical Mixing Coefficients &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Template" href="Template.html" />
+    <link rel="prev" title="Tridiagonal Solver" href="TridiagonalSolver.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Vertical Mixing Coefficients</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-vertical-mixing-coefficient-interface-should-be-modular">2.1 Requirement: Vertical mixing coefficient interface should be modular</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-vertical-mixing-models-should-be-have-local-and-or-gradient-free-terms">2.2 Requirement: Vertical mixing models should be have local and/or gradient free terms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-vertical-mixing-models-cannot-ingest-single-columns-at-a-time">2.3 Requirement: Vertical mixing models cannot ingest single columns at a time</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#richardson-number-dependent-mixing">3.1 Richardson number dependent mixing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#convective-instability-mixing">3.2 Convective Instability Mixing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Vertical Mixing Coefficients</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/VerticalMixingCoeff.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="vertical-mixing-coefficients">
+<h1>Vertical Mixing Coefficients<a class="headerlink" href="#vertical-mixing-coefficients" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>Representation of unresolved vertical fluxes of momentum, heat, salt, and biogeochemical tracers in ocean models is essential to simulations fidelity. Models of turbulent fluxes spans a wide range of complexity, but the models generally fall into a few categories: simply polynomial relationships, equilibrium turbulence models, and prognostic turbulence models.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-vertical-mixing-coefficient-interface-should-be-modular">
+<h3>2.1 Requirement: Vertical mixing coefficient interface should be modular<a class="headerlink" href="#requirement-vertical-mixing-coefficient-interface-should-be-modular" title="Permalink to this heading"></a></h3>
+<p>To prepare for additional mixing closures and later improvements, the interface to vertical mixing must allow for easy connection of closures. It is assumed that the strength of vertical mixing from each closure is additive, such that the final vertical diffusion coefficient is the sum of the coefficients and potential non local terms from each closure.</p>
+</section>
+<section id="requirement-vertical-mixing-models-should-be-have-local-and-or-gradient-free-terms">
+<h3>2.2 Requirement: Vertical mixing models should be have local and/or gradient free terms<a class="headerlink" href="#requirement-vertical-mixing-models-should-be-have-local-and-or-gradient-free-terms" title="Permalink to this heading"></a></h3>
+<p>For optimal performance, initial models of vertical turbulent fluxes for Omega should be cast as an implicit, down gradient mixing and an explicit, gradient free, component, e.g.,</p>
+<div class="math notranslate nohighlight">
+\[
+\overline{w' \phi'}\approx \kappa(\overline{\rho},\overline{u},\overline{v}) \left(\frac{\partial \overline{\phi}}{\partial z} + \gamma(\overline{\rho},\overline{u},\overline{v}) \right)\,.
+\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(\phi\)</span> is a generic tracer, <span class="math notranslate nohighlight">\(\overline{w'\phi'}\)</span> is the vertical turbulent flux of that tracer, <span class="math notranslate nohighlight">\(\kappa\)</span> is the vertical diffusivity, and <span class="math notranslate nohighlight">\(\gamma\)</span> is the gradient free portion of the flux (often referred to as ‘non-local’). The vertical diffusivity <span class="math notranslate nohighlight">\(\kappa\)</span> can be as simple as a constant value, to complex functions of quantities like shear and stratification. A similar equation can be written for turbulent momentum fluxes and vertical viscosity (<span class="math notranslate nohighlight">\(\nu\)</span>).</p>
+<p>Invocation of the gradient diffusion hypothesis is a simplifying assumption for turbulence closures that casts turbulence as a purely diffusive process and allows the mixing problem to be cast implicitly in a tridagonal solve.  For more physical mixing closures, other methods can be explored, e.g., direct and iterative implicit solvers or subcycling.</p>
+<p>The initial design and implementation of these vertical mixing coefficients will include only the local, down gradient portion of the flux (first right-hand-side term in Eq. (1)). Implementation of the non-local, gradient free portion of the vertical flux will come later. However, it is important to note here that <span class="math notranslate nohighlight">\(\gamma\)</span> is only non-zero within the boundary layer, and when non-local flux formulations (such as <a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94rg01872">KPP (Large et al., 1994)</a>) are being used, <span class="math notranslate nohighlight">\(\kappa\)</span> value contributions such as the convective mixing flux detailed in Section 3.2 are only computed outside of the boundary layer and remain zero within the boundary layer.</p>
+</section>
+<section id="requirement-vertical-mixing-models-cannot-ingest-single-columns-at-a-time">
+<h3>2.3 Requirement: Vertical mixing models cannot ingest single columns at a time<a class="headerlink" href="#requirement-vertical-mixing-models-cannot-ingest-single-columns-at-a-time" title="Permalink to this heading"></a></h3>
+<p>Many standard vertical mixing libraries (e.g. CVMix) receive and operate on one column at a time. This results in poor performance, especially on accelerators. Any utilized model of vertical mixing must ingest and operate on multiple columns concurrently.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>For Omega-1 a few simple vertical mixing algorithms will be used. When computing <span class="math notranslate nohighlight">\(\kappa\)</span> and <span class="math notranslate nohighlight">\(\nu\)</span>, linear superposition when combining the various parameterizations is assumed.</p>
+<section id="richardson-number-dependent-mixing">
+<h3>3.1 Richardson number dependent mixing<a class="headerlink" href="#richardson-number-dependent-mixing" title="Permalink to this heading"></a></h3>
+<p>One of the simplest class of models of vertical turbulence are polynomial functions of the gradient Richardson number. As in MPAS-Ocean, we choose to define the Richardson number as</p>
+<div class="math notranslate nohighlight">
+\[
+Ri = \frac{N^2}{\left|\frac{\partial \mathbf{U}}{\partial z}\right|^2}\,,
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(N^2\)</span> is the Brunt Vaisala Frequency, which for non Boussinesq flows is defined as</p>
+<div class="math notranslate nohighlight">
+\[
+N^2 = \frac{g}{\rho_0}\frac{\partial \rho}{\partial z}\,.
+\]</div>
+<p>If we assume this term is defined at the top of the cell, it is discretized as</p>
+<div class="math notranslate nohighlight">
+\[
+N^2(k) = g \rho_0 \frac{\rho_{DD}(k) - \rho(k)}{z_m(k-1) - z_m(k)}\,.
+\]</div>
+<p>Here <span class="math notranslate nohighlight">\(\rho_{DD}\)</span> is the density of the fluid of layer k-1 displaced to layer k adiabatically.</p>
+<p>The shear in the denominator, also defined at the top of the cell, is discretized as</p>
+<div class="math notranslate nohighlight">
+\[
+\left| \frac{\partial \mathbf{U}}{\partial z}\right|^2 = \left(\frac{U_n(k-1)-U_n(k)}{z_m(k-1) - z_m(k)}\right)^2 + \left(\frac{U_t(k-1)-U_t(k)}{z_m(k-1) - z_m(k)}\right)^2\,.
+\]</div>
+<p>Where the subscripts <em>n</em> and <em>t</em> are the normal and tangential velocities respectively.</p>
+<p>With the definition of the gradient richardson number, the viscosity and diffusivity are defined according to <a class="reference external" href="https://journals.ametsoc.org/view/journals/phoc/11/11/1520-0485_1981_011_1443_povmin_2_0_co_2.xml?tab_body=pdf">Pacanowski and Philander (1981)</a> as</p>
+<div class="math notranslate nohighlight">
+\[
+\nu = \frac{\nu_o}{(1+\alpha Ri)^n} + \nu_b\,,
+\]</div>
+<div class="math notranslate nohighlight">
+\[
+\kappa = \frac{\nu}{(1+\alpha Ri)} + \kappa_b\,.
+\]</div>
+<p><span class="math notranslate nohighlight">\(\nu\)</span> and <span class="math notranslate nohighlight">\(\kappa\)</span> are defined at the top of the cell, similarly to <span class="math notranslate nohighlight">\(Ri\)</span> and <span class="math notranslate nohighlight">\(N^2\)</span>. In these formulae, <span class="math notranslate nohighlight">\(\alpha\)</span> and <em>n</em> are tunable parameters, most often chosen as 5 and 2 respectively. <span class="math notranslate nohighlight">\(\nu_b\)</span> and <span class="math notranslate nohighlight">\(\kappa_b\)</span> are the background viscosity and diffusivity respectively. MPAS-Ocean has an additional <span class="math notranslate nohighlight">\(\kappa_{b,passive}\)</span> for applying to just the passive tracers, leaving the active tracers with <span class="math notranslate nohighlight">\(\kappa_b\)</span>.</p>
+</section>
+<section id="convective-instability-mixing">
+<h3>3.2 Convective Instability Mixing<a class="headerlink" href="#convective-instability-mixing" title="Permalink to this heading"></a></h3>
+<p>Commonly (and how this is currently handled by CVMix in MPAS-O), mixing due to convective instability is treated as a step function for the diffusivity and viscosity. This is often represented as</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\kappa =
+\begin{cases}
+\kappa_{b} + \kappa_{conv} \quad \text{ if } N^2 \leq N^2_{crit}\\
+\kappa_{b} \quad \text{ if } N^2 &gt; N^2_{crit}
+\end{cases}
+\end{split}\]</div>
+<p>A similar expression is utilized for viscosity. The effect of this formula is to homogenize T, S, passive tracers, and normal velocity, for unstable stratification, but also in neutral stratification, as <span class="math notranslate nohighlight">\(N^2_{crit}\)</span> is typically chosen to be 0. The behavior in unstable stratification is likely correct, but for neutral stratification, homogenization of momentum is questionable. In Omega, we will slightly modify the algorithm above to,</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\kappa =
+\begin{cases}
+\kappa_{b} + \kappa_{conv} \quad \text{ if } N^2 &lt; N^2_{crit}\\
+\kappa_{b} \quad \text{ if } N^2 \geq N^2_{crit}
+\end{cases}
+\end{split}\]</div>
+<p>So that homogenization only occurs for unstable stratification (assuming <span class="math notranslate nohighlight">\(N^2_{crit} = 0\)</span>). Values for <span class="math notranslate nohighlight">\(\kappa_{conv}\)</span> are typically large (<span class="math notranslate nohighlight">\(\sim 1 \, \mathrm{m^2/s}\)</span>). Again, when non-local, gradient free flux formulations are included in Eq. (1) in future developments, this convective instability contribution to the mixing will not be calculated within the boundary layer where <span class="math notranslate nohighlight">\(\gamma\)</span> is active.</p>
+</section>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>Vertical chunking, as is, does not work well for vertical derivatives, so a first design of the vertical mixing coefficients computation does not do vertical chunking and just computes with the full-depth column.</p>
+<p>Additionally, to start, only the down gradient contribution to vertical mixing will be added, with contributions to the vertical viscosity and diffusivity coming from the shear (Richardson number mixing), convective, and background mixing models detailed in the prior section. However, in future developments, the K Profile Parameterization <a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94rg01872">(KPP; Large et al., 1994)</a> and other non-local and/or higher-order mixing models will be added. Some of these parameterizations require vertical derivatives, full-depth integrals, and/or formulate <span class="math notranslate nohighlight">\(\kappa\)</span> and <span class="math notranslate nohighlight">\(\gamma\)</span> in Eq. (1) Section 2.1 as functions of surface forcing, which require either full-depth column or surface forcing information at depth, thus we design the mixing coefficients routine with this in mind. A solution that allows chunking with vertical operations such as derivatives and integrals and/or surface forcing values would be advantageous, but is outside of the scope of this design document.</p>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<p>Several parameters will be needed for the three different contributions to the local, down gradient vertical mixing coefficients. These parameters should be run-time configurable through the YAML config. A new section in the YAML config should be made for these parameters, as more run-time configurable vertical mixing parameters will be added to this section when the non-local formulations are added.</p>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>The following config options should be included for the Richardson number dependent – Pacanowski and Philander (1981) based – vertical mixing:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">EnableShearMix</span></code>. If true, shear-based mixing is computed based upon Pacanowski and Philander (1981) and applied to velocity components and tracer quantities. [.true./.false.]</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ShearNuZero</span></code>. Numerator of Pacanowski and Philander (1981) Eq (1). [0.005 <span class="math notranslate nohighlight">\(m^2 s^{-1}\)</span>]</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ShearAlpha</span></code>. Alpha value used in Pacanowski and Philander (1981) Eqs (1) and (2). [5]</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ShearExponent</span></code>. Exponent used in denominator of Pacanowski and Philander (1981) Eqs (1). [2]</p></li>
+</ol>
+<p>The following config options should be included for convective vertical mixing:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">EnableConvectiveMix</span></code>. If true, convective mixing is computed and applied to velocity components and tracer quantities. [.true./.false.]</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ConvectiveDiffusivity</span></code>. Convective vertical viscosity and diffusivity applied to velocity components and tracer quantities, respectively. [1.0 <span class="math notranslate nohighlight">\(m^2 s^{-1}\)</span>]</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ConvectiveTriggerBVF</span></code>. Value of Brunt Viasala frequency squared below which convective mixing is triggered. [0.0]</p></li>
+</ol>
+<p>The following config options should be included for background vertical mixing:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">BackgroundViscosity</span></code>. Background vertical viscosity applied to velocity components. [1.0e-4 <span class="math notranslate nohighlight">\(m^2 s^{-1}\)</span>]</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BackgroundDiffusivity</span></code>. Background vertical diffusivity applied to all tracer quantities. [1.0e-5 <span class="math notranslate nohighlight">\(m^2 s^{-1}\)</span>]</p></li>
+</ol>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<!--- List and describe all public methods and their interfaces (actual code for
+interface that would be in header file). Describe typical use cases. -->
+<p>It is assumed that viscosity and diffusivity will be stored at cell centers. Additionally, since they will be used elsewhere, it is assumed that zMid and N2 have been computed elsewhere (N2 in the density routine) and stored. Quantities such as squared shear and Richardson number are not needed outside of the vertical mixing routines, so are computed locally. Note: how topography will be dealt with has not been finalized yet, but will be adopted into the following once finalized.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">parallelFor</span><span class="p">(</span>
+<span class="w">    </span><span class="p">{</span><span class="n">NCellsAll</span><span class="p">,</span><span class="w"> </span><span class="n">NVertLevels</span><span class="p">},</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">        </span><span class="c1">// Add background contribution to viscosity and diffusivity </span>
+<span class="w">        </span><span class="n">VertViscosity</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BackgroundViscosity</span><span class="p">;</span>
+<span class="w">        </span><span class="n">VertDiffusivity</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BackgroundDiffusivity</span><span class="p">;</span>
+
+<span class="w">        </span><span class="c1">// If shear mixing true, add shear contribution to viscosity and diffusivity </span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">EnableShearMix</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">InvAreaCell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.</span><span class="n">_Real</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">AreaCell</span><span class="p">(</span><span class="n">ICell</span><span class="p">);</span>
+<span class="w">            </span><span class="c1">// Calculate the square of the shear</span>
+<span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">J</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">J</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NEdgesOnCell</span><span class="p">(</span><span class="n">ICell</span><span class="p">);</span><span class="w"> </span><span class="o">++</span><span class="n">J</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="k">const</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">JEdge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">EdgesOnCell</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">J</span><span class="p">);</span>
+<span class="w">                </span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">Factor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="n">_Real</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">DcEdge</span><span class="p">(</span><span class="n">JEdge</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">DvEdge</span><span class="p">(</span><span class="n">JEdge</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">InvAreaCell</span><span class="p">;</span>
+<span class="w">                </span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">DelU2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">NormalVelocity</span><span class="p">(</span><span class="n">JEdge</span><span class="p">,</span><span class="n">K</span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">NormalVelocity</span><span class="p">(</span><span class="n">JEdge</span><span class="p">,</span><span class="n">K</span><span class="p">),</span><span class="w"> </span><span class="mf">2.</span><span class="n">_Real</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">TangentialVelocity</span><span class="p">(</span><span class="n">JEdge</span><span class="p">,</span><span class="n">K</span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">TangentialVelocity</span><span class="p">(</span><span class="n">JEdge</span><span class="p">,</span><span class="n">K</span><span class="p">),</span><span class="w"> </span><span class="mf">2.</span><span class="n">_Real</span><span class="p">);</span>
+<span class="w">                </span><span class="n">ShearSquared</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ShearSquared</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Factor</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">DelU2</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="n">ShearSquared</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ShearSquared</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">zMid</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">zMid</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">),</span><span class="w"> </span><span class="mf">2.</span><span class="n">_Real</span><span class="p">);</span>
+
+<span class="w">            </span><span class="c1">// Calculate Richardson number</span>
+<span class="w">            </span><span class="n">RichardsonNum</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BruntVaisalaFreq</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">ShearSquared</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">),</span><span class="w"> </span><span class="mf">1.0e-12</span><span class="n">_Real</span><span class="p">);</span>
+
+<span class="w">            </span><span class="c1">// Add in shear contribution to vertical mixing</span>
+<span class="w">            </span><span class="n">VertViscosity</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">VertViscosity</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ShearNuZero</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="mf">1.</span><span class="n">_Real</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ShearAlpha</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">RichardsonNum</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">),</span><span class="w"> </span><span class="n">ShearExponent</span><span class="p">);</span>
+<span class="w">            </span><span class="n">VertDiffusivity</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">VertDiffusivity</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">VertViscosity</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ShearAlpha</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">RichardsonNum</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// If conv mixing true, add conv contribution to viscosity and diffusivity </span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">EnableConvectiveMix</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">BruntVaisalaFreq</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">ConvectiveTriggerBVF</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">VertViscosity</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">VertViscosity</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ConvectiveDiffusivity</span><span class="p">;</span>
+<span class="w">                </span><span class="n">VertDiffusivity</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">VertDiffusivity</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ConvectiveDiffusivity</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">    </span><span class="p">});</span>
+</pre></div>
+</div>
+<p>A no-flux condition should be applied to both the vertical mixing of momentum and tracers through setting the vertical viscosity and diffusivity to zero at the boundaries. From here, the vertical viscosity and vertical diffusivity will enter into the <a class="reference internal" href="TridiagonalSolver.html"><span class="std std-doc">tridiagonal solver</span></a> to compute the vertical flux of momentum and tracers.</p>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<p>Unit tests can be initialized with linear-with-depth initial conditions (velocity and density) and use a linear equation of state. Expected values of the Richardson number, vertical viscosity, and vertical diffusion coefficients can be computed and compared to. Tests for both the shear, convective, and combined mixing contributions should be made to test requirement (2.1).</p>
+<p>This assumes that the displaced density has already been tested. Vertical fluxes of momentum and tracers will be tested separately with the <a class="reference internal" href="TridiagonalSolver.html"><span class="std std-doc">tridiagonal solver</span></a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="TridiagonalSolver.html" class="btn btn-neutral float-left" title="Tridiagonal Solver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Template.html" class="btn btn-neutral float-right" title="Template" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

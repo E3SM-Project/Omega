@@ -1,0 +1,312 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Omega Build with CMake &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Developing Omega Logging" href="Logging.html" />
+    <link rel="prev" title="Omega Broadcast" href="Broadcast.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Omega Build with CMake</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#step-1-setup">Step 1: Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-2-update">Step 2: Update</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-3-build">Step 3: Build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-4-output">Step 4: Output</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Omega Build with CMake</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/devGuide/CMakeBuild.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="omega-build-with-cmake">
+<span id="omega-dev-cmake-build"></span><h1>Omega Build with CMake<a class="headerlink" href="#omega-build-with-cmake" title="Permalink to this heading"></a></h1>
+<p>The Omega build system utilizes CMake, a widely-used build tool,
+to facilitate the build process.</p>
+<p>The build process is defined in the CMakeLists.txt file located
+in the top-level directory of Omega. It consists of four consecutive
+steps: Setup, Update, Build, and Output.</p>
+<p><img alt="CMake-based Omega build process" src="../_images/cmakebuild.png" /></p>
+<p>The build step consists of adding three subdirectories that drive builds
+for external libraries, the Omega model, and optional tests.</p>
+<p>Python is required to use this build system.
+The version of CMake should be 3.21 or later for supporting HIP.</p>
+<section id="step-1-setup">
+<h2>Step 1: Setup<a class="headerlink" href="#step-1-setup" title="Permalink to this heading"></a></h2>
+<p>During this step, the build-controlling variables are configured.
+The Omega build system supports two modes: standalone and E3SM
+component. The build mode is automatically detected, and any
+mode-specific differences are resolved to ensure a consistent
+build process.</p>
+<p>By default, Omega assumes it is part of the E3SM code distribution.
+In both build modes, the build system collects build-controlling
+parameters, such as compiler paths and flags, from the E3SM build system.</p>
+<p>There are three types of Omega build-controlling variables: Omega,
+E3SM, and CMake. The names of these variables start with “OMEGA_”,
+“E3SM_”, and “CMAKE”, respectively. Temporary variables are prefixed
+with an underscore (“_”).</p>
+<p>The following is a list of Omega-specific variables available in
+this version:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA_PROJECT_NAME</span><span class="p">:</span> <span class="n">Name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">project</span> <span class="p">(</span><span class="s2">&quot;OmegaOceanModel&quot;</span><span class="p">)</span>
+<span class="n">OMEGA_EXE_NAME</span><span class="p">:</span> <span class="n">Name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">executable</span> <span class="p">(</span><span class="s2">&quot;omega.exe&quot;</span><span class="p">)</span>
+<span class="n">OMEGA_LIB_NAME</span><span class="p">:</span> <span class="n">Name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">library</span> <span class="p">(</span><span class="s2">&quot;OmegaLib&quot;</span><span class="p">)</span>
+<span class="n">OMEGA_BUILD_MODES</span><span class="p">:</span> <span class="n">List</span> <span class="n">of</span> <span class="n">build</span> <span class="n">modes</span> <span class="p">(</span><span class="s2">&quot;E3SM&quot;</span><span class="p">,</span> <span class="s2">&quot;STANDALONE&quot;</span><span class="p">,</span> <span class="s2">&quot;NOT_DEFINED&quot;</span><span class="p">)</span>
+<span class="n">OMEGA_BUILD_MODE</span><span class="p">:</span> <span class="n">Selected</span> <span class="n">build</span> <span class="n">mode</span>
+<span class="n">OMEGA_BUILD_DIR</span><span class="p">:</span> <span class="n">Omega</span> <span class="n">top</span><span class="o">-</span><span class="n">level</span> <span class="n">build</span> <span class="n">directory</span>
+<span class="n">OMEGA_SOURCE_DIR</span><span class="p">:</span> <span class="n">Directory</span> <span class="n">where</span> <span class="n">the</span> <span class="n">top</span><span class="o">-</span><span class="n">level</span> <span class="n">Omega</span> <span class="n">CMakeLists</span><span class="o">.</span><span class="n">txt</span> <span class="ow">is</span> <span class="n">located</span>
+<span class="n">OMEGA_DEFAULT_BUILD_TYPE</span><span class="p">:</span> <span class="n">Default</span> <span class="n">build</span> <span class="nb">type</span> <span class="p">(</span><span class="s2">&quot;Release&quot;</span><span class="p">)</span>
+<span class="n">OMEGA_INSTALL_PREFIX</span><span class="p">:</span> <span class="n">User</span><span class="o">-</span><span class="n">defined</span> <span class="n">output</span> <span class="n">directory</span> <span class="k">for</span> <span class="n">the</span> <span class="n">library</span> <span class="ow">and</span> <span class="n">executable</span>
+<span class="n">OMEGA_ARCH</span><span class="p">:</span> <span class="n">User</span><span class="o">-</span><span class="n">defined</span> <span class="n">programming</span> <span class="n">framework</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span><span class="p">,</span> <span class="s2">&quot;CUDA&quot;</span><span class="p">,</span> <span class="s2">&quot;HIP&quot;</span><span class="p">,</span> <span class="s2">&quot;OPENMP&quot;</span><span class="p">,</span> <span class="s2">&quot;SYCL&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+<span class="n">OMEGA_CXX_COMPILER</span><span class="p">:</span> <span class="n">C</span><span class="o">++</span> <span class="n">compiler</span>
+<span class="n">OMEGA_C_COMPILER</span><span class="p">:</span> <span class="n">C</span> <span class="n">compiler</span>
+<span class="n">OMEGA_Fortran_COMPILER</span><span class="p">:</span> <span class="n">Fortran</span> <span class="n">compiler</span>
+<span class="n">OMEGA_CIME_COMPILER</span><span class="p">:</span> <span class="n">E3SM</span> <span class="n">compiler</span> <span class="n">name</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">config_machines</span><span class="o">.</span><span class="n">xml</span>
+<span class="n">OMEGA_CIME_MACHINE</span><span class="p">:</span> <span class="n">E3SM</span> <span class="n">machine</span> <span class="n">name</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">config_machines</span><span class="o">.</span><span class="n">xml</span>
+<span class="n">OMEGA_CIME_PROJECT</span><span class="p">:</span> <span class="n">Slurm</span> <span class="n">account</span> <span class="n">passed</span> <span class="n">to</span> <span class="n">CIME</span> <span class="n">during</span> <span class="n">Omega</span> <span class="n">build</span>
+<span class="n">OMEGA_CXX_FLAGS</span><span class="p">:</span> <span class="n">a</span> <span class="nb">list</span> <span class="k">for</span> <span class="n">C</span><span class="o">++</span> <span class="n">compiler</span> <span class="n">flags</span>
+<span class="n">OMEGA_LINK_OPTIONS</span><span class="p">:</span> <span class="n">a</span> <span class="nb">list</span> <span class="k">for</span> <span class="n">linker</span> <span class="n">flags</span>
+<span class="n">OMEGA_BUILD_EXECUTABLE</span><span class="p">:</span> <span class="n">Enable</span> <span class="n">building</span> <span class="n">the</span> <span class="n">Omega</span> <span class="n">executable</span>
+<span class="n">OMEGA_BUILD_TEST</span><span class="p">:</span> <span class="n">Enable</span> <span class="n">building</span> <span class="n">Omega</span> <span class="n">tests</span>
+<span class="n">OMEGA_PARMETIS_ROOT</span><span class="p">:</span> <span class="n">Parmetis</span> <span class="n">installtion</span> <span class="n">directory</span>
+<span class="n">OMEGA_METIS_ROOT</span><span class="p">:</span> <span class="n">Metis</span> <span class="n">installtion</span> <span class="n">directory</span>
+<span class="n">OMEGA_GKLIB_ROOT</span><span class="p">:</span> <span class="n">GKlib</span> <span class="n">installtion</span> <span class="n">directory</span>
+<span class="n">OMEGA_HIP_COMPILER</span><span class="p">:</span> <span class="n">HIP</span> <span class="n">compiler</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span><span class="p">,</span> <span class="n">hipcc</span><span class="p">)</span>
+<span class="n">OMEGA_HIP_FLAGS</span><span class="p">:</span> <span class="n">HIP</span> <span class="n">compiler</span> <span class="n">flags</span>
+<span class="n">OMEGA_MEMORY_LAYOUT</span><span class="p">:</span> <span class="n">Kokkos</span> <span class="n">memory</span> <span class="n">layout</span> <span class="p">(</span><span class="s2">&quot;LEFT&quot;</span> <span class="ow">or</span> <span class="s2">&quot;RIGHT&quot;</span><span class="p">)</span><span class="o">.</span> <span class="s2">&quot;RIGHT&quot;</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
+<span class="n">OMEGA_TILE_LENGTH</span><span class="p">:</span> <span class="n">a</span> <span class="n">length</span> <span class="n">of</span> <span class="n">one</span> <span class="s2">&quot;side&quot;</span> <span class="n">of</span> <span class="n">a</span> <span class="n">Kokkos</span> <span class="n">tile</span><span class="o">.</span> <span class="mi">64</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
+<span class="n">OMEGA_LOG_LEVEL</span><span class="p">:</span> <span class="n">a</span> <span class="n">default</span> <span class="n">logging</span> <span class="n">level</span><span class="o">.</span> <span class="s2">&quot;OMEGA_LOG_INFO&quot;</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
+<span class="n">OMEGA_LOG_FLUSH</span><span class="p">:</span> <span class="n">turn</span> <span class="n">on</span> <span class="n">the</span> <span class="n">unbuffered</span> <span class="n">logging</span><span class="o">.</span> <span class="s2">&quot;OFF&quot;</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
+<span class="n">OMEGA_LOG_TASKS</span><span class="p">:</span> <span class="nb">set</span> <span class="n">the</span> <span class="n">tasks</span> <span class="n">that</span> <span class="n">generate</span> <span class="n">log</span> <span class="n">file</span><span class="o">.</span> <span class="s2">&quot;0&quot;</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
+<span class="n">OMEGA_VECTOR_LENGTH</span><span class="p">:</span> <span class="n">Vector</span> <span class="n">length</span> <span class="n">used</span> <span class="k">for</span> <span class="n">blocking</span> <span class="n">inner</span> <span class="n">loops</span> <span class="k">for</span> <span class="n">vectorization</span><span class="o">.</span> <span class="s2">&quot;1&quot;</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>E3SM-specific variables</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>E3SM_SOURCE_DIR: E3SM component directory (${E3SM_ROOT}/components)
+E3SM_CIME_ROOT: CIME root directory
+E3SM_CIMECONFIG_ROOT: E3SM CIME config directory
+E3SM_EXTERNALS_ROOT: E3SM externals directory
+E3SM_DEFAULT_BUILD_TYPE: E3SM build type (Release or Debug)
+</pre></div>
+</div>
+<p>CMake variables</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">CMAKE_CURRENT_SOURCE_DIR</span>
+<span class="n">CMAKE_CURRENT_BINARY_DIR</span>
+<span class="n">CMAKE_CURRENT_LIST_DIR</span>
+<span class="n">CMAKE_CXX_STANDARD</span>
+<span class="n">CMAKE_CXX_COMPILER</span>
+<span class="n">CMAKE_CXX_FLAGS</span>
+<span class="n">CMAKE_CURRENT_LIST_DIR</span>
+<span class="n">CMAKE_BUILD_TYPE</span>
+<span class="n">CMAKE_INSTALL_PREFIX</span>
+<span class="n">CMAKE_VERSION</span>
+</pre></div>
+</div>
+</section>
+<section id="step-2-update">
+<h2>Step 2: Update<a class="headerlink" href="#step-2-update" title="Permalink to this heading"></a></h2>
+<p>In this step, CMake is configured, and external library variables,
+such as Kokkos, MPI, NetCDF, and PNetCDF, are set based on the settings
+defined in the Setup step. The integrity of the build setup is verified
+at the end of this step.</p>
+</section>
+<section id="step-3-build">
+<h2>Step 3: Build<a class="headerlink" href="#step-3-build" title="Permalink to this heading"></a></h2>
+<p>During this step, the build process is configured. It includes building
+external libraries, followed by building the Omega main model from source
+files. Optionally, tests can also be built.</p>
+</section>
+<section id="step-4-output">
+<h2>Step 4: Output<a class="headerlink" href="#step-4-output" title="Permalink to this heading"></a></h2>
+<p>The final step, which is optional, involves copying a subset of the build
+artifacts to designated locations or generating dynamic outputs as needed.</p>
+<p>Note: Until the Omega build is integrated into the E3SM build, specific
+modifications are required to trigger the Omega build within the E3SM
+build process. Please see <a class="reference internal" href="../userGuide/OmegaBuild.html"><span class="std std-doc">Omega Build User Guide</span></a>
+for details.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Broadcast.html" class="btn btn-neutral float-left" title="Omega Broadcast" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Logging.html" class="btn btn-neutral float-right" title="Developing Omega Logging" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

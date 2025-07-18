@@ -1,0 +1,362 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IO Streams (IOStream) &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Halo Exchanges (Halo)" href="Halo.html" />
+    <link rel="prev" title="Parallel IO (IO)" href="IO.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">IO Streams (IOStream)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/userGuide/IOStreams.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="io-streams-iostream">
+<span id="omega-user-iostreams"></span><h1>IO Streams (IOStream)<a class="headerlink" href="#io-streams-iostream" title="Permalink to this heading"></a></h1>
+<p>IO Streams are the primary mechanism for users to specify input and output
+for Omega. An IOStream can be defined for any number of fields and at desired
+time frequencies (including one-time or at startup/shutdown). IOStreams are
+defined in the Omega input configuration file in an IOStreams section:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Omega</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># other config options removed for brevity</span>
+<span class="w">  </span><span class="nt">IOStreams</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">InitialState</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">UsePointerFile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">OmegaMesh.nc</span>
+<span class="w">      </span><span class="nt">Mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read</span>
+<span class="w">      </span><span class="nt">Precision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">double</span>
+<span class="w">      </span><span class="nt">Freq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">      </span><span class="nt">FreqUnits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">OnStartup</span>
+<span class="w">      </span><span class="nt">UseStartEnd</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">Contents</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Restart</span>
+<span class="w">    </span><span class="nt">RestartWrite</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">UsePointerFile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">PointerFilename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ocn.pointer</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ocn.restart.$Y-$M-$D_$h.$m.$s</span>
+<span class="w">      </span><span class="nt">Mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write</span>
+<span class="w">      </span><span class="nt">IfExists</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">replace</span>
+<span class="w">      </span><span class="nt">Precision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">double</span>
+<span class="w">      </span><span class="nt">Freq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span>
+<span class="w">      </span><span class="nt">FreqUnits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">months</span>
+<span class="w">      </span><span class="nt">UseStartEnd</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">Contents</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Restart</span>
+<span class="w">    </span><span class="nt">History</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">UsePointerFile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ocn.hist.$SimTime</span>
+<span class="w">      </span><span class="nt">Mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write</span>
+<span class="w">      </span><span class="nt">IfExists</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">replace</span>
+<span class="w">      </span><span class="nt">Precision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">double</span>
+<span class="w">      </span><span class="nt">Freq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">      </span><span class="nt">FreqUnits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">months</span>
+<span class="w">      </span><span class="nt">UseStartEnd</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">Contents</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Tracers</span>
+<span class="w">    </span><span class="nt">Highfreq</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">UsePointerFile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ocn.hifreq.$Y-$M</span>
+<span class="w">      </span><span class="nt">Mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write</span>
+<span class="w">      </span><span class="nt">IfExists</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">append</span>
+<span class="w">      </span><span class="nt">Precision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">single</span>
+<span class="w">      </span><span class="nt">Freq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">      </span><span class="nt">FreqUnits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">days</span>
+<span class="w">      </span><span class="nt">FileFreq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">      </span><span class="nt">FileFreqUnits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">months</span>
+<span class="w">      </span><span class="nt">UseStartEnd</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">StartTime</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0001-06-01_00.00.00</span>
+<span class="w">      </span><span class="nt">EndTime</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0001-06-30_00.00.00</span>
+<span class="w">      </span><span class="nt">Contents</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Tracers</span>
+</pre></div>
+</div>
+<p>Each stream has a number of required and optional parameters for customizing
+input and output. These options are indented below the stream name as shown
+in the sample YAML entries above. They include:</p>
+<ul class="simple">
+<li><p><strong>UsePointerFile:</strong> A required flag that is either true or false. A pointer
+file is used for cases like restart files where the last file written can
+be stored for the next job submission so that the configuration file does
+not need to be edited between job submissions.</p></li>
+<li><p><strong>PointerFilename:</strong> Only required if UsePointerFile is true and should
+be set to the full filename (with path) for the pointer file. Each stream
+using a pointer file must define a unique pointer file name.</p></li>
+<li><p><strong>Filename:</strong> Required in all cases except input streams using a pointer
+file. This is the complete name (with path) of the file to be read or written.
+A filename template is also supported in which simulation (or real) time
+can be used in the file name. As the examples above show, accepted keys for
+a template can be:</p>
+<ul>
+<li><p>$SimTime for the current simulation time in a standard time string (note
+that this time string may include colon separators that can be a problem
+for filenames so using the individual keys below is preferred).</p></li>
+<li><p>$Y for the current simulation year</p></li>
+<li><p>$M for the current simulation month</p></li>
+<li><p>$D for the current simulation day</p></li>
+<li><p>$h for the current simulation hour</p></li>
+<li><p>$m for the current simulation minute</p></li>
+<li><p>$s for the current simulation second</p></li>
+<li><p>$WallTime for the time IRL for use when you might need the actual time for
+a debug time stamp</p></li>
+</ul>
+</li>
+<li><p><strong>Mode:</strong> A required field that is either read or write. There is no
+readwrite option (eg for restarts) so a separate stream should be
+defined for such cases as in the examples above.</p></li>
+<li><p><strong>IfExists:</strong> A required field for write streams that determines behavior
+if the file already exists. Acceptable options are:</p>
+<ul>
+<li><p>Fail if you want the code to exit with an error</p></li>
+<li><p>Replace if you want to replace the existing file with the new file</p></li>
+<li><p>Append if you want to append (eg multiple time slices) to the existing
+file. When re-running an interval, this will also over-write existing
+slices corresponding to the simulation time if they exist in the file.</p></li>
+</ul>
+</li>
+<li><p><strong>Precision:</strong> A field that determines whether floating point numbers are
+written in full (double) precision or reduced (single). Acceptable values
+are double or single. If not present, double is assumed, but a warning
+message will be generated so it is best to explicitly include it.</p></li>
+<li><p><strong>Freq:</strong> A required integer field that determines the frequency of
+input/output in units determined by the next FreqUnits entry.</p></li>
+<li><p><strong>FreqUnits:</strong> A required field that, combined with the integer frequency,
+determines the frequency of input/output. Acceptable values include:</p>
+<ul>
+<li><p>OnStartup for files read/written once on startup</p></li>
+<li><p>OnShutdown for files read/written only once on model exit</p></li>
+<li><p>AtTime or OnTime or Time or TimeInstant for a one-time read or write
+at the time specified in the StartTime entry</p></li>
+<li><p>Never if the stream should not be used but you wish to retain the
+entry in the config file (a warning will be output to log file)</p></li>
+<li><p>Years for a frequency every Freq years (<em>not</em> Freq times per year)</p></li>
+<li><p>Months for a frequency every Freq months (<em>not</em> Freq times per month)</p></li>
+<li><p>Days for a frequency every Freq days (<em>not</em> Freq times per day)</p></li>
+<li><p>Hours for a frequency every Freq hours (<em>not</em> Freq times per hour)</p></li>
+<li><p>Minutes for a frequency every Freq minutes (<em>not</em> Freq times per minute)</p></li>
+<li><p>Seconds for a frequency every Freq seconds (<em>not</em> Freq times per seconds)</p></li>
+</ul>
+</li>
+<li><p><strong>FileFreq:</strong> An optional entry for including multiple time slices in a
+single file (only supported for output presently)</p></li>
+<li><p><strong>FileFreqUnits:</strong> A field that, combined with the integer frequency,
+determines the frequency of new files when multiple time slices are
+included in a file. The file frequency must be less than or equal to
+the data frequency. Acceptable values include all of the frequency values
+listed above except the one-time values (eg OnStartup/Shutdown or AtTime).
+The filename template should reflect the frequency and the time used for
+the file will correspond to the template at the time the file is first
+opened.</p></li>
+<li><p><strong>UseStartEnd:</strong> A required entry that is true or false and is used if the
+I/O is desired only within a certain time interval. An example might be
+for specifying high-frequency output within a certain period of a simulation.</p></li>
+<li><p><strong>StartTime:</strong> A field only required when UseStartEnd is true or if
+the FreqUnits request a one-time read/write. The StartTime must be a time
+string of the format YYYY-MM-DD_hh.mm.ss (though the delimiters can be
+any non-numeric character). The year entry is the integer year and can be
+four or more digits. The StartTime is inclusive - the I/O will occur at or
+after that date/time.</p></li>
+<li><p><strong>EndTime:</strong> A field that is only required when UseStartEnd is true. It
+requires the same format as StartTime but unlike StartTime, the EndTime
+is not inclusive and I/O only occurs for times before the EndTime. If a
+file is desired at the EndTime, the user should specify an EndTime slightly
+later (less than a time step) than the desired end time.</p></li>
+<li><p><strong>Contents:</strong> This is a required field that contains an itemized list of
+each Field or FieldGroup that is desired in the output. The name must
+match a name of a defined Field or Group within Omega. Group names are
+preferred to keep the list of fields short so Omega will define convenient
+FieldGroups like Restart, State, Tracers that will include all members
+of the group. If only a subset of Fields from a Group is desired, the
+individual Field names should be specified and not the Group name.</p></li>
+</ul>
+<p>This streams configuration should be sufficient to define all input and output
+from the model and provides a relatively simple interface for a typical user.
+However, if necessary (eg before streams have been defined), the specific
+interfaces in the lower level <a class="reference internal" href="IO.html#omega-user-io"><span class="std std-ref">IO</span></a> module can be used.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="IO.html" class="btn btn-neutral float-left" title="Parallel IO (IO)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Halo.html" class="btn btn-neutral float-right" title="Halo Exchanges (Halo)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

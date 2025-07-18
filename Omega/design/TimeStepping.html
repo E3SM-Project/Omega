@@ -1,0 +1,339 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time Stepping &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Tracer Infrastructure" href="Tracers.html" />
+    <link rel="prev" title="Timers" href="Timers.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Time Stepping</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-accurate-discretization-of-time-derivative">2.1 Requirement: Accurate discretization of time derivative</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-stability">2.2 Requirement: Stability</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-performance">2.3 Requirement: Performance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-modularity">2.4 Requirement: Modularity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-conservation">2.5 Requirement: Conservation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-the-rhs-must-accept-a-time-argument">2.6 Requirement: The RHS must accept a time argument</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#forward-backward-scheme">3.1 Forward-Backward Scheme</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#other-schemes">3.2 Other Schemes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Time Stepping</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/TimeStepping.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="time-stepping">
+<h1>Time Stepping<a class="headerlink" href="#time-stepping" title="Permalink to this heading"></a></h1>
+<!--- use table of contents if desired for longer documents  -->
+<p><strong>Table of Contents</strong></p>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="#overview">Overview</a></p></li>
+<li><p><a class="reference internal" href="#requirements">Requirements</a></p></li>
+<li><p><a class="reference internal" href="#algorithmic-formulation">Algorithmic Formulation</a></p></li>
+<li><p><a class="reference internal" href="#design">Design</a></p></li>
+<li><p><a class="reference internal" href="#verification-and-testing">Verification and Testing</a></p></li>
+</ol>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>The solution methods for a partial differential equation come in two categories: the spatial discretizations and the temporal discretizations. Here we present the methods of solving the time derivative, <span class="math notranslate nohighlight">\(\partial / \partial t\)</span>, in the Omega-0 shallow water equations. The spatial discretizations are presented in the <a class="reference internal" href="OmegaV0ShallowWater.html#omega-design-shallow-water-omega0"><span class="std std-ref">Omega V0: Shallow Water</span></a> design document.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-accurate-discretization-of-time-derivative">
+<h3>2.1 Requirement: Accurate discretization of time derivative<a class="headerlink" href="#requirement-accurate-discretization-of-time-derivative" title="Permalink to this heading"></a></h3>
+<p>The time discretization scheme must be able to advance the shallow water equations with at least second-order accuracy for standard shallow water test cases.</p>
+</section>
+<section id="requirement-stability">
+<h3>2.2 Requirement: Stability<a class="headerlink" href="#requirement-stability" title="Permalink to this heading"></a></h3>
+<p>The scheme must be stable for reasonably long time steps compared to other schemes.</p>
+</section>
+<section id="requirement-performance">
+<h3>2.3 Requirement: Performance<a class="headerlink" href="#requirement-performance" title="Permalink to this heading"></a></h3>
+<p>The time stepping scheme must follow the scaling and performance criteria outlined in the <a class="reference internal" href="OmegaV0ShallowWater.html#omega-design-shallow-water-omega0"><span class="std std-ref">Omega V0: Shallow Water</span></a> design document. It will be tested with metrics for:</p>
+<ol class="arabic simple">
+<li><p>Single CPU throughput</p></li>
+<li><p>Parallel CPU scalability to high node counts</p></li>
+<li><p>Single GPU throughput</p></li>
+</ol>
+<p>The first two items will be compared against MPAS-Ocean with the same test case and resolution.</p>
+</section>
+<section id="requirement-modularity">
+<h3>2.4 Requirement: Modularity<a class="headerlink" href="#requirement-modularity" title="Permalink to this heading"></a></h3>
+<p>The time stepping code must be written in such a way that other time stepping schemes can be chosen, and the code is organized in a clear and readable fashion.</p>
+</section>
+<section id="requirement-conservation">
+<h3>2.5 Requirement: Conservation<a class="headerlink" href="#requirement-conservation" title="Permalink to this heading"></a></h3>
+<p>The total volume (area integrated layer thickness <span class="math notranslate nohighlight">\(h\)</span>) and total tracer (area integrated <span class="math notranslate nohighlight">\(\phi\)</span>) must be conserved. This means that the totals should remain constant to machine precision in time.</p>
+</section>
+<section id="requirement-the-rhs-must-accept-a-time-argument">
+<h3>2.6 Requirement: The RHS must accept a time argument<a class="headerlink" href="#requirement-the-rhs-must-accept-a-time-argument" title="Permalink to this heading"></a></h3>
+<p>For the manufactured solution and time-dependant forcing (winds, tides), the right-hand side functions must accept a specific time argument, which is the time that the RHS is associated with.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<section id="forward-backward-scheme">
+<h3>3.1 Forward-Backward Scheme<a class="headerlink" href="#forward-backward-scheme" title="Permalink to this heading"></a></h3>
+<p>The primary time stepping scheme will be forward-backward. This scheme is commonly used in shallow water models and the barotropic mode of layered models. It suits the design requirements because it is second order, is stable for reasonably long time steps compared to competing schemes, and may be implemented in a performant manner.</p>
+<p>Given the shallow water equations introduced in the <a class="reference internal" href="OmegaV0ShallowWater.html#omega-design-shallow-water-omega0"><span class="std std-ref">Omega V0: Shallow Water</span></a> design document, we may consolidate the right-hand-side tendency terms to express them as</p>
+<div class="math notranslate nohighlight">
+\[
+\frac{\partial \boldsymbol{u}}{\partial t} = \mathcal{RHS}_u \left( \boldsymbol{u},h,t \right),
+\]</div>
+<div class="math notranslate nohighlight">
+\[
+\frac{\partial h}{\partial t} = \mathcal{RHS}_h \left( \boldsymbol{u},h,t \right),
+\]</div>
+<div class="math notranslate nohighlight">
+\[
+\frac{\partial h \phi}{\partial t} = \mathcal{RHS}_\phi \left( \boldsymbol{u},h,\phi,t \right).
+\]</div>
+<p>The forward-backward scheme is simply a single forward time step, but always using the most recent information available:</p>
+<div class="math notranslate nohighlight">
+\[
+h^{n+1} = h^n + \mathcal{RHS}_h \left( \boldsymbol{u}^n,h^n,t^n \right) \Delta t
+\]</div>
+<div class="math notranslate nohighlight">
+\[
+\phi^{n+1} = \frac{1}{h^{n+1}} \left( \phi^n h^n + \mathcal{RHS}_\phi \left( \boldsymbol{u}^n,h^n,\phi^n, t^n \right) \Delta t \right)
+\]</div>
+<div class="math notranslate nohighlight">
+\[
+\boldsymbol{u}^{n+1} = \boldsymbol{u}^n + \mathcal{RHS}_u \left( \boldsymbol{u}^n,h^{n+1}, t^{n+1} \right) \Delta t
+\]</div>
+<p>Here the variables are discretized in time only. Spatial discretization can be shown with a subscript if desired, using <span class="math notranslate nohighlight">\(u^n_e, h^n_i, \phi^n_i\)</span> etc.
+The time domain is discretized into steps <span class="math notranslate nohighlight">\(t_0, t_1, ... t_n, t_{n+1}\)</span> where <span class="math notranslate nohighlight">\(t_{n+1} = t_n+\Delta t\)</span>. The superscript indicates the time on all variables. For example, <span class="math notranslate nohighlight">\(h^n = h\left( t_n \right)\)</span>.</p>
+<p>Note that the tracer equation is thickness-weighted, but we divide by the thickness in order to obtain the tracer variable <span class="math notranslate nohighlight">\(\phi\)</span>, which has units of concentration.
+One might argue that the tracer equation could use <span class="math notranslate nohighlight">\(h^{n+1}\)</span> in the right-hand-side calculation, because that quantity is available from the previous computation. However, that would violate the consistency of the solution method of the thickness and tracer equations, and cause the globally-integrated tracer to not be conserved. Like the continuous equations, when we set <span class="math notranslate nohighlight">\(\phi=1\)</span> the numerical method for <span class="math notranslate nohighlight">\(\phi h\)</span> must reduce to the numerical method for <span class="math notranslate nohighlight">\(h\)</span>.</p>
+</section>
+<section id="other-schemes">
+<h3>3.2 Other Schemes<a class="headerlink" href="#other-schemes" title="Permalink to this heading"></a></h3>
+<p>If time permits, other schemes will be added and tested. This includes the four-stage Runge-Kutta (RK4) for direct comparison to MPAS-Ocean. Other possibilities are the second-order Adams-Bashforth (AB2) which was implemented in MPAS-Ocean and the Heun’s method (RK2). Including multiple time-stepping schemes allows developers to test the modularity requirement above.</p>
+</section>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>Design specifics will be added at a later time.</p>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<p>The timestepping will be tested with a time-only convergence test on the equations
+<div class="math notranslate nohighlight">
+\[
+\frac{\partial \boldsymbol{u}}{\partial t} =
+ -Ra \, \boldsymbol{u}
+\hspace{1cm}   (1)
+\]</div>
+</p>
+<div class="math notranslate nohighlight">
+\[
+\frac{\partial h}{\partial t} = 0
+\hspace{1cm}   (2)
+\]</div>
+<div class="math notranslate nohighlight">
+\[
+\frac{\partial h \phi}{\partial t} =
+- \frac{h}{\tau} \left( \phi - \phi_0 \right)
+\hspace{1cm}   (3)
+\]</div>
+<p>Where the initial conditions for <span class="math notranslate nohighlight">\(\boldsymbol{u}\)</span> and <span class="math notranslate nohighlight">\(\phi\)</span> are uniformly one, the tracer restoring value in this case is <span class="math notranslate nohighlight">\(\phi_0=0\)</span>, and the solution is simply exponential decay to zero.</p>
+<p>The timestepping is an intrinsic part of the Omega-0 model, so the verification and testing are identical to those in the <a class="reference internal" href="OmegaV0ShallowWater.html#omega-design-shallow-water-omega0"><span class="std std-ref">Omega V0: Shallow Water</span></a> design document. The timestepping will be tested with convergence tests in time using the manufactured solution test case.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Timers.html" class="btn btn-neutral float-left" title="Timers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Tracers.html" class="btn btn-neutral float-right" title="Tracer Infrastructure" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

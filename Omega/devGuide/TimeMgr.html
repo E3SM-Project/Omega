@@ -1,0 +1,470 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time Manager (TimeMgr) &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Time stepping" href="TimeStepping.html" />
+    <link rel="prev" title="Ocean State" href="OceanState.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Time Manager (TimeMgr)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#class-descriptions">Class Descriptions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#timefrac">1. TimeFrac</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#calendar">2. Calendar</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#timeinstant">3. TimeInstant</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#timeinterval">4. TimeInterval</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#alarm">5. Alarm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#clock">6. Clock</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#implementation">Implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Time Manager (TimeMgr)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/devGuide/TimeMgr.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="time-manager-timemgr">
+<span id="omega-dev-time-manager"></span><h1>Time Manager (TimeMgr)<a class="headerlink" href="#time-manager-timemgr" title="Permalink to this heading"></a></h1>
+<p>The Omega Time Manager module tracks simulation time during a run and manages
+alarms for triggering events at specified times This is handled by six
+interacting defined classes, each of which have a number of methods defined for
+accessing, comparing, and manipulating the class members.</p>
+<section id="class-descriptions">
+<h2>Class Descriptions<a class="headerlink" href="#class-descriptions" title="Permalink to this heading"></a></h2>
+<section id="timefrac">
+<h3>1. TimeFrac<a class="headerlink" href="#timefrac" title="Permalink to this heading"></a></h3>
+<p>The TimeFrac class is the fundamental base time representation. To avoid
+potential rounding errors that can accumulate over millions of time steps, time
+is tracked in seconds as a fractional representation using three 8-byte integers
+representing the whole number, numerator, and denominator. Most of the other
+classes in the Time Manager are based on the TimeFrac class and generally
+convert time representations from other units and store them as a TimeFrac
+object.</p>
+</section>
+<section id="calendar">
+<h3>2. Calendar<a class="headerlink" href="#calendar" title="Permalink to this heading"></a></h3>
+<p>The Calendar class is mostly an immutable class that stores all information for
+supported calendars that can be utilized in a simulation. The supported
+calendars are: Gregorian, No Leap, Julian, Julian Day, Modified Julian Day,
+360 Day, Custom, and No Calendar. These supported calendars are specified via an
+enum defined in the Time Manager header file:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="nc">CalendarKind</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="n">CalendarGregorian</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; usual Gregorian calendar</span>
+<span class="w">   </span><span class="n">CalendarNoLeap</span><span class="p">,</span><span class="w">        </span><span class="c1">///&lt; Gregorian, but without leap yrs</span>
+<span class="w">   </span><span class="n">CalendarJulian</span><span class="p">,</span><span class="w">        </span><span class="c1">///&lt; Julian</span>
+<span class="w">   </span><span class="n">CalendarJulianDay</span><span class="p">,</span><span class="w">     </span><span class="c1">///&lt; Julian day</span>
+<span class="w">   </span><span class="n">CalendarModJulianDay</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; modified Julian day</span>
+<span class="w">   </span><span class="n">Calendar360Day</span><span class="p">,</span><span class="w">        </span><span class="c1">///&lt; 12 months, 30 days each</span>
+<span class="w">   </span><span class="n">CalendarCustom</span><span class="p">,</span><span class="w">        </span><span class="c1">///&lt; user defined</span>
+<span class="w">   </span><span class="n">CalendarNoCalendar</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; track elapsed time only</span>
+<span class="w">   </span><span class="n">CalendarUnknown</span><span class="w">        </span><span class="c1">///&lt; uninitialized or invalid</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>During a simulation, only one calendar can be defined and is set with the call:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Calendar</span><span class="o">::</span><span class="n">init</span><span class="p">(</span><span class="s">&quot;CalendarName&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>that must be set early in the model initialization before other time quantities
+are defined. CalendarName is a string associated with the defined calendars
+above and found in the list CalendarKindName in <code class="docutils literal notranslate"><span class="pre">TimeMgr.h</span></code>. Typically, they
+are the same as the kinds above with a space for multi-word names
+(eg “No Leap”). If a custom calendar is desired rather than the supported
+calendars, a custom calendar can be defined with a different init
+interface in which all the relevant quantities are provided:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Calendar</span><span class="o">::</span><span class="n">init</span><span class="p">(</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">InDaysPerMonth</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] array of days per month</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">InSecondsPerDay</span><span class="p">,</span><span class="w">              </span><span class="c1">///&lt; [in] seconds per day</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">InSecondsPerYear</span><span class="p">,</span><span class="w">             </span><span class="c1">///&lt; [in] seconds per year</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">InDaysPerYear</span><span class="w">                 </span><span class="c1">///&lt; [in] days per year (dpy)</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>Time is generally tracked as the amount of time elapsed from a reference date
+for a given calendar. A number of public functions exist to retrieve Calendar
+information, convert between dates and elapsed time, check for leap years and
+other checks. However, these are typically used by other TimeMgr classes and
+not directly by the developer. Examples of their use can be found in the
+TimeMgr unit test.</p>
+</section>
+<section id="timeinstant">
+<h3>3. TimeInstant<a class="headerlink" href="#timeinstant" title="Permalink to this heading"></a></h3>
+<p>The TimeInstant class represents a moment in time with the particular calendar
+that has been defined for the simulation. It consists of a TimeFrac that
+represents the time since a reference time associated with the defined calendar.
+There are three constructors for initializing a TimeInstant. One method is with
+five 8-byte integers, and an 8-byte real value:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInstant</span><span class="w"> </span><span class="nf">TI1</span><span class="p">(</span><span class="n">Year</span><span class="p">,</span><span class="w"> </span><span class="n">Month</span><span class="p">,</span><span class="w"> </span><span class="n">Day</span><span class="p">,</span><span class="w"> </span><span class="n">Hour</span><span class="p">,</span><span class="w"> </span><span class="n">Minute</span><span class="p">,</span><span class="w"> </span><span class="n">RealSecond</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Alternatively, the TimeInstant can be initialized with eight 8-byte integers,
+with the seconds value represented by three 8-byte integers:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInstant</span><span class="w"> </span><span class="nf">TI2</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span><span class="w"> </span><span class="n">M</span><span class="p">,</span><span class="w"> </span><span class="n">D</span><span class="p">,</span><span class="w"> </span><span class="n">H</span><span class="p">,</span><span class="w"> </span><span class="n">M</span><span class="p">,</span><span class="w"> </span><span class="n">Whole</span><span class="p">,</span><span class="w"> </span><span class="n">Numer</span><span class="p">,</span><span class="w"> </span><span class="n">Denom</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>A final constructor creates a time instant based on a time string that
+conforms roughly to the ISO standard <code class="docutils literal notranslate"><span class="pre">&quot;YYYYYY-MM-DD_HH:MM:SS.SSSS&quot;</span></code> though
+the constructor allows for any single-character non-numeric separator between
+each of the numeric fields and the width of the YY and SS fields can be up
+to the 8-byte standards for integer and floats, respectively.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInstant</span><span class="w"> </span><span class="nf">TI3</span><span class="p">(</span><span class="n">TimeString</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Among the methods defined in the TimeInstant class is <code class="docutils literal notranslate"><span class="pre">getString</span></code> which will
+produce a <code class="docutils literal notranslate"><span class="pre">std::string</span></code> representation of the time conforming to ISO standards,
+e.g. <code class="docutils literal notranslate"><span class="pre">&quot;YYYYYY-MM-DD</span> <span class="pre">HH:MM:SS.SSSSS&quot;</span></code>. The <code class="docutils literal notranslate"><span class="pre">getString</span></code> method takes two 4-byte
+integers which represent the number of digits to use for the year and the
+number of digits for the decimal portion of seconds, as well as a <code class="docutils literal notranslate"><span class="pre">std::string</span></code>
+for the seprator between the Y/M/D calendar date and the H/M/S clock time. A
+string formatted as above is returned with the following call:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TI1</span><span class="p">.</span><span class="n">getString</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="s">&quot; &quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>A range of accessor functions can also get/set the TimeInstant in various
+forms.</p>
+</section>
+<section id="timeinterval">
+<h3>4. TimeInterval<a class="headerlink" href="#timeinterval" title="Permalink to this heading"></a></h3>
+<p>The TimeInterval class represents a length of time between two moments in time.
+A TimeInterval can represent the time step, but is also utilized by other
+classes for computing differences between TimeInstant objects, such as when
+checking to trigger an Alarm. A TimeInterval can be initialized with a
+fractional second representation, by supplying three 8-byte integers:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInterval</span><span class="w"> </span><span class="nf">Interval1</span><span class="p">(</span><span class="n">Whole</span><span class="p">,</span><span class="w"> </span><span class="n">Numerator</span><span class="p">,</span><span class="w"> </span><span class="n">Denominator</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Alternatively, a TimeInterval can also be initialized with either an integer
+or floating point value and a specified unit of time:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInterval</span><span class="w"> </span><span class="nf">Interval2</span><span class="p">(</span><span class="n">Length</span><span class="p">,</span><span class="w"> </span><span class="n">UnitType</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The supported time units are defined via an enum class in the Time Manager
+header file:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">TimeUnits</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="n">None</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; value for undefined units</span>
+<span class="w">   </span><span class="n">Seconds</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; time units in seconds (typical)</span>
+<span class="w">   </span><span class="n">Minutes</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; time units in minutes</span>
+<span class="w">   </span><span class="n">Hours</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; time units in hours</span>
+<span class="w">   </span><span class="n">Days</span><span class="p">,</span><span class="w">     </span><span class="c1">///&lt; time units in days</span>
+<span class="w">   </span><span class="n">Months</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; time units in months</span>
+<span class="w">   </span><span class="n">Years</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; time units in years</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Finally, a time interval can be defined as the time between two time instants:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInterval</span><span class="w"> </span><span class="n">MyDeltaTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyTimeInstant2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">MyTimeInstant1</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="alarm">
+<h3>5. Alarm<a class="headerlink" href="#alarm" title="Permalink to this heading"></a></h3>
+<p>The Alarm class is designed to trigger events at specified times. Alarms can be
+set to ring at a single time or to ring periodically. A one-time Alarm is
+initialized with a <code class="docutils literal notranslate"><span class="pre">std::string</span></code> name and a TimeInstant:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Alarm</span><span class="w"> </span><span class="n">SingleAlarm</span><span class="p">(</span><span class="s">&quot;Single Alarm&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">AlarmInstant</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>A periodic Alarm is initialized with a <code class="docutils literal notranslate"><span class="pre">std::string</span></code> name, a TimeInterval, and a
+TimeInstant representing the start of the first interval:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Alarm</span><span class="w"> </span><span class="n">PeriodicAlarm</span><span class="p">(</span><span class="s">&quot;Periodic Alarm&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">AlarmInterval</span><span class="p">,</span><span class="w"> </span><span class="n">AlarmStart</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The status of an Alarm can be checked using the <code class="docutils literal notranslate"><span class="pre">isRinging</span></code> method, which
+returns true or false depending on the Alarm status:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">SingleAlarm</span><span class="p">.</span><span class="n">isRinging</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">reset</span></code> method takes a TimeInstant as input and will switch a ringing Alarm
+off, as well as set a new ring time. If it is a one-time Alarm, the input time
+is set as the new ring time:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">SingleAlarm</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">NewAlarmTime</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>If the Alarm is periodic, the ringing will be switched off as above and the
+new ring time will be set to the next interval boundary after the input time.
+The interval boundary is an integer number of intervals after the start time
+provided on Alarm creation.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">PeriodicAlarm</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">CurrentTime</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>An Alarm can be permanently stopped using the <code class="docutils literal notranslate"><span class="pre">stop</span></code> method:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">SingleAlarm</span><span class="p">.</span><span class="n">stop</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>It is sometimes useful to retrieve other aspects of a periodic Alarm, namely
+the Alarm interval and the last time the Alarm was ringing. Two retrieval
+functions are provided that return const pointers to these values:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">*</span><span class="n">AlarmInterval</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PeriodicAlarm</span><span class="p">.</span><span class="n">getInterval</span><span class="p">();</span>
+<span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">*</span><span class="n">PriorRingTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PeriodicAlarm</span><span class="p">.</span><span class="n">getRingTimePrev</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+<section id="clock">
+<h3>6. Clock<a class="headerlink" href="#clock" title="Permalink to this heading"></a></h3>
+<p>The Clock class is the primary object for managing time during a simulation.
+A Clock is initialized with a TimeInstant representing the start time and a
+TimeInterval representing the time step the Clock advances with each integration
+step:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Clock</span><span class="w"> </span><span class="nf">ModelClock</span><span class="p">(</span><span class="n">StartTime</span><span class="p">,</span><span class="w"> </span><span class="n">TimeStep</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The class contains a <code class="docutils literal notranslate"><span class="pre">std::vector</span></code> of pointers to Alarms. Any number of Alarms
+can be attached to the Clock using the <code class="docutils literal notranslate"><span class="pre">attachAlarm</span></code> method:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ModelClock</span><span class="p">.</span><span class="n">attachAlarm</span><span class="p">(</span><span class="o">&amp;</span><span class="n">SingleAlarm</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The Clock is advanced during each time step with the <code class="docutils literal notranslate"><span class="pre">advance</span></code> method:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ModelClock</span><span class="p">.</span><span class="n">advance</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>The Clock will automatically trigger any attached Alarms as the Clock marches
+forward. The time step for a Clock can be changed by passing a TimeInterval
+to the <code class="docutils literal notranslate"><span class="pre">changeTimeStep</span></code> method:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ModelClock</span><span class="p">.</span><span class="n">changeTimeStep</span><span class="p">(</span><span class="n">NewTimeStep</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>During a simulation, the <code class="docutils literal notranslate"><span class="pre">getCurrentTime</span></code> method will return the current time
+stored in the Clock as a TimeInstant:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInstant</span><span class="w"> </span><span class="n">CurrentTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ModelClock</span><span class="p">.</span><span class="n">getCurrentTime</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this heading"></a></h2>
+<p>In order to utilize the Time Manager, the first step is to initialize a
+Calendar object:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Calendar</span><span class="w"> </span><span class="n">CalGreg</span><span class="p">(</span><span class="s">&quot;Gregorian&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">CalendarGregorian</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>A start time and a time step are needed in order to initialize the Clock. The
+following lines will initialize a Clock that starts Jan 1st, 2000 at midnight
+with a 20 minute time step:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInstant</span><span class="w"> </span><span class="nf">StartTime</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CalGreg</span><span class="p">,</span><span class="w"> </span><span class="mi">2000</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInterval</span><span class="w"> </span><span class="nf">TimeStep</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeUnits</span><span class="o">::</span><span class="n">Minutes</span><span class="p">);</span>
+
+<span class="n">OMEGA</span><span class="o">::</span><span class="n">Clock</span><span class="w"> </span><span class="nf">ModelClock</span><span class="p">(</span><span class="n">StartTime</span><span class="p">,</span><span class="w"> </span><span class="n">TimeStep</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Now, Alarms can be attached to the Clock. For example, if some output
+is desired on the first of each month, the following lines will attach a
+monthly Alarm:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInterval</span><span class="w"> </span><span class="nf">IntervalMonthly</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeUnits</span><span class="o">::</span><span class="n">Months</span><span class="p">);</span>
+<span class="n">OMEGA</span><span class="o">::</span><span class="n">Alarm</span><span class="w"> </span><span class="n">AlarmMonthly</span><span class="p">(</span><span class="s">&quot;Every Month&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">IntervalMontly</span><span class="p">,</span><span class="w"> </span><span class="n">StartTime</span><span class="p">);</span>
+
+<span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ModelClock</span><span class="p">.</span><span class="n">attachAlarm</span><span class="p">(</span><span class="n">AlarmMonthly</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The Clock can be used to control the duration of a simulation by using a
+TimeInstant that represents the stop time:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInstant</span><span class="w"> </span><span class="nf">StopTime</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CalGreg</span><span class="p">,</span><span class="w"> </span><span class="mi">2025</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInstant</span><span class="w"> </span><span class="n">CurrentTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">StartTime</span><span class="p">;</span>
+
+<span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">CurrentTime</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">StopTime</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ModelClock</span><span class="p">.</span><span class="n">advance</span><span class="p">();</span>
+<span class="w">   </span><span class="n">CurrentTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ModelClock</span><span class="p">.</span><span class="n">getCurrentTime</span><span class="p">();</span>
+
+<span class="w">  </span><span class="p">...</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>To utilize any attached Alarms, the ringing status needs to be checked each
+time step:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">AlarmMonthly</span><span class="p">.</span><span class="n">isRinging</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="n">AlarmMonthly</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">CurrentTime</span><span class="p">);</span>
+
+<span class="w">   </span><span class="p">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="OceanState.html" class="btn btn-neutral float-left" title="Ocean State" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="TimeStepping.html" class="btn btn-neutral float-right" title="Time stepping" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

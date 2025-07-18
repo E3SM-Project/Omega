@@ -1,0 +1,522 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Halo &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Horizontal Mesh" href="HorzMeshClass.html" />
+    <link rel="prev" title="ErrorHandler (Error)" href="Error.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Halo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-compatible-with-all-types-of-arrays">2.1 Requirement: Compatible with all types of arrays</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-exchange-at-all-types-of-mesh-elements">2.2 Requirement: Exchange at all types of mesh elements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-variable-halo-depth">2.3 Requirement: Variable halo depth</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-exchange-lists">2.4 Requirement: Exchange lists</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-send-and-receive-buffers">2.5 Requirement: Send and receive buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-non-blocking-communication">2.6 Requirement: Non-blocking communication</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-compatible-with-device-resident-arrays">2.7 Requirement: Compatible with device-resident arrays</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-communicate-subset-of-halo-layers">2.8 Desired: Communicate subset of halo layers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-exchange-multiple-arrays-simultaneously">2.9 Desired: Exchange multiple arrays simultaneously</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-multiple-environments-decompositions">2.10 Desired: Multiple environments/decompositions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-openmp-threading">2.11 Desired: OpenMP threading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-minimize-buffer-memory-allocation-deallocation">2.12 Desired: Minimize buffer memory allocation/deallocation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#constructors">4.2.1 Constructors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#array-halo-exchange">4.2.2 Array halo exchange</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#start-receive-send">4.2.3 Start receive/send</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#buffer-pack-unpack">4.2.4 Buffer pack/unpack</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#halo-exchange-tests">5.1 Halo exchange tests</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Halo</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/Halo.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="halo">
+<span id="omega-design-halo"></span><h1>Halo<a class="headerlink" href="#halo" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>In a distributed memory parallel environment, it is necessary to regularly
+exchange data on the interfaces between adjacent partitions of the mesh
+(i.e. halo elements). These halo exchanges will be accomplished utilizing
+the MPI library.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-compatible-with-all-types-of-arrays">
+<h3>2.1 Requirement: Compatible with all types of arrays<a class="headerlink" href="#requirement-compatible-with-all-types-of-arrays" title="Permalink to this heading"></a></h3>
+<p>Handle halo exchanges for arrays of each supported data type and dimensionality.</p>
+</section>
+<section id="requirement-exchange-at-all-types-of-mesh-elements">
+<h3>2.2 Requirement: Exchange at all types of mesh elements<a class="headerlink" href="#requirement-exchange-at-all-types-of-mesh-elements" title="Permalink to this heading"></a></h3>
+<p>Meshes are composed of three types of elements (cells, edges, and vertices)
+at which values can be defined, we must be able to handle exchanges at each
+type of element.</p>
+</section>
+<section id="requirement-variable-halo-depth">
+<h3>2.3 Requirement: Variable halo depth<a class="headerlink" href="#requirement-variable-halo-depth" title="Permalink to this heading"></a></h3>
+<p>The default minimum required halo depth for most of the algorithms we will
+use is three cells. We should also be able to handle different halo depths.</p>
+</section>
+<section id="requirement-exchange-lists">
+<h3>2.4 Requirement: Exchange lists<a class="headerlink" href="#requirement-exchange-lists" title="Permalink to this heading"></a></h3>
+<p>Each MPI rank needs a send list and receive list for every neighboring rank and
+each type of mesh element (cells, edges, and vertices) containing the local
+indices for each owned element to be packed and sent to neighboring ranks and
+each element owned by neighboring ranks to be received and unpacked into local
+field arrays. Exchange lists should be organized by halo layer.</p>
+</section>
+<section id="requirement-send-and-receive-buffers">
+<h3>2.5 Requirement: Send and receive buffers<a class="headerlink" href="#requirement-send-and-receive-buffers" title="Permalink to this heading"></a></h3>
+<p>Each MPI rank needs two arrays for every neighboring rank to serve as a send
+buffer and a receive buffer to be passed to the MPI send and receive routines.
+On each rank, one buffer per neighbor will be sent concurrently, so there needs
+to be one send and one receive buffer array for each neighbor to facilitate
+communication.</p>
+</section>
+<section id="requirement-non-blocking-communication">
+<h3>2.6 Requirement: Non-blocking communication<a class="headerlink" href="#requirement-non-blocking-communication" title="Permalink to this heading"></a></h3>
+<p>To efficiently handle exchanges between each rank and all of its neighbors, we
+will use the non-blocking MPI routines <code class="docutils literal notranslate"><span class="pre">MPI_Isend</span></code> and <code class="docutils literal notranslate"><span class="pre">MPI_Irecv</span></code>. The
+<code class="docutils literal notranslate"><span class="pre">MPI_Test</span></code> routine will be used to determine when each communication is
+completed. Boolean variables will be needed to track when messages have been
+received and when buffers have been unpacked.</p>
+</section>
+<section id="requirement-compatible-with-device-resident-arrays">
+<h3>2.7 Requirement: Compatible with device-resident arrays<a class="headerlink" href="#requirement-compatible-with-device-resident-arrays" title="Permalink to this heading"></a></h3>
+<p>In environments with GPU devices, many arrays will reside solely on the device
+and we will need to be able to manage halo exchanges for these arrays, either
+via GPU-aware MPI or handling array transfers to host.</p>
+</section>
+<section id="desired-communicate-subset-of-halo-layers">
+<h3>2.8 Desired: Communicate subset of halo layers<a class="headerlink" href="#desired-communicate-subset-of-halo-layers" title="Permalink to this heading"></a></h3>
+<p>We may want the ability to communicate individual halo layers as opposed to
+always exchanging the entire halo for a given array. Exchange lists should be
+organized by halo layer to facilitate this.</p>
+</section>
+<section id="desired-exchange-multiple-arrays-simultaneously">
+<h3>2.9 Desired: Exchange multiple arrays simultaneously<a class="headerlink" href="#desired-exchange-multiple-arrays-simultaneously" title="Permalink to this heading"></a></h3>
+<p>Communications in MPAS are generally latency limited, so it may be advantageous
+to exchange multiple arrays at the same time, packing the halo elements of
+multiple arrays into the same buffer to reduce the number of messages.</p>
+</section>
+<section id="desired-multiple-environments-decompositions">
+<h3>2.10 Desired: Multiple environments/decompositions<a class="headerlink" href="#desired-multiple-environments-decompositions" title="Permalink to this heading"></a></h3>
+<p>OMEGA runs may contain multiple communication environments or mesh
+decompositions, would need to be able to perform halo exchanges in these
+circumstances.</p>
+</section>
+<section id="desired-openmp-threading">
+<h3>2.11 Desired: OpenMP threading<a class="headerlink" href="#desired-openmp-threading" title="Permalink to this heading"></a></h3>
+<p>If we allow OpenMP threading, halo exchanges would need to be carried out in a
+thread-safe manner, and a process to carry out local exchanges may be needed.</p>
+</section>
+<section id="desired-minimize-buffer-memory-allocation-deallocation">
+<h3>2.12 Desired: Minimize buffer memory allocation/deallocation<a class="headerlink" href="#desired-minimize-buffer-memory-allocation-deallocation" title="Permalink to this heading"></a></h3>
+<p>It might be advantageous to have persistent buffer arrays that are large enough
+to handle the largest halo exchange in a particular run, as opposed to
+calculating the needed buffer size and reallocating the buffer arrays for each
+halo exchange. Only a subset of the buffer array would need to be communicated
+for smaller exchanges. A method for determining the largest necessary buffer
+size for each neighbor would be needed, and would depend on which arrays are
+active, the number of halo elements in each index space, the number of vertical
+layers and tracers.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>No specific algorithms needed outside of those provided by standard MPI library</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>The mesh decomposition will be performed during initialization via the Decomp
+class based on the input mesh file and options defined in the configuration
+file. A set of class objects described below will take the Decomp object and
+store information about the decomposition as well as allocate buffer memory
+necessary for performing halo exchanges.</p>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>An enum defining mesh element types would be helpful to control which exchange
+lists to use for a particular field array:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="nc">meshElement</span><span class="p">{</span><span class="n">onCell</span><span class="p">,</span><span class="w"> </span><span class="n">onEdge</span><span class="p">,</span><span class="w"> </span><span class="n">onVertex</span><span class="p">};</span>
+</pre></div>
+</div>
+<p>An MPI datatype <code class="docutils literal notranslate"><span class="pre">MPI_RealKind</span></code> will be defined based on whether the default
+real data type is single or double precision via the SINGLE_PRECISION compile
+time switch:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#ifdef SINGLE_PRECISION</span>
+<span class="n">MPI_Datatype</span><span class="w"> </span><span class="n">MPI_RealKind</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MPI_FLOAT</span><span class="p">;</span>
+<span class="cp">#else</span>
+<span class="n">MPI_Datatype</span><span class="w"> </span><span class="n">MPI_RealKind</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MPI_DOUBLE</span><span class="p">;</span>
+<span class="cp">#endif</span>
+</pre></div>
+</div>
+<p>Halo exchanges will depend on the <code class="docutils literal notranslate"><span class="pre">haloWidth</span></code> parameter defined in the
+decomp configuration group.</p>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>The ExchList class will hold both send and receive lists. Lists are separated by
+halo layer to allow for the possibility of exchanging individual layers. Buffer
+offsets are needed to pack/unpack all the halo layers into/from the same buffer.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ExchList</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="k">private</span><span class="o">:</span>
+
+<span class="w">      </span><span class="n">I4</span><span class="w"> </span><span class="n">nList</span><span class="p">[</span><span class="n">haloWidth</span><span class="p">];</span><span class="w">        </span><span class="c1">///&lt; number of mesh elements in each</span>
+<span class="w">                                  </span><span class="c1">///&lt;   layer of list</span>
+<span class="w">      </span><span class="n">I4</span><span class="w"> </span><span class="n">nTot</span><span class="p">;</span><span class="w">                    </span><span class="c1">///&lt; number of elements summed over layers</span>
+<span class="w">      </span><span class="n">I4</span><span class="w"> </span><span class="n">offsets</span><span class="p">[</span><span class="n">haloWidth</span><span class="p">];</span><span class="w">      </span><span class="c1">///&lt; offsets for each halo layer</span>
+
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="n">indices</span><span class="p">[</span><span class="n">haloWidth</span><span class="p">];</span><span class="w">   </span><span class="c1">///&lt; list of local indices</span>
+
+<span class="w">   </span><span class="k">friend</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">Neighbor</span><span class="p">;</span>
+<span class="w">   </span><span class="k">friend</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">Halo</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>The Neighbor class contains all the information and buffer memory needed for
+carrying out each type of halo exchange with one neighboring rank. It contains
+the ID of the neighboring MPI rank, an object of the ExchList class for sends
+and receives for each mesh index space, a send and a receive buffer, MPI request
+handles that are returned by <code class="docutils literal notranslate"><span class="pre">MPI_Irecv</span></code> and <code class="docutils literal notranslate"><span class="pre">MPI_Isend</span></code> which are
+needed to test for completion of an individual message transfer, and boolean
+switches to control the progress of a Halo exchange. To avoid the need for
+separate integer and floating-point buffers, during the packing process integer
+values can be recast as reals in a bit-preserving manner using
+<code class="docutils literal notranslate"><span class="pre">reinterpret_cast</span></code> and then recast as integers on the receiving end.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Neighbor</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="k">private</span><span class="o">:</span>
+
+<span class="w">      </span><span class="n">I4</span><span class="w"> </span><span class="n">rankID</span><span class="p">;</span><span class="w">                           </span><span class="c1">///&lt; ID of neighboring MPI rank</span>
+<span class="w">      </span><span class="n">ExchList</span><span class="w"> </span><span class="n">sendLists</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span><span class="w"> </span><span class="n">recvLists</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span><span class="w"> </span><span class="c1">///&lt; 0 = onCell, 1 = onEdge,</span>
+<span class="w">                                           </span><span class="c1">///&lt; 2 = onVertex</span>
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Real</span><span class="o">&gt;</span><span class="w"> </span><span class="n">sendBuffer</span><span class="p">,</span><span class="w"> </span><span class="n">recvBuffer</span><span class="p">;</span>
+<span class="w">      </span><span class="n">MPI_Request</span><span class="w"> </span><span class="n">rReq</span><span class="p">,</span><span class="w"> </span><span class="n">sReq</span><span class="p">;</span><span class="w">              </span><span class="c1">///&lt; MPI request handles</span>
+<span class="w">      </span><span class="kt">bool</span><span class="w"> </span><span class="n">received</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">      </span><span class="kt">bool</span><span class="w"> </span><span class="n">unpacked</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+
+<span class="w">   </span><span class="k">friend</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">Halo</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>The Halo class collects all Neighbor objects needed by an MPI rank to perform
+a full halo exchange with each of its neighbors. The total number of neighbors,
+the local rank, and the MPI communicator are saved here. The mesh element type
+for the current array being transferred is also stored here. This class will be
+the user interface for halo exchanges, it is a friend class to the subordinate
+classes so that it has access to all private data.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Halo</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="k">private</span><span class="o">:</span>
+
+<span class="w">      </span><span class="n">I4</span><span class="w"> </span><span class="n">nNghbr</span><span class="p">;</span><span class="w">                           </span><span class="c1">///&lt; number of neighboring ranks</span>
+<span class="w">      </span><span class="n">I4</span><span class="w"> </span><span class="n">myRank</span><span class="w">                            </span><span class="c1">///&lt; local MPI rank ID</span>
+<span class="w">      </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">myComm</span><span class="p">;</span><span class="w">                     </span><span class="c1">///&lt; MPI communicator handle</span>
+<span class="w">      </span><span class="n">meshElement</span><span class="w"> </span><span class="n">elemType</span><span class="p">;</span><span class="w">                </span><span class="c1">///&lt; index space of current array</span>
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Neighbor</span><span class="o">&gt;</span><span class="w"> </span><span class="n">neighbors</span><span class="p">;</span>
+
+<span class="w">   </span><span class="k">public</span><span class="o">:</span>
+
+<span class="w">      </span><span class="c1">// methods</span>
+
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<section id="constructors">
+<h4>4.2.1 Constructors<a class="headerlink" href="#constructors" title="Permalink to this heading"></a></h4>
+<p>The constructor for the Halo class will be the interface for declaring an
+instance of the Halo class and instances of all associated member classes,
+and requires info from the Decomp and MachEnv objects.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Halo</span><span class="p">(</span><span class="n">Decomp</span><span class="w"> </span><span class="n">inDecomp</span><span class="p">,</span><span class="w"> </span><span class="n">MachEnv</span><span class="w"> </span><span class="n">inEnv</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The constructors for Neighbor and ExchList will be called from within the Halo
+constructor and will create instances of these classes based on info from the
+Decomp object.</p>
+</section>
+<section id="array-halo-exchange">
+<h4>4.2.2 Array halo exchange<a class="headerlink" href="#array-halo-exchange" title="Permalink to this heading"></a></h4>
+<p>The primary use for the Halo class will be a member function called
+<code class="docutils literal notranslate"><span class="pre">exchangeFullArrayHalo</span></code> which will exchange halo elements for the input
+array with each of its neighbors across all layers of the halo. The index space
+the array is located in (cells, edges, or vertices) needs to be fetched from the
+metadata associated with the array stored in the Halo object to determine which
+exchange lists to use. It will return an integer error code to catch errors
+(likewise for each subprocess below).</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">exchangeFullArrayHalo</span><span class="p">(</span><span class="n">ArrayLocDDTT</span><span class="w"> </span><span class="o">&amp;</span><span class="n">array</span><span class="p">,</span><span class="w"> </span><span class="n">meshElement</span><span class="w"> </span><span class="n">elemType</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This will be an interface for different exchange funcitons for each type of
+ArrayLocDDTT (where Loc is the array location, i.e. device or host, DD is the
+dimensionality and TT is the data type) as defined in the DataTypes doc. If the
+array is located on a GPU device, this function may tranfer arrays from device
+to host. The ordering of steps for completing a halo exchange is:</p>
+<ol class="arabic simple">
+<li><p>start receives</p></li>
+<li><p>pack buffers</p></li>
+<li><p>start sends</p></li>
+<li><p>unpack buffers</p></li>
+</ol>
+</section>
+<section id="start-receive-send">
+<h4>4.2.3 Start receive/send<a class="headerlink" href="#start-receive-send" title="Permalink to this heading"></a></h4>
+<p>A <code class="docutils literal notranslate"><span class="pre">startReceives</span></code> function will loop over all member Neighbor objects and
+call <code class="docutils literal notranslate"><span class="pre">MPI_Irecv</span></code> for each neighbor. It takes no arguments because all the
+info needed is already contained in the Halo object and its member objects.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">StartReceives</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>Likewise, <code class="docutils literal notranslate"><span class="pre">startSends</span></code> will loop over all Neighbor objects and call
+<code class="docutils literal notranslate"><span class="pre">MPI_Isend</span></code> to send the buffers to each neighbor.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">StartSends</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+<section id="buffer-pack-unpack">
+<h4>4.2.4 Buffer pack/unpack<a class="headerlink" href="#buffer-pack-unpack" title="Permalink to this heading"></a></h4>
+<p>For each type of ArrayDDTT, there will be a buffer pack function aliased to a
+<code class="docutils literal notranslate"><span class="pre">packBuffer</span></code> interface:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">packBuffer</span><span class="p">(</span><span class="n">ArrayDDTT</span><span class="w"> </span><span class="n">array</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">iNeighbor</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where halo elements of the potentially multidimensional array ArrayDDTT are
+packed into the 1D send buffer for a particular Neighbor in the member
+<code class="docutils literal notranslate"><span class="pre">std::vector</span></code> neighbors using the associated ExchList based on the
+meshElement the array is defined on. The <code class="docutils literal notranslate"><span class="pre">exchangeFullArrayHalo</span></code> will loop
+over the member neighbors and call <code class="docutils literal notranslate"><span class="pre">packBuffer</span></code> for each Neighbor.</p>
+<p>Similarly, buffer unpack functions for each ArrayDDTT type will be aliased to
+an <code class="docutils literal notranslate"><span class="pre">unpackBuffer</span></code> interface:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">unpackBuffer</span><span class="p">(</span><span class="n">ArrayDDTT</span><span class="w"> </span><span class="o">&amp;</span><span class="n">array</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">iNeighbor</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="halo-exchange-tests">
+<h3>5.1 Halo exchange tests<a class="headerlink" href="#halo-exchange-tests" title="Permalink to this heading"></a></h3>
+<p>A unit test where a set of halo exchanges are performed for each type of
+ArrayDDTT and each index space could verify all requirements, except for 2.3.
+The test should use a mesh decomposition across multiple MPI ranks, and define
+an array for each type of ArrayDDTT and index space. The array elements could be
+filled based on the global IDs for the cells, edges, or vertices. After an
+exchange, all the elements in an array (owned+halo elements) would be checked
+to ensure they have the expected value to verify a successful test. A similar
+test utilizing a mesh decomposition with HaloWidth other than the default value
+would satisfy requirement 2.3 as well.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Error.html" class="btn btn-neutral float-left" title="ErrorHandler (Error)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="HorzMeshClass.html" class="btn btn-neutral float-right" title="Horizontal Mesh" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

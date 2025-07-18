@@ -1,0 +1,346 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Model Configuration (Config) &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Driver" href="Driver.html" />
+    <link rel="prev" title="Machine Environment (MachEnv)" href="MachEnv.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/EOS.html">Equation of State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Model Configuration (Config)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/devGuide/Config.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="model-configuration-config">
+<span id="omega-dev-config"></span><h1>Model Configuration (Config)<a class="headerlink" href="#model-configuration-config" title="Permalink to this heading"></a></h1>
+<p>Model configuration refers to all of the necessary variables to configure
+and run the model. It contains all the input parameters, choices of methods,
+physical coefficients for parameterizations and various options for I/O.
+Typically, this is read as a single input file that can serve as
+a description of the configuration for provenance as well. The input YAML
+file and it’s requirements are described in the
+<a class="reference internal" href="../userGuide/Config.html#omega-user-config"><span class="std std-ref">User Guide</span></a>.</p>
+<p>Within the model, the paradigm should be that a given module will extract
+its configuration from the full configuration as part of the module’s
+initialization and store it in private class or module variables to be used
+later. This paradigm keeps variables close to the code that uses them and
+will allow the deletion of the configuration at the end of initialization
+to free memory.</p>
+<p>The configuration is built around the yaml-cpp library. Each configuration
+contains a <code class="docutils literal notranslate"><span class="pre">YAML::Node</span></code> and a name for the configuration.
+Most of the functions below are wrappers around yaml-cpp templated functions.
+Rather than using templated forms in omega, we alias the function interfaces
+so that the syntax is cleaner.</p>
+<p>Within Omega, the full configuration file is read just after the MachEnv
+initialization using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Config</span><span class="o">::</span><span class="n">readAll</span><span class="p">(</span><span class="s">&quot;omega.yml&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The full Omega configuration is stored in a static variable for later
+retrievals.</p>
+<p>Each module in Omega will extract its own configuration variables by
+first retrieving the stored Omega configuration, then retrieving the module
+configuration (multiple times if the module is nested under a parent)
+and finally retrieving the variable by name. The sequence might look like
+this for the example shown in the User Guide:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Get pointer to full configuration</span>
+<span class="n">Config</span><span class="w"> </span><span class="o">*</span><span class="n">OmegaConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Config</span><span class="o">::</span><span class="n">getOmegaConfig</span><span class="p">;</span>
+
+<span class="n">Config</span><span class="w"> </span><span class="n">HmixConfig</span><span class="p">;</span><span class="w"> </span><span class="c1">// creates an empty config for Hmix</span>
+
+<span class="n">OmegaConfig</span><span class="o">-&gt;</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;Hmix&quot;</span><span class="p">,</span><span class="n">HmixConfig</span><span class="p">);</span><span class="w"> </span><span class="c1">// extracts all Hmix config vars from omega</span>
+
+<span class="c1">// Get individual variables</span>
+<span class="n">Error</span><span class="w"> </span><span class="n">Err</span><span class="p">;</span>
+<span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;HmixScaleWithMesh&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">HmixScaleWithMesh</span><span class="p">);</span>
+<span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;MaxMeshDensity&quot;</span><span class="w">   </span><span class="p">,</span><span class="w"> </span><span class="n">MaxMeshDensity</span><span class="p">);</span>
+<span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;HmixUseRefWidth&quot;</span><span class="w">  </span><span class="p">,</span><span class="w"> </span><span class="n">HmixUseRefWidth</span><span class="p">);</span>
+<span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;HmixRefWidth&quot;</span><span class="w">     </span><span class="p">,</span><span class="w"> </span><span class="n">HmixRefWidth</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>All Config get/set/add functions support variables of all Omega data
+types (I4, I8, R4, R8, Real, bool, std::string) and also
+std::vector vectors of any of those supported types.
+If the module is deeper in the hierarchy (eg an HmixDel2 module
+under the Hmix module), you would need an additional call to extract
+the subconfiguration, like:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Config</span><span class="w"> </span><span class="n">HmixDel2Config</span><span class="p">;</span><span class="w"> </span><span class="c1">// creates and empty config for Hmix Del2</span>
+<span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">HmixDel2Config</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>If the variable cannot be found in the input configuration, a failure
+error code is returned.  Existence can also be checked with the bool
+functions existsGroup or existsVar, where the variable name is provided.
+The developer will need to decide the action to take based on that
+condition. For example, the code could return a critical error and terminate
+if it is required. In some cases, it may be sufficient to issue a warning
+and set the value of the variable to an internal default.
+In this latter case, it is a good idea to add the variable and its value to
+the configuration using the add function. For example:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;HmixNewVar&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Then it will be included in any future writing of the configuration in
+order to save provenance. Similarly, an existing value can be changed using
+the <code class="docutils literal notranslate"><span class="pre">set</span></code> function that has an analogous form. There is also a remove
+function that can remove a variable or subconfiguration from any Config -
+only the name needs to be supplied. Finally, any configuration can be
+written using the write function with a filename supplied as in</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OmegaConfig</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;FileName&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>In some cases, the variable or group name is not known prior to reading.
+For example, users can define an arbitrary number of IO streams in the
+Config file. In these cases, a module must loop through the entries,
+retrieving the name of each entry. Then the variable or sub-configuration
+can be retrieved by name for further processing. The streams example might
+then look like:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// extract streams sub-configuration from full Omega config</span>
+<span class="n">Config</span><span class="w"> </span><span class="n">StreamsConfig</span><span class="p">;</span><span class="w"> </span><span class="c1">// creates an empty config for streams</span>
+<span class="n">OmegaConfig</span><span class="o">-&gt;</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;Streams&quot;</span><span class="p">,</span><span class="n">StreamsConfig</span><span class="p">);</span>
+
+<span class="c1">// The iterator here is a Config::Iter (we use auto to save space)</span>
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="n">It</span><span class="o">=</span><span class="n">StreamsConfig</span><span class="o">-&gt;</span><span class="n">begin</span><span class="p">();</span><span class="w"> </span><span class="n">It</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">StreamsConfig</span><span class="o">-&gt;</span><span class="n">end</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">It</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">NodeName</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">Config</span><span class="o">::</span><span class="n">getName</span><span class="p">(</span><span class="n">It</span><span class="p">,</span><span class="w"> </span><span class="n">NodeName</span><span class="p">);</span>
+
+<span class="w">   </span><span class="c1">// Now we can get the specific configuration of each stream by name</span>
+<span class="w">   </span><span class="c1">// and use it to process each stream</span>
+<span class="w">   </span><span class="n">Config</span><span class="w"> </span><span class="n">ThisStreamConfig</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">StreamsConfig</span><span class="o">-&gt;</span><span class="n">get</span><span class="p">(</span><span class="n">NodeName</span><span class="p">,</span><span class="w"> </span><span class="n">ThisStreamConfig</span><span class="p">);</span>
+
+<span class="w">   </span><span class="c1">// Extract info from ThisStreamConfig as needed</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The Config iterator is identical to a <code class="docutils literal notranslate"><span class="pre">YAML::const_iterator</span></code> which in
+turn behaves like the <code class="docutils literal notranslate"><span class="pre">std::map</span></code> iterator and they can be used in a
+similar manner. For example, you can retrive the key and value of a
+YAML map node entry using <code class="docutils literal notranslate"><span class="pre">Iter-&gt;first.as&lt;std::string&gt;()</span></code> (for the key) and
+<code class="docutils literal notranslate"><span class="pre">Iter-&gt;second.as&lt;DataType&gt;()</span></code> (for the value). Generally, the other
+interfaces described in this section are preferred after retrieving the
+name with the getName interface as shown above, but this iterator functionality
+is available if needed when iterating through Configuration entries that
+are not known in advance.</p>
+<p>While the focus is on reading a configuration, a new configuration can be
+built up from scratch by creating an empty Config instance using the
+constructors and adding variables and sub-configurations through the add
+functions. In this process, the configuration must be built up from the
+bottom of the hierarchy and added to each higher layer until reaching the
+top. For an example of this process, see the ConfigTest unit test that
+builds a sample config for testing.</p>
+<p>In order to support the automatic generation of a default Config file,
+we request all modules include the default configuration as comments in
+the header file, using a backslash ConfigInput to delimit the lines to
+extract into a default Config input. For example:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">/// \ConfigInput</span>
+<span class="c1">/// #</span>
+<span class="c1">/// # Group description (eg. hmix: the horizontal mix configuration)</span>
+<span class="c1">/// #</span>
+<span class="c1">/// groupName:</span>
+<span class="c1">///    #</span>
+<span class="c1">///    # Parameter description (eg horizontal mixing coeff)</span>
+<span class="c1">///    #    more description (units, acceptable values or range)</span>
+<span class="c1">///    #</span>
+<span class="c1">///    varName1: defaultValue1</span>
+<span class="c1">///    #</span>
+<span class="c1">///    # Parameter description</span>
+<span class="c1">///    #</span>
+<span class="c1">///    varName2: defaultValue2</span>
+<span class="c1">///    [ continue for remaining vars in this block]</span>
+<span class="c1">///</span>
+<span class="c1">/// \EndConfigInput (might not be necessary?)</span>
+</pre></div>
+</div>
+<p>The automated tool (not yet developed) can extract these into a default
+input config file and optionally remove the comment lines for a more
+compact input. User’s can then modify this default file to configure their
+specific simulation.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="MachEnv.html" class="btn btn-neutral float-left" title="Machine Environment (MachEnv)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Driver.html" class="btn btn-neutral float-right" title="Driver" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
