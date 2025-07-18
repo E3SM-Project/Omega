@@ -69,9 +69,7 @@ TimeStepper::TimeStepper(
    if (InName != "Default")
       AlarmName += InName;
    EndAlarm = std::make_unique<Alarm>(Alarm(AlarmName, InStopTime));
-   int Err  = StepClock->attachAlarm(EndAlarm.get());
-   if (Err != 0)
-      ABORT_ERROR("Error attaching EndAlarm to TimeStep Clock");
+   StepClock->attachAlarm(EndAlarm.get());
 }
 
 //------------------------------------------------------------------------------
@@ -301,8 +299,7 @@ void TimeStepper::init1() {
 
 //------------------------------------------------------------------------------
 // Finish initialization of the default time stepper (phase 2)
-int TimeStepper::init2() {
-   int Err = 0;
+void TimeStepper::init2() {
 
    // Get default pointers
    HorzMesh *DefMesh        = HorzMesh::getDefault();
@@ -312,17 +309,13 @@ int TimeStepper::init2() {
 
    // Attach data pointers
    DefaultTimeStepper->attachData(DefTend, AuxState, DefMesh, DefHalo);
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
 // Change time step
 void TimeStepper::changeTimeStep(const TimeInterval &TimeStepIn) {
    TimeStep = TimeStepIn;
-   int Err  = StepClock->changeTimeStep(TimeStepIn);
-   if (Err != 0)
-      ABORT_ERROR("Error changing clock time step");
+   StepClock->changeTimeStep(TimeStepIn);
 }
 
 //------------------------------------------------------------------------------
@@ -391,6 +384,8 @@ void TimeStepper::updateThicknessByTend(OceanState *State1, int TimeLevel1,
    I4 Err;
    Err = State1->getLayerThickness(LayerThick1, TimeLevel1);
    Err = State2->getLayerThickness(LayerThick2, TimeLevel2);
+   if (Err != 0)
+      ABORT_ERROR("TimeStepper updateThickness: error retrieving layer thick");
    const auto &LayerThickTend = Tend->LayerThicknessTend;
    const int NVertLevels      = LayerThickTend.extent_int(1);
 
@@ -418,6 +413,8 @@ void TimeStepper::updateVelocityByTend(OceanState *State1, int TimeLevel1,
    I4 Err;
    Err = State1->getNormalVelocity(NormalVel1, TimeLevel1);
    Err = State2->getNormalVelocity(NormalVel2, TimeLevel2);
+   if (Err != 0)
+      ABORT_ERROR("TimeStepper updateVelocity: error retrieving velocity");
    const auto &NormalVelTend = Tend->NormalVelocityTend;
    const int NVertLevels     = NormalVelTend.extent_int(1);
 
@@ -451,7 +448,6 @@ void TimeStepper::updateTracersByTend(const Array3DReal &NextTracers,
                                       OceanState *State1, int TimeLevel1,
                                       OceanState *State2, int TimeLevel2,
                                       TimeInterval Coeff) const {
-   int Err = 0;
 
    const auto &LayerThick1 = State1->LayerThickness[TimeLevel1];
    const auto &LayerThick2 = State2->LayerThickness[TimeLevel2];
@@ -460,7 +456,7 @@ void TimeStepper::updateTracersByTend(const Array3DReal &NextTracers,
    const int NVertLevels   = TracerTend.extent(2);
 
    R8 CoeffSeconds;
-   Err = Coeff.get(CoeffSeconds, TimeUnits::Seconds);
+   Coeff.get(CoeffSeconds, TimeUnits::Seconds);
 
    parallelFor(
        "updateTracersByTend", {NTracers, Mesh->NCellsAll, NVertLevels},
@@ -501,7 +497,7 @@ void TimeStepper::accumulateTracersUpdate(const Array3DReal &AccumTracer,
    const int NVertLevels  = TracerTend.extent(2);
 
    R8 CoeffSeconds;
-   int Err = Coeff.get(CoeffSeconds, TimeUnits::Seconds);
+   Coeff.get(CoeffSeconds, TimeUnits::Seconds);
 
    parallelFor(
        "accumulateTracersUpdate", {NTracers, Mesh->NCellsAll, NVertLevels},

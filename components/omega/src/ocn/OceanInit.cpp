@@ -108,11 +108,7 @@ int initOmegaModules(MPI_Comm Comm) {
    Tracers::init();
    AuxiliaryState::init();
    Tendencies::init();
-
-   Err = TimeStepper::init2();
-   if (Err != 0) {
-      ABORT_ERROR("ocnInit: Error phase 2 initializing default time stepper");
-   }
+   TimeStepper::init2();
 
    Err = OceanState::init();
    if (Err != 0) {
@@ -151,10 +147,7 @@ int initOmegaModules(MPI_Comm Comm) {
    // If reading from restart, reset the current time to the input time
    if (SimTimeStr != " ") {
       TimeInstant NewCurrentTime(SimTimeStr);
-      Err = ModelClock->setCurrentTime(NewCurrentTime);
-      if (Err != 0) {
-         ABORT_ERROR("Error resetting the simulation time from restart");
-      }
+      ModelClock->setCurrentTime(NewCurrentTime);
    }
 
    // Update Halos and Host arrays with new state, auxiliary state, and tracer

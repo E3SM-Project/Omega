@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
       // Create a stop alarm at 1 year for time stepping
       TimeInstant StopTime(0002, 1, 1, 0, 0, 0.0);
       Alarm StopAlarm("Stop Time", StopTime);
-      Err1 = ModelClock->attachAlarm(&StopAlarm);
+      ModelClock->attachAlarm(&StopAlarm);
 
       // Overwrite
       // Step forward in time and write files if it is time

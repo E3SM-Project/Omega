@@ -124,55 +124,45 @@ class TimeFrac {
    // Accessor methods
 
    /// Single call to set all native base time components
-   /// \return error code
-   I4 set(const I8 W, ///< [in] whole seconds
-          const I8 N, ///< [in] fractional second numerator
-          const I8 D  ///< [in] fractional second denominator
+   void set(const I8 W, ///< [in] whole seconds
+            const I8 N, ///< [in] fractional second numerator
+            const I8 D  ///< [in] fractional second denominator
    );
    /// Set base time by converting from integer hours, minutes, seconds
-   /// \return error code
-   I4 setHMS(const I4 Hours,   ///< [in] integer hours
-             const I4 Minutes, ///< [in] integer minutes
-             const I4 Seconds  ///< [in] integer seconds
+   void setHMS(const I4 Hours,   ///< [in] integer hours
+               const I4 Minutes, ///< [in] integer minutes
+               const I4 Seconds  ///< [in] integer seconds
    );
 
    /// Set base time by converting from a real number of seconds
-   /// \return error code
-   I4 setSeconds(const R8 Seconds ///< [in] Time in real seconds
+   void setSeconds(const R8 Seconds ///< [in] Time in real seconds
    );
    /// Set base time by converting from a real number of hours
-   /// \return error code
-   I4 setHours(const R8 Hours ///< [in] Time in real hours
+   void setHours(const R8 Hours ///< [in] Time in real hours
    );
    /// Set base time by converting from a real number of minutes
-   /// \return error code
-   I4 setMinutes(const R8 Minutes ///< [in] Time in real minutes
+   void setMinutes(const R8 Minutes ///< [in] Time in real minutes
    );
 
    /// Set whole seconds separately
-   /// \return error code
-   I4 setWhole(const I8 W ///< [in] Whole number of seconds
+   void setWhole(const I8 W ///< [in] Whole number of seconds
    );
    /// Set numerator of fractional seconds separately
-   /// \return error code
-   I4 setNumer(const I8 N ///< [in] Numerator of fractional seconds
+   void setNumer(const I8 N ///< [in] Numerator of fractional seconds
    );
    /// Set denominator of fractional seconds separately
-   /// \return error code
-   I4 setDenom(const I8 D ///< [in] Denominator of fractional seconds
+   void setDenom(const I8 D ///< [in] Denominator of fractional seconds
    );
 
    /// Single call to retrieve native base time components
-   /// \return error code
-   I4 get(I8 &W, ///< [out] whole seconds
-          I8 &N, ///< [out] fractional second numerator
-          I8 &D  ///< [out] fractional second denominator
+   void get(I8 &W, ///< [out] whole seconds
+            I8 &N, ///< [out] fractional second numerator
+            I8 &D  ///< [out] fractional second denominator
    ) const;
    /// Get base time converted to integer hours, minutes, seconds
-   /// \return error code
-   I4 getHMS(I4 &Hours,   ///< [out] integer hours
-             I4 &Minutes, ///< [out] integer minutes
-             I4 &Seconds  ///< [out] integer seconds
+   void getHMS(I4 &Hours,   ///< [out] integer hours
+               I4 &Minutes, ///< [out] integer minutes
+               I4 &Seconds  ///< [out] integer seconds
    ) const;
    /// Get base time and convert to a real number of seconds
    /// \return Time in real seconds
@@ -257,10 +247,9 @@ class TimeFrac {
    // Other utility methods
 
    /// Convert a time fraction to new denominator
-   /// \return error code
-   I4 convert(const I8 Denom); ///< [in] new denominator
+   void convert(const I8 Denom); ///< [in] new denominator
    /// Reduce a time fraction to simplest form
-   I4 simplify(void);
+   void simplify(void);
 
 }; // end class TimeFrac
 
@@ -366,7 +355,7 @@ class Calendar {
    ~Calendar(void);
 
    /// Validate calendar
-   I4 validate() const;
+   void validate() const;
 
    /// Checks whether input year is a leap year
    /// \return true if year is a leap year, false otherwise
@@ -389,8 +378,7 @@ class Calendar {
 
    /// Determines the calendar date and time of day, given an
    /// elapsed time since the calendar reference time.
-   /// \return error code
-   static I4
+   static void
    getDateTime(const TimeFrac ElapsedTime, ///< [in] time in secs from ref time
                I8 &Year,                   ///< [out] calendar year
                I8 &Month,                  ///< [out] calendar month
@@ -409,8 +397,7 @@ class Calendar {
    /// manager routines (eg to add/subtract time instants) for those
    /// time intervals that are dependent on date and sensitive to
    /// calendar features like leap years and varying days of the month.
-   /// \return error code
-   static I4
+   static void
    incrementDate(const I8 Interval,     ///< [in] time interval to advance date
                  const TimeUnits Units, ///< [in] time units for interval
                  I8 &Year,  ///< [in,out] calendar year for time to be advanced
@@ -491,56 +478,49 @@ class TimeInterval {
    // Accessor methods
 
    /// Set a non-calendar interval in native fractional integer seconds
-   /// \return error code
-   I4 set(const I8 Whole, ///< Whole integer seconds
-          const I8 Numer, ///< Fractional seconds numerator
-          const I8 Denom  ///< Fractional seconds denominator
+   void set(const I8 Whole, ///< Whole integer seconds
+            const I8 Numer, ///< Fractional seconds numerator
+            const I8 Denom  ///< Fractional seconds denominator
    );
 
    /// Set a time interval from I4 length and units
-   /// \return error code
-   I4 set(const I4 InLength,      ///< length of time interval
-          const TimeUnits InUnits ///< unit of time for interval
+   void set(const I4 InLength,      ///< length of time interval
+            const TimeUnits InUnits ///< unit of time for interval
    );
 
    /// Set a time interval from I8 length and units
-   /// \return error code
-   I4 set(const I8 Length,        ///< length of time interval
-          const TimeUnits InUnits ///< unit of time for interval
+   void set(const I8 Length,        ///< length of time interval
+            const TimeUnits InUnits ///< unit of time for interval
    );
 
    /// Set a time interval from a real length and units
    /// Real length is only supported for non-calendar intervals since
    /// a non-integral length has ambiguous meaning when months, years
    /// have variable length.
-   /// \return error code
-   I4 set(const R8 Length,        ///< length of time interval
-          const TimeUnits InUnits ///< unit of time for interval
+   void set(const R8 Length,        ///< length of time interval
+            const TimeUnits InUnits ///< unit of time for interval
    );
 
    /// Retrieve non-calendar interval in native fractional integer form
-   /// \return error code
-   I4 get(I8 &Whole, ///< [out] whole seconds
-          I8 &Numer, ///< [out] fractional second numerator
-          I8 &Denom  ///< [out] fractional second denominator
+   void get(I8 &Whole, ///< [out] whole seconds
+            I8 &Numer, ///< [out] fractional second numerator
+            I8 &Denom  ///< [out] fractional second denominator
    ) const;
 
    /// Retrieve a time interval in integer length in specified units.
    /// To avoid roundoff issues during conversions, integer retrieval
    /// is only permitted in the same units in which the interval was
    /// defined.
-   /// \return error code
-   I4 get(I8 &Length, ///< [out] requested integer length of interval
-          const TimeUnits ReqUnits ///< [in] unit of time for interval
+   void get(I8 &Length, ///< [out] requested integer length of interval
+            const TimeUnits ReqUnits ///< [in] unit of time for interval
    ) const;
 
    /// Retrieve a time interval in real length and specified units.
    /// For calendar intervals, the units must match the units in which
    /// the interval was defined. For non-calendar intervals, only conversions
    /// between hours, minutes and seconds are allowed.
-   /// \return error code
-   I4 get(R8 &Length,              ///< [out] Requested time interval length
-          const TimeUnits ReqUnits ///< [in] unit of time for interval
+   void get(R8 &Length,              ///< [out] Requested time interval length
+            const TimeUnits ReqUnits ///< [in] unit of time for interval
    ) const;
 
    /// Equivalence comparison operator for TimeInterval
@@ -660,48 +640,44 @@ class TimeInstant {
 
    /// Set time instant from date and time, where seconds is supplied
    /// as a real number.
-   /// \return error code
-   I4 set(const I8 Year,   ///< [in] year
-          const I8 Month,  ///< [in] month
-          const I8 Day,    ///< [in] day
-          const I8 Hour,   ///< [in] hour
-          const I8 Minute, ///< [in] minute
-          const R8 RSecond ///< [in] second (real)
+   void set(const I8 Year,   ///< [in] year
+            const I8 Month,  ///< [in] month
+            const I8 Day,    ///< [in] day
+            const I8 Hour,   ///< [in] hour
+            const I8 Minute, ///< [in] minute
+            const R8 RSecond ///< [in] second (real)
    );
 
    /// Set time instant from date and time, where seconds is supplied
    /// in integer fractional seconds.
-   /// \return error code
-   I4 set(const I8 Year,   ///< [in] year
-          const I8 Month,  ///< [in] month
-          const I8 Day,    ///< [in] day
-          const I8 Hour,   ///< [in] hour
-          const I8 Minute, ///< [in] minute
-          const I8 Whole,  ///< [in] second (whole integer)
-          const I8 Numer,  ///< [in] second (fraction numerator)
-          const I8 Denom   ///< [in] second (fraction denominator)
+   void set(const I8 Year,   ///< [in] year
+            const I8 Month,  ///< [in] month
+            const I8 Day,    ///< [in] day
+            const I8 Hour,   ///< [in] hour
+            const I8 Minute, ///< [in] minute
+            const I8 Whole,  ///< [in] second (whole integer)
+            const I8 Numer,  ///< [in] second (fraction numerator)
+            const I8 Denom   ///< [in] second (fraction denominator)
    );
 
    /// Retrieve time in date, time form with real seconds.
-   /// \return error code
-   I4 get(I8 &Year,   ///< [out] year   of this time instant
-          I8 &Month,  ///< [out] month  of this time instant
-          I8 &Day,    ///< [out] day    of this time instant
-          I8 &Hour,   ///< [out] hour   of this time instant
-          I8 &Minute, ///< [out] minute of this time instant
-          R8 &Second  ///< [out] second of this time instant
+   void get(I8 &Year,   ///< [out] year   of this time instant
+            I8 &Month,  ///< [out] month  of this time instant
+            I8 &Day,    ///< [out] day    of this time instant
+            I8 &Hour,   ///< [out] hour   of this time instant
+            I8 &Minute, ///< [out] minute of this time instant
+            R8 &Second  ///< [out] second of this time instant
    ) const;
 
    /// Retrieve time in date, time form with fractional integer seconds.
-   /// \return error code
-   I4 get(I8 &Year,   ///< [out] year   of this time instant
-          I8 &Month,  ///< [out] month  of this time instant
-          I8 &Day,    ///< [out] day    of this time instant
-          I8 &Hour,   ///< [out] hour   of this time instant
-          I8 &Minute, ///< [out] minute of this time instant
-          I8 &Whole,  ///< [out] whole seconds of this time
-          I8 &Numer,  ///< [out] frac second numerator
-          I8 &Denom   ///< [out] frac second denominator
+   void get(I8 &Year,   ///< [out] year   of this time instant
+            I8 &Month,  ///< [out] month  of this time instant
+            I8 &Day,    ///< [out] day    of this time instant
+            I8 &Hour,   ///< [out] hour   of this time instant
+            I8 &Minute, ///< [out] minute of this time instant
+            I8 &Whole,  ///< [out] whole seconds of this time
+            I8 &Numer,  ///< [out] frac second numerator
+            I8 &Denom   ///< [out] frac second denominator
    ) const;
 
    // Operators on time instants
@@ -790,23 +766,22 @@ class Alarm {
    bool isRinging(void);
 
    /// Checks whether the alarm should ring based on the current
-   /// (or supplied) time instant (returns error code)
-   I4 updateStatus(const TimeInstant CurrentTime ///< [in] current time
+   /// (or supplied) time instant
+   void updateStatus(const TimeInstant CurrentTime ///< [in] current time
    );
 
    /// Stops a ringing alarm and sets next a new ring time. If the alarm
    /// is a periodic/interval alarm, the next ring time is set to be the
    /// next interval boundary after the input time.  If the alarm is a
    /// single instance, the input time is used as the next alarm time.
-   /// (returns error code)
-   I4 reset(const TimeInstant InTime ///< [in] new basis for alarm time
+   void reset(const TimeInstant InTime ///< [in] new basis for alarm time
    );
 
-   /// Stops a ringing alarm (returns error code).
-   I4 stop(void);
+   /// Stops a ringing alarm
+   void stop(void);
 
-   /// Rename an alarm (returns error code)
-   I4 rename(const std::string NewName ///< [in] new name for alarm
+   /// Rename an alarm
+   void rename(const std::string NewName ///< [in] new name for alarm
    );
 
    /// Get alarm name
@@ -855,13 +830,13 @@ class Clock {
    ~Clock(void);
 
    // Accessor Methods
-   /// Set the current time (returns error code)
-   I4 setCurrentTime(
+   /// Set the current time
+   void setCurrentTime(
        const TimeInstant CurrTime ///< [in] new value for current time
    );
 
-   /// Changes the time step for this clock (returns error code)
-   I4 changeTimeStep(
+   /// Changes the time step for this clock
+   void changeTimeStep(
        const TimeInterval NewTimeStep ///< [in] new value for time step
    );
 
@@ -881,13 +856,13 @@ class Clock {
    TimeInterval getTimeStep(void) const;
 
    /// Attaches an alarm to this clock. The clock simply stores a
-   /// pointer to this alarm. (returns error code)
-   I4 attachAlarm(Alarm *InAlarm ///< [in] pointer to alarm to attach
+   /// pointer to this alarm.
+   void attachAlarm(Alarm *InAlarm ///< [in] pointer to alarm to attach
    );
 
    /// Advance a clock one timestep and update status of any attached
-   /// alarms. (returns error code)
-   I4 advance(void);
+   /// alarms.
+   void advance(void);
 
 }; // end class Clock
 

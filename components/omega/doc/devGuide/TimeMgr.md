@@ -231,7 +231,7 @@ monthly Alarm:
 OMEGA::TimeInterval IntervalMonthly(1, OMEGA::TimeUnits::Months);
 OMEGA::Alarm AlarmMonthly("Every Month", IntervalMontly, StartTime);
 
-Err = ModelClock.attachAlarm(AlarmMonthly);
+ModelClock.attachAlarm(AlarmMonthly);
 ```
 The Clock can be used to control the duration of a simulation by using a
 TimeInstant that represents the stop time:
@@ -241,7 +241,7 @@ OMEGA::TimeInstant CurrentTime = StartTime;
 
 while (CurrentTime < StopTime) {
 
-   Err = ModelClock.advance();
+   ModelClock.advance();
    CurrentTime = ModelClock.getCurrentTime();
 
   ...

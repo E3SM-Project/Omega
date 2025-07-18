@@ -19,6 +19,7 @@
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OmegaKokkos.h"
+#include "Pacer.h"
 #include "TimeMgr.h"
 #include "mpi.h"
 #include <vector>
@@ -63,6 +64,8 @@ int initFieldTest() {
       LOG_ERROR("IO initialization failed");
       return Err;
    }
+   Pacer::initialize(MPI_COMM_WORLD);
+   Pacer::setPrefix("Omega:");
 
    // Open config file
    OMEGA::Config("Omega");
@@ -127,6 +130,7 @@ int initFieldTest() {
        Dimension::create("NStuff", NVertLevels);
 
    // Create a model clock for time info
+   Calendar::init("Gregorian");
    TimeInstant SimStartTime(0001, 1, 1, 0, 0, 0.0);
    TimeInterval TimeStep(2, TimeUnits::Hours);
    Clock *ModelClock = new Clock(SimStartTime, TimeStep);
