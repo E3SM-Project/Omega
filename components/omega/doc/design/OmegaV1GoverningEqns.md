@@ -753,7 +753,7 @@ $$ (discrete-z)
 
 We refer to these as the discrete equations, but time derivatives remain continuous. The time discretization is described in the [time stepping design document](TimeStepping.md). The velocity, mass-thickness, and tracers are solved prognostically using [](discrete-momentum), [](discrete-mass), [](discrete-tracer). At the new time, these variables are used to compute pressure [](discrete-pressure), specific volume [](discrete-eos), and z-locations [](discrete-z). Additional variables are computed diagnostically at the new time: $\mathbf{u}^{\perp}$, $K$, $\zeta_a$, $z^{mid}$, $\Phi$, etc. The initial geopotential is simply $\Phi=gz$, but additional gravitational terms may be added later.
 
-The horizontal operators $\nabla$, $\nabla\cdot$, and $\nabla \times$ are now in their discrete form. In the TRiSK design, gradients ($\nabla$) map cell centers to edges; divergence ($\nabla \cdot$) maps edge quantities to cells; and curl ($\nabla \times$) maps edges to vertices. The exact form of operators and interpolation stencils remain the same as those given in [Omega-0 design document](OmegaV0ShallowWater.md#32-operator-formulation). The discrete version of terms common with Omega-0, such as advection, potential vorticity, and $\nabla K$, can be found in [Omega-0 Momentum Terms](OmegaV0ShallowWater.md#33-momentum-terms) and [Omega-0 Thickness and Tracer Terms](OmegaV0ShallowWater.md#34-thickness-and-tracer-terms).
+The horizontal operators $\nabla$, $\nabla\cdot$, and $\nabla \times$ are now in their discrete form. In the TRiSK design, gradients ($\nabla$) map cell centers to edges; divergence ($\nabla \cdot$) maps edge quantities to cells; and curl ($\nabla \times$) maps edges to vertices. The exact form of operators and interpolation stencils remain the same as those given in {ref}`Omega-0 operator formulation <32-operator-formulation>` The discrete version of terms common with Omega-0, such as advection, potential vorticity, and $\nabla K$, can be found in {ref}`Omega-0 Momentum Terms <33-momentum-terms>` and {ref}`Omega-0 Thickness and Tracer Terms <34-thickness-and-tracer-terms>`.
 
 
 ## 11. Sub gridscale parameterizations
@@ -765,25 +765,37 @@ There are two terms related to horizontal momentum dissipation in [](#discrete-m
 As in MPAS-Ocean, parameterizaiton of the horizontal momentum dissipiation is through laplacian or biharmonic dissipation,
 
 $$
-\frac{1}{\left[\tilde{h}_{i,k}\right]_e} \nabla \cdot \left( \tilde{h}_k \left< {\bf u}^\prime \otimes {\bf u}^\prime \right>_k \right) =  \nu_2 \nabla^2 u_{e,k} - \nu_4 \nabla^4 u_{e,k}.
+\frac{1}{\left[\tilde{h}_{i,k}\right]_e} \nabla \cdot \left( \tilde{h}_k \left< {\bf u}^\prime \otimes {\bf u}^\prime \right>_k \right) =  \nu_{2,e} \nabla^2 u_{e,k} - \nu_{4,e} \nabla^4 u_{e,k}.
 $$ (discrete-mom-diss)
 
-Again, the quantities in [](#discrete-mom-diss) are layer averaged.  The gradient of $\tilde{h}$ is assumed to be small relative to the stress tensor to allow the utilization of traditional parameterization of the dissipation. We note here that while we use $\nu_2$ and $\nu_4$ indicating constant values, which are specified via the YAML configuration file, the viscosities are scaled by the mesh density.  For regionally refined meshes the viscosity is not spatially constant.  We assume that the spatially gradient of $\nu$ is small and we can treat them as constant and pass them through the gradient operator.
+Again, the quantities in [](#discrete-mom-diss) are layer averaged.  The gradient of $\tilde{h}$ is assumed to be small relative to the stress tensor to allow the utilization of traditional parameterization of the dissipation. In [](#discrete-mom-diss), the viscosities are defined as
+
+$$
+\nu_{2,e} = \nu_2 \times \text{meshScaling}_{2,e}
+$$
+
+and
+
+$$
+\nu_{4,e} = \nu_4 \times \text{meshScaling}_{4,e}
+$$
+
+Where the $\nu_4$ and $\nu_2$ are the constant biharmonic and laplacian coefficients specified in the YAML configuration file.  The meshScaling variable is constructed to appropriately scale the viscosity with changes in mesh spacing (for details, see [Hecht et al 2008](https://www.researchgate.net/profile/Mark-Petersen-2/publication/255570421_Lateral_Mixing_in_the_Eddying_Regime_and_a_New_Broad-Ranging_Formulation/links/55886e1c08ae347f9bda9f04/Lateral-Mixing-in-the-Eddying-Regime-and-a-New-Broad-Ranging-Formulation.pdf)).  This formulation implies that for regionally resolved configurations, we cannot strictly pull the $\nu_{2,e}$ and $\nu_{4,e}$ variables through the gradient operator.  To do this, we assume that the spatially gradient of $\nu$ is small and we can treat them as constant and pass them through the gradient operator.
 
 #### Laplacian dissipation (del2)
 
 $$
- \nu_2 \nabla^2 u_{e,k} = \nu_2 \left( \nabla D_{i,k} - \nabla^{\perp} \zeta_{v,k} \right)
+ \nu_{2,e} \nabla^2 u_{e,k} = \nu_{2,e} \left( \nabla D_{i,k} - \nabla^{\perp} \zeta_{v,k} \right)
 $$ (discrete-mom-del2)
 
-where $D$ is divergence and $\zeta$ is relative vorticity. See [Omega V0 Section 3.3.4](OmegaV0ShallowWater.md#334-del2-momentum-dissipation) for further details.
+where $D$ is divergence and $\zeta$ is relative vorticity. See {ref}`Omega V0 Section 3.3.4 <334-del2-momentum-dissipation>` for further details.
 
 #### Biharmonic dissipation (del4)
-As in [Omega V0 Section 3.3.5](OmegaV0ShallowWater.md#335-del4-momentum-dissipation), biharmonic momentum dissipation is computed with two applications of the Del2 operator above.
+As in {ref}`Omega V0 Section 3.3.5 <335-del4-momentum-dissipation>`, biharmonic momentum dissipation is computed with two applications of the Del2 operator above.
 
 $$
- - \nu_4 \nabla^4 u_{e,k}
-= - \nu_4 \nabla^2 \left( \nabla^2 u_{e,k} \right)
+ - \nu_{4,e} \nabla^4 u_{e,k}
+= - \nu_{4,e} \nabla^2 \left( \nabla^2 u_{e,k} \right)
 $$ (discrete-mom-del4)
 
 ### Momentum dissipation across a sloping $\tilde{z}$ surface
@@ -791,7 +803,7 @@ $$ (discrete-mom-del4)
 We interpret $\left<\mathbf{u}^\prime \tilde{u}^\prime \right>$ as the dissipation of momentum across the sloping $\tilde{z}$ surface.
 
 $$
-\left<\mathbf{u}^\prime \tilde{u}^\prime \right> = \left\{\left[\nu_2 \left( \nabla \tilde{D}_{i} - \nabla^{\perp} \tilde{\zeta}_{v} \right)\right]_k - \left[\nu_4 \nabla^2 \left( \nabla^2 \tilde{u}_{e,k} \right)\right]_k\right\}
+\left<\mathbf{u}^\prime \tilde{u}^\prime \right> = \left\{\left[\nu_{2,e} \left( \nabla \tilde{D}_{i} - \nabla^{\perp} \tilde{\zeta}_{v} \right)\right]_k - \left[\nu_{4,e} \nabla^2 \left( \nabla^2 \tilde{u}_{e,k} \right)\right]_k\right\}
 $$ (discrete-mom-flux-sloping)
 
 While it looks very similar to [](#discrete-mom-del2) - [](#discrete-mom-del4), there are a few critical differences.  First, the normal velocities in the divergence and relative vorticity in [](#discrete-mom-flux-sloping) are the reconstructed velocity at the top of the cell along an edge, not the layer average.  Second, the velocities in the divergence and relative vorticity are only the projection across the interface (hence the tilde on $D$ and $\zeta$), computed in a discrete sense following
@@ -914,38 +926,38 @@ Since Omega is a non-Boussinesq ocean, surface sources of water will be mass flu
 As with momentum dissipation, the horizontal tracer diffusion arises from the $\left<\mathbf{u}_k^\prime \varphi_k \right>$ and $\left< \tilde{u}^\prime \varphi^\prime \right>$.  As in MPAS-Ocean, the former term can be parameterized either as Laplacian or Biharmonic diffusion,
 
 $$
-D^\varphi_{i,k} =  \kappa_2 \nabla^2 \varphi_{i,k} - \kappa_4 \nabla^4 \varphi_{i,k}.
+D^\varphi_{i,k} =  \kappa_{2,e} \nabla^2 \varphi_{i,k} - \kappa_{4,e} \nabla^4 \varphi_{i,k}.
 $$ (discrete-tracer-diff)
 
-As in [](#discrete-mom-diss), we have used $\kappa_2$ and $\kappa_4$ to indicate the constant values specified in the YAML configuration file.  These values are also scaled by the mesh density and are thus not exactly constant.  We assume that $\varphi_{i,k} \nabla^2 \kappa_2$ is small relative to $\kappa_2 \nabla^2 \varphi_{i,k}$.
+As in [](#discrete-mom-diss), we have defined $\kappa_{2,e} = \kappa_2 \times \text{meshScaling}_{4,e}$ and $\kappa_{2,e} = \kappa_2 \times \text{meshScaling}_{4,e}$, where $\kappa_2$ and $\kappa_4$ are the constant values specified in the YAML configuration file.  We also assume that $\varphi_{i,k} \nabla^2 \kappa_{2,e}$ is small relative to $\kappa_{2,e} \nabla^2 \varphi_{i,k}$.
 
 #### Laplacian diffusion (del2)
 The Laplacian may be written as the divergence of the gradient,
 
 $$
-\nabla \cdot \left(\tilde{h}_k \left<\varphi^\prime u^\prime \right>_k \right) = \nabla \cdot \left( \tilde{h}_{i,k} \kappa_2 \nabla \varphi_{i,k} \right).
+\nabla \cdot \left(\tilde{h}_k \left<\varphi^\prime u^\prime \right>_k \right) = \nabla \cdot \left( \tilde{h}_{i,k} \kappa_{2,e} \nabla \varphi_{i,k} \right).
 $$ (discrete-tracer-del2)
 
-See [Omega V0 Section 3.4.2](OmegaV0ShallowWater.md#342-del2-tracer-diffusion) for details of this calculation.
+See {ref}`Omega V0 Section 3.4.2 <342-del2-tracer-diffusion>` for details of this calculation.
 
 #### Biharmonic diffusion (del4)
 The biharmonic is a Laplacian operator applied twice,
 
 $$
- -  \nabla \cdot \left( \kappa_4 \nabla
+ -  \nabla \cdot \left( \kappa_{4,e} \nabla
 \right[
 \nabla \cdot \left( \tilde{h}_{i,k} \nabla \varphi_{i,k} \right)
 \left]
  \right).
 $$ (discrete-tracer-del4)
 
-Each of these operators are written as horizontal stencils in the [Omega V0 Operator Formulation Section](OmegaV0ShallowWater.md#32-operator-formulation).  Again we note that the variables in these equations are the layer average.
+Each of these operators are written as horizontal stencils in the {ref}`Omega V0 Operator Formulation Section <32-operator-formulation>`.  Again we note that the variables in these equations are the layer average.
 
 #### Horizontal tracer diffusion across a sloping surface
 As with horizontal momentum dissipation, there is a turbulent flux of tracer across a sloping $\tilde{z}$ interface.  We interpret the $\left< \tilde{z}^\prime \varphi^\prime \right>$ as the projection of the horizontal turbulent flux across the sloping interface.  The form of the diffusion is similar, taking Laplacian diffusion as an example
 
 $$
- \nabla \cdot \left( \tilde{h}_{i} \kappa_2 \nabla \varphi_{i} \right)_k.
+ \nabla \cdot \left( \tilde{h}_{i} \kappa_{2,e} \nabla \varphi_{i} \right)_k.
 $$
 
 While this is similar in form, this uses the reconstruction at the top of the layer and not the layer averages directly as in [](#discrete-tracer-del2).
@@ -1037,8 +1049,9 @@ Table 1. Definition of variables. Geometric variables may be found in the [Omega
 |$\kappa_2$| tracer diffusion  | m$^2$/s    | cell     |   |  |
 |$\kappa_4$| biharmonic tracer diffusion | m$^4$/s    | cell     |   |  |
 |$\kappa_v$| vertical tracer diffusion | m$^2$/s    | cell     |   |  |
-|$\nu_2$   | horizontal del2 viscosity         | m$^2$/s    | edge     |   | |
-|$\nu_4$   | horizontal biharmonic (del4) viscosity        | m$^4$/s    | edge     |   |  |
+|meshScaling  | variable that holds the scaling factor for biharmonic and laplacian mixing        | unitless   | edge     |   | |
+|$\nu_{2,e}$   | horizontal del2 viscosity scaled by mesh resolution        | m$^2$/s    | edge     |   | |
+|$\nu_{4,e}$   | horizontal biharmonic (del4) viscosity scaled by mesh resolution       | m$^4$/s    | edge     |   |  |
 |$\nu_v$| vertical momentum diffusion | m$^2$/s    | edge       |   |  |
 |$\varphi_{i,k}$ | tracer | kg/m$^3$ or similar | cell | | e.g. $\Theta$, $S$ |
 |$\rho_{i,k}$ | density | kg/m$^3$ | cell  | Density |
