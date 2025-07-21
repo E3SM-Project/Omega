@@ -66,7 +66,6 @@ void Eos::init() {
 
    Error Err; // error code
    HorzMesh *DefHorzMesh = HorzMesh::getDefault();
-   I4 NVertLevels        = DefHorzMesh->NVertLevels;
 
    /// Retrieve default eos
    Eos *eos = Eos::getInstance();
@@ -83,20 +82,13 @@ void Eos::init() {
    Err += EosConfig.get("EosType", EosTypeStr);
    CHECK_ERROR_ABORT(Err, "Eos::init: EosType subgroup not found in EosConfig");
 
-   /// Set EosChoice based on EosTypeStr
+   /// Set EosChoice and parameters based on EosTypeStr
    if (EosTypeStr == "Linear" or EosTypeStr == "linear") {
-      eos->EosChoice = EosType::LinearEos;
-   } else if ((EosTypeStr == "teos10") or (EosTypeStr == "teos-10") or
-              (EosTypeStr == "TEOS-10")) {
-      eos->EosChoice = EosType::Teos10Eos;
-   } else {
-      LOG_ERROR("Eos::init: Unknown EosType requested");
-   }
-
-   /// Set parameters based on EosChoice
-   if (eos->EosChoice == EosType::LinearEos) {
       Config EosLinConfig("Linear");
       Err += EosConfig.get(EosLinConfig);
+
+      eos->EosChoice = EosType::LinearEos;
+
       CHECK_ERROR_ABORT(Err,
                         "Eos::init: Linear subgroup not found in EosConfig");
       Err += EosLinConfig.get("DRhoDT", eos->ComputeSpecVolLinear.DRhodT);
@@ -110,6 +102,11 @@ void Eos::init() {
       Err += EosLinConfig.get("RhoT0S0", eos->ComputeSpecVolLinear.RhoT0S0);
       CHECK_ERROR_ABORT(
           Err, "Eos::init: Parameter Linear:RhoT0S0 not found in EosLinConfig");
+   } else if ((EosTypeStr == "teos10") or (EosTypeStr == "teos-10") or
+              (EosTypeStr == "TEOS-10")) {
+      eos->EosChoice = EosType::Teos10Eos;
+   } else {
+      LOG_ERROR("Eos::init: Unknown EosType requested");
    }
 } // end init
 

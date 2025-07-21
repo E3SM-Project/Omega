@@ -242,9 +242,10 @@ class Teos10Eos {
 /// Linear Equation of State
 class LinearEos {
  public:
-   Real DRhodT;  ///< Thermal expansion coefficient (kg m^-3 degC^-1)
-   Real DRhodS;  ///< Haline contraction coefficient (kg m^-3)
-   Real RhoT0S0; ///< Reference density (kg m^-3) at (T,S)=(0,0)
+   /// Coefficients for LinearEos (overwritten by config file if set there)
+   Real DRhodT  = -0.2;   ///< Thermal expansion coefficient (kg m^-3 degC^-1)
+   Real DRhodS  = 0.8;    ///< Haline contraction coefficient (kg m^-3)
+   Real RhoT0S0 = 1000.0; ///< Reference density (kg m^-3) at (T,S)=(0,0)
 
    /// constructor declaration
    LinearEos();

@@ -33,7 +33,6 @@
 using namespace OMEGA;
 
 /// Test constants and expected values
-constexpr Geometry Geom   = Geometry::Spherical;
 constexpr int NVertLevels = 60;
 
 /// Published values (TEOS-10 and linear) to test against
@@ -135,11 +134,12 @@ int testEosLinear() {
        },
        numMismatches);
 
+   auto SpecVolH = createHostMirrorCopy(SpecVol);
    if (numMismatches != 0) {
       Err++;
       LOG_ERROR("EosTest: SpecVol Linear isApprox FAIL, "
-                "expected {}, got {} mismatches",
-                LinearExpValue, numMismatches);
+                "expected {}, got {} with {} mismatches",
+                LinearExpValue, SpecVolH(1, 1), numMismatches);
    }
    if (Err == 0) {
       LOG_INFO("EosTest SpecVolCalc Linear: PASS");
@@ -181,11 +181,12 @@ int testEosLinearDisplaced() {
        },
        numMismatches);
 
+   auto SpecVolDisplacedH = createHostMirrorCopy(SpecVolDisplaced);
    if (numMismatches != 0) {
       Err++;
       LOG_ERROR("EosTest: Linear SpecVolDisp isApprox FAIL, "
                 "expected {}, got {} with {} mismatches",
-                LinearExpValue, SpecVolDisplaced(1, 1), numMismatches);
+                LinearExpValue, SpecVolDisplacedH(1, 1), numMismatches);
    }
    if (Err == 0) {
       LOG_INFO("EosTest SpecVolCalcDisp Linear: PASS");
@@ -227,11 +228,12 @@ int testEosTeos10() {
        },
        numMismatches);
 
+   auto SpecVolH = createHostMirrorCopy(SpecVol);
    if (numMismatches != 0) {
       Err++;
       LOG_ERROR("EosTest: TEOS SpecVol isApprox FAIL, "
                 "expected {}, got {} with {} mismatches",
-                TeosExpValue, SpecVol(1, 1), numMismatches);
+                TeosExpValue, SpecVolH(1, 1), numMismatches);
    }
    if (Err == 0) {
       LOG_INFO("EosTest SpecVolCalc TEOS-10: PASS");
@@ -273,11 +275,12 @@ int testEosTeos10Displaced() {
        },
        numMismatches);
 
+   auto SpecVolDisplacedH = createHostMirrorCopy(SpecVolDisplaced);
    if (numMismatches != 0) {
       Err++;
       LOG_ERROR("EosTest: TEOS SpecVolDisp isApprox FAIL, "
                 "expected {}, got {} with {} mismatches",
-                TeosExpValue, SpecVolDisplaced(1, 1), numMismatches);
+                TeosExpValue, SpecVolDisplacedH(1, 1), numMismatches);
    }
    if (Err == 0) {
       LOG_INFO("EosTest SpecVolCalcDisp TEOS-10: PASS");

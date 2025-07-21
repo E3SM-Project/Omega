@@ -91,3 +91,6 @@
 [submodule "components/omega/external/GSW-C"]
 	path = components/omega/external/GSW-C
 	url = git@github.com:E3SM-Project/GSW-C.git
+[submodule "components/omega/external/yaml-cpp"]
+	path = components/omega/external/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git
