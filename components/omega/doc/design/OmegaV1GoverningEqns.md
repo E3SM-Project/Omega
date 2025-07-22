@@ -644,9 +644,9 @@ $$ (layer-momentum-prefinal)
 
 ### Simplifying Assumptions
 
-In [](#layer-momentum-final), we will assume that $\left<\alpha^\prime p^\prime \right>$ is small.  We would only expect this term to be large in nonhydrostatic codes in regions of vigorous convection.  All terms involving $\alpha^\prime$ are neglected.  The final momentum equation for Omega is given by
+In [](#layer-momentum-final), we will assume that $\left<\alpha^\prime p^\prime \right>$ is small.  We would only expect this term to be large in nonhydrostatic codes in regions of vigorous convection.  All terms involving $\alpha^\prime$ are neglected.  The final velocity equation for Omega is given by
 
-**Momentum:**
+**Velocity:**
 
 $$
 \frac{\partial \overline{\left< {\bf u} \right>}^{\tilde{z}}_k}{\partial t}
@@ -758,7 +758,7 @@ The horizontal operators $\nabla$, $\nabla\cdot$, and $\nabla \times$ are now in
 
 ## 11. Sub gridscale parameterizations
 
-### Horizontal Momentum Dissipation
+### Horizontal Velocity Dissipation
 
 There are two terms related to horizontal momentum dissipation in [](#discrete-momentum) that need to be parameterized, $\left<\mathbf{u}^\prime \tilde{u}^\prime \right>_k$ and $\frac{1}{\left[\tilde{h}_{i,k}\right]_e} \nabla \cdot \left( \tilde{h}_k \left< {\bf u}^\prime \otimes {\bf u}^\prime \right>_k \right)$.  The former only arises from the layer integration in psuedo-height coordinates, we interpret this term as the projection of the horizontal momentum dissipation that crosses $\tilde{z}$ interfaces.  Given this, we discuss the form of the horizontal dissipation parameterization first and return to the second term in a later subsection.
 
@@ -798,7 +798,7 @@ $$
 = - \nu_{4,e} \nabla^2 \left( \nabla^2 u_{e,k} \right)
 $$ (discrete-mom-del4)
 
-### Momentum dissipation across a sloping $\tilde{z}$ surface
+### Velocity dissipation across a sloping $\tilde{z}$ surface
 
 We interpret $\left<\mathbf{u}^\prime \tilde{u}^\prime \right>$ as the dissipation of momentum across the sloping $\tilde{z}$ surface.
 
@@ -814,7 +814,7 @@ $$
 
 in this relation, we have moved the subscript $k$ off the variable itself to prevent confusion with the layer average.  With this definition, [](#discrete-mom-flux-sloping) goes to zero for flat layer surfaces.
 
-#### Vertical momentum dissipation
+#### Vertical velocity dissipation
 The vertical turbulent momentum stress is most commonly parameterized as a down-gradient process, i.e.,
 
 $$
@@ -871,7 +871,7 @@ With this, we can now fully discretize [](#discrete-mom-vert-diff) as
 
 $$
 -\frac{\rho_0}{\left[\tilde{h}_k\right]_e} \left\{ \left[\left<u^\prime \tilde{w}_{tr}^\prime\right> \right]_{e,k} - \left[\left<u^\prime \tilde{w}_{tr}^\prime\right> \right]_{e,k+1} \right\} = -\frac{\rho_0}{\left[\tilde{h}_k\right]_e} \left\{ \frac{\left(u_{e,k-1} - u_{e,k}\right)}{0.5 \left(\tilde{h}_k-1 + \tilde{h}_{k}\right)} - \frac{\left(u_{e,k} - u_{e,k+1}\right)}{0.5 \left(\tilde{h}_k + \tilde{h}_{k+1}\right)} \right\}.
-$$
+$$ (final-vert-vel-dissipation)
 
 This form can be interfaced with the Omega [tridiagongal solver](TridiagonalSolver.md) routine.
 
@@ -962,8 +962,8 @@ $$
 
 While this is similar in form, this uses the reconstruction at the top of the layer and not the layer averages directly as in [](#discrete-tracer-del2).
 
-#### Vertical tracer diffusion
-The vertical tracer diffusion arises from the $\rho_0\left(\left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right> \right]_k - \left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right> \right]_{k+1} \right)$ term. A treatment of this term differs from the vertical momentum diffusion. In the tracer equation, the quantity being updated is the mass-weighted tracer $\tilde{h}_k \varphi$, while in the momentum equation, the variable is simply the velocity $\bf u$, without multiplication by pseudo-thickness $\tilde{h}_k$. This difference affects how vertical mixing is handled. For the momentum equation, the vertical mixing term includes an explicit $1/\tilde{h}_k$ factor, which makes it easy to rearrange the equation into a standard tridiganal form that can be solved implicitly. However, in the tracer equation [](#layer-tracer-final-simple), because $\tilde{h}_k$ is already included in the prognostic variable $\tilde{h}_k \varphi_k$, isolating $\varphi_k^{n+1}$ becomes more difficult, where $n$ is an index of timestep. In particular, if $\tilde{h}_k^{n+1}$ were treated implicitly, the left-hand side of [](#layer-tracer-final-simple) would involve the product of two unknowns $\tilde{h}_k^{n+1}$ and $\varphi_k^{n+1}$, resulting in a non-linear system. This nonlinearity prevents the formation of the standard tridiagonal matrix for $\varphi_k^{n+1}$, unlike in the vertical momentum diffusion. To address this, Omega follows the approach used in the MPAS-Ocean: the tracer update is split into two steps. First, a provisional tracer field is computed using advection and horizontal diffusion only, excluding vertical mixing. Then, vertical tracer diffusion is applied in a separate implicit step using this provisional field.
+### Vertical tracer diffusion
+The vertical tracer diffusion arises from the $\rho_0\left(\left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right> \right]_k - \left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right> \right]_{k+1} \right)$ term. Discretization of this term differs from the vertical velocity diffusion. In the tracer equation, the quantity being updated is the mass-weighted tracer $\tilde{h}_k \varphi$, while in the momentum equation, the variable is simply the velocity $\bf u$, without multiplication by pseudo-thickness $\tilde{h}_k$. This difference affects how vertical mixing is handled. For the momentum equation, the vertical mixing term includes an explicit $1/\tilde{h}_k$ factor, which makes it easy to rearrange the equation into a standard tridiganal form that can be solved implicitly ([](#final-vert-vel-dissipation)). However, in the tracer equation [](#layer-tracer-final-simple), because $\tilde{h}_k$ is included in the prognostic variable $\tilde{h}_k \varphi_k$ and not divided through as in the velocity equation.  Thus isolating $\varphi_k^{n+1}$ becomes more difficult, where $n$ is an index of timestep. In particular, if $\tilde{h}_k^{n+1}$ were treated implicitly, the left-hand side of [](#layer-tracer-final-simple) would involve the product of two unknowns $\tilde{h}_k^{n+1}$ and $\varphi_k^{n+1}$, resulting in a non-linear system. This nonlinearity prevents the formation of the standard tridiagonal matrix for $\varphi_k^{n+1}$, unlike in the vertical momentum diffusion. To address this, Omega follows the approach used in the MPAS-Ocean: the tracer update is split into two steps. First, a provisional tracer field is computed with all processes except vertical mixing (e.g. advection, horizontal mixing). Then, vertical tracer diffusion is applied in a separate implicit step using this provisional field.
 
 During the tracer update, Omega first computes a provisional tracer field that excludes vertical turbulent mixing to obtain $\varphi^{n+1}$. This temporary tracer update is given by
 
@@ -972,7 +972,7 @@ $$
 $$ (provision-tracer-update)
 
 where the term "$\text{Adv}$" represents resolved tracer advection and includes both horizontal transport and resolved vertical transport by the projected vertical velocity $\tilde{W}_{tr}$, and the "$\text{Diff}_{\text{H}}$" term represents horizontal tracer diffusion including the harmonic and biharmonic diffusion.
-Once the provisional tracer field is formed, vertical diffusion is applied using an implicit tridiagonal solver. The non mass weighted tracer is used to compute the diffusive tendency and compute the final tracer at the next timestep. Given diffusion is done on the non mass weighted tracer, the diffusive term is written as
+Once the provisional tracer field ($\varphi^{*}$) is formed, vertical diffusion is applied using an implicit tridiagonal solver. The non mass weighted tracer can now be used to compute the diffusive tendency and compute the final tracer at the next timestep. Given diffusion is done on the non mass weighted tracer, the diffusive term is written as
 
 $$
 \frac{\rho_0}{\tilde{h}_k} \left\{\left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right>\right]_k - \left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right>\right]_{k+1} \right\}
