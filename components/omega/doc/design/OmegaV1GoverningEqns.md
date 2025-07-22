@@ -963,20 +963,28 @@ $$
 While this is similar in form, this uses the reconstruction at the top of the layer and not the layer averages directly as in [](#discrete-tracer-del2).
 
 #### Vertical tracer diffusion
-The vertical tracer diffusion arises from the $\rho_0\left(\left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right> \right]_k - \left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right> \right]_{k+1} \right)$ term.  In an equation for $\tilde{h}_k \varphi$, this term is different than in the velocity equation for vertical turbulent diffusion.  In Omega, we will follow the same approach as in MPAS-Ocean and solve the tracer diffusion after the main tracer update.  Roughly Omega will compute a temporarily updated tracer as
+The vertical tracer diffusion arises from the $\rho_0\left(\left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right> \right]_k - \left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right> \right]_{k+1} \right)$ term. A treatment of this term differs from the vertical momentum diffusion. In the tracer equation, the quantity being updated is the mass-weighted tracer $\tilde{h}_k \varphi$, while in the momentum equation, the variable is simply the velocity $\bf u$, without multiplication by pseudo-thickness $\tilde{h}_k$. This difference affects how vertical mixing is handled. For the momentum equation, the vertical mixing term includes an explicit $1/\tilde{h}_k$ factor, which makes it easy to rearrange the equation into a standard tridiganal form that can be solved implicitly. However, in the tracer equation [](#layer-tracer-final-simple), because $\tilde{h}_k$ is already included in the prognostic variable $\tilde{h}_k \varphi_k$, isolating $\varphi_k^{n+1}$ becomes more difficult, where $n$ is an index of timestep. In particular, if $\tilde{h}_k^{n+1}$ were treated implicitly, the left-hand side of [](#layer-tracer-final-simple) would involve the product of two unknowns $\tilde{h}_k^{n+1}$ and $\varphi_k^{n+1}$, resulting in a non-linear system. This nonlinearity prevents the formation of the standard tridiagonal matrix for $\varphi_k^{n+1}$, unlike in the vertical momentum diffusion. To address this, Omega follows the approach used in the MPAS-Ocean: the tracer update is split into two steps. First, a provisional tracer field is computed using advection and horizontal diffusion only, excluding vertical mixing. Then, vertical tracer diffusion is applied in a separate implicit step using this provisional field.
+
+During the tracer update, Omega first computes a provisional tracer field that excludes vertical turbulent mixing to obtain $\varphi^{n+1}$. This temporary tracer update is given by
 
 $$
-\varphi^{new} = \tilde{h}_k^{old} \varphi^{old} + dt \frac{Adv + Hdiff}{\tilde{h}_k^{new}}.
+\varphi^{*} = \frac{\tilde{h}_k^{n} \varphi^{n} + \Delta t  (\text{Adv} + \text{Diff}_{\text{H}})}{\tilde{h}_k^{n+1}}.
+$$ (provision-tracer-update)
+
+where the term "$\text{Adv}$" represents resolved tracer advection and includes both horizontal transport and resolved vertical transport by the projected vertical velocity $\tilde{W}_{tr}$, and the "$\text{Diff}_{\text{H}}$" term represents horizontal tracer diffusion including the harmonic and biharmonic diffusion.
+Once the provisional tracer field is formed, vertical diffusion is applied using an implicit tridiagonal solver. The non mass weighted tracer is used to compute the diffusive tendency and compute the final tracer at the next timestep. Given diffusion is done on the non mass weighted tracer, the diffusive term is written as
+
+$$
+\frac{\rho_0}{\tilde{h}_k} \left\{\left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right>\right]_k - \left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right>\right]_{k+1} \right\}
 $$
 
-The non mass weighted tracer is then used to compute the diffusive tendency and compute the final tracer at the next timestep.  Given diffusion is done on the non mass weighted tracer, the diffusive term is written as
-
+Taking a traditional down gradient approximation and using [](#weak-deriv-final) the vertical turbulent flux can be applied using a tridiagonal solver ($\mathcal{L}$) in the
+[tridiagonal solver](TridiagonalSolver) in the implicit vertical mixing step:
 $$
-\frac{rho_0}{\tilde{h}_k} \left\{\left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right>\right]_k - \left[\left<\varphi^\prime \tilde{w}_{tr}^\prime \right>\right]_{k+1} \right\}
+\varphi^{n+1}=\mathcal{L}_\varphi^{-1} (\varphi^*)
 $$
+Additional enhancements, such as non local tracer fluxes will be discussed in future design documents.
 
-Taking a traditional down gradient approximation and using [](#weak-deriv-final) the vertical turbulent flux can be applied using a tridiagonal solver in the
-[tridiagonal solver](TridiagonalSolver) in the implicit vertical mixing step.  Additional enhancements, such as non local tracer fluxes will be discused in future design documents.
 
 ### MPAS-Ocean Equations of Motion
 
