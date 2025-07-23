@@ -1220,9 +1220,8 @@ Calendar::Calendar(CalendarKind InCalKind) { // [in] calendar type
 
    case CalendarCustom:
       // custom requires more info, so separate interface should be used
-      LOG_ERROR(
+      ABORT_ERROR(
           "TimeMgr: Must use custom constructor for custom calendar type");
-      break;
 
    default:
       // unknown calendar kind, invalidate and abort with error
@@ -1350,17 +1349,14 @@ bool Calendar::isLeapYear(I8 Year // [in] a calendar year
    case CalendarGregorian:
       // leap year is divisible by 400 or divisible by 4 and not 100.
       return (Year % 400 == 0) || ((Year % 4 == 0) && (Year % 100 != 0));
-      break;
 
    case CalendarJulian:
       // leap year is divisible by 4.
       return Year % 4 == 0;
-      break;
 
    default:
       // all other calendars don't have leap years.
       return false;
-      break;
    } // end switch CalKind
 
 } // end Calendar::isLeapYear
@@ -1391,7 +1387,7 @@ TimeFrac Calendar::getElapsedTime(
 
    // Check that calendar has been defined
    if (!isDefined())
-      LOG_CRITICAL("TimeMgr: Cannot get elapsed time - calendar not defined");
+      ABORT_ERROR("TimeMgr: Cannot get elapsed time - calendar not defined");
 
    // Branch on calendar type for actual calculation
    switch (Calendar::OmegaCal->CalKind) {

@@ -2278,7 +2278,6 @@ int IOStream::readFieldData(
       LOG_ERROR("Invalid data type while reading field {} for stream {}",
                 FieldName, Name);
       return Fail;
-      break;
 
    } // end switch data type
 
