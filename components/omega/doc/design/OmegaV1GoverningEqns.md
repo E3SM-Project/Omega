@@ -666,7 +666,7 @@ Throughout the rest of this document, we will
 
 1. Drop the $< >$ notation around single variables and note that all variables are assumed to be Reynolds' averaged.  Turbulent correlations will retain the angle bracket notation.
 2. Change the vertical density weighted average notation from $\overline{\varphi}^{\tilde{z}}_k$ to the more simple $\varphi_k$.  Thus, any subscript $k$ implies a vertical average.
-3. Define a projected vertical velocity as $\tilde{W}_{tr} \equiv \tilde{w}_{tr} - \tilde{u}$
+3. Define a total vertical velocity across the psuedo height surface as $\tilde{W}_{tr} \equiv \tilde{w}_{tr} - \tilde{u}$.  As a reminder $\tilde{u}$ is the projection of the normal velocity onto the normal vector to the pseudo height surface, in many cases this can be a very small correction to $\tilde{w}_{tr}.
 
 With these three simplifications, the final continuous equations become
 
@@ -1046,7 +1046,7 @@ Table 1. Definition of variables. Geometric variables may be found in the {ref}`
 |$\alpha_{i,k}$ | specific volume | m$^3$/kg | cell  | SpecificVolume | $v = 1/\rho$ |
 |$\tilde{w}_{i,k}$ | vertical velocity across a pseudo height surface | m/s | cell  | VerticalVelocity | volume transport per m$^2$ |
 |$\tilde{u}_{i,k}$ | projection of normal velocity across a pseudo height surface | m/s | cell | | |
-|$\tilde{W}_{i,k}$ | projected velocity $\tilde{W}_{i,k} \equiv $\tilde{w}_{i,k} - \tilde{u}_{i,k} | m/s | cell | | |
+|$\tilde{W}_{i,k}$ | total velocity across a pseudo height surface $\tilde{W}_{i,k} \equiv $\tilde{w}_{i,k} - \tilde{u}_{i,k}$ | m/s | cell | | |
 |$\tilde{z}$ | vertical coordinate | m | - | | positive upward |
 |$\tilde{z}^{top}_{i,k}$ | layer top z-location | m | cell | ZTop | see [](discrete-z) |
 |$\tilde{z}^{mid}_{i,k}$ | layer mid-depth z-location | m | cell | ZMid |
