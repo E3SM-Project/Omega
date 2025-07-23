@@ -753,7 +753,7 @@ $$ (discrete-z)
 
 We refer to these as the discrete equations, but time derivatives remain continuous. The time discretization is described in the [time stepping design document](TimeStepping.md). The velocity, mass-thickness, and tracers are solved prognostically using [](discrete-momentum), [](discrete-mass), [](discrete-tracer). At the new time, these variables are used to compute pressure [](discrete-pressure), specific volume [](discrete-eos), and z-locations [](discrete-z). Additional variables are computed diagnostically at the new time: $\mathbf{u}^{\perp}$, $K$, $\zeta_a$, $z^{mid}$, $\Phi$, etc. The initial geopotential is simply $\Phi=gz$, but additional gravitational terms may be added later.
 
-The horizontal operators $\nabla$, $\nabla\cdot$, and $\nabla \times$ are now in their discrete form. In the TRiSK design, gradients ($\nabla$) map cell centers to edges; divergence ($\nabla \cdot$) maps edge quantities to cells; and curl ($\nabla \times$) maps edges to vertices. The exact form of operators and interpolation stencils remain the same as those given in {ref}`Omega-0 operator formulation <32-operator-formulation>` The discrete version of terms common with Omega-0, such as advection, potential vorticity, and $\nabla K$, can be found in {ref}`Omega-0 Momentum Terms <33-momentum-terms>` and {ref}`Omega-0 Thickness and Tracer Terms <34-thickness-and-tracer-terms>`.
+The horizontal operators $\nabla$, $\nabla\cdot$, and $\nabla \times$ are now in their discrete form. In the TRiSK design, gradients ($\nabla$) map cell centers to edges; divergence ($\nabla \cdot$) maps edge quantities to cells; and curl ($\nabla \times$) maps edges to vertices. The exact form of operators and interpolation stencils remain the same as those given in {ref}`Omega-0 operator formulation <33-operator-formulation>` The discrete version of terms common with Omega-0, such as advection, potential vorticity, and $\nabla K$, can be found in {ref}`Omega-0 Momentum Terms <34-momentum-terms>` and {ref}`Omega-0 Thickness and Tracer Terms <35-thickness-and-tracer-terms>`.
 
 
 ## 11. Sub gridscale parameterizations
@@ -788,10 +788,10 @@ $$
  \nu_{2,e} \nabla^2 u_{e,k} = \nu_{2,e} \left( \nabla D_{i,k} - \nabla^{\perp} \zeta_{v,k} \right)
 $$ (discrete-mom-del2)
 
-where $D$ is divergence and $\zeta$ is relative vorticity. See {ref}`Omega V0 Section 3.3.4 <334-del2-momentum-dissipation>` for further details.
+where $D$ is divergence and $\zeta$ is relative vorticity. See {ref}`Omega V0 Section 3.4.4 <344-del2-momentum-dissipation>` for further details.
 
 #### Biharmonic dissipation (del4)
-As in {ref}`Omega V0 Section 3.3.5 <335-del4-momentum-dissipation>`, biharmonic momentum dissipation is computed with two applications of the Del2 operator above.
+As in {ref}`Omega V0 Section 3.4.5 <345-del4-momentum-dissipation>`, biharmonic momentum dissipation is computed with two applications of the Del2 operator above.
 
 $$
  - \nu_{4,e} \nabla^4 u_{e,k}
@@ -938,7 +938,7 @@ $$
 \nabla \cdot \left(\tilde{h}_k \left<\varphi^\prime u^\prime \right>_k \right) = \nabla \cdot \left( \tilde{h}_{i,k} \kappa_{2,e} \nabla \varphi_{i,k} \right).
 $$ (discrete-tracer-del2)
 
-See {ref}`Omega V0 Section 3.4.2 <342-del2-tracer-diffusion>` for details of this calculation.
+See {ref}`Omega V0 Section 3.5.2 <352-del2-tracer-diffusion>` for details of this calculation.
 
 #### Biharmonic diffusion (del4)
 The biharmonic is a Laplacian operator applied twice,
@@ -951,7 +951,7 @@ $$
  \right).
 $$ (discrete-tracer-del4)
 
-Each of these operators are written as horizontal stencils in the {ref}`Omega V0 Operator Formulation Section <32-operator-formulation>`.  Again we note that the variables in these equations are the layer average.
+Each of these operators are written as horizontal stencils in the {ref}`Omega V0 Operator Formulation Section <33-operator-formulation>`.  Again we note that the variables in these equations are the layer average.
 
 #### Horizontal tracer diffusion across a sloping surface
 As with horizontal momentum dissipation, there is a turbulent flux of tracer across a sloping $\tilde{z}$ interface.  We interpret the $\left< \tilde{z}^\prime \varphi^\prime \right>$ as the projection of the horizontal turbulent flux across the sloping interface.  The form of the diffusion is similar, taking Laplacian diffusion as an example
@@ -1019,7 +1019,7 @@ The layer thickness $h$, vertical velocity $w$, pressure $p$, and tracer $\varph
 
 ## 12. Variable Definitions
 
-Table 1. Definition of variables. Geometric variables may be found in the [Omega V0 design document, Table 1](OmegaV0ShallowWater.md#Variable Definitions)
+Table 1. Definition of variables. Geometric variables may be found in the {ref}`Omega V0 design document, Table 1 <32-variable-definitions>`
 
 | symbol  | name   | units    | location | name in code | notes  |
 |---------------------|-----------------------------|----------|-|---------|-------------------------------------------------------|
@@ -1037,8 +1037,6 @@ Table 1. Definition of variables. Geometric variables may be found in the [Omega
 |$p^{floor}_i$ | bottom pressure | Pa | cell | PFloor | pressure at ocean floor
 |$p^{surf}_i$ | surface pressure | Pa | cell | PSurface | due to atm. pressure, sea ice, ice shelves
 |$q_{v,k}$ | potential vorticity         | 1/m/s    | vertex   | PotentialVorticity  |$q = \left(\zeta+f\right)/h$ |
-|$Q^h_{i,k}$ | mass source and sink terms| kg/s/m$^2$ | cell |   |
-|$Q^\varphi_{i,k}$ | tracer source and sink terms|kg/s/m$^2$ or similar| cell |   |
 |$Ra$      | Rayleigh drag coefficient   | 1/s      | constant |   |  |
 |$S_{i,k}$ | salinity | PSU | cell | Salinity | a tracer $\varphi$  |
 |$t$       | time    | s        | none     |   |  |
@@ -1046,13 +1044,16 @@ Table 1. Definition of variables. Geometric variables may be found in the [Omega
 |$u_{e,k}$   | velocity, normal to edge      | m/s      | edge     | NormalVelocity  | |
 |$u^\perp_{e,k}$   | velocity, tangential to edge      | m/s      | edge     | TangentialVelocity  |${\bf u}^\perp = {\bf k} \times {\bf u}$|
 |$\alpha_{i,k}$ | specific volume | m$^3$/kg | cell  | SpecificVolume | $v = 1/\rho$ |
-|$w_{i,k}$ | vertical velocity | m/s | cell  | VerticalVelocity | volume transport per m$^2$ |
-|$z$ | vertical coordinate | m | - | | positive upward |
-|$z^{top}_{i,k}$ | layer top z-location | m | cell | ZTop | see [](discrete-z) |
-|$z^{mid}_{i,k}$ | layer mid-depth z-location | m | cell | ZMid |
-|$z^{surf}_{i}$ | ocean surface, i.e. sea surface height  | m | cell | ZSurface | same as SSH in MPAS-Ocean |
-|$z^{floor}_{i}$ | ocean floor z-location | m | cell | ZFloor | -bottomDepth from MPAS-Ocean |
+|$\tilde{w}_{i,k}$ | vertical velocity across a pseudo height surface | m/s | cell  | VerticalVelocity | volume transport per m$^2$ |
+|$\tilde{u}_{i,k}$ | projection of normal velocity across a pseudo height surface | m/s | cell | | |
+|$\tilde{W}_{i,k}$ | projected velocity $\tilde{W}_{i,k} \equiv $\tilde{w}_{i,k} - \tilde{u}_{i,k} | m/s | cell | | |
+|$\tilde{z}$ | vertical coordinate | m | - | | positive upward |
+|$\tilde{z}^{top}_{i,k}$ | layer top z-location | m | cell | ZTop | see [](discrete-z) |
+|$\tilde{z}^{mid}_{i,k}$ | layer mid-depth z-location | m | cell | ZMid |
+|$\tilde{z}^{surf}_{i}$ | ocean surface, i.e. sea surface height  | m | cell | ZSurface | same as SSH in MPAS-Ocean |
+|$\tilde{z}^{floor}_{i}$ | ocean floor z-location | m | cell | ZFloor | -bottomDepth from MPAS-Ocean |
 |$\zeta_{v,k}$   | relative vorticity| 1/s      | vertex   |  RelativeVorticity |$\zeta={\bf k} \cdot \left( \nabla \times {\bf u}\right)$ |
+|$\zeta_a$ | absolute vorticity ($\zeta + f$) | 1/s | vertex | |
 |$\Theta_{i,k}$ | conservative temperature | C | cell  | Temperature  | a tracer $\varphi$ |
 |$\kappa_2$| tracer diffusion  | m$^2$/s    | cell     |   |  |
 |$\kappa_4$| biharmonic tracer diffusion | m$^4$/s    | cell     |   |  |
@@ -1063,10 +1064,10 @@ Table 1. Definition of variables. Geometric variables may be found in the [Omega
 |$\nu_v$| vertical momentum diffusion | m$^2$/s    | edge       |   |  |
 |$\varphi_{i,k}$ | tracer | kg/m$^3$ or similar | cell | | e.g. $\Theta$, $S$ |
 |$\rho_{i,k}$ | density | kg/m$^3$ | cell  | Density |
-|$\rho_0$ | Boussinesq reference density | kg/m$^3$ | |  constant |
+|$\rho_0$ | Reference density | kg/m$^3$ | |  constant |
 |$\tau_i$ | wind stress | Pa=N/m$^2$ | edge |  SurfaceStress |
 |$\Phi_{i,k}$ | geopotential| | cell | Geopotential |$\partial \Phi / \partial z = g$ for gravity |
-|$\omega$   | mass transport | kg/s/m^2      | cell | VerticalTransport |$\omega=\rho w$|
+|$\omega$   | mass transport | kg/s/m^2      | cell | VerticalTransport |$\omega=\rho_0 w$|
 
 
 ## 13. Verification and Testing

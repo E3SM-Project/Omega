@@ -191,6 +191,7 @@ $$
 \mathcal{F}_e =  C_W \frac{(u_W - u_e)\left|u_W - u_e\right|}{[h_i]_e}
 $$
 
+(32-variable-definitions)=
 ### 3.2 Variable Definitions
 
 Table 1. Definition of variables
@@ -273,12 +274,12 @@ The definitions of geometric variables may be found in
 [Ringler et al. 2010](https://www.sciencedirect.com/science/article/pii/S0021999109006780), and
 [Thuburn and Cotter 2012](https://epubs.siam.org/doi/10.1137/110850293).
 
-(32-operator-formulation)=
-### 3.2 Operator Formulation
+(33-operator-formulation)=
+### 3.3 Operator Formulation
 
 The TRiSK formulation of the discrete operators are as follows. See [Bishnu et al. 2023](https://gmd.copernicus.org/articles/16/5539/2023) section 4.1 and Figure 1 for a description and documentation of convergence rates, as well as [Bishnu et al. 2021](https://doi.org/10.5281/zenodo.7439539). All TRiSK spatial operators show second-order convergence on a uniform hexagon grid, except for the curl on vertices, which is first order. The curl interpolated from vertices to cell centers regains second order convergence. The rates of convergence are typically less than second order on nonuniform meshes, including spherical meshes.
 
-#### 3.2.1 Divergence
+#### 3.3.1 Divergence
 The divergence operator maps a vector field's edge normal component $F_e$ to a cell center ([Ringler et al. 2010](https://www.sciencedirect.com/science/article/pii/S0021999109006780) eqn 21),
 
 $$
@@ -302,7 +303,7 @@ D_i
 $$
 
 
-#### 3.2.2 Gradient
+#### 3.3.2 Gradient
 
 The gradient operator maps a cell-centered scalar to an edge-normal vector component
 ([Ringler et al. 2010](https://www.sciencedirect.com/science/article/pii/S0021999109006780) eqn 22),
@@ -322,7 +323,7 @@ $$
 $$
 where $\left\{i_1, i_2\right\}$ are the cells neighboring edge $e$.  The indices $\left\{i_1, i_2\right\}$ are ordered such that the normal vector ${\bf n}$ points from cell $i_1$ to cell $i_2$. In the code ${\bf n}$ points from `CellsOnEdge(IEdge, 0)` to `CellsOnEdge(IEdge, 1)`.
 
-#### 3.2.3 Curl
+#### 3.3.3 Curl
 The curl operator maps a vector's edge normal component $u_e$ to a scalar field at vertex
 ([Ringler et al. 2010](https://www.sciencedirect.com/science/article/pii/S0021999109006780) eqn 23),
 
@@ -337,7 +338,7 @@ where ${\hat A}_v$ is the area of the dual mesh cell $v$, i.e. the triangle surr
 ${\bf x}_v$, then $t_{e,v}=1$. The summation is over $e\in EV(v)$, which are the edges that terminate at vertex $v$. There are *always* three edges that terminate at each vertex for Voronoi Tessellations, and four edges on each vertex for quadrilateral meshes, unless neighboring cells are missing for land boundaries. Again, the subscript $v$ is dropped and a vertex is assumed for the location of the curl.
 
 
-#### 3.2.4 Perpendicular vector component
+#### 3.3.4 Perpendicular vector component
 
 The perpendicular component a vector field is defined as
 $$
@@ -370,7 +371,7 @@ u_e^\perp = \sum_{e'\in ECP(e)} {\tilde w}_{e,e'} \, u_{e'}.
 $$
 This simple operation can be seen in MPAS-Ocean in the subroutine `ocn_diagnostic_solve_vortVel` in the file `mpas_ocn_diagnostics.F`.
 
-#### 3.2.5 Perpendicular Gradient
+#### 3.3.5 Perpendicular Gradient
 The gradient of a scalar at the middle of an edge, pointing tangentially along the edge (from one vertex to the other), is sometimes used. For example, the del2 formulation requires the perpendicular gradient of vorticity. This is called the perpendicular gradient because the standard gradient is normal to the edge.
 
 The perpendicular gradient maps a scalar at vertices to an edge-tangential vector component,
@@ -383,21 +384,21 @@ $$
 $$
 where the positive vector ${\bf n}^\perp$ is 90$^o$ to the left of ${\bf n}$. The indices are ordered such that ${\bf n}^\perp$ points from $v_1$ to $v_2$, which corresponds to `VerticesOnEdge(IEdge, 0)` and `VerticesOnEdge(IEdge, 1)` in the code.
 
-#### 3.2.6 Cell to Edge Interpolation
+#### 3.3.6 Cell to Edge Interpolation
 The mid-point average of a scalar from cell centers to the adjoining edge is
 $$
 [h_i]_e = \frac{1}{2} \sum_{i\in CE(e)} h_i.
 $$
 In a Voronoi tessellation the edge is defined to be at the mid-point between the two cell centers, so this formula is identical to an area-weighted average using the triangles between edge $e$ and the neighboring cell centers.
 
-#### 3.2.7 Vertex to Edge Interpolation
+#### 3.3.7 Vertex to Edge Interpolation
 The mid-point average of a scalar from vertices to the middle of the connecting edge is
 $$
 [\zeta_v]_e = \frac{1}{2} \sum_{v\in VE(e)} \zeta_v.
 $$
 The is a distance-weighted average, since the edge quantity lives at the mid-point between the vertices. One could alternatively compute an area-weighted average using the dual-mesh cell area ${\hat A}_v$ surrounding each vertex, but that is not done and would result in very small differences.
 
-#### 3.2.8 Cell to Vertex Interpolation
+#### 3.3.8 Cell to Vertex Interpolation
 The area-weighted average of a scalar at a vertex from the three surrounding cells is
 $$
 [h_i]_v = \frac{1}{{\hat A}_v} \sum_{i\in CV(v)} h_i {\tilde A}_{v,i}.
@@ -408,22 +409,22 @@ $$
 {\hat A}_v = \sum_{i\in CV(v)} {\tilde A}_{v,i}.
 $$
 
-#### 3.2.9 Vertex to Cell Interpolation
+#### 3.3.9 Vertex to Cell Interpolation
 The area-weighted average of a scalar at a cell from the surrounding vertices is
 $$
 [h_v]_i = \frac{1}{A_i} \sum_{v\in VC(i)} h_v {\tilde A}_{v,i}
 $$
 
-#### 3.2.10 Vector from Edge to Cell
+#### 3.3.10 Vector from Edge to Cell
 
 The prognostic velocity variable on the edge is the edge normal velocity, $u_e$. The tangential velocity $u_e^\perp$ is computed diagnostically from $u_e$. In addition, the full vector may be computed at the cell center from the edge normal velocities $u_e$ of the edges on that cell. That is done in MPAS with radial basis functions, and is explained in this [previous design document](https://github.com/MPAS-Dev/MPAS-Documents/blob/master/shared/rbf_design/rbf.pdf).
 
-(33-momentum-terms)=
-### 3.3 Momentum Terms
+(34-momentum-terms)=
+### 3.4 Momentum Terms
 
 The computation of each term in (4-6) is now described in detail, along with alternative formulations.
 
-#### 3.3.1 Kinetic energy gradient
+#### 3.4.1 Kinetic energy gradient
 
 The kinetic energy gradient term is the non-rotational part of the nonlinear advection. Fundamentally, it maps the prognostic edge-normal velocity from edges back to an edge scalar quantity. We use the standard gradient formulation from cell center to edge,
 
@@ -466,7 +467,7 @@ $$
 for the final kinetic energy at the cell center. Note that addition of $[K_v]_i$ enlarges the stencil. One could also use $u_e^{\perp}$ and compute the kinetic energy at the edge itself in order to enlarge the stencil, but that method is not used here.
 See [Calandrini et al. 2021](https://www.sciencedirect.com/science/article/pii/S146350032100161X) section 2.3 for more information.
 
-#### 3.3.2 Potential vorticity term
+#### 3.4.2 Potential vorticity term
 
 The potential vorticity term, $q\left(h\boldsymbol{u}^{\perp}\right)$, includes the rotational part of the advection. It may be computed in two ways,
 
@@ -480,7 +481,7 @@ $$
 
 The first computes the potential vorticity $q_v$ at the vertex and interpolates that quantity to the edge, which is what is done in MPAS-Ocean. One may also cancel the thickness $h$ (ignoring the interpolated locations) and use option 2. Additional interpolation options and results are presented in [Calandrini et al. 2021](https://www.sciencedirect.com/science/article/pii/S146350032100161X)
 
-#### 3.3.3 Sea surface height gradient
+#### 3.4.3 Sea surface height gradient
 The sea surface height (SSH) gradient uses the standard gradient formulation from cell center to edge,
 
 $$
@@ -488,8 +489,8 @@ $$
 &= -g\frac{(h_{i2}-b_{i2}) - (h_{i1}-b_{i1}) }{d_e}.
 $$
 
-(334-del2-momentum-dissipation)=
-#### 3.3.4 Del2 momentum dissipation
+(344-del2-momentum-dissipation)=
+#### 3.4.4 Del2 momentum dissipation
 The Del2, or Laplacian operator, viscous momentum dissipation maps edge-normal velocity back to the edge-normal component of the Laplacian. In TRiSK this is done with the vorticity-divergence formulation, which may be written as
 
 $$
@@ -511,39 +512,39 @@ where the ordering of indices $\{i_i, i_2\}$ and $\{v_1, v_2\}$ are explained in
 An alternative formulation for the Del2 dissipation on an unstructured mesh is presented in section 4.2 and Appendix B of
 [Gassman 2018](https://onlinelibrary.wiley.com/doi/10.1002/qj.3294).
 
-(335-del4-momentum-dissipation)=
-#### 3.3.5 Del4 momentum dissipation
+(345-del4-momentum-dissipation)=
+#### 3.4.5 Del4 momentum dissipation
 The Del4, or biharmonic, momentum dissipation also maps edge-normal velocity back to the edge-normal component of the Laplacian. This is done with two applications of the Del2 operator above.
 
 $$
 - \nu_4 \nabla^4 u_e = - \nu_4 \nabla^2 \left( \nabla^2 u_e \right)
 $$
 
-#### 3.3.6 Rayleigh Drag
+#### 3.4.6 Rayleigh Drag
 Rayleigh drag is simply linear drag, applied to all levels. It is typically only used during the spin-up process to damp large velocities during the initial adjustment. The Rayleigh coefficient $Ra$ is simply a scalar constant,
 
 $$
 - Ra \: u_e.
 $$
 
-#### 3.3.7 Bottom drag
+#### 3.4.7 Bottom drag
 Bottom drag is more relevant to layered models than to shallow water systems, but is included here for completeness. It is a quadratic drag applied to the edge velocity,
 
 $$
 - C_D \frac{u_e\left|u_e\right|}{[h_i]_e}.
 $$
 
-#### 3.3.8 Wind forcing
+#### 3.4.8 Wind forcing
 Wind forcing has the same form as the bottom drag, but the forcing is the difference between the current velocity and the wind $u_W$, interpolated and projected to the edge normal direction,
 
 $$
 - C_W \frac{(u_W - u_e)\left|u_W - u_e\right|}{[h_i]_e}.
 $$
 
-(34-thickness-and-tracer-terms)=
-### 3.4 Thickness and Tracer Terms
+(35-thickness-and-tracer-terms)=
+### 3.5 Thickness and Tracer Terms
 
-#### 3.4.1 Tracer advection
+#### 3.5.1 Tracer advection
 
 There are many schemes available for tracer advection. Simple schemes include centered advection and upstream. MPAS-Ocean uses Flux Corrected Transport, which is fourth order under normal conditions, and reduces to third order to preserve monotonicity.
 
@@ -562,8 +563,8 @@ Note that the thickness advection is identical to the tracer advection when $\ph
 
 More details of the tracer advection scheme will be given in a future design document.
 
-(342-del2-tracer-diffusion)=
-#### 3.4.2 Del2 tracer diffusion
+(352-del2-tracer-diffusion)=
+#### 3.5.2 Del2 tracer diffusion
 Tracer diffusion is applied with a Laplacian operator on the cell-centered tracer phi, and the product of the operator is also at the cell center. The Laplacian may be written as the divergence of the gradient,
 
 $$
@@ -572,7 +573,7 @@ $$
 \kappa_2 h_i \nabla \cdot \left( \nabla \phi_i \right).
 $$
 
-and the stencils in Section 3.2 are used. Here $\kappa_2$ is the del2 diffusion coefficient, and the operator is thickness-weighted by $h_i$. The position of a gradient is assumed to be at an edge, and a divergence at the cell center. This could be written explicitly as
+and the stencils in Section 3.3 are used. Here $\kappa_2$ is the del2 diffusion coefficient, and the operator is thickness-weighted by $h_i$. The position of a gradient is assumed to be at an edge, and a divergence at the cell center. This could be written explicitly as
 
 $$
 \kappa_2 h_i \left( \nabla^2 \phi_i \right)_i
@@ -580,8 +581,8 @@ $$
 \kappa_2 h_i \left( \nabla \cdot \left( \nabla \phi_i \right)_e \right)_i.
 $$
 
-(343-del4-tracer-diffusion)=
-#### 3.4.3 Del4 tracer diffusion
+(353-del4-tracer-diffusion)=
+#### 3.5.3 Del4 tracer diffusion
 The del4 tracer diffusion is simply the Laplacian operator applied twice,
 
 $$
@@ -589,7 +590,7 @@ $$
 =
 - \kappa_4 h_i \nabla^2 \left( \nabla^2 \phi_i \right).
 $$
-The del2 operator using the divergence of the gradient in the last section is used, with the simple stencils from Section 3.2.
+The del2 operator using the divergence of the gradient in the last section is used, with the simple stencils from Section 3.3.
 
 ## 4 Design
 
