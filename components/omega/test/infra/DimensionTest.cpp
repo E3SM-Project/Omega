@@ -18,6 +18,7 @@
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OmegaKokkos.h"
+#include "Pacer.h"
 #include "mpi.h"
 
 #include <memory>
@@ -36,7 +37,9 @@ int initDimensionTest() {
    MachEnv *DefEnv = MachEnv::getDefault();
    initLogging(DefEnv);
    MPI_Comm DefComm = DefEnv->getComm();
-   Err              = IO::init(DefComm);
+   Pacer::initialize(DefComm);
+   Pacer::setPrefix("Omega:");
+   Err = IO::init(DefComm);
    if (Err != 0) {
       LOG_ERROR("IO initialization failed");
       return Err;

@@ -109,11 +109,7 @@ int initStateTest() {
    Tendencies::init();
 
    // Finish time stepper initialization
-   Err = TimeStepper::init2();
-   if (Err != 0) {
-      LOG_CRITICAL("State: Error phase 2 initializing default time stepper");
-      return Err;
-   }
+   TimeStepper::init2();
 
    // Create a default ocean state
    Err = OceanState::init();

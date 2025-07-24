@@ -87,7 +87,7 @@ class TimeStepper {
    static void init1();
 
    /// 2nd phase of Initialization for the default time stepper
-   static int init2();
+   static void init2();
 
    /// Create a time stepper when all components are known
    static TimeStepper *

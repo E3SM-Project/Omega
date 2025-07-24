@@ -36,6 +36,8 @@ void ForwardBackwardStepper::doStep(
    Array3DReal CurTracerArray, NextTracerArray;
    Err = Tracers::getAll(CurTracerArray, CurLevel);
    Err = Tracers::getAll(NextTracerArray, NextLevel);
+   if (Err != 0)
+      ABORT_ERROR("ForwardBackward doStep: error retrieving tracers");
 
    if (State == nullptr)
       LOG_CRITICAL("Invalid State");
@@ -70,7 +72,7 @@ void ForwardBackwardStepper::doStep(
    Tracers::updateTimeLevels();
 
    // Advance the clock and update the simulation time
-   Err     = StepClock->advance();
+   StepClock->advance();
    SimTime = StepClock->getCurrentTime();
 }
 

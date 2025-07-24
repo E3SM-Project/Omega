@@ -13,6 +13,7 @@
 
 #include "TimeMgr.h"
 #include "DataTypes.h"
+#include "Error.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "mpi.h"
@@ -22,14 +23,12 @@ using namespace OMEGA;
 //------------------------------------------------------------------------------
 // TimeFrac test
 
-int testTimeFrac(void) {
+void testTimeFrac(void) {
 
    LOG_INFO("TimeMgrTest: TimeFrac tests ------------------------------------");
 
    // Initialize error codes
-   I4 Err1{0};
-   I4 Err2{0};
-   I4 ErrAll{0};
+   Error ErrAll;
 
    // Initialize some reference values for the fractional
    // representation of 2 1/3 seconds.
@@ -47,171 +46,134 @@ int testTimeFrac(void) {
    // Also implicitly tests one form of the get routine.
 
    TimeFrac RefTF;
+   RefTF.get(WTst, NTst, DTst);
 
-   Err1 = RefTF.get(WTst, NTst, DTst);
-
-   if (Err1 == 0 && WTst == 0 && NTst == 0 && DTst == 1) {
-      LOG_INFO("TimeMgrTest/TimeFrac: default constructor and get: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: default constructor or get: FAIL");
-   }
+   if (WTst != 0 or NTst != 0 or DTst != 1)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeFrac: default constructor or get: FAIL");
 
    // Test set/get by each component to set reference values
+   // Also tests equivalence and non-equivalence
 
-   Err1 = RefTF.setWhole(WRef);
-   if (Err1 != 0) {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: setWhole: FAIL");
-   }
-   Err1 = RefTF.setNumer(NRef);
-   if (Err1 != 0) {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: setNumer: FAIL");
-   }
-   Err1 = RefTF.setDenom(DRef);
-   if (Err1 != 0) {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: setDenom: FAIL");
-   }
+   RefTF.setWhole(WRef);
+   RefTF.setNumer(NRef);
+   RefTF.setDenom(DRef);
 
    WTst = RefTF.getWhole();
    NTst = RefTF.getNumer();
    DTst = RefTF.getDenom();
 
-   if (WTst == WRef) {
-      LOG_INFO("TimeMgrTest/TimeFrac: setWhole/getWhole: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: setWhole/getWhole: FAIL");
-   }
+   if (WTst != WRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeFrac: setWhole/getWhole: FAIL");
 
-   if (NTst == NRef) {
-      LOG_INFO("TimeMgrTest/TimeFrac: setNumer/getNumer: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: setNumer/getNumer: FAIL");
-   }
+   if (NTst != NRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeFrac: setNumer/getNumer: FAIL");
 
-   if (DTst == DRef) {
-      LOG_INFO("TimeMgrTest/TimeFrac: setDenom/getDenom: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: setDenom/getDenom: FAIL");
-   }
+   if (DTst != DRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeFrac: setDenom/getDenom: FAIL");
 
    // Test component constructor
 
    TimeFrac Tst1TF(WRef, NRef, DRef);
+   Tst1TF.get(WTst, NTst, DTst);
 
-   Err1 = Tst1TF.get(WTst, NTst, DTst);
-
-   if (Err1 == 0 && WTst == WRef && NTst == NRef && DTst == DRef) {
-      LOG_INFO("TimeMgrTest/TimeFrac: component constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: component constructor: FAIL");
-   }
+   if (WTst != WRef or NTst != NRef or DTst != DRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeFrac: component constructor: FAIL");
 
    // Can now test equivalence operator
 
    if (Tst1TF == RefTF) {
-      LOG_INFO("TimeMgrTest/TimeFrac: operator(==): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: operator(==): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: operator(==): FAIL");
    }
 
    // Test unified set call
 
-   Err1 = Tst1TF.set(0, 0, 1);
+   Tst1TF.set(0, 0, 1);
    WTst = Tst1TF.getWhole();
    NTst = Tst1TF.getNumer();
    DTst = Tst1TF.getDenom();
 
-   if (Err1 == 0 && WTst == 0 && NTst == 0 && DTst == 1) {
-      LOG_INFO("TimeMgrTest/TimeFrac: unified set: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: unified set: FAIL");
-   }
+   if (WTst != 0 or NTst != 0 or DTst != 1)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: unified set: FAIL");
 
    // Test non-equivalence
 
    if (Tst1TF != RefTF) {
-      LOG_INFO("TimeMgrTest/TimeFrac: operator(!=): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: operator(!=): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: operator(!=): FAIL");
    }
 
    // Test < operator (and < part of <= operator)
 
    if (Tst1TF < RefTF) {
-      LOG_INFO("TimeMgrTest/TimeFrac: operator(<): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: operator(<): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: operator(<): FAIL");
    }
 
    if (Tst1TF <= RefTF) {
-      LOG_INFO("TimeMgrTest/TimeFrac: operator(<=): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: operator(<=): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: operator(<=): FAIL");
    }
 
    // Test > operator (and > part of >= operator)
 
    if (RefTF > Tst1TF) {
-      LOG_INFO("TimeMgrTest/TimeFrac: operator(>): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: operator(>): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: operator(>): FAIL");
    }
 
    if (RefTF >= Tst1TF) {
-      LOG_INFO("TimeMgrTest/TimeFrac: operator(>=): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: operator(>=): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: operator(>=): FAIL");
    }
 
    // Test assignment operator and = part of above comparisons
 
    Tst1TF = RefTF;
 
-   if (Tst1TF == RefTF) {
-      LOG_INFO("TimeMgrTest/TimeFrac: assignment operator: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: assignment operator: FAIL");
-   }
+   if (Tst1TF != RefTF)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeFrac: assignment operator: FAIL");
 
    if (Tst1TF <= RefTF) {
-      LOG_INFO("TimeMgrTest/TimeFrac: operator(<=): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: operator(<=): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: operator(<=): FAIL");
    }
 
    if (RefTF >= Tst1TF) {
-      LOG_INFO("TimeMgrTest/TimeFrac: operator(>=): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: operator(>=): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: operator(>=): FAIL");
    }
 
    // Test copy constuctor
 
    TimeFrac Tst2TF(RefTF);
 
-   if (Tst2TF == RefTF) {
-      LOG_INFO("TimeMgrTest/TimeFrac: copy constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: copy constructor: FAIL");
-   }
+   if (Tst2TF != RefTF)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeFrac: copy constructor: FAIL");
 
    // Test addition
 
@@ -221,14 +183,10 @@ int testTimeFrac(void) {
    TimeFrac Tst3TF;
    Tst3TF = Tst1TF + Tst2TF;
 
-   Err1 = Tst3TF.get(WTst, NTst, DTst);
+   Tst3TF.get(WTst, NTst, DTst);
 
-   if (Err1 == 0 && WTst == 3 && NTst == 13 && DTst == 15) {
-      LOG_INFO("TimeMgrTest/TimeFrac: addition: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: addition: FAIL");
-   }
+   if (WTst != 3 or NTst != 13 or DTst != 15)
+      ErrAll += Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: addition: FAIL");
 
    // Test increment
 
@@ -238,14 +196,10 @@ int testTimeFrac(void) {
    Tst3TF = Tst1TF;
    Tst3TF += Tst2TF;
 
-   Err1 = Tst3TF.get(WTst, NTst, DTst);
+   Tst3TF.get(WTst, NTst, DTst);
 
-   if (Err1 == 0 && WTst == 3 && NTst == 13 && DTst == 15) {
-      LOG_INFO("TimeMgrTest/TimeFrac: increment: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: increment: FAIL");
-   }
+   if (WTst != 3 or NTst != 13 or DTst != 15)
+      ErrAll += Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: increment: FAIL");
 
    // Test subtraction
 
@@ -254,14 +208,11 @@ int testTimeFrac(void) {
 
    Tst3TF = Tst1TF - Tst2TF;
 
-   Err1 = Tst3TF.get(WTst, NTst, DTst);
+   Tst3TF.get(WTst, NTst, DTst);
 
-   if (Err1 == 0 && WTst == 1 && NTst == 7 && DTst == 15) {
-      LOG_INFO("TimeMgrTest/TimeFrac: subtraction: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: subtraction: FAIL");
-   }
+   if (WTst != 1 or NTst != 7 or DTst != 15)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: subtraction: FAIL");
 
    // Test decrement
 
@@ -271,14 +222,10 @@ int testTimeFrac(void) {
    Tst3TF = Tst1TF;
    Tst3TF -= Tst2TF;
 
-   Err1 = Tst3TF.get(WTst, NTst, DTst);
+   Tst3TF.get(WTst, NTst, DTst);
 
-   if (Err1 == 0 && WTst == 1 && NTst == 7 && DTst == 15) {
-      LOG_INFO("TimeMgrTest/TimeFrac: decrement: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: decrement: FAIL");
-   }
+   if (WTst != 1 or NTst != 7 or DTst != 15)
+      ErrAll += Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: decrement: FAIL");
 
    // Test multiply by int functions
 
@@ -289,21 +236,15 @@ int testTimeFrac(void) {
    Tst2TF = Tst1TF * ITst;
    Tst3TF *= ITst;
 
-   Err1 = Tst2TF.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 13 && NTst == 1 && DTst == 3) {
-      LOG_INFO("TimeMgrTest/TimeFrac: int multiply: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: int multiply: FAIL");
-   }
+   Tst2TF.get(WTst, NTst, DTst);
+   if (WTst != 13 or NTst != 1 or DTst != 3)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: int multiply: FAIL");
 
-   Err1 = Tst3TF.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 13 && NTst == 1 && DTst == 3) {
-      LOG_INFO("TimeMgrTest/TimeFrac: int multiply in place: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: int multiply in place: FAIL");
-   }
+   Tst3TF.get(WTst, NTst, DTst);
+   if (WTst != 13 or NTst != 1 or DTst != 3)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeFrac: int multiply in place: FAIL");
 
    // Test multiply by real functions
 
@@ -314,21 +255,15 @@ int testTimeFrac(void) {
    Tst2TF = Tst1TF * RTst;
    Tst3TF *= RTst;
 
-   Err1 = Tst2TF.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 20 && NTst == 2 && DTst == 15) {
-      LOG_INFO("TimeMgrTest/TimeFrac: real multiply: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: real multiply: FAIL");
-   }
+   Tst2TF.get(WTst, NTst, DTst);
+   if (WTst != 20 or NTst != 2 or DTst != 15)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: real multiply: FAIL");
 
-   Err1 = Tst3TF.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 20 && NTst == 2 && DTst == 15) {
-      LOG_INFO("TimeMgrTest/TimeFrac: real multiply in place: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: real multiply in place: FAIL");
-   }
+   Tst3TF.get(WTst, NTst, DTst);
+   if (WTst != 20 or NTst != 2 or DTst != 15)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeFrac: real multiply in place: FAIL");
 
    // Test divide by int functions
 
@@ -339,21 +274,14 @@ int testTimeFrac(void) {
    Tst2TF = Tst1TF / WTst;
    Tst3TF /= WTst;
 
-   Err1 = Tst2TF.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 0 && NTst == 8 && DTst == 15) {
-      LOG_INFO("TimeMgrTest/TimeFrac: divide: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: divide: FAIL");
-   }
+   Tst2TF.get(WTst, NTst, DTst);
+   if (WTst != 0 or NTst != 8 or DTst != 15)
+      ErrAll += Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: divide: FAIL");
 
-   Err1 = Tst3TF.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 0 && NTst == 8 && DTst == 15) {
-      LOG_INFO("TimeMgrTest/TimeFrac: divide in place: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: divide in place: FAIL");
-   }
+   Tst3TF.get(WTst, NTst, DTst);
+   if (WTst != 0 or NTst != 8 or DTst != 15)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: divide in place: FAIL");
 
    // Test divide fractions
 
@@ -362,12 +290,9 @@ int testTimeFrac(void) {
 
    RTst = Tst1TF / Tst2TF;
 
-   if (fabs(RTst - 0.8333333333333333) < 1.e-15) {
-      LOG_INFO("TimeMgrTest/TimeFrac: divide fractions: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: divide fractions: FAIL");
-   }
+   if (fabs(RTst - 0.8333333333333333) > 1.e-15)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeFrac: divide fractions: FAIL");
 
    // Test modulo functions
 
@@ -377,21 +302,14 @@ int testTimeFrac(void) {
    Tst3TF = Tst1TF % Tst2TF;
    Tst1TF %= Tst2TF;
 
-   Err1 = Tst3TF.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 0 && NTst == 98 && DTst == 171) {
-      LOG_INFO("TimeMgrTest/TimeFrac: modulo: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: modulo: FAIL");
-   }
+   Tst3TF.get(WTst, NTst, DTst);
+   if (WTst != 0 or NTst != 98 or DTst != 171)
+      ErrAll += Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: modulo: FAIL");
 
-   Err1 = Tst1TF.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 0 && NTst == 98 && DTst == 171) {
-      LOG_INFO("TimeMgrTest/TimeFrac: modulo in place: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: modulo in place: FAIL");
-   }
+   Tst1TF.get(WTst, NTst, DTst);
+   if (WTst != 0 or NTst != 98 or DTst != 171)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: modulo in place: FAIL");
 
    // Test get/set for integer hour, minute, second interfaces
 
@@ -402,15 +320,12 @@ int testTimeFrac(void) {
    I4 MTst{0};
    I4 STst{0};
 
-   Err1 = Tst1TF.setHMS(HRef, MRef, SRef);
-   Err2 = Tst1TF.getHMS(HTst, MTst, STst);
+   Tst1TF.setHMS(HRef, MRef, SRef);
+   Tst1TF.getHMS(HTst, MTst, STst);
 
-   if (Err1 == 0 && Err2 == 0 && HTst == 14 && MTst == 27 && STst == 36) {
-      LOG_INFO("TimeMgrTest/TimeFrac: getHMS/setHMS: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: getHMS/setHMS: FAIL");
-   }
+   if (HTst != 14 or MTst != 27 or STst != 36)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: getHMS/setHMS: FAIL");
 
    // Test real hour minute second interfaces
    // First test real seconds.
@@ -418,106 +333,81 @@ int testTimeFrac(void) {
    RRef = 7.8;
    RTst = 0.0;
 
-   Err1 = Tst1TF.setSeconds(RRef);
+   Tst1TF.setSeconds(RRef);
    RTst = Tst1TF.getSeconds();
-   Err2 = Tst1TF.get(WTst, NTst, DTst);
+   Tst1TF.get(WTst, NTst, DTst);
 
-   if (Err1 == 0 && Err2 == 0 && fabs(RTst - RRef) < 1.e-15 && WTst == 7 &&
-       NTst == 4 && DTst == 5) {
-      LOG_INFO("TimeMgrTest/TimeFrac: get/set real seconds: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: get/set real seconds: FAIL");
-   }
+   if (fabs(RTst - RRef) > 1.e-15 or WTst != 7 or NTst != 4 or DTst != 5)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeFrac: get/set real seconds: FAIL");
 
    // Test the related constructor from real seconds.
 
    TimeFrac Tst4TF(RRef);
 
-   if (Tst4TF == Tst1TF) {
-      LOG_INFO("TimeMgrTest/TimeFrac: real seconds constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: real seconds constructor: FAIL");
-   }
+   if (Tst4TF != Tst1TF)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeFrac: real seconds constructor: FAIL");
 
    // Test real hours.
 
    RRef = 3.55;
    RTst = 0.0;
 
-   Err1 = Tst1TF.setHours(RRef);
+   Tst1TF.setHours(RRef);
    RTst = Tst1TF.getHours();
-   Err2 = Tst1TF.get(WTst, NTst, DTst);
+   Tst1TF.get(WTst, NTst, DTst);
 
-   if (Err1 == 0 && Err2 == 0 && fabs(RTst - RRef) < 1.e-15 && WTst == 12780 &&
-       NTst == 0 & DTst == 1) {
-      LOG_INFO("TimeMgrTest/TimeFrac: get/set real hours: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: get/set real hours: FAIL");
-   }
+   if (fabs(RTst - RRef) > 1.e-15 or WTst != 12780 or NTst != 0 or DTst != 1)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeFrac: get/set real hours: FAIL");
 
    // Test real minutes.
 
    RRef = 5.0875;
    RTst = 0.0;
 
-   Err1 = Tst1TF.setMinutes(RRef);
+   Tst1TF.setMinutes(RRef);
    RTst = Tst1TF.getMinutes();
-   Err2 = Tst1TF.get(WTst, NTst, DTst);
+   Tst1TF.get(WTst, NTst, DTst);
 
-   if (Err1 == 0 && Err2 == 0 && fabs(RTst - RRef) < 1.e-15 && WTst == 305 &&
-       NTst == 1 & DTst == 4) {
-      LOG_INFO("TimeMgrTest/TimeFrac: get/set real minutes: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: get/set real minutes: FAIL");
-   }
+   if (fabs(RTst - RRef) > 1.e-15 or WTst != 305 or NTst != 1 or DTst != 4)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeFrac: get/set real minutes: FAIL");
 
    // Test simplify function (not exhaustive test)
 
    Tst2TF.set(2, 5, 3);
-   Err2 = Tst2TF.simplify();
-   Err1 = Tst2TF.get(WTst, NTst, DTst);
+   Tst2TF.simplify();
+   Tst2TF.get(WTst, NTst, DTst);
 
-   if (Err1 == 0 && DTst == 3 && WTst == 3 && NTst == 2) {
-      LOG_INFO("TimeMgrTest/TimeFrac: simplify: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: simplify: FAIL");
-   }
+   if (DTst != 3 or WTst != 3 or NTst != 2)
+      ErrAll += Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: simplify: FAIL");
 
    // Test convert function
 
    Tst2TF.set(2, 5, 3);
    DTst = 15;
-   Err1 = Tst2TF.convert(DTst);
-   Err2 = Tst2TF.get(WTst, NTst, DTst);
+   Tst2TF.convert(DTst);
+   Tst2TF.get(WTst, NTst, DTst);
 
    // note that convert leaves an improper fraction - no simplify
-   if (Err1 == 0 && Err2 == 0 && DTst == 15 && WTst == 0 && NTst == 55) {
-      LOG_INFO("TimeMgrTest/TimeFrac: convert: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeFrac: convert: FAIL");
-   }
+   if (DTst != 15 or WTst != 0 or NTst != 55)
+      ErrAll += Error(ErrorCode::Fail, "TimeMgrTest/TimeFrac: convert: FAIL");
 
-   return ErrAll;
+   CHECK_ERROR_ABORT(ErrAll, "TimeFrac unit test: FAIL");
 
 } // end testTimeFrac
 
 //------------------------------------------------------------------------------
 // Calendar test
 
-int testCalendar(void) {
+void testCalendar(void) {
 
    LOG_INFO("TimeMgrTest: Calendar tests ------------------------------------");
 
    // Initialize error codes
-   I4 Err1{0};
-   I4 Err2{0};
-   I4 ErrAll{0};
+   Error ErrAll;
 
    // Test custom calendar
    // Also tests the get routine.
@@ -570,25 +460,17 @@ int testCalendar(void) {
    SecondsPerYear1     = Calendar::getSecondsPerYear();
    DaysPerYear1        = Calendar::getDaysPerYear();
 
-   if (Err1 != 0 || Kind1 != Kind0 || MonthsPerYear1 != MonthsPerYear0 ||
-       SecondsPerDay1 != SecondsPerDay0 || SecondsPerYear1 != SecondsPerYear0 ||
-       DaysPerYear1 != DaysPerYear0) {
-      Err2 = 1;
-   } else {
-      Err2 = 0;
-   }
-
+   int ErrSum = 0;
    for (int I = 0; I < MonthsPerYear0; I++) {
       if (DaysPerMonth0[I] != DaysPerMonth1[I])
-         Err2 = 1;
+         ErrSum++;
    }
 
-   if (Err2 == 0) {
-      LOG_INFO("TimeMgrTest/Calendar: custom constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: custom constructor: FAIL");
-   }
+   if (ErrSum != 0 or Kind1 != Kind0 or MonthsPerYear1 != MonthsPerYear0 or
+       SecondsPerDay1 != SecondsPerDay0 or SecondsPerYear1 != SecondsPerYear0 or
+       DaysPerYear1 != DaysPerYear0)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/Calender: custom constructor: FAIL");
 
    // Test a date in custom calendar (1957-10-4, 00:01:24.25)
    I8 TmpSeconds = (1957 * (I8)12400) + (9 * 10 + 4 - 1) * 100 + 60 + 24;
@@ -615,40 +497,24 @@ int testCalendar(void) {
    ChkTime =
        Calendar::getElapsedTime(TstYear, TstMonth, TstDay, TstHour, TstMinute,
                                 TstSecondW, TstSecondN, TstSecondD);
-   if (ChkTime == TstTime) {
-      LOG_INFO("TimeMgrTest/Calendar: convert custom date to "
-               "elapsed time: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: convert custom date to "
-                "elapsed time: FAIL");
-   }
+   if (ChkTime != TstTime)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: convert custom date to elapsed time: FAIL");
 
-   Err1 = Calendar::getDateTime(ChkTime, ChkYear, ChkMonth, ChkDay, ChkHour,
-                                ChkMinute, ChkSecondW, ChkSecondN, ChkSecondD);
-   if (Err1 == 0 && ChkYear == TstYear && ChkMonth == TstMonth &&
-       ChkDay == TstDay && ChkHour == TstHour && ChkMinute == TstMinute &&
-       ChkSecondW == TstSecondW && ChkSecondN == TstSecondN &&
-       ChkSecondD == TstSecondD) {
-      LOG_INFO("TimeMgrTest/Calendar: convert elapsed time to "
-               "Custom date: PASS");
+   Calendar::getDateTime(ChkTime, ChkYear, ChkMonth, ChkDay, ChkHour, ChkMinute,
+                         ChkSecondW, ChkSecondN, ChkSecondD);
+   if (ChkYear != TstYear or ChkMonth != TstMonth or ChkDay != TstDay or
+       ChkHour != TstHour or ChkMinute != TstMinute or
+       ChkSecondW != TstSecondW or ChkSecondN != TstSecondN or
+       ChkSecondD != TstSecondD)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: convert elapsed time to custom date: FAIL");
 
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: convert elapsed time to "
-                "Custom date: FAIL");
-   }
+   // Test validate (passes on successful return)
 
-   // Test validate
-
-   Err1 = CalCustom->validate();
-
-   if (Err1 == 0) {
-      LOG_INFO("TimeMgrTest/Calendar: validate: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: validate: FAIL");
-   }
+   CalCustom->validate();
 
    //------------------------
    // Test Gregorian calendar
@@ -700,75 +566,36 @@ int testCalendar(void) {
    SecondsPerYear1 = Calendar::getSecondsPerYear();
    DaysPerYear1    = Calendar::getDaysPerYear();
 
-   if (Kind1 != Kind0 || MonthsPerYear1 != MonthsPerYear0 ||
-       SecondsPerDay1 != SecondsPerDay0 || SecondsPerYear1 != SecondsPerYear0 ||
+   if (Kind1 != Kind0 or MonthsPerYear1 != MonthsPerYear0 or
+       SecondsPerDay1 != SecondsPerDay0 or SecondsPerYear1 != SecondsPerYear0 or
        DaysPerYear1 != DaysPerYear0)
-      Err1 = 1;
-
-   if (Err1 == 0) {
-      LOG_INFO("TimeMgrTest/Calendar: Gregorian constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: Gregorian constructor: FAIL");
-   }
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/Calendar: Gregorian constructor: FAIL");
 
    // Test leap year with a non-leap year
    TstYear = 1981;
-   if (!Calendar::isLeapYear(TstYear)) {
-      if (Err1 == 0) {
-         LOG_INFO("TimeMgrTest/Calendar: non-leap year Gregorian: PASS");
-      } else {
-         ++ErrAll;
-         LOG_ERROR("TimeMgrTest/Calendar: non-leap year Gregorian: FAIL");
-      }
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: non-leap year Gregorian: FAIL");
-   }
+   if (Calendar::isLeapYear(TstYear))
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/Calendar: non-leap year Gregorian: FAIL");
+
    // Test leap year with a leap year
    TstYear = 1984;
-   if (Calendar::isLeapYear(TstYear)) {
-      if (Err1 == 0) {
-         LOG_INFO("TimeMgrTest/Calendar: 1984 leap year Gregorian: PASS");
-      } else {
-         ++ErrAll;
-         LOG_ERROR("TimeMgrTest/Calendar: 1984 leap year Gregorian: FAIL");
-      }
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: 1984 leap year Gregorian: FAIL");
-   }
+   if (!Calendar::isLeapYear(TstYear))
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/Calendar: 1984 leap year Gregorian: FAIL");
+
    // Test special Gregorian leap year exceptions
    TstYear = 1900;
-   if (!Calendar::isLeapYear(TstYear)) {
-      if (Err1 == 0) {
-         LOG_INFO("TimeMgrTest/Calendar: leap year exception "
-                  "100 Gregorian: PASS");
-      } else {
-         ++ErrAll;
-         LOG_ERROR("TimeMgrTest/Calendar: leap year exception "
-                   "100 Gregorian: FAIL");
-      }
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: leap year exception "
-                "100 Gregorian: FAIL");
-   }
+   if (Calendar::isLeapYear(TstYear))
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: leap year exception 100 Gregorian: FAIL");
+
    TstYear = 2000;
-   if (Calendar::isLeapYear(TstYear)) {
-      if (Err1 == 0) {
-         LOG_INFO("TimeMgrTest/Calendar: leap year exception "
-                  "400 Gregorian: PASS");
-      } else {
-         ++ErrAll;
-         LOG_ERROR("TimeMgrTest/Calendar: leap year exception "
-                   "400 Gregorian: FAIL");
-      }
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: leap year exception "
-                "400 Gregorian: FAIL");
-   }
+   if (!Calendar::isLeapYear(TstYear))
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: leap year exception 400 Gregorian: FAIL");
 
    // Test calendar date to/from elapsed time conversion
    // This is not an exhaustive test - just testing a single time
@@ -776,7 +603,7 @@ int testCalendar(void) {
 
    // For Gregorian, check that Oct 4.81 1957 converts to the
    // Julian Day of 2436116.31 * SECONDS_PER_DAY for elapsed time
-   Err1       = TstTime.set(210480449184, 1, 4);
+   TstTime.set(210480449184, 1, 4);
    TstYear    = 1957;
    TstMonth   = 10;
    TstDay     = 4;
@@ -786,7 +613,7 @@ int testCalendar(void) {
    TstSecondN = 1;
    TstSecondD = 4;
 
-   Err1       = ChkTime.set(0, 0, 1);
+   ChkTime.set(0, 0, 1);
    ChkYear    = 0;
    ChkMonth   = 0;
    ChkDay     = 0;
@@ -800,29 +627,20 @@ int testCalendar(void) {
        Calendar::getElapsedTime(TstYear, TstMonth, TstDay, TstHour, TstMinute,
                                 TstSecondW, TstSecondN, TstSecondD);
 
-   if (ChkTime == TstTime) {
-      LOG_INFO("TimeMgrTest/Calendar: convert Gregorian date to "
-               "elapsed time: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: convert Gregorian date to "
-                "elapsed time: FAIL");
-   }
+   if (ChkTime != TstTime)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: convert Gregorian date to elapsed time: FAIL");
 
-   Err1 = Calendar::getDateTime(ChkTime, ChkYear, ChkMonth, ChkDay, ChkHour,
-                                ChkMinute, ChkSecondW, ChkSecondN, ChkSecondD);
-   if (Err1 == 0 && ChkYear == TstYear && ChkMonth == TstMonth &&
-       ChkDay == TstDay && ChkHour == TstHour && ChkMinute == TstMinute &&
-       ChkSecondW == TstSecondW && ChkSecondN == TstSecondN &&
-       ChkSecondD == TstSecondD) {
-      LOG_INFO("TimeMgrTest/Calendar: convert elapsed time to "
-               "Gregorian date: PASS");
-
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: convert elapsed time to "
-                "Gregorian date: FAIL");
-   }
+   Calendar::getDateTime(ChkTime, ChkYear, ChkMonth, ChkDay, ChkHour, ChkMinute,
+                         ChkSecondW, ChkSecondN, ChkSecondD);
+   if (ChkYear != TstYear or ChkMonth != TstMonth or ChkDay != TstDay or
+       ChkHour != TstHour or ChkMinute != TstMinute or
+       ChkSecondW != TstSecondW or ChkSecondN != TstSecondN or
+       ChkSecondD != TstSecondD)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: convert elapsed time to Gregorian date: FAIL");
 
    // Test calendar date increment function
    // Check normal year increment/decrement
@@ -834,15 +652,11 @@ int testCalendar(void) {
    ChkMonth = 6;
    ChkDay   = 15;
 
-   Err1 =
-       CalGreg->incrementDate(2, TimeUnits::Years, TstYear, TstMonth, TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: increment Gregorian date by year: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: increment Gregorian date by year: FAIL");
-   }
+   CalGreg->incrementDate(2, TimeUnits::Years, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/Calendar: increment Gregorian date by year: FAIL");
 
    // Check normal month increment/decrement
    TstYear  = 1984;
@@ -852,16 +666,11 @@ int testCalendar(void) {
    ChkMonth = 8;
    ChkDay   = 15;
 
-   Err1 =
-       CalGreg->incrementDate(2, TimeUnits::Months, TstYear, TstMonth, TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: increment Gregorian date by month: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: increment Gregorian date "
-                "by month: FAIL");
-   }
+   CalGreg->incrementDate(2, TimeUnits::Months, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: increment Gregorian date by month: FAIL");
 
    // Check year rollover for longer month intervals
 
@@ -872,17 +681,11 @@ int testCalendar(void) {
    ChkMonth = 4;
    ChkDay   = 15;
 
-   Err1 =
-       CalGreg->incrementDate(18, TimeUnits::Months, TstYear, TstMonth, TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: increment Gregorian date by "
-               "18 months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: increment Gregorian date by "
-                "18 months: FAIL");
-   }
+   CalGreg->incrementDate(18, TimeUnits::Months, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: increment Gregorian date by 18 months: FAIL");
 
    TstYear  = 1984;
    TstMonth = 10;
@@ -891,32 +694,11 @@ int testCalendar(void) {
    ChkMonth = 4;
    ChkDay   = 15;
 
-   Err1 = CalGreg->incrementDate(-18, TimeUnits::Months, TstYear, TstMonth,
-                                 TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: decrement Gregorian date by "
-               "18 months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: decrement Gregorian date by "
-                "18 months: FAIL");
-   }
-
-   // Check error case when day exceeds max day of new month
-
-   TstYear  = 1984;
-   TstMonth = 8;
-   TstDay   = 31;
-
-   Err1 =
-       CalGreg->incrementDate(1, TimeUnits::Months, TstYear, TstMonth, TstDay);
-   if (Err1 != 0) {
-      LOG_INFO("TimeMgrTest/Calendar: increment catch bad day range: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: increment catch bad day range: FAIL");
-   }
+   CalGreg->incrementDate(-18, TimeUnits::Months, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: decrement Gregorian date by 18 months: FAIL");
 
    // Test normal daily increments/decrements including a leap day
 
@@ -927,17 +709,11 @@ int testCalendar(void) {
    ChkMonth = 3;
    ChkDay   = 6;
 
-   Err1 =
-       CalGreg->incrementDate(10, TimeUnits::Days, TstYear, TstMonth, TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: increment Gregorian date by "
-               "10 days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: increment Gregorian date by "
-                "10 days: FAIL");
-   }
+   CalGreg->incrementDate(10, TimeUnits::Days, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: increment Gregorian date by 10 days: FAIL");
 
    TstYear  = 1984;
    TstMonth = 3;
@@ -946,17 +722,11 @@ int testCalendar(void) {
    ChkMonth = 2;
    ChkDay   = 25;
 
-   Err1 =
-       CalGreg->incrementDate(-10, TimeUnits::Days, TstYear, TstMonth, TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: decrement Gregorian date by "
-               "10 days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: decrement Gregorian date by "
-                "10 days: FAIL");
-   }
+   CalGreg->incrementDate(-10, TimeUnits::Days, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: decrement Gregorian date by 10 days: FAIL");
 
    // Test longer daily intervals
 
@@ -967,17 +737,11 @@ int testCalendar(void) {
    ChkMonth = 3;
    ChkDay   = 31;
 
-   Err1 =
-       CalGreg->incrementDate(400, TimeUnits::Days, TstYear, TstMonth, TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: increment Gregorian date by "
-               "400 days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: increment Gregorian date by "
-                "400 days: FAIL");
-   }
+   CalGreg->incrementDate(400, TimeUnits::Days, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: increment Gregorian date by 400 days: FAIL");
 
    TstYear  = 1985;
    TstMonth = 3;
@@ -986,17 +750,11 @@ int testCalendar(void) {
    ChkMonth = 2;
    ChkDay   = 25;
 
-   Err1 =
-       CalGreg->incrementDate(-400, TimeUnits::Days, TstYear, TstMonth, TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: decrement Gregorian date by "
-               "400 days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: decrement Gregorian date by "
-                "400 days: FAIL");
-   }
+   CalGreg->incrementDate(-400, TimeUnits::Days, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: decrement Gregorian date by 400 days: FAIL");
 
    //------------------------
    // Test No Leap calendar
@@ -1033,31 +791,17 @@ int testCalendar(void) {
    SecondsPerYear1 = Calendar::getSecondsPerYear();
    DaysPerYear1    = Calendar::getDaysPerYear();
 
-   if (Kind1 != Kind0 || MonthsPerYear1 != MonthsPerYear0 ||
-       SecondsPerDay1 != SecondsPerDay0 || SecondsPerYear1 != SecondsPerYear0 ||
+   if (Kind1 != Kind0 or MonthsPerYear1 != MonthsPerYear0 or
+       SecondsPerDay1 != SecondsPerDay0 or SecondsPerYear1 != SecondsPerYear0 or
        DaysPerYear1 != DaysPerYear0)
-      Err1 = 1;
-
-   if (Err1 == 0) {
-      LOG_INFO("TimeMgrTest/Calendar: No leap constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: No leap constructor: FAIL");
-   }
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/Calendar: No leap constructor: FAIL");
 
    // Verify the calendar does not have a leap year
    TstYear = 1984;
-   if (!Calendar::isLeapYear(TstYear)) {
-      if (Err1 == 0) {
-         LOG_INFO("TimeMgrTest/Calendar: 1984 leap year NoLeap: PASS");
-      } else {
-         ++ErrAll;
-         LOG_ERROR("TimeMgrTest/Calendar: 1984 leap year NoLeap: FAIL");
-      }
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: 1984 leap year NoLeap: FAIL");
-   }
+   if (Calendar::isLeapYear(TstYear))
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/Calendar: 1984 leap year NoLeap: FAIL");
 
    // Test calendar date to/from elapsed time conversion
    // This is not an exhaustive test - just testing a single time
@@ -1067,7 +811,7 @@ int testCalendar(void) {
        (1957 * (I8)86400 * 365) +
        (31 + 28 + 31 + 30 + 31 + 30 + 31 + 31 + 30 + 4 - 1) * (I8)86400 +
        19 * 3600 + 26 * 60 + 24;
-   Err1       = TstTime.set(TmpSeconds, 1, 4);
+   TstTime.set(TmpSeconds, 1, 4);
    TstYear    = 1957;
    TstMonth   = 10;
    TstDay     = 4;
@@ -1077,7 +821,7 @@ int testCalendar(void) {
    TstSecondN = 1;
    TstSecondD = 4;
 
-   Err1       = ChkTime.set(0, 0, 1);
+   ChkTime.set(0, 0, 1);
    ChkYear    = 0;
    ChkMonth   = 0;
    ChkDay     = 0;
@@ -1090,29 +834,20 @@ int testCalendar(void) {
    ChkTime =
        Calendar::getElapsedTime(TstYear, TstMonth, TstDay, TstHour, TstMinute,
                                 TstSecondW, TstSecondN, TstSecondD);
-   if (ChkTime == TstTime) {
-      LOG_INFO("TimeMgrTest/Calendar: convert NoLeap date to "
-               "elapsed time: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: convert NoLeap date to "
-                "elapsed time: FAIL");
-   }
+   if (ChkTime != TstTime)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: convert NoLeap date to elapsed time: FAIL");
 
-   Err1 = Calendar::getDateTime(ChkTime, ChkYear, ChkMonth, ChkDay, ChkHour,
-                                ChkMinute, ChkSecondW, ChkSecondN, ChkSecondD);
-   if (Err1 == 0 && ChkYear == TstYear && ChkMonth == TstMonth &&
-       ChkDay == TstDay && ChkHour == TstHour && ChkMinute == TstMinute &&
-       ChkSecondW == TstSecondW && ChkSecondN == TstSecondN &&
-       ChkSecondD == TstSecondD) {
-      LOG_INFO("TimeMgrTest/Calendar: convert elapsed time to "
-               "NoLeap date: PASS");
-
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: convert elapsed time to "
-                "NoLeap date: FAIL");
-   }
+   Calendar::getDateTime(ChkTime, ChkYear, ChkMonth, ChkDay, ChkHour, ChkMinute,
+                         ChkSecondW, ChkSecondN, ChkSecondD);
+   if (ChkYear != TstYear or ChkMonth != TstMonth or ChkDay != TstDay or
+       ChkHour != TstHour or ChkMinute != TstMinute or
+       ChkSecondW != TstSecondW or ChkSecondN != TstSecondN or
+       ChkSecondD != TstSecondD)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: convert elapsed time to NoLeap date: FAIL");
 
    // Test calendar date increment function
    // Check normal year increment/decrement
@@ -1123,27 +858,19 @@ int testCalendar(void) {
    ChkMonth = 6;
    ChkDay   = 15;
 
-   Err1 =
-       CalNoLeap->incrementDate(2, TimeUnits::Years, TstYear, TstMonth, TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: increment NoLeap date by year: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: increment NoLeap date by year: FAIL");
-   }
+   CalNoLeap->incrementDate(2, TimeUnits::Years, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/Calendar: increment NoLeap date by year: FAIL");
 
    TstYear = 1983;
    ChkYear = 1981;
-   Err1    = CalNoLeap->incrementDate(-2, TimeUnits::Years, TstYear, TstMonth,
-                                      TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: decrement NoLeap date by year: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: decrement NoLeap date by year: FAIL");
-   }
+   CalNoLeap->incrementDate(-2, TimeUnits::Years, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/Calendar: decrement NoLeap date by year: FAIL");
 
    // Check normal month increment/decrement
    TstYear  = 1984;
@@ -1154,27 +881,19 @@ int testCalendar(void) {
    ChkDay   = 15;
 
    TstMonth = 6;
-   Err1     = CalNoLeap->incrementDate(2, TimeUnits::Months, TstYear, TstMonth,
-                                       TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: increment NoLeap date by month: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: increment NoLeap date by month: FAIL");
-   }
+   CalNoLeap->incrementDate(2, TimeUnits::Months, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/Calendar: increment NoLeap date by month: FAIL");
 
    TstMonth = 6;
    ChkMonth = 4;
-   Err1     = CalNoLeap->incrementDate(-2, TimeUnits::Months, TstYear, TstMonth,
-                                       TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: decrement NoLeap date by month: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: decrement NoLeap date by month: FAIL");
-   }
+   CalNoLeap->incrementDate(-2, TimeUnits::Months, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/Calendar: decrement NoLeap date by month: FAIL");
 
    // Test normal daily increments/decrements
 
@@ -1185,15 +904,11 @@ int testCalendar(void) {
    ChkMonth = 3;
    ChkDay   = 7;
 
-   Err1 =
-       CalNoLeap->incrementDate(10, TimeUnits::Days, TstYear, TstMonth, TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: increment NoLeap date by 10 days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: increment NoLeap date by 10 days: FAIL");
-   }
+   CalNoLeap->incrementDate(10, TimeUnits::Days, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/Calendar: increment NoLeap date by 10 days: FAIL");
 
    TstYear  = 1984;
    TstMonth = 3;
@@ -1202,15 +917,11 @@ int testCalendar(void) {
    ChkMonth = 2;
    ChkDay   = 25;
 
-   Err1 = CalNoLeap->incrementDate(-10, TimeUnits::Days, TstYear, TstMonth,
-                                   TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: decrement NoLeap date by 10 days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: decrement NoLeap date by 10 days: FAIL");
-   }
+   CalNoLeap->incrementDate(-10, TimeUnits::Days, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/Calendar: decrement NoLeap date by 10 days: FAIL");
 
    // Test longer daily intervals
 
@@ -1221,16 +932,11 @@ int testCalendar(void) {
    ChkMonth = 4;
    ChkDay   = 1;
 
-   Err1 = CalNoLeap->incrementDate(400, TimeUnits::Days, TstYear, TstMonth,
-                                   TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: increment NoLeap date by 400 days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: increment NoLeap date by "
-                "400 days: FAIL");
-   }
+   CalNoLeap->incrementDate(400, TimeUnits::Days, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: increment NoLeap date by 400 days: FAIL");
 
    TstYear  = 1985;
    TstMonth = 4;
@@ -1239,16 +945,11 @@ int testCalendar(void) {
    ChkMonth = 2;
    ChkDay   = 25;
 
-   Err1 = CalNoLeap->incrementDate(-400, TimeUnits::Days, TstYear, TstMonth,
-                                   TstDay);
-   if (Err1 == 0 && TstYear == ChkYear && TstMonth == ChkMonth &&
-       TstDay == ChkDay) {
-      LOG_INFO("TimeMgrTest/Calendar: decrement NoLeap date by 400 days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: decrement NoLeap date by "
-                "400 days: FAIL");
-   }
+   CalNoLeap->incrementDate(-400, TimeUnits::Days, TstYear, TstMonth, TstDay);
+   if (TstYear != ChkYear or TstMonth != ChkMonth or TstDay != ChkDay)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: decrement NoLeap date by 400 days: FAIL");
 
    //------------------------
    // Straight Julian calendar the same
@@ -1283,31 +984,17 @@ int testCalendar(void) {
    SecondsPerYear1 = Calendar::getSecondsPerYear();
    DaysPerYear1    = Calendar::getDaysPerYear();
 
-   if (Kind1 != Kind0 || MonthsPerYear1 != MonthsPerYear0 ||
-       SecondsPerDay1 != SecondsPerDay0 || SecondsPerYear1 != SecondsPerYear0 ||
+   if (Kind1 != Kind0 or MonthsPerYear1 != MonthsPerYear0 or
+       SecondsPerDay1 != SecondsPerDay0 or SecondsPerYear1 != SecondsPerYear0 or
        DaysPerYear1 != DaysPerYear0)
-      Err1 = 1;
-
-   if (Err1 == 0) {
-      LOG_INFO("TimeMgrTest/Calendar: Julian constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: Julian constructor: FAIL");
-   }
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/Calendar: Julian constructor: FAIL");
 
    // Leap year calendar normal leap years
    TstYear = 1984;
-   if (Calendar::isLeapYear(TstYear)) {
-      if (Err1 == 0) {
-         LOG_INFO("TimeMgrTest/Calendar: 1984 leap year Julian: PASS");
-      } else {
-         ++ErrAll;
-         LOG_ERROR("TimeMgrTest/Calendar: 1984 leap year Julian: FAIL");
-      }
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: 1984 leap year Julian: FAIL");
-   }
+   if (!Calendar::isLeapYear(TstYear))
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/Calendar: 1984 leap year Julian: FAIL");
 
    // Test calendar date to/from elapsed time conversion
    // For Julian calendar, don't have a good reference date
@@ -1321,7 +1008,7 @@ int testCalendar(void) {
    TstSecondN = 1;
    TstSecondD = 4;
 
-   Err1       = ChkTime.set(0, 0, 1);
+   ChkTime.set(0, 0, 1);
    ChkYear    = 0;
    ChkMonth   = 0;
    ChkDay     = 0;
@@ -1335,20 +1022,15 @@ int testCalendar(void) {
        Calendar::getElapsedTime(TstYear, TstMonth, TstDay, TstHour, TstMinute,
                                 TstSecondW, TstSecondN, TstSecondD);
 
-   Err1 = Calendar::getDateTime(ChkTime, ChkYear, ChkMonth, ChkDay, ChkHour,
-                                ChkMinute, ChkSecondW, ChkSecondN, ChkSecondD);
-   if (Err1 == 0 && ChkYear == TstYear && ChkMonth == TstMonth &&
-       ChkDay == TstDay && ChkHour == TstHour && ChkMinute == TstMinute &&
-       ChkSecondW == TstSecondW && ChkSecondN == TstSecondN &&
-       ChkSecondD == TstSecondD) {
-      LOG_INFO("TimeMgrTest/Calendar: convert elapsed time to "
-               "Julian date: PASS");
-
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: convert elapsed time to "
-                "Julian date: FAIL");
-   }
+   Calendar::getDateTime(ChkTime, ChkYear, ChkMonth, ChkDay, ChkHour, ChkMinute,
+                         ChkSecondW, ChkSecondN, ChkSecondD);
+   if (ChkYear != TstYear or ChkMonth != TstMonth or ChkDay != TstDay or
+       ChkHour != TstHour or ChkMinute != TstMinute or
+       ChkSecondW != TstSecondW or ChkSecondN != TstSecondN or
+       ChkSecondD != TstSecondD)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: convert elapsed time to Julian date: FAIL");
 
    //------------------------
    // Test calendar construction for 360 day
@@ -1399,17 +1081,11 @@ int testCalendar(void) {
    SecondsPerYear1 = Calendar::getSecondsPerYear();
    DaysPerYear1    = Calendar::getDaysPerYear();
 
-   if (Kind1 != Kind0 || MonthsPerYear1 != MonthsPerYear0 ||
-       SecondsPerDay1 != SecondsPerDay0 || SecondsPerYear1 != SecondsPerYear0 ||
+   if (Kind1 != Kind0 or MonthsPerYear1 != MonthsPerYear0 or
+       SecondsPerDay1 != SecondsPerDay0 or SecondsPerYear1 != SecondsPerYear0 or
        DaysPerYear1 != DaysPerYear0)
-      Err1 = 1;
-
-   if (Err1 == 0) {
-      LOG_INFO("TimeMgrTest/Calendar: 360 Day constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: 360 Day constructor: FAIL");
-   }
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/Calendar: 360 Day constructor: FAIL");
 
    // Test calendar date to/from elapsed time conversion
    // This is not an exhaustive test - just testing a single time
@@ -1417,7 +1093,7 @@ int testCalendar(void) {
 
    TmpSeconds = (1957 * (I8)86400 * 360) + (9 * 30 + 4 - 1) * (I8)86400 +
                 19 * 3600 + 26 * 60 + 24;
-   Err1       = TstTime.set(TmpSeconds, 1, 4);
+   TstTime.set(TmpSeconds, 1, 4);
    TstYear    = 1957;
    TstMonth   = 10;
    TstDay     = 4;
@@ -1427,7 +1103,7 @@ int testCalendar(void) {
    TstSecondN = 1;
    TstSecondD = 4;
 
-   Err1       = ChkTime.set(0, 0, 1);
+   ChkTime.set(0, 0, 1);
    ChkYear    = 0;
    ChkMonth   = 0;
    ChkDay     = 0;
@@ -1440,29 +1116,20 @@ int testCalendar(void) {
    ChkTime =
        Calendar::getElapsedTime(TstYear, TstMonth, TstDay, TstHour, TstMinute,
                                 TstSecondW, TstSecondN, TstSecondD);
-   if (ChkTime == TstTime) {
-      LOG_INFO("TimeMgrTest/Calendar: convert 360-day date to "
-               "elapsed time: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: convert 360-day date to "
-                "elapsed time: FAIL");
-   }
+   if (ChkTime != TstTime)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: convert 360-day date to elapsed time: FAIL");
 
-   Err1 = Calendar::getDateTime(ChkTime, ChkYear, ChkMonth, ChkDay, ChkHour,
-                                ChkMinute, ChkSecondW, ChkSecondN, ChkSecondD);
-   if (Err1 == 0 && ChkYear == TstYear && ChkMonth == TstMonth &&
-       ChkDay == TstDay && ChkHour == TstHour && ChkMinute == TstMinute &&
-       ChkSecondW == TstSecondW && ChkSecondN == TstSecondN &&
-       ChkSecondD == TstSecondD) {
-      LOG_INFO("TimeMgrTest/Calendar: convert elapsed time to "
-               "360-day date: PASS");
-
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: convert elapsed time to "
-                "360-day date: FAIL");
-   }
+   Calendar::getDateTime(ChkTime, ChkYear, ChkMonth, ChkDay, ChkHour, ChkMinute,
+                         ChkSecondW, ChkSecondN, ChkSecondD);
+   if (ChkYear != TstYear or ChkMonth != TstMonth or ChkDay != TstDay or
+       ChkHour != TstHour or ChkMinute != TstMinute or
+       ChkSecondW != TstSecondW or ChkSecondN != TstSecondN or
+       ChkSecondD != TstSecondD)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: convert elapsed time to 360-day date: FAIL");
 
    //------------------------
    // Test calendar construction for Julian day
@@ -1513,38 +1180,24 @@ int testCalendar(void) {
    SecondsPerYear1 = Calendar::getSecondsPerYear();
    DaysPerYear1    = Calendar::getDaysPerYear();
 
-   if (Kind1 != Kind0 || MonthsPerYear1 != MonthsPerYear0 ||
-       SecondsPerDay1 != SecondsPerDay0 || SecondsPerYear1 != SecondsPerYear0 ||
+   if (Kind1 != Kind0 or MonthsPerYear1 != MonthsPerYear0 or
+       SecondsPerDay1 != SecondsPerDay0 or SecondsPerYear1 != SecondsPerYear0 or
        DaysPerYear1 != DaysPerYear0)
-      Err1 = 1;
-
-   if (Err1 == 0) {
-      LOG_INFO("TimeMgrTest/Calendar: Julian Day constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: Julian Day constructor: FAIL");
-   }
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/Calendar: Julian Day constructor: FAIL");
 
    // Calendar with no leap year
    TstYear = 1981;
-   if (!Calendar::isLeapYear(TstYear)) {
-      if (Err1 == 0) {
-         LOG_INFO("TimeMgrTest/Calendar: non-leap year JulianDay: PASS");
-      } else {
-         ++ErrAll;
-         LOG_ERROR("TimeMgrTest/Calendar: non-leap year JulianDay: FAIL");
-      }
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: non-leap year JulianDay: FAIL");
-   }
+   if (Calendar::isLeapYear(TstYear))
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/Calendar: non-leap year JulianDay: FAIL");
 
    // Test calendar date to/from elapsed time conversion
    // This is not an exhaustive test - just testing a single time
    // and for internal consistency
    // Julian Day - test Julian Day of 2436116.31 (plus 1/4 second)
    TmpSeconds = (2436116 - 1) * (I8)86400 + 7 * 3600 + 26 * 60 + 24;
-   Err1       = TstTime.set(TmpSeconds, 1, 4);
+   TstTime.set(TmpSeconds, 1, 4);
    TstYear    = 0;
    TstMonth   = 0;
    TstDay     = 2436116;
@@ -1554,7 +1207,7 @@ int testCalendar(void) {
    TstSecondN = 1;
    TstSecondD = 4;
 
-   Err1       = ChkTime.set(0, 0, 1);
+   ChkTime.set(0, 0, 1);
    ChkYear    = 0;
    ChkMonth   = 0;
    ChkDay     = 0;
@@ -1567,29 +1220,20 @@ int testCalendar(void) {
    ChkTime =
        Calendar::getElapsedTime(TstYear, TstMonth, TstDay, TstHour, TstMinute,
                                 TstSecondW, TstSecondN, TstSecondD);
-   if (ChkTime == TstTime) {
-      LOG_INFO("TimeMgrTest/Calendar: convert Julian day to "
-               "elapsed time: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: convert Julian day to "
-                "elapsed time: FAIL");
-   }
+   if (ChkTime != TstTime)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: convert Julian day to elapsed time: FAIL");
 
-   Err1 = Calendar::getDateTime(ChkTime, ChkYear, ChkMonth, ChkDay, ChkHour,
-                                ChkMinute, ChkSecondW, ChkSecondN, ChkSecondD);
-   if (Err1 == 0 && ChkYear == TstYear && ChkMonth == TstMonth &&
-       ChkDay == TstDay && ChkHour == TstHour && ChkMinute == TstMinute &&
-       ChkSecondW == TstSecondW && ChkSecondN == TstSecondN &&
-       ChkSecondD == TstSecondD) {
-      LOG_INFO("TimeMgrTest/Calendar: convert elapsed time to "
-               "Julian day: PASS");
-
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: convert elapsed time to "
-                "Julian day: FAIL");
-   }
+   Calendar::getDateTime(ChkTime, ChkYear, ChkMonth, ChkDay, ChkHour, ChkMinute,
+                         ChkSecondW, ChkSecondN, ChkSecondD);
+   if (ChkYear != TstYear or ChkMonth != TstMonth or ChkDay != TstDay or
+       ChkHour != TstHour or ChkMinute != TstMinute or
+       ChkSecondW != TstSecondW or ChkSecondN != TstSecondN or
+       ChkSecondD != TstSecondD)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: convert elapsed time to Julian day: FAIL");
 
    //------------------------
    // Modified Julian day identical
@@ -1624,24 +1268,19 @@ int testCalendar(void) {
    SecondsPerYear1 = Calendar::getSecondsPerYear();
    DaysPerYear1    = Calendar::getDaysPerYear();
 
-   if (Kind1 != Kind0 || MonthsPerYear1 != MonthsPerYear0 ||
-       SecondsPerDay1 != SecondsPerDay0 || SecondsPerYear1 != SecondsPerYear0 ||
+   if (Kind1 != Kind0 or MonthsPerYear1 != MonthsPerYear0 or
+       SecondsPerDay1 != SecondsPerDay0 or SecondsPerYear1 != SecondsPerYear0 or
        DaysPerYear1 != DaysPerYear0)
-      Err1 = 1;
-
-   if (Err1 == 0) {
-      LOG_INFO("TimeMgrTest/Calendar: Modified Julian Day constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: Modified Julian Day constructor: FAIL");
-   }
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/Calendar: Modified Julian Day constructor: FAIL");
 
    // Test calendar date to/from elapsed time conversion
    // This is not an exhaustive test - just testing a single time
    // and for internal consistency
    // Mod Julian Day - test Mod Julian Day of 2436116.31 (plus 1/4 second)
    TmpSeconds = (2436116 - 1) * (I8)86400 + 7 * 3600 + 26 * 60 + 24;
-   Err1       = TstTime.set(TmpSeconds, 1, 4);
+   TstTime.set(TmpSeconds, 1, 4);
    TstYear    = 0;
    TstMonth   = 0;
    TstDay     = 2436116;
@@ -1651,7 +1290,7 @@ int testCalendar(void) {
    TstSecondN = 1;
    TstSecondD = 4;
 
-   Err1       = ChkTime.set(0, 0, 1);
+   ChkTime.set(0, 0, 1);
    ChkYear    = 0;
    ChkMonth   = 0;
    ChkDay     = 0;
@@ -1664,48 +1303,37 @@ int testCalendar(void) {
    ChkTime =
        Calendar::getElapsedTime(TstYear, TstMonth, TstDay, TstHour, TstMinute,
                                 TstSecondW, TstSecondN, TstSecondD);
-   if (ChkTime == TstTime) {
-      LOG_INFO("TimeMgrTest/Calendar: convert Mod Julian day to "
-               "elapsed time: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: convert Mod Julian day to "
-                "elapsed time: FAIL");
-   }
+   if (ChkTime != TstTime)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: convert Mod Julian day to elapsed time: FAIL");
 
-   Err1 = Calendar::getDateTime(ChkTime, ChkYear, ChkMonth, ChkDay, ChkHour,
-                                ChkMinute, ChkSecondW, ChkSecondN, ChkSecondD);
-   if (Err1 == 0 && ChkYear == TstYear && ChkMonth == TstMonth &&
-       ChkDay == TstDay && ChkHour == TstHour && ChkMinute == TstMinute &&
-       ChkSecondW == TstSecondW && ChkSecondN == TstSecondN &&
-       ChkSecondD == TstSecondD) {
-      LOG_INFO("TimeMgrTest/Calendar: convert elapsed time to "
-               "Mod Julian day: PASS");
-
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Calendar: convert elapsed time to "
-                "Mod Julian day: FAIL");
-   }
+   Calendar::getDateTime(ChkTime, ChkYear, ChkMonth, ChkDay, ChkHour, ChkMinute,
+                         ChkSecondW, ChkSecondN, ChkSecondD);
+   if (ChkYear != TstYear or ChkMonth != TstMonth or ChkDay != TstDay or
+       ChkHour != TstHour or ChkMinute != TstMinute or
+       ChkSecondW != TstSecondW or ChkSecondN != TstSecondN or
+       ChkSecondD != TstSecondD)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/Calendar: convert elapsed time to Mod Julian day: FAIL");
 
    // All done calendar tests - switch to Gregorian calendar before returning
    Calendar::reset();
    Calendar::init("Gregorian");
-   return ErrAll;
+   CHECK_ERROR_ABORT(ErrAll, "Time Mgr Calendar tests FAIL");
 
 } // end testCalendar
 
 //------------------------------------------------------------------------------
 // TimeInterval test
 
-int testTimeInterval(void) {
+void testTimeInterval(void) {
 
    LOG_INFO("TimeMgrTest: TimeInterval tests --------------------------------");
 
    // Initialize error codes
-   I4 Err1{0};
-   I4 Err2{0};
-   I4 ErrAll{0};
+   Error ErrAll;
 
    // Initialize some reference values for the fractional
    // representation of a TimeInterval 5 3/8 seconds.
@@ -1727,555 +1355,486 @@ int testTimeInterval(void) {
    TimeInterval TiRef;
 
    // Test get function for a fractional second representation
-   Err1 = TiRef.get(WTst, NTst, DTst);
+   TiRef.get(WTst, NTst, DTst);
 
-   if (Err1 == 0 && WTst == 0 && NTst == 0 && DTst == 1) {
-      LOG_INFO("TimeMgrTest/TimeInterval: default constructor and get: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: default constructor and get: FAIL");
-   }
+   if (WTst != 0 or NTst != 0 or DTst != 1)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: default constructor and get: FAIL");
 
    // Test constructor from fractional seconds
 
    TimeInterval TiTstFS(WRef, NRef, DRef);
 
-   Err1 = TiTstFS.get(WTst, NTst, DTst);
+   TiTstFS.get(WTst, NTst, DTst);
 
-   if (Err1 == 0 && WTst == WRef && NTst == NRef && DTst == DRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: fractional second constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: fractional second "
-                "constructor: FAIL");
-   }
+   if (WTst != WRef or NTst != NRef or DTst != DRef)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/TimeInterval: fractional second constructor: FAIL");
 
    // Can now test assignment and equivalence operator
 
    TiRef = TiTstFS;
    if (TiTstFS == TiRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(==): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(==): FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(==): FAIL");
    }
 
    // Test time interval constructor from real seconds
    TimeInterval TiTstRSec(RRef, TimeUnits::Seconds);
 
-   if (TiTstRSec == TiRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real seconds constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real seconds constructor: FAIL");
-   }
+   if (TiTstRSec != TiRef)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: real seconds constructor: FAIL");
 
    // Test time interval constructor from real minutes
    TimeInterval TiTstRMin((RRef / SECONDS_PER_MINUTE), TimeUnits::Minutes);
-   if (TiTstRMin == TiRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real minutes constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real minutes constructor: FAIL");
-   }
+   if (TiTstRMin != TiRef)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: real minutes constructor: FAIL");
 
    // Test time interval constructor from real hours
    TimeInterval TiTstRHour((RRef / SECONDS_PER_HOUR), TimeUnits::Hours);
-   if (TiTstRHour == TiRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real hours constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real hours constructor: FAIL");
-   }
+   if (TiTstRHour != TiRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: real hours constructor: FAIL");
 
    // Test time interval constructor from real days
    TimeInterval TiTstRDay(RRef, TimeUnits::Days);
 
-   Err1 = TiTstRDay.get(RTst, TimeUnits::Days);
-   if (Err1 == 0 && RTst == 5.0) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real days constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real days constructor: FAIL");
-   }
+   TiTstRDay.get(RTst, TimeUnits::Days);
+   if (RTst != 5.0)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: real days constructor: FAIL");
 
    // Test time interval constructor from real months
    TimeInterval TiTstRMonth(RRef, TimeUnits::Months);
 
-   Err1 = TiTstRMonth.get(RTst, TimeUnits::Months);
-   if (Err1 == 0 && RTst == 5.0) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real months constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real months constructor: FAIL");
-   }
+   TiTstRMonth.get(RTst, TimeUnits::Months);
+   if (RTst != 5.0)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: real months constructor: FAIL");
 
    // Test time interval constructor from real years
    TimeInterval TiTstRYear(RRef, TimeUnits::Years);
 
-   Err1 = TiTstRYear.get(RTst, TimeUnits::Years);
-   if (Err1 == 0 && RTst == 5.0) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real years constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real years constructor: FAIL");
-   }
+   TiTstRYear.get(RTst, TimeUnits::Years);
+   if (RTst != 5.0)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: real years constructor: FAIL");
 
    // Test time interval constructor from integer seconds
    TimeInterval TiTstISec(IRef, TimeUnits::Seconds);
 
-   Err1 = TiTstISec.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == WRef && NTst == 0 && DTst == 1) {
-      LOG_INFO("TimeMgrTest/TimeInterval: integer seconds constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: integer seconds constructor: FAIL");
-   }
+   TiTstISec.get(WTst, NTst, DTst);
+   if (WTst != WRef or NTst != 0 or DTst != 1)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: integer seconds constructor: FAIL");
 
    // Test time interval constructor from integer minutes
    TimeInterval TiTstIMin(IRef, TimeUnits::Minutes);
 
-   Err1 = TiTstIMin.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == WRef * SECONDS_PER_MINUTE && NTst == 0 &&
-       DTst == 1) {
-      LOG_INFO("TimeMgrTest/TimeInterval: integer minutes constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: integer minutes constructor: FAIL");
-   }
+   TiTstIMin.get(WTst, NTst, DTst);
+   if (WTst != WRef * SECONDS_PER_MINUTE or NTst != 0 or DTst != 1)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: integer minutes constructor: FAIL");
 
    // Test non-equivalence comparison operator for TimeInterval
 
-   if (TiTstIMin != TiRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(!=): PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(!=): FAIL");
-   }
+   if (TiTstIMin == TiRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(!=): FAIL");
 
    // Test time interval constructor from integer hours
    TimeInterval TiTstIHour(IRef, TimeUnits::Hours);
 
-   Err1 = TiTstIHour.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == WRef * SECONDS_PER_HOUR && NTst == 0 && DTst == 1) {
-      LOG_INFO("TimeMgrTest/TimeInterval: integer hours constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: integer hours constructor: FAIL");
-   }
+   TiTstIHour.get(WTst, NTst, DTst);
+   if (WTst != WRef * SECONDS_PER_HOUR or NTst != 0 or DTst != 1)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: integer hours constructor: FAIL");
 
    // Test calendar-based time interval constructor in years
    TimeInterval TiTstIYear(IRef, TimeUnits::Years);
 
-   Err1 = TiTstIYear.get(ITst, TimeUnits::Years);
+   TiTstIYear.get(ITst, TimeUnits::Years);
 
-   if (Err1 == 0 && ITst == IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: year constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: year constructor: FAIL");
-   }
+   if (ITst != IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: year constructor: FAIL");
 
    // Test calendar-based time interval constructor in months
    TimeInterval TiTstIMonth(IRef, TimeUnits::Months);
 
-   Err1 = TiTstIMonth.get(ITst, TimeUnits::Months);
+   TiTstIMonth.get(ITst, TimeUnits::Months);
 
-   if (Err1 == 0 && ITst == IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: month constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: month constructor: FAIL");
-   }
+   if (ITst != IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: month constructor: FAIL");
 
    // Test calendar-based time interval constructor in days
    TimeInterval TiTstIDay(IRef, TimeUnits::Days);
 
-   Err1 = TiTstIDay.get(ITst, TimeUnits::Days);
+   TiTstIDay.get(ITst, TimeUnits::Days);
 
-   if (Err1 == 0 && ITst == IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: day constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: day constructor: FAIL");
-   }
+   if (ITst != IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: day constructor: FAIL");
 
    // Test assignment operator for time interval
    TiTstFS = TiRef;
 
-   if (TiTstFS == TiRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: assignment operator: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: assignment operator: FAIL");
-   }
+   if (TiTstFS != TiRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: assignment operator: FAIL");
 
    // Test accessor functions in pairs
    // Test fractional second put/get
 
-   Err1 = TiTstFS.set(WRef, NRef, DRef);
-   Err2 = TiTstFS.get(WTst, NTst, DTst);
+   TiTstFS.set(WRef, NRef, DRef);
+   TiTstFS.get(WTst, NTst, DTst);
 
-   if (Err1 == 0 && Err2 == 0 && WTst == WRef && NTst == NRef && DTst == DRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: fractional second put/get: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: fractional second put/get: FAIL");
-   }
+   if (WTst != WRef or NTst != NRef or DTst != DRef)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: fractional second put/get: FAIL");
 
    // Test real seconds put/get
 
-   Err1 = TiTstRSec.set(RRef, TimeUnits::Seconds);
-   Err2 = TiTstRSec.get(RTst, TimeUnits::Seconds);
+   TiTstRSec.set(RRef, TimeUnits::Seconds);
+   TiTstRSec.get(RTst, TimeUnits::Seconds);
 
-   if (Err1 == 0 && Err2 == 0 && RTst == RRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real seconds put/get: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real seconds put/get: FAIL");
-   }
+   if (RTst != RRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: real seconds put/get: FAIL");
 
    // Test integer seconds put/get
 
-   Err1 = TiTstISec.set(IRef, TimeUnits::Seconds);
-   Err2 = TiTstISec.get(ITst, TimeUnits::Seconds);
+   TiTstISec.set(IRef, TimeUnits::Seconds);
+   TiTstISec.get(ITst, TimeUnits::Seconds);
 
-   if (Err1 == 0 && Err2 == 0 && ITst == IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: integer seconds put/get: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: integer seconds put/get: FAIL");
-   }
+   if (ITst != IRef)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: integer seconds put/get: FAIL");
 
    // Test real hours put/get
 
-   Err1 = TiTstRSec.set(RRef, TimeUnits::Hours);
-   Err2 = TiTstRSec.get(RTst, TimeUnits::Hours);
+   TiTstRSec.set(RRef, TimeUnits::Hours);
+   TiTstRSec.get(RTst, TimeUnits::Hours);
 
-   if (Err1 == 0 && Err2 == 0 && RTst == RRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real hours put/get: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real hours put/get: FAIL");
-   }
+   if (RTst != RRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: real hours put/get: FAIL");
 
    // Test integer hours put/get
 
-   Err1 = TiTstISec.set(IRef, TimeUnits::Hours);
-   Err2 = TiTstISec.get(ITst, TimeUnits::Hours);
+   TiTstISec.set(IRef, TimeUnits::Hours);
+   TiTstISec.get(ITst, TimeUnits::Hours);
 
-   if (Err1 == 0 && Err2 == 0 && ITst == IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: integer hours put/get: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: integer hours put/get: FAIL");
-   }
+   if (ITst != IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: integer hours put/get: FAIL");
 
    // Test real minutes put/get
 
-   Err1 = TiTstRSec.set(RRef, TimeUnits::Minutes);
-   Err2 = TiTstRSec.get(RTst, TimeUnits::Minutes);
+   TiTstRSec.set(RRef, TimeUnits::Minutes);
+   TiTstRSec.get(RTst, TimeUnits::Minutes);
 
-   if (Err1 == 0 && Err2 == 0 && RTst == RRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real minutes put/get: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real minutes put/get: FAIL");
-   }
+   if (RTst != RRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: real minutes put/get: FAIL");
 
    // Test integer minutes put/get
 
-   Err1 = TiTstISec.set(IRef, TimeUnits::Minutes);
-   Err2 = TiTstISec.get(ITst, TimeUnits::Minutes);
+   TiTstISec.set(IRef, TimeUnits::Minutes);
+   TiTstISec.get(ITst, TimeUnits::Minutes);
 
-   if (Err1 == 0 && Err2 == 0 && ITst == IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: integer minutes put/get: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: integer minutes put/get: FAIL");
-   }
+   if (ITst != IRef)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: integer minutes put/get: FAIL");
 
    // Test integer years put/get
 
-   Err1 = TiTstISec.set(IRef + 1, TimeUnits::Years);
-   Err2 = TiTstISec.get(ITst, TimeUnits::Years);
+   TiTstISec.set(IRef + 1, TimeUnits::Years);
+   TiTstISec.get(ITst, TimeUnits::Years);
 
-   if (Err1 == 0 && Err2 == 0 && ITst == IRef + 1) {
-      LOG_INFO("TimeMgrTest/TimeInterval: integer years put/get: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: integer years put/get: FAIL");
-   }
+   if (ITst != IRef + 1)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: integer years put/get: FAIL");
 
    // Test integer months put/get
 
-   Err1 = TiTstISec.set(IRef + 1, TimeUnits::Months);
-   Err2 = TiTstISec.get(ITst, TimeUnits::Months);
+   TiTstISec.set(IRef + 1, TimeUnits::Months);
+   TiTstISec.get(ITst, TimeUnits::Months);
 
-   if (Err1 == 0 && Err2 == 0 && ITst == IRef + 1) {
-      LOG_INFO("TimeMgrTest/TimeInterval: integer months put/get: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: integer months put/get: FAIL");
-   }
+   if (ITst != IRef + 1)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: integer months put/get: FAIL");
 
    // Test integer days put/get
 
-   Err1 = TiTstISec.set(IRef + 1, TimeUnits::Days);
-   Err2 = TiTstISec.get(ITst, TimeUnits::Days);
+   TiTstISec.set(IRef + 1, TimeUnits::Days);
+   TiTstISec.get(ITst, TimeUnits::Days);
 
-   if (Err1 == 0 && Err2 == 0 && ITst == IRef + 1) {
-      LOG_INFO("TimeMgrTest/TimeInterval: integer days put/get: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: integer days put/get: FAIL");
-   }
+   if (ITst != IRef + 1)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: integer days put/get: FAIL");
 
    // Test < operator (and < part of <= operator) for non-calendars
    // Test both success and failure modes
 
-   Err1 = TiTstFS.set(WRef - 1, NRef - 1, DRef);
+   TiTstFS.set(WRef - 1, NRef - 1, DRef);
 
    if (TiTstFS < TiRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInterval: operator(<): FAIL");
    }
 
    if (TiTstFS <= TiRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<=): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<=): FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<=): FAIL");
    }
 
    if (!(TiRef < TiTstFS)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInterval: operator(<): FAIL");
    }
 
    if (!(TiRef <= TiTstFS)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<=): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<=): FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<=): FAIL");
    }
 
    // Test < operator (and < part of <= operator) for calendar intervals
 
-   Err1 = TiTstIYear.set(IRef, TimeUnits::Years);
-   Err1 = TiTstIMonth.set(IRef, TimeUnits::Months);
-   Err1 = TiTstIDay.set(IRef, TimeUnits::Days);
+   TiTstIYear.set(IRef, TimeUnits::Years);
+   TiTstIMonth.set(IRef, TimeUnits::Months);
+   TiTstIDay.set(IRef, TimeUnits::Days);
 
    TimeInterval TiTstIYear2(IRef - 1, TimeUnits::Years);
    TimeInterval TiTstIMonth2(IRef - 1, TimeUnits::Months);
    TimeInterval TiTstIDay2(IRef - 1, TimeUnits::Days);
 
    if (TiTstIYear2 < TiTstIYear) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<) years: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<) years: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<) years: FAIL");
    }
 
    if (TiTstIYear2 <= TiTstIYear) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<=) years: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<=) years: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<=) years: FAIL");
    }
 
    if (TiTstIMonth2 < TiTstIMonth) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<) months: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<) months: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<) months: FAIL");
    }
 
    if (TiTstIMonth2 <= TiTstIMonth) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<=) months: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<=) months: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<=) months: FAIL");
    }
 
    if (TiTstIDay2 < TiTstIDay) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<) days: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<) days: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<) days: FAIL");
    }
 
    if (TiTstIDay2 <= TiTstIDay) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<=) days: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<=) days: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<=) days: FAIL");
    }
 
    // test failure modes
 
    if (!(TiTstIYear < TiTstIYear2)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<) years: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<) years: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<) years: FAIL");
    }
 
    if (!(TiTstIYear <= TiTstIYear2)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<=) years: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<=) years: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<=) years: FAIL");
    }
 
    if (!(TiTstIMonth < TiTstIMonth2)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<) months: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<) months: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<) months: FAIL");
    }
 
    if (!(TiTstIMonth <= TiTstIMonth2)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<=) months: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<=) months: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<=) months: FAIL");
    }
 
    if (!(TiTstIDay < TiTstIDay2)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<) days: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<) days: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<) days: FAIL");
    }
 
    if (!(TiTstIDay <= TiTstIDay2)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<=) days: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<=) days: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<=) days: FAIL");
    }
 
    // Test > operator (and > part of >= operator) for non-calendars
 
    if (TiRef > TiTstFS) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInterval: operator(>): FAIL");
    }
 
    if (TiRef >= TiTstFS) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>=): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>=): FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>=): FAIL");
    }
 
    if (!(TiTstFS > TiRef)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInterval: operator(>): FAIL");
    }
 
    if (!(TiTstFS >= TiRef)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>=): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>=): FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>=): FAIL");
    }
 
    // Test > operator (and > part of >= operator) for calendar interval
 
    if (TiTstIYear > TiTstIYear2) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>) years: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>) years: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>) years: FAIL");
    }
 
    if (TiTstIYear >= TiTstIYear2) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>=) years: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>=) years: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>=) years: FAIL");
    }
 
    if (TiTstIMonth > TiTstIMonth2) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>) months: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>) months: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>) months: FAIL");
    }
 
    if (TiTstIMonth >= TiTstIMonth2) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>=) months: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>=) months: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>=) months: FAIL");
    }
 
    if (TiTstIDay > TiTstIDay2) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>) days: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>) days: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>) days: FAIL");
    }
 
    if (TiTstIDay >= TiTstIDay2) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>=) days: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>=) days: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>=) days: FAIL");
    }
 
    // test failure modes
 
    if (!(TiTstIYear2 > TiTstIYear)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>) years: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>) years: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>) years: FAIL");
    }
 
    if (!(TiTstIYear2 >= TiTstIYear)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>=) years: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>=) years: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>=) years: FAIL");
    }
 
    if (!(TiTstIMonth2 > TiTstIMonth)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>) months: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>) months: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>) months: FAIL");
    }
 
    if (!(TiTstIMonth2 >= TiTstIMonth)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>=) months: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>=) months: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>=) months: FAIL");
    }
 
    if (!(TiTstIDay2 > TiTstIDay)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>) days: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>) days: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>) days: FAIL");
    }
 
    if (!(TiTstIDay2 >= TiTstIDay)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>=) days: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>=) days: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>=) days: FAIL");
    }
 
    // Test equivalence part of comparisons
@@ -2286,59 +1845,59 @@ int testTimeInterval(void) {
    TiTstIDay2   = TiTstIDay;
 
    if (TiTstFS <= TiRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<=): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<=): FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<=): FAIL");
    }
 
    if (TiTstFS >= TiRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>=): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>=): FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>=): FAIL");
    }
 
    if (TiTstIYear2 <= TiTstIYear) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<=) years: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<=) years: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<=) years: FAIL");
    }
 
    if (TiTstIYear2 >= TiTstIYear) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>=) years: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>=) years: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>=) years: FAIL");
    }
 
    if (TiTstIMonth2 <= TiTstIMonth) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<=) months: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<=) months: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<=) months: FAIL");
    }
 
    if (TiTstIMonth2 >= TiTstIMonth) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>=) months: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>=) months: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>=) months: FAIL");
    }
 
    if (TiTstIDay2 <= TiTstIDay) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(<=) days: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(<=) days: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(<=) days: FAIL");
    }
 
    if (TiTstIDay2 >= TiTstIDay) {
-      LOG_INFO("TimeMgrTest/TimeInterval: operator(>=) days: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: operator(>=) days: FAIL");
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: operator(>=) days: FAIL");
    }
 
    // Test addition operator for interval
@@ -2348,37 +1907,25 @@ int testTimeInterval(void) {
    TiTstIMonth2 = TiTstIMonth + TiTstIMonth;
    TiTstIDay2   = TiTstIDay + TiTstIDay;
 
-   Err1 = TiTstFS.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 10 && NTst == 3 && DTst == 4) {
-      LOG_INFO("TimeMgrTest/TimeInterval: addition: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: addition: FAIL");
-   }
+   TiTstFS.get(WTst, NTst, DTst);
+   if (WTst != 10 or NTst != 3 or DTst != 4)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInterval: addition: FAIL");
 
-   Err1 = TiTstIYear2.get(ITst, TimeUnits::Years);
-   if (Err1 == 0 && ITst == (IRef + IRef)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: addition years: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: addition years: FAIL");
-   }
+   TiTstIYear2.get(ITst, TimeUnits::Years);
+   if (ITst != (IRef + IRef))
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: addition years: FAIL");
 
-   Err1 = TiTstIMonth2.get(ITst, TimeUnits::Months);
-   if (Err1 == 0 && ITst == (IRef + IRef)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: addition months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: addition months: FAIL");
-   }
+   TiTstIMonth2.get(ITst, TimeUnits::Months);
+   if (ITst != (IRef + IRef))
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: addition months: FAIL");
 
-   Err1 = TiTstIDay2.get(ITst, TimeUnits::Days);
-   if (Err1 == 0 && ITst == (IRef + IRef)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: addition days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: addition days: FAIL");
-   }
+   TiTstIDay2.get(ITst, TimeUnits::Days);
+   if (ITst != (IRef + IRef))
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: addition days: FAIL");
 
    // Test increment
 
@@ -2387,37 +1934,25 @@ int testTimeInterval(void) {
    TiTstIMonth2 += TiTstIMonth;
    TiTstIDay2 += TiTstIDay;
 
-   Err1 = TiTstFS.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 16 && NTst == 1 && DTst == 8) {
-      LOG_INFO("TimeMgrTest/TimeInterval: increment: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: increment: FAIL");
-   }
+   TiTstFS.get(WTst, NTst, DTst);
+   if (WTst != 16 or NTst != 1 or DTst != 8)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInterval: increment: FAIL");
 
-   Err1 = TiTstIYear2.get(ITst, TimeUnits::Years);
-   if (Err1 == 0 && ITst == (IRef + IRef + IRef)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: increment years: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: increment years: FAIL");
-   }
+   TiTstIYear2.get(ITst, TimeUnits::Years);
+   if (ITst != (IRef + IRef + IRef))
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: increment years: FAIL");
 
-   Err1 = TiTstIMonth2.get(ITst, TimeUnits::Months);
-   if (Err1 == 0 && ITst == (IRef + IRef + IRef)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: increment months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: increment months: FAIL");
-   }
+   TiTstIMonth2.get(ITst, TimeUnits::Months);
+   if (ITst != (IRef + IRef + IRef))
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: increment months: FAIL");
 
-   Err1 = TiTstIDay2.get(ITst, TimeUnits::Days);
-   if (Err1 == 0 && ITst == (IRef + IRef + IRef)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: increment days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: increment days: FAIL");
-   }
+   TiTstIDay2.get(ITst, TimeUnits::Days);
+   if (ITst != (IRef + IRef + IRef))
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: increment days: FAIL");
 
    // Test subtraction
 
@@ -2426,37 +1961,25 @@ int testTimeInterval(void) {
    TiTstIMonth2 = TiTstIMonth2 - TiTstIMonth;
    TiTstIDay2   = TiTstIDay2 - TiTstIDay;
 
-   Err1 = TiTstFS.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 10 && NTst == 3 && DTst == 4) {
-      LOG_INFO("TimeMgrTest/TimeInterval: subtraction: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: subtraction: FAIL");
-   }
+   TiTstFS.get(WTst, NTst, DTst);
+   if (WTst != 10 or NTst != 3 or DTst != 4)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInterval: subtraction: FAIL");
 
-   Err1 = TiTstIYear2.get(ITst, TimeUnits::Years);
-   if (Err1 == 0 && ITst == (IRef + IRef)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: subtraction years: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: subtraction years: FAIL");
-   }
+   TiTstIYear2.get(ITst, TimeUnits::Years);
+   if (ITst != (IRef + IRef))
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: subtraction years: FAIL");
 
-   Err1 = TiTstIMonth2.get(ITst, TimeUnits::Months);
-   if (Err1 == 0 && ITst == (IRef + IRef)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: subtraction months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: subtraction months: FAIL");
-   }
+   TiTstIMonth2.get(ITst, TimeUnits::Months);
+   if (ITst != (IRef + IRef))
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: subtraction months: FAIL");
 
-   Err1 = TiTstIDay2.get(ITst, TimeUnits::Days);
-   if (Err1 == 0 && ITst == (IRef + IRef)) {
-      LOG_INFO("TimeMgrTest/TimeInterval: subtraction days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: subtraction days: FAIL");
-   }
+   TiTstIDay2.get(ITst, TimeUnits::Days);
+   if (ITst != (IRef + IRef))
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: subtraction days: FAIL");
 
    // Test decrement
 
@@ -2465,37 +1988,25 @@ int testTimeInterval(void) {
    TiTstIMonth2 -= TiTstIMonth;
    TiTstIDay2 -= TiTstIDay;
 
-   Err1 = TiTstFS.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 5 && NTst == 3 && DTst == 8) {
-      LOG_INFO("TimeMgrTest/TimeInterval: decrement: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: decrement: FAIL");
-   }
+   TiTstFS.get(WTst, NTst, DTst);
+   if (WTst != 5 or NTst != 3 or DTst != 8)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInterval: decrement: FAIL");
 
-   Err1 = TiTstIYear2.get(ITst, TimeUnits::Years);
-   if (Err1 == 0 && ITst == IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: decrement years: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: decrement years: FAIL");
-   }
+   TiTstIYear2.get(ITst, TimeUnits::Years);
+   if (ITst != IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: decrement years: FAIL");
 
-   Err1 = TiTstIMonth2.get(ITst, TimeUnits::Months);
-   if (Err1 == 0 && ITst == IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: decrement months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: decrement months: FAIL");
-   }
+   TiTstIMonth2.get(ITst, TimeUnits::Months);
+   if (ITst != IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: decrement months: FAIL");
 
-   Err1 = TiTstIDay2.get(ITst, TimeUnits::Days);
-   if (Err1 == 0 && ITst == IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: decrement days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: decrement days: FAIL");
-   }
+   TiTstIDay2.get(ITst, TimeUnits::Days);
+   if (ITst != IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: decrement days: FAIL");
 
    // Test multiply by integer scalar
 
@@ -2504,37 +2015,25 @@ int testTimeInterval(void) {
    TiTstIMonth2 = TiTstIMonth * 3;
    TiTstIDay2   = TiTstIDay * 3;
 
-   Err1 = TiTstFS.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 16 && NTst == 1 && DTst == 8) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int multiply: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int multiply: FAIL");
-   }
+   TiTstFS.get(WTst, NTst, DTst);
+   if (WTst != 16 or NTst != 1 or DTst != 8)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: int multiply: FAIL");
 
-   Err1 = TiTstIYear2.get(ITst, TimeUnits::Years);
-   if (Err1 == 0 && ITst == 3 * IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int multiply years: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int multiply years: FAIL");
-   }
+   TiTstIYear2.get(ITst, TimeUnits::Years);
+   if (ITst != 3 * IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: int multiply years: FAIL");
 
-   Err1 = TiTstIMonth2.get(ITst, TimeUnits::Months);
-   if (Err1 == 0 && ITst == 3 * IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int multiply months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int multiply months: FAIL");
-   }
+   TiTstIMonth2.get(ITst, TimeUnits::Months);
+   if (ITst != 3 * IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: int multiply months: FAIL");
 
-   Err1 = TiTstIDay2.get(ITst, TimeUnits::Days);
-   if (Err1 == 0 && ITst == 3 * IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int multiply days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int multiply days: FAIL");
-   }
+   TiTstIDay2.get(ITst, TimeUnits::Days);
+   if (ITst != 3 * IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: int multiply days: FAIL");
 
    // Test multiply by integer scalar commutative version
 
@@ -2543,37 +2042,27 @@ int testTimeInterval(void) {
    TiTstIMonth2 = 3 * TiTstIMonth;
    TiTstIDay2   = 3 * TiTstIDay;
 
-   Err1 = TiTstFS.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 16 && NTst == 1 && DTst == 8) {
-      LOG_INFO("TimeMgrTest/TimeInterval: comm int multiply: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: comm int multiply: FAIL");
-   }
+   TiTstFS.get(WTst, NTst, DTst);
+   if (WTst != 16 or NTst != 1 or DTst != 8)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: comm int multiply: FAIL");
 
-   Err1 = TiTstIYear2.get(ITst, TimeUnits::Years);
-   if (Err1 == 0 && ITst == 3 * IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: comm int multiply years: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: comm int multiply years: FAIL");
-   }
+   TiTstIYear2.get(ITst, TimeUnits::Years);
+   if (ITst != 3 * IRef)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: comm int multiply years: FAIL");
 
-   Err1 = TiTstIMonth2.get(ITst, TimeUnits::Months);
-   if (Err1 == 0 && ITst == 3 * IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: comm int multiply months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: comm int multiply months: FAIL");
-   }
+   TiTstIMonth2.get(ITst, TimeUnits::Months);
+   if (ITst != 3 * IRef)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: comm int multiply months: FAIL");
 
-   Err1 = TiTstIDay2.get(ITst, TimeUnits::Days);
-   if (Err1 == 0 && ITst == 3 * IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: comm int multiply days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: comm int multiply days: FAIL");
-   }
+   TiTstIDay2.get(ITst, TimeUnits::Days);
+   if (ITst != 3 * IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: comm int multiply days: FAIL");
 
    // Test multiply by integer scalar in place
 
@@ -2582,37 +2071,28 @@ int testTimeInterval(void) {
    TiTstIMonth2 *= 3;
    TiTstIDay2 *= 3;
 
-   Err1 = TiTstFS.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 48 && NTst == 3 && DTst == 8) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int multiply in place: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int multiply in place: FAIL");
-   }
+   TiTstFS.get(WTst, NTst, DTst);
+   if (WTst != 48 or NTst != 3 or DTst != 8)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: int multiply in place: FAIL");
 
-   Err1 = TiTstIYear2.get(ITst, TimeUnits::Years);
-   if (Err1 == 0 && ITst == 9 * IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int multiply in place years: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int multiply in place years: FAIL");
-   }
+   TiTstIYear2.get(ITst, TimeUnits::Years);
+   if (ITst != 9 * IRef)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: int multiply in place years: FAIL");
 
-   Err1 = TiTstIMonth2.get(ITst, TimeUnits::Months);
-   if (Err1 == 0 && ITst == 9 * IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int multiply in place months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int multiply in place months: FAIL");
-   }
+   TiTstIMonth2.get(ITst, TimeUnits::Months);
+   if (ITst != 9 * IRef)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: int multiply in place months: FAIL");
 
-   Err1 = TiTstIDay2.get(ITst, TimeUnits::Days);
-   if (Err1 == 0 && ITst == 9 * IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int multiply in place days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int multiply in place days: FAIL");
-   }
+   TiTstIDay2.get(ITst, TimeUnits::Days);
+   if (ITst != 9 * IRef)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: int multiply in place days: FAIL");
 
    // Test multiply by real scalar
 
@@ -2621,37 +2101,25 @@ int testTimeInterval(void) {
    TiTstIMonth2 = TiTstIMonth * 3.25;
    TiTstIDay2   = TiTstIDay * 3.25;
 
-   Err1 = TiTstFS.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 17 && NTst == 15 && DTst == 32) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real multiply: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real multiply: FAIL");
-   }
+   TiTstFS.get(WTst, NTst, DTst);
+   if (WTst != 17 or NTst != 15 or DTst != 32)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: real multiply: FAIL");
 
-   Err1 = TiTstIYear2.get(ITst, TimeUnits::Years);
-   if (Err1 == 0 && ITst == 16) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real multiply years: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real multiply years: FAIL");
-   }
+   TiTstIYear2.get(ITst, TimeUnits::Years);
+   if (ITst != 16)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: real multiply years: FAIL");
 
-   Err1 = TiTstIMonth2.get(ITst, TimeUnits::Months);
-   if (Err1 == 0 && ITst == 16) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real multiply months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real multiply months: FAIL");
-   }
+   TiTstIMonth2.get(ITst, TimeUnits::Months);
+   if (ITst != 16)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: real multiply months: FAIL");
 
-   Err1 = TiTstIDay2.get(ITst, TimeUnits::Days);
-   if (Err1 == 0 && ITst == 16) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real multiply days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real multiply days: FAIL");
-   }
+   TiTstIDay2.get(ITst, TimeUnits::Days);
+   if (ITst != 16)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: real multiply days: FAIL");
 
    // Test multiply by real scalar commutative version
 
@@ -2660,37 +2128,28 @@ int testTimeInterval(void) {
    TiTstIMonth2 = 3.25 * TiTstIMonth;
    TiTstIDay2   = 3.25 * TiTstIDay;
 
-   Err1 = TiTstFS.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 17 && NTst == 15 && DTst == 32) {
-      LOG_INFO("TimeMgrTest/TimeInterval: comm real multiply: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: comm real multiply: FAIL");
-   }
+   TiTstFS.get(WTst, NTst, DTst);
+   if (WTst != 17 or NTst != 15 or DTst != 32)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: comm real multiply: FAIL");
 
-   Err1 = TiTstIYear2.get(ITst, TimeUnits::Years);
-   if (Err1 == 0 && ITst == 16) {
-      LOG_INFO("TimeMgrTest/TimeInterval: comm real multiply years: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: comm real multiply years: FAIL");
-   }
+   TiTstIYear2.get(ITst, TimeUnits::Years);
+   if (ITst != 16)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: comm real multiply years: FAIL");
 
-   Err1 = TiTstIMonth2.get(ITst, TimeUnits::Months);
-   if (Err1 == 0 && ITst == 16) {
-      LOG_INFO("TimeMgrTest/TimeInterval: comm real multiply months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: comm real multiply months: FAIL");
-   }
+   TiTstIMonth2.get(ITst, TimeUnits::Months);
+   if (ITst != 16)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: comm real multiply months: FAIL");
 
-   Err1 = TiTstIDay2.get(ITst, TimeUnits::Days);
-   if (Err1 == 0 && ITst == 16) {
-      LOG_INFO("TimeMgrTest/TimeInterval: comm real multiply days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: comm real multiply days: FAIL");
-   }
+   TiTstIDay2.get(ITst, TimeUnits::Days);
+   if (ITst != 16)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: comm real multiply days: FAIL");
 
    // Test multiply by real scalar in place
 
@@ -2699,38 +2158,28 @@ int testTimeInterval(void) {
    TiTstIMonth2 *= 3.25;
    TiTstIDay2 *= 3.25;
 
-   Err1 = TiTstFS.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 56 && NTst == 99 && DTst == 128) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real multiply in place: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real multiply in place: FAIL");
-   }
+   TiTstFS.get(WTst, NTst, DTst);
+   if (WTst != 56 or NTst != 99 or DTst != 128)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: real multiply in place: FAIL");
 
-   Err1 = TiTstIYear2.get(ITst, TimeUnits::Years);
-   if (Err1 == 0 && ITst == 52) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real multiply in place years: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real multiply in place years: FAIL");
-   }
+   TiTstIYear2.get(ITst, TimeUnits::Years);
+   if (ITst != 52)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: real multiply in place years: FAIL");
 
-   Err1 = TiTstIMonth2.get(ITst, TimeUnits::Months);
-   if (Err1 == 0 && ITst == 52) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real multiply in place months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real multiply in place "
-                "months: FAIL");
-   }
+   TiTstIMonth2.get(ITst, TimeUnits::Months);
+   if (ITst != 52)
+      ErrAll += Error(
+          ErrorCode::Fail,
+          "TimeMgrTest/TimeInterval: real multiply in place months: FAIL");
 
-   Err1 = TiTstIDay2.get(ITst, TimeUnits::Days);
-   if (Err1 == 0 && ITst == 52) {
-      LOG_INFO("TimeMgrTest/TimeInterval: real multiply in place days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: real multiply in place days: FAIL");
-   }
+   TiTstIDay2.get(ITst, TimeUnits::Days);
+   if (ITst != 52)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: real multiply in place days: FAIL");
 
    // Test divide by integer functions
 
@@ -2739,37 +2188,25 @@ int testTimeInterval(void) {
    TiTstIMonth2 = TiTstIMonth / 3;
    TiTstIDay2   = TiTstIDay / 3;
 
-   Err1 = TiTstFS.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 1 && NTst == 19 && DTst == 24) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int divide: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int divide: FAIL");
-   }
+   TiTstFS.get(WTst, NTst, DTst);
+   if (WTst != 1 or NTst != 19 or DTst != 24)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInterval: int divide: FAIL");
 
-   Err1 = TiTstIYear2.get(ITst, TimeUnits::Years);
-   if (Err1 == 0 && ITst == 1) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int divide years: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int divide years: FAIL");
-   }
+   TiTstIYear2.get(ITst, TimeUnits::Years);
+   if (ITst != 1)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: int divide years: FAIL");
 
-   Err1 = TiTstIMonth2.get(ITst, TimeUnits::Months);
-   if (Err1 == 0 && ITst == 1) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int divide months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int divide months: FAIL");
-   }
+   TiTstIMonth2.get(ITst, TimeUnits::Months);
+   if (ITst != 1)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: int divide months: FAIL");
 
-   Err1 = TiTstIDay2.get(ITst, TimeUnits::Days);
-   if (Err1 == 0 && ITst == 1) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int divide days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int divide days: FAIL");
-   }
+   TiTstIDay2.get(ITst, TimeUnits::Days);
+   if (ITst != 1)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: int divide days: FAIL");
 
    // Test divide by integer scalar in place
 
@@ -2778,37 +2215,28 @@ int testTimeInterval(void) {
    TiTstIMonth2 /= 3;
    TiTstIDay2 /= 3;
 
-   Err1 = TiTstFS.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == 0 && NTst == 43 && DTst == 72) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int divide in place: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int divide in place: FAIL");
-   }
+   TiTstFS.get(WTst, NTst, DTst);
+   if (WTst != 0 or NTst != 43 or DTst != 72)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: int divide in place: FAIL");
 
-   Err1 = TiTstIYear2.get(ITst, TimeUnits::Years);
-   if (Err1 == 0 && ITst == 0) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int divide in place years: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int divide in place years: FAIL");
-   }
+   TiTstIYear2.get(ITst, TimeUnits::Years);
+   if (ITst != 0)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: int divide in place years: FAIL");
 
-   Err1 = TiTstIMonth2.get(ITst, TimeUnits::Months);
-   if (Err1 == 0 && ITst == 0) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int divide in place months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int divide in place months: FAIL");
-   }
+   TiTstIMonth2.get(ITst, TimeUnits::Months);
+   if (ITst != 0)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: int divide in place months: FAIL");
 
-   Err1 = TiTstIDay2.get(ITst, TimeUnits::Days);
-   if (Err1 == 0 && ITst == 0) {
-      LOG_INFO("TimeMgrTest/TimeInterval: int divide in place days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: int divide in place days: FAIL");
-   }
+   TiTstIDay2.get(ITst, TimeUnits::Days);
+   if (ITst != 0)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInterval: int divide in place days: FAIL");
 
    // Test negative absolute value first to change sign
 
@@ -2817,47 +2245,32 @@ int testTimeInterval(void) {
    TiTstIMonth2 = TimeInterval::negAbsValue(TiTstIMonth);
    TiTstIDay2   = TimeInterval::negAbsValue(TiTstIDay);
 
-   Err1 = TiTstFS.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == -WRef && NTst == -NRef && DTst == DRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: negAbsValue: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: negAbsValue: FAIL");
-   }
+   TiTstFS.get(WTst, NTst, DTst);
+   if (WTst != -WRef or NTst != -NRef or DTst != DRef)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInterval: negAbsValue: FAIL");
 
-   Err1 = TiTstIYear2.get(ITst, TimeUnits::Years);
-   if (Err1 == 0 && ITst == -IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: negAbsValue years: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: negAbsValue years: FAIL");
-   }
+   TiTstIYear2.get(ITst, TimeUnits::Years);
+   if (ITst != -IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: negAbsValue years: FAIL");
 
-   Err1 = TiTstIMonth2.get(ITst, TimeUnits::Months);
-   if (Err1 == 0 && ITst == -IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: negAbsValue months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: negAbsValue months: FAIL");
-   }
+   TiTstIMonth2.get(ITst, TimeUnits::Months);
+   if (ITst != -IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: negAbsValue months: FAIL");
 
-   Err1 = TiTstIDay2.get(ITst, TimeUnits::Days);
-   if (Err1 == 0 && ITst == -IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: negAbsValue days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: negAbsValue days: FAIL");
-   }
+   TiTstIDay2.get(ITst, TimeUnits::Days);
+   if (ITst != -IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: negAbsValue days: FAIL");
 
    // Test is positive function with negative results
 
-   if (!(TiTstFS.isPositive()) && !(TiTstIYear2.isPositive()) &&
-       !(TiTstIDay2.isPositive())) {
-      LOG_INFO("TimeMgrTest/TimeInterval: not isPositive: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: not isPositive: FAIL");
-   }
+   if (TiTstFS.isPositive() or TiTstIYear2.isPositive() or
+       TiTstIDay2.isPositive())
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: not isPositive: FAIL");
 
    // Test absolute value by changing the above to abs value
 
@@ -2871,77 +2284,56 @@ int testTimeInterval(void) {
    TiTstIMonth3 = TimeInterval::absValue(TiTstIMonth2);
    TiTstIDay3   = TimeInterval::absValue(TiTstIDay2);
 
-   Err1 = TiTst3.get(WTst, NTst, DTst);
-   if (Err1 == 0 && WTst == WRef && NTst == NRef && DTst == DRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: absValue: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: absValue: FAIL");
-   }
+   TiTst3.get(WTst, NTst, DTst);
+   if (WTst != WRef or NTst != NRef or DTst != DRef)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInterval: absValue: FAIL");
 
-   Err1 = TiTstIYear3.get(ITst, TimeUnits::Years);
-   if (Err1 == 0 && ITst == IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: absValue years: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: absValue years: FAIL");
-   }
+   TiTstIYear3.get(ITst, TimeUnits::Years);
+   if (ITst != IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: absValue years: FAIL");
 
-   Err1 = TiTstIMonth3.get(ITst, TimeUnits::Months);
-   if (Err1 == 0 && ITst == IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: absValue months: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: absValue months: FAIL");
-   }
+   TiTstIMonth3.get(ITst, TimeUnits::Months);
+   if (ITst != IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: absValue months: FAIL");
 
-   Err1 = TiTstIDay3.get(ITst, TimeUnits::Days);
-   if (Err1 == 0 && ITst == IRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: absValue days: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: absValue days: FAIL");
-   }
+   TiTstIDay3.get(ITst, TimeUnits::Days);
+   if (ITst != IRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: absValue days: FAIL");
 
    // Test is positive function with positive results
 
-   if (TiTst3.isPositive() && TiTstIYear3.isPositive() &&
-       TiTstIMonth3.isPositive() && TiTstIDay3.isPositive()) {
-      LOG_INFO("TimeMgrTest/TimeInterval: isPositive: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: isPositive: FAIL");
-   }
+   if (!(TiTst3.isPositive()) or !(TiTstIYear3.isPositive()) or
+       !(TiTstIMonth3.isPositive()) or !(TiTstIDay3.isPositive()))
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInterval: isPositive: FAIL");
 
    // Test time interval constructor from string
    std::string TiStr = "1001_11:23:45.375";
    TimeInterval TiTstStr(TiStr);
    RRef = 86527425.375;
-   Err1 = TiTstStr.get(RTst, TimeUnits::Seconds);
+   TiTstStr.get(RTst, TimeUnits::Seconds);
 
-   if (Err1 == 0 && RTst == RRef) {
-      LOG_INFO("TimeMgrTest/TimeInterval: string constructor: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInterval: string constructor: FAIL");
-   }
+   if (RTst != RRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInterval: string constructor: FAIL");
 
-   return ErrAll;
+   CHECK_ERROR_ABORT(ErrAll, "TimeMgr/TimeInterval unit tests FAIL");
 
 } // end testTimeInterval
 
 //------------------------------------------------------------------------------
 // TimeInstant test
 
-int testTimeInstant(void) {
+void testTimeInstant(void) {
 
    LOG_INFO("TimeMgrTest: TimeInstant tests ---------------------------------");
 
    // Initialize error codes
-   I4 Err1{0};
-   I4 Err2{0};
-   I4 Err3{0};
-   I4 ErrAll{0};
+   Error ErrAll;
 
    // Use default constructor to create first (empty) instant
    TimeInstant TiEmpty;
@@ -2976,20 +2368,18 @@ int testTimeInstant(void) {
    I8 MinuteChk  = 0;
    R8 RSecondChk = 0.0;
 
-   Err1 = TiGreg.get(YearChk, MonthChk, DayChk, HourChk, MinuteChk, RSecondChk);
-   if (Err1 == 0 && YearChk == YearRef && MonthChk == MonthRef &&
-       DayChk == DayRef && HourChk == HourRef && MinuteChk == MinuteRef &&
-       abs(RSecondChk - RRef) < 1.e-15) {
-      LOG_INFO("TimeMgrTest/TimeInstant: constructor YMDHMS(real): PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: constructor YMDHMS(real): FAIL");
-   }
+   TiGreg.get(YearChk, MonthChk, DayChk, HourChk, MinuteChk, RSecondChk);
+   if (YearChk != YearRef or MonthChk != MonthRef or DayChk != DayRef or
+       HourChk != HourRef or MinuteChk != MinuteRef or
+       fabs(RSecondChk - RRef) > 1.e-15)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: constructor YMDHMS(real): FAIL");
 
    // Now use set function to create an identical instant
 
    TimeInstant TiGreg2;
-   Err1 = TiGreg2.set(YearRef, MonthRef, DayRef, HourRef, MinuteRef, RRef);
+   TiGreg2.set(YearRef, MonthRef, DayRef, HourRef, MinuteRef, RRef);
 
    YearChk    = 0;
    MonthChk   = 0;
@@ -2998,38 +2388,34 @@ int testTimeInstant(void) {
    MinuteChk  = 0;
    RSecondChk = 0.0;
 
-   Err2 =
-       TiGreg2.get(YearChk, MonthChk, DayChk, HourChk, MinuteChk, RSecondChk);
-   if (Err1 == 0 && Err2 == 0 && YearChk == YearRef && MonthChk == MonthRef &&
-       DayChk == DayRef && HourChk == HourRef && MinuteChk == MinuteRef &&
-       abs(RSecondChk - RRef) < 1.e-15) {
-      LOG_INFO("TimeMgrTest/TimeInstant: get/set YMDHMS(real): PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: get/set YMDHMS(real): FAIL");
-   }
+   TiGreg2.get(YearChk, MonthChk, DayChk, HourChk, MinuteChk, RSecondChk);
+   if (YearChk != YearRef or MonthChk != MonthRef or DayChk != DayRef or
+       HourChk != HourRef or MinuteChk != MinuteRef or
+       fabs(RSecondChk - RRef) > 1.e-15)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInstant: get/set YMDHMS(real): FAIL");
 
    // Can now also check equivalence and equivalence part of >=, <=
 
    if (TiGreg == TiGreg2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: operator(==): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: operator(==): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInstant: operator(==): FAIL");
    }
 
    if (TiGreg >= TiGreg2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: operator(>=): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: operator(>=): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInstant: operator(>=): FAIL");
    }
 
    if (TiGreg <= TiGreg2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: operator(<=): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: operator(<=): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInstant: operator(<=): FAIL");
    }
 
    // Now must test remaining operators involving time intervals
@@ -3048,24 +2434,19 @@ int testTimeInstant(void) {
    I8 WChk   = 0;
    I8 NChk   = 0;
    I8 DChk   = 0;
-   Err1 = TiGreg2.get(YearChk, MonthChk, DayChk, HourChk, MinuteChk, WChk, NChk,
-                      DChk);
+   TiGreg2.get(YearChk, MonthChk, DayChk, HourChk, MinuteChk, WChk, NChk, DChk);
 
-   if (Err1 == 0 && YearChk == YearRef && MonthChk == MonthRef &&
-       DayChk == DayRef && HourChk == HourRef && MinuteChk == MinuteRef &&
-       NChk == NRef && DChk == DRef && WChk == WRef + 1) {
-      LOG_INFO("TimeMgrTest/TimeInstant: addition second interval: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: addition second interval: FAIL");
-   }
+   if (YearChk != YearRef or MonthChk != MonthRef or DayChk != DayRef or
+       HourChk != HourRef or MinuteChk != MinuteRef or NChk != NRef or
+       DChk != DRef or WChk != WRef + 1)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: addition second interval: FAIL");
 
-   if (TiGreg3 == TiGreg) {
-      LOG_INFO("TimeMgrTest/TimeInstant: subtraction second interval: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: subtraction second interval: FAIL");
-   }
+   if (TiGreg3 != TiGreg)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: subtraction second interval: FAIL");
 
    // Test a 5-year integration in several units (year, month, day, hour,
    // minute). Include a nominal leap year.
@@ -3085,76 +2466,60 @@ int testTimeInstant(void) {
    for (int N = 1; N <= 5; ++N) {
       TiFinal += IntervalYear;
    }
-   if (TiFinal == TiGreg2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: Gregorian annual integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: Gregorian annual integration: FAIL");
-   }
+   if (TiFinal != TiGreg2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: Gregorian annual integration: FAIL");
 
    TiFinal = TiGreg;
    for (int N = 1; N <= 30; ++N) {
       TiFinal += IntervalMonth;
    }
-   if (TiFinal == TiGreg2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: Gregorian monthly integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: Gregorian monthly integration: FAIL");
-   }
+   if (TiFinal != TiGreg2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: Gregorian monthly integration: FAIL");
 
    TiFinal = TiGreg;
    for (int N = 1; N <= 365 * 5 + 2; ++N) { // period includes 2 leap years
       TiFinal += IntervalDay;
    }
-   if (TiFinal == TiGreg2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: Gregorian daily integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: Gregorian daily integration: FAIL");
-   }
+   if (TiFinal != TiGreg2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: Gregorian daily integration: FAIL");
 
    TiFinal = TiGreg;
    for (int N = 1; N <= 12 * (365 * 5 + 2); ++N) {
       TiFinal += IntervalHour;
    }
-   if (TiFinal == TiGreg2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: Gregorian hourly integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: Gregorian hourly integration: FAIL");
-   }
+   if (TiFinal != TiGreg2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: Gregorian hourly integration: FAIL");
 
    TiFinal = TiGreg;
    for (int N = 1; N <= (3 * 24) * (365 * 5 + 2); ++N) {
       TiFinal += IntervalMinute;
    }
-   if (TiFinal == TiGreg2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: Gregorian minute integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: Gregorian minute integration: FAIL");
-   }
+   if (TiFinal != TiGreg2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: Gregorian minute integration: FAIL");
 
    // Test time string generator and constructor from string
 
    std::string StrDateRef = "2019-07-04_15:16:23.2500";
    std::string StrDateChk = TiGreg.getString(4, 4, "_");
 
-   if (StrDateChk == StrDateRef) {
-      LOG_INFO("TimeMgrTest/TimeInstant: getString: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: getString: FAIL");
-   }
+   if (StrDateChk != StrDateRef)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInstant: getString: FAIL");
 
    TimeInstant TiFromString(StrDateChk);
-   if (TiFromString == TiGreg) {
-      LOG_INFO("TimeMgrTest/TimeInstant from string: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant from string: FAIL");
-   }
+   if (TiFromString != TiGreg)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInstant from string: FAIL");
 
    //--- Test instants in no-leap calendar
    Calendar::reset(); // reset calendar
@@ -3173,22 +2538,20 @@ int testTimeInstant(void) {
    NChk      = 0;
    DChk      = 0;
 
-   Err1 = TiNoLeap.get(YearChk, MonthChk, DayChk, HourChk, MinuteChk, WChk,
-                       NChk, DChk);
-   if (Err1 == 0 && YearChk == YearRef && MonthChk == MonthRef &&
-       DayChk == DayRef && HourChk == HourRef && MinuteChk == MinuteRef &&
-       WChk == WRef && NChk == NRef && DChk == DRef) {
-      LOG_INFO("TimeMgrTest/TimeInstant: constructor YMDHMS(frac): PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: constructor YMDHMS(frac): FAIL");
-   }
+   TiNoLeap.get(YearChk, MonthChk, DayChk, HourChk, MinuteChk, WChk, NChk,
+                DChk);
+   if (YearChk != YearRef or MonthChk != MonthRef or DayChk != DayRef or
+       HourChk != HourRef or MinuteChk != MinuteRef or WChk != WRef or
+       NChk != NRef or DChk != DRef)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: constructor YMDHMS(frac): FAIL");
 
    // Now use get/set interface to set a slightly earlier instant
 
    TimeInstant TiNoLeap2;
-   Err2 = TiNoLeap2.set(YearRef, MonthRef, DayRef, HourRef, MinuteRef, WRef - 1,
-                        NRef, DRef);
+   TiNoLeap2.set(YearRef, MonthRef, DayRef, HourRef, MinuteRef, WRef - 1, NRef,
+                 DRef);
 
    YearChk   = 0;
    MonthChk  = 0;
@@ -3198,58 +2561,54 @@ int testTimeInstant(void) {
    WChk      = 0;
    NChk      = 0;
    DChk      = 0;
-   Err3 = TiNoLeap2.get(YearChk, MonthChk, DayChk, HourChk, MinuteChk, WChk,
-                        NChk, DChk);
+   TiNoLeap2.get(YearChk, MonthChk, DayChk, HourChk, MinuteChk, WChk, NChk,
+                 DChk);
 
-   if (Err2 == 0 && Err3 == 0 && YearChk == YearRef && MonthChk == MonthRef &&
-       DayChk == DayRef && HourChk == HourRef && MinuteChk == MinuteRef &&
-       WChk == WRef - 1 && NChk == NRef && DChk == DRef) {
-      LOG_INFO("TimeMgrTest/TimeInstant: get/set by YMDHMS(frac): PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: get/set by YMDHMS(frac): FAIL");
-   }
+   if (YearChk != YearRef or MonthChk != MonthRef or DayChk != DayRef or
+       HourChk != HourRef or MinuteChk != MinuteRef or WChk != WRef - 1 or
+       NChk != NRef or DChk != DRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInstant: get/set by YMDHMS(frac): FAIL");
 
    // Can use these to test a few more operators like non-equivalence, <
 
    // Non-equiv for different time instant in same calendar
    if (TiNoLeap != TiNoLeap2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: operator(!=) for "
-               "different time instant: PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: operator(!=) for "
-                "different time instant: FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInstant: operator(!=) for "
+                                 "different time instant: FAIL");
    }
 
    // Test forms of > operator
    if (TiNoLeap >= TiNoLeap2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: operator(>=): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: operator(>=): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInstant: operator(>=): FAIL");
    }
 
    if (TiNoLeap > TiNoLeap2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: operator(>): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: operator(>): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInstant: operator(>): FAIL");
    }
 
    // Test forms of < operator
    if (TiNoLeap2 <= TiNoLeap) {
-      LOG_INFO("TimeMgrTest/TimeInstant: operator(<=): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: operator(<=): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInstant: operator(<=): FAIL");
    }
 
    if (TiNoLeap2 < TiNoLeap) {
-      LOG_INFO("TimeMgrTest/TimeInstant: operator(<): PASS");
+      // Success - no op
    } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: operator(<): FAIL");
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/TimeInstant: operator(<): FAIL");
    }
 
    // NoLeap and NoLeap2 above differ by one second, so create
@@ -3258,14 +2617,10 @@ int testTimeInstant(void) {
 
    TimeInterval IntervalSec2 = TiNoLeap - TiNoLeap2;
 
-   if (IntervalSec == IntervalSec2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: create interval from "
-               "diff of instants: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: create interval from "
-                "diff of instants: FAIL");
-   }
+   if (IntervalSec != IntervalSec2)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInstant: create interval from "
+                      "diff of instants: FAIL");
 
    // Now test addition, subtraction for seconds
 
@@ -3273,20 +2628,16 @@ int testTimeInstant(void) {
    TimeInstant TiNoLeap3 = TiNoLeap2;
 
    TiNoLeap2 += IntervalSec;
-   if (TiNoLeap2 == TiNoLeap) {
-      LOG_INFO("TimeMgrTest/TimeInstant: increment by second interval: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: increment by second interval: FAIL");
-   }
+   if (TiNoLeap2 != TiNoLeap)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: increment by second interval: FAIL");
 
    TiNoLeap2 -= IntervalSec;
-   if (TiNoLeap2 == TiNoLeap3) {
-      LOG_INFO("TimeMgrTest/TimeInstant: decrement by second interval: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: decrement by second interval: FAIL");
-   }
+   if (TiNoLeap2 != TiNoLeap3)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: decrement by second interval: FAIL");
 
    // Test a 5-year integration in several units (year, month, day, hour,
    // minute). Include a nominal leap year.
@@ -3305,56 +2656,46 @@ int testTimeInstant(void) {
    for (int N = 1; N <= 5; ++N) {
       TiFinal += IntYearNL;
    }
-   if (TiFinal == TiNoLeap2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: NoLeap annual integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: NoLeap annual integration: FAIL");
-   }
+   if (TiFinal != TiNoLeap2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: NoLeap annual integration: FAIL");
 
    TiFinal = TiNoLeap;
    for (int N = 1; N <= 30; ++N) {
       TiFinal += IntMonthNL;
    }
-   if (TiFinal == TiNoLeap2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: NoLeap monthly integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: NoLeap monthly integration: FAIL");
-   }
+   if (TiFinal != TiNoLeap2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: NoLeap monthly integration: FAIL");
 
    TiFinal = TiNoLeap;
    for (int N = 1; N <= 365 * 5; ++N) {
       TiFinal += IntDayNL;
    }
-   if (TiFinal == TiNoLeap2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: NoLeap daily integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: NoLeap daily integration: FAIL");
-   }
+   if (TiFinal != TiNoLeap2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: NoLeap daily integration: FAIL");
 
    TiFinal = TiNoLeap;
    for (int N = 1; N <= 12 * 365 * 5; ++N) {
       TiFinal += IntHourNL;
    }
-   if (TiFinal == TiNoLeap2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: NoLeap hourly integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: NoLeap hourly integration: FAIL");
-   }
+   if (TiFinal != TiNoLeap2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: NoLeap hourly integration: FAIL");
 
    TiFinal = TiNoLeap;
    for (int N = 1; N <= (3 * 24) * (365 * 5); ++N) {
       TiFinal += IntMinuteNL;
    }
-   if (TiFinal == TiNoLeap2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: NoLeap minute integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: NoLeap minute integration: FAIL");
-   }
+   if (TiFinal != TiNoLeap2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: NoLeap minute integration: FAIL");
 
    //--- Test instants in 360 day calendar
    Calendar::reset(); // reset calendar
@@ -3372,17 +2713,14 @@ int testTimeInstant(void) {
    WChk      = 0;
    NChk      = 0;
    DChk      = 0;
-   Err1      = Ti360Day.get(YearChk, MonthChk, DayChk, HourChk, MinuteChk, WChk,
-                            NChk, DChk);
+   Ti360Day.get(YearChk, MonthChk, DayChk, HourChk, MinuteChk, WChk, NChk,
+                DChk);
 
-   if (Err1 == 0 && YearChk == YearRef && MonthChk == MonthRef &&
-       DayChk == DayRef && HourChk == HourRef && MinuteChk == MinuteRef &&
-       WChk == WRef && NChk == NRef && DChk == DRef) {
-      LOG_INFO("TimeMgrTest/TimeInstant: construct 360Day: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: construct 360Day: FAIL");
-   }
+   if (YearChk != YearRef or MonthChk != MonthRef or DayChk != DayRef or
+       HourChk != HourRef or MinuteChk != MinuteRef or WChk != WRef or
+       NChk != NRef or DChk != DRef)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/TimeInstant: construct 360Day: FAIL");
 
    // Test a 5-year integration in several units (year, month, day, hour,
    // minute).
@@ -3401,56 +2739,46 @@ int testTimeInstant(void) {
    for (int N = 1; N <= 5; ++N) {
       TiFinal += IntYear360;
    }
-   if (TiFinal == Ti360Day2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: 360Day annual integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: 360Day annual integration: FAIL");
-   }
+   if (TiFinal != Ti360Day2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: 360Day annual integration: FAIL");
 
    TiFinal = Ti360Day;
    for (int N = 1; N <= 30; ++N) {
       TiFinal += IntMonth360;
    }
-   if (TiFinal == Ti360Day2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: 360Day monthly integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: 360Day monthly integration: FAIL");
-   }
+   if (TiFinal != Ti360Day2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: 360Day monthly integration: FAIL");
 
    TiFinal = Ti360Day;
    for (int N = 1; N <= 360 * 5; ++N) { // period includes 2 leap years
       TiFinal += IntDay360;
    }
-   if (TiFinal == Ti360Day2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: 360Day daily integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: 360Day daily integration: FAIL");
-   }
+   if (TiFinal != Ti360Day2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: 360Day daily integration: FAIL");
 
    TiFinal = Ti360Day;
    for (int N = 1; N <= 12 * 360 * 5; ++N) {
       TiFinal += IntHour360;
    }
-   if (TiFinal == Ti360Day2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: 360Day hourly integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: 360Day hourly integration: FAIL");
-   }
+   if (TiFinal != Ti360Day2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: 360Day hourly integration: FAIL");
 
    TiFinal = Ti360Day;
    for (int N = 1; N <= (3 * 24) * (360 * 5); ++N) {
       TiFinal += IntMinute360;
    }
-   if (TiFinal == Ti360Day2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: 360Day minute integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: 360Day minute integration: FAIL");
-   }
+   if (TiFinal != Ti360Day2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: 360Day minute integration: FAIL");
 
    //--- Test instants in no calendar option
    Calendar::reset(); // reset calendar
@@ -3469,12 +2797,10 @@ int testTimeInstant(void) {
 
    TimeInstant TiNone2(YearChk, MonthChk, DayChk, HourChk, MinuteChk, RRef);
 
-   if (TiNone == TiNone2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: No-calendar time constructors: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: No-calendar time constructors: FAIL");
-   }
+   if (TiNone != TiNone2)
+      ErrAll +=
+          Error(ErrorCode::Fail,
+                "TimeMgrTest/TimeInstant: No-calendar time constructors: FAIL");
 
    // Test a five-year integration with only units that make sense when there
    // is no calendar.
@@ -3491,45 +2817,34 @@ int testTimeInstant(void) {
    for (int N = 1; N <= 12 * 365 * 5; ++N) {
       TiFinal += IntHourNone;
    }
-   if (TiFinal == TiNone2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: No-calendar hourly integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: No-calendar "
-                "hourly integration: FAIL");
-   }
+   if (TiFinal != TiNone2)
+      ErrAll += Error(ErrorCode::Fail, "TimeMgrTest/TimeInstant: No-calendar "
+                                       "hourly integration: FAIL");
 
    TiFinal = TiNone;
    for (int N = 1; N <= (3 * 24) * (365 * 5); ++N) {
       TiFinal += IntMinuteNone;
    }
-   if (TiFinal == TiNone2) {
-      LOG_INFO("TimeMgrTest/TimeInstant: No-calendar minute integration: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/TimeInstant: No-calendar "
-                "minute integration: FAIL");
-   }
+   if (TiFinal != TiNone2)
+      ErrAll += Error(ErrorCode::Fail, "TimeMgrTest/TimeInstant: No-calendar "
+                                       "minute integration: FAIL");
 
    //--- Finished time instant tests, switch back to Gregorian calendar
    Calendar::reset(); // reset calendar
    Calendar::init("Gregorian");
-   return ErrAll;
+   CHECK_ERROR_ABORT(ErrAll, "TimeMgr/TimeInstant unit tests FAIL");
 
 } // end testTimeInstant
 
 //------------------------------------------------------------------------------
 // Alarm test
 
-int testAlarm(void) {
+void testAlarm(void) {
 
    LOG_INFO("TimeMgrTest: Alarm tests ---------------------------------------");
 
    // Initialize error codes
-   I4 Err1{0};
-   I4 Err2{0};
-   I4 Err3{0};
-   I4 ErrAll{0};
+   Error ErrAll;
 
    // For various time intervals, we create alarms at relevant times
    // and step through time to trigger the alarm.
@@ -3557,41 +2872,24 @@ int testAlarm(void) {
 
    // Test retrieval of the time interval
    const TimeInterval *NewInterval = AlarmEveryYear.getInterval();
-   if (*NewInterval == IntervalAnnual) {
-      LOG_INFO("TimeMgrTest/Alarm: retrieve interval: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Alarm: retrieve interval: FAIL");
-   }
+   if (*NewInterval != IntervalAnnual)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/Alarm: retrieve interval: FAIL");
 
    // Test initial retrieval of the previous ring time (should be time0)
    TimeInstant PriorRingTimeTest    = Time0;
    const TimeInstant *PriorRingTime = AlarmEveryYear.getRingTimePrev();
-   if (*PriorRingTime == PriorRingTimeTest) {
-      LOG_INFO("TimeMgrTest/Alarm: retrieve initial ring time: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Alarm: retrieve initial ring time: FAIL");
-   }
+   if (*PriorRingTime != PriorRingTimeTest)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/Alarm: retrieve initial ring time: FAIL");
 
-   // quick test of update status function
-   Err1 = AlarmNewYear2020.updateStatus(CurTime);
-   Err2 = AlarmEveryYear.updateStatus(CurTime);
-   if (Err1 == 0 && Err2 == 0) {
-      LOG_INFO("TimeMgrTest/Alarm: update status: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Alarm: update status: FAIL");
-   }
+   // quick test of update status function (aborts internally on FAIL)
+   AlarmNewYear2020.updateStatus(CurTime);
+   AlarmEveryYear.updateStatus(CurTime);
 
    // reset interval timer to make sure first ring time is in future
-   Err1 = AlarmEveryYear.reset(CurTime);
-   if (Err1 == 0) {
-      LOG_INFO("TimeMgrTest/Alarm: initial reset: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Alarm: initial reset: FAIL");
-   }
+   AlarmEveryYear.reset(CurTime);
+
    // reset the previous ring time to proper value corresponding to current time
    TimeInstant TestTime = Time0;
    while (TestTime < CurTime) {
@@ -3605,65 +2903,44 @@ int testAlarm(void) {
       CurTime += IntervalMonthly;
 
       // update alarm state based on current time
-      Err1 = AlarmNewYear2020.updateStatus(CurTime);
-      Err2 = AlarmEveryYear.updateStatus(CurTime);
-      if (Err1 != 0 || Err2 != 0) {
-         ++ErrAll;
-         LOG_ERROR("TimeMgrTest/Alarm: update annual alarms: FAIL");
-      }
+      AlarmNewYear2020.updateStatus(CurTime);
+      AlarmEveryYear.updateStatus(CurTime);
 
       // Test whether one-time alarm should be ringing or not
       if (N == 5) {
-         if (AlarmNewYear2020.isRinging()) {
-            LOG_INFO("TimeMgrTest/Alarm: one-time annual alarm: PASS");
-         } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: one-time annual alarm: FAIL");
-         }
-         Err1 = AlarmNewYear2020.stop();
-         if (Err1 == 0) {
-            LOG_INFO("TimeMgrTest/Alarm: one-time annual alarm stop: PASS");
-         } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: one-time annual alarm stop: FAIL");
-         }
+
+         if (!(AlarmNewYear2020.isRinging()))
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: one-time annual alarm: FAIL");
+
+         AlarmNewYear2020.stop();
+
       } else {
-         if (AlarmNewYear2020.isRinging()) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: one-time annual alarm "
-                      "should not be ringing: FAIL");
-         }
+
+         if (AlarmNewYear2020.isRinging())
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: one-time annual alarm "
+                            "should not be ringing: FAIL");
       }
 
       // Test retrieval of previous ring time
       const TimeInstant *PriorRingTime = AlarmEveryYear.getRingTimePrev();
-      if (*PriorRingTime != PriorRingTimeTest) {
-         ++ErrAll;
-         LOG_ERROR("TimeMgrTest/Alarm: retrieve prior ring time: FAIL");
-      }
+      if (*PriorRingTime != PriorRingTimeTest)
+         ErrAll += Error(ErrorCode::Fail,
+                         "TimeMgrTest/Alarm: retrieve prior ring time: FAIL");
 
       // Test whether interval alarm should be ringing or not
-      if (N == 5 || N == 17) {
-         if (AlarmEveryYear.isRinging()) {
-            LOG_INFO("TimeMgrTest/Alarm: periodic annual alarm: PASS");
-         } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic annual alarm: FAIL");
-         }
-         Err1 = AlarmEveryYear.reset(CurTime);
-         if (Err1 == 0) {
-            LOG_INFO("TimeMgrTest/Alarm: periodic annual alarm reset: PASS");
-         } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic annual alarm reset: FAIL");
-         }
+      if (N == 5 or N == 17) {
+         if (!(AlarmEveryYear.isRinging()))
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: periodic annual alarm: FAIL");
+         AlarmEveryYear.reset(CurTime);
          PriorRingTimeTest += IntervalAnnual;
       } else {
-         if (AlarmEveryYear.isRinging()) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic annual alarm "
-                      "should not be ringing: FAIL");
-         }
+         if (AlarmEveryYear.isRinging())
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: periodic annual alarm "
+                            "should not be ringing: FAIL");
       }
    }
 
@@ -3676,65 +2953,47 @@ int testAlarm(void) {
    Alarm AlarmEveryMonth("Every Month", IntervalMonthly, Time0);
    TimeInterval IntervalDaily(1, TimeUnits::Days);
 
-   CurTime = StartTime; // start time is 2019-08-15_14:25:23.25
-   Err1    = AlarmEveryMonth.reset(CurTime); // ensure first alarm in future
+   CurTime = StartTime;            // start time is 2019-08-15_14:25:23.25
+   AlarmEveryMonth.reset(CurTime); // ensure first alarm in future
 
-   Err3 = 1; // use to limit messages
    for (int N = 1; N <= 365; ++N) {
       // increment time in daily intervals
       CurTime += IntervalDaily;
 
       // update alarm state based on current time
-      Err1 = Alarm2020Mar1.updateStatus(CurTime);
-      Err2 = AlarmEveryMonth.updateStatus(CurTime);
-      if (Err1 != 0 || Err2 != 0) {
-         ++ErrAll;
-         LOG_ERROR("TimeMgrTest/Alarm: update monthly alarms: FAIL");
-      }
+      Alarm2020Mar1.updateStatus(CurTime);
+      AlarmEveryMonth.updateStatus(CurTime);
+
       // Test whether one-time alarm should be ringing or not
       if (N == 199) {
-         if (Alarm2020Mar1.isRinging()) {
-            LOG_INFO("TimeMgrTest/Alarm: one-time monthly alarm: PASS");
-         } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: one-time monthly alarm: FAIL");
-         }
-         Err1 = Alarm2020Mar1.stop();
-         if (Err1 != 0) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: one-time monthly alarm stop: FAIL");
-         }
+         if (!(Alarm2020Mar1.isRinging()))
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: one-time monthly alarm: FAIL");
+
+         Alarm2020Mar1.stop();
       } else {
-         if (Alarm2020Mar1.isRinging()) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: one-time monthly alarm "
-                      "should not be ringing: FAIL");
-         }
+         if (Alarm2020Mar1.isRinging())
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: one-time monthly alarm "
+                            "should not be ringing: FAIL");
       }
 
       // Test whether interval alarm should be ringing or not
-      if (N == 17 || N == 47 || N == 78 || N == 108 || N == 139 || N == 170 ||
-          N == 199 || N == 230 || N == 260 || N == 291 || N == 321 ||
+      if (N == 17 or N == 47 or N == 78 or N == 108 or N == 139 or N == 170 or
+          N == 199 or N == 230 or N == 260 or N == 291 or N == 321 or
           N == 352) {
-         if (AlarmEveryMonth.isRinging()) {
-            if (Err3 == 1) // only print first instance for pass
-               LOG_INFO("TimeMgrTest/Alarm: periodic monthly alarm: PASS");
-            Err3 = 0;
-         } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic monthly alarm: FAIL");
-         }
-         Err1 = AlarmEveryMonth.reset(CurTime);
-         if (Err1 != 0) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic monthly alarm reset: FAIL");
-         }
+
+         if (!(AlarmEveryMonth.isRinging()))
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: periodic monthly alarm: FAIL");
+
+         AlarmEveryMonth.reset(CurTime);
+
       } else {
-         if (AlarmEveryMonth.isRinging()) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic monthly alarm "
-                      "should not be ringing: FAIL");
-         }
+         if (AlarmEveryMonth.isRinging())
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: periodic monthly alarm "
+                            "should not be ringing: FAIL");
       }
    }
 
@@ -3747,65 +3006,44 @@ int testAlarm(void) {
    Alarm AlarmEveryDay("Every Day", IntervalDaily, Time0);
    TimeInterval IntervalHourly(1, TimeUnits::Hours);
 
-   CurTime = StartTime; // start time is 2019-08-15_14:25:23.25
-   Err1    = AlarmEveryDay.reset(CurTime); // ensure first alarm in future
+   CurTime = StartTime;          // start time is 2019-08-15_14:25:23.25
+   AlarmEveryDay.reset(CurTime); // ensure first alarm in future
 
-   Err3 = 1; // use to limit output
    for (int N = 1; N <= 240; ++N) {
       // increment time in hourly intervals
       CurTime += IntervalHourly;
 
       // update alarm state based on current time
-      Err1 = Alarm2019Aug20.updateStatus(CurTime);
-      Err2 = AlarmEveryDay.updateStatus(CurTime);
-      if (Err1 != 0 || Err2 != 0) {
-         ++ErrAll;
-         LOG_ERROR("TimeMgrTest/Alarm: update daily alarms: FAIL");
-      }
+      Alarm2019Aug20.updateStatus(CurTime);
+      AlarmEveryDay.updateStatus(CurTime);
 
       // Test whether one-time alarm should be ringing or not
       if (N == 106) {
-         if (Alarm2019Aug20.isRinging()) {
-            LOG_INFO("TimeMgrTest/Alarm: one-time daily alarm: PASS");
-         } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: one-time daily alarm: FAIL");
-         }
-         Err1 = Alarm2019Aug20.stop();
-         if (Err1 != 0) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: one-time daily alarm stop: FAIL");
-         }
+         if (!(Alarm2019Aug20.isRinging()))
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: one-time daily alarm: FAIL");
+
+         Alarm2019Aug20.stop();
       } else {
-         if (Alarm2019Aug20.isRinging()) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: one-time daily alarm "
-                      "should not be ringing: FAIL");
-         }
+         if (Alarm2019Aug20.isRinging())
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: one-time daily alarm "
+                            "should not be ringing: FAIL");
       }
 
       // Test whether interval alarm should be ringing or not
-      if (N == 10 || N == 34 || N == 58 || N == 82 || N == 106 || N == 130 ||
-          N == 154 || N == 178 || N == 202 || N == 226 || N == 250) {
-         if (AlarmEveryDay.isRinging()) {
-            if (Err3 == 1) // only print first instance for pass
-               LOG_INFO("TimeMgrTest/Alarm: periodic daily alarm: PASS");
-            Err3 = 0;
-         } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic daily alarm: FAIL");
-         }
-         Err1 = AlarmEveryDay.reset(CurTime);
-         if (Err1 != 0) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic daily alarm reset: FAIL");
-         }
+      if (N == 10 or N == 34 or N == 58 or N == 82 or N == 106 or N == 130 or
+          N == 154 or N == 178 or N == 202 or N == 226 or N == 250) {
+         if (!(AlarmEveryDay.isRinging()))
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: periodic daily alarm: FAIL");
+
+         AlarmEveryDay.reset(CurTime);
       } else {
-         if (AlarmEveryMonth.isRinging()) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic monthly alarm "
-                      "should not be ringing: FAIL");
-         }
+         if (AlarmEveryMonth.isRinging())
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: periodic monthly alarm "
+                            "should not be ringing: FAIL");
       }
    }
 
@@ -3818,64 +3056,42 @@ int testAlarm(void) {
    Alarm AlarmEveryHour("Every Hour", IntervalHourly, Time0);
    TimeInterval IntervalMinute(1, TimeUnits::Minutes);
 
-   CurTime = StartTime; // start time is 2019-08-15_14:25:23.25
-   Err1    = AlarmEveryHour.reset(CurTime); // ensure first alarm in future
+   CurTime = StartTime;           // start time is 2019-08-15_14:25:23.25
+   AlarmEveryHour.reset(CurTime); // ensure first alarm in future
 
-   Err3 = 1; // use to limit number of output lines
    for (int N = 1; N <= 2880; ++N) {
       // increment time in minute intervals
       CurTime += IntervalMinute;
 
       // update alarm state based on current time
-      Err1 = Alarm9am.updateStatus(CurTime);
-      Err2 = AlarmEveryHour.updateStatus(CurTime);
-      if (Err1 != 0 || Err2 != 0) {
-         ++ErrAll;
-         LOG_ERROR("TimeMgrTest/Alarm: update hourly alarms: FAIL");
-      }
+      Alarm9am.updateStatus(CurTime);
+      AlarmEveryHour.updateStatus(CurTime);
 
       // Test whether one-time alarm should be ringing or not
       if (N == 1115) {
-         if (Alarm9am.isRinging()) {
-            LOG_INFO("TimeMgrTest/Alarm: one-time hourly alarm: PASS");
-         } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: one-time hourly alarm: FAIL");
-         }
-         Err1 = Alarm9am.stop();
-         if (Err1 != 0) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: one-time hourly alarm stop: FAIL");
-         }
+         if (!(Alarm9am.isRinging()))
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: one-time hourly alarm: FAIL");
+
+         Alarm9am.stop();
       } else {
-         if (Alarm9am.isRinging()) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: one-time hourly alarm "
-                      "should not be ringing: FAIL");
-         }
+         if (Alarm9am.isRinging())
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: one-time hourly alarm "
+                            "should not be ringing: FAIL");
       }
 
       // Test whether interval alarm should be ringing or not
       if ((N - 35) % 60 == 0) {
-         if (AlarmEveryHour.isRinging()) {
-            if (Err3 == 1) // only print success on first instance
-               LOG_INFO("TimeMgrTest/Alarm: periodic hourly alarm: PASS");
-            Err3 = 0;
-         } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic hourly alarm: FAIL");
-         }
-         Err1 = AlarmEveryHour.reset(CurTime);
-         if (Err1 != 0) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic hourly alarm reset: FAIL");
-         }
+         if (!(AlarmEveryHour.isRinging()))
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: periodic hourly alarm: FAIL");
+         AlarmEveryHour.reset(CurTime);
       } else {
-         if (AlarmEveryHour.isRinging()) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic hourly alarm "
-                      "should not be ringing: FAIL");
-         }
+         if (AlarmEveryHour.isRinging())
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: periodic hourly alarm "
+                            "should not be ringing: FAIL");
       }
    }
 
@@ -3885,42 +3101,28 @@ int testAlarm(void) {
    TimeInterval Interval6Hour(6, TimeUnits::Hours);
    Alarm AlarmEvery6Hour("Every 6 Hours", Interval6Hour, Time0);
 
-   CurTime = StartTime; // start time is 2019-08-15_14:25:23.25
-   Err1    = AlarmEvery6Hour.reset(CurTime); // ensure first alarm in future
+   CurTime = StartTime;            // start time is 2019-08-15_14:25:23.25
+   AlarmEvery6Hour.reset(CurTime); // ensure first alarm in future
 
-   Err3 = 1; // limit output
    for (int N = 1; N <= 120; ++N) {
       // increment time in hourly intervals
       CurTime += IntervalHourly;
 
       // update alarm state based on current time
-      Err2 = AlarmEvery6Hour.updateStatus(CurTime);
-      if (Err2 != 0) {
-         ++ErrAll;
-         LOG_ERROR("TimeMgrTest/Alarm: update 6-hourly alarms: FAIL");
-      }
+      AlarmEvery6Hour.updateStatus(CurTime);
 
       // Test whether interval alarm should be ringing or not
       if ((N - 4) % 6 == 0) {
-         if (AlarmEvery6Hour.isRinging()) {
-            if (Err3 == 1) // only print first instance of pass
-               LOG_INFO("TimeMgrTest/Alarm: periodic 6-hourly alarm: PASS");
-            Err3 = 0;
-         } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic 6-hourly alarm: FAIL");
-         }
-         Err1 = AlarmEvery6Hour.reset(CurTime);
-         if (Err1 != 0) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic 6-hourly alarm reset: FAIL");
-         }
+         if (!(AlarmEvery6Hour.isRinging()))
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: periodic 6-hourly alarm: FAIL");
+
+         AlarmEvery6Hour.reset(CurTime);
       } else {
-         if (AlarmEvery6Hour.isRinging()) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic 6-hourly alarm "
-                      "should not be ringing: FAIL");
-         }
+         if (AlarmEvery6Hour.isRinging())
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: periodic 6-hourly alarm "
+                            "should not be ringing: FAIL");
       }
    }
 
@@ -3934,83 +3136,57 @@ int testAlarm(void) {
    Alarm AlarmEvery20min("Every 20 minutes", Interval20min, Time0);
    TimeInterval IntervalSecond(1, TimeUnits::Seconds);
 
-   CurTime = StartTime; // start time is 2019-08-15_14:25:23.25
-   Err1    = AlarmEvery20min.reset(CurTime); // ensure first alarm in future
+   CurTime = StartTime;            // start time is 2019-08-15_14:25:23.25
+   AlarmEvery20min.reset(CurTime); // ensure first alarm in future
 
-   Err3 = 1;                          // to limit output
    for (int N = 1; N <= 10800; ++N) { // integrate for 3 hours
       // increment time in second intervals
       CurTime += IntervalSecond;
 
       // update alarm state based on current time
-      Err1 = Alarm30min.updateStatus(CurTime);
-      Err2 = AlarmEvery20min.updateStatus(CurTime);
-      if (Err1 != 0 && Err2 != 0) {
-         ++ErrAll;
-         LOG_ERROR("TimeMgrTest/Alarm: update minute alarms: FAIL");
-      }
+      Alarm30min.updateStatus(CurTime);
+      AlarmEvery20min.updateStatus(CurTime);
 
       // Test whether one-time alarm should be ringing or not
       if (N == 1800) {
-         if (Alarm30min.isRinging()) {
-            LOG_INFO("TimeMgrTest/Alarm: one-time minute alarm: PASS");
-         } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: one-time minute alarm: FAIL");
-         }
-         Err1 = Alarm30min.stop();
-         if (Err1 != 0) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: one-time minute alarm stop: FAIL");
-         }
+         if (!(Alarm30min.isRinging()))
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: one-time minute alarm: FAIL");
+         Alarm30min.stop();
       } else {
-         if (Alarm30min.isRinging()) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: one-time minute alarm "
-                      "should not be ringing: FAIL");
-         }
+         if (Alarm30min.isRinging())
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: one-time minute alarm "
+                            "should not be ringing: FAIL");
       }
 
       // Test whether interval alarm should be ringing or not
       if ((N - 877) % 1200 == 0) {
-         if (AlarmEvery20min.isRinging()) {
-            if (Err3 == 1) // only print first instance of pass
-               LOG_INFO("TimeMgrTest/Alarm: periodic minute alarm: PASS");
-            Err3 = 0;
-         } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic minute alarm: FAIL");
-         }
-         Err1 = AlarmEvery20min.reset(CurTime);
-         if (Err1 != 0) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic minute alarm reset: FAIL");
-         }
+         if (!(AlarmEvery20min.isRinging()))
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: periodic minute alarm: FAIL");
+         AlarmEvery20min.reset(CurTime);
       } else {
-         if (AlarmEvery20min.isRinging()) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Alarm: periodic minute alarm "
-                      "should not be ringing: FAIL");
-         }
+         if (AlarmEvery20min.isRinging())
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Alarm: periodic minute alarm "
+                            "should not be ringing: FAIL");
       }
    }
 
-   return ErrAll;
+   CHECK_ERROR_ABORT(ErrAll, "TimeMgr/Alarm unit tests FAIL");
 
 } // end testAlarm
 
 //------------------------------------------------------------------------------
 // Clock test
 
-int testClock(void) {
+void testClock(void) {
 
    LOG_INFO("TimeMgrTest: Clock tests ---------------------------------------");
 
    // Initialize error codes
-   I4 Err1{0};
-   I4 Err2{0};
-   I4 Err3{0};
-   I4 ErrAll{0};
+   Error ErrAll;
 
    // For various time intervals, we create alarms at relevant times
    // and step through time to trigger the alarm.
@@ -4035,19 +3211,13 @@ int testClock(void) {
    TimeCheck = ModelClock.getStartTime();
    StepCheck = ModelClock.getTimeStep();
 
-   if (TimeCheck == Time0) {
-      LOG_INFO("TimeMgrTest/Clock: get start time: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Clock: get start time: FAIL");
-   }
+   if (TimeCheck != Time0)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/Clock: get start time: FAIL");
 
-   if (StepCheck == TimeStep) {
-      LOG_INFO("TimeMgrTest/Clock: get time step: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Clock: get time step: FAIL");
-   }
+   if (StepCheck != TimeStep)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/Clock: get time step: FAIL");
 
    // Define a number of periodic and one-time alarms
 
@@ -4073,52 +3243,28 @@ int testClock(void) {
    Alarm AlarmEvery6Hour("Every 6 Hours", Interval6Hour, Time0);
    Alarm AlarmEvery20min("Every 20 minutes", Interval20min, Time0);
 
-   // Test adding alarms to clock
+   // Test adding alarms to clock (aborts internally on fail)
 
-   Err1 = ModelClock.attachAlarm(&AlarmNewYear2020);
-   Err2 = ModelClock.attachAlarm(&Alarm2020Mar1);
-   Err3 = ModelClock.attachAlarm(&Alarm2019Aug20);
+   ModelClock.attachAlarm(&AlarmNewYear2020);
+   ModelClock.attachAlarm(&Alarm2020Mar1);
+   ModelClock.attachAlarm(&Alarm2019Aug20);
 
-   if (Err1 == 0 && Err2 == 0 && Err3 == 0) {
-      LOG_INFO("TimeMgrTest/Clock: attach one-time alarms: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Clock: attach one-time alarms: FAIL");
-   }
+   ModelClock.attachAlarm(&AlarmEveryYear);
+   ModelClock.attachAlarm(&AlarmEveryMonth);
+   ModelClock.attachAlarm(&AlarmEveryDay);
 
-   Err1 = ModelClock.attachAlarm(&AlarmEveryYear);
-   Err2 = ModelClock.attachAlarm(&AlarmEveryMonth);
-   Err3 = ModelClock.attachAlarm(&AlarmEveryDay);
-
-   if (Err1 == 0 && Err2 == 0 && Err3 == 0) {
-      LOG_INFO("TimeMgrTest/Clock: attach periodic alarms 1: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Clock: attach periodic alarms 1: FAIL");
-   }
-
-   Err1 = ModelClock.attachAlarm(&AlarmEveryHour);
-   Err2 = ModelClock.attachAlarm(&AlarmEvery6Hour);
-   Err3 = ModelClock.attachAlarm(&AlarmEvery20min);
-
-   if (Err1 == 0 && Err2 == 0 && Err3 == 0) {
-      LOG_INFO("TimeMgrTest/Clock: attach periodic alarms 2: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Clock: attach periodic alarms 2: FAIL");
-   }
+   ModelClock.attachAlarm(&AlarmEveryHour);
+   ModelClock.attachAlarm(&AlarmEvery6Hour);
+   ModelClock.attachAlarm(&AlarmEvery20min);
 
    // Test changing the time step
 
-   Err1 = ModelClock.changeTimeStep(Interval20min);
+   ModelClock.changeTimeStep(Interval20min);
 
    StepCheck = ModelClock.getTimeStep();
-   if (StepCheck == Interval20min && Err1 == 0) {
-      LOG_INFO("TimeMgrTest/Clock: change time step: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Clock: change time step: FAIL");
-   }
+   if (StepCheck != Interval20min)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/Clock: change time step: FAIL");
 
    // Test setting new current time and retrieving current, previous,
    // and next times.
@@ -4127,47 +3273,37 @@ int testClock(void) {
    TimeInstant PrevTime(2018, 12, 31, 23, 40, 0.0);
    TimeInstant NextTime(2019, 1, 1, 0, 20, 0.0);
 
-   Err1      = ModelClock.setCurrentTime(CurrTime);
+   ModelClock.setCurrentTime(CurrTime);
    TimeCheck = ModelClock.getCurrentTime();
 
-   if (TimeCheck == CurrTime && Err1 == 0) {
-      LOG_INFO("TimeMgrTest/Clock: set/get current time: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Clock: set/get current time: FAIL");
-   }
+   if (TimeCheck != CurrTime)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/Clock: set/get current time: FAIL");
 
    TimeCheck = ModelClock.getPreviousTime();
-   if (TimeCheck == PrevTime) {
-      LOG_INFO("TimeMgrTest/Clock: set/get previous time: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Clock: set/get previous time: FAIL");
-   }
+   if (TimeCheck != PrevTime)
+      ErrAll += Error(ErrorCode::Fail,
+                      "TimeMgrTest/Clock: set/get previous time: FAIL");
 
    TimeCheck = ModelClock.getNextTime();
-   if (TimeCheck == NextTime) {
-      LOG_INFO("TimeMgrTest/Clock: set/get next time: PASS");
-   } else {
-      ++ErrAll;
-      LOG_ERROR("TimeMgrTest/Clock: set/get next time: FAIL");
-   }
+   if (TimeCheck != NextTime)
+      ErrAll +=
+          Error(ErrorCode::Fail, "TimeMgrTest/Clock: set/get next time: FAIL");
 
    // Update periodic alarms to new current time
 
-   Err1 = AlarmEveryYear.reset(CurrTime);
-   Err1 = AlarmEveryMonth.reset(CurrTime);
-   Err1 = AlarmEveryDay.reset(CurrTime);
-   Err1 = AlarmEveryHour.reset(CurrTime);
-   Err1 = AlarmEvery6Hour.reset(CurrTime);
-   Err1 = AlarmEvery20min.reset(CurrTime);
+   AlarmEveryYear.reset(CurrTime);
+   AlarmEveryMonth.reset(CurrTime);
+   AlarmEveryDay.reset(CurrTime);
+   AlarmEveryHour.reset(CurrTime);
+   AlarmEvery6Hour.reset(CurrTime);
+   AlarmEvery20min.reset(CurrTime);
 
    // Test the integration of a model clock by advancing forward
    // in time and checking alarms. Integrate forward 2 years with a
    // 20 min timestep.
 
    TimeInstant StopTime(2021, 1, 1, 0, 0, 0.0);
-   bool FirstStep{true};
    bool RingCheck{false};
    I8 Year{0};
    I8 Month{0};
@@ -4178,16 +3314,7 @@ int testClock(void) {
 
    while (CurrTime <= StopTime) {
 
-      Err1 = ModelClock.advance(); // advance one time step
-
-      if (Err1 == 0) {
-         if (FirstStep)
-            LOG_INFO("TimeMgrTest/Clock: advance: PASS");
-      } else {
-         ++ErrAll;
-         break;
-         LOG_ERROR("TimeMgrTest/Clock: advance: FAIL");
-      }
+      ModelClock.advance(); // advance one time step
 
       // retrieve current time for both loop cycling and tests below
       CurrTime = ModelClock.getCurrentTime();
@@ -4196,158 +3323,136 @@ int testClock(void) {
       RingCheck = AlarmNewYear2020.isRinging();
       if (CurrTime == TimeNewYear2020) {
          if (RingCheck) {
-            LOG_INFO("TimeMgrTest/Clock: alarm NewYear2020: PASS");
-            Err1 = AlarmNewYear2020.stop();
+            AlarmNewYear2020.stop();
          } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm NewYear2020: FAIL");
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm NewYear2020: FAIL");
          }
       } else {
-         if (RingCheck) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm NewYear2020: FAIL");
-         }
+         if (RingCheck)
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm NewYear2020: FAIL");
       }
 
       RingCheck = Alarm2020Mar1.isRinging();
       if (CurrTime == Time2020Mar1) {
          if (RingCheck) {
-            LOG_INFO("TimeMgrTest/Clock: alarm 2020Mar1: PASS");
-            Err1 = Alarm2020Mar1.stop();
+            Alarm2020Mar1.stop();
          } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm 2020Mar1: FAIL");
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm 2020Mar1: FAIL");
          }
       } else {
-         if (RingCheck) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm 2020Mar1: FAIL");
-         }
+         if (RingCheck)
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm 2020Mar1: FAIL");
       }
 
       RingCheck = Alarm2019Aug20.isRinging();
       if (CurrTime == Time2019Aug20) {
          if (RingCheck) {
-            LOG_INFO("TimeMgrTest/Clock: alarm 2019Aug20: PASS");
-            Err1 = Alarm2019Aug20.stop();
+            Alarm2019Aug20.stop();
          } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm 2019Aug20: FAIL");
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm 2019Aug20: FAIL");
          }
       } else {
-         if (RingCheck) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm 2019Aug20: FAIL");
-         }
+         if (RingCheck)
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm 2019Aug20: FAIL");
       }
 
       // check 20-min alarm should always be ringing
       RingCheck = AlarmEvery20min.isRinging();
       if (RingCheck) {
-         if (FirstStep)
-            LOG_INFO("TimeMgrTest/Clock: alarm Every20min: PASS");
-         Err1 = AlarmEvery20min.reset(CurrTime);
+         AlarmEvery20min.reset(CurrTime);
       } else {
-         ++ErrAll;
-         LOG_INFO("TimeMgrTest/Clock: alarm Every20min: FAIL");
+         ErrAll += Error(ErrorCode::Fail,
+                         "TimeMgrTest/Clock: alarm Every20min: FAIL");
       }
 
       // Extract year, month, day, hour, min, seconds from current
       // time to check other periodic alarms
 
-      Err1 = CurrTime.get(Year, Month, Day, Hour, Minute, Second);
+      CurrTime.get(Year, Month, Day, Hour, Minute, Second);
 
       // Check annual alarm
       RingCheck = AlarmEveryYear.isRinging();
       if (Month == 1 && Day == 1 && Hour == 0 && Minute == 0 && Second == 0.0) {
          if (RingCheck) {
-            // success but avoid printing excessive PASS output
-            Err1 = AlarmEveryYear.reset(CurrTime);
+            AlarmEveryYear.reset(CurrTime);
          } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm EveryYear 1: FAIL");
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm EveryYear 1: FAIL");
          }
       } else {
-         if (RingCheck) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm EveryYear 2: FAIL");
-         }
+         if (RingCheck)
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm EveryYear 2: FAIL");
       }
 
       // Check monthly alarm
       RingCheck = AlarmEveryMonth.isRinging();
       if (Day == 1 && Hour == 0 && Minute == 0 && Second == 0.0) {
          if (RingCheck) {
-            // success but avoid printing excessive PASS output
-            Err1 = AlarmEveryMonth.reset(CurrTime);
+            AlarmEveryMonth.reset(CurrTime);
          } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm EveryMonth 1: FAIL");
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm EveryMonth 1: FAIL");
          }
       } else {
-         if (RingCheck) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm EveryMonth 2: FAIL");
-         }
+         if (RingCheck)
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm EveryMonth 2: FAIL");
       }
 
       // Check daily alarm
       RingCheck = AlarmEveryDay.isRinging();
       if (Hour == 0 && Minute == 0 && Second == 0.0) {
          if (RingCheck) {
-            // success but avoid printing excessive PASS output
-            Err1 = AlarmEveryDay.reset(CurrTime);
+            AlarmEveryDay.reset(CurrTime);
          } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm EveryDay 1: FAIL");
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm EveryDay 1: FAIL");
          }
       } else {
-         if (RingCheck) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm EveryDay 2: FAIL");
-         }
+         if (RingCheck)
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm EveryDay 2: FAIL");
       }
 
       // Check hourly alarm
       RingCheck = AlarmEveryHour.isRinging();
       if (Minute == 0 && Second == 0.0) {
          if (RingCheck) {
-            // success but avoid printing excessive PASS output
-            Err1 = AlarmEveryHour.reset(CurrTime);
+            AlarmEveryHour.reset(CurrTime);
          } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm EveryHour 1: FAIL");
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm EveryHour 1: FAIL");
          }
       } else {
-         if (RingCheck) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm EveryHour 2: FAIL");
-         }
+         if (RingCheck)
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm EveryHour 2: FAIL");
       }
 
       // Check 6-hour alarm
       RingCheck = AlarmEvery6Hour.isRinging();
       if (Hour % 6 == 0 && Minute == 0 && Second == 0.0) {
          if (RingCheck) {
-            // success but avoid printing excessive PASS output
-            Err1 = AlarmEvery6Hour.reset(CurrTime);
+            AlarmEvery6Hour.reset(CurrTime);
          } else {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm Every6Hour 1: FAIL");
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm Every6Hour 1: FAIL");
          }
       } else {
-         if (RingCheck) {
-            ++ErrAll;
-            LOG_ERROR("TimeMgrTest/Clock: alarm Every6Hour 2: FAIL");
-         }
+         if (RingCheck)
+            ErrAll += Error(ErrorCode::Fail,
+                            "TimeMgrTest/Clock: alarm Every6Hour 2: FAIL");
       }
-
-      // reset flag for stuff on first step
-      if (FirstStep)
-         FirstStep = false;
    }
 
-   return ErrAll;
+   CHECK_ERROR_ABORT(ErrAll, "TimeMgr/Clock unit tests FAIL");
 
 } // end testClock
 
@@ -4355,9 +3460,6 @@ int testClock(void) {
 // The test driver.
 
 int main(int argc, char *argv[]) {
-
-   I4 Err{0};
-   I4 TotErr{0};
 
    // Initialize the global MPI environment
    MPI_Init(&argc, &argv);
@@ -4369,36 +3471,17 @@ int main(int argc, char *argv[]) {
    // Initialize the Logging system
    initLogging(DefEnv);
 
-   Err = testTimeFrac();
-   TotErr += Err;
+   testTimeFrac();
+   testCalendar();
+   testTimeInterval();
+   testTimeInstant();
+   testAlarm();
+   testClock();
 
-   Err = testCalendar();
-   TotErr += Err;
-
-   Err = testTimeInterval();
-   TotErr += Err;
-
-   Err = testTimeInstant();
-   TotErr += Err;
-
-   Err = testAlarm();
-   TotErr += Err;
-
-   Err = testClock();
-   TotErr += Err;
+   // if it made it here, all tests successful
 
    MPI_Finalize();
-
-   if (TotErr == 0) {
-      LOG_INFO("TimeMgrTest: Successful completion");
-   } else {
-      LOG_INFO("TimeMgrTest: Failed");
-   }
-
-   if (TotErr >= 256)
-      TotErr = 255;
-
-   return TotErr;
+   return 0;
 
 } // end of main
 //===-----------------------------------------------------------------------===/

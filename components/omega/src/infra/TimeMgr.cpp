@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "TimeMgr.h"
+#include "Error.h"
 #include "Logging.h"
 
 #include <algorithm>
@@ -132,11 +133,9 @@ I8 TimeFracLCM(const I8 A,   // first  num for which LCM needed
                const I8 B) { // second num for which LCM needed
 
    I8 GCD = TimeFracGCD(A, B);
-   // Check GCD does not return zero
-   if (GCD == 0) {
-      LOG_ERROR("TimeMgr: TimeFracLCM TimeFracGCD returned 0.");
-      return 0;
-   }
+   // Check unlikely zero return from GCD
+   if (GCD == 0)
+      ABORT_ERROR("TimeMgr: Cannot compute TimeFracLCM: GCD returned 0.");
 
    return llabs((A / GCD) * B); // avoid (a * b) directly to prevent
                                 //   overflow when a and b are large;
@@ -148,42 +147,33 @@ I8 TimeFracLCM(const I8 A,   // first  num for which LCM needed
 //------------------------------------------------------------------------------
 // TimeFrac::set - sets base time components directly
 
-I4 TimeFrac::set(I8 W,   // [in] whole integer seconds
-                 I8 N,   // [in] fractional seconds, numerator
-                 I8 D) { // [in] fractional seconds, denominator
-
-   // Initialize error code to success
-   I4 Err{0};
+void TimeFrac::set(I8 W,   // [in] whole integer seconds
+                   I8 N,   // [in] fractional seconds, numerator
+                   I8 D) { // [in] fractional seconds, denominator
 
    // Whole and Numer must be either both positive or both negative (product
    // non-neg), Denom must be always positive and >= 1. If conditions are met,
    // set TimeFrac to input values, else output an error message
 
    if ((W * N >= 0) && D >= 1) {
-      Whole = W;          // Sets whole number to input value
-      Numer = N;          // Sets numerator    to input value
-      Denom = D;          // Sets denominator  to input value
-      Err   = simplify(); // Ensure fraction in simplest form
+      Whole = W;  // Sets whole number to input value
+      Numer = N;  // Sets numerator    to input value
+      Denom = D;  // Sets denominator  to input value
+      simplify(); // Ensure fraction in simplest form
    } else {
-      LOG_ERROR("TimeMgr: Invalid input for TimeFrac::set, product of W and N "
-                "must be non-negative and D must be >= 1.");
-
-      Err = 1;
+      ABORT_ERROR("TimeMgr: Invalid input for TimeFrac::set,"
+                  " product of W and N must be non-negative and"
+                  " D must be >= 1.");
    }
-
-   return Err;
 
 } // end TimeFrac::set
 
 //------------------------------------------------------------------------------
 // TimeFrac::setHMS - sets a base time by converting from hour, min, sec
 
-I4 TimeFrac::setHMS(I4 Hours,     // [in] integer hours
-                    I4 Minutes,   // [in] integer minutes
-                    I4 Seconds) { // [in] integer seconds
-
-   // Initialize error code as success
-   I4 Err{0};
+void TimeFrac::setHMS(I4 Hours,     // [in] integer hours
+                      I4 Minutes,   // [in] integer minutes
+                      I4 Seconds) { // [in] integer seconds
 
    // set fractional component to zero
    Numer = 0;
@@ -193,32 +183,21 @@ I4 TimeFrac::setHMS(I4 Hours,     // [in] integer hours
    Whole = (I8)Seconds + (I8)Hours * SECONDS_PER_HOUR +
            (I8)Minutes * SECONDS_PER_MINUTE;
 
-   Err = simplify(); // Ensure fraction in simplest form
-   if (Err != 0)
-      LOG_ERROR("TimeMgr: Error simplifying final fraction");
-
-   // return
-   return Err;
+   simplify(); // Ensure fraction in simplest form
 
 } // end TimeFrac::setHMS
 
 //------------------------------------------------------------------------------
 // TimeFrac::setSeconds - sets a base time by converting real seconds
 
-I4 TimeFrac::setSeconds(R8 Seconds) { // [in] floating point seconds
-
-   // Initialize error code as success
-   I4 Err{0};
+void TimeFrac::setSeconds(R8 Seconds) { // [in] floating point seconds
 
    // Ensure real input is in reasonable fractional range
    // due to limitation of I8 representation.
    R8 Rabs = fabs(Seconds);
-   if ((Rabs > 0.0 && Rabs < 1e-17) || Rabs > 1e18) {
-      Err = 1;
-      LOG_ERROR("TimeMgr: Input out of range, abs value larger than 1e18 or "
-                "smaller than 1e-17");
-      return Err;
-   }
+   if ((Rabs > 0.0 && Rabs < 1e-17) || Rabs > 1e18)
+      ABORT_ERROR("TimeMgr: Input out of range, abs value larger than 1e18 or "
+                  "smaller than 1e-17");
 
    // Must convert real seconds to native integer fraction.
    // This is performed using a method of continued fractions (CF) and a
@@ -233,7 +212,7 @@ I4 TimeFrac::setSeconds(R8 Seconds) { // [in] floating point seconds
    Denom     = 1;
    R8 Target = Rabs;
    if (Target == 0.0)
-      return Err; // if input is 0.0, we're done
+      return; // if input is 0.0, we're done
 
    // Strip off any whole number part (w) first to avoid 64-bit overflow in
    // the algorithm if given a large value.
@@ -242,7 +221,7 @@ I4 TimeFrac::setSeconds(R8 Seconds) { // [in] floating point seconds
       Target -= (R8)W;
       Whole = Sign * W;
       if (Target < 1e-17)
-         return Err; // if input is an integer, we're done
+         return; // if input is an integer, we're done
    }
 
    // Target precision is relative to given input (not target, due to possible
@@ -271,7 +250,6 @@ I4 TimeFrac::setSeconds(R8 Seconds) { // [in] floating point seconds
    I8 N; // numerator
    I8 D; // denominator
    R8 F = 0.0;
-   I4 I = 0;
    do {
       // Compute next convergent N/D
       A = (I8)R;
@@ -300,94 +278,64 @@ I4 TimeFrac::setSeconds(R8 Seconds) { // [in] floating point seconds
    Numer = N * Sign;
    Denom = D;
 
-   Err = simplify(); // Ensure fraction in simplest form
-   if (Err != 0)
-      LOG_ERROR("TimeMgr: Error simplifying final fraction");
-   return Err; // Return error code
+   simplify(); // Ensure fraction in simplest form
 
 } // end TimeFrac::setSeconds
 
 //------------------------------------------------------------------------------
 // TimeFrac::setMinutes - sets a base time by converting real minutes
 
-I4 TimeFrac::setMinutes(R8 minutes) { // [in] floating point minutes
-
-   // Initialize error code as success
-   I4 Err{0};
+void TimeFrac::setMinutes(R8 minutes) { // [in] floating point minutes
 
    // Convert to real seconds and use the seconds routine
    R8 seconds = minutes * SECONDS_PER_MINUTE;
-   Err        = setSeconds(seconds);
-
-   // Check for errors and return
-   if (Err != 0)
-      LOG_ERROR("TimeMgr: Error calling TimeFrac::setSeconds");
-   return Err;
+   setSeconds(seconds);
 
 } // end TimeFrac::setMinutes
 
 //------------------------------------------------------------------------------
 // TimeFrac::setHours - sets a base time by converting real hours
 
-I4 TimeFrac::setHours(R8 hours) { // [in] floating point hours
-
-   // Initialize error code as success
-   I4 Err{0};
+void TimeFrac::setHours(R8 hours) { // [in] floating point hours
 
    // Convert to real seconds and use the seconds routine
    R8 seconds = hours * SECONDS_PER_HOUR;
-   Err        = setSeconds(seconds);
-
-   // Check for errors and return
-   if (Err != 0)
-      LOG_ERROR("TimeMgr: Error calling TimeFrac::setSeconds");
-   return Err;
+   setSeconds(seconds);
 
 } // end TimeFrac::setHours
 
 //------------------------------------------------------------------------------
 // TimeFrac::setWhole - Set whole seconds separately
 
-I4 TimeFrac::setWhole(const I8 W) { // [in] Whole number of seconds
-
-   Whole = W; // Sets whole number to input value
-   return 0;
-
+void TimeFrac::setWhole(const I8 W) { // [in] Whole number of seconds
+   Whole = W;                         // Sets whole number to input value
 } // end TimeFrac::setWhole
 
 //------------------------------------------------------------------------------
 // TimeFrac::setNumer - Set numerator of fractional seconds separately
 
-I4 TimeFrac::setNumer(const I8 N) { // [in] Numerator of fractional seconds
-
-   Numer = N; // Sets numerator to input value
-   return 0;
-
+void TimeFrac::setNumer(const I8 N) { // [in] Numerator of fractional seconds
+   Numer = N;                         // Sets numerator to input value
 } // end TimeFrac::setNumer
 
 //------------------------------------------------------------------------------
 // TimeFrac::setDenom - Set denominator of fractional seconds separately
 
-I4 TimeFrac::setDenom(const I8 D) { // [in] Denominator of fraction
-
-   Denom = D; // Sets denominator to input value
-   return 0;
-
+void TimeFrac::setDenom(const I8 D) { // [in] Denominator of fraction
+   Denom = D;                         // Sets denominator to input value
 } // end TimeFrac::setDenom
 
 //------------------------------------------------------------------------------
 // TimeFrac::get - Retrieve base time in native fractional seconds
 
-I4 TimeFrac::get(I8 &W,         // [out] whole seconds
-                 I8 &N,         // [out] fractional second numerator
-                 I8 &D) const { // [out] fractional second denominator
+void TimeFrac::get(I8 &W,         // [out] whole seconds
+                   I8 &N,         // [out] fractional second numerator
+                   I8 &D) const { // [out] fractional second denominator
 
    // retrieve components
    W = Whole;
    N = Numer;
    D = Denom;
-
-   return 0;
 
 } // end TimeFrac::get
 
@@ -395,12 +343,9 @@ I4 TimeFrac::get(I8 &W,         // [out] whole seconds
 // TimeFrac::getHMS - Gets base time in integer hours, minutes, seconds
 // Note that this version truncates the fractional second (rounds toward zero).
 
-I4 TimeFrac::getHMS(I4 &Hours,           // [out] integer hours
-                    I4 &Minutes,         // [out] integer minutes
-                    I4 &Seconds) const { // [out] integer seconds
-
-   // Initialize error code to success
-   I4 Err{0};
+void TimeFrac::getHMS(I4 &Hours,           // [out] integer hours
+                      I4 &Minutes,         // [out] integer minutes
+                      I4 &Seconds) const { // [out] integer seconds
 
    // make local copy for manipulation
    TimeFrac RemainingTime = *this;
@@ -412,11 +357,9 @@ I4 TimeFrac::getHMS(I4 &Hours,           // [out] integer hours
    // extract hours and check whether in range
    I8 TmpHours = RemainingSeconds / SECONDS_PER_HOUR;
 
-   if (TmpHours < INT_MIN || TmpHours > INT_MAX) {
-      Err = 1;
-      LOG_ERROR("TimeMgr: value exceeds machine limits for I4");
-      return Err;
-   }
+   if (TmpHours < INT_MIN || TmpHours > INT_MAX)
+      ABORT_ERROR("TimeMgr: TimeFrac::getHMS:"
+                  " Hours value exceeds machine limits for I4");
 
    // hours from remaining time
    RemainingSeconds %= SECONDS_PER_HOUR;
@@ -430,9 +373,6 @@ I4 TimeFrac::getHMS(I4 &Hours,           // [out] integer hours
    Minutes = (I4)TmpMinutes;
    Seconds = (I4)RemainingSeconds;
 
-   // return error code
-   return Err;
-
 } // end TimeFrac::getHMS
 
 //------------------------------------------------------------------------------
@@ -442,12 +382,8 @@ I4 TimeFrac::getHMS(I4 &Hours,           // [out] integer hours
 R8 TimeFrac::getSeconds(void) const { // \result Time in real seconds
 
    // check for divide-by-zero
-   I4 Err{0};
-   if (Denom == 0) {
-      Err = 1;
-      LOG_ERROR("TimeMgr: encountered 0 denominator.");
-      return 0.0;
-   }
+   if (Denom == 0)
+      ABORT_ERROR("TimeMgr: TimeFrac::getSeconds encountered 0 denominator.");
 
    // convert integer fractional seconds to real result
    return (R8)Whole + (R8)Numer / (R8)Denom;
@@ -461,12 +397,8 @@ R8 TimeFrac::getSeconds(void) const { // \result Time in real seconds
 R8 TimeFrac::getHours(void) const { // \result Time in real hours
 
    // check for divide-by-zero
-   I4 Err{0};
-   if (Denom == 0) {
-      Err = 1;
-      LOG_ERROR("TimeMgr: encountered 0 denominator.");
-      return 0.0;
-   }
+   if (Denom == 0)
+      ABORT_ERROR("TimeMgr: TimeFrac::getHours encountered 0 denominator.");
 
    // make local copy for manipulation
    TimeFrac TmpTime = *this;
@@ -488,12 +420,8 @@ R8 TimeFrac::getHours(void) const { // \result Time in real hours
 R8 TimeFrac::getMinutes(void) const { // \result Time in real minutes
 
    // check for divide-by-zero
-   int Err{0};
-   if (Denom == 0) {
-      Err = 1;
-      LOG_ERROR("TimeMgr: encountered 0 denominator.");
-      return 0.0;
-   }
+   if (Denom == 0)
+      ABORT_ERROR("TimeMgr: TimeFrac::getMinutes encountered 0 denominator.");
 
    // make local copy for manipulation
    TimeFrac TmpTime = *this;
@@ -548,11 +476,7 @@ TimeFrac::TimeFrac(I8 W,   // [in] integer whole seconds
                    I8 D) { // [in] fractional seconds, denominator
 
    // Calls the set function to set TimeFrac to input values
-   I4 Err = this->set(W, N, D);
-
-   if (Err != 0)
-      LOG_ERROR("TimeMgr: TimeFrac constructor returned error from component "
-                "set routine");
+   this->set(W, N, D);
 
 } // end TimeFrac constructor by components
 
@@ -563,11 +487,7 @@ TimeFrac::TimeFrac(const R8 Seconds) { // [in] Time in real seconds
 
    // Calls the setSecond function to convert seconds to an integer
    // fraction for TimeFrac
-   I4 Err = this->setSeconds(Seconds);
-
-   if (Err != 0)
-      LOG_ERROR("TimeMgr: TimeFrac constructor (real seconds) Returned error "
-                "from component set routine");
+   this->setSeconds(Seconds);
 
 } // end TimeFrac constructor from real seconds
 
@@ -589,10 +509,8 @@ bool TimeFrac::operator==(
    TimeFrac Ttmp2 = Time;
 
    // ensure proper base time
-   if (Ttmp1.simplify() != 0 || Ttmp2.simplify() != 0) {
-      LOG_ERROR("TimeMgr: TimeFrac(==) simplfy error");
-      return false;
-   }
+   Ttmp1.simplify();
+   Ttmp2.simplify();
 
    // put both fractions on the same denominator, then compare
    I8 LCM = TimeFracLCM(Ttmp1.Denom, Ttmp2.Denom);
@@ -613,10 +531,8 @@ bool TimeFrac::operator!=(
    TimeFrac Ttmp2 = Time;
 
    // ensure proper base time
-   if (Ttmp1.simplify() != 0 || Ttmp2.simplify() != 0) {
-      LOG_ERROR("TimeMgr: TimeFrac(!=) simplfy error");
-      return false;
-   }
+   Ttmp1.simplify();
+   Ttmp2.simplify();
 
    // put both fractions on the same denominator, then compare
    I8 LCM = TimeFracLCM(Ttmp1.Denom, Ttmp2.Denom);
@@ -637,10 +553,8 @@ bool TimeFrac::operator<(
    TimeFrac Ttmp2 = Time;
 
    // ensure proper fractions; check for divide-by-zero
-   if (Ttmp1.simplify() != 0 || Ttmp2.simplify() != 0) {
-      LOG_ERROR("TimeMgr: TimeFrac(<) simplfy error");
-      return false;
-   }
+   Ttmp1.simplify();
+   Ttmp2.simplify();
 
    // ignore fractional part if whole parts are different
    if (Ttmp1.Whole != Ttmp2.Whole) {
@@ -666,10 +580,8 @@ bool TimeFrac::operator>(
    TimeFrac Ttmp2 = Time;
 
    // ensure proper fractions; check for divide-by-zero
-   if (Ttmp1.simplify() != 0 || Ttmp2.simplify() != 0) {
-      LOG_ERROR("TimeMgr: TimeFrac(<) simplfy error");
-      return false;
-   }
+   Ttmp1.simplify();
+   Ttmp2.simplify();
 
    // ignore fractional part if whole parts are different
    if (Ttmp1.Whole != Ttmp2.Whole) {
@@ -717,10 +629,8 @@ TimeFrac
 TimeFrac::operator+(const TimeFrac &Time) const { // [in] TimeFrac to add
 
    // check for divide-by-zero
-   if (Denom == 0 || Time.Denom == 0) {
-      LOG_ERROR("TimeMgr: TimeFrac(+) encountered 0 denominator");
-      return TimeFrac(0, 0, 1);
-   }
+   if (Denom == 0 || Time.Denom == 0)
+      ABORT_ERROR("TimeMgr: TimeFrac(+) encountered 0 denominator");
 
    TimeFrac Sum;
 
@@ -747,10 +657,8 @@ TimeFrac
 TimeFrac::operator-(const TimeFrac &Time) const { // [in] TimeFrac to subtract
 
    // check for divide-by-zero
-   if (Denom == 0 || Time.Denom == 0) {
-      LOG_ERROR("TimeMgr: TimeFrac(-) encountered 0 denominator");
-      return TimeFrac(0, 0, 1);
-   }
+   if (Denom == 0 || Time.Denom == 0)
+      ABORT_ERROR("TimeMgr: TimeFrac(-) encountered 0 denominator");
 
    TimeFrac Diff;
 
@@ -875,10 +783,8 @@ TimeFrac &TimeFrac::operator*=(const R8 Multiplier) { // [in] real multiplier
 TimeFrac TimeFrac::operator/(I4 Divisor) const { // [in] integer divisor
 
    // check for divide-by-zero
-   if (Divisor == 0) {
-      LOG_ERROR("TimeMgr: TimeFrac(/) attempt to divide by 0");
-      return TimeFrac(0, 0, 1);
-   }
+   if (Divisor == 0)
+      ABORT_ERROR("TimeMgr: TimeFrac(/) attempt to divide by 0");
 
    TimeFrac Quotient;
    I8 Remainder;
@@ -935,10 +841,8 @@ R8 TimeFrac::operator/(
 
    // check for divide-by-zero
    if (Denom == 0 || Time.Denom == 0 ||
-       Time.Whole * Time.Denom + Time.Numer == 0) {
-      LOG_ERROR("TimeMgr: TimeFrac(/) attempt to divide by 0");
-      return 0.0;
-   }
+       Time.Whole * Time.Denom + Time.Numer == 0)
+      ABORT_ERROR("TimeMgr: TimeFrac(/) attempt to divide by 0");
 
    R8 Quotient = (Whole + (R8)Numer / (R8)Denom) /
                  (Time.Whole + (R8)Time.Numer / (R8)Time.Denom);
@@ -962,17 +866,14 @@ TimeFrac::operator%(const TimeFrac &Time) const { // [in] TimeFrac to modulo by
       if (Time.Whole != 0) {
          Remainder.Numer = Whole % Time.Whole;
       } else {
-         LOG_ERROR("TimeMgr: TimeFrac modulus attempt to divide by 0");
-         return TimeFrac(0, 0, 1);
+         ABORT_ERROR("TimeMgr: TimeFrac modulus attempt to divide by 0");
       }
    }
    // otherwise, perform Time modulus
    else {
       // check for divide-by-zero
-      if (Denom == 0 || Time.Denom == 0) {
-         LOG_ERROR("TimeMgr: TimeFrac modulus divide by 0");
-         return TimeFrac(0, 0, 1);
-      }
+      if (Denom == 0 || Time.Denom == 0)
+         ABORT_ERROR("TimeMgr: TimeFrac modulus divide by 0");
 
       I8 LCM = TimeFracLCM(Denom, Time.Denom);
 
@@ -984,8 +885,7 @@ TimeFrac::operator%(const TimeFrac &Time) const { // [in] TimeFrac to modulo by
          Remainder.Numer =
              ((Whole * Denom + Numer) * (LCM / Denom)) % Remainder.Denom;
       } else {
-         LOG_ERROR("TimeMgr: TimeFrac modulus divide by 0");
-         return TimeFrac(0, 0, 1);
+         ABORT_ERROR("TimeMgr: TimeFrac modulus divide by 0");
       }
    }
 
@@ -1030,16 +930,11 @@ TimeFrac &TimeFrac::operator=(const TimeFrac &Time) { // [in] TimeFrac to assign
 // TimeFrac::convert
 // Converts a base time fraction to new denominator
 
-I4 TimeFrac::convert(I8 Denominator) {
-
-   I4 Err{0};
+void TimeFrac::convert(I8 Denominator) {
 
    // Check for invalid denominator
-   if (Denominator == 0 || Denom == 0) {
-      Err = 1;
-      LOG_ERROR("TimeMgr: TimeFrac::convert encountered 0 denominator");
-      return Err;
-   }
+   if (Denominator == 0 || Denom == 0)
+      ABORT_ERROR("TimeMgr: TimeFrac::convert encountered 0 denominator");
 
    I8 Conversion = Whole * Denominator + (Numer * Denominator) / Denom;
 
@@ -1050,8 +945,6 @@ I4 TimeFrac::convert(I8 Denominator) {
 
    // don't simplify; leave on specified denominator.
 
-   return Err; // return error code
-
 } // end TimeFrac::convert
 
 //------------------------------------------------------------------------------
@@ -1060,17 +953,11 @@ I4 TimeFrac::convert(I8 Denominator) {
 // If fraction >= 1, add to whole part, and adjust fraction to
 // remainder. Then reduce to lowest denominator.
 
-I4 TimeFrac::simplify(void) {
-
-   // Initialize error code
-   I4 Err{0};
+void TimeFrac::simplify(void) {
 
    // check for divide-by-zero
-   if (Denom == 0) {
-      Err = 1;
-      LOG_ERROR("TimeMgr: TimeFrac::simplify encountered 0 denominator");
-      return Err;
-   }
+   if (Denom == 0)
+      ABORT_ERROR("TimeMgr: TimeFrac::simplify encountered 0 denominator");
 
    // normalize to proper fraction - if fraction > 1 add to the
    // whole number component to bring fraction under 1
@@ -1103,17 +990,12 @@ I4 TimeFrac::simplify(void) {
    // reduce to lowest denominator
 
    I8 GCD = TimeFracGCD(Numer, Denom);
-   // Check GCD does not return zero
-   if (GCD == 0) {
-      Err = 1;
-      LOG_ERROR("TimeMgr: TimeFrac::simplify TimeFracGCD returned 0");
-      return Err;
-   }
+   // Check unlikely GCD zero
+   if (GCD == 0)
+      ABORT_ERROR("TimeMgr: TimeFrac::simplify error: TimeFracGCD returned 0");
 
    Numer /= GCD;
    Denom /= GCD;
-
-   return Err; // return error code
 
 } // end TimeFrac::simplify
 
@@ -1130,11 +1012,13 @@ std::unique_ptr<Calendar> Calendar::OmegaCal = nullptr;
 //-------------------------------------------------------------------------
 // Calendar::get - retrieves pointer to model calendar
 Calendar *Calendar::get() {
-   if (isDefined()) {
-      return Calendar::OmegaCal.get();
-   } else {
-      LOG_CRITICAL("Attempt to retrieve undefined calendar");
-   }
+
+   // Check for valid calendar
+   if (!isDefined())
+      ABORT_ERROR("TimeMgr: Attempt to retrieve undefined calendar");
+
+   return Calendar::OmegaCal.get();
+
 } // end retrieve calendar pointer
 
 //------------------------------------------------------------------------------
@@ -1144,17 +1028,15 @@ CalendarKind Calendar::getKind() {
 
    CalendarKind OutKind = CalendarUnknown;
    // check if calendar defined
-   if (isDefined()) {
+   if (!isDefined())
+      ABORT_ERROR("TimeMgr: Cannot retrieve calendar kind"
+                  " - Calendar not initialized");
 
-      // get calendar type and check for valid value
-      OutKind = Calendar::OmegaCal->CalKind;
-      if (OutKind == CalendarUnknown)
-         LOG_CRITICAL("Cannot retrieve calendar kind"
-                      " - Calendar undefined or not initialized");
-
-   } else {
-      LOG_CRITICAL("Cannot retrieve calendar kind - Calendar not initialized");
-   }
+   // get calendar type and check for valid value
+   OutKind = Calendar::OmegaCal->CalKind;
+   if (OutKind == CalendarUnknown)
+      ABORT_ERROR("Time Mgr: Cannot retrieve calendar kind"
+                  " - Calendar undefined or not initialized");
 
    return OutKind;
 }
@@ -1162,59 +1044,55 @@ CalendarKind Calendar::getKind() {
 std::vector<I4> Calendar::getDaysPerMonth() {
 
    // check if calendar defined
-   if (isDefined) {
-      // also check for valid vector
-      if (Calendar::OmegaCal->DaysPerMonth.size() > 0) {
-         return Calendar::OmegaCal->DaysPerMonth;
-      } else {
-         LOG_CRITICAL("Invalid DaysPerMonth vector");
-      }
-   } else {
-      LOG_CRITICAL("Cannot retrieve calendar props - Calendar not initialized");
-   }
+   if (!isDefined())
+      ABORT_ERROR("TimeMgr: Cannot retrieve DaysPerMonth"
+                  " - Calendar not initialized");
+
+   // also check for valid vector
+   if (Calendar::OmegaCal->DaysPerMonth.size() < 1)
+      ABORT_ERROR("TimeMgr: Invalid DaysPerMonth vector in Calendar");
+
+   return Calendar::OmegaCal->DaysPerMonth;
 }
 
 I4 Calendar::getMonthsPerYear() {
 
    // check if calendar defined
-   if (isDefined()) {
-      return Calendar::OmegaCal->MonthsPerYear;
-   } else {
-      LOG_CRITICAL("Cannot retrieve MonthsPerYear - Calendar not initialized");
-      return 0;
-   }
+   if (!isDefined())
+      ABORT_ERROR("TimeMgr: Cannot retrieve MonthsPerYear"
+                  " - Calendar not initialized");
+
+   return Calendar::OmegaCal->MonthsPerYear;
 }
 
 I4 Calendar::getSecondsPerDay() {
 
    // check if calendar defined
-   if (isDefined()) {
-      return Calendar::OmegaCal->SecondsPerDay;
-   } else {
-      LOG_CRITICAL("Cannot retrieve SecondsPerDay - Calendar not initialized");
-      return 0;
-   }
+   if (!isDefined())
+      ABORT_ERROR("TimeMgr: Cannot retrieve SecondsPerDay"
+                  " - Calendar not initialized");
+
+   return Calendar::OmegaCal->SecondsPerDay;
 }
 
 I4 Calendar::getSecondsPerYear() {
 
    // check if calendar defined
-   if (isDefined()) {
-      return Calendar::OmegaCal->SecondsPerYear;
-   } else {
-      LOG_CRITICAL("Cannot retrieve SecondsPerYear - Calendar not initialized");
-      return 0;
-   }
+   if (!isDefined())
+      ABORT_ERROR("TimeMgr: Cannot retrieve SecondsPerYear"
+                  " - Calendar not initialized");
+
+   return Calendar::OmegaCal->SecondsPerYear;
 }
 
 I4 Calendar::getDaysPerYear() {
+
    // check if calendar defined
-   if (isDefined()) {
-      return Calendar::OmegaCal->DaysPerYear;
-   } else {
-      LOG_CRITICAL("Cannot retrieve DaysPerYear - Calendar not initialized");
-      return 0;
-   }
+   if (!isDefined())
+      ABORT_ERROR("TimeMgr: Cannot retrieve DaysPerYear"
+                  " - Calendar not initialized");
+
+   return Calendar::OmegaCal->DaysPerYear;
 }
 
 // Calendar constructors/destructors
@@ -1225,10 +1103,8 @@ void Calendar::init(
 ) {
 
    // If calendar has already been set, throw a critical error
-   if (isDefined()) {
-      LOG_CRITICAL("Omega calendar already set, can not be changed");
-      return;
-   }
+   if (isDefined())
+      ABORT_ERROR("Omega calendar already set, can not be changed");
 
    // Convert string name for type of calendar to a supported kind
    CalendarKind CalKindLoc = CalendarUnknown;
@@ -1241,9 +1117,8 @@ void Calendar::init(
 
    // Call constructor and assign the calendar if it is valid
    if (CalKindLoc == CalendarUnknown) {
-      LOG_CRITICAL("Attempt to create calendar of unknown name: {}",
-                   CalendarKindStr);
-      Calendar::OmegaCal = nullptr;
+      ABORT_ERROR("Attempt to create calendar of unknown name: {}",
+                  CalendarKindStr);
    } else {
       Calendar::OmegaCal = std::unique_ptr<Calendar>(new Calendar(CalKindLoc));
    }
@@ -1261,10 +1136,8 @@ void Calendar::init(std::vector<I4> &InDaysPerMonth, // [in] vector days/month
 ) {
 
    // If calendar has already been set, throw a critical error
-   if (isDefined()) {
-      LOG_CRITICAL("Omega calendar already set, can not be changed");
-      return;
-   }
+   if (isDefined())
+      ABORT_ERROR("Omega calendar already set, can not be changed");
 
    // Call constructor and assign the single instance
    // instance = std::unique_ptr<Singleton>(new Singleton());
@@ -1347,16 +1220,14 @@ Calendar::Calendar(CalendarKind InCalKind) { // [in] calendar type
 
    case CalendarCustom:
       // custom requires more info, so separate interface should be used
-      LOG_ERROR(
+      ABORT_ERROR(
           "TimeMgr: Must use custom constructor for custom calendar type");
-      break;
 
    default:
-      // unknown calendar kind, invalidate and return with error
+      // unknown calendar kind, invalidate and abort with error
       CalKind     = CalendarUnknown;
       CalKindName = CalendarKindName[CalKind];
-      LOG_ERROR("Attempt to create a calendar of unknown kind");
-      break;
+      ABORT_ERROR("TimeMgr: Attempt to create a calendar of unknown kind");
 
    } // end switch on CalKind
 
@@ -1421,71 +1292,44 @@ bool Calendar::isDefined() {
 // Calendar::validate - validate Calendar state
 // Validates the Calendar state, checking for improper values.
 
-I4 Calendar::validate() const {
-
-   // initialize error code
-   I4 Err{0};
+void Calendar::validate() const {
 
    // Check if calendar kind was invalid
-   if (this->CalKind == CalendarUnknown) {
-      Err = 1;
-      LOG_ERROR("TimeMgr: Calendar::validate unknown calendar kind");
-      return Err;
-   }
+   if (this->CalKind == CalendarUnknown)
+      ABORT_ERROR("TimeMgr: Calendar::validate unknown calendar kind");
 
    // Check type of calendar
-   if (this->CalKind < 1 || this->CalKind > NUM_SUPPORTED_CALENDARS) {
-      Err = 1;
-      LOG_ERROR("TimeMgr: Calendar::validate calendar kind out of range");
-      return Err;
-   }
+   if (this->CalKind < 1 || this->CalKind > NUM_SUPPORTED_CALENDARS)
+      ABORT_ERROR("TimeMgr: Calendar::validate calendar kind out of range");
 
    // Check seconds per day
-   if (this->SecondsPerDay < 0) {
-      Err = 1;
-      LOG_ERROR("TimeMgr: Calendar::validate invalid seconds per day");
-      return Err;
-   }
+   if (this->SecondsPerDay < 0)
+      ABORT_ERROR("TimeMgr: Calendar::validate invalid seconds per day");
 
    // Check seconds per year
-   if (this->SecondsPerYear < 0) {
-      Err = 1;
-      LOG_ERROR("TimeMgr: Calendar::validate invalid seconds per year");
-      return Err;
-   }
+   if (this->SecondsPerYear < 0)
+      ABORT_ERROR("TimeMgr: Calendar::validate invalid seconds per year");
 
    // Check days per year
-   if (this->DaysPerYear < 0) {
-      Err = 1;
-      LOG_ERROR("TimeMgr: Calendar::validate invalid days per year");
-      return Err;
-   }
+   if (this->DaysPerYear < 0)
+      ABORT_ERROR("TimeMgr: Calendar::validate invalid days per year");
 
    // Check days per month
    if (this->MonthsPerYear > 0 && this->MonthsPerYear <= MONTHS_PER_YEAR) {
       I4 CountDaysPerYr{0};
       for (I4 I = 0; I < this->MonthsPerYear; I++) {
          CountDaysPerYr += this->DaysPerMonth[I];
-         if (this->DaysPerMonth[I] < 0) {
-            Err = 1;
-            LOG_ERROR("TimeMgr: Calendar::validate invalid days per month "
-                      "DaysPerMonth[{}] = {}",
-                      I, this->DaysPerMonth[I]);
-            return Err;
-         }
+         if (this->DaysPerMonth[I] < 0)
+            ABORT_ERROR("TimeMgr: Calendar::validate invalid days per month "
+                        "DaysPerMonth[{}] = {}",
+                        I, this->DaysPerMonth[I]);
       }
 
       // check whether sum of days per month is same as days per year
-      if (this->DaysPerYear != CountDaysPerYr) {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::validate DaysPerYear != sum of "
-                   "DaysPerMonth[]");
-         return Err;
-      }
+      if (this->DaysPerYear != CountDaysPerYr)
+         ABORT_ERROR("TimeMgr: Calendar::validate"
+                     " DaysPerYear != sum of DaysPerMonth[]");
    }
-
-   // all done, return error code
-   return Err;
 
 } // end Calendar::validate
 
@@ -1497,27 +1341,22 @@ bool Calendar::isLeapYear(I8 Year // [in] a calendar year
 ) {
 
    // Check calendar existence
-   if (!isDefined()) {
-      LOG_CRITICAL("Attempt to check leap year - calendar not defined");
-      return false;
-   }
+   if (!isDefined())
+      ABORT_ERROR("TimeMgr: Attempt to check leap year - calendar not defined");
 
    // now check for leap year depending on calendar kind
    switch (Calendar::OmegaCal->CalKind) {
    case CalendarGregorian:
       // leap year is divisible by 400 or divisible by 4 and not 100.
       return (Year % 400 == 0) || ((Year % 4 == 0) && (Year % 100 != 0));
-      break;
 
    case CalendarJulian:
       // leap year is divisible by 4.
       return Year % 4 == 0;
-      break;
 
    default:
       // all other calendars don't have leap years.
       return false;
-      break;
    } // end switch CalKind
 
 } // end Calendar::isLeapYear
@@ -1539,20 +1378,16 @@ TimeFrac Calendar::getElapsedTime(
     const I8 Denom   ///< [in] time of day-frac secs (denom)
 ) {
 
-   // initialize error code, the basetime result, and common temps
-   I4 Err{0};
+   // initialize the basetime result, and common temps
    TimeFrac Result(0, 0, 1);
    I8 ResultWhole{0}; // whole seconds for result
-   I8 DayOfYear{0};   // day since beginning of year
    I8 JD{0};          // Julian Day used for many conversions
    I8 HourTmp{0};     // For half-day JD conversions
    I4 FebDays{0};     // For tracking leap days
 
    // Check that calendar has been defined
-   if (!isDefined()) {
-      LOG_CRITICAL("Cannot get elapsed time - calendar not defined");
-      return Result;
-   }
+   if (!isDefined())
+      ABORT_ERROR("TimeMgr: Cannot get elapsed time - calendar not defined");
 
    // Branch on calendar type for actual calculation
    switch (Calendar::OmegaCal->CalKind) {
@@ -1560,46 +1395,36 @@ TimeFrac Calendar::getElapsedTime(
    // convert Gregorian Date to time since reference of noon 3/1/-4800
    case CalendarGregorian: {
       // Validate inputs
-      if (Year < -4800 || Month < 1 || Month > 12 || Day < 1) {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime invalid Gregorian date");
-         break;
-      }
+      if (Year < -4800 || Month < 1 || Month > 12 || Day < 1)
+         ABORT_ERROR("TimeMgr: Calendar::getElapsedTime:"
+                     " invalid Gregorian date");
+
       // invalid before 3/1/-4800
-      if (Year == -4800 && Month < 3) {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime invalid date prior to "
-                   "reference Gregorian date");
-         break;
-      }
+      if (Year == -4800 && Month < 3)
+         ABORT_ERROR("TimeMgr: Calendar::getElapsedTime invalid date prior to "
+                     "reference Gregorian date");
+
       // check day of the month for any month except February
-      if (Month != 2 && Day > Calendar::OmegaCal->DaysPerMonth[Month - 1]) {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime invalid day of month for "
-                   "Gregorian calendar");
-         break;
-      }
+      if (Month != 2 && Day > Calendar::OmegaCal->DaysPerMonth[Month - 1])
+         ABORT_ERROR("TimeMgr: Calendar::getElapsedTime invalid day of month"
+                     " for Gregorian calendar");
+
       // if February, take leap year into account before checking
       //   day of the month
       if (Month == 2) {
          FebDays = Calendar::OmegaCal->DaysPerMonth[1];
          if (isLeapYear(Year))
             FebDays += 1;
-         if (Day > FebDays) {
-            Err = 1;
-            LOG_ERROR("TimeMgr: Calendar::getElapsedTime invalid day of "
-                      "February for Gregorian calendar");
-            break;
-         }
+         if (Day > FebDays)
+            ABORT_ERROR("TimeMgr: Calendar::getElapsedTime invalid day of "
+                        "February for Gregorian calendar");
       }
       // Check valid hour, minute, seconds
       if (Hour < 0 || Hour > 24 || Minute < 0 || Minute > 60 || Whole < 0 ||
-          Whole > SECONDS_PER_MINUTE) {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime invalid time of day "
-                   "(hour, min, sec) for Gregorian calendar");
-         break;
-      }
+          Whole > SECONDS_PER_MINUTE)
+         ABORT_ERROR("TimeMgr: Calendar::getElapsedTime invalid time of day "
+                     "(hour, min, sec) for Gregorian calendar");
+
       // convert Gregorian date to Julian days
       // using Fliegel, van Flandern algorithm
       // Gregorian date (year, month, day) => Julian days (JD)
@@ -1619,10 +1444,7 @@ TimeFrac Calendar::getElapsedTime(
       ResultWhole = JD * Calendar::OmegaCal->SecondsPerDay +
                     HourTmp * SECONDS_PER_HOUR + Minute * SECONDS_PER_MINUTE +
                     Whole;
-      Err = Result.set(ResultWhole, Numer, Denom);
-      if (Err != 0)
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime Gregorian - error "
-                   "setting final result");
+      Result.set(ResultWhole, Numer, Denom);
       break;
    }
 
@@ -1630,45 +1452,33 @@ TimeFrac Calendar::getElapsedTime(
    // Q.JlR. astr. Soc. (1984) 25, 53-55.  It is valid from 3/1/-4712 forward.
    case CalendarJulian: {
       // Validate inputs
-      if (Year < -4712 || Month < 1 || Month > 12 || Day < 1) {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime invalid Julian date");
-         break;
-      }
-      if (Year == -4712 && Month < 3) {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime invalid date prior to "
-                   "reference Julian date");
-         break;
-      }
+      if (Year < -4712 || Month < 1 || Month > 12 || Day < 1)
+         ABORT_ERROR("TimeMgr: Calendar::getElapsedTime invalid Julian date");
+
+      if (Year == -4712 && Month < 3)
+         ABORT_ERROR("TimeMgr: Calendar::getElapsedTime invalid date prior to "
+                     "reference Julian date");
+
       // check day of the month for any month except February
-      if (Month != 2 && Day > Calendar::OmegaCal->DaysPerMonth[Month - 1]) {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime invalid day of month for "
-                   "Julian calendar");
-         break;
-      }
+      if (Month != 2 && Day > Calendar::OmegaCal->DaysPerMonth[Month - 1])
+         ABORT_ERROR("TimeMgr: Calendar::getElapsedTime invalid day of month"
+                     " for Julian calendar");
+
       // if February, take leap year into account before checking
       //   day of the month
       if (Month == 2) {
          FebDays = Calendar::OmegaCal->DaysPerMonth[1];
          if (isLeapYear(Year))
             FebDays += 1;
-         if (Day > FebDays) {
-            Err = 1;
-            LOG_ERROR("TimeMgr: Calendar::getElapsedTime invalid day of "
-                      "February for Julian calendar");
-            break;
-         }
+         if (Day > FebDays)
+            ABORT_ERROR("TimeMgr: Calendar::getElapsedTime invalid day of "
+                        "February for Julian calendar");
       }
       // Check valid hour, minute, seconds
       if (Hour < 0 || Hour > 24 || Minute < 0 || Minute > 60 || Whole < 0 ||
-          Whole > SECONDS_PER_MINUTE) {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime invalid time of day "
-                   "(hour, min, sec) for Julian calendar");
-         break;
-      }
+          Whole > SECONDS_PER_MINUTE)
+         ABORT_ERROR("TimeMgr: Calendar::getElapsedTime invalid time of day "
+                     "(hour, min, sec) for Julian calendar");
 
       // Convert date to Julian day number
       I8 YPrime = Year - ((12 - Month) / 10);
@@ -1688,10 +1498,7 @@ TimeFrac Calendar::getElapsedTime(
       ResultWhole = JD * Calendar::OmegaCal->SecondsPerDay +
                     HourTmp * SECONDS_PER_HOUR + Minute * SECONDS_PER_MINUTE +
                     Whole;
-      Err = Result.set(ResultWhole, Numer, Denom);
-      if (Err != 0)
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime Julian - error setting "
-                   "final result");
+      Result.set(ResultWhole, Numer, Denom);
       break;
    }
 
@@ -1699,19 +1506,16 @@ TimeFrac Calendar::getElapsedTime(
    case CalendarJulianDay:
    case CalendarModJulianDay: {
       // Validate inputs
-      if (Year != 0 || Month != 0 || Day < 1) {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime Invalid date for Julian "
-                   "Day calendars");
-         break;
-      }
+      if (Year != 0 || Month != 0 || Day < 1)
+         ABORT_ERROR("TimeMgr: Calendar::getElapsedTime Invalid date for"
+                     " Julian Day calendars");
+
       // Check valid hour, minute, seconds
       if (Hour < 0 || Hour > 24 || Minute < 0 || Minute > 60 || Whole < 0 ||
-          Whole > SECONDS_PER_MINUTE) {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime invalid time of day "
-                   "(hour, min, sec) for Julian calendar");
-      }
+          Whole > SECONDS_PER_MINUTE)
+         ABORT_ERROR("TimeMgr: Calendar::getElapsedTime invalid time of day "
+                     "(hour, min, sec) for Julian calendar");
+
       // Elapsed time just seconds per day plus time of day
       // For regular Julian Day, the start of the day is at noon on
       // other calendars - does not matter for internal calendar
@@ -1720,10 +1524,7 @@ TimeFrac Calendar::getElapsedTime(
                     Hour * SECONDS_PER_HOUR + Minute * SECONDS_PER_MINUTE +
                     Whole;
       // Now set final result and add fractional second
-      Err = Result.set(ResultWhole, Numer, Denom);
-      if (Err != 0)
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime Julian Day calendars - "
-                   "error setting final result");
+      Result.set(ResultWhole, Numer, Denom);
       break;
    }
 
@@ -1732,27 +1533,20 @@ TimeFrac Calendar::getElapsedTime(
    case CalendarCustom: {
       // Validate inputs
       if (Year < 0 || Month < 1 || Month > Calendar::OmegaCal->MonthsPerYear ||
-          Day < 1) {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime invalid date for "
-                   "fixed-length calendars");
-         break;
-      }
+          Day < 1)
+         ABORT_ERROR("TimeMgr: Calendar::getElapsedTime invalid date for "
+                     "fixed-length calendars");
+
       // check day of the month for any month except February
-      if (Day > Calendar::OmegaCal->DaysPerMonth[Month - 1]) {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime invalid date of month "
-                   "for fixed-length calendars");
-         break;
-      }
+      if (Day > Calendar::OmegaCal->DaysPerMonth[Month - 1])
+         ABORT_ERROR("TimeMgr: Calendar::getElapsedTime invalid date of month "
+                     "for fixed-length calendars");
+
       // Check valid hour, minute, seconds
       if (Hour < 0 || Hour > 24 || Minute < 0 || Minute > 60 || Whole < 0 ||
-          Whole > SECONDS_PER_MINUTE) {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime invalid time of day "
-                   "(hour, min, sec) for fixed-length calendars");
-         break;
-      }
+          Whole > SECONDS_PER_MINUTE)
+         ABORT_ERROR("TimeMgr: Calendar::getElapsedTime invalid time of day "
+                     "(hour, min, sec) for fixed-length calendars");
 
       // Conversion straightforward for fixed-length calendars
       ResultWhole = Year * Calendar::OmegaCal->SecondsPerYear; // at beg of year
@@ -1763,34 +1557,26 @@ TimeFrac Calendar::getElapsedTime(
       ResultWhole +=
           Hour * SECONDS_PER_HOUR + Minute * SECONDS_PER_MINUTE + Whole;
       // Now set final result and add fractional second
-      Err = Result.set(ResultWhole, Numer, Denom);
-      if (Err != 0)
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime fixed-length calendars - "
-                   "error setting final result");
+      Result.set(ResultWhole, Numer, Denom);
       break;
    }
 
    // No calendar option should only be tracking seconds, so check for
    // inappropriate entries for other fields and simply return the
    // input seconds field
-   case CalendarNoCalendar: {
+   case CalendarNoCalendar:
       // Validate inputs
       if (Year != 0 || Month != 0 || Day != 0 || Hour != 0 || Minute != 0)
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime NoCalendar option should "
-                   "not be tracking date or time of day");
-      Err = Result.set(Whole, Numer, Denom);
-      if (Err != 0)
-         LOG_ERROR("TimeMgr: Calendar::getElapsedTime NoCalendar calendars - "
-                   "error setting final result");
+         ABORT_ERROR("TimeMgr: Calendar::getElapsedTime NoCalendar option"
+                     "should not be tracking date or time of day");
+
+      Result.set(Whole, Numer, Denom);
       break;
-   }
 
    // Undefined calendars
    case CalendarUnknown:
-   default: {
-      LOG_ERROR("TimeMgr: Calendar::getElapsedTime invalid calendar");
-      break;
-   }
+   default:
+      ABORT_ERROR("TimeMgr: Calendar::getElapsedTime invalid calendar");
    } // end switch CalKind
 
    return Result;
@@ -1802,7 +1588,7 @@ TimeFrac Calendar::getElapsedTime(
 // Determines the calendar date and time of day, given an elapsed time since
 // the calendar reference time.
 
-I4 Calendar::getDateTime(
+void Calendar::getDateTime(
     const TimeFrac ElapsedTime, //< [in] time (secs) from ref time
     I8 &Year,                   //< [out] calendar year
     I8 &Month,                  //< [out] calendar month
@@ -1814,31 +1600,15 @@ I4 Calendar::getDateTime(
     I8 &Denom                   //< [out] time of day-frac secs (denom)
 ) {
 
-   // initialize error code to success and make sure input elapsed
-   // time is reduced to its simplest form
-   I4 Error{0};
-
    // Check existence of calendar
-   if (!isDefined()) {
-      LOG_CRITICAL("Attempt to getDateTime on non-existent calendar");
-      return 1;
-   }
+   if (!isDefined())
+      ABORT_ERROR("Attempt to getDateTime on non-existent calendar");
 
    TimeFrac RevisedTime = ElapsedTime;
-   Error                = RevisedTime.simplify();
-   if (Error != 0) {
-      LOG_ERROR("TimeMgr: Calendar::getDateTime error simplifying time "
-                "representation");
-      return Error;
-   }
+   RevisedTime.simplify();
 
    // retrieve whole and fractional seconds to manipulate
-   Error = RevisedTime.get(Whole, Numer, Denom);
-   if (Error != 0) {
-      LOG_ERROR("TimeMgr: Calendar::getDateTime error retrieving fractional "
-                "second components");
-      return Error;
-   }
+   RevisedTime.get(Whole, Numer, Denom);
 
    // initialize common counters used by several calendars
    I4 DayInYear{0};
@@ -1971,7 +1741,7 @@ I4 Calendar::getDateTime(
       break;
    }
 
-   case CalendarNoCalendar: {
+   case CalendarNoCalendar:
       // If no calendar is used, we only track elapsed time so simply
       // return elapsed time in current form and zero all other elements.
       Year   = 0;
@@ -1980,17 +1750,12 @@ I4 Calendar::getDateTime(
       Hour   = 0;
       Minute = 0;
       break;
-   }
 
    case CalendarUnknown:
-   default: {
-      Error = 1;
-      LOG_ERROR("TimeMgr: Calendar::getDateTime invalid calendar");
-      break;
-   }
-   } // end switch calKindFlag
+   default:
+      ABORT_ERROR("TimeMgr: Calendar::getDateTime invalid calendar");
 
-   return Error;
+   } // end switch calKindFlag
 
 } // end Calendar::getDateTime
 
@@ -1999,7 +1764,7 @@ I4 Calendar::getDateTime(
 // Increments (or decrements if negative) the date by a given integer time
 // interval. Only calendar intervals are supported.
 
-I4 Calendar::incrementDate(
+void Calendar::incrementDate(
     const I8 Interval,     //< [in] interval to advance time
     const TimeUnits Units, //< [in] units for input interval
     I8 &Year,              //< [in,out] calendar year for time to be advanced
@@ -2007,14 +1772,9 @@ I4 Calendar::incrementDate(
     I8 &Day                //< [in,out] calendar day for time to be advanced
 ) {
 
-   // initialize error code
-   I4 Err{0};
-
    // Check calendar exists
-   if (!isDefined()) {
-      LOG_CRITICAL("Attempt to increment non-existent calendar");
-      return 1;
-   }
+   if (!isDefined())
+      ABORT_ERROR("TimeMgr: Attempt to increment non-existent calendar");
 
    // Increment date based on supported interval types
    switch (Units) {
@@ -2028,24 +1788,20 @@ I4 Calendar::incrementDate(
       case Calendar360Day:
       case CalendarCustom: {
          Year += Interval;
-         if (!(isLeapYear(Year)) && Month == 2 && Day == 29) {
-            Err = 1;
-            LOG_ERROR("TimeMgr: Calendar::incrementDate day out of range for "
-                      "new year increment");
-         }
+         if (!(isLeapYear(Year)) && Month == 2 && Day == 29)
+            ABORT_ERROR("TimeMgr: Calendar::incrementDate day out of range for "
+                        "new year increment");
          break;
       }
-      // all other options return an error since year undefined
+
+      // all other options abort with an error since year undefined
       case CalendarJulianDay:
       case CalendarModJulianDay:
       case CalendarNoCalendar:
       case CalendarUnknown:
-      default: {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::incrementDate invalid calendar for year "
-                   "interval");
-         break;
-      }
+      default:
+         ABORT_ERROR("TimeMgr: Calendar::incrementDate invalid calendar for"
+                     " year interval");
       } // end switch on calendar type
       break;
    }
@@ -2077,24 +1833,20 @@ I4 Calendar::incrementDate(
          I8 MaxDays = Calendar::OmegaCal->DaysPerMonth[Month - 1];
          if (isLeapYear(Year) && Month == 2)
             MaxDays += 1;
-         if (Day < 1 || Day > MaxDays) {
-            Err = 1;
-            LOG_ERROR("TimeMgr: Calendar::incrementDate day outside range for "
-                      "new month");
-         }
+         if (Day < 1 || Day > MaxDays)
+            ABORT_ERROR("TimeMgr: Calendar::incrementDate day outside range"
+                        " for new month");
          break;
       }
-      // all other options return an error since month undefined
+
+      // all other options abort with an error since month undefined
       case CalendarJulianDay:
       case CalendarModJulianDay:
       case CalendarNoCalendar:
       case CalendarUnknown:
-      default: {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::incrementDate invalid calendar for "
-                   "month interval");
-         break;
-      }
+      default:
+         ABORT_ERROR("TimeMgr: Calendar::incrementDate invalid calendar for "
+                     "month interval");
       } // end switch on calendar type
       break;
    }
@@ -2143,40 +1895,32 @@ I4 Calendar::incrementDate(
          }
          break;
       }
+
       // For day-only calendars, just increment/decrement the day
       case CalendarJulianDay:
-      case CalendarModJulianDay: {
+      case CalendarModJulianDay:
          Day += Interval;
          break;
-      }
-      // all other options return an error
+
+      // all other options abort with an error
       case CalendarNoCalendar:
       case CalendarUnknown:
-      default: {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Calendar::incrementDate invalid calendar for day "
-                   "interval");
-         break;
-      }
+      default:
+         ABORT_ERROR("TimeMgr: Calendar::incrementDate invalid calendar for"
+                     " day interval");
       } // end switch on calendar type
       break;
    }
 
-   // All other intervals return an error
+   // All other intervals abort with an error
    case TimeUnits::None:
    case TimeUnits::Seconds:
    case TimeUnits::Minutes:
    case TimeUnits::Hours:
-   default: {
-      Err = 1;
-      LOG_ERROR("TimeMgr: Calendar::incrementDateTime only calendar intervals "
-                "supported");
-      break;
-   }
+   default:
+      ABORT_ERROR("TimeMgr: Calendar::incrementDateTime only calendar"
+                  " intervals supported");
    } // end switch on interval type
-
-   // All done, return the results
-   return Err;
 
 } // end Calendar::incrementDateTime
 
@@ -2235,19 +1979,18 @@ TimeInterval::TimeInterval(
    Units       = InUnits;
    IsCalendar  = false;
    CalInterval = 0;
-   I4 Err{0};
 
    // Now set values based on input units
    I8 Length = InLength;
    switch (Units) {
    case TimeUnits::Seconds:
-      Err = Interval.set(Length, 0, 1);
+      Interval.set(Length, 0, 1);
       break;
    case TimeUnits::Minutes:
-      Err = Interval.setHMS(0, Length, 0);
+      Interval.setHMS(0, Length, 0);
       break;
    case TimeUnits::Hours:
-      Err = Interval.setHMS(Length, 0, 0);
+      Interval.setHMS(Length, 0, 0);
       break;
    case TimeUnits::Years:  // these three are all calendar
    case TimeUnits::Months: // intervals with the input length
@@ -2257,7 +2000,7 @@ TimeInterval::TimeInterval(
       break;
    case TimeUnits::None:
    default:
-      LOG_ERROR("TimeMgr: invalid time units for TimeInterval constructor");
+      ABORT_ERROR("TimeMgr: invalid time units for TimeInterval constructor");
    }
 
 } // end TimeInterval::TimeInterval I4 length/unit constructor
@@ -2276,18 +2019,17 @@ TimeInterval::TimeInterval(
    Units       = InUnits;
    IsCalendar  = false;
    CalInterval = 0;
-   I4 Err{0};
 
    // Now set values based on input units
    switch (InUnits) {
    case TimeUnits::Seconds:
-      Err = Interval.set(Length, 0, 1);
+      Interval.set(Length, 0, 1);
       break;
    case TimeUnits::Minutes:
-      Err = Interval.setHMS(0, Length, 0);
+      Interval.setHMS(0, Length, 0);
       break;
    case TimeUnits::Hours:
-      Err = Interval.setHMS(Length, 0, 0);
+      Interval.setHMS(Length, 0, 0);
       break;
    case TimeUnits::Years:  // these three are all calendar
    case TimeUnits::Months: // intervals with the input length
@@ -2297,7 +2039,7 @@ TimeInterval::TimeInterval(
       break;
    case TimeUnits::None:
    default:
-      LOG_ERROR("TimeMgr: invalid time units for TimeInterval constructor");
+      ABORT_ERROR("TimeMgr: invalid time units for TimeInterval constructor");
    }
 
 } // end TimeInterval::TimeInterval I8 length/unit constructor
@@ -2318,18 +2060,17 @@ TimeInterval::TimeInterval(
    Units       = InUnits;
    IsCalendar  = false;
    CalInterval = 0;
-   I4 Err{0};
 
    // Now set values based on input units
    switch (InUnits) {
    case TimeUnits::Seconds:
-      Err = Interval.setSeconds(Length); // TimeFrac set
+      Interval.setSeconds(Length); // TimeFrac set
       break;
    case TimeUnits::Minutes:
-      Err = Interval.setMinutes(Length); // TimeFrac set
+      Interval.setMinutes(Length); // TimeFrac set
       break;
    case TimeUnits::Hours:
-      Err = Interval.setHours(Length); // TimeFrac set
+      Interval.setHours(Length); // TimeFrac set
       break;
    case TimeUnits::Years:  // these three are all calendar
    case TimeUnits::Months: // intervals with the input length
@@ -2339,7 +2080,7 @@ TimeInterval::TimeInterval(
       break;
    case TimeUnits::None:
    default:
-      LOG_ERROR("TimeMgr: invalid time units for TimeInterval constructor");
+      ABORT_ERROR("TimeMgr: invalid time units for TimeInterval constructor");
    }
 
 } // end TimeInterval::TimeInterval real length/unit constructor
@@ -2358,8 +2099,6 @@ TimeInterval::TimeInterval(
    IsCalendar  = false;
    CalInterval = 0;
 
-   I4 Err{0};
-
    // Extract variables from string
    I8 Day     = 0;
    I8 Hour    = 0;
@@ -2374,11 +2113,7 @@ TimeInterval::TimeInterval(
                    Minute * SECONDS_PER_MINUTE + RSecond;
 
    // Use the set function to define the Time Interval
-   Err = this->set(SecondsSet, TimeUnits::Seconds);
-
-   if (Err != 0)
-      LOG_ERROR("TimeMgr: TimeInterval constructor from string error "
-                "using using set function to construct TimeInterval.");
+   this->set(SecondsSet, TimeUnits::Seconds);
 
 } // end TimeInterval::TimeInterval constructor from string
 
@@ -2396,9 +2131,9 @@ TimeInterval::~TimeInterval(void) { // Nothing to be done
 // Set a non-calendar time interval from the base time integer fraction
 // representation (whole seconds + numerator + denominator).
 
-I4 TimeInterval::set(const I8 Whole, // [in] whole integer seconds
-                     const I8 Numer, // [in] fractional seconds numerator
-                     const I8 Denom  // [in] fractional seconds denominator
+void TimeInterval::set(const I8 Whole, // [in] whole integer seconds
+                       const I8 Numer, // [in] fractional seconds numerator
+                       const I8 Denom  // [in] fractional seconds denominator
 ) {
 
    // Create non-calendar TimeFrac interval using TimeFrac constructor
@@ -2409,15 +2144,13 @@ I4 TimeInterval::set(const I8 Whole, // [in] whole integer seconds
    IsCalendar  = false;
    CalInterval = 0;
 
-   return 0;
-
 } // end TimeInterval::set (fractional seconds)
 
 //------------------------------------------------------------------------------
 // TimeInterval::set
 // Sets a time interval from an integer length and specified unit of time.
 
-I4 TimeInterval::set(
+void TimeInterval::set(
     const I4 InLength,      // [in] Time interval length
     const TimeUnits InUnits // [in] Units of time for this interval
 ) {
@@ -2427,19 +2160,18 @@ I4 TimeInterval::set(
    Units       = InUnits;
    IsCalendar  = false;
    CalInterval = 0;
-   I4 Err{0};
 
    // Now set values based on input units
    I8 Length = InLength;
    switch (InUnits) {
    case TimeUnits::Seconds:
-      Err = Interval.set(Length, 0, 1);
+      Interval.set(Length, 0, 1);
       break;
    case TimeUnits::Minutes:
-      Err = Interval.setHMS(0, Length, 0);
+      Interval.setHMS(0, Length, 0);
       break;
    case TimeUnits::Hours:
-      Err = Interval.setHMS(Length, 0, 0);
+      Interval.setHMS(Length, 0, 0);
       break;
    case TimeUnits::Years:  // these three are all calendar
    case TimeUnits::Months: // intervals with the input length
@@ -2449,11 +2181,8 @@ I4 TimeInterval::set(
       break;
    case TimeUnits::None:
    default:
-      Err = 1;
-      LOG_ERROR("TimeMgr: invalid time units for TimeInterval::set");
+      ABORT_ERROR("TimeMgr: invalid time units for TimeInterval::set");
    }
-
-   return Err;
 
 } // end TimeInterval::set (I4 length/unit)
 
@@ -2461,7 +2190,7 @@ I4 TimeInterval::set(
 // TimeInterval::set
 // Sets a time interval from an integer length and specified unit of time.
 
-I4 TimeInterval::set(
+void TimeInterval::set(
     const I8 Length,        // [in] Time interval length
     const TimeUnits InUnits // [in] Units of time for this interval
 ) {
@@ -2471,18 +2200,17 @@ I4 TimeInterval::set(
    Units       = InUnits;
    IsCalendar  = false;
    CalInterval = 0;
-   I4 Err{0};
 
    // Now set values based on input units
    switch (InUnits) {
    case TimeUnits::Seconds:
-      Err = Interval.set(Length, 0, 1);
+      Interval.set(Length, 0, 1);
       break;
    case TimeUnits::Minutes:
-      Err = Interval.setHMS(0, Length, 0);
+      Interval.setHMS(0, Length, 0);
       break;
    case TimeUnits::Hours:
-      Err = Interval.setHMS(Length, 0, 0);
+      Interval.setHMS(Length, 0, 0);
       break;
    case TimeUnits::Years:  // these three are all calendar
    case TimeUnits::Months: // intervals with the input length
@@ -2492,11 +2220,8 @@ I4 TimeInterval::set(
       break;
    case TimeUnits::None:
    default:
-      Err = 1;
-      LOG_ERROR("TimeMgr: invalid time units for TimeInterval::set");
+      ABORT_ERROR("TimeMgr: invalid time units for TimeInterval::set");
    }
-
-   return Err;
 
 } // end TimeInterval::set (I8 length/unit)
 
@@ -2507,7 +2232,7 @@ I4 TimeInterval::set(
 // real value is converted to an integer number of months, days or years
 // using standard conversions.
 
-I4 TimeInterval::set(
+void TimeInterval::set(
     const R8 Length,        // [in] Time interval length
     const TimeUnits InUnits // [in] Units of time for this interval
 ) {
@@ -2517,18 +2242,17 @@ I4 TimeInterval::set(
    Units       = InUnits;
    IsCalendar  = false;
    CalInterval = 0;
-   I4 Err{0};
 
    // Now set values based on input units
    switch (InUnits) {
    case TimeUnits::Seconds:
-      Err = Interval.setSeconds(Length); // TimeFrac set
+      Interval.setSeconds(Length); // TimeFrac set
       break;
    case TimeUnits::Minutes:
-      Err = Interval.setMinutes(Length); // TimeFrac set
+      Interval.setMinutes(Length); // TimeFrac set
       break;
    case TimeUnits::Hours:
-      Err = Interval.setHours(Length); // TimeFrac set
+      Interval.setHours(Length); // TimeFrac set
       break;
    case TimeUnits::Years:  // these three are all calendar
    case TimeUnits::Months: // intervals with the input length
@@ -2538,11 +2262,8 @@ I4 TimeInterval::set(
       break;
    case TimeUnits::None:
    default:
-      Err = 1;
-      LOG_ERROR("TimeMgr: invalid time units for TimeInterval::set");
+      ABORT_ERROR("TimeMgr: invalid time units for TimeInterval::set");
    }
-
-   return Err;
 
 } // end TimeInterval::set (real length/unit)
 
@@ -2550,24 +2271,19 @@ I4 TimeInterval::set(
 // TimeInterval::get
 // Retrieve a non-calendar time interval in fractional integer seconds
 
-I4 TimeInterval::get(I8 &Whole, ///< [out] whole seconds
-                     I8 &Numer, ///< [out] fractional second numerator
-                     I8 &Denom  ///< [out] fractional second denominator
+void TimeInterval::get(I8 &Whole, ///< [out] whole seconds
+                       I8 &Numer, ///< [out] fractional second numerator
+                       I8 &Denom  ///< [out] fractional second denominator
 ) const {
 
-   I4 Err{0};
-
-   // If this is a calendar interval, return an error
+   // If this is a calendar interval, abort with an error
    if (IsCalendar) {
-      Err = 1;
-      LOG_ERROR("TimeMgr: TimeInterval::get attempt to retrieve non-calendar "
-                "values from calendar interval");
+      ABORT_ERROR("TimeMgr: TimeInterval::get attempt to retrieve non-calendar "
+                  "values from calendar interval");
    } else {
       // otherwise, just use the TimeFrac::get to extract
-      Err = Interval.get(Whole, Numer, Denom);
+      Interval.get(Whole, Numer, Denom);
    }
-
-   return Err;
 
 } // end TimeInterval::get (fractonal seconds)
 
@@ -2577,7 +2293,7 @@ I4 TimeInterval::get(I8 &Whole, ///< [out] whole seconds
 // Due to issues in unit conversion, we only allow integer retrieval to
 // return in the same units that the interval was defined.
 
-I4 TimeInterval::get(
+void TimeInterval::get(
     I8 &Length,              // requested length of interval
     const TimeUnits ReqUnits // units requested for time interval
 ) const {
@@ -2586,7 +2302,6 @@ I4 TimeInterval::get(
    I4 Hours{0}; // needed for TimeFrac HMS interface
    I4 Minutes{0};
    I4 Seconds{0};
-   I4 Err{0};
 
    // Now get values based on requested units
    // If requested units are same as the interval was defined,
@@ -2594,71 +2309,61 @@ I4 TimeInterval::get(
    // write an error if not possible.
    switch (ReqUnits) {
    case TimeUnits::Seconds:
-      Err = Interval.getHMS(Hours, Minutes, Seconds); // TimeFrac get
+      Interval.getHMS(Hours, Minutes, Seconds); // TimeFrac get
       if (Units == TimeUnits::Seconds) {
          Length = Seconds;
       } else {
-         Err = 1;
-         LOG_ERROR("TimeMgr: TimeInterval::get (integer) attempt to get "
-                   "interval in seconds but defined in other units");
+         ABORT_ERROR("TimeMgr: TimeInterval::get (integer) attempt to get "
+                     "interval in seconds but defined in other units");
       }
       break;
    case TimeUnits::Minutes:
-      Err = Interval.getHMS(Hours, Minutes, Seconds); // TimeFrac get
+      Interval.getHMS(Hours, Minutes, Seconds); // TimeFrac get
       if (Units == TimeUnits::Minutes) {
          Length = Minutes;
       } else {
-         Err = 1;
-         LOG_ERROR("TimeMgr: TimeInterval::get (integer) attempt to get "
-                   "interval in minutes but defined in other units");
+         ABORT_ERROR("TimeMgr: TimeInterval::get (integer) attempt to get "
+                     "interval in minutes but defined in other units");
       }
       break;
    case TimeUnits::Hours:
-      Err = Interval.getHMS(Hours, Minutes, Seconds); // TimeFrac get
+      Interval.getHMS(Hours, Minutes, Seconds); // TimeFrac get
       if (Units == TimeUnits::Hours) {
          Length = Hours;
       } else {
-         Err = 1;
-         LOG_ERROR("TimeMgr: TimeInterval::get (integer) attempt to get "
-                   "interval in hours but defined in other units");
+         ABORT_ERROR("TimeMgr: TimeInterval::get (integer) attempt to get "
+                     "interval in hours but defined in other units");
       }
       break;
    case TimeUnits::Years:
       if (Units == TimeUnits::Years) {
          Length = CalInterval;
       } else {
-         Err = 1;
-         LOG_ERROR("TimeMgr: TimeInterval::get (integer) attempt to get "
-                   "interval in years but defined in other units");
+         ABORT_ERROR("TimeMgr: TimeInterval::get (integer) attempt to get "
+                     "interval in years but defined in other units");
       }
       break;
    case TimeUnits::Months:
       if (Units == TimeUnits::Months) {
          Length = CalInterval;
       } else {
-         Err = 1;
-         LOG_ERROR("TimeMgr: TimeInterval::get (integer) attempt to get "
-                   "interval in months but defined in other units");
+         ABORT_ERROR("TimeMgr: TimeInterval::get (integer) attempt to get "
+                     "interval in months but defined in other units");
       }
       break;
    case TimeUnits::Days:
       if (Units == TimeUnits::Days) {
          Length = CalInterval;
       } else {
-         Err = 1;
-         LOG_ERROR("TimeMgr: TimeInterval::get (integer) attempt to get "
-                   "interval in days but defined in other units");
+         ABORT_ERROR("TimeMgr: TimeInterval::get (integer) attempt to get "
+                     "interval in days but defined in other units");
       }
       break;
    case TimeUnits::None:
    default:
-      Err = 1;
-      LOG_ERROR("TimeMgr: TimeInterval::get (integer) invalid time units for "
-                "time interval");
+      ABORT_ERROR("TimeMgr: TimeInterval::get (integer) invalid time units for "
+                  "time interval");
    }
-
-   // return error code
-   return Err;
 
 } // end TimeInterval::get (integer)
 
@@ -2669,14 +2374,13 @@ I4 TimeInterval::get(
 // units. Because year, month intervals change based on current date, no
 // conversion is supported yet.
 
-I4 TimeInterval::get(
+void TimeInterval::get(
     R8 &Length,              // requested length of interval
     const TimeUnits ReqUnits // units requested for time interval
 ) const {
 
    Length = 0.0;
    R8 TmpResult{0.0}; // temporary for conversion
-   I4 Err{0};
 
    // Now get values based on requested units
    // If requested units are same as the interval was defined,
@@ -2688,18 +2392,16 @@ I4 TimeInterval::get(
       if (Units == TimeUnits::Years) {
          Length = CalInterval;
       } else {
-         Err = 1;
-         LOG_ERROR("TimeMgr: TimeInterval::get (real) attempt to get interval "
-                   "in years but defined in other units");
+         ABORT_ERROR("TimeMgr: TimeInterval::get (real) attempt to get interval"
+                     " in years but defined in other units");
       }
       break;
    case TimeUnits::Months:
       if (Units == TimeUnits::Months) {
          Length = CalInterval;
       } else {
-         Err = 1;
-         LOG_ERROR("TimeMgr: TimeInterval::get (real) attempt to get interval "
-                   "in months but defined in other units");
+         ABORT_ERROR("TimeMgr: TimeInterval::get (real) attempt to get interval"
+                     " in months but defined in other units");
       }
       break;
    case TimeUnits::Days:
@@ -2715,15 +2417,13 @@ I4 TimeInterval::get(
          break;
       case TimeUnits::Months:
       case TimeUnits::Years:
-         Err = 1;
-         LOG_ERROR("TimeMgr: TimeInterval::get (real) conversion of year/month "
-                   "units to days not supported");
+         ABORT_ERROR("TimeMgr: TimeInterval::get (real) conversion of"
+                     " year/month units to days not supported");
          break;
       case TimeUnits::None:
       default:
-         Err = 1;
-         LOG_ERROR("TimeMgr: TimeInterval::get (real) interval units not "
-                   "defined");
+         ABORT_ERROR("TimeMgr: TimeInterval::get (real) interval units not "
+                     "defined");
       } // end switch on interval units
       break;
    case TimeUnits::Seconds:
@@ -2740,15 +2440,13 @@ I4 TimeInterval::get(
       case TimeUnits::Years:  // some calendar intervals cannot
       case TimeUnits::Months: // be converted
          Length = 0.0;
-         Err    = 1;
-         LOG_ERROR("TimeMgr: TimeInterval::get (real) conversion of year/month "
-                   "intervals to seconds unsupported");
+         ABORT_ERROR("TimeMgr: TimeInterval::get (real) conversion of"
+                     " year/month intervals to seconds unsupported");
          break;
       case TimeUnits::None:
       default:
-         Err = 1;
-         LOG_ERROR("TimeMgr: TimeInterval::get (real) interval units not "
-                   "defined");
+         ABORT_ERROR("TimeMgr: TimeInterval::get (real) interval units not "
+                     "defined");
       } // end switch on interval units
       break;
    case TimeUnits::Minutes:
@@ -2761,9 +2459,8 @@ I4 TimeInterval::get(
       case TimeUnits::Years:  // some calendar intervals cannot
       case TimeUnits::Months: // be converted
          Length = 0.0;
-         Err    = 1;
-         LOG_ERROR("TimeMgr: TimeInterval::get (real) conversion of year/month "
-                   "intervals to minutes unsupported");
+         ABORT_ERROR("TimeMgr: TimeInterval::get (real) conversion of"
+                     " year/month intervals to minutes unsupported");
          break;
       case TimeUnits::Days:
          TmpResult = CalInterval;
@@ -2772,8 +2469,7 @@ I4 TimeInterval::get(
          break;
       case TimeUnits::None:
       default:
-         Err = 1;
-         LOG_ERROR(
+         ABORT_ERROR(
              "TimeMgr: TimeInterval::get (real) interval units not defined");
       } // end switch on interval units
       break;
@@ -2787,9 +2483,8 @@ I4 TimeInterval::get(
       case TimeUnits::Years:  // some calendar intervals cannot
       case TimeUnits::Months: // be converted
          Length = 0.0;
-         Err    = 1;
-         LOG_ERROR("TimeMgr: TimeInterval::get (real) conversion of year/month "
-                   "intervals to seconds unsupported");
+         ABORT_ERROR("TimeMgr: TimeInterval::get (real) conversion of"
+                     " year/month intervals to seconds unsupported");
          break;
       case TimeUnits::Days:
          TmpResult = CalInterval;
@@ -2798,20 +2493,15 @@ I4 TimeInterval::get(
          break;
       case TimeUnits::None:
       default:
-         Err = 1;
-         LOG_ERROR("TimeMgr: TimeInterval::get (real) interval units not "
-                   "defined");
+         ABORT_ERROR("TimeMgr: TimeInterval::get (real) interval units not "
+                     "defined");
       } // end switch on interval units
       break;
    case TimeUnits::None:
    default:
-      Err = 1;
-      LOG_ERROR("TimeMgr: TimeInterval::get (real) invalid time units for time "
-                "interval");
+      ABORT_ERROR("TimeMgr: TimeInterval::get (real) invalid time units for"
+                  " time interval");
    } // end switch on requested units
-
-   // return error code
-   return Err;
 
 } // end TimeInterval::get (real)
 
@@ -2872,31 +2562,32 @@ bool TimeInterval::operator<(
    // calendar intervals
    if (this->IsCalendar) {
       // cannot determine result if both are not calendar intervals
-      if (!(TimeInt.IsCalendar)) {
-         LOG_ERROR("TimeMgr: TimeInterval::operator< attempt to compare "
-                   "incompatible time intervals");
-         return false;
-      }
+      if (!(TimeInt.IsCalendar))
+         ABORT_ERROR("TimeMgr: TimeInterval::operator< attempt to compare "
+                     "incompatible time intervals");
+
       // calendar must also compare intervals with same units
       if (this->Units == TimeInt.Units) {
          return this->CalInterval < TimeInt.CalInterval;
       } else {
-         LOG_ERROR("TimeMgr: TimeInterval::operator< attempt to compare "
-                   "incompatible calendar intervals");
-         return false;
+         ABORT_ERROR("TimeMgr: TimeInterval::operator< attempt to compare "
+                     "incompatible calendar intervals");
       }
    } else {
       // non-calendar intervals use inherited operator
       // check for incompatibility
       if (TimeInt.IsCalendar) {
-         LOG_ERROR("TimeMgr: TimeInterval::operator< attempt to compare "
-                   "incompatible time intervals");
+         ABORT_ERROR("TimeMgr: TimeInterval::operator< attempt to compare "
+                     "incompatible time intervals");
          return false;
       } else {
          // use base time comparison
          return this->Interval < TimeInt.Interval;
       }
    } // end else (non-calendar)
+
+   // should not make it here
+   return false;
 
 } // end TimeInterval::operator<
 
@@ -2914,31 +2605,31 @@ bool TimeInterval::operator>(
    // calendar intervals
    if (this->IsCalendar) {
       // cannot determine result if both are not calendar intervals
-      if (!(TimeInt.IsCalendar)) {
-         LOG_ERROR("TimeMgr: TimeInterval::operator> attempt to compare "
-                   "incompatible time intervals");
-         return false;
-      }
+      if (!(TimeInt.IsCalendar))
+         ABORT_ERROR("TimeMgr: TimeInterval::operator> attempt to compare "
+                     "incompatible time intervals");
+
       // calendar must also compare intervals with same units
       if (this->Units == TimeInt.Units) {
          return this->CalInterval > TimeInt.CalInterval;
       } else {
-         LOG_ERROR("TimeMgr: TimeInterval::operator> attempt to compare "
-                   "incompatible calendar intervals");
-         return false;
+         ABORT_ERROR("TimeMgr: TimeInterval::operator> attempt to compare "
+                     "incompatible calendar intervals");
       }
    } else {
       // non-calendar intervals use inherited operator
       // check for incompatibility
       if (TimeInt.IsCalendar) {
-         LOG_ERROR("TimeInterval::operator> attempt to compare incompatible "
-                   "time intervals");
-         return false;
+         ABORT_ERROR("TimeInterval::operator> attempt to compare incompatible "
+                     "time intervals");
       } else {
          // use TimeFrac comparison
          return this->Interval > TimeInt.Interval;
       }
    }
+
+   // should not make it here
+   return false;
 
 } // end TimeInterval::operator>
 
@@ -2987,27 +2678,23 @@ TimeInterval TimeInterval::operator+(
    // can only really add compatible time intervals
    // add calendar intervals
    if (Result.IsCalendar) {
-      if (!(TimeInt.IsCalendar)) {
-         LOG_ERROR("TimeMgr: TimeInterval::operator+ attempt to add "
-                   "incompatible time intervals");
-         return Result;
-      }
+      if (!(TimeInt.IsCalendar))
+         ABORT_ERROR("TimeMgr: TimeInterval::operator+ attempt to add "
+                     "incompatible time intervals");
+
       // calendar can only add intervals with same units
       if (this->Units == TimeInt.Units) {
          Result.CalInterval += TimeInt.CalInterval;
       } else {
-         LOG_ERROR("TimeMgr: TimeInterval::operator+ attempt to add "
-                   "incompatible calendar intervals");
-         return Result;
+         ABORT_ERROR("TimeMgr: TimeInterval::operator+ attempt to add "
+                     "incompatible calendar intervals");
       }
    } else {
       // add non-calendar using TimeFrac operator
       // first check that both operands are non-calendar intervals
-      if (TimeInt.IsCalendar) {
-         LOG_ERROR("TimeMgr: TimeInterval::operator+ attempt to add "
-                   "incompatible time intervals");
-         return Result;
-      }
+      if (TimeInt.IsCalendar)
+         ABORT_ERROR("TimeMgr: TimeInterval::operator+ attempt to add "
+                     "incompatible time intervals");
 
       // use underlying TimeFrac operator to add the TimeFrac component
       Result.Interval += TimeInt.Interval;
@@ -3031,27 +2718,23 @@ TimeInterval TimeInterval::operator-(
    // can only really subtract compatible time intervals
    // subtract calendar intervals
    if (Result.IsCalendar) {
-      if (!(TimeInt.IsCalendar)) {
-         LOG_ERROR("TimeMgr: TimeInterval::operator- attempt to subtract "
-                   "incompatible time intervals");
-         return Result;
-      }
+      if (!(TimeInt.IsCalendar))
+         ABORT_ERROR("TimeMgr: TimeInterval::operator- attempt to subtract "
+                     "incompatible time intervals");
+
       // calendar can only subtract intervals with same units
       if (this->Units == TimeInt.Units) {
          Result.CalInterval -= TimeInt.CalInterval;
       } else {
-         LOG_ERROR("TimeMgr: TimeInterval::operator- attempt to subtract "
-                   "incompatible calendar intervals");
-         return Result;
+         ABORT_ERROR("TimeMgr: TimeInterval::operator- attempt to subtract "
+                     "incompatible calendar intervals");
       }
    } else {
       // subtract non-calendar intervals using TimeFrac operator
       // check compatibility of operands
-      if (TimeInt.IsCalendar) {
-         LOG_ERROR("TimeInterval::operator- attempt to subtract incompatible "
-                   "time intervals");
-         return Result;
-      }
+      if (TimeInt.IsCalendar)
+         ABORT_ERROR("TimeInterval::operator- attempt to subtract incompatible "
+                     "time intervals");
 
       // use TimeFrac operator on the TimeFrac component
       Result.Interval -= TimeInt.Interval;
@@ -3209,11 +2892,9 @@ TimeInterval::operator/(const I4 Divisor) const { //! [in] integer divisor
 
    // check for divide by zero and return a zero default interval
    TimeInterval Quotient;
-   if (Divisor == 0) {
-      LOG_ERROR("TimeMgr: TimeInterval::operator/ (int) attempt to divide by "
-                "zero");
-      return Quotient;
-   }
+   if (Divisor == 0)
+      ABORT_ERROR("TimeMgr: TimeInterval::operator/ (int) attempt to divide by "
+                  "zero");
 
    // copy the time interval to the result
    Quotient = *this;
@@ -3349,10 +3030,10 @@ bool TimeInterval::isPositive(void) {
    // make sure fraction is in proper form, particularly that the
    // whole and fraction have same sign and numerator and denomintator
    // have the same sign.
-   I4 Err = Interval.simplify();
+   Interval.simplify();
 
    // now retrieve fractional seconds and check components
-   Err = Interval.get(W, N, D);
+   Interval.get(W, N, D);
    if (W >= 0) { // whole part of seconds non-negative
       // only need check the numerator with simplified form
       if (N > 0)
@@ -3381,29 +3062,24 @@ bool TimeInterval::isPositive(void) {
 // a real number. The calendar must already be set in order to correctly use
 // this function.
 
-I4 TimeInstant::set(const I8 Year,   //< [in] year
-                    const I8 Month,  //< [in] month
-                    const I8 Day,    //< [in] day
-                    const I8 Hour,   //< [in] hour
-                    const I8 Minute, //< [in] minute
-                    const R8 RSecond //< [in] second (real)
+void TimeInstant::set(const I8 Year,   //< [in] year
+                      const I8 Month,  //< [in] month
+                      const I8 Day,    //< [in] day
+                      const I8 Hour,   //< [in] hour
+                      const I8 Minute, //< [in] minute
+                      const R8 RSecond //< [in] second (real)
 ) {
-
-   // Initialize error code
-   I4 Err{0};
 
    // Convert real seconds to fractional representation
    TimeFrac TmpSeconds(RSecond);
    I8 Whole{0};
    I8 Numer{0};
    I8 Denom{0};
-   Err = TmpSeconds.get(Whole, Numer, Denom);
+   TmpSeconds.get(Whole, Numer, Denom);
 
    // Call Calendar function to determine elapsed time since reference time
    ElapsedTime = Calendar::getElapsedTime(Year, Month, Day, Hour, Minute, Whole,
                                           Numer, Denom);
-
-   return Err;
 
 } // end TimeInstant::set (date and time, real seconds)
 
@@ -3413,24 +3089,19 @@ I4 TimeInstant::set(const I8 Year,   //< [in] year
 // a fractional integer. The calendar must already be set in order to correctly
 // use this function.
 
-int TimeInstant::set(const I8 Year,   //< [in] year
-                     const I8 Month,  //< [in] month
-                     const I8 Day,    //< [in] day
-                     const I8 Hour,   //< [in] hour
-                     const I8 Minute, //< [in] minute
-                     const I8 Whole,  //< [in] second (whole integer)
-                     const I8 Numer,  //< [in] second (fraction numerator)
-                     const I8 Denom   //< [in] second (fraction denominator)
+void TimeInstant::set(const I8 Year,   //< [in] year
+                      const I8 Month,  //< [in] month
+                      const I8 Day,    //< [in] day
+                      const I8 Hour,   //< [in] hour
+                      const I8 Minute, //< [in] minute
+                      const I8 Whole,  //< [in] second (whole integer)
+                      const I8 Numer,  //< [in] second (fraction numerator)
+                      const I8 Denom   //< [in] second (fraction denominator)
 ) {
-
-   // Initialize error code
-   I4 Err{0};
 
    // Call Calendar function to determine elapsed time since reference time
    ElapsedTime = Calendar::getElapsedTime(Year, Month, Day, Hour, Minute, Whole,
                                           Numer, Denom);
-
-   return Err;
 
 } // end TimeInstant::set (date and time, fractional integer seconds)
 
@@ -3439,16 +3110,13 @@ int TimeInstant::set(const I8 Year,   //< [in] year
 // Retrieve the time instant in terms of a date and time with seconds returned
 // as a real (double) value.
 
-I4 TimeInstant::get(I8 &Year,   //< [out] year   of this time instant
-                    I8 &Month,  //< [out] month  of this time instant
-                    I8 &Day,    //< [out] day    of this time instant
-                    I8 &Hour,   //< [out] hour   of this time instant
-                    I8 &Minute, //< [out] minute of this time instant
-                    R8 &Second  //< [out] second of this time instant
+void TimeInstant::get(I8 &Year,   //< [out] year   of this time instant
+                      I8 &Month,  //< [out] month  of this time instant
+                      I8 &Day,    //< [out] day    of this time instant
+                      I8 &Hour,   //< [out] hour   of this time instant
+                      I8 &Minute, //< [out] minute of this time instant
+                      R8 &Second  //< [out] second of this time instant
 ) const {
-
-   // Initialize error code
-   I4 Err{0};
 
    Second = 0.0;
 
@@ -3457,20 +3125,13 @@ I4 TimeInstant::get(I8 &Year,   //< [out] year   of this time instant
    I8 Whole{0};
    I8 Numer{0};
    I8 Denom{0};
-   Err = Calendar::getDateTime(ElapsedTime, Year, Month, Day, Hour, Minute,
-                               Whole, Numer, Denom);
-   if (Err != 0) {
-      LOG_ERROR("TimeMgr: TimeInstant::get(date and time, real seconds) "
-                "error converting base time to date/time");
-   } else {
-      // Convert retrieved seconds in TimeFrac and then
-      // to real seconds for return
-      TimeFrac TmpSeconds(Whole, Numer, Denom);
-      Second = TmpSeconds.getSeconds();
-   }
+   Calendar::getDateTime(ElapsedTime, Year, Month, Day, Hour, Minute, Whole,
+                         Numer, Denom);
 
-   // return the error code
-   return Err;
+   // Convert retrieved seconds in TimeFrac and then
+   // to real seconds for return
+   TimeFrac TmpSeconds(Whole, Numer, Denom);
+   Second = TmpSeconds.getSeconds();
 
 } // end TimeInstant::get (date and time, real seconds)
 
@@ -3479,29 +3140,20 @@ I4 TimeInstant::get(I8 &Year,   //< [out] year   of this time instant
 // Retrieve the time instant in terms of a date and time with seconds returned
 // as a fractional integer.
 
-I4 TimeInstant::get(I8 &Year,   //< [out] year   of this time instant
-                    I8 &Month,  //< [out] month  of this time instant
-                    I8 &Day,    //< [out] day    of this time instant
-                    I8 &Hour,   //< [out] hour   of this time instant
-                    I8 &Minute, //< [out] minute of this time instant
-                    I8 &Whole,  //< [out] whole seconds of this time
-                    I8 &Numer,  //< [out] frac second numerator
-                    I8 &Denom   //< [out] frac second denominator
+void TimeInstant::get(I8 &Year,   //< [out] year   of this time instant
+                      I8 &Month,  //< [out] month  of this time instant
+                      I8 &Day,    //< [out] day    of this time instant
+                      I8 &Hour,   //< [out] hour   of this time instant
+                      I8 &Minute, //< [out] minute of this time instant
+                      I8 &Whole,  //< [out] whole seconds of this time
+                      I8 &Numer,  //< [out] frac second numerator
+                      I8 &Denom   //< [out] frac second denominator
 ) const {
-
-   // Initialize error code
-   I4 Err{0};
 
    // Call the calendar function to convert the time to a date and time
    // appropriate for that calendar
-   Err = Calendar::getDateTime(ElapsedTime, Year, Month, Day, Hour, Minute,
-                               Whole, Numer, Denom);
-   if (Err != 0)
-      LOG_ERROR("TimeMgr: TimeInstant::get(date and time, frac int seconds) "
-                "error converting base time to date/time");
-
-   // return the error code
-   return Err;
+   Calendar::getDateTime(ElapsedTime, Year, Month, Day, Hour, Minute, Whole,
+                         Numer, Denom);
 
 } // end TimeInstant::get (date and time, fractional integer seconds)
 
@@ -3529,11 +3181,7 @@ TimeInstant::TimeInstant(const I8 Year,   //< [in] year
 ) {
 
    // Reuse the set function to define the time component
-   I4 Err = this->set(Year, Month, Day, Hour, Minute, RSecond);
-   if (Err != 0)
-      LOG_ERROR("TimeMgr: TimeInstant::TimeInstant "
-                "(date and time, real seconds) "
-                "error using set function to construct TimeInstant.");
+   this->set(Year, Month, Day, Hour, Minute, RSecond);
 
 } // end TimeInstant::TimeInstant constructor from yy/mm/dd-hh:mm:ss(real)
 
@@ -3553,11 +3201,7 @@ TimeInstant::TimeInstant(const I8 Year,   //< [in] year
 ) {
 
    // Reuse the set function to define the time component
-   I4 Err = this->set(Year, Month, Day, Hour, Minute, Whole, Numer, Denom);
-   if (Err != 0)
-      LOG_ERROR("TimeMgr: TimeInstant::TimeInstant "
-                "(date and time, frac int seconds) "
-                "error using set function to construct TimeInstant.");
+   this->set(Year, Month, Day, Hour, Minute, Whole, Numer, Denom);
 
 } // end TimeInstant::TimeInstant constructor from yy/mm/dd-hh:mm:ss(real ss)
 
@@ -3584,10 +3228,7 @@ TimeInstant::TimeInstant(std::string &TimeString //< [in] string with date/time
        discard >> Minute >> discard >> RSecond;
 
    // Use the set function to define the Time Instant
-   I4 Err = this->set(Year, Month, Day, Hour, Minute, RSecond);
-   if (Err != 0)
-      LOG_ERROR("TimeMgr: TimeInstant constructor from string "
-                "error using set function to construct TimeInstant.");
+   this->set(Year, Month, Day, Hour, Minute, RSecond);
 
 } // end TimeInstant::TimeInstant constructor from string
 
@@ -3690,8 +3331,6 @@ bool TimeInstant::operator>=(
 TimeInstant TimeInstant::operator+(
     const TimeInterval &Interval) const { // [in] - interval to add
 
-   I4 Err{0};
-
    // start by copying result
    TimeInstant Result = *this;
 
@@ -3710,23 +3349,15 @@ TimeInstant TimeInstant::operator+(
       I8 Whole{0};
       I8 Numer{0};
       I8 Denom{1};
-      Err = Calendar::getDateTime(ElapsedTime, Year, Month, Day, Hour, Minute,
-                                  Whole, Numer, Denom);
-      if (Err != 0)
-         LOG_ERROR("TimeMgr: TimeInstant::operator+ error converting instant "
-                   "to date/time");
+      Calendar::getDateTime(ElapsedTime, Year, Month, Day, Hour, Minute, Whole,
+                            Numer, Denom);
+
       // use calendar function to increment date based on calendar kind
-      Err = Calendar::incrementDate(Interval.CalInterval, Interval.Units, Year,
-                                    Month, Day);
-      if (Err != 0)
-         LOG_ERROR("TimeMgr: TimeInstant::operator+ error advancing calendar "
-                   "date/time");
+      Calendar::incrementDate(Interval.CalInterval, Interval.Units, Year, Month,
+                              Day);
 
       // convert new date/time back to time instant
-      Err = Result.set(Year, Month, Day, Hour, Minute, Whole, Numer, Denom);
-      if (Err != 0)
-         LOG_ERROR("TimeMgr: TimeInstant::operator+ error converting date/time "
-                   "to instant");
+      Result.set(Year, Month, Day, Hour, Minute, Whole, Numer, Denom);
 
    } // end calendar else clause
 
@@ -3741,8 +3372,6 @@ TimeInstant TimeInstant::operator+(
 
 TimeInstant TimeInstant::operator-(
     const TimeInterval &Interval) const { // [in] - interval to subtract
-
-   I4 Err{0};
 
    // start by copying result
    TimeInstant Result = *this;
@@ -3763,24 +3392,14 @@ TimeInstant TimeInstant::operator-(
       I8 Whole{0};
       I8 Numer{0};
       I8 Denom{1};
-      Err = Calendar::getDateTime(ElapsedTime, Year, Month, Day, Hour, Minute,
-                                  Whole, Numer, Denom);
-      if (Err != 0)
-         LOG_ERROR("TimeMgr: TimeInstant::operator- error converting instant "
-                   "to date/time");
+      Calendar::getDateTime(ElapsedTime, Year, Month, Day, Hour, Minute, Whole,
+                            Numer, Denom);
       // use calendar function to decrement date based on calendar kind
       I8 TmpInterval = -(Interval.CalInterval);
-      Err = Calendar::incrementDate(TmpInterval, Interval.Units, Year, Month,
-                                    Day);
-      if (Err != 0)
-         LOG_ERROR("TimeMgr: TimeInstant::operator- error reversing calendar "
-                   "date/time");
+      Calendar::incrementDate(TmpInterval, Interval.Units, Year, Month, Day);
 
       // convert new date/time back to time instant
-      Err = Result.set(Year, Month, Day, Hour, Minute, Whole, Numer, Denom);
-      if (Err != 0)
-         LOG_ERROR("TimeMgr: TimeInstant::operator- cannot compare time "
-                   "instants on different calendars");
+      Result.set(Year, Month, Day, Hour, Minute, Whole, Numer, Denom);
 
    } // end calendar else clause
 
@@ -3795,7 +3414,6 @@ TimeInstant TimeInstant::operator-(
 
 TimeInterval TimeInstant::operator-(const TimeInstant &Instant) const {
 
-   I4 Err{0};
    I8 Whole{0};
    I8 Numer{0};
    I8 Denom{1};
@@ -3806,15 +3424,9 @@ TimeInterval TimeInstant::operator-(const TimeInstant &Instant) const {
 
    // extract ElapsedTime components of time difference and use them to
    // set time interval result
-   Err = Timediff.get(Whole, Numer, Denom);
-   if (Err != 0)
-      LOG_ERROR("TimeMgr: TimeInstant::operator- (interval) error retrieving "
-                "time difference components");
+   Timediff.get(Whole, Numer, Denom);
 
-   Err = Result.set(Whole, Numer, Denom);
-   if (Err != 0)
-      LOG_ERROR("TimeMgr: TimeInstant::operator- (interval) error setting "
-                "TimeFrac components of interval");
+   Result.set(Whole, Numer, Denom);
 
    // finally return time interval result
    return Result;
@@ -3868,9 +3480,7 @@ std::string TimeInstant::getString(
    I8 Hour{0};
    I8 Minute{0};
    R8 Second{0.0};
-   I4 Err = this->get(Year, Month, Day, Hour, Minute, Second);
-   if (Err != 0)
-      LOG_ERROR("TimeMgr: TimeInstant::getString error retrieving time/date");
+   this->get(Year, Month, Day, Hour, Minute, Second);
 
    // allocate character string for date/time
    I4 TimeLength = YearWidth + 3 + 3 + 1 + 3 + 3 + 3 + SecondWidth + 1;
@@ -3903,9 +3513,10 @@ std::string TimeInstant::getString(
    const char *FormatStr = Tmp.c_str();
 
    // now use sprintf to print to C string
-   Err = sprintf(TimeStr, FormatStr, Year, Month, Day, Hour, Minute, Second);
-   if (Err < 0)
-      LOG_ERROR("TimeMgr: TimeInstant::getString error in sprintf");
+   I4 NChars =
+       sprintf(TimeStr, FormatStr, Year, Month, Day, Hour, Minute, Second);
+   if (NChars < 0)
+      ABORT_ERROR("TimeMgr: TimeInstant::getString error in sprintf");
 
    // now convert C string to std::string for result
    std::string Result(TimeStr);
@@ -4012,19 +3623,15 @@ bool Alarm::isRinging(void) { return Ringing; }
 // Alarm::updateStatus - Changes the alarm status based on current time
 // Checks whether the alarm should ring based on the current (or supplied)
 // time instant. If the instant is equal to, or later than the ring time,
-// the alarm begins ringing until stopped.  Returns an error code that is
-// generally true unless you try to check a stopped alarm.
+// the alarm begins ringing until stopped.
 
-I4 Alarm::updateStatus(const TimeInstant CurrentTime // [in] current time
+void Alarm::updateStatus(const TimeInstant CurrentTime // [in] current time
 ) {
 
-   I4 Err{0};
    if (!Stopped) { // if stopped, then status never changes
       if (CurrentTime >= RingTime)
          Ringing = true;
    }
-
-   return Err;
 
 } // end Alarm::updateStatus
 
@@ -4035,11 +3642,10 @@ I4 Alarm::updateStatus(const TimeInstant CurrentTime // [in] current time
 // next interval boundary after the input time.  If the alarm is a
 // single instance, the input time is used as the next alarm time.
 
-I4 Alarm::reset(const TimeInstant InTime // [in] new alarm time
+void Alarm::reset(const TimeInstant InTime // [in] new alarm time
 ) {
 
-   // initialize error code and stop the ringing alarm
-   I4 Err{0};
+   // stop the ringing alarm
    Ringing = false;
 
    // if this is an interval alarm, find the next alarm time after
@@ -4048,9 +3654,8 @@ I4 Alarm::reset(const TimeInstant InTime // [in] new alarm time
 
       // first check that the input time is valid
       if (InTime < RingTime) {
-         Err = 1;
-         LOG_ERROR("TimeMgr: Alarm::reset input time less than the current "
-                   "ring time");
+         ABORT_ERROR("TimeMgr: Alarm::reset error - input time is less than the"
+                     " current ring time");
       } else {
          // now move forward in time until the next interval is greater
          // than the input time
@@ -4065,8 +3670,6 @@ I4 Alarm::reset(const TimeInstant InTime // [in] new alarm time
       RingTime = InTime;
    }
 
-   return Err;
-
 } // end Alarm::reset
 
 //------------------------------------------------------------------------------
@@ -4074,25 +3677,19 @@ I4 Alarm::reset(const TimeInstant InTime // [in] new alarm time
 // This function permanently stops a ringing alarm. Use the reset function
 // if the alarm needs to be set for a later time.
 
-I4 Alarm::stop(void) {
+void Alarm::stop(void) {
 
-   I4 Err{0};
    Stopped = true;
    Ringing = false;
-   return Err;
 
 } // end Alarm::stop
 
 //------------------------------------------------------------------------------
 // Alarm::rename - Renames an existing timer
 
-I4 Alarm::rename(const std::string NewName ///< [in] new name for alarm
+void Alarm::rename(const std::string NewName ///< [in] new name for alarm
 ) {
-
-   I4 Err{0};
    Name = NewName;
-   return Err;
-
 } // end Alarm:: rename
 
 //------------------------------------------------------------------------------
@@ -4161,16 +3758,14 @@ Clock::~Clock(void) { // Nothing to be done
 // Sets the current time to an input value. Also must reset previous time and
 // next time to be consistent. Check that new time does not precede start time.
 
-I4 Clock::setCurrentTime(
+void Clock::setCurrentTime(
     const TimeInstant InCurrTime // new value for current time
 ) {
 
-   I4 Err{0};
-
    // Check that the new value does not precede start time
    if (InCurrTime < StartTime) {
-      LOG_ERROR("TimeMgr: Clock::setCurrentTime value for current time "
-                "precedes start time");
+      ABORT_ERROR("TimeMgr: Clock::setCurrentTime value for current time "
+                  "precedes start time");
 
    } else {
       // otherwise reset currTime to input value and
@@ -4181,16 +3776,9 @@ I4 Clock::setCurrentTime(
    }
 
    // Update status of all attached alarms based on new time
-   I4 Err1{0};
    for (I4 N = 0; N < NumAlarms; ++N) {
-      Err1 = Alarms[N]->updateStatus(CurrTime);
-      if (Err1 != 0) {
-         ++Err;
-         LOG_ERROR("Clock::setCurrentTime error updating alarm # {}", N);
-         break;
-      }
+      Alarms[N]->updateStatus(CurrTime);
    }
-   return Err;
 
 } // end Clock::setCurrentTime
 
@@ -4199,19 +3787,15 @@ I4 Clock::setCurrentTime(
 // Simply changes the time step. Does not check to see if the new time step
 // is reasonable. With the new time step, must also update the next time.
 
-I4 Clock::changeTimeStep(
+void Clock::changeTimeStep(
     const TimeInterval InTimeStep // [in] new time step to use
 ) {
-
-   I4 Err{0};
 
    // Assign the new time step to this clock
    TimeStep = InTimeStep;
 
    // Update the next time based on new time step
    NextTime = CurrTime + TimeStep;
-
-   return Err;
 
 } // end Clock::changeTimeStep
 
@@ -4250,10 +3834,8 @@ TimeInterval Clock::getTimeStep(void) const { return TimeStep; }
 // Attaches an alarm to this clock. The clock simply stores a pointer to this
 // alarm, so user must be careful not to destroy any alarms before the clock.
 
-I4 Clock::attachAlarm(Alarm *InAlarm // [in] pointer to alarm to attach
+void Clock::attachAlarm(Alarm *InAlarm // [in] pointer to alarm to attach
 ) {
-
-   I4 Err{0};
 
    // First update the alarm count and resize array if needed
    NumAlarms += 1;
@@ -4267,8 +3849,6 @@ I4 Clock::attachAlarm(Alarm *InAlarm // [in] pointer to alarm to attach
    // Now add the pointer to the next available slot in the array
    Alarms[NumAlarms - 1] = InAlarm;
 
-   return Err;
-
 } // end Clock::attachAlarm
 
 // Clock methods
@@ -4277,9 +3857,7 @@ I4 Clock::attachAlarm(Alarm *InAlarm // [in] pointer to alarm to attach
 // This method advances a clock one interval and updates the status of all
 // attached alarms.
 
-I4 Clock::advance(void) {
-
-   I4 Err{0};
+void Clock::advance(void) {
 
    // Update previous time and current time from previously computed times
    PrevTime = CurrTime;
@@ -4289,17 +3867,9 @@ I4 Clock::advance(void) {
    NextTime += TimeStep;
 
    // Update status of all attached alarms
-   I4 Err1{0};
    for (I4 N = 0; N < NumAlarms; ++N) {
-      Err1 = Alarms[N]->updateStatus(CurrTime);
-      if (Err1 != 0) {
-         ++Err;
-         LOG_ERROR("TimeMgr: Clock::advance error updating alarm # {}", N);
-         break;
-      }
+      Alarms[N]->updateStatus(CurrTime);
    }
-
-   return Err;
 
 } // end Clock::advance
 

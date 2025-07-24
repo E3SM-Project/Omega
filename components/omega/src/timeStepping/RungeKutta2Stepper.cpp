@@ -35,6 +35,8 @@ void RungeKutta2Stepper::doStep(OceanState *State,   // model state
    Array3DReal CurTracerArray, NextTracerArray;
    Err = Tracers::getAll(CurTracerArray, CurLevel);
    Err = Tracers::getAll(NextTracerArray, NextLevel);
+   if (Err != 0)
+      ABORT_ERROR("RungeKutt2 doStep: error retrieving tracers");
 
    // q = (h,u,phi)
    // R_q^{n} = RHS_q(u^{n}, h^{n}, phi^{n}, t^{n})
@@ -61,7 +63,7 @@ void RungeKutta2Stepper::doStep(OceanState *State,   // model state
    Tracers::updateTimeLevels();
 
    // Advance the clock and update the simulation time
-   Err     = StepClock->advance();
+   StepClock->advance();
    SimTime = StepClock->getCurrentTime();
 }
 
