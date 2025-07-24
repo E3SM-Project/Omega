@@ -406,7 +406,7 @@ monthly Alarm:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInterval</span><span class="w"> </span><span class="nf">IntervalMonthly</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeUnits</span><span class="o">::</span><span class="n">Months</span><span class="p">);</span>
 <span class="n">OMEGA</span><span class="o">::</span><span class="n">Alarm</span><span class="w"> </span><span class="n">AlarmMonthly</span><span class="p">(</span><span class="s">&quot;Every Month&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">IntervalMontly</span><span class="p">,</span><span class="w"> </span><span class="n">StartTime</span><span class="p">);</span>
 
-<span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ModelClock</span><span class="p">.</span><span class="n">attachAlarm</span><span class="p">(</span><span class="n">AlarmMonthly</span><span class="p">);</span>
+<span class="n">ModelClock</span><span class="p">.</span><span class="n">attachAlarm</span><span class="p">(</span><span class="n">AlarmMonthly</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The Clock can be used to control the duration of a simulation by using a
@@ -416,7 +416,7 @@ TimeInstant that represents the stop time:</p>
 
 <span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">CurrentTime</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">StopTime</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 
-<span class="w">   </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ModelClock</span><span class="p">.</span><span class="n">advance</span><span class="p">();</span>
+<span class="w">   </span><span class="n">ModelClock</span><span class="p">.</span><span class="n">advance</span><span class="p">();</span>
 <span class="w">   </span><span class="n">CurrentTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ModelClock</span><span class="p">.</span><span class="n">getCurrentTime</span><span class="p">();</span>
 
 <span class="w">  </span><span class="p">...</span>
