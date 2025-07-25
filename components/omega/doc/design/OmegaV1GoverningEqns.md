@@ -234,9 +234,16 @@ $$ (vertical-flux)
 
 so that the vertical flux terms correctly account for both the local motion of the fluid and the motion of the interface itself. Because both terms are scaled by $1/\rho_0$, the full flux is multiplied by $\rho_0$ to recover a physical mass flux. This ensures dimensional consistency and physical equivalence to the traditional form $\rho w - \rho {\bf u} \cdot \nabla z$ expressed in geometric-height coordinates.
 
-The quantity $\tilde{w}$ from equation [](#w-tilde) is the pseudo-velocity. The second term, $\tilde{ u} = {\bf u} \cdot \nabla \tilde{z}^{\text{top}}$, captures the component of horizontal velocity advecting material across a sloping pseudo-height interface. Together, the expression in brackets represents the **net vertical transport** through a surface of constant $\tilde{z}$.
+The quantity $\tilde{w}$ from equation [](#w-tilde) is the pseudo-velocity. The second term, $\tilde{ u} = {\bf u} \cdot \nabla \tilde{z}^{\text{top}}$, captures the component of horizontal velocity advecting material across a sloping pseudo-height interface. Together, the expression in brackets represents the **net vertical transport** through a surface of constant $\tilde{z}$. A schematic of how $\tilde{w}$, $\tilde{w}_{tr}$, and $\tilde{u}$ relate to each other: 
 
-Using this projection, we obtain:
+```{figure} images/tilde_w.jpeg
+:align: center
+:width: 300 px
+
+Schematic of pseudo-velocities.
+```
+
+$\tilde{W}_{tr}$ will be introduced and defined in [](#notational-simplifications). Using this projection, we obtain:
 
 $$
 \frac{d}{dt} \int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \, \varphi \, d\tilde{z} \, dA
@@ -644,6 +651,7 @@ $$ (layer-momentum-final)
 
 The $\delta X$ terms in the layered equations are vertical deviations from the vertical layer average of a given quantity $X$.  We will assume these deviations are small and products of these deviations are even smaller.  Thus we will ignore all of these terms in Omega.  We note that these terms could potentially serve as a bridge to multiscale fluxes, as resolution is increased, these $\delta X$ terms would get larger, but likely only for significantly higher resolution (e.g. 10s of meters).  However, these terms would have to be further analyzed and developed as these terms are only deviations from layer averages, not temporal averages as in the Reynolds' approach.
 
+(notational-simplifications)=
 ### Notational simplifications
 
 Throughout the rest of this document, we will
