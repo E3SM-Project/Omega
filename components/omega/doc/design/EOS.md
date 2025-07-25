@@ -1,5 +1,6 @@
 (omega-design-eos)=
-# Equation of State
+
+# Equation of State (EOS)
 
 ## 1 Overview
 The equation of state relates density to the prognostic state variables temperature and salinity. In the case of a non-Boussinesq model, it is also dependent on prognostic pressure. The prognostic temperature, $\theta$, is either potential temperature or Conservative Temperature, depending on the chosen equation of state, and  $S$ is the absolute salinity (linear eos could use practical salinity). Given that the Omega governing equations are  non-Boussinesq, the equation of state class will provide specific volume from the state variables. It will provide methods for computing the specific volume, and its first derivatives.

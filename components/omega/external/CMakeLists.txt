@@ -1,5 +1,26 @@
 # Add external packages
 
+include(ExternalProject)
+
+# Add GSW-C project
+ExternalProject_Add(
+    gswteos
+    BINARY_DIR ${OMEGA_BUILD_DIR}/external/GSW-C
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
+		${OMEGA_SOURCE_DIR}/external/GSW-C
+		${OMEGA_BUILD_DIR}/external/GSW-C
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND make CC=${CMAKE_C_COMPILER} all
+    INSTALL_COMMAND ""
+    BUILD_BYPRODUCTS ${OMEGA_BUILD_DIR}/external/GSW-C/libgswteos-10.so
+		${OMEGA_BUILD_DIR}/external/GSW-C/gsw_check
+)
+
+add_library(gswteos-10 SHARED IMPORTED)
+set_target_properties(gswteos-10 PROPERTIES
+    IMPORTED_LOCATION ${OMEGA_BUILD_DIR}/external/GSW-C/libgswteos-10.so
+)
+
 # Add the spdlog library
 if (NOT TARGET spdlog::spdlog)
 	add_subdirectory(
