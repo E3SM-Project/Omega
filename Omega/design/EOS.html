@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Equation of State &mdash; Omega develop documentation</title>
+  <title>Equation of State (EOS) &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -58,6 +58,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
@@ -88,6 +89,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
@@ -119,7 +121,7 @@
 <li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Equation of State</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Equation of State (EOS)</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#requirement-calculate-specific-volume-and-density-from-prognostic-temperature-and-salinity">2.1 Requirement: calculate specific volume and density from prognostic temperature and salinity</a></li>
@@ -196,7 +198,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Equation of State</li>
+      <li class="breadcrumb-item active">Equation of State (EOS)</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/design/EOS.md.txt" rel="nofollow"> View page source</a>
       </li>
@@ -206,8 +208,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section class="tex2jax_ignore mathjax_ignore" id="equation-of-state">
-<span id="omega-design-eos"></span><h1>Equation of State<a class="headerlink" href="#equation-of-state" title="Permalink to this heading"></a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="equation-of-state-eos">
+<span id="omega-design-eos"></span><h1>Equation of State (EOS)<a class="headerlink" href="#equation-of-state-eos" title="Permalink to this heading"></a></h1>
 <section id="overview">
 <h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
 <p>The equation of state relates density to the prognostic state variables temperature and salinity. In the case of a non-Boussinesq model, it is also dependent on prognostic pressure. The prognostic temperature, <span class="math notranslate nohighlight">\(\theta\)</span>, is either potential temperature or Conservative Temperature, depending on the chosen equation of state, and  <span class="math notranslate nohighlight">\(S\)</span> is the absolute salinity (linear eos could use practical salinity). Given that the Omega governing equations are  non-Boussinesq, the equation of state class will provide specific volume from the state variables. It will provide methods for computing the specific volume, and its first derivatives.</p>

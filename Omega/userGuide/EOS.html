@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Domain Decomposition (Decomp) &mdash; Omega develop documentation</title>
+  <title>Equation of State (EOS) &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -16,11 +16,13 @@
       <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
       <script src="../_static/doctools.js"></script>
       <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Dimension" href="Dimension.html" />
-    <link rel="prev" title="Driver" href="Driver.html" />
+    <link rel="next" title="Error handling" href="Error.html" />
+    <link rel="prev" title="Dimension" href="Dimension.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -54,9 +56,9 @@
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Omega Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
-<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Error.html">Error handling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
@@ -157,9 +159,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Domain Decomposition (Decomp)</li>
+      <li class="breadcrumb-item active">Equation of State (EOS)</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/userGuide/Decomp.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/userGuide/EOS.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -167,61 +169,29 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="domain-decomposition-decomp">
-<span id="omega-user-decomp"></span><h1>Domain Decomposition (Decomp)<a class="headerlink" href="#domain-decomposition-decomp" title="Permalink to this heading"></a></h1>
-<p>Omega is designed to be run in parallel across multiple nodes and cores
-in a clustered architecture. As in many Earth System Models, we decompose
-the horizontal domain into subdomains that are distributed across the
-system. Communication between the domains is accomplished using the
-Message Passing Interface standard. To reduce the communication between
-subdomains, a halo of points is filled with information from remote neighbor
-cells, edges and vertices so that a time step can largely be completed
-without the need to communicate.</p>
-<p>The partitioning itself is performed using the
-<a class="reference external" href="http://glaros.dtc.umn.edu/gkhome/metis/metis/overview">METIS</a> library that
-can partition unstructured domains in a way that also optimizes communication.
-More details on the mesh, connectivity and partitioning can be found in
-the <a class="reference internal" href="../devGuide/Decomp.html#omega-dev-decomp"><span class="std std-ref">Developer’s Guide</span></a>.</p>
-<p>There are three parameters that are set by the user in the input configuration
-file. These are:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Decomp</span><span class="p">:</span>
-<span class="w">   </span><span class="nt">HaloWidth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
-<span class="w">   </span><span class="nt">MeshFileName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">OmegaMesh.nc</span>
-<span class="w">   </span><span class="nt">DecompMethod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MetisKWay</span>
+  <section class="tex2jax_ignore mathjax_ignore" id="equation-of-state-eos">
+<span id="omega-user-eos"></span><h1>Equation of State (EOS)<a class="headerlink" href="#equation-of-state-eos" title="Permalink to this heading"></a></h1>
+<p>The equation of state (EOS) for the ocean describes the relationship between specific volume of seawater (in <span class="math notranslate nohighlight">\(\textrm{m}^3/\textrm{kg}\)</span>; the reciprocal of density) and temperature (in <span class="math notranslate nohighlight">\(^{\circ}\textrm{C}\)</span>), salinity (in <span class="math notranslate nohighlight">\(\textrm{g/kg}\)</span>), and pressure (in <span class="math notranslate nohighlight">\(\textrm{dbar}\)</span>). Through the hydrostatic balance (which relates density/specific volume gradients to pressure gradients), the equation of state provides a connection between active tracers (temperature and salinity) and the fluid dynamics.</p>
+<p>Two choices of EOS are provided by Omega: a linear EOS and a TEOS-10 EOS. The linear EOS simplifies the relationship by excluding the influence of pressure and using constant expansion/contraction coefficients, making the specific volume a simple linear function of temperature and salinity. However, this option is only recommended for simpler idealized test cases as its accuracy is not sufficient for real ocean simulations. The TEOS-10 EOS is a 75-term polynomial expression from <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S1463500315000566">Roquet et al. 2015</a> that approximates the <a class="reference external" href="https://www.teos-10.org/pubs/TEOS-10_Manual.pdf">Thermodynamic Equation of Seawater 2010</a> , but in a less complex and more computationally efficient manner, and is the preferred EOS for real ocean simulations in Omega.</p>
+<p>The user-configurable options are: <code class="docutils literal notranslate"><span class="pre">EosType</span></code> (choose either <code class="docutils literal notranslate"><span class="pre">Linear</span></code> or <code class="docutils literal notranslate"><span class="pre">Teos-10</span></code>), as well as the parameters needed for the linear EOS.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Eos</span><span class="p">:</span>
+<span class="w">   </span><span class="nt">EosType </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">teos10</span>
+<span class="w">   </span><span class="nt">Linear</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">DRhoDT</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-0.2</span>
+<span class="w">      </span><span class="nt">DRhoDS</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.8</span>
+<span class="w">      </span><span class="nt">RhoT0S0</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000.0</span>
 </pre></div>
 </div>
-<p>(until the config module is complete, these are currently hardwired to
-the defaults above). The HaloWidth is set to be able to compute all of the
-baroclinic terms in a timestep without communication and for higher-order
-tracer advection terms, this currently must be at least 3. The MeshFileName
-should include the complete path and filename to a standard Omega mesh file
-that contains at a minimum</p>
-<ul class="simple">
-<li><p>the total number of cells, edges and vertices (NCells, NEdges, NVertices)</p></li>
-<li><p>the mesh connectivity contained in the arrays CellsOnCell, EdgesOnCell
-VerticesOnCell, CellsOnEdge, EdgesOnEdge, CellsOnVertex, EdgesOnVertex.
-Again, a full description of the mesh is given in the
-<a class="reference internal" href="../devGuide/Decomp.html#omega-dev-decomp"><span class="std std-ref">Developer’s Guide</span></a>.
-The mesh information is read via parallel IO into an initial linear domain
-decomposition and then is partitioned by METIS and rearranged into the
-final METIS parallel decomposition.</p></li>
-</ul>
-<p>METIS and ParMETIS support a number of partitioning schemes, but MetisKWay
-is currently the only supported decomposition method for Omega and is
-generally the better option.</p>
-<p>Once the mesh is decomposed, all of the mesh index arrays are stored in
-a Decomp named Default which can be retrieved as described in the
-Developer guide. In the future, additional decompositions associated
-with processor subsets (as described in MachEnv) but this capability is
-not yet supported.</p>
+<p>where <code class="docutils literal notranslate"><span class="pre">DRhoDT</span></code> is the thermal expansion coefficient (<span class="math notranslate nohighlight">\(\textrm{kg}/(\textrm{m}^3 \cdot ^{\circ}\textrm{C})\)</span>), <code class="docutils literal notranslate"><span class="pre">DRhoDS</span></code> is the saline contraction coefficient (<span class="math notranslate nohighlight">\(\textrm{kg}/\textrm{m}^3\)</span>), and <code class="docutils literal notranslate"><span class="pre">RhoT0S0</span></code> is the reference density at (T,S)=(0,0) (in <span class="math notranslate nohighlight">\(\textrm{kg}/\textrm{m}^3\)</span>).</p>
+<p>In addition to <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code>, the displaced specific volume <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> is also calculated by the EOS. This calculates the density of a parcel of fluid that is adiabatically displaced by a relative <code class="docutils literal notranslate"><span class="pre">k</span></code> levels, capturing the effects of pressure/depth changes. This is primarily used to calculate quantities for determining the water column stability (i.e. the stratification) and the vertical mixing coefficients (viscosity and diffusivity). Note: when using the linear EOS, <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> will be the same as <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> since the specific volume calculation is independent of pressure/depth.</p>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="Driver.html" class="btn btn-neutral float-left" title="Driver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="Dimension.html" class="btn btn-neutral float-right" title="Dimension" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="Dimension.html" class="btn btn-neutral float-left" title="Dimension" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Error.html" class="btn btn-neutral float-right" title="Error handling" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

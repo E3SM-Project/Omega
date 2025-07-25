@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Linting Code &mdash; Omega develop documentation</title>
+  <title>Equation of State (EOS) &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Documentation" href="Docs.html" />
-    <link rel="prev" title="Development Conda Environment" href="CondaEnv.html" />
+    <link rel="next" title="Omega Broadcast" href="Broadcast.html" />
+    <link rel="prev" title="Driver" href="Driver.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -79,14 +79,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Developers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CondaEnv.html">Development Conda Environment</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Linting Code</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#enabling-lint-checks">Enabling Lint Checks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#bypassing-linting">Bypassing Linting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#linting-c-code">Linting C++ Code</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#linting-python-code">Linting Python Code</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#updating-the-linting-pacakge">Updating the linting pacakge</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="Linting.html">Linting Code</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Docs.html">Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="BuildDocs.html">Building the Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
@@ -94,7 +87,13 @@
 <li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
-<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Equation of State (EOS)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#eos-type">Eos type</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#initialization">Initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#computation-of-eos">Computation of Eos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#removal-of-eos">Removal of Eos</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Omega Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
@@ -164,9 +163,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Linting Code</li>
+      <li class="breadcrumb-item active">Equation of State (EOS)</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/devGuide/Linting.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/devGuide/EOS.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -174,74 +173,56 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section class="tex2jax_ignore mathjax_ignore" id="linting-code">
-<span id="omega-dev-linting"></span><h1>Linting Code<a class="headerlink" href="#linting-code" title="Permalink to this heading"></a></h1>
-<section id="enabling-lint-checks">
-<h2>Enabling Lint Checks<a class="headerlink" href="#enabling-lint-checks" title="Permalink to this heading"></a></h2>
-<p>First, please follow the procedure in <a class="reference internal" href="CondaEnv.html#omega-dev-conda-env"><span class="std std-ref">Development Conda Environment</span></a> to set up a
-conda environment for linting the code and building the docs.</p>
-<p>Once on each machine you are developing on, before committing code, please run:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>install
-</pre></div>
-</div>
-<p>After this, your code will be linted with all the tools discussed below as part
-of each call to <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span></code>. Any modified files will also be linted when CI
-(GitHub Actions) runs on each pull request and merge to the <code class="docutils literal notranslate"><span class="pre">develop</span></code> branch.</p>
-<p>You can lint the full code using all the tools with:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+  <p>(omega-dev-eos) =</p>
+<section class="tex2jax_ignore mathjax_ignore" id="equation-of-state-eos">
+<h1>Equation of State (EOS)<a class="headerlink" href="#equation-of-state-eos" title="Permalink to this heading"></a></h1>
+<p>Omega includes an <code class="docutils literal notranslate"><span class="pre">Eos</span></code> class that provides functions that compute <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> and <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code>.
+Current EOS options are a linear EOS or an EOS computed using the TEOS-10 75 term expansion from
+<a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S1463500315000566">Roquet et al. 2015</a>. If
+<code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> is calculated with the linear EOS option, it will be equal to <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> as there
+is no pressure/depth dependence for the linear EOS. <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> computes specific volume
+adiabatically displaced to <code class="docutils literal notranslate"><span class="pre">K</span> <span class="pre">+</span> <span class="pre">KDisp</span></code>.</p>
+<section id="eos-type">
+<h2>Eos type<a class="headerlink" href="#eos-type" title="Permalink to this heading"></a></h2>
+<p>An enumeration listing all implemented schemes is provided. It needs to be extended every time an
+EOS is added. It is used to identify which EOS method is to be used at run time.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">EosType</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">Linear</span><span class="p">,</span><span class="w"> </span><span class="n">Teos10Poly75t</span><span class="w"> </span><span class="p">};</span>
 </pre></div>
 </div>
 </section>
-<section id="bypassing-linting">
-<h2>Bypassing Linting<a class="headerlink" href="#bypassing-linting" title="Permalink to this heading"></a></h2>
-<p>If you wish to commit without first checking the code for lint (e.g. you plan
-to fix the code in a later commit), run:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>commit<span class="w"> </span>--no-verify<span class="w"> </span>...
+<section id="initialization">
+<h2>Initialization<a class="headerlink" href="#initialization" title="Permalink to this heading"></a></h2>
+<p>An instance of the <code class="docutils literal notranslate"><span class="pre">Eos</span></code> class requires a <a class="reference internal" href="HorzMesh.html#omega-dev-horz-mesh"><span class="std std-ref"><code class="docutils literal notranslate"><span class="pre">HorzMesh</span></code></span></a>, so the mesh class
+and all of its dependencies need to be initialized before the <code class="docutils literal notranslate"><span class="pre">Eos</span></code> class can be. The static method:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Eos</span><span class="o">::</span><span class="n">init</span><span class="p">();</span>
 </pre></div>
 </div>
-<p>with the same arguments you would normally use for <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span></code>.</p>
-</section>
-<section id="linting-c-code">
-<h2>Linting C++ Code<a class="headerlink" href="#linting-c-code" title="Permalink to this heading"></a></h2>
-<p>The tools used to lint C++ code are from
-<a class="reference external" href="https://github.com/Takishima/cmake-pre-commit-hooks">cmake-pre-commit-hooks</a>
-and include <a class="reference external" href="https://clang.llvm.org/docs/ClangFormat.html">clang-format</a>,
-<a class="reference external" href="https://clang.llvm.org/extra/clang-tidy/">clang-tidy</a>,
-<a class="reference external" href="https://cppcheck.sourceforge.io/">cppcheck</a>, and
-<a class="reference external" href="https://github.com/include-what-you-use/include-what-you-use">include-what-you-use</a>.
-(Currently <code class="docutils literal notranslate"><span class="pre">clang-tidy</span></code>, <code class="docutils literal notranslate"><span class="pre">cppcheck</span></code> and <code class="docutils literal notranslate"><span class="pre">include-what-you-use</span></code> are disabled
-but they will be enabled shortly.)</p>
-<p>You can run these tools individually if you need to:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>run<span class="w"> </span>clang-format<span class="w"> </span>--all-files
-pre-commit<span class="w"> </span>run<span class="w"> </span>clang-tidy<span class="w"> </span>--all-files
-pre-commit<span class="w"> </span>run<span class="w"> </span>cppcheck<span class="w"> </span>--all-files
-pre-commit<span class="w"> </span>run<span class="w"> </span>include-what-you-use<span class="w"> </span>--all-files
+<p>initializes the default <code class="docutils literal notranslate"><span class="pre">Eos</span></code>. A pointer to it can be retrieved at any time using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Eos</span><span class="o">*</span><span class="w"> </span><span class="n">DefEos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Eos</span><span class="o">::</span><span class="n">getInstance</span><span class="p">();</span>
 </pre></div>
 </div>
-<p>You can specify one more more files instead of <code class="docutils literal notranslate"><span class="pre">--all-files</span></code>.</p>
 </section>
-<section id="linting-python-code">
-<h2>Linting Python Code<a class="headerlink" href="#linting-python-code" title="Permalink to this heading"></a></h2>
-<p>The tools used to lint python code include
-<a class="reference external" href="https://pycqa.github.io/isort/">isort</a> for sorting imports,
-<a class="reference external" href="https://github.com/ikamensh/flynt">flynt</a> for enforcing string formatting
-with f-strings,
-<a class="reference external" href="https://flake8.pycqa.org/en/latest/">flake8</a> for enforcing the
-<a class="reference external" href="https://peps.python.org/pep-0008/">PEP8</a> style guide for python, and
-<a class="reference external" href="https://mypy-lang.org/">mypy</a> for performing variable type checking.</p>
-<p>You can run these tools individually if you need to:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>run<span class="w"> </span>isort<span class="w"> </span>--all-files
-pre-commit<span class="w"> </span>run<span class="w"> </span>flynt<span class="w"> </span>--all-files
-pre-commit<span class="w"> </span>run<span class="w"> </span>flake8<span class="w"> </span>--all-files
-pre-commit<span class="w"> </span>run<span class="w"> </span>mypy<span class="w"> </span>--all-files
+<section id="computation-of-eos">
+<h2>Computation of Eos<a class="headerlink" href="#computation-of-eos" title="Permalink to this heading"></a></h2>
+<p>To compute <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> for a particular set of temperature, salinity, and pressure arrays, do</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Eos</span><span class="p">.</span><span class="n">computeSpecVol</span><span class="p">(</span><span class="n">ConsrvTemp</span><span class="p">,</span><span class="w"> </span><span class="n">AbsSalinity</span><span class="p">,</span><span class="w"> </span><span class="n">Pressure</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>You can specify one more more files instead of <code class="docutils literal notranslate"><span class="pre">--all-files</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> is calculated using local temperature and salinity values, but a pressure
+value at <code class="docutils literal notranslate"><span class="pre">K</span> <span class="pre">+</span> <span class="pre">KDisp</span></code>. To compute <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> for a particular set of temperature, salinity,
+and pressure arrays and displaced vertical index level, do</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Eos</span><span class="p">.</span><span class="n">computeSpecVolDisp</span><span class="p">(</span><span class="n">ConsrvTemp</span><span class="p">,</span><span class="w"> </span><span class="n">AbsSalinity</span><span class="p">,</span><span class="w"> </span><span class="n">Pressure</span><span class="p">,</span><span class="w"> </span><span class="n">KDisp</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">KDisp</span></code> is the number of <code class="docutils literal notranslate"><span class="pre">k</span></code> levels you want to displace each specific volume level to.
+For example, to displace each level to one below, set <code class="docutils literal notranslate"><span class="pre">KDisp</span> <span class="pre">=</span> <span class="pre">1</span></code>.</p>
 </section>
-<section id="updating-the-linting-pacakge">
-<h2>Updating the linting pacakge<a class="headerlink" href="#updating-the-linting-pacakge" title="Permalink to this heading"></a></h2>
-<p>To update the linting packages, you just need to recreate the development
-conda environment.  See <a class="reference internal" href="CondaEnv.html#omega-dev-update-conda-env"><span class="std std-ref">Updating the Conda Environment</span></a>.</p>
+<section id="removal-of-eos">
+<h2>Removal of Eos<a class="headerlink" href="#removal-of-eos" title="Permalink to this heading"></a></h2>
+<p>To clear the Eos instance do:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Eos</span><span class="o">::</span><span class="n">destroyInstance</span><span class="p">();</span>
+</pre></div>
+</div>
 </section>
 </section>
 
@@ -249,8 +230,8 @@ conda environment.  See <a class="reference internal" href="CondaEnv.html#omega-
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="CondaEnv.html" class="btn btn-neutral float-left" title="Development Conda Environment" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="Docs.html" class="btn btn-neutral float-right" title="Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="Driver.html" class="btn btn-neutral float-left" title="Driver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Broadcast.html" class="btn btn-neutral float-right" title="Omega Broadcast" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
