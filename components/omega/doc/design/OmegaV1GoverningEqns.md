@@ -234,9 +234,10 @@ $$ (vertical-flux)
 
 so that the vertical flux terms correctly account for both the local motion of the fluid and the motion of the interface itself. Because both terms are scaled by $1/\rho_0$, the full flux is multiplied by $\rho_0$ to recover a physical mass flux. This ensures dimensional consistency and physical equivalence to the traditional form $\rho w - \rho {\bf u} \cdot \nabla z$ expressed in geometric-height coordinates.
 
-The quantity $\tilde{w}$ from equation [](#w-tilde) is the pseudo-velocity. The second term, $\tilde{ u} = {\bf u} \cdot \nabla \tilde{z}^{\text{top}}$, captures the component of horizontal velocity advecting material across a sloping pseudo-height interface. Together, the expression in brackets represents the **net vertical transport** through a surface of constant $\tilde{z}$. A schematic of how $\tilde{w}$, $\tilde{w}_{tr}$, and $\tilde{u}$ relate to each other: 
+The quantity $\tilde{w}$ from equation [](#w-tilde) is the pseudo-velocity. The second term, $\tilde{ u} = {\bf u} \cdot \nabla \tilde{z}^{\text{top}}$, captures the component of horizontal velocity advecting material across a sloping pseudo-height interface. Together, the expression in brackets represents the **net vertical transport** through a surface of constant $\tilde{z}$. A schematic of how $\tilde{w}$, $\tilde{w}_{tr}$, and $\tilde{u}$ relate to each other {numref}`pseudo-vel-schematic`:
 
 ```{figure} images/tilde_w.jpeg
+:name:  pseudo-vel-schematic
 :align: center
 :width: 300 px
 
