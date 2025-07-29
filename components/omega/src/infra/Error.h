@@ -215,7 +215,7 @@ Error::Error(ErrorCode ErrCode,        // [in] error code to assign
 /// It is only active for debug builds.
 #ifdef OMEGA_DEBUG
 #define OMEGA_ASSERT(_Condition, _ErrMsg, ...) \
-   if (!_Condition) {                          \
+   if (!(_Condition)) {                        \
       LOG_CRITICAL(_ErrMsg, ##__VA_ARGS__);    \
       cpptrace::generate_trace().print();      \
       OMEGA::Error::abort();                   \
@@ -227,7 +227,7 @@ Error::Error(ErrorCode ErrCode,        // [in] error code to assign
 /// This macro checks for a required condition and exits if not met
 /// It is always evaluated (unlike ASSERT for debug builds)
 #define OMEGA_REQUIRE(_Condition, _ErrMsg, ...) \
-   if (!_Condition) {                           \
+   if (!(_Condition)) {                         \
       LOG_CRITICAL(_ErrMsg, ##__VA_ARGS__);     \
       cpptrace::generate_trace().print();       \
       OMEGA::Error::abort();                    \
