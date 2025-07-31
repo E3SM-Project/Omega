@@ -84,7 +84,7 @@ $$ \Phi_{i,k} = \left( gz_{i,k} + \Phi_{tp} + \Phi_{SAL} \right). $$
 
 The desired pseudo thickness used for the $p^\star$ coordinate is:
 
-$$\tilde{h}_k^{p^\star} = \frac{(p_B-p_{surf})}{g\rho_0} \frac{W_k\tilde{h}_k^{ref}}{\sum_{k^\prime=1}^K W_{k^\prime}\tilde{h}_{k^\prime}^{ref}}, $$
+$$\tilde{h}_k^{p^\star} = \tilde{h}_k^{ref} + \left(\frac{p_B-p_{surf}}{g\rho_0} - \sum_{k^\prime=1}^K \tilde{h}_{k^\prime}^{ref} \right)\frac{W_k\tilde{h}_k^{ref}}{\sum_{k^\prime=1}^K W_{k^\prime}\tilde{h}_{k^\prime}^{ref}}, $$
 
 where $\tilde{h}_k^{ref}$ is the initial reference pseudo thickness and the weights $W_k$ determine how pressure perturbations are distributed amongst the layers.
 Setting all $W_k$ values to a constant, corresponds to uniform stretching of the layers.
