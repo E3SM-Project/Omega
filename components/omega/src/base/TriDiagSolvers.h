@@ -162,7 +162,6 @@ struct PCRSolver {
       // Perform NLevels of parallel cyclic reduction
       for (int Lev = 1; Lev < NLevels; ++Lev) {
 
-         const int Stride     = 1 << Lev;
          const int HalfStride = 1 << (Lev - 1);
 
          int Kmh = K - HalfStride;

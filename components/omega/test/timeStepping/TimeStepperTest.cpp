@@ -40,8 +40,6 @@
 
 using namespace OMEGA;
 
-// Geometry doesn't matter for this test
-constexpr Geometry Geom = Geometry::Planar;
 // Only one vertical level is needed
 constexpr int NVertLevels = 1;
 
