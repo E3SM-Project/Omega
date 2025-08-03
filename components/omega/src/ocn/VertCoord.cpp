@@ -379,6 +379,44 @@ void VertCoord::initMovementWeights(Config *Options) {
    VertCoordMovementWeightsH = createHostMirrorCopy(VertCoordMovementWeights);
 }
 
+//------------------------------------------------------------------------------
+void VertCoord::computePressure(const Array2DReal &PressureInterface,
+                                const Array2DReal &PressureMid,
+                                const Array2DReal &LayerThickness,
+                                const Array1DReal &SurfacePressure) {
+
+   Real Gravity = 9.80616_Real;
+   Real Rho0    = 1035._Real;
+
+   OMEGA_SCOPE(LocMinLevelCell, MinLevelCell);
+   OMEGA_SCOPE(LocMaxLevelCell, MaxLevelCell);
+
+   const auto Policy = TeamPolicy(NCellsAll, OMEGA_TEAMSIZE, 1);
+   Kokkos::parallel_for(
+       "computePressure", Policy, KOKKOS_LAMBDA(const TeamMember &Member) {
+          const I4 ICell = Member.league_rank();
+          const I4 KMin  = LocMinLevelCell(ICell);
+          const I4 KMax  = LocMaxLevelCell(ICell);
+          const I4 Range = KMax - KMin + 1;
+
+          PressureInterface(ICell, KMin) = SurfacePressure(ICell);
+          Kokkos::parallel_scan(
+              TeamThreadRange(Member, Range),
+              [&](int K, Real &Accum, bool IsFinal) {
+                 const I4 KLvl  = K + KMin;
+                 Real Increment = Gravity * Rho0 * LayerThickness(ICell, KLvl);
+                 Accum += Increment;
+
+                 if (IsFinal) {
+                    PressureInterface(ICell, KLvl + 1) =
+                        SurfacePressure(ICell) + Accum;
+                    PressureMid(ICell, KLvl) =
+                        SurfacePressure(ICell) + Accum - 0.5 * Increment;
+                 }
+              });
+       });
+}
+
 } // end namespace OMEGA
 
 //===----------------------------------------------------------------------===//
