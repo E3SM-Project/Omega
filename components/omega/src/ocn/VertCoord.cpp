@@ -453,6 +453,42 @@ void VertCoord::computeZHeight(const Array2DReal &ZInterface,
        });
 }
 
+//------------------------------------------------------------------------------
+void VertCoord::computeGeopotential(const Array2DReal &GeopotentialMid,
+                                    const Array2DReal &ZMid,
+                                    const Array1DReal &TidalPotential,
+                                    const Array1DReal &SelfAttractionLoading) {
+
+   Real Gravity = 9.80616_Real;
+
+   OMEGA_SCOPE(LocMinLevelCell, MinLevelCell);
+   OMEGA_SCOPE(LocMaxLevelCell, MaxLevelCell);
+
+   Kokkos::parallel_for(
+       "computeGeopotential", TeamPolicy(NCellsAll, OMEGA_TEAMSIZE),
+       KOKKOS_LAMBDA(const TeamMember &Member) {
+          const I4 ICell   = Member.league_rank();
+          const I4 KMin    = LocMinLevelCell(ICell);
+          const I4 KMax    = LocMaxLevelCell(ICell);
+          const I4 KRange  = KMax - KMin + 1;
+          const I4 NChunks = (KRange + VecLength - 1) / VecLength;
+          Kokkos::parallel_for(
+              Kokkos::TeamThreadRange(Member, NChunks), [&](const int KChunk) {
+                 const I4 KStart = KMin + KChunk * VecLength;
+                 const I4 KEnd   = KStart + VecLength;
+
+                 const I4 KLen =
+                     KEnd > KMax + 1 ? KMax + 1 - KStart : VecLength;
+                 for (int KVec = 0; KVec < KLen; ++KVec) {
+                    const I4 K                = KStart + KVec;
+                    GeopotentialMid(ICell, K) = Gravity * ZMid(ICell, K) +
+                                                TidalPotential(ICell) +
+                                                SelfAttractionLoading(ICell);
+                 }
+              });
+       });
+}
+
 } // end namespace OMEGA
 
 //===----------------------------------------------------------------------===//
