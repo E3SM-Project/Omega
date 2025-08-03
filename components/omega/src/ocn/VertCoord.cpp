@@ -417,6 +417,42 @@ void VertCoord::computePressure(const Array2DReal &PressureInterface,
        });
 }
 
+//------------------------------------------------------------------------------
+void VertCoord::computeZHeight(const Array2DReal &ZInterface,
+                               const Array2DReal &ZMid,
+                               const Array2DReal &LayerThickness,
+                               const Array2DReal &SpecVol,
+                               const Array1DReal &BottomDepth) {
+
+   Real Rho0 = 1035._Real;
+
+   OMEGA_SCOPE(LocMinLevelCell, MinLevelCell);
+   OMEGA_SCOPE(LocMaxLevelCell, MaxLevelCell);
+
+   const auto Policy = TeamPolicy(NCellsAll, OMEGA_TEAMSIZE, 1);
+   Kokkos::parallel_for(
+       "computeZHeight", Policy, KOKKOS_LAMBDA(const TeamMember &Member) {
+          const I4 ICell = Member.league_rank();
+          const I4 KMin  = LocMinLevelCell(ICell);
+          const I4 KMax  = LocMaxLevelCell(ICell);
+          const I4 Range = KMax - KMin + 1;
+
+          ZInterface(ICell, KMax + 1) = -BottomDepth(ICell);
+          Kokkos::parallel_scan(
+              TeamThreadRange(Member, Range),
+              [&](int K, Real &Accum, bool IsFinal) {
+                 const I4 KLvl = KMax - K;
+                 Real DZ =
+                     Rho0 * SpecVol(ICell, KLvl) * LayerThickness(ICell, KLvl);
+                 Accum += DZ;
+                 if (IsFinal) {
+                    ZInterface(ICell, KLvl) = -BottomDepth(ICell) + Accum;
+                    ZMid(ICell, KLvl) = -BottomDepth(ICell) + Accum - 0.5 * DZ;
+                 }
+              });
+       });
+}
+
 } // end namespace OMEGA
 
 //===----------------------------------------------------------------------===//
