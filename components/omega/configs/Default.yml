@@ -18,6 +18,8 @@ Omega:
     FluxTracerType: Center
   WindStress:
     InterpType: Isotropic
+  VertCoord:
+    MovementWeightType: Uniform
   Tendencies:
     ThicknessFluxTendencyEnable: true
     PVTendencyEnable: true
