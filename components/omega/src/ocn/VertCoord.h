@@ -164,11 +164,11 @@ class VertCoord {
                             const Array1DReal &TidalPotential,
                             const Array1DReal &SelfAttractionLoading);
 
-   /// Determine mass thickness used for the p-star vertical coordinate
-   void computePStarThickness(const Array2DReal &LayerThicknessPStar,
-                              const Array2DReal &PressureInterface,
-                              const Array1DReal &VertCoordMovementWeights,
-                              const Array2DReal &RefLayerThickness);
+   /// Determine mass thickness used for the target vertical coordinate
+   void computeTargetThickness(const Array2DReal &LayerThicknessTarget,
+                               const Array2DReal &PressureInterface,
+                               const Array2DReal &RefLayerThickness,
+                               const Array1DReal &VertCoordMovementWeights);
 
 }; // end class VertCoord
 
