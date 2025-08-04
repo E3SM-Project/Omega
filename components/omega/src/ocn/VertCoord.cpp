@@ -95,6 +95,8 @@ VertCoord::VertCoord(const std::string &Name_, const Decomp *Decomp,
    minMaxLevelEdge();
    minMaxLevelVertex();
 
+   initMovementWeights(Options);
+
 } // end constructor
 
 VertCoord *VertCoord::create(const std::string &Name, const Decomp *Decomp,
