@@ -489,6 +489,67 @@ void VertCoord::computeGeopotential(const Array2DReal &GeopotentialMid,
        });
 }
 
+//------------------------------------------------------------------------------
+void VertCoord::computeTargetThickness(
+    const Array2DReal &LayerThicknessTarget,
+    const Array2DReal &PressureInterface, const Array2DReal &RefLayerThickness,
+    const Array1DReal &VertCoordMovementWeights) {
+
+   Real Gravity = 9.80616_Real;
+   Real Rho0    = 1035._Real;
+
+   OMEGA_SCOPE(LocMinLevelCell, MinLevelCell);
+   OMEGA_SCOPE(LocMaxLevelCell, MaxLevelCell);
+
+   Kokkos::parallel_for(
+       "computeTargetThickness", TeamPolicy(NCellsAll, OMEGA_TEAMSIZE),
+       KOKKOS_LAMBDA(const TeamMember &Member) {
+          const I4 ICell = Member.league_rank();
+          const I4 KMin  = LocMinLevelCell(ICell);
+          const I4 KMax  = LocMaxLevelCell(ICell);
+
+          Real Coeff = (PressureInterface(ICell, KMax + 1) -
+                        PressureInterface(ICell, KMin)) /
+                       (Gravity * Rho0);
+
+          Real SumWh = 0;
+          Kokkos::parallel_reduce(
+              Kokkos::TeamThreadRange(Member, KMin, KMax + 1),
+              [=](const int K, Real &LocalWh) {
+                 LocalWh +=
+                     VertCoordMovementWeights(K) * RefLayerThickness(ICell, K);
+              },
+              SumWh);
+
+          Real SumRefH = 0;
+          Kokkos::parallel_reduce(
+              Kokkos::TeamThreadRange(Member, KMin, KMax + 1),
+              [=](const int K, Real &LocalSum) {
+                 LocalSum += RefLayerThickness(ICell, K);
+              },
+              SumRefH);
+          Coeff -= SumRefH;
+
+          const I4 KRange  = KMax - KMin + 1;
+          const I4 NChunks = (KRange + VecLength - 1) / VecLength;
+
+          Kokkos::parallel_for(
+              Kokkos::TeamThreadRange(Member, NChunks), [&](const int KChunk) {
+                 const I4 KStart = KMin + KChunk * VecLength;
+                 const I4 KEnd   = KStart + VecLength;
+
+                 const I4 KLen =
+                     KEnd > KMax + 1 ? KMax + 1 - KStart : VecLength;
+                 for (int KVec = 0; KVec < KLen; ++KVec) {
+                    const I4 K = KStart + KVec;
+                    LayerThicknessTarget(ICell, K) =
+                        RefLayerThickness(ICell, K) *
+                        (1._Real + Coeff * VertCoordMovementWeights(K) / SumWh);
+                 }
+              });
+       });
+}
+
 } // end namespace OMEGA
 
 //===----------------------------------------------------------------------===//
