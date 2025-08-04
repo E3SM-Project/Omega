@@ -550,6 +550,31 @@ void VertCoord::computeTargetThickness(
        });
 }
 
+//------------------------------------------------------------------------------
+// Get default VertCoord
+VertCoord *VertCoord::getDefault() { return VertCoord::DefaultVertCoord; }
+
+//------------------------------------------------------------------------------
+// Get VertCoord by name
+VertCoord *VertCoord::get(const std::string Name ///< [in] Name of VertCoord
+) {
+
+   // look for an instance of this name
+   auto it = AllVertCoords.find(Name);
+
+   // if found, return the VertCoord pointer
+   if (it != AllVertCoords.end()) {
+      return it->second.get();
+
+      // otherwise print error and return null pointer
+   } else {
+      LOG_ERROR("VertCoord::get: Attempt to retrieve non-existant VertCoord:");
+      LOG_ERROR("{} has not been defined or has been removed", Name);
+      return nullptr;
+   }
+
+} // end get VertCoord
+
 } // end namespace OMEGA
 
 //===----------------------------------------------------------------------===//
