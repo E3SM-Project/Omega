@@ -41,7 +41,11 @@ VertCoord::VertCoord(const std::string &Name_, const Decomp *Decomp,
    I4 NVertLevelsID;
    Err = IO::getDimFromFile(MeshFileID, "nVertLevels", NVertLevelsID,
                             NVertLevels);
-
+   if (Err != 0) {
+      LOG_WARN("VertCoord: error reading nVertLevels from mesh file, "
+               "using NVertLevels = 1");
+      NVertLevels = 1;
+   }
    NVertLevelsP1 = NVertLevels + 1;
 
    auto VertDim = Dimension::create("NVertLevels", NVertLevels);
