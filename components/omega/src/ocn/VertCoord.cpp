@@ -408,7 +408,7 @@ void VertCoord::computePressure(const Array2DReal &PressureInterface,
           PressureInterface(ICell, KMin) = SurfacePressure(ICell);
           Kokkos::parallel_scan(
               TeamThreadRange(Member, Range),
-              [&](int K, Real &Accum, bool IsFinal) {
+              [=](int K, Real &Accum, bool IsFinal) {
                  const I4 KLvl  = K + KMin;
                  Real Increment = Gravity * Rho0 * LayerThickness(ICell, KLvl);
                  Accum += Increment;
@@ -446,7 +446,7 @@ void VertCoord::computeZHeight(const Array2DReal &ZInterface,
           ZInterface(ICell, KMax + 1) = -BottomDepth(ICell);
           Kokkos::parallel_scan(
               TeamThreadRange(Member, Range),
-              [&](int K, Real &Accum, bool IsFinal) {
+              [=](int K, Real &Accum, bool IsFinal) {
                  const I4 KLvl = KMax - K;
                  Real DZ =
                      Rho0 * SpecVol(ICell, KLvl) * LayerThickness(ICell, KLvl);
@@ -479,7 +479,7 @@ void VertCoord::computeGeopotential(const Array2DReal &GeopotentialMid,
           const I4 KRange  = KMax - KMin + 1;
           const I4 NChunks = (KRange + VecLength - 1) / VecLength;
           Kokkos::parallel_for(
-              Kokkos::TeamThreadRange(Member, NChunks), [&](const int KChunk) {
+              Kokkos::TeamThreadRange(Member, NChunks), [=](const int KChunk) {
                  const I4 KStart = KMin + KChunk * VecLength;
                  const I4 KEnd   = KStart + VecLength;
 
@@ -540,7 +540,7 @@ void VertCoord::computeTargetThickness(
           const I4 NChunks = (KRange + VecLength - 1) / VecLength;
 
           Kokkos::parallel_for(
-              Kokkos::TeamThreadRange(Member, NChunks), [&](const int KChunk) {
+              Kokkos::TeamThreadRange(Member, NChunks), [=](const int KChunk) {
                  const I4 KStart = KMin + KChunk * VecLength;
                  const I4 KEnd   = KStart + VecLength;
 
