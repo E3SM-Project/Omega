@@ -565,8 +565,6 @@ void HorzMesh::readWeights() {
 // Read the Coriolis parameter at the cells, edges, and vertices
 void HorzMesh::readCoriolis() {
 
-   int Err;
-
    readCellArray(FCellH, "fCell");
 
    readVertexArray(FVertexH, "fVertex");
