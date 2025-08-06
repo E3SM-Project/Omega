@@ -78,30 +78,30 @@ class VertCoord {
    HostArray2DReal LayerThicknessTargetH;
 
    // Vertical loop bounds
-   Array1DI4 MinLevelCell;
-   Array1DI4 MaxLevelCell;
-   Array1DI4 MinLevelEdgeTop;
-   Array1DI4 MaxLevelEdgeTop;
-   Array1DI4 MinLevelEdgeBot;
-   Array1DI4 MaxLevelEdgeBot;
-   Array1DI4 MinLevelVertexTop;
-   Array1DI4 MaxLevelVertexTop;
-   Array1DI4 MinLevelVertexBot;
-   Array1DI4 MaxLevelVertexBot;
+   Array1DI4 MinLayerCell;
+   Array1DI4 MaxLayerCell;
+   Array1DI4 MinLayerEdgeTop;
+   Array1DI4 MaxLayerEdgeTop;
+   Array1DI4 MinLayerEdgeBot;
+   Array1DI4 MaxLayerEdgeBot;
+   Array1DI4 MinLayerVertexTop;
+   Array1DI4 MaxLayerVertexTop;
+   Array1DI4 MinLayerVertexBot;
+   Array1DI4 MaxLayerVertexBot;
 
-   HostArray1DI4 MinLevelCellH;
-   HostArray1DI4 MaxLevelCellH;
-   HostArray1DI4 MinLevelEdgeTopH;
-   HostArray1DI4 MaxLevelEdgeTopH;
-   HostArray1DI4 MinLevelEdgeBotH;
-   HostArray1DI4 MaxLevelEdgeBotH;
-   HostArray1DI4 MinLevelVertexTopH;
-   HostArray1DI4 MaxLevelVertexTopH;
-   HostArray1DI4 MinLevelVertexBotH;
-   HostArray1DI4 MaxLevelVertexBotH;
+   HostArray1DI4 MinLayerCellH;
+   HostArray1DI4 MaxLayerCellH;
+   HostArray1DI4 MinLayerEdgeTopH;
+   HostArray1DI4 MaxLayerEdgeTopH;
+   HostArray1DI4 MinLayerEdgeBotH;
+   HostArray1DI4 MaxLayerEdgeBotH;
+   HostArray1DI4 MinLayerVertexTopH;
+   HostArray1DI4 MaxLayerVertexTopH;
+   HostArray1DI4 MinLayerVertexBotH;
+   HostArray1DI4 MaxLayerVertexBotH;
 
-   void minMaxLevelEdge();
-   void minMaxLevelVertex();
+   void minMaxLayerEdge();
+   void minMaxLayerVertex();
 
    void initMovementWeights(Config *Options);
 
