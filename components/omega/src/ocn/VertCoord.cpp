@@ -69,8 +69,8 @@ VertCoord::VertCoord(const std::string &Name_, const Decomp *Decomp,
    CellsOnVertex = Decomp->CellsOnVertex;
 
    // Allocate device arrays
-   MaxLevelCell = Array1DI4("MaxLevelCell", NCellsSize);
-   MinLevelCell = Array1DI4("MinLevelCell", NCellsSize);
+   MaxLayerCell = Array1DI4("MaxLayerCell", NCellsSize);
+   MinLayerCell = Array1DI4("MinLayerCell", NCellsSize);
    BottomDepth  = Array1DReal("BottomDepth", NCellsSize);
 
    PressureInterface =
@@ -84,8 +84,8 @@ VertCoord::VertCoord(const std::string &Name_, const Decomp *Decomp,
    LayerThicknessTarget =
        Array2DReal("LayerThicknessTarget", NCellsSize, NVertLevels);
 
-   MaxLevelCellH         = createHostMirrorCopy(MaxLevelCell);
-   MinLevelCellH         = createHostMirrorCopy(MinLevelCell);
+   MaxLayerCellH         = createHostMirrorCopy(MaxLayerCell);
+   MinLayerCellH         = createHostMirrorCopy(MinLayerCell);
    BottomDepthH          = createHostMirrorCopy(BottomDepth);
    PressureInterfaceH    = createHostMirrorCopy(PressureInterface);
    PressureMidH          = createHostMirrorCopy(PressureMid);
@@ -96,8 +96,8 @@ VertCoord::VertCoord(const std::string &Name_, const Decomp *Decomp,
 
    readArrays(Decomp);
 
-   minMaxLevelEdge();
-   minMaxLevelVertex();
+   minMaxLayerEdge();
+   minMaxLayerVertex();
 
    initMovementWeights(Options);
 
@@ -147,7 +147,7 @@ void VertCoord::readArrays(const Decomp *Decomp) {
 
    if (MaxReadErr != 0) {
       LOG_WARN("VertCoord: error reading maxLevelCell from mesh file, "
-               "using MaxLevelCell = NVertLevels - 1");
+               "using MaxLayerCell = NVertLevels - 1");
       deepCopy(TmpArrayI4H, NVertLevels - 1);
    } else {
       for (int ICell = 0; ICell < NCellsAll; ++ICell) {
@@ -156,8 +156,8 @@ void VertCoord::readArrays(const Decomp *Decomp) {
    }
    TmpArrayI4H(NCellsAll) = -1;
 
-   deepCopy(MaxLevelCellH, TmpArrayI4H);
-   deepCopy(MaxLevelCell, TmpArrayI4H);
+   deepCopy(MaxLayerCellH, TmpArrayI4H);
+   deepCopy(MaxLayerCell, TmpArrayI4H);
 
    const std::string MinNameMPAS = "minLevelCell";
    I4 MinReadErr = IO::readArray(TmpArrayI4H.data(), NCellsAll, MinNameMPAS,
@@ -165,7 +165,7 @@ void VertCoord::readArrays(const Decomp *Decomp) {
 
    if (MinReadErr != 0) {
       LOG_WARN("VertCoord: error reading minLevelCell from mesh file, "
-               "using MinLevelCell = 0");
+               "using MinLayerCell = 0");
       deepCopy(TmpArrayI4H, 0);
    } else {
       for (int ICell = 0; ICell < NCellsAll; ++ICell) {
@@ -174,8 +174,8 @@ void VertCoord::readArrays(const Decomp *Decomp) {
    }
    TmpArrayI4H(NCellsAll) = NVertLevelsP1;
 
-   deepCopy(MinLevelCellH, TmpArrayI4H);
-   deepCopy(MinLevelCell, TmpArrayI4H);
+   deepCopy(MinLayerCellH, TmpArrayI4H);
+   deepCopy(MinLayerCell, TmpArrayI4H);
 
    I4 CellDecompR8;
    DecErr = IO::createDecomp(CellDecompR8, IO::IOTypeR8, NDims, CellDims,
@@ -226,130 +226,130 @@ void VertCoord::clear() {
 } // end clear
 
 //------------------------------------------------------------------------------
-void VertCoord::minMaxLevelEdge() {
+void VertCoord::minMaxLayerEdge() {
 
-   MinLevelEdgeTop = Array1DI4("MinLevelEdgeTop", NEdgesSize);
-   MinLevelEdgeBot = Array1DI4("MinLevelEdgeBot", NEdgesSize);
-   MaxLevelEdgeTop = Array1DI4("MaxLevelEdgeTop", NEdgesSize);
-   MaxLevelEdgeBot = Array1DI4("MaxLevelEdgeBot", NEdgesSize);
+   MinLayerEdgeTop = Array1DI4("MinLayerEdgeTop", NEdgesSize);
+   MinLayerEdgeBot = Array1DI4("MinLayerEdgeBot", NEdgesSize);
+   MaxLayerEdgeTop = Array1DI4("MaxLayerEdgeTop", NEdgesSize);
+   MaxLayerEdgeBot = Array1DI4("MaxLayerEdgeBot", NEdgesSize);
 
    OMEGA_SCOPE(LocNVertLevelsP1, NVertLevelsP1);
    OMEGA_SCOPE(LocCellsOnEdge, CellsOnEdge);
-   OMEGA_SCOPE(LocMinLevelCell, MinLevelCell);
-   OMEGA_SCOPE(LocMaxLevelCell, MaxLevelCell);
-   OMEGA_SCOPE(LocMinLevelEdgeTop, MinLevelEdgeTop);
-   OMEGA_SCOPE(LocMinLevelEdgeBot, MinLevelEdgeBot);
-   OMEGA_SCOPE(LocMaxLevelEdgeTop, MaxLevelEdgeTop);
-   OMEGA_SCOPE(LocMaxLevelEdgeBot, MaxLevelEdgeBot);
+   OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
+   OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+   OMEGA_SCOPE(LocMinLayerEdgeTop, MinLayerEdgeTop);
+   OMEGA_SCOPE(LocMinLayerEdgeBot, MinLayerEdgeBot);
+   OMEGA_SCOPE(LocMaxLayerEdgeTop, MaxLayerEdgeTop);
+   OMEGA_SCOPE(LocMaxLayerEdgeBot, MaxLayerEdgeBot);
    parallelFor(
        {NEdgesAll}, KOKKOS_LAMBDA(int IEdge) {
           I4 Lvl1;
           I4 Lvl2;
           const I4 ICell1 = LocCellsOnEdge(IEdge, 0);
           const I4 ICell2 = LocCellsOnEdge(IEdge, 1);
-          Lvl1            = LocMaxLevelCell(ICell1) == -1 ? LocNVertLevelsP1
-                                                          : LocMinLevelCell(ICell1);
-          Lvl2            = LocMaxLevelCell(ICell2) == -1 ? LocNVertLevelsP1
-                                                          : LocMinLevelCell(ICell2);
-          LocMinLevelEdgeTop(IEdge) = Kokkos::min(Lvl1, Lvl2);
+          Lvl1            = LocMaxLayerCell(ICell1) == -1 ? LocNVertLevelsP1
+                                                          : LocMinLayerCell(ICell1);
+          Lvl2            = LocMaxLayerCell(ICell2) == -1 ? LocNVertLevelsP1
+                                                          : LocMinLayerCell(ICell2);
+          LocMinLayerEdgeTop(IEdge) = Kokkos::min(Lvl1, Lvl2);
 
-          Lvl1 = LocMaxLevelCell(ICell1) == -1 ? 0 : LocMinLevelCell(ICell1);
-          Lvl2 = LocMaxLevelCell(ICell2) == -1 ? 0 : LocMinLevelCell(ICell2);
-          LocMinLevelEdgeBot(IEdge) = Kokkos::max(Lvl1, Lvl2);
+          Lvl1 = LocMaxLayerCell(ICell1) == -1 ? 0 : LocMinLayerCell(ICell1);
+          Lvl2 = LocMaxLayerCell(ICell2) == -1 ? 0 : LocMinLayerCell(ICell2);
+          LocMinLayerEdgeBot(IEdge) = Kokkos::max(Lvl1, Lvl2);
 
-          LocMaxLevelEdgeTop(IEdge) =
-              Kokkos::min(LocMaxLevelCell(ICell1), LocMaxLevelCell(ICell2));
-          LocMaxLevelEdgeBot(IEdge) =
-              Kokkos::max(LocMaxLevelCell(ICell1), LocMaxLevelCell(ICell2));
+          LocMaxLayerEdgeTop(IEdge) =
+              Kokkos::min(LocMaxLayerCell(ICell1), LocMaxLayerCell(ICell2));
+          LocMaxLayerEdgeBot(IEdge) =
+              Kokkos::max(LocMaxLayerCell(ICell1), LocMaxLayerCell(ICell2));
        });
 
    OMEGA_SCOPE(LocNEdgesAll, NEdgesAll);
    parallelFor(
        {1}, KOKKOS_LAMBDA(const int &) {
-          LocMinLevelEdgeTop(LocNEdgesAll) = LocNVertLevelsP1;
-          LocMinLevelEdgeBot(LocNEdgesAll) = LocNVertLevelsP1;
-          LocMaxLevelEdgeTop(LocNEdgesAll) = -1;
-          LocMaxLevelEdgeBot(LocNEdgesAll) = -1;
+          LocMinLayerEdgeTop(LocNEdgesAll) = LocNVertLevelsP1;
+          LocMinLayerEdgeBot(LocNEdgesAll) = LocNVertLevelsP1;
+          LocMaxLayerEdgeTop(LocNEdgesAll) = -1;
+          LocMaxLayerEdgeBot(LocNEdgesAll) = -1;
        });
 
-   MinLevelEdgeTopH = createHostMirrorCopy(MinLevelEdgeTop);
-   MinLevelEdgeBotH = createHostMirrorCopy(MinLevelEdgeBot);
-   MaxLevelEdgeTopH = createHostMirrorCopy(MaxLevelEdgeTop);
-   MaxLevelEdgeBotH = createHostMirrorCopy(MaxLevelEdgeBot);
+   MinLayerEdgeTopH = createHostMirrorCopy(MinLayerEdgeTop);
+   MinLayerEdgeBotH = createHostMirrorCopy(MinLayerEdgeBot);
+   MaxLayerEdgeTopH = createHostMirrorCopy(MaxLayerEdgeTop);
+   MaxLayerEdgeBotH = createHostMirrorCopy(MaxLayerEdgeBot);
 }
 
 //------------------------------------------------------------------------------
-void VertCoord::minMaxLevelVertex() {
+void VertCoord::minMaxLayerVertex() {
 
-   MinLevelVertexTop = Array1DI4("MinLevelVertexTop", NVerticesSize);
-   MinLevelVertexBot = Array1DI4("MinLevelVertexBot", NVerticesSize);
-   MaxLevelVertexTop = Array1DI4("MaxLevelVertexTop", NVerticesSize);
-   MaxLevelVertexBot = Array1DI4("MaxLevelVertexBot", NVerticesSize);
+   MinLayerVertexTop = Array1DI4("MinLayerVertexTop", NVerticesSize);
+   MinLayerVertexBot = Array1DI4("MinLayerVertexBot", NVerticesSize);
+   MaxLayerVertexTop = Array1DI4("MaxLayerVertexTop", NVerticesSize);
+   MaxLayerVertexBot = Array1DI4("MaxLayerVertexBot", NVerticesSize);
 
    OMEGA_SCOPE(LocNVertLevelsP1, NVertLevelsP1);
    OMEGA_SCOPE(LocVertexDegree, VertexDegree);
    OMEGA_SCOPE(LocCellsOnVertex, CellsOnVertex);
-   OMEGA_SCOPE(LocMinLevelCell, MinLevelCell);
-   OMEGA_SCOPE(LocMaxLevelCell, MaxLevelCell);
-   OMEGA_SCOPE(LocMinLevelVertexTop, MinLevelVertexTop);
-   OMEGA_SCOPE(LocMinLevelVertexBot, MinLevelVertexBot);
-   OMEGA_SCOPE(LocMaxLevelVertexTop, MaxLevelVertexTop);
-   OMEGA_SCOPE(LocMaxLevelVertexBot, MaxLevelVertexBot);
+   OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
+   OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+   OMEGA_SCOPE(LocMinLayerVertexTop, MinLayerVertexTop);
+   OMEGA_SCOPE(LocMinLayerVertexBot, MinLayerVertexBot);
+   OMEGA_SCOPE(LocMaxLayerVertexTop, MaxLayerVertexTop);
+   OMEGA_SCOPE(LocMaxLayerVertexBot, MaxLayerVertexBot);
 
    parallelFor(
        {NVerticesAll}, KOKKOS_LAMBDA(int IVertex) {
           I4 Lvl;
           I4 ICell = LocCellsOnVertex(IVertex, 0);
-          Lvl      = LocMaxLevelCell(ICell) == -1 ? 0 : LocMinLevelCell(ICell);
-          LocMinLevelVertexBot(IVertex) = Lvl;
+          Lvl      = LocMaxLayerCell(ICell) == -1 ? 0 : LocMinLayerCell(ICell);
+          LocMinLayerVertexBot(IVertex) = Lvl;
           for (int I = 1; I < LocVertexDegree; ++I) {
              ICell = LocCellsOnVertex(IVertex, I);
-             Lvl   = LocMaxLevelCell(ICell) == -1 ? 0 : LocMinLevelCell(ICell);
-             LocMinLevelVertexBot(IVertex) =
-                 Kokkos::max(LocMinLevelVertexBot(IVertex), Lvl);
+             Lvl   = LocMaxLayerCell(ICell) == -1 ? 0 : LocMinLayerCell(ICell);
+             LocMinLayerVertexBot(IVertex) =
+                 Kokkos::max(LocMinLayerVertexBot(IVertex), Lvl);
           }
 
           ICell = LocCellsOnVertex(IVertex, 0);
-          Lvl   = LocMaxLevelCell(ICell) == -1 ? LocNVertLevelsP1
-                                               : LocMinLevelCell(ICell);
-          LocMinLevelVertexTop(IVertex) = Lvl;
+          Lvl   = LocMaxLayerCell(ICell) == -1 ? LocNVertLevelsP1
+                                               : LocMinLayerCell(ICell);
+          LocMinLayerVertexTop(IVertex) = Lvl;
           for (int I = 1; I < LocVertexDegree; ++I) {
              ICell = LocCellsOnVertex(IVertex, I);
-             Lvl   = LocMaxLevelCell(ICell) == -1 ? LocNVertLevelsP1
-                                                  : LocMinLevelCell(ICell);
-             LocMinLevelVertexTop(IVertex) =
-                 Kokkos::min(LocMinLevelVertexTop(IVertex), Lvl);
+             Lvl   = LocMaxLayerCell(ICell) == -1 ? LocNVertLevelsP1
+                                                  : LocMinLayerCell(ICell);
+             LocMinLayerVertexTop(IVertex) =
+                 Kokkos::min(LocMinLayerVertexTop(IVertex), Lvl);
           }
 
           ICell                         = LocCellsOnVertex(IVertex, 0);
-          LocMaxLevelVertexBot(IVertex) = LocMaxLevelCell(ICell);
+          LocMaxLayerVertexBot(IVertex) = LocMaxLayerCell(ICell);
           for (int I = 1; I < LocVertexDegree; ++I) {
              ICell                         = LocCellsOnVertex(IVertex, I);
-             LocMaxLevelVertexBot(IVertex) = Kokkos::max(
-                 LocMaxLevelVertexBot(IVertex), LocMaxLevelCell(ICell));
+             LocMaxLayerVertexBot(IVertex) = Kokkos::max(
+                 LocMaxLayerVertexBot(IVertex), LocMaxLayerCell(ICell));
           }
 
           ICell                         = LocCellsOnVertex(IVertex, 0);
-          LocMaxLevelVertexTop(IVertex) = LocMaxLevelCell(ICell);
+          LocMaxLayerVertexTop(IVertex) = LocMaxLayerCell(ICell);
           for (int I = 1; I < LocVertexDegree; ++I) {
              ICell                         = LocCellsOnVertex(IVertex, I);
-             LocMaxLevelVertexTop(IVertex) = Kokkos::min(
-                 LocMaxLevelVertexTop(IVertex), LocMaxLevelCell(ICell));
+             LocMaxLayerVertexTop(IVertex) = Kokkos::min(
+                 LocMaxLayerVertexTop(IVertex), LocMaxLayerCell(ICell));
           }
        });
    OMEGA_SCOPE(LocNVerticesAll, NVerticesAll);
    parallelFor(
        {1}, KOKKOS_LAMBDA(const int &) {
-          LocMinLevelVertexTop(LocNVerticesAll) = LocNVertLevelsP1;
-          LocMinLevelVertexBot(LocNVerticesAll) = LocNVertLevelsP1;
-          LocMaxLevelVertexTop(LocNVerticesAll) = -1;
-          LocMaxLevelVertexBot(LocNVerticesAll) = -1;
+          LocMinLayerVertexTop(LocNVerticesAll) = LocNVertLevelsP1;
+          LocMinLayerVertexBot(LocNVerticesAll) = LocNVertLevelsP1;
+          LocMaxLayerVertexTop(LocNVerticesAll) = -1;
+          LocMaxLayerVertexBot(LocNVerticesAll) = -1;
        });
 
-   MinLevelVertexTopH = createHostMirrorCopy(MinLevelVertexTop);
-   MinLevelVertexBotH = createHostMirrorCopy(MinLevelVertexBot);
-   MaxLevelVertexTopH = createHostMirrorCopy(MaxLevelVertexTop);
-   MaxLevelVertexBotH = createHostMirrorCopy(MaxLevelVertexBot);
+   MinLayerVertexTopH = createHostMirrorCopy(MinLayerVertexTop);
+   MinLayerVertexBotH = createHostMirrorCopy(MinLayerVertexBot);
+   MaxLayerVertexTopH = createHostMirrorCopy(MaxLayerVertexTop);
+   MaxLayerVertexBotH = createHostMirrorCopy(MaxLayerVertexBot);
 }
 
 //------------------------------------------------------------------------------
@@ -394,15 +394,15 @@ void VertCoord::computePressure(const Array2DReal &PressureInterface,
    Real Gravity = 9.80616_Real;
    Real Rho0    = 1035._Real;
 
-   OMEGA_SCOPE(LocMinLevelCell, MinLevelCell);
-   OMEGA_SCOPE(LocMaxLevelCell, MaxLevelCell);
+   OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
+   OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
 
    const auto Policy = TeamPolicy(NCellsAll, OMEGA_TEAMSIZE, 1);
    Kokkos::parallel_for(
        "computePressure", Policy, KOKKOS_LAMBDA(const TeamMember &Member) {
           const I4 ICell = Member.league_rank();
-          const I4 KMin  = LocMinLevelCell(ICell);
-          const I4 KMax  = LocMaxLevelCell(ICell);
+          const I4 KMin  = LocMinLayerCell(ICell);
+          const I4 KMax  = LocMaxLayerCell(ICell);
           const I4 Range = KMax - KMin + 1;
 
           PressureInterface(ICell, KMin) = SurfacePressure(ICell);
@@ -432,15 +432,15 @@ void VertCoord::computeZHeight(const Array2DReal &ZInterface,
 
    Real Rho0 = 1035._Real;
 
-   OMEGA_SCOPE(LocMinLevelCell, MinLevelCell);
-   OMEGA_SCOPE(LocMaxLevelCell, MaxLevelCell);
+   OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
+   OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
 
    const auto Policy = TeamPolicy(NCellsAll, OMEGA_TEAMSIZE, 1);
    Kokkos::parallel_for(
        "computeZHeight", Policy, KOKKOS_LAMBDA(const TeamMember &Member) {
           const I4 ICell = Member.league_rank();
-          const I4 KMin  = LocMinLevelCell(ICell);
-          const I4 KMax  = LocMaxLevelCell(ICell);
+          const I4 KMin  = LocMinLayerCell(ICell);
+          const I4 KMax  = LocMaxLayerCell(ICell);
           const I4 Range = KMax - KMin + 1;
 
           ZInterface(ICell, KMax + 1) = -BottomDepth(ICell);
@@ -467,15 +467,15 @@ void VertCoord::computeGeopotential(const Array2DReal &GeopotentialMid,
 
    Real Gravity = 9.80616_Real;
 
-   OMEGA_SCOPE(LocMinLevelCell, MinLevelCell);
-   OMEGA_SCOPE(LocMaxLevelCell, MaxLevelCell);
+   OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
+   OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
 
    Kokkos::parallel_for(
        "computeGeopotential", TeamPolicy(NCellsAll, OMEGA_TEAMSIZE),
        KOKKOS_LAMBDA(const TeamMember &Member) {
           const I4 ICell   = Member.league_rank();
-          const I4 KMin    = LocMinLevelCell(ICell);
-          const I4 KMax    = LocMaxLevelCell(ICell);
+          const I4 KMin    = LocMinLayerCell(ICell);
+          const I4 KMax    = LocMaxLayerCell(ICell);
           const I4 KRange  = KMax - KMin + 1;
           const I4 NChunks = (KRange + VecLength - 1) / VecLength;
           Kokkos::parallel_for(
@@ -504,15 +504,15 @@ void VertCoord::computeTargetThickness(
    Real Gravity = 9.80616_Real;
    Real Rho0    = 1035._Real;
 
-   OMEGA_SCOPE(LocMinLevelCell, MinLevelCell);
-   OMEGA_SCOPE(LocMaxLevelCell, MaxLevelCell);
+   OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
+   OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
 
    Kokkos::parallel_for(
        "computeTargetThickness", TeamPolicy(NCellsAll, OMEGA_TEAMSIZE),
        KOKKOS_LAMBDA(const TeamMember &Member) {
           const I4 ICell = Member.league_rank();
-          const I4 KMin  = LocMinLevelCell(ICell);
-          const I4 KMax  = LocMaxLevelCell(ICell);
+          const I4 KMin  = LocMinLayerCell(ICell);
+          const I4 KMax  = LocMaxLayerCell(ICell);
 
           Real Coeff = (PressureInterface(ICell, KMax + 1) -
                         PressureInterface(ICell, KMin)) /
