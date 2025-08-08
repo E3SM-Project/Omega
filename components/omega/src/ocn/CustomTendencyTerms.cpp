@@ -115,7 +115,7 @@ void ManufacturedSolution::ManufacturedThicknessTendency::operator()(
    ElapsedTimeInterval.get(ElapsedTimeSec, TimeUnits::Seconds);
 
    auto *Mesh       = HorzMesh::getDefault();
-   auto NVertLevels = ThicknessTend.extent_int(1);
+   auto NVertLayers = ThicknessTend.extent_int(1);
 
    Array1DReal XCell = Mesh->XCell;
    Array1DReal YCell = Mesh->YCell;
@@ -127,7 +127,7 @@ void ManufacturedSolution::ManufacturedThicknessTendency::operator()(
    OMEGA_SCOPE(LocAngFreq, AngFreq);
 
    parallelFor(
-       {Mesh->NCellsAll, NVertLevels}, KOKKOS_LAMBDA(int ICell, int KLevel) {
+       {Mesh->NCellsAll, NVertLayers}, KOKKOS_LAMBDA(int ICell, int KLevel) {
           R8 X     = XCell(ICell);
           R8 Y     = YCell(ICell);
           R8 Phase = LocKx * X + LocKy * Y - LocAngFreq * ElapsedTimeSec;
@@ -153,7 +153,7 @@ void ManufacturedSolution::ManufacturedVelocityTendency::operator()(
    ElapsedTimeInterval.get(ElapsedTimeSec, TimeUnits::Seconds);
 
    auto *Mesh       = HorzMesh::getDefault();
-   auto NVertLevels = NormalVelTend.extent_int(1);
+   auto NVertLayers = NormalVelTend.extent_int(1);
 
    Array1DReal FEdge     = Mesh->FEdge;
    Array1DReal XEdge     = Mesh->XEdge;
@@ -176,7 +176,7 @@ void ManufacturedSolution::ManufacturedVelocityTendency::operator()(
    R8 LocKy4 = LocKy2 * LocKy2;
 
    parallelFor(
-       {Mesh->NEdgesAll, NVertLevels}, KOKKOS_LAMBDA(int IEdge, int KLevel) {
+       {Mesh->NEdgesAll, NVertLayers}, KOKKOS_LAMBDA(int IEdge, int KLevel) {
           R8 X = XEdge(IEdge);
           R8 Y = YEdge(IEdge);
 

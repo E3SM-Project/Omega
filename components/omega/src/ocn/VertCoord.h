@@ -59,8 +59,8 @@ class VertCoord {
    VertCoord(VertCoord &&)      = delete;
 
  public:
-   I4 NVertLevels;
-   I4 NVertLevelsP1;
+   I4 NVertLayers;
+   I4 NVertLayersP1;
 
    // Variables computed
    Array2DReal PressureInterface;

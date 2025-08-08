@@ -22,7 +22,7 @@ contributon to the tendency for the given term. The functors are designed to be
 used inside a Kokkos parallel loop:
 ```c++
    OMEGA::parallelFor(
-       {mesh->NCellsOwned, NVertLevels}, KOKKOS_LAMBDA(int ICell, int KChunk) {
+       {mesh->NCellsOwned, NVertLayers}, KOKKOS_LAMBDA(int ICell, int KChunk) {
           ThickFluxDixOnC(ThicknessTend, ICell, KChunk, ThickFluxEdge);
        });
 ```

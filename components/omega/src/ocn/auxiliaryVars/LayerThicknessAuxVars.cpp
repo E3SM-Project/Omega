@@ -7,12 +7,12 @@ namespace OMEGA {
 
 LayerThicknessAuxVars::LayerThicknessAuxVars(const std::string &AuxStateSuffix,
                                              const HorzMesh *Mesh,
-                                             int NVertLevels)
+                                             int NVertLayers)
     : FluxLayerThickEdge("FluxLayerThickEdge" + AuxStateSuffix,
-                         Mesh->NEdgesSize, NVertLevels),
+                         Mesh->NEdgesSize, NVertLayers),
       MeanLayerThickEdge("MeanLayerThickEdge" + AuxStateSuffix,
-                         Mesh->NEdgesSize, NVertLevels),
-      SshCell("SshCell" + AuxStateSuffix, Mesh->NCellsSize, NVertLevels),
+                         Mesh->NEdgesSize, NVertLayers),
+      SshCell("SshCell" + AuxStateSuffix, Mesh->NCellsSize, NVertLayers),
       CellsOnEdge(Mesh->CellsOnEdge), BottomDepth(Mesh->BottomDepth) {}
 
 void LayerThicknessAuxVars::registerFields(const std::string &AuxGroupName,
@@ -32,7 +32,7 @@ void LayerThicknessAuxVars::registerFields(const std::string &AuxGroupName,
    }
 
    DimNames[0] = "NEdges" + DimSuffix;
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
 
    // Flux layer thickness on edges
    auto FluxLayerThickEdgeField = Field::create(

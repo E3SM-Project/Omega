@@ -63,7 +63,7 @@ class Eos{
     private:
        EOSType eosChoice;
        I4 NCellsAll;
-       I4 NChunks = NVertLevels / VecLength;
+       I4 NChunks = NVertLayers / VecLength;
        void computeSpecVolTEOS10Poly75t();
        void computeSpecVolLinear();
        void truncateTempSal();
@@ -106,14 +106,14 @@ The constructor will be responsible for:
   * allocating arrays
 
 ```c++
-Eos::Eos(const HorzMesh *Mesh, int NVertLevels, Config *Options);
+Eos::Eos(const HorzMesh *Mesh, int NVertLayers, Config *Options);
 ```
 
 The create method will take the same arguments as the constructor plus a name. It calls the constructor to
 create a new eos instance, and put it in the static map of all eos.
 It will return a pointer to the newly created object.
 ```c++
-Eos *Eos::create(const std::string &Name, const HorzMesh *Mesh, int NVertLevels, Config *Options);
+Eos *Eos::create(const std::string &Name, const HorzMesh *Mesh, int NVertLayers, Config *Options);
 ```
 
 #### 4.2.2 Initialization

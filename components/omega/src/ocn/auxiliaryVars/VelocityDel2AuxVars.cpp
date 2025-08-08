@@ -7,12 +7,12 @@
 namespace OMEGA {
 
 VelocityDel2AuxVars::VelocityDel2AuxVars(const std::string &AuxStateSuffix,
-                                         const HorzMesh *Mesh, int NVertLevels)
-    : Del2Edge("VelDel2Edge" + AuxStateSuffix, Mesh->NEdgesSize, NVertLevels),
+                                         const HorzMesh *Mesh, int NVertLayers)
+    : Del2Edge("VelDel2Edge" + AuxStateSuffix, Mesh->NEdgesSize, NVertLayers),
       Del2DivCell("VelDel2DivCell" + AuxStateSuffix, Mesh->NCellsSize,
-                  NVertLevels),
+                  NVertLayers),
       Del2RelVortVertex("VelDel2RelVortVertex" + AuxStateSuffix,
-                        Mesh->NVerticesSize, NVertLevels),
+                        Mesh->NVerticesSize, NVertLayers),
       NEdgesOnCell(Mesh->NEdgesOnCell), EdgesOnCell(Mesh->EdgesOnCell),
       EdgeSignOnCell(Mesh->EdgeSignOnCell), DcEdge(Mesh->DcEdge),
       DvEdge(Mesh->DvEdge), AreaCell(Mesh->AreaCell),
@@ -30,7 +30,7 @@ void VelocityDel2AuxVars::registerFields(const std::string &AuxGroupName,
    const Real FillValue = -9.99e30;
    int NDims            = 2;
    std::vector<std::string> DimNames(NDims);
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
    std::string DimSuffix;
    if (MeshName == "Default") {
       DimSuffix = "";

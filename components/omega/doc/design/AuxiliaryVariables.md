@@ -10,7 +10,7 @@ can often be bundled together into groups of variables that are logically
 related, or can be efficiently computed together. Each auxiliary variable group
 is implemented as a class containing array(s) storing the variable(s) and member
 functions that compute them. The member functions compute the variable (or
-variable group) over a chunk of vertical levels for a particular mesh location.
+variable group) over a chunk of vertical layers for a particular mesh location.
 There may be more than one compute function, since some groups may contain
 variables defined on different mesh elements. This approach allows flexible
 groupings of computational work within larger cell/edge/vertex loops. This type
@@ -31,7 +31,7 @@ implement a given variable (group) computation on a specific mesh location
 
 ### 2.3 Requirement: Vectorization on CPU architectures
 Auxiliary variables computations have inner loops over a chunk of vertical
-levels. The chunk size will be set to the vector length on CPU machines and 1
+layers. The chunk size will be set to the vector length on CPU machines and 1
 for GPUs. This will allow for the possibility of vectorization on CPUs.
 
 ### 2.4 Requirement: Configuration options
@@ -101,11 +101,11 @@ The constructor will be responsible for:
   * registering fields and metadata with the I/O infrastructure.
 
 ```c++
-   LayerThicknessAuxVars(const HorzMesh *mesh, int NVertLevels, const Config *Options)
+   LayerThicknessAuxVars(const HorzMesh *mesh, int NVertLayers, const Config *Options)
        : FluxLayerThickEdge("FluxLayerThickEdge", mesh->NEdgesSize,
-                            NVertLevels),
+                            NVertLayers),
          MeanLayerThickEdge("MeanLayerThickEdge", mesh->NEdgesSize,
-                            NVertLevels),
+                            NVertLayers),
          CellsOnEdge(mesh->CellsOnEdge) {
 
              std::string FluxThickTypeStr;
@@ -128,11 +128,11 @@ The constructor will be responsible for:
 
 #### 4.2.2 Compute methods
 Compute methods implement the auxiliary variables computations for a chunk of
-vertical levels at a given horizontal mesh location. The mesh location is
+vertical layers at a given horizontal mesh location. The mesh location is
 indicated in the method name. There may be more than one compute method to
 compute different groups of variables over different mesh locations. Any
 configurable computation options are handled inside the compute method. The
-inner loop over a chunk of vertical levels enables CPU vectorization.
+inner loop over a chunk of vertical layers enables CPU vectorization.
 
 ```c++
    KOKKOS_FUNCTION void

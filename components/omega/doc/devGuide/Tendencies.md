@@ -27,15 +27,15 @@ tendency terms, which each store constant mesh information as private member var
 
 A non-default tendency group can be created with or without custom tendencies.
 Without custom tendencies, it is created from a string `Name`, horizontal mesh `Mesh`, number of
-vertical levels `NVertLevels`, number of tracers `NTracers`, and a configuration `Options`:
+vertical layers `NVertLayers`, number of tracers `NTracers`, and a configuration `Options`:
 ```c++
-OMEGA::Tendencies*  NewTendencies = OMEGA::Tendencies::create(Name, Mesh, NVertLevels, NTracers, Options);
+OMEGA::Tendencies*  NewTendencies = OMEGA::Tendencies::create(Name, Mesh, NVertLayers, NTracers, Options);
 ```
 For convenience, this returns a pointer to the newly created instance.
 To allow the user to provide custom tendencies, the `create` function can take two additional arguments
 `CustomThicknessTend` and `CustomVelocityTend`
 ```c++
-OMEGA::Tendencies*  NewTendencies = OMEGA::Tendencies::create(Name, Mesh, NVertLevels, NTracers, Options, CustomThicknessTend, CustomVelocityTend);
+OMEGA::Tendencies*  NewTendencies = OMEGA::Tendencies::create(Name, Mesh, NVertLayers, NTracers, Options, CustomThicknessTend, CustomVelocityTend);
 ```
 The two custom tendency arguments need to be callable objects that take a Kokkos array `Tend`, ocean state `State`,
 auxiliary state `AuxState`, two integers: `ThickTimeLevel` and `VelTimeLevel`, and time instant `Time`.

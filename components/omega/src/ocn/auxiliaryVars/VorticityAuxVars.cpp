@@ -7,17 +7,17 @@
 namespace OMEGA {
 
 VorticityAuxVars::VorticityAuxVars(const std::string &AuxStateSuffix,
-                                   const HorzMesh *Mesh, int NVertLevels)
+                                   const HorzMesh *Mesh, int NVertLayers)
     : RelVortVertex("RelVortVertex" + AuxStateSuffix, Mesh->NVerticesSize,
-                    NVertLevels),
+                    NVertLayers),
       NormRelVortVertex("NormRelVortVertex" + AuxStateSuffix,
-                        Mesh->NVerticesSize, NVertLevels),
+                        Mesh->NVerticesSize, NVertLayers),
       NormPlanetVortVertex("NormPlanetVortVertex" + AuxStateSuffix,
-                           Mesh->NVerticesSize, NVertLevels),
+                           Mesh->NVerticesSize, NVertLayers),
       NormRelVortEdge("NormRelVortEdge" + AuxStateSuffix, Mesh->NEdgesSize,
-                      NVertLevels),
+                      NVertLayers),
       NormPlanetVortEdge("NormPlanetVortEdge" + AuxStateSuffix,
-                         Mesh->NEdgesSize, NVertLevels),
+                         Mesh->NEdgesSize, NVertLayers),
       VertexDegree(Mesh->VertexDegree), CellsOnVertex(Mesh->CellsOnVertex),
       EdgesOnVertex(Mesh->EdgesOnVertex),
       EdgeSignOnVertex(Mesh->EdgeSignOnVertex), DcEdge(Mesh->DcEdge),
@@ -42,7 +42,7 @@ void VorticityAuxVars::registerFields(const std::string &AuxGroupName,
    }
 
    DimNames[0] = "NVertices" + DimSuffix; // for first three fields
-   DimNames[1] = "NVertLevels";           // same for all fields below
+   DimNames[1] = "NVertLayers";           // same for all fields below
 
    // Relative vorticity on vertices
    auto RelVortVertexField = Field::create(

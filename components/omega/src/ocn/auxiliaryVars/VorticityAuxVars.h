@@ -19,7 +19,7 @@ class VorticityAuxVars {
    Array2DReal NormPlanetVortEdge;
 
    VorticityAuxVars(const std::string &AuxStateSuffix, const HorzMesh *Mesh,
-                    int NVertLevels);
+                    int NVertLayers);
 
    KOKKOS_FUNCTION void
    computeVarsOnVertex(int IVertex, int KChunk,

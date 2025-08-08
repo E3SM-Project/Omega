@@ -387,13 +387,13 @@ void TimeStepper::updateThicknessByTend(OceanState *State1, int TimeLevel1,
    if (Err != 0)
       ABORT_ERROR("TimeStepper updateThickness: error retrieving layer thick");
    const auto &LayerThickTend = Tend->LayerThicknessTend;
-   const int NVertLevels      = LayerThickTend.extent_int(1);
+   const int NVertLayers      = LayerThickTend.extent_int(1);
 
    R8 CoeffSeconds;
    Coeff.get(CoeffSeconds, TimeUnits::Seconds);
 
    parallelFor(
-       "updateThickByTend", {Mesh->NCellsAll, NVertLevels},
+       "updateThickByTend", {Mesh->NCellsAll, NVertLayers},
        KOKKOS_LAMBDA(int ICell, int K) {
           LayerThick1(ICell, K) =
               LayerThick2(ICell, K) + CoeffSeconds * LayerThickTend(ICell, K);
@@ -416,13 +416,13 @@ void TimeStepper::updateVelocityByTend(OceanState *State1, int TimeLevel1,
    if (Err != 0)
       ABORT_ERROR("TimeStepper updateVelocity: error retrieving velocity");
    const auto &NormalVelTend = Tend->NormalVelocityTend;
-   const int NVertLevels     = NormalVelTend.extent_int(1);
+   const int NVertLayers     = NormalVelTend.extent_int(1);
 
    R8 CoeffSeconds;
    Coeff.get(CoeffSeconds, TimeUnits::Seconds);
 
    parallelFor(
-       "updateVelByTend", {Mesh->NEdgesAll, NVertLevels},
+       "updateVelByTend", {Mesh->NEdgesAll, NVertLayers},
        KOKKOS_LAMBDA(int IEdge, int K) {
           NormalVel1(IEdge, K) =
               NormalVel2(IEdge, K) + CoeffSeconds * NormalVelTend(IEdge, K);
@@ -453,13 +453,13 @@ void TimeStepper::updateTracersByTend(const Array3DReal &NextTracers,
    const auto &LayerThick2 = State2->LayerThickness[TimeLevel2];
    const auto &TracerTend  = Tend->TracerTend;
    const int NTracers      = TracerTend.extent(0);
-   const int NVertLevels   = TracerTend.extent(2);
+   const int NVertLayers   = TracerTend.extent(2);
 
    R8 CoeffSeconds;
    Coeff.get(CoeffSeconds, TimeUnits::Seconds);
 
    parallelFor(
-       "updateTracersByTend", {NTracers, Mesh->NCellsAll, NVertLevels},
+       "updateTracersByTend", {NTracers, Mesh->NCellsAll, NVertLayers},
        KOKKOS_LAMBDA(int L, int ICell, int K) {
           NextTracers(L, ICell, K) =
               (CurTracers(L, ICell, K) * LayerThick2(ICell, K) +
@@ -476,10 +476,10 @@ void TimeStepper::weightTracers(const Array3DReal &NextTracers,
 
    const Array2DReal &CurThickness = CurState->LayerThickness[TimeLevel1];
    const int NTracers              = NextTracers.extent(0);
-   const int NVertLevels           = NextTracers.extent(2);
+   const int NVertLayers           = NextTracers.extent(2);
 
    parallelFor(
-       "weightTracers", {NTracers, Mesh->NCellsAll, NVertLevels},
+       "weightTracers", {NTracers, Mesh->NCellsAll, NVertLayers},
        KOKKOS_LAMBDA(int L, int ICell, int K) {
           NextTracers(L, ICell, K) =
               CurTracers(L, ICell, K) * CurThickness(ICell, K);
@@ -494,13 +494,13 @@ void TimeStepper::accumulateTracersUpdate(const Array3DReal &AccumTracer,
 
    const auto &TracerTend = Tend->TracerTend;
    const int NTracers     = TracerTend.extent(0);
-   const int NVertLevels  = TracerTend.extent(2);
+   const int NVertLayers  = TracerTend.extent(2);
 
    R8 CoeffSeconds;
    Coeff.get(CoeffSeconds, TimeUnits::Seconds);
 
    parallelFor(
-       "accumulateTracersUpdate", {NTracers, Mesh->NCellsAll, NVertLevels},
+       "accumulateTracersUpdate", {NTracers, Mesh->NCellsAll, NVertLayers},
        KOKKOS_LAMBDA(int L, int ICell, int K) {
           AccumTracer(L, ICell, K) += CoeffSeconds * TracerTend(L, ICell, K);
        });
@@ -514,10 +514,10 @@ void TimeStepper::finalizeTracersUpdate(const Array3DReal &NextTracers,
 
    const Array2DReal &NextThick = State->LayerThickness[TimeLevel];
    const int NTracers           = NextTracers.extent(0);
-   const int NVertLevels        = NextTracers.extent(2);
+   const int NVertLayers        = NextTracers.extent(2);
 
    parallelFor(
-       "finalizeTracersUpdate", {NTracers, Mesh->NCellsAll, NVertLevels},
+       "finalizeTracersUpdate", {NTracers, Mesh->NCellsAll, NVertLayers},
        KOKKOS_LAMBDA(int L, int ICell, int K) {
           NextTracers(L, ICell, K) /= NextThick(ICell, K);
        });
