@@ -128,11 +128,11 @@ relevant MachEnv (eg defaultEnv.comm) and indxRange is a
 `std::vector` of length 2x the number of array dimensions.
 The entries of this vector will be the min, max index of
 each array dimension. So, for example an array dimensioned
-`(nCellsAll+1, nVertLevels+1)` might need to be summed over
-the `indxRange{0, nCellsOwned-1, 0, nVertLevels-1}`. Note
+`(nCellsAll+1, nVertLayers+1)` might need to be summed over
+the `indxRange{0, nCellsOwned-1, 0, nVertLayers-1}`. Note
 that the indxRange supports a constant scalar values only so
 does not support a variable index range like
-minLevelCell/maxLevelCell. That is best managed either
+minLayerCell/maxLayerCell. That is best managed either
 by masking with the sum-product interface below or
 ensuring the array has been set to zero in non-active
 entries.

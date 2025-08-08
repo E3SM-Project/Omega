@@ -7,6 +7,7 @@
 #include "HorzMesh.h"
 #include "OceanState.h"
 #include "Tracers.h"
+#include "VertCoord.h"
 #include "auxiliaryVars/KineticAuxVars.h"
 #include "auxiliaryVars/LayerThicknessAuxVars.h"
 #include "auxiliaryVars/TracerAuxVars.h"
@@ -49,7 +50,7 @@ class AuxiliaryState {
 
    // Create a non-default auxiliary state
    static AuxiliaryState *create(const std::string &Name, const HorzMesh *Mesh,
-                                 Halo *MeshHalo, int NVertLevels, int NTracers);
+                                 Halo *MeshHalo, int NVertLayers, int NTracers);
 
    /// Get the default auxiliary state
    static AuxiliaryState *getDefault();
@@ -82,7 +83,7 @@ class AuxiliaryState {
 
  private:
    AuxiliaryState(const std::string &Name, const HorzMesh *Mesh, Halo *MeshHalo,
-                  int NVertLevels, int NTracers);
+                  int NVertLayers, int NTracers);
 
    AuxiliaryState(const AuxiliaryState &) = delete;
    AuxiliaryState(AuxiliaryState &&)      = delete;

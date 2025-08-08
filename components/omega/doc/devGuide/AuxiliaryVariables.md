@@ -28,7 +28,7 @@ class KineticAuxVars {
    Array2DReal KineticEnergyCell;
    Array2DReal VelocityDivCell;
 
-   KineticAuxVars(const HorzMesh *mesh, int NVertLevels);
+   KineticAuxVars(const HorzMesh *mesh, int NVertLayers);
    void addMetaData() const;
    void defineIOFields() const;
 

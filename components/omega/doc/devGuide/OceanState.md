@@ -16,7 +16,7 @@ OceanState::create(const std::string &Name, ///< [in] Name for mesh
                    HorzMesh *Mesh,          ///< [in] Horizontal mesh
                    Decomp *MeshDecomp,      ///< [in] Decomp for Mesh
                    Halo *MeshHalo_,         ///< [in] Halo for Mesh
-                   const int NVertLevels_,  ///< [in] Number of vertical levels
+                   const int NVertLayers_,  ///< [in] Number of vertical layers
                    const int NTimeLevels_   ///< [in] Number of time levels
 );
 ```

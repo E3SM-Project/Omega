@@ -3,7 +3,7 @@
 
 ## 1 Overview
 
-The tendency terms in OMEGA are implemented as functors, which define an operation over a number of vertical levels for particular a cell, edge, or vertex.
+The tendency terms in OMEGA are implemented as functors, which define an operation over a number of vertical layers for particular a cell, edge, or vertex.
 Tendency functors take information which remains constant during the forward simulation (such as `HorzMesh` and `Config`)  as constructor arguments.
 The `operator()` method is overloaded with the relevant discrete /parameterization.
 This approach allows for a modularization of the tendency terms that enables flexible groupings of work within larger cell/edge/vertex loops.
@@ -19,7 +19,7 @@ Each functor will implement a given tendency operation on a specific mesh locati
 Tendency functors take in constant data as constructor arguments, which simplifies the arguments used to call the operator method.
 
 ### 2.3 Requirement: Tendencies must allow for vectorization on CPU architectures.
-Tendency operations have inner loops over a chunk of vertical levels.
+Tendency operations have inner loops over a chunk of vertical layers.
 The chunk size will be set to the vector length on CPU machines and 1 for GPUs.
 This will allow for the possibility of vectorization on CPUs.
 
@@ -76,8 +76,8 @@ ThicknessFluxDivergenceOnCell::ThicknessFluxDivergenceOnCell(HorzMesh const *Mes
 ```
 
 #### 4.2.2 operator
-The operator method implements the tendency computation for a chunk of vertical levels at a given horizontal mesh location.
-The inner loop over a chunk of vertical levels enables CPU vectorization.
+The operator method implements the tendency computation for a chunk of vertical layers at a given horizontal mesh location.
+The inner loop over a chunk of vertical layers enables CPU vectorization.
 
 ```c++
 KOKKOS_FUNCTION void ThicknessFluxDivergenceOnCell::operator()(Array2DReal &Tend

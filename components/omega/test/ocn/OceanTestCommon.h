@@ -124,10 +124,10 @@ int setScalar(const Functor &Fun, const Array &ScalarElement, Geometry Geom,
    }
 
    if constexpr (Array::rank == 2) {
-      const int NVertLevels = ScalarElement.extent_int(1);
+      const int NVertLayers = ScalarElement.extent_int(1);
 
       parallelFor(
-          {NElementsOwned, NVertLevels}, KOKKOS_LAMBDA(int IElement, int K) {
+          {NElementsOwned, NVertLayers}, KOKKOS_LAMBDA(int IElement, int K) {
              if (Geom == Geometry::Planar) {
                 const Real X               = XElement(IElement);
                 const Real Y               = YElement(IElement);
@@ -142,9 +142,9 @@ int setScalar(const Functor &Fun, const Array &ScalarElement, Geometry Geom,
 
    if constexpr (Array::rank == 3) {
       const int NTracers    = ScalarElement.extent_int(0);
-      const int NVertLevels = ScalarElement.extent_int(2);
+      const int NVertLayers = ScalarElement.extent_int(2);
       parallelFor(
-          {NTracers, NElementsOwned, NVertLevels},
+          {NTracers, NElementsOwned, NVertLayers},
           KOKKOS_LAMBDA(int L, int IElement, int K) {
              if (Geom == Geometry::Planar) {
                 const Real X                  = XElement(IElement);
@@ -284,9 +284,9 @@ int setVectorEdge(const Functor &Fun, const Array &VectorFieldEdge,
    }
 
    if constexpr (Array::rank == 2) {
-      const int NVertLevels = VectorFieldEdge.extent_int(1);
+      const int NVertLayers = VectorFieldEdge.extent_int(1);
       parallelFor(
-          {Mesh->NEdgesOwned, NVertLevels}, KOKKOS_LAMBDA(int IEdge, int K) {
+          {Mesh->NEdgesOwned, NVertLayers}, KOKKOS_LAMBDA(int IEdge, int K) {
              VectorFieldEdge(IEdge, K) = ProjectVector(IEdge);
           });
    }
@@ -469,16 +469,16 @@ int computeErrors(ErrorMeasures &ErrorMeasures, const Array &NumFieldElement,
           });
    }
    if constexpr (Array::rank == 2) {
-      const int NVertLevels = NumFieldElement.extent_int(1);
+      const int NVertLayers = NumFieldElement.extent_int(1);
 
-      LInfElement = Array("LInfElement", NElementsOwned, NVertLevels);
-      L2Element   = Array("L2Element", NElementsOwned, NVertLevels);
+      LInfElement = Array("LInfElement", NElementsOwned, NVertLayers);
+      L2Element   = Array("L2Element", NElementsOwned, NVertLayers);
 
-      LInfScaleElement = Array("LInfScaleElement", NElementsOwned, NVertLevels);
-      L2ScaleElement   = Array("L2ScaleElement", NElementsOwned, NVertLevels);
+      LInfScaleElement = Array("LInfScaleElement", NElementsOwned, NVertLayers);
+      L2ScaleElement   = Array("L2ScaleElement", NElementsOwned, NVertLayers);
 
       parallelFor(
-          {NElementsOwned, NVertLevels}, KOKKOS_LAMBDA(int IElement, int K) {
+          {NElementsOwned, NVertLayers}, KOKKOS_LAMBDA(int IElement, int K) {
              const Real NumValElement   = NumFieldElement(IElement, K);
              const Real ExactValElement = ExactFieldElement(IElement, K);
 
@@ -497,18 +497,18 @@ int computeErrors(ErrorMeasures &ErrorMeasures, const Array &NumFieldElement,
 
    if constexpr (Array::rank == 3) {
       const int NTracers    = NumFieldElement.extent_int(0);
-      const int NVertLevels = NumFieldElement.extent_int(2);
+      const int NVertLayers = NumFieldElement.extent_int(2);
 
-      LInfElement = Array("LInfElement", NTracers, NElementsOwned, NVertLevels);
-      L2Element   = Array("L2Element", NTracers, NElementsOwned, NVertLevels);
+      LInfElement = Array("LInfElement", NTracers, NElementsOwned, NVertLayers);
+      L2Element   = Array("L2Element", NTracers, NElementsOwned, NVertLayers);
 
       LInfScaleElement =
-          Array("LInfScaleElement", NTracers, NElementsOwned, NVertLevels);
+          Array("LInfScaleElement", NTracers, NElementsOwned, NVertLayers);
       L2ScaleElement =
-          Array("L2ScaleElement", NTracers, NElementsOwned, NVertLevels);
+          Array("L2ScaleElement", NTracers, NElementsOwned, NVertLayers);
 
       parallelFor(
-          {NTracers, NElementsOwned, NVertLevels},
+          {NTracers, NElementsOwned, NVertLayers},
           KOKKOS_LAMBDA(int L, int IElement, int K) {
              const Real NumValElement   = NumFieldElement(L, IElement, K);
              const Real ExactValElement = ExactFieldElement(L, IElement, K);

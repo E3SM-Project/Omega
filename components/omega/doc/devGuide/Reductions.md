@@ -30,7 +30,7 @@ int globalSum(const ArrayTTDD array,
 and dimension DD ranging from 1D to 5D. The `indexRange` vector is of length
 2x the number of array dimensions: e.g. for a 2D array the min and
 max indexes for a local sum might be
-`indexRange{0, nCellsOwned-1, 0, nVertLevels-1}`. The index range vector
+`indexRange{0, nCellsOwned-1, 0, nVertLayers-1}`. The index range vector
 is an optional parameter and, when absent, local sum defaults to
 min,max indexes of the array. Computed global sum is stored
 in `Result`. Any errors from the MPI collective call are passed back

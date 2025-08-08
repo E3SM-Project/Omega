@@ -14,6 +14,7 @@
 #include "HorzMesh.h"
 #include "MachEnv.h"
 #include "OceanState.h"
+#include "VertCoord.h"
 
 #include <functional>
 #include <memory>
@@ -310,7 +311,7 @@ class BottomDragOnEdge {
    Real Coeff;
 
    /// constructor declaration
-   BottomDragOnEdge(const HorzMesh *Mesh);
+   BottomDragOnEdge(const HorzMesh *Mesh, const VertCoord *VCoord);
 
    /// The functor takes the edge index and arrays for
    /// horizontal velocity, kinetic energy,
@@ -319,7 +320,7 @@ class BottomDragOnEdge {
                                    const Array2DReal &NormalVelEdge,
                                    const Array2DReal &KECell,
                                    const Array2DReal &LayerThickEdge) const {
-      const I4 KBot = NVertLevels - 1;
+      const I4 KBot = NVertLayers - 1;
 
       const I4 JCell0 = CellsOnEdge(IEdge, 0);
       const I4 JCell1 = CellsOnEdge(IEdge, 1);
@@ -333,7 +334,7 @@ class BottomDragOnEdge {
    }
 
  private:
-   I4 NVertLevels;
+   I4 NVertLayers;
    Array2DI4 CellsOnEdge;
    Array2DReal EdgeMask;
 };

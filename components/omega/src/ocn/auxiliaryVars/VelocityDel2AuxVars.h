@@ -16,7 +16,7 @@ class VelocityDel2AuxVars {
    Array2DReal Del2RelVortVertex;
 
    VelocityDel2AuxVars(const std::string &AuxStateSuffix, const HorzMesh *Mesh,
-                       int NVertLevels);
+                       int NVertLayers);
 
    KOKKOS_FUNCTION void
    computeVarsOnEdge(int IEdge, int KChunk, const Array2DReal &VelocityDivCell,

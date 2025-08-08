@@ -48,18 +48,18 @@ void RungeKutta4Stepper::finalizeInit() {
    if (!MeshHalo)
       LOG_CRITICAL("Invalid MeshHalo");
 
-   int NVertLevels = Tend->LayerThicknessTend.extent_int(1);
+   int NVertLayers = Tend->LayerThicknessTend.extent_int(1);
    int NTracers    = Tracers::getNumTracers();
    int NCellsSize  = Mesh->NCellsSize;
    int NTimeLevels = 1; // for provisional tracer
 
    ProvisState = OceanState::create("Provis" + Name, Mesh, MeshHalo,
-                                    NVertLevels, NTimeLevels);
+                                    NVertLayers, NTimeLevels);
    if (!ProvisState)
       LOG_CRITICAL("Error creating Provis state");
 
    ProvisTracers =
-       Array3DReal("ProvisTracers", NTracers, NCellsSize, NVertLevels);
+       Array3DReal("ProvisTracers", NTracers, NCellsSize, NVertLayers);
 }
 
 //------------------------------------------------------------------------------

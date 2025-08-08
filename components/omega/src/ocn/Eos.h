@@ -16,6 +16,7 @@
 #include "MachEnv.h"
 #include "OmegaKokkos.h"
 #include "TimeMgr.h"
+#include "VertCoord.h"
 #include <string>
 
 namespace OMEGA {
@@ -31,7 +32,7 @@ class Teos10Eos {
    Array2DReal SpecVolPCoeffs;
 
    /// constructor declaration
-   Teos10Eos(int NVertLevels);
+   Teos10Eos(int NVertLayers);
 
    //   The functor takes the full arrays of specific volume (inout),
    //   the indices ICell and KChunk, and the ocean tracers (conservative)
@@ -65,7 +66,7 @@ class Teos10Eos {
                 calcDelta(LocSpecVolPCoeffs, KVec, Pressure(ICell, K));
          } else {
             // Displacement, use the displaced pressure
-            I4 KTmp = Kokkos::min(K + KDisp, NVertLevels - 1);
+            I4 KTmp = Kokkos::min(K + KDisp, NVertLayers - 1);
             KTmp    = Kokkos::max(0, KTmp);
             SpecVol(ICell, K) =
                 calcRefProfile(Pressure(ICell, KTmp)) +
@@ -236,7 +237,7 @@ class Teos10Eos {
    }
 
  private:
-   const int NVertLevels;
+   const int NVertLayers;
 };
 
 /// Linear Equation of State
@@ -286,7 +287,7 @@ class Eos {
    std::string EosGroupName;    ///< EOS group name (for config)
    std::string Name;            ///< Name of this EOS instance
 
-   /// Compute specific volume for all cells/levels
+   /// Compute specific volume for all cells/layers
    void computeSpecVol(const Array2DReal &ConservTemp,
                        const Array2DReal &AbsSalinity,
                        const Array2DReal &Pressure);
@@ -301,7 +302,7 @@ class Eos {
 
  private:
    /// Private constructor
-   Eos(const std::string &Name, const HorzMesh *Mesh, int NVertLevels);
+   Eos(const std::string &Name, const HorzMesh *Mesh, int NVertLayers);
 
    /// Private destructor
    ~Eos();
