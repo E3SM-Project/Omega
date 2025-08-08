@@ -20,7 +20,7 @@ class LayerThicknessAuxVars {
    FluxThickEdgeOption FluxThickEdgeChoice;
 
    LayerThicknessAuxVars(const std::string &AuxStateSuffix,
-                         const HorzMesh *Mesh, int NVertLevels);
+                         const HorzMesh *Mesh, int NVertLayers);
 
    KOKKOS_FUNCTION void
    computeVarsOnEdge(int IEdge, int KChunk, const Array2DReal &LayerThickCell,
@@ -73,7 +73,7 @@ class LayerThicknessAuxVars {
 
       /*
       Real TotalThickness = 0.0;
-      for (int K = 0; K < NVertLevels; K++) {
+      for (int K = 0; K < NVertLayers; K++) {
          TotalThickness += LayerThickCell(ICell, K);
       }
 

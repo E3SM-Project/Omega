@@ -14,8 +14,6 @@
 #include "Logging.h"
 #include "TimeStepper.h"
 
-#include <iostream>
-
 namespace OMEGA {
 
 // Initialize static member variables
@@ -25,7 +23,7 @@ std::vector<HostArray3DReal> Tracers::TracerArraysH;
 std::map<std::string, std::pair<I4, I4>> Tracers::TracerGroups;
 std::map<std::string, I4> Tracers::TracerIndexes;
 std::map<I4, std::string> Tracers::TracerNames;
-std::vector<std::string> Tracers::TracerDimNames = {"NCells", "NVertLevels"};
+std::vector<std::string> Tracers::TracerDimNames = {"NCells", "NVertLayers"};
 
 Halo *Tracers::MeshHalo = nullptr;
 
@@ -33,7 +31,7 @@ I4 Tracers::NCellsOwned  = 0;
 I4 Tracers::NCellsAll    = 0;
 I4 Tracers::NCellsSize   = 0;
 I4 Tracers::NTimeLevels  = 0;
-I4 Tracers::NVertLevels  = 0;
+I4 Tracers::NVertLayers  = 0;
 I4 Tracers::CurTimeIndex = 0;
 I4 Tracers::NumTracers   = 0;
 
@@ -46,12 +44,13 @@ void Tracers::init() {
    Error Err;       // error code
 
    // Retrieve mesh cell/edge/vertex totals from Decomp
-   HorzMesh *DefHorzMesh = HorzMesh::getDefault();
+   HorzMesh *DefHorzMesh   = HorzMesh::getDefault();
+   VertCoord *DefVertCoord = VertCoord::getDefault();
 
    NCellsOwned = DefHorzMesh->NCellsOwned;
    NCellsAll   = DefHorzMesh->NCellsAll;
    NCellsSize  = DefHorzMesh->NCellsSize;
-   NVertLevels = DefHorzMesh->NVertLevels;
+   NVertLayers = DefVertCoord->NVertLayers;
 
    MeshHalo = Halo::getDefault();
 
@@ -117,10 +116,10 @@ void Tracers::init() {
    for (I4 TimeIndex = 0; TimeIndex < NTimeLevels; ++TimeIndex) {
       TracerArrays[TimeIndex] =
           Array3DReal("TracerTime" + std::to_string(TimeIndex), NumTracers,
-                      NCellsSize, NVertLevels);
+                      NCellsSize, NVertLayers);
       TracerArraysH[TimeIndex] =
           HostArray3DReal("TracerHTime" + std::to_string(TimeIndex), NumTracers,
-                          NCellsSize, NVertLevels);
+                          NCellsSize, NVertLayers);
    }
 
    // Define tracers
@@ -246,7 +245,7 @@ I4 Tracers::clear() {
    NCellsAll   = 0;
    NCellsSize  = 0;
    NTimeLevels = 0;
-   NVertLevels = 0;
+   NVertLayers = 0;
 
    return 0;
 }

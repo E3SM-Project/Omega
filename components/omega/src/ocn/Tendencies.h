@@ -37,6 +37,7 @@
 #include "OceanState.h"
 #include "TendencyTerms.h"
 #include "TimeMgr.h"
+#include "VertCoord.h"
 
 #include <functional>
 #include <memory>
@@ -149,7 +150,8 @@ class Tendencies {
    // Construct a new tendency object
    Tendencies(const std::string &Name, ///< [in] Name for tendencies
               const HorzMesh *Mesh,    ///< [in] Horizontal mesh
-              int NVertLevels,         ///< [in] Number of vertical levels
+              const VertCoord *VCoord, ///< [in] Vertical coordinate
+              int NVertLayers,         ///< [in] Number of vertical layers
               int NTracersIn,          ///< [in] Number of tracers
               Config *Options,         ///< [in] Configuration options
               CustomTendencyType InCustomThicknessTend,
@@ -157,7 +159,8 @@ class Tendencies {
 
    Tendencies(const std::string &Name, ///< [in] Name for tendencies
               const HorzMesh *Mesh,    ///< [in] Horizontal mesh
-              int NVertLevels,         ///< [in] Number of vertical levels
+              const VertCoord *VCoord, ///< [in] Vertical coordinate
+              int NVertLayers,         ///< [in] Number of vertical layers
               int NTracersIn,          ///< [in] Number of tracers
               Config *Options          ///< [in] Configuration options
    );
@@ -170,7 +173,7 @@ class Tendencies {
    I4 NCellsAll; ///< Number of cells including full halo
    I4 NEdgesAll; ///< Number of edges including full halo
    I4 NTracers;  ///< Number of tracers
-   I4 NChunks;   ///< Number of vertical level chunks
+   I4 NChunks;   ///< Number of vertical layer chunks
 
    // Pointer to default tendencies
    static Tendencies *DefaultTendencies;

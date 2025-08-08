@@ -15,7 +15,7 @@ class KineticAuxVars {
    Array2DReal VelocityDivCell;
 
    KineticAuxVars(const std::string &AuxStateSuffix, const HorzMesh *Mesh,
-                  int NVertLevels);
+                  int NVertLayers);
 
    KOKKOS_FUNCTION void
    computeVarsOnCell(int ICell, int KChunk,

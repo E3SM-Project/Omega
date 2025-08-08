@@ -27,13 +27,14 @@
 #include "Field.h"
 #include "Halo.h"
 #include "HorzMesh.h"
+#include "VertCoord.h"
 
 #include <gswteos-10.h>
 
 using namespace OMEGA;
 
 /// Test constants and expected values
-constexpr int NVertLevels = 60;
+constexpr int NVertLayers = 60;
 
 /// Published values (TEOS-10 and linear) to test against
 const Real TeosExpValue = 0.0009732819628; // Expected value for TEOS-10 eos
@@ -77,13 +78,11 @@ I4 initEosTest(const std::string &mesh) {
    /// Initialize decomposition
    Decomp::init(mesh);
 
+   /// Initialize vertical coordinate
+   VertCoord::init();
+
    /// Initialize mesh
    HorzMesh::init();
-
-   /// Create vertical dimension for test arrays
-   const auto &Mesh = HorzMesh::getDefault();
-   std::shared_ptr<Dimension> VertDim =
-       Dimension::create("NVertLevels", NVertLevels);
 
    /// Initialize Eos
    Eos::init();
@@ -101,7 +100,7 @@ I4 initEosTest(const std::string &mesh) {
    return Err;
 }
 
-/// Test Linear EOS calculation for all cells/levels
+/// Test Linear EOS calculation for all cells/layers
 int testEosLinear() {
    int Err          = 0;
    const auto *Mesh = HorzMesh::getDefault();
@@ -110,9 +109,9 @@ int testEosLinear() {
    TestEos->EosChoice = EosType::LinearEos;
 
    /// Create and fill ocean state arrays
-   Array2DReal SArray = Array2DReal("SArray", Mesh->NCellsAll, NVertLevels);
-   Array2DReal TArray = Array2DReal("TArray", Mesh->NCellsAll, NVertLevels);
-   Array2DReal PArray = Array2DReal("PArray", Mesh->NCellsAll, NVertLevels);
+   Array2DReal SArray = Array2DReal("SArray", Mesh->NCellsAll, NVertLayers);
+   Array2DReal TArray = Array2DReal("TArray", Mesh->NCellsAll, NVertLayers);
+   Array2DReal PArray = Array2DReal("PArray", Mesh->NCellsAll, NVertLayers);
    /// Use Kokkos::deep_copy to fill the entire view with the ref value
    deepCopy(SArray, Sa);
    deepCopy(TArray, Ct);
@@ -126,7 +125,7 @@ int testEosLinear() {
    int numMismatches   = 0;
    Array2DReal SpecVol = TestEos->SpecVol;
    parallelReduce(
-       "CheckSpecVolMatrix-linear", {Mesh->NCellsAll, NVertLevels},
+       "CheckSpecVolMatrix-linear", {Mesh->NCellsAll, NVertLayers},
        KOKKOS_LAMBDA(int i, int j, int &localCount) {
           if (!isApprox(SpecVol(i, j), LinearExpValue, RTol)) {
              localCount++;
@@ -157,9 +156,9 @@ int testEosLinearDisplaced() {
    TestEos->EosChoice = EosType::LinearEos;
 
    /// Create and fill ocean state arrays
-   Array2DReal SArray = Array2DReal("SArray", Mesh->NCellsAll, NVertLevels);
-   Array2DReal TArray = Array2DReal("TArray", Mesh->NCellsAll, NVertLevels);
-   Array2DReal PArray = Array2DReal("PArray", Mesh->NCellsAll, NVertLevels);
+   Array2DReal SArray = Array2DReal("SArray", Mesh->NCellsAll, NVertLayers);
+   Array2DReal TArray = Array2DReal("TArray", Mesh->NCellsAll, NVertLayers);
+   Array2DReal PArray = Array2DReal("PArray", Mesh->NCellsAll, NVertLayers);
    /// Use Kokkos::deep_copy to fill the entire view with the ref value
    deepCopy(SArray, Sa);
    deepCopy(TArray, Ct);
@@ -173,7 +172,7 @@ int testEosLinearDisplaced() {
    int numMismatches            = 0;
    Array2DReal SpecVolDisplaced = TestEos->SpecVolDisplaced;
    parallelReduce(
-       "CheckSpecVolDispMatrix-linear", {Mesh->NCellsAll, NVertLevels},
+       "CheckSpecVolDispMatrix-linear", {Mesh->NCellsAll, NVertLayers},
        KOKKOS_LAMBDA(int i, int j, int &localCount) {
           if (!isApprox(SpecVolDisplaced(i, j), LinearExpValue, RTol)) {
              localCount++;
@@ -195,7 +194,7 @@ int testEosLinearDisplaced() {
    return Err;
 }
 
-/// Test TEOS-10 EOS calculation for all cells/levels
+/// Test TEOS-10 EOS calculation for all cells/layers
 int testEosTeos10() {
    int Err          = 0;
    const auto *Mesh = HorzMesh::getDefault();
@@ -204,9 +203,9 @@ int testEosTeos10() {
    TestEos->EosChoice = EosType::Teos10Eos;
 
    /// Create and fill ocean state arrays
-   Array2DReal SArray = Array2DReal("SArray", Mesh->NCellsAll, NVertLevels);
-   Array2DReal TArray = Array2DReal("TArray", Mesh->NCellsAll, NVertLevels);
-   Array2DReal PArray = Array2DReal("PArray", Mesh->NCellsAll, NVertLevels);
+   Array2DReal SArray = Array2DReal("SArray", Mesh->NCellsAll, NVertLayers);
+   Array2DReal TArray = Array2DReal("TArray", Mesh->NCellsAll, NVertLayers);
+   Array2DReal PArray = Array2DReal("PArray", Mesh->NCellsAll, NVertLayers);
    /// Use Kokkos::deep_copy to fill the entire view with the ref value
    deepCopy(SArray, Sa);
    deepCopy(TArray, Ct);
@@ -220,7 +219,7 @@ int testEosTeos10() {
    int numMismatches   = 0;
    Array2DReal SpecVol = TestEos->SpecVol;
    parallelReduce(
-       "CheckSpecVolMatrix-Teos", {Mesh->NCellsAll, NVertLevels},
+       "CheckSpecVolMatrix-Teos", {Mesh->NCellsAll, NVertLayers},
        KOKKOS_LAMBDA(int i, int j, int &localCount) {
           if (!isApprox(SpecVol(i, j), TeosExpValue, RTol)) {
              localCount++;
@@ -251,9 +250,9 @@ int testEosTeos10Displaced() {
    TestEos->EosChoice = EosType::Teos10Eos;
 
    /// Create and fill ocean state arrays
-   Array2DReal SArray = Array2DReal("SArray", Mesh->NCellsAll, NVertLevels);
-   Array2DReal TArray = Array2DReal("TArray", Mesh->NCellsAll, NVertLevels);
-   Array2DReal PArray = Array2DReal("PArray", Mesh->NCellsAll, NVertLevels);
+   Array2DReal SArray = Array2DReal("SArray", Mesh->NCellsAll, NVertLayers);
+   Array2DReal TArray = Array2DReal("TArray", Mesh->NCellsAll, NVertLayers);
+   Array2DReal PArray = Array2DReal("PArray", Mesh->NCellsAll, NVertLayers);
    /// Use Kokkos::deep_copy to fill the entire view with the ref value
    deepCopy(SArray, Sa);
    deepCopy(TArray, Ct);
@@ -267,7 +266,7 @@ int testEosTeos10Displaced() {
    int numMismatches            = 0;
    Array2DReal SpecVolDisplaced = TestEos->SpecVolDisplaced;
    parallelReduce(
-       "CheckSpecVolDispMatrix-Teos", {Mesh->NCellsAll, NVertLevels},
+       "CheckSpecVolDispMatrix-Teos", {Mesh->NCellsAll, NVertLayers},
        KOKKOS_LAMBDA(int i, int j, int &localCount) {
           if (!isApprox(SpecVolDisplaced(i, j), TeosExpValue, RTol)) {
              localCount++;
@@ -292,6 +291,7 @@ int testEosTeos10Displaced() {
 /// Finalize and clean up all test infrastructure
 void finalizeEosTest() {
    HorzMesh::clear();
+   VertCoord::clear();
    Decomp::clear();
    Field::clear();
    Dimension::clear();

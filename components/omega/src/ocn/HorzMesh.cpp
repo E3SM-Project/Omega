@@ -27,7 +27,8 @@ HorzMesh *HorzMesh::DefaultHorzMesh = nullptr;
 std::map<std::string, std::unique_ptr<HorzMesh>> HorzMesh::AllHorzMeshes;
 
 //------------------------------------------------------------------------------
-// Initialize the mesh. Assumes that Decomp has already been initialized.
+// Initialize the mesh. Assumes that Decomp and VertCoord have already been
+// initialized.
 
 void HorzMesh::init() {
 
@@ -36,19 +37,10 @@ void HorzMesh::init() {
    // Retrieve the default decomposition
    Decomp *DefDecomp = Decomp::getDefault();
 
-   // Retrieve NVertLevels from Config
-   I4 NVertLevels;
-   Config *OmegaConfig = Config::getOmegaConfig();
-   Config DimConfig("Dimension");
-   Err += OmegaConfig->get(DimConfig);
-   CHECK_ERROR_ABORT(Err, "HorzMesh: Dimension group not found in Config");
-
-   Err += DimConfig.get("NVertLevels", NVertLevels);
-   CHECK_ERROR_ABORT(Err,
-                     "HorzMesh: NVertLevels not found in Dimension Config");
+   I4 NVertLayers = VertCoord::getDefault()->NVertLayers;
 
    // Create the default mesh and set pointer to it
-   HorzMesh::DefaultHorzMesh = create("Default", DefDecomp, NVertLevels);
+   HorzMesh::DefaultHorzMesh = create("Default", DefDecomp, NVertLayers);
 }
 
 //------------------------------------------------------------------------------
@@ -56,7 +48,7 @@ void HorzMesh::init() {
 
 HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
                    Decomp *MeshDecomp,      //< [in] Decomp for the new mesh
-                   I4 InNVertLevels         //< [in} num vertical levels
+                   I4 InNVertLayers         //< [in} num vertical layers
 ) {
 
    MeshName = Name;
@@ -64,8 +56,8 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
    // Retrieve mesh files name from Decomp
    MeshFileName = MeshDecomp->MeshFileName;
 
-   // Set NVertLevels
-   NVertLevels = InNVertLevels;
+   // Set NVertLayers
+   NVertLayers = InNVertLayers;
 
    // Retrieve mesh cell/edge/vertex totals from Decomp
    NCellsHalo  = MeshDecomp->NCellsHalo;
@@ -153,7 +145,7 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
    computeEdgeSign();
 
    // TODO: implement setMasks during Mesh constructor
-   setMasks(NVertLevels);
+   setMasks(NVertLayers);
 
    // set mesh scaling coefficients
    setMeshScaling();
@@ -164,7 +156,7 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
 /// AllHorzMeshes map
 HorzMesh *HorzMesh::create(const std::string &Name, //< [in] Name for new mesh
                            Decomp *MeshDecomp, //< [in] Decomp for the new mesh
-                           I4 InNVertLevels    //< [in] num vertical levels
+                           I4 InNVertLayers    //< [in] num vertical layers
 ) {
    // Check to see if a mesh of the same name already exists and
    // if so, exit with an error
@@ -177,7 +169,7 @@ HorzMesh *HorzMesh::create(const std::string &Name, //< [in] Name for new mesh
 
    // create a new mesh on the heap and put it in a map of
    // unique_ptrs, which will manage its lifetime
-   auto *NewHorzMesh = new HorzMesh(Name, MeshDecomp, InNVertLevels);
+   auto *NewHorzMesh = new HorzMesh(Name, MeshDecomp, InNVertLayers);
    AllHorzMeshes.emplace(Name, NewHorzMesh);
 
    return NewHorzMesh;
@@ -631,9 +623,9 @@ void HorzMesh::computeEdgeSign() {
 // set computational masks for mesh elements
 // TODO: this is just a placeholder, implement actual masks for edges, cells,
 // and vertices
-void HorzMesh::setMasks(int NVertLevels) {
+void HorzMesh::setMasks(int NVertLayers) {
 
-   EdgeMask = Array2DReal("EdgeMask", NEdgesSize, NVertLevels);
+   EdgeMask = Array2DReal("EdgeMask", NEdgesSize, NVertLayers);
 
    OMEGA_SCOPE(LocEdgeMask, EdgeMask);
    OMEGA_SCOPE(LocCellsOnEdge, CellsOnEdge);
@@ -641,7 +633,7 @@ void HorzMesh::setMasks(int NVertLevels) {
 
    deepCopy(EdgeMask, 1.0);
    parallelFor(
-       {NEdgesAll, NVertLevels}, KOKKOS_LAMBDA(int Edge, int K) {
+       {NEdgesAll, NVertLayers}, KOKKOS_LAMBDA(int Edge, int K) {
           const I4 Cell1 = LocCellsOnEdge(Edge, 0);
           const I4 Cell2 = LocCellsOnEdge(Edge, 1);
           if (!(Cell1 >= 0 and Cell1 < LocNCellsAll) or

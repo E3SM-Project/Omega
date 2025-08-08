@@ -97,14 +97,14 @@ int main(int argc, char *argv[]) {
 
       // test SUM of I4 arrays
       int i, j, k;
-      I4 NumCells = 10, NumVertLvls = 10, c = 0;
+      I4 NumCells = 10, NumVertLyrs = 10, c = 0;
       HostArray1DI4 HostArr1DI4("HostArrD1", NumCells);
-      HostArray2DI4 HostArr2DI4("HostArrD2", NumCells, NumVertLvls);
+      HostArray2DI4 HostArr2DI4("HostArrD2", NumCells, NumVertLyrs);
       I4 Sum1DI4 = 0, Sum2DI4 = 0;
       for (i = 0; i < NumCells; i++) {
          HostArr1DI4(i) = i;
          Sum1DI4 += i;
-         for (j = 0; j < NumVertLvls; j++) {
+         for (j = 0; j < NumVertLyrs; j++) {
             HostArr2DI4(i, j) = c;
             Sum2DI4 += c;
             c++;
@@ -130,12 +130,12 @@ int main(int argc, char *argv[]) {
 
       // test SUM of I8 arrays
       HostArray1DI8 HostArr1DI8("HostArrD1I8", NumCells);
-      HostArray2DI8 HostArr2DI8("HostArrD2I8", NumCells, NumVertLvls);
+      HostArray2DI8 HostArr2DI8("HostArrD2I8", NumCells, NumVertLyrs);
       I8 Sum1DI8 = 0, Sum2DI8 = 0, c8 = 0;
       for (i = 0; i < NumCells; i++) {
          HostArr1DI8(i) = i;
          Sum1DI8 += i;
-         for (j = 0; j < NumVertLvls; j++) {
+         for (j = 0; j < NumVertLyrs; j++) {
             HostArr2DI8(i, j) = c8;
             Sum2DI8 += c8;
             c8++;
@@ -161,12 +161,12 @@ int main(int argc, char *argv[]) {
 
       // test SUM of R4 arrays
       HostArray1DR4 HostArr1DR4("HostArrD1R4", NumCells);
-      HostArray2DR4 HostArr2DR4("HostArrD2R4", NumCells, NumVertLvls);
+      HostArray2DR4 HostArr2DR4("HostArrD2R4", NumCells, NumVertLyrs);
       R4 Sum1DR4 = 0.0, Sum2DR4 = 0.0, f = 0.0;
       for (i = 0; i < NumCells; i++) {
          HostArr1DR4(i) = i + 0.00001;
          Sum1DR4 += HostArr1DR4(i);
-         for (j = 0; j < NumVertLvls; j++) {
+         for (j = 0; j < NumVertLyrs; j++) {
             HostArr2DR4(i, j) = f;
             Sum2DR4 += HostArr2DR4(i, j);
             f += 1.00001;
@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
 
       // test SUM of R8 arrays
       HostArray1DR8 HostArr1DR8("HostArrD1R8", NumCells);
-      HostArray2DR8 HostArr2DR8("HostArrD2R8", NumCells, NumVertLvls);
+      HostArray2DR8 HostArr2DR8("HostArrD2R8", NumCells, NumVertLyrs);
       R8 Sum1DR8 = 0.0, Sum2DR8 = 0.0, d = 0.0;
       complex<double> LocalSum1D(0.0, 0.0), LocalSum2D(0.0, 0.0);
       double e, t1, t2, ai;
@@ -205,7 +205,7 @@ int main(int argc, char *argv[]) {
          e  = t1 - ai;
          t2 = ((real(LocalSum1D) - e) + (ai - (t1 - e))) + imag(LocalSum1D);
          LocalSum1D = complex<double>(t1 + t2, t2 - ((t1 + t2) - t1));
-         for (j = 0; j < NumVertLvls; j++) {
+         for (j = 0; j < NumVertLyrs; j++) {
             HostArr2DR8(i, j) = d;
             d += 1.0000000000001;
             ai = HostArr2DR8(i, j);
@@ -327,11 +327,11 @@ int main(int argc, char *argv[]) {
 
       // test SUM of I4 arrays on device
       Array1DI4 DevArr1DI4("DevArr1DI4", NumCells);
-      Array2DI4 DevArr2DI4("DevArr2DI4", NumCells, NumVertLvls);
+      Array2DI4 DevArr2DI4("DevArr2DI4", NumCells, NumVertLyrs);
 
       parallelFor({NumCells}, KOKKOS_LAMBDA(int i) { DevArr1DI4(i) = i; });
       parallelFor(
-          {NumCells, NumVertLvls},
+          {NumCells, NumVertLyrs},
           KOKKOS_LAMBDA(int i, int j) { DevArr2DI4(i, j) = i * 10 + j; });
       Kokkos::fence();
 

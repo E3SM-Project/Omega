@@ -24,7 +24,8 @@ OceanState *OceanState::DefaultOceanState = nullptr;
 std::map<std::string, std::unique_ptr<OceanState>> OceanState::AllOceanStates;
 
 //------------------------------------------------------------------------------
-// Initialize the state. Assumes that Decomp has already been initialized.
+// Initialize the state. Assumes that Decomp, HorzMesh, VertCoord, and
+// TimeStepper have already been initialized.
 
 int OceanState::init() {
 
@@ -35,7 +36,7 @@ int OceanState::init() {
    HorzMesh *DefHorzMesh = HorzMesh::getDefault();
    Halo *DefHalo         = Halo::getDefault();
 
-   int NVertLevels = DefHorzMesh->NVertLevels;
+   int NVertLayers = VertCoord::getDefault()->NVertLayers;
 
    auto *DefTimeStepper = TimeStepper::getDefault();
    if (!DefTimeStepper) {
@@ -50,7 +51,7 @@ int OceanState::init() {
 
    // Create the default state and set pointer to it
    OceanState::DefaultOceanState =
-       create("Default", DefHorzMesh, DefHalo, NVertLevels, NTimeLevels);
+       create("Default", DefHorzMesh, DefHalo, NVertLayers, NTimeLevels);
 
    // State values are filled by a later read of the initial state or
    // restart file
@@ -65,7 +66,7 @@ OceanState::OceanState(
     const std::string &Name_, //< [in] Name for new state
     HorzMesh *Mesh,           //< [in] HorzMesh for state
     Halo *MeshHalo_,          //< [in] Halo for Mesh
-    const int NVertLevels_,   //< [in] number of vertical levels
+    const int NVertLayers_,   //< [in] number of vertical layers
     const int NTimeLevels_    //< [in] number of time levels
 ) {
 
@@ -78,7 +79,7 @@ OceanState::OceanState(
    NEdgesAll   = Mesh->NEdgesAll;
    NEdgesSize  = Mesh->NEdgesSize;
 
-   NVertLevels = NVertLevels_;
+   NVertLayers = NVertLayers_;
    NTimeLevels = NTimeLevels_;
 
    MeshHalo = MeshHalo_;
@@ -93,9 +94,9 @@ OceanState::OceanState(
 
    for (int I = 0; I < NTimeLevels; I++) {
       LayerThicknessH[I] = HostArray2DReal("LayerThickness" + std::to_string(I),
-                                           NCellsSize, NVertLevels);
+                                           NCellsSize, NVertLayers);
       NormalVelocityH[I] = HostArray2DReal("NormalVelocity" + std::to_string(I),
-                                           NEdgesSize, NVertLevels);
+                                           NEdgesSize, NVertLayers);
    }
 
    // Allocate state device arrays
@@ -105,9 +106,9 @@ OceanState::OceanState(
    // Create device arrays and copy host data
    for (int I = 0; I < NTimeLevels; I++) {
       LayerThickness[I] = Array2DReal("LayerThickness" + std::to_string(I),
-                                      NCellsSize, NVertLevels);
+                                      NCellsSize, NVertLayers);
       NormalVelocity[I] = Array2DReal("NormalVelocity" + std::to_string(I),
-                                      NEdgesSize, NVertLevels);
+                                      NEdgesSize, NVertLayers);
    }
 
    // Register fields and metadata for IO
@@ -121,7 +122,7 @@ OceanState *
 OceanState::create(const std::string &Name, //< [in] Name for new state
                    HorzMesh *Mesh,          //< [in] HorzMesh for state
                    Halo *MeshHalo,          //< [in] Halo for Mesh
-                   const int NVertLevels,   //< [in] number of vertical levels
+                   const int NVertLayers,   //< [in] number of vertical layers
                    const int NTimeLevels    //< [in] number of time levels
 ) {
 
@@ -138,7 +139,7 @@ OceanState::create(const std::string &Name, //< [in] Name for new state
    // create a new state on the heap and put it in a map of
    // unique_ptrs, which will manage its lifetime
    auto *NewOceanState =
-       new OceanState(Name, Mesh, MeshHalo, NVertLevels, NTimeLevels);
+       new OceanState(Name, Mesh, MeshHalo, NVertLayers, NTimeLevels);
    AllOceanStates.emplace(Name, NewOceanState);
 
    return NewOceanState;
@@ -198,7 +199,7 @@ void OceanState::defineFields() {
    int NDims = 2;
    std::vector<std::string> DimNames(NDims);
    DimNames[0] = "NEdges";
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
    auto NormalVelocityField =
        Field::create(NormalVelocityFldName,               // field name
                      "Velocity component normal to edge", // long Name

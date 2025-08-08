@@ -19,13 +19,15 @@ Tendencies *Tendencies::DefaultTendencies = nullptr;
 std::map<std::string, std::unique_ptr<Tendencies>> Tendencies::AllTendencies;
 
 //------------------------------------------------------------------------------
-// Initialize the tendencies. Assumes that HorzMesh as alread been initialized.
+// Initialize the tendencies. Assumes that HorzMesh and VertCoord has alread
+// been initialized.
 void Tendencies::init() {
    Error Err; // error code
 
-   HorzMesh *DefHorzMesh = HorzMesh::getDefault();
+   HorzMesh *DefHorzMesh   = HorzMesh::getDefault();
+   VertCoord *DefVertCoord = VertCoord::getDefault();
 
-   I4 NVertLevels = DefHorzMesh->NVertLevels;
+   I4 NVertLayers = DefVertCoord->NVertLayers;
    I4 NTracers    = Tracers::getNumTracers();
 
    // Get TendConfig group
@@ -63,8 +65,8 @@ void Tendencies::init() {
 
    // Ceate default tendencies
    Tendencies::DefaultTendencies =
-       create("Default", DefHorzMesh, NVertLevels, NTracers, &TendConfig,
-              CustomThickTend, CustomVelTend);
+       create("Default", DefHorzMesh, DefVertCoord, NVertLayers, NTracers,
+              &TendConfig, CustomThickTend, CustomVelTend);
 
    DefaultTendencies->readTendConfig(&TendConfig);
 
@@ -214,40 +216,42 @@ void Tendencies::readTendConfig(
 // Construct a new group of tendencies
 Tendencies::Tendencies(const std::string &Name, ///< [in] Name for tendencies
                        const HorzMesh *Mesh,    ///< [in] Horizontal mesh
-                       int NVertLevels, ///< [in] Number of vertical levels
+                       const VertCoord *VCoord, ///< [in] Vertical coordinate
+                       int NVertLayers, ///< [in] Number of vertical layers
                        int NTracersIn,  ///< [in] Number of tracers
                        Config *Options, ///< [in] Configuration options
                        CustomTendencyType InCustomThicknessTend,
                        CustomTendencyType InCustomVelocityTend)
     : ThicknessFluxDiv(Mesh), PotientialVortHAdv(Mesh), KEGrad(Mesh),
       SSHGrad(Mesh), VelocityDiffusion(Mesh), VelocityHyperDiff(Mesh),
-      WindForcing(Mesh), BottomDrag(Mesh), TracerHorzAdv(Mesh),
+      WindForcing(Mesh), BottomDrag(Mesh, VCoord), TracerHorzAdv(Mesh),
       TracerDiffusion(Mesh), TracerHyperDiff(Mesh),
       CustomThicknessTend(InCustomThicknessTend),
       CustomVelocityTend(InCustomVelocityTend) {
 
    // Tendency arrays
    LayerThicknessTend =
-       Array2DReal("LayerThicknessTend", Mesh->NCellsSize, NVertLevels);
+       Array2DReal("LayerThicknessTend", Mesh->NCellsSize, NVertLayers);
    NormalVelocityTend =
-       Array2DReal("NormalVelocityTend", Mesh->NEdgesSize, NVertLevels);
+       Array2DReal("NormalVelocityTend", Mesh->NEdgesSize, NVertLayers);
    TracerTend =
-       Array3DReal("TracerTend", NTracersIn, Mesh->NCellsSize, NVertLevels);
+       Array3DReal("TracerTend", NTracersIn, Mesh->NCellsSize, NVertLayers);
 
    // Array dimension lengths
    NCellsAll = Mesh->NCellsAll;
    NEdgesAll = Mesh->NEdgesAll;
    NTracers  = NTracersIn;
-   NChunks   = NVertLevels / VecLength;
+   NChunks   = NVertLayers / VecLength;
 
 } // end constructor
 
 Tendencies::Tendencies(const std::string &Name, ///< [in] Name for tendencies
                        const HorzMesh *Mesh,    ///< [in] Horizontal mesh
-                       int NVertLevels, ///< [in] Number of vertical levels
+                       const VertCoord *VCoord, ///< [in] Vertical coordinate
+                       int NVertLayers, ///< [in] Number of vertical layers
                        int NTracersIn,  ///< [in] Number of tracers
                        Config *Options) ///< [in] Configuration options
-    : Tendencies(Name, Mesh, NVertLevels, NTracersIn, Options,
+    : Tendencies(Name, Mesh, VCoord, NVertLayers, NTracersIn, Options,
                  CustomTendencyType{}, CustomTendencyType{}) {}
 
 //------------------------------------------------------------------------------

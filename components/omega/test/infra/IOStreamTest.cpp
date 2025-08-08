@@ -27,6 +27,7 @@
 #include "TimeMgr.h"
 #include "TimeStepper.h"
 #include "Tracers.h"
+#include "VertCoord.h"
 #include "mpi.h"
 #include <chrono>
 #include <thread>
@@ -95,14 +96,18 @@ int initIOStreamTest(Clock *&ModelClock // Model clock
    // Initialize IOStreams
    IOStream::init(ModelClock);
 
+   // Initialize the vertical coordinate
+   VertCoord::init();
+
    // Initialize HorzMesh - this should read Mesh stream
    HorzMesh::init();
    HorzMesh *DefMesh = HorzMesh::getDefault();
 
-   // Set vertical levels and time levels
-   I4 NVertLevels = 60;
+   // Reset vertical layers dimension
+   Dimension::destroy("NVertLayers");
+   I4 NVertLayers = 60;
    std::shared_ptr<Dimension> VertDim =
-       Dimension::create("NVertLevels", NVertLevels);
+       Dimension::create("NVertLayers", NVertLayers);
 
    // Initialize State
    Err1 = OceanState::init();
@@ -170,7 +175,7 @@ int main(int argc, char **argv) {
 
       // Retrieve dimension lengths and some mesh info
       I4 NCellsSize     = Dimension::getDimLengthLocal("NCells");
-      I4 NVertLevels    = Dimension::getDimLengthLocal("NVertLevels");
+      I4 NVertLayers    = Dimension::getDimLengthLocal("NVertLayers");
       Decomp *DefDecomp = Decomp::getDefault();
       I4 NCellsOwned    = DefDecomp->NCellsOwned;
       Array1DI4 CellID  = DefDecomp->CellID;
@@ -182,13 +187,13 @@ int main(int argc, char **argv) {
 
       // Overwrite salinity array with values associated with global cell
       // ID to test proper indexing of IO
-      Array2DReal Test("Test", NCellsSize, NVertLevels);
+      Array2DReal Test("Test", NCellsSize, NVertLayers);
       Array2DReal Salt;
       Err1 = Tracers::getByIndex(Salt, 0, Tracers::IndxSalt);
       TestEval("Retrieve Salinity", Err1, ErrRef, Err);
 
       parallelFor(
-          {NCellsSize, NVertLevels}, KOKKOS_LAMBDA(int Cell, int K) {
+          {NCellsSize, NVertLayers}, KOKKOS_LAMBDA(int Cell, int K) {
              Salt(Cell, K) = 0.0001_Real * (CellID(Cell) + K);
              Test(Cell, K) = Salt(Cell, K);
           });
@@ -222,7 +227,7 @@ int main(int argc, char **argv) {
       auto DataReducer = Kokkos::Sum<I4>(Err1);
 
       parallelReduce(
-          {NCellsOwned, NVertLevels},
+          {NCellsOwned, NVertLayers},
           KOKKOS_LAMBDA(int Cell, int K, I4 &Err1) {
              if (Salt(Cell, K) != Test(Cell, K))
                 ++Err1;
@@ -240,6 +245,7 @@ int main(int argc, char **argv) {
    OceanState::clear();
    AuxiliaryState::clear();
    HorzMesh::clear();
+   VertCoord::clear();
    Field::clear();
    Dimension::clear();
    Halo::clear();

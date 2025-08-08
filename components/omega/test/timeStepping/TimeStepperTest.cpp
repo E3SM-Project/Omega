@@ -32,6 +32,7 @@
 #include "TendencyTerms.h"
 #include "TimeMgr.h"
 #include "Tracers.h"
+#include "VertCoord.h"
 #include "mpi.h"
 
 #include <cmath>
@@ -42,8 +43,8 @@ using namespace OMEGA;
 
 // Geometry doesn't matter for this test
 constexpr Geometry Geom = Geometry::Planar;
-// Only one vertical level is needed
-constexpr int NVertLevels = 1;
+// Only one vertical layer is needed
+constexpr int NVertLayers = 1;
 
 // Custom tendency for normal velocity
 // du/dt = -coeff * u
@@ -59,14 +60,14 @@ struct DecayVelocityTendency {
                    int VelTimeLevel, TimeInstant Time) const {
 
       auto *Mesh       = HorzMesh::getDefault();
-      auto NVertLevels = NormalVelTend.extent_int(1);
+      auto NVertLayers = NormalVelTend.extent_int(1);
       Array2DReal NormalVelEdge;
       State->getNormalVelocity(NormalVelEdge, VelTimeLevel);
 
       OMEGA_SCOPE(LocCoeff, Coeff);
 
       parallelFor(
-          {Mesh->NEdgesAll, NVertLevels}, KOKKOS_LAMBDA(int IEdge, int K) {
+          {Mesh->NEdgesAll, NVertLayers}, KOKKOS_LAMBDA(int IEdge, int K) {
              NormalVelTend(IEdge, K) -= LocCoeff * NormalVelEdge(IEdge, K);
           });
    }
@@ -102,7 +103,7 @@ int createExactSolution(Real TimeEnd) {
    Err = Tracers::getAll(TracerArray, 0);
 
    auto *ExactState =
-       OceanState::create("Exact", DefMesh, DefHalo, NVertLevels, 1);
+       OceanState::create("Exact", DefMesh, DefHalo, NVertLayers, 1);
 
    Array2DReal LayerThickCell;
    Array2DReal NormalVelEdge;
@@ -156,17 +157,6 @@ int initTimeStepperTest(const std::string &mesh) {
    Config("Omega");
    Config::readAll("omega.yml");
 
-   // Reset NVertLevels to 1 regardless of config value
-   Config *OmegaConfig = Config::getOmegaConfig();
-   Config DimConfig("Dimension");
-   Err1 = OmegaConfig->get(DimConfig);
-   CHECK_ERROR_ABORT(Err1, "TimeStepperTest: Dimension group not in Config");
-
-   DimConfig.set("NVertLevels", NVertLevels);
-
-   // Horz dimensions will be created in HorzMesh
-   auto VertDim = Dimension::create("NVertLevels", NVertLevels);
-
    // Note that the default time stepper is not used in subsequent tests
    // but is initialized here because the number of time levels is needed
    // to initialize the Tracers. If a later timestepper test uses more time
@@ -187,6 +177,14 @@ int initTimeStepperTest(const std::string &mesh) {
       LOG_ERROR("TimeStepperTest: error initializing default halo");
    }
 
+   // Initialize the vertical coordinate and reset NVertLayers to 1
+   VertCoord::init();
+   auto *DefVertCoord        = VertCoord::getDefault();
+   DefVertCoord->NVertLayers = 1;
+   Dimension::destroy("NVertLayers");
+   std::shared_ptr<Dimension> VertDim =
+       Dimension::create("NVertLayers", NVertLayers);
+
    HorzMesh::init();
    Tracers::init();
    AuxiliaryState::init();
@@ -202,7 +200,7 @@ int initTimeStepperTest(const std::string &mesh) {
 
    // Non-default init
    // Creating non-default state and auxiliary state to use only one vertical
-   // level
+   // layer
 
    auto *DefMesh = HorzMesh::getDefault();
    auto *DefHalo = Halo::getDefault();
@@ -210,15 +208,16 @@ int initTimeStepperTest(const std::string &mesh) {
    int NTracers          = Tracers::getNumTracers();
    const int NTimeLevels = 2;
    auto *TestOceanState  = OceanState::create("TestState", DefMesh, DefHalo,
-                                              NVertLevels, NTimeLevels);
+                                              NVertLayers, NTimeLevels);
    if (!TestOceanState) {
       Err++;
       LOG_ERROR("TimeStepperTest: error creating test state");
    }
 
    auto *TestAuxState = AuxiliaryState::create("TestAuxState", DefMesh, DefHalo,
-                                               NVertLevels, NTracers);
+                                               NVertLayers, NTracers);
 
+   Config *OmegaConfig = Config::getOmegaConfig();
    TestAuxState->readConfigOptions(OmegaConfig);
 
    if (!TestAuxState) {
@@ -230,7 +229,7 @@ int initTimeStepperTest(const std::string &mesh) {
 
    // Creating non-default tendencies with custom velocity tendencies
    auto *TestTendencies = Tendencies::create(
-       "TestTendencies", DefMesh, NVertLevels, NTracers, &Options,
+       "TestTendencies", DefMesh, DefVertCoord, NVertLayers, NTracers, &Options,
        Tendencies::CustomTendencyType{}, DecayVelocityTendency{});
    if (!TestTendencies) {
       Err++;
@@ -293,6 +292,7 @@ void finalizeTimeStepperTest() {
    Dimension::clear();
    Field::clear();
    HorzMesh::clear();
+   VertCoord::clear();
    Halo::clear();
    Decomp::clear();
    MachEnv::removeAll();
