@@ -1,11 +1,13 @@
 #ifndef OMEGA_VERTCOORD_H
 #define OMEGA_VERTCOORD_H
-//===-- base/VertCoord.h - vertical coordinate --------------*- C++ -*-===//
+//===-- base/VertCoord.h - vertical coordinate definitions ------*- C++ -*-===//
 //
 /// \file
-/// \brief
+/// \brief Contains the vertical mesh variables and methods for Omega
 ///
-///
+/// This header defines the VertCoord class which contains information related
+/// to the vertical coordinate, the vertical extent of the mesh, and the active
+/// vertical layers for each ocean column.
 //
 //===----------------------------------------------------------------------===//
 
@@ -48,17 +50,22 @@ class VertCoord {
 
    // methods
 
-   void readArrays(const Decomp *MeshDecomp);
-
    /// construct a new vertical coordinate object
-   VertCoord(const std::string &Name, const Decomp *MeshDecomp,
-             Config *Options);
+   VertCoord(const std::string &Name,  ///< [in] Name for new VertCoord
+             const Decomp *MeshDecomp, ///< [in] associated Decomp
+             Config *Options           ///< [in] configuration options
+   );
+
+   /// read desired quantities from mesh file
+   void readArrays(const Decomp *Decomp ///< [in] Decomp for mesh
+   );
 
    // Forbid copy and move construction
    VertCoord(const VertCoord &) = delete;
    VertCoord(VertCoord &&)      = delete;
 
  public:
+   // Vertical dimension
    I4 NVertLayers;
    I4 NVertLayersP1;
 
@@ -100,11 +107,6 @@ class VertCoord {
    HostArray1DI4 MinLayerVertexBotH;
    HostArray1DI4 MaxLayerVertexBotH;
 
-   void minMaxLayerEdge();
-   void minMaxLayerVertex();
-
-   void initMovementWeights(Config *Options);
-
    // p star coordinate variables
    Array1DReal VertCoordMovementWeights;
    Array2DReal RefLayerThickness;
@@ -126,12 +128,16 @@ class VertCoord {
 
    /// Creates a new vertical coordinate object by calling the constructor and
    /// puts it in the AllVertCoords map
-   static VertCoord *create(const std::string &Name, const Decomp *MeshDecomp,
-                            Config *Options);
+   static VertCoord *
+   create(const std::string &Name,  /// [in] name for new VertCoord
+          const Decomp *MeshDecomp, /// [in] associated Decomp
+          Config *Options           /// [in] configuration options
+   );
 
    /// Destructor - deallocates all memory and deletes a VertCoord
    ~VertCoord();
 
+   /// Deallocates arrays
    static void clear();
 
    /// Remove a VertCoord by name
@@ -143,32 +149,48 @@ class VertCoord {
    /// Retreive a VertCoord by name
    static VertCoord *get(std::string name);
 
+   // Variable initialization methods
+   void minMaxLayerEdge();
+   void minMaxLayerVertex();
+   void initMovementWeights(Config *Options ///< [in] configuration options
+   );
+
    /// Sums the mass thickness times g from the top layer down, starting with
    /// the surface pressure
-   void computePressure(const Array2DReal &PressureInterface,
-                        const Array2DReal &PressureMid,
-                        const Array2DReal &LayerThickness,
-                        const Array1DReal &SurfacePressure);
+   void computePressure(
+       const Array2DReal &PressureInterface, ///< [out] P at layer interfaces
+       const Array2DReal &PressureMid,       ///< [out] P at layer midpoints
+       const Array2DReal &LayerThickness,    ///< [in] pseudo thickness
+       const Array1DReal &SurfacePressure    ///< [in] surface pressure
+   );
 
-   /// Sum the mass thickness time specific volume from the bottom layer up,
+   /// Sum the mass thickness times specific volume from the bottom layer up,
    /// starting with the bottom elevation
-   void computeZHeight(const Array2DReal &ZInterface, const Array2DReal &ZMid,
-                       const Array2DReal &LayerThickness,
-                       const Array2DReal &SpecVol,
-                       const Array1DReal &BottomDepth);
+   void computeZHeight(
+       const Array2DReal &ZInterface,     ///< [out] Z coord at layer interfaces
+       const Array2DReal &ZMid,           ///< [out] Z coord at layer midpoints
+       const Array2DReal &LayerThickness, ///< [in] pseudo thickness
+       const Array2DReal &SpecVol,        ///< [in] specific volume
+       const Array1DReal &BottomDepth);   ///< [in] bottom depth
 
    /// Sum the z height times g, the tidal potential, and self attraction and
    /// loading
-   void computeGeopotential(const Array2DReal &GeopotentialMid,
-                            const Array2DReal &ZMid,
-                            const Array1DReal &TidalPotential,
-                            const Array1DReal &SelfAttractionLoading);
+   void computeGeopotential(
+       const Array2DReal &GeopotentialMid, ///< [out] geopotential
+       const Array2DReal &ZMid,            ///< [in] Z coord at layer midpoints
+       const Array1DReal &TidalPotential,  ///< [in] tidal potential
+       const Array1DReal
+           &SelfAttractionLoading ///< [in] self attraction and loading
+   );
 
    /// Determine mass thickness used for the target vertical coordinate
-   void computeTargetThickness(const Array2DReal &LayerThicknessTarget,
-                               const Array2DReal &PressureInterface,
-                               const Array2DReal &RefLayerThickness,
-                               const Array1DReal &VertCoordMovementWeights);
+   void computeTargetThickness(
+       const Array2DReal
+           &LayerThicknessTarget,            ///< [out] desired target thickness
+       const Array2DReal &PressureInterface, ///< [in] P at layer interfaces
+       const Array2DReal &RefLayerThickness, ///< [in] reference pseudo thicknes
+       const Array1DReal &VertCoordMovementWeights ///< [in] movement weights
+   );
 
 }; // end class VertCoord
 
