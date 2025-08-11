@@ -1,5 +1,10 @@
 //===-- base/VertCoord.cpp - vertical coordinate ----------------*- C++ -*-===//
 //
+// The VertCoord class contains member variables related to the vertical mesh
+// and methods for computing these variables in Omega. The class will also serve
+// as the container for information defining the extent of the vertical
+// dimension and the number of active vertical layers in each column.
+//
 //===----------------------------------------------------------------------===//
 
 #include "VertCoord.h"
@@ -9,6 +14,7 @@
 
 namespace OMEGA {
 
+// create static class members
 VertCoord *VertCoord::DefaultVertCoord = nullptr;
 std::map<std::string, std::unique_ptr<VertCoord>> VertCoord::AllVertCoords;
 
@@ -25,8 +31,12 @@ void VertCoord::init() {
 
 } // end init
 
-VertCoord::VertCoord(const std::string &Name_, const Decomp *Decomp,
-                     Config *Options) {
+//------------------------------------------------------------------------------
+// Construct a new VertCoord instance given a Decomp
+VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
+                     const Decomp *Decomp,     //< [in] associated Decomp
+                     Config *Options           //< [in] configuration options
+) {
 
    Name = Name_;
 
@@ -103,8 +113,13 @@ VertCoord::VertCoord(const std::string &Name_, const Decomp *Decomp,
 
 } // end constructor
 
-VertCoord *VertCoord::create(const std::string &Name, const Decomp *Decomp,
-                             Config *Options) {
+//------------------------------------------------------------------------------
+// Calls the VertCoord constructor and places it in the AllVertCoords map
+VertCoord *
+VertCoord::create(const std::string &Name, // [in] name for new VertCoord
+                  const Decomp *Decomp,    // [in] associated Decomp
+                  Config *Options          // [in] configuration options
+) {
    // Check to see if a VertCoord of the same name already exists and, if so,
    // exit with an error
    if (AllVertCoords.find(Name) != AllVertCoords.end()) {
@@ -122,7 +137,10 @@ VertCoord *VertCoord::create(const std::string &Name, const Decomp *Decomp,
    return NewVertCoord;
 } // end create
 
-void VertCoord::readArrays(const Decomp *Decomp) {
+//------------------------------------------------------------------------------
+// Read desired quantities from the mesh file
+void VertCoord::readArrays(const Decomp *Decomp //< [in] Decomp for mesh
+) {
 
    I4 NDims             = 1;
    IO::Rearranger Rearr = IO::RearrBox;
@@ -203,17 +221,17 @@ void VertCoord::readArrays(const Decomp *Decomp) {
    if (DecErr != 0) {
       LOG_CRITICAL("VertCoord: error destroying cell R8 IO decomposition");
    }
-}
+} // end readArrays
 
 //------------------------------------------------------------------------------
 // Destroys a local VertCoord and deallocates all arrays
-VertCoord::~VertCoord() {} // end deconstructor
+VertCoord::~VertCoord() {} // end destructor
 
 //------------------------------------------------------------------------------
-// Removes a VertCoord from list by name
-void VertCoord::erase(std::string InName) {
-   AllVertCoords.erase(InName); // removes the VertCoord from the list and in
-                                // the process, calls the destructor
+// Removes a VertCoord from map by name
+void VertCoord::erase(std::string Name) {
+   AllVertCoords.erase(Name); // removes the VertCoord from the list and in the
+                              // process, calls the destructor
 } // end erase
 
 //------------------------------------------------------------------------------
@@ -226,6 +244,8 @@ void VertCoord::clear() {
 } // end clear
 
 //------------------------------------------------------------------------------
+// Compute min and max layer indices for edges based on MinLayerCell and
+// MaxLayerCell
 void VertCoord::minMaxLayerEdge() {
 
    MinLayerEdgeTop = Array1DI4("MinLayerEdgeTop", NEdgesSize);
@@ -276,9 +296,11 @@ void VertCoord::minMaxLayerEdge() {
    MinLayerEdgeBotH = createHostMirrorCopy(MinLayerEdgeBot);
    MaxLayerEdgeTopH = createHostMirrorCopy(MaxLayerEdgeTop);
    MaxLayerEdgeBotH = createHostMirrorCopy(MaxLayerEdgeBot);
-}
+} // end MinMaxLayerEdge
 
 //------------------------------------------------------------------------------
+// Compute min and max layer indices for vertices based on MinLayerCell and
+// MaxLayerCell
 void VertCoord::minMaxLayerVertex() {
 
    MinLayerVertexTop = Array1DI4("MinLayerVertexTop", NVerticesSize);
@@ -350,10 +372,13 @@ void VertCoord::minMaxLayerVertex() {
    MinLayerVertexBotH = createHostMirrorCopy(MinLayerVertexBot);
    MaxLayerVertexTopH = createHostMirrorCopy(MaxLayerVertexTop);
    MaxLayerVertexBotH = createHostMirrorCopy(MaxLayerVertexBot);
-}
+} // end MinMaxLayerVertex
 
 //------------------------------------------------------------------------------
-void VertCoord::initMovementWeights(Config *Options) {
+// Store VertCoordMovementWeights based on config choice
+void VertCoord::initMovementWeights(
+    Config *Options // [in] configuration options
+) {
 
    Error Err; // default successful error code
 
@@ -386,13 +411,20 @@ void VertCoord::initMovementWeights(Config *Options) {
 }
 
 //------------------------------------------------------------------------------
-void VertCoord::computePressure(const Array2DReal &PressureInterface,
-                                const Array2DReal &PressureMid,
-                                const Array2DReal &LayerThickness,
-                                const Array1DReal &SurfacePressure) {
+// Compute the pressure at each layer interface and midpoint given the
+// LayerThickness and SurfacePressure. Hierarchical parallelism is used with a
+// parallel_for loop over all cells and a parallel_scan performing a prefix sum
+// in each column to compute pressure from the top-most active layer to the
+// bottom-most active layer.
+void VertCoord::computePressure(
+    const Array2DReal &PressureInterface, // [out] pressure at layer interfaces
+    const Array2DReal &PressureMid,       // [out] pressure at layer midpoints
+    const Array2DReal &LayerThickness,    // [in] pseudo thickness
+    const Array1DReal &SurfacePressure    // [in] surface pressure
+) {
 
-   Real Gravity = 9.80616_Real;
-   Real Rho0    = 1035._Real;
+   Real Gravity = 9.80616_Real; // gravitationl acceleration
+   Real Rho0    = 1035._Real;   // reference density
 
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
@@ -421,16 +453,23 @@ void VertCoord::computePressure(const Array2DReal &PressureInterface,
                  }
               });
        });
-}
+} // end computePressure
 
 //------------------------------------------------------------------------------
-void VertCoord::computeZHeight(const Array2DReal &ZInterface,
-                               const Array2DReal &ZMid,
-                               const Array2DReal &LayerThickness,
-                               const Array2DReal &SpecVol,
-                               const Array1DReal &BottomDepth) {
+// Compute geometric height z at layer interfaces and midpoints given the
+// LayerThickness, SpecVol, and BottomDepth. Hierarchical parallelism is used
+// with a parallel_for loop over cells and a parallel_scan performing a prefix
+// sum in each column to compute z from the bottom-most active layer to the
+// top-most active layer
+void VertCoord::computeZHeight(
+    const Array2DReal &ZInterface,     // [out] Z coord at layer interfaces
+    const Array2DReal &ZMid,           // [out] Z coord at layer midpoints
+    const Array2DReal &LayerThickness, // [in] pseudo thickness
+    const Array2DReal &SpecVol,        // [in] specific volume
+    const Array1DReal &BottomDepth     // [in] bottom depth
+) {
 
-   Real Rho0 = 1035._Real;
+   Real Rho0 = 1035._Real; // reference density
 
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
@@ -457,15 +496,22 @@ void VertCoord::computeZHeight(const Array2DReal &ZInterface,
                  }
               });
        });
-}
+} // end computeZHeight
 
 //------------------------------------------------------------------------------
-void VertCoord::computeGeopotential(const Array2DReal &GeopotentialMid,
-                                    const Array2DReal &ZMid,
-                                    const Array1DReal &TidalPotential,
-                                    const Array1DReal &SelfAttractionLoading) {
+// Compute geopotential given Zmid, TidalPotential, and SelfAttractionLoading.
+// Nested parallel_fors loop over all cells and all active layers in a column to
+// compute the geopotential at the midpoint of each layer. The tidal potential
+// and SAL are configurable, default-off features. When off these arrays will
+// just be zeroes.
+void VertCoord::computeGeopotential(
+    const Array2DReal &GeopotentialMid,      // [out] geopotential
+    const Array2DReal &ZMid,                 // [in] Z coord at layer midpoints
+    const Array1DReal &TidalPotential,       // [in] tidal potential
+    const Array1DReal &SelfAttractionLoading // [in] self attraction and loading
+) {
 
-   Real Gravity = 9.80616_Real;
+   Real Gravity = 9.80616_Real; // gravitationl acceleration
 
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
@@ -493,16 +539,22 @@ void VertCoord::computeGeopotential(const Array2DReal &GeopotentialMid,
                  }
               });
        });
-}
+} // end compute Geopotential
 
 //------------------------------------------------------------------------------
+// Compute the desired target thickness, given PressureInterface,
+// RefLayerThickness, and VertCoordMovementWeights. Hierarchical parallelsim is
+// used with an outer parallel_for loop over cells, and 2 paralel_reduce
+// reductions and a parallel_for over the active layers within a column.
 void VertCoord::computeTargetThickness(
-    const Array2DReal &LayerThicknessTarget,
-    const Array2DReal &PressureInterface, const Array2DReal &RefLayerThickness,
-    const Array1DReal &VertCoordMovementWeights) {
+    const Array2DReal &LayerThicknessTarget, // [out] desired target thickness
+    const Array2DReal &PressureInterface, // [in] pressure at layer interfaces
+    const Array2DReal &RefLayerThickness, // [in] reference pseudo thickness
+    const Array1DReal &VertCoordMovementWeights // [in] movement weights
+) {
 
-   Real Gravity = 9.80616_Real;
-   Real Rho0    = 1035._Real;
+   Real Gravity = 9.80616_Real; // gravitationl acceleration
+   Real Rho0    = 1035._Real;   // reference density
 
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
