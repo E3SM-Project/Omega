@@ -4,7 +4,7 @@
 
 ### Overview
 
-Omega uses pseudo height, $\tilde{z} = \frac{p}{\rho_0 g}$,  as the vertical coordinate ([V0 governing equation document](OmegaV1GoverningEqns)).
+Omega uses pseudo height, $\tilde{z} = \frac{p}{\rho_0 g}$,  as the vertical coordinate ([V1 governing equation document](OmegaV1GoverningEqns)).
 The pseudo height is essentially a normalized pressure coordinate, with the advantage that it has units of meters.
 The `VertCoord` class contains variables and functions relevant to keeping track of:
  - the maximum possible number of layers in a cell, i.e. the extent of the vertical dimension (read in from the mesh file)
