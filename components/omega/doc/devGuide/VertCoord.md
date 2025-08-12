@@ -86,7 +86,7 @@ The `parallel_scan` is called inside the `parallel_for`:
 Range = KMax - KMin + 1;
 Kokkos::parallel_scan(
     TeamThreadRange(Member, Range),
-    [&](int K, Real &Accum, bool IsFinal) {
+    [=](int K, Real &Accum, bool IsFinal) {
     ...
 }
 ```
@@ -105,7 +105,7 @@ Kokkos::parallel_reduce(
 also, the vertical computation of the target thicknesses are computed in a nested `parallel_for`:
 ```c++
 Kokkos::parallel_for(
-    Kokkos::TeamThreadRange(Member, NChunks), [&](const int KChunk) {
+    Kokkos::TeamThreadRange(Member, NChunks), [=](const int KChunk) {
    ...
 }
 ```
