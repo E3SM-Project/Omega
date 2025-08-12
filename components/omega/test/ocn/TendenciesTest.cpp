@@ -188,10 +188,9 @@ int testTendencies() {
                                        ThickTimeLevel, VelTimeLevel, Time);
 
    // check that everything got computed correctly
-   int NCellsOwned    = Mesh->NCellsOwned;
-   int NEdgesOwned    = Mesh->NEdgesOwned;
-   int NVerticesOwned = Mesh->NVerticesOwned;
-   int NTracers       = Tracers::getNumTracers();
+   int NCellsOwned = Mesh->NCellsOwned;
+   int NEdgesOwned = Mesh->NEdgesOwned;
+   int NTracers    = Tracers::getNumTracers();
 
    const Real LayerThickTendSum =
        sum(DefTendencies->LayerThicknessTend, NCellsOwned);

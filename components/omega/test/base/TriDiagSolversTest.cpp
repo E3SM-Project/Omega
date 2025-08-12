@@ -4,7 +4,6 @@
 using namespace OMEGA;
 
 void initTridiagonalTest() {
-   int Err = 0;
 
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv  = MachEnv::getDefault();

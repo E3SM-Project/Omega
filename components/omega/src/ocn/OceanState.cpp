@@ -329,7 +329,7 @@ I4 OceanState::getNormalVelocityH(HostArray2DReal &NormVelH,
 // TimeLevel == [1:new, 0:current, -1:previous, -2:two times ago, ...]
 I4 OceanState::copyToDevice(const I4 TimeLevel) {
 
-   I4 Err = 0;
+   I4 Err;
    I4 TimeIndex;
 
    Err = getTimeIndex(TimeIndex, TimeLevel);
@@ -345,7 +345,7 @@ I4 OceanState::copyToDevice(const I4 TimeLevel) {
 // TimeLevel == [1: new, 0:current, -1:previous, -2:two times ago, ...]
 I4 OceanState::copyToHost(const I4 TimeLevel) {
 
-   I4 Err = 0;
+   I4 Err;
    I4 TimeIndex;
 
    Err = getTimeIndex(TimeIndex, TimeLevel);
@@ -361,7 +361,7 @@ I4 OceanState::copyToHost(const I4 TimeLevel) {
 // TimeLevel == [1:new, 0:current, -1:previous, -2:two times ago, ...]
 I4 OceanState::exchangeHalo(const I4 TimeLevel) {
 
-   I4 Err = 0;
+   I4 Err;
    I4 TimeIndex;
    Err = getTimeIndex(TimeIndex, TimeLevel);
 
@@ -387,7 +387,7 @@ I4 OceanState::updateTimeLevels() {
    // Update current time index for layer thickness and normal velocity
    CurTimeIndex = (CurTimeIndex + 1) % NTimeLevels;
 
-   I4 Err = 0;
+   I4 Err;
 
    // Update IOField data associations
    Err = Field::attachFieldData<Array2DReal>(NormalVelocityFldName,
