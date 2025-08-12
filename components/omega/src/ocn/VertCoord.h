@@ -56,6 +56,9 @@ class VertCoord {
              Config *Options           ///< [in] configuration options
    );
 
+   /// define field metadata
+   void defineFields();
+
    /// read desired quantities from mesh file
    void readArrays(const Decomp *Decomp ///< [in] Decomp for mesh
    );
@@ -119,7 +122,17 @@ class VertCoord {
 
    HostArray1DReal BottomDepthH;
 
+   // VertCoord instance name and FieldGroup name
    std::string Name;
+   std::string GroupName;
+
+   // Field names
+   std::string PressInterfFldName;    ///< Field name for interface pressure
+   std::string PressMidFldName;       ///< Field name for midpoint pressure
+   std::string ZInterfFldName;        ///< Field name for interface Z height
+   std::string ZMidFldName;           ///< Field name for midpoint Z height
+   std::string GeopotFldName;         ///< Field name for geopotential
+   std::string LyrThickTargetFldName; ///< Field name for target thickness
 
    // methods
 

@@ -9,8 +9,11 @@
 
 #include "VertCoord.h"
 #include "Dimension.h"
+#include "Field.h"
 #include "IO.h"
 #include "OmegaKokkos.h"
+
+#include <limits>
 
 namespace OMEGA {
 
@@ -138,6 +141,162 @@ VertCoord::create(const std::string &Name, // [in] name for new VertCoord
 } // end create
 
 //------------------------------------------------------------------------------
+// Define IO fields and metadata
+void VertCoord::defineFields() {
+
+   I4 Err = 0; // default error code
+
+   // Set field names (append Name if not default)
+   PressInterfFldName    = "PressureInterface";
+   PressMidFldName       = "PressureMid";
+   ZInterfFldName        = "ZInterface";
+   ZMidFldName           = "ZMid";
+   GeopotFldName         = "GeopotentialMid";
+   LyrThickTargetFldName = "LayerThicknessTarget";
+
+   if (Name != "Default") {
+      PressInterfFldName.append(Name);
+      PressMidFldName.append(Name);
+      ZInterfFldName.append(Name);
+      ZMidFldName.append(Name);
+      GeopotFldName.append(Name);
+      LyrThickTargetFldName.append(Name);
+   }
+
+   // Create fields for VertCoord variables
+   const Real FillValue = -9.99e30;
+   int NDims            = 2;
+   std::vector<std::string> DimNames(NDims);
+   DimNames[0] = "NCells";
+   DimNames[1] = "NVertLayers";
+
+   auto PressureInterfaceField = Field::create(
+       PressInterfFldName,                      // field name
+       "Pressure at vertical layer interfaces", // long name or description
+       "Pa",                                    // units
+       "sea_water_pressure",                    // CF standard Name
+       0.0,                                     // min valid value
+       std::numeric_limits<Real>::max(),        // max valid value
+       FillValue,                               // scalar for undefined entries
+       NDims,                                   // number of dimensions
+       DimNames                                 // dimension names
+   );
+
+   auto PressureMidField = Field::create(
+       PressMidFldName,                        // field name
+       "Pressure at vertical layer midpoints", // long name or description
+       "Pa",                                   // units
+       "sea_water_pressure",                   // CF standard Name
+       0.0,                                    // min valid value
+       std::numeric_limits<Real>::max(),       // max valid value
+       FillValue,                              // scalar for undefined entries
+       NDims,                                  // number of dimensions
+       DimNames                                // dimension names
+   );
+
+   auto ZInterfaceField = Field::create(
+       ZInterfFldName,                               // field name
+       "Cartesian Z coordinate at layer interfaces", // long name or description
+       "m",                                          // units
+       "height",                                     // CF standard Name
+       std::numeric_limits<Real>::min(),             // min valid value
+       std::numeric_limits<Real>::max(),             // max valid value
+       FillValue, // scalar for undefined entries
+       NDims,     // number of dimensions
+       DimNames   // dimension names
+   );
+
+   auto ZMidField = Field::create(
+       ZMidFldName,                                 // field name
+       "Cartesian Z coordinate at layer midpoints", // long name or description
+       "m",                                         // units
+       "height",                                    // CF standard Name
+       std::numeric_limits<Real>::min(),            // min valid value
+       std::numeric_limits<Real>::max(),            // max valid value
+       FillValue, // scalar for undefined entries
+       NDims,     // number of dimensions
+       DimNames   // dimension names
+   );
+
+   auto GeopotentialMidField = Field::create(
+       GeopotFldName,                     // field name
+       "Geopotential at layer midpoints", // long name or description
+       "m^2 s^-2",                        // units
+       "geopotential",                    // CF standard Name
+       std::numeric_limits<Real>::min(),  // min valid value
+       std::numeric_limits<Real>::max(),  // max valid value
+       FillValue,                         // scalar for undefined entries
+       NDims,                             // number of dimensions
+       DimNames                           // dimension names
+   );
+
+   auto LayerThicknessTargetField =
+       Field::create(LyrThickTargetFldName, // field name
+                     "desired layer thickness based on total perturbation from "
+                     "the reference thickness", // long name or description
+                     "m",                       // units
+                     "",                        // CF standard Name
+                     0.0,                       // min valid value
+                     std::numeric_limits<Real>::max(), // max valid value
+                     FillValue, // scalar for undefined entries
+                     NDims,     // number of dimensions
+                     DimNames   // dimension names
+       );
+
+   // Create a field group for VertCoord fields
+   GroupName = "VertCoord";
+   if (Name != "Default") {
+      GroupName.append(Name);
+   }
+   auto VCoordGroup = FieldGroup::create(GroupName);
+
+   Err = VCoordGroup->addField(PressInterfFldName);
+   if (Err != 0)
+      LOG_ERROR("Error adding {} to field group {}", PressInterfFldName,
+                GroupName);
+   Err = VCoordGroup->addField(PressMidFldName);
+   if (Err != 0)
+      LOG_ERROR("Error adding {} to field group {}", PressMidFldName,
+                GroupName);
+   Err = VCoordGroup->addField(ZInterfFldName);
+   if (Err != 0)
+      LOG_ERROR("Error adding {} to field group {}", ZInterfFldName, GroupName);
+   Err = VCoordGroup->addField(ZMidFldName);
+   if (Err != 0)
+      LOG_ERROR("Error adding {} to field group {}", ZMidFldName, GroupName);
+   Err = VCoordGroup->addField(GeopotFldName);
+   if (Err != 0)
+      LOG_ERROR("Error adding {} to field group {}", GeopotFldName, GroupName);
+   Err = VCoordGroup->addField(LyrThickTargetFldName);
+   if (Err != 0)
+      LOG_ERROR("Error adding {} to field group {}", LyrThickTargetFldName,
+                GroupName);
+
+   // Associate Field with data
+   Err = PressureInterfaceField->attachData<Array2DReal>(PressureInterface);
+   if (Err != 0)
+      LOG_ERROR("Error attaching data array to field {}", PressInterfFldName);
+   Err = PressureMidField->attachData<Array2DReal>(PressureMid);
+   if (Err != 0)
+      LOG_ERROR("Error attaching data array to field {}", PressMidFldName);
+   Err = ZInterfaceField->attachData<Array2DReal>(ZInterface);
+   if (Err != 0)
+      LOG_ERROR("Error attaching data array to field {}", ZInterfFldName);
+   Err = ZMidField->attachData<Array2DReal>(ZMid);
+   if (Err != 0)
+      LOG_ERROR("Error attaching data array to field {}", ZMidFldName);
+   Err = GeopotentialMidField->attachData<Array2DReal>(GeopotentialMid);
+   if (Err != 0)
+      LOG_ERROR("Error attaching data array to field {}", GeopotFldName);
+   Err =
+       LayerThicknessTargetField->attachData<Array2DReal>(LayerThicknessTarget);
+   if (Err != 0)
+      LOG_ERROR("Error attaching data array to field {}",
+                LyrThickTargetFldName);
+
+} // end defineFields
+
+//------------------------------------------------------------------------------
 // Read desired quantities from the mesh file
 void VertCoord::readArrays(const Decomp *Decomp //< [in] Decomp for mesh
 ) {
@@ -225,7 +384,32 @@ void VertCoord::readArrays(const Decomp *Decomp //< [in] Decomp for mesh
 
 //------------------------------------------------------------------------------
 // Destroys a local VertCoord and deallocates all arrays
-VertCoord::~VertCoord() {} // end destructor
+VertCoord::~VertCoord() {
+
+   int Err;
+   Err = FieldGroup::destroy(GroupName);
+   if (Err != 0)
+      LOG_ERROR("Error removing FieldGrup {}", GroupName);
+   Err = Field::destroy(PressInterfFldName);
+   if (Err != 0)
+      LOG_ERROR("Error removing Field {}", PressInterfFldName);
+   Err = Field::destroy(PressMidFldName);
+   if (Err != 0)
+      LOG_ERROR("Error removing Field {}", PressMidFldName);
+   Err = Field::destroy(ZInterfFldName);
+   if (Err != 0)
+      LOG_ERROR("Error removing Field {}", ZInterfFldName);
+   Err = Field::destroy(ZMidFldName);
+   if (Err != 0)
+      LOG_ERROR("Error removing Field {}", ZMidFldName);
+   Err = Field::destroy(GeopotFldName);
+   if (Err != 0)
+      LOG_ERROR("Error removing Field {}", GeopotFldName);
+   Err = Field::destroy(LyrThickTargetFldName);
+   if (Err != 0)
+      LOG_ERROR("Error removing Field {}", LyrThickTargetFldName);
+
+} // end destructor
 
 //------------------------------------------------------------------------------
 // Removes a VertCoord from map by name
