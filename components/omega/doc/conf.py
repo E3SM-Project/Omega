@@ -41,6 +41,7 @@ extensions = [
     "sphinx.ext.mathjax",
 ]
 
+numfig = True
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -73,6 +74,7 @@ myst_footnote_transition = True
 myst_dmath_double_inline = True
 myst_enable_checkboxes = True
 suppress_warnings = ['myst.header']
+myst_heading_start_level = 1
 
 # -- HTML output -------------------------------------------------
 
