@@ -21,7 +21,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Broadcast" href="Broadcast.html" />
+    <link rel="next" title="Omega V1: Governing Equations" href="OmegaV1GoverningEqns.html" />
     <link rel="prev" title="Tridiagonal Solvers" href="../devGuide/TridiagonalSolvers.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
@@ -137,34 +137,34 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#variable-definitions">3.2 Variable Definitions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#operator-formulation">3.2 Operator Formulation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#divergence">3.2.1. Divergence</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#gradient">3.2.2. Gradient</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#curl">3.2.3. Curl</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#perpendicular-vector-component">3.2.4. Perpendicular vector component</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#perpendicular-gradient">3.2.5. Perpendicular Gradient</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#cell-to-edge-interpolation">3.2.6. Cell to Edge Interpolation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#vertex-to-edge-interpolation">3.2.7. Vertex to Edge Interpolation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#cell-to-vertex-interpolation">3.2.8. Cell to Vertex Interpolation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#vertex-to-cell-interpolation">3.2.9. Vertex to Cell Interpolation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#vector-from-edge-to-cell">3.2.10. Vector from Edge to Cell</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#operator-formulation">3.3 Operator Formulation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#divergence">3.3.1 Divergence</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gradient">3.3.2 Gradient</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#curl">3.3.3 Curl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#perpendicular-vector-component">3.3.4 Perpendicular vector component</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#perpendicular-gradient">3.3.5 Perpendicular Gradient</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cell-to-edge-interpolation">3.3.6 Cell to Edge Interpolation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#vertex-to-edge-interpolation">3.3.7 Vertex to Edge Interpolation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cell-to-vertex-interpolation">3.3.8 Cell to Vertex Interpolation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#vertex-to-cell-interpolation">3.3.9 Vertex to Cell Interpolation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#vector-from-edge-to-cell">3.3.10 Vector from Edge to Cell</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#momentum-terms">3.3 Momentum Terms</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#kinetic-energy-gradient">3.3.1. Kinetic energy gradient</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#potential-vorticity-term">3.3.2. Potential vorticity term</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#sea-surface-height-gradient">3.3.3. Sea surface height gradient</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#del2-momentum-dissipation">3.3.4. Del2 momentum dissipation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#del4-momentum-dissipation">3.3.5. Del4 momentum dissipation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#rayleigh-drag">3.3.6. Rayleigh Drag</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#bottom-drag">3.3.7. Bottom drag</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#wind-forcing">3.3.8. Wind forcing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#momentum-terms">3.4 Momentum Terms</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#kinetic-energy-gradient">3.4.1 Kinetic energy gradient</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#potential-vorticity-term">3.4.2 Potential vorticity term</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sea-surface-height-gradient">3.4.3 Sea surface height gradient</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#del2-momentum-dissipation">3.4.4 Del2 momentum dissipation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#del4-momentum-dissipation">3.4.5 Del4 momentum dissipation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rayleigh-drag">3.4.6 Rayleigh Drag</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bottom-drag">3.4.7 Bottom drag</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#wind-forcing">3.4.8 Wind forcing</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#thickness-and-tracer-terms">3.4 Thickness and Tracer Terms</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#tracer-advection">3.4.1. Tracer advection</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#del2-tracer-diffusion">3.4.2. Del2 tracer diffusion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#del4-tracer-diffusion">3.4.3. Del4 tracer diffusion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#thickness-and-tracer-terms">3.5 Thickness and Tracer Terms</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#tracer-advection">3.5.1 Tracer advection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#del2-tracer-diffusion">3.5.2 Del2 tracer diffusion</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#del4-tracer-diffusion">3.5.3 Del4 tracer diffusion</a></li>
 </ul>
 </li>
 </ul>
@@ -183,6 +183,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="OmegaV1GoverningEqns.html">Omega V1: Governing Equations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
@@ -337,7 +338,7 @@ We begin with the standard shallow water equations, which are derived from conse
 \[\begin{split}
 \boldsymbol{u} \cdot \nabla \boldsymbol{u} &amp;= (\nabla \times \boldsymbol{u}) \times \boldsymbol{u} + \nabla \frac{|\boldsymbol{u}|^2}{2} \\
 &amp;= \{\boldsymbol{k} \cdot (\nabla \times \boldsymbol{u})\} \boldsymbol{k} \times \boldsymbol{u} + \nabla \frac{|\boldsymbol{u}|^2}{2} \\
-&amp;= \omega \boldsymbol{u}^{\perp} + \nabla K.
+&amp;= \zeta \boldsymbol{u}^{\perp} + \nabla K.
 \end{split}\]</div>
 </p>
 <p>The governing equations for Omega-0 in continuous form are then
@@ -372,11 +373,11 @@ We begin with the standard shallow water equations, which are derived from conse
 <p>Here <span class="math notranslate nohighlight">\(q\)</span> is the potential vorticity, so that the term
 <div class="math notranslate nohighlight">
 \[
-q\left(h\boldsymbol{u}^{\perp}\right) = \frac{\omega + f}{h}\left(h\boldsymbol{u}^{\perp}\right)
- = \omega \boldsymbol{u}^{\perp} + f \boldsymbol{u}^{\perp}
+q\left(h\boldsymbol{u}^{\perp}\right) = \frac{\zeta + f}{h}\left(h\boldsymbol{u}^{\perp}\right)
+ = \zeta \boldsymbol{u}^{\perp} + f \boldsymbol{u}^{\perp}
 \]</div>
 
-is composed of the rotational part of the advection <span class="math notranslate nohighlight">\(\omega \boldsymbol{u}^{\perp}\)</span> and the Coriolis term <span class="math notranslate nohighlight">\(f \boldsymbol{u}^{\perp}\)</span>. This term is discussed in <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999109006780">Ringler et al. 2010</a> sections 2.1 and 2.2.</p>
+is composed of the rotational part of the advection <span class="math notranslate nohighlight">\(\zeta \boldsymbol{u}^{\perp}\)</span> and the Coriolis term <span class="math notranslate nohighlight">\(f \boldsymbol{u}^{\perp}\)</span>. This term is discussed in <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999109006780">Ringler et al. 2010</a> sections 2.1 and 2.2.</p>
 <p>The thickness equation (2) is derived from conservation of mass for a fluid with constant density, which reduces to conservation of volume. The model domain uses fixed horizontal cells with horizontal areas that are constant in time, so the area drops out and only the layer thickness <span class="math notranslate nohighlight">\(h\)</span> remains as the prognostic variable.</p>
 <p>The Tracer Equation (3) is the conservation equation for a passive tracer (scalar), with only advective and diffusive terms. It is not included in the textbook Shallow Water equations, but is useful for us to test tracer advection in preparation for a primitive equation model in Omega-1. For a tracer which is uniformly one (<span class="math notranslate nohighlight">\(\phi=1\)</span>), with no viscous terms, the tracer equation reduces to the thickness equation.
 The tracer equation is thickness weighted, because the conserved quantity is the tracer mass. Here <span class="math notranslate nohighlight">\((h\phi A)\)</span> typically has units of mass of the tracer in [kg] while <span class="math notranslate nohighlight">\(\phi\)</span> has units of concentration [kg m<span class="math notranslate nohighlight">\(^{-3}\)</span>]. Because the horizontal area is fixed, <span class="math notranslate nohighlight">\(A\)</span> has been divided out making (3) thickness weighted, rather than volume weighted. For chemical tracers <span class="math notranslate nohighlight">\(\phi\)</span> has units of [mmol m<span class="math notranslate nohighlight">\(^{-3}\)</span>]; salinity has units of Practical Salinity Units (PSU) and potential temperature has units of [C]. A derivation of the thickness-weighted tracer equation appears in Appendix A-2 of <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S1463500313000760">Ringler et al. 2013</a>.</p>
@@ -421,7 +422,7 @@ Publications that evaluate TRiSK against alternative formulations include <a cla
 </section>
 </section>
 <section id="variable-definitions">
-<h3>3.2 Variable Definitions<a class="headerlink" href="#variable-definitions" title="Permalink to this heading"></a></h3>
+<span id="id1"></span><h3>3.2 Variable Definitions<a class="headerlink" href="#variable-definitions" title="Permalink to this heading"></a></h3>
 <p>Table 1. Definition of variables</p>
 <table class="docutils align-default">
 <thead>
@@ -565,7 +566,7 @@ Publications that evaluate TRiSK against alternative formulations include <a cla
 <td><p>1/m/s</p></td>
 <td><p>vertex</p></td>
 <td><p></p></td>
-<td><p><span class="math notranslate nohighlight">\(q = \eta/h = \left(\omega+f\right)/h\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(q = \left(\zeta+f\right)/h\)</span></p></td>
 </tr>
 <tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(Ra\)</span></p></td>
 <td><p>Rayleigh drag coefficient</p></td>
@@ -630,54 +631,47 @@ Publications that evaluate TRiSK against alternative formulations include <a cla
 <td><p>WeightsOnEdge</p></td>
 <td><p>normalized weights, <span class="math notranslate nohighlight">\({\tilde w}_{e,e'} = \tfrac{l_{e'}}{d_e} w_{e,e'}\)</span></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\eta\)</span></p></td>
-<td><p>absolute vorticity</p></td>
-<td><p>1/s</p></td>
-<td><p>vertex</p></td>
-<td><p></p></td>
-<td><p><span class="math notranslate nohighlight">\(\eta=\omega + f\)</span></p></td>
-</tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\kappa_2\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\kappa_2\)</span></p></td>
 <td><p>tracer diffusion</p></td>
 <td><p>m<span class="math notranslate nohighlight">\(^2\)</span>/s</p></td>
 <td><p>cell</p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\kappa_4\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\kappa_4\)</span></p></td>
 <td><p>biharmonic tracer diffusion</p></td>
 <td><p>m<span class="math notranslate nohighlight">\(^4\)</span>/s</p></td>
 <td><p>cell</p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\nu_2\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\nu_2\)</span></p></td>
 <td><p>viscosity</p></td>
 <td><p>m<span class="math notranslate nohighlight">\(^2\)</span>/s</p></td>
 <td><p>edge</p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\nu_4\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\nu_4\)</span></p></td>
 <td><p>biharmonic viscosity</p></td>
 <td><p>m<span class="math notranslate nohighlight">\(^4\)</span>/s</p></td>
 <td><p>edge</p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\phi\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\phi\)</span></p></td>
 <td><p>tracer</p></td>
 <td><p>varies</p></td>
 <td><p>cell</p></td>
 <td><p></p></td>
 <td><p>units may be kg/m<span class="math notranslate nohighlight">\(^3\)</span> or similar</p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\omega\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\zeta\)</span></p></td>
 <td><p>relative vorticity</p></td>
 <td><p>1/s</p></td>
 <td><p>vertex</p></td>
 <td><p>RelativeVorticity</p></td>
-<td><p><span class="math notranslate nohighlight">\(\omega={\boldsymbol k} \cdot \left( \nabla \times {\boldsymbol u}\right)\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\zeta={\boldsymbol k} \cdot \left( \nabla \times {\boldsymbol u}\right)\)</span></p></td>
 </tr>
 </tbody>
 </table>
@@ -790,10 +784,10 @@ Publications that evaluate TRiSK against alternative formulations include <a cla
 <a class="reference external" href="https://epubs.siam.org/doi/10.1137/110850293">Thuburn and Cotter 2012</a>.</p>
 </section>
 <section id="operator-formulation">
-<h3>3.2 Operator Formulation<a class="headerlink" href="#operator-formulation" title="Permalink to this heading"></a></h3>
+<span id="id2"></span><h3>3.3 Operator Formulation<a class="headerlink" href="#operator-formulation" title="Permalink to this heading"></a></h3>
 <p>The TRiSK formulation of the discrete operators are as follows. See <a class="reference external" href="https://gmd.copernicus.org/articles/16/5539/2023">Bishnu et al. 2023</a> section 4.1 and Figure 1 for a description and documentation of convergence rates, as well as <a class="reference external" href="https://doi.org/10.5281/zenodo.7439539">Bishnu et al. 2021</a>. All TRiSK spatial operators show second-order convergence on a uniform hexagon grid, except for the curl on vertices, which is first order. The curl interpolated from vertices to cell centers regains second order convergence. The rates of convergence are typically less than second order on nonuniform meshes, including spherical meshes.</p>
 <section id="divergence">
-<h4>3.2.1. Divergence<a class="headerlink" href="#divergence" title="Permalink to this heading"></a></h4>
+<h4>3.3.1 Divergence<a class="headerlink" href="#divergence" title="Permalink to this heading"></a></h4>
 <p>The divergence operator maps a vector field’s edge normal component <span class="math notranslate nohighlight">\(F_e\)</span> to a cell center (<a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999109006780">Ringler et al. 2010</a> eqn 21),</p>
 <div class="math notranslate nohighlight">
 \[
@@ -817,7 +811,7 @@ D_i
 </p>
 </section>
 <section id="gradient">
-<h4>3.2.2. Gradient<a class="headerlink" href="#gradient" title="Permalink to this heading"></a></h4>
+<h4>3.3.2 Gradient<a class="headerlink" href="#gradient" title="Permalink to this heading"></a></h4>
 <p>The gradient operator maps a cell-centered scalar to an edge-normal vector component
 (<a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999109006780">Ringler et al. 2010</a> eqn 22),</p>
 <div class="math notranslate nohighlight">
@@ -838,7 +832,7 @@ D_i
 where <span class="math notranslate nohighlight">\(\left\{i_1, i_2\right\}\)</span> are the cells neighboring edge <span class="math notranslate nohighlight">\(e\)</span>.  The indices <span class="math notranslate nohighlight">\(\left\{i_1, i_2\right\}\)</span> are ordered such that the normal vector <span class="math notranslate nohighlight">\({\bf n}\)</span> points from cell <span class="math notranslate nohighlight">\(i_1\)</span> to cell <span class="math notranslate nohighlight">\(i_2\)</span>. In the code <span class="math notranslate nohighlight">\({\bf n}\)</span> points from <code class="docutils literal notranslate"><span class="pre">CellsOnEdge(IEdge,</span> <span class="pre">0)</span></code> to <code class="docutils literal notranslate"><span class="pre">CellsOnEdge(IEdge,</span> <span class="pre">1)</span></code>.</p>
 </section>
 <section id="curl">
-<h4>3.2.3. Curl<a class="headerlink" href="#curl" title="Permalink to this heading"></a></h4>
+<h4>3.3.3 Curl<a class="headerlink" href="#curl" title="Permalink to this heading"></a></h4>
 <p>The curl operator maps a vector’s edge normal component <span class="math notranslate nohighlight">\(u_e\)</span> to a scalar field at vertex
 (<a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999109006780">Ringler et al. 2010</a> eqn 23),</p>
 <div class="math notranslate nohighlight">
@@ -852,7 +846,7 @@ where <span class="math notranslate nohighlight">\(\left\{i_1, i_2\right\}\)</sp
 <span class="math notranslate nohighlight">\({\bf x}_v\)</span>, then <span class="math notranslate nohighlight">\(t_{e,v}=1\)</span>. The summation is over <span class="math notranslate nohighlight">\(e\in EV(v)\)</span>, which are the edges that terminate at vertex <span class="math notranslate nohighlight">\(v\)</span>. There are <em>always</em> three edges that terminate at each vertex for Voronoi Tessellations, and four edges on each vertex for quadrilateral meshes, unless neighboring cells are missing for land boundaries. Again, the subscript <span class="math notranslate nohighlight">\(v\)</span> is dropped and a vertex is assumed for the location of the curl.</p>
 </section>
 <section id="perpendicular-vector-component">
-<h4>3.2.4. Perpendicular vector component<a class="headerlink" href="#perpendicular-vector-component" title="Permalink to this heading"></a></h4>
+<h4>3.3.4 Perpendicular vector component<a class="headerlink" href="#perpendicular-vector-component" title="Permalink to this heading"></a></h4>
 <p>The perpendicular component a vector field is defined as
 <div class="math notranslate nohighlight">
 \[
@@ -887,24 +881,24 @@ u_e^\perp = \sum_{e'\in ECP(e)} {\tilde w}_{e,e'} \, u_{e'}.
 This simple operation can be seen in MPAS-Ocean in the subroutine <code class="docutils literal notranslate"><span class="pre">ocn_diagnostic_solve_vortVel</span></code> in the file <code class="docutils literal notranslate"><span class="pre">mpas_ocn_diagnostics.F</span></code>.</p>
 </section>
 <section id="perpendicular-gradient">
-<h4>3.2.5. Perpendicular Gradient<a class="headerlink" href="#perpendicular-gradient" title="Permalink to this heading"></a></h4>
+<h4>3.3.5 Perpendicular Gradient<a class="headerlink" href="#perpendicular-gradient" title="Permalink to this heading"></a></h4>
 <p>The gradient of a scalar at the middle of an edge, pointing tangentially along the edge (from one vertex to the other), is sometimes used. For example, the del2 formulation requires the perpendicular gradient of vorticity. This is called the perpendicular gradient because the standard gradient is normal to the edge.</p>
 <p>The perpendicular gradient maps a scalar at vertices to an edge-tangential vector component,
 <div class="math notranslate nohighlight">
 \[
-\left(\nabla \omega_v\right)_e^\perp = \frac{1}{l_e} \sum_{v\in VE(e)} -t_{e,v}\omega_v.
+\left(\nabla \zeta_v\right)_e^\perp = \frac{1}{l_e} \sum_{v\in VE(e)} -t_{e,v}\zeta_v.
 \]</div>
 
 Like the standard gradient, in practice we drop the sign indicator <span class="math notranslate nohighlight">\(t_{e,v}\)</span> and rewrite it using the index ordering,
 <div class="math notranslate nohighlight">
 \[
-\left(\nabla \omega_v\right)_e^\perp = \frac{\omega_{v2} - \omega_{v1}}{l_e},
+\left(\nabla \zeta_v\right)_e^\perp = \frac{\zeta_{v2} - \zeta_{v1}}{l_e},
 \]</div>
 
 where the positive vector <span class="math notranslate nohighlight">\({\bf n}^\perp\)</span> is 90<span class="math notranslate nohighlight">\(^o\)</span> to the left of <span class="math notranslate nohighlight">\({\bf n}\)</span>. The indices are ordered such that <span class="math notranslate nohighlight">\({\bf n}^\perp\)</span> points from <span class="math notranslate nohighlight">\(v_1\)</span> to <span class="math notranslate nohighlight">\(v_2\)</span>, which corresponds to <code class="docutils literal notranslate"><span class="pre">VerticesOnEdge(IEdge,</span> <span class="pre">0)</span></code> and <code class="docutils literal notranslate"><span class="pre">VerticesOnEdge(IEdge,</span> <span class="pre">1)</span></code> in the code.</p>
 </section>
 <section id="cell-to-edge-interpolation">
-<h4>3.2.6. Cell to Edge Interpolation<a class="headerlink" href="#cell-to-edge-interpolation" title="Permalink to this heading"></a></h4>
+<h4>3.3.6 Cell to Edge Interpolation<a class="headerlink" href="#cell-to-edge-interpolation" title="Permalink to this heading"></a></h4>
 <p>The mid-point average of a scalar from cell centers to the adjoining edge is
 <div class="math notranslate nohighlight">
 \[
@@ -914,17 +908,17 @@ where the positive vector <span class="math notranslate nohighlight">\({\bf n}^\
 In a Voronoi tessellation the edge is defined to be at the mid-point between the two cell centers, so this formula is identical to an area-weighted average using the triangles between edge <span class="math notranslate nohighlight">\(e\)</span> and the neighboring cell centers.</p>
 </section>
 <section id="vertex-to-edge-interpolation">
-<h4>3.2.7. Vertex to Edge Interpolation<a class="headerlink" href="#vertex-to-edge-interpolation" title="Permalink to this heading"></a></h4>
+<h4>3.3.7 Vertex to Edge Interpolation<a class="headerlink" href="#vertex-to-edge-interpolation" title="Permalink to this heading"></a></h4>
 <p>The mid-point average of a scalar from vertices to the middle of the connecting edge is
 <div class="math notranslate nohighlight">
 \[
-[\omega_v]_e = \frac{1}{2} \sum_{v\in VE(e)} \omega_v.
+[\zeta_v]_e = \frac{1}{2} \sum_{v\in VE(e)} \zeta_v.
 \]</div>
 
 The is a distance-weighted average, since the edge quantity lives at the mid-point between the vertices. One could alternatively compute an area-weighted average using the dual-mesh cell area <span class="math notranslate nohighlight">\({\hat A}_v\)</span> surrounding each vertex, but that is not done and would result in very small differences.</p>
 </section>
 <section id="cell-to-vertex-interpolation">
-<h4>3.2.8. Cell to Vertex Interpolation<a class="headerlink" href="#cell-to-vertex-interpolation" title="Permalink to this heading"></a></h4>
+<h4>3.3.8 Cell to Vertex Interpolation<a class="headerlink" href="#cell-to-vertex-interpolation" title="Permalink to this heading"></a></h4>
 <p>The area-weighted average of a scalar at a vertex from the three surrounding cells is
 <div class="math notranslate nohighlight">
 \[
@@ -940,7 +934,7 @@ The three kites sum to the triangle area,
 </p>
 </section>
 <section id="vertex-to-cell-interpolation">
-<h4>3.2.9. Vertex to Cell Interpolation<a class="headerlink" href="#vertex-to-cell-interpolation" title="Permalink to this heading"></a></h4>
+<h4>3.3.9 Vertex to Cell Interpolation<a class="headerlink" href="#vertex-to-cell-interpolation" title="Permalink to this heading"></a></h4>
 <p>The area-weighted average of a scalar at a cell from the surrounding vertices is
 <div class="math notranslate nohighlight">
 \[
@@ -949,15 +943,15 @@ The three kites sum to the triangle area,
 </p>
 </section>
 <section id="vector-from-edge-to-cell">
-<h4>3.2.10. Vector from Edge to Cell<a class="headerlink" href="#vector-from-edge-to-cell" title="Permalink to this heading"></a></h4>
+<h4>3.3.10 Vector from Edge to Cell<a class="headerlink" href="#vector-from-edge-to-cell" title="Permalink to this heading"></a></h4>
 <p>The prognostic velocity variable on the edge is the edge normal velocity, <span class="math notranslate nohighlight">\(u_e\)</span>. The tangential velocity <span class="math notranslate nohighlight">\(u_e^\perp\)</span> is computed diagnostically from <span class="math notranslate nohighlight">\(u_e\)</span>. In addition, the full vector may be computed at the cell center from the edge normal velocities <span class="math notranslate nohighlight">\(u_e\)</span> of the edges on that cell. That is done in MPAS with radial basis functions, and is explained in this <a class="reference external" href="https://github.com/MPAS-Dev/MPAS-Documents/blob/master/shared/rbf_design/rbf.pdf">previous design document</a>.</p>
 </section>
 </section>
 <section id="momentum-terms">
-<h3>3.3 Momentum Terms<a class="headerlink" href="#momentum-terms" title="Permalink to this heading"></a></h3>
+<span id="id3"></span><h3>3.4 Momentum Terms<a class="headerlink" href="#momentum-terms" title="Permalink to this heading"></a></h3>
 <p>The computation of each term in (4-6) is now described in detail, along with alternative formulations.</p>
 <section id="kinetic-energy-gradient">
-<h4>3.3.1. Kinetic energy gradient<a class="headerlink" href="#kinetic-energy-gradient" title="Permalink to this heading"></a></h4>
+<h4>3.4.1 Kinetic energy gradient<a class="headerlink" href="#kinetic-energy-gradient" title="Permalink to this heading"></a></h4>
 <p>The kinetic energy gradient term is the non-rotational part of the nonlinear advection. Fundamentally, it maps the prognostic edge-normal velocity from edges back to an edge scalar quantity. We use the standard gradient formulation from cell center to edge,</p>
 <div class="math notranslate nohighlight">
 \[
@@ -1000,20 +994,20 @@ since <span class="math notranslate nohighlight">\({\bar A}_{e}/4\)</span> is ex
 See <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S146350032100161X">Calandrini et al. 2021</a> section 2.3 for more information.</p>
 </section>
 <section id="potential-vorticity-term">
-<h4>3.3.2. Potential vorticity term<a class="headerlink" href="#potential-vorticity-term" title="Permalink to this heading"></a></h4>
+<h4>3.4.2 Potential vorticity term<a class="headerlink" href="#potential-vorticity-term" title="Permalink to this heading"></a></h4>
 <p>The potential vorticity term, <span class="math notranslate nohighlight">\(q\left(h\boldsymbol{u}^{\perp}\right)\)</span>, includes the rotational part of the advection. It may be computed in two ways,</p>
 <div class="math notranslate nohighlight">
 \[
-\text{Option 1:  } \left[ \frac{\omega_v +f_v}{[h_i]_v}\right]_e\left([h_i]_e u_e^{\perp}\right)
+\text{Option 1:  } \left[ \frac{\zeta_v +f_v}{[h_i]_v}\right]_e\left([h_i]_e u_e^{\perp}\right)
 \]</div>
 <div class="math notranslate nohighlight">
 \[
-\text{Option 2:  }([\omega_v]_e +f_e) u_e^\perp
+\text{Option 2:  }([\zeta_v]_e +f_e) u_e^\perp
 \]</div>
 <p>The first computes the potential vorticity <span class="math notranslate nohighlight">\(q_v\)</span> at the vertex and interpolates that quantity to the edge, which is what is done in MPAS-Ocean. One may also cancel the thickness <span class="math notranslate nohighlight">\(h\)</span> (ignoring the interpolated locations) and use option 2. Additional interpolation options and results are presented in <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S146350032100161X">Calandrini et al. 2021</a></p>
 </section>
 <section id="sea-surface-height-gradient">
-<h4>3.3.3. Sea surface height gradient<a class="headerlink" href="#sea-surface-height-gradient" title="Permalink to this heading"></a></h4>
+<h4>3.4.3 Sea surface height gradient<a class="headerlink" href="#sea-surface-height-gradient" title="Permalink to this heading"></a></h4>
 <p>The sea surface height (SSH) gradient uses the standard gradient formulation from cell center to edge,</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}
@@ -1022,22 +1016,22 @@ See <a class="reference external" href="https://www.sciencedirect.com/science/ar
 \end{split}\]</div>
 </section>
 <section id="del2-momentum-dissipation">
-<h4>3.3.4. Del2 momentum dissipation<a class="headerlink" href="#del2-momentum-dissipation" title="Permalink to this heading"></a></h4>
+<span id="id4"></span><h4>3.4.4 Del2 momentum dissipation<a class="headerlink" href="#del2-momentum-dissipation" title="Permalink to this heading"></a></h4>
 <p>The Del2, or Laplacian operator, viscous momentum dissipation maps edge-normal velocity back to the edge-normal component of the Laplacian. In TRiSK this is done with the vorticity-divergence formulation, which may be written as</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}
 \nabla^2 {\bf u} &amp;=  \nabla \left( \nabla\cdot{\bf u}\right) - \nabla \times \left( \nabla \times {\bf u} \right) \\
- &amp;=  \nabla {\bf D} - \nabla \times \omega \\
- &amp;=  \nabla {\bf D} - {\bf k} \times \nabla \omega \\
- &amp;=  \nabla {\bf D} - \nabla^\perp \omega.
+ &amp;=  \nabla {\bf D} - \nabla \times \zeta \\
+ &amp;=  \nabla {\bf D} - {\bf k} \times \nabla \zeta \\
+ &amp;=  \nabla {\bf D} - \nabla^\perp \zeta.
 \end{split}\]</div>
 <p>This formulation is also mentioned in <a class="reference external" href="https://linkinghub.elsevier.com/retrieve/pii/S0021999111000325">Gassmann 2011</a> (equation 17), <a class="reference external" href="https://onlinelibrary.wiley.com/doi/10.1002/qj.3294">Gassman 2018</a> (equation 44) and <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S1463500324000222">Lapolli et al. 2024</a> (section 4.5.2).</p>
 <p>For our discretization, the full Del2 term is written as
 <div class="math notranslate nohighlight">
 \[\begin{split}
-\nu_2 \nabla^2 u_e &amp;= \nu_2 \left( \nabla D_i - \nabla^\perp \omega_v\right) \\
-&amp;= \nu_2 \left( \frac{1}{d_e} \sum_{i\in CE(e)} -n_{e,i}D_i - \frac{1}{l_e} \sum_{v\in VE(e)} -t_{e,v}\omega_v\right) \\
-&amp;= \nu_2 \left( \frac{D_{i2} - D_{i1}}{d_e} - \frac{\omega_{v2} - \omega_{v1}}{l_e} \right),
+\nu_2 \nabla^2 u_e &amp;= \nu_2 \left( \nabla D_i - \nabla^\perp \zeta_v\right) \\
+&amp;= \nu_2 \left( \frac{1}{d_e} \sum_{i\in CE(e)} -n_{e,i}D_i - \frac{1}{l_e} \sum_{v\in VE(e)} -t_{e,v}\zeta_v\right) \\
+&amp;= \nu_2 \left( \frac{D_{i2} - D_{i1}}{d_e} - \frac{\zeta_{v2} - \zeta_{v1}}{l_e} \right),
 \end{split}\]</div>
 
 where the ordering of indices <span class="math notranslate nohighlight">\(\{i_i, i_2\}\)</span> and <span class="math notranslate nohighlight">\(\{v_1, v_2\}\)</span> are explained in the gradient operator sections above.</p>
@@ -1045,7 +1039,7 @@ where the ordering of indices <span class="math notranslate nohighlight">\(\{i_i
 <a class="reference external" href="https://onlinelibrary.wiley.com/doi/10.1002/qj.3294">Gassman 2018</a>.</p>
 </section>
 <section id="del4-momentum-dissipation">
-<h4>3.3.5. Del4 momentum dissipation<a class="headerlink" href="#del4-momentum-dissipation" title="Permalink to this heading"></a></h4>
+<span id="id5"></span><h4>3.4.5 Del4 momentum dissipation<a class="headerlink" href="#del4-momentum-dissipation" title="Permalink to this heading"></a></h4>
 <p>The Del4, or biharmonic, momentum dissipation also maps edge-normal velocity back to the edge-normal component of the Laplacian. This is done with two applications of the Del2 operator above.</p>
 <div class="math notranslate nohighlight">
 \[
@@ -1053,7 +1047,7 @@ where the ordering of indices <span class="math notranslate nohighlight">\(\{i_i
 \]</div>
 </section>
 <section id="rayleigh-drag">
-<h4>3.3.6. Rayleigh Drag<a class="headerlink" href="#rayleigh-drag" title="Permalink to this heading"></a></h4>
+<h4>3.4.6 Rayleigh Drag<a class="headerlink" href="#rayleigh-drag" title="Permalink to this heading"></a></h4>
 <p>Rayleigh drag is simply linear drag, applied to all levels. It is typically only used during the spin-up process to damp large velocities during the initial adjustment. The Rayleigh coefficient <span class="math notranslate nohighlight">\(Ra\)</span> is simply a scalar constant,</p>
 <div class="math notranslate nohighlight">
 \[
@@ -1061,7 +1055,7 @@ where the ordering of indices <span class="math notranslate nohighlight">\(\{i_i
 \]</div>
 </section>
 <section id="bottom-drag">
-<h4>3.3.7. Bottom drag<a class="headerlink" href="#bottom-drag" title="Permalink to this heading"></a></h4>
+<h4>3.4.7 Bottom drag<a class="headerlink" href="#bottom-drag" title="Permalink to this heading"></a></h4>
 <p>Bottom drag is more relevant to layered models than to shallow water systems, but is included here for completeness. It is a quadratic drag applied to the edge velocity,</p>
 <div class="math notranslate nohighlight">
 \[
@@ -1069,7 +1063,7 @@ where the ordering of indices <span class="math notranslate nohighlight">\(\{i_i
 \]</div>
 </section>
 <section id="wind-forcing">
-<h4>3.3.8. Wind forcing<a class="headerlink" href="#wind-forcing" title="Permalink to this heading"></a></h4>
+<h4>3.4.8 Wind forcing<a class="headerlink" href="#wind-forcing" title="Permalink to this heading"></a></h4>
 <p>Wind forcing has the same form as the bottom drag, but the forcing is the difference between the current velocity and the wind <span class="math notranslate nohighlight">\(u_W\)</span>, interpolated and projected to the edge normal direction,</p>
 <div class="math notranslate nohighlight">
 \[
@@ -1078,9 +1072,9 @@ where the ordering of indices <span class="math notranslate nohighlight">\(\{i_i
 </section>
 </section>
 <section id="thickness-and-tracer-terms">
-<h3>3.4 Thickness and Tracer Terms<a class="headerlink" href="#thickness-and-tracer-terms" title="Permalink to this heading"></a></h3>
+<span id="id6"></span><h3>3.5 Thickness and Tracer Terms<a class="headerlink" href="#thickness-and-tracer-terms" title="Permalink to this heading"></a></h3>
 <section id="tracer-advection">
-<h4>3.4.1. Tracer advection<a class="headerlink" href="#tracer-advection" title="Permalink to this heading"></a></h4>
+<h4>3.5.1 Tracer advection<a class="headerlink" href="#tracer-advection" title="Permalink to this heading"></a></h4>
 <p>There are many schemes available for tracer advection. Simple schemes include centered advection and upstream. MPAS-Ocean uses Flux Corrected Transport, which is fourth order under normal conditions, and reduces to third order to preserve monotonicity.</p>
 <p>The tracer advection term is
 <div class="math notranslate nohighlight">
@@ -1099,7 +1093,7 @@ The question is how to interpolate to the edge to obtain <span class="math notra
 <p>More details of the tracer advection scheme will be given in a future design document.</p>
 </section>
 <section id="del2-tracer-diffusion">
-<h4>3.4.2. Del2 tracer diffusion<a class="headerlink" href="#del2-tracer-diffusion" title="Permalink to this heading"></a></h4>
+<span id="id7"></span><h4>3.5.2 Del2 tracer diffusion<a class="headerlink" href="#del2-tracer-diffusion" title="Permalink to this heading"></a></h4>
 <p>Tracer diffusion is applied with a Laplacian operator on the cell-centered tracer phi, and the product of the operator is also at the cell center. The Laplacian may be written as the divergence of the gradient,</p>
 <div class="math notranslate nohighlight">
 \[
@@ -1107,7 +1101,7 @@ The question is how to interpolate to the edge to obtain <span class="math notra
 =
 \kappa_2 h_i \nabla \cdot \left( \nabla \phi_i \right).
 \]</div>
-<p>and the stencils in Section 3.2 are used. Here <span class="math notranslate nohighlight">\(\kappa_2\)</span> is the del2 diffusion coefficient, and the operator is thickness-weighted by <span class="math notranslate nohighlight">\(h_i\)</span>. The position of a gradient is assumed to be at an edge, and a divergence at the cell center. This could be written explicitly as</p>
+<p>and the stencils in Section 3.3 are used. Here <span class="math notranslate nohighlight">\(\kappa_2\)</span> is the del2 diffusion coefficient, and the operator is thickness-weighted by <span class="math notranslate nohighlight">\(h_i\)</span>. The position of a gradient is assumed to be at an edge, and a divergence at the cell center. This could be written explicitly as</p>
 <div class="math notranslate nohighlight">
 \[
 \kappa_2 h_i \left( \nabla^2 \phi_i \right)_i
@@ -1116,7 +1110,7 @@ The question is how to interpolate to the edge to obtain <span class="math notra
 \]</div>
 </section>
 <section id="del4-tracer-diffusion">
-<h4>3.4.3. Del4 tracer diffusion<a class="headerlink" href="#del4-tracer-diffusion" title="Permalink to this heading"></a></h4>
+<span id="id8"></span><h4>3.5.3 Del4 tracer diffusion<a class="headerlink" href="#del4-tracer-diffusion" title="Permalink to this heading"></a></h4>
 <p>The del4 tracer diffusion is simply the Laplacian operator applied twice,</p>
 <div class="math notranslate nohighlight">
 \[
@@ -1124,7 +1118,7 @@ The question is how to interpolate to the edge to obtain <span class="math notra
 =
 - \kappa_4 h_i \nabla^2 \left( \nabla^2 \phi_i \right).
 \]</div>
-<p>The del2 operator using the divergence of the gradient in the last section is used, with the simple stencils from Section 3.2.</p>
+<p>The del2 operator using the divergence of the gradient in the last section is used, with the simple stencils from Section 3.3.</p>
 </section>
 </section>
 </section>
@@ -1255,7 +1249,7 @@ They test the tracer advection and tracer time stepping. Velocity and thickness 
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="../devGuide/TridiagonalSolvers.html" class="btn btn-neutral float-left" title="Tridiagonal Solvers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="Broadcast.html" class="btn btn-neutral float-right" title="Broadcast" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="OmegaV1GoverningEqns.html" class="btn btn-neutral float-right" title="Omega V1: Governing Equations" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
