@@ -6,8 +6,8 @@ In order to run across nodes in a parallel computer, Omega subdivides the
 horizontal domain into subdomains that are distributed across the machine
 and communicate using message passing via the Message Passing Interface (MPI).
 To decompose the domain, we utilize the
-[METIS](http://glaros.dtc.umn.edu/gkhome/metis/metis/overview) library.
-An Omega mesh is fully described by the
+[METIS/ParMETIS](http://glaros.dtc.umn.edu/gkhome/metis/metis/overview)
+libraries.  An Omega mesh is fully described by the
 [MPAS Mesh Specification](https://mpas-dev.github.io/files/documents/MPAS-MeshSpec.pdf)
 which we will reproduce here eventually. The Decomp class decomposes
 the domain based on the index space and number of MPI tasks (currently
@@ -21,11 +21,14 @@ with the call:
 ```
 This must be called very early in the init process, just after initializing
 the MachEnv, Config and IO.  Mesh information is first read using parallel
-IO into an equally-spaced linear decomposition, then partitioned by METIS
-into a more optimal decomposition. The parallel METIS implementation
-(ParMETIS) will eventually be used to reduce the memory footprint for
-high-resolution configurations, but currently we use the serial METIS library
-for the partitioning.
+IO into an equally-spaced linear decomposition, then partitioned by METIS or
+ParMETIS into a more optimal decomposition. The parallel ParMETIS
+implementation should be used to reduce the memory footprint for
+high-resolution configurations. Although the algorithmic method is similar,
+ParMETIS leads to a somewhat different partitioning than the serial METIS
+version. The serial version should give the same partition as the serial
+offline gpmetis tool used by MPAS when the same version of the METIS library
+is used.
 
 METIS requires information about the connectivity in the mesh. In particular,
 it needs the total number of cells and edges in the mesh and the connectivity

@@ -23,8 +23,9 @@
 ///    # Width of halo around local domain (Default = 3)
 ///    HaloWidth: 3
 ///    # Method to use for decomposing the horizontal domain
-///    # The only currently supported option is MetisKWay but others may
-///    # be added in the future
+///    # Currently supported options are:
+///    #    - MetisKWay
+///    #    - ParMetisKway (Parallel implementation of KWay)
 ///    DecompMethod: MetisKWay
 /// \EndConfigInput
 //
@@ -46,9 +47,10 @@ namespace OMEGA {
 
 /// Supported partitioning methods
 enum PartMethod {
-   PartMethodUnknown,   ///< Unknown or undefined method
-   PartMethodMetisKWay, ///< Metis K-way partitioning (default)
-   PartMethodMetisRB    ///< Metis recursive bisection (not yet supported)
+   PartMethodUnknown,      ///< Unknown or undefined method
+   PartMethodMetisKWay,    ///< Metis K-way partitioning (default)
+   PartMethodParMetisKWay, ///< parallel version of K-way partitioning
+   PartMethodMetisRB       ///< Metis recursive bisection (not yet supported)
 };
 
 /// Translates an input string for partition method option to the
@@ -75,13 +77,24 @@ class Decomp {
    /// map paired with a name for later retrieval.
    static std::map<std::string, std::unique_ptr<Decomp>> AllDecomps;
 
-   /// Partition cells by calling the METIS/ParMETIS KWay routine
+   /// Partition cells by calling the serial Metis KWay routine
    /// It starts with the CellsOnCell array from the input mesh file
    /// distributed across tasks in linear contiguous chunks
    /// On output, it has defined all the NCells sizes (NCellsOwned,
    /// NCellsHalo array, NCellsAll and NCellsSize) and the final CellID
    /// and CellLoc arrays
-   void partCellsKWay(
+   void partCellsMetisKWay(
+       const MachEnv *InEnv,                  ///< [in] MachEnv with MPI info
+       const std::vector<I4> &CellsOnCellInit ///< [in] cell nbrs in init dstrb
+   );
+
+   /// Partition cells by calling the parallel ParMetis KWay routine
+   /// It starts with the CellsOnCell array from the input mesh file
+   /// distributed across tasks in linear contiguous chunks
+   /// On output, it has defined all the NCells sizes (NCellsOwned,
+   /// NCellsHalo array, NCellsAll and NCellsSize) and the final CellID
+   /// and CellLoc arrays
+   void partCellsParMetisKWay(
        const MachEnv *InEnv,                  ///< [in] MachEnv with MPI info
        const std::vector<I4> &CellsOnCellInit ///< [in] cell nbrs in init dstrb
    );
