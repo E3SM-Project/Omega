@@ -1,0 +1,496 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vertical Coordinate &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Vertical Mixing Coefficients" href="VerticalMixingCoeff.html" />
+    <link rel="prev" title="Tridiagonal Solver" href="TridiagonalSolver.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OmegaV1GoverningEqns.html">Omega V1: Governing Equations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Vertical Coordinate</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-compute-and-store-the-total-pressure-at-a-given-layer-interface">2.1 Requirement: Compute and store the total pressure at a given layer interface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-compute-and-store-the-z-location-of-a-given-layer-interface">2.2 Requirement: Compute and store the <span class="math notranslate nohighlight">\(z\)</span> location of a given layer interface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-compute-and-store-the-vertical-layer-bounds-for-each-horizontal-cell">2.3 Requirement: Compute and store the vertical layer bounds for each horizontal cell</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-compute-and-store-the-geopotential">2.4 Requirement: Compute and store the geopotential</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-compute-and-store-the-desired-thickness-used-in-the-p-star-vertical-coordinate">2.5 Requirement: Compute and store the desired thickness used in the <span class="math notranslate nohighlight">\(p^\star\)</span> vertical coordinate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-general-arbitrary-lagrangian-eulerian-ale-coordinate-support">2.6 Desired: General Arbitrary Lagrangian Eulerian (ALE) coordinate support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-vertical-lagrangian-remapping-vlr-support">2.7 Desired: Vertical Lagrangian remapping (VLR) support</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#creation">4.2.1 Creation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#initialization">4.2.2 Initialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#retrieval">4.2.3 Retrieval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#computation">4.2.4 Computation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#destruction-and-removal">4.2.5 Destruction and removal</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test">Test:</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Vertical Coordinate</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/VertCoord.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="vertical-coordinate">
+<span id="omega-design-vert-coord"></span><h1>Vertical Coordinate<a class="headerlink" href="#vertical-coordinate" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>The vertical coordinate module will be responsible for computing and storing information related to the vertical mesh in Omega.
+Since Omega will be a non-Boussinesq model, the vertical independent variable will be pressure-based (expressed in terms of the pseudo-height) as opposed to <span class="math notranslate nohighlight">\(z\)</span>-based.
+Similar to MPAS-Ocean’s support for tilted height (<span class="math notranslate nohighlight">\(z^\star\)</span>) coordinates, Omega V1 will support a general vertical coordinate, where pseudo thickness <span class="math notranslate nohighlight">\(\tilde{h}\)</span> varies in proportion to the total pseudo thickness of the water column.
+The prognostic variable in the layered continuity equation is pseudo thickness, which can be used to calculate the total pressure at a given vertical layer interface.
+The geometric height of a given layer interface is still necessary in the model to compute sea level, the geopotential, and derivatives with respect to <span class="math notranslate nohighlight">\(z\)</span>, all of which affect the dynamics.
+The geometric thickness of a layer (<span class="math notranslate nohighlight">\(\Delta z\)</span>) can be found using the pseudo thickness, density, reference density, and known bottom elevation (positive up) relative to the reference geoid.
+The vertical coordinate module will also serve as a container for information related to the variable number of active vertical layers for a given ocean column (due to variations in bottom elevation and ice shelf cavities).</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-compute-and-store-the-total-pressure-at-a-given-layer-interface">
+<h3>2.1 Requirement: Compute and store the total pressure at a given layer interface<a class="headerlink" href="#requirement-compute-and-store-the-total-pressure-at-a-given-layer-interface" title="Permalink to this heading"></a></h3>
+<p>The total pressure at each layer interface will be computed and stored within the vertical coordinate module.
+This involves a surface-down summation of the pseudo thickness variable times the gravitational acceleration, <span class="math notranslate nohighlight">\(g\)</span>, and the reference density, <span class="math notranslate nohighlight">\(\rho_0\)</span>, starting with the surface pressure.
+The pressure variable will be needed in the computation of the TEOS-10 equation of state and the pressure gradient.
+The variable will be registered with the <code class="docutils literal notranslate"><span class="pre">IOStreams</span></code> framework to enable it to be output during runtime.</p>
+</section>
+<section id="requirement-compute-and-store-the-z-location-of-a-given-layer-interface">
+<h3>2.2 Requirement: Compute and store the <span class="math notranslate nohighlight">\(z\)</span> location of a given layer interface<a class="headerlink" href="#requirement-compute-and-store-the-z-location-of-a-given-layer-interface" title="Permalink to this heading"></a></h3>
+<p>The <span class="math notranslate nohighlight">\(z\)</span> location at each layer interface will be computed and stored within the vertical coordinate module.
+In the model, <span class="math notranslate nohighlight">\(z\)</span> is defined as being positive up from the geoid.
+The <span class="math notranslate nohighlight">\(z\)</span> location is calculated in a bottom-up summation of the pseudo thickness times the specific volume and reference density, starting with the known bottom elevation.
+The <span class="math notranslate nohighlight">\(z\)</span> location of the interfaces is needed to compute the geopotential gradient and the sea level.
+The variable will be registered with the <code class="docutils literal notranslate"><span class="pre">IOStreams</span></code> framework to enable it to be output during runtime.</p>
+</section>
+<section id="requirement-compute-and-store-the-vertical-layer-bounds-for-each-horizontal-cell">
+<h3>2.3 Requirement: Compute and store the vertical layer bounds for each horizontal cell<a class="headerlink" href="#requirement-compute-and-store-the-vertical-layer-bounds-for-each-horizontal-cell" title="Permalink to this heading"></a></h3>
+<p>All tendency terms require a variable vertical loop range to account for variation in bottom elevation and ice shelf cavities.
+These bounds will be computed on construction in the vertical coordinate module and used for setting the loop bounds for active layers in calculations over the vertical.</p>
+</section>
+<section id="requirement-compute-and-store-the-geopotential">
+<h3>2.4 Requirement: Compute and store the geopotential<a class="headerlink" href="#requirement-compute-and-store-the-geopotential" title="Permalink to this heading"></a></h3>
+<p>The geopotential will be computed and stored within the vertical coordinate module.
+Initially this will be calculated by summing together the <span class="math notranslate nohighlight">\(z\)</span> location times <span class="math notranslate nohighlight">\(g\)</span>.
+In the future, tidal potential and self attraction and loading will also have optional (default off) contributions to the geopotential.</p>
+</section>
+<section id="requirement-compute-and-store-the-desired-thickness-used-in-the-p-star-vertical-coordinate">
+<h3>2.5 Requirement: Compute and store the desired thickness used in the <span class="math notranslate nohighlight">\(p^\star\)</span> vertical coordinate<a class="headerlink" href="#requirement-compute-and-store-the-desired-thickness-used-in-the-p-star-vertical-coordinate" title="Permalink to this heading"></a></h3>
+<p>The <span class="math notranslate nohighlight">\(p^\star\)</span> vertical coordinate specifies a desired layer thickness that stretches the initial thicknesses by the bottom pressure anomaly.
+This involves adding a vertically-weighted bottom pressure perturbation to the reference (initial) thickness.
+This desired thickness will be computed and stored within the vertical coordinate module.
+The vertical advection algorithm will use this desired thickness to compute the vertical transport.</p>
+</section>
+<section id="desired-general-arbitrary-lagrangian-eulerian-ale-coordinate-support">
+<h3>2.6 Desired: General Arbitrary Lagrangian Eulerian (ALE) coordinate support<a class="headerlink" href="#desired-general-arbitrary-lagrangian-eulerian-ale-coordinate-support" title="Permalink to this heading"></a></h3>
+<p>In future versions of Omega, the <span class="math notranslate nohighlight">\(p^\star\)</span> coordinate will be extended to a more general ALE coordinate</p>
+</section>
+<section id="desired-vertical-lagrangian-remapping-vlr-support">
+<h3>2.7 Desired: Vertical Lagrangian remapping (VLR) support<a class="headerlink" href="#desired-vertical-lagrangian-remapping-vlr-support" title="Permalink to this heading"></a></h3>
+<p>The vertical coordinate module should retain flexibility to support VLR in future versions of Omega.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>In the layered non-Boussinesq equations solved in Omega (see <a class="reference internal" href="OmegaV1GoverningEqns.html"><span class="doc std std-doc">V0 governing equation document</span></a> for details), the prognostic variable for cell <span class="math notranslate nohighlight">\(i\)</span> and layer <span class="math notranslate nohighlight">\(k\)</span> is the pseudo thickness, <span class="math notranslate nohighlight">\(\tilde{h}_{i,k}\)</span>, so that the geometric thickness (in meters) is a diagnostic variable defined as:</p>
+<div class="math notranslate nohighlight">
+\[ \Delta z_{i,k} = \rho_0 \alpha_{i,k} \tilde{h}_{i,k}. \]</div>
+<p>The pressure at vertical cell interfaces is the found by summing the pseudo thicknesses:</p>
+<div class="math notranslate nohighlight">
+\[  p_{i,k+1/2} = p_{i}^{surf} + g\rho_0 \sum_{k^\prime=1}^k \tilde{h}_{i,k^\prime}. \]</div>
+<p>and at the midpoint by</p>
+<div class="math notranslate nohighlight">
+\[ p_{i,k} = p_{i}^{surf} + g\rho_0 \sum_{k'=1}^{k-1} \tilde{h}_{i,k'} + \frac{1}{2} g\rho_0 \tilde{h}_{i,k} \]</div>
+<p>The <span class="math notranslate nohighlight">\(z\)</span> location of cell interfaces is found by summing the pseudo thicknesses from the bottom multiplied by the specific volume:</p>
+<div class="math notranslate nohighlight">
+\[ z_{i,k+1/2} = z_i^{floor} + \rho_0 \sum_{k^\prime=k}^{K_{max}} \alpha_{i,k^\prime} \tilde{h}_{i,k^\prime}, \]</div>
+<p>where <span class="math notranslate nohighlight">\(z_i^{floor}\)</span> is the (positive-up) bottom elevation.
+The <span class="math notranslate nohighlight">\(z\)</span> location of a layer midpoint is given by:</p>
+<div class="math notranslate nohighlight">
+\[ z_{i,k} = z_i^{floor} + \frac{1}{2} \rho_0\alpha_{i,k} \tilde{h}_{i,k} + \rho_0\sum_{k^\prime= k+1}^{K_{max}} \alpha_{i,k^\prime} \tilde{h}_{i,k^\prime}. \]</div>
+<p>Initially, the geopotential is the sum of the <span class="math notranslate nohighlight">\(z\)</span> height times <span class="math notranslate nohighlight">\(g\)</span>.
+In the future, it will include contributions from the tidal potential (<span class="math notranslate nohighlight">\(\Phi_{tp}\)</span>) and self attraction and loading (<span class="math notranslate nohighlight">\(\Phi_{SAL}\)</span>):</p>
+<div class="math notranslate nohighlight">
+\[ \Phi_{i,k} = \left( gz_{i,k} + \Phi_{tp} + \Phi_{SAL} \right). \]</div>
+<p>The desired pseudo thickness used for the <span class="math notranslate nohighlight">\(p^\star\)</span> coordinate is:</p>
+<div class="math notranslate nohighlight">
+\[\tilde{h}_k^{p^\star} = \tilde{h}_k^{ref} + \left(\frac{p_B-p_{surf}}{g\rho_0} - \sum_{k^\prime=1}^K \tilde{h}_{k^\prime}^{ref} \right)\frac{W_k\tilde{h}_k^{ref}}{\sum_{k^\prime=1}^K W_{k^\prime}\tilde{h}_{k^\prime}^{ref}}, \]</div>
+<p>where <span class="math notranslate nohighlight">\(\tilde{h}_k^{ref}\)</span> is the initial reference pseudo thickness and the weights <span class="math notranslate nohighlight">\(W_k\)</span> determine how pressure perturbations are distributed amongst the layers.
+Setting all <span class="math notranslate nohighlight">\(W_k\)</span> values to a constant, corresponds to uniform stretching of the layers.
+Different weight values can be chosen such that perturbations are distributed unequally.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> class will be used to compute pressure, <span class="math notranslate nohighlight">\(z\)</span> height, and geopotential at each layer.
+It will also contain the vertical loop bounds for cells, edges, and vertices.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">VertCoord</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="o">:</span>
+<span class="w">        </span><span class="n">I4</span><span class="w"> </span><span class="n">NVertLevels</span><span class="p">;</span>
+<span class="w">        </span><span class="n">I4</span><span class="w"> </span><span class="n">NVertLevelsP1</span><span class="p">;</span>
+
+<span class="w">        </span><span class="c1">// Variables computed</span>
+<span class="w">        </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">PressureInterface</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">PressureMid</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">ZInterface</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">ZMid</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">GeopotentialMid</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">LayerThicknessTarget</span><span class="p">;</span>
+
+<span class="w">        </span><span class="c1">// Vertical loop bounds (computed on construction)</span>
+<span class="w">        </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">MinLevelCell</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">MaxLevelCell</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">MinLevelEdgeTop</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">MaxLevelEdgeTop</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">MinLevelEdgeBot</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">MaxLevelEdgeBot</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">MinLevelVertexTop</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">MaxLevelVertexTop</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">MinLevelVertexBot</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">MaxLevelVertexBot</span><span class="p">;</span>
+
+<span class="w">        </span><span class="c1">// Variables read in from vert coord stream</span>
+<span class="w">        </span><span class="c1">/// p star coordinate variables</span>
+<span class="w">        </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">VertCoordMovementWeights</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">RefLayerThickness</span><span class="p">;</span>
+
+<span class="w">        </span><span class="c1">/// Variables read in from mesh file</span>
+<span class="w">        </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">BottomDepth</span><span class="p">;</span>
+<span class="w">    </span><span class="k">private</span><span class="o">:</span>
+
+<span class="w">        </span><span class="c1">// Variables from HorzMesh</span>
+<span class="w">        </span><span class="n">I4</span><span class="w"> </span><span class="n">NCells</span><span class="p">;</span>
+<span class="w">        </span><span class="n">I4</span><span class="w"> </span><span class="n">NEdges</span><span class="p">;</span>
+<span class="w">        </span><span class="n">I4</span><span class="w"> </span><span class="n">NVertices</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">CellsOnEdge</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">CellsOnVertex</span><span class="p">;</span>
+
+<span class="w">        </span><span class="k">static</span><span class="w"> </span><span class="n">VertCoord</span><span class="w"> </span><span class="o">*</span><span class="n">DefaultVertCoord</span><span class="p">;</span>
+<span class="w">        </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">VertCoord</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">AllVertCoords</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">VertCoord</span><span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="o">:</span>
+<span class="w">        </span><span class="k">static</span><span class="w"> </span><span class="n">VertCoord</span><span class="w"> </span><span class="o">*</span><span class="n">create</span><span class="p">();</span>
+<span class="w">        </span><span class="kt">void</span><span class="w"> </span><span class="nf">computePressure</span><span class="p">();</span>
+<span class="w">        </span><span class="kt">void</span><span class="w"> </span><span class="nf">computeZHeight</span><span class="p">();</span>
+<span class="w">        </span><span class="kt">void</span><span class="w"> </span><span class="nf">computeGeopotential</span><span class="p">();</span>
+<span class="w">        </span><span class="kt">void</span><span class="w"> </span><span class="nf">computeTargetThickness</span><span class="p">();</span>
+<span class="w">    </span><span class="k">private</span><span class="o">:</span>
+<span class="w">        </span><span class="kt">void</span><span class="w"> </span><span class="n">minMaxLevelEdge</span><span class="p">();</span>
+<span class="w">        </span><span class="kt">void</span><span class="w"> </span><span class="nf">minMaxLevelVertex</span><span class="p">();</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+<section id="creation">
+<h4>4.2.1 Creation<a class="headerlink" href="#creation" title="Permalink to this heading"></a></h4>
+<p>The constructor will be responsible for storing any static mesh information as private variables and handling the selection any user-specified options.
+It will also compute the vertical loop bounds on edges and vertices.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">VertCoord</span><span class="o">::</span><span class="n">VertCoord</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span>
+<span class="w">                     </span><span class="kt">int</span><span class="w"> </span><span class="n">NVertLevels</span><span class="p">,</span>
+<span class="w">                     </span><span class="n">Config</span><span class="w"> </span><span class="o">*</span><span class="n">Options</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The create method will take the same arguments as the constructor plus a name.
+It calls the constructor to create a new vertical coordinate instance, and put it in the static map of all vertical coordinate objects.
+It will return a pointer to the newly created object.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">VertCoord</span><span class="w"> </span><span class="o">*</span><span class="nf">VertCoord::create</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">,</span>
+<span class="w">                             </span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span>
+<span class="w">                             </span><span class="kt">int</span><span class="w"> </span><span class="n">NVertLevels</span><span class="p">,</span>
+<span class="w">                             </span><span class="n">Config</span><span class="w"> </span><span class="o">*</span><span class="n">Options</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>A vertical coordinate <code class="docutils literal notranslate"><span class="pre">IOStream</span></code> will be defined to read in the <code class="docutils literal notranslate"><span class="pre">BottomDepth</span></code>, <code class="docutils literal notranslate"><span class="pre">VertCoordMovementWeights</span></code> and <code class="docutils literal notranslate"><span class="pre">RefLayerThickness</span></code> variables.</p>
+</section>
+<section id="initialization">
+<h4>4.2.2 Initialization<a class="headerlink" href="#initialization" title="Permalink to this heading"></a></h4>
+<p>The init method will create the default vertical coordinate and return an error code:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">VertCoord::init</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+<section id="retrieval">
+<h4>4.2.3 Retrieval<a class="headerlink" href="#retrieval" title="Permalink to this heading"></a></h4>
+<p>There will be methods for getting the default and non-default vertical coordinate instances:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">VertCoord</span><span class="w"> </span><span class="o">*</span><span class="nf">VertCoord::getDefault</span><span class="p">();</span>
+<span class="n">VertCoord</span><span class="w"> </span><span class="o">*</span><span class="nf">VertCoord::get</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="computation">
+<h4>4.2.4 Computation<a class="headerlink" href="#computation" title="Permalink to this heading"></a></h4>
+<p>The public <code class="docutils literal notranslate"><span class="pre">computePressure</span></code> will sum the pseudo thicknesses times <span class="math notranslate nohighlight">\(g\)</span> from the top layer down, starting with the surface pressure.
+This will be done with a <code class="docutils literal notranslate"><span class="pre">parallel_scan</span></code> inside a <code class="docutils literal notranslate"><span class="pre">parallel_for</span></code> over the mesh cells using hierarchical parallelism.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">VertCoord::computePressure</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">PressureInterface</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">PressureMid</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">LayerThickness</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">SurfacePressure</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The public <code class="docutils literal notranslate"><span class="pre">computeZHeight</span></code> will sum the pseudo thicknesses times <span class="math notranslate nohighlight">\(\alpha\)</span> from the bottom later up, starting with the bottom elevation.
+This will be done with a <code class="docutils literal notranslate"><span class="pre">parallel_scan</span></code> inside a <code class="docutils literal notranslate"><span class="pre">parallel_for</span></code> over the mesh cells using hierarchical parallelism.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">VertCoord::computeZHeight</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ZInterface</span><span class="p">,</span>
+<span class="w">                               </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ZMid</span><span class="p">,</span>
+<span class="w">                               </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">LayerThickness</span><span class="p">,</span>
+<span class="w">                               </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">SpecVol</span><span class="p">,</span>
+<span class="w">                               </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">BottomDepth</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The public <code class="docutils literal notranslate"><span class="pre">computeGeopotential</span></code> will sum together the <span class="math notranslate nohighlight">\(z\)</span> height times <span class="math notranslate nohighlight">\(g\)</span>, the tidal potential, and self attraction and loading:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">VertCoord::computeGeopotential</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">GeopotentialMid</span><span class="p">,</span>
+<span class="w">                                    </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ZMid</span><span class="p">,</span>
+<span class="w">                                    </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TidalPotential</span>
+<span class="w">                                    </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">SelfAttractionLoading</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Tidal potential forcing and self attraction and loading will be default-off features.
+The will be added to (or excluded from) the geopotential based on config flags.</p>
+<p>The public <code class="docutils literal notranslate"><span class="pre">computeTargetThickness</span></code> will determine the desired pseudo thickness used for the <span class="math notranslate nohighlight">\(p^\star\)</span> vertical coordinate:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">VertCoord::computeTargetThickness</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">LayerThicknessPStar</span><span class="p">,</span>
+<span class="w">                                       </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">VertCoordMovementWeights</span><span class="p">,</span>
+<span class="w">                                       </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">RefLayerThickness</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The private <code class="docutils literal notranslate"><span class="pre">minMaxLevel</span></code> will determine the various vertical loop bounds on edges and vertices.
+It will compute the class member variables: <code class="docutils literal notranslate"><span class="pre">MinLevelEdgeTop</span></code>, <code class="docutils literal notranslate"><span class="pre">MaxLevelEdgeTop</span></code>, <code class="docutils literal notranslate"><span class="pre">MinLevelEdgeBot</span></code>, <code class="docutils literal notranslate"><span class="pre">MaxLevelEdgeBot</span></code>, <code class="docutils literal notranslate"><span class="pre">MinLevelVertexTop</span></code>, <code class="docutils literal notranslate"><span class="pre">MaxLevelVertexTop</span></code>, <code class="docutils literal notranslate"><span class="pre">MinLevelVertexBot</span></code>, and <code class="docutils literal notranslate"><span class="pre">MaxLevelVertexBot</span></code> from <code class="docutils literal notranslate"><span class="pre">MinLevelCell</span></code>, <code class="docutils literal notranslate"><span class="pre">MaxLevelCell</span></code>, <code class="docutils literal notranslate"><span class="pre">CellsOnEdge</span></code>, and <code class="docutils literal notranslate"><span class="pre">CellsOnVertex</span></code>.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">VertCoord::minMaxLevel</span><span class="p">(</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="destruction-and-removal">
+<h4>4.2.5 Destruction and removal<a class="headerlink" href="#destruction-and-removal" title="Permalink to this heading"></a></h4>
+<p>No operations are needed in the destructor.
+The erase method will remove a named vertical coordinate instance, whereas the clear method will remove all of
+them.
+Both will call the destructor in the process.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">VertCoord::erase</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">);</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">VertCoord::clear</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test">
+<h3>Test:<a class="headerlink" href="#test" title="Permalink to this heading"></a></h3>
+<p>Unit tests will be used to test each of the computations (computePressure, computeZHeight, computeGeopotential, computePStarThickness) for a given pseudo thickness array. Comparison will be made to a ‘’truth’’ vertical mesh that includes spatially varying <code class="docutils literal notranslate"><span class="pre">minLevelCell</span></code> and <code class="docutils literal notranslate"><span class="pre">maxLevelCell</span></code>.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="TridiagonalSolver.html" class="btn btn-neutral float-left" title="Tridiagonal Solver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="VerticalMixingCoeff.html" class="btn btn-neutral float-right" title="Vertical Mixing Coefficients" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
