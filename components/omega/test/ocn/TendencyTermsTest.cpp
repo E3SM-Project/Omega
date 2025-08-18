@@ -1017,11 +1017,7 @@ void initTendTest(const std::string &MeshFile, int NVertLevels) {
 
    DimConfig.set("NVertLevels", NVertLevels);
 
-   I4 IOErr = IO::init(DefComm);
-   if (IOErr != 0) {
-      ABORT_ERROR("TendencyTermsTest: error initializing parallel IO");
-   }
-
+   IO::init(DefComm);
    Decomp::init(MeshFile);
 
    int HaloErr = Halo::init();

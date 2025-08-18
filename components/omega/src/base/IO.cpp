@@ -8,9 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "IO.h"
+#include "Config.h"
 #include "DataTypes.h"
+#include "Error.h"
 #include "Logging.h"
-// include "Config.h"
 #include "mpi.h"
 #include "pio.h"
 
@@ -57,7 +58,7 @@ RearrFromString(const std::string &Rearr // [in] choice of IO rearranger
       ReturnRearr = RearrDefault;
 
    } else {
-      ReturnRearr = RearrUnknown;
+      ABORT_ERROR("IO: Unknown data rearranger {}", RearrComp);
    }
 
    return ReturnRearr;
@@ -113,7 +114,7 @@ FileFmtFromString(const std::string &Format // [in] choice of IO file format
       ReturnFileFmt = FmtDefault;
 
    } else {
-      ReturnFileFmt = FmtUnknown;
+      ABORT_ERROR("IO: Unknown default file format {}", FmtCompare);
    }
 
    return ReturnFileFmt;
@@ -144,7 +145,7 @@ Mode ModeFromString(
       ReturnMode = ModeWrite;
 
    } else {
-      ReturnMode = ModeUnknown;
+      ABORT_ERROR("IO: Unknown file mode {}: Must be read or write", ModeComp);
    }
 
    return ReturnMode;
@@ -190,28 +191,58 @@ IfExists IfExistsFromString(
 //------------------------------------------------------------------------------
 // Initializes the IO system based on configuration inputs and
 // default MPI communicator
-int init(const MPI_Comm &InComm // [in] MPI communicator to use
+void init(const MPI_Comm &InComm // [in] MPI communicator to use
 ) {
 
-   int Err = 0; // success error code
    // Retrieve parallel IO parameters from the Omega configuration
-   // TODO: replace with actual config, for now hardwired
-   // extern int SysID;
 
-   FileFmt DefaultFileFmt = FileFmtFromString("netcdf4c");
-   int NumIOTasks         = 1;
-   int IOStride           = 1;
-   int IOBaseTask         = 0;
-   Rearranger Rearrange   = RearrDefault;
+   Error Err;
+   Config *OmegaConfig = Config::getOmegaConfig();
+
+   // Read IO subconfiguration
+   Config IOConfig("IO");
+   Err = OmegaConfig->get(IOConfig);
+   CHECK_ERROR_ABORT(Err, "IO: IO group not found in input Config");
+
+   // Read default file format
+   std::string InFileFmt = "netcdf4c"; // set default value
+   Err                   = IOConfig.get("IODefaultFormat", InFileFmt);
+   CHECK_ERROR_WARN(Err, "IO: DefaultFileFmt not found in Config - using {}",
+                    InFileFmt);
+   FileFmt DefaultFileFmt = FileFmtFromString(InFileFmt);
+
+   // Read parallel IO settings - default to single-task if config
+   // values do not exist
+   int NumIOTasks           = 1;
+   int IOStride             = 1;
+   int IOBaseTask           = 0;
+   std::string InRearranger = "box";
+
+   Err = IOConfig.get("IOTasks", NumIOTasks);
+   CHECK_ERROR_WARN(Err, "IO: NumIOTasks not found in Config - using {}",
+                    NumIOTasks);
+
+   Err = IOConfig.get("IOStride", IOStride);
+   CHECK_ERROR_WARN(Err, "IO: IOStride not found in Config - using {}",
+                    IOStride);
+
+   Err = IOConfig.get("IOBaseTask", IOBaseTask);
+   CHECK_ERROR_WARN(Err, "IO: IOBaseTask not found in Config - using {}",
+                    IOBaseTask);
+
+   Err = IOConfig.get("IORearranger", InRearranger);
+   CHECK_ERROR_WARN(Err, "IO: Rearranger not found in Config - using {}",
+                    InRearranger);
+   Rearranger Rearrange = RearrFromString(InRearranger);
 
    // Call PIO routine to initialize
    DefaultRearr = Rearrange;
-   Err          = PIOc_Init_Intracomm(InComm, NumIOTasks, IOStride, IOBaseTask,
+   int PIOErr   = PIOc_Init_Intracomm(InComm, NumIOTasks, IOStride, IOBaseTask,
                                       Rearrange, &SysID);
-   if (Err != 0)
-      LOG_ERROR("IO::init: Error initializing SCORPIO");
+   if (PIOErr != 0)
+      ABORT_ERROR("IO::init: Error initializing SCORPIO");
 
-   return Err;
+   return;
 
 } // end init
 

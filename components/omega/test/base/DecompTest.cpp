@@ -49,9 +49,7 @@ void initDecompTest() {
    Config::readAll("omega.yml");
 
    // Initialize the IO system
-   Err = IO::init(DefComm);
-   if (Err != 0)
-      ABORT_ERROR("DecompTest: error initializing parallel IO");
+   IO::init(DefComm);
 
    // Create the default decomposition (initializes the decomposition)
    Decomp::init();

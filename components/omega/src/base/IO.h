@@ -21,6 +21,8 @@
 ///    # The stride in MPI tasks when the number of IO tasks is less
 ///    #  than the total number of MPI tasks
 ///    IOStride: 1
+///    # The base MPI task from which to start when using strided tasks
+///    IOBaseTask: 0
 ///    # When using parallel IO, the data must be rearranged to match
 ///    #  the IO task decomposition. Choices are box and subset. Box is
 ///    #  the default and generally preferred (ensures each IO task has
@@ -133,7 +135,7 @@ IfExists IfExistsFromString(
 
 /// Initializes the IO system based on configuration inputs and
 /// default MPI communicator
-int init(const MPI_Comm &InComm ///< [in] MPI communicator to use
+void init(const MPI_Comm &InComm ///< [in] MPI communicator to use
 );
 
 /// This routine opens a file for reading or writing, depending on the

@@ -77,8 +77,7 @@ int initIOStreamTest(Clock *&ModelClock // Model clock
    ModelClock = new Clock(SimStartTime, TimeStep);
 
    // Initialize base-level IO
-   Err1 = IO::init(DefComm);
-   TestEval("IO Initialization", Err1, ErrRef, Err);
+   IO::init(DefComm);
 
    // Initialize decomposition
    Decomp::init();
