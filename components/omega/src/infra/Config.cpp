@@ -86,7 +86,7 @@ void Config::readAll(const std::string &ConfigFile // [in] input YAML file
 ) {
 
    // Start a timer for config file reads
-   Pacer::start("ConfigReadAll");
+   Pacer::start("ConfigReadAll", 0);
 
    // Now give the full config the omega name and extract the
    // top-level omega node from the Root.
@@ -104,7 +104,7 @@ void Config::readAll(const std::string &ConfigFile // [in] input YAML file
       MPI_Barrier(ConfigComm);
    }
 
-   Pacer::stop("ConfigReadAll");
+   Pacer::stop("ConfigReadAll", 0);
    return;
 
 } // end Config::readAll

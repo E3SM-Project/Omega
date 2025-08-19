@@ -32,14 +32,14 @@ int main(int argc, char *argv[]) {
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
 
-   Pacer::start("Init");
+   Pacer::start("Init", 0);
    ErrCurr = OMEGA::ocnInit(MPI_COMM_WORLD);
    if (ErrCurr == 0) {
       LOG_INFO("DriverTest: Omega initialize PASS");
    } else {
       LOG_INFO("DriverTest: Omega initialize FAIL");
    }
-   Pacer::stop("Init");
+   Pacer::stop("Init", 0);
 
    // Time management objects
    OMEGA::TimeStepper *DefStepper = OMEGA::TimeStepper::getDefault();
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
    OMEGA::Alarm *EndAlarm         = DefStepper->getEndAlarm();
    OMEGA::TimeInstant CurrTime    = ModelClock->getCurrentTime();
 
-   Pacer::start("RunLoop");
+   Pacer::start("RunLoop", 0);
    if (ErrCurr == 0) {
       ErrCurr = OMEGA::ocnRun(CurrTime);
    }
@@ -56,16 +56,16 @@ int main(int argc, char *argv[]) {
    } else {
       LOG_INFO("DriverTest: Omega model run FAIL");
    }
-   Pacer::stop("RunLoop");
+   Pacer::stop("RunLoop", 0);
 
-   Pacer::start("Finalize");
+   Pacer::start("Finalize", 0);
    ErrFinalize = OMEGA::ocnFinalize(CurrTime);
    if (ErrFinalize == 0) {
       LOG_INFO("DriverTest: Omega finalize PASS");
    } else {
       LOG_INFO("DriverTest: Omega finalize FAIL");
    }
-   Pacer::stop("Finalize");
+   Pacer::stop("Finalize", 0);
 
    ErrAll = abs(ErrCurr) + abs(ErrFinalize);
    if (ErrAll == 0) {

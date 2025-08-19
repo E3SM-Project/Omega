@@ -25,11 +25,11 @@ int main(int argc, char **argv) {
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
 
-   Pacer::start("Init");
+   Pacer::start("Init", 0);
    ErrCurr = OMEGA::ocnInit(MPI_COMM_WORLD);
    if (ErrCurr != 0)
       LOG_ERROR("Error initializing OMEGA");
-   Pacer::stop("Init");
+   Pacer::stop("Init", 0);
 
    // Get time information
    OMEGA::TimeStepper *DefStepper = OMEGA::TimeStepper::getDefault();
@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
    OMEGA::Clock *ModelClock       = DefStepper->getClock();
    OMEGA::TimeInstant CurrTime    = ModelClock->getCurrentTime();
 
-   Pacer::start("RunLoop");
+   Pacer::start("RunLoop", 0);
    while (ErrCurr == 0 && !(EndAlarm->isRinging())) {
 
       ErrCurr = OMEGA::ocnRun(CurrTime);
@@ -45,13 +45,13 @@ int main(int argc, char **argv) {
       if (ErrCurr != 0)
          LOG_ERROR("Error advancing Omega run interval");
    }
-   Pacer::stop("RunLoop");
+   Pacer::stop("RunLoop", 0);
 
-   Pacer::start("Finalize");
+   Pacer::start("Finalize", 0);
    ErrFinalize = OMEGA::ocnFinalize(CurrTime);
    if (ErrFinalize != 0)
       LOG_ERROR("Error finalizing OMEGA");
-   Pacer::stop("Finalize");
+   Pacer::stop("Finalize", 0);
 
    ErrAll = abs(ErrCurr) + abs(ErrFinalize);
    if (ErrAll == 0) {
