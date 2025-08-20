@@ -5,6 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ForwardBackwardStepper.h"
+#include "Pacer.h"
 
 namespace OMEGA {
 
@@ -68,8 +69,12 @@ void ForwardBackwardStepper::doStep(
 
    // Update time levels (New -> Old) of prognostic variables with halo
    // exchanges
+   const MPI_Comm Comm = MeshHalo->getComm();
+   Pacer::timingBarrier("ForwardBackward:haloExchBarrier", 3, Comm);
+   Pacer::start("ForwardBackward:haloExch", 3);
    State->updateTimeLevels();
    Tracers::updateTimeLevels();
+   Pacer::stop("ForwardBackward:haloExch", 3);
 
    // Advance the clock and update the simulation time
    StepClock->advance();

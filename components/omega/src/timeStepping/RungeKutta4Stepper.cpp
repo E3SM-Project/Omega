@@ -5,6 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "RungeKutta4Stepper.h"
+#include "Pacer.h"
 
 namespace OMEGA {
 
@@ -70,6 +71,8 @@ void RungeKutta4Stepper::doStep(OceanState *State,   // model state
 
    int Err = 0;
 
+   const MPI_Comm Comm = MeshHalo->getComm();
+
    const int CurLevel  = 0;
    const int NextLevel = 1;
 
@@ -103,8 +106,11 @@ void RungeKutta4Stepper::doStep(OceanState *State,   // model state
 
          // TODO(mwarusz) this depends on halo width actually
          if (Stage == 2) {
+            Pacer::timingBarrier("RK4:haloExchProvisBarrier", 3, Comm);
+            Pacer::start("RK4:haloExchProvis", 3);
             ProvisState->exchangeHalo(CurLevel);
             MeshHalo->exchangeFullArrayHalo(ProvisTracers, OnCell);
+            Pacer::stop("RK4:haloExchProvis", 3);
          }
 
          Tend->computeAllTendencies(ProvisState, AuxState, ProvisTracers,
@@ -119,8 +125,11 @@ void RungeKutta4Stepper::doStep(OceanState *State,   // model state
 
    // Update time levels (New -> Old) of prognostic variables with halo
    // exchanges
+   Pacer::timingBarrier("RK4:haloExchBarrier", 3, Comm);
+   Pacer::start("RK4:haloExch", 3);
    State->updateTimeLevels();
    Tracers::updateTimeLevels();
+   Pacer::stop("RK4:haloExch", 3);
 
    // Advance the clock and update the simulation time
    StepClock->advance();
