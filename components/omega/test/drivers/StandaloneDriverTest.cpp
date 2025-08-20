@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
       LOG_INFO("DriverTest: Successful completion");
    }
 
-   Pacer::print("omega_driver_test");
+   Pacer::print("omega_driver_test", OMEGA::printTimingAllRanks());
    Pacer::finalize();
 
    Kokkos::finalize();

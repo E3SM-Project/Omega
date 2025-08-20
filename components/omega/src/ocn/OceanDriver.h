@@ -18,6 +18,9 @@
 
 namespace OMEGA {
 
+/// Should timing info be printed from all ranks
+bool printTimingAllRanks();
+
 /// Read the config file and call all the inidividual initialization routines
 /// for each Omega module
 int ocnInit(MPI_Comm Comm);

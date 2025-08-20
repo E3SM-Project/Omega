@@ -32,6 +32,16 @@
 
 namespace OMEGA {
 
+namespace Timing {
+// Flag to determine if timing info should be printed from all ranks
+// Set by ocnInit. Access outside of this file is provided by
+// the printAllRanks() function below
+static bool PrintAllRanks = false;
+} // namespace Timing
+
+// Accessor function for the Timing::PrintAllRanks flag
+bool printTimingAllRanks() { return Timing::PrintAllRanks; }
+
 // Read timing configuration and set Pacer options
 static void readTimingConfig() {
    Error Err;
@@ -60,6 +70,9 @@ static void readTimingConfig() {
    if (TimingBarriers) {
       Pacer::enableTimingBarriers();
    }
+
+   Err += TimingConfig.get("PrintAllRanks", Timing::PrintAllRanks);
+   CHECK_ERROR_ABORT(Err, "Timing: PrintAllRanks not found in TimingConfig");
 }
 
 int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator

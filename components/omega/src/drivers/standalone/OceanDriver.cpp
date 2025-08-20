@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
       LOG_ERROR("OMEGA terminating due to error");
    }
 
-   Pacer::print("omega");
+   Pacer::print("omega", OMEGA::printTimingAllRanks());
    Pacer::finalize();
 
    Kokkos::finalize();
