@@ -29,6 +29,7 @@ macro(common)
   option(OMEGA_DEBUG "Turn on error message throwing (default OFF)." OFF)
   option(OMEGA_LOG_FLUSH "Turn on unbuffered logging (default OFF)." OFF)
   option(OMEGA_TEST_CDASH "Turn on CDash support (default ON)." ON)
+  option(OMEGA_EXTERNAL_PROF "Integration of Omega timers with external profiling tools (default OFF)." OFF)
 
   if("${OMEGA_BUILD_TYPE}" STREQUAL "Debug" OR "${OMEGA_BUILD_TYPE}" STREQUAL "DEBUG")
     set(OMEGA_DEBUG ON)
