@@ -40,6 +40,7 @@ int ocnFinalize(const TimeInstant &CurrTime ///< [in] current sim time
    Dimension::clear();
    Field::clear();
    HorzMesh::clear();
+   VertCoord::clear();
    Halo::clear();
    Decomp::clear();
    MachEnv::removeAll();
