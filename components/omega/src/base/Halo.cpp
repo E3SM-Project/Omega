@@ -279,6 +279,10 @@ Halo *Halo::get(const std::string Name // name of Halo to retrieve
 } // end Halo get
 
 //------------------------------------------------------------------------------
+// Get communicator for a Halo object
+MPI_Comm Halo::getComm() const { return MyComm; }
+
+//------------------------------------------------------------------------------
 // Sets Halo class members NeighborList, NNghbr, SendFlags, and RecvFlags during
 // Halo construction
 

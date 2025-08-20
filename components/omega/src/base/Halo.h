@@ -277,6 +277,9 @@ class Halo {
    /// Retrieves a pointer to a Halo object by Name
    static Halo *get(std::string Name);
 
+   /// Retrieves MPI communicator from a Halo object
+   MPI_Comm getComm() const;
+
    /// Buffer pack specialized function templates for supported Kokkos array
    /// ranks. Select out the proper elements from the input Array to send to a
    /// neighboring task and pack them into the proper send buffer for
