@@ -114,6 +114,8 @@ VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
 
    initMovementWeights(Options);
 
+   defineFields();
+
 } // end constructor
 
 //------------------------------------------------------------------------------
@@ -387,9 +389,6 @@ void VertCoord::readArrays(const Decomp *Decomp //< [in] Decomp for mesh
 VertCoord::~VertCoord() {
 
    int Err;
-   Err = FieldGroup::destroy(GroupName);
-   if (Err != 0)
-      LOG_ERROR("Error removing FieldGrup {}", GroupName);
    Err = Field::destroy(PressInterfFldName);
    if (Err != 0)
       LOG_ERROR("Error removing Field {}", PressInterfFldName);
@@ -408,6 +407,9 @@ VertCoord::~VertCoord() {
    Err = Field::destroy(LyrThickTargetFldName);
    if (Err != 0)
       LOG_ERROR("Error removing Field {}", LyrThickTargetFldName);
+   Err = FieldGroup::destroy(GroupName);
+   if (Err != 0)
+      LOG_ERROR("Error removing FieldGroup {}", GroupName);
 
 } // end destructor
 

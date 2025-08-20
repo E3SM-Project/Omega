@@ -836,10 +836,10 @@ int initAuxVarsTest(const std::string &mesh) {
 }
 
 void finalizeAuxVarsTest() {
+   VertCoord::clear();
    Field::clear();
    Dimension::clear();
    HorzMesh::clear();
-   VertCoord::clear();
    Halo::clear();
    Decomp::clear();
    MachEnv::removeAll();

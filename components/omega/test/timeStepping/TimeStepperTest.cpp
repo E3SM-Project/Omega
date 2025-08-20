@@ -287,10 +287,10 @@ void finalizeTimeStepperTest() {
    Tendencies::clear();
    AuxiliaryState::clear();
    OceanState::clear();
+   VertCoord::clear();
    Dimension::clear();
    Field::clear();
    HorzMesh::clear();
-   VertCoord::clear();
    Halo::clear();
    Decomp::clear();
    MachEnv::removeAll();
