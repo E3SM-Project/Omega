@@ -147,11 +147,12 @@ int testTendencies() {
       return -1;
    }
 
-   const auto Mesh   = HorzMesh::getDefault();
-   const auto VCoord = VertCoord::getDefault();
+   const auto Mesh     = HorzMesh::getDefault();
+   const auto VCoord   = VertCoord::getDefault();
+   VCoord->NVertLayers = 12;
    // test creation of another tendencies
    Config *Options = Config::getOmegaConfig();
-   Tendencies::create("TestTendencies", Mesh, VCoord, 12, 3, Options);
+   Tendencies::create("TestTendencies", Mesh, VCoord, 3, Options);
 
    // test retrievel of another tendencies
    if (Tendencies::get("TestTendencies")) {
@@ -170,6 +171,8 @@ int testTendencies() {
    } else {
       LOG_INFO("TendenciesTest: Non-default tendencies erase PASS");
    }
+
+   VCoord->NVertLayers = NVertLayers;
 
    // put NANs in every tendency variables
    deepCopy(DefTendencies->LayerThicknessTend, NAN);

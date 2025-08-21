@@ -151,7 +151,6 @@ class Tendencies {
    Tendencies(const std::string &Name, ///< [in] Name for tendencies
               const HorzMesh *Mesh,    ///< [in] Horizontal mesh
               const VertCoord *VCoord, ///< [in] Vertical coordinate
-              int NVertLayers,         ///< [in] Number of vertical layers
               int NTracersIn,          ///< [in] Number of tracers
               Config *Options,         ///< [in] Configuration options
               CustomTendencyType InCustomThicknessTend,
@@ -160,7 +159,6 @@ class Tendencies {
    Tendencies(const std::string &Name, ///< [in] Name for tendencies
               const HorzMesh *Mesh,    ///< [in] Horizontal mesh
               const VertCoord *VCoord, ///< [in] Vertical coordinate
-              int NVertLayers,         ///< [in] Number of vertical layers
               int NTracersIn,          ///< [in] Number of tracers
               Config *Options          ///< [in] Configuration options
    );
