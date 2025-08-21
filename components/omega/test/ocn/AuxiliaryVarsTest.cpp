@@ -840,7 +840,6 @@ void finalizeAuxVarsTest() {
    Field::clear();
    Dimension::clear();
    HorzMesh::clear();
-   VertCoord::clear();
    Halo::clear();
    Decomp::clear();
    MachEnv::removeAll();

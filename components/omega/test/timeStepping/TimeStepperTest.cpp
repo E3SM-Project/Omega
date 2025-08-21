@@ -291,7 +291,6 @@ void finalizeTimeStepperTest() {
    Dimension::clear();
    Field::clear();
    HorzMesh::clear();
-   VertCoord::clear();
    Halo::clear();
    Decomp::clear();
    MachEnv::removeAll();

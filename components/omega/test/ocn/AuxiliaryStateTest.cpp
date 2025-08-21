@@ -289,7 +289,6 @@ void finalizeAuxStateTest() {
    Dimension::clear();
    TimeStepper::clear();
    HorzMesh::clear();
-   VertCoord::clear();
    Halo::clear();
    Decomp::clear();
    MachEnv::removeAll();
