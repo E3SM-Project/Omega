@@ -1,17 +1,19 @@
 #ifndef SCREAM_PHYSICS_TEST_DATA_HPP
 #define SCREAM_PHYSICS_TEST_DATA_HPP
 
-#include "share/eamxx_types.hpp"
+#include "physics_test_read_write_helpers.hpp"
 
-#include "ekat/util/ekat_math_utils.hpp"
-#include "ekat/ekat_assert.hpp"
-#include "ekat/util/ekat_file_utils.hpp"
-#include "ekat/util/ekat_test_utils.hpp"
+#include "share/eamxx_types.hpp"
 #include "share/util/eamxx_setup_random_test.hpp"
+
+#include <ekat_math_utils.hpp>
+#include <ekat_assert.hpp>
+#include <ekat_test_utils.hpp>
 
 #include <random>
 #include <vector>
 #include <utility>
+#include <fstream>
 
 /*
 PhysicsTestData is meant to offer the client something they can inherit to provide
@@ -96,56 +98,45 @@ struct SHOCGridData : public PhysicsTestData {
 #define PTD_ASS19(first, ...) first = rhs.first; PTD_ASS18(__VA_ARGS__)
 #define PTD_ASS20(first, ...) first = rhs.first; PTD_ASS19(__VA_ARGS__)
 
-#define  PTD_RW0(action)             ((void) (0))
-#define  PTD_RW1(action, first)      ekat::action(&first, 1, fid); PTD_RW0(action)
-#define  PTD_RW2(action, first, ...) ekat::action(&first, 1, fid); PTD_RW1(action, __VA_ARGS__)
-#define  PTD_RW3(action, first, ...) ekat::action(&first, 1, fid); PTD_RW2(action, __VA_ARGS__)
-#define  PTD_RW4(action, first, ...) ekat::action(&first, 1, fid); PTD_RW3(action, __VA_ARGS__)
-#define  PTD_RW5(action, first, ...) ekat::action(&first, 1, fid); PTD_RW4(action, __VA_ARGS__)
-#define  PTD_RW6(action, first, ...) ekat::action(&first, 1, fid); PTD_RW5(action, __VA_ARGS__)
-#define  PTD_RW7(action, first, ...) ekat::action(&first, 1, fid); PTD_RW6(action, __VA_ARGS__)
-#define  PTD_RW8(action, first, ...) ekat::action(&first, 1, fid); PTD_RW7(action, __VA_ARGS__)
-#define  PTD_RW9(action, first, ...) ekat::action(&first, 1, fid); PTD_RW8(action, __VA_ARGS__)
-#define PTD_RW10(action, first, ...) ekat::action(&first, 1, fid); PTD_RW9(action, __VA_ARGS__)
-#define PTD_RW11(action, first, ...) ekat::action(&first, 1, fid); PTD_RW10(action, __VA_ARGS__)
-#define PTD_RW12(action, first, ...) ekat::action(&first, 1, fid); PTD_RW11(action, __VA_ARGS__)
-#define PTD_RW13(action, first, ...) ekat::action(&first, 1, fid); PTD_RW12(action, __VA_ARGS__)
-#define PTD_RW14(action, first, ...) ekat::action(&first, 1, fid); PTD_RW13(action, __VA_ARGS__)
-#define PTD_RW15(action, first, ...) ekat::action(&first, 1, fid); PTD_RW14(action, __VA_ARGS__)
-#define PTD_RW16(action, first, ...) ekat::action(&first, 1, fid); PTD_RW15(action, __VA_ARGS__)
-#define PTD_RW17(action, first, ...) ekat::action(&first, 1, fid); PTD_RW16(action, __VA_ARGS__)
-#define PTD_RW18(action, first, ...) ekat::action(&first, 1, fid); PTD_RW17(action, __VA_ARGS__)
-#define PTD_RW19(action, first, ...) ekat::action(&first, 1, fid); PTD_RW18(action, __VA_ARGS__)
-#define PTD_RW20(action, first, ...) ekat::action(&first, 1, fid); PTD_RW19(action, __VA_ARGS__)
-#define PTD_RW21(action, first, ...) ekat::action(&first, 1, fid); PTD_RW20(action, __VA_ARGS__)
-#define PTD_RW22(action, first, ...) ekat::action(&first, 1, fid); PTD_RW21(action, __VA_ARGS__)
-#define PTD_RW23(action, first, ...) ekat::action(&first, 1, fid); PTD_RW22(action, __VA_ARGS__)
-#define PTD_RW24(action, first, ...) ekat::action(&first, 1, fid); PTD_RW23(action, __VA_ARGS__)
-#define PTD_RW25(action, first, ...) ekat::action(&first, 1, fid); PTD_RW24(action, __VA_ARGS__)
-#define PTD_RW26(action, first, ...) ekat::action(&first, 1, fid); PTD_RW25(action, __VA_ARGS__)
-#define PTD_RW27(action, first, ...) ekat::action(&first, 1, fid); PTD_RW26(action, __VA_ARGS__)
-#define PTD_RW28(action, first, ...) ekat::action(&first, 1, fid); PTD_RW27(action, __VA_ARGS__)
-#define PTD_RW29(action, first, ...) ekat::action(&first, 1, fid); PTD_RW28(action, __VA_ARGS__)
-#define PTD_RW30(action, first, ...) ekat::action(&first, 1, fid); PTD_RW29(action, __VA_ARGS__)
-#define PTD_RW31(action, first, ...) ekat::action(&first, 1, fid); PTD_RW30(action, __VA_ARGS__)
-
 #define PTD_ASSIGN_OP(name, num_scalars, ...)                                  \
   name& operator=(const name& rhs) { PTD_ASS##num_scalars(__VA_ARGS__); assignment_impl(rhs); return *this; }
 
 #define PTD_ASSIGN_OP_INIT(name, num_scalars, ...)                      \
   name& operator=(const name& rhs) { PTD_ASS##num_scalars(__VA_ARGS__); assignment_impl(rhs); init = rhs.init; return *this; }
 
-#define PTD_RW_SCALARS(num_scalars, ...) \
-  void read_scalars(const ekat::FILEPtr& fid) { EKAT_REQUIRE_MSG(fid, "Tried to read from missing file. You may have forgotten to generate baselines for some BFB unit tests"); PTD_RW##num_scalars(read, __VA_ARGS__); } \
-  void write_scalars(const ekat::FILEPtr& fid) const { PTD_RW##num_scalars(write, __VA_ARGS__); }
+#define PTD_RW_SCALARS(num_scalars, ...)                                \
+  void read_scalars (std::ifstream& ifile) {                            \
+    EKAT_REQUIRE_MSG (ifile.good(),                                     \
+        "Cannot read from input file. Did you forget to open it?\n");   \
+    ::scream::impl::read_scalars(ifile,__VA_ARGS__);                    \
+  }                                                                     \
+  void write_scalars (std::ofstream& ofile) {                           \
+    EKAT_REQUIRE_MSG (ofile.good(),                                     \
+        "Cannot write to output file. Did you forget to open it?\n");   \
+    ::scream::impl::write_scalars(ofile,__VA_ARGS__);                   \
+  }
 
-#define PTD_RW_SCALARS_ONLY(num_scalars, ...) \
-  void read(const ekat::FILEPtr& fid) { EKAT_REQUIRE_MSG(fid, "Tried to read from missing file. You may have forgotten to generate baselines for some BFB unit tests"); PTD_RW##num_scalars(read, __VA_ARGS__); } \
-  void write(const ekat::FILEPtr& fid) const { PTD_RW##num_scalars(write, __VA_ARGS__); }
+#define PTD_RW_SCALARS_ONLY(num_scalars, ...)                           \
+  void read(std::ifstream& ifile) {                                     \
+    EKAT_REQUIRE_MSG (ifile.good(),                                     \
+        "Cannot read from input file. Did you forget to open it?\n");   \
+    ::scream::impl::read_scalars(ifile,__VA_ARGS__);                    \
+  }                                                                     \
+  void write(std::ofstream& ofile) {                                    \
+    EKAT_REQUIRE_MSG (ofile.good(),                                     \
+        "Cannot write to output file. Did you forget to open it?\n");   \
+    ::scream::impl::write_scalars(ofile,__VA_ARGS__);                   \
+  }
 
 #define PTD_RW() \
-  void read(const ekat::FILEPtr& fid) { read_scalars(fid); PhysicsTestData::read(fid); } \
-  void write(const ekat::FILEPtr& fid) const { write_scalars(fid); PhysicsTestData::write(fid); }
+  void read(std::ifstream& ifile) {           \
+    read_scalars(ifile);                      \
+    PhysicsTestData::read(ifile);             \
+  }                                           \
+  void write(std::ofstream& ofile) {          \
+    write_scalars(ofile);                     \
+    PhysicsTestData::write(ofile);            \
+  }
 
 #define PTD_STD_DEF(name, num_scalars, ...) \
   PTD_DATA_COPY_CTOR(name, num_scalars);     \
@@ -303,14 +294,14 @@ class PhysicsTestData
       m_data = new_data;
     }
 
-    void read(const ekat::FILEPtr& fid)
+    void read(std::ifstream& ifile)
     {
-      ekat::read(m_data.data(), m_data.size(), fid);
+      impl::read_scalars(ifile,m_data);
     }
 
-    void write(const ekat::FILEPtr& fid) const
+    void write(std::ofstream& ofile) const
     {
-      ekat::write(m_data.data(), m_data.size(), fid);
+      impl::write_scalars(ofile,m_data);
     }
 
     std::vector<std::vector<Int> > m_dims_list;    // list of dims, one per unique set of dims
@@ -392,25 +383,41 @@ class PhysicsTestData
     }
   }
 
-  // Since we are also preparing index data, this function is doing more than transposing. It's shifting the
-  // format of all data from one language to another
   template <ekat::TransposeDirection::Enum D>
-  void transpose()
+  void shift_int_scalar(int& scalar)
+  {
+    const int shift = (D == ekat::TransposeDirection::c2f ? 1 : -1);
+    scalar += shift;
+
+    // Since f90 allows for negative index ranges (-foo:foo), we may
+    // have to remove this check.
+    EKAT_ASSERT_MSG(scalar >= 0, "Bad index: " << scalar);
+  }
+
+  // Since we are also preparing index data, this function is doing more than transposing. It's shifting the
+  // format of all data from one language to another.
+  //
+  // There is currently no way for this struct to know which integer scalars need
+  // to be shifted, so any subclass that has those will need to define their own
+  // transition method which will call this one and then adjust their int scalars
+  // that represent indices.
+  template <ekat::TransposeDirection::Enum D>
+  void transition()
   {
     m_reals.transpose<D>();
     m_ints.transpose<D>();
     m_bools.transpose<D>();
 
-    // Shift the indices. We might not be able to make the assumption that int data represented indices
+    // Shift the indices. We might not be able to make the assumption that int data represented indices.
+    // NOTE! This will not shift scalar integers. It is up the children structs to do that
     for (size_t i = 0; i < m_ints.m_data.size(); ++i) {
-      m_ints.m_data[i] += (D == ekat::TransposeDirection::c2f ? 1 : -1);
-      EKAT_ASSERT_MSG(m_ints.m_data[i] >= 0, "Bad index: " << m_ints.m_data[i]);
+      shift_int_scalar<D>(m_ints.m_data[i]);
     }
   }
 
-  void read(const ekat::FILEPtr& fid);
+  void read(std::ifstream& ifile);
 
-  void write(const ekat::FILEPtr& fid) const;
+  void write(std::ofstream& ofile) const;
 
  protected:
 
@@ -444,13 +451,13 @@ struct UnitBase
   std::string     m_baseline_path;
   std::string     m_test_name;
   BASELINE_ACTION m_baseline_action;
-  ekat::FILEPtr   m_fid;
+  std::ifstream   m_ifile;
+  std::ofstream   m_ofile;
 
   UnitBase() :
     m_baseline_path(""),
     m_test_name(Catch::getResultCapture().getCurrentTestName()),
-    m_baseline_action(NONE),
-    m_fid()
+    m_baseline_action(NONE)
   {
     auto& ts = ekat::TestSession::get();
     if (ts.flags["c"]) {
@@ -468,12 +475,14 @@ struct UnitBase
                       "Unit test flags problem: baseline actions were requested but no baseline path was provided");
 
     std::string baseline_name = m_baseline_path + "/" + m_test_name;
+
     if (m_baseline_action == COMPARE) {
-      m_fid = ekat::FILEPtr(fopen(baseline_name.c_str(), "r"));
-      EKAT_REQUIRE_MSG(m_fid, "Missing baselines: " << baseline_name);
+      m_ifile.open(baseline_name,std::ios::binary);
+      EKAT_REQUIRE_MSG(m_ifile.good(), "Missing baselines: " + baseline_name + "\n");
     }
     else if (m_baseline_action == GENERATE) {
-      m_fid = ekat::FILEPtr(fopen(baseline_name.c_str(), "w"));
+      m_ofile.open(baseline_name,std::ios::binary);
+      EKAT_REQUIRE_MSG(m_ofile.good(), "Coult not open baseline file for write: " + baseline_name + "\n");
     }
   }
 
@@ -487,14 +496,14 @@ struct UnitBase
       auto engine = setup_random_test(nullptr, &seed);
       if (m_baseline_action == GENERATE) {
         // Write the seed
-        ekat::write(&seed, 1, m_fid);
+        impl::write_scalars(m_ofile,seed);
       }
       return engine;
     }
     else {
       // Read the seed
       int seed;
-      ekat::read(&seed, 1, m_fid);
+      impl::read_scalars(m_ifile,seed);
       return setup_random_test(seed);
     }
   }

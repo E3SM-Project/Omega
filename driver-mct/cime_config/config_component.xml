@@ -2646,7 +2646,7 @@
 
   <entry id="PIO_TYPENAME">
     <type>char</type>
-    <valid_values>netcdf,pnetcdf,netcdf4p,netcdf4c,adios,adiosc,hdf5,default</valid_values>
+    <valid_values>netcdf,pnetcdf,netcdf4p,netcdf4c,netcdf4z,adios,adiosc,hdf5,default</valid_values>
     <group>run_pio</group>
     <file>env_run.xml</file>
     <desc>pio io type</desc>
@@ -3124,15 +3124,6 @@
    <group>job_submission</group>
    <file>env_batch.xml</file>
    <desc>whether the PROJECT value is required on this machine</desc>
- </entry>
-
- <entry id="COMPARE_TO_NUOPC">
-   <type>logical</type>
-   <valid_values>TRUE,FALSE</valid_values>
-   <default_value>FALSE</default_value>
-   <group>comparison_to_nuopc</group>
-   <file>env_build.xml</file>
-   <desc>TRUE=>turn on CPP variable COMPARE_TO_NUOPC</desc>
  </entry>
 
  <help>

@@ -4,8 +4,8 @@
 #include "share/grid/grid_import_export.hpp"
 #include "share/io/scorpio_input.hpp"
 
-#include <ekat/kokkos/ekat_kokkos_utils.hpp>
-#include <ekat/ekat_pack_utils.hpp>
+#include <ekat_team_policy_utils.hpp>
+#include <ekat_pack_utils.hpp>
 #include <numeric>
 
 namespace scream
@@ -90,6 +90,9 @@ HorizInterpRemapperBase::
 
 void HorizInterpRemapperBase::registration_ends_impl ()
 {
+  using namespace ShortFieldTagsNames;
+
+  m_needs_remap.resize(m_num_fields,1);
   for (int i=0; i<m_num_fields; ++i) {
     const auto& src_dt = m_src_fields[i].get_header().get_identifier().data_type();
     const auto& tgt_dt = m_tgt_fields[i].get_header().get_identifier().data_type();
@@ -99,6 +102,17 @@ void HorizInterpRemapperBase::registration_ends_impl ()
         "  - tgt field name: " + m_tgt_fields[i].name() + "\n"
         "  - src data type : " + e2str(src_dt) + "\n"
         "  - tgt data type : " + e2str(tgt_dt) + "\n");
+
+    const auto& src_fl = m_src_fields[i].get_header().get_identifier().get_layout();
+    if (not src_fl.has_tag(COL)) {
+      // This field will be skipped in several of the remap steps
+      m_needs_remap[i] = 0;
+    } else {
+      EKAT_REQUIRE_MSG (src_fl.tag(0)==COL,
+          "[HorizInterpRemapperBase::registration_ends_impl] Error! If present, the COL dimension MUST be the first one.\n"
+          " - field name: " + m_src_fields[i].name() + "\n"
+          " - field layout: " + src_fl.to_string() + "\n");
+    }
   }
 
   create_ov_fields ();
@@ -107,6 +121,8 @@ void HorizInterpRemapperBase::registration_ends_impl ()
 
 void HorizInterpRemapperBase::create_ov_fields ()
 {
+  using namespace ShortFieldTagsNames;
+
   m_ov_fields.reserve(m_num_fields);
   const auto num_ov_gids = m_ov_coarse_grid->get_num_local_dofs();
   const auto ov_gn = m_ov_coarse_grid->name();
@@ -114,6 +130,13 @@ void HorizInterpRemapperBase::create_ov_fields ()
   for (int i=0; i<m_num_fields; ++i) {
     const auto& f = m_type==InterpType::Refine ? m_tgt_fields[i] : m_src_fields[i];
     const auto& fid = f.get_header().get_identifier();
+    if (m_needs_remap[i]==0) {
+      // This field won't be remapped. We can simply emplace an empty field (which won't be used),
+      // to make sure m_ov_fields[i] always returns the ov field for the i-th field
+      m_ov_fields.emplace_back();
+      continue;
+    }
+
     const auto layout = fid.get_layout().clone().reset_dim(0,num_ov_gids);
     FieldIdentifier ov_fid (fid.name(),layout,fid.get_units(),ov_gn,dt);
 
@@ -132,7 +155,7 @@ local_mat_vec (const Field& x, const Field& y) const
 {
   using RangePolicy = typename KT::RangePolicy;
   using MemberType  = typename KT::MemberType;
-  using ESU         = ekat::ExeSpaceUtils<typename KT::ExeSpace>;
+  using TPF         = ekat::TeamPolicyFactory<DefaultDevice::execution_space>;
   using Pack        = ekat::Pack<Real,PackSize>;
   using PackInfo    = ekat::PackInfo<PackSize>;
 
@@ -173,7 +196,7 @@ local_mat_vec (const Field& x, const Field& y) const
       auto x_view = x.get_view<const Pack**>();
       auto y_view = y.get_view<      Pack**>();
       const int dim1 = PackInfo::num_packs(src_layout.dim(1));
-      auto policy = ESU::get_default_team_policy(nrows,dim1);
+      auto policy = TPF::get_default_team_policy(nrows,dim1);
       Kokkos::parallel_for(policy,
                            KOKKOS_LAMBDA(const MemberType& team) {
         const auto row = team.league_rank();
@@ -196,7 +219,7 @@ local_mat_vec (const Field& x, const Field& y) const
       auto y_view = y.get_view<      Pack***>();
       const int dim1 = src_layout.dim(1);
       const int dim2 = PackInfo::num_packs(src_layout.dim(2));
-      auto policy = ESU::get_default_team_policy(nrows,dim1*dim2);
+      auto policy = TPF::get_default_team_policy(nrows,dim1*dim2);
       Kokkos::parallel_for(policy,
                            KOKKOS_LAMBDA(const MemberType& team) {
         const auto row = team.league_rank();
@@ -222,7 +245,7 @@ local_mat_vec (const Field& x, const Field& y) const
       const int dim1 = src_layout.dim(1);
       const int dim2 = src_layout.dim(2);
       const int dim3 = PackInfo::num_packs(src_layout.dim(3));
-      auto policy = ESU::get_default_team_policy(nrows,dim1*dim2*dim3);
+      auto policy = TPF::get_default_team_policy(nrows,dim1*dim2*dim3);
       Kokkos::parallel_for(policy,
                            KOKKOS_LAMBDA(const MemberType& team) {
         const auto row = team.league_rank();
@@ -255,6 +278,7 @@ void HorizInterpRemapperBase::clean_up ()
   m_src_fields.clear();
   m_tgt_fields.clear();
   m_ov_fields.clear();
+  m_needs_remap.clear();
 
   // Reset the state of the base class
   m_state = RepoState::Clean;

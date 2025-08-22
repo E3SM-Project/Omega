@@ -1,7 +1,6 @@
 #include <catch2/catch.hpp>
 #include <numeric>
 
-#include "ekat/kokkos/ekat_subview_utils.hpp"
 #include "share/field/field_identifier.hpp"
 #include "share/field/field_header.hpp"
 #include "share/field/field.hpp"
@@ -11,9 +10,10 @@
 
 #include "share/grid/point_grid.hpp"
 
-#include "ekat/ekat_pack.hpp"
-#include "ekat/ekat_pack_utils.hpp"
-#include "ekat/util/ekat_test_utils.hpp"
+#include <ekat_pack.hpp>
+#include <ekat_pack_utils.hpp>
+#include <ekat_test_utils.hpp>
+#include <ekat_subview_utils.hpp>
 
 namespace {
 
@@ -512,18 +512,9 @@ TEST_CASE("field_mgr", "") {
   REQUIRE_THROWS(field_mgr.get_field("field1", "grid3")); // Wrong grid
 
   // Check that the groups names are in the header. While at it, make sure that case insensitive works fine.
-  auto has_group = [](const ekat::WeakPtrSet<const FieldGroupInfo>& groups,
-                      const std::string& name)->bool {
-    for (auto it : groups) {
-      if (it.lock()->m_group_name==name) {
-        return true;
-      }
-    }
-    return false;
-  };
-  REQUIRE (has_group(f2_1.get_header().get_tracking().get_groups_info(),"gRouP_1"));
-  REQUIRE (has_group(f1_2.get_header().get_tracking().get_groups_info(),"Group_2"));
-  REQUIRE (has_group(f1_2.get_header().get_tracking().get_groups_info(),"Group_1"));
+  REQUIRE (ekat::contains(f2_1.get_header().get_tracking().get_groups_names(),"gRouP_1"));
+  REQUIRE (ekat::contains(f1_2.get_header().get_tracking().get_groups_names(),"Group_2"));
+  REQUIRE (ekat::contains(f1_2.get_header().get_tracking().get_groups_names(),"Group_1"));
 
   // Check that correct grids requested groups
   REQUIRE (field_mgr.has_group("group_1", "grid1"));
@@ -880,6 +871,56 @@ TEST_CASE ("update") {
     }
   }
 
+  SECTION ("max-min") {
+    SECTION ("real") {
+      Field one = f_real.clone();
+      Field two = f_real.clone();
+      one.deep_copy(1.0);
+      two.deep_copy(2.0);
+
+      Field f1 = one.clone();
+      Field f2 = two.clone();
+      f1.max(f2);
+      REQUIRE (views_are_equal(f1, f2));
+
+      Field f3 = one.clone();
+      Field f4 = two.clone();
+      f4.min(f3);
+      REQUIRE (views_are_equal(f3, f4));
+
+      // Check that updating with rhs==fill_value ignores the rhs
+      f3.deep_copy(constants::fill_value<Real>);
+      f3.get_header().set_extra_data("mask_value",constants::fill_value<Real>);
+      f2.deep_copy(1.0);
+      f2.max(f3);
+      REQUIRE (views_are_equal(f2,one));
+    }
+
+    SECTION ("int") {
+      Field one = f_int.clone();
+      Field two = f_int.clone();
+      one.deep_copy(1);
+      two.deep_copy(2);
+
+      Field f1 = one.clone();
+      Field f2 = two.clone();
+      f1.max(f2);
+      REQUIRE (views_are_equal(f1, f2));
+
+      Field f3 = one.clone();
+      Field f4 = two.clone();
+      f4.min(f3);
+      REQUIRE (views_are_equal(f3, f4));
+
+      // Check that updating with rhs==fill_value ignores the rhs
+      f3.deep_copy(constants::fill_value<int>);
+      f3.get_header().set_extra_data("mask_value",constants::fill_value<int>);
+      f2.deep_copy(1);
+      f2.max(f3);
+      REQUIRE (views_are_equal(f2,one));
+    }
+  }
+
   SECTION ("scale_inv") {
     SECTION ("real") {
       Field f1 = f_real.clone();
@@ -922,6 +963,19 @@ TEST_CASE ("update") {
       // Same, but we discard current content of f3
       f3.update(f_real,2,0);
       REQUIRE (views_are_equal(f3,f2));
+
+      // Check that updating with rhs==fill_value ignores the rhs
+      Field one = f_real.clone();
+      one.deep_copy(1.0);
+
+      f3.deep_copy(constants::fill_value<Real>);
+      f3.get_header().set_extra_data("mask_value",constants::fill_value<Real>);
+      f2.deep_copy(1.0);
+      f2.update(f3,1,1);
+      if (not views_are_equal(f2,one)) {
+        print_field_hyperslab(f2);
+      }
+      REQUIRE (views_are_equal(f2,one));
     }
 
     SECTION ("int") {
@@ -941,6 +995,16 @@ TEST_CASE ("update") {
       // Same, but we discard current content of f3
       f3.update(f_int,2,0);
       REQUIRE (views_are_equal(f3,f2));
+
+      // Check that updating with rhs==fill_value ignores the rhs
+      Field one = f_int.clone();
+      one.deep_copy(1);
+
+      f3.deep_copy(constants::fill_value<int>);
+      f3.get_header().set_extra_data("mask_value",constants::fill_value<int>);
+      f2.deep_copy(1);
+      f2.update(f3,1,1);
+      REQUIRE (views_are_equal(f2,one));
     }
   }
 }

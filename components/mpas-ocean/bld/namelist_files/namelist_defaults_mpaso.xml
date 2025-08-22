@@ -372,6 +372,14 @@
 <config_sgr_temperature_prescribed>0.0</config_sgr_temperature_prescribed>
 <config_sgr_salinity_prescribed>0.0</config_sgr_salinity_prescribed>
 
+<!-- precip_scaling -->
+<config_use_precip_scaling>.false.</config_use_precip_scaling>
+<config_precip_scaling_mode>'off'</config_precip_scaling_mode>
+<config_precip_scaling_initial_factor>1.0</config_precip_scaling_initial_factor>
+<config_precip_scaling_constant_factor>1.0</config_precip_scaling_constant_factor>
+<config_precip_scaling_history_years>1</config_precip_scaling_history_years>
+<config_precip_scaling_write_to_logfile>.false.</config_precip_scaling_write_to_logfile>
+
 <!-- coupling -->
 <config_remove_ais_river_runoff>.false.</config_remove_ais_river_runoff>
 <config_remove_ais_ice_runoff>.false.</config_remove_ais_ice_runoff>
@@ -427,6 +435,20 @@
 <config_frazil_sea_ice_reference_salinity>4.0</config_frazil_sea_ice_reference_salinity>
 <config_frazil_maximum_freezing_temperature>0.0</config_frazil_maximum_freezing_temperature>
 <config_frazil_use_surface_pressure>.false.</config_frazil_use_surface_pressure>
+
+<!-- land_ice -->
+<config_land_ice_draft_mode>'pressure-dependent'</config_land_ice_draft_mode>
+<config_land_ice_draft_mode ocn_grid="oQU240wLI">'data'</config_land_ice_draft_mode>
+<config_land_ice_draft_mode ocn_grid="ECwISC30to60E1r2">'data'</config_land_ice_draft_mode>
+<config_land_ice_draft_mode ocn_grid="SOwISC12to60E2r4">'data'</config_land_ice_draft_mode>
+<config_land_ice_draft_mode ocn_grid="ECwISC30to60E2r1">'data'</config_land_ice_draft_mode>
+<config_land_ice_draft_mode ocn_grid="IcoswISC30E3r5">'data'</config_land_ice_draft_mode>
+<config_land_ice_draft_mode ocn_grid="FRISwISC08to60E3r1">'data'</config_land_ice_draft_mode>
+<config_land_ice_draft_mode ocn_grid="FRISwISC04to60E3r1">'data'</config_land_ice_draft_mode>
+<config_land_ice_draft_mode ocn_grid="FRISwISC02to60E3r1">'data'</config_land_ice_draft_mode>
+<config_land_ice_draft_mode ocn_grid="FRISwISC01to60E3r1">'data'</config_land_ice_draft_mode>
+<config_land_ice_draft_mode ocn_grid="RRSwISC6to18E3r5">'data'</config_land_ice_draft_mode>
+<config_land_ice_rho_ocean>1028</config_land_ice_rho_ocean>
 
 <!-- land_ice_fluxes -->
 <config_land_ice_flux_mode>'off'</config_land_ice_flux_mode>
@@ -509,6 +531,9 @@
 <config_flux_limiter>'monotonic'</config_flux_limiter>
 <config_remap_limiter>'monotonic'</config_remap_limiter>
 <config_thickness_flux_type>'centered'</config_thickness_flux_type>
+<config_use_spatially_variable_upwind>.false.</config_use_spatially_variable_upwind>
+<config_spatially_variable_upwind_hmin>5.0</config_spatially_variable_upwind_hmin>
+<config_spatially_variable_upwind_hmax>10.0</config_spatially_variable_upwind_hmax>
 
 <!-- bottom_drag -->
 <config_bottom_drag_mode>'implicit'</config_bottom_drag_mode>
@@ -759,6 +784,7 @@
 <config_use_ecosysTracers_ttd_forcing>.false.</config_use_ecosysTracers_ttd_forcing>
 <config_use_ecosysTracers_surface_value>.false.</config_use_ecosysTracers_surface_value>
 <config_use_ecosysTracers_river_inputs_from_coupler>.false.</config_use_ecosysTracers_river_inputs_from_coupler>
+<config_use_ecosys_frazil_tendencies>.false.</config_use_ecosys_frazil_tendencies>
 <config_use_ecosysTracers_sea_ice_coupling>.false.</config_use_ecosysTracers_sea_ice_coupling>
 <config_ecosysTracers_diagnostic_fields_level1>.false.</config_ecosysTracers_diagnostic_fields_level1>
 <config_ecosysTracers_diagnostic_fields_level2>.false.</config_ecosysTracers_diagnostic_fields_level2>

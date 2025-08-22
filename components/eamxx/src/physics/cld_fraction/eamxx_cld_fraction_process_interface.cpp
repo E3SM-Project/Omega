@@ -1,10 +1,14 @@
 #include "eamxx_cld_fraction_process_interface.hpp"
 #include "share/property_checks/field_within_interval_check.hpp"
 
-#include "ekat/ekat_assert.hpp"
-#include "ekat/util/ekat_units.hpp"
+#include <ekat_assert.hpp>
+#include <ekat_units.hpp>
 
 #include <array>
+
+#ifdef EAMXX_HAS_PYTHON
+#include "share/atm_process/atmosphere_process_pyhelpers.hpp"
+#endif
 
 namespace scream
 {
@@ -78,15 +82,49 @@ void CldFraction::run_impl (const double /* dt */)
 {
   // Calculate ice cloud fraction and total cloud fraction given the liquid cloud fraction
   // and the ice mass mixing ratio.
-  auto qi   = get_field_in("qi").get_view<const Pack**>();
-  auto liq_cld_frac = get_field_in("cldfrac_liq").get_view<const Pack**>();
-  auto ice_cld_frac = get_field_out("cldfrac_ice").get_view<Pack**>();
-  auto tot_cld_frac = get_field_out("cldfrac_tot").get_view<Pack**>();
-  auto ice_cld_frac_4out = get_field_out("cldfrac_ice_for_analysis").get_view<Pack**>();
-  auto tot_cld_frac_4out = get_field_out("cldfrac_tot_for_analysis").get_view<Pack**>();
+  auto qi   = get_field_in("qi");
+  auto liq_cld_frac = get_field_in("cldfrac_liq");
+  auto ice_cld_frac = get_field_out("cldfrac_ice");
+  auto tot_cld_frac = get_field_out("cldfrac_tot");
+  auto ice_cld_frac_4out = get_field_out("cldfrac_ice_for_analysis");
+  auto tot_cld_frac_4out = get_field_out("cldfrac_tot_for_analysis");
+#ifdef EAMXX_HAS_PYTHON
+  if (has_py_module()) {
+    // For now, we run Python code only on CPU
+    const auto& py_qi                = get_py_field_host("qi");
+    const auto& py_liq_cld_frac      = get_py_field_host("cldfrac_liq");
+    const auto& py_ice_cld_frac      = get_py_field_host("cldfrac_ice");
+    const auto& py_tot_cld_frac      = get_py_field_host("cldfrac_tot");
+    const auto& py_ice_cld_frac_4out = get_py_field_host("cldfrac_ice_for_analysis");
+    const auto& py_tot_cld_frac_4out = get_py_field_host("cldfrac_tot_for_analysis");
 
-  CldFractionFunc::main(m_num_cols,m_num_levs,m_icecloud_threshold,m_icecloud_for_analysis_threshold,
-    qi,liq_cld_frac,ice_cld_frac,tot_cld_frac,ice_cld_frac_4out,tot_cld_frac_4out);
+    // Sync input to host
+    liq_cld_frac.sync_to_host();
+
+    double ice_threshold      = m_params.get<double>("ice_cloud_threshold");
+    double ice_4out_threshold = m_params.get<double>("ice_cloud_for_analysis_threshold");
+    py_module_call("main",ice_threshold,ice_4out_threshold,py_qi,py_liq_cld_frac,py_ice_cld_frac,py_tot_cld_frac,py_ice_cld_frac_4out,py_tot_cld_frac_4out);
+
+    // Sync outputs to dev
+    qi.sync_to_dev();
+    liq_cld_frac.sync_to_dev();
+    ice_cld_frac.sync_to_dev();
+    tot_cld_frac.sync_to_dev();
+    ice_cld_frac_4out.sync_to_dev();
+    tot_cld_frac_4out.sync_to_dev();
+  } else
+#endif
+  {
+    auto qi_v                = qi.get_view<const Pack**>();
+    auto liq_cld_frac_v      = liq_cld_frac.get_view<const Pack**>();
+    auto ice_cld_frac_v      = ice_cld_frac.get_view<Pack**>();
+    auto tot_cld_frac_v      = tot_cld_frac.get_view<Pack**>();
+    auto ice_cld_frac_4out_v = ice_cld_frac_4out.get_view<Pack**>();
+    auto tot_cld_frac_4out_v = tot_cld_frac_4out.get_view<Pack**>();
+
+    CldFractionFunc::main(m_num_cols,m_num_levs,m_icecloud_threshold,m_icecloud_for_analysis_threshold,
+      qi_v,liq_cld_frac_v,ice_cld_frac_v,tot_cld_frac_v,ice_cld_frac_4out_v,tot_cld_frac_4out_v);
+  }
 }
 
 // =========================================================================================

@@ -1,12 +1,12 @@
 #include "catch2/catch.hpp"
 
 #include "share/eamxx_types.hpp"
-#include "ekat/ekat_pack.hpp"
-#include "ekat/kokkos/ekat_kokkos_utils.hpp"
 #include "physics/gw/gw_functions.hpp"
 #include "physics/gw/tests/infra/gw_test_data.hpp"
 
 #include "gw_unit_tests_common.hpp"
+
+#include <ekat_pack.hpp>
 
 namespace scream {
 namespace gw {
@@ -20,24 +20,15 @@ struct UnitWrap::UnitTest<D>::TestGwDragProf : public UnitWrap::UnitTest<D>::Bas
     auto engine = Base::get_engine();
 
     // Set up init data
-    GwInit init_data[] = {
-          // pver, pgwv,   dc, orog_only, molec_diff, tau_0_ubc, nbot_molec, ktop, kbotbg, fcrit2, kwv
-      GwInit(  72,   20, 0.75,     false,      false,     false,         16,   60,     16,    .67, 6.28e-5),
-      GwInit(  72,   20, 0.75,     true ,      false,     true ,         16,   60,     16,    .67, 6.28e-5),
-      GwInit(  72,   20, 0.75,     false,      true ,     true ,         16,   60,     16,    .67, 6.28e-5),
-      GwInit(  72,   20, 0.75,     true ,      true ,     false,         16,   60,     16,    .67, 6.28e-5),
-    };
-
-    for (auto& d : init_data) {
-      d.randomize(engine);
-    }
+    auto init_data = get_common_init_data(engine);
 
     // Set up inputs
     GwDragProfData baseline_data[] = {
-      GwDragProfData(5, 2, 10, true, .4, 1.8, init_data[0]),
-      GwDragProfData(6, 3, 11, false, .8, 2.4, init_data[1]),
-      GwDragProfData(7, 4, 12, true, 1.4, 3.4, init_data[2]),
-      GwDragProfData(8, 5, 13, false, 2.4, 4.4, init_data[3]),
+      //         pcnst, ncol, do_taper,  dt, effgw
+      GwDragProfData(5,    2,     true,  .4, 1.8,  init_data[0]),
+      GwDragProfData(6,    3,    false,  .8, 2.4,  init_data[1]),
+      GwDragProfData(7,    4,     true, 1.4, 3.4,  init_data[2]),
+      GwDragProfData(8,    5,    false, 2.4, 4.4,  init_data[3]),
     };
 
     static constexpr Int num_runs = sizeof(baseline_data) / sizeof(GwDragProfData);
@@ -45,7 +36,8 @@ struct UnitWrap::UnitTest<D>::TestGwDragProf : public UnitWrap::UnitTest<D>::Bas
     // Generate random input data
     // Alternatively, you can use the baseline_data construtors/initializer lists to hardcode data
     for (auto& d : baseline_data) {
-      d.randomize(engine);
+      // ni must be very small or else we risk a FPE due to a huge exp
+      d.randomize(engine, { {d.ni, {1.E-08, 2.E-08}} });
     }
 
     // Create copies of data for use by test. Needs to happen before read calls so that
@@ -60,7 +52,7 @@ struct UnitWrap::UnitTest<D>::TestGwDragProf : public UnitWrap::UnitTest<D>::Bas
     // Read baseline data
     if (this->m_baseline_action == COMPARE) {
       for (auto& d : baseline_data) {
-        d.read(Base::m_fid);
+        d.read(Base::m_ifile);
       }
     }
 
@@ -111,7 +103,7 @@ struct UnitWrap::UnitTest<D>::TestGwDragProf : public UnitWrap::UnitTest<D>::Bas
     }
     else if (this->m_baseline_action == GENERATE) {
       for (Int i = 0; i < num_runs; ++i) {
-        test_data[i].write(Base::m_fid);
+        test_data[i].write(Base::m_ofile);
       }
     }
   } // run_bfb

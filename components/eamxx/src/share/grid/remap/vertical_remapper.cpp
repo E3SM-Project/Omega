@@ -7,10 +7,10 @@
 #include "share/util/eamxx_universal_constants.hpp"
 #include "share/io/eamxx_scorpio_interface.hpp"
 
-#include <ekat/util/ekat_units.hpp>
-#include <ekat/kokkos/ekat_kokkos_utils.hpp>
-#include <ekat/ekat_pack_utils.hpp>
-#include <ekat/ekat_pack_kokkos.hpp>
+#include <ekat_units.hpp>
+#include <ekat_team_policy_utils.hpp>
+#include <ekat_pack_utils.hpp>
+#include <ekat_pack_kokkos.hpp>
 
 #include <numeric>
 
@@ -47,15 +47,20 @@ create_tgt_grid (const grid_ptr_type& src_grid,
 
 VerticalRemapper::
 VerticalRemapper (const grid_ptr_type& src_grid,
-                  const std::string& map_file)
- : VerticalRemapper(src_grid,create_tgt_grid(src_grid,map_file))
+                  const std::string& map_file,
+                  const bool src_int_same_as_mid)
+ : VerticalRemapper(src_grid,create_tgt_grid(src_grid,map_file),src_int_same_as_mid,true)
 {
   set_target_pressure (m_tgt_grid->get_geometry_data("p_levs"),Both);
 }
 
 VerticalRemapper::
 VerticalRemapper (const grid_ptr_type& src_grid,
-                  const grid_ptr_type& tgt_grid)
+                  const grid_ptr_type& tgt_grid,
+                  const bool src_int_same_as_mid,
+                  const bool tgt_int_same_as_mid)
+ : m_src_int_same_as_mid(src_int_same_as_mid)
+ , m_tgt_int_same_as_mid(tgt_int_same_as_mid)
 {
   // We only go in one direction for simplicity, since we need to setup some
   // infrsatructures, and we don't want to setup 2x as many "just in case".
@@ -82,7 +87,7 @@ set_extrapolation_type (const ExtrapType etype, const TopBot where)
 void VerticalRemapper::
 set_mask_value (const Real mask_val)
 {
-  EKAT_REQUIRE_MSG (not ekat::is_invalid(mask_val),
+  EKAT_REQUIRE_MSG (not Kokkos::isnan(mask_val),
       "[VerticalRemapper::set_mask_value] Error! Input mask value must be a valid number.\n");
 
   m_mask_val = mask_val;
@@ -114,9 +119,7 @@ set_pressure (const Field& p, const std::string& src_or_tgt, const ProfileType p
       msg_prefix + "Field is not yet allocated.\n"
       " - field name: " + p.name() + "\n");
 
-  EKAT_REQUIRE_MSG(p.get_header().get_alloc_properties().is_compatible<PackT>(),
-      msg_prefix + "Field not compatible with default pack size.\n"
-      " - pack size: " + std::to_string(SCREAM_PACK_SIZE) + "\n");
+  bool pack_compatible = p.get_header().get_alloc_properties().is_compatible<PackT>();
 
   const int nlevs = src ? m_src_grid->get_num_vertical_levels()
                         : m_tgt_grid->get_num_vertical_levels();
@@ -126,41 +129,29 @@ set_pressure (const Field& p, const std::string& src_or_tgt, const ProfileType p
 
   FieldTag expected_tag;
   int      expected_dim;
-  switch (ptype) {
-    case Midpoints:
-      expected_tag = LEV;
-      expected_dim = nlevs;
-      if (src) {
-        m_src_pmid = p;
-      } else {
-        m_tgt_pmid = p;
-      }
-      break;
-    case Interfaces:
-      expected_tag = ILEV;
-      expected_dim = nlevs+1;
-      if (src) {
-        m_src_pint = p;
-      } else {
-        m_tgt_pint = p;
-      }
-      break;
-    case Both:
-      expected_tag = LEV;
-      expected_dim = nlevs;
-      if (src) {
-        m_src_pint = p;
-        m_src_pmid = p;
-        m_src_int_same_as_mid = true;
-      } else {
-        m_tgt_pint = p;
-        m_tgt_pmid = p;
-        m_tgt_int_same_as_mid = true;
-      }
-      break;
-    default:
-      EKAT_ERROR_MSG ("[VerticalRemapper::set_source_pressure] Error! Unrecognized value for 'ptype'.\n");
+  if (ptype==Midpoints or ptype==Both) {
+    expected_tag = LEV;
+    expected_dim = nlevs;
+    if (src) {
+      m_src_pmid = p;
+    } else {
+      m_tgt_pmid = p;
+    }
+    m_mid_packs_supported &= pack_compatible;
   }
+  if (ptype==Interfaces or ptype==Both) {
+    if (src) {
+      expected_tag = m_src_int_same_as_mid ? LEV : ILEV;
+      expected_dim = m_src_int_same_as_mid ? nlevs : nlevs+1;
+      m_src_pint = p;
+    } else {
+      expected_tag = m_tgt_int_same_as_mid ? LEV : ILEV;
+      expected_dim = m_tgt_int_same_as_mid ? nlevs : nlevs+1;
+      m_tgt_pint = p;
+    }
+    m_int_packs_supported &= pack_compatible;
+  }
+
   EKAT_REQUIRE_MSG (vtag==expected_tag and vdim==expected_dim,
       msg_prefix + "Invalid pressure layout.\n"
       "  - layout: " + p_layout.to_string() + "\n"
@@ -192,6 +183,12 @@ registration_ends_impl ()
                    : src.get_header().get_identifier().get_layout().has_tag(LEV);
       ft.packed    = src.get_header().get_alloc_properties().is_compatible<PackT>() and
                      tgt.get_header().get_alloc_properties().is_compatible<PackT>();
+
+      // Adjust packed based on whether we support packs (i.e., if src/tgt pressures were pack-compatible)
+      if (ft.midpoints)
+        ft.packed &= m_mid_packs_supported;
+      else
+        ft.packed &= m_int_packs_supported;
 
       if (m_etype_top==Mask or m_etype_bot==Mask) {
         // NOTE: for now we assume that masking is determined only by the COL,LEV location in space
@@ -482,9 +479,9 @@ void VerticalRemapper::
 setup_lin_interp (const ekat::LinInterp<Real,Packsize>& lin_interp,
                   const Field& p_src, const Field& p_tgt) const
 {
-  using LI_t = ekat::LinInterp<Real,Packsize>;
-  using ESU = ekat::ExeSpaceUtils<DefaultDevice::execution_space>;
-  using PackT = ekat::Pack<Real,Packsize>;
+  using LI_t   = ekat::LinInterp<Real,Packsize>;
+  using TPF    = ekat::TeamPolicyFactory<DefaultDevice::execution_space>;
+  using PackT  = ekat::Pack<Real,Packsize>;
   using view2d = typename KokkosTypes<DefaultDevice>::view<const PackT**>;
   using view1d = typename KokkosTypes<DefaultDevice>::view<const PackT*>;
 
@@ -519,7 +516,7 @@ setup_lin_interp (const ekat::LinInterp<Real,Packsize>& lin_interp,
   const int ncols = m_src_grid->get_num_local_dofs();
   const int nlevs_tgt = m_tgt_grid->get_num_vertical_levels();
   const int npacks_tgt = ekat::PackInfo<Packsize>::num_packs(nlevs_tgt);
-  auto policy = ESU::get_default_team_policy(ncols,npacks_tgt);
+  auto policy = TPF::get_default_team_policy(ncols,npacks_tgt);
   Kokkos::parallel_for("VerticalRemapper::interp_setup",policy,lambda);
   Kokkos::fence();
 }
@@ -532,9 +529,9 @@ apply_vertical_interpolation(const ekat::LinInterp<Real,Packsize>& lin_interp,
 {
   // Note: if Packsize==1, we grab packs of size 1, which are for sure
   //       compatible with the allocation
-  using LI_t = ekat::LinInterp<Real,Packsize>;
-  using PackT = ekat::Pack<Real,Packsize>;
-  using ESU = ekat::ExeSpaceUtils<DefaultDevice::execution_space>;
+  using LI_t   = ekat::LinInterp<Real,Packsize>;
+  using PackT  = ekat::Pack<Real,Packsize>;
+  using TPF    = ekat::TeamPolicyFactory<DefaultDevice::execution_space>;
 
   using view2d = typename KokkosTypes<DefaultDevice>::view<const PackT**>;
   using view1d = typename KokkosTypes<DefaultDevice>::view<const PackT*>;
@@ -565,7 +562,7 @@ apply_vertical_interpolation(const ekat::LinInterp<Real,Packsize>& lin_interp,
     {
       auto f_src_v = f_src.get_view<const PackT**>();
       auto f_tgt_v = f_tgt.get_view<      PackT**>();
-      auto policy = ESU::get_default_team_policy(ncols,npacks_tgt);
+      auto policy = TPF::get_default_team_policy(ncols,npacks_tgt);
       auto lambda = KOKKOS_LAMBDA(typename LI_t::MemberType const& team)
       {
         const int icol = team.league_rank();
@@ -590,7 +587,7 @@ apply_vertical_interpolation(const ekat::LinInterp<Real,Packsize>& lin_interp,
       auto f_src_v = f_src.get_view<const PackT***>();
       auto f_tgt_v = f_tgt.get_view<      PackT***>();
       const int ncomps = f_tgt_l.get_vector_dim();
-      auto policy = ESU::get_default_team_policy(ncols*ncomps,npacks_tgt);
+      auto policy = TPF::get_default_team_policy(ncols*ncomps,npacks_tgt);
 
       auto lambda = KOKKOS_LAMBDA(typename LI_t::MemberType const& team)
       {
@@ -627,7 +624,7 @@ extrapolate (const Field& f_src,
              const Field& p_tgt,
              const Real mask_val) const
 {
-  using ESU = ekat::ExeSpaceUtils<DefaultDevice::execution_space>;
+  using TPF = ekat::TeamPolicyFactory<DefaultDevice::execution_space>;
 
   using view2d = typename KokkosTypes<DefaultDevice>::view<const Real**>;
   using view1d = typename KokkosTypes<DefaultDevice>::view<const Real*>;
@@ -662,7 +659,7 @@ extrapolate (const Field& f_src,
     {
       auto f_src_v = f_src.get_view<const Real**>();
       auto f_tgt_v = f_tgt.get_view<      Real**>();
-      auto policy = ESU::get_default_team_policy(ncols,nlevs_tgt);
+      auto policy = TPF::get_default_team_policy(ncols,nlevs_tgt);
 
       using MemberType = typename decltype(policy)::member_type;
       auto lambda = KOKKOS_LAMBDA(const MemberType& team)
@@ -713,7 +710,7 @@ extrapolate (const Field& f_src,
       auto f_src_v = f_src.get_view<const Real***>();
       auto f_tgt_v = f_tgt.get_view<      Real***>();
       const int ncomps = f_tgt_l.get_vector_dim();
-      auto policy = ESU::get_default_team_policy(ncols*ncomps,nlevs_tgt);
+      auto policy = TPF::get_default_team_policy(ncols*ncomps,nlevs_tgt);
 
       using MemberType = typename decltype(policy)::member_type;
       auto lambda = KOKKOS_LAMBDA(const MemberType& team)

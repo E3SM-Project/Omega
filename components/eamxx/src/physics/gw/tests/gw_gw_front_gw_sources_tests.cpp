@@ -1,12 +1,12 @@
 #include "catch2/catch.hpp"
 
 #include "share/eamxx_types.hpp"
-#include "ekat/ekat_pack.hpp"
-#include "ekat/kokkos/ekat_kokkos_utils.hpp"
 #include "physics/gw/gw_functions.hpp"
 #include "physics/gw/tests/infra/gw_test_data.hpp"
 
 #include "gw_unit_tests_common.hpp"
+
+#include <ekat_pack.hpp>
 
 namespace scream {
 namespace gw {
@@ -20,19 +20,9 @@ struct UnitWrap::UnitTest<D>::TestGwFrontGwSources : public UnitWrap::UnitTest<D
     auto engine = Base::get_engine();
 
     // Set up init data
-    GwInit init_data[] = {
-          // pver, pgwv,   dc, orog_only, molec_diff, tau_0_ubc, nbot_molec, ktop, kbotbg, fcrit2, kwv
-      GwInit(  72,   20, 0.75,     false,      false,     false,         16,   60,     16,    .67, 6.28e-5),
-      GwInit(  72,   20, 0.75,     true ,      false,     true ,         16,   60,     16,    .67, 6.28e-5),
-      GwInit(  72,   20, 0.75,     false,      true ,     true ,         16,   60,     16,    .67, 6.28e-5),
-      GwInit(  72,   20, 0.75,     true ,      true ,     false,         16,   60,     16,    .67, 6.28e-5),
-    };
+    auto init_data = get_common_init_data(engine);
 
-    for (auto& d : init_data) {
-      d.randomize(engine);
-    }
-
-    // Set up init data
+    // Set up front init data
     GwFrontInitData front_init_data[] = {
                 // taubgnd,  frontgfc_in, kfront_in, init
       GwFrontInitData(  .1,           .4,        10, init_data[0]),
@@ -47,10 +37,11 @@ struct UnitWrap::UnitTest<D>::TestGwFrontGwSources : public UnitWrap::UnitTest<D
 
     // Set up inputs
     GwFrontGwSourcesData baseline_data[] = {
-      GwFrontGwSourcesData(2, 10, 3, front_init_data[0]),
-      GwFrontGwSourcesData(3, 11, 4, front_init_data[1]),
-      GwFrontGwSourcesData(4, 12, 5, front_init_data[2]),
-      GwFrontGwSourcesData(5, 13, 6, front_init_data[3]),
+      //                ncol, kbot
+      GwFrontGwSourcesData(2, 53, front_init_data[0]),
+      GwFrontGwSourcesData(3, 54, front_init_data[1]),
+      GwFrontGwSourcesData(4, 55, front_init_data[2]),
+      GwFrontGwSourcesData(5, 56, front_init_data[3]),
     };
 
     static constexpr Int num_runs = sizeof(baseline_data) / sizeof(GwFrontGwSourcesData);
@@ -73,7 +64,7 @@ struct UnitWrap::UnitTest<D>::TestGwFrontGwSources : public UnitWrap::UnitTest<D
     // Read baseline data
     if (this->m_baseline_action == COMPARE) {
       for (auto& d : baseline_data) {
-        d.read(Base::m_fid);
+        d.read(Base::m_ifile);
       }
     }
 
@@ -96,7 +87,7 @@ struct UnitWrap::UnitTest<D>::TestGwFrontGwSources : public UnitWrap::UnitTest<D
     }
     else if (this->m_baseline_action == GENERATE) {
       for (Int i = 0; i < num_runs; ++i) {
-        test_data[i].write(Base::m_fid);
+        test_data[i].write(Base::m_ofile);
       }
     }
   } // run_bfb

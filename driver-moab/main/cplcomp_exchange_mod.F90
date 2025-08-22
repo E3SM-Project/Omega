@@ -15,7 +15,7 @@ module cplcomp_exchange_mod
   use seq_flds_mod, only: seq_flds_x2o_fields ! needed for MOAB init of ocean fields x2o to be able to transfer from coupler
   use seq_flds_mod, only: seq_flds_i2x_fields, seq_flds_x2i_fields ! needed for MOAB init of ice fields x2o on coupler side, to save them
   use seq_flds_mod, only: seq_flds_l2x_fields, seq_flds_x2l_fields ! 
-  use seq_flds_mod, only: seq_flds_r2x_fields, seq_flds_x2r_fields !
+  use seq_flds_mod, only: seq_flds_r2x_fields, seq_flds_x2r_fields, seq_flds_r2x_fluxes
   use seq_comm_mct, only: cplid, logunit
   use seq_comm_mct, only: seq_comm_getinfo => seq_comm_setptrs, seq_comm_iamin
   use seq_diag_mct
@@ -1020,7 +1020,7 @@ subroutine  copy_aream_from_area(mbappid)
       !-----------------------------------------------------
       !
       use iMOAB, only: iMOAB_RegisterApplication, iMOAB_ReceiveMesh, iMOAB_SendMesh, &
-      iMOAB_WriteMesh, iMOAB_DefineTagStorage, iMOAB_GetMeshInfo, &
+      iMOAB_WriteMesh, iMOAB_DefineTagStorage, iMOAB_GetMeshInfo, iMOAB_SetDoubleTagStorage, &
       iMOAB_FreeSenderBuffers, iMOAB_ComputeCommGraph, iMOAB_LoadMesh
       !
       use seq_infodata_mod
@@ -1056,11 +1056,13 @@ subroutine  copy_aream_from_area(mbappid)
       integer                  :: typeA, typeB, ATM_PHYS_CID ! used to compute par graph between atm phys
                                                             ! and atm spectral on coupler
       character(CXX)           :: tagname
+      character(CXX)           :: newlist
       integer                  nvert(3), nvise(3), nbl(3), nsurf(3), nvisBC(3)
+      logical                  :: rof_present, lnd_prognostic
       real(r8),    allocatable    :: tagValues(:) ! used for setting aream tags for atm domain read case
-      integer                     :: arrSize ! for the size of tagValues
-      ! type(mct_list)           :: temp_list
-      ! integer                  :: nfields, arrsize
+      integer                     :: arrsize ! for the size of tagValues
+      type(mct_list)             :: temp_list
+      integer                    :: nfields
       ! real(R8), allocatable, target :: values(:)
 
 
@@ -1399,7 +1401,7 @@ subroutine  copy_aream_from_area(mbappid)
             endif
             ! also, frac, area,  masks has to come from ocean mpoid, not from domain file reader
             ! this is hard to digest :(
-            tagname = 'area:frac:mask'//C_NULL_CHAR
+            tagname = 'lat:lon:area:frac:mask'//C_NULL_CHAR
             call component_exch_moab(comp, mpoid, mboxid, 0, tagname, context_exch='afm')
          endif 
 
@@ -1497,6 +1499,7 @@ subroutine  copy_aream_from_area(mbappid)
       if (comp%oneletterid == 'l'  .and. maxMLID /= -1) then
          call seq_comm_getinfo(cplid ,mpigrp=mpigrp_cplid)  ! receiver group
          call seq_comm_getinfo(id_old,mpigrp=mpigrp_old)   !  component group pes
+         call seq_infodata_GetData(infodata,rof_present=rof_present, lnd_prognostic=lnd_prognostic)
 
          ! use land full mesh 
          if (MPI_COMM_NULL /= mpicom_new ) then !  we are on the coupler pes
@@ -1509,8 +1512,13 @@ subroutine  copy_aream_from_area(mbappid)
             endif
             ! do not receive the mesh anymore, read it from file, then pair it with mlnid, component land PC mesh
             ! similar to rof mosart mesh  
-            
-            ropts = 'PARALLEL=READ_PART;PARTITION_METHOD=SQIJ;VARIABLE=;REPARTITION'//C_NULL_CHAR
+            ! do not cull in case of data land, like all other data models
+            ! for regular land model, cull, because the lnd component culls too
+            if (lnd_prognostic) then
+               ropts = 'PARALLEL=READ_PART;PARTITION_METHOD=SQIJ;VARIABLE=;REPARTITION'//C_NULL_CHAR
+            else
+               ropts = 'PARALLEL=READ_PART;PARTITION_METHOD=SQIJ;VARIABLE=;REPARTITION;NO_CULLING'//C_NULL_CHAR
+            endif
             call seq_infodata_GetData(infodata,lnd_domain=lnd_domain)
             outfile = trim(lnd_domain)//C_NULL_CHAR
             nghlay = 0 ! no ghost layers 
@@ -1549,6 +1557,26 @@ subroutine  copy_aream_from_area(mbappid)
                write(logunit,*) subname,' error in defining tags x2l on coupler land'
                call shr_sys_abort(subname//' ERROR in defining tags x2l on coupler land')
             endif        
+
+            if (.not.rof_present) then  ! need to zero out some Flrr fields
+               call shr_string_listIntersect(seq_flds_x2l_fields,seq_flds_r2x_fluxes,newlist)
+               call mct_list_init(temp_list, newlist)
+               nfields=mct_list_nitem (temp_list)
+               if (nfields > 0) then
+                 ierr  = iMOAB_GetMeshInfo ( mblxid, nvert, nvise, nbl, nsurf, nvisBC )
+                 arrsize = nvise(1)*nfields
+                 allocate(tagValues(arrsize))
+                 tagname = trim(newlist)//C_NULL_CHAR
+                 tagValues = 0.0_r8
+                 ent_type = 1 ! cells
+                 ierr = iMOAB_SetDoubleTagStorage ( mblxid, tagname, arrsize , ent_type, tagValues)
+                 if (ierr .ne. 0) then
+                    write(logunit,*) subname,' error in zeroing Flrr tags on land', ierr
+                    call shr_sys_abort(subname//' ERROR in zeroing Flrr tags land')
+                 endif
+               endif
+            endif
+
 
             !add the normalization tag
             tagname = trim(seq_flds_dom_fields)//":norm8wt"//C_NULL_CHAR
@@ -1727,7 +1755,7 @@ subroutine  copy_aream_from_area(mbappid)
             endif
             ! also, frac, area,  masks has to come from ice MPSIID , not from domain file reader
             ! this is hard to digest :(
-            tagname = 'area:frac:mask'//C_NULL_CHAR
+            tagname = 'lat:lon:area:frac:mask'//C_NULL_CHAR
             call component_exch_moab(comp, MPSIID, mbixid, 0, tagname)
          endif 
 #ifdef MOABDEBUG
@@ -1891,30 +1919,11 @@ subroutine  copy_aream_from_area(mbappid)
        target_id = target_id + 200
     endif
     if (mbAPPid1 .ge. 0) then !  we are on the sending pes
-#ifdef MOABDEBUG
-       if (direction .eq. 0 ) then
-          dir = 'c2x'
-       else
-          dir = 'x2c'
-       endif
-       write(lnum,"(I0.2)") num_moab_exports
-       if (present(context_exch)) then
-          outfile = comp%ntype//'_src_'//trim(context_exch)//'_'//trim(dir)//'_'//trim(lnum)//'.h5m'//C_NULL_CHAR
-       else
-          outfile = comp%ntype//'_src_'//trim(dir)//'_'//trim(lnum)//'.h5m'//C_NULL_CHAR
-       endif
-       wopts   = ';PARALLEL=WRITE_PART'//C_NULL_CHAR !
-       ierr = iMOAB_WriteMesh(mbAPPid1, trim(outfile), trim(wopts))
-       if (ierr .ne. 0) then
-          call shr_sys_abort(subname//' cannot write file '// outfile)
-       endif
-#endif
        ! basically, use the initial partitioning
        ierr = iMOAB_SendElementTag(mbAPPid1, tagName, mpicom_join, target_id)
        if (ierr .ne. 0) then
           call shr_sys_abort(subname//' cannot send element tag: '//trim(tagName))
        endif
-
     endif
     if ( mbAPPid2 .ge. 0 ) then !  we are on receiving end
        ierr = iMOAB_ReceiveElementTag(mbAPPid2, tagName, mpicom_join, source_id)

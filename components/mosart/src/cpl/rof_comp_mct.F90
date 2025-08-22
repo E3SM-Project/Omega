@@ -331,7 +331,7 @@ contains
        ! set those fields to 0 in moab
        r2x_rm = 0._r8
        ent_type = 0 ! rof is point cloud on this side
-       ierr = iMOAB_SetDoubleTagStorage ( mrofid, tagname, totalmbls , ent_type, r2x_rm(1,1))
+       ierr = iMOAB_SetDoubleTagStorage ( mrofid, tagname, totalmbls , ent_type, r2x_rm)
        if (ierr > 0 )  &
           call shr_sys_abort( sub//' Error: fail to set to 0 seq_flds_x2r_fields ')
 
@@ -350,7 +350,7 @@ contains
 
        ! set those fields to 0 in moab
        x2r_rm = 0._r8
-       ierr = iMOAB_SetDoubleTagStorage ( mrofid, tagname, totalmbls_r , ent_type, x2r_rm(1,1))
+       ierr = iMOAB_SetDoubleTagStorage ( mrofid, tagname, totalmbls_r , ent_type, x2r_rm)
        if (ierr > 0 )  &
           call shr_sys_abort( sub//' Error: fail to set to 0 seq_flds_x2r_fields ')
   ! also load initial data to moab tags, fill with some initial data
@@ -532,6 +532,9 @@ contains
     ! DESCRIPTION:
     ! Finalize rof surface model
     !
+#ifdef HAVE_MOAB
+    use seq_comm_mct,     only : mrofid ! id of moab rof app
+#endif
     ! ARGUMENTS:
     implicit none
     type(ESMF_Clock) , intent(inout) :: EClock    ! Input synchronization clock from driver
@@ -543,7 +546,9 @@ contains
    ! fill this in
 #ifdef HAVE_MOAB
     ! deallocate moab fields array
+    if (mrofid > 0) then
       deallocate (r2x_rm)
+    endif
 #endif
   end subroutine rof_final_mct
 
@@ -1064,39 +1069,9 @@ contains
     if (ierr > 0 )  &
       call shr_sys_abort( sub//' Error: fail to create domain tags ')
 
-    do n = 1, lsz
-       coords(n) = rtmCTL%mask(rtmCTL%begr+n-1)  ! local to global !
-    end do
+   ! fill in domain info
 
-    tagname='mask'//C_NULL_CHAR
-    ierr = iMOAB_SetDoubleTagStorage ( mrofid, tagname, lsz , ent_type, coords)
-    if (ierr > 0 )  &
-      call shr_sys_abort( sub//' Error: fail to set mask tag ')
-
-    ni = 0
-    do n = rtmCTL%begr,rtmCTL%endr
-       ni = ni + 1
-       coords(ni) = rtmCTL%area(n)*1.0e-6_r8/(re*re)
-    end do
-
-    tagname='area'//C_NULL_CHAR
-
-    ierr = iMOAB_SetDoubleTagStorage ( mrofid, tagname, lsz , ent_type, coords)
-    if (ierr > 0 )  &
-      call shr_sys_abort(sub//' Error: fail to set area tag ')
-
-    ni = 0
-    do n = rtmCTL%begr,rtmCTL%endr
-       ni = ni + 1
-       coords(ni) = rtmCTL%latc(n)
-    end do
-
-    tagname='lat'//C_NULL_CHAR
-
-    ierr = iMOAB_SetDoubleTagStorage ( mrofid, tagname, lsz , ent_type, coords)
-    if (ierr > 0 )  &
-      call shr_sys_abort(sub//' Error: fail to set lat tag ')
-
+   ! longitude
     ni = 0
     do n = rtmCTL%begr,rtmCTL%endr
        ni = ni + 1
@@ -1104,15 +1079,48 @@ contains
     end do
 
     tagname='lon'//C_NULL_CHAR
+    ierr = iMOAB_SetDoubleTagStorage ( mrofid, tagname, lsz , ent_type, coords)
+    if (ierr > 0 )  &
+      call shr_sys_abort(sub//' Error: fail to set lon tag ')
 
+   ! latitude
+    ni = 0
+    do n = rtmCTL%begr,rtmCTL%endr
+       ni = ni + 1
+       coords(ni) = rtmCTL%latc(n)
+    end do
+
+    tagname='lat'//C_NULL_CHAR
     ierr = iMOAB_SetDoubleTagStorage ( mrofid, tagname, lsz , ent_type, coords)
     if (ierr > 0 )  &
       call shr_sys_abort(sub//' Error: fail to set lat tag ')
 
-   !  tagname='aream'//C_NULL_CHAR
-   !  ierr = iMOAB_SetDoubleTagStorage ( mrofid, tagname, lsz , ent_type, coords)
-   !  if (ierr > 0 )  &
-   !    call shr_sys_abort(sub//' Error: fail to set aream tag ')
+  ! area
+    ni = 0
+    do n = rtmCTL%begr,rtmCTL%endr
+       ni = ni + 1
+       coords(ni) = rtmCTL%area(n)*1.0e-6_r8/(re*re)
+    end do
+
+    tagname='area'//C_NULL_CHAR
+    ierr = iMOAB_SetDoubleTagStorage ( mrofid, tagname, lsz , ent_type, coords)
+    if (ierr > 0 )  &
+      call shr_sys_abort(sub//' Error: fail to set area tag ')
+
+    ! mask and frac
+    do n = 1, lsz
+       coords(n) = 1.0_r8
+    end do
+
+    tagname='mask'//C_NULL_CHAR
+    ierr = iMOAB_SetDoubleTagStorage ( mrofid, tagname, lsz , ent_type, coords)
+    if (ierr > 0 )  &
+      call shr_sys_abort( sub//' Error: fail to set mask tag ')
+
+    tagname='frac'//C_NULL_CHAR
+    ierr = iMOAB_SetDoubleTagStorage ( mrofid, tagname, lsz , ent_type, coords)
+    if (ierr > 0 )  &
+      call shr_sys_abort( sub//' Error: fail to set frac tag ')
 
     ierr = iMOAB_UpdateMeshInfo ( mrofid )
     if (ierr > 0 )  &
