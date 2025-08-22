@@ -87,8 +87,13 @@ to buid and test Omega. The utility automates many of the steps below.
 In the Omega branch you would like to build, first update the submodules that
 Omega requires:
 ```sh
-git submodule update --init --recursive externals/ekat \
-    externals/scorpio cime externals/cpptrace
+git submodule update --init --recursive \
+    externals/YAKL \
+    externals/ekat \
+    externals/scorpio \
+    externals/cpptrace \
+    components/omega/external \
+    cime
 ```
 
 Since some systems require tests to be run on in a scratch space, it is a good

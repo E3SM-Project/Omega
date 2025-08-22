@@ -269,8 +269,13 @@ to buid and test Omega. The utility automates many of the steps below.</p>
 <h3>Building Omega<a class="headerlink" href="#building-omega" title="Permalink to this heading"></a></h3>
 <p>In the Omega branch you would like to build, first update the submodules that
 Omega requires:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>submodule<span class="w"> </span>update<span class="w"> </span>--init<span class="w"> </span>--recursive<span class="w"> </span>externals/ekat<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>externals/scorpio<span class="w"> </span>cime<span class="w"> </span>externals/cpptrace
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>submodule<span class="w"> </span>update<span class="w"> </span>--init<span class="w"> </span>--recursive<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>externals/YAKL<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>externals/ekat<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>externals/scorpio<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>externals/cpptrace<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>components/omega/external<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>cime
 </pre></div>
 </div>
 <p>Since some systems require tests to be run on in a scratch space, it is a good
