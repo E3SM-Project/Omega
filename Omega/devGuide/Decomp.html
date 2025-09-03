@@ -175,8 +175,8 @@
 horizontal domain into subdomains that are distributed across the machine
 and communicate using message passing via the Message Passing Interface (MPI).
 To decompose the domain, we utilize the
-<a class="reference external" href="http://glaros.dtc.umn.edu/gkhome/metis/metis/overview">METIS</a> library.
-An Omega mesh is fully described by the
+<a class="reference external" href="http://glaros.dtc.umn.edu/gkhome/metis/metis/overview">METIS/ParMETIS</a>
+libraries.  An Omega mesh is fully described by the
 <a class="reference external" href="https://mpas-dev.github.io/files/documents/MPAS-MeshSpec.pdf">MPAS Mesh Specification</a>
 which we will reproduce here eventually. The Decomp class decomposes
 the domain based on the index space and number of MPI tasks (currently
@@ -189,11 +189,14 @@ with the call:</p>
 </div>
 <p>This must be called very early in the init process, just after initializing
 the MachEnv, Config and IO.  Mesh information is first read using parallel
-IO into an equally-spaced linear decomposition, then partitioned by METIS
-into a more optimal decomposition. The parallel METIS implementation
-(ParMETIS) will eventually be used to reduce the memory footprint for
-high-resolution configurations, but currently we use the serial METIS library
-for the partitioning.</p>
+IO into an equally-spaced linear decomposition, then partitioned by METIS or
+ParMETIS into a more optimal decomposition. The parallel ParMETIS
+implementation should be used to reduce the memory footprint for
+high-resolution configurations. Although the algorithmic method is similar,
+ParMETIS leads to a somewhat different partitioning than the serial METIS
+version. The serial version should give the same partition as the serial
+offline gpmetis tool used by MPAS when the same version of the METIS library
+is used.</p>
 <p>METIS requires information about the connectivity in the mesh. In particular,
 it needs the total number of cells and edges in the mesh and the connectivity
 given by the CellsOnCell array that stores the indices of neighboring cells
