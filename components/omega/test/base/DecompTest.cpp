@@ -14,10 +14,12 @@
 #include "Decomp.h"
 #include "Config.h"
 #include "DataTypes.h"
+#include "Error.h"
 #include "IO.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "Pacer.h"
+#include "Reductions.h"
 #include "mpi.h"
 
 #include <iostream>
@@ -28,7 +30,7 @@ using namespace OMEGA;
 // The initialization routine for Decomp testing. It calls various
 // init routines, including the creation of the default decomposition.
 
-int initDecompTest() {
+void initDecompTest() {
 
    int Err = 0;
 
@@ -40,6 +42,7 @@ int initDecompTest() {
    MPI_Comm DefComm = DefEnv->getComm();
 
    initLogging(DefEnv);
+   LOG_INFO("---- Starting Decomp unit tests ----");
 
    // Open config file
    Config("Omega");
@@ -48,12 +51,12 @@ int initDecompTest() {
    // Initialize the IO system
    Err = IO::init(DefComm);
    if (Err != 0)
-      LOG_ERROR("DecompTest: error initializing parallel IO");
+      ABORT_ERROR("DecompTest: error initializing parallel IO");
 
    // Create the default decomposition (initializes the decomposition)
    Decomp::init();
 
-   return Err;
+   return;
 }
 
 //------------------------------------------------------------------------------
@@ -71,9 +74,7 @@ int main(int argc, char *argv[]) {
    Pacer::setPrefix("Omega:");
    {
       // Call initialization routine to create the default decomposition
-      int Err = initDecompTest();
-      if (Err != 0)
-         LOG_CRITICAL("DecompTest: Error initializing");
+      initDecompTest();
 
       // Get MPI vars if needed
       MachEnv *DefEnv = MachEnv::getDefault();
@@ -84,12 +85,14 @@ int main(int argc, char *argv[]) {
 
       // Test retrieval of the default decomposition
       Decomp *DefDecomp = Decomp::getDefault();
-      if (DefDecomp) { // true if non-null ptr
-         LOG_INFO("DecompTest: Default decomp retrieval PASS");
-      } else {
-         LOG_INFO("DecompTest: Default decomp retrieval FAIL");
-         return -1;
-      }
+
+      // Extract some index info from Decomp
+      I4 NCellsGlobal    = DefDecomp->NCellsGlobal;
+      I4 NCellsOwned     = DefDecomp->NCellsOwned;
+      I4 NEdgesGlobal    = DefDecomp->NEdgesGlobal;
+      I4 NEdgesOwned     = DefDecomp->NEdgesOwned;
+      I4 NVerticesGlobal = DefDecomp->NVerticesGlobal;
+      I4 NVerticesOwned  = DefDecomp->NVerticesOwned;
 
       // Test that all Cells, Edges, Vertices are accounted for by
       // summing the list of owned values by all tasks. The result should
@@ -97,11 +100,11 @@ int main(int argc, char *argv[]) {
       I4 RefSumCells    = 0;
       I4 RefSumEdges    = 0;
       I4 RefSumVertices = 0;
-      for (int n = 0; n < DefDecomp->NCellsGlobal; ++n)
+      for (int n = 0; n < NCellsGlobal; ++n)
          RefSumCells += n + 1;
-      for (int n = 0; n < DefDecomp->NEdgesGlobal; ++n)
+      for (int n = 0; n < NEdgesGlobal; ++n)
          RefSumEdges += n + 1;
-      for (int n = 0; n < DefDecomp->NVerticesGlobal; ++n)
+      for (int n = 0; n < NVerticesGlobal; ++n)
          RefSumVertices += n + 1;
       I4 LocSumCells          = 0;
       I4 LocSumEdges          = 0;
@@ -109,50 +112,41 @@ int main(int argc, char *argv[]) {
       HostArray1DI4 CellIDH   = DefDecomp->CellIDH;
       HostArray1DI4 EdgeIDH   = DefDecomp->EdgeIDH;
       HostArray1DI4 VertexIDH = DefDecomp->VertexIDH;
-      for (int n = 0; n < DefDecomp->NCellsOwned; ++n)
+      for (int n = 0; n < NCellsOwned; ++n)
          LocSumCells += CellIDH(n);
-      for (int n = 0; n < DefDecomp->NEdgesOwned; ++n)
+      for (int n = 0; n < NEdgesOwned; ++n)
          LocSumEdges += EdgeIDH(n);
-      for (int n = 0; n < DefDecomp->NVerticesOwned; ++n)
+      for (int n = 0; n < NVerticesOwned; ++n)
          LocSumVertices += VertexIDH(n);
       I4 SumCells    = 0;
       I4 SumEdges    = 0;
       I4 SumVertices = 0;
-      Err =
-          MPI_Allreduce(&LocSumCells, &SumCells, 1, MPI_INT32_T, MPI_SUM, Comm);
-      Err =
-          MPI_Allreduce(&LocSumEdges, &SumEdges, 1, MPI_INT32_T, MPI_SUM, Comm);
-      Err = MPI_Allreduce(&LocSumVertices, &SumVertices, 1, MPI_INT32_T,
-                          MPI_SUM, Comm);
+      RetVal += globalSum(&LocSumCells, Comm, &SumCells);
+      RetVal += globalSum(&LocSumEdges, Comm, &SumEdges);
+      RetVal += globalSum(&LocSumVertices, Comm, &SumVertices);
 
-      if (SumCells == RefSumCells) {
-         LOG_INFO("DecompTest: Sum cell ID test PASS");
-      } else {
+      if (SumCells != RefSumCells) {
          RetVal += 1;
-         LOG_INFO("DecompTest: Sum cell ID test FAIL {} {}", SumCells,
-                  RefSumCells);
+         LOG_ERROR("DecompTest: Sum cell ID test FAIL {} {}", SumCells,
+                   RefSumCells);
       }
-      if (SumEdges == RefSumEdges) {
-         LOG_INFO("DecompTest: Sum edge ID test PASS");
-      } else {
+      if (SumEdges != RefSumEdges) {
          RetVal += 1;
-         LOG_INFO("DecompTest: Sum edge ID test FAIL {} {}", SumEdges,
-                  RefSumEdges);
+         LOG_ERROR("DecompTest: Sum edge ID test FAIL {} {}", SumEdges,
+                   RefSumEdges);
       }
-      if (SumVertices == RefSumVertices) {
-         LOG_INFO("DecompTest: Sum vertex ID test PASS");
-      } else {
+      if (SumVertices != RefSumVertices) {
          RetVal += 1;
-         LOG_INFO("DecompTest: Sum vertex ID test FAIL {} {}", SumVertices,
-                  RefSumVertices);
+         LOG_ERROR("DecompTest: Sum vertex ID test FAIL {} {}", SumVertices,
+                   RefSumVertices);
       }
 
       // Clean up
       Decomp::clear();
       MachEnv::removeAll();
 
-      if (Err == 0)
-         LOG_INFO("DecompTest: Successful completion");
+      if (RetVal == 0)
+         LOG_INFO("---- DecompTest: Successful completion ----");
    }
    Kokkos::finalize();
    MPI_Finalize();

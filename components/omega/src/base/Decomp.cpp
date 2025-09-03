@@ -15,11 +15,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "Decomp.h"
+#include "Broadcast.h"
 #include "Config.h"
 #include "DataTypes.h"
 #include "Error.h"
 #include "IO.h"
-#include "Logging.h"
 #include "MachEnv.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
@@ -105,22 +105,22 @@ I4 srchVector(HostArray1DI4 InVector, // vector to search
 // These are initially read into a uniform linear distribution across MPI tasks
 // and redistributed later after the decomposition is complete.
 
-int readMesh(const int MeshFileID, // file ID for open mesh file
-             const MachEnv *InEnv, // input machine environment for MPI layout
-             I4 &NCellsGlobal,     // total number of cells
-             I4 &NEdgesGlobal,     // total number of edges
-             I4 &NVerticesGlobal,  // total number of vertices
-             I4 &MaxEdges,         // max number of edges on a cell
-             I4 &MaxCellsOnEdge,   // max number of cells sharing edge
-             I4 &VertexDegree,     // number of cells/edges sharing vrtx
-             std::vector<I4> &CellsOnCellInit, // cell neighbors for each cell
-             std::vector<I4> &EdgesOnCellInit, // edge IDs for each cell edge
-             std::vector<I4> &VerticesOnCellInit, // vertices around each cell
-             std::vector<I4> &CellsOnEdgeInit,    // cell IDs sharing edge
-             std::vector<I4> &EdgesOnEdgeInit,    // all edges neighboring edge
-             std::vector<I4> &VerticesOnEdgeInit, // vertices on ends of edge
-             std::vector<I4> &CellsOnVertexInit,  // cells meeting at each vrtx
-             std::vector<I4> &EdgesOnVertexInit   // edges meeting at each vrtx
+void readMesh(const int MeshFileID, // file ID for open mesh file
+              const MachEnv *InEnv, // input machine environment for MPI layout
+              I4 &NCellsGlobal,     // total number of cells
+              I4 &NEdgesGlobal,     // total number of edges
+              I4 &NVerticesGlobal,  // total number of vertices
+              I4 &MaxEdges,         // max number of edges on a cell
+              I4 &MaxCellsOnEdge,   // max number of cells sharing edge
+              I4 &VertexDegree,     // number of cells/edges sharing vrtx
+              std::vector<I4> &CellsOnCellInit, // cell neighbors for each cell
+              std::vector<I4> &EdgesOnCellInit, // edge IDs for each cell edge
+              std::vector<I4> &VerticesOnCellInit, // vertices around each cell
+              std::vector<I4> &CellsOnEdgeInit,    // cell IDs sharing edge
+              std::vector<I4> &EdgesOnEdgeInit,    // all edges neighboring edge
+              std::vector<I4> &VerticesOnEdgeInit, // vertices on ends of edge
+              std::vector<I4> &CellsOnVertexInit,  // cells meeting at each vrtx
+              std::vector<I4> &EdgesOnVertexInit   // edges meeting at each vrtx
 ) {
 
    int Err = 0;
@@ -129,8 +129,6 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
    MPI_Comm Comm = InEnv->getComm();
    I4 NumTasks   = InEnv->getNumTasks();
    I4 MyTask     = InEnv->getMyTask();
-   I4 MasterTask = InEnv->getMasterTask();
-   bool IsMaster = InEnv->isMasterTask();
 
    // Read in mesh size information - these are dimension lengths in
    // the input mesh file. Check both the name under Omega name conventions
@@ -142,7 +140,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
    if (Err != 0) { // dim not found, try again with older MPAS name
       Err = IO::getDimFromFile(MeshFileID, DimNameOld, NCellsID, NCellsGlobal);
       if (Err != 0 or NCellsGlobal <= 0)
-         LOG_CRITICAL("Decomp: error reading nCells");
+         ABORT_ERROR("Decomp: error reading nCells");
    }
 
    DimName    = "NEdges";
@@ -152,7 +150,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
    if (Err != 0) { // dim not found, try again with older MPAS name
       Err = IO::getDimFromFile(MeshFileID, DimNameOld, NEdgesID, NEdgesGlobal);
       if (Err != 0 or NEdgesGlobal <= 0)
-         LOG_CRITICAL("Decomp: error reading NEdges");
+         ABORT_ERROR("Decomp: error reading NEdges");
    }
 
    DimName    = "NVertices";
@@ -163,7 +161,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::getDimFromFile(MeshFileID, DimNameOld, NVerticesID,
                                NVerticesGlobal);
       if (Err != 0 or NVerticesGlobal <= 0)
-         LOG_CRITICAL("Decomp: error reading NVertices");
+         ABORT_ERROR("Decomp: error reading NVertices");
    }
 
    DimName    = "MaxEdges";
@@ -173,7 +171,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
    if (Err != 0) { // dim not found, try again with older MPAS name
       Err = IO::getDimFromFile(MeshFileID, DimNameOld, MaxEdgesID, MaxEdges);
       if (Err != 0 or MaxEdges <= 0)
-         LOG_CRITICAL("Decomp: error reading MaxEdges");
+         ABORT_ERROR("Decomp: error reading MaxEdges");
    }
 
    DimName    = "VertexDegree";
@@ -184,7 +182,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::getDimFromFile(MeshFileID, DimNameOld, VertexDegreeID,
                                VertexDegree);
       if (Err != 0 or VertexDegree <= 0)
-         LOG_CRITICAL("Decomp: error reading VertexDegree");
+         ABORT_ERROR("Decomp: error reading VertexDegree");
    }
 
    DimName    = "MaxCellsOnEdge";
@@ -196,7 +194,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::getDimFromFile(MeshFileID, DimName, MaxCellsOnEdgeID,
                                MaxCellsOnEdge);
       if (Err != 0 or MaxCellsOnEdge <= 0)
-         LOG_CRITICAL("Decomp: error reading MaxCellsOnEdge");
+         ABORT_ERROR("Decomp: error reading MaxCellsOnEdge");
    }
    I4 MaxEdgesOnEdge = 2 * MaxEdges; // 2*MaxCellsOnEdge
 
@@ -278,19 +276,19 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
    Err = IO::createDecomp(OnCellDecomp, IO::IOTypeI4, NDims, OnCellDims,
                           OnCellSize, OnCellOffset, Rearr);
    if (Err != 0)
-      LOG_CRITICAL("Decomp: error creating OnCell IO decomposition");
+      ABORT_ERROR("Decomp: error creating OnCell IO decomposition");
    Err = IO::createDecomp(OnEdgeDecomp, IO::IOTypeI4, NDims, OnEdgeDims,
                           OnEdgeSize, OnEdgeOffset, Rearr);
    if (Err != 0)
-      LOG_CRITICAL("Decomp: error creating OnEdge IO decomposition");
+      ABORT_ERROR("Decomp: error creating OnEdge IO decomposition");
    Err = IO::createDecomp(OnEdgeDecomp2, IO::IOTypeI4, NDims, OnEdgeDims2,
                           OnEdgeSize2, OnEdgeOffset2, Rearr);
    if (Err != 0)
-      LOG_CRITICAL("Decomp: error creating OnEdg2 IO decomposition");
+      ABORT_ERROR("Decomp: error creating OnEdg2 IO decomposition");
    Err = IO::createDecomp(OnVertexDecomp, IO::IOTypeI4, NDims, OnVertexDims,
                           OnVertexSize, OnVertexOffset, Rearr);
    if (Err != 0)
-      LOG_CRITICAL("Decomp: error creating Vertex IO decomposition");
+      ABORT_ERROR("Decomp: error creating Vertex IO decomposition");
 
    // Now read the connectivity arrays. Try reading under the new Omega
    // name convention and the older MPAS mesh names.
@@ -312,7 +310,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&CellsOnCellInit[0], OnCellSize, VarNameOld,
                           MeshFileID, OnCellDecomp, CellsOnCellID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading CellsOnCell");
+         ABORT_ERROR("Decomp: error reading CellsOnCell");
    }
 
    VarName    = "EdgesOnCell";
@@ -324,7 +322,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&EdgesOnCellInit[0], OnCellSize, VarNameOld,
                           MeshFileID, OnCellDecomp, EdgesOnCellID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading EdgesOnCell");
+         ABORT_ERROR("Decomp: error reading EdgesOnCell");
    }
 
    VarName    = "VerticesOnCell";
@@ -336,7 +334,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&VerticesOnCellInit[0], OnCellSize, VarNameOld,
                           MeshFileID, OnCellDecomp, VerticesOnCellID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading VerticesOnCell");
+         ABORT_ERROR("Decomp: error reading VerticesOnCell");
    }
 
    VarName    = "CellsOnEdge";
@@ -348,7 +346,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&CellsOnEdgeInit[0], OnEdgeSize, VarNameOld,
                           MeshFileID, OnEdgeDecomp, CellsOnEdgeID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading CellsOnEdge");
+         ABORT_ERROR("Decomp: error reading CellsOnEdge");
    }
 
    VarName    = "EdgesOnEdge";
@@ -360,7 +358,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&EdgesOnEdgeInit[0], OnEdgeSize2, VarNameOld,
                           MeshFileID, OnEdgeDecomp2, EdgesOnEdgeID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading EdgesOnEdge");
+         ABORT_ERROR("Decomp: error reading EdgesOnEdge");
    }
 
    VarName    = "VerticesOnEdge";
@@ -372,7 +370,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&VerticesOnEdgeInit[0], OnEdgeSize, VarNameOld,
                           MeshFileID, OnEdgeDecomp, VerticesOnEdgeID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading VerticesOnEdge");
+         ABORT_ERROR("Decomp: error reading VerticesOnEdge");
    }
 
    VarName    = "CellsOnVertex";
@@ -384,7 +382,7 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&CellsOnVertexInit[0], OnVertexSize, VarNameOld,
                           MeshFileID, OnVertexDecomp, CellsOnVertexID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading CellsOnVertex");
+         ABORT_ERROR("Decomp: error reading CellsOnVertex");
    }
 
    VarName    = "EdgesOnVertex";
@@ -396,30 +394,30 @@ int readMesh(const int MeshFileID, // file ID for open mesh file
       Err = IO::readArray(&EdgesOnVertexInit[0], OnVertexSize, VarNameOld,
                           MeshFileID, OnVertexDecomp, EdgesOnVertexID);
       if (Err != 0)
-         LOG_CRITICAL("Decomp: error reading EdgesOnVertex");
+         ABORT_ERROR("Decomp: error reading EdgesOnVertex");
    }
 
    // Initial decompositions are no longer needed so remove them now
    Err = IO::destroyDecomp(OnCellDecomp);
    if (Err != 0)
-      LOG_ERROR("Decomp: error destroying OnCell decomposition");
+      ABORT_ERROR("Decomp: error destroying OnCell decomposition");
    Err = IO::destroyDecomp(OnEdgeDecomp);
    if (Err != 0)
-      LOG_ERROR("Decomp: error destroying OnEdge decomposition");
+      ABORT_ERROR("Decomp: error destroying OnEdge decomposition");
    Err = IO::destroyDecomp(OnEdgeDecomp2);
    if (Err != 0)
-      LOG_ERROR("Decomp: error destroying OnEdge2 decomposition");
+      ABORT_ERROR("Decomp: error destroying OnEdge2 decomposition");
    Err = IO::destroyDecomp(OnVertexDecomp);
    if (Err != 0)
-      LOG_ERROR("Decomp: error destroying OnVertex decomposition");
+      ABORT_ERROR("Decomp: error destroying OnVertex decomposition");
 
-   return Err;
+   return;
 
 } // end readMesh
 
 //------------------------------------------------------------------------------
 // Initialize the decomposition and create the default decomposition with
-// (currently) one partition per MPI task using a ParMetis KWay method.
+// (currently) one partition per MPI task using selected partition method
 
 void Decomp::init(const std::string &MeshFileName) {
 
@@ -480,8 +478,6 @@ Decomp::Decomp(
    MPI_Comm Comm = InEnv->getComm();
    I4 NumTasks   = InEnv->getNumTasks();
    I4 MyTask     = InEnv->getMyTask();
-   I4 MasterTask = InEnv->getMasterTask();
-   bool IsMaster = InEnv->isMasterTask();
 
    // Open the mesh file for reading (assume IO has already been initialized)
    TimerFlag = Pacer::start("Decomp read mesh") && TimerFlag;
@@ -489,7 +485,7 @@ Decomp::Decomp(
    MeshFileName = MeshFileName_;
    Err          = IO::openFile(FileID, MeshFileName, IO::ModeRead);
    if (Err != 0)
-      LOG_CRITICAL("Decomp: error opening mesh file");
+      ABORT_ERROR("Decomp: error opening mesh file");
 
    // Read mesh size and connectivity information
    std::vector<I4> CellsOnCellInit;
@@ -502,13 +498,11 @@ Decomp::Decomp(
    std::vector<I4> EdgesOnVertexInit;
    HaloWidth = InHaloWidth;
 
-   Err = readMesh(FileID, InEnv, NCellsGlobal, NEdgesGlobal, NVerticesGlobal,
-                  MaxEdges, MaxCellsOnEdge, VertexDegree, CellsOnCellInit,
-                  EdgesOnCellInit, VerticesOnCellInit, CellsOnEdgeInit,
-                  EdgesOnEdgeInit, VerticesOnEdgeInit, CellsOnVertexInit,
-                  EdgesOnVertexInit);
-   if (Err != 0)
-      LOG_CRITICAL("Decomp: Error reading mesh connectivity");
+   readMesh(FileID, InEnv, NCellsGlobal, NEdgesGlobal, NVerticesGlobal,
+            MaxEdges, MaxCellsOnEdge, VertexDegree, CellsOnCellInit,
+            EdgesOnCellInit, VerticesOnCellInit, CellsOnEdgeInit,
+            EdgesOnEdgeInit, VerticesOnEdgeInit, CellsOnVertexInit,
+            EdgesOnVertexInit);
 
    // Close file
    Err       = IO::closeFile(FileID);
@@ -525,24 +519,24 @@ Decomp::Decomp(
       // Use the mesh adjacency information to create a partition of cells
       switch (Method) { // branch depending on method chosen
 
-      //---------------------------------------------------------------------------
-      // ParMetis KWay method
-      case PartMethodMetisKWay: {
+      //------------------------------------------------------------------------
+      // Serial Metis KWay method
+      case PartMethodMetisKWay:
 
-         Err = partCellsKWay(InEnv, CellsOnCellInit);
-         if (Err != 0) {
-            LOG_CRITICAL("Decomp: Error partitioning cells KWay");
-            return;
-         }
+         partCellsMetisKWay(InEnv, CellsOnCellInit);
          break;
-      } // end case MethodKWay
 
-         //---------------------------------------------------------------------------
-         // Unknown partitioning method
+      //------------------------------------------------------------------------
+      // Parallel ParMetis KWay method
+      case PartMethodParMetisKWay:
 
+         partCellsParMetisKWay(InEnv, CellsOnCellInit);
+         break;
+
+      //------------------------------------------------------------------------
+      // Unknown partitioning method
       default:
-         LOG_CRITICAL("Decomp: Unknown or unsupported decomposition method");
-         return;
+         ABORT_ERROR("Decomp: Unknown or unsupported decomposition method");
 
       } // End switch on Method
    }
@@ -552,51 +546,31 @@ Decomp::Decomp(
    // Cell partitioning complete. Redistribute the initial XXOnCell arrays
    // to their final locations.
    TimerFlag = Pacer::start("Decomp rearrange cells") && TimerFlag;
-   Err       = rearrangeCellArrays(InEnv, CellsOnCellInit, EdgesOnCellInit,
-                                   VerticesOnCellInit);
-   if (Err != 0) {
-      LOG_CRITICAL("Decomp: Error rearranging XxOnCell arrays");
-      return;
-   }
+   rearrangeCellArrays(InEnv, CellsOnCellInit, EdgesOnCellInit,
+                       VerticesOnCellInit);
    TimerFlag = Pacer::stop("Decomp rearrange cells") && TimerFlag;
 
    // Partition the edges
    TimerFlag = Pacer::start("Decomp part edges") && TimerFlag;
-   Err       = partEdges(InEnv, CellsOnEdgeInit);
-   if (Err != 0) {
-      LOG_CRITICAL("Decomp: Error partitioning edges");
-      return;
-   }
+   partEdges(InEnv, CellsOnEdgeInit);
    TimerFlag = Pacer::stop("Decomp part edges") && TimerFlag;
 
    // Edge partitioning complete. Redistribute the initial XXOnEdge arrays
    // to their final locations.
    TimerFlag = Pacer::start("Decomp rearrange edges") && TimerFlag;
-   Err       = rearrangeEdgeArrays(InEnv, CellsOnEdgeInit, EdgesOnEdgeInit,
-                                   VerticesOnEdgeInit);
-   if (Err != 0) {
-      LOG_CRITICAL("Decomp: Error rearranging XxOnEdge arrays");
-      return;
-   }
+   rearrangeEdgeArrays(InEnv, CellsOnEdgeInit, EdgesOnEdgeInit,
+                       VerticesOnEdgeInit);
    TimerFlag = Pacer::stop("Decomp rearrange edges") && TimerFlag;
 
    // Partition the vertices
    TimerFlag = Pacer::start("Decomp part vertices") && TimerFlag;
-   Err       = partVertices(InEnv, CellsOnVertexInit);
-   if (Err != 0) {
-      LOG_CRITICAL("Decomp: Error partitioning vertices");
-      return;
-   }
+   partVertices(InEnv, CellsOnVertexInit);
    TimerFlag = Pacer::stop("Decomp part vertices") && TimerFlag;
 
    // Vertex partitioning complete. Redistribute the initial XXOnVertex arrays
    // to their final locations.
    TimerFlag = Pacer::start("Decomp rearrange vertices") && TimerFlag;
-   Err = rearrangeVertexArrays(InEnv, CellsOnVertexInit, EdgesOnVertexInit);
-   if (Err != 0) {
-      LOG_CRITICAL("Decomp: Error rearranging XxOnVertex arrays");
-      return;
-   }
+   rearrangeVertexArrays(InEnv, CellsOnVertexInit, EdgesOnVertexInit);
    TimerFlag = Pacer::stop("Decomp rearrange vertices") && TimerFlag;
 
    // Convert global addresses to local addresses. Create the global to
@@ -811,10 +785,9 @@ Decomp *Decomp::create(
    // Check to see if a decomposition of the same name already exists and
    // if so, exit with an error
    if (AllDecomps.find(Name) != AllDecomps.end()) {
-      LOG_ERROR("Attempted to create a Decomp with name {} but a Decomp of "
-                "that name already exists",
-                Name);
-      return nullptr;
+      ABORT_ERROR("Attempted to create a Decomp with name {} but a Decomp of "
+                  "that name already exists",
+                  Name);
    }
 
    // create a new decomp on the heap and put it in a map of
@@ -873,16 +846,14 @@ Decomp *Decomp::get(const std::string Name ///< [in] Name of environment
    // look for an instance of this name
    auto it = AllDecomps.find(Name);
 
-   // if found, return the decomposition pointer
-   if (it != AllDecomps.end()) {
-      return it->second.get();
+   // if not found abort with an error
+   if (it == AllDecomps.end())
+      ABORT_ERROR(
+          "Decomp::get: Attempt to retrieve non-existent Decomposition: {}",
+          Name);
 
-      // otherwise print an error and return a null pointer
-   } else {
-      LOG_ERROR("Decomp::get: Attempt to retrieve non-existent Decomposition:");
-      LOG_ERROR(" {} has not been defined or has been removed", Name);
-      return nullptr;
-   }
+   // return the decomposition pointer
+   return it->second.get();
 
 } // end get Decomposition
 
@@ -913,30 +884,22 @@ void Decomp::partCellsSingleTask() {
 } // end function partCellsSingleTask
 
 //------------------------------------------------------------------------------
-// Partition the cells using the Metis/ParMetis KWay method
+// Partition the cells using the serial Metis KWay method
 // After this partitioning, the decomposition class member CellID and
 // CellLocator arrays have been set as well as the class NCells size variables
 // (owned, halo, all).
 
-int Decomp::partCellsKWay(
+void Decomp::partCellsMetisKWay(
     const MachEnv *InEnv, // [in] input machine environment with MPI info
     const std::vector<I4> &CellsOnCellInit // [in] cell nbrs in linear distrb
 ) {
 
-   int Err = 0; // initialize return code
+   int Err = 0; // internal error code for MPI and Metis/ParMetis
 
    // Retrieve some info on the MPI layout
    MPI_Comm Comm = InEnv->getComm();
    I4 NumTasks   = InEnv->getNumTasks();
    I4 MyTask     = InEnv->getMyTask();
-   I4 MasterTask = InEnv->getMasterTask();
-   bool IsMaster = InEnv->isMasterTask();
-
-   // TEMPORARY:
-   // Due to difficulties with ParMetis, we use serial Metis for now with
-   // each task calling the serial form with the global adjacency data.
-   // This requires us to communicate the CellsOnCell data and pack it
-   // into the Metis structure.
 
    // Allocate adjacency arrays and a buffer for portions of the CellsOnCell
    // array.
@@ -954,27 +917,24 @@ int Decomp::partCellsKWay(
    // and then unpacks it into the adjacency array in the packed form needed
    // by METIS/ParMETIS
    bool TimerFlag = Pacer::start("Gather adjacency");
-   for (int Task = 0; Task < NumTasks; ++Task) {
+   for (int ITask = 0; ITask < NumTasks; ++ITask) {
 
       // If it is this task's turn, pack up the CellsOnCell data and broadcast
       // to other tasks.
-      if (MyTask == Task) {
+      if (MyTask == ITask) {
          for (int n = 0; n < CellsOnCellSize; ++n) {
             CellsOnCellBuf[n] = CellsOnCellInit[n];
          } // end loop CellsOnCell
       } // end if this is MyTask
-      Err = MPI_Bcast(&CellsOnCellBuf[0], CellsOnCellSize, MPI_INT32_T, Task,
-                      Comm);
-      if (Err != 0) {
-         LOG_CRITICAL("Decomp: Error communicating CellsOnCell info");
-         return Err;
-      }
+      Err = Broadcast(CellsOnCellBuf, InEnv, ITask);
+      if (Err != 0)
+         ABORT_ERROR("Decomp: Error communicating CellsOnCell info");
 
       // Create the adjacency graph by aggregating the individual
       // chunks. Prune edges that don't have neighbors.
       for (int Cell = 0; Cell < NCellsChunk; ++Cell) {
 
-         I4 CellGlob = Task * NCellsChunk + Cell; // global cell ID
+         I4 CellGlob = ITask * NCellsChunk + Cell; // global cell ID
 
          // when chunks do not divide evenly this happens and we break out
          if (CellGlob >= NCellsGlobal)
@@ -985,7 +945,7 @@ int Decomp::partCellsKWay(
             I4 BufAdd  = Cell * MaxEdges + Edge;
             I4 NbrCell = CellsOnCellBuf[BufAdd];
             // Skip edges with no neighbors
-            if (NbrCell > 0 && NbrCell <= NCellsGlobal) {
+            if (validCellID(NbrCell)) {
                // switch to 0-based indx
                Adjacency[Add] = NbrCell - 1;
                ++Add; // increment address counter
@@ -1038,11 +998,8 @@ int Decomp::partCellsKWay(
                                       EdgeWgtPtr, &NumTasksMetis, TpWgts, Ubvec,
                                       Options, &Edgecut, &CellTask[0]);
 
-   if (MetisErr != METIS_OK) {
-      LOG_CRITICAL("Decomp: Error in ParMETIS");
-      Err = -1;
-      return Err;
-   }
+   if (MetisErr != METIS_OK)
+      ABORT_ERROR("Decomp: Error in ParMETIS");
    TimerFlag = Pacer::stop("Metis partitioning") && TimerFlag;
 
    // Determine the initial sizes needed by address arrays
@@ -1067,8 +1024,8 @@ int Decomp::partCellsKWay(
    std::set<I4> CellsInList; // list of unique cells in local owned, halo
 
    // reset local address counter
-   for (int Task = 0; Task < NumTasks; ++Task)
-      TaskCount[Task] = 0;
+   for (int ITask = 0; ITask < NumTasks; ++ITask)
+      TaskCount[ITask] = 0;
 
    for (int Cell = 0; Cell < NCellsGlobal; ++Cell) {
       I4 TaskLoc  = CellTask[Cell];
@@ -1173,15 +1130,338 @@ int Decomp::partCellsKWay(
    // All done
    if (!TimerFlag)
       LOG_WARN("Decomp::partCellsKWay: Error in timers");
-   return Err;
+   return;
 
-} // end function partCellsKWay
+} // end function partCellsMetisKWay
+
+//------------------------------------------------------------------------------
+// Partition the cells using the parallel ParMetis KWay method
+// After this partitioning, the decomposition class member CellID and
+// CellLocator arrays have been set as well as the class NCells size variables
+// (owned, halo, all).
+
+void Decomp::partCellsParMetisKWay(
+    const MachEnv *InEnv, // [in] input machine environment with MPI info
+    const std::vector<I4> &CellsOnCellInit // [in] cell nbrs in linear distrb
+) {
+
+   int Err = 0; // internal error code for MPI and Metis/ParMetis
+
+   // Retrieve some info on the MPI layout
+   MPI_Comm Comm = InEnv->getComm();
+   I4 NumTasks   = InEnv->getNumTasks();
+   I4 MyTask     = InEnv->getMyTask();
+
+   // On entry, the cells are distributed linearly across tasks so the metis
+   // array describing the distribution is just the beginning of each chunk
+   // (Note: We use cell centers as the graph vertices in Metis)
+   I4 NCellsChunk = (NCellsGlobal - 1) / NumTasks + 1;
+   std::vector<idx_t> VrtxDist(NumTasks + 1, 0);
+   for (int IChunk = 0; IChunk < NumTasks; ++IChunk) {
+      VrtxDist[IChunk] = IChunk * NCellsChunk;
+   }
+   VrtxDist[NumTasks] = NCellsGlobal; // last address
+   I4 NCellsLocal     = NCellsChunk;  // most processors have full chunk
+   if (MyTask == NumTasks - 1) { // if uneven distribution, must adjust last
+      I4 NCellsStart = (NumTasks - 1) * NCellsChunk;
+      NCellsLocal    = NCellsGlobal - NCellsStart;
+   }
+
+   // Allocate adjacency arrays
+   I4 AdjSize = NCellsLocal * MaxEdges;
+   std::vector<idx_t> AdjAdd(NCellsLocal + 1, 0);
+   std::vector<idx_t> Adjacency(AdjSize, 0);
+
+   // This is an address counter needed to keep track of the starting
+   // address for each cell in the packed adjacency array.
+   I4 Add = 0;
+
+   // Now we pack the local adjacency array into the form needed by ParMetis
+
+   // Create the adjacency graph by extracting the cells on cell info
+   // and packing into the adjacency array and pruning special entries
+   for (int Cell = 0; Cell < NCellsLocal; ++Cell) {
+
+      AdjAdd[Cell] = Add; // starting address for neighbors of this local cell
+
+      for (int Edge = 0; Edge < MaxEdges; ++Edge) {
+         I4 VecAdd  = Cell * MaxEdges + Edge; // vector add into CellsOnCell
+         I4 NbrCell = CellsOnCellInit[VecAdd];
+         // Only include valid neighbors (eg non-existent edges or edges along
+         // boundaries with no neighbors)
+         if (NbrCell > 0 && NbrCell <= NCellsGlobal) {
+            // switch to 0-based indx
+            Adjacency[Add] = NbrCell - 1;
+            ++Add; // increment address counter
+         }
+      } // end edge loop
+   } // end cell loop
+   // Add last end address
+   AdjAdd[NCellsLocal] = Add;
+   Adjacency.resize(Add);
+
+   // Set up remaining partitioning variables
+
+   // Options array
+   // Options[0] = 0 for default (1 otherwise), Options[1] = 1 for timing info
+   // Options[2] = random number seed
+   std::vector<idx_t> Options(3, 0); // default options
+
+   // Arrays needed for weighted decompositions. If no weighting used
+   // set pointers to null.
+   idx_t WgtFlag = 0; // no weights (1 for edge wgts, 2 for vrtx, 3 for both)
+   idx_t *VrtxWgtPtr{nullptr};
+   idx_t *EdgeWgtPtr{nullptr};
+
+   // NConstraints is the number of balancing constraints, mostly for
+   // use when multiple vertex weights are assigned. Must be at least 1.
+   // We do not yet support weighted partitions
+   idx_t NConstraints = 1;
+
+   // These are for multi-constraint partitions where the vertex weight
+   // has to be distributed among the multiple constraints.
+   // We do not use them so set them to an even distribution of weight
+   std::vector<real_t> TpWgts(NConstraints * NumTasks, 1.0 / NumTasks);
+   std::vector<real_t> Ubvec(NConstraints, 1.05);
+   real_t *TpWgtsPtr = TpWgts.data();
+   real_t *UbvecPtr  = Ubvec.data();
+
+   // Results are stored in a new partition array which returns
+   // the processor (partition) assigned to the cell (vrtx)
+   // The routine also returns the number of edge cuts in the partition
+   std::vector<idx_t> CellTask(NCellsChunk);
+   idx_t Edgecut = 0;
+
+   // Additional info for Metis
+   idx_t NumFlagMetis  = 0;        // C-style base-0 indexing
+   idx_t NumPartsMetis = NumTasks; // number of partitions = num MPI tasks
+
+   // Call ParMETIS routine to partition the mesh
+   // METIS routines are C code that expect pointers, so we use the
+   // idiom &Var[0] to extract the pointer to any data in std::vector
+   bool TimerFlag = Pacer::start("Metis partitioning");
+   int MetisErr   = ParMETIS_V3_PartKway(
+       &VrtxDist[0], &AdjAdd[0], &Adjacency[0], VrtxWgtPtr, EdgeWgtPtr,
+       &WgtFlag, &NumFlagMetis, &NConstraints, &NumPartsMetis, TpWgtsPtr,
+       UbvecPtr, &Options[0], &Edgecut, &CellTask[0], &Comm);
+
+   TimerFlag = Pacer::stop("Metis partitioning");
+   if (MetisErr != METIS_OK)
+      ABORT_ERROR("Decomp: Error in ParMETIS");
+
+   // The location of each cell is now distributed across tasks, so we
+   // need to communicate that information to their final locations. We do
+   // this by having each task broadcast its piece of the distribution
+   // information and gathering the cellIDs owned by this task. We also
+   // gather some connectivity info to create the first level of ghost
+   // cells.
+
+   // Create message buffer for cell location and the nbr cell IDs
+   // Create temporary vector to hold CellIDs, locators and list of Halo cells
+   TimerFlag  = Pacer::start("partCellsGatherOwned");
+   I4 BufSize = NCellsChunk * (1 + MaxEdges);
+   std::vector<I4> MsgBuf(BufSize);
+   std::vector<I4> CellIDTmp;    // Global ID for all cells needed by this task
+   std::vector<I4> CellTaskTmp;  // Task owner for remote halo cells
+   std::vector<I4> CellLocalTmp; // Local index for remote halo cells
+   std::set<I4> HaloList;        // List of halo/nbr points for next pass
+   std::vector<I4> TaskCounter(NumTasks + 1, 0);
+   I4 CellCount = 0; // counter for number of local owned and halo cells
+
+   // First make a pass to determine owned cells and collect global IDs for
+   // the first halo layer
+   for (int ITask = 0; ITask < NumTasks; ++ITask) {
+
+      // If it is this tasks turn, fill the buffer with cell loc and nbrs
+      if (MyTask == ITask) {
+         for (int I = 0; I < NCellsLocal; ++I) {
+            int BufAdd     = I * (1 + MaxEdges);
+            MsgBuf[BufAdd] = CellTask[I];
+            for (int J = 0; J < MaxEdges; ++J) {
+               int VecAdd             = I * MaxEdges + J;
+               MsgBuf[BufAdd + 1 + J] = CellsOnCellInit[VecAdd];
+            }
+         }
+         // handle case where NCells does not divide evenly over tasks
+         for (int I = NCellsLocal; I < NCellsChunk; ++I) {
+            int BufAdd     = I * (1 + MaxEdges);
+            MsgBuf[BufAdd] = NumTasks;
+         }
+      }
+
+      // broadcast the buffer to all tasks
+      TimerFlag = Pacer::start("partCellsOwnerBcast");
+      int Err   = Broadcast(MsgBuf, InEnv, ITask);
+      TimerFlag = Pacer::stop("partCellsOwnerBcast");
+      if (Err != MPI_SUCCESS)
+         ABORT_ERROR("Decomp:partCellsParMetisKWay: error broadcasting owners");
+
+      // for each cell in the buffer, determine its location (task, local indx)
+      // if it's on this task, store as an owned cell and gather nbr info for
+      // the first halo level
+      for (int BufCell = 0; BufCell < NCellsChunk; ++BufCell) {
+         int BufAdd    = BufCell * (1 + MaxEdges); // location of task owner
+         int TaskLoc   = MsgBuf[BufAdd];
+         int LocalIndx = TaskCounter[TaskLoc];
+         if (TaskLoc == MyTask) { // this cell owned by this task
+            int GlobalID = ITask * NCellsChunk + BufCell + 1; // IDs are 1-based
+            CellIDTmp.push_back(GlobalID);
+            CellTaskTmp.push_back(TaskLoc);
+            CellLocalTmp.push_back(LocalIndx);
+            ++CellCount;
+            // collect nbr ids for this cell and create the halo list
+            for (int Nbr = 0; Nbr < MaxEdges; ++Nbr) {
+               int NbrID = MsgBuf[BufAdd + Nbr + 1];
+               if (validCellID(NbrID)) // active neighbor ID
+                  HaloList.insert(NbrID);
+            }
+         }
+         // increment the task counter for next pass
+         TaskCounter[TaskLoc] = LocalIndx + 1;
+      }
+   }
+
+   // Set the number of owned cells and add halo points to CellID list
+   NCellsOwned = CellCount;
+   for (auto Iter = HaloList.begin(); Iter != HaloList.end(); ++Iter) {
+      int HaloID = *Iter;
+      // add Halo cell if not already an owned cell
+      if (std::find(CellIDTmp.begin(), CellIDTmp.end(), HaloID) ==
+          CellIDTmp.end()) { // not found
+         CellIDTmp.push_back(HaloID);
+         ++CellCount;
+      }
+   }
+   // Add number of owned+halo points for this first halo level
+   HostArray1DI4 NCellsHaloTmp("NCellsHalo", HaloWidth);
+   NCellsHaloTmp(0) = CellCount;
+
+   TimerFlag = Pacer::stop("partCellsGatherOwned");
+
+   // For each halo layer, we find the location of the current layer and
+   // gather the global address of the next layer. The process is similar to
+   // the owned process above, broadcasting and extracting needed info
+   TimerFlag      = Pacer::start("partCellsGatherHalos");
+   I4 SrchIDBegin = NCellsOwned; // initialize search range for ID search
+   I4 SrchIDEnd   = CellCount;
+   for (int HaloLvl = 0; HaloLvl < HaloWidth; ++HaloLvl) {
+
+      // reset task counter and halo list
+      for (int ITask = 0; ITask <= NumTasks; ++ITask)
+         TaskCounter[ITask] = 0;
+      HaloList.clear();
+
+      // Loop over tasks to broadcast the partition info on each
+      for (int ITask = 0; ITask < NumTasks; ++ITask) {
+
+         // If it is this tasks turn, fill the buffer with cell loc and nbrs
+         if (MyTask == ITask) {
+            for (int I = 0; I < NCellsLocal; ++I) {
+               int BufAdd     = I * (1 + MaxEdges);
+               MsgBuf[BufAdd] = CellTask[I];
+               for (int J = 0; J < MaxEdges; ++J) {
+                  int VecAdd             = I * MaxEdges + J;
+                  MsgBuf[BufAdd + J + 1] = CellsOnCellInit[VecAdd];
+               }
+            }
+            // handle case where NCells does not divide evenly over tasks
+            for (int I = NCellsLocal; I < NCellsChunk; ++I) {
+               int BufAdd     = I * (1 + MaxEdges);
+               MsgBuf[BufAdd] = NumTasks; // fill with invalid task ID
+            }
+         }
+
+         // broadcast the buffer to all tasks
+         TimerFlag = Pacer::start("partCellsHaloBCast");
+         int Err   = Broadcast(MsgBuf, InEnv, ITask);
+         TimerFlag = Pacer::stop("partCellsHaloBCast");
+         if (Err != MPI_SUCCESS)
+            ABORT_ERROR("Decomp:partCellsParMetisKWay: error broadcasting"
+                        " halo data");
+
+         // for each cell in the buffer, determine location (task, local indx)
+         // if it's needed by the halo, store the info and gather the nbrs for
+         // the next halo level
+         TimerFlag = Pacer::start("partCellsHaloSearch");
+         for (int BufCell = 0; BufCell < NCellsChunk; ++BufCell) {
+            int GlobalID         = ITask * NCellsChunk + BufCell + 1;
+            int BufAdd           = BufCell * (1 + MaxEdges);
+            int TaskLoc          = MsgBuf[BufAdd];
+            int LocalIndx        = TaskCounter[TaskLoc];
+            TaskCounter[TaskLoc] = LocalIndx + 1;
+            // If tasks did not divide mesh evenly, the last group is
+            // padded with a task outside the range, so skip these
+            if (TaskLoc < 0 or TaskLoc >= NumTasks)
+               continue;
+            // search this halo level to see if this cell is needed
+            for (int SrchIndx = SrchIDBegin; SrchIndx < SrchIDEnd; ++SrchIndx) {
+               if (CellIDTmp[SrchIndx] == GlobalID) { // found
+                  CellTaskTmp.push_back(TaskLoc);
+                  CellLocalTmp.push_back(LocalIndx);
+                  // collect nbr ids for this cell and create the halo list
+                  for (int Nbr = 0; Nbr < MaxEdges; ++Nbr) {
+                     int NbrID = MsgBuf[BufAdd + Nbr + 1];
+                     if (validCellID(NbrID)) // active neighbor ID
+                        HaloList.insert(NbrID);
+                  }
+                  break;
+               }
+            }
+         }
+         TimerFlag = Pacer::stop("partCellsHaloSearch");
+      } // end task loop
+
+      // Add new halo points to CellID vector (except last pass) and update
+      // count indices
+      if (HaloLvl < HaloWidth - 1) {
+         for (auto Iter = HaloList.begin(); Iter != HaloList.end(); ++Iter) {
+            int HaloID = *Iter;
+            // add Halo cell if not already an owned cell
+            if (std::find(CellIDTmp.begin(), CellIDTmp.end(), HaloID) ==
+                CellIDTmp.end()) { // not found
+               CellIDTmp.push_back(HaloID);
+               ++CellCount;
+            }
+         } // end halo list loop
+         // Set new halo level index and reset search range for next halo lvl
+         SrchIDBegin                = SrchIDEnd;
+         SrchIDEnd                  = CellCount;
+         NCellsHaloTmp(HaloLvl + 1) = CellCount;
+      } // endif halolvl
+
+   } // end loop halo levels
+   TimerFlag = Pacer::stop("partCellsGatherHalos");
+
+   // The cell decomposition is now complete, copy the information
+   // into the final locations as class members on host (copy to device later)
+
+   NCellsAll   = CellCount;
+   NCellsSize  = NCellsAll + 1;
+   NCellsHaloH = NCellsHaloTmp;
+
+   // Copy global ID for each cell, both owned and halo.
+   // Copy cell location (task, local add) for each cell, both owned and halo
+
+   HostArray1DI4 CellIDHTmp("CellID", NCellsSize);
+   HostArray2DI4 CellLocHTmp("CellLoc", NCellsSize, 2);
+   for (int Cell = 0; Cell < NCellsAll; ++Cell) {
+      CellIDHTmp(Cell)     = CellIDTmp[Cell];
+      CellLocHTmp(Cell, 0) = CellTaskTmp[Cell];  // task owning this cell
+      CellLocHTmp(Cell, 1) = CellLocalTmp[Cell]; // local address on task
+   }
+   CellIDH  = CellIDHTmp;
+   CellLocH = CellLocHTmp;
+
+   // All done
+   return;
+
+} // end function partCellsParMetisKWay
 
 //------------------------------------------------------------------------------
 // Partition the edges based on the cell decomposition. The first cell ID in
 // the CellsOnEdge array for a given edge is assigned ownership of the edge.
 
-int Decomp::partEdges(
+void Decomp::partEdges(
     const MachEnv *InEnv, ///< [in] input machine environment with MPI info
     const std::vector<I4> &CellsOnEdgeInit // [in] cell nbrs for each edge
 ) {
@@ -1192,8 +1472,6 @@ int Decomp::partEdges(
    MPI_Comm Comm = InEnv->getComm();
    I4 NumTasks   = InEnv->getNumTasks();
    I4 MyTask     = InEnv->getMyTask();
-   I4 MasterTask = InEnv->getMasterTask();
-   bool IsMaster = InEnv->isMasterTask();
 
    // Calculate some quantities associated with the initial linear
    // distribution
@@ -1265,17 +1543,17 @@ int Decomp::partEdges(
    // and create a sorted list of all owned edges.
 
    std::vector<I4> EdgeBuf(NEdgesChunk);
-   for (int Task = 0; Task < NumTasks; ++Task) {
+   for (int ITask = 0; ITask < NumTasks; ++ITask) {
 
       TimerFlag = Pacer::start("partEdgesOwnerBcast") && TimerFlag;
       // if it is this task's turn, fill the buffer with the owner info
-      if (Task == MyTask) {
+      if (ITask == MyTask) {
          for (int Edge = 0; Edge < NEdgesChunk; ++Edge) {
             EdgeBuf[Edge] = EdgeOwnerInit[Edge];
          }
       }
       // Broadcast this buffer
-      Err       = MPI_Bcast(&EdgeBuf[0], NEdgesChunk, MPI_INT32_T, Task, Comm);
+      Err       = Broadcast(EdgeBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("partEdgesOwnerBcast") && TimerFlag;
 
       // For each edge in the buffer, check to see if the task owns
@@ -1284,7 +1562,7 @@ int Decomp::partEdges(
       for (int Edge = 0; Edge < NEdgesChunk; ++Edge) {
 
          I4 EdgeGlob =
-             Task * NEdgesChunk + Edge + 1; // Global ID in initial distrb
+             ITask * NEdgesChunk + Edge + 1; // Global ID in initial distrb
          // when number of edges doesn't divide evenly, the last
          // task has some invalid edges at the end so break out of loop
          if (EdgeGlob > NEdgesGlobal)
@@ -1395,20 +1673,20 @@ int Decomp::partEdges(
    // Determine remote locations by having each task broadcast its list
    // of owned edges. Then each task searches the list for the edges it
    // needs and stores the remote address
-   for (int Task = 0; Task < NumTasks; ++Task) {
+   for (int ITask = 0; ITask < NumTasks; ++ITask) {
 
       TimerFlag = Pacer::start("partEdgesFinalBcast") && TimerFlag;
       // fill broadcast buffer with the list of owned edges. The
       // first entry in the vector is the number of edges owned by
       // this task.
-      if (Task == MyTask) {
+      if (ITask == MyTask) {
          EdgeBuf[0] = NEdgesOwned;
          for (int BufEdge = 0; BufEdge < NEdgesOwned; ++BufEdge) {
             EdgeBuf[BufEdge + 1] = EdgeIDTmp(BufEdge);
          }
       }
       // Broadcast the list of edges owned by this task
-      Err = MPI_Bcast(&EdgeBuf[0], 2 * NEdgesChunk, MPI_INT32_T, Task, Comm);
+      Err       = Broadcast(EdgeBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("partEdgesFinalBcast") && TimerFlag;
 
       // Extract the buffer into a local search vector
@@ -1425,7 +1703,7 @@ int Decomp::partEdges(
             I4 GlobID = EdgeIDTmp(Edge);
             I4 BufLoc = srchVector(RemoteID, GlobID);
             if (BufLoc < BufOwned) {
-               EdgeLocTmp(Edge, 0) = Task;   // Task that owns edge
+               EdgeLocTmp(Edge, 0) = ITask;  // Task that owns edge
                EdgeLocTmp(Edge, 1) = BufLoc; // Local address on task
                EdgeFound[Edge]     = true;   // Mark as found
             }
@@ -1442,7 +1720,7 @@ int Decomp::partEdges(
 
    if (!TimerFlag)
       LOG_WARN("Decomp::partEdges: Error encountered in timers");
-   return Err;
+   return;
 
 } // end function partEdges
 
@@ -1451,7 +1729,7 @@ int Decomp::partEdges(
 // in the CellsOnVertex array for a given vertex is assigned ownership of the
 // vertex.
 
-int Decomp::partVertices(
+void Decomp::partVertices(
     const MachEnv *InEnv, ///< [in] input machine environment with MPI info
     const std::vector<I4> &CellsOnVertexInit // [in] cell nbrs for each vrtx
 ) {
@@ -1462,8 +1740,6 @@ int Decomp::partVertices(
    MPI_Comm Comm = InEnv->getComm();
    I4 NumTasks   = InEnv->getNumTasks();
    I4 MyTask     = InEnv->getMyTask();
-   I4 MasterTask = InEnv->getMasterTask();
-   bool IsMaster = InEnv->isMasterTask();
 
    // Calculate some quantities associated with the initial linear
    // distribution
@@ -1535,17 +1811,17 @@ int Decomp::partVertices(
    // and create a sorted list of all owned vertices.
 
    std::vector<I4> VrtxBuf(NVerticesChunk);
-   for (int Task = 0; Task < NumTasks; ++Task) {
+   for (int ITask = 0; ITask < NumTasks; ++ITask) {
 
       TimerFlag = Pacer::start("partVerticesOwnedBcast") && TimerFlag;
       // if it is this task's turn, fill the buffer with the owner info
-      if (Task == MyTask) {
+      if (ITask == MyTask) {
          for (int Vrtx = 0; Vrtx < NVerticesChunk; ++Vrtx) {
             VrtxBuf[Vrtx] = VrtxOwnerInit[Vrtx];
          }
       }
       // Broadcast this buffer
-      Err = MPI_Bcast(&VrtxBuf[0], NVerticesChunk, MPI_INT32_T, Task, Comm);
+      Err       = Broadcast(VrtxBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("partVerticesOwnedBcast") && TimerFlag;
 
       // For each vertex in the buffer, check to see if the task owns
@@ -1554,7 +1830,7 @@ int Decomp::partVertices(
       for (int Vrtx = 0; Vrtx < NVerticesChunk; ++Vrtx) {
 
          I4 VrtxGlob =
-             Task * NVerticesChunk + Vrtx + 1; // Global ID init distrb
+             ITask * NVerticesChunk + Vrtx + 1; // Global ID init distrb
          // when number of vertices doesn't divide evenly, the last
          // task has some invalid vertices at the end so break out of loop
          if (VrtxGlob > NVerticesGlobal)
@@ -1666,20 +1942,20 @@ int Decomp::partVertices(
    // Determine remote locations by having each task broadcast its list
    // of owned edges. Then each task searches the list for the edges it
    // needs and stores the remote address
-   for (int Task = 0; Task < NumTasks; ++Task) {
+   for (int ITask = 0; ITask < NumTasks; ++ITask) {
 
       // fill broadcast buffer with the list of owned vertices. The
       // first entry in the vector is the number of vertices owned by
       // this task.
       TimerFlag = Pacer::start("partVerticesFinalBcast") && TimerFlag;
-      if (Task == MyTask) {
+      if (ITask == MyTask) {
          VrtxBuf[0] = NVerticesOwned;
          for (int BufVrtx = 0; BufVrtx < NVerticesOwned; ++BufVrtx) {
             VrtxBuf[BufVrtx + 1] = VertexIDTmp(BufVrtx);
          }
       }
       // Broadcast the list of vertices owned by this task
-      Err = MPI_Bcast(&VrtxBuf[0], 2 * NVerticesChunk, MPI_INT32_T, Task, Comm);
+      Err       = Broadcast(VrtxBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("partVerticesFinalBcast") && TimerFlag;
 
       // Extract the buffer into a local search vector
@@ -1696,7 +1972,7 @@ int Decomp::partVertices(
             I4 GlobID = VertexIDTmp(Vrtx);
             I4 BufLoc = srchVector(RemoteID, GlobID);
             if (BufLoc < BufOwned) {
-               VertexLocTmp(Vrtx, 0) = Task;   // Task that owns edge
+               VertexLocTmp(Vrtx, 0) = ITask;  // Task that owns edge
                VertexLocTmp(Vrtx, 1) = BufLoc; // Local address on task
                VertexFound[Vrtx]     = true;   // Mark as found
             }
@@ -1713,7 +1989,7 @@ int Decomp::partVertices(
 
    if (!TimerFlag)
       LOG_WARN("Decomp::partVertices: error in timers");
-   return Err;
+   return;
 
 } // end function partVertices
 
@@ -1723,7 +1999,7 @@ int Decomp::partVertices(
 // initial linear distribution. On exit, all the XxOnCell arrays are
 // in the correct final domain decomposition.
 
-int Decomp::rearrangeCellArrays(
+void Decomp::rearrangeCellArrays(
     const MachEnv *InEnv, // input machine environment for MPI layout
     const std::vector<I4> &CellsOnCellInit,   //< [in] cell nbrs on each edge
     const std::vector<I4> &EdgesOnCellInit,   //< [in] edges around each cell
@@ -1737,8 +2013,6 @@ int Decomp::rearrangeCellArrays(
    MPI_Comm Comm = InEnv->getComm();
    I4 NumTasks   = InEnv->getNumTasks();
    I4 MyTask     = InEnv->getMyTask();
-   I4 MasterTask = InEnv->getMasterTask();
-   bool IsMaster = InEnv->isMasterTask();
 
    // Define the chunk sizes for the initial linear distribution
    I4 NCellsChunk = (NCellsGlobal - 1) / NumTasks + 1;
@@ -1775,12 +2049,12 @@ int Decomp::rearrangeCellArrays(
    // Each task will broadcast the cells it owns in the initial linear
    // distribution and all tasks will search their list of cells to determine
    // entries it needs.
-   for (int Task = 0; Task < NumTasks; ++Task) {
+   for (int ITask = 0; ITask < NumTasks; ++ITask) {
 
       TimerFlag = Pacer::start("rearrangeCellsBcast") && TimerFlag;
       // If it is this task's turn to send, fill the buffer with the local
       // chunk of all three arrays.
-      if (MyTask == Task) { // Fill buffer with local chunk
+      if (MyTask == ITask) { // Fill buffer with local chunk
          for (int Cell = 0; Cell < NCellsChunk; ++Cell) {
             for (int Edge = 0; Edge < MaxEdges; ++Edge) {
                I4 BufAdd           = Cell * SizePerCell + Edge * 3;
@@ -1791,11 +2065,9 @@ int Decomp::rearrangeCellArrays(
             }
          }
       }
-      Err = MPI_Bcast(&CellBuf[0], BufSize, MPI_INT32_T, Task, Comm);
-      if (Err != 0) {
-         LOG_CRITICAL("rearrangeCellArrays: Error broadcasting cell buffer");
-         return Err;
-      }
+      Err = Broadcast(CellBuf, InEnv, ITask);
+      if (Err != 0)
+         ABORT_ERROR("rearrangeCellArrays: Error broadcasting cell buffer");
       TimerFlag = Pacer::stop("rearrangeCellsBcast") && TimerFlag;
 
       // For each cell needed locally, we can compute the task and address
@@ -1804,7 +2076,7 @@ int Decomp::rearrangeCellArrays(
 
       TimerFlag = Pacer::start("rearrangeCellsSearch") && TimerFlag;
       for (int Cell = 0; Cell < NCellsAll; ++Cell) {
-         if (TaskInit[Cell] == Task) {
+         if (TaskInit[Cell] == ITask) {
             if (AddInit[Cell] < NCellsGlobal + 1) {
 
                // Local cell needs the info so extract from the buffer
@@ -1847,9 +2119,7 @@ int Decomp::rearrangeCellArrays(
 
    // All done
    TimerFlag = Pacer::stop("rearrangeCellArrays") && TimerFlag;
-   if (!TimerFlag)
-      LOG_WARN("Decomp::rearrangeCellArrays: Error in timers");
-   return Err;
+   return;
 
 } // end function rearrangeCellArrays
 
@@ -1859,7 +2129,7 @@ int Decomp::rearrangeCellArrays(
 // initial linear distribution. On exit, all the XxOnEdge arrays are
 // in the correct final domain decomposition.
 
-int Decomp::rearrangeEdgeArrays(
+void Decomp::rearrangeEdgeArrays(
     const MachEnv *InEnv, // input machine environment for MPI layout
     const std::vector<I4> &CellsOnEdgeInit,   //< [in] cell nbrs on each edge
     const std::vector<I4> &EdgesOnEdgeInit,   //< [in] edges around nbr cells
@@ -1873,8 +2143,6 @@ int Decomp::rearrangeEdgeArrays(
    MPI_Comm Comm = InEnv->getComm();
    I4 NumTasks   = InEnv->getNumTasks();
    I4 MyTask     = InEnv->getMyTask();
-   I4 MasterTask = InEnv->getMasterTask();
-   bool IsMaster = InEnv->isMasterTask();
 
    // Define the chunk sizes for the initial linear distribution
    I4 NEdgesChunk = (NEdgesGlobal - 1) / NumTasks + 1;
@@ -1912,12 +2180,12 @@ int Decomp::rearrangeEdgeArrays(
    // Each task will broadcast the array chunks it owns in the initial linear
    // distribution and all tasks will search that list and extract the
    // entries it owns.
-   for (int Task = 0; Task < NumTasks; ++Task) {
+   for (int ITask = 0; ITask < NumTasks; ++ITask) {
 
       TimerFlag = Pacer::start("rearrangeEdgeArraysBcast") && TimerFlag;
       // If it is this task's turn to send, fill the buffer with the local
       // chunk of all three arrays.
-      if (MyTask == Task) { // Fill buffer with local chunk
+      if (MyTask == ITask) { // Fill buffer with local chunk
          for (int Edge = 0; Edge < NEdgesChunk; ++Edge) {
             I4 BufAdd = Edge * SizePerEdge;
             for (int Cell = 0; Cell < MaxCellsOnEdge; ++Cell) {
@@ -1937,18 +2205,16 @@ int Decomp::rearrangeEdgeArrays(
             }
          }
       }
-      Err = MPI_Bcast(&EdgeBuf[0], BufSize, MPI_INT32_T, Task, Comm);
-      if (Err != 0) {
-         LOG_CRITICAL("rearrangeEdgeArrays: Error broadcasting edge buffer");
-         return Err;
-      }
+      Err = Broadcast(EdgeBuf, InEnv, ITask);
+      if (Err != 0)
+         ABORT_ERROR("rearrangeEdgeArrays: Error broadcasting edge buffer");
       TimerFlag = Pacer::stop("rearrangeEdgeArraysBcast") && TimerFlag;
 
       // If the local Edge array has points in this buffer, extract the
       // array information into the proper location
       TimerFlag = Pacer::start("rearrangeEdgeArraysSearch") && TimerFlag;
       for (int Edge = 0; Edge < NEdgesAll; ++Edge) {
-         if (TaskInit[Edge] == Task) {
+         if (TaskInit[Edge] == ITask) {
             if (AddInit[Edge] < NEdgesGlobal + 1) {
 
                // Local edge exists in the buffer, compute starting address
@@ -1993,7 +2259,7 @@ int Decomp::rearrangeEdgeArrays(
    // All done
    if (!TimerFlag)
       LOG_WARN("Decomp::rearrangeEdgeArrays: Error in timers");
-   return Err;
+   return;
 
 } // end function rearrangeEdgeArrays
 
@@ -2003,7 +2269,7 @@ int Decomp::rearrangeEdgeArrays(
 // initial linear distribution. On exit, all the XxOnVertex arrays are
 // in the correct final domain decomposition.
 
-int Decomp::rearrangeVertexArrays(
+void Decomp::rearrangeVertexArrays(
     const MachEnv *InEnv, // input machine environment for MPI layout
     const std::vector<I4> &CellsOnVertexInit, //< [in] cells at each vrtx
     const std::vector<I4> &EdgesOnVertexInit  //< [in] edges joined at vrtx
@@ -2016,8 +2282,6 @@ int Decomp::rearrangeVertexArrays(
    MPI_Comm Comm = InEnv->getComm();
    I4 NumTasks   = InEnv->getNumTasks();
    I4 MyTask     = InEnv->getMyTask();
-   I4 MasterTask = InEnv->getMasterTask();
-   bool IsMaster = InEnv->isMasterTask();
 
    // Define the chunk sizes for the initial linear distribution
    I4 NVerticesChunk = (NVerticesGlobal - 1) / NumTasks + 1;
@@ -2051,12 +2315,12 @@ int Decomp::rearrangeVertexArrays(
    // Each task will broadcast the array chunks it owns in the initial linear
    // distribution and all tasks will search that list and extract the
    // entries it owns.
-   for (int Task = 0; Task < NumTasks; ++Task) {
+   for (int ITask = 0; ITask < NumTasks; ++ITask) {
 
       // If it is this task's turn to send, fill the buffer with the local
       // chunk of both arrays.
       TimerFlag = Pacer::start("rearrangeVertexArraysBcast") && TimerFlag;
-      if (MyTask == Task) { // Fill buffer with local chunk
+      if (MyTask == ITask) { // Fill buffer with local chunk
          for (int Vrtx = 0; Vrtx < NVerticesChunk; ++Vrtx) {
             I4 BufAdd = Vrtx * SizePerVrtx;
             for (int Cell = 0; Cell < VertexDegree; ++Cell) {
@@ -2071,18 +2335,16 @@ int Decomp::rearrangeVertexArrays(
             }
          }
       }
-      Err = MPI_Bcast(&VrtxBuf[0], BufSize, MPI_INT32_T, Task, Comm);
-      if (Err != 0) {
-         LOG_CRITICAL("rearrangeVertexArrays: Error broadcasting buffer");
-         return Err;
-      }
+      Err = Broadcast(VrtxBuf, InEnv, ITask);
+      if (Err != 0)
+         ABORT_ERROR("rearrangeVertexArrays: Error broadcasting buffer");
       TimerFlag = Pacer::stop("rearrangeVertexArraysBcast") && TimerFlag;
 
       // For each local vertex in the distribution, determine whether the
       // buffer contains the vertex and extract the arrays
       TimerFlag = Pacer::start("rearrangeVertexArraysSearch") && TimerFlag;
       for (int Vrtx = 0; Vrtx < NVerticesAll; ++Vrtx) {
-         if (TaskInit[Vrtx] == Task) {
+         if (TaskInit[Vrtx] == ITask) {
             if (AddInit[Vrtx] < NVerticesGlobal + 1) {
 
                // Local vertex is in the buffer so compute a buffer starting
@@ -2110,7 +2372,7 @@ int Decomp::rearrangeVertexArrays(
    // All done
    if (!TimerFlag)
       LOG_WARN("Decomp::rearrangeVertexArrays: Error in timers");
-   return Err;
+   return;
 
 } // end function rearrangeVertexArrays
 
@@ -2125,9 +2387,11 @@ PartMethod getPartMethodFromStr(const std::string &InMethod) {
                   [](unsigned char c) { return std::tolower(c); });
 
    // Check supported methods and return appropriate enum
-   // Currently, only the METIS/ParMETIS KWay option is supported
-   if (MethodComp == "metiskway") {
+   if (MethodComp == "metiskway") { // serial Metis KWay
       return PartMethodMetisKWay;
+
+   } else if (MethodComp == "parmetiskway") { // parallel ParMetis KWay
+      return PartMethodParMetisKWay;
 
    } else {
       return PartMethodUnknown;
