@@ -39,6 +39,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "DataTypes.h"
+#include "Error.h"
 #include "mpi.h"
 #include "pio.h"
 
@@ -145,8 +146,8 @@ void init(const MPI_Comm &InComm ///< [in] MPI communicator to use
 /// but can be optionally changed through this open function.
 /// For files to be written, optional arguments govern the behavior to be
 /// used if the file already exists, and the precision of any floating point
-/// variables. Returns an error code.
-int openFile(
+/// variables.
+void openFile(
     int &FileID,                    ///< [out] returned fileID for this file
     const std::string &Filename,    ///< [in] name (incl path) of file to open
     Mode Mode,                      ///< [in] mode (read or write)
@@ -155,106 +156,104 @@ int openFile(
 );
 
 /// Closes an open file using the fileID, returns an error code
-int closeFile(int &FileID /// [in] ID of the file to be closed
+void closeFile(int &FileID /// [in] ID of the file to be closed
 );
 
 /// Retrieves a dimension length from an input file, given the name
-/// of the dimension. Returns the length if exists, but returns a negative
-/// value if a dimension of that length is not found in the file.
-int getDimFromFile(int FileID, ///< [in] ID of the file containing dim
-                   const std::string &DimName, ///< [in] name of dimension
-                   int &DimID,    ///< [out] ID assigned to this dimension
-                   int &DimLength ///< [out] global length of the dimension
+/// of the dimension. Returns the length if exists, but returns an error and a
+/// negative length if a dim of that name is not found in the file.
+Error getDimFromFile(int FileID, ///< [in] ID of the file containing dim
+                     const std::string &DimName, ///< [in] name of dimension
+                     int &DimID,    ///< [out] ID assigned to this dimension
+                     int &DimLength ///< [out] global length of the dimension
 );
 
-/// Defines a dimension for an output file. Returns a dimension id to
-/// be used in future field definitions as well as an error flag.
+/// Defines a dimension for an output file. Returns an integer dimension id to
+/// be used in future field definitions.
 int defineDim(int FileID, ///< [in] ID of the file containing dim
               const std::string &DimName, ///< [in] name of dimension
-              int Length,                 ///< [in] length of dimension
-              int &DimID                  ///< [out] dimension id assigned
+              int Length                  ///< [in] length of dimension
 );
 
 /// Writes metadata (name, value) associated with a variable and/or file.
 /// The variable ID can be GlobalID for global file and/or simulation
 /// attributes/metadata. Specific interfaces for each data type are aliased
 /// to a generic interface form.
-int writeMeta(const std::string &MetaName, ///< [in] name of metadata
-              I4 MetaValue,                ///< [in] value of metadata
-              int FileID,                  ///< [in] ID of the file for writing
-              int VarID ///< [in] ID for variable associated with metadata
+void writeMeta(const std::string &MetaName, ///< [in] name of metadata
+               I4 MetaValue,                ///< [in] value of metadata
+               int FileID,                  ///< [in] ID of the file for writing
+               int VarID ///< [in] ID for variable associated with metadata
 );
-int writeMeta(const std::string &MetaName, ///< [in] name of metadata
-              I8 MetaValue,                ///< [in] value of metadata
-              int FileID,                  ///< [in] ID of the file for writing
-              int VarID ///< [in] ID for variable associated with metadata
+void writeMeta(const std::string &MetaName, ///< [in] name of metadata
+               I8 MetaValue,                ///< [in] value of metadata
+               int FileID,                  ///< [in] ID of the file for writing
+               int VarID ///< [in] ID for variable associated with metadata
 );
-int writeMeta(const std::string &MetaName, ///< [in] name of metadata
-              R4 MetaValue,                ///< [in] value of metadata
-              int FileID,                  ///< [in] ID of the file for writing
-              int VarID ///< [in] ID for variable associated with metadata
+void writeMeta(const std::string &MetaName, ///< [in] name of metadata
+               R4 MetaValue,                ///< [in] value of metadata
+               int FileID,                  ///< [in] ID of the file for writing
+               int VarID ///< [in] ID for variable associated with metadata
 );
-int writeMeta(const std::string &MetaName, ///< [in] name of metadata
-              R8 MetaValue,                ///< [in] value of metadata
-              int FileID,                  ///< [in] ID of the file for writing
-              int VarID ///< [in] ID for variable associated with metadata
+void writeMeta(const std::string &MetaName, ///< [in] name of metadata
+               R8 MetaValue,                ///< [in] value of metadata
+               int FileID,                  ///< [in] ID of the file for writing
+               int VarID ///< [in] ID for variable associated with metadata
 );
-int writeMeta(const std::string &MetaName,  ///< [in] name of metadata
-              const std::string &MetaValue, ///< [in] value of metadata
-              int FileID,                   ///< [in] ID of the file for writing
-              int VarID ///< [in] ID for variable associated with metadata
+void writeMeta(const std::string &MetaName,  ///< [in] name of metadata
+               const std::string &MetaValue, ///< [in] value of metadata
+               int FileID,                   ///< [in] ID of the file for write
+               int VarID ///< [in] ID for variable associated with metadata
 );
 
 /// Reads metadata (name, value) associated with a variable and/or file.
 /// The variable ID can be GlobalID for global file and/or simulation
 /// metadata. Specific interfaces for each supported type are aliased
-/// to a generic interface form.
-int readMeta(const std::string &MetaName, ///< [in] name of metadata
-             I4 &MetaValue,               ///< [out] value of metadata
-             int FileID,                  ///< [in] ID of the file for writing
-             int VarID ///< [in] ID for variable associated with metadata
+/// to a generic interface form. Read routines return an error code so that
+/// the calling routines can determine an action if the metadata is not found.
+Error readMeta(const std::string &MetaName, ///< [in] name of metadata
+               I4 &MetaValue,               ///< [out] value of metadata
+               int FileID,                  ///< [in] ID of the file for writing
+               int VarID ///< [in] ID for variable associated with metadata
 );
-int readMeta(const std::string &MetaName, ///< [in] name of metadata
-             I8 &MetaValue,               ///< [out] value of metadata
-             int FileID,                  ///< [in] ID of the file for writing
-             int VarID ///< [in] ID for variable associated with metadata
+Error readMeta(const std::string &MetaName, ///< [in] name of metadata
+               I8 &MetaValue,               ///< [out] value of metadata
+               int FileID,                  ///< [in] ID of the file for writing
+               int VarID ///< [in] ID for variable associated with metadata
 );
-int readMeta(const std::string &MetaName, ///< [in] name of metadata
-             R4 &MetaValue,               ///< [out] value of metadata
-             int FileID,                  ///< [in] ID of the file for writing
-             int VarID ///< [in] ID for variable associated with metadata
+Error readMeta(const std::string &MetaName, ///< [in] name of metadata
+               R4 &MetaValue,               ///< [out] value of metadata
+               int FileID,                  ///< [in] ID of the file for writing
+               int VarID ///< [in] ID for variable associated with metadata
 );
-int readMeta(const std::string &MetaName, ///< [in] name of metadata
-             R8 &MetaValue,               ///< [out] value of metadata
-             int FileID,                  ///< [in] ID of the file for writing
-             int VarID ///< [in] ID for variable associated with metadata
+Error readMeta(const std::string &MetaName, ///< [in] name of metadata
+               R8 &MetaValue,               ///< [out] value of metadata
+               int FileID,                  ///< [in] ID of the file for writing
+               int VarID ///< [in] ID for variable associated with metadata
 );
-int readMeta(const std::string &MetaName, ///< [in] name of metadata
-             std::string &MetaValue,      ///< [out] value of metadata
-             int FileID,                  ///< [in] ID of the file for writing
-             int VarID ///< [in] ID for variable associated with metadata
+Error readMeta(const std::string &MetaName, ///< [in] name of metadata
+               std::string &MetaValue,      ///< [out] value of metadata
+               int FileID,                  ///< [in] ID of the file for writing
+               int VarID ///< [in] ID for variable associated with metadata
 );
 
 /// Defines a variable for an output file. The name and dimensions of
-/// the variable must be supplied. An ID is assigned to the variable
-/// for later use in the writing of the variable.
+/// the variable must be supplied. An ID is assigned to the variable and
+/// returned for later use in the writing of the variable.
 int defineVar(int FileID, ///< [in] ID of the file containing dim
               const std::string &VarName, ///< [in] name of variable
               IODataType VarType,         ///< [in] data type for the variable
               int NDims,                  ///< [in] number of dimensions
-              int *DimIDs, ///< [in] vector of NDims dimension IDs
-              int &VarID   ///< [out] id assigned to this variable
+              int *DimIDs ///< [in] vector of NDims dimension IDs
 );
 
 /// Ends define mode signifying all field definitions and metadata
 /// have been written and the larger data sets can now be written
-int endDefinePhase(int FileID ///< [in] ID of the file being written
+void endDefinePhase(int FileID ///< [in] ID of the file being written
 );
 
 /// Creates a PIO decomposition description to describe the layout of
 /// a distributed array of given type.
 int createDecomp(
-    int &DecompID,                      ///< [out] ID for the new decomposition
     IODataType VarType,                 ///< [in] data type of array
     int NDims,                          ///< [in] number of array dimensions
     const std::vector<int> &DimLengths, ///< [in] global dimension lengths
@@ -264,7 +263,7 @@ int createDecomp(
 );
 
 /// Removes a PIO decomposition to free memory.
-int destroyDecomp(int &DecompID ///< [inout] ID for decomp to remove
+void destroyDecomp(int &DecompID ///< [inout] ID for decomp to remove
 );
 
 /// Reads a distributed array. We use a void pointer here to create
@@ -272,13 +271,15 @@ int destroyDecomp(int &DecompID ///< [inout] ID for decomp to remove
 /// storage so the arrays of any dimension are treated as a 1-d array with
 /// the full local size. The routine returns the array as well as the id
 /// assigned to the array should that be needed to retrieve variable metadata.
-int readArray(void *Array,                ///< [out] array to be read
-              int Size,                   ///< [in] local size of array
-              const std::string &VarName, ///< [in] name of variable to read
-              int FileID,                 ///< [in] ID of open file to read from
-              int DecompID,  ///< [in] decomposition ID for this var
-              int &VarID,    ///< [out] variable ID in case metadata needed
-              int Frame = -1 ///< [in] opt frame if multiple time slices
+/// An error code is also returned so that the calling routine can re-try the
+/// read on failure (eg due to name changes).
+Error readArray(void *Array,                ///< [out] array to be read
+                int Size,                   ///< [in] local size of array
+                const std::string &VarName, ///< [in] name of variable to read
+                int FileID,                 ///< [in] ID of open file for read
+                int DecompID,  ///< [in] decomposition ID for this var
+                int &VarID,    ///< [out] variable ID in case metadata needed
+                int Frame = -1 ///< [in] opt frame if multiple time slices
 );
 
 /// Reads a non-distributed variable. We use a void pointer here to create
@@ -287,26 +288,27 @@ int readArray(void *Array,                ///< [out] array to be read
 /// the full local size. The routine returns the variable as well as the id
 /// assigned to the variable should that be needed later. For time-dependent
 /// variables, the optional frame and dimension length information must be
-/// provided
-int readNDVar(void *Variable,             ///< [out] variable to be read
-              const std::string &VarName, ///< [in] name of variable to read
-              int FileID,                 ///< [in] ID of open file to read from
-              int &VarID,     ///< [out] variable ID in case metadata needed
-              int Frame = -1, ///< [in] opt frame if multiple time slices
-              std::vector<int> *DimLengths = nullptr ///< [in] opt dim lengths
+/// provided. An error code is also returned so that the calling routine can
+/// re-try the read on failure (eg due to name changes).
+Error readNDVar(void *Variable,             ///< [out] variable to be read
+                const std::string &VarName, ///< [in] name of variable to read
+                int FileID,                 ///< [in] ID of open file for read
+                int &VarID,     ///< [out] variable ID in case metadata needed
+                int Frame = -1, ///< [in] opt frame if multiple time slices
+                std::vector<int> *DimLengths = nullptr ///< [in] opt dim lengths
 );
 
 /// Writes a distributed array. A void pointer is used to create a generic
 /// interface. Arrays are assumed to be in contiguous storage and the variable
 /// must have a valid ID assigned by the defineVar function. A void pointer
 /// to a scalar FillValue is also required to fill missing values.
-int writeArray(void *Array,     ///< [in] array to be written
-               int Size,        ///< [in] size of array to be written
-               void *FillValue, ///< [in] value to use for missing entries
-               int FileID,      ///< [in] ID of open file to write to
-               int DecompID,    ///< [in] decomposition ID for this var
-               int VarID,       ///< [in] variable ID assigned by defineVar
-               int Frame = -1   ///< [in] opt current frame/slice for multiframe
+void writeArray(void *Array,     ///< [in] array to be written
+                int Size,        ///< [in] size of array to be written
+                void *FillValue, ///< [in] value to use for missing entries
+                int FileID,      ///< [in] ID of open file to write to
+                int DecompID,    ///< [in] decomposition ID for this var
+                int VarID,       ///< [in] variable ID assigned by defineVar
+                int Frame = -1   ///< [in] opt current frame for multiframe
 );
 
 /// Writes a non-distributed variable. A void pointer is used for a generic
@@ -315,11 +317,11 @@ int writeArray(void *Array,     ///< [in] array to be written
 /// to a scalar FillValue is also required to fill missing values. For time-
 /// dependent fields, the optional Frame and Dimension length arguments must
 /// be provided.
-int writeNDVar(void *Variable, ///< [in] variable to be written
-               int FileID,     ///< [in] ID of open file to write to
-               int VarID,      ///< [in] variable ID assigned by defineVar
-               int Frame = -1, ///< [in] opt current frame/slice for multiframe
-               std::vector<int> *DimLengths = nullptr ///< [in] opt dim lengths
+void writeNDVar(void *Variable, ///< [in] variable to be written
+                int FileID,     ///< [in] ID of open file to write to
+                int VarID,      ///< [in] variable ID assigned by defineVar
+                int Frame = -1, ///< [in] opt current frame/slice for multiframe
+                std::vector<int> *DimLengths = nullptr ///< [in] opt dim lengths
 );
 
 } // end namespace IO

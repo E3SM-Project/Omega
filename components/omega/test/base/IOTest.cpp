@@ -26,9 +26,7 @@ using namespace OMEGA;
 // The initialization routine for IO testing. It calls various
 // init routines, including the creation of the default decomposition.
 
-int initIOTest() {
-
-   int Err = 0;
+void initIOTest() {
 
    // Initialize the Machine Environment class - this also creates
    // the default MachEnv. Then retrieve the default environment and
@@ -39,6 +37,7 @@ int initIOTest() {
 
    // Initialize the Logging system
    initLogging(DefEnv);
+   LOG_INFO("----- Base IO Unit Testing -----");
 
    // Open config file
    Config("Omega");
@@ -50,7 +49,7 @@ int initIOTest() {
    // Create the default decomposition (initializes the decomposition)
    Decomp::init();
 
-   return Err;
+   return;
 }
 
 //------------------------------------------------------------------------------
@@ -70,25 +69,11 @@ int main(int argc, char *argv[]) {
    {
       // Call initialization routine to create the default decomposition
       // and initialize the parallel IO library
-      int Err = initIOTest();
-      if (Err != 0)
-         LOG_CRITICAL("IOTest: Error initializing");
-
-      // Get MPI vars if needed
-      MachEnv *DefEnv = MachEnv::getDefault();
-      MPI_Comm Comm   = DefEnv->getComm();
-      I4 MyTask       = DefEnv->getMyTask();
-      I4 NumTasks     = DefEnv->getNumTasks();
-      bool IsMaster   = DefEnv->isMasterTask();
+      Error Err;
+      initIOTest();
 
       // Retrieve the default decomposition
       Decomp *DefDecomp = Decomp::getDefault();
-      if (DefDecomp) { // true if non-null ptr
-         LOG_ERROR("IOTest: Default decomp retrieval PASS");
-      } else {
-         LOG_ERROR("IOTest: Default decomp retrieval FAIL");
-         return -1;
-      }
 
       // Create Kokkos arrays of each type and at various mesh locations
       I4 NCellsSize      = DefDecomp->NCellsSize;
@@ -185,18 +170,6 @@ int main(int argc, char *argv[]) {
 
       // Create the needed decomposition offsets
 
-      int DecompCellI4;
-      int DecompCellI8;
-      int DecompCellR4;
-      int DecompCellR8;
-      int DecompEdgeI4;
-      int DecompEdgeI8;
-      int DecompEdgeR4;
-      int DecompEdgeR8;
-      int DecompVrtxI4;
-      int DecompVrtxI8;
-      int DecompVrtxR4;
-      int DecompVrtxR8;
       std::vector<int> CellDims{NCellsGlobal, NVertLevels};
       std::vector<int> EdgeDims{NEdgesGlobal, NVertLevels};
       std::vector<int> VrtxDims{NVerticesGlobal, NVertLevels};
@@ -204,154 +177,59 @@ int main(int argc, char *argv[]) {
       int EdgeArraySize = NEdgesSize * NVertLevels;
       int VrtxArraySize = NVerticesSize * NVertLevels;
 
-      Err = IO::createDecomp(DecompCellI4, IO::IOTypeI4, 2, CellDims,
-                             CellArraySize, OffsetCell, IO::DefaultRearr);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: creating cell decomp I4 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error creating cell decomp I4 FAIL");
-      }
-      Err = IO::createDecomp(DecompCellI8, IO::IOTypeI8, 2, CellDims,
-                             CellArraySize, OffsetCell, IO::DefaultRearr);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: creating cell decomp I8 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error creating cell decomp I8 FAIL");
-      }
-      Err = IO::createDecomp(DecompCellR4, IO::IOTypeR4, 2, CellDims,
-                             CellArraySize, OffsetCell, IO::DefaultRearr);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: creating cell decomp R4 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error creating cell decomp R4 FAIL");
-      }
-      Err = IO::createDecomp(DecompCellR8, IO::IOTypeR8, 2, CellDims,
-                             CellArraySize, OffsetCell, IO::DefaultRearr);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: creating cell decomp R8 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error creating cell decomp R8 FAIL");
-      }
-      Err = IO::createDecomp(DecompEdgeI4, IO::IOTypeI4, 2, EdgeDims,
-                             EdgeArraySize, OffsetEdge, IO::DefaultRearr);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: creating edge decomp I4 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error creating edge decomp I4 FAIL");
-      }
-      Err = IO::createDecomp(DecompEdgeI8, IO::IOTypeI8, 2, EdgeDims,
-                             EdgeArraySize, OffsetEdge, IO::DefaultRearr);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: creating edge decomp I8 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error creating edge decomp I8 FAIL");
-      }
-      Err = IO::createDecomp(DecompEdgeR4, IO::IOTypeR4, 2, EdgeDims,
-                             EdgeArraySize, OffsetEdge, IO::DefaultRearr);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: creating edge decomp R4 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error creating edge decomp R4 FAIL");
-      }
-      Err = IO::createDecomp(DecompEdgeR8, IO::IOTypeR8, 2, EdgeDims,
-                             EdgeArraySize, OffsetEdge, IO::DefaultRearr);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: creating edge decomp R8 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error creating edge decomp R8 FAIL");
-      }
-      Err = IO::createDecomp(DecompVrtxI4, IO::IOTypeI4, 2, VrtxDims,
-                             VrtxArraySize, OffsetVrtx, IO::DefaultRearr);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: creating vertex decomp I4 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error creating vertex decomp I4 FAIL");
-      }
-      Err = IO::createDecomp(DecompVrtxI8, IO::IOTypeI8, 2, VrtxDims,
-                             VrtxArraySize, OffsetVrtx, IO::DefaultRearr);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: creating vertex decomp I8 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error creating vertex decomp I8 FAIL");
-      }
-      Err = IO::createDecomp(DecompVrtxR4, IO::IOTypeR4, 2, VrtxDims,
-                             VrtxArraySize, OffsetVrtx, IO::DefaultRearr);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: creating vertex decomp R4 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error creating vertex decomp R4 FAIL");
-      }
-      Err = IO::createDecomp(DecompVrtxR8, IO::IOTypeR8, 2, VrtxDims,
-                             VrtxArraySize, OffsetVrtx, IO::DefaultRearr);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: creating vertex decomp R8 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error creating vertex decomp R8 FAIL");
-      }
+      int DecompCellI4 =
+          IO::createDecomp(IO::IOTypeI4, 2, CellDims, CellArraySize, OffsetCell,
+                           IO::DefaultRearr);
+      int DecompCellI8 =
+          IO::createDecomp(IO::IOTypeI8, 2, CellDims, CellArraySize, OffsetCell,
+                           IO::DefaultRearr);
+      int DecompCellR4 =
+          IO::createDecomp(IO::IOTypeR4, 2, CellDims, CellArraySize, OffsetCell,
+                           IO::DefaultRearr);
+      int DecompCellR8 =
+          IO::createDecomp(IO::IOTypeR8, 2, CellDims, CellArraySize, OffsetCell,
+                           IO::DefaultRearr);
+      int DecompEdgeI4 =
+          IO::createDecomp(IO::IOTypeI4, 2, EdgeDims, EdgeArraySize, OffsetEdge,
+                           IO::DefaultRearr);
+      int DecompEdgeI8 =
+          IO::createDecomp(IO::IOTypeI8, 2, EdgeDims, EdgeArraySize, OffsetEdge,
+                           IO::DefaultRearr);
+      int DecompEdgeR4 =
+          IO::createDecomp(IO::IOTypeR4, 2, EdgeDims, EdgeArraySize, OffsetEdge,
+                           IO::DefaultRearr);
+      int DecompEdgeR8 =
+          IO::createDecomp(IO::IOTypeR8, 2, EdgeDims, EdgeArraySize, OffsetEdge,
+                           IO::DefaultRearr);
+      int DecompVrtxI4 =
+          IO::createDecomp(IO::IOTypeI4, 2, VrtxDims, VrtxArraySize, OffsetVrtx,
+                           IO::DefaultRearr);
+      int DecompVrtxI8 =
+          IO::createDecomp(IO::IOTypeI8, 2, VrtxDims, VrtxArraySize, OffsetVrtx,
+                           IO::DefaultRearr);
+      int DecompVrtxR4 =
+          IO::createDecomp(IO::IOTypeR4, 2, VrtxDims, VrtxArraySize, OffsetVrtx,
+                           IO::DefaultRearr);
+      int DecompVrtxR8 =
+          IO::createDecomp(IO::IOTypeR8, 2, VrtxDims, VrtxArraySize, OffsetVrtx,
+                           IO::DefaultRearr);
 
       // Open a file for output
       int OutFileID;
-      Err = IO::openFile(OutFileID, "IOTest.nc", IO::ModeWrite, IO::FmtDefault,
-                         IO::IfExists::Replace);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: file open PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error opening file for output FAIL");
-      }
+      IO::openFile(OutFileID, "IOTest.nc", IO::ModeWrite, IO::FmtDefault,
+                   IO::IfExists::Replace);
+
       // Define array dimensions
       int DimCellID;
       int DimEdgeID;
       int DimVrtxID;
       int DimVertID;
       int DimTimeID; // unlimited time dim
-      Err = IO::defineDim(OutFileID, "NVertLevels", NVertLevels, DimVertID);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining vertical dimension PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error defining vertical dimension FAIL");
-      }
-      Err = IO::defineDim(OutFileID, "NCells", NCellsGlobal, DimCellID);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining Cell dimension PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error defining Cell dimension FAIL");
-      }
-      Err = IO::defineDim(OutFileID, "NEdges", NEdgesGlobal, DimEdgeID);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining Edge dimension PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error defining Edge dimension FAIL");
-      }
-      Err = IO::defineDim(OutFileID, "NVertices", NVerticesGlobal, DimVrtxID);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining Vertex dimension PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error defining Vertex dimension FAIL");
-      }
-      Err = IO::defineDim(OutFileID, "Time", IO::Unlimited, DimTimeID);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining unlimited time dimension PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error defining unlimited time dimension FAIL");
-      }
+      DimVertID = IO::defineDim(OutFileID, "NVertLevels", NVertLevels);
+      DimCellID = IO::defineDim(OutFileID, "NCells", NCellsGlobal);
+      DimEdgeID = IO::defineDim(OutFileID, "NEdges", NEdgesGlobal);
+      DimVrtxID = IO::defineDim(OutFileID, "NVertices", NVerticesGlobal);
+      DimTimeID = IO::defineDim(OutFileID, "Time", IO::Unlimited);
 
       // Write some global file metadata
       I4 FileMetaI4Ref          = 2;
@@ -360,71 +238,16 @@ int main(int argc, char *argv[]) {
       R8 FileMetaR8Ref          = 1.23456789;
       std::string FileMetaDescr = "OMEGA IO Unit test file";
 
-      Err = IO::writeMeta("FileMetaI4", FileMetaI4Ref, OutFileID, IO::GlobalID);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing global I4 metadata PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing global I4 metadata FAIL");
-      }
-      Err = IO::writeMeta("FileMetaI8", FileMetaI8Ref, OutFileID, IO::GlobalID);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing global I8 metadata PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing global I8 metadata FAIL");
-      }
-      Err = IO::writeMeta("FileMetaR4", FileMetaR4Ref, OutFileID, IO::GlobalID);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing global R4 metadata PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing global R4 metadata FAIL");
-      }
-      Err = IO::writeMeta("FileMetaR8", FileMetaR8Ref, OutFileID, IO::GlobalID);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing global R8 metadata PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing global R8 metadata FAIL");
-      }
-      Err = IO::writeMeta("FileMetaDescr", FileMetaDescr, OutFileID,
-                          IO::GlobalID);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing global char metadata PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing global char metadata FAIL");
-      }
-      Err = IO::writeMeta("StringLiteral", "MyString", OutFileID, IO::GlobalID);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing char literal metadata PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing char literal metadata FAIL");
-      }
+      IO::writeMeta("FileMetaI4", FileMetaI4Ref, OutFileID, IO::GlobalID);
+      IO::writeMeta("FileMetaI8", FileMetaI8Ref, OutFileID, IO::GlobalID);
+      IO::writeMeta("FileMetaR4", FileMetaR4Ref, OutFileID, IO::GlobalID);
+      IO::writeMeta("FileMetaR8", FileMetaR8Ref, OutFileID, IO::GlobalID);
+      IO::writeMeta("FileMetaDescr", FileMetaDescr, OutFileID, IO::GlobalID);
+      IO::writeMeta("StringLiteral", "MyString", OutFileID, IO::GlobalID);
 
       // Define variables/arrays
-      int VarIDScalarI4;
-      int VarIDScalarI8;
-      int VarIDScalarR4;
-      int VarIDScalarR8;
-      int VarIDI4Vert;
-      int VarIDI8Vert;
-      int VarIDR4Vert;
-      int VarIDR8Time; // combine two vert arrays in 2 time frames
-      int VarIDCellI4;
-      int VarIDCellI8;
-      int VarIDCellR4;
-      int VarIDTimeR8; // combine two cell arrays in 2 time frames
-      int VarIDEdgeI4;
-      int VarIDEdgeI8;
-      int VarIDEdgeR4;
-      int VarIDEdgeR8;
-      int VarIDVrtxI4;
-      int VarIDVrtxI8;
-      int VarIDVrtxR4;
-      int VarIDVrtxR8;
+      // Test every data type up to 2-d and use two of the arrays to
+      // test the unlimited time dimension
 
       int VertDimIDs[1] = {DimVertID};
       int CellDimIDs[2] = {DimCellID, DimVertID};
@@ -433,168 +256,46 @@ int main(int argc, char *argv[]) {
       int TimeDimIDs[2] = {DimTimeID, DimVertID};
       int Tim2DimIDs[3] = {DimTimeID, DimCellID, DimVertID};
 
-      Err = IO::defineVar(OutFileID, "ScalarI4", IO::IOTypeI4, 0, nullptr,
-                          VarIDScalarI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining I4 scalar PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining I4 scalar FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "ScalarI8", IO::IOTypeI8, 0, nullptr,
-                          VarIDScalarI8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining I8 scalar PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining I8 scalar FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "ScalarR4", IO::IOTypeR4, 0, nullptr,
-                          VarIDScalarR4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining R4 scalar PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining R4 scalar FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "ScalarR8", IO::IOTypeR8, 0, nullptr,
-                          VarIDScalarR8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining R8 scalar PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining R8 scalar FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "I4Vert", IO::IOTypeI4, 1, VertDimIDs,
-                          VarIDI4Vert);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining I4Vert array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining I4Vert array FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "I8Vert", IO::IOTypeI8, 1, VertDimIDs,
-                          VarIDI8Vert);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining I8Vert array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining I8Vert array FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "R4Vert", IO::IOTypeR4, 1, VertDimIDs,
-                          VarIDR4Vert);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining R4Vert array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining R4Vert array FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "R8Time", IO::IOTypeR8, 2, TimeDimIDs,
-                          VarIDR8Time);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining time-dependent R8Vert array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining time-dependent R8Vert array FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "CellI4", IO::IOTypeI4, 2, CellDimIDs,
-                          VarIDCellI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining CellI4 array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining CellI4 array FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "CellI8", IO::IOTypeI8, 2, CellDimIDs,
-                          VarIDCellI8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining CellI8 array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining CellI8 array FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "CellR4", IO::IOTypeR4, 2, CellDimIDs,
-                          VarIDCellR4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining CellR4 array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining CellR4 array FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "TimeR8", IO::IOTypeR8, 3, Tim2DimIDs,
-                          VarIDTimeR8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining time-dependent CellR8 array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining time-dependent CellR8 array FAIL");
-      }
-
-      Err = IO::defineVar(OutFileID, "EdgeI4", IO::IOTypeI4, 2, EdgeDimIDs,
-                          VarIDEdgeI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining EdgeI4 array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining EdgeI4 array FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "EdgeI8", IO::IOTypeI8, 2, EdgeDimIDs,
-                          VarIDEdgeI8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining EdgeI8 array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining EdgeI8 array FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "EdgeR4", IO::IOTypeR4, 2, EdgeDimIDs,
-                          VarIDEdgeR4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining EdgeR4 array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining EdgeR4 array FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "EdgeR8", IO::IOTypeR8, 2, EdgeDimIDs,
-                          VarIDEdgeR8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining EdgeR8 array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining EdgeR8 array FAIL");
-      }
-
-      Err = IO::defineVar(OutFileID, "VrtxI4", IO::IOTypeI4, 2, VrtxDimIDs,
-                          VarIDVrtxI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining VrtxI4 array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining VrtxI4 array FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "VrtxI8", IO::IOTypeI8, 2, VrtxDimIDs,
-                          VarIDVrtxI8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining VrtxI8 array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining VrtxI8 array FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "VrtxR4", IO::IOTypeR4, 2, VrtxDimIDs,
-                          VarIDVrtxR4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining VrtxR4 array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining VrtxR4 array FAIL");
-      }
-      Err = IO::defineVar(OutFileID, "VrtxR8", IO::IOTypeR8, 2, VrtxDimIDs,
-                          VarIDVrtxR8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: defining VrtxR8 array PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: Error defining VrtxR8 array FAIL");
-      }
+      int VarIDScalarI4 =
+          IO::defineVar(OutFileID, "ScalarI4", IO::IOTypeI4, 0, nullptr);
+      int VarIDScalarI8 =
+          IO::defineVar(OutFileID, "ScalarI8", IO::IOTypeI8, 0, nullptr);
+      int VarIDScalarR4 =
+          IO::defineVar(OutFileID, "ScalarR4", IO::IOTypeR4, 0, nullptr);
+      int VarIDScalarR8 =
+          IO::defineVar(OutFileID, "ScalarR8", IO::IOTypeR8, 0, nullptr);
+      int VarIDI4Vert =
+          IO::defineVar(OutFileID, "I4Vert", IO::IOTypeI4, 1, VertDimIDs);
+      int VarIDI8Vert =
+          IO::defineVar(OutFileID, "I8Vert", IO::IOTypeI8, 1, VertDimIDs);
+      int VarIDR4Vert =
+          IO::defineVar(OutFileID, "R4Vert", IO::IOTypeR4, 1, VertDimIDs);
+      int VarIDR8Time =
+          IO::defineVar(OutFileID, "R8Time", IO::IOTypeR8, 2, TimeDimIDs);
+      int VarIDCellI4 =
+          IO::defineVar(OutFileID, "CellI4", IO::IOTypeI4, 2, CellDimIDs);
+      int VarIDCellI8 =
+          IO::defineVar(OutFileID, "CellI8", IO::IOTypeI8, 2, CellDimIDs);
+      int VarIDCellR4 =
+          IO::defineVar(OutFileID, "CellR4", IO::IOTypeR4, 2, CellDimIDs);
+      int VarIDTimeR8 =
+          IO::defineVar(OutFileID, "TimeR8", IO::IOTypeR8, 3, Tim2DimIDs);
+      int VarIDEdgeI4 =
+          IO::defineVar(OutFileID, "EdgeI4", IO::IOTypeI4, 2, EdgeDimIDs);
+      int VarIDEdgeI8 =
+          IO::defineVar(OutFileID, "EdgeI8", IO::IOTypeI8, 2, EdgeDimIDs);
+      int VarIDEdgeR4 =
+          IO::defineVar(OutFileID, "EdgeR4", IO::IOTypeR4, 2, EdgeDimIDs);
+      int VarIDEdgeR8 =
+          IO::defineVar(OutFileID, "EdgeR8", IO::IOTypeR8, 2, EdgeDimIDs);
+      int VarIDVrtxI4 =
+          IO::defineVar(OutFileID, "VrtxI4", IO::IOTypeI4, 2, VrtxDimIDs);
+      int VarIDVrtxI8 =
+          IO::defineVar(OutFileID, "VrtxI8", IO::IOTypeI8, 2, VrtxDimIDs);
+      int VarIDVrtxR4 =
+          IO::defineVar(OutFileID, "VrtxR4", IO::IOTypeR4, 2, VrtxDimIDs);
+      int VarIDVrtxR8 =
+          IO::defineVar(OutFileID, "VrtxR8", IO::IOTypeR8, 2, VrtxDimIDs);
 
       // Add Variable metadata just for one array
       I4 VarMetaI4Ref             = 3;
@@ -603,49 +304,14 @@ int main(int argc, char *argv[]) {
       R8 VarMetaR8Ref             = 2.23456789;
       std::string VarMetaDescrRef = "Test array for I4 on Cells";
 
-      Err = IO::writeMeta("VarMetaI4", VarMetaI4Ref, OutFileID, VarIDCellI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing var I4 metadata PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing var I4 metadata FAIL");
-      }
-      Err = IO::writeMeta("VarMetaI8", VarMetaI8Ref, OutFileID, VarIDCellI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing var I8 metadata PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing var I8 metadata FAIL");
-      }
-      Err = IO::writeMeta("VarMetaR4", VarMetaR4Ref, OutFileID, VarIDCellI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing var R4 metadata PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing var R4 metadata FAIL");
-      }
-      Err = IO::writeMeta("VarMetaR8", VarMetaR8Ref, OutFileID, VarIDCellI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing var R8 metadata PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing var R8 metadata FAIL");
-      }
-      Err = IO::writeMeta("VarMetaDescr", VarMetaDescrRef, OutFileID,
-                          VarIDCellI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing var char metadata PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing var char metadata FAIL");
-      }
+      IO::writeMeta("VarMetaI4", VarMetaI4Ref, OutFileID, VarIDCellI4);
+      IO::writeMeta("VarMetaI8", VarMetaI8Ref, OutFileID, VarIDCellI4);
+      IO::writeMeta("VarMetaR4", VarMetaR4Ref, OutFileID, VarIDCellI4);
+      IO::writeMeta("VarMetaR8", VarMetaR8Ref, OutFileID, VarIDCellI4);
+      IO::writeMeta("VarMetaDescr", VarMetaDescrRef, OutFileID, VarIDCellI4);
 
       // Exit define mode
-      Err = IO::endDefinePhase(OutFileID);
-      if (Err != 0) {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error ending define mode FAIL");
-      }
+      IO::endDefinePhase(OutFileID);
 
       // Write variables
       I4 FillI4 = -999;
@@ -654,287 +320,94 @@ int main(int argc, char *argv[]) {
       R8 FillR8 = -1.23456789e30;
 
       // Write non-distributed variables
-      Err = IO::writeNDVar(&RefI4Scalar, OutFileID, VarIDScalarI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing I4 scalar PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing I4 scalar FAIL");
-      }
-
-      Err = IO::writeNDVar(&RefI8Scalar, OutFileID, VarIDScalarI8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing I8 scalar PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing I8 scalar FAIL");
-      }
-
-      Err = IO::writeNDVar(&RefR4Scalar, OutFileID, VarIDScalarR4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing R4 scalar PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing R4 scalar FAIL");
-      }
-
-      Err = IO::writeNDVar(&RefR8Scalar, OutFileID, VarIDScalarR8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing R8 scalar PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing R8 scalar FAIL");
-      }
-
-      Err = IO::writeNDVar(RefI4Vert.data(), OutFileID, VarIDI4Vert);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing I4Vert vector PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing I4Vert vector FAIL");
-      }
-
-      Err = IO::writeNDVar(RefI8Vert.data(), OutFileID, VarIDI8Vert);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing I8Vert vector PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing I8Vert vector FAIL");
-      }
-
-      Err = IO::writeNDVar(RefR4Vert.data(), OutFileID, VarIDR4Vert);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing R4Vert vector PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing R4Vert vector FAIL");
-      }
-
+      IO::writeNDVar(&RefI4Scalar, OutFileID, VarIDScalarI4);
+      IO::writeNDVar(&RefI8Scalar, OutFileID, VarIDScalarI8);
+      IO::writeNDVar(&RefR4Scalar, OutFileID, VarIDScalarR4);
+      IO::writeNDVar(&RefR8Scalar, OutFileID, VarIDScalarR8);
+      IO::writeNDVar(RefI4Vert.data(), OutFileID, VarIDI4Vert);
+      IO::writeNDVar(RefI8Vert.data(), OutFileID, VarIDI8Vert);
+      IO::writeNDVar(RefR4Vert.data(), OutFileID, VarIDR4Vert);
       // Write R8 arrays as two time slices - the first frame here with
       // the second frame written after re-open
       std::vector<int> DimLengths(1);
       DimLengths[0] = NVertLevels;
-      Err = IO::writeNDVar(RefR8Vert.data(), OutFileID, VarIDR8Time, 0,
-                           &DimLengths);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing R8Time vector frame 0 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing R8Time vector frame 0 FAIL");
-      }
+      IO::writeNDVar(RefR8Vert.data(), OutFileID, VarIDR8Time, 0, &DimLengths);
 
       // Write distributed arrays
-      Err = IO::writeArray(RefI4Cell.data(), NCellsSize * NVertLevels, &FillI4,
-                           OutFileID, DecompCellI4, VarIDCellI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing I4 array on cells PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing I4 array on cells FAIL");
-      }
-      Err = IO::writeArray(RefI8Cell.data(), NCellsSize * NVertLevels, &FillI8,
-                           OutFileID, DecompCellI8, VarIDCellI8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing I8 array on cells PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing I8 array on cells FAIL");
-      }
-      Err = IO::writeArray(RefR4Cell.data(), NCellsSize * NVertLevels, &FillR4,
-                           OutFileID, DecompCellR4, VarIDCellR4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing R4 array on cells PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing R4 array on cells FAIL");
-      }
+      IO::writeArray(RefI4Cell.data(), NCellsSize * NVertLevels, &FillI4,
+                     OutFileID, DecompCellI4, VarIDCellI4);
+      IO::writeArray(RefI8Cell.data(), NCellsSize * NVertLevels, &FillI8,
+                     OutFileID, DecompCellI8, VarIDCellI8);
+      IO::writeArray(RefR4Cell.data(), NCellsSize * NVertLevels, &FillR4,
+                     OutFileID, DecompCellR4, VarIDCellR4);
       // Write R8 cell data as two time slices - this is first frame
       // Second frame written below
-      Err = IO::writeArray(RefR8Cell.data(), NCellsSize * NVertLevels, &FillR8,
-                           OutFileID, DecompCellR8, VarIDTimeR8, 0);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing R8 array on cells frame 0 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing R8 array on cells frame 0 FAIL");
-      }
-
-      Err = IO::writeArray(RefI4Edge.data(), NEdgesSize * NVertLevels, &FillI4,
-                           OutFileID, DecompEdgeI4, VarIDEdgeI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing I4 array on Edges PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing I4 array on Edges FAIL");
-      }
-      Err = IO::writeArray(RefI8Edge.data(), NEdgesSize * NVertLevels, &FillI8,
-                           OutFileID, DecompEdgeI8, VarIDEdgeI8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing I8 array on Edges PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing I8 array on Edges FAIL");
-      }
-      Err = IO::writeArray(RefR4Edge.data(), NEdgesSize * NVertLevels, &FillR4,
-                           OutFileID, DecompEdgeR4, VarIDEdgeR4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing R4 array on Edges PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing R4 array on Edges FAIL");
-      }
-      Err = IO::writeArray(RefR8Edge.data(), NEdgesSize * NVertLevels, &FillR8,
-                           OutFileID, DecompEdgeR8, VarIDEdgeR8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing R8 array on Edges PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing R8 array on Edges FAIL");
-      }
-
-      Err = IO::writeArray(RefI4Vrtx.data(), NVerticesSize * NVertLevels,
-                           &FillI4, OutFileID, DecompVrtxI4, VarIDVrtxI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing I4 array on vertices PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing I4 array on vertices FAIL");
-      }
-      Err = IO::writeArray(RefI8Vrtx.data(), NVerticesSize * NVertLevels,
-                           &FillI8, OutFileID, DecompVrtxI8, VarIDVrtxI8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing I8 array on vertices PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing I8 array on vertices FAIL");
-      }
-      Err = IO::writeArray(RefR4Vrtx.data(), NVerticesSize * NVertLevels,
-                           &FillR4, OutFileID, DecompVrtxR4, VarIDVrtxR4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing R4 array on vertices PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing R4 array on vertices FAIL");
-      }
-      Err = IO::writeArray(RefR8Vrtx.data(), NVerticesSize * NVertLevels,
-                           &FillR8, OutFileID, DecompVrtxR8, VarIDVrtxR8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing R8 array on vertices PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing R8 array on vertices FAIL");
-      }
+      IO::writeArray(RefR8Cell.data(), NCellsSize * NVertLevels, &FillR8,
+                     OutFileID, DecompCellR8, VarIDTimeR8, 0);
+      IO::writeArray(RefI4Edge.data(), NEdgesSize * NVertLevels, &FillI4,
+                     OutFileID, DecompEdgeI4, VarIDEdgeI4);
+      IO::writeArray(RefI8Edge.data(), NEdgesSize * NVertLevels, &FillI8,
+                     OutFileID, DecompEdgeI8, VarIDEdgeI8);
+      IO::writeArray(RefR4Edge.data(), NEdgesSize * NVertLevels, &FillR4,
+                     OutFileID, DecompEdgeR4, VarIDEdgeR4);
+      IO::writeArray(RefR8Edge.data(), NEdgesSize * NVertLevels, &FillR8,
+                     OutFileID, DecompEdgeR8, VarIDEdgeR8);
+      IO::writeArray(RefI4Vrtx.data(), NVerticesSize * NVertLevels, &FillI4,
+                     OutFileID, DecompVrtxI4, VarIDVrtxI4);
+      IO::writeArray(RefI8Vrtx.data(), NVerticesSize * NVertLevels, &FillI8,
+                     OutFileID, DecompVrtxI8, VarIDVrtxI8);
+      IO::writeArray(RefR4Vrtx.data(), NVerticesSize * NVertLevels, &FillR4,
+                     OutFileID, DecompVrtxR4, VarIDVrtxR4);
+      IO::writeArray(RefR8Vrtx.data(), NVerticesSize * NVertLevels, &FillR8,
+                     OutFileID, DecompVrtxR8, VarIDVrtxR8);
 
       // Finished writing, close file
-      Err = IO::closeFile(OutFileID);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: closing output file PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error closing output file FAIL");
-      }
+      IO::closeFile(OutFileID);
 
       // Re-open to write additional frames for multi-frame fields
       // Open a file for output
-      Err = IO::openFile(OutFileID, "IOTest.nc", IO::ModeWrite, IO::FmtDefault,
-                         IO::IfExists::Append);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: file re-open PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error re-opening file for output FAIL");
-      }
+      IO::openFile(OutFileID, "IOTest.nc", IO::ModeWrite, IO::FmtDefault,
+                   IO::IfExists::Append);
 
       // write second frame data
-      Err = IO::writeNDVar(RefR8Time.data(), OutFileID, VarIDR8Time, 1,
-                           &DimLengths);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing R8Time vector frame 1 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing R8Time vector frame 1 FAIL");
-      }
-
-      Err = IO::writeArray(RefR8Tim2.data(), NCellsSize * NVertLevels, &FillR8,
-                           OutFileID, DecompCellR8, VarIDTimeR8, 1);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: writing R8 array on cells frame 1 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error writing R8 array on cells frame 1 FAIL");
-      }
+      IO::writeNDVar(RefR8Time.data(), OutFileID, VarIDR8Time, 1, &DimLengths);
+      IO::writeArray(RefR8Tim2.data(), NCellsSize * NVertLevels, &FillR8,
+                     OutFileID, DecompCellR8, VarIDTimeR8, 1);
 
       // Finished writing again, close file
-      Err = IO::closeFile(OutFileID);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: closing output file PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error closing output file FAIL");
-      }
+      IO::closeFile(OutFileID);
 
       // Open a file for reading to verify read/write
       int InFileID;
-      Err = IO::openFile(InFileID, "IOTest.nc", IO::ModeRead);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: opening file for reading PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error opening file for reading FAIL");
-      }
+      IO::openFile(InFileID, "IOTest.nc", IO::ModeRead);
 
       // Get dimension lengths to verify read/write of dimension info
       I4 NVertLevelsID;
       I4 NVertLevelsNew;
       Err = IO::getDimFromFile(InFileID, "NVertLevels", NVertLevelsID,
                                NVertLevelsNew);
-      if (Err == 0 and NVertLevelsNew == NVertLevels) {
-         LOG_ERROR("IOTest: read/write vert dimension test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write vert dimension test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: failed to get NVertLevels from file");
 
       I4 NCellsNewID;
       I4 NCellsNew;
       Err = IO::getDimFromFile(InFileID, "NCells", NCellsNewID, NCellsNew);
-      if (Err == 0 and NCellsNew == NCellsGlobal) {
-         LOG_ERROR("IOTest: read/write cell dimension test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write cell dimension test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: failed to get NCells from file");
 
       I4 NEdgesNewID;
       I4 NEdgesNew;
       Err = IO::getDimFromFile(InFileID, "NEdges", NEdgesNewID, NEdgesNew);
-      if (Err == 0 and NEdgesNew == NEdgesGlobal) {
-         LOG_ERROR("IOTest: read/write edge dimension test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write edge dimension test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: failed to get NEdges from file");
 
       I4 NVerticesNewID;
       I4 NVerticesNew;
       Err = IO::getDimFromFile(InFileID, "NVertices", NVerticesNewID,
                                NVerticesNew);
-      if (Err == 0 and NVerticesNew == NVerticesGlobal) {
-         LOG_ERROR("IOTest: read/write vertex dimension test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write vertex dimension test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: failed to get NVertices from file");
 
       I4 NTimeNewID;
       I4 NTimeNew;
       Err = IO::getDimFromFile(InFileID, "Time", NTimeNewID, NTimeNew);
-      if (Err == 0 and NTimeNew == 2) {
-         LOG_ERROR("IOTest: read/write time dimension test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write time dimension test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: failed to get NTime dimension from file");
 
       // Read global attributes
       I4 FileMetaI4New;
@@ -944,78 +417,37 @@ int main(int argc, char *argv[]) {
       std::string FileMetaDescrNew;
 
       Err = IO::readMeta("FileMetaI4", FileMetaI4New, InFileID, IO::GlobalID);
-      if (Err != 0) {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading file I4 metadata FAIL");
-      }
-      if (FileMetaI4New == FileMetaI4Ref) {
-         LOG_ERROR("IOTest: read/write file metadata I4 test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write file metadata I4 test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest FAIL: error reading file I4 metadata");
+      if (FileMetaI4New != FileMetaI4Ref)
+         ABORT_ERROR("IOTest: read I4 file metadata FAIL with bad data");
 
       Err = IO::readMeta("FileMetaI8", FileMetaI8New, InFileID, IO::GlobalID);
-      if (Err != 0) {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading file I8 metadata FAIL");
-      }
-      if (FileMetaI8New == FileMetaI8Ref) {
-         LOG_ERROR("IOTest: read/write file metadata I8 test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write file metadata I8 test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest FAIL: error reading file I8 metadata");
+      if (FileMetaI8New != FileMetaI8Ref)
+         ABORT_ERROR("IOTest: read I8 file metadata FAIL with bad data");
 
       Err = IO::readMeta("FileMetaR4", FileMetaR4New, InFileID, IO::GlobalID);
-      if (Err != 0) {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading file R4 metadata FAIL");
-      }
-      if (FileMetaR4New == FileMetaR4Ref) {
-         LOG_ERROR("IOTest: read/write file metadata R4 test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write file metadata R4 test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest FAIL: error reading file R4 metadata");
+      if (FileMetaR4New != FileMetaR4Ref)
+         ABORT_ERROR("IOTest: read R4 file metadata FAIL with bad data");
 
       Err = IO::readMeta("FileMetaR8", FileMetaR8New, InFileID, IO::GlobalID);
-      if (Err != 0) {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading file R8 metadata FAIL");
-      }
-      if (FileMetaR8New == FileMetaR8Ref) {
-         LOG_ERROR("IOTest: read/write file metadata R8 test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write file metadata R8 test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest FAIL: error reading file R8 metadata");
+      if (FileMetaR8New != FileMetaR8Ref)
+         ABORT_ERROR("IOTest: read R8 file metadata FAIL with bad data");
 
       Err = IO::readMeta("FileMetaDescr", FileMetaDescrNew, InFileID,
                          IO::GlobalID);
-      if (Err != 0) {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading file string metadata FAIL");
-      }
-      if (FileMetaDescrNew == FileMetaDescr) {
-         LOG_ERROR("IOTest: read/write file metadata string test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write file metadata string test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest FAIL: error reading file string metadata");
+      if (FileMetaDescrNew != FileMetaDescr)
+         ABORT_ERROR("IOTest: read string file metadata FAIL with bad data");
 
       std::string MyStringNew;
       Err = IO::readMeta("StringLiteral", MyStringNew, InFileID, IO::GlobalID);
-      if (Err != 0) {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading file string literal FAIL");
-      }
-      if (MyStringNew == "MyString") {
-         LOG_ERROR("IOTest: read/write file metadata string literal test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write file metadata string literal test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest FAIL: reading string literal metadata");
+      if (MyStringNew != "MyString")
+         ABORT_ERROR("IOTest: read string literal metadata FAIL with bad data");
+
       // Read new variables
 
       I4 NewI4Scalar = 0;
@@ -1047,191 +479,90 @@ int main(int argc, char *argv[]) {
 
       // Read non-distributed variables
       Err = IO::readNDVar(&NewI4Scalar, "ScalarI4", InFileID, VarIDScalarI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading I4 scalar PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading I4 scalar FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read scalar I4 NDVar")
 
       Err = IO::readNDVar(&NewI8Scalar, "ScalarI8", InFileID, VarIDScalarI8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading I8 scalar PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading I8 scalar FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read scalar I8 NDVar")
 
       Err = IO::readNDVar(&NewR4Scalar, "ScalarR4", InFileID, VarIDScalarR4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading R4 scalar PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading R4 scalar FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read scalar R4 NDVar")
 
       Err = IO::readNDVar(&NewR8Scalar, "ScalarR8", InFileID, VarIDScalarR8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading R8 scalar PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading R8 scalar FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read scalar R8 NDVar")
 
       Err = IO::readNDVar(NewI4Vert.data(), "I4Vert", InFileID, VarIDI4Vert);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading I4Vert vector PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading I4Vert vector FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read I4 vertical NDVar")
 
       Err = IO::readNDVar(NewI8Vert.data(), "I8Vert", InFileID, VarIDI8Vert);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading I8Vert vector PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading I8Vert vector FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read I8 vertical NDVar")
 
       Err = IO::readNDVar(NewR4Vert.data(), "R4Vert", InFileID, VarIDR4Vert);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading R4Vert vector PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading R4Vert vector FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read R4 vertical NDVar")
 
       // Read R8 data as two time slices
       Err = IO::readNDVar(NewR8Vert.data(), "R8Time", InFileID, VarIDR8Time, 0,
                           &DimLengths);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading R8Vert vector frame 0 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading R8Vert vector frame 0 FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read R8 NDVar time slice 0")
       Err = IO::readNDVar(NewR8Time.data(), "R8Time", InFileID, VarIDR8Time, 1,
                           &DimLengths);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading R8Vert vector frame 1 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading R8Vert vector frame 1 FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read R8 NDVar time slice 1")
 
       // Read distributed arrays
       Err = IO::readArray(NewI4Cell.data(), NCellsSize * NVertLevels, "CellI4",
                           InFileID, DecompCellI4, VarIDCellI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading I4 array on cells PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading I4 array on cells FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read I4 cell array")
       Err = IO::readArray(NewI8Cell.data(), NCellsSize * NVertLevels, "CellI8",
                           InFileID, DecompCellI8, VarIDCellI8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading I8 array on cells PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading I8 array on cells FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read I8 cell array")
       Err = IO::readArray(NewR4Cell.data(), NCellsSize * NVertLevels, "CellR4",
                           InFileID, DecompCellR4, VarIDCellR4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading R4 array on cells PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading R4 array on cells FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read R4 cell array")
       // Read R8 Cell data as two time slices
       Err = IO::readArray(NewR8Cell.data(), NCellsSize * NVertLevels, "TimeR8",
                           InFileID, DecompCellR8, VarIDTimeR8, 0);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading R8 array on cells frame 0 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading R8 array on cells frame 0 FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read R8 cell array, time 0")
       Err = IO::readArray(NewR8Tim2.data(), NCellsSize * NVertLevels, "TimeR8",
                           InFileID, DecompCellR8, VarIDTimeR8, 1);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading R8 array on cells frame 1 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading R8 array on cells frame 1 FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read R8 cell array, time 1")
 
       Err = IO::readArray(NewI4Edge.data(), NEdgesSize * NVertLevels, "EdgeI4",
                           InFileID, DecompEdgeI4, VarIDEdgeI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading I4 array on Edges PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading I4 array on Edges FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read I4 edge array")
       Err = IO::readArray(NewI8Edge.data(), NEdgesSize * NVertLevels, "EdgeI8",
                           InFileID, DecompEdgeI8, VarIDEdgeI8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading I8 array on Edges PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading I8 array on Edges FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read I8 edge array")
       Err = IO::readArray(NewR4Edge.data(), NEdgesSize * NVertLevels, "EdgeR4",
                           InFileID, DecompEdgeR4, VarIDEdgeR4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading R4 array on Edges PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading R4 array on Edges FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read R4 edge array")
       Err = IO::readArray(NewR8Edge.data(), NEdgesSize * NVertLevels, "EdgeR8",
                           InFileID, DecompEdgeR8, VarIDEdgeR8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading R8 array on Edges PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading R8 array on Edges FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read R8 edge array")
 
       Err = IO::readArray(NewI4Vrtx.data(), NVerticesSize * NVertLevels,
                           "VrtxI4", InFileID, DecompVrtxI4, VarIDVrtxI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading I4 array on vertices PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading I4 array on vertices FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read I4 vertex array")
       Err = IO::readArray(NewI8Vrtx.data(), NVerticesSize * NVertLevels,
                           "VrtxI8", InFileID, DecompVrtxI8, VarIDVrtxI8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading I8 array on vertices PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading I8 array on vertices FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read I8 vertex array")
       Err = IO::readArray(NewR4Vrtx.data(), NVerticesSize * NVertLevels,
                           "VrtxR4", InFileID, DecompVrtxR4, VarIDVrtxR4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading R4 array on vertices PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading R4 array on vertices FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read R4 vertex array")
       Err = IO::readArray(NewR8Vrtx.data(), NVerticesSize * NVertLevels,
                           "VrtxR8", InFileID, DecompVrtxR8, VarIDVrtxR8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: reading R8 array on vertices PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading R8 array on vertices FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: Failed to read R8 vertex array")
 
       // Check that variables match the reference cases that were written
       // Only check the owned values for distributed arrays - these would need
       // to be followed by a halo update.
+
+      if (NewI4Scalar != RefI4Scalar)
+         ABORT_ERROR("IOTest: read/write scalar I4 FAIL");
+      if (NewI8Scalar != RefI8Scalar)
+         ABORT_ERROR("IOTest: read/write scalar I8 test FAIL");
+      if (NewR4Scalar != RefR4Scalar)
+         ABORT_ERROR("IOTest: read/write scalar R4 test FAIL");
+      if (NewR8Scalar != RefR8Scalar)
+         ABORT_ERROR("IOTest: read/write scalar R8 test FAIL");
 
       int Err1 = 0;
       int Err2 = 0;
@@ -1239,44 +570,6 @@ int main(int argc, char *argv[]) {
       int Err4 = 0;
       int Err5 = 0;
 
-      if (NewI4Scalar != RefI4Scalar)
-         Err1++;
-      if (NewI8Scalar != RefI8Scalar)
-         Err2++;
-      if (NewR4Scalar != RefR4Scalar)
-         Err3++;
-      if (NewR8Scalar != RefR8Scalar)
-         Err4++;
-      if (Err1 == 0) {
-         LOG_ERROR("IOTest: read/write scalar I4 test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write scalar I4 test FAIL");
-      }
-      if (Err2 == 0) {
-         LOG_ERROR("IOTest: read/write scalar I8 test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write scalar I8 test FAIL");
-      }
-      if (Err3 == 0) {
-         LOG_ERROR("IOTest: read/write scalar R4 test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write scalar R4 test FAIL");
-      }
-      if (Err4 == 0) {
-         LOG_ERROR("IOTest: read/write scalar R8 test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write scalar R8 test FAIL");
-      }
-
-      Err1 = 0;
-      Err2 = 0;
-      Err3 = 0;
-      Err4 = 0;
-      Err5 = 0;
       for (int k = 0; k < NVertLevels; ++k) {
          if (NewI4Vert(k) != RefI4Vert(k))
             Err1++;
@@ -1289,36 +582,16 @@ int main(int argc, char *argv[]) {
          if (NewR8Time(k) != RefR8Time(k))
             Err5++;
       }
-      if (Err1 == 0) {
-         LOG_ERROR("IOTest: read/write vert I4 vector test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write vert I4 vector test FAIL");
-      }
-      if (Err2 == 0) {
-         LOG_ERROR("IOTest: read/write vert I8 vector test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write vert I8 vector test FAIL");
-      }
-      if (Err3 == 0) {
-         LOG_ERROR("IOTest: read/write vert R4 vector test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write vert R4 vector test FAIL");
-      }
-      if (Err4 == 0) {
-         LOG_ERROR("IOTest: read/write vert R8 vector test frame 0 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write vert R8 vector test frame 0 FAIL");
-      }
-      if (Err5 == 0) {
-         LOG_ERROR("IOTest: read/write vert R8 vector test frame 1 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write vert R8 vector test frame 1 FAIL");
-      }
+      if (Err1 > 0)
+         ABORT_ERROR("IOTest: read/write vert I4 vector test FAIL");
+      if (Err2 > 0)
+         ABORT_ERROR("IOTest: read/write vert I8 vector test FAIL");
+      if (Err3 > 0)
+         ABORT_ERROR("IOTest: read/write vert R4 vector test FAIL");
+      if (Err4 > 0)
+         ABORT_ERROR("IOTest: read/write vert R8 vector test frame 0 FAIL");
+      if (Err5 > 0)
+         ABORT_ERROR("IOTest: read/write vert R8 vector test frame 1 FAIL");
 
       Err1 = 0;
       Err2 = 0;
@@ -1339,36 +612,16 @@ int main(int argc, char *argv[]) {
                Err5++;
          }
       }
-      if (Err1 == 0) {
-         LOG_ERROR("IOTest: read/write array I4 on Cells test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write array I4 on Cells test FAIL");
-      }
-      if (Err2 == 0) {
-         LOG_ERROR("IOTest: read/write array I8 on Cells test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write array I8 on Cells test FAIL");
-      }
-      if (Err3 == 0) {
-         LOG_ERROR("IOTest: read/write array R4 on Cells test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write array R4 on Cells test FAIL");
-      }
-      if (Err4 == 0) {
-         LOG_ERROR("IOTest: read/write array R8 on Cells test frame 0 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write array R8 on Cells test frame 0 FAIL");
-      }
-      if (Err5 == 0) {
-         LOG_ERROR("IOTest: read/write array R8 on Cells test frame 1 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write array R8 on Cells test frame 1 FAIL");
-      }
+      if (Err1 > 0)
+         ABORT_ERROR("IOTest: read/write array I4 on Cells test FAIL");
+      if (Err2 > 0)
+         ABORT_ERROR("IOTest: read/write array I8 on Cells test FAIL");
+      if (Err3 > 0)
+         ABORT_ERROR("IOTest: read/write array R4 on Cells test FAIL");
+      if (Err4 > 0)
+         ABORT_ERROR("IOTest: read/write array R8 on Cells test frame 0 FAIL");
+      if (Err5 > 0)
+         ABORT_ERROR("IOTest: read/write array R8 on Cells test frame 1 FAIL");
 
       Err1 = 0;
       Err2 = 0;
@@ -1386,30 +639,14 @@ int main(int argc, char *argv[]) {
                Err4++;
          }
       }
-      if (Err1 == 0) {
-         LOG_ERROR("IOTest: read/write array I4 on Edges test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write array I4 on Edges test FAIL");
-      }
-      if (Err2 == 0) {
-         LOG_ERROR("IOTest: read/write array I8 on Edges test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write array I8 on Edges test FAIL");
-      }
-      if (Err3 == 0) {
-         LOG_ERROR("IOTest: read/write array R4 on Edges test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write array R4 on Edges test FAIL");
-      }
-      if (Err4 == 0) {
-         LOG_ERROR("IOTest: read/write array R8 on Edges test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write array R8 on Edges test FAIL");
-      }
+      if (Err1 > 0)
+         ABORT_ERROR("IOTest: read/write array I4 on Edges test FAIL");
+      if (Err2 > 0)
+         ABORT_ERROR("IOTest: read/write array I8 on Edges test FAIL");
+      if (Err3 > 0)
+         ABORT_ERROR("IOTest: read/write array R4 on Edges test FAIL");
+      if (Err4 > 0)
+         ABORT_ERROR("IOTest: read/write array R8 on Edges test FAIL");
 
       Err1 = 0;
       Err2 = 0;
@@ -1427,30 +664,14 @@ int main(int argc, char *argv[]) {
                Err4++;
          }
       }
-      if (Err1 == 0) {
-         LOG_ERROR("IOTest: read/write array I4 on Vertices test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write array I4 on Vertices test FAIL");
-      }
-      if (Err2 == 0) {
-         LOG_ERROR("IOTest: read/write array I8 on Vertices test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write array I8 on Vertices test FAIL");
-      }
-      if (Err3 == 0) {
-         LOG_ERROR("IOTest: read/write array R4 on Vertices test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write array R4 on Vertices test FAIL");
-      }
-      if (Err4 == 0) {
-         LOG_ERROR("IOTest: read/write array R8 on Vertices test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write array R8 on Vertices test FAIL");
-      }
+      if (Err1 > 0)
+         ABORT_ERROR("IOTest: read/write array I4 on Vertices test FAIL");
+      if (Err2 > 0)
+         ABORT_ERROR("IOTest: read/write array I8 on Vertices test FAIL");
+      if (Err3 > 0)
+         ABORT_ERROR("IOTest: read/write array R4 on Vertices test FAIL");
+      if (Err4 > 0)
+         ABORT_ERROR("IOTest: read/write array R8 on Vertices test FAIL");
 
       // Read array attributes
       I4 VarMetaI4New;
@@ -1460,171 +681,58 @@ int main(int argc, char *argv[]) {
       std::string VarMetaDescrNew;
 
       Err = IO::readMeta("VarMetaI4", VarMetaI4New, InFileID, VarIDCellI4);
-      if (Err != 0) {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading var I4 metadata FAIL");
-      }
-      if (VarMetaI4New == VarMetaI4Ref) {
-         LOG_ERROR("IOTest: read/write var metadata I4 test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write var metadata I4 test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: error reading var I4 metadata FAIL");
+      if (VarMetaI4New != VarMetaI4Ref)
+         ABORT_ERROR("IOTest: read var metadata I4 test FAIL with bad data");
+
       Err = IO::readMeta("VarMetaI8", VarMetaI8New, InFileID, VarIDCellI4);
-      if (Err != 0) {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading var I8 metadata FAIL");
-      }
-      if (VarMetaI8New == VarMetaI8Ref) {
-         LOG_ERROR("IOTest: read/write var metadata I8 test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write var metadata I8 test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: error reading var I8 metadata FAIL");
+      if (VarMetaI8New != VarMetaI8Ref)
+         ABORT_ERROR("IOTest: read var metadata I8 test FAIL with bad data");
+
       Err = IO::readMeta("VarMetaR4", VarMetaR4New, InFileID, VarIDCellI4);
-      if (Err != 0) {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading var R4 metadata FAIL");
-      }
-      if (VarMetaR4New == VarMetaR4Ref) {
-         LOG_ERROR("IOTest: read/write var metadata R4 test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write var metadata R4 test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: error reading var R4 metadata FAIL");
+      if (VarMetaR4New != VarMetaR4Ref)
+         ABORT_ERROR("IOTest: read var metadata R4 test FAIL with bad data");
+
       Err = IO::readMeta("VarMetaR8", VarMetaR8New, InFileID, VarIDCellI4);
-      if (Err != 0) {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading var R8 metadata FAIL");
-      }
-      if (VarMetaR8New == VarMetaR8Ref) {
-         LOG_ERROR("IOTest: read/write var metadata R8 test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write var metadata R8 test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: error reading var R8 metadata FAIL");
+      if (VarMetaR8New != VarMetaR8Ref)
+         ABORT_ERROR("IOTest: read var metadata R8 test FAIL with bad data");
+
       Err =
           IO::readMeta("VarMetaDescr", VarMetaDescrNew, InFileID, VarIDCellI4);
-      if (Err != 0) {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error reading var string metadata FAIL");
-      }
-      if (VarMetaDescrNew == VarMetaDescrRef) {
-         LOG_ERROR("IOTest: read/write var metadata string test PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: read/write var metadata string test FAIL");
-      }
+      CHECK_ERROR_ABORT(Err, "IOTest: error reading var string metadata FAIL");
+      if (VarMetaDescrNew != VarMetaDescrRef)
+         ABORT_ERROR("IOTest: read var metadata string test FAIL bad data");
 
       // Finished reading, close file
-      Err = IO::closeFile(InFileID);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: closing input file PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error closing input file FAIL");
-      }
+      IO::closeFile(InFileID);
 
       // Test destruction of Decompositions
-      Err = IO::destroyDecomp(DecompCellI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: destroying decomp cell I4 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error destroying decomp cell I4 FAIL");
-      }
-      Err = IO::destroyDecomp(DecompCellI8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: destroying decomp cell I8 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error destroying decomp cell I8 FAIL");
-      }
-      Err = IO::destroyDecomp(DecompCellR4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: destroying decomp cell R4 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error destroying decomp cell R4 FAIL");
-      }
-      Err = IO::destroyDecomp(DecompCellR8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: destroying decomp cell R8 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error destroying decomp cell R8 FAIL");
-      }
-
-      Err = IO::destroyDecomp(DecompEdgeI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: destroying decomp Edge I4 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error destroying decomp Edge I4 FAIL");
-      }
-      Err = IO::destroyDecomp(DecompEdgeI8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: destroying decomp Edge I8 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error destroying decomp Edge I8 FAIL");
-      }
-      Err = IO::destroyDecomp(DecompEdgeR4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: destroying decomp Edge R4 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error destroying decomp Edge R4 FAIL");
-      }
-      Err = IO::destroyDecomp(DecompEdgeR8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: destroying decomp Edge R8 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error destroying decomp Edge R8 FAIL");
-      }
-
-      Err = IO::destroyDecomp(DecompVrtxI4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: destroying decomp Vrtx I4 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error destroying decomp Vrtx I4 FAIL");
-      }
-      Err = IO::destroyDecomp(DecompVrtxI8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: destroying decomp Vrtx I8 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error destroying decomp Vrtx I8 FAIL");
-      }
-      Err = IO::destroyDecomp(DecompVrtxR4);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: destroying decomp Vrtx R4 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error destroying decomp Vrtx R4 FAIL");
-      }
-      Err = IO::destroyDecomp(DecompVrtxR8);
-      if (Err == 0) {
-         LOG_ERROR("IOTest: destroying decomp Vrtx R8 PASS");
-      } else {
-         RetVal += 1;
-         LOG_ERROR("IOTest: error destroying decomp Vrtx R8 FAIL");
-      }
+      IO::destroyDecomp(DecompCellI4);
+      IO::destroyDecomp(DecompCellI8);
+      IO::destroyDecomp(DecompCellR4);
+      IO::destroyDecomp(DecompCellR8);
+      IO::destroyDecomp(DecompEdgeI4);
+      IO::destroyDecomp(DecompEdgeI8);
+      IO::destroyDecomp(DecompEdgeR4);
+      IO::destroyDecomp(DecompEdgeR8);
+      IO::destroyDecomp(DecompVrtxI4);
+      IO::destroyDecomp(DecompVrtxI8);
+      IO::destroyDecomp(DecompVrtxR4);
+      IO::destroyDecomp(DecompVrtxR8);
 
       // Exit environments
       Decomp::clear();
       MachEnv::removeAll();
-      if (Err == 0)
-         LOG_ERROR("IOTest: Successful completion");
+
+      LOG_INFO("IOTest: Successful completion");
    }
    Kokkos::finalize();
    MPI_Finalize();
 
-   if (RetVal >= 256)
-      RetVal = 255;
-
    return RetVal;
+
 } // end of main
 //===-----------------------------------------------------------------------===/

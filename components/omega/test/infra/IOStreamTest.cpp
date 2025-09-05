@@ -204,9 +204,7 @@ int main(int argc, char **argv) {
          TimeInstant CurTime    = ModelClock->getCurrentTime();
          std::string CurTimeStr = CurTime.getString(4, 2, " ");
 
-         Err1 = IOStream::writeAll(ModelClock);
-         if (Err1 != 0) // to prevent too much output in log
-            TestEval("Write all streams " + CurTimeStr, Err1, ErrRef, Err);
+         IOStream::writeAll(ModelClock);
       }
 
       // Force read the latest restart and check the results
