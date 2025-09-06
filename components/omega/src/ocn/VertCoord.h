@@ -124,9 +124,13 @@ class VertCoord {
 
    // VertCoord instance name and FieldGroup name
    std::string Name;
+   std::string InitGroupName;
    std::string GroupName;
 
    // Field names
+   std::string MinLayerCellFldName;   ///< Field name for MinLayerCell
+   std::string MaxLayerCellFldName;   ///< Field name for MaxLayerCell
+   std::string BottomDepthFldName;    ///< Field name for BottomDepth
    std::string PressInterfFldName;    ///< Field name for interface pressure
    std::string PressMidFldName;       ///< Field name for midpoint pressure
    std::string ZInterfFldName;        ///< Field name for interface Z height

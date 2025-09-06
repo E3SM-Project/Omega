@@ -11,6 +11,7 @@
 #include "Dimension.h"
 #include "Field.h"
 #include "IO.h"
+#include "IOStream.h"
 #include "OmegaKokkos.h"
 
 #include <limits>
@@ -149,6 +150,9 @@ void VertCoord::defineFields() {
    I4 Err = 0; // default error code
 
    // Set field names (append Name if not default)
+   MinLayerCellFldName   = "MinLevelCell";
+   MaxLayerCellFldName   = "MaxLevelCell";
+   BottomDepthFldName    = "BottomDepth";
    PressInterfFldName    = "PressureInterface";
    PressMidFldName       = "PressureMid";
    ZInterfFldName        = "ZInterface";
@@ -157,6 +161,9 @@ void VertCoord::defineFields() {
    LyrThickTargetFldName = "LayerThicknessTarget";
 
    if (Name != "Default") {
+      MinLayerCellFldName.append(Name);
+      MaxLayerCellFldName.append(Name);
+      BottomDepthFldName.append(Name);
       PressInterfFldName.append(Name);
       PressMidFldName.append(Name);
       ZInterfFldName.append(Name);
@@ -166,10 +173,51 @@ void VertCoord::defineFields() {
    }
 
    // Create fields for VertCoord variables
-   const Real FillValue = -9.99e30;
-   int NDims            = 2;
+   const I4 FillValueI4     = -999;
+   const Real FillValueReal = -9.99e30;
+   int NDims                = 1;
    std::vector<std::string> DimNames(NDims);
    DimNames[0] = "NCells";
+
+   auto MinLayerCellField = Field::create(
+       MinLayerCellFldName,                         // field name
+       "Index to first active cell in each column", // long name or description
+       "",                                          // units
+       "",                                          // CF standard Name
+       0,                                           // min valid value
+       std::numeric_limits<I4>::max(),              // max valid value
+       FillValueI4, // scalar for undefined entries
+       NDims,       // number of dimensions
+       DimNames     // dimension names
+   );
+
+   auto MaxLayerCellField = Field::create(
+       MaxLayerCellFldName,                        // field name
+       "Index to last active cell in each column", // long name or description
+       "",                                         // units
+       "",                                         // CF standard Name
+       -1,                                         // min valid value
+       std::numeric_limits<I4>::max(),             // max valid value
+       FillValueI4, // scalar for undefined entries
+       NDims,       // number of dimensions
+       DimNames     // dimension names
+   );
+
+   auto BottomDepthField = Field::create(
+       BottomDepthFldName, // field name
+       "Depth of the bottom of the ocean. Given as a positive distance from"
+       "sea level",                      // long name or description
+       "m",                              // units
+       "",                               // CF standard Name
+       0.0,                              // min valid value
+       std::numeric_limits<Real>::max(), // max valid value
+       FillValueReal,                    // scalar for undefined entries
+       NDims,                            // number of dimensions
+       DimNames                          // dimension names
+   );
+
+   NDims = 2;
+   DimNames.resize(NDims);
    DimNames[1] = "NVertLayers";
 
    auto PressureInterfaceField = Field::create(
@@ -179,7 +227,7 @@ void VertCoord::defineFields() {
        "sea_water_pressure",                    // CF standard Name
        0.0,                                     // min valid value
        std::numeric_limits<Real>::max(),        // max valid value
-       FillValue,                               // scalar for undefined entries
+       FillValueReal,                           // scalar for undefined entries
        NDims,                                   // number of dimensions
        DimNames                                 // dimension names
    );
@@ -191,7 +239,7 @@ void VertCoord::defineFields() {
        "sea_water_pressure",                   // CF standard Name
        0.0,                                    // min valid value
        std::numeric_limits<Real>::max(),       // max valid value
-       FillValue,                              // scalar for undefined entries
+       FillValueReal,                          // scalar for undefined entries
        NDims,                                  // number of dimensions
        DimNames                                // dimension names
    );
@@ -203,9 +251,9 @@ void VertCoord::defineFields() {
        "height",                                     // CF standard Name
        std::numeric_limits<Real>::min(),             // min valid value
        std::numeric_limits<Real>::max(),             // max valid value
-       FillValue, // scalar for undefined entries
-       NDims,     // number of dimensions
-       DimNames   // dimension names
+       FillValueReal, // scalar for undefined entries
+       NDims,         // number of dimensions
+       DimNames       // dimension names
    );
 
    auto ZMidField = Field::create(
@@ -215,9 +263,9 @@ void VertCoord::defineFields() {
        "height",                                    // CF standard Name
        std::numeric_limits<Real>::min(),            // min valid value
        std::numeric_limits<Real>::max(),            // max valid value
-       FillValue, // scalar for undefined entries
-       NDims,     // number of dimensions
-       DimNames   // dimension names
+       FillValueReal, // scalar for undefined entries
+       NDims,         // number of dimensions
+       DimNames       // dimension names
    );
 
    auto GeopotentialMidField = Field::create(
@@ -227,7 +275,7 @@ void VertCoord::defineFields() {
        "geopotential",                    // CF standard Name
        std::numeric_limits<Real>::min(),  // min valid value
        std::numeric_limits<Real>::max(),  // max valid value
-       FillValue,                         // scalar for undefined entries
+       FillValueReal,                     // scalar for undefined entries
        NDims,                             // number of dimensions
        DimNames                           // dimension names
    );
@@ -240,10 +288,40 @@ void VertCoord::defineFields() {
                      "",                        // CF standard Name
                      0.0,                       // min valid value
                      std::numeric_limits<Real>::max(), // max valid value
-                     FillValue, // scalar for undefined entries
-                     NDims,     // number of dimensions
-                     DimNames   // dimension names
+                     FillValueReal, // scalar for undefined entries
+                     NDims,         // number of dimensions
+                     DimNames       // dimension names
        );
+
+   // Create a field group for initial VertCoord fields
+   InitGroupName = "InitVertCoord";
+   if (Name != "Default") {
+      InitGroupName.append(Name);
+   }
+   auto InitVCoordGroup = FieldGroup::create(InitGroupName);
+
+   Err = InitVCoordGroup->addField(MinLayerCellFldName);
+   if (Err != 0)
+      LOG_ERROR("Error adding {} to field group {}", MinLayerCellFldName,
+                InitGroupName);
+   Err = InitVCoordGroup->addField(MaxLayerCellFldName);
+   if (Err != 0)
+      LOG_ERROR("Error adding {} to field group {}", MaxLayerCellFldName,
+                InitGroupName);
+   Err = InitVCoordGroup->addField(BottomDepthFldName);
+   if (Err != 0)
+      LOG_ERROR("Error adding {} to field group {}", BottomDepthFldName,
+                InitGroupName);
+
+   Err = MinLayerCellField->attachData<Array1DI4>(MinLayerCell);
+   if (Err != 0)
+      LOG_ERROR("Error attaching data array to field {}", MinLayerCellFldName);
+   Err = MaxLayerCellField->attachData<Array1DI4>(MaxLayerCell);
+   if (Err != 0)
+      LOG_ERROR("Error attaching data array to field {}", MaxLayerCellFldName);
+   Err = BottomDepthField->attachData<Array1DReal>(BottomDepth);
+   if (Err != 0)
+      LOG_ERROR("Error attaching data array to field {}", BottomDepthFldName);
 
    // Create a field group for VertCoord fields
    GroupName = "VertCoord";
@@ -389,6 +467,20 @@ void VertCoord::readArrays(const Decomp *Decomp //< [in] Decomp for mesh
 VertCoord::~VertCoord() {
 
    int Err;
+
+   Err = Field::destroy(MinLayerCellFldName);
+   if (Err != 0)
+      LOG_ERROR("Error removing Field {}", MinLayerCellFldName);
+   Err = Field::destroy(MaxLayerCellFldName);
+   if (Err != 0)
+      LOG_ERROR("Error removing Field {}", MaxLayerCellFldName);
+   Err = Field::destroy(BottomDepthFldName);
+   if (Err != 0)
+      LOG_ERROR("Error removing Field {}", BottomDepthFldName);
+   Err = FieldGroup::destroy(InitGroupName);
+   if (Err != 0)
+      LOG_ERROR("Error removing FieldGroup {}", InitGroupName);
+
    Err = Field::destroy(PressInterfFldName);
    if (Err != 0)
       LOG_ERROR("Error removing Field {}", PressInterfFldName);
