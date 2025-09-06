@@ -62,7 +62,15 @@ VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
    }
    NVertLayersP1 = NVertLayers + 1;
 
-   auto VertDim = Dimension::create("NVertLayers", NVertLayers);
+   std::string DimName   = "NVertLayers";
+   std::string DimP1Name = "NVertLayersP1";
+   if (Name != "Default") {
+      DimName.append(Name);
+      DimP1Name.append(Name);
+   }
+
+   auto VertDim   = Dimension::create(DimName, NVertLayers);
+   auto VertDimP1 = Dimension::create(DimP1Name, NVertLayersP1);
 
    // Retrieve mesh variables from Decomp
    NCellsOwned = Decomp->NCellsOwned;
