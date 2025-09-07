@@ -51,17 +51,12 @@ class VertCoord {
    // methods
 
    /// construct a new vertical coordinate object
-   VertCoord(const std::string &Name,  ///< [in] Name for new VertCoord
-             const Decomp *MeshDecomp, ///< [in] associated Decomp
-             Config *Options           ///< [in] configuration options
+   VertCoord(const std::string &Name, ///< [in] Name for new VertCoord
+             const Decomp *MeshDecomp ///< [in] associated Decomp
    );
 
    /// define field metadata
    void defineFields();
-
-   /// read desired quantities from mesh file
-   void readArrays(const Decomp *Decomp ///< [in] Decomp for mesh
-   );
 
    // Forbid copy and move construction
    VertCoord(const VertCoord &) = delete;
@@ -122,7 +117,7 @@ class VertCoord {
 
    HostArray1DReal BottomDepthH;
 
-   // VertCoord instance name and FieldGroup name
+   // VertCoord instance name and FieldGroup names
    std::string Name;
    std::string InitGroupName;
    std::string GroupName;
@@ -140,15 +135,24 @@ class VertCoord {
 
    // methods
 
-   /// Initialize Omega vertical coordinate
    static void init();
 
+   /// 1st phase of initialization for default vertical coordinate
+   static void init1();
+
+   /// 2nd phase of initialization for default vertical coordinate
+   static void init2();
+
    /// Creates a new vertical coordinate object by calling the constructor and
-   /// puts it in the AllVertCoords map
+   /// puts it in the AllVertCoords map. This object is mostly empty and must
+   /// completed by completeSetup.
    static VertCoord *
-   create(const std::string &Name,  /// [in] name for new VertCoord
-          const Decomp *MeshDecomp, /// [in] associated Decomp
-          Config *Options           /// [in] configuration options
+   create(const std::string &Name, /// [in] name for new VertCoord
+          const Decomp *MeshDecomp /// [in] associated Decomp
+   );
+
+   /// Read InitialVertCoord stream and complete initialization
+   void completeSetup(Config *Options /// [in] configuration options
    );
 
    /// Destructor - deallocates all memory and deletes a VertCoord

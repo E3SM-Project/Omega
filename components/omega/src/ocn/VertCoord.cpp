@@ -22,26 +22,38 @@ namespace OMEGA {
 VertCoord *VertCoord::DefaultVertCoord = nullptr;
 std::map<std::string, std::unique_ptr<VertCoord>> VertCoord::AllVertCoords;
 
+void VertCoord::init() {}
+
 //------------------------------------------------------------------------------
-// Initialize default vertical coordinate, requires prior initialization of
-// Decomp.
-void VertCoord::init() {
+// Begin initialization of default vertical coordinate, requires prior
+// initialization of Decomp.
+void VertCoord::init1() {
 
    Decomp *DefDecomp = Decomp::getDefault();
 
-   Config *OmegaConfig = Config::getOmegaConfig();
+   VertCoord::DefaultVertCoord = create("Default", DefDecomp);
 
-   VertCoord::DefaultVertCoord = create("Default", DefDecomp, OmegaConfig);
-
-} // end init
+} // end init1
 
 //------------------------------------------------------------------------------
-// Construct a new VertCoord instance given a Decomp
+// Complete initialization of default vertical coordinate, requires prior
+// initialization of HorzMesh.
+void VertCoord::init2() {
+
+   Config *OmegaConfig = Config::getOmegaConfig();
+
+   DefaultVertCoord->completeSetup(OmegaConfig);
+
+} // end init2
+
+//------------------------------------------------------------------------------
+// Construct a new VertCoord instance given a Decomp. New object is incomplete
+// and completeSetup must be called afterwards
 VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
-                     const Decomp *Decomp,     //< [in] associated Decomp
-                     Config *Options           //< [in] configuration options
+                     const Decomp *Decomp      //< [in] associated Decomp
 ) {
 
+   // Store name suffix
    Name = Name_;
 
    // Retrieve mesh filename from Decomp
@@ -51,7 +63,7 @@ VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
    I4 Err;
    Err = IO::openFile(MeshFileID, MeshFileName, IO::ModeRead);
 
-   // Set NVertLayers and NVertLayersP1 and create the vertical dimension
+   // Set NVertLayers and NVertLayersP1 and create the vertical dimensions
    I4 NVertLayersID;
    Err = IO::getDimFromFile(MeshFileID, "nVertLevels", NVertLayersID,
                             NVertLayers);
@@ -94,21 +106,16 @@ VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
    MaxLayerCell = Array1DI4("MaxLayerCell", NCellsSize);
    MinLayerCell = Array1DI4("MinLayerCell", NCellsSize);
    BottomDepth  = Array1DReal("BottomDepth", NCellsSize);
-
    PressureInterface =
        Array2DReal("PressureInterface", NCellsSize, NVertLayersP1);
-   PressureMid = Array2DReal("PressureMid", NCellsSize, NVertLayers);
-
-   ZInterface = Array2DReal("ZInterface", NCellsSize, NVertLayersP1);
-   ZMid       = Array2DReal("ZMid", NCellsSize, NVertLayers);
-
+   PressureMid     = Array2DReal("PressureMid", NCellsSize, NVertLayers);
+   ZInterface      = Array2DReal("ZInterface", NCellsSize, NVertLayersP1);
+   ZMid            = Array2DReal("ZMid", NCellsSize, NVertLayers);
    GeopotentialMid = Array2DReal("GeopotentialMid", NCellsSize, NVertLayers);
    LayerThicknessTarget =
        Array2DReal("LayerThicknessTarget", NCellsSize, NVertLayers);
 
-   MaxLayerCellH         = createHostMirrorCopy(MaxLayerCell);
-   MinLayerCellH         = createHostMirrorCopy(MinLayerCell);
-   BottomDepthH          = createHostMirrorCopy(BottomDepth);
+   // Make host copies for device arrays not being read from file
    PressureInterfaceH    = createHostMirrorCopy(PressureInterface);
    PressureMidH          = createHostMirrorCopy(PressureMid);
    ZInterfaceH           = createHostMirrorCopy(ZInterface);
@@ -116,23 +123,63 @@ VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
    GeopotentialMidH      = createHostMirrorCopy(GeopotentialMid);
    LayerThicknessTargetH = createHostMirrorCopy(LayerThicknessTarget);
 
-   readArrays(Decomp);
+} // end constructor
 
+//------------------------------------------------------------------------------
+// Complete construction of new VertCoord instance
+void VertCoord::completeSetup(Config *Options //< [in] configuration options
+) {
+
+   // define field metadata
+   defineFields();
+
+   // Fill with default values + 1 in case arrays are not present in mesh file
+   deepCopy(MinLayerCell, 1);
+   deepCopy(MaxLayerCell, NVertLayers);
+
+   // Fetch input stream and validate
+   std::string StreamName = "InitialVertCoord";
+
+   auto VCoordStream = IOStream::get(StreamName);
+
+   bool IsValidated = VCoordStream->validate();
+
+   // Read InitialVertCoord stream
+   I4 Err;
+   if (IsValidated) {
+      Err = IOStream::read(StreamName);
+   } else {
+      ABORT_ERROR("Error validating IO stream {}", StreamName);
+   }
+
+   // Subtract 1 to convert to zero-based indexing
+   OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
+   OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+   parallelFor(
+       {NCellsAll}, KOKKOS_LAMBDA(int ICell) {
+          MinLayerCell(ICell) -= 1;
+          MaxLayerCell(ICell) -= 1;
+       });
+
+   // Compute Edge and Vertex vertical ranges
    minMaxLayerEdge();
    minMaxLayerVertex();
 
+   // Initialize movement weights
    initMovementWeights(Options);
 
-   defineFields();
+   // Make host copies for device arrays read from mesh file
+   MaxLayerCellH = createHostMirrorCopy(MaxLayerCell);
+   MinLayerCellH = createHostMirrorCopy(MinLayerCell);
+   BottomDepthH  = createHostMirrorCopy(BottomDepth);
 
-} // end constructor
+} // end completeSetup
 
 //------------------------------------------------------------------------------
 // Calls the VertCoord constructor and places it in the AllVertCoords map
 VertCoord *
 VertCoord::create(const std::string &Name, // [in] name for new VertCoord
-                  const Decomp *Decomp,    // [in] associated Decomp
-                  Config *Options          // [in] configuration options
+                  const Decomp *Decomp     // [in] associated Decomp
 ) {
    // Check to see if a VertCoord of the same name already exists and, if so,
    // exit with an error
@@ -145,7 +192,7 @@ VertCoord::create(const std::string &Name, // [in] name for new VertCoord
 
    // create a new VertCoord on the heap and put it in a map of unique_ptrs,
    // which will manage its lifetime
-   auto *NewVertCoord = new VertCoord(Name, Decomp, Options);
+   auto *NewVertCoord = new VertCoord(Name, Decomp);
    AllVertCoords.emplace(Name, NewVertCoord);
 
    return NewVertCoord;
@@ -383,92 +430,6 @@ void VertCoord::defineFields() {
                 LyrThickTargetFldName);
 
 } // end defineFields
-
-//------------------------------------------------------------------------------
-// Read desired quantities from the mesh file
-void VertCoord::readArrays(const Decomp *Decomp //< [in] Decomp for mesh
-) {
-
-   I4 NDims             = 1;
-   IO::Rearranger Rearr = IO::RearrBox;
-
-   I4 CellDecompI4;
-   std::vector<I4> CellDims{Decomp->NCellsGlobal};
-   std::vector<I4> CellID(NCellsAll);
-   for (int Cell = 0; Cell < NCellsAll; ++Cell) {
-      CellID[Cell] = Decomp->CellIDH(Cell) - 1;
-   }
-   I4 DecErr = IO::createDecomp(CellDecompI4, IO::IOTypeI4, NDims, CellDims,
-                                NCellsAll, CellID, Rearr);
-   if (DecErr != 0) {
-      LOG_CRITICAL("VertCoord: error creating cell I4 IO decomposition");
-   }
-
-   HostArray1DI4 TmpArrayI4H("TmpCellArray", NCellsSize);
-   I4 ArrayID;
-   const std::string MaxNameMPAS = "maxLevelCell";
-   I4 MaxReadErr = IO::readArray(TmpArrayI4H.data(), NCellsAll, MaxNameMPAS,
-                                 MeshFileID, CellDecompI4, ArrayID);
-
-   if (MaxReadErr != 0) {
-      LOG_WARN("VertCoord: error reading maxLevelCell from mesh file, "
-               "using MaxLayerCell = NVertLayers - 1");
-      deepCopy(TmpArrayI4H, NVertLayers - 1);
-   } else {
-      for (int ICell = 0; ICell < NCellsAll; ++ICell) {
-         TmpArrayI4H(ICell) = TmpArrayI4H(ICell) - 1;
-      }
-   }
-   TmpArrayI4H(NCellsAll) = -1;
-
-   deepCopy(MaxLayerCellH, TmpArrayI4H);
-   deepCopy(MaxLayerCell, TmpArrayI4H);
-
-   const std::string MinNameMPAS = "minLevelCell";
-   I4 MinReadErr = IO::readArray(TmpArrayI4H.data(), NCellsAll, MinNameMPAS,
-                                 MeshFileID, CellDecompI4, ArrayID);
-
-   if (MinReadErr != 0) {
-      LOG_WARN("VertCoord: error reading minLevelCell from mesh file, "
-               "using MinLayerCell = 0");
-      deepCopy(TmpArrayI4H, 0);
-   } else {
-      for (int ICell = 0; ICell < NCellsAll; ++ICell) {
-         TmpArrayI4H(ICell) = TmpArrayI4H(ICell) - 1;
-      }
-   }
-   TmpArrayI4H(NCellsAll) = NVertLayersP1;
-
-   deepCopy(MinLayerCellH, TmpArrayI4H);
-   deepCopy(MinLayerCell, TmpArrayI4H);
-
-   I4 CellDecompR8;
-   DecErr = IO::createDecomp(CellDecompR8, IO::IOTypeR8, NDims, CellDims,
-                             NCellsAll, CellID, Rearr);
-   if (DecErr != 0) {
-      LOG_CRITICAL("VertCoord: error creating cell R8 IO decomposition");
-   }
-
-   HostArray1DR8 TmpArrayR8H("TmpCellArray", NCellsSize);
-   const std::string BotNameMPAS = "bottomDepth";
-   I4 BotReadErr = IO::readArray(TmpArrayR8H.data(), NCellsAll, BotNameMPAS,
-                                 MeshFileID, CellDecompR8, ArrayID);
-   if (BotReadErr != 0) {
-      LOG_CRITICAL("VertCoord: error reading bottomDepth");
-   }
-
-   deepCopy(BottomDepthH, TmpArrayR8H);
-   deepCopy(BottomDepth, BottomDepthH);
-
-   DecErr = IO::destroyDecomp(CellDecompI4);
-   if (DecErr != 0) {
-      LOG_CRITICAL("VertCoord: error destroying cell I4 IO decomposition");
-   }
-   DecErr = IO::destroyDecomp(CellDecompR8);
-   if (DecErr != 0) {
-      LOG_CRITICAL("VertCoord: error destroying cell R8 IO decomposition");
-   }
-} // end readArrays
 
 //------------------------------------------------------------------------------
 // Destroys a local VertCoord and deallocates all arrays

@@ -15,16 +15,21 @@
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
+#include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
+#include "TimeMgr.h"
+#include "TimeStepper.h"
 #include "mpi.h"
 
 #include <algorithm>
 #include <iostream>
 
 using namespace OMEGA;
+
+Clock *TestClock = nullptr;
 
 int initVertCoordTest() {
 
@@ -41,6 +46,9 @@ int initVertCoordTest() {
    Config("Omega");
    Config::readAll("omega.yml");
 
+   // First step of time stepper initialization needed for IOstream
+   TimeStepper::init1();
+
    // Initialize the IO system
    Err = IO::init(DefComm);
    if (Err != 0)
@@ -49,16 +57,22 @@ int initVertCoordTest() {
    // Create the default decomposition (initializes the decomposition)
    Decomp::init();
 
+   // Initialize streams
+   IOStream::init();
+
    // Initialize the default halo
    Err = Halo::init();
    if (Err != 0)
       LOG_ERROR("VertCoordTest: error initializing default halo");
 
-   // Initialize the vertical coordinate
-   VertCoord::init();
+   // Begin initialization of the default vertical coordinate
+   VertCoord::init1();
 
    // Initialize the default mesh
    HorzMesh::init();
+
+   // Complete initialization of the default vertical coordinate
+   VertCoord::init2();
 
    return Err;
 } // end initVertCoordTest
@@ -399,7 +413,8 @@ int main(int argc, char *argv[]) {
           });
       parallelFor(
           {NVertLayers}, KOKKOS_LAMBDA(int K) { MovementWgts(K) = 0.0; });
-      parallelFor({1}, KOKKOS_LAMBDA(const int &) { MovementWgts(0) = 1.0; });
+      parallelFor(
+          {1}, KOKKOS_LAMBDA(const int &) { MovementWgts(0) = 1.0; });
       Kokkos::fence();
 
       /// Call functions and get host copy of output
@@ -587,6 +602,8 @@ int main(int argc, char *argv[]) {
       }
 
       // Finalize Omega objects
+      IOStream::finalize();
+      TimeStepper::clear();
       HorzMesh::clear();
       VertCoord::clear();
       Dimension::clear();
