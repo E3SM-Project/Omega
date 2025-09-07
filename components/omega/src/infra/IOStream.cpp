@@ -74,6 +74,16 @@ void IOStream::init(Clock *&ModelClock //< [inout] Omega model clock
 } // End initialize
 
 //------------------------------------------------------------------------------
+/// Initialize with no clock
+void IOStream::init(void) {
+
+   // Create an empty dummy clock
+   Clock *ModelClock = new Clock;
+   init(ModelClock);
+
+} // End initialize(void)
+
+//------------------------------------------------------------------------------
 // Performs a final write of any streams that have the OnShutdown option and
 // then removes all streams to clean up. Returns an error code.
 int IOStream::finalize(
@@ -107,6 +117,16 @@ int IOStream::finalize(
    return Err;
 
 } // End finalize
+
+//------------------------------------------------------------------------------
+// Finalize with no clock
+int IOStream::finalize(void) {
+
+   // Create an empty dummy clock
+   Clock *ModelClock = new Clock;
+   finalize(ModelClock);
+
+} // End finalize(void)
 
 //------------------------------------------------------------------------------
 // Retrieves a pointer to a previously defined stream.
@@ -255,6 +275,24 @@ int IOStream::read(
    return Err;
 
 } // End read stream
+
+//------------------------------------------------------------------------------
+// Reads a single stream regardless of time. Returns an error code.
+int IOStream::read(const std::string &StreamName // [in] Name of stream
+) {
+
+   int Err = Success; // default return code
+
+   // create empty Clock and Metadata
+   Clock *ModelClock = new Clock;
+   Metadata ReqMetaData;
+   bool ForceRead = true;
+
+   Err = read(StreamName, ModelClock, ReqMetaData, ForceRead);
+
+   return Err;
+
+} // End read(void)
 
 //------------------------------------------------------------------------------
 // Writes a single stream if it is time. Returns an error code.
@@ -1131,7 +1169,7 @@ int IOStream::writeFieldData(
          }
          break;
 
-      } // end switch NDims
+      }      // end switch NDims
       break; // end I4 type
 
    // I8 Fields
@@ -1274,7 +1312,7 @@ int IOStream::writeFieldData(
             }
          }
          break;
-      } // end switch NDims
+      }      // end switch NDims
       break; // end I8 type
 
    // R4 Fields
@@ -1417,7 +1455,7 @@ int IOStream::writeFieldData(
             }
          }
          break;
-      } // end switch NDims
+      }      // end switch NDims
       break; // end R4 type
 
    // R8 Fields
@@ -1860,7 +1898,7 @@ int IOStream::readFieldData(
             deepCopy(DataTmp, Data);
          }
          break;
-      } // end switch NDims
+      }      // end switch NDims
       break; // end I4 fields
 
    // I8 Fields
@@ -1997,7 +2035,7 @@ int IOStream::readFieldData(
             deepCopy(DataTmp, Data);
          }
          break;
-      } // end switch NDims
+      }      // end switch NDims
       break; // end I8 fields
 
    // R4 Fields
@@ -2134,7 +2172,7 @@ int IOStream::readFieldData(
             deepCopy(DataTmp, Data);
          }
          break;
-      } // end switch NDims
+      }      // end switch NDims
       break; // end R4 fields
 
    // R8 Fields
@@ -2271,7 +2309,7 @@ int IOStream::readFieldData(
             deepCopy(DataTmp, Data);
          }
          break;
-      } // end switch NDims
+      }      // end switch NDims
       break; // end R8 fields
 
    default:
@@ -2572,9 +2610,9 @@ int IOStream::writeStream(
                             OutFileName);
                return Fail;
             } // end if elapsed time matches
-         } // end loop over existing frames
-      } // end if nframes
-   } // end if multiframe
+         }    // end loop over existing frames
+      }       // end if nframes
+   }          // end if multiframe
 
    // Write Metadata for global metadata (Code and Simulation)
    // Only needs to be written for a new file
