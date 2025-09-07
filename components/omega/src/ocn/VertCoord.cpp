@@ -130,7 +130,7 @@ VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
 void VertCoord::completeSetup(Config *Options //< [in] configuration options
 ) {
 
-   // define field metadata
+   // Define field metadata
    defineFields();
 
    // Fill with default values + 1 in case arrays are not present in mesh file
@@ -172,6 +172,16 @@ void VertCoord::completeSetup(Config *Options //< [in] configuration options
    MaxLayerCellH = createHostMirrorCopy(MaxLayerCell);
    MinLayerCellH = createHostMirrorCopy(MinLayerCell);
    BottomDepthH  = createHostMirrorCopy(BottomDepth);
+
+   Error Err1;
+
+   // Fetch reference desnity from Config
+   Config TendConfig("Tendencies");
+   Err1 += Options->get(TendConfig);
+   CHECK_ERROR_ABORT(Err1, "VertCoord: Tendencies group not found in Config");
+
+   Err1 += TendConfig.get("Density0", Rho0);
+   CHECK_ERROR_ABORT(Err1, "VertCoord: Density0 not found in TendConfig");
 
 } // end completeSetup
 
@@ -671,8 +681,8 @@ void VertCoord::computePressure(
 ) {
 
    Real Gravity = 9.80616_Real; // gravitationl acceleration
-   Real Rho0    = 1035._Real;   // reference density
 
+   OMEGA_SCOPE(LocRho0, Rho0);
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
 
@@ -685,20 +695,21 @@ void VertCoord::computePressure(
           const I4 Range = KMax - KMin + 1;
 
           PressureInterface(ICell, KMin) = SurfacePressure(ICell);
-          Kokkos::parallel_scan(
-              TeamThreadRange(Member, Range),
-              [=](int K, Real &Accum, bool IsFinal) {
-                 const I4 KLyr  = K + KMin;
-                 Real Increment = Gravity * Rho0 * LayerThickness(ICell, KLyr);
-                 Accum += Increment;
+          Kokkos::parallel_scan(TeamThreadRange(Member, Range),
+                                [=](int K, Real &Accum, bool IsFinal) {
+                                   const I4 KLyr  = K + KMin;
+                                   Real Increment = Gravity * LocRho0 *
+                                                    LayerThickness(ICell, KLyr);
+                                   Accum += Increment;
 
-                 if (IsFinal) {
-                    PressureInterface(ICell, KLyr + 1) =
-                        SurfacePressure(ICell) + Accum;
-                    PressureMid(ICell, KLyr) =
-                        SurfacePressure(ICell) + Accum - 0.5 * Increment;
-                 }
-              });
+                                   if (IsFinal) {
+                                      PressureInterface(ICell, KLyr + 1) =
+                                          SurfacePressure(ICell) + Accum;
+                                      PressureMid(ICell, KLyr) =
+                                          SurfacePressure(ICell) + Accum -
+                                          0.5 * Increment;
+                                   }
+                                });
        });
 } // end computePressure
 
@@ -716,8 +727,7 @@ void VertCoord::computeZHeight(
     const Array1DReal &BottomDepth     // [in] bottom depth
 ) {
 
-   Real Rho0 = 1035._Real; // reference density
-
+   OMEGA_SCOPE(LocRho0, Rho0);
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
 
@@ -734,8 +744,8 @@ void VertCoord::computeZHeight(
               TeamThreadRange(Member, Range),
               [=](int K, Real &Accum, bool IsFinal) {
                  const I4 KLyr = KMax - K;
-                 Real DZ =
-                     Rho0 * SpecVol(ICell, KLyr) * LayerThickness(ICell, KLyr);
+                 Real DZ       = LocRho0 * SpecVol(ICell, KLyr) *
+                           LayerThickness(ICell, KLyr);
                  Accum += DZ;
                  if (IsFinal) {
                     ZInterface(ICell, KLyr) = -BottomDepth(ICell) + Accum;
@@ -801,8 +811,8 @@ void VertCoord::computeTargetThickness(
 ) {
 
    Real Gravity = 9.80616_Real; // gravitationl acceleration
-   Real Rho0    = 1035._Real;   // reference density
 
+   OMEGA_SCOPE(LocRho0, Rho0);
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
 
@@ -815,7 +825,7 @@ void VertCoord::computeTargetThickness(
 
           Real Coeff = (PressureInterface(ICell, KMax + 1) -
                         PressureInterface(ICell, KMin)) /
-                       (Gravity * Rho0);
+                       (Gravity * LocRho0);
 
           Real SumWh = 0;
           Kokkos::parallel_reduce(
