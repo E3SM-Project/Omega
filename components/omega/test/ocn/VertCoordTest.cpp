@@ -97,13 +97,12 @@ int main(int argc, char *argv[]) {
       auto *DefVertCoord = VertCoord::getDefault();
       auto *DefMesh      = HorzMesh::getDefault();
 
-      I4 NCellsSize    = DefMesh->NCellsSize;
-      I4 NCellsAll     = DefMesh->NCellsAll;
-      I4 NEdgesAll     = DefMesh->NEdgesAll;
-      I4 NVerticesAll  = DefMesh->NVerticesAll;
-      I4 VertexDegree  = DefMesh->VertexDegree;
-      I4 NVertLayers   = DefVertCoord->NVertLayers;
-      I4 NVertLayersP1 = DefVertCoord->NVertLayersP1;
+      I4 NCellsSize   = DefMesh->NCellsSize;
+      I4 NCellsAll    = DefMesh->NCellsAll;
+      I4 NEdgesAll    = DefMesh->NEdgesAll;
+      I4 NVerticesAll = DefMesh->NVerticesAll;
+      I4 VertexDegree = DefMesh->VertexDegree;
+      I4 NVertLayers  = DefVertCoord->NVertLayers;
 
       // Tests for computePressure
 
@@ -465,7 +464,6 @@ int main(int argc, char *argv[]) {
       Err = 0;
       for (int IEdge = 0; IEdge < NEdgesAll; IEdge++) {
          I4 Expected;
-         I4 Count = 0;
 
          /// Skip edges on boundary
          if ((DefMesh->CellsOnEdgeH(IEdge, 1) == NCellsAll) ||
