@@ -180,40 +180,27 @@ class VertCoord {
 
    /// Sums the mass thickness times g from the top layer down, starting with
    /// the surface pressure
-   void computePressure(
-       const Array2DReal &PressureInterface, ///< [out] P at layer interfaces
-       const Array2DReal &PressureMid,       ///< [out] P at layer midpoints
-       const Array2DReal &LayerThickness,    ///< [in] pseudo thickness
-       const Array1DReal &SurfacePressure    ///< [in] surface pressure
+   void
+   computePressure(const Array2DReal &LayerThickness, ///< [in] pseudo thickness
+                   const Array1DReal &SurfacePressure ///< [in] surface pressure
    );
 
    /// Sum the mass thickness times specific volume from the bottom layer up,
    /// starting with the bottom elevation
-   void computeZHeight(
-       const Array2DReal &ZInterface,     ///< [out] Z coord at layer interfaces
-       const Array2DReal &ZMid,           ///< [out] Z coord at layer midpoints
-       const Array2DReal &LayerThickness, ///< [in] pseudo thickness
-       const Array2DReal &SpecVol,        ///< [in] specific volume
-       const Array1DReal &BottomDepth);   ///< [in] bottom depth
+   void
+   computeZHeight(const Array2DReal &LayerThickness, ///< [in] pseudo thickness
+                  const Array2DReal &SpecVol);       ///< [in] specific volume
 
    /// Sum the z height times g, the tidal potential, and self attraction and
    /// loading
    void computeGeopotential(
-       const Array2DReal &GeopotentialMid, ///< [out] geopotential
-       const Array2DReal &ZMid,            ///< [in] Z coord at layer midpoints
-       const Array1DReal &TidalPotential,  ///< [in] tidal potential
+       const Array1DReal &TidalPotential, ///< [in] tidal potential
        const Array1DReal
            &SelfAttractionLoading ///< [in] self attraction and loading
    );
 
    /// Determine mass thickness used for the target vertical coordinate
-   void computeTargetThickness(
-       const Array2DReal
-           &LayerThicknessTarget,            ///< [out] desired target thickness
-       const Array2DReal &PressureInterface, ///< [in] P at layer interfaces
-       const Array2DReal &RefLayerThickness, ///< [in] reference pseudo thicknes
-       const Array1DReal &VertCoordMovementWeights ///< [in] movement weights
-   );
+   void computeTargetThickness();
 
 }; // end class VertCoord
 

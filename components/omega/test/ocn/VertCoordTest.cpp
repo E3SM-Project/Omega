@@ -110,9 +110,6 @@ int main(int argc, char *argv[]) {
       Array2DReal LayerThickness("LayerThickness", NCellsSize, NVertLayers);
       Array1DReal SurfacePressure("SurfacePressure", NCellsSize);
 
-      auto &PressInterf = DefVertCoord->PressureInterface;
-      auto &PressMid    = DefVertCoord->PressureMid;
-
       /// Initialize layer thickness and surface pressure so that resulting
       /// interface pressure is the number of layers above plus one
       Real Gravity = 9.80616_Real;
@@ -127,10 +124,9 @@ int main(int argc, char *argv[]) {
       Kokkos::fence();
 
       /// Call function and get host copies of outputs
-      DefVertCoord->computePressure(PressInterf, PressMid, LayerThickness,
-                                    SurfacePressure);
-      auto PressInterfH = createHostMirrorCopy(PressInterf);
-      auto PressMidH    = createHostMirrorCopy(PressMid);
+      DefVertCoord->computePressure(LayerThickness, SurfacePressure);
+      auto PressInterfH = createHostMirrorCopy(DefVertCoord->PressureInterface);
+      auto PressMidH    = createHostMirrorCopy(DefVertCoord->PressureMid);
 
       /// Check results
       Err = 0;
@@ -174,9 +170,9 @@ int main(int argc, char *argv[]) {
       Kokkos::fence();
 
       /// Call functions and get host copy of output
-      DefVertCoord->computePressure(PressInterf, PressMid, LayerThickness,
-                                    SurfacePressure);
-      auto PressInterfH2 = createHostMirrorCopy(PressInterf);
+      DefVertCoord->computePressure(LayerThickness, SurfacePressure);
+      auto PressInterfH2 =
+          createHostMirrorCopy(DefVertCoord->PressureInterface);
 
       /// Check results
       Err = 0;
@@ -209,8 +205,6 @@ int main(int argc, char *argv[]) {
       Array1DReal MaxLyrCellReal("MaxLyrCellReal", NCellsSize);
       deepCopy(MaxLyrCellReal, DefVertCoord->MaxLayerCell);
 
-      auto &ZInterf  = DefVertCoord->ZInterface;
-      auto &ZMid     = DefVertCoord->ZMid;
       auto &BotDepth = DefVertCoord->BottomDepth;
 
       /// Initialize bottom depth, layer thickness and specific volume so that
@@ -226,10 +220,9 @@ int main(int argc, char *argv[]) {
       Kokkos::fence();
 
       /// Call functions and get host copy of output
-      DefVertCoord->computeZHeight(ZInterf, ZMid, LayerThickness, SpecVol,
-                                   BotDepth);
-      auto ZInterfH = createHostMirrorCopy(ZInterf);
-      auto ZMidH    = createHostMirrorCopy(ZMid);
+      DefVertCoord->computeZHeight(LayerThickness, SpecVol);
+      auto ZInterfH = createHostMirrorCopy(DefVertCoord->ZInterface);
+      auto ZMidH    = createHostMirrorCopy(DefVertCoord->ZMid);
 
       /// Check results
       Err = 0;
@@ -275,9 +268,8 @@ int main(int argc, char *argv[]) {
       Kokkos::fence();
 
       /// Call functions and get host copy of output
-      DefVertCoord->computeZHeight(ZInterf, ZMid, LayerThickness, SpecVol,
-                                   BotDepth);
-      auto ZInterfH2 = createHostMirrorCopy(ZInterf);
+      DefVertCoord->computeZHeight(LayerThickness, SpecVol);
+      auto ZInterfH2 = createHostMirrorCopy(DefVertCoord->ZInterface);
 
       /// Check results
       Err = 0;
@@ -304,9 +296,10 @@ int main(int argc, char *argv[]) {
       }
 
       // Tests for computeGeopotential
-      Array2DReal GeopotentialMid("GeopotentialMid", NCellsSize, NVertLayers);
       Array1DReal TidalPotential("TidalPotential", NCellsSize);
       Array1DReal SelfAttractionLoading("SelfAttractionLoading", NCellsSize);
+
+      auto &ZMid = DefVertCoord->ZMid;
 
       /// Initialize z mid, tidal potential and SAL so that the resulting
       /// geopotential is the cell number + layer number
@@ -321,9 +314,9 @@ int main(int argc, char *argv[]) {
       Kokkos::fence();
 
       /// Call functions and get host copy of output
-      DefVertCoord->computeGeopotential(GeopotentialMid, ZMid, TidalPotential,
-                                        SelfAttractionLoading);
-      auto GeopotentialMidH = createHostMirrorCopy(GeopotentialMid);
+      DefVertCoord->computeGeopotential(TidalPotential, SelfAttractionLoading);
+      auto GeopotentialMidH =
+          createHostMirrorCopy(DefVertCoord->GeopotentialMid);
 
       /// Check results
       Err = 0;
@@ -348,10 +341,7 @@ int main(int argc, char *argv[]) {
       }
 
       // Tests for computeTargetThickness
-      Array2DReal LayerThicknessTarget("LayerThicknessTarget", NCellsSize,
-                                       NVertLayers);
-      Array2DReal RefLayerThickness("RefLayerThickness", NCellsSize,
-                                    NVertLayers);
+      auto &RefLayerThick = DefVertCoord->RefLayerThickness;
 
       /// Initialize surface pressure, vertical coord weights, ref layer
       /// thickness, and layer thickness so that the resulting target thickness
@@ -360,20 +350,17 @@ int main(int argc, char *argv[]) {
           {NCellsAll}, KOKKOS_LAMBDA(int ICell) {
              SurfacePressure(ICell) = 0.0;
              for (int K = 0; K < NVertLayers; K++) {
-                RefLayerThickness(ICell, K) = 1.0;
-                LayerThickness(ICell, K)    = 2.0;
+                RefLayerThick(ICell, K)  = 1.0;
+                LayerThickness(ICell, K) = 2.0;
              }
           });
       Kokkos::fence();
 
-      auto &MovementWgts = DefVertCoord->VertCoordMovementWeights;
-
       /// Call functions and get host copy of output
-      DefVertCoord->computePressure(PressInterf, PressMid, LayerThickness,
-                                    SurfacePressure);
-      DefVertCoord->computeTargetThickness(LayerThicknessTarget, PressInterf,
-                                           RefLayerThickness, MovementWgts);
-      auto LayerThicknessTargetH = createHostMirrorCopy(LayerThicknessTarget);
+      DefVertCoord->computePressure(LayerThickness, SurfacePressure);
+      DefVertCoord->computeTargetThickness();
+      auto LayerThicknessTargetH =
+          createHostMirrorCopy(DefVertCoord->LayerThicknessTarget);
 
       /// Check results
       Err = 0;
@@ -407,10 +394,12 @@ int main(int argc, char *argv[]) {
           {NCellsAll}, KOKKOS_LAMBDA(int ICell) {
              SurfacePressure(ICell) = 0.0;
              for (int K = 0; K < NVertLayers; K++) {
-                RefLayerThickness(ICell, K) = 1.0;
-                LayerThickness(ICell, K)    = 2.0;
+                RefLayerThick(ICell, K)  = 1.0;
+                LayerThickness(ICell, K) = 2.0;
              }
           });
+
+      auto &MovementWgts = DefVertCoord->VertCoordMovementWeights;
       parallelFor(
           {NVertLayers}, KOKKOS_LAMBDA(int K) { MovementWgts(K) = 0.0; });
       parallelFor(
@@ -418,12 +407,11 @@ int main(int argc, char *argv[]) {
       Kokkos::fence();
 
       /// Call functions and get host copy of output
-      DefVertCoord->computePressure(PressInterf, PressMid, LayerThickness,
-                                    SurfacePressure);
-      DefVertCoord->computeTargetThickness(LayerThicknessTarget, PressInterf,
-                                           RefLayerThickness, MovementWgts);
-      auto LayerThicknessTargetH2 = createHostMirrorCopy(LayerThicknessTarget);
-      Err                         = 0;
+      DefVertCoord->computePressure(LayerThickness, SurfacePressure);
+      DefVertCoord->computeTargetThickness();
+      auto LayerThicknessTargetH2 =
+          createHostMirrorCopy(DefVertCoord->LayerThicknessTarget);
+      Err = 0;
 
       /// Check results
       for (int ICell = 0; ICell < NCellsAll; ICell++) {

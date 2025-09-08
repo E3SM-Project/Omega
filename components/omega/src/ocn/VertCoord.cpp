@@ -114,6 +114,8 @@ VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
    GeopotentialMid = Array2DReal("GeopotentialMid", NCellsSize, NVertLayers);
    LayerThicknessTarget =
        Array2DReal("LayerThicknessTarget", NCellsSize, NVertLayers);
+   RefLayerThickness =
+       Array2DReal("RefLayerThickness", NCellsSize, NVertLayers);
 
    // Make host copies for device arrays not being read from file
    PressureInterfaceH    = createHostMirrorCopy(PressureInterface);
@@ -122,6 +124,7 @@ VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
    ZMidH                 = createHostMirrorCopy(ZMid);
    GeopotentialMidH      = createHostMirrorCopy(GeopotentialMid);
    LayerThicknessTargetH = createHostMirrorCopy(LayerThicknessTarget);
+   RefLayerThicknessH    = createHostMirrorCopy(RefLayerThickness);
 
 } // end constructor
 
@@ -674,10 +677,8 @@ void VertCoord::initMovementWeights(
 // in each column to compute pressure from the top-most active layer to the
 // bottom-most active layer.
 void VertCoord::computePressure(
-    const Array2DReal &PressureInterface, // [out] pressure at layer interfaces
-    const Array2DReal &PressureMid,       // [out] pressure at layer midpoints
-    const Array2DReal &LayerThickness,    // [in] pseudo thickness
-    const Array1DReal &SurfacePressure    // [in] surface pressure
+    const Array2DReal &LayerThickness, // [in] pseudo thickness
+    const Array1DReal &SurfacePressure // [in] surface pressure
 ) {
 
    Real Gravity = 9.80616_Real; // gravitationl acceleration
@@ -685,6 +686,8 @@ void VertCoord::computePressure(
    OMEGA_SCOPE(LocRho0, Rho0);
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+   OMEGA_SCOPE(LocPressInterf, PressureInterface);
+   OMEGA_SCOPE(LocPressMid, PressureMid);
 
    const auto Policy = TeamPolicy(NCellsAll, OMEGA_TEAMSIZE, 1);
    Kokkos::parallel_for(
@@ -694,7 +697,7 @@ void VertCoord::computePressure(
           const I4 KMax  = LocMaxLayerCell(ICell);
           const I4 Range = KMax - KMin + 1;
 
-          PressureInterface(ICell, KMin) = SurfacePressure(ICell);
+          LocPressInterf(ICell, KMin) = SurfacePressure(ICell);
           Kokkos::parallel_scan(TeamThreadRange(Member, Range),
                                 [=](int K, Real &Accum, bool IsFinal) {
                                    const I4 KLyr  = K + KMin;
@@ -703,9 +706,9 @@ void VertCoord::computePressure(
                                    Accum += Increment;
 
                                    if (IsFinal) {
-                                      PressureInterface(ICell, KLyr + 1) =
+                                      LocPressInterf(ICell, KLyr + 1) =
                                           SurfacePressure(ICell) + Accum;
-                                      PressureMid(ICell, KLyr) =
+                                      LocPressMid(ICell, KLyr) =
                                           SurfacePressure(ICell) + Accum -
                                           0.5 * Increment;
                                    }
@@ -720,16 +723,16 @@ void VertCoord::computePressure(
 // sum in each column to compute z from the bottom-most active layer to the
 // top-most active layer
 void VertCoord::computeZHeight(
-    const Array2DReal &ZInterface,     // [out] Z coord at layer interfaces
-    const Array2DReal &ZMid,           // [out] Z coord at layer midpoints
     const Array2DReal &LayerThickness, // [in] pseudo thickness
-    const Array2DReal &SpecVol,        // [in] specific volume
-    const Array1DReal &BottomDepth     // [in] bottom depth
+    const Array2DReal &SpecVol         // [in] specific volume
 ) {
 
    OMEGA_SCOPE(LocRho0, Rho0);
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+   OMEGA_SCOPE(LocZInterf, ZInterface);
+   OMEGA_SCOPE(LocZMid, ZMid);
+   OMEGA_SCOPE(LocBotDepth, BottomDepth);
 
    const auto Policy = TeamPolicy(NCellsAll, OMEGA_TEAMSIZE, 1);
    Kokkos::parallel_for(
@@ -739,7 +742,7 @@ void VertCoord::computeZHeight(
           const I4 KMax  = LocMaxLayerCell(ICell);
           const I4 Range = KMax - KMin + 1;
 
-          ZInterface(ICell, KMax + 1) = -BottomDepth(ICell);
+          LocZInterf(ICell, KMax + 1) = -LocBotDepth(ICell);
           Kokkos::parallel_scan(
               TeamThreadRange(Member, Range),
               [=](int K, Real &Accum, bool IsFinal) {
@@ -748,8 +751,9 @@ void VertCoord::computeZHeight(
                            LayerThickness(ICell, KLyr);
                  Accum += DZ;
                  if (IsFinal) {
-                    ZInterface(ICell, KLyr) = -BottomDepth(ICell) + Accum;
-                    ZMid(ICell, KLyr) = -BottomDepth(ICell) + Accum - 0.5 * DZ;
+                    LocZInterf(ICell, KLyr) = -LocBotDepth(ICell) + Accum;
+                    LocZMid(ICell, KLyr) =
+                        -LocBotDepth(ICell) + Accum - 0.5 * DZ;
                  }
               });
        });
@@ -762,8 +766,6 @@ void VertCoord::computeZHeight(
 // and SAL are configurable, default-off features. When off these arrays will
 // just be zeroes.
 void VertCoord::computeGeopotential(
-    const Array2DReal &GeopotentialMid,      // [out] geopotential
-    const Array2DReal &ZMid,                 // [in] Z coord at layer midpoints
     const Array1DReal &TidalPotential,       // [in] tidal potential
     const Array1DReal &SelfAttractionLoading // [in] self attraction and loading
 ) {
@@ -772,6 +774,8 @@ void VertCoord::computeGeopotential(
 
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+   OMEGA_SCOPE(LocGeopotMid, GeopotentialMid);
+   OMEGA_SCOPE(LocZMid, ZMid);
 
    Kokkos::parallel_for(
        "computeGeopotential", TeamPolicy(NCellsAll, OMEGA_TEAMSIZE),
@@ -789,10 +793,10 @@ void VertCoord::computeGeopotential(
                  const I4 KLen =
                      KEnd > KMax + 1 ? KMax + 1 - KStart : VecLength;
                  for (int KVec = 0; KVec < KLen; ++KVec) {
-                    const I4 K                = KStart + KVec;
-                    GeopotentialMid(ICell, K) = Gravity * ZMid(ICell, K) +
-                                                TidalPotential(ICell) +
-                                                SelfAttractionLoading(ICell);
+                    const I4 K             = KStart + KVec;
+                    LocGeopotMid(ICell, K) = Gravity * LocZMid(ICell, K) +
+                                             TidalPotential(ICell) +
+                                             SelfAttractionLoading(ICell);
                  }
               });
        });
@@ -803,18 +807,17 @@ void VertCoord::computeGeopotential(
 // RefLayerThickness, and VertCoordMovementWeights. Hierarchical parallelsim is
 // used with an outer parallel_for loop over cells, and 2 paralel_reduce
 // reductions and a parallel_for over the active layers within a column.
-void VertCoord::computeTargetThickness(
-    const Array2DReal &LayerThicknessTarget, // [out] desired target thickness
-    const Array2DReal &PressureInterface, // [in] pressure at layer interfaces
-    const Array2DReal &RefLayerThickness, // [in] reference pseudo thickness
-    const Array1DReal &VertCoordMovementWeights // [in] movement weights
-) {
+void VertCoord::computeTargetThickness() {
 
    Real Gravity = 9.80616_Real; // gravitationl acceleration
 
    OMEGA_SCOPE(LocRho0, Rho0);
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+   OMEGA_SCOPE(LocLayerThickTarget, LayerThicknessTarget);
+   OMEGA_SCOPE(LocPressInterf, PressureInterface);
+   OMEGA_SCOPE(LocRefLayerThick, RefLayerThickness);
+   OMEGA_SCOPE(LocVertCoordMvmtWgts, VertCoordMovementWeights);
 
    Kokkos::parallel_for(
        "computeTargetThickness", TeamPolicy(NCellsAll, OMEGA_TEAMSIZE),
@@ -823,17 +826,17 @@ void VertCoord::computeTargetThickness(
           const I4 KMin  = LocMinLayerCell(ICell);
           const I4 KMax  = LocMaxLayerCell(ICell);
 
-          Real Coeff = (PressureInterface(ICell, KMax + 1) -
-                        PressureInterface(ICell, KMin)) /
-                       (Gravity * LocRho0);
+          Real Coeff =
+              (LocPressInterf(ICell, KMax + 1) - LocPressInterf(ICell, KMin)) /
+              (Gravity * LocRho0);
 
           Real SumWh   = 0;
           Real SumRefH = 0;
           Kokkos::parallel_reduce(
               Kokkos::TeamThreadRange(Member, KMin, KMax + 1),
               [=](const int K, Real &LocalWh, Real &LocalSum) {
-                 const Real RefLayerThick = RefLayerThickness(ICell, K);
-                 LocalWh += VertCoordMovementWeights(K) * RefLayerThick;
+                 const Real RefLayerThick = LocRefLayerThick(ICell, K);
+                 LocalWh += LocVertCoordMvmtWgts(K) * RefLayerThick;
                  LocalSum += RefLayerThick;
               },
               SumWh, SumRefH);
@@ -851,9 +854,9 @@ void VertCoord::computeTargetThickness(
                      KEnd > KMax + 1 ? KMax + 1 - KStart : VecLength;
                  for (int KVec = 0; KVec < KLen; ++KVec) {
                     const I4 K = KStart + KVec;
-                    LayerThicknessTarget(ICell, K) =
-                        RefLayerThickness(ICell, K) *
-                        (1._Real + Coeff * VertCoordMovementWeights(K) / SumWh);
+                    LocLayerThickTarget(ICell, K) =
+                        LocRefLayerThick(ICell, K) *
+                        (1._Real + Coeff * LocVertCoordMvmtWgts(K) / SumWh);
                  }
               });
        });
