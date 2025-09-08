@@ -64,9 +64,10 @@ void IOStream::init(Clock *&ModelClock //< [inout] Omega model clock
 
       // Call the create routine to create the stream
       int LocErr = create(StreamName, StreamCfg, ModelClock);
-      LOG_WARN("Errors encountered creating stream {}."
-               "Stream will be ignored",
-               StreamName);
+      if (LocErr != Success)
+         LOG_WARN("Errors encountered creating stream {}."
+                  "Stream will be ignored",
+                  StreamName);
 
    } // end loop over all streams
 

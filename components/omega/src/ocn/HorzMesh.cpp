@@ -286,7 +286,6 @@ void HorzMesh::createDimensions(Decomp *MeshDecomp) {
 // Initialize the parallel IO decompositions for the mesh variables
 void HorzMesh::initParallelIO(Decomp *MeshDecomp) {
 
-   I4 Err;
    I4 NDims             = 1;
    IO::Rearranger Rearr = IO::RearrBox;
 
@@ -319,8 +318,6 @@ void HorzMesh::initParallelIO(Decomp *MeshDecomp) {
 
    VertexDecompR8 = IO::createDecomp(IO::IOTypeR8, NDims, VertexDims,
                                      NVerticesAll, VertexID, Rearr);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error creating vertex IO decomposition");
 
    // Create the IO decomp for arrays with (NEdges, 2*MaxEdges) dimensions
    NDims     = 2;
@@ -338,8 +335,6 @@ void HorzMesh::initParallelIO(Decomp *MeshDecomp) {
 
    OnEdgeDecompR8 = IO::createDecomp(IO::IOTypeR8, NDims, OnEdgeDims2,
                                      OnEdgeSize2, OnEdgeOffset2, Rearr);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error creating OnEdge IO decomposition");
 
    // Create the IO decomp for arrays with (NVertices, VertexDegree) dimensions
    std::vector<I4> OnVertexDims{MeshDecomp->NVerticesGlobal, VertexDegree};
@@ -354,8 +349,6 @@ void HorzMesh::initParallelIO(Decomp *MeshDecomp) {
 
    OnVertexDecompR8 = IO::createDecomp(IO::IOTypeR8, NDims, OnVertexDims,
                                        OnVertexSize, OnVertexOffset, Rearr);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error creating OnVertex IO decomposition");
 
 } // end initParallelIO
 
