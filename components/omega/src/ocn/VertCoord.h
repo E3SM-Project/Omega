@@ -51,17 +51,12 @@ class VertCoord {
    // methods
 
    /// construct a new vertical coordinate object
-   VertCoord(const std::string &Name,  ///< [in] Name for new VertCoord
-             const Decomp *MeshDecomp, ///< [in] associated Decomp
-             Config *Options           ///< [in] configuration options
+   VertCoord(const std::string &Name, ///< [in] Name for new VertCoord
+             const Decomp *MeshDecomp ///< [in] associated Decomp
    );
 
    /// define field metadata
    void defineFields();
-
-   /// read desired quantities from mesh file
-   void readArrays(const Decomp *Decomp ///< [in] Decomp for mesh
-   );
 
    // Forbid copy and move construction
    VertCoord(const VertCoord &) = delete;
@@ -122,11 +117,17 @@ class VertCoord {
 
    HostArray1DReal BottomDepthH;
 
-   // VertCoord instance name and FieldGroup name
+   Real Rho0; // reference density
+
+   // VertCoord instance name and FieldGroup names
    std::string Name;
+   std::string InitGroupName;
    std::string GroupName;
 
    // Field names
+   std::string MinLayerCellFldName;   ///< Field name for MinLayerCell
+   std::string MaxLayerCellFldName;   ///< Field name for MaxLayerCell
+   std::string BottomDepthFldName;    ///< Field name for BottomDepth
    std::string PressInterfFldName;    ///< Field name for interface pressure
    std::string PressMidFldName;       ///< Field name for midpoint pressure
    std::string ZInterfFldName;        ///< Field name for interface Z height
@@ -136,15 +137,22 @@ class VertCoord {
 
    // methods
 
-   /// Initialize Omega vertical coordinate
-   static void init();
+   /// 1st phase of initialization for default vertical coordinate
+   static void init1();
+
+   /// 2nd phase of initialization for default vertical coordinate
+   static void init2();
 
    /// Creates a new vertical coordinate object by calling the constructor and
-   /// puts it in the AllVertCoords map
+   /// puts it in the AllVertCoords map. This object is mostly empty and must
+   /// completed by completeSetup.
    static VertCoord *
-   create(const std::string &Name,  /// [in] name for new VertCoord
-          const Decomp *MeshDecomp, /// [in] associated Decomp
-          Config *Options           /// [in] configuration options
+   create(const std::string &Name, /// [in] name for new VertCoord
+          const Decomp *MeshDecomp /// [in] associated Decomp
+   );
+
+   /// Read InitialVertCoord stream and complete initialization
+   void completeSetup(Config *Options /// [in] configuration options
    );
 
    /// Destructor - deallocates all memory and deletes a VertCoord
@@ -170,40 +178,27 @@ class VertCoord {
 
    /// Sums the mass thickness times g from the top layer down, starting with
    /// the surface pressure
-   void computePressure(
-       const Array2DReal &PressureInterface, ///< [out] P at layer interfaces
-       const Array2DReal &PressureMid,       ///< [out] P at layer midpoints
-       const Array2DReal &LayerThickness,    ///< [in] pseudo thickness
-       const Array1DReal &SurfacePressure    ///< [in] surface pressure
+   void
+   computePressure(const Array2DReal &LayerThickness, ///< [in] pseudo thickness
+                   const Array1DReal &SurfacePressure ///< [in] surface pressure
    );
 
    /// Sum the mass thickness times specific volume from the bottom layer up,
    /// starting with the bottom elevation
-   void computeZHeight(
-       const Array2DReal &ZInterface,     ///< [out] Z coord at layer interfaces
-       const Array2DReal &ZMid,           ///< [out] Z coord at layer midpoints
-       const Array2DReal &LayerThickness, ///< [in] pseudo thickness
-       const Array2DReal &SpecVol,        ///< [in] specific volume
-       const Array1DReal &BottomDepth);   ///< [in] bottom depth
+   void
+   computeZHeight(const Array2DReal &LayerThickness, ///< [in] pseudo thickness
+                  const Array2DReal &SpecVol);       ///< [in] specific volume
 
    /// Sum the z height times g, the tidal potential, and self attraction and
    /// loading
    void computeGeopotential(
-       const Array2DReal &GeopotentialMid, ///< [out] geopotential
-       const Array2DReal &ZMid,            ///< [in] Z coord at layer midpoints
-       const Array1DReal &TidalPotential,  ///< [in] tidal potential
+       const Array1DReal &TidalPotential, ///< [in] tidal potential
        const Array1DReal
            &SelfAttractionLoading ///< [in] self attraction and loading
    );
 
    /// Determine mass thickness used for the target vertical coordinate
-   void computeTargetThickness(
-       const Array2DReal
-           &LayerThicknessTarget,            ///< [out] desired target thickness
-       const Array2DReal &PressureInterface, ///< [in] P at layer interfaces
-       const Array2DReal &RefLayerThickness, ///< [in] reference pseudo thicknes
-       const Array1DReal &VertCoordMovementWeights ///< [in] movement weights
-   );
+   void computeTargetThickness();
 
 }; // end class VertCoord
 

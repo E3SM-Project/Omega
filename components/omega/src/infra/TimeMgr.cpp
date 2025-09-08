@@ -3714,6 +3714,29 @@ const TimeInstant *Alarm::getRingTimePrev(void) const { return &RingTimePrev; }
 
 // Clock constructors/destructors
 //------------------------------------------------------------------------------
+// Clock::Clock - default constructor
+// This is a default constructor that creates a clock using the default
+// TimeInstant and default TimeInterval, should only be used for testing.
+Clock::Clock(void) {
+
+   TimeInstant DefTime;
+   TimeInterval DefInterval;
+
+   StartTime = DefTime;
+   TimeStep  = DefInterval;
+
+   CurrTime = StartTime;
+   PrevTime = CurrTime - TimeStep;
+   NextTime = CurrTime + TimeStep;
+
+   NumAlarms = 0;
+   Alarms.resize(MAX_ALARMS);
+   for (I4 I = 0; I < MAX_ALARMS; ++I) {
+      Alarms[I] = nullptr;
+   }
+
+} // end Clock default constructor
+
 // Clock::Clock - constructs a clock for tracking time within a model
 // Construct a clock using a start time and time step.
 

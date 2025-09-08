@@ -6,11 +6,13 @@
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
+#include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OceanTestCommon.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
+#include "TimeStepper.h"
 #include "VertCoord.h"
 #include "auxiliaryVars/KineticAuxVars.h"
 #include "auxiliaryVars/LayerThicknessAuxVars.h"
@@ -814,6 +816,8 @@ int initAuxVarsTest(const std::string &mesh) {
    Config("Omega");
    OMEGA::Config::readAll("omega.yml");
 
+   TimeStepper::init1();
+
    int IOErr = IO::init(DefComm);
    if (IOErr != 0) {
       Err++;
@@ -822,20 +826,33 @@ int initAuxVarsTest(const std::string &mesh) {
 
    Decomp::init(mesh);
 
+   IOStream::init();
+
    int HaloErr = Halo::init();
    if (HaloErr != 0) {
       Err++;
       LOG_ERROR("AuxVarsTest: error initializing default halo");
    }
 
-   VertCoord::init();
+   VertCoord::init1();
+   // Reset NVertLayers to the test value
+   auto *DefVertCoord        = VertCoord::getDefault();
+   DefVertCoord->NVertLayers = NVertLayers;
+   Dimension::destroy("NVertLayers");
+   std::shared_ptr<Dimension> VertDim =
+       Dimension::create("NVertLayers", NVertLayers);
 
    HorzMesh::init();
+
+   VertCoord::init2();
 
    return Err;
 }
 
 void finalizeAuxVarsTest() {
+   IOStream::finalize();
+   TimeStepper::clear();
+   VertCoord::clear();
    Field::clear();
    Dimension::clear();
    HorzMesh::clear();

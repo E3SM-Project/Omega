@@ -7,6 +7,7 @@
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
+#include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OceanTestCommon.h"
@@ -106,14 +107,17 @@ int initAuxStateTest(const std::string &mesh) {
 
    Decomp::init(mesh);
 
+   IOStream::init();
+
    int HaloErr = Halo::init();
    if (HaloErr != 0) {
       Err++;
       LOG_ERROR("AuxStateTest: error initializing default halo");
    }
 
-   VertCoord::init();
+   VertCoord::init1();
    HorzMesh::init();
+   VertCoord::init2();
    Tracers::init();
 
    const auto &Mesh = HorzMesh::getDefault();
@@ -282,8 +286,10 @@ int testAuxState() {
 }
 
 void finalizeAuxStateTest() {
+   IOStream::finalize();
    Tracers::clear();
    OceanState::clear();
+   VertCoord::clear();
    Field::clear();
    Dimension::clear();
    TimeStepper::clear();

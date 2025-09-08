@@ -56,7 +56,7 @@ In future versions of Omega, the $p^\star$ coordinate will be extended to a more
 The vertical coordinate module should retain flexibility to support VLR in future versions of Omega.
 
 ## 3 Algorithmic Formulation
-In the layered non-Boussinesq equations solved in Omega (see [V0 governing equation document](OmegaV1GoverningEqns) for details), the prognostic variable for cell $i$ and layer $k$ is the pseudo thickness, $\tilde{h}_{i,k}$, so that the geometric thickness (in meters) is a diagnostic variable defined as:
+In the layered non-Boussinesq equations solved in Omega (see [V0 governing equation document](omega-design-governing-eqns-omega1) for details), the prognostic variable for cell $i$ and layer $k$ is the pseudo thickness, $\tilde{h}_{i,k}$, so that the geometric thickness (in meters) is a diagnostic variable defined as:
 
 $$ \Delta z_{i,k} = \rho_0 \alpha_{i,k} \tilde{h}_{i,k}. $$
 

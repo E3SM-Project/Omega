@@ -15,10 +15,13 @@
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
+#include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
+#include "TimeMgr.h"
+#include "TimeStepper.h"
 #include "mpi.h"
 
 #include <algorithm>
@@ -41,6 +44,9 @@ int initVertCoordTest() {
    Config("Omega");
    Config::readAll("omega.yml");
 
+   // First step of time stepper initialization needed for IOstream
+   TimeStepper::init1();
+
    // Initialize the IO system
    Err = IO::init(DefComm);
    if (Err != 0)
@@ -49,16 +55,22 @@ int initVertCoordTest() {
    // Create the default decomposition (initializes the decomposition)
    Decomp::init();
 
+   // Initialize streams
+   IOStream::init();
+
    // Initialize the default halo
    Err = Halo::init();
    if (Err != 0)
       LOG_ERROR("VertCoordTest: error initializing default halo");
 
-   // Initialize the vertical coordinate
-   VertCoord::init();
+   // Begin initialization of the default vertical coordinate
+   VertCoord::init1();
 
    // Initialize the default mesh
    HorzMesh::init();
+
+   // Complete initialization of the default vertical coordinate
+   VertCoord::init2();
 
    return Err;
 } // end initVertCoordTest
@@ -83,26 +95,22 @@ int main(int argc, char *argv[]) {
       auto *DefVertCoord = VertCoord::getDefault();
       auto *DefMesh      = HorzMesh::getDefault();
 
-      I4 NCellsSize    = DefMesh->NCellsSize;
-      I4 NCellsAll     = DefMesh->NCellsAll;
-      I4 NEdgesAll     = DefMesh->NEdgesAll;
-      I4 NVerticesAll  = DefMesh->NVerticesAll;
-      I4 VertexDegree  = DefMesh->VertexDegree;
-      I4 NVertLayers   = DefVertCoord->NVertLayers;
-      I4 NVertLayersP1 = DefVertCoord->NVertLayersP1;
+      I4 NCellsSize   = DefMesh->NCellsSize;
+      I4 NCellsAll    = DefMesh->NCellsAll;
+      I4 NEdgesAll    = DefMesh->NEdgesAll;
+      I4 NVerticesAll = DefMesh->NVerticesAll;
+      I4 VertexDegree = DefMesh->VertexDegree;
+      I4 NVertLayers  = DefVertCoord->NVertLayers;
 
       // Tests for computePressure
 
       Array2DReal LayerThickness("LayerThickness", NCellsSize, NVertLayers);
       Array1DReal SurfacePressure("SurfacePressure", NCellsSize);
 
-      auto &PressInterf = DefVertCoord->PressureInterface;
-      auto &PressMid    = DefVertCoord->PressureMid;
-
       /// Initialize layer thickness and surface pressure so that resulting
       /// interface pressure is the number of layers above plus one
       Real Gravity = 9.80616_Real;
-      Real Rho0    = 1035._Real;
+      Real Rho0    = DefVertCoord->Rho0;
       parallelFor(
           {NCellsAll}, KOKKOS_LAMBDA(int ICell) {
              SurfacePressure(ICell) = 1.0_Real;
@@ -113,10 +121,9 @@ int main(int argc, char *argv[]) {
       Kokkos::fence();
 
       /// Call function and get host copies of outputs
-      DefVertCoord->computePressure(PressInterf, PressMid, LayerThickness,
-                                    SurfacePressure);
-      auto PressInterfH = createHostMirrorCopy(PressInterf);
-      auto PressMidH    = createHostMirrorCopy(PressMid);
+      DefVertCoord->computePressure(LayerThickness, SurfacePressure);
+      auto PressInterfH = createHostMirrorCopy(DefVertCoord->PressureInterface);
+      auto PressMidH    = createHostMirrorCopy(DefVertCoord->PressureMid);
 
       /// Check results
       Err = 0;
@@ -160,9 +167,9 @@ int main(int argc, char *argv[]) {
       Kokkos::fence();
 
       /// Call functions and get host copy of output
-      DefVertCoord->computePressure(PressInterf, PressMid, LayerThickness,
-                                    SurfacePressure);
-      auto PressInterfH2 = createHostMirrorCopy(PressInterf);
+      DefVertCoord->computePressure(LayerThickness, SurfacePressure);
+      auto PressInterfH2 =
+          createHostMirrorCopy(DefVertCoord->PressureInterface);
 
       /// Check results
       Err = 0;
@@ -195,8 +202,6 @@ int main(int argc, char *argv[]) {
       Array1DReal MaxLyrCellReal("MaxLyrCellReal", NCellsSize);
       deepCopy(MaxLyrCellReal, DefVertCoord->MaxLayerCell);
 
-      auto &ZInterf  = DefVertCoord->ZInterface;
-      auto &ZMid     = DefVertCoord->ZMid;
       auto &BotDepth = DefVertCoord->BottomDepth;
 
       /// Initialize bottom depth, layer thickness and specific volume so that
@@ -212,10 +217,9 @@ int main(int argc, char *argv[]) {
       Kokkos::fence();
 
       /// Call functions and get host copy of output
-      DefVertCoord->computeZHeight(ZInterf, ZMid, LayerThickness, SpecVol,
-                                   BotDepth);
-      auto ZInterfH = createHostMirrorCopy(ZInterf);
-      auto ZMidH    = createHostMirrorCopy(ZMid);
+      DefVertCoord->computeZHeight(LayerThickness, SpecVol);
+      auto ZInterfH = createHostMirrorCopy(DefVertCoord->ZInterface);
+      auto ZMidH    = createHostMirrorCopy(DefVertCoord->ZMid);
 
       /// Check results
       Err = 0;
@@ -261,9 +265,8 @@ int main(int argc, char *argv[]) {
       Kokkos::fence();
 
       /// Call functions and get host copy of output
-      DefVertCoord->computeZHeight(ZInterf, ZMid, LayerThickness, SpecVol,
-                                   BotDepth);
-      auto ZInterfH2 = createHostMirrorCopy(ZInterf);
+      DefVertCoord->computeZHeight(LayerThickness, SpecVol);
+      auto ZInterfH2 = createHostMirrorCopy(DefVertCoord->ZInterface);
 
       /// Check results
       Err = 0;
@@ -290,9 +293,10 @@ int main(int argc, char *argv[]) {
       }
 
       // Tests for computeGeopotential
-      Array2DReal GeopotentialMid("GeopotentialMid", NCellsSize, NVertLayers);
       Array1DReal TidalPotential("TidalPotential", NCellsSize);
       Array1DReal SelfAttractionLoading("SelfAttractionLoading", NCellsSize);
+
+      auto &ZMid = DefVertCoord->ZMid;
 
       /// Initialize z mid, tidal potential and SAL so that the resulting
       /// geopotential is the cell number + layer number
@@ -307,9 +311,9 @@ int main(int argc, char *argv[]) {
       Kokkos::fence();
 
       /// Call functions and get host copy of output
-      DefVertCoord->computeGeopotential(GeopotentialMid, ZMid, TidalPotential,
-                                        SelfAttractionLoading);
-      auto GeopotentialMidH = createHostMirrorCopy(GeopotentialMid);
+      DefVertCoord->computeGeopotential(TidalPotential, SelfAttractionLoading);
+      auto GeopotentialMidH =
+          createHostMirrorCopy(DefVertCoord->GeopotentialMid);
 
       /// Check results
       Err = 0;
@@ -334,10 +338,7 @@ int main(int argc, char *argv[]) {
       }
 
       // Tests for computeTargetThickness
-      Array2DReal LayerThicknessTarget("LayerThicknessTarget", NCellsSize,
-                                       NVertLayers);
-      Array2DReal RefLayerThickness("RefLayerThickness", NCellsSize,
-                                    NVertLayers);
+      auto &RefLayerThick = DefVertCoord->RefLayerThickness;
 
       /// Initialize surface pressure, vertical coord weights, ref layer
       /// thickness, and layer thickness so that the resulting target thickness
@@ -346,20 +347,17 @@ int main(int argc, char *argv[]) {
           {NCellsAll}, KOKKOS_LAMBDA(int ICell) {
              SurfacePressure(ICell) = 0.0;
              for (int K = 0; K < NVertLayers; K++) {
-                RefLayerThickness(ICell, K) = 1.0;
-                LayerThickness(ICell, K)    = 2.0;
+                RefLayerThick(ICell, K)  = 1.0;
+                LayerThickness(ICell, K) = 2.0;
              }
           });
       Kokkos::fence();
 
-      auto &MovementWgts = DefVertCoord->VertCoordMovementWeights;
-
       /// Call functions and get host copy of output
-      DefVertCoord->computePressure(PressInterf, PressMid, LayerThickness,
-                                    SurfacePressure);
-      DefVertCoord->computeTargetThickness(LayerThicknessTarget, PressInterf,
-                                           RefLayerThickness, MovementWgts);
-      auto LayerThicknessTargetH = createHostMirrorCopy(LayerThicknessTarget);
+      DefVertCoord->computePressure(LayerThickness, SurfacePressure);
+      DefVertCoord->computeTargetThickness();
+      auto LayerThicknessTargetH =
+          createHostMirrorCopy(DefVertCoord->LayerThicknessTarget);
 
       /// Check results
       Err = 0;
@@ -393,22 +391,23 @@ int main(int argc, char *argv[]) {
           {NCellsAll}, KOKKOS_LAMBDA(int ICell) {
              SurfacePressure(ICell) = 0.0;
              for (int K = 0; K < NVertLayers; K++) {
-                RefLayerThickness(ICell, K) = 1.0;
-                LayerThickness(ICell, K)    = 2.0;
+                RefLayerThick(ICell, K)  = 1.0;
+                LayerThickness(ICell, K) = 2.0;
              }
           });
+
+      auto &MovementWgts = DefVertCoord->VertCoordMovementWeights;
       parallelFor(
           {NVertLayers}, KOKKOS_LAMBDA(int K) { MovementWgts(K) = 0.0; });
       parallelFor({1}, KOKKOS_LAMBDA(const int &) { MovementWgts(0) = 1.0; });
       Kokkos::fence();
 
       /// Call functions and get host copy of output
-      DefVertCoord->computePressure(PressInterf, PressMid, LayerThickness,
-                                    SurfacePressure);
-      DefVertCoord->computeTargetThickness(LayerThicknessTarget, PressInterf,
-                                           RefLayerThickness, MovementWgts);
-      auto LayerThicknessTargetH2 = createHostMirrorCopy(LayerThicknessTarget);
-      Err                         = 0;
+      DefVertCoord->computePressure(LayerThickness, SurfacePressure);
+      DefVertCoord->computeTargetThickness();
+      auto LayerThicknessTargetH2 =
+          createHostMirrorCopy(DefVertCoord->LayerThicknessTarget);
+      Err = 0;
 
       /// Check results
       for (int ICell = 0; ICell < NCellsAll; ICell++) {
@@ -462,7 +461,6 @@ int main(int argc, char *argv[]) {
       Err = 0;
       for (int IEdge = 0; IEdge < NEdgesAll; IEdge++) {
          I4 Expected;
-         I4 Count = 0;
 
          /// Skip edges on boundary
          if ((DefMesh->CellsOnEdgeH(IEdge, 1) == NCellsAll) ||
@@ -587,6 +585,8 @@ int main(int argc, char *argv[]) {
       }
 
       // Finalize Omega objects
+      IOStream::finalize();
+      TimeStepper::clear();
       HorzMesh::clear();
       VertCoord::clear();
       Dimension::clear();

@@ -49,6 +49,16 @@ Omega:
       DRhoDS: 0.8
       RhoT0S0: 1000.0
   IOStreams:
+    InitialVertCoord:
+      UsePointerFile: false
+      Filename: OmegaMesh.nc
+      Mode: read
+      Precision: double
+      Freq: 1
+      FreqUnits: OnStartup
+      UseStartEnd: false
+      Contents:
+        - InitVertCoord
     # InitialState should only be used when starting from scratch.
     # For restart runs, the frequency units should be changed from
     # "OnStartup" to "never" so that the initial state file is not read.

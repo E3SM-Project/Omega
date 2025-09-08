@@ -27,8 +27,7 @@ void Tendencies::init() {
    HorzMesh *DefHorzMesh   = HorzMesh::getDefault();
    VertCoord *DefVertCoord = VertCoord::getDefault();
 
-   I4 NVertLayers = DefVertCoord->NVertLayers;
-   I4 NTracers    = Tracers::getNumTracers();
+   I4 NTracers = Tracers::getNumTracers();
 
    // Get TendConfig group
    Config *OmegaConfig = Config::getOmegaConfig();
@@ -65,8 +64,8 @@ void Tendencies::init() {
 
    // Ceate default tendencies
    Tendencies::DefaultTendencies =
-       create("Default", DefHorzMesh, DefVertCoord, NVertLayers, NTracers,
-              &TendConfig, CustomThickTend, CustomVelTend);
+       create("Default", DefHorzMesh, DefVertCoord, NTracers, &TendConfig,
+              CustomThickTend, CustomVelTend);
 
    DefaultTendencies->readTendConfig(&TendConfig);
 
@@ -217,9 +216,8 @@ void Tendencies::readTendConfig(
 Tendencies::Tendencies(const std::string &Name, ///< [in] Name for tendencies
                        const HorzMesh *Mesh,    ///< [in] Horizontal mesh
                        const VertCoord *VCoord, ///< [in] Vertical coordinate
-                       int NVertLayers, ///< [in] Number of vertical layers
-                       int NTracersIn,  ///< [in] Number of tracers
-                       Config *Options, ///< [in] Configuration options
+                       int NTracersIn,          ///< [in] Number of tracers
+                       Config *Options,         ///< [in] Configuration options
                        CustomTendencyType InCustomThicknessTend,
                        CustomTendencyType InCustomVelocityTend)
     : ThicknessFluxDiv(Mesh), PotientialVortHAdv(Mesh), KEGrad(Mesh),
@@ -231,28 +229,27 @@ Tendencies::Tendencies(const std::string &Name, ///< [in] Name for tendencies
 
    // Tendency arrays
    LayerThicknessTend =
-       Array2DReal("LayerThicknessTend", Mesh->NCellsSize, NVertLayers);
+       Array2DReal("LayerThicknessTend", Mesh->NCellsSize, VCoord->NVertLayers);
    NormalVelocityTend =
-       Array2DReal("NormalVelocityTend", Mesh->NEdgesSize, NVertLayers);
-   TracerTend =
-       Array3DReal("TracerTend", NTracersIn, Mesh->NCellsSize, NVertLayers);
+       Array2DReal("NormalVelocityTend", Mesh->NEdgesSize, VCoord->NVertLayers);
+   TracerTend = Array3DReal("TracerTend", NTracersIn, Mesh->NCellsSize,
+                            VCoord->NVertLayers);
 
    // Array dimension lengths
    NCellsAll = Mesh->NCellsAll;
    NEdgesAll = Mesh->NEdgesAll;
    NTracers  = NTracersIn;
-   NChunks   = NVertLayers / VecLength;
+   NChunks   = VCoord->NVertLayers / VecLength;
 
 } // end constructor
 
 Tendencies::Tendencies(const std::string &Name, ///< [in] Name for tendencies
                        const HorzMesh *Mesh,    ///< [in] Horizontal mesh
                        const VertCoord *VCoord, ///< [in] Vertical coordinate
-                       int NVertLayers, ///< [in] Number of vertical layers
-                       int NTracersIn,  ///< [in] Number of tracers
-                       Config *Options) ///< [in] Configuration options
-    : Tendencies(Name, Mesh, VCoord, NVertLayers, NTracersIn, Options,
-                 CustomTendencyType{}, CustomTendencyType{}) {}
+                       int NTracersIn,          ///< [in] Number of tracers
+                       Config *Options)         ///< [in] Configuration options
+    : Tendencies(Name, Mesh, VCoord, NTracersIn, Options, CustomTendencyType{},
+                 CustomTendencyType{}) {}
 
 //------------------------------------------------------------------------------
 // Compute tendencies for layer thickness equation

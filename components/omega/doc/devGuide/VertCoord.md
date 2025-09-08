@@ -109,7 +109,7 @@ Kokkos::parallel_for(
    ...
 }
 ```
-This `parallel_for` iterates over vertical chunks to facilitate vectorization on CPUs within in inner `for` loop over the vector length.
+This `parallel_for` iterates over vertical chunks to facilitate vectorization on CPUs within an inner `for` loop over the vector length.
 The vector length on GPUs is set to 1 to maximize parallelism.
 The `computeGeopotential` method uses hierarchical parallelism in a very similar way to `computeTargetThickness`, except that it doesn't require a column sum.
 It has an outer `parallel_for` that splits horizontal cells into teams and an inner `parallel_for` that does vertical computations in chunks.

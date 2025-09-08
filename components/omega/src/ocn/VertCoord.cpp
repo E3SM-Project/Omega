@@ -11,6 +11,7 @@
 #include "Dimension.h"
 #include "Field.h"
 #include "IO.h"
+#include "IOStream.h"
 #include "OmegaKokkos.h"
 
 #include <limits>
@@ -22,25 +23,35 @@ VertCoord *VertCoord::DefaultVertCoord = nullptr;
 std::map<std::string, std::unique_ptr<VertCoord>> VertCoord::AllVertCoords;
 
 //------------------------------------------------------------------------------
-// Initialize default vertical coordinate, requires prior initialization of
-// Decomp.
-void VertCoord::init() {
+// Begin initialization of default vertical coordinate, requires prior
+// initialization of Decomp.
+void VertCoord::init1() {
 
    Decomp *DefDecomp = Decomp::getDefault();
 
-   Config *OmegaConfig = Config::getOmegaConfig();
+   VertCoord::DefaultVertCoord = create("Default", DefDecomp);
 
-   VertCoord::DefaultVertCoord = create("Default", DefDecomp, OmegaConfig);
-
-} // end init
+} // end init1
 
 //------------------------------------------------------------------------------
-// Construct a new VertCoord instance given a Decomp
+// Complete initialization of default vertical coordinate, requires prior
+// initialization of HorzMesh.
+void VertCoord::init2() {
+
+   Config *OmegaConfig = Config::getOmegaConfig();
+
+   DefaultVertCoord->completeSetup(OmegaConfig);
+
+} // end init2
+
+//------------------------------------------------------------------------------
+// Construct a new VertCoord instance given a Decomp. New object is incomplete
+// and completeSetup must be called afterwards
 VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
-                     const Decomp *Decomp,     //< [in] associated Decomp
-                     Config *Options           //< [in] configuration options
+                     const Decomp *Decomp      //< [in] associated Decomp
 ) {
 
+   // Store name suffix
    Name = Name_;
 
    // Retrieve mesh filename from Decomp
@@ -50,7 +61,7 @@ VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
    I4 Err;
    Err = IO::openFile(MeshFileID, MeshFileName, IO::ModeRead);
 
-   // Set NVertLayers and NVertLayersP1 and create the vertical dimension
+   // Set NVertLayers and NVertLayersP1 and create the vertical dimensions
    I4 NVertLayersID;
    Err = IO::getDimFromFile(MeshFileID, "nVertLevels", NVertLayersID,
                             NVertLayers);
@@ -61,7 +72,15 @@ VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
    }
    NVertLayersP1 = NVertLayers + 1;
 
-   auto VertDim = Dimension::create("NVertLayers", NVertLayers);
+   std::string DimName   = "NVertLayers";
+   std::string DimP1Name = "NVertLayersP1";
+   if (Name != "Default") {
+      DimName.append(Name);
+      DimP1Name.append(Name);
+   }
+
+   auto VertDim   = Dimension::create(DimName, NVertLayers);
+   auto VertDimP1 = Dimension::create(DimP1Name, NVertLayersP1);
 
    // Retrieve mesh variables from Decomp
    NCellsOwned = Decomp->NCellsOwned;
@@ -85,43 +104,93 @@ VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
    MaxLayerCell = Array1DI4("MaxLayerCell", NCellsSize);
    MinLayerCell = Array1DI4("MinLayerCell", NCellsSize);
    BottomDepth  = Array1DReal("BottomDepth", NCellsSize);
-
    PressureInterface =
        Array2DReal("PressureInterface", NCellsSize, NVertLayersP1);
-   PressureMid = Array2DReal("PressureMid", NCellsSize, NVertLayers);
-
-   ZInterface = Array2DReal("ZInterface", NCellsSize, NVertLayersP1);
-   ZMid       = Array2DReal("ZMid", NCellsSize, NVertLayers);
-
+   PressureMid     = Array2DReal("PressureMid", NCellsSize, NVertLayers);
+   ZInterface      = Array2DReal("ZInterface", NCellsSize, NVertLayersP1);
+   ZMid            = Array2DReal("ZMid", NCellsSize, NVertLayers);
    GeopotentialMid = Array2DReal("GeopotentialMid", NCellsSize, NVertLayers);
    LayerThicknessTarget =
        Array2DReal("LayerThicknessTarget", NCellsSize, NVertLayers);
+   RefLayerThickness =
+       Array2DReal("RefLayerThickness", NCellsSize, NVertLayers);
 
-   MaxLayerCellH         = createHostMirrorCopy(MaxLayerCell);
-   MinLayerCellH         = createHostMirrorCopy(MinLayerCell);
-   BottomDepthH          = createHostMirrorCopy(BottomDepth);
+   // Make host copies for device arrays not being read from file
    PressureInterfaceH    = createHostMirrorCopy(PressureInterface);
    PressureMidH          = createHostMirrorCopy(PressureMid);
    ZInterfaceH           = createHostMirrorCopy(ZInterface);
    ZMidH                 = createHostMirrorCopy(ZMid);
    GeopotentialMidH      = createHostMirrorCopy(GeopotentialMid);
    LayerThicknessTargetH = createHostMirrorCopy(LayerThicknessTarget);
+   RefLayerThicknessH    = createHostMirrorCopy(RefLayerThickness);
 
-   readArrays(Decomp);
+} // end constructor
 
+//------------------------------------------------------------------------------
+// Complete construction of new VertCoord instance
+void VertCoord::completeSetup(Config *Options //< [in] configuration options
+) {
+
+   // Define field metadata
+   defineFields();
+
+   // Fill with default values + 1 in case arrays are not present in mesh file
+   deepCopy(MinLayerCell, 1);
+   deepCopy(MaxLayerCell, NVertLayers);
+
+   // Fetch input stream and validate
+   std::string StreamName = "InitialVertCoord";
+
+   auto VCoordStream = IOStream::get(StreamName);
+
+   bool IsValidated = VCoordStream->validate();
+
+   // Read InitialVertCoord stream
+   I4 Err;
+   if (IsValidated) {
+      Err = IOStream::read(StreamName);
+   } else {
+      ABORT_ERROR("Error validating IO stream {}", StreamName);
+   }
+
+   // Subtract 1 to convert to zero-based indexing
+   OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
+   OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+   parallelFor(
+       {NCellsAll}, KOKKOS_LAMBDA(int ICell) {
+          MinLayerCell(ICell) -= 1;
+          MaxLayerCell(ICell) -= 1;
+       });
+
+   // Compute Edge and Vertex vertical ranges
    minMaxLayerEdge();
    minMaxLayerVertex();
 
+   // Initialize movement weights
    initMovementWeights(Options);
 
-} // end constructor
+   // Make host copies for device arrays read from mesh file
+   MaxLayerCellH = createHostMirrorCopy(MaxLayerCell);
+   MinLayerCellH = createHostMirrorCopy(MinLayerCell);
+   BottomDepthH  = createHostMirrorCopy(BottomDepth);
+
+   Error Err1;
+
+   // Fetch reference desnity from Config
+   Config TendConfig("Tendencies");
+   Err1 += Options->get(TendConfig);
+   CHECK_ERROR_ABORT(Err1, "VertCoord: Tendencies group not found in Config");
+
+   Err1 += TendConfig.get("Density0", Rho0);
+   CHECK_ERROR_ABORT(Err1, "VertCoord: Density0 not found in TendConfig");
+
+} // end completeSetup
 
 //------------------------------------------------------------------------------
 // Calls the VertCoord constructor and places it in the AllVertCoords map
 VertCoord *
 VertCoord::create(const std::string &Name, // [in] name for new VertCoord
-                  const Decomp *Decomp,    // [in] associated Decomp
-                  Config *Options          // [in] configuration options
+                  const Decomp *Decomp     // [in] associated Decomp
 ) {
    // Check to see if a VertCoord of the same name already exists and, if so,
    // exit with an error
@@ -134,7 +203,7 @@ VertCoord::create(const std::string &Name, // [in] name for new VertCoord
 
    // create a new VertCoord on the heap and put it in a map of unique_ptrs,
    // which will manage its lifetime
-   auto *NewVertCoord = new VertCoord(Name, Decomp, Options);
+   auto *NewVertCoord = new VertCoord(Name, Decomp);
    AllVertCoords.emplace(Name, NewVertCoord);
 
    return NewVertCoord;
@@ -147,6 +216,9 @@ void VertCoord::defineFields() {
    I4 Err = 0; // default error code
 
    // Set field names (append Name if not default)
+   MinLayerCellFldName   = "MinLevelCell";
+   MaxLayerCellFldName   = "MaxLevelCell";
+   BottomDepthFldName    = "BottomDepth";
    PressInterfFldName    = "PressureInterface";
    PressMidFldName       = "PressureMid";
    ZInterfFldName        = "ZInterface";
@@ -155,6 +227,9 @@ void VertCoord::defineFields() {
    LyrThickTargetFldName = "LayerThicknessTarget";
 
    if (Name != "Default") {
+      MinLayerCellFldName.append(Name);
+      MaxLayerCellFldName.append(Name);
+      BottomDepthFldName.append(Name);
       PressInterfFldName.append(Name);
       PressMidFldName.append(Name);
       ZInterfFldName.append(Name);
@@ -164,11 +239,52 @@ void VertCoord::defineFields() {
    }
 
    // Create fields for VertCoord variables
-   const Real FillValue = -9.99e30;
-   int NDims            = 2;
+   const I4 FillValueI4     = -999;
+   const Real FillValueReal = -9.99e30;
+   int NDims                = 1;
    std::vector<std::string> DimNames(NDims);
    DimNames[0] = "NCells";
-   DimNames[1] = "NVertLayers";
+
+   auto MinLayerCellField = Field::create(
+       MinLayerCellFldName,                         // field name
+       "Index to first active cell in each column", // long name or description
+       "",                                          // units
+       "",                                          // CF standard Name
+       0,                                           // min valid value
+       std::numeric_limits<I4>::max(),              // max valid value
+       FillValueI4, // scalar for undefined entries
+       NDims,       // number of dimensions
+       DimNames     // dimension names
+   );
+
+   auto MaxLayerCellField = Field::create(
+       MaxLayerCellFldName,                        // field name
+       "Index to last active cell in each column", // long name or description
+       "",                                         // units
+       "",                                         // CF standard Name
+       -1,                                         // min valid value
+       std::numeric_limits<I4>::max(),             // max valid value
+       FillValueI4, // scalar for undefined entries
+       NDims,       // number of dimensions
+       DimNames     // dimension names
+   );
+
+   auto BottomDepthField = Field::create(
+       BottomDepthFldName, // field name
+       "Depth of the bottom of the ocean. Given as a positive distance from"
+       "sea level",                      // long name or description
+       "m",                              // units
+       "sea_floor_depth_below_geoid",    // CF standard Name
+       0.0,                              // min valid value
+       std::numeric_limits<Real>::max(), // max valid value
+       FillValueReal,                    // scalar for undefined entries
+       NDims,                            // number of dimensions
+       DimNames                          // dimension names
+   );
+
+   NDims = 2;
+   DimNames.resize(NDims);
+   DimNames[1] = "NVertLayersP1";
 
    auto PressureInterfaceField = Field::create(
        PressInterfFldName,                      // field name
@@ -177,21 +293,9 @@ void VertCoord::defineFields() {
        "sea_water_pressure",                    // CF standard Name
        0.0,                                     // min valid value
        std::numeric_limits<Real>::max(),        // max valid value
-       FillValue,                               // scalar for undefined entries
+       FillValueReal,                           // scalar for undefined entries
        NDims,                                   // number of dimensions
        DimNames                                 // dimension names
-   );
-
-   auto PressureMidField = Field::create(
-       PressMidFldName,                        // field name
-       "Pressure at vertical layer midpoints", // long name or description
-       "Pa",                                   // units
-       "sea_water_pressure",                   // CF standard Name
-       0.0,                                    // min valid value
-       std::numeric_limits<Real>::max(),       // max valid value
-       FillValue,                              // scalar for undefined entries
-       NDims,                                  // number of dimensions
-       DimNames                                // dimension names
    );
 
    auto ZInterfaceField = Field::create(
@@ -201,9 +305,23 @@ void VertCoord::defineFields() {
        "height",                                     // CF standard Name
        std::numeric_limits<Real>::min(),             // min valid value
        std::numeric_limits<Real>::max(),             // max valid value
-       FillValue, // scalar for undefined entries
-       NDims,     // number of dimensions
-       DimNames   // dimension names
+       FillValueReal, // scalar for undefined entries
+       NDims,         // number of dimensions
+       DimNames       // dimension names
+   );
+
+   DimNames[1] = "NVertLayers";
+
+   auto PressureMidField = Field::create(
+       PressMidFldName,                        // field name
+       "Pressure at vertical layer midpoints", // long name or description
+       "Pa",                                   // units
+       "sea_water_pressure",                   // CF standard Name
+       0.0,                                    // min valid value
+       std::numeric_limits<Real>::max(),       // max valid value
+       FillValueReal,                          // scalar for undefined entries
+       NDims,                                  // number of dimensions
+       DimNames                                // dimension names
    );
 
    auto ZMidField = Field::create(
@@ -213,9 +331,9 @@ void VertCoord::defineFields() {
        "height",                                    // CF standard Name
        std::numeric_limits<Real>::min(),            // min valid value
        std::numeric_limits<Real>::max(),            // max valid value
-       FillValue, // scalar for undefined entries
-       NDims,     // number of dimensions
-       DimNames   // dimension names
+       FillValueReal, // scalar for undefined entries
+       NDims,         // number of dimensions
+       DimNames       // dimension names
    );
 
    auto GeopotentialMidField = Field::create(
@@ -225,7 +343,7 @@ void VertCoord::defineFields() {
        "geopotential",                    // CF standard Name
        std::numeric_limits<Real>::min(),  // min valid value
        std::numeric_limits<Real>::max(),  // max valid value
-       FillValue,                         // scalar for undefined entries
+       FillValueReal,                     // scalar for undefined entries
        NDims,                             // number of dimensions
        DimNames                           // dimension names
    );
@@ -238,10 +356,40 @@ void VertCoord::defineFields() {
                      "",                        // CF standard Name
                      0.0,                       // min valid value
                      std::numeric_limits<Real>::max(), // max valid value
-                     FillValue, // scalar for undefined entries
-                     NDims,     // number of dimensions
-                     DimNames   // dimension names
+                     FillValueReal, // scalar for undefined entries
+                     NDims,         // number of dimensions
+                     DimNames       // dimension names
        );
+
+   // Create a field group for initial VertCoord fields
+   InitGroupName = "InitVertCoord";
+   if (Name != "Default") {
+      InitGroupName.append(Name);
+   }
+   auto InitVCoordGroup = FieldGroup::create(InitGroupName);
+
+   Err = InitVCoordGroup->addField(MinLayerCellFldName);
+   if (Err != 0)
+      LOG_ERROR("Error adding {} to field group {}", MinLayerCellFldName,
+                InitGroupName);
+   Err = InitVCoordGroup->addField(MaxLayerCellFldName);
+   if (Err != 0)
+      LOG_ERROR("Error adding {} to field group {}", MaxLayerCellFldName,
+                InitGroupName);
+   Err = InitVCoordGroup->addField(BottomDepthFldName);
+   if (Err != 0)
+      LOG_ERROR("Error adding {} to field group {}", BottomDepthFldName,
+                InitGroupName);
+
+   Err = MinLayerCellField->attachData<Array1DI4>(MinLayerCell);
+   if (Err != 0)
+      LOG_ERROR("Error attaching data array to field {}", MinLayerCellFldName);
+   Err = MaxLayerCellField->attachData<Array1DI4>(MaxLayerCell);
+   if (Err != 0)
+      LOG_ERROR("Error attaching data array to field {}", MaxLayerCellFldName);
+   Err = BottomDepthField->attachData<Array1DReal>(BottomDepth);
+   if (Err != 0)
+      LOG_ERROR("Error attaching data array to field {}", BottomDepthFldName);
 
    // Create a field group for VertCoord fields
    GroupName = "VertCoord";
@@ -297,99 +445,24 @@ void VertCoord::defineFields() {
 } // end defineFields
 
 //------------------------------------------------------------------------------
-// Read desired quantities from the mesh file
-void VertCoord::readArrays(const Decomp *Decomp //< [in] Decomp for mesh
-) {
-
-   I4 NDims             = 1;
-   IO::Rearranger Rearr = IO::RearrBox;
-
-   I4 CellDecompI4;
-   std::vector<I4> CellDims{Decomp->NCellsGlobal};
-   std::vector<I4> CellID(NCellsAll);
-   for (int Cell = 0; Cell < NCellsAll; ++Cell) {
-      CellID[Cell] = Decomp->CellIDH(Cell) - 1;
-   }
-   I4 DecErr = IO::createDecomp(CellDecompI4, IO::IOTypeI4, NDims, CellDims,
-                                NCellsAll, CellID, Rearr);
-   if (DecErr != 0) {
-      LOG_CRITICAL("VertCoord: error creating cell I4 IO decomposition");
-   }
-
-   HostArray1DI4 TmpArrayI4H("TmpCellArray", NCellsSize);
-   I4 ArrayID;
-   const std::string MaxNameMPAS = "maxLevelCell";
-   I4 MaxReadErr = IO::readArray(TmpArrayI4H.data(), NCellsAll, MaxNameMPAS,
-                                 MeshFileID, CellDecompI4, ArrayID);
-
-   if (MaxReadErr != 0) {
-      LOG_WARN("VertCoord: error reading maxLevelCell from mesh file, "
-               "using MaxLayerCell = NVertLayers - 1");
-      deepCopy(TmpArrayI4H, NVertLayers - 1);
-   } else {
-      for (int ICell = 0; ICell < NCellsAll; ++ICell) {
-         TmpArrayI4H(ICell) = TmpArrayI4H(ICell) - 1;
-      }
-   }
-   TmpArrayI4H(NCellsAll) = -1;
-
-   deepCopy(MaxLayerCellH, TmpArrayI4H);
-   deepCopy(MaxLayerCell, TmpArrayI4H);
-
-   const std::string MinNameMPAS = "minLevelCell";
-   I4 MinReadErr = IO::readArray(TmpArrayI4H.data(), NCellsAll, MinNameMPAS,
-                                 MeshFileID, CellDecompI4, ArrayID);
-
-   if (MinReadErr != 0) {
-      LOG_WARN("VertCoord: error reading minLevelCell from mesh file, "
-               "using MinLayerCell = 0");
-      deepCopy(TmpArrayI4H, 0);
-   } else {
-      for (int ICell = 0; ICell < NCellsAll; ++ICell) {
-         TmpArrayI4H(ICell) = TmpArrayI4H(ICell) - 1;
-      }
-   }
-   TmpArrayI4H(NCellsAll) = NVertLayersP1;
-
-   deepCopy(MinLayerCellH, TmpArrayI4H);
-   deepCopy(MinLayerCell, TmpArrayI4H);
-
-   I4 CellDecompR8;
-   DecErr = IO::createDecomp(CellDecompR8, IO::IOTypeR8, NDims, CellDims,
-                             NCellsAll, CellID, Rearr);
-   if (DecErr != 0) {
-      LOG_CRITICAL("VertCoord: error creating cell R8 IO decomposition");
-   }
-
-   HostArray1DR8 TmpArrayR8H("TmpCellArray", NCellsSize);
-   const std::string BotNameMPAS = "bottomDepth";
-   I4 BotReadErr = IO::readArray(TmpArrayR8H.data(), NCellsAll, BotNameMPAS,
-                                 MeshFileID, CellDecompR8, ArrayID);
-   if (BotReadErr != 0) {
-      LOG_CRITICAL("VertCoord: error reading bottomDepth");
-   }
-
-   deepCopy(BottomDepthH, TmpArrayR8H);
-   deepCopy(BottomDepth, BottomDepthH);
-
-   DecErr = IO::destroyDecomp(CellDecompI4);
-   if (DecErr != 0) {
-      LOG_CRITICAL("VertCoord: error destroying cell I4 IO decomposition");
-   }
-   DecErr = IO::destroyDecomp(CellDecompR8);
-   if (DecErr != 0) {
-      LOG_CRITICAL("VertCoord: error destroying cell R8 IO decomposition");
-   }
-} // end readArrays
-
-//------------------------------------------------------------------------------
 // Destroys a local VertCoord and deallocates all arrays
 VertCoord::~VertCoord() {
 
    int Err;
-   Err = FieldGroup::destroy(GroupName);
+
+   Err = Field::destroy(MinLayerCellFldName);
    if (Err != 0)
-      LOG_ERROR("Error removing FieldGrup {}", GroupName);
+      LOG_ERROR("Error removing Field {}", MinLayerCellFldName);
+   Err = Field::destroy(MaxLayerCellFldName);
+   if (Err != 0)
+      LOG_ERROR("Error removing Field {}", MaxLayerCellFldName);
+   Err = Field::destroy(BottomDepthFldName);
+   if (Err != 0)
+      LOG_ERROR("Error removing Field {}", BottomDepthFldName);
+   Err = FieldGroup::destroy(InitGroupName);
+   if (Err != 0)
+      LOG_ERROR("Error removing FieldGroup {}", InitGroupName);
+
    Err = Field::destroy(PressInterfFldName);
    if (Err != 0)
       LOG_ERROR("Error removing Field {}", PressInterfFldName);
@@ -408,6 +481,9 @@ VertCoord::~VertCoord() {
    Err = Field::destroy(LyrThickTargetFldName);
    if (Err != 0)
       LOG_ERROR("Error removing Field {}", LyrThickTargetFldName);
+   Err = FieldGroup::destroy(GroupName);
+   if (Err != 0)
+      LOG_ERROR("Error removing FieldGroup {}", GroupName);
 
 } // end destructor
 
@@ -601,17 +677,17 @@ void VertCoord::initMovementWeights(
 // in each column to compute pressure from the top-most active layer to the
 // bottom-most active layer.
 void VertCoord::computePressure(
-    const Array2DReal &PressureInterface, // [out] pressure at layer interfaces
-    const Array2DReal &PressureMid,       // [out] pressure at layer midpoints
-    const Array2DReal &LayerThickness,    // [in] pseudo thickness
-    const Array1DReal &SurfacePressure    // [in] surface pressure
+    const Array2DReal &LayerThickness, // [in] pseudo thickness
+    const Array1DReal &SurfacePressure // [in] surface pressure
 ) {
 
    Real Gravity = 9.80616_Real; // gravitationl acceleration
-   Real Rho0    = 1035._Real;   // reference density
 
+   OMEGA_SCOPE(LocRho0, Rho0);
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+   OMEGA_SCOPE(LocPressInterf, PressureInterface);
+   OMEGA_SCOPE(LocPressMid, PressureMid);
 
    const auto Policy = TeamPolicy(NCellsAll, OMEGA_TEAMSIZE, 1);
    Kokkos::parallel_for(
@@ -621,21 +697,22 @@ void VertCoord::computePressure(
           const I4 KMax  = LocMaxLayerCell(ICell);
           const I4 Range = KMax - KMin + 1;
 
-          PressureInterface(ICell, KMin) = SurfacePressure(ICell);
-          Kokkos::parallel_scan(
-              TeamThreadRange(Member, Range),
-              [=](int K, Real &Accum, bool IsFinal) {
-                 const I4 KLyr  = K + KMin;
-                 Real Increment = Gravity * Rho0 * LayerThickness(ICell, KLyr);
-                 Accum += Increment;
+          LocPressInterf(ICell, KMin) = SurfacePressure(ICell);
+          Kokkos::parallel_scan(TeamThreadRange(Member, Range),
+                                [=](int K, Real &Accum, bool IsFinal) {
+                                   const I4 KLyr  = K + KMin;
+                                   Real Increment = Gravity * LocRho0 *
+                                                    LayerThickness(ICell, KLyr);
+                                   Accum += Increment;
 
-                 if (IsFinal) {
-                    PressureInterface(ICell, KLyr + 1) =
-                        SurfacePressure(ICell) + Accum;
-                    PressureMid(ICell, KLyr) =
-                        SurfacePressure(ICell) + Accum - 0.5 * Increment;
-                 }
-              });
+                                   if (IsFinal) {
+                                      LocPressInterf(ICell, KLyr + 1) =
+                                          SurfacePressure(ICell) + Accum;
+                                      LocPressMid(ICell, KLyr) =
+                                          SurfacePressure(ICell) + Accum -
+                                          0.5 * Increment;
+                                   }
+                                });
        });
 } // end computePressure
 
@@ -646,17 +723,16 @@ void VertCoord::computePressure(
 // sum in each column to compute z from the bottom-most active layer to the
 // top-most active layer
 void VertCoord::computeZHeight(
-    const Array2DReal &ZInterface,     // [out] Z coord at layer interfaces
-    const Array2DReal &ZMid,           // [out] Z coord at layer midpoints
     const Array2DReal &LayerThickness, // [in] pseudo thickness
-    const Array2DReal &SpecVol,        // [in] specific volume
-    const Array1DReal &BottomDepth     // [in] bottom depth
+    const Array2DReal &SpecVol         // [in] specific volume
 ) {
 
-   Real Rho0 = 1035._Real; // reference density
-
+   OMEGA_SCOPE(LocRho0, Rho0);
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+   OMEGA_SCOPE(LocZInterf, ZInterface);
+   OMEGA_SCOPE(LocZMid, ZMid);
+   OMEGA_SCOPE(LocBotDepth, BottomDepth);
 
    const auto Policy = TeamPolicy(NCellsAll, OMEGA_TEAMSIZE, 1);
    Kokkos::parallel_for(
@@ -666,17 +742,18 @@ void VertCoord::computeZHeight(
           const I4 KMax  = LocMaxLayerCell(ICell);
           const I4 Range = KMax - KMin + 1;
 
-          ZInterface(ICell, KMax + 1) = -BottomDepth(ICell);
+          LocZInterf(ICell, KMax + 1) = -LocBotDepth(ICell);
           Kokkos::parallel_scan(
               TeamThreadRange(Member, Range),
               [=](int K, Real &Accum, bool IsFinal) {
                  const I4 KLyr = KMax - K;
-                 Real DZ =
-                     Rho0 * SpecVol(ICell, KLyr) * LayerThickness(ICell, KLyr);
+                 Real DZ       = LocRho0 * SpecVol(ICell, KLyr) *
+                           LayerThickness(ICell, KLyr);
                  Accum += DZ;
                  if (IsFinal) {
-                    ZInterface(ICell, KLyr) = -BottomDepth(ICell) + Accum;
-                    ZMid(ICell, KLyr) = -BottomDepth(ICell) + Accum - 0.5 * DZ;
+                    LocZInterf(ICell, KLyr) = -LocBotDepth(ICell) + Accum;
+                    LocZMid(ICell, KLyr) =
+                        -LocBotDepth(ICell) + Accum - 0.5 * DZ;
                  }
               });
        });
@@ -689,8 +766,6 @@ void VertCoord::computeZHeight(
 // and SAL are configurable, default-off features. When off these arrays will
 // just be zeroes.
 void VertCoord::computeGeopotential(
-    const Array2DReal &GeopotentialMid,      // [out] geopotential
-    const Array2DReal &ZMid,                 // [in] Z coord at layer midpoints
     const Array1DReal &TidalPotential,       // [in] tidal potential
     const Array1DReal &SelfAttractionLoading // [in] self attraction and loading
 ) {
@@ -699,6 +774,8 @@ void VertCoord::computeGeopotential(
 
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+   OMEGA_SCOPE(LocGeopotMid, GeopotentialMid);
+   OMEGA_SCOPE(LocZMid, ZMid);
 
    Kokkos::parallel_for(
        "computeGeopotential", TeamPolicy(NCellsAll, OMEGA_TEAMSIZE),
@@ -716,10 +793,10 @@ void VertCoord::computeGeopotential(
                  const I4 KLen =
                      KEnd > KMax + 1 ? KMax + 1 - KStart : VecLength;
                  for (int KVec = 0; KVec < KLen; ++KVec) {
-                    const I4 K                = KStart + KVec;
-                    GeopotentialMid(ICell, K) = Gravity * ZMid(ICell, K) +
-                                                TidalPotential(ICell) +
-                                                SelfAttractionLoading(ICell);
+                    const I4 K             = KStart + KVec;
+                    LocGeopotMid(ICell, K) = Gravity * LocZMid(ICell, K) +
+                                             TidalPotential(ICell) +
+                                             SelfAttractionLoading(ICell);
                  }
               });
        });
@@ -730,18 +807,17 @@ void VertCoord::computeGeopotential(
 // RefLayerThickness, and VertCoordMovementWeights. Hierarchical parallelsim is
 // used with an outer parallel_for loop over cells, and 2 paralel_reduce
 // reductions and a parallel_for over the active layers within a column.
-void VertCoord::computeTargetThickness(
-    const Array2DReal &LayerThicknessTarget, // [out] desired target thickness
-    const Array2DReal &PressureInterface, // [in] pressure at layer interfaces
-    const Array2DReal &RefLayerThickness, // [in] reference pseudo thickness
-    const Array1DReal &VertCoordMovementWeights // [in] movement weights
-) {
+void VertCoord::computeTargetThickness() {
 
    Real Gravity = 9.80616_Real; // gravitationl acceleration
-   Real Rho0    = 1035._Real;   // reference density
 
+   OMEGA_SCOPE(LocRho0, Rho0);
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+   OMEGA_SCOPE(LocLayerThickTarget, LayerThicknessTarget);
+   OMEGA_SCOPE(LocPressInterf, PressureInterface);
+   OMEGA_SCOPE(LocRefLayerThick, RefLayerThickness);
+   OMEGA_SCOPE(LocVertCoordMvmtWgts, VertCoordMovementWeights);
 
    Kokkos::parallel_for(
        "computeTargetThickness", TeamPolicy(NCellsAll, OMEGA_TEAMSIZE),
@@ -750,26 +826,20 @@ void VertCoord::computeTargetThickness(
           const I4 KMin  = LocMinLayerCell(ICell);
           const I4 KMax  = LocMaxLayerCell(ICell);
 
-          Real Coeff = (PressureInterface(ICell, KMax + 1) -
-                        PressureInterface(ICell, KMin)) /
-                       (Gravity * Rho0);
+          Real Coeff =
+              (LocPressInterf(ICell, KMax + 1) - LocPressInterf(ICell, KMin)) /
+              (Gravity * LocRho0);
 
-          Real SumWh = 0;
-          Kokkos::parallel_reduce(
-              Kokkos::TeamThreadRange(Member, KMin, KMax + 1),
-              [=](const int K, Real &LocalWh) {
-                 LocalWh +=
-                     VertCoordMovementWeights(K) * RefLayerThickness(ICell, K);
-              },
-              SumWh);
-
+          Real SumWh   = 0;
           Real SumRefH = 0;
           Kokkos::parallel_reduce(
               Kokkos::TeamThreadRange(Member, KMin, KMax + 1),
-              [=](const int K, Real &LocalSum) {
-                 LocalSum += RefLayerThickness(ICell, K);
+              [=](const int K, Real &LocalWh, Real &LocalSum) {
+                 const Real RefLayerThick = LocRefLayerThick(ICell, K);
+                 LocalWh += LocVertCoordMvmtWgts(K) * RefLayerThick;
+                 LocalSum += RefLayerThick;
               },
-              SumRefH);
+              SumWh, SumRefH);
           Coeff -= SumRefH;
 
           const I4 KRange  = KMax - KMin + 1;
@@ -784,9 +854,9 @@ void VertCoord::computeTargetThickness(
                      KEnd > KMax + 1 ? KMax + 1 - KStart : VecLength;
                  for (int KVec = 0; KVec < KLen; ++KVec) {
                     const I4 K = KStart + KVec;
-                    LayerThicknessTarget(ICell, K) =
-                        RefLayerThickness(ICell, K) *
-                        (1._Real + Coeff * VertCoordMovementWeights(K) / SumWh);
+                    LocLayerThickTarget(ICell, K) =
+                        LocRefLayerThick(ICell, K) *
+                        (1._Real + Coeff * LocVertCoordMvmtWgts(K) / SumWh);
                  }
               });
        });

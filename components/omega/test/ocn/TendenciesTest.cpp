@@ -9,6 +9,7 @@
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
+#include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OceanTestCommon.h"
@@ -109,14 +110,17 @@ int initTendenciesTest(const std::string &mesh) {
 
    Decomp::init(mesh);
 
+   IOStream::init();
+
    int HaloErr = Halo::init();
    if (HaloErr != 0) {
       Err++;
       LOG_ERROR("TendenciesTest: error initializing default halo");
    }
 
-   VertCoord::init();
+   VertCoord::init1();
    HorzMesh::init();
+   VertCoord::init2();
    Tracers::init();
 
    int StateErr = OceanState::init();
@@ -147,11 +151,12 @@ int testTendencies() {
       return -1;
    }
 
-   const auto Mesh   = HorzMesh::getDefault();
-   const auto VCoord = VertCoord::getDefault();
+   const auto Mesh     = HorzMesh::getDefault();
+   const auto VCoord   = VertCoord::getDefault();
+   VCoord->NVertLayers = 12;
    // test creation of another tendencies
    Config *Options = Config::getOmegaConfig();
-   Tendencies::create("TestTendencies", Mesh, VCoord, 12, 3, Options);
+   Tendencies::create("TestTendencies", Mesh, VCoord, 3, Options);
 
    // test retrievel of another tendencies
    if (Tendencies::get("TestTendencies")) {
@@ -170,6 +175,8 @@ int testTendencies() {
    } else {
       LOG_INFO("TendenciesTest: Non-default tendencies erase PASS");
    }
+
+   VCoord->NVertLayers = NVertLayers;
 
    // put NANs in every tendency variables
    deepCopy(DefTendencies->LayerThicknessTend, NAN);
@@ -219,9 +226,11 @@ int testTendencies() {
 }
 
 void finalizeTendenciesTest() {
+   IOStream::finalize();
    Tracers::clear();
    AuxiliaryState::clear();
    OceanState::clear();
+   VertCoord::clear();
    Field::clear();
    Dimension::clear();
    TimeStepper::clear();

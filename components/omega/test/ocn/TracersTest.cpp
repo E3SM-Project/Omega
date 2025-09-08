@@ -18,6 +18,7 @@
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
+#include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OmegaKokkos.h"
@@ -67,6 +68,9 @@ I4 initTracersTest() {
    // Create the default decomposition (initializes the decomposition)
    Decomp::init();
 
+   // Initialize streams
+   IOStream::init();
+
    // Initialize the default halo
    Err = Halo::init();
    if (Err != 0) {
@@ -74,11 +78,14 @@ I4 initTracersTest() {
       return Err;
    }
 
-   // Initialize the vertical coordinate
-   VertCoord::init();
+   // Initialize the vertical coordinate (phase 1)
+   VertCoord::init1();
 
    // Initialize the default mesh
    HorzMesh::init();
+
+   // Initialize the vertical coordinate (phase 2)
+   VertCoord::init2();
 
    return 0;
 }
@@ -484,6 +491,7 @@ int main(int argc, char *argv[]) {
                    "data FAIL");
       }
 
+      IOStream::finalize();
       Tracers::clear();
       TimeStepper::clear();
       HorzMesh::clear();
