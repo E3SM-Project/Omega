@@ -84,11 +84,14 @@ int initStateTest() {
    if (Err != 0)
       LOG_ERROR("State: error initializing default halo");
 
-   // Initialize the vertical coordinate
-   VertCoord::init();
+   // Initialize the vertical coordinate (phase 1)
+   VertCoord::init1();
 
    // Initialize the default mesh
    HorzMesh::init();
+
+   // Initialize the vertical coordinate (phase 2)
+   VertCoord::init2();
 
    // Initialize tracers
    Tracers::init();

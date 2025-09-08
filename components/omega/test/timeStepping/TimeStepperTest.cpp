@@ -24,6 +24,7 @@
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
+#include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OceanState.h"
@@ -169,6 +170,8 @@ int initTimeStepperTest(const std::string &mesh) {
 
    Decomp::init(mesh);
 
+   IOStream::init();
+
    int HaloErr = Halo::init();
    if (HaloErr != 0) {
       Err++;
@@ -176,7 +179,7 @@ int initTimeStepperTest(const std::string &mesh) {
    }
 
    // Initialize the vertical coordinate and reset NVertLayers to 1
-   VertCoord::init();
+   VertCoord::init1();
    auto *DefVertCoord        = VertCoord::getDefault();
    DefVertCoord->NVertLayers = 1;
    Dimension::destroy("NVertLayers");
@@ -184,6 +187,7 @@ int initTimeStepperTest(const std::string &mesh) {
        Dimension::create("NVertLayers", NVertLayers);
 
    HorzMesh::init();
+   VertCoord::init2();
    Tracers::init();
    AuxiliaryState::init();
    Tendencies::init();
@@ -281,7 +285,7 @@ void timeLoop(TimeInstant TimeStart, Real TimeEnd) {
 }
 
 void finalizeTimeStepperTest() {
-
+   IOStream::finalize();
    Tracers::clear();
    TimeStepper::clear();
    Tendencies::clear();

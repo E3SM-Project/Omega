@@ -22,10 +22,12 @@
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
+#include "IOStream.h"
 #include "Logging.h"
 #include "OceanTestCommon.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
+#include "TimeStepper.h"
 #include "VertCoord.h"
 #include "mpi.h"
 
@@ -1010,6 +1012,8 @@ void initTendTest(const std::string &MeshFile, int NVertLayers) {
    Config("Omega");
    Config::readAll("omega.yml");
 
+   TimeStepper::init1();
+
    I4 IOErr = IO::init(DefComm);
    if (IOErr != 0) {
       ABORT_ERROR("TendencyTermsTest: error initializing parallel IO");
@@ -1017,12 +1021,14 @@ void initTendTest(const std::string &MeshFile, int NVertLayers) {
 
    Decomp::init(MeshFile);
 
+   IOStream::init();
+
    int HaloErr = Halo::init();
    if (HaloErr != 0) {
       ABORT_ERROR("TendencyTermsTest: error initializing default halo");
    }
 
-   VertCoord::init();
+   VertCoord::init1();
 
    // Reset NVertLayers to the test value
    auto *DefVertCoord        = VertCoord::getDefault();
@@ -1033,10 +1039,13 @@ void initTendTest(const std::string &MeshFile, int NVertLayers) {
 
    HorzMesh::init();
 
+   VertCoord::init2();
+
 } // end initTendTest
 
 void finalizeTendTest() {
-
+   IOStream::finalize();
+   TimeStepper::clear();
    HorzMesh::clear();
    VertCoord::clear();
    Dimension::clear();
