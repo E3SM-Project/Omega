@@ -827,22 +827,16 @@ void VertCoord::computeTargetThickness(
                         PressureInterface(ICell, KMin)) /
                        (Gravity * LocRho0);
 
-          Real SumWh = 0;
-          Kokkos::parallel_reduce(
-              Kokkos::TeamThreadRange(Member, KMin, KMax + 1),
-              [=](const int K, Real &LocalWh) {
-                 LocalWh +=
-                     VertCoordMovementWeights(K) * RefLayerThickness(ICell, K);
-              },
-              SumWh);
-
+          Real SumWh   = 0;
           Real SumRefH = 0;
           Kokkos::parallel_reduce(
               Kokkos::TeamThreadRange(Member, KMin, KMax + 1),
-              [=](const int K, Real &LocalSum) {
-                 LocalSum += RefLayerThickness(ICell, K);
+              [=](const int K, Real &LocalWh, Real &LocalSum) {
+                 const Real RefLayerThick = RefLayerThickness(ICell, K);
+                 LocalWh += VertCoordMovementWeights(K) * RefLayerThick;
+                 LocalSum += RefLayerThick;
               },
-              SumRefH);
+              SumWh, SumRefH);
           Coeff -= SumRefH;
 
           const I4 KRange  = KMax - KMin + 1;
