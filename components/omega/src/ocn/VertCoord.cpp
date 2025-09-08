@@ -286,7 +286,7 @@ void VertCoord::defineFields() {
 
    NDims = 2;
    DimNames.resize(NDims);
-   DimNames[1] = "NVertLayers";
+   DimNames[1] = "NVertLayersP1";
 
    auto PressureInterfaceField = Field::create(
        PressInterfFldName,                      // field name
@@ -300,18 +300,6 @@ void VertCoord::defineFields() {
        DimNames                                 // dimension names
    );
 
-   auto PressureMidField = Field::create(
-       PressMidFldName,                        // field name
-       "Pressure at vertical layer midpoints", // long name or description
-       "Pa",                                   // units
-       "sea_water_pressure",                   // CF standard Name
-       0.0,                                    // min valid value
-       std::numeric_limits<Real>::max(),       // max valid value
-       FillValueReal,                          // scalar for undefined entries
-       NDims,                                  // number of dimensions
-       DimNames                                // dimension names
-   );
-
    auto ZInterfaceField = Field::create(
        ZInterfFldName,                               // field name
        "Cartesian Z coordinate at layer interfaces", // long name or description
@@ -322,6 +310,20 @@ void VertCoord::defineFields() {
        FillValueReal, // scalar for undefined entries
        NDims,         // number of dimensions
        DimNames       // dimension names
+   );
+
+   DimNames[1] = "NVertLayers";
+
+   auto PressureMidField = Field::create(
+       PressMidFldName,                        // field name
+       "Pressure at vertical layer midpoints", // long name or description
+       "Pa",                                   // units
+       "sea_water_pressure",                   // CF standard Name
+       0.0,                                    // min valid value
+       std::numeric_limits<Real>::max(),       // max valid value
+       FillValueReal,                          // scalar for undefined entries
+       NDims,                                  // number of dimensions
+       DimNames                                // dimension names
    );
 
    auto ZMidField = Field::create(
