@@ -25,7 +25,6 @@
 #include "mpi.h"
 
 #include <algorithm>
-#include <iostream>
 
 using namespace OMEGA;
 

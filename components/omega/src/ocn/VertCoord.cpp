@@ -158,8 +158,8 @@ void VertCoord::completeSetup(Config *Options //< [in] configuration options
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
    parallelFor(
        {NCellsAll}, KOKKOS_LAMBDA(int ICell) {
-          MinLayerCell(ICell) -= 1;
-          MaxLayerCell(ICell) -= 1;
+          LocMinLayerCell(ICell) -= 1;
+          LocMaxLayerCell(ICell) -= 1;
        });
 
    // Compute Edge and Vertex vertical ranges
