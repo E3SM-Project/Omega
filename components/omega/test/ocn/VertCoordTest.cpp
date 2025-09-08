@@ -401,8 +401,7 @@ int main(int argc, char *argv[]) {
       auto &MovementWgts = DefVertCoord->VertCoordMovementWeights;
       parallelFor(
           {NVertLayers}, KOKKOS_LAMBDA(int K) { MovementWgts(K) = 0.0; });
-      parallelFor(
-          {1}, KOKKOS_LAMBDA(const int &) { MovementWgts(0) = 1.0; });
+      parallelFor({1}, KOKKOS_LAMBDA(const int &) { MovementWgts(0) = 1.0; });
       Kokkos::fence();
 
       /// Call functions and get host copy of output
