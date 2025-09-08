@@ -276,7 +276,7 @@ void VertCoord::defineFields() {
        "Depth of the bottom of the ocean. Given as a positive distance from"
        "sea level",                      // long name or description
        "m",                              // units
-       "",                               // CF standard Name
+       "sea_floor_depth_below_geoid",    // CF standard Name
        0.0,                              // min valid value
        std::numeric_limits<Real>::max(), // max valid value
        FillValueReal,                    // scalar for undefined entries
