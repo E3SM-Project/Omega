@@ -122,9 +122,13 @@ int IOStream::finalize(
 // Finalize with no clock
 int IOStream::finalize(void) {
 
+   int Err = 0;
+
    // Create an empty dummy clock
    Clock *ModelClock = new Clock;
-   finalize(ModelClock);
+   Err               = finalize(ModelClock);
+
+   return Err;
 
 } // End finalize(void)
 
