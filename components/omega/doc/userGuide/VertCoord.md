@@ -25,8 +25,8 @@ Multiple instances of the vertical coordinate class can be created and accessed 
 | ------------- | ----------- | ----- |
 | NVertLayers   | maximum number of vertical layers | - |
 | NVertLayersP1 | maximum number of vertical layers plus 1 | - |
-| PressureInterface | pressure at layer interfaces | pressure per unit area at layer interfaces | kg m/s$^2$ |
-| PressureMid | pressure at layer mid points | pressure per unit area at layer mid point | kg m/s$^2$ |
+| PressureInterface | pressure at layer interfaces | force per unit area at layer interfaces | kg m$^{-1}$ s$^{-2}$ |
+| PressureMid | pressure at layer mid points | force per unit area at layer mid point | kg m$^{-1}$ s$^{-2}$ |
 | ZInterface | z height of layer interfaces | m |
 | ZMid | z height of layer midpoint | m |
 | GeopotentialMid | geopotential at layer mid points | m$^2$/s$^2$|
@@ -42,7 +42,7 @@ Multiple instances of the vertical coordinate class can be created and accessed 
 | MinLayerVertexBot | max of the first active layer for cells on vertex | - |
 | MaxLayerVertexBot | max of the last active layer for cells on vertex | - |
 | VertCoordMovementWeights | weights to specify how total column thickness changes are distributed across layers | - |
-| RefLayerThickness | reference layer thickness used to distributed total column thickness changes | m |
+| RefLayerThickness | reference layer thickness used to distribute total column thickness changes | m |
 | BottomDepth | positive down distance from the reference geoid to the bottom | m |
 
 ### Configuration options
