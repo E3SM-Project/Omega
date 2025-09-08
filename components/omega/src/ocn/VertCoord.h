@@ -155,6 +155,12 @@ class VertCoord {
    void completeSetup(Config *Options /// [in] configuration options
    );
 
+   /// Copy member arrays from device to host
+   void copyToHost();
+
+   /// Copy member arrays from host to device
+   void copyToDevice();
+
    /// Destructor - deallocates all memory and deletes a VertCoord
    ~VertCoord();
 

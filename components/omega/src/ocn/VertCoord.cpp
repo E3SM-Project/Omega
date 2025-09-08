@@ -863,6 +863,32 @@ void VertCoord::computeTargetThickness() {
 }
 
 //------------------------------------------------------------------------------
+// Perform deepCopy for each variable array from device to host
+void VertCoord::copyToHost() {
+
+   deepCopy(PressureInterfaceH, PressureInterface);
+   deepCopy(PressureMidH, PressureMid);
+   deepCopy(ZInterfaceH, ZInterface);
+   deepCopy(ZMidH, ZMid);
+   deepCopy(GeopotentialMidH, GeopotentialMid);
+   deepCopy(LayerThicknessTargetH, LayerThicknessTarget);
+   deepCopy(RefLayerThicknessH, RefLayerThickness);
+}
+
+//------------------------------------------------------------------------------
+// Perform deepCopy for each variable array from host to device
+void VertCoord::copyToDevice() {
+
+   deepCopy(PressureInterface, PressureInterfaceH);
+   deepCopy(PressureMid, PressureMidH);
+   deepCopy(ZInterface, ZInterfaceH);
+   deepCopy(ZMid, ZMidH);
+   deepCopy(GeopotentialMid, GeopotentialMidH);
+   deepCopy(LayerThicknessTarget, LayerThicknessTargetH);
+   deepCopy(RefLayerThickness, RefLayerThicknessH);
+}
+
+//------------------------------------------------------------------------------
 // Get default VertCoord
 VertCoord *VertCoord::getDefault() { return VertCoord::DefaultVertCoord; }
 
