@@ -100,18 +100,20 @@ int initIOStreamTest(Clock *&ModelClock // Model clock
 
    // Set vertical levels and time levels
    I4 NVertLevels = 60;
-   std::shared_ptr<Dimension> VertDim =
-       Dimension::create("NVertLevels", NVertLevels);
+   if (NVertLevels != DefMesh->NVertLevels) {
+      Dimension::destroy("NVertLevels");
+      auto VertDim = Dimension::create("NVertLevels", NVertLevels);
+   }
 
    // Initialize State
    Err1 = OceanState::init();
    TestEval("Ocean state initialization", Err1, ErrRef, Err);
 
-   // Initialize Aux State
-   AuxiliaryState::init();
-
    // Initialize Tracers
    Tracers::init();
+
+   // Initialize Aux State
+   AuxiliaryState::init();
 
    // Add some global (Model and Simulation) metadata
    std::shared_ptr<Field> CodeField = Field::get(CodeMeta);

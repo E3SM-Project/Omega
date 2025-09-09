@@ -219,6 +219,8 @@ void HorzMesh::createDimensions(Decomp *MeshDecomp) {
       auto MaxEdgesDim = Dimension::create("MaxEdges", MaxEdges);
    if (!Dimension::exists("VertexDegree"))
       auto VertexDegreeDim = Dimension::create("VertexDegree", VertexDegree);
+   if (!Dimension::exists("NVertLevels"))
+      auto VertDim = Dimension::create("NVertLevels", NVertLevels);
 
    // For distributed dimensions we need to compute offsets along each
    // dimension (the global offset at each local point with -1 for non-owned
