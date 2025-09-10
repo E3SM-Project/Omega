@@ -5,6 +5,8 @@
 ### Overview
 
 Omega uses pseudo height, $\tilde{z} = \frac{p}{\rho_0 g}$,  as the vertical coordinate ([V1 governing equation document](omega-design-governing-eqns-omega1)).
+In practice, $\tilde{z}$ is not computed directly.
+Instead, the model tracks and evolves the pseudo-thickness, $\tilde{h} = \Delta \tilde{z}$, defined as the difference between adjacent layer interfaces.
 The pseudo height is essentially a normalized pressure coordinate, with the advantage that it has units of meters.
 The `VertCoord` class contains variables and functions relevant to keeping track of:
  - the maximum possible number of layers in a cell, i.e. the extent of the vertical dimension (read in from the mesh file)
@@ -54,6 +56,6 @@ omega:
       MovementWeightType: [Fixed,Uniform]
 ```
 The option `Uniform` specifies that perturbations to the total pseudo-thickness of the water column is distributed evenly to all vertical layers.
-This is similar to the standard "z-star" coordinate in Boussinesq models
+This is similar to the standard "z-star" coordinate in Boussinesq models.
 The option `Fixed` means that total pseudo-thickness perturbations are confined to the top layer, while all others remain constant.
-This is similar to the traditional "z" coordinate in Boussinesq models
+This is similar to the traditional "z" coordinate in Boussinesq models.
