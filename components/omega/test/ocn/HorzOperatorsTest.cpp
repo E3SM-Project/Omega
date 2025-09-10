@@ -6,13 +6,11 @@
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
-#include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OceanTestCommon.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
-#include "TimeStepper.h"
 #include "VertCoord.h"
 #include "mpi.h"
 
@@ -443,8 +441,6 @@ int initOperatorsTest(const std::string &MeshFile) {
    Config("Omega");
    Config::readAll("omega.yml");
 
-   TimeStepper::init1();
-
    int IOErr = IO::init(DefComm);
    if (IOErr != 0) {
       Err++;
@@ -452,8 +448,6 @@ int initOperatorsTest(const std::string &MeshFile) {
    }
 
    Decomp::init(MeshFile);
-
-   IOStream::init();
 
    int HaloErr = Halo::init();
    if (HaloErr != 0) {
@@ -465,14 +459,10 @@ int initOperatorsTest(const std::string &MeshFile) {
 
    HorzMesh::init();
 
-   VertCoord::init2();
-
    return Err;
 }
 
 void finalizeOperatorsTest() {
-   IOStream::finalize();
-   TimeStepper::clear();
    HorzMesh::clear();
    VertCoord::clear();
    Dimension::clear();

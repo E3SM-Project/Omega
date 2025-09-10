@@ -450,40 +450,44 @@ VertCoord::~VertCoord() {
 
    int Err;
 
-   Err = Field::destroy(MinLayerCellFldName);
-   if (Err != 0)
-      LOG_ERROR("Error removing Field {}", MinLayerCellFldName);
-   Err = Field::destroy(MaxLayerCellFldName);
-   if (Err != 0)
-      LOG_ERROR("Error removing Field {}", MaxLayerCellFldName);
-   Err = Field::destroy(BottomDepthFldName);
-   if (Err != 0)
-      LOG_ERROR("Error removing Field {}", BottomDepthFldName);
-   Err = FieldGroup::destroy(InitGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error removing FieldGroup {}", InitGroupName);
+   if (FieldGroup::exists(InitGroupName)) {
+      Err = Field::destroy(MinLayerCellFldName);
+      if (Err != 0)
+         LOG_ERROR("Error removing Field {}", MinLayerCellFldName);
+      Err = Field::destroy(MaxLayerCellFldName);
+      if (Err != 0)
+         LOG_ERROR("Error removing Field {}", MaxLayerCellFldName);
+      Err = Field::destroy(BottomDepthFldName);
+      if (Err != 0)
+         LOG_ERROR("Error removing Field {}", BottomDepthFldName);
+      Err = FieldGroup::destroy(InitGroupName);
+      if (Err != 0)
+         LOG_ERROR("Error removing FieldGroup {}", InitGroupName);
+   }
 
-   Err = Field::destroy(PressInterfFldName);
-   if (Err != 0)
-      LOG_ERROR("Error removing Field {}", PressInterfFldName);
-   Err = Field::destroy(PressMidFldName);
-   if (Err != 0)
-      LOG_ERROR("Error removing Field {}", PressMidFldName);
-   Err = Field::destroy(ZInterfFldName);
-   if (Err != 0)
-      LOG_ERROR("Error removing Field {}", ZInterfFldName);
-   Err = Field::destroy(ZMidFldName);
-   if (Err != 0)
-      LOG_ERROR("Error removing Field {}", ZMidFldName);
-   Err = Field::destroy(GeopotFldName);
-   if (Err != 0)
-      LOG_ERROR("Error removing Field {}", GeopotFldName);
-   Err = Field::destroy(LyrThickTargetFldName);
-   if (Err != 0)
-      LOG_ERROR("Error removing Field {}", LyrThickTargetFldName);
-   Err = FieldGroup::destroy(GroupName);
-   if (Err != 0)
-      LOG_ERROR("Error removing FieldGroup {}", GroupName);
+   if (FieldGroup::exists(GroupName)) {
+      Err = Field::destroy(PressInterfFldName);
+      if (Err != 0)
+         LOG_ERROR("Error removing Field {}", PressInterfFldName);
+      Err = Field::destroy(PressMidFldName);
+      if (Err != 0)
+         LOG_ERROR("Error removing Field {}", PressMidFldName);
+      Err = Field::destroy(ZInterfFldName);
+      if (Err != 0)
+         LOG_ERROR("Error removing Field {}", ZInterfFldName);
+      Err = Field::destroy(ZMidFldName);
+      if (Err != 0)
+         LOG_ERROR("Error removing Field {}", ZMidFldName);
+      Err = Field::destroy(GeopotFldName);
+      if (Err != 0)
+         LOG_ERROR("Error removing Field {}", GeopotFldName);
+      Err = Field::destroy(LyrThickTargetFldName);
+      if (Err != 0)
+         LOG_ERROR("Error removing Field {}", LyrThickTargetFldName);
+      Err = FieldGroup::destroy(GroupName);
+      if (Err != 0)
+         LOG_ERROR("Error removing FieldGroup {}", GroupName);
+   }
 
 } // end destructor
 

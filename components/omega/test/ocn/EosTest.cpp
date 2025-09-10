@@ -15,13 +15,11 @@
 #include "Decomp.h"
 #include "Dimension.h"
 #include "IO.h"
-#include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OceanTestCommon.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
-#include "TimeStepper.h"
 #include "mpi.h"
 
 // added for debug
@@ -70,9 +68,6 @@ I4 initEosTest(const std::string &mesh) {
    Config("Omega");
    Config::readAll("omega.yml");
 
-   // First step of time stepper initialization needed for IOstream
-   TimeStepper::init1();
-
    /// Initialize parallel IO
    int IOErr = IO::init(DefComm);
    if (IOErr != 0) {
@@ -83,17 +78,11 @@ I4 initEosTest(const std::string &mesh) {
    /// Initialize decomposition
    Decomp::init(mesh);
 
-   /// Initialize streams
-   IOStream::init();
-
    /// Initialize vertical coordinate (phase 1)
    VertCoord::init1();
 
    /// Initialize mesh
    HorzMesh::init();
-
-   /// Initialize vertical coordinate (phase 2)
-   VertCoord::init2();
 
    /// Initialize Eos
    Eos::init();
@@ -301,8 +290,6 @@ int testEosTeos10Displaced() {
 
 /// Finalize and clean up all test infrastructure
 void finalizeEosTest() {
-   IOStream::finalize();
-   TimeStepper::clear();
    HorzMesh::clear();
    VertCoord::clear();
    Decomp::clear();

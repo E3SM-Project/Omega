@@ -16,12 +16,10 @@
 #include "Error.h"
 #include "Halo.h"
 #include "IO.h"
-#include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
-#include "TimeStepper.h"
 #include "VertCoord.h"
 #include "mpi.h"
 
@@ -51,9 +49,6 @@ int initHorzMeshTest() {
    Config("Omega");
    Config::readAll("omega.yml");
 
-   // First step of time stepper initialization needed for IOstream
-   TimeStepper::init1();
-
    // Initialize the IO system
    Err = IO::init(DefComm);
    if (Err != 0)
@@ -61,9 +56,6 @@ int initHorzMeshTest() {
 
    // Create the default decomposition (initializes the decomposition)
    Decomp::init();
-
-   // Initialize streams
-   IOStream::init();
 
    // Initialize the default halo
    Err = Halo::init();
@@ -75,9 +67,6 @@ int initHorzMeshTest() {
 
    // Initialize the default mesh
    HorzMesh::init();
-
-   // Initialize the vertical coordinate (phase 2)
-   VertCoord::init2();
 
    return Err;
 }

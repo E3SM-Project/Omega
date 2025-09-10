@@ -9,7 +9,6 @@
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
-#include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OceanTestCommon.h"
@@ -110,8 +109,6 @@ int initTendenciesTest(const std::string &mesh) {
 
    Decomp::init(mesh);
 
-   IOStream::init();
-
    int HaloErr = Halo::init();
    if (HaloErr != 0) {
       Err++;
@@ -120,7 +117,6 @@ int initTendenciesTest(const std::string &mesh) {
 
    VertCoord::init1();
    HorzMesh::init();
-   VertCoord::init2();
    Tracers::init();
 
    int StateErr = OceanState::init();
@@ -226,7 +222,6 @@ int testTendencies() {
 }
 
 void finalizeTendenciesTest() {
-   IOStream::finalize();
    Tracers::clear();
    AuxiliaryState::clear();
    OceanState::clear();
