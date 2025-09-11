@@ -88,8 +88,7 @@ int initIOStreamTest(Clock *&ModelClock // Model clock
    OMEGA::Halo *DefHalo = OMEGA::Halo::getDefault();
 
    // Initialize Field
-   Err1 = Field::init(ModelClock);
-   TestEval("IO Field initialization", Err1, ErrRef, Err);
+   Field::init(ModelClock);
 
    // Initialize IOStreams
    IOStream::init(ModelClock);
@@ -119,22 +118,15 @@ int initIOStreamTest(Clock *&ModelClock // Model clock
    std::shared_ptr<Field> CodeField = Field::get(CodeMeta);
    std::shared_ptr<Field> SimField  = Field::get(SimMeta);
 
-   Err1 = CodeField->addMetadata("CodeIntTest", 3);
-   TestEval("Add code metadata int", Err1, ErrRef, Err);
-   Err1 = CodeField->addMetadata("CodeRealTest", 4.567);
-   TestEval("Add code metadata real", Err1, ErrRef, Err);
-   Err1 = CodeField->addMetadata("CodeBoolTest", true);
-   TestEval("Add code metadata bool", Err1, ErrRef, Err);
+   CodeField->addMetadata("CodeIntTest", 3);
+   CodeField->addMetadata("CodeRealTest", 4.567);
+   CodeField->addMetadata("CodeBoolTest", true);
    std::string CodeStrVal = "ASampleString";
-   Err1                   = CodeField->addMetadata("CodeStrTest", CodeStrVal);
-   TestEval("Add code metadata str", Err1, ErrRef, Err);
-   Err1 = CodeField->addMetadata("CodeVersion", "V0.0");
-   TestEval("Add code metadata str literal", Err1, ErrRef, Err);
-   Err1 = SimField->addMetadata("ExpName", "IOStreamsTest");
-   TestEval("Add ExpName metadata", Err1, ErrRef, Err);
+   CodeField->addMetadata("CodeStrTest", CodeStrVal);
+   CodeField->addMetadata("CodeVersion", "V0.0");
+   SimField->addMetadata("ExpName", "IOStreamsTest");
    std::string StartTimeStr = SimStartTime.getString(4, 2, "_");
-   Err1 = SimField->addMetadata("SimStartTime", StartTimeStr);
-   TestEval("Add SimStartTime metadata", Err1, ErrRef, Err);
+   SimField->addMetadata("SimStartTime", StartTimeStr);
 
    // Validate all streams (Mesh stream already validated in HorzMesh?)
    bool AllValidated = IOStream::validateAll();

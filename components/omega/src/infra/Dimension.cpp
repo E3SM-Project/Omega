@@ -144,13 +144,11 @@ void Dimension::clear() { AllDims.clear(); }
 std::shared_ptr<Dimension>
 Dimension::get(const std::string &Name // [in] Name of dimension
 ) {
-   if (exists(Name)) {
-      return AllDims[Name];
-   } else {
+   if (!exists(Name))
       ABORT_ERROR("Cannot retrieve dimension {}: dimension does not exist.",
                   Name);
-      return nullptr;
-   }
+
+   return AllDims[Name];
 
 } // end get full dimension instance
 

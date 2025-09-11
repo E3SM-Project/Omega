@@ -67,11 +67,7 @@ int initStateTest() {
    IOStream::init(ModelClock);
 
    // Initialize Field infrastructure
-   Err = Field::init(ModelClock);
-   if (Err != 0) {
-      LOG_CRITICAL("State: Error initializing Fields");
-      return Err;
-   }
+   Field::init(ModelClock);
 
    // Create the default decomposition (initializes the decomposition)
    Decomp::init();
