@@ -150,9 +150,9 @@ class IOStream {
    /// options in the input model configuration. This routine is called by
    /// the IOStreams initialize function. It requires an initialized model
    /// clock so that stream alarm can be attached to this clock during creation.
-   static Error create(const std::string &StreamName, ///< [in] name of stream
-                       Config &StreamConfig, ///< [in] stream configuration
-                       Clock *&ModelClock    ///< [inout] Omega model clock
+   static int create(const std::string &StreamName, ///< [in] name of stream
+                     Config &StreamConfig, ///< [in] stream configuration
+                     Clock *&ModelClock    ///< [inout] Omega model clock
    );
 
    /// Define all dimensions used. Returns an error code as well as a map
@@ -188,16 +188,16 @@ class IOStream {
 
    /// Private function that performs most of the stream write - called by the
    /// public write method
-   int writeStream(
+   void writeStream(
        const Clock *ModelClock, ///< [in] Model clock for alarms, time stamp
        bool ForceWrite = false, ///< [in] Optional: write even if not time
        bool FinalCall  = false  ///< [in] Optional flag for shutdown
    );
 
    /// Write all metadata associated with a field
-   int writeFieldMeta(std::string FieldName, ///< [in] metadata from field;
-                      int FileID,            ///< [in] id assigned to open file
-                      int FieldID            ///< [in] id assigned to the field
+   void writeFieldMeta(std::string FieldName, ///< [in] metadata from field;
+                       int FileID,            ///< [in] id assigned to open file
+                       int FieldID            ///< [in] id assigned to the field
    );
 
    /// Write a field's data array, performing any manipulations to reduce
@@ -269,7 +269,7 @@ class IOStream {
    //---------------------------------------------------------------------------
    /// Performs a final write of any streams that have the OnShutdown option and
    /// then removes all streams to clean up. Returns an error code.
-   static int
+   static void
    finalize(const Clock *ModelClock ///< [in] Model clock needed for time stamps
    );
 
@@ -322,8 +322,8 @@ class IOStream {
    );
 
    //---------------------------------------------------------------------------
-   /// Writes a stream if it is time. Returns an error code.
-   static int
+   /// Writes a stream if it is time.
+   static void
    write(const std::string &StreamName, ///< [in] Name of stream
          const Clock *ModelClock,       ///< [in] Model clock for time stamps
          bool ForceWrite = false        ///< [in] opt: write even if not time
@@ -332,7 +332,7 @@ class IOStream {
    //---------------------------------------------------------------------------
    /// Loops through all streams and writes them if it is time. This is
    /// useful if most I/O is consolidated at one point (eg end of step).
-   static int
+   static void
    writeAll(const Clock *ModelClock ///< [in] Model clock for time stamps
    );
 

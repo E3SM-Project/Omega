@@ -60,9 +60,7 @@ int initStateTest() {
    Clock *ModelClock       = DefStepper->getClock();
 
    // Initialize the IO system
-   Err = IO::init(DefComm);
-   if (Err != 0)
-      LOG_ERROR("State: error initializing parallel IO");
+   IO::init(DefComm);
 
    // Initialize IOStreams - this does not yet validate the contents
    // of each file, only creates streams from Config

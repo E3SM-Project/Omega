@@ -68,11 +68,7 @@ I4 initEosTest(const std::string &mesh) {
    Config::readAll("omega.yml");
 
    /// Initialize parallel IO
-   int IOErr = IO::init(DefComm);
-   if (IOErr != 0) {
-      Err++;
-      LOG_ERROR("EosTest: error initializing parallel IO");
-   }
+   IO::init(DefComm);
 
    /// Initialize decomposition
    Decomp::init(mesh);

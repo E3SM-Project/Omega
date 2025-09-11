@@ -11,6 +11,12 @@ Omega:
   Decomp:
     HaloWidth: 3
     DecompMethod: MetisKWay
+  IO:
+    IOTasks:  1
+    IOStride: 1
+    IOBaseTask: 0
+    IORearranger: box
+    IODefaultFormat: NetCDF4
   State:
     NTimeLevels: 2
   Advection:

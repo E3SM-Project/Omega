@@ -177,7 +177,7 @@ Error Config::get(const std::string &VarName, // [in] name of variable to get
    if (Node[VarName]) { // the variable exists
       Value = Node[VarName].as<I4>();
    } else {
-      Value = -999;
+      // Do not modify value if not found to preserve any default value set
       RETURN_ERROR(Err, ErrorCode::Fail,
                    "Config get I4: could not find variable {}", VarName);
    }
@@ -197,7 +197,7 @@ Error Config::get(const std::string &VarName, // [in] name of variable to get
    if (Node[VarName]) { // the variable exists
       Value = Node[VarName].as<I8>();
    } else {
-      Value = -999;
+      // Do not modify value if not found to preserve any default value set
       RETURN_ERROR(Err, ErrorCode::Fail,
                    "Config get I8: could not find variable {}", VarName);
    }
@@ -217,7 +217,7 @@ Error Config::get(const std::string &VarName, // [in] name of variable to get
    if (Node[VarName]) { // the variable exists
       Value = Node[VarName].as<R4>();
    } else {
-      Value = -999.999;
+      // Do not modify value if not found to preserve any default value set
       RETURN_ERROR(Err, ErrorCode::Fail,
                    "Config get R4: could not find variable {}", VarName);
    }
@@ -237,7 +237,7 @@ Error Config::get(const std::string &VarName, // [in] name of variable to get
    if (Node[VarName]) { // the variable exists
       Value = Node[VarName].as<R8>();
    } else {
-      Value = -99999.999;
+      // Do not modify value if not found to preserve any default value set
       RETURN_ERROR(Err, ErrorCode::Fail,
                    "Config get R8: could not find variable {}", VarName);
    }
@@ -257,7 +257,7 @@ Error Config::get(const std::string &VarName, // [in] name of variable to get
    if (Node[VarName]) { // the variable exists
       Value = Node[VarName].as<bool>();
    } else {
-      Value = false;
+      // Do not modify value if not found to preserve any default value set
       RETURN_ERROR(Err, ErrorCode::Fail,
                    "Config get bool: could not find variable {}", VarName);
    }
@@ -278,7 +278,7 @@ Error Config::get(const std::string &VarName, // [in] name of variable to get
    if (Node[VarName]) { // the variable exists
       Value = Node[VarName].as<std::string>();
    } else {
-      Value = "ConfigError";
+      // Do not modify value if not found to preserve any default value set
       RETURN_ERROR(Err, ErrorCode::Fail,
                    "Config get string: could not find variable {}", VarName);
    }

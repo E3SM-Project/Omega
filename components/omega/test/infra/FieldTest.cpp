@@ -59,17 +59,15 @@ int initFieldTest() {
    MachEnv *DefEnv = MachEnv::getDefault();
    initLogging(DefEnv);
    MPI_Comm DefComm = DefEnv->getComm();
-   Err              = IO::init(DefComm);
-   if (Err != 0) {
-      LOG_ERROR("IO initialization failed");
-      return Err;
-   }
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
 
    // Open config file
    OMEGA::Config("Omega");
    OMEGA::Config::readAll("omega.yml");
+
+   // Initialize parallel IO
+   IO::init(DefComm);
 
    // Initialize decomposition
    Decomp::init();

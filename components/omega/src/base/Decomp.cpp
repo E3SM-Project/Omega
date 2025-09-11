@@ -123,7 +123,7 @@ void readMesh(const int MeshFileID, // file ID for open mesh file
               std::vector<I4> &EdgesOnVertexInit   // edges meeting at each vrtx
 ) {
 
-   int Err = 0;
+   Error Err; // error code for IO calls
 
    // Retrieve some info on the MPI layout
    MPI_Comm Comm = InEnv->getComm();
@@ -137,52 +137,59 @@ void readMesh(const int MeshFileID, // file ID for open mesh file
    std::string DimNameOld = "nCells";
    I4 NCellsID;
    Err = IO::getDimFromFile(MeshFileID, DimName, NCellsID, NCellsGlobal);
-   if (Err != 0) { // dim not found, try again with older MPAS name
+   if (Err.isFail()) { // dim not found, try again with older MPAS name
       Err = IO::getDimFromFile(MeshFileID, DimNameOld, NCellsID, NCellsGlobal);
-      if (Err != 0 or NCellsGlobal <= 0)
-         ABORT_ERROR("Decomp: error reading nCells");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading nCells");
+      if (NCellsGlobal <= 0)
+         ABORT_ERROR("Decomp: Bad NCells ({}) read from file", NCellsGlobal);
    }
 
    DimName    = "NEdges";
    DimNameOld = "nEdges";
    I4 NEdgesID;
    Err = IO::getDimFromFile(MeshFileID, DimName, NEdgesID, NEdgesGlobal);
-   if (Err != 0) { // dim not found, try again with older MPAS name
+   if (Err.isFail()) { // dim not found, try again with older MPAS name
       Err = IO::getDimFromFile(MeshFileID, DimNameOld, NEdgesID, NEdgesGlobal);
-      if (Err != 0 or NEdgesGlobal <= 0)
-         ABORT_ERROR("Decomp: error reading NEdges");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading NEdges");
+      if (NEdgesGlobal <= 0)
+         ABORT_ERROR("Decomp: Bad NEdges ({}) read from file", NEdgesGlobal);
    }
 
    DimName    = "NVertices";
    DimNameOld = "nVertices";
    I4 NVerticesID;
    Err = IO::getDimFromFile(MeshFileID, DimName, NVerticesID, NVerticesGlobal);
-   if (Err != 0) { // dim not found, try again with older MPAS name
+   if (Err.isFail()) { // dim not found, try again with older MPAS name
       Err = IO::getDimFromFile(MeshFileID, DimNameOld, NVerticesID,
                                NVerticesGlobal);
-      if (Err != 0 or NVerticesGlobal <= 0)
-         ABORT_ERROR("Decomp: error reading NVertices");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading NVertices");
+      if (NVerticesGlobal <= 0)
+         ABORT_ERROR("Decomp: Bad NVertices ({}) read from file",
+                     NVerticesGlobal);
    }
 
    DimName    = "MaxEdges";
    DimNameOld = "maxEdges";
    I4 MaxEdgesID;
    Err = IO::getDimFromFile(MeshFileID, DimName, MaxEdgesID, MaxEdges);
-   if (Err != 0) { // dim not found, try again with older MPAS name
+   if (Err.isFail()) { // dim not found, try again with older MPAS name
       Err = IO::getDimFromFile(MeshFileID, DimNameOld, MaxEdgesID, MaxEdges);
-      if (Err != 0 or MaxEdges <= 0)
-         ABORT_ERROR("Decomp: error reading MaxEdges");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading MaxEdges");
+      if (MaxEdges <= 0)
+         ABORT_ERROR("Decomp: Bad MaxEdges ({}) read from file", MaxEdges);
    }
 
    DimName    = "VertexDegree";
    DimNameOld = "vertexDegree";
    I4 VertexDegreeID;
    Err = IO::getDimFromFile(MeshFileID, DimName, VertexDegreeID, VertexDegree);
-   if (Err != 0) { // dim not found, try again with older MPAS name
+   if (Err.isFail()) { // dim not found, try again with older MPAS name
       Err = IO::getDimFromFile(MeshFileID, DimNameOld, VertexDegreeID,
                                VertexDegree);
-      if (Err != 0 or VertexDegree <= 0)
-         ABORT_ERROR("Decomp: error reading VertexDegree");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading VertexDegree");
+      if (VertexDegree <= 0)
+         ABORT_ERROR("Decomp: Bad VertexDegree ({}) read from file",
+                     VertexDegree);
    }
 
    DimName    = "MaxCellsOnEdge";
@@ -190,11 +197,13 @@ void readMesh(const int MeshFileID, // file ID for open mesh file
    I4 MaxCellsOnEdgeID;
    Err = IO::getDimFromFile(MeshFileID, DimNameOld, MaxCellsOnEdgeID,
                             MaxCellsOnEdge);
-   if (Err != 0) { // dim not found, try again with older MPAS name
+   if (Err.isFail()) { // dim not found, try again with older MPAS name
       Err = IO::getDimFromFile(MeshFileID, DimName, MaxCellsOnEdgeID,
                                MaxCellsOnEdge);
-      if (Err != 0 or MaxCellsOnEdge <= 0)
-         ABORT_ERROR("Decomp: error reading MaxCellsOnEdge");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading MaxCellsOnEdge");
+      if (MaxCellsOnEdge <= 0)
+         ABORT_ERROR("Decomp: Bad MaxCellsOnEdge/TWO ({}) read from file",
+                     MaxCellsOnEdge);
    }
    I4 MaxEdgesOnEdge = 2 * MaxEdges; // 2*MaxCellsOnEdge
 
@@ -269,26 +278,14 @@ void readMesh(const int MeshFileID, // file ID for open mesh file
 
    // Create the parallel IO decompositions
    IO::Rearranger Rearr = IO::RearrBox;
-   I4 OnCellDecomp;
-   I4 OnEdgeDecomp;
-   I4 OnEdgeDecomp2;
-   I4 OnVertexDecomp;
-   Err = IO::createDecomp(OnCellDecomp, IO::IOTypeI4, NDims, OnCellDims,
-                          OnCellSize, OnCellOffset, Rearr);
-   if (Err != 0)
-      ABORT_ERROR("Decomp: error creating OnCell IO decomposition");
-   Err = IO::createDecomp(OnEdgeDecomp, IO::IOTypeI4, NDims, OnEdgeDims,
-                          OnEdgeSize, OnEdgeOffset, Rearr);
-   if (Err != 0)
-      ABORT_ERROR("Decomp: error creating OnEdge IO decomposition");
-   Err = IO::createDecomp(OnEdgeDecomp2, IO::IOTypeI4, NDims, OnEdgeDims2,
-                          OnEdgeSize2, OnEdgeOffset2, Rearr);
-   if (Err != 0)
-      ABORT_ERROR("Decomp: error creating OnEdg2 IO decomposition");
-   Err = IO::createDecomp(OnVertexDecomp, IO::IOTypeI4, NDims, OnVertexDims,
-                          OnVertexSize, OnVertexOffset, Rearr);
-   if (Err != 0)
-      ABORT_ERROR("Decomp: error creating Vertex IO decomposition");
+   I4 OnCellDecomp      = IO::createDecomp(IO::IOTypeI4, NDims, OnCellDims,
+                                           OnCellSize, OnCellOffset, Rearr);
+   I4 OnEdgeDecomp      = IO::createDecomp(IO::IOTypeI4, NDims, OnEdgeDims,
+                                           OnEdgeSize, OnEdgeOffset, Rearr);
+   I4 OnEdgeDecomp2     = IO::createDecomp(IO::IOTypeI4, NDims, OnEdgeDims2,
+                                           OnEdgeSize2, OnEdgeOffset2, Rearr);
+   I4 OnVertexDecomp    = IO::createDecomp(IO::IOTypeI4, NDims, OnVertexDims,
+                                           OnVertexSize, OnVertexOffset, Rearr);
 
    // Now read the connectivity arrays. Try reading under the new Omega
    // name convention and the older MPAS mesh names.
@@ -306,11 +303,10 @@ void readMesh(const int MeshFileID, // file ID for open mesh file
    int CellsOnCellID;
    Err = IO::readArray(&CellsOnCellInit[0], OnCellSize, VarName, MeshFileID,
                        OnCellDecomp, CellsOnCellID);
-   if (Err != 0) { // not found, try again under older name
+   if (Err.isFail()) { // not found, try again under older name
       Err = IO::readArray(&CellsOnCellInit[0], OnCellSize, VarNameOld,
                           MeshFileID, OnCellDecomp, CellsOnCellID);
-      if (Err != 0)
-         ABORT_ERROR("Decomp: error reading CellsOnCell");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading CellsOnCell");
    }
 
    VarName    = "EdgesOnCell";
@@ -318,11 +314,10 @@ void readMesh(const int MeshFileID, // file ID for open mesh file
    int EdgesOnCellID;
    Err = IO::readArray(&EdgesOnCellInit[0], OnCellSize, VarName, MeshFileID,
                        OnCellDecomp, EdgesOnCellID);
-   if (Err != 0) { // not found, try again under older name
+   if (Err.isFail()) { // not found, try again under older name
       Err = IO::readArray(&EdgesOnCellInit[0], OnCellSize, VarNameOld,
                           MeshFileID, OnCellDecomp, EdgesOnCellID);
-      if (Err != 0)
-         ABORT_ERROR("Decomp: error reading EdgesOnCell");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading EdgesOnCell");
    }
 
    VarName    = "VerticesOnCell";
@@ -330,11 +325,10 @@ void readMesh(const int MeshFileID, // file ID for open mesh file
    int VerticesOnCellID;
    Err = IO::readArray(&VerticesOnCellInit[0], OnCellSize, VarName, MeshFileID,
                        OnCellDecomp, VerticesOnCellID);
-   if (Err != 0) { // not found, try again under older name
+   if (Err.isFail()) { // not found, try again under older name
       Err = IO::readArray(&VerticesOnCellInit[0], OnCellSize, VarNameOld,
                           MeshFileID, OnCellDecomp, VerticesOnCellID);
-      if (Err != 0)
-         ABORT_ERROR("Decomp: error reading VerticesOnCell");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading EdgesOnCell");
    }
 
    VarName    = "CellsOnEdge";
@@ -342,11 +336,10 @@ void readMesh(const int MeshFileID, // file ID for open mesh file
    int CellsOnEdgeID;
    Err = IO::readArray(&CellsOnEdgeInit[0], OnEdgeSize, VarName, MeshFileID,
                        OnEdgeDecomp, CellsOnEdgeID);
-   if (Err != 0) { // not found, try again under older name
+   if (Err.isFail()) { // not found, try again under older name
       Err = IO::readArray(&CellsOnEdgeInit[0], OnEdgeSize, VarNameOld,
                           MeshFileID, OnEdgeDecomp, CellsOnEdgeID);
-      if (Err != 0)
-         ABORT_ERROR("Decomp: error reading CellsOnEdge");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading CellsOnEdge");
    }
 
    VarName    = "EdgesOnEdge";
@@ -354,11 +347,10 @@ void readMesh(const int MeshFileID, // file ID for open mesh file
    int EdgesOnEdgeID;
    Err = IO::readArray(&EdgesOnEdgeInit[0], OnEdgeSize2, VarName, MeshFileID,
                        OnEdgeDecomp2, EdgesOnEdgeID);
-   if (Err != 0) { // not found, try again under older name
+   if (Err.isFail()) { // not found, try again under older name
       Err = IO::readArray(&EdgesOnEdgeInit[0], OnEdgeSize2, VarNameOld,
                           MeshFileID, OnEdgeDecomp2, EdgesOnEdgeID);
-      if (Err != 0)
-         ABORT_ERROR("Decomp: error reading EdgesOnEdge");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading EdgesOnEdge");
    }
 
    VarName    = "VerticesOnEdge";
@@ -366,11 +358,10 @@ void readMesh(const int MeshFileID, // file ID for open mesh file
    int VerticesOnEdgeID;
    Err = IO::readArray(&VerticesOnEdgeInit[0], OnEdgeSize, VarName, MeshFileID,
                        OnEdgeDecomp, VerticesOnEdgeID);
-   if (Err != 0) { // not found, try again under older name
+   if (Err.isFail()) { // not found, try again under older name
       Err = IO::readArray(&VerticesOnEdgeInit[0], OnEdgeSize, VarNameOld,
                           MeshFileID, OnEdgeDecomp, VerticesOnEdgeID);
-      if (Err != 0)
-         ABORT_ERROR("Decomp: error reading VerticesOnEdge");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading VerticesOnEdge");
    }
 
    VarName    = "CellsOnVertex";
@@ -378,11 +369,10 @@ void readMesh(const int MeshFileID, // file ID for open mesh file
    int CellsOnVertexID;
    Err = IO::readArray(&CellsOnVertexInit[0], OnVertexSize, VarName, MeshFileID,
                        OnVertexDecomp, CellsOnVertexID);
-   if (Err != 0) { // not found, try again under older name
+   if (Err.isFail()) { // not found, try again under older name
       Err = IO::readArray(&CellsOnVertexInit[0], OnVertexSize, VarNameOld,
                           MeshFileID, OnVertexDecomp, CellsOnVertexID);
-      if (Err != 0)
-         ABORT_ERROR("Decomp: error reading CellsOnVertex");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading CellsOnVertex");
    }
 
    VarName    = "EdgesOnVertex";
@@ -390,28 +380,17 @@ void readMesh(const int MeshFileID, // file ID for open mesh file
    int EdgesOnVertexID;
    Err = IO::readArray(&EdgesOnVertexInit[0], OnVertexSize, VarName, MeshFileID,
                        OnVertexDecomp, EdgesOnVertexID);
-   if (Err != 0) { // not found, try again under older name
+   if (Err.isFail()) { // not found, try again under older name
       Err = IO::readArray(&EdgesOnVertexInit[0], OnVertexSize, VarNameOld,
                           MeshFileID, OnVertexDecomp, EdgesOnVertexID);
-      if (Err != 0)
-         ABORT_ERROR("Decomp: error reading EdgesOnVertex");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading EdgesOnVertex");
    }
 
    // Initial decompositions are no longer needed so remove them now
-   Err = IO::destroyDecomp(OnCellDecomp);
-   if (Err != 0)
-      ABORT_ERROR("Decomp: error destroying OnCell decomposition");
-   Err = IO::destroyDecomp(OnEdgeDecomp);
-   if (Err != 0)
-      ABORT_ERROR("Decomp: error destroying OnEdge decomposition");
-   Err = IO::destroyDecomp(OnEdgeDecomp2);
-   if (Err != 0)
-      ABORT_ERROR("Decomp: error destroying OnEdge2 decomposition");
-   Err = IO::destroyDecomp(OnVertexDecomp);
-   if (Err != 0)
-      ABORT_ERROR("Decomp: error destroying OnVertex decomposition");
-
-   return;
+   IO::destroyDecomp(OnCellDecomp);
+   IO::destroyDecomp(OnEdgeDecomp);
+   IO::destroyDecomp(OnEdgeDecomp2);
+   IO::destroyDecomp(OnVertexDecomp);
 
 } // end readMesh
 
@@ -471,6 +450,7 @@ Decomp::Decomp(
     const std::string &MeshFileName_ //< [in] name of file with mesh info
 ) {
 
+   Error IOErr;
    bool TimerFlag = Pacer::start("Decomp construct");
    int Err        = 0; // internal error code
 
@@ -483,9 +463,7 @@ Decomp::Decomp(
    TimerFlag = Pacer::start("Decomp read mesh") && TimerFlag;
    int FileID;
    MeshFileName = MeshFileName_;
-   Err          = IO::openFile(FileID, MeshFileName, IO::ModeRead);
-   if (Err != 0)
-      ABORT_ERROR("Decomp: error opening mesh file");
+   IO::openFile(FileID, MeshFileName, IO::ModeRead);
 
    // Read mesh size and connectivity information
    std::vector<I4> CellsOnCellInit;
@@ -505,7 +483,7 @@ Decomp::Decomp(
             EdgesOnVertexInit);
 
    // Close file
-   Err       = IO::closeFile(FileID);
+   IO::closeFile(FileID);
    TimerFlag = Pacer::stop("Decomp read mesh") && TimerFlag;
 
    // In the case of single task avoid calling a full partitioning routine and

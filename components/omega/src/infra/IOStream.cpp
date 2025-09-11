@@ -63,11 +63,11 @@ void IOStream::init(Clock *&ModelClock //< [inout] Omega model clock
                         StreamName);
 
       // Call the create routine to create the stream
-      Err = create(StreamName, StreamCfg, ModelClock);
-      CHECK_ERROR_WARN(Err,
-                       "Errors encountered creating stream {}."
-                       "Stream will be ignored",
-                       StreamName);
+      int LocErr = create(StreamName, StreamCfg, ModelClock);
+      if (LocErr != Success)
+         LOG_WARN("Errors encountered creating stream {}."
+                  "Stream will be ignored",
+                  StreamName);
 
    } // end loop over all streams
 
@@ -76,11 +76,10 @@ void IOStream::init(Clock *&ModelClock //< [inout] Omega model clock
 //------------------------------------------------------------------------------
 // Performs a final write of any streams that have the OnShutdown option and
 // then removes all streams to clean up. Returns an error code.
-int IOStream::finalize(
+void IOStream::finalize(
     const Clock *ModelClock // [in] Model clock needed for time stamps
 ) {
 
-   int Err        = 0;
    bool FinalCall = true;
 
    // Loop over all streams and call write function for any write streams
@@ -91,20 +90,15 @@ int IOStream::finalize(
       std::shared_ptr<IOStream> ThisStream = Iter->second;
       bool ForceWrite                      = false;
 
-      int Err1 = 0;
       if (ThisStream->OnShutdown)
-         Err1 = ThisStream->writeStream(ModelClock, ForceWrite, FinalCall);
+         ThisStream->writeStream(ModelClock, ForceWrite, FinalCall);
 
-      if (Err1 != 0) {
-         LOG_ERROR("Error trying to write stream {} at shutdown", StreamName);
-         ++Err;
-      }
    } // end loop over streams
 
    // Remove all streams
    AllStreams.clear();
 
-   return Err;
+   return;
 
 } // End finalize
 
@@ -249,7 +243,7 @@ int IOStream::read(
    } else { // Stream not found
       // The response to this case must be determined by the calling routine
       // since a missing stream might be expected in some cases
-      Err = Fail;
+      Err = -1;
    }
 
    return Err;
@@ -258,37 +252,33 @@ int IOStream::read(
 
 //------------------------------------------------------------------------------
 // Writes a single stream if it is time. Returns an error code.
-int IOStream::write(
+void IOStream::write(
     const std::string &StreamName, // [in] Name of stream
     const Clock *ModelClock,       // [in] Model clock needed for time stamps
     bool ForceWrite                // [in] optional: write even if not time
 ) {
-   int Err = Success; // default return code
 
    // Retrieve stream by name and make sure it exists
    auto StreamItr = AllStreams.find(StreamName);
    if (StreamItr != AllStreams.end()) {
       // Stream found, call the write function
       std::shared_ptr<IOStream> ThisStream = StreamItr->second;
-      Err = ThisStream->writeStream(ModelClock, ForceWrite);
+      ThisStream->writeStream(ModelClock, ForceWrite);
    } else {
       // Stream not found, return error
-      LOG_ERROR("Unable to write stream {}. Stream not defined", StreamName);
-      Err = Fail;
+      ABORT_ERROR("Unable to write stream {}. Stream not defined", StreamName);
    }
 
-   return Err;
+   return;
 
 } // End write stream
 
 //------------------------------------------------------------------------------
 // Loops through all streams and writes them if it is time. This is
 // useful if most I/O is consolidated at one point (eg end of step).
-int IOStream::writeAll(
+void IOStream::writeAll(
     const Clock *ModelClock // [in] Model clock needed for time stamps
 ) {
-
-   int Err = Success; // accumulated error for return value
 
    // Loop over all streams and call write function for any write streams
    for (auto Iter = AllStreams.begin(); Iter != AllStreams.end(); Iter++) {
@@ -296,19 +286,12 @@ int IOStream::writeAll(
       std::string StreamName               = Iter->first;
       std::shared_ptr<IOStream> ThisStream = Iter->second;
 
-      int Err1;
       if (ThisStream->Mode == IO::ModeWrite) {
-         Err1 = ThisStream->writeStream(ModelClock);
-      }
-
-      // check for errors
-      if (Err1 == Fail) {
-         ++Err;
-         LOG_ERROR("writeAll error in stream {}", StreamName);
+         ThisStream->writeStream(ModelClock);
       }
    }
 
-   return Err;
+   return;
 
 } // End writeAll
 
@@ -336,9 +319,9 @@ IOStream::IOStream() {
 // the IOStreams initialize function. It requires an initialized model
 // clock and stream alarms are attached to this clock during creation.
 
-Error IOStream::create(const std::string &StreamName, //< [in] name of stream
-                       Config &StreamConfig, //< [in] input stream configuration
-                       Clock *&ModelClock    //< [inout] Omega model clock
+int IOStream::create(const std::string &StreamName, //< [in] name of stream
+                     Config &StreamConfig, //< [in] input stream configuration
+                     Clock *&ModelClock    //< [inout] Omega model clock
 ) {
 
    Error Err; // returned error code
@@ -346,9 +329,8 @@ Error IOStream::create(const std::string &StreamName, //< [in] name of stream
    // Check whether the stream already exists
    if (AllStreams.find(StreamName) != AllStreams.end()) {
       // Stream already exists, return error
-      RETURN_ERROR(Err, ErrorCode::Fail,
-                   "Attempt to create stream {} that already exists",
-                   StreamName);
+      LOG_ERROR("Attempt to create stream {} that already exists", StreamName);
+      return Fail;
    }
 
    // Create a new pointer and set name
@@ -481,9 +463,9 @@ Error IOStream::create(const std::string &StreamName, //< [in] name of stream
 
    } else if (IOFreqUnits == "never") { // special never case
 
-      RETURN_ERROR(Err, ErrorCode::Warn,
-                   "Stream {} has IO frequency of never and will be skipped",
-                   StreamName);
+      LOG_WARN("Stream {} has IO frequency of never and will be skipped",
+               StreamName);
+      return Skipped;
 
    } else { // default error
 
@@ -615,7 +597,7 @@ Error IOStream::create(const std::string &StreamName, //< [in] name of stream
    // the list
    AllStreams[StreamName] = NewStream;
 
-   return Err;
+   return Success;
 
 } // End IOStream create
 
@@ -627,7 +609,8 @@ int IOStream::defineAllDims(
     std::map<std::string, int> &AllDimIDs ///< [out] dim name, assigned ID
 ) {
 
-   int Err = 0;
+   Error Err;
+   int TmpErr = 0;
 
    for (auto IDim = Dimension::begin(); IDim != Dimension::end(); ++IDim) {
       std::string DimName = IDim->first;
@@ -646,18 +629,16 @@ int IOStream::defineAllDims(
       // First check to see if the dimension already exists in the file
       I4 InLength;
       Err = IO::getDimFromFile(FileID, DimName, DimID, InLength);
-      if (Err != 0) { // dim not found
+      if (Err.isFail()) { // dim not found
          // Try again using old name for back compatibility to MPAS
          Err = IO::getDimFromFile(FileID, OldDimName, DimID, InLength);
       }
 
       // If dim is found, use this DimID and check the length for consistency
-      if (Err == 0) {
-         if (InLength != Length and Length != IO::Unlimited) {
-            LOG_ERROR("Inconsistent length for dimension {} in stream {}",
-                      DimName, Name);
-            return Fail;
-         }
+      if (Err.isSuccess()) {
+         if (InLength != Length and Length != IO::Unlimited)
+            ABORT_ERROR("Inconsistent length for dimension {} in stream {}",
+                        DimName, Name);
 
          // If dim is not found, define the dimension from the dim class if
          // it is a write operation, otherwise assume the dimension is not
@@ -665,15 +646,7 @@ int IOStream::defineAllDims(
       } else {
 
          if (Mode == IO::Mode::ModeWrite) {
-            Err = IO::defineDim(FileID, DimName, Length, DimID);
-            if (Err != 0) {
-               LOG_ERROR("Error defining dimension {} for stream {}", DimName,
-                         Name);
-               return Fail;
-            }
-         } else {
-            Err = Success;
-            continue;
+            DimID = IO::defineDim(FileID, DimName, Length);
          }
 
       } // end if found in file
@@ -683,7 +656,7 @@ int IOStream::defineAllDims(
 
    } // end loop over all dims
 
-   return Err;
+   return TmpErr;
 
 } // End defineAllDims
 
@@ -837,13 +810,8 @@ int IOStream::computeDecomp(
       }
    }
 
-   Err = OMEGA::IO::createDecomp(DecompID, MyIOType, NDims, DimLengthsGlob,
-                                 LocalSize, Offset, OMEGA::IO::DefaultRearr);
-   if (Err != 0) {
-      LOG_ERROR("Error creating decomp for field {} in stream {}", FieldName,
-                Name);
-      return Fail;
-   }
+   DecompID = IO::createDecomp(MyIOType, NDims, DimLengthsGlob, LocalSize,
+                               Offset, OMEGA::IO::DefaultRearr);
 
    return Err;
 
@@ -851,12 +819,11 @@ int IOStream::computeDecomp(
 
 //------------------------------------------------------------------------------
 // Write all metadata associated with a field
-int IOStream::writeFieldMeta(
+void IOStream::writeFieldMeta(
     const std::string FieldName, // [in] metadata for field
     int FileID,                  // [in] id assigned to open file
     int FieldID                  // [in] id assigned to the field
 ) {
-   int Err = Success; // default return code
 
    // Get the field metadata entries
    std::shared_ptr<Field> ThisField  = Field::get(FieldName);
@@ -872,55 +839,49 @@ int IOStream::writeFieldMeta(
       std::any MetaVal = IMeta->second;
       if (MetaVal.type() == typeid(I8)) {
          I8 MetaValI8 = std::any_cast<I8>(MetaVal);
-         Err          = IO::writeMeta(MetaName, MetaValI8, FileID, FieldID);
+         IO::writeMeta(MetaName, MetaValI8, FileID, FieldID);
 
       } else if (MetaVal.type() == typeid(I4)) {
          I4 MetaValI4 = std::any_cast<I4>(MetaVal);
-         Err          = IO::writeMeta(MetaName, MetaValI4, FileID, FieldID);
+         IO::writeMeta(MetaName, MetaValI4, FileID, FieldID);
 
       } else if (MetaVal.type() == typeid(R8)) {
          R8 MetaValR8 = std::any_cast<R8>(MetaVal);
          // if reduced precision is desired, convert to single (R4)
          if (ReducePrecision and !ThisField->retainPrecision()) {
             R4 MetaValR4 = MetaValR8;
-            Err          = IO::writeMeta(MetaName, MetaValR4, FileID, FieldID);
+            IO::writeMeta(MetaName, MetaValR4, FileID, FieldID);
          } else {
-            Err = IO::writeMeta(MetaName, MetaValR8, FileID, FieldID);
+            IO::writeMeta(MetaName, MetaValR8, FileID, FieldID);
          }
 
       } else if (MetaVal.type() == typeid(R4)) {
          R4 MetaValR4 = std::any_cast<R4>(MetaVal);
-         Err          = IO::writeMeta(MetaName, MetaValR4, FileID, FieldID);
+         IO::writeMeta(MetaName, MetaValR4, FileID, FieldID);
 
       } else if (MetaVal.type() == typeid(bool)) {
          bool MetaValBool = std::any_cast<bool>(MetaVal);
          // bool is coerced to int in write
-         Err = IO::writeMeta(MetaName, MetaValBool, FileID, FieldID);
+         IO::writeMeta(MetaName, MetaValBool, FileID, FieldID);
 
       } else if (MetaVal.type() == typeid(std::string)) {
          std::string MetaValStr = std::any_cast<std::string>(MetaVal);
-         Err = IO::writeMeta(MetaName, MetaValStr, FileID, FieldID);
+         IO::writeMeta(MetaName, MetaValStr, FileID, FieldID);
 
          // If the metadata was assigned using a string literal, std::any
          // stores it as a char pointer so we need to convert it differently
       } else if (MetaVal.type() == typeid(const char *)) {
          const char *MetaValChar = std::any_cast<const char *>(MetaVal);
-         Err = IO::writeMeta(MetaName, MetaValChar, FileID, FieldID);
+         IO::writeMeta(MetaName, MetaValChar, FileID, FieldID);
 
       } else { // unknown data type
-         LOG_ERROR("Unknown data type for Metadata {} in Field {}", MetaName,
-                   FieldName);
-         return Fail;
-      }
-      if (Err != 0) {
-         LOG_ERROR("Error trying to write Metadata {} for Field {}", MetaName,
-                   FieldName);
-         return Fail;
+         ABORT_ERROR("Unknown data type for Metadata {} in Field {}", MetaName,
+                     FieldName);
       }
 
    } // end loop over metadata
 
-   return Err;
+   return;
 
 } // End writeFieldMeta
 
@@ -1590,31 +1551,14 @@ int IOStream::writeFieldData(
 
    // Write the data
    if (IsDistributed) {
-      Err = OMEGA::IO::writeArray(DataPtr, LocSize, FillValPtr, FileID,
-                                  MyDecompID, FieldID, FldFrame);
-      if (Err != 0) {
-         LOG_ERROR("Error writing data array for field {} in stream {}",
-                   FieldName, Name);
-         return Fail;
-      }
+      OMEGA::IO::writeArray(DataPtr, LocSize, FillValPtr, FileID, MyDecompID,
+                            FieldID, FldFrame);
 
       // Clean up the decomp
-      Err = OMEGA::IO::destroyDecomp(MyDecompID);
-      if (Err != 0) {
-         LOG_ERROR("Error destroying decomp for field {} in stream {}",
-                   FieldName, Name);
-         return Fail;
-      }
+      IO::destroyDecomp(MyDecompID);
 
    } else {
-      Err = OMEGA::IO::writeNDVar(DataPtr, FileID, FieldID, FldFrame,
-                                  &DimLengths);
-      if (Err != 0) {
-         LOG_ERROR(
-             "Error writing non-distributed data for field {} in stream {}",
-             FieldName, Name);
-         return Fail;
-      }
+      OMEGA::IO::writeNDVar(DataPtr, FileID, FieldID, FldFrame, &DimLengths);
    }
 
    return Err;
@@ -1631,7 +1575,8 @@ int IOStream::readFieldData(
     int &FieldID                           // [out] id assigned to the field
 ) {
 
-   int Err = 0;
+   Error Err;
+   int TmpErr = 0;
 
    // Retrieve some basic field information
    std::string FieldName = FieldPtr->getName();
@@ -1656,8 +1601,8 @@ int IOStream::readFieldData(
    int NDimsTmp = std::min(NDims, 1);
    std::vector<int> DimLengths(NDimsTmp);
    if (IsDistributed) {
-      Err = computeDecomp(FieldPtr, DecompID, LocSize, DimLengths);
-      if (Err != 0) {
+      TmpErr = computeDecomp(FieldPtr, DecompID, LocSize, DimLengths);
+      if (TmpErr != 0) {
          LOG_ERROR("Error computing decomposition for Field {}", FieldName);
          return Fail;
       }
@@ -1708,7 +1653,7 @@ int IOStream::readFieldData(
    } else {
       Err = IO::readNDVar(DataPtr, FieldName, FileID, FieldID);
    }
-   if (Err != 0) {
+   if (Err.isFail()) {
       // For back compatibility, try to read again with old field name
       if (IsDistributed) {
          Err = IO::readArray(DataPtr, LocSize, OldFieldName, FileID, DecompID,
@@ -1716,11 +1661,8 @@ int IOStream::readFieldData(
       } else {
          Err = IO::readNDVar(DataPtr, OldFieldName, FileID, FieldID);
       }
-      if (Err != 0) { // still not found - return error
-         LOG_ERROR("Error reading data array for {} in stream {}", FieldName,
-                   Name);
-         return Fail;
-      }
+      CHECK_ERROR_ABORT(Err, "Error reading data array for {} in stream {}",
+                        FieldName, Name);
    }
 
    // Unpack vector into array based on type, dims and location
@@ -2282,14 +2224,9 @@ int IOStream::readFieldData(
    } // end switch data type
 
    // Clean up the decomp
-   Err = OMEGA::IO::destroyDecomp(DecompID);
-   if (Err != 0) {
-      LOG_ERROR("Error destroying decomp after reading field {} in stream {}",
-                FieldName, Name);
-      return Fail;
-   }
+   IO::destroyDecomp(DecompID);
 
-   return Err;
+   return TmpErr;
 
 } // End readFieldData
 
@@ -2302,7 +2239,8 @@ int IOStream::readStream(
     bool ForceRead           // [in] optional: read even if not time
 ) {
 
-   int Err; // return code
+   Error Err;
+   int TmpErr; // return code
 
    // First check that this is an input stream
    if (Mode != IO::ModeRead) {
@@ -2348,12 +2286,7 @@ int IOStream::readStream(
 
    // Open input file
    int InFileID;
-   Err = OMEGA::IO::openFile(InFileID, InFileName, Mode, IO::FmtDefault,
-                             ExistAction);
-   if (Err != 0) {
-      LOG_ERROR("Error opening file {} for input", InFileName);
-      return Fail;
-   }
+   IO::openFile(InFileID, InFileName, Mode, IO::FmtDefault, ExistAction);
 
    // Read any requested global metadata
    for (auto Iter = ReqMetadata.begin(); Iter != ReqMetadata.end(); ++Iter) {
@@ -2368,7 +2301,7 @@ int IOStream::readStream(
       std::string MetaValStr;
 
       // Read metadata based on type
-      int ErrRead = 0;
+      Error ErrRead;
       if (MetaTmp.type() == typeid(I8)) {
          ErrRead = IO::readMeta(MetaName, MetaValI8, InFileID, IO::GlobalID);
          ReqMetadata[MetaName] = MetaValI8;
@@ -2399,24 +2332,21 @@ int IOStream::readStream(
          ErrRead = IO::readMeta(MetaName, MetaValStr, InFileID, IO::GlobalID);
          ReqMetadata[MetaName] = MetaValStr;
       } else {
-         LOG_ERROR("Metadata read failed: unknown data type for {} in file {}",
-                   MetaName, InFileName);
-         ErrRead = Fail;
+         ABORT_ERROR(
+             "Metadata read failed: unknown data type for {} in file {}",
+             MetaName, InFileName);
       }
 
-      if (ErrRead != 0) {
-         LOG_ERROR("Error reading metadata {} from file {}", InFileName);
-         return Fail;
-      }
+      CHECK_ERROR_ABORT(ErrRead, "Error reading metadata {} from file {}",
+                        MetaName, InFileName);
+
    } // end loop over requested metadata
 
    // Get dimensions from file and check that file has same dimension lengths
    std::map<std::string, int> AllDimIDs;
-   Err = defineAllDims(InFileID, AllDimIDs);
-   if (Err != 0) {
-      LOG_ERROR("Error defining dimensions for file {} ", InFileName);
-      return Fail;
-   }
+   TmpErr = defineAllDims(InFileID, AllDimIDs);
+   if (TmpErr != 0)
+      ABORT_ERROR("Error defining dimensions for file {} ", InFileName);
 
    // For each field in the contents, define field and read field data
    for (auto IFld = Contents.begin(); IFld != Contents.end(); ++IFld) {
@@ -2427,8 +2357,8 @@ int IOStream::readStream(
 
       // Extract the data pointer and read the data array
       int FieldID; // not currently used but available if field metadata needed
-      Err = readFieldData(ThisField, InFileID, AllDimIDs, FieldID);
-      if (Err != 0) {
+      TmpErr = readFieldData(ThisField, InFileID, AllDimIDs, FieldID);
+      if (TmpErr != 0) {
          LOG_ERROR("Error reading field data for Field {} in Stream {}",
                    FieldName, Name);
          return Fail;
@@ -2437,46 +2367,41 @@ int IOStream::readStream(
    } // End loop over field list
 
    // Close input file
-   Err = IO::closeFile(InFileID);
-   if (Err != 0) {
-      LOG_ERROR("Error closing input file {}", InFileName);
-      return Fail;
-   }
+   IO::closeFile(InFileID);
 
    LOG_INFO("Successfully read stream {} from file {}", Name, InFileName);
 
    // End of routine - return
-   return Success;
+   return TmpErr;
 
 } // End read
 
 //------------------------------------------------------------------------------
 // Writes stream. This is the internal member write function used by the
 // public write interfaces.
-int IOStream::writeStream(
+void IOStream::writeStream(
     const Clock *ModelClock, // [in] Model clock needed for time stamps
     bool ForceWrite,         // [in] Optional: write even if not time
     bool FinalCall           // [in] Optional flag if called from finalize
 ) {
 
-   int Err = Success; // default return code
+   Error Err;  // default return code
+   int TmpErr; // internal error codes
 
    // First check that this is an output stream
-   if (Mode != IO::ModeWrite) {
-      LOG_ERROR("IOStream write: cannot write stream defined as input stream");
-      return Fail;
-   }
+   if (Mode != IO::ModeWrite)
+      ABORT_ERROR("IOStream write: cannot write to an input stream");
 
    // If it is not time to write, return
    if (!ForceWrite) {
       bool StartupShutdown = OnStartup or (OnShutdown and FinalCall);
       if (!MyAlarm.isRinging() and !StartupShutdown)
-         return Skipped;
+         return;
       if (UseStartEnd) { // If time outside interval, return
          if (!StartAlarm.isRinging())
-            return Skipped;
+            return;
          if (EndAlarm.isRinging())
-            return Skipped;
+            return;
       }
    }
 
@@ -2500,7 +2425,7 @@ int IOStream::writeStream(
    ElapsedTime.get(ElapsedTimeR8, TimeUnits::Seconds);
    HostArray1DR8 OutTime("OutTime", 1);
    OutTime(0) = ElapsedTimeR8;
-   Err        = Field::attachFieldData("time", OutTime);
+   TmpErr     = Field::attachFieldData("time", OutTime);
 
    // Reset alarms and flags
    if (OnStartup)
@@ -2521,13 +2446,7 @@ int IOStream::writeStream(
 
    // Open output file
    int OutFileID;
-   Err = OMEGA::IO::openFile(OutFileID, OutFileName, Mode, IO::FmtDefault,
-                             ExistAction);
-   if (Err != 0) {
-      LOG_ERROR("IOStream::write: error opening file {} for output",
-                OutFileName);
-      return Fail;
-   }
+   IO::openFile(OutFileID, OutFileName, Mode, IO::FmtDefault, ExistAction);
 
    // For files with multiple frames or time slices, we need to determine the
    // default Frame number for time-dependent fields. If the frame/time already
@@ -2541,7 +2460,7 @@ int IOStream::writeStream(
       I4 TimeDimID;
       I4 NFrames;
       Err = IO::getDimFromFile(OutFileID, "time", TimeDimID, NFrames);
-      if (Err != 0 or NFrames == 0) {
+      if (Err.isFail() or NFrames == 0) {
          // If there is an error, we assume this is a new file in which
          // the dimension has not yet been written. Similarly, if NFrames is 0,
          // no frames have yet been written. In both cases, this is the first
@@ -2558,19 +2477,18 @@ int IOStream::writeStream(
          for (int IFrame = 0; IFrame < NFrames; ++IFrame) {
             Err = IO::readNDVar(&FrameTime, "time", OutFileID, TmpID, IFrame,
                                 &TmpDimLengths);
-            if (Err != 0)
-               LOG_ERROR("Error reading frame time in {}", OutFileName);
+            CHECK_ERROR_ABORT(Err, "Error reading frame time in {}",
+                              OutFileName);
             if (std::abs(ElapsedTimeR8 - FrameTime) < 1.e-5) { // overwrite
                Frame = IFrame;
                break;
             } else if (ElapsedTimeR8 > FrameTime) { // move to next frame
                Frame = IFrame + 1;
             } else { // time is earlier but doesn't match any frames
-               LOG_CRITICAL("Existing multiframe file {} appears to be using "
-                            "different time intervals or is from the wrong "
-                            "time period",
-                            OutFileName);
-               return Fail;
+               ABORT_ERROR("Existing multiframe file {} appears to be using "
+                           "different time intervals or is from the wrong "
+                           "time period",
+                           OutFileName);
             } // end if elapsed time matches
          } // end loop over existing frames
       } // end if nframes
@@ -2579,16 +2497,8 @@ int IOStream::writeStream(
    // Write Metadata for global metadata (Code and Simulation)
    // Only needs to be written for a new file
    if (Frame < 1) {
-      Err = writeFieldMeta(CodeMeta, OutFileID, IO::GlobalID);
-      if (Err != 0) {
-         LOG_ERROR("Error writing Code Metadata to file {}", OutFileName);
-         return Fail;
-      }
-      Err = writeFieldMeta(SimMeta, OutFileID, IO::GlobalID);
-      if (Err != 0) {
-         LOG_ERROR("Error writing Simulation Metadata to file {}", OutFileName);
-         return Fail;
-      }
+      writeFieldMeta(CodeMeta, OutFileID, IO::GlobalID);
+      writeFieldMeta(SimMeta, OutFileID, IO::GlobalID);
    }
 
    // Create and write a field for any global data that is file or time
@@ -2596,35 +2506,26 @@ int IOStream::writeStream(
    std::shared_ptr<Field> FileField = Field::create("FileField");
    // Add the current simulation time
    std::string SimTimeName = "SimulationTime";
-   Err                     = FileField->addMetadata(SimTimeName, SimTimeStr);
-   if (Err != 0) {
-      LOG_ERROR("Error adding current sim time to output {}", OutFileName);
-      return Fail;
-   }
+   TmpErr                  = FileField->addMetadata(SimTimeName, SimTimeStr);
+   if (TmpErr != 0)
+      ABORT_ERROR("Error adding current sim time to output {}", OutFileName);
+
    // If it is a multi-frame file, add the time for this frame
    if (Multiframe) {
       SimTimeName = SimTimeName + std::to_string(Frame);
-      Err         = FileField->addMetadata(SimTimeName, SimTimeStr);
+      TmpErr      = FileField->addMetadata(SimTimeName, SimTimeStr);
    }
    // Write and then destroy temporary field
-   Err = writeFieldMeta("FileField", OutFileID, IO::GlobalID);
-   if (Err != 0) {
-      LOG_ERROR("Error writing File Metadata to file {}", OutFileName);
-      return Fail;
-   }
-   Err = Field::destroy("FileField");
-   if (Err != 0) {
-      LOG_ERROR("Error destroying File field for file {}", OutFileName);
-      return Fail;
-   }
+   writeFieldMeta("FileField", OutFileID, IO::GlobalID);
+   TmpErr = Field::destroy("FileField");
+   if (TmpErr != 0)
+      ABORT_ERROR("Error destroying File field for file {}", OutFileName);
 
    // Assign dimension IDs for all defined dimensions
    std::map<std::string, int> AllDimIDs;
-   Err = defineAllDims(OutFileID, AllDimIDs);
-   if (Err != 0) {
-      LOG_ERROR("Error defining dimensions for file {}", OutFileName);
-      return Fail;
-   }
+   TmpErr = defineAllDims(OutFileID, AllDimIDs);
+   if (TmpErr != 0)
+      ABORT_ERROR("Error defining dimensions for file {}", OutFileName);
 
    // Define each field and write field metadata
    std::map<std::string, int> FieldIDs;
@@ -2642,12 +2543,10 @@ int IOStream::writeStream(
       if (NDims > 0) {
          DimNames.resize(NDims);
          FieldDims.resize(NDims);
-         Err = ThisField->getDimNames(DimNames);
-         if (Err != 0) {
-            LOG_ERROR("Error retrieving dimension names for Field {}",
-                      FieldName);
-            return Fail;
-         }
+         TmpErr = ThisField->getDimNames(DimNames);
+         if (TmpErr != 0)
+            ABORT_ERROR("Error retrieving dimension names for Field {}",
+                        FieldName);
       }
       // If this is a time-dependent field, we insert the unlimited time
       // dimension as the first dimension (for field definition only)
@@ -2666,23 +2565,14 @@ int IOStream::writeStream(
       IO::IODataType MyIOType = getFieldIOType(ThisField);
 
       // Define the field and assign a FieldID
-      int FieldID;
-      Err = defineVar(OutFileID, FieldName, MyIOType, NDims, FieldDims.data(),
-                      FieldID);
-      if (Err != 0) {
-         LOG_ERROR("Error defining field {} in stream {}", FieldName, Name);
-         return Fail;
-      }
+      int FieldID =
+          defineVar(OutFileID, FieldName, MyIOType, NDims, FieldDims.data());
+
       FieldIDs[FieldName] = FieldID;
 
       // Now we can write the field metadata
       if (Frame < 1) { // only write if it's the first time
-         Err = writeFieldMeta(FieldName, OutFileID, FieldID);
-         if (Err != 0) {
-            LOG_ERROR("Error writing field metadata for field {} in stream {}",
-                      FieldName, Name);
-            return Fail;
-         }
+         writeFieldMeta(FieldName, OutFileID, FieldID);
       }
    }
 
@@ -2695,20 +2585,14 @@ int IOStream::writeStream(
       int FieldID                      = FieldIDs[FieldName];
 
       // Extract and write the data array
-      Err = this->writeFieldData(ThisField, OutFileID, FieldID, AllDimIDs);
-      if (Err != 0) {
-         LOG_ERROR("Error writing field data for Field {} in Stream {}",
-                   FieldName, Name);
-         return Fail;
-      }
+      TmpErr = this->writeFieldData(ThisField, OutFileID, FieldID, AllDimIDs);
+      if (TmpErr != 0)
+         ABORT_ERROR("Error writing field data for Field {} in Stream {}",
+                     FieldName, Name);
    }
 
    // Close output file
-   Err = IO::closeFile(OutFileID);
-   if (Err != 0) {
-      LOG_ERROR("Error closing output file {}", OutFileName);
-      return Fail;
-   }
+   IO::closeFile(OutFileID);
 
    // If using pointer files for this stream, write the filename to the pointer
    // after the file is successfully written
@@ -2721,7 +2605,7 @@ int IOStream::writeStream(
    LOG_INFO("Successfully wrote stream {} to file {}", Name, OutFileName);
 
    // End of routine - return
-   return Success;
+   return;
 
 } // end writeStream
 

@@ -49,9 +49,7 @@ int initHorzMeshTest() {
    Config::readAll("omega.yml");
 
    // Initialize the IO system
-   Err = IO::init(DefComm);
-   if (Err != 0)
-      LOG_ERROR("HorzMeshTest: error initializing parallel IO");
+   IO::init(DefComm);
 
    // Create the default decomposition (initializes the decomposition)
    Decomp::init();

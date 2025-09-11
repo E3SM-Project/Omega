@@ -39,15 +39,13 @@ int initDimensionTest() {
    MPI_Comm DefComm = DefEnv->getComm();
    Pacer::initialize(DefComm);
    Pacer::setPrefix("Omega:");
-   Err = IO::init(DefComm);
-   if (Err != 0) {
-      LOG_ERROR("IO initialization failed");
-      return Err;
-   }
 
    // Open config file
    Config("Omega");
    Config::readAll("omega.yml");
+
+   // Initialize parallel IO
+   IO::init(DefComm);
 
    // Initialize decomposition
    Decomp::init();

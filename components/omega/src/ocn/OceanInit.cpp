@@ -72,10 +72,7 @@ int initOmegaModules(MPI_Comm Comm) {
    // of each file, only creates streams from Config
    IOStream::init(ModelClock);
 
-   Err = IO::init(Comm);
-   if (Err != 0) {
-      ABORT_ERROR("ocnInit: Error initializing parallel IO");
-   }
+   IO::init(Comm);
 
    Err = Field::init(ModelClock);
    if (Err != 0) {
