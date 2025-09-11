@@ -190,10 +190,11 @@ an Omega-aware wrapper around SCORPIO calls.</p>
 <p>There are some general parameters that must be set for IO performance and
 formatting via the input configuration file. These are:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">IO</span><span class="p">:</span>
-<span class="w">   </span><span class="nt">IOTasks</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<span class="w">   </span><span class="nt">IOStride</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<span class="w">   </span><span class="nt">IORearranger</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">box</span>
-<span class="w">   </span><span class="nt">IODefaultFormat</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NetCDF4</span>
+<span class="w">    </span><span class="nt">IOTasks</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">IOStride</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">IOBaseTask</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">    </span><span class="nt">IORearranger</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">box</span>
+<span class="w">    </span><span class="nt">IODefaultFormat</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NetCDF4</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">IOTasks</span></code> is the total number of IOTasks to assign to reading
@@ -201,9 +202,9 @@ and writing. The default is 1 (serial IO) for safety but this number
 should be set appropriately for the underlying hardware. A simple
 starting point might be one IOTask per node or socket. The <code class="docutils literal notranslate"><span class="pre">IOStride</span></code>
 is set to spread the IOTasks across the total number of MPI tasks so
-that every IOStride task (starting with the root task) is an IOTask.
-The product of IOTasks and IOStride should equal the total number of
-MPI Tasks.</p>
+that every IOStride task (starting with the root task IOBaseTask) is an
+IOTask. The product of IOTasks and IOStride should equal the total number
+of MPI Tasks.</p>
 <p>When using parallel IO, the data must be rearranged to match the IO task
 decomposition. There are two algorithms for rearranging data available
 in SCORPIO: box and subset. Box is the default and preferred for most
