@@ -175,7 +175,7 @@
 metadata for use in IO (or any other part of Omega that may require the field
 metadata). The module owning the field will define the Field together
 with some required metadata for compliance with the Climate and Forecast
-<a class="reference external" href="http://cfconventions.org/">(CF) metadata conventios.</a>. Groups of Fields
+<a class="reference external" href="http://cfconventions.org/">(CF) metadata conventions.</a>. Groups of Fields
 can also be defined to provide a short cut to groups that are commonly used
 together, like the model state and tracer groups. Two special Fields, CodeMeta
 and SimMeta (with default names “code” and “simulation”, respectively), are
@@ -187,7 +187,7 @@ metadata are more appropriate for that context.</p>
 <p>To use the Field class, the Field header file must be included and as part of
 the application initialization, there should be a call to the init method:
 Fields initialized with the init method:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">::</span><span class="n">init</span><span class="p">();</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Field</span><span class="o">::</span><span class="n">init</span><span class="p">();</span>
 </pre></div>
 </div>
 <p>which primarily defines the CodeMeta and SimMeta fields for later use.
@@ -244,15 +244,14 @@ a 1D array with size 1. Fields without a data array can be created with:</p>
 should be added to the existing CodeMeta or SimMeta fields for this
 purpose.</p>
 <p>Additional metadata in the form of a name-value pair can be added using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">addMetadata</span><span class="p">(</span>
-<span class="w">                         </span><span class="n">MetaName</span><span class="p">,</span><span class="w"> </span><span class="c1">// [in] Name of new metadata (string)</span>
-<span class="w">                         </span><span class="n">Value</span><span class="w">     </span><span class="c1">// [in] Value of new metadata</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">addMetadata</span><span class="p">(</span><span class="n">MetaName</span><span class="p">,</span><span class="w"> </span><span class="c1">// [in] Name of new metadata (string)</span>
+<span class="w">                        </span><span class="n">Value</span><span class="w">     </span><span class="c1">// [in] Value of new metadata</span>
 <span class="w">   </span><span class="p">);</span>
 </pre></div>
 </div>
 <p>where Value can be any supported data type (I4, I8, R4, R8, bool, string).
 Multiple pairs can be added in a single call using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SimField</span><span class="o">-&gt;</span><span class="n">addMetadata</span><span class="p">(</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">SimField</span><span class="o">-&gt;</span><span class="n">addMetadata</span><span class="p">(</span>
 <span class="w">         </span><span class="p">{</span><span class="n">std</span><span class="o">::</span><span class="n">make_pair</span><span class="p">(</span><span class="s">&quot;Name1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Val1</span><span class="p">),</span>
 <span class="w">          </span><span class="n">std</span><span class="o">::</span><span class="n">make_pair</span><span class="p">(</span><span class="s">&quot;Name2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Val2</span><span class="p">),</span>
 <span class="w">          </span><span class="n">std</span><span class="o">::</span><span class="n">make_pair</span><span class="p">(</span><span class="s">&quot;Name3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Val3</span><span class="p">),</span>
@@ -264,16 +263,16 @@ type.</p>
 <p>As mentioned above, the actual data array is attached in a separate call
 using a templated form. If the pointer to the Field is available, use the
 member function:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">attachData</span><span class="o">&lt;</span><span class="n">ArrayType</span><span class="o">&gt;</span><span class="p">(</span><span class="n">InDataArray</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">attachData</span><span class="o">&lt;</span><span class="n">ArrayType</span><span class="o">&gt;</span><span class="p">(</span><span class="n">InDataArray</span><span class="p">);</span>
 <span class="w">   </span><span class="c1">// for example:</span>
-<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">attachData</span><span class="o">&lt;</span><span class="n">HostArray1DI4</span><span class="o">&gt;</span><span class="p">(</span><span class="n">CellID</span><span class="p">);</span>
-<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">attachData</span><span class="o">&lt;</span><span class="n">Array2DR8</span><span class="o">&gt;</span><span class="p">(</span><span class="n">NormalVelocity</span><span class="p">);</span>
+<span class="w">   </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">attachData</span><span class="o">&lt;</span><span class="n">HostArray1DI4</span><span class="o">&gt;</span><span class="p">(</span><span class="n">CellID</span><span class="p">);</span>
+<span class="w">   </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">attachData</span><span class="o">&lt;</span><span class="n">Array2DR8</span><span class="o">&gt;</span><span class="p">(</span><span class="n">NormalVelocity</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>where ArrayType is one of the supported array types (Array1DI4, etc. or
 HostArray1DI4, etc.). If the Field pointer has not been retrieved, an interface
 is provided using the field name:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">::</span><span class="n">attachFieldData</span><span class="o">&lt;</span><span class="n">ArrayType</span><span class="o">&gt;</span><span class="p">(</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Field</span><span class="o">::</span><span class="n">attachFieldData</span><span class="o">&lt;</span><span class="n">ArrayType</span><span class="o">&gt;</span><span class="p">(</span>
 <span class="w">                    </span><span class="n">FieldName</span><span class="p">,</span><span class="w">   </span><span class="c1">// [in] Name of Field (string)</span>
 <span class="w">                    </span><span class="n">InDataArray</span><span class="w">  </span><span class="c1">// [in] Array with data to attach</span>
 <span class="w">                    </span><span class="p">);</span>
@@ -333,7 +332,7 @@ field name, so we provide:</p>
 <p>The dimension information can be retrieved using:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">NDims</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">getNumDims</span><span class="p">();</span>
 <span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyDimNames</span><span class="p">(</span><span class="n">NDims</span><span class="p">);</span>
-<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">getDimNames</span><span class="p">(</span><span class="n">MyDimNames</span><span class="p">);</span>
+<span class="w">   </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">getDimNames</span><span class="p">(</span><span class="n">MyDimNames</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Once the dimension names have been retrieved, the Dimension class API can be
@@ -353,13 +352,13 @@ functions.  To retrieve a pointer to the full Field, use:</p>
 </div>
 <p>With this pointer all the member functions above can be used.
 The Metadata associated with a field can be retrieved individually using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">getMetadata</span><span class="p">(</span><span class="n">MetadataName</span><span class="p">,</span><span class="w"> </span><span class="n">MetaValue</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Error</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">getMetadata</span><span class="p">(</span><span class="n">MetadataName</span><span class="p">,</span><span class="w"> </span><span class="n">MetaValue</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>where the MetaValue can be a scalar of any supported data type (I4, I8, R4, R8,
 bool, std::string). If the value of a metadata entry needs to be changed,
 an update function is provided:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">updateMetadata</span><span class="p">(</span><span class="n">MetadataName</span><span class="p">,</span><span class="w"> </span><span class="n">NewMetaValue</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">updateMetadata</span><span class="p">(</span><span class="n">MetadataName</span><span class="p">,</span><span class="w"> </span><span class="n">NewMetaValue</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The existence of a metadata entry can be determined with:</p>
@@ -389,13 +388,13 @@ function or a by-name interface:</p>
 is not known in advance, the field can be queried for both type and memory
 location as described previously.</p>
 <p>Metadata can be removed from a Field using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">removeMetadata</span><span class="p">(</span><span class="n">MetaName</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">removeMetadata</span><span class="p">(</span><span class="n">MetaName</span><span class="p">);</span>
 <span class="w">   </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">removeAllMetadata</span><span class="p">();</span>
 </pre></div>
 </div>
 <p>depending on whether a single metadata entry or all metadata entries need to
 be deleted. Entire fields can be removed using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">::</span><span class="n">destroy</span><span class="p">(</span><span class="n">FieldName</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Field</span><span class="o">::</span><span class="n">destroy</span><span class="p">(</span><span class="n">FieldName</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>and before exiting, all fields should be removed using:</p>
@@ -412,8 +411,8 @@ is created by first creating an empty group with the desired name:</p>
 </div>
 <p>Fields can then be added either through a member function if the group
 pointer is available, or by group name:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyGroup</span><span class="o">-&gt;</span><span class="n">addField</span><span class="p">(</span><span class="n">FieldName</span><span class="p">);</span>
-<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FieldGroup</span><span class="o">::</span><span class="n">addFieldToGroup</span><span class="p">(</span><span class="n">FieldName</span><span class="p">,</span><span class="w"> </span><span class="n">GroupName</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">MyGroup</span><span class="o">-&gt;</span><span class="n">addField</span><span class="p">(</span><span class="n">FieldName</span><span class="p">);</span>
+<span class="w">   </span><span class="n">FieldGroup</span><span class="o">::</span><span class="n">addFieldToGroup</span><span class="p">(</span><span class="n">FieldName</span><span class="p">,</span><span class="w"> </span><span class="n">GroupName</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The latter is useful especially if the group was created elsewhere. If the
@@ -447,15 +446,15 @@ FieldGroup:</p>
 </pre></div>
 </div>
 <p>A field can be removed from a field group using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FieldGroup</span><span class="o">::</span><span class="n">removeField</span><span class="p">(</span><span class="n">FieldName</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">MyGroup</span><span class="o">-&gt;</span><span class="n">removeField</span><span class="p">(</span><span class="n">FieldName</span><span class="p">);</span>
 <span class="w">   </span><span class="c1">// or</span>
-<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">removeFieldFromGroup</span><span class="p">(</span><span class="n">FieldName</span><span class="p">,</span><span class="w"> </span><span class="n">GroupName</span><span class="p">);</span>
+<span class="w">   </span><span class="n">FieldGroup</span><span class="o">::</span><span class="n">removeFieldFromGroup</span><span class="p">(</span><span class="n">FieldName</span><span class="p">,</span><span class="w"> </span><span class="n">GroupName</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The removal of a field from a group does not remove the field itself, it only
 removes the field name from the list of fields assigned to the group.
 The entire group can be removed with:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FieldGroup</span><span class="o">::</span><span class="n">destroy</span><span class="p">(</span><span class="n">GroupName</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">FieldGroup</span><span class="o">::</span><span class="n">destroy</span><span class="p">(</span><span class="n">GroupName</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>and the usual <code class="docutils literal notranslate"><span class="pre">FieldGroup::clear();</span></code> should be used to remove all field
