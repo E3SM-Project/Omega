@@ -429,8 +429,6 @@ void initFieldTest() {
 int main(int argc, char **argv) {
 
    Error Err;
-   int Err1   = 0;
-   int ErrRef = 0;
 
    // Initialize the global MPI environment
    MPI_Init(&argc, &argv);
@@ -801,7 +799,6 @@ int main(int argc, char **argv) {
                 if (Data2DI4(Cell, K) != RefI4 + Cell + K)
                    ++LCount;
                 for (int Trcr = 0; Trcr < NTracers; ++Trcr) {
-                   int Add3 = Trcr * NCellsSize * NVertLevels + Add2;
                    if (Data3DI4(Cell, K, Trcr) != RefI4 + Cell + K + Trcr)
                       ++LCount;
                    for (int TimeLvl = 0; TimeLvl < NTime; ++TimeLvl) {

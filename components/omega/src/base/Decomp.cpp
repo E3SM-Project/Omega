@@ -450,9 +450,7 @@ Decomp::Decomp(
     const std::string &MeshFileName_ //< [in] name of file with mesh info
 ) {
 
-   Error IOErr;
    bool TimerFlag = Pacer::start("Decomp construct");
-   int Err        = 0; // internal error code
 
    // Retrieve some info on the MPI layout
    MPI_Comm Comm = InEnv->getComm();
@@ -1122,8 +1120,6 @@ void Decomp::partCellsParMetisKWay(
     const MachEnv *InEnv, // [in] input machine environment with MPI info
     const std::vector<I4> &CellsOnCellInit // [in] cell nbrs in linear distrb
 ) {
-
-   int Err = 0; // internal error code for MPI and Metis/ParMetis
 
    // Retrieve some info on the MPI layout
    MPI_Comm Comm = InEnv->getComm();

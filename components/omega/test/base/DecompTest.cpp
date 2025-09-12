@@ -32,8 +32,6 @@ using namespace OMEGA;
 
 void initDecompTest() {
 
-   int Err = 0;
-
    // Initialize the Machine Environment class - this also creates
    // the default MachEnv. Then retrieve the default environment and
    // some needed data members.

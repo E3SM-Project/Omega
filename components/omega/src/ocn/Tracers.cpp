@@ -330,13 +330,12 @@ I4 Tracers::getHostByIndex(HostArray2DReal &TracerArrayH, const I4 TimeLevel,
       return -2;
    }
 
-   I4 Err;
    I4 TimeIndex;
 
-   Err          = getTimeIndex(TimeIndex, TimeLevel);
+   I4 Err       = getTimeIndex(TimeIndex, TimeLevel);
    TracerArrayH = Kokkos::subview(TracerArraysH[TimeIndex], TracerIndex,
                                   Kokkos::ALL, Kokkos::ALL);
-   return 0;
+   return Err;
 }
 
 I4 Tracers::getHostByName(HostArray2DReal &TracerArrayH, const I4 TimeLevel,
@@ -444,13 +443,12 @@ I4 Tracers::copyToDevice(const I4 TimeLevel) {
 
 I4 Tracers::copyToHost(const I4 TimeLevel) {
 
-   I4 Err;
    I4 TimeIndex;
 
-   Err = getTimeIndex(TimeIndex, TimeLevel);
+   I4 Err = getTimeIndex(TimeIndex, TimeLevel);
    deepCopy(TracerArraysH[TimeIndex], TracerArrays[TimeIndex]);
 
-   return 0;
+   return Err;
 }
 
 //---------------------------------------------------------------------------

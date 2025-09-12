@@ -150,7 +150,6 @@ OceanState::~OceanState() {
 
    // Kokkos arrays removed when no longer in scope
 
-   int Err;
    FieldGroup::destroy(StateGroupName);
    Field::destroy(LayerThicknessFldName);
    Field::destroy(NormalVelocityFldName);
@@ -308,7 +307,7 @@ I4 OceanState::copyToDevice(const I4 TimeLevel) {
    deepCopy(LayerThickness[TimeIndex], LayerThicknessH[TimeIndex]);
    deepCopy(NormalVelocity[TimeIndex], NormalVelocityH[TimeIndex]);
 
-   return 0;
+   return Err;
 } // end copyToDevice
 
 //------------------------------------------------------------------------------
@@ -324,7 +323,7 @@ I4 OceanState::copyToHost(const I4 TimeLevel) {
    deepCopy(LayerThicknessH[TimeIndex], LayerThickness[TimeIndex]);
    deepCopy(NormalVelocityH[TimeIndex], NormalVelocity[TimeIndex]);
 
-   return 0;
+   return Err;
 } // end copyToHost
 
 //------------------------------------------------------------------------------
@@ -339,7 +338,7 @@ I4 OceanState::exchangeHalo(const I4 TimeLevel) {
    MeshHalo->exchangeFullArrayHalo(LayerThickness[TimeIndex], OnCell);
    MeshHalo->exchangeFullArrayHalo(NormalVelocity[TimeIndex], OnEdge);
 
-   return 0;
+   return Err;
 
 } // end exchangeHalo
 
