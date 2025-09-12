@@ -73,12 +73,7 @@ int initOmegaModules(MPI_Comm Comm) {
    IOStream::init(ModelClock);
 
    IO::init(Comm);
-
-   Err = Field::init(ModelClock);
-   if (Err != 0) {
-      ABORT_ERROR("ocnInit: Error initializing Fields");
-   }
-
+   Field::init(ModelClock);
    Decomp::init();
 
    Err = Halo::init();

@@ -18,6 +18,7 @@
 
 #include "DataTypes.h"
 #include "Dimension.h"
+#include "Error.h"
 #include "Logging.h"
 #include "OmegaKokkos.h"
 #include "TimeMgr.h"
@@ -87,7 +88,7 @@ class Field {
    //---------------------------------------------------------------------------
    /// Initializes the fields for global code and simulation metadata
    /// It also initializes the unlimited time dimension needed by most fields
-   static int init(const Clock *ModelClock ///< [in] the default model clock
+   static void init(const Clock *ModelClock ///< [in] the default model clock
    );
 
    //---------------------------------------------------------------------------
@@ -131,7 +132,7 @@ class Field {
    /// Removes a single Field from the list of available fields
    /// That process also decrements the reference counters for the
    /// shared pointers and removes them if those counters reach 0.
-   static int destroy(const std::string &FieldName /// Name of Field to remove
+   static void destroy(const std::string &FieldName /// Name of Field to remove
    );
 
    //---------------------------------------------------------------------------
@@ -191,7 +192,7 @@ class Field {
 
    /// Returns a vector of dimension names associated with each dimension
    /// of an array field. Returns an error code.
-   int getDimNames(
+   void getDimNames(
        std::vector<std::string> &Dimensions ///< [out] list of dimensions
    ) const;
 
@@ -228,21 +229,22 @@ class Field {
    ) const;
 
    /// Adds a metadata entry with the (name,value) pair
-   int addMetadata(const std::string &MetaName, ///< [in] Name of new metadata
-                   const std::any Value         ///< [in] Value of new metadata
+   void addMetadata(const std::string &MetaName, ///< [in] Name of new metadata
+                    const std::any Value         ///< [in] Value of new metadata
    );
 
    /// Adds multiple metadata entries with a list of (name,value) pairs
-   int addMetadata(const std::initializer_list<std::pair<std::string, std::any>>
-                       &MetaPairs);
+   void
+   addMetadata(const std::initializer_list<std::pair<std::string, std::any>>
+                   &MetaPairs);
 
    /// Updates a metadata entry with a new value
-   int updateMetadata(const std::string &MetaName, ///< [in] Name of metadata
-                      const std::any Value         ///< [in] Value of metadata
+   void updateMetadata(const std::string &MetaName, ///< [in] Name of metadata
+                       const std::any Value         ///< [in] Value of metadata
    );
 
    /// Removes a metadata entry with the given name
-   int
+   void
    removeMetadata(const std::string &MetaName ///< [in] Name of entry to remove
    );
 
@@ -252,43 +254,43 @@ class Field {
    /// Retrieves the value of the metadata associated with a given name
    /// This specific version of the overloaded interface coerces the value
    /// to an I4 type
-   int getMetadata(const std::string &Name, ///< [in] Name of metadata to get
-                   I4 &Value                ///< [out] I4 Value of metadata
+   Error getMetadata(const std::string &Name, ///< [in] Name of metadata to get
+                     I4 &Value                ///< [out] I4 Value of metadata
    );
 
    /// Retrieves the value of the metadata associated with a given name
    /// This specific version of the overloaded interface coerces the value
    /// to an I8 type
-   int getMetadata(const std::string &Name, ///< [in] Name of metadata to get
-                   I8 &Value                ///< [out] I8 Value of metadata
+   Error getMetadata(const std::string &Name, ///< [in] Name of metadata to get
+                     I8 &Value                ///< [out] I8 Value of metadata
    );
 
    /// Retrieves the value of the metadata associated with a given name
    /// This specific version of the overloaded interface coerces the value
    /// to an R4 type
-   int getMetadata(const std::string &Name, ///< [in] Name of metadata to get
-                   R4 &Value                ///< [out]  R4 Value of metadata
+   Error getMetadata(const std::string &Name, ///< [in] Name of metadata to get
+                     R4 &Value                ///< [out]  R4 Value of metadata
    );
 
    /// Retrieves the value of the metadata associated with a given name
    /// This specific version of the overloaded interface coerces the value
    /// to an R8 type
-   int getMetadata(const std::string &Name, ///< [in] Name of metadata to get
-                   R8 &Value                ///< [out] R8 Value of metadata
+   Error getMetadata(const std::string &Name, ///< [in] Name of metadata to get
+                     R8 &Value                ///< [out] R8 Value of metadata
    );
 
    /// Retrieves the value of the metadata associated with a given name
    /// This specific version of the overloaded interface coerces the value
    /// to a bool type
-   int getMetadata(const std::string &Name, ///< [in] Name of metadata to get
-                   bool &Value              ///< [out] bool Value of metadata
+   Error getMetadata(const std::string &Name, ///< [in] Name of metadata to get
+                     bool &Value              ///< [out] bool Value of metadata
    );
 
    /// Retrieves the value of the metadata associated with a given name
    /// This specific version of the overloaded interface coerces the value
    /// to a string type
-   int getMetadata(const std::string &Name, ///< [in] Name of metadata to get
-                   std::string &Value       ///< [out] string Value of metadata
+   Error getMetadata(const std::string &Name, ///< [in] Name of metadata to get
+                     std::string &Value       ///< [out] string Value
    );
 
    //---------------------------------------------------------------------------
@@ -301,11 +303,10 @@ class Field {
    /// templated based on the array data type so a template argument with
    /// the proper array data type (eg <Array2DR4>) must be supplied.
    template <typename T>
-   int attachData(const T &InDataArray ///< [in] Array with data to attach
+   void attachData(const T &InDataArray ///< [in] Array with data to attach
    ) {
-      static_assert(isKokkosArray<T>,
-                    "attachData requires Kokkos array as input");
-      int Err = 0; // initialize return code
+      OMEGA_ASSERT(isKokkosArray<T>,
+                   "Field::attachData requires Kokkos array as input");
 
       // Attach the data array - this is a shallow copy
       DataArray = std::make_shared<T>(InDataArray);
@@ -313,8 +314,6 @@ class Field {
       // Determine type and location
       DataType = checkArrayType<T>();
       MemLoc   = findArrayMemLoc<T>();
-
-      return Err;
    };
 
    //---------------------------------------------------------------------------
@@ -324,28 +323,25 @@ class Field {
    /// templated based on the array data type so a template argument with
    /// the proper array data type (eg <Array2DR4>) must be supplied.
    template <typename T>
-   static int
+   static void
    attachFieldData(const std::string &FieldName, ///< [in] Name of Field
                    const T &InDataArray ///< [in] Array with data to attach
    ) {
-      static_assert(isKokkosArray<T>,
-                    "attachFieldData requires Kokkos array as input");
-
-      int Err = 0; // initialize return code
+      OMEGA_ASSERT(isKokkosArray<T>,
+                   "Field::attachFieldData requires Kokkos array as input");
 
       // Check to make sure field exists
       if (exists(FieldName)) { // entry found
          // Retrieve the field
          auto ThisField = AllFields[FieldName];
          // Attach the data array
-         Err = ThisField->attachData<T>(InDataArray);
+         ThisField->attachData<T>(InDataArray);
 
       } else { // field has not yet been defined
-         Err = -1;
-         LOG_ERROR("Field: error attaching data to {}. Field not defined",
-                   FieldName);
+         ABORT_ERROR("Field: error attaching data to {}. Field not defined",
+                     FieldName);
       }
-      return Err;
+      return;
    };
 
    //---------------------------------------------------------------------------
@@ -355,26 +351,19 @@ class Field {
    /// OMEGA array types so a template argument with the proper type must
    /// also be supplied.
    template <typename T> T getDataArray() {
-      static_assert(
+      OMEGA_ASSERT(
           isKokkosArray<T>,
           "getDataArray requires Kokkos array as its template argument");
 
       // Check to make sure data is attached
-      if (DataArray != nullptr) { // data is attached
+      if (DataArray == nullptr)
+         ABORT_ERROR("Field: Attempt to get data failed from field {}. "
+                     "Data array has not been attached",
+                     FldName);
 
-         // Convert the data pointer to the appropriate type and
-         // return data array dereferenced from the pointer
-         return *(std::static_pointer_cast<T>(DataArray));
-
-      } else { // data has not yet been attached
-
-         LOG_ERROR("Field: Attempt to get data failed from field {}. "
-                   "Data array has not been attached",
-                   FldName);
-         // return an empty data object
-         T Data;
-         return Data;
-      }
+      // Convert the data pointer to the appropriate type and
+      // return data array dereferenced from the pointer
+      return *(std::static_pointer_cast<T>(DataArray));
    };
 
    //---------------------------------------------------------------------------
@@ -388,21 +377,16 @@ class Field {
    getFieldDataArray(const std::string &FieldName ///< [in] name of Field
    ) {
 
-      T Data; // Set up empty array
-
       // Check to see if field is defined
-      if (!exists(FieldName)) { // no entry found return error
-         LOG_ERROR("Field: Attempted to get data failed, {} does not exist",
-                   FieldName);
-         return Data;
-      }
+      if (!exists(FieldName))
+         ABORT_ERROR("Field: Attempted to get data failed, {} does not exist",
+                     FieldName);
 
       // Retrieve the field by name
       auto ThisField = AllFields[FieldName];
 
       // Retrieve the data
-      Data = ThisField->getDataArray<T>();
-      return Data;
+      return ThisField->getDataArray<T>();
    };
 
    //---------------------------------------------------------------------------
@@ -434,7 +418,7 @@ class FieldGroup {
    );
 
    /// Removes a field group
-   static int
+   static void
    destroy(const std::string &GroupName ///< [in] Name of group to destroy
    );
 
@@ -457,21 +441,21 @@ class FieldGroup {
    );
 
    /// Adds a field to the group instance
-   int addField(const std::string &FieldName ///< [in] Name of field to add
+   void addField(const std::string &FieldName ///< [in] Name of field to add
    );
 
    /// Adds a field to a group based on group name
-   static int
+   static void
    addFieldToGroup(const std::string &FieldName, ///< [in] Name of field to add
                    const std::string &GroupName  ///< [in] Name of group
    );
 
    /// Removes a field from a group instance
-   int removeField(const std::string &FieldName ///< [in] Name of field removed
+   void removeField(const std::string &FieldName ///< [in] Name of field removed
    );
 
    /// Removes a field from a group with a given name
-   static int removeFieldFromGroup(
+   static void removeFieldFromGroup(
        const std::string &FieldName, ///< [in] Name of field to remove
        const std::string &GroupName  ///< [in] Name of group holding field
    );

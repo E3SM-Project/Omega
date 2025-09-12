@@ -6,7 +6,7 @@ Omega includes a Field class that registers available fields and associated
 metadata for use in IO (or any other part of Omega that may require the field
 metadata). The module owning the field will define the Field together
 with some required metadata for compliance with the Climate and Forecast
-[(CF) metadata conventios.](http://cfconventions.org/). Groups of Fields
+[(CF) metadata conventions.](http://cfconventions.org/). Groups of Fields
 can also be defined to provide a short cut to groups that are commonly used
 together, like the model state and tracer groups. Two special Fields, CodeMeta
 and SimMeta (with default names "code" and "simulation", respectively), are
@@ -20,7 +20,7 @@ To use the Field class, the Field header file must be included and as part of
 the application initialization, there should be a call to the init method:
 Fields initialized with the init method:
 ```c++
-int Err = Field::init();
+Field::init();
 ```
 which primarily defines the CodeMeta and SimMeta fields for later use.
 For array fields, the appropriate Dimensions must be defined. The default
@@ -79,15 +79,14 @@ purpose.
 
 Additional metadata in the form of a name-value pair can be added using:
 ```c++
-   int Err = MyField->addMetadata(
-                         MetaName, // [in] Name of new metadata (string)
-                         Value     // [in] Value of new metadata
+   MyField->addMetadata(MetaName, // [in] Name of new metadata (string)
+                        Value     // [in] Value of new metadata
    );
 ```
 where Value can be any supported data type (I4, I8, R4, R8, bool, string).
 Multiple pairs can be added in a single call using:
 ``` c++
-   Err = SimField->addMetadata(
+   SimField->addMetadata(
          {std::make_pair("Name1", Val1),
           std::make_pair("Name2", Val2),
           std::make_pair("Name3", Val3),
@@ -100,16 +99,16 @@ As mentioned above, the actual data array is attached in a separate call
 using a templated form. If the pointer to the Field is available, use the
 member function:
 ```c++
-   int Err = MyField->attachData<ArrayType>(InDataArray);
+   MyField->attachData<ArrayType>(InDataArray);
    // for example:
-   int Err = MyField->attachData<HostArray1DI4>(CellID);
-   int Err = MyField->attachData<Array2DR8>(NormalVelocity);
+   MyField->attachData<HostArray1DI4>(CellID);
+   MyField->attachData<Array2DR8>(NormalVelocity);
 ```
 where ArrayType is one of the supported array types (Array1DI4, etc. or
 HostArray1DI4, etc.). If the Field pointer has not been retrieved, an interface
 is provided using the field name:
 ```c++
-   int Err = Field::attachFieldData<ArrayType>(
+   Field::attachFieldData<ArrayType>(
                     FieldName,   // [in] Name of Field (string)
                     InDataArray  // [in] Array with data to attach
                     );
@@ -170,7 +169,7 @@ The dimension information can be retrieved using:
 ```c++
    int NDims = MyField->getNumDims();
    std::vector<std::string> MyDimNames(NDims);
-   int Err = MyField->getDimNames(MyDimNames);
+   MyField->getDimNames(MyDimNames);
 ```
 Once the dimension names have been retrieved, the Dimension class API can be
 used to extract further dimension information. Two other field quantities
@@ -191,13 +190,13 @@ functions.  To retrieve a pointer to the full Field, use:
 With this pointer all the member functions above can be used.
 The Metadata associated with a field can be retrieved individually using:
 ```c++
-   int Err = MyField->getMetadata(MetadataName, MetaValue);
+   Error Err = MyField->getMetadata(MetadataName, MetaValue);
 ```
 where the MetaValue can be a scalar of any supported data type (I4, I8, R4, R8,
 bool, std::string). If the value of a metadata entry needs to be changed,
 an update function is provided:
 ```c++
-   int Err = MyField->updateMetadata(MetadataName, NewMetaValue);
+   MyField->updateMetadata(MetadataName, NewMetaValue);
 ```
 The existence of a metadata entry can be determined with:
 ```c++
@@ -229,13 +228,13 @@ location as described previously.
 
 Metadata can be removed from a Field using:
 ```c++
-   int Err = MyField->removeMetadata(MetaName);
+   MyField->removeMetadata(MetaName);
    MyField->removeAllMetadata();
 ```
 depending on whether a single metadata entry or all metadata entries need to
 be deleted. Entire fields can be removed using:
 ```c++
-   int Err = Field::destroy(FieldName);
+   Field::destroy(FieldName);
 ```
 and before exiting, all fields should be removed using:
 ```c++
@@ -253,8 +252,8 @@ is created by first creating an empty group with the desired name:
 Fields can then be added either through a member function if the group
 pointer is available, or by group name:
 ```c++
-   int Err = MyGroup->addField(FieldName);
-   int Err = FieldGroup::addFieldToGroup(FieldName, GroupName);
+   MyGroup->addField(FieldName);
+   FieldGroup::addFieldToGroup(FieldName, GroupName);
 ```
 The latter is useful especially if the group was created elsewhere. If the
 field has already been added to the group, no additional entries are created.
@@ -289,15 +288,15 @@ The FieldGroup pointer can also be retrieved:
 
 A field can be removed from a field group using:
 ```c++
-   int Err = FieldGroup::removeField(FieldName);
+   MyGroup->removeField(FieldName);
    // or
-   int Err = removeFieldFromGroup(FieldName, GroupName);
+   FieldGroup::removeFieldFromGroup(FieldName, GroupName);
 ```
 The removal of a field from a group does not remove the field itself, it only
 removes the field name from the list of fields assigned to the group.
 The entire group can be removed with:
 ```c++
-   int Err = FieldGroup::destroy(GroupName);
+   FieldGroup::destroy(GroupName);
 ```
 and the usual ``FieldGroup::clear();`` should be used to remove all field
 groups before exiting.

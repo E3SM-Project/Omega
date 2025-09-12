@@ -16,6 +16,7 @@
 #include "Field.h"
 #include "DataTypes.h"
 #include "Dimension.h"
+#include "Error.h"
 #include "IO.h"
 #include "Logging.h"
 #include <iostream>
@@ -31,10 +32,8 @@ std::map<std::string, std::shared_ptr<FieldGroup>> FieldGroup::AllGroups;
 
 //------------------------------------------------------------------------------
 // Initializes the fields for global code and simulation metadata
-int Field::init(const Clock *ModelClock // [in] default model clock
+void Field::init(const Clock *ModelClock // [in] default model clock
 ) {
-
-   int Err = 0;
 
    // Create two fields to hold global metadata associated with either the
    // code or the simulation/experiment
@@ -43,8 +42,7 @@ int Field::init(const Clock *ModelClock // [in] default model clock
 
    // Define an unlimited time dimension for many time-dependent fields
    // for CF-compliant output
-   std::shared_ptr<Dimension> TimeDim =
-       Dimension::create("time", IO::Unlimited);
+   auto TimeDim = Dimension::create("time", IO::Unlimited);
 
    // Define a time field with required metadata for CF-compliant output
    // It is defined here as a scalar field but the time axis will be added
@@ -59,8 +57,6 @@ int Field::init(const Clock *ModelClock // [in] default model clock
        create("time", "time", UnitString, "time", 0.0, 1.e20, -9.99e30, 0,
               DimNamesTmp, true, true);
    TimeField->addMetadata("calendar", CalName);
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
@@ -97,12 +93,10 @@ Field::create(const std::string &FieldName,   // [in] Name of variable/field
 ) {
 
    // Check to make sure a field of that name has not already been defined
-   if (exists(FieldName)) {
-      LOG_ERROR("Attempt to create field {} failed."
-                " Field with that name already exists.",
-                FieldName);
-      return nullptr;
-   }
+   if (exists(FieldName))
+      ABORT_ERROR("Attempt to create field {} failed."
+                  " Field with that name already exists.",
+                  FieldName);
 
    // Create an empty Field
    auto ThisField = std::make_shared<Field>();
@@ -174,12 +168,10 @@ Field::create(const std::string &FieldName // [in] Name of field
 ) {
 
    // Check to make sure a field of that name has not already been defined
-   if (exists(FieldName)) {
-      LOG_ERROR("Attempt to create field {} failed."
-                " Field with that name already exists.",
-                FieldName);
-      return nullptr;
-   }
+   if (exists(FieldName))
+      ABORT_ERROR("Attempt to create field {} failed."
+                  " Field with that name already exists.",
+                  FieldName);
 
    // Create an empty Field
    auto ThisField = std::make_shared<Field>();
@@ -204,9 +196,8 @@ Field::create(const std::string &FieldName // [in] Name of field
 // Removes a single IOField from the list of available fields
 // That process also decrements the reference counters for the
 // shared pointers and removes them if those counters reach 0.
-int Field::destroy(const std::string &FieldName // [in] Name of Field to remove
+void Field::destroy(const std::string &FieldName // [in] Name of Field to remove
 ) {
-   int Err = 0;
 
    // Check that the group exists
    if (exists(FieldName)) {
@@ -214,14 +205,12 @@ int Field::destroy(const std::string &FieldName // [in] Name of Field to remove
       // Erase the group from the list of all groups
       AllFields.erase(FieldName);
 
-      // Group does not exist, exit with error
+      // Group does not exist, emit a warning but continue
    } else {
-
-      LOG_ERROR("Failed to destroy the field {}: field not found", FieldName);
-      Err = 1;
+      LOG_WARN("Failed to destroy the field {}: field not found", FieldName);
    }
 
-   return Err;
+   return;
 }
 
 //------------------------------------------------------------------------------
@@ -237,12 +226,11 @@ std::shared_ptr<Field>
 Field::get(const std::string &FieldName // [in] name of field
 ) {
 
-   if (exists(FieldName)) {
-      return AllFields[FieldName];
-   } else {
-      LOG_ERROR("Unable to retrieve Field {}. Field not found.", FieldName);
-      return nullptr;
-   }
+   // check that the field exists
+   if (!exists(FieldName))
+      ABORT_ERROR("Unable to retrieve Field {}. Field not found.", FieldName);
+
+   return AllFields[FieldName];
 }
 
 //------------------------------------------------------------------------------
@@ -261,14 +249,13 @@ Field::getFieldType(const std::string &FieldName // [in] name of field
    // Retrieve field with given name
    auto It = AllFields.find(FieldName);
 
-   // If found, use member function to return type
-   if (It != AllFields.end()) {
-      return It->second->getType();
-   } else { // Could not find field with that name
-      LOG_ERROR("Unable to retrieve field type. Field {} has not been created.",
-                FieldName);
-      return ArrayDataType::Unknown;
-   }
+   // If not found, abort
+   if (It == AllFields.end())
+      ABORT_ERROR("Field getFieldType error: Field {} does not exist.",
+                  FieldName);
+
+   // Otherwise use member function to return type
+   return It->second->getType();
 }
 
 //------------------------------------------------------------------------------
@@ -283,15 +270,13 @@ Field::getFieldMemoryLocation(const std::string &FieldName // [in] name of field
    // Retrieve field with given name
    auto It = AllFields.find(FieldName);
 
-   // If found, use member function to return location
-   if (It != AllFields.end()) {
-      return It->second->getMemoryLocation();
-   } else { // Could not find field with that name
-      LOG_ERROR("Unable to retrieve memory location."
-                " Field {} has not been created.",
-                FieldName);
-      return ArrayMemLoc::Unknown;
-   }
+   // If not found, abort
+   if (It == AllFields.end())
+      ABORT_ERROR("Field getFieldMemoryLocation: Field {} does not exist",
+                  FieldName);
+
+   // Use member function to return location
+   return It->second->getMemoryLocation();
 }
 
 //------------------------------------------------------------------------------
@@ -311,15 +296,14 @@ bool Field::isFieldOnHost(const std::string &FieldName // [in] name of field
    // Retrieve field with given name
    auto It = AllFields.find(FieldName);
 
-   // If found, use member function to return host flag
-   if (It != AllFields.end()) {
-      return It->second->isOnHost();
-   } else { // Could not find field with that name
-      LOG_ERROR("Unable to determine whether field is on host."
-                " Field {} has not been created.",
-                FieldName);
-      return false;
-   }
+   // If field not found, abort with error
+   if (It == AllFields.end())
+      ABORT_ERROR("Unable to determine whether field is on host."
+                  " Field {} does not exist.",
+                  FieldName);
+
+   // Use member function to return host flag
+   return It->second->isOnHost();
 }
 
 //------------------------------------------------------------------------------
@@ -345,26 +329,22 @@ bool Field::retainPrecision() const { return RetainPrecision; }
 //------------------------------------------------------------------------------
 // Returns a vector of dimension names associated with each dimension
 // of an array field. Returns an error code.
-int Field::getDimNames(
+void Field::getDimNames(
     std::vector<std::string> &Dimensions // [out] list of dimensions
 ) const {
-   int Err = 0;
 
    // Make sure vector is correct length
    if (NDims > 0) {
       Dimensions.resize(NDims);
    } else {
-      LOG_ERROR("Unable to retrieve dimension names for Field {}. NDims < 1",
-                FldName);
-      Err = -1;
+      ABORT_ERROR("Unable to retrieve dimension names for Field {}. NDims < 1",
+                  FldName);
    }
 
    // Fill vector
    for (int I = 0; I < NDims; ++I) {
       Dimensions[I] = DimNames[I];
    }
-
-   return Err;
 }
 
 //------------------------------------------------------------------------------
@@ -386,14 +366,12 @@ Field::getFieldMetadata(const std::string &FieldName // [in] name of field
    auto It = AllFields.find(FieldName);
 
    // If found, call member function to return Metadata
-   if (It != AllFields.end()) {
-      return It->second->getAllMetadata();
-   } else { // Field not found
-      LOG_ERROR("Unable to retrieve Metadata for Field {}."
-                "No Field with that name could be found.",
-                FieldName);
-      return nullptr;
-   }
+   if (It == AllFields.end())
+      ABORT_ERROR("Unable to retrieve Metadata for Field {}."
+                  " Field does not exist.",
+                  FieldName);
+
+   return It->second->getAllMetadata();
 }
 
 //------------------------------------------------------------------------------
@@ -406,85 +384,69 @@ bool Field::hasMetadata(
 
 //------------------------------------------------------------------------------
 // Adds a metadata entry with the (name,value) pair
-int Field::addMetadata(const std::string &MetaName, // [in] Name of new metadata
-                       const std::any Value         // [in] Value of metadata
+void Field::addMetadata(const std::string &MetaName, // [in] Name of metadata
+                        const std::any Value         // [in] Value of metadata
 ) {
-   int RetVal = 0;
 
-   if (hasMetadata(MetaName)) {
-      LOG_ERROR("Failed to add the metadata {} to field {} because the field "
-                "already has an entry with that name.",
-                MetaName, FldName);
+   // If metadata already exists, abort (should use update instead)
+   if (hasMetadata(MetaName))
+      ABORT_ERROR("Failed to add the metadata {} to field {}. The field "
+                  "already has an entry with that name. Use update instead.",
+                  MetaName, FldName);
 
-      RetVal = -1;
+   FieldMeta[MetaName] = Value;
 
-   } else {
-      FieldMeta[MetaName] = Value;
-   }
-
-   return RetVal;
+   return;
 }
 
 //------------------------------------------------------------------------------
 // Adds multiple metadata entries with a list of (name,value) pairs
-int Field::addMetadata(
+void Field::addMetadata(
     const std::initializer_list<std::pair<std::string, std::any>> &MetaPairs) {
-
-   int RetVal = 0;
 
    // Loop through pairs and add each individually
    for (const auto &MetaPair : MetaPairs) {
-      RetVal += addMetadata(MetaPair.first, MetaPair.second);
+      addMetadata(MetaPair.first, MetaPair.second);
    }
 
-   return RetVal;
+   return;
 }
 
 //------------------------------------------------------------------------------
 // Updates a metadata entry with a new value
-int Field::updateMetadata(const std::string &MetaName, // [in] Name of metadata
-                          const std::any Value         // [in] Value of metadata
+void Field::updateMetadata(const std::string &MetaName, // [in] Metadata name
+                           const std::any Value         // [in] Metadata value
 ) {
-   int RetVal = 0;
 
    if (hasMetadata(MetaName)) {
       FieldMeta[MetaName] = Value;
 
    } else {
-      LOG_ERROR("Failed to update metadata {} for field {} because the field "
-                "has no entry with that name.",
-                MetaName, FldName);
-
-      RetVal = -1;
+      ABORT_ERROR("Unable to update metadata {} for field {}. "
+                  "Field has no entry with that name.",
+                  MetaName, FldName);
    }
 
-   return RetVal;
+   return;
 }
 
 //------------------------------------------------------------------------------
 // Removes a metadata entry with the given name
-int Field::removeMetadata(
+void Field::removeMetadata(
     const std::string &MetaName // [in] Name of metadata entry to remove
 ) {
 
-   int RetVal = 0;
-
    // Make sure metadata exists
    if (hasMetadata(MetaName)) {
-      if (FieldMeta.erase(MetaName) != 1) {
-         LOG_ERROR("Unknown error removing metadata {} in field {} ", MetaName,
-                   FldName);
-         RetVal = -2;
-      }
+      FieldMeta.erase(MetaName);
 
    } else {
-      LOG_ERROR("Failed to remove metadata {} for the field {}: "
-                "entry does not exist.",
-                MetaName, FldName);
-      RetVal = -1;
+      LOG_WARN("Failed to remove metadata {} for the field {}: "
+               "entry does not exist.",
+               MetaName, FldName);
    }
 
-   return RetVal;
+   return;
 
 } // end removeMetadata
 
@@ -496,121 +458,127 @@ void Field::removeAllMetadata() { FieldMeta.clear(); }
 // Retrieves the value of the metadata associated with a given name
 // This specific version of the overloaded interface coerces the value
 // to an I4 type
-int Field::getMetadata(
+Error Field::getMetadata(
     const std::string &MetaName, // [in] Name of metadata to get
     I4 &Value                    // [out] I4 Value of metadata
 ) {
 
-   int RetVal = 0;
+   Error Err; // returned error code, default success
 
    if (hasMetadata(MetaName)) {
       Value = std::any_cast<I4>(FieldMeta[MetaName]);
    } else {
-      LOG_ERROR("Metadata {} does not exist for field {}.", MetaName, FldName);
-      RetVal = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Metadata {} does not exist for field {}.", MetaName,
+                   FldName);
    }
 
-   return RetVal;
+   return Err;
 }
 
 // Retrieves the value of the metadata associated with a given name
 // This specific version of the overloaded interface coerces the value
 // to an I8 type
-int Field::getMetadata(
+Error Field::getMetadata(
     const std::string &MetaName, // [in] Name of metadata to get
     I8 &Value                    // [out] I8 Value of metadata
 ) {
 
-   int RetVal = 0;
+   Error Err; // returned error code, default success
 
    if (hasMetadata(MetaName)) {
       Value = std::any_cast<I8>(FieldMeta[MetaName]);
    } else {
-      LOG_ERROR("Metadata {} does not exist for field {}.", MetaName, FldName);
-      RetVal = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Metadata {} does not exist for field {}.", MetaName,
+                   FldName);
    }
 
-   return RetVal;
+   return Err;
 }
 
 // Retrieves the value of the metadata associated with a given name
 // This specific version of the overloaded interface coerces the value
 // to an R4 type
-int Field::getMetadata(
+Error Field::getMetadata(
     const std::string &MetaName, // [in] Name of metadata to get
     R4 &Value                    // [out] R4 Value of metadata
 ) {
 
-   int RetVal = 0;
+   Error Err; // returned error code, default success
 
    if (hasMetadata(MetaName)) {
       Value = std::any_cast<R4>(FieldMeta[MetaName]);
    } else {
-      LOG_ERROR("Metadata {} does not exist for field {}.", MetaName, FldName);
-      RetVal = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Metadata {} does not exist for field {}.", MetaName,
+                   FldName);
    }
 
-   return RetVal;
+   return Err;
 }
 
 // Retrieves the value of the metadata associated with a given name
 // This specific version of the overloaded interface coerces the value
 // to an R8 type
-int Field::getMetadata(
+Error Field::getMetadata(
     const std::string &MetaName, // [in] Name of metadata to get
     R8 &Value                    // [out] R8 Value of metadata
 ) {
 
-   int RetVal = 0;
+   Error Err; // returned error code, default success
 
    if (hasMetadata(MetaName)) {
       Value = std::any_cast<R8>(FieldMeta[MetaName]);
    } else {
-      LOG_ERROR("Metadata {} does not exist for field {}.", MetaName, FldName);
-      RetVal = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Metadata {} does not exist for field {}.", MetaName,
+                   FldName);
    }
 
-   return RetVal;
+   return Err;
 }
 
 // Retrieves the value of the metadata associated with a given name
 // This specific version of the overloaded interface coerces the value
 // to an bool type
-int Field::getMetadata(
+Error Field::getMetadata(
     const std::string &MetaName, // [in] Name of metadata to get
     bool &Value                  // [out] bool Value of metadata
 ) {
 
-   int RetVal = 0;
+   Error Err; // returned error code, default success
 
    if (hasMetadata(MetaName)) {
       Value = std::any_cast<bool>(FieldMeta[MetaName]);
    } else {
-      LOG_ERROR("Metadata {} does not exist for field {}.", MetaName, FldName);
-      RetVal = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Metadata {} does not exist for field {}.", MetaName,
+                   FldName);
    }
 
-   return RetVal;
+   return Err;
 }
 
 // Retrieves the value of the metadata associated with a given name
 // This specific version of the overloaded interface coerces the value
 // to an string type
-int Field::getMetadata(
+Error Field::getMetadata(
     const std::string &MetaName, // [in] Name of metadata to get
     std::string &Value           // [out] string Value of metadata
 ) {
 
-   int RetVal = 0;
+   Error Err; // returned error code, default success
 
    if (hasMetadata(MetaName)) {
       Value = std::any_cast<std::string>(FieldMeta[MetaName]);
    } else {
-      LOG_ERROR("Metadata {} does not exist for field {}.", MetaName, FldName);
-      RetVal = -1;
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "Metadata {} does not exist for field {}.", MetaName,
+                   FldName);
    }
 
-   return RetVal;
+   return Err;
 }
 
 //------------------------------------------------------------------------------
@@ -632,50 +600,39 @@ FieldGroup::create(const std::string &GroupName // [in] Name of group to create
 ) {
 
    // Check to make sure group has not already been defined
-   if (exists(GroupName)) {
-      LOG_ERROR("Attempt to create FieldGroup {} failed: group already exists",
-                GroupName);
-      return nullptr;
+   if (exists(GroupName))
+      ABORT_ERROR("Attempt to create FieldGroup {} that already exists",
+                  GroupName);
 
-      // Create an empty group with the given name
-   } else {
+   // Create an empty group with the given name
+   auto Group     = std::make_shared<FieldGroup>();
+   Group->GrpName = GroupName;
+   // add to list of groups
+   AllGroups[GroupName] = Group;
 
-      auto Group     = std::make_shared<FieldGroup>();
-      Group->GrpName = GroupName;
-      // add to list of groups
-      AllGroups[GroupName] = Group;
-
-      return Group;
-   }
+   return Group;
 
 } // end create group
 
 //------------------------------------------------------------------------------
 // Removes a field group
-int FieldGroup::destroy(
+void FieldGroup::destroy(
     const std::string &GroupName // [in] Name of group to destroy
 ) {
-
-   int RetVal = 0;
 
    // Check that the group exists
    if (exists(GroupName)) {
 
       // Erase the group from the list of all groups
-      if (AllGroups.erase(GroupName) != 1) {
-         LOG_ERROR("Unknown error trying to erase field group {}.", GroupName);
-         RetVal = -2;
-      }
+      AllGroups.erase(GroupName);
 
-      // Group does not exist, exit with error
+      // Group does not exist, abort
    } else {
-
-      LOG_ERROR("Failed to destroy the field group {}: group not found",
-                GroupName);
-      RetVal = -1;
+      ABORT_ERROR("Failed to destroy the field group {}: group not found",
+                  GroupName);
    }
 
-   return RetVal;
+   return;
 
 } // end destroy group
 
@@ -707,96 +664,74 @@ bool FieldGroup::isFieldInGroup(
 ) {
 
    // Check that the group exists
-   if (exists(GroupName)) {
+   if (!exists(GroupName))
+      ABORT_ERROR("Attempt to search for field {} in group {} failed: "
+                  "Group does not exist",
+                  FieldName, GroupName);
 
-      // Now check for field in group
-      auto Group = AllGroups[GroupName];
-      return Group->hasField(FieldName);
-
-      // Group not found
-   } else {
-      LOG_ERROR("Attempt to search for field {} in group {} failed: "
-                "Group does not exist",
-                FieldName, GroupName);
-      return false;
-   }
+   // Now check for field in group
+   auto Group = AllGroups[GroupName];
+   return Group->hasField(FieldName);
 }
 
 //------------------------------------------------------------------------------
 // Adds a field to the group instance
-int FieldGroup::addField(
+void FieldGroup::addField(
     const std::string &FieldName // [in] Name of field to add
 ) {
-
-   int RetVal = 0;
 
    // Add field name to the list of fields. If this is a duplicate, the
    // insert function knows not to repeat an entry so nothing happens.
    Fields.insert(FieldName);
-
-   return RetVal;
 }
 
 //------------------------------------------------------------------------------
 // Adds a field to a group based on group name
-int FieldGroup::addFieldToGroup(
+void FieldGroup::addFieldToGroup(
     const std::string &FieldName, // [in] Name of field to add
     const std::string &GroupName  // [in] Name of group
 ) {
 
-   int RetVal = 0;
-
    // Check that the group exists
-   if (exists(GroupName)) {
+   if (!exists(GroupName))
+      ABORT_ERROR("Failed to add field {} to group {}: Group does not exist",
+                  FieldName, GroupName);
 
-      auto Group = AllGroups[GroupName];
-      Group->addField(FieldName);
+   // Add field name to group's list
+   auto Group = AllGroups[GroupName];
+   Group->addField(FieldName);
 
-   } else { // group does not exist
-      LOG_ERROR("Failed to add field {} to group {}: Group does not exist",
-                FieldName, GroupName);
-      RetVal = 1;
-   }
-
-   return RetVal;
+   return;
 }
 
 //------------------------------------------------------------------------------
 // Removes a field from a group instance
-int FieldGroup::removeField(
+void FieldGroup::removeField(
     const std::string &FieldName // [in] Name of field to remove
 ) {
 
-   int RetVal = 0;
-
    // Removing a field is simply erasing the field from list
    Fields.erase(FieldName);
-
-   return RetVal;
+   return;
 }
 
 //------------------------------------------------------------------------------
 // Removes a field from a group with a given name
-int FieldGroup::removeFieldFromGroup(
+void FieldGroup::removeFieldFromGroup(
     const std::string &FieldName, // [in] Name of field to remove
     const std::string &GroupName  // [in] Name of group holding field
 ) {
 
-   int RetVal = 0;
-
    // Check that the group exists
-   if (exists(GroupName)) {
+   if (!exists(GroupName))
+      ABORT_ERROR("Failed to remove field {} from group {}: "
+                  "Group does not exist",
+                  FieldName, GroupName);
 
-      auto Group = AllGroups[GroupName];
-      Group->removeField(FieldName);
+   auto Group = AllGroups[GroupName];
+   Group->removeField(FieldName);
 
-   } else { // group does not exist
-      LOG_ERROR("Failed to remove field {} from group {}: Group does not exist",
-                FieldName, GroupName);
-      RetVal = 1;
-   }
-
-   return RetVal;
+   return;
 }
 
 //------------------------------------------------------------------------------
@@ -806,15 +741,12 @@ FieldGroup::get(const std::string &GroupName // [in] Name of group to retrieve
 ) {
 
    // Check to make sure group exists
-   if (exists(GroupName)) {
-      // Return the pointer from the list of groups
-      return AllGroups[GroupName];
+   if (!exists(GroupName))
+      ABORT_ERROR("Failed to retrieve FieldGroup {}: group does not exist.",
+                  GroupName);
 
-   } else { // group does not exist
-      LOG_ERROR("Failed to retrieve FieldGroup {}: group does not exist.",
-                GroupName);
-      return nullptr;
-   }
+   // Return the pointer from the list of groups
+   return AllGroups[GroupName];
 }
 
 //------------------------------------------------------------------------------
@@ -839,21 +771,16 @@ std::set<std::string> FieldGroup::getFieldListFromGroup(
    std::set<std::string> List; // default empty list
 
    // Check for valid group name
-   if (FieldGroup::exists(GroupName)) {
+   if (!(FieldGroup::exists(GroupName)))
+      ABORT_ERROR("Error getting field list from group {}. "
+                  "Group does not exist",
+                  GroupName);
 
-      // Retrieve group
-      std::shared_ptr<FieldGroup> ThisGroup = AllGroups[GroupName];
+   // Retrieve group
+   std::shared_ptr<FieldGroup> ThisGroup = AllGroups[GroupName];
 
-      // Return list from member function
-      List = ThisGroup->getFieldList();
-
-   } else { // Group not found
-
-      LOG_ERROR("Error getting field list from group {}. Group does not exist",
-                GroupName);
-   }
-
-   return List;
+   // Return list from member function
+   return ThisGroup->getFieldList();
 }
 
 //------------------------------------------------------------------------------
@@ -863,12 +790,11 @@ std::shared_ptr<Field> FieldGroup::getField(
 ) const {
 
    // Check to see if the group has field
-   if (hasField(FieldName)) {
-      return Field::get(FieldName);
-   } else {
-      LOG_ERROR("Cannot find Field {} in Group {}", FieldName, GrpName);
-      return nullptr;
-   }
+   if (!hasField(FieldName))
+      ABORT_ERROR("Cannot find Field {} in Group {}", FieldName, GrpName);
+
+   // Return the field
+   return Field::get(FieldName);
 }
 
 //------------------------------------------------------------------------------
@@ -879,15 +805,13 @@ std::shared_ptr<Field> FieldGroup::getFieldFromGroup(
 ) {
 
    // Check to see of group exists
-   if (exists(GroupName)) {
-      // Retrieve group - getField function performs checks
-      std::shared_ptr<FieldGroup> Group = AllGroups[GroupName];
-      return Group->getField(FieldName);
-   } else {
-      LOG_ERROR("Unable to retrieve Field {} from Group {}. Group not found.",
-                FieldName, GroupName);
-      return nullptr;
-   }
+   if (!exists(GroupName))
+      ABORT_ERROR("Unable to retrieve Field {} from Group {}. Group not found.",
+                  FieldName, GroupName);
+
+   // Retrieve group - getField function performs checks
+   std::shared_ptr<FieldGroup> Group = AllGroups[GroupName];
+   return Group->getField(FieldName);
 }
 
 //------------------------------------------------------------------------------

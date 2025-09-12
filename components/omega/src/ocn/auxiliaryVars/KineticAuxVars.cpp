@@ -21,8 +21,6 @@ void KineticAuxVars::registerFields(
     const std::string &MeshName      // name of horizontal mesh
 ) const {
 
-   int Err = 0; // error flag for some calls
-
    // Create fields
    const Real FillValue = -9.99e30;
    int NDims            = 2;
@@ -63,33 +61,17 @@ void KineticAuxVars::registerFields(
    );
 
    // Add fields to FieldGroup
-   Err = FieldGroup::addFieldToGroup(KineticEnergyCell.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", KineticEnergyCell.label(),
-                AuxGroupName);
-   Err = FieldGroup::addFieldToGroup(VelocityDivCell.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", VelocityDivCell.label(),
-                AuxGroupName);
+   FieldGroup::addFieldToGroup(KineticEnergyCell.label(), AuxGroupName);
+   FieldGroup::addFieldToGroup(VelocityDivCell.label(), AuxGroupName);
 
    // Attach data
-   Err = KineticEnergyCellField->attachData<Array2DReal>(KineticEnergyCell);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", KineticEnergyCell.label());
-
-   Err = VelocityDivCellField->attachData<Array2DReal>(VelocityDivCell);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", VelocityDivCell.label());
+   KineticEnergyCellField->attachData<Array2DReal>(KineticEnergyCell);
+   VelocityDivCellField->attachData<Array2DReal>(VelocityDivCell);
 }
 
 void KineticAuxVars::unregisterFields() const {
-   int Err = 0;
-   Err     = Field::destroy(KineticEnergyCell.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", KineticEnergyCell.label());
-   Err = Field::destroy(VelocityDivCell.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", VelocityDivCell.label());
+   Field::destroy(KineticEnergyCell.label());
+   Field::destroy(VelocityDivCell.label());
 }
 
 } // namespace OMEGA

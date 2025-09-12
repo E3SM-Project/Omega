@@ -90,6 +90,7 @@ int initAuxStateTest(const std::string &mesh) {
    MPI_Comm DefComm = DefEnv->getComm();
 
    initLogging(DefEnv);
+   LOG_INFO("------ Auxiliary State unit tests ------");
 
    // Open config file
    Config("Omega");
@@ -106,13 +107,17 @@ int initAuxStateTest(const std::string &mesh) {
       LOG_ERROR("AuxStateTest: error initializing default halo");
    }
 
-   HorzMesh::init();
-   Tracers::init();
-
-   const auto &Mesh = HorzMesh::getDefault();
    // Horz dimensions created in HorzMesh
-   auto VertDim = Dimension::create("NVertLevels", NVertLevels);
+   HorzMesh::init();
+   const auto &Mesh = HorzMesh::getDefault();
+   // if NVertLevels is different from what HorzMesh initialized from the
+   // config, reset the vertical dimension
+   if (NVertLevels != Mesh->NVertLevels) {
+      Dimension::destroy("NVertLevels");
+      auto VertDim = Dimension::create("NVertLevels", NVertLevels);
+   }
 
+   Tracers::init();
    int StateErr = OceanState::init();
    if (StateErr != 0) {
       Err++;
@@ -324,6 +329,8 @@ int main(int argc, char *argv[]) {
 
    if (RetVal >= 256)
       RetVal = 255;
+   if (RetVal == 0)
+      LOG_INFO("------ Auxiliary State unit tests successful ------");
 
    return RetVal;
 

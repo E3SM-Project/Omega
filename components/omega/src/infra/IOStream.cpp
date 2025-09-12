@@ -682,11 +682,7 @@ void IOStream::getFieldSize(
    }
 
    std::vector<std::string> DimNames(NDims);
-   int Err = FieldPtr->getDimNames(DimNames);
-   if (Err != 0) {
-      LOG_ERROR("Error retrieving dimension names for Field {}", FieldName);
-      return;
-   }
+   FieldPtr->getDimNames(DimNames);
 
    LocalSize = 1;
    for (int IDim = 0; IDim < NDims; ++IDim) {
@@ -718,11 +714,7 @@ int IOStream::computeDecomp(
    }
 
    std::vector<std::string> DimNames(NDims);
-   Err = FieldPtr->getDimNames(DimNames);
-   if (Err != 0) {
-      LOG_ERROR("Error retrieving dimension names for Field {}", FieldName);
-      return Fail;
-   }
+   FieldPtr->getDimNames(DimNames);
 
    // Get dimension and size information for each dimension
    // For the offset calculation, we also create dimension and dimension offsets
@@ -895,7 +887,8 @@ int IOStream::writeFieldData(
     std::map<std::string, int> &AllDimIDs // [in] dimension IDs
 ) {
 
-   int Err = 0;
+   Error Err; // internal error code, default success
+   int Err1 = 0;
 
    // Retrieve some basic field information
    std::string FieldName = FieldPtr->getName();
@@ -917,8 +910,8 @@ int IOStream::writeFieldData(
    int NDimsTmp = std::max(NDims, 1);
    std::vector<int> DimLengths(NDimsTmp);
    if (IsDistributed) {
-      Err = computeDecomp(FieldPtr, MyDecompID, LocSize, DimLengths);
-      if (Err != 0) {
+      Err1 = computeDecomp(FieldPtr, MyDecompID, LocSize, DimLengths);
+      if (Err1 != 0) {
          LOG_ERROR("Error computing decomposition for Field {}", FieldName);
          return Fail;
       }
@@ -957,11 +950,9 @@ int IOStream::writeFieldData(
       DataI4.resize(LocSize);
       DataPtr = DataI4.data();
       // get fill value
-      Err = FieldPtr->getMetadata("FillValue", FillValI4);
-      if (Err != 0) {
-         LOG_ERROR("Error retrieving FillValue for Field {}", FieldName);
-         return Fail;
-      }
+      Err += FieldPtr->getMetadata("FillValue", FillValI4);
+      CHECK_ERROR_ABORT(Err, "Error retrieving FillValue for Field {}",
+                        FieldName);
       FillValPtr = &FillValI4;
 
       switch (NDims) {
@@ -1101,11 +1092,9 @@ int IOStream::writeFieldData(
       DataI8.resize(LocSize);
       DataPtr = DataI8.data();
       // Get fill value
-      Err = FieldPtr->getMetadata("FillValue", FillValI8);
-      if (Err != 0) {
-         LOG_ERROR("Error retrieving FillValue for Field {}", FieldName);
-         return Fail;
-      }
+      Err += FieldPtr->getMetadata("FillValue", FillValI8);
+      CHECK_ERROR_ABORT(Err, "Error retrieving FillValue for Field {}",
+                        FieldName);
       FillValPtr = &FillValI8;
 
       switch (NDims) {
@@ -1244,11 +1233,9 @@ int IOStream::writeFieldData(
       DataR4.resize(LocSize);
       DataPtr = DataR4.data();
       // Get fill value
-      Err = FieldPtr->getMetadata("FillValue", FillValR4);
-      if (Err != 0) {
-         LOG_ERROR("Error retrieving FillValue for Field {}", FieldName);
-         return Fail;
-      }
+      Err += FieldPtr->getMetadata("FillValue", FillValR4);
+      CHECK_ERROR_ABORT(Err, "Error retrieving FillValue for Field {}",
+                        FieldName);
       FillValPtr = &FillValR4;
 
       switch (NDims) {
@@ -1385,11 +1372,9 @@ int IOStream::writeFieldData(
    case ArrayDataType::R8:
 
       // Get fill value
-      Err = FieldPtr->getMetadata("FillValue", FillValR8);
-      if (Err != 0) {
-         LOG_ERROR("Error retrieving FillValue for Field {}", FieldName);
-         return Fail;
-      }
+      Err += FieldPtr->getMetadata("FillValue", FillValR8);
+      CHECK_ERROR_ABORT(Err, "Error retrieving FillValue for Field {}",
+                        FieldName);
       DataR8.resize(LocSize);
       if (ReducePrecision and !RetainPrecision) {
          FillValR4  = FillValR8;
@@ -1537,9 +1522,7 @@ int IOStream::writeFieldData(
       break; // end R8 type
 
    default:
-      LOG_ERROR("Cannot determine data type for field {}", FieldName);
-      Err = 3;
-      break;
+      ABORT_ERROR("Cannot determine data type for field {}", FieldName);
 
    } // end switch data type
 
@@ -1561,7 +1544,7 @@ int IOStream::writeFieldData(
       OMEGA::IO::writeNDVar(DataPtr, FileID, FieldID, FldFrame, &DimLengths);
    }
 
-   return Err;
+   return Err1;
 
 } // end writeFieldData
 
@@ -2425,7 +2408,7 @@ void IOStream::writeStream(
    ElapsedTime.get(ElapsedTimeR8, TimeUnits::Seconds);
    HostArray1DR8 OutTime("OutTime", 1);
    OutTime(0) = ElapsedTimeR8;
-   TmpErr     = Field::attachFieldData("time", OutTime);
+   Field::attachFieldData("time", OutTime);
 
    // Reset alarms and flags
    if (OnStartup)
@@ -2506,20 +2489,16 @@ void IOStream::writeStream(
    std::shared_ptr<Field> FileField = Field::create("FileField");
    // Add the current simulation time
    std::string SimTimeName = "SimulationTime";
-   TmpErr                  = FileField->addMetadata(SimTimeName, SimTimeStr);
-   if (TmpErr != 0)
-      ABORT_ERROR("Error adding current sim time to output {}", OutFileName);
+   FileField->addMetadata(SimTimeName, SimTimeStr);
 
    // If it is a multi-frame file, add the time for this frame
    if (Multiframe) {
       SimTimeName = SimTimeName + std::to_string(Frame);
-      TmpErr      = FileField->addMetadata(SimTimeName, SimTimeStr);
+      FileField->addMetadata(SimTimeName, SimTimeStr);
    }
    // Write and then destroy temporary field
    writeFieldMeta("FileField", OutFileID, IO::GlobalID);
-   TmpErr = Field::destroy("FileField");
-   if (TmpErr != 0)
-      ABORT_ERROR("Error destroying File field for file {}", OutFileName);
+   Field::destroy("FileField");
 
    // Assign dimension IDs for all defined dimensions
    std::map<std::string, int> AllDimIDs;
@@ -2543,10 +2522,7 @@ void IOStream::writeStream(
       if (NDims > 0) {
          DimNames.resize(NDims);
          FieldDims.resize(NDims);
-         TmpErr = ThisField->getDimNames(DimNames);
-         if (TmpErr != 0)
-            ABORT_ERROR("Error retrieving dimension names for Field {}",
-                        FieldName);
+         ThisField->getDimNames(DimNames);
       }
       // If this is a time-dependent field, we insert the unlimited time
       // dimension as the first dimension (for field definition only)

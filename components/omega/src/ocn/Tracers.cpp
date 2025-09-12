@@ -42,8 +42,7 @@ I4 Tracers::NumTracers   = 0;
 //---------------------------------------------------------------------------
 void Tracers::init() {
 
-   int ErrFlag = 0; // back-compatible error to be removed later
-   Error Err;       // error code
+   Error Err; // error code
 
    // Retrieve mesh cell/edge/vertex totals from Decomp
    HorzMesh *DefHorzMesh = HorzMesh::getDefault();
@@ -152,23 +151,13 @@ void Tracers::init() {
          std::string TracerFieldName = _TracerName;
 
          // add tracer Field to field group
-         ErrFlag = TracerFieldGroup->addField(TracerFieldName);
-         if (ErrFlag != 0) {
-            ABORT_ERROR("Error adding {} to field group {}", TracerFieldName,
-                        TracerFieldGroupName);
-         }
+         TracerFieldGroup->addField(TracerFieldName);
 
          // Add tracer Field to all tracer group
-         ErrFlag = AllTracerGrp->addField(TracerFieldName);
-         if (ErrFlag != 0) {
-            ABORT_ERROR("Error adding {} to All Tracer group", TracerFieldName);
-         }
+         AllTracerGrp->addField(TracerFieldName);
 
          // Add tracer Field to restart group
-         ErrFlag = FieldGroup::addFieldToGroup(TracerFieldName, "Restart");
-         if (ErrFlag != 0) {
-            ABORT_ERROR("Error adding {} to Restart group", TracerFieldName);
-         }
+         FieldGroup::addFieldToGroup(TracerFieldName, "Restart");
 
          // Associate Field with data
          I4 TracerIndex                     = TracerIndexes[_TracerName];
@@ -177,11 +166,7 @@ void Tracers::init() {
          // Create a 2D subview by fixing the first dimension (TracerIndex)
          Array2DReal TracerSubview = Kokkos::subview(
              TracerArrays[CurTimeIndex], TracerIndex, Kokkos::ALL, Kokkos::ALL);
-         ErrFlag = TracerField->attachData<Array2DReal>(TracerSubview);
-         if (ErrFlag != 0) {
-            ABORT_ERROR("Error attaching data array to field {}",
-                        TracerFieldName);
-         }
+         TracerField->attachData<Array2DReal>(TracerSubview);
       }
    }
 
@@ -345,13 +330,12 @@ I4 Tracers::getHostByIndex(HostArray2DReal &TracerArrayH, const I4 TimeLevel,
       return -2;
    }
 
-   I4 Err;
    I4 TimeIndex;
 
-   Err          = getTimeIndex(TimeIndex, TimeLevel);
+   I4 Err       = getTimeIndex(TimeIndex, TimeLevel);
    TracerArrayH = Kokkos::subview(TracerArraysH[TimeIndex], TracerIndex,
                                   Kokkos::ALL, Kokkos::ALL);
-   return 0;
+   return Err;
 }
 
 I4 Tracers::getHostByName(HostArray2DReal &TracerArrayH, const I4 TimeLevel,
@@ -459,13 +443,12 @@ I4 Tracers::copyToDevice(const I4 TimeLevel) {
 
 I4 Tracers::copyToHost(const I4 TimeLevel) {
 
-   I4 Err;
    I4 TimeIndex;
 
-   Err = getTimeIndex(TimeIndex, TimeLevel);
+   I4 Err = getTimeIndex(TimeIndex, TimeLevel);
    deepCopy(TracerArraysH[TimeIndex], TracerArrays[TimeIndex]);
 
-   return 0;
+   return Err;
 }
 
 //---------------------------------------------------------------------------
@@ -488,12 +471,10 @@ I4 Tracers::exchangeHalo(const I4 TimeLevel) {
 //---------------------------------------------------------------------------
 //  update time level
 //---------------------------------------------------------------------------
-I4 Tracers::updateTimeLevels() {
+void Tracers::updateTimeLevels() {
 
-   if (NTimeLevels == 1) {
-      LOG_ERROR("Tracers: can't update time levels for NTimeLevels == 1");
-      return -1;
-   }
+   if (NTimeLevels == 1)
+      ABORT_ERROR("Tracers: can't update time levels for NTimeLevels == 1");
 
    // Exchange halo
    exchangeHalo(1);
@@ -509,14 +490,10 @@ I4 Tracers::updateTimeLevels() {
 
       Array2DReal TracerSubview = Kokkos::subview(
           TracerArrays[CurTimeIndex], TracerIndex, Kokkos::ALL, Kokkos::ALL);
-      I4 Err = TracerField->attachData<Array2DReal>(TracerSubview);
-      if (Err != 0) {
-         LOG_ERROR("Error attaching data array to field {}", TracerFieldName);
-         return Err;
-      }
+      TracerField->attachData<Array2DReal>(TracerSubview);
    }
 
-   return 0;
+   return;
 }
 
 //---------------------------------------------------------------------------
