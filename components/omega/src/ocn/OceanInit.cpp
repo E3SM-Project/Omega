@@ -118,8 +118,8 @@ int initOmegaModules(MPI_Comm Comm) {
    std::string SimTimeStr          = " "; // create SimulationTime metadata
    std::shared_ptr<Field> SimField = Field::get(SimMeta);
    SimField->addMetadata("SimulationTime", SimTimeStr);
-   int Err1 = IOStream::Success;
-   int Err2 = IOStream::Success;
+   Error Err1;
+   Error Err2;
 
    // read from initial state if this is starting a new simulation
    Metadata ReqMeta; // no requested metadata for initial state
@@ -132,7 +132,7 @@ int initOmegaModules(MPI_Comm Comm) {
 
    // One of the above two streams must be successful to initialize the
    // state and other fields used in the model
-   if (Err1 != IOStream::Success and Err2 != IOStream::Success) {
+   if (Err1.isFail() and Err2.isFail()) {
       ABORT_ERROR("Error initializing ocean variables from input streams");
    }
 

@@ -37,29 +37,26 @@ using namespace OMEGA;
 //------------------------------------------------------------------------------
 // A simple test evaluation function
 template <typename T>
-void TestEval(const std::string &TestName, T TestVal, T ExpectVal, int &Error) {
-
-   if (TestVal == ExpectVal) {
-      LOG_INFO("{}: PASS", TestName);
-   } else {
-      LOG_ERROR("{}: FAIL", TestName);
-      ++Error;
+void TestEval(const std::string &TestName, T TestVal, T ExpectVal, Error &Err) {
+   if (TestVal != ExpectVal) {
+      std::string ErrMsg = TestName + ": FAIL";
+      Err += Error(ErrorCode::Fail, ErrMsg);
    }
 }
 //------------------------------------------------------------------------------
 // Initialization routine to create reference Fields
-int initIOStreamTest(Clock *&ModelClock // Model clock
+void initIOStreamTest(Clock *&ModelClock // Model clock
 ) {
 
-   int Err    = 0;
-   int Err1   = 0;
-   int ErrRef = 0;
+   Error Err;
+   int TmpErr = 0;
 
    // Initialize machine environment and logging
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv  = MachEnv::getDefault();
    MPI_Comm DefComm = DefEnv->getComm();
    initLogging(DefEnv);
+   LOG_INFO("------ IOStream Unit Tests ------");
 
    // Read the model configuration
    Config("Omega");
@@ -105,8 +102,9 @@ int initIOStreamTest(Clock *&ModelClock // Model clock
    }
 
    // Initialize State
-   Err1 = OceanState::init();
-   TestEval("Ocean state initialization", Err1, ErrRef, Err);
+   TmpErr = OceanState::init();
+   if (TmpErr != 0)
+      ABORT_ERROR("IOStreamTest: Error initializing OceanState");
 
    // Initialize Tracers
    Tracers::init();
@@ -133,7 +131,8 @@ int initIOStreamTest(Clock *&ModelClock // Model clock
    TestEval("IOStream Validation", AllValidated, true, Err);
 
    // End of init
-   return Err;
+   CHECK_ERROR_ABORT(Err, "IOStreamTest: Error in initialization");
+   return;
 
 } // End initialization IOStream test
 
@@ -144,7 +143,7 @@ int initIOStreamTest(Clock *&ModelClock // Model clock
 
 int main(int argc, char **argv) {
 
-   int Err    = 0;
+   Error Err; // internal error code
    int Err1   = 0;
    int ErrRef = 0;
 
@@ -158,8 +157,7 @@ int main(int argc, char **argv) {
       Clock *ModelClock = nullptr;
 
       // Call initialization to create reference IO field
-      Err1 = initIOStreamTest(ModelClock);
-      TestEval("Initialize IOStream test", Err1, ErrRef, Err);
+      initIOStreamTest(ModelClock);
 
       // Retrieve dimension lengths and some mesh info
       I4 NCellsSize     = Dimension::getDimLengthLocal("NCells");
@@ -170,8 +168,8 @@ int main(int argc, char **argv) {
 
       // Read restart file for initial temperature and salinity data
       Metadata ReqMetadata; // leave empty for now - no required metadata
-      Err1 = IOStream::read("InitialState", ModelClock, ReqMetadata);
-      TestEval("Read restart file", Err1, IOStream::Success, Err);
+      Err = IOStream::read("InitialState", ModelClock, ReqMetadata);
+      CHECK_ERROR_ABORT(Err, "IOStreamTest: Error reading initial state");
 
       // Overwrite salinity array with values associated with global cell
       // ID to test proper indexing of IO
@@ -206,8 +204,8 @@ int main(int argc, char **argv) {
       // written before we read.
       std::this_thread::sleep_for(std::chrono::seconds(5));
       bool ForceRead = true;
-      Err1 = IOStream::read("RestartRead", ModelClock, ReqMetadata, ForceRead);
-      TestEval("Restart force read", Err1, IOStream::Success, Err);
+      Err = IOStream::read("RestartRead", ModelClock, ReqMetadata, ForceRead);
+      CHECK_ERROR_ABORT(Err, "IOStreamTest: Error reading restart");
 
       Err1             = 0;
       auto DataReducer = Kokkos::Sum<I4>(Err1);
@@ -238,10 +236,10 @@ int main(int argc, char **argv) {
    Kokkos::finalize();
    MPI_Finalize();
 
-   if (Err >= 256)
-      Err = 255;
+   CHECK_ERROR_ABORT(Err, "IOStream Unit Tests: FAIL");
+   LOG_INFO("------ IOStream Unit Tests successful ------");
 
    // End of testing
-   return Err;
+   return 0;
 }
 //===--- End test driver for IO Streams ------------------------------------===/
