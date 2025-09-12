@@ -795,7 +795,6 @@ int main(int argc, char **argv) {
              if (Data1DI4(Cell) != RefI4 + Cell)
                 ++LCount;
              for (int K = 0; K < NVertLevels; ++K) {
-                int Add2 = Cell * NVertLevels + K;
                 if (Data2DI4(Cell, K) != RefI4 + Cell + K)
                    ++LCount;
                 for (int Trcr = 0; Trcr < NTracers; ++Trcr) {

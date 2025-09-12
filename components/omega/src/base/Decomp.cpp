@@ -1529,6 +1529,8 @@ void Decomp::partEdges(
       // Broadcast this buffer
       Err       = Broadcast(EdgeBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("partEdgesOwnerBcast") && TimerFlag;
+      if (Err != 0)
+         ABORT_ERROR("Decomp partEdges: Error broadcasting Edge owner info");
 
       // For each edge in the buffer, check to see if the task owns
       // the cell. If so, add the edge ID to the owned edges list.
@@ -1662,6 +1664,8 @@ void Decomp::partEdges(
       // Broadcast the list of edges owned by this task
       Err       = Broadcast(EdgeBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("partEdgesFinalBcast") && TimerFlag;
+      if (Err != 0)
+         ABORT_ERROR("Decomp partEdges: Error in final broadcast");
 
       // Extract the buffer into a local search vector
       TimerFlag   = Pacer::start("partEdgesFinalSearch") && TimerFlag;
@@ -1797,6 +1801,8 @@ void Decomp::partVertices(
       // Broadcast this buffer
       Err       = Broadcast(VrtxBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("partVerticesOwnedBcast") && TimerFlag;
+      if (Err != 0)
+         ABORT_ERROR("Decomp partVertices: error broadcasting owned vertices");
 
       // For each vertex in the buffer, check to see if the task owns
       // the cell. If so, add the vertex ID to the owned vertices list.
@@ -1931,6 +1937,8 @@ void Decomp::partVertices(
       // Broadcast the list of vertices owned by this task
       Err       = Broadcast(VrtxBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("partVerticesFinalBcast") && TimerFlag;
+      if (Err != 0)
+         ABORT_ERROR("Decomp partVertices: error in final broadcast");
 
       // Extract the buffer into a local search vector
       TimerFlag   = Pacer::start("partVerticesFinalSearch") && TimerFlag;
