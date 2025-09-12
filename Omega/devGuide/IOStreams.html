@@ -207,7 +207,7 @@ before the validateAll call, a single stream can be validated using</p>
 been defined and the relevant data arrays have been attached to Fields and
 are available to access.  At the end of a simulation, IOStreams must be
 finalized using</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IOStream</span><span class="o">::</span><span class="n">finalize</span><span class="p">(</span><span class="n">ModelClock</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">IOStream</span><span class="o">::</span><span class="n">finalize</span><span class="p">(</span><span class="n">ModelClock</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>so that any final writes can take place for the OnShutdown streams and to
@@ -218,7 +218,7 @@ before that time, an erase function is provided:</p>
 </div>
 <p>For most output streams, we provide a writeAll interface that should be placed
 at an appropriate time during the time step loop:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IOStream</span><span class="o">::</span><span class="n">writeAll</span><span class="p">(</span><span class="n">ModelClock</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">IOStream</span><span class="o">::</span><span class="n">writeAll</span><span class="p">(</span><span class="n">ModelClock</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>This function checks each write stream and writes the file if it is time, based
@@ -226,18 +226,21 @@ on a time manager alarm that is defined during initialization for each stream
 based on the time frequency in the streams configuration. After writing the
 file, the alarm is reset for the next write time. If a file must be written
 outside of this routine, a single-stream write can take place using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IOStream</span><span class="o">::</span><span class="n">write</span><span class="p">(</span><span class="n">StreamName</span><span class="p">,</span><span class="w"> </span><span class="n">ModelClock</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">IOStream</span><span class="o">::</span><span class="n">write</span><span class="p">(</span><span class="n">StreamName</span><span class="p">,</span><span class="w"> </span><span class="n">ModelClock</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Reading files (eg for initialization, restart or forcing) does not often
 take place all at once, so no readAll interface is provided. Instead, each
 input stream is read using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IOStream</span><span class="o">::</span><span class="n">read</span><span class="p">(</span><span class="n">StreamName</span><span class="p">,</span><span class="w"> </span><span class="n">ModelClock</span><span class="p">,</span><span class="w"> </span><span class="n">ReqMetadata</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Error</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IOStream</span><span class="o">::</span><span class="n">read</span><span class="p">(</span><span class="n">StreamName</span><span class="p">,</span><span class="w"> </span><span class="n">ModelClock</span><span class="p">,</span><span class="w"> </span><span class="n">ReqMetadata</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>where ReqMetadata is a variable of type Metadata (defined in Field but
+<p>The returned error code typically means that a field in the stream could
+not be found in the input file - most other errors abort immediately. The
+calling routine is then responsible for deciding what action to take.
+The ReqMetadata argument is a variable of type Metadata (defined in Field but
 essentially a <code class="docutils literal notranslate"><span class="pre">std::map&lt;std::string,</span> <span class="pre">std::any&gt;</span></code> for the name/value pair).
-This variable should incude the names of global metadata that are desired
+This variable should include the names of global metadata that are desired
 from the input file. For example, if a time string is needed to verify the
 input file corresponds to a desired time, the required metadata can be
 initialized with</p>

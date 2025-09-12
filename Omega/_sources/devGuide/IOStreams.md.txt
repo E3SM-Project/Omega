@@ -40,7 +40,7 @@ been defined and the relevant data arrays have been attached to Fields and
 are available to access.  At the end of a simulation, IOStreams must be
 finalized using
 ```c++
-   int Err = IOStream::finalize(ModelClock);
+   IOStream::finalize(ModelClock);
 ```
 so that any final writes can take place for the OnShutdown streams and to
 deallocate all defined streams and arrays. If a stream needs to be removed
@@ -52,7 +52,7 @@ before that time, an erase function is provided:
 For most output streams, we provide a writeAll interface that should be placed
 at an appropriate time during the time step loop:
 ```c++
-   int Err = IOStream::writeAll(ModelClock);
+   IOStream::writeAll(ModelClock);
 ```
 This function checks each write stream and writes the file if it is time, based
 on a time manager alarm that is defined during initialization for each stream
@@ -60,18 +60,21 @@ based on the time frequency in the streams configuration. After writing the
 file, the alarm is reset for the next write time. If a file must be written
 outside of this routine, a single-stream write can take place using:
 ```c++
-   int Err = IOStream::write(StreamName, ModelClock);
+   IOStream::write(StreamName, ModelClock);
 ```
 
 Reading files (eg for initialization, restart or forcing) does not often
 take place all at once, so no readAll interface is provided. Instead, each
 input stream is read using:
 ```c++
-   int Err = IOStream::read(StreamName, ModelClock, ReqMetadata);
+   Error Err = IOStream::read(StreamName, ModelClock, ReqMetadata);
 ```
-where ReqMetadata is a variable of type Metadata (defined in Field but
+The returned error code typically means that a field in the stream could
+not be found in the input file - most other errors abort immediately. The
+calling routine is then responsible for deciding what action to take.
+The ReqMetadata argument is a variable of type Metadata (defined in Field but
 essentially a ``std::map<std::string, std::any>`` for the name/value pair).
-This variable should incude the names of global metadata that are desired
+This variable should include the names of global metadata that are desired
 from the input file. For example, if a time string is needed to verify the
 input file corresponds to a desired time, the required metadata can be
 initialized with
