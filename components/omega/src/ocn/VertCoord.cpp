@@ -58,14 +58,14 @@ VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
    MeshFileName = Decomp->MeshFileName;
 
    // Open the mesh file for reading (assume IO has already been initialized)
-   I4 Err;
-   Err = IO::openFile(MeshFileID, MeshFileName, IO::ModeRead);
+   IO::openFile(MeshFileID, MeshFileName, IO::ModeRead);
 
    // Set NVertLayers and NVertLayersP1 and create the vertical dimensions
+   Error Err; // Error code
    I4 NVertLayersID;
    Err = IO::getDimFromFile(MeshFileID, "nVertLevels", NVertLayersID,
                             NVertLayers);
-   if (Err != 0) {
+   if (!Err.isSuccess()) {
       LOG_WARN("VertCoord: error reading nVertLevels from mesh file, "
                "using NVertLayers = 1");
       NVertLayers = 1;
@@ -134,28 +134,70 @@ void VertCoord::completeSetup(Config *Options //< [in] configuration options
    // Define field metadata
    defineFields();
 
-   // Fill with default values + 1 in case arrays are not present in mesh file
-   deepCopy(MinLayerCell, 1);
-   deepCopy(MaxLayerCell, NVertLayers);
+   I4 FillValueI4     = -1;
+   Real FillValueReal = -999._Real;
+
+   deepCopy(MinLayerCell, FillValueI4);
+   deepCopy(MaxLayerCell, FillValueI4);
+   deepCopy(BottomDepth, FillValueReal);
+
+   OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
+   OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+   OMEGA_SCOPE(LocBottomDepth, BottomDepth);
 
    // Fetch input stream and validate
    std::string StreamName = "InitialVertCoord";
+   if (Name != "Default") {
+      StreamName.append(Name);
+   }
 
    auto VCoordStream = IOStream::get(StreamName);
 
    bool IsValidated = VCoordStream->validate();
 
    // Read InitialVertCoord stream
-   I4 Err;
+   Error Err; // Error code
    if (IsValidated) {
       Err = IOStream::read(StreamName);
+      if (!Err.isSuccess()) {
+         LOG_WARN("VertCoord: Error reading {} stream", StreamName);
+         I4 Sum1 = 0;
+         parallelReduce(
+             {MinLayerCell.extent_int(0)},
+             KOKKOS_LAMBDA(int I, int &Accum) { Accum += LocMinLayerCell(I); },
+             Sum1);
+         if (Sum1 < 0) {
+            LOG_WARN("VertCoord: Error reading minLevelCell from {}, "
+                     "using MinLayerCell = 0",
+                     StreamName);
+            deepCopy(MinLayerCell, 1);
+         }
+         I4 Sum2 = 0;
+         parallelReduce(
+             {MaxLayerCell.extent_int(0)},
+             KOKKOS_LAMBDA(int I, int &Accum) { Accum += LocMaxLayerCell(I); },
+             Sum2);
+         if (Sum2 < 0) {
+            LOG_WARN("VertCoord: Error reading maxLevelCell from {}, "
+                     "using MaxLayerCell = NVertLayers - 1",
+                     StreamName);
+            deepCopy(MaxLayerCell, NVertLayers);
+         }
+         Real Sum3 = 0.;
+         parallelReduce(
+             {BottomDepth.extent_int(0)},
+             KOKKOS_LAMBDA(int I, Real &Accum) { Accum += LocBottomDepth(I); },
+             Sum3);
+         if (Sum3 < 0.) {
+            ABORT_ERROR("VertCoord: Error reading bottomDepth from {}",
+                        StreamName);
+         }
+      }
    } else {
       ABORT_ERROR("Error validating IO stream {}", StreamName);
    }
 
    // Subtract 1 to convert to zero-based indexing
-   OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
-   OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
    parallelFor(
        {NCellsAll}, KOKKOS_LAMBDA(int ICell) {
           LocMinLayerCell(ICell) -= 1;
@@ -174,15 +216,14 @@ void VertCoord::completeSetup(Config *Options //< [in] configuration options
    MinLayerCellH = createHostMirrorCopy(MinLayerCell);
    BottomDepthH  = createHostMirrorCopy(BottomDepth);
 
-   Error Err1;
-
    // Fetch reference desnity from Config
    Config TendConfig("Tendencies");
-   Err1 += Options->get(TendConfig);
-   CHECK_ERROR_ABORT(Err1, "VertCoord: Tendencies group not found in Config");
+   Err.reset();
+   Err += Options->get(TendConfig);
+   CHECK_ERROR_ABORT(Err, "VertCoord: Tendencies group not found in Config");
 
-   Err1 += TendConfig.get("Density0", Rho0);
-   CHECK_ERROR_ABORT(Err1, "VertCoord: Density0 not found in TendConfig");
+   Err += TendConfig.get("Density0", Rho0);
+   CHECK_ERROR_ABORT(Err, "VertCoord: Density0 not found in TendConfig");
 
 } // end completeSetup
 
@@ -212,8 +253,6 @@ VertCoord::create(const std::string &Name, // [in] name for new VertCoord
 //------------------------------------------------------------------------------
 // Define IO fields and metadata
 void VertCoord::defineFields() {
-
-   I4 Err = 0; // default error code
 
    // Set field names (append Name if not default)
    MinLayerCellFldName   = "MinLevelCell";
@@ -368,28 +407,13 @@ void VertCoord::defineFields() {
    }
    auto InitVCoordGroup = FieldGroup::create(InitGroupName);
 
-   Err = InitVCoordGroup->addField(MinLayerCellFldName);
-   if (Err != 0)
-      LOG_ERROR("Error adding {} to field group {}", MinLayerCellFldName,
-                InitGroupName);
-   Err = InitVCoordGroup->addField(MaxLayerCellFldName);
-   if (Err != 0)
-      LOG_ERROR("Error adding {} to field group {}", MaxLayerCellFldName,
-                InitGroupName);
-   Err = InitVCoordGroup->addField(BottomDepthFldName);
-   if (Err != 0)
-      LOG_ERROR("Error adding {} to field group {}", BottomDepthFldName,
-                InitGroupName);
+   InitVCoordGroup->addField(MinLayerCellFldName);
+   InitVCoordGroup->addField(MaxLayerCellFldName);
+   InitVCoordGroup->addField(BottomDepthFldName);
 
-   Err = MinLayerCellField->attachData<Array1DI4>(MinLayerCell);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data array to field {}", MinLayerCellFldName);
-   Err = MaxLayerCellField->attachData<Array1DI4>(MaxLayerCell);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data array to field {}", MaxLayerCellFldName);
-   Err = BottomDepthField->attachData<Array1DReal>(BottomDepth);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data array to field {}", BottomDepthFldName);
+   MinLayerCellField->attachData<Array1DI4>(MinLayerCell);
+   MaxLayerCellField->attachData<Array1DI4>(MaxLayerCell);
+   BottomDepthField->attachData<Array1DReal>(BottomDepth);
 
    // Create a field group for VertCoord fields
    GroupName = "VertCoord";
@@ -398,49 +422,20 @@ void VertCoord::defineFields() {
    }
    auto VCoordGroup = FieldGroup::create(GroupName);
 
-   Err = VCoordGroup->addField(PressInterfFldName);
-   if (Err != 0)
-      LOG_ERROR("Error adding {} to field group {}", PressInterfFldName,
-                GroupName);
-   Err = VCoordGroup->addField(PressMidFldName);
-   if (Err != 0)
-      LOG_ERROR("Error adding {} to field group {}", PressMidFldName,
-                GroupName);
-   Err = VCoordGroup->addField(ZInterfFldName);
-   if (Err != 0)
-      LOG_ERROR("Error adding {} to field group {}", ZInterfFldName, GroupName);
-   Err = VCoordGroup->addField(ZMidFldName);
-   if (Err != 0)
-      LOG_ERROR("Error adding {} to field group {}", ZMidFldName, GroupName);
-   Err = VCoordGroup->addField(GeopotFldName);
-   if (Err != 0)
-      LOG_ERROR("Error adding {} to field group {}", GeopotFldName, GroupName);
-   Err = VCoordGroup->addField(LyrThickTargetFldName);
-   if (Err != 0)
-      LOG_ERROR("Error adding {} to field group {}", LyrThickTargetFldName,
-                GroupName);
+   VCoordGroup->addField(PressInterfFldName);
+   VCoordGroup->addField(PressMidFldName);
+   VCoordGroup->addField(ZInterfFldName);
+   VCoordGroup->addField(ZMidFldName);
+   VCoordGroup->addField(GeopotFldName);
+   VCoordGroup->addField(LyrThickTargetFldName);
 
    // Associate Field with data
-   Err = PressureInterfaceField->attachData<Array2DReal>(PressureInterface);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data array to field {}", PressInterfFldName);
-   Err = PressureMidField->attachData<Array2DReal>(PressureMid);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data array to field {}", PressMidFldName);
-   Err = ZInterfaceField->attachData<Array2DReal>(ZInterface);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data array to field {}", ZInterfFldName);
-   Err = ZMidField->attachData<Array2DReal>(ZMid);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data array to field {}", ZMidFldName);
-   Err = GeopotentialMidField->attachData<Array2DReal>(GeopotentialMid);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data array to field {}", GeopotFldName);
-   Err =
-       LayerThicknessTargetField->attachData<Array2DReal>(LayerThicknessTarget);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data array to field {}",
-                LyrThickTargetFldName);
+   PressureInterfaceField->attachData<Array2DReal>(PressureInterface);
+   PressureMidField->attachData<Array2DReal>(PressureMid);
+   ZInterfaceField->attachData<Array2DReal>(ZInterface);
+   ZMidField->attachData<Array2DReal>(ZMid);
+   GeopotentialMidField->attachData<Array2DReal>(GeopotentialMid);
+   LayerThicknessTargetField->attachData<Array2DReal>(LayerThicknessTarget);
 
 } // end defineFields
 
@@ -448,45 +443,21 @@ void VertCoord::defineFields() {
 // Destroys a local VertCoord and deallocates all arrays
 VertCoord::~VertCoord() {
 
-   int Err;
-
    if (FieldGroup::exists(InitGroupName)) {
-      Err = Field::destroy(MinLayerCellFldName);
-      if (Err != 0)
-         LOG_ERROR("Error removing Field {}", MinLayerCellFldName);
-      Err = Field::destroy(MaxLayerCellFldName);
-      if (Err != 0)
-         LOG_ERROR("Error removing Field {}", MaxLayerCellFldName);
-      Err = Field::destroy(BottomDepthFldName);
-      if (Err != 0)
-         LOG_ERROR("Error removing Field {}", BottomDepthFldName);
-      Err = FieldGroup::destroy(InitGroupName);
-      if (Err != 0)
-         LOG_ERROR("Error removing FieldGroup {}", InitGroupName);
+      Field::destroy(MinLayerCellFldName);
+      Field::destroy(MaxLayerCellFldName);
+      Field::destroy(BottomDepthFldName);
+      FieldGroup::destroy(InitGroupName);
    }
 
    if (FieldGroup::exists(GroupName)) {
-      Err = Field::destroy(PressInterfFldName);
-      if (Err != 0)
-         LOG_ERROR("Error removing Field {}", PressInterfFldName);
-      Err = Field::destroy(PressMidFldName);
-      if (Err != 0)
-         LOG_ERROR("Error removing Field {}", PressMidFldName);
-      Err = Field::destroy(ZInterfFldName);
-      if (Err != 0)
-         LOG_ERROR("Error removing Field {}", ZInterfFldName);
-      Err = Field::destroy(ZMidFldName);
-      if (Err != 0)
-         LOG_ERROR("Error removing Field {}", ZMidFldName);
-      Err = Field::destroy(GeopotFldName);
-      if (Err != 0)
-         LOG_ERROR("Error removing Field {}", GeopotFldName);
-      Err = Field::destroy(LyrThickTargetFldName);
-      if (Err != 0)
-         LOG_ERROR("Error removing Field {}", LyrThickTargetFldName);
-      Err = FieldGroup::destroy(GroupName);
-      if (Err != 0)
-         LOG_ERROR("Error removing FieldGroup {}", GroupName);
+      Field::destroy(PressInterfFldName);
+      Field::destroy(PressMidFldName);
+      Field::destroy(ZInterfFldName);
+      Field::destroy(ZMidFldName);
+      Field::destroy(GeopotFldName);
+      Field::destroy(LyrThickTargetFldName);
+      FieldGroup::destroy(GroupName);
    }
 
 } // end destructor

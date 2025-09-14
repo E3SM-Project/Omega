@@ -47,9 +47,7 @@ int initVertCoordTest() {
    TimeStepper::init1();
 
    // Initialize the IO system
-   Err = IO::init(DefComm);
-   if (Err != 0)
-      LOG_ERROR("VertCoordTest: error initializing parallel IO");
+   IO::init(DefComm);
 
    // Create the default decomposition (initializes the decomposition)
    Decomp::init();
@@ -79,7 +77,8 @@ int initVertCoordTest() {
 //
 int main(int argc, char *argv[]) {
 
-   int RetVal = 0;
+   // Initialize error code
+   Error ErrAll;
 
    // Initialize the global MPI environment
    MPI_Init(&argc, &argv);
@@ -89,7 +88,7 @@ int main(int argc, char *argv[]) {
    {
       int Err = initVertCoordTest();
       if (Err != 0)
-         LOG_CRITICAL("VertCoordTest: Error initializing");
+         ABORT_ERROR("VertCoordTest: Error initializing");
 
       auto *DefVertCoord = VertCoord::getDefault();
       auto *DefMesh      = HorzMesh::getDefault();
@@ -149,9 +148,9 @@ int main(int argc, char *argv[]) {
          LOG_INFO(
              "VertCoordTest: computePressure with uniform LayerThickness PASS");
       } else {
-         LOG_INFO(
+         ErrAll += Error(
+             ErrorCode::Fail,
              "VertCoordTest: computePressure with uniform LayerThickness FAIL");
-         RetVal += 1;
       }
 
       /// Initialize layer thickness and surface pressure so that the resulting
@@ -189,9 +188,10 @@ int main(int argc, char *argv[]) {
          LOG_INFO("VertCoordTest: computePressure with non-uniform "
                   "LayerThickness PASS");
       } else {
-         LOG_INFO("VertCoordTest: computePressure with non-uniform "
-                  "LayerThickness FAIL");
-         RetVal += 1;
+         ErrAll += Error(
+             ErrorCode::Fail,
+             "VertCoordTest: computePressure with non-uniform LayerThickness "
+             "FAIL");
       }
 
       // Tests for computeZHeight
@@ -245,9 +245,9 @@ int main(int argc, char *argv[]) {
          LOG_INFO(
              "VertCoordTest: computeZHeight with uniform LayerThickness PASS");
       } else {
-         LOG_INFO(
+         ErrAll += Error(
+             ErrorCode::Fail,
              "VertCoordTest: computeZHeight with uniform LayerThickness FAIL");
-         RetVal += 1;
       }
 
       /// Initialize bottom depth, layer thickness and specific volume so that
@@ -286,9 +286,10 @@ int main(int argc, char *argv[]) {
          LOG_INFO("VertCoordTest: computeZHeight with non-uniform "
                   "LayerThickness PASS");
       } else {
-         LOG_INFO("VertCoordTest: computeZHeight with non-uniform "
-                  "LayerThickness FAIL");
-         RetVal += 1;
+         ErrAll += Error(
+             ErrorCode::Fail,
+             "VertCoordTest: computeZHeight with non-uniform LayerThickness "
+             "FAIL");
       }
 
       // Tests for computeGeopotential
@@ -332,8 +333,8 @@ int main(int argc, char *argv[]) {
       if (Err == 0) {
          LOG_INFO("VertCoordTest: computeGeopotential PASS");
       } else {
-         LOG_INFO("VertCoordTest: computeGeopotential FAIL");
-         RetVal += 1;
+         ErrAll +=
+             Error(ErrorCode::Fail, "VertCoordTest: computeGeopotential FAIL");
       }
 
       // Tests for computeTargetThickness
@@ -377,9 +378,10 @@ int main(int argc, char *argv[]) {
          LOG_INFO("VertCoordTest: computeTargetThickness with uniform "
                   "distribution PASS");
       } else {
-         LOG_INFO("VertCoordTest: computeTargetThickness with uniform "
-                  "distribution FAIL");
-         RetVal += 1;
+         ErrAll += Error(
+             ErrorCode::Fail,
+             "VertCoordTest: computeTargetThickness with uniform distribution "
+             "FAIL");
       }
 
       /// Intialize surface pressure, vertical coord weights, ref layer
@@ -434,9 +436,10 @@ int main(int argc, char *argv[]) {
          LOG_INFO("VertCoordTest: computeTargetThickness with top only "
                   "distribution PASS");
       } else {
-         LOG_INFO("VertCoordTest: computeTargetThickness with top only "
-                  "distribution FAIL");
-         RetVal += 1;
+         ErrAll += Error(
+             ErrorCode::Fail,
+             "VertCoordTest: computeTargetThickness with top only distribution "
+             "FAIL");
       }
 
       // Tests for minMaxLayerEdge
@@ -501,8 +504,8 @@ int main(int argc, char *argv[]) {
       if (Err == 0) {
          LOG_INFO("VertCoordTest: minMaxLayerEdge PASS");
       } else {
-         LOG_INFO("VertCoordTest: minMaxLayerEdge FAIL");
-         RetVal += 1;
+         ErrAll +=
+             Error(ErrorCode::Fail, "VertCoordTest: minMaxLayerEdge FAIL");
       }
 
       // Tests for minMaxLayerVertex
@@ -579,8 +582,8 @@ int main(int argc, char *argv[]) {
       if (Err == 0) {
          LOG_INFO("VertCoordTest: minMaxLayerVertex PASS");
       } else {
-         LOG_INFO("VertCoordTest: minMaxLayerVertex FAIL");
-         RetVal += 1;
+         ErrAll +=
+             Error(ErrorCode::Fail, "VertCoordTest: minMaxLayerVertex FAIL");
       }
 
       // Finalize Omega objects
@@ -596,10 +599,9 @@ int main(int argc, char *argv[]) {
    Kokkos::finalize();
    MPI_Finalize();
 
-   if (RetVal >= 256)
-      RetVal = 255;
+   CHECK_ERROR_ABORT(ErrAll, "VertCoord unit tests FAIL");
 
-   return RetVal;
+   return 0;
 
 } // end of main
 //===-----------------------------------------------------------------------===/
