@@ -196,7 +196,7 @@ class Tracers {
    );
 
    /// increment time levels
-   static I4 updateTimeLevels();
+   static void updateTimeLevels();
 
    //---------------------------------------------------------------------------
    // Device-Host data movement

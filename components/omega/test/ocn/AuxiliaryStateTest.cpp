@@ -91,6 +91,7 @@ int initAuxStateTest(const std::string &mesh) {
    MPI_Comm DefComm = DefEnv->getComm();
 
    initLogging(DefEnv);
+   LOG_INFO("------ Auxiliary State unit tests ------");
 
    // Open config file
    Config("Omega");
@@ -98,12 +99,7 @@ int initAuxStateTest(const std::string &mesh) {
 
    TimeStepper::init1();
 
-   int IOErr = IO::init(DefComm);
-   if (IOErr != 0) {
-      Err++;
-      LOG_ERROR("AuxStateTest: error initializing parallel IO");
-   }
-
+   IO::init(DefComm);
    Decomp::init(mesh);
 
    int HaloErr = Halo::init();
@@ -114,10 +110,8 @@ int initAuxStateTest(const std::string &mesh) {
 
    VertCoord::init1();
    HorzMesh::init();
+
    Tracers::init();
-
-   const auto &Mesh = HorzMesh::getDefault();
-
    int StateErr = OceanState::init();
    if (StateErr != 0) {
       Err++;
@@ -331,6 +325,8 @@ int main(int argc, char *argv[]) {
 
    if (RetVal >= 256)
       RetVal = 255;
+   if (RetVal == 0)
+      LOG_INFO("------ Auxiliary State unit tests successful ------");
 
    return RetVal;
 

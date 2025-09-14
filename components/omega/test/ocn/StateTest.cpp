@@ -36,7 +36,7 @@ using namespace OMEGA;
 // The initialization routine for State testing. It calls various
 // init routines, including the creation of the default decomposition.
 
-int initStateTest() {
+void initStateTest() {
 
    int Err = 0;
    Error Err1;
@@ -61,20 +61,14 @@ int initStateTest() {
    Clock *ModelClock       = DefStepper->getClock();
 
    // Initialize the IO system
-   Err = IO::init(DefComm);
-   if (Err != 0)
-      LOG_ERROR("State: error initializing parallel IO");
+   IO::init(DefComm);
 
    // Initialize IOStreams - this does not yet validate the contents
    // of each file, only creates streams from Config
    IOStream::init(ModelClock);
 
    // Initialize Field infrastructure
-   Err = Field::init(ModelClock);
-   if (Err != 0) {
-      LOG_CRITICAL("State: Error initializing Fields");
-      return Err;
-   }
+   Field::init(ModelClock);
 
    // Create the default decomposition (initializes the decomposition)
    Decomp::init();
@@ -82,7 +76,7 @@ int initStateTest() {
    // Initialize the default halo
    Err = Halo::init();
    if (Err != 0)
-      LOG_ERROR("State: error initializing default halo");
+      ABORT_ERROR("State: error initializing default halo");
 
    // Initialize the vertical coordinate (phase 1)
    VertCoord::init1();
@@ -107,26 +101,19 @@ int initStateTest() {
 
    // Create a default ocean state
    Err = OceanState::init();
-   if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error initializing default state");
-      return Err;
-   }
+   if (Err != 0)
+      ABORT_ERROR("ocnInit: Error initializing default state");
 
    // Now that all fields have been defined, validate all the streams
    // contents
    bool StreamsValid = IOStream::validateAll();
-   if (!StreamsValid) {
-      LOG_CRITICAL("ocnInit: Error validating IO Streams");
-      return Err;
-   }
+   if (!StreamsValid)
+      ABORT_ERROR("ocnInit: Error validating IO Streams");
 
    // Read the state variables from the initial state stream
    Metadata ReqMeta; // no global metadata needed for init state read
-   Err = IOStream::read("InitialState", ModelClock, ReqMeta);
-   if (Err != IOStream::Success) {
-      LOG_CRITICAL("ocnInit: Error reading initial state from stream");
-      return Err;
-   }
+   Err1 = IOStream::read("InitialState", ModelClock, ReqMeta);
+   CHECK_ERROR_ABORT(Err1, "ocnInit: Error reading initial state from stream");
 
    // Finish initialization of initial state by filling halos and copying
    // to host. Current time level is zero.
@@ -134,7 +121,7 @@ int initStateTest() {
    DefState->exchangeHalo(0);
    DefState->copyToHost(0);
 
-   return Err;
+   return;
 }
 
 // Check for differences between layer thickness and normal velocity host arrays
@@ -226,9 +213,7 @@ int main(int argc, char *argv[]) {
 
       // Call initialization routine to create default state and other
       // quantities
-      int Err = initStateTest();
-      if (Err != 0)
-         LOG_CRITICAL("State: Error initializing");
+      initStateTest();
 
       // Get default mesh, halo and time data
       HorzMesh *DefHorzMesh   = HorzMesh::getDefault();

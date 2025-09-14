@@ -126,7 +126,7 @@ class OceanState {
    I4 exchangeHalo(const I4 TimeLevel);
 
    /// Swap time levels to update state arrays
-   I4 updateTimeLevels();
+   void updateTimeLevels();
 
    /// Copy state variables from host to device
    I4 copyToDevice(const I4 TimeLevel);

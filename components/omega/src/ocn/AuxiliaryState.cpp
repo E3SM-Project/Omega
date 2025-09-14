@@ -52,9 +52,7 @@ AuxiliaryState::~AuxiliaryState() {
    WindForcingAux.unregisterFields();
    TracerAux.unregisterFields();
 
-   int Err = FieldGroup::destroy(GroupName);
-   if (Err != 0)
-      LOG_ERROR("Error destroying FieldGroup {}", GroupName);
+   FieldGroup::destroy(GroupName);
 }
 
 // Compute the auxiliary variables needed for momentum equation

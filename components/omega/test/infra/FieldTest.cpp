@@ -38,38 +38,32 @@ const std::string RefStr = "Reference String";
 //------------------------------------------------------------------------------
 // A simple test evaluation function
 template <typename T>
-void TstEval(const std::string &TestName, T TestVal, T ExpectVal, int &Error) {
+void TstEval(const std::string &TestName, T TestVal, T ExpectVal, Error &Err) {
 
-   if (TestVal == ExpectVal) {
-      LOG_INFO("{}: PASS", TestName);
-   } else {
-      LOG_ERROR("{}: FAIL", TestName);
-      ++Error;
+   if (TestVal != ExpectVal) {
+      std::string ErrMsg = TestName + ": FAIL";
+      Err += Error(ErrorCode::Fail, ErrMsg);
    }
 }
 //------------------------------------------------------------------------------
 // Initialization routine to create reference Fields
-int initFieldTest() {
-
-   int Err    = 0;
-   int ErrRef = 0;
+void initFieldTest() {
 
    // Initialize various environments
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv = MachEnv::getDefault();
    initLogging(DefEnv);
    MPI_Comm DefComm = DefEnv->getComm();
-   Err              = IO::init(DefComm);
-   if (Err != 0) {
-      LOG_ERROR("IO initialization failed");
-      return Err;
-   }
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
+   LOG_INFO("------ Field Unit Tests ------");
 
    // Open config file
    OMEGA::Config("Omega");
    OMEGA::Config::readAll("omega.yml");
+
+   // Initialize parallel IO
+   IO::init(DefComm);
 
    // Initialize decomposition
    Decomp::init();
@@ -136,36 +130,27 @@ int initFieldTest() {
    Clock *ModelClock = new Clock(SimStartTime, TimeStep);
 
    // Initialize Field class - creates Model and Sim metadata fields
-   int Err1 = Field::init(ModelClock);
-   TstEval<int>("Field initialization", Err1, ErrRef, Err);
+   Field::init(ModelClock);
 
    // Add some global (Model and Simulation) metadata
    // First using single metadata add functions
    std::shared_ptr<Field> CodeField = Field::get(CodeMeta);
-   Err1                             = CodeField->addMetadata("CodeI4", RefI4);
-   TstEval<int>("Add metadata I4", Err1, ErrRef, Err);
-   Err1 = CodeField->addMetadata("CodeI8", RefI8);
-   TstEval<int>("Add metadata I8", Err1, ErrRef, Err);
-   Err1 = CodeField->addMetadata("CodeR4", RefR4);
-   TstEval<int>("Add metadata R4", Err1, ErrRef, Err);
-   Err1 = CodeField->addMetadata("CodeR8", RefR8);
-   TstEval<int>("Add metadata R8", Err1, ErrRef, Err);
-   Err1 = CodeField->addMetadata("CodeStr", RefStr);
-   TstEval<int>("Add metadata String", Err1, ErrRef, Err);
-   Err1 = CodeField->addMetadata("CodeBool", true);
-   TstEval<int>("Add metadata String", Err1, ErrRef, Err);
+   CodeField->addMetadata("CodeI4", RefI4);
+   CodeField->addMetadata("CodeI8", RefI8);
+   CodeField->addMetadata("CodeR4", RefR4);
+   CodeField->addMetadata("CodeR8", RefR8);
+   CodeField->addMetadata("CodeStr", RefStr);
+   CodeField->addMetadata("CodeBool", true);
 
    // Now with the multiple add function
    std::shared_ptr<Field> SimField = Field::get(SimMeta);
-   Err1                            = SimField->addMetadata(
+   SimField->addMetadata(
        {std::make_pair("SimI4", RefI4), std::make_pair("SimI8", RefI8),
-                                   std::make_pair("SimR4", RefR4), std::make_pair("SimR8", RefR8),
-                                   std::make_pair("SimBool", true), std::make_pair("SimStr", RefStr)});
-   TstEval<int>("Add multiple global meta entries", Err1, ErrRef, Err);
+        std::make_pair("SimR4", RefR4), std::make_pair("SimR8", RefR8),
+        std::make_pair("SimBool", true), std::make_pair("SimStr", RefStr)});
 
    // Define fields for various data types, mesh locations and memory
    // locations.
-
    std::vector<std::string> DimNames(1);
 
    // 1D Fields on host
@@ -300,23 +285,15 @@ int initFieldTest() {
 
    // Add fields to each group - for 1d use the member function, for
    // 2d, use the add-by-name interface
-   Err1 = FieldGroup1D->addField("Test1DI4");
-   TstEval<int>("Add field to group 1DI4", Err1, ErrRef, Err);
-   Err1 = FieldGroup1D->addField("Test1DI8");
-   TstEval<int>("Add field to group 1DI8", Err1, ErrRef, Err);
-   Err1 = FieldGroup1D->addField("Test1DR4");
-   TstEval<int>("Add field to group 1DR4", Err1, ErrRef, Err);
-   Err1 = FieldGroup1D->addField("Test1DR8");
-   TstEval<int>("Add field to group 1DR8", Err1, ErrRef, Err);
+   FieldGroup1D->addField("Test1DI4");
+   FieldGroup1D->addField("Test1DI8");
+   FieldGroup1D->addField("Test1DR4");
+   FieldGroup1D->addField("Test1DR8");
 
-   Err1 = FieldGroup::addFieldToGroup("Test2DI4", "FieldGroup2D");
-   TstEval<int>("Add field to group 2DI4", Err1, ErrRef, Err);
-   Err1 = FieldGroup::addFieldToGroup("Test2DI8", "FieldGroup2D");
-   TstEval<int>("Add field to group 2DI8", Err1, ErrRef, Err);
-   Err1 = FieldGroup::addFieldToGroup("Test2DR4", "FieldGroup2D");
-   TstEval<int>("Add field to group 2DR4", Err1, ErrRef, Err);
-   Err1 = FieldGroup::addFieldToGroup("Test2DR8", "FieldGroup2D");
-   TstEval<int>("Add field to group 2DR8", Err1, ErrRef, Err);
+   FieldGroup::addFieldToGroup("Test2DI4", "FieldGroup2D");
+   FieldGroup::addFieldToGroup("Test2DI8", "FieldGroup2D");
+   FieldGroup::addFieldToGroup("Test2DR4", "FieldGroup2D");
+   FieldGroup::addFieldToGroup("Test2DR8", "FieldGroup2D");
 
    // Create data arrays
 
@@ -414,51 +391,31 @@ int initFieldTest() {
    // Attach data arrays
    // Use member function for some and name interface for others
 
-   Err1 = Test1DI4H->attachData<HostArray1DI4>(Data1DI4H);
-   TstEval<int>("Attach data to field 1DI4H", Err1, ErrRef, Err);
-   Err1 = Test1DI8H->attachData<HostArray1DI8>(Data1DI8H);
-   TstEval<int>("Attach data to field 1DI8H", Err1, ErrRef, Err);
-   Err1 = Test1DR4H->attachData<HostArray1DR4>(Data1DR4H);
-   TstEval<int>("Attach data to field 1DR4H", Err1, ErrRef, Err);
-   Err1 = Test1DR8H->attachData<HostArray1DR8>(Data1DR8H);
-   TstEval<int>("Attach data to field 1DR8H", Err1, ErrRef, Err);
+   Test1DI4H->attachData<HostArray1DI4>(Data1DI4H);
+   Test1DI8H->attachData<HostArray1DI8>(Data1DI8H);
+   Test1DR4H->attachData<HostArray1DR4>(Data1DR4H);
+   Test1DR8H->attachData<HostArray1DR8>(Data1DR8H);
 
-   Err1 = Field::attachFieldData<HostArray2DI4>("Test2DI4H", Data2DI4H);
-   TstEval<int>("Attach data to field 2DI4H", Err1, ErrRef, Err);
-   Err1 = Field::attachFieldData<HostArray2DI8>("Test2DI8H", Data2DI8H);
-   TstEval<int>("Attach data to field 2DI8H", Err1, ErrRef, Err);
-   Err1 = Field::attachFieldData<HostArray2DR4>("Test2DR4H", Data2DR4H);
-   TstEval<int>("Attach data to field 2DR4H", Err1, ErrRef, Err);
-   Err1 = Field::attachFieldData<HostArray2DR8>("Test2DR8H", Data2DR8H);
-   TstEval<int>("Attach data to field 2DR8H", Err1, ErrRef, Err);
+   Field::attachFieldData<HostArray2DI4>("Test2DI4H", Data2DI4H);
+   Field::attachFieldData<HostArray2DI8>("Test2DI8H", Data2DI8H);
+   Field::attachFieldData<HostArray2DR4>("Test2DR4H", Data2DR4H);
+   Field::attachFieldData<HostArray2DR8>("Test2DR8H", Data2DR8H);
 
-   Err1 = Field::attachFieldData("Test1DI4", Data1DI4);
-   TstEval<int>("Attach data to field 1DI4", Err1, ErrRef, Err);
-   Err1 = Field::attachFieldData("Test1DI8", Data1DI8);
-   TstEval<int>("Attach data to field 1DI8", Err1, ErrRef, Err);
-   Err1 = Field::attachFieldData("Test1DR4", Data1DR4);
-   TstEval<int>("Attach data to field 1DR4", Err1, ErrRef, Err);
-   Err1 = Field::attachFieldData("Test1DR8", Data1DR8);
-   TstEval<int>("Attach data to field 1DR8", Err1, ErrRef, Err);
+   Field::attachFieldData("Test1DI4", Data1DI4);
+   Field::attachFieldData("Test1DI8", Data1DI8);
+   Field::attachFieldData("Test1DR4", Data1DR4);
+   Field::attachFieldData("Test1DR8", Data1DR8);
 
-   Err1 = Test2DI4->attachData(Data2DI4);
-   TstEval<int>("Attach data to field 2DI4", Err1, ErrRef, Err);
-   Err1 = Test2DI8->attachData(Data2DI8);
-   TstEval<int>("Attach data to field 2DI8", Err1, ErrRef, Err);
-   Err1 = Test2DR4->attachData(Data2DR4);
-   TstEval<int>("Attach data to field 2DR4", Err1, ErrRef, Err);
-   Err1 = Test2DR8->attachData(Data2DR8);
-   TstEval<int>("Attach data to field 2DR8", Err1, ErrRef, Err);
+   Test2DI4->attachData(Data2DI4);
+   Test2DI8->attachData(Data2DI8);
+   Test2DR4->attachData(Data2DR4);
+   Test2DR8->attachData(Data2DR8);
 
-   Err1 = Test3DI4->attachData(Data3DI4);
-   TstEval<int>("Attach data to field 3DI4", Err1, ErrRef, Err);
-   Err1 = Test4DI8->attachData(Data4DI8);
-   TstEval<int>("Attach data to field 4DI8", Err1, ErrRef, Err);
-   Err1 = Test5DR4->attachData(Data5DR4);
-   TstEval<int>("Attach data to field 5DR4", Err1, ErrRef, Err);
+   Test3DI4->attachData(Data3DI4);
+   Test4DI8->attachData(Data4DI8);
+   Test5DR4->attachData(Data5DR4);
 
    // End of init
-   return Err;
 
 } // End initialization Fields
 
@@ -471,17 +428,14 @@ int initFieldTest() {
 
 int main(int argc, char **argv) {
 
-   int Err    = 0;
-   int Err1   = 0;
-   int ErrRef = 0;
+   Error Err;
 
    // Initialize the global MPI environment
    MPI_Init(&argc, &argv);
    Kokkos::initialize();
    {
       // Call initialization to create reference IO field
-      Err1 = initFieldTest();
-      TstEval<int>("Initialize Fields", Err1, ErrRef, Err);
+      initFieldTest();
 
       // Retrieve some mesh sizes to be used later
       Decomp *DefDecomp = Decomp::getDefault();
@@ -510,28 +464,30 @@ int main(int argc, char **argv) {
       // Retrieve individual metadata entries
 
       I4 MetaI4 = 0;
-      Err1      = CodeField->getMetadata("CodeI4", MetaI4);
+      Err += CodeField->getMetadata("CodeI4", MetaI4);
       TstEval<I4>("Get I4 Metadata", MetaI4, RefI4, Err);
       I8 MetaI8 = 0;
-      Err1      = CodeField->getMetadata("CodeI8", MetaI8);
+      Err += CodeField->getMetadata("CodeI8", MetaI8);
       TstEval<I8>("Get I8 Metadata", MetaI8, RefI8, Err);
       R4 MetaR4 = 0;
-      Err1      = CodeField->getMetadata("CodeR4", MetaR4);
+      Err += CodeField->getMetadata("CodeR4", MetaR4);
       TstEval<R4>("Get R4 Metadata", MetaR4, RefR4, Err);
       R8 MetaR8 = 0;
-      Err1      = CodeField->getMetadata("CodeR8", MetaR8);
+      Err += CodeField->getMetadata("CodeR8", MetaR8);
       TstEval<R8>("Get R8 Metadata", MetaR8, RefR8, Err);
       bool MetaBool;
-      Err1 = CodeField->getMetadata("CodeBool", MetaBool);
+      Err += CodeField->getMetadata("CodeBool", MetaBool);
       TstEval<bool>("Get Bool Metadata", MetaBool, RefBool, Err);
       std::string MetaStr = " ";
-      Err1                = CodeField->getMetadata("CodeStr", MetaStr);
+      Err += CodeField->getMetadata("CodeStr", MetaStr);
       TstEval<std::string>("Get string Metadata", MetaStr, RefStr, Err);
 
       // Retrieve all Metadata for the Code Field.
       std::any MetaVal;
       std::shared_ptr<Metadata> CodeMetaAll = CodeField->getAllMetadata();
-      MetaVal                               = (*CodeMetaAll)["CodeI4"];
+
+      // Test retrievals for each type from metadata map
+      MetaVal = (*CodeMetaAll)["CodeI4"];
       TstEval<I4>("Get All Metadata I4", std::any_cast<I4>(MetaVal), RefI4,
                   Err);
       MetaVal = (*CodeMetaAll)["CodeI8"];
@@ -552,7 +508,9 @@ int main(int argc, char **argv) {
 
       // Retrieve all Metadata from SimMeta using the named interface.
       std::shared_ptr<Metadata> SimMetaAll = Field::getFieldMetadata(SimMeta);
-      MetaVal                              = (*SimMetaAll)["SimI4"];
+
+      // Test retrieval for each type from metadata map
+      MetaVal = (*SimMetaAll)["SimI4"];
       TstEval<I4>("Get All Metadata I4", std::any_cast<I4>(MetaVal), RefI4,
                   Err);
       MetaVal = (*SimMetaAll)["SimI8"];
@@ -572,13 +530,12 @@ int main(int argc, char **argv) {
                            std::any_cast<std::string>(MetaVal), RefStr, Err);
 
       // Test updating a metadata value
-      Err1 = CodeField->updateMetadata("CodeI8", MetaI8 + 2);
-      Err1 = CodeField->getMetadata("CodeI8", MetaI8);
+      CodeField->updateMetadata("CodeI8", MetaI8 + 2);
+      Err += CodeField->getMetadata("CodeI8", MetaI8);
       TstEval<I8>("Update I8 Metadata", MetaI8, RefI8 + 2, Err);
 
       // Test removal of a metadata entry with the given name
-      Err1 = CodeField->removeMetadata("CodeBool");
-      TstEval<int>("Remove metadata call", Err1, ErrRef, Err);
+      CodeField->removeMetadata("CodeBool");
       MetaTest = CodeField->hasMetadata("CodeBool");
       TstEval<bool>("Remove metadata verify", MetaTest, false, Err);
 
@@ -611,23 +568,17 @@ int main(int argc, char **argv) {
 
       // Retrieve location of field data
       ArrayMemLoc MemLoc1DI4H = Test1DI4H->getMemoryLocation();
-      if (MemLoc1DI4H == ArrayMemLoc::Both or
-          MemLoc1DI4H == ArrayMemLoc::Host) {
-         LOG_INFO("Retrieve mem location - member: PASS");
-      } else {
-         LOG_ERROR("Retrieve mem location - member: FAIL");
-         ++Err;
+      if (MemLoc1DI4H != ArrayMemLoc::Both and
+          MemLoc1DI4H != ArrayMemLoc::Host) {
+         Err += Error(ErrorCode::Fail, "Retrieve mem location - member: FAIL");
       }
       bool OnHost = Test1DI4H->isOnHost();
       TstEval<bool>("Retrieve onHost flag", OnHost, true, Err);
 
       ArrayMemLoc MemLoc1DI4 = Field::getFieldMemoryLocation("Test1DI4");
-      if (MemLoc1DI4 == ArrayMemLoc::Both or
-          MemLoc1DI4 == ArrayMemLoc::Device) {
-         LOG_INFO("Retrieve mem location by name: PASS");
-      } else {
-         LOG_ERROR("Retrieve mem location by name: FAIL");
-         ++Err;
+      if (MemLoc1DI4 != ArrayMemLoc::Both and
+          MemLoc1DI4 != ArrayMemLoc::Device) {
+         Err += Error(ErrorCode::Fail, "Retrieve mem location by name: FAIL");
       }
       OnHost = Field::isFieldOnHost("Test1DI4");
       if (MemLoc1DI4 == ArrayMemLoc::Both) {
@@ -641,8 +592,7 @@ int main(int argc, char **argv) {
       TstEval<int>("Retrieve number of dims1", NDims, 1, Err);
 
       std::vector<std::string> DimNames(NDims);
-      Err1 = Test1DI4H->getDimNames(DimNames);
-      TstEval<int>("Retrieve dim names 1 function call", Err1, ErrRef, Err);
+      Test1DI4H->getDimNames(DimNames);
       TstEval<std::string>("Retrieve dim names 1 result 1", DimNames[0],
                            "NCells", Err);
 
@@ -651,8 +601,7 @@ int main(int argc, char **argv) {
       TstEval<int>("Retrieve number of dims5", NDims, 5, Err);
 
       DimNames.resize(NDims);
-      Err1 = Test5DR4->getDimNames(DimNames);
-      TstEval<int>("Retrieve dim names 5 function call", Err1, ErrRef, Err);
+      Test5DR4->getDimNames(DimNames);
       TstEval<std::string>("Retrieve dim names 5 result 1", DimNames[0],
                            "NCells", Err);
       TstEval<std::string>("Retrieve dim names 5 result 2", DimNames[1],
@@ -846,11 +795,9 @@ int main(int argc, char **argv) {
              if (Data1DI4(Cell) != RefI4 + Cell)
                 ++LCount;
              for (int K = 0; K < NVertLayers; ++K) {
-                int Add2 = Cell * NVertLayers + K;
                 if (Data2DI4(Cell, K) != RefI4 + Cell + K)
                    ++LCount;
                 for (int Trcr = 0; Trcr < NTracers; ++Trcr) {
-                   int Add3 = Trcr * NCellsSize * NVertLayers + Add2;
                    if (Data3DI4(Cell, K, Trcr) != RefI4 + Cell + K + Trcr)
                       ++LCount;
                    for (int TimeLvl = 0; TimeLvl < NTime; ++TimeLvl) {
@@ -901,19 +848,16 @@ int main(int argc, char **argv) {
                    Err);
 
       // Test removing a field from a group
-      Err1 = Group1D->removeField("Test1DI4");
-      TstEval<int>("Remove field call return 1D", Err1, ErrRef, Err);
+      Group1D->removeField("Test1DI4");
       GroupTest = Group1D->hasField("Test1DI4");
       TstEval<bool>("Remove field member result 1D", GroupTest, false, Err);
 
-      Err1 = FieldGroup::removeFieldFromGroup("Test2DI4", "FieldGroup2D");
-      TstEval<int>("Remove field call return 2D", Err1, ErrRef, Err);
+      FieldGroup::removeFieldFromGroup("Test2DI4", "FieldGroup2D");
       GroupTest = FieldGroup::isFieldInGroup("Test2DI4", "FieldGroup2D");
       TstEval<bool>("Remove field member result 2D", GroupTest, false, Err);
 
       // Remove field groups
-      Err1 = FieldGroup::destroy("FieldGroup1D");
-      TstEval<int>("Remove field group call return 1D", Err1, ErrRef, Err);
+      FieldGroup::destroy("FieldGroup1D");
       GroupTest = FieldGroup::exists("FieldGroup1D");
       TstEval<bool>("Remove field group verification", GroupTest, false, Err);
 
@@ -938,16 +882,16 @@ int main(int argc, char **argv) {
       TstEval<bool>("Clear all fields 2DR8", FieldExists, ShouldExist, Err);
    }
 
+   CHECK_ERROR_ABORT(Err, "Some Field Unit Tests FAIL");
+   LOG_INFO("------ Field Unit Tests Successful ------");
+
    // Clean up environments
    Dimension::clear();
    Decomp::clear();
    Kokkos::finalize();
    MPI_Finalize();
 
-   if (Err >= 256)
-      Err = 255;
-
    // End of testing
-   return Err;
+   return 0;
 }
 //===--- End test driver for IO Field --------------------------------------===/

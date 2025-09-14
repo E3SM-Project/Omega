@@ -441,12 +441,7 @@ int initOperatorsTest(const std::string &MeshFile) {
    Config("Omega");
    Config::readAll("omega.yml");
 
-   int IOErr = IO::init(DefComm);
-   if (IOErr != 0) {
-      Err++;
-      LOG_ERROR("OperatorsTest: error initializing parallel IO");
-   }
-
+   IO::init(DefComm);
    Decomp::init(MeshFile);
 
    int HaloErr = Halo::init();

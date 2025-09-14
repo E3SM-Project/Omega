@@ -31,7 +31,7 @@ the IO routines within the Omega and IO namespaces.
 Before using any IO functions, the parallel IO system must be initialized
 using:
 ```c++
-   int Err = IO::init(Comm);
+   IO::init(Comm);
 ```
 where Comm is an MPI communicator and should in most cases be the communicator
 from the Omega default MachEnv (see [MachEnv](#omega-dev-mach-env)). This
@@ -44,13 +44,13 @@ As mentioned above, most I/O operations will take place within the IOStreams
 module, but the base IO functions can be accessed directly. To open and close
 files for reading/writing, use:
 ```c++
-   int Err = IO::openFile(FileID, Filename, Mode);
-   Err = IO::closeFile(FileID);
+   IO::openFile(FileID, Filename, Mode);
+   IO::closeFile(FileID);
 ```
 or
 ```c++
-   int Err = IO::openFile(FileID, Filename, Mode, Format, IfExists);
-   Err = IO::closeFile(FileID);
+   IO::openFile(FileID, Filename, Mode, Format, IfExists);
+   IO::closeFile(FileID);
 ```
 In both case, an integer FileID is assigned to the open file which is then
 used by all subsequent operations. The Filename is a ``std::string`` that
@@ -89,8 +89,8 @@ Once the file is open, data is read/written using one of two interfaces,
 depending on whether the array is decomposed across MPI tasks or not. For
 large decomposed arrays, the interface is:
 ```c++
-int Err = IO::readArray (&Array, Size, VariableName, FileID, DecompID, VarID);
-int Err = IO::writeArray(&Array, Size, &FillValue,   FileID, DecompID, VarID);
+Error Err = IO::readArray (&Array, Size, VariableName, FileID, DecompID, VarID);
+IO::writeArray(&Array, Size, &FillValue,   FileID, DecompID, VarID);
 ```
 where the pointer to the data array is passed and data is assumed to be
 contiguous with the full local size of the array passed as Size. The FileID is
@@ -99,21 +99,25 @@ as described below. For reading, the variable name (as a ``std::string``) is
 supplied and the variable ID (VarID) is returned in case it is needed for
 reading of variable metadata. For writing, a FillValue is supplied to fill
 undefined locations in an array and the variable ID must have been assigned
-in a prior defineVar call prior to the write as described below.
+in a prior defineVar call prior to the write as described below. The readArray
+returns an error code so that the calling routine can re-try the read. This
+is used in Omega to manage name changes between Omega and the earlier MPAS
+names.
 
 Writing or reading multiple time slices (where there in an unlimited time
 dimension) is also possible and an additional optional Frame argument
 specifies the time index along that dimension that should be read/written:
 ```c++
-int Err = IO::readArray (&Array, Size, VariableName, FileID, DecompID, VarID, Frame);
-int Err = IO::writeArray(&Array, Size, &FillValue,   FileID, DecompID, VarID, Frame);
+Error Err = IO::readArray (&Array, Size, VariableName, FileID, DecompID,
+                           VarID, Frame);
+IO::writeArray(&Array, Size, &FillValue,   FileID, DecompID, VarID, Frame);
 ```
 
 For arrays or scalars that are not distributed, the non-distributed variable
 interface must be used:
 ```c++
-int Err = IO::readNDVar(&Array, VariableName, FileID, VarID);
-int Err = IO::writeNDVar(&Array, FileID, VarID);
+Error Err = IO::readNDVar(&Array, VariableName, FileID, VarID);
+IO::writeNDVar(&Array, FileID, VarID);
 ```
 with arguments similar to the distributed array calls above. Note that
 when defining dimensions for these fields, the dimensions must be
@@ -124,8 +128,8 @@ Frame (index of the time slice) must be provided. In addition, a vector
 ``std::vector<int> DimLengths`` containing the length of the non-time
 dimensions must be provided:
 ```c++
-int Err = IO::readNDVar(&Array, VariableName, FileID, VarID, Frame, DimLengths);
-int Err = IO::writeNDVar(&Array, FileID, VarID, Frame, DimLengths);
+Error Err = IO::readNDVar(&Array, VariableName, FileID, VarID, Frame, DimLengths);
+IO::writeNDVar(&Array, FileID, VarID, Frame, DimLengths);
 ```
 Note that the full arrays in this case are written so if any masking or
 pruning of points is required, it should be performed before the call.
@@ -135,7 +139,7 @@ decomposition. Both the dimensions of the array and the decomposition
 across tasks must be defined. For each dimension, a dimension must be
 defined using:
 ```c++
-   int Err = IO::defineDim(FileID, DimName, Length, DimID);
+   int DimID = IO::defineDim(FileID, DimName, Length);
 ```
 where FileID is the ID of an open file, the DimName is a ``std::string``
 with the dimension name (eg NCells, NEdges, NVertices, NVertLayers or
@@ -143,7 +147,7 @@ NTracers), length is the length of the full global array and DimID is
 the ID assigned to this dimension. Note that for reading a file, we
 supply the function:
 ```c++
-   int Err = IO::getDimFromFile(FileID, DimName, DimID, DimLength);
+   Error Err = IO::getDimFromFile(FileID, DimName, DimID, DimLength);
 ```
 that can be used to inquire about the dimension length and retrieve the
 dimension ID from the file.
@@ -151,8 +155,8 @@ dimension ID from the file.
 Once the dimensions are defined, the decomposition of an array must
 be defined using:
 ```c++
-   int Err = createDecomp(DecompID, IODataType, NDims, DimLengths,
-                          Size, GlobalIndx, Rearr);
+   int DecompID = createDecomp(IODataType, NDims, DimLengths,
+                               Size, GlobalIndx, Rearr);
 ```
 where DecompID is the ID assigned to the newly created decomposition,
 NDims is the number of dimensions for the array, DimLengths is an
@@ -196,7 +200,7 @@ for an Omega I4 data type.
 Now that dimensions and decompositions have been defined, a variable can
 be defined (this is required for writing only) using:
 ```c++
-   int Err = IO::defineVar(FileID, VarName, IODataType, NDims, DimIDs, VarID);
+   int VarID = IO::defineVar(FileID, VarName, IODataType, NDims, DimIDs);
 ```
 where VarID is the ID assigned to the variable, FileID is the usual ID of
 the data file, VarName is a ``std::string`` holding the variable name,
@@ -212,8 +216,8 @@ interfaces, but the base IO module contains interfaces for reading and
 writing metadata associated with either an array or the file or simulation
 itself. To read/write metadata, use:
 ```c++
-   int Err = IO::writeMeta(MetaName, MetaValue, FileID, VarID);
-   int Err = IO::readMeta (MetaName, MetaValue, FileID, VarID);
+   IO::writeMeta(MetaName, MetaValue, FileID, VarID);
+   Error Err = IO::readMeta (MetaName, MetaValue, FileID, VarID);
 ```
 where MetaName is a ``std::string`` holding the name of the metadata and
 the MetaValue is the value of the MetaData. All supported Omega data types are

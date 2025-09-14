@@ -28,8 +28,6 @@ VorticityAuxVars::VorticityAuxVars(const std::string &AuxStateSuffix,
 void VorticityAuxVars::registerFields(const std::string &AuxGroupName,
                                       const std::string &MeshName) const {
 
-   int Err = 0; // error code for some calls
-
    // Create fields with metadata
    const Real FillValue = -9.99e30;
    int NDims            = 2;
@@ -114,78 +112,26 @@ void VorticityAuxVars::registerFields(const std::string &AuxGroupName,
    );
 
    // Add fields to Aux field group
-   Err = FieldGroup::addFieldToGroup(RelVortVertex.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", RelVortVertex.label(),
-                AuxGroupName);
-
-   Err = FieldGroup::addFieldToGroup(NormRelVortVertex.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", NormRelVortVertex.label(),
-                AuxGroupName);
-
-   Err =
-       FieldGroup::addFieldToGroup(NormPlanetVortVertex.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}",
-                NormPlanetVortVertex.label(), AuxGroupName);
-
-   Err = FieldGroup::addFieldToGroup(NormRelVortEdge.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", NormRelVortEdge.label(),
-                AuxGroupName);
-
-   Err = FieldGroup::addFieldToGroup(NormPlanetVortEdge.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", NormPlanetVortEdge.label(),
-                AuxGroupName);
+   FieldGroup::addFieldToGroup(RelVortVertex.label(), AuxGroupName);
+   FieldGroup::addFieldToGroup(NormRelVortVertex.label(), AuxGroupName);
+   FieldGroup::addFieldToGroup(NormPlanetVortVertex.label(), AuxGroupName);
+   FieldGroup::addFieldToGroup(NormRelVortEdge.label(), AuxGroupName);
+   FieldGroup::addFieldToGroup(NormPlanetVortEdge.label(), AuxGroupName);
 
    // Attach data to fields
-   Err = RelVortVertexField->attachData<Array2DReal>(RelVortVertex);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", RelVortVertex.label());
-
-   Err = NormRelVortVertexField->attachData<Array2DReal>(NormRelVortVertex);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", NormRelVortVertex.label());
-
-   Err =
-       NormPlanetVortVertexField->attachData<Array2DReal>(NormPlanetVortVertex);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}",
-                NormPlanetVortVertex.label());
-
-   Err = NormRelVortEdgeField->attachData<Array2DReal>(NormRelVortEdge);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", NormRelVortEdge.label());
-
-   Err = NormPlanetVortEdgeField->attachData<Array2DReal>(NormPlanetVortEdge);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", NormPlanetVortEdge.label());
+   RelVortVertexField->attachData<Array2DReal>(RelVortVertex);
+   NormRelVortVertexField->attachData<Array2DReal>(NormRelVortVertex);
+   NormPlanetVortVertexField->attachData<Array2DReal>(NormPlanetVortVertex);
+   NormRelVortEdgeField->attachData<Array2DReal>(NormRelVortEdge);
+   NormPlanetVortEdgeField->attachData<Array2DReal>(NormPlanetVortEdge);
 }
 
 void VorticityAuxVars::unregisterFields() const {
-   int Err = 0;
-
-   Err = Field::destroy(RelVortVertex.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", RelVortVertex.label());
-
-   Err = Field::destroy(NormRelVortVertex.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", NormRelVortVertex.label());
-
-   Err = Field::destroy(NormPlanetVortVertex.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", NormPlanetVortVertex.label());
-
-   Err = Field::destroy(NormRelVortEdge.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", NormRelVortEdge.label());
-
-   Err = Field::destroy(NormPlanetVortEdge.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", NormPlanetVortEdge.label());
+   Field::destroy(RelVortVertex.label());
+   Field::destroy(NormRelVortVertex.label());
+   Field::destroy(NormPlanetVortVertex.label());
+   Field::destroy(NormRelVortEdge.label());
+   Field::destroy(NormPlanetVortEdge.label());
 }
 
 } // namespace OMEGA

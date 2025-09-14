@@ -101,12 +101,7 @@ int initTendenciesTest(const std::string &mesh) {
 
    TimeStepper::init1();
 
-   int IOErr = IO::init(DefComm);
-   if (IOErr != 0) {
-      Err++;
-      LOG_ERROR("TendenciesTest: error initializing parallel IO");
-   }
-
+   IO::init(DefComm);
    Decomp::init(mesh);
 
    int HaloErr = Halo::init();

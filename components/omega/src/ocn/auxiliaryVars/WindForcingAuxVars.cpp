@@ -20,8 +20,6 @@ void WindForcingAuxVars::registerFields(
     const std::string &MeshName      // name of horizontal mesh
 ) const {
 
-   int Err = 0; // error flag for some calls
-
    // Create fields
    const Real FillValue = -9.99e30;
    int NDims            = 1;
@@ -61,33 +59,17 @@ void WindForcingAuxVars::registerFields(
        );
 
    // Add fields to FieldGroup
-   Err = FieldGroup::addFieldToGroup(ZonalStressCell.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", ZonalStressCell.label(),
-                AuxGroupName);
-   Err = FieldGroup::addFieldToGroup(MeridStressCell.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", MeridStressCell.label(),
-                AuxGroupName);
+   FieldGroup::addFieldToGroup(ZonalStressCell.label(), AuxGroupName);
+   FieldGroup::addFieldToGroup(MeridStressCell.label(), AuxGroupName);
 
    // Attach data
-   Err = ZonalStressCellField->attachData<Array1DReal>(ZonalStressCell);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", ZonalStressCell.label());
-
-   Err = MeridStressCellField->attachData<Array1DReal>(MeridStressCell);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", MeridStressCell.label());
+   ZonalStressCellField->attachData<Array1DReal>(ZonalStressCell);
+   MeridStressCellField->attachData<Array1DReal>(MeridStressCell);
 }
 
 void WindForcingAuxVars::unregisterFields() const {
-   int Err = 0;
-   Err     = Field::destroy(ZonalStressCell.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", ZonalStressCell.label());
-   Err = Field::destroy(MeridStressCell.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", MeridStressCell.label());
+   Field::destroy(ZonalStressCell.label());
+   Field::destroy(MeridStressCell.label());
 }
 
 } // namespace OMEGA

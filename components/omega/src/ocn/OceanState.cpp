@@ -151,16 +151,9 @@ OceanState::~OceanState() {
 
    // Kokkos arrays removed when no longer in scope
 
-   int Err;
-   Err = FieldGroup::destroy(StateGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error removing FieldGroup {}", StateGroupName);
-   Err = Field::destroy(LayerThicknessFldName);
-   if (Err != 0)
-      LOG_ERROR("Error removing Field {}", LayerThicknessFldName);
-   Err = Field::destroy(NormalVelocityFldName);
-   if (Err != 0)
-      LOG_ERROR("Error removing Field {}", NormalVelocityFldName);
+   FieldGroup::destroy(StateGroupName);
+   Field::destroy(LayerThicknessFldName);
+   Field::destroy(NormalVelocityFldName);
 
 } // end destructor
 
@@ -185,8 +178,6 @@ void OceanState::clear() {
 //------------------------------------------------------------------------------
 // Define IO fields and metadata
 void OceanState::defineFields() {
-
-   int Err = 0;
 
    LayerThicknessFldName = "LayerThickness";
    NormalVelocityFldName = "NormalVelocity";
@@ -236,38 +227,18 @@ void OceanState::defineFields() {
    if (!FieldGroup::exists("Restart"))
       auto RestartGroup = FieldGroup::create("Restart");
 
-   Err = StateGroup->addField(NormalVelocityFldName);
-   if (Err != 0)
-      LOG_ERROR("Error adding {} to field group {}", NormalVelocityFldName,
-                StateGroupName);
-   Err = StateGroup->addField(LayerThicknessFldName);
-   if (Err != 0)
-      LOG_ERROR("Error adding {} to field group {}", LayerThicknessFldName,
-                StateGroupName);
+   StateGroup->addField(NormalVelocityFldName);
+   StateGroup->addField(LayerThicknessFldName);
 
-   Err = FieldGroup::addFieldToGroup(NormalVelocityFldName, "Restart");
-   if (Err != 0)
-      LOG_ERROR("Error adding {} to Restart field group",
-                NormalVelocityFldName);
-   Err = FieldGroup::addFieldToGroup(LayerThicknessFldName, "Restart");
-   if (Err != 0)
-      LOG_ERROR("Error adding {} to Restart field group",
-                LayerThicknessFldName);
+   FieldGroup::addFieldToGroup(NormalVelocityFldName, "Restart");
+   FieldGroup::addFieldToGroup(LayerThicknessFldName, "Restart");
 
    // Associate Field with data
    I4 TimeIndex;
-   Err = getTimeIndex(TimeIndex, 0);
+   int Err = getTimeIndex(TimeIndex, 0);
 
-   Err =
-       NormalVelocityField->attachData<Array2DReal>(NormalVelocity[TimeIndex]);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data array to field {}",
-                NormalVelocityFldName);
-   Err =
-       LayerThicknessField->attachData<Array2DReal>(LayerThickness[TimeIndex]);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data array to field {}",
-                LayerThicknessFldName);
+   NormalVelocityField->attachData<Array2DReal>(NormalVelocity[TimeIndex]);
+   LayerThicknessField->attachData<Array2DReal>(LayerThickness[TimeIndex]);
 
 } // end defineIOFields
 
@@ -337,7 +308,7 @@ I4 OceanState::copyToDevice(const I4 TimeLevel) {
    deepCopy(LayerThickness[TimeIndex], LayerThicknessH[TimeIndex]);
    deepCopy(NormalVelocity[TimeIndex], NormalVelocityH[TimeIndex]);
 
-   return 0;
+   return Err;
 } // end copyToDevice
 
 //------------------------------------------------------------------------------
@@ -353,7 +324,7 @@ I4 OceanState::copyToHost(const I4 TimeLevel) {
    deepCopy(LayerThicknessH[TimeIndex], LayerThickness[TimeIndex]);
    deepCopy(NormalVelocityH[TimeIndex], NormalVelocity[TimeIndex]);
 
-   return 0;
+   return Err;
 } // end copyToHost
 
 //------------------------------------------------------------------------------
@@ -368,18 +339,16 @@ I4 OceanState::exchangeHalo(const I4 TimeLevel) {
    MeshHalo->exchangeFullArrayHalo(LayerThickness[TimeIndex], OnCell);
    MeshHalo->exchangeFullArrayHalo(NormalVelocity[TimeIndex], OnEdge);
 
-   return 0;
+   return Err;
 
 } // end exchangeHalo
 
 //------------------------------------------------------------------------------
 // Perform time level update
-I4 OceanState::updateTimeLevels() {
+void OceanState::updateTimeLevels() {
 
-   if (NTimeLevels == 1) {
-      LOG_ERROR("OceanState: can't update time levels for NTimeLevels == 1");
-      return -1;
-   }
+   if (NTimeLevels == 1)
+      ABORT_ERROR("OceanState: can't update time levels for NTimeLevels == 1");
 
    // Exchange halo
    exchangeHalo(1);
@@ -387,15 +356,11 @@ I4 OceanState::updateTimeLevels() {
    // Update current time index for layer thickness and normal velocity
    CurTimeIndex = (CurTimeIndex + 1) % NTimeLevels;
 
-   I4 Err;
-
    // Update IOField data associations
-   Err = Field::attachFieldData<Array2DReal>(NormalVelocityFldName,
-                                             NormalVelocity[CurTimeIndex]);
-   Err = Field::attachFieldData<Array2DReal>(LayerThicknessFldName,
-                                             LayerThickness[CurTimeIndex]);
-
-   return 0;
+   Field::attachFieldData<Array2DReal>(NormalVelocityFldName,
+                                       NormalVelocity[CurTimeIndex]);
+   Field::attachFieldData<Array2DReal>(LayerThicknessFldName,
+                                       LayerThickness[CurTimeIndex]);
 
 } // end updateTimeLevels
 

@@ -18,8 +18,6 @@ LayerThicknessAuxVars::LayerThicknessAuxVars(const std::string &AuxStateSuffix,
 void LayerThicknessAuxVars::registerFields(const std::string &AuxGroupName,
                                            const std::string &MeshName) const {
 
-   int Err = 0; // Error flag for some calls
-
    // Create/define fields
    const Real FillValue = -9.99e30;
    int NDims            = 2;
@@ -77,50 +75,20 @@ void LayerThicknessAuxVars::registerFields(const std::string &AuxGroupName,
    );
 
    // Add fields to Aux field group
-   Err = FieldGroup::addFieldToGroup(FluxLayerThickEdge.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", FluxLayerThickEdge.label(),
-                AuxGroupName);
-
-   Err = FieldGroup::addFieldToGroup(MeanLayerThickEdge.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", MeanLayerThickEdge.label(),
-                AuxGroupName);
-
-   Err = FieldGroup::addFieldToGroup(SshCell.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", SshCell.label(),
-                AuxGroupName);
+   FieldGroup::addFieldToGroup(FluxLayerThickEdge.label(), AuxGroupName);
+   FieldGroup::addFieldToGroup(MeanLayerThickEdge.label(), AuxGroupName);
+   FieldGroup::addFieldToGroup(SshCell.label(), AuxGroupName);
 
    // Attach field data
-   Err = FluxLayerThickEdgeField->attachData<Array2DReal>(FluxLayerThickEdge);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", FluxLayerThickEdge.label());
-
-   Err = MeanLayerThickEdgeField->attachData<Array2DReal>(MeanLayerThickEdge);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", MeanLayerThickEdge.label());
-
-   Err = SshCellField->attachData<Array2DReal>(SshCell);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", SshCell.label());
+   FluxLayerThickEdgeField->attachData<Array2DReal>(FluxLayerThickEdge);
+   MeanLayerThickEdgeField->attachData<Array2DReal>(MeanLayerThickEdge);
+   SshCellField->attachData<Array2DReal>(SshCell);
 }
 
 void LayerThicknessAuxVars::unregisterFields() const {
-
-   int Err = 0;
-
-   Err = Field::destroy(FluxLayerThickEdge.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", FluxLayerThickEdge.label());
-
-   Err = Field::destroy(MeanLayerThickEdge.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", MeanLayerThickEdge.label());
-
-   Err = Field::destroy(SshCell.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", SshCell.label());
+   Field::destroy(FluxLayerThickEdge.label());
+   Field::destroy(MeanLayerThickEdge.label());
+   Field::destroy(SshCell.label());
 }
 
 } // namespace OMEGA

@@ -1010,10 +1010,7 @@ void initTendTest(const std::string &MeshFile, int NVertLayers) {
    Config("Omega");
    Config::readAll("omega.yml");
 
-   I4 IOErr = IO::init(DefComm);
-   if (IOErr != 0) {
-      ABORT_ERROR("TendencyTermsTest: error initializing parallel IO");
-   }
+   IO::init(DefComm);
 
    Decomp::init(MeshFile);
 

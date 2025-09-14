@@ -23,19 +23,20 @@ There are some general parameters that must be set for IO performance and
 formatting via the input configuration file. These are:
 ```yaml
 IO:
-   IOTasks:  1
-   IOStride: 1
-   IORearranger: box
-   IODefaultFormat: NetCDF4
+    IOTasks:  1
+    IOStride: 1
+    IOBaseTask: 0
+    IORearranger: box
+    IODefaultFormat: NetCDF4
 ```
 where ``IOTasks`` is the total number of IOTasks to assign to reading
 and writing. The default is 1 (serial IO) for safety but this number
 should be set appropriately for the underlying hardware. A simple
 starting point might be one IOTask per node or socket. The ``IOStride``
 is set to spread the IOTasks across the total number of MPI tasks so
-that every IOStride task (starting with the root task) is an IOTask.
-The product of IOTasks and IOStride should equal the total number of
-MPI Tasks.
+that every IOStride task (starting with the root task IOBaseTask) is an
+IOTask. The product of IOTasks and IOStride should equal the total number
+of MPI Tasks.
 
 When using parallel IO, the data must be rearranged to match the IO task
 decomposition. There are two algorithms for rearranging data available

@@ -179,8 +179,6 @@ void Eos::computeSpecVolDisp(const Array2DReal &ConservTemp,
 /// Define IO fields and metadata for output
 void Eos::defineFields() {
 
-   I4 Err = 0;
-
    /// Set field names (append Name if not default)
    SpecVolFldName          = "SpecVol";
    SpecVolDisplacedFldName = "SpecVolDisplaced";
@@ -229,24 +227,12 @@ void Eos::defineFields() {
    auto EosGroup = FieldGroup::create(EosGroupName);
 
    // Add fields to the EOS group
-   Err = EosGroup->addField(SpecVolDisplacedFldName);
-   if (Err != 0)
-      LOG_ERROR("Eos::defineFields: Error adding {} to field group {}",
-                SpecVolDisplacedFldName, EosGroupName);
-   Err = EosGroup->addField(SpecVolFldName);
-   if (Err != 0)
-      LOG_ERROR("Eos::defineFields: Error adding {} to field group {}",
-                SpecVolFldName, EosGroupName);
+   EosGroup->addField(SpecVolDisplacedFldName);
+   EosGroup->addField(SpecVolFldName);
 
    // Attach Kokkos views to the fields
-   Err = SpecVolDisplacedField->attachData<Array2DReal>(SpecVolDisplaced);
-   if (Err != 0)
-      LOG_ERROR("Eos::defineFields: Error attaching data array to field {}",
-                SpecVolDisplacedFldName);
-   Err = SpecVolField->attachData<Array2DReal>(SpecVol);
-   if (Err != 0)
-      LOG_ERROR("Eos::defineFields: Error attaching data array to field {}",
-                SpecVolFldName);
+   SpecVolDisplacedField->attachData<Array2DReal>(SpecVolDisplaced);
+   SpecVolField->attachData<Array2DReal>(SpecVol);
 
 } // end defineIOFields
 
