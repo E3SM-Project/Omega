@@ -177,10 +177,10 @@ like MPI communicators and task information, the number of threads
 if threaded, vector length for CPUs, and GPU and node information as
 needed. Multiple environments can be defined to support running portions
 of the model on subsets of tasks.</p>
-<p>On model initiation, the initialization routine <code class="docutils literal notranslate"><span class="pre">OMEGA::MachEnv::init()</span></code>
+<p>On model initiation, the initialization routine <code class="docutils literal notranslate"><span class="pre">MachEnv::init()</span></code>
 is called to set up the default MachEnv, which can be retrieved at
 any time using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">MachEnv</span><span class="w"> </span><span class="n">DefEnv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">MachEnv</span><span class="o">::</span><span class="n">getDefault</span><span class="p">();</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">MachEnv</span><span class="w"> </span><span class="n">DefEnv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MachEnv</span><span class="o">::</span><span class="n">getDefault</span><span class="p">();</span>
 </pre></div>
 </div>
 <p>that returns a pointer to the default environment.
@@ -195,19 +195,19 @@ are retrieved using various get functions:</p>
 <p>There is also a logical function <code class="docutils literal notranslate"><span class="pre">isMasterTask</span></code> that can be used
 for work that should only be done on the master task. By default,
 the master task is defined as task 0 in the environment, but if
-the master task is overloaded, there is a <code class="docutils literal notranslate"><span class="pre">setMasterTask</span></code> that can
-redefine any other task in the group as the master.</p>
+the master task is overloaded, there is a <code class="docutils literal notranslate"><span class="pre">setMasterTask(TaskID)</span></code>
+that can redefine any other task in the group as the master.</p>
 <p>If Omega has been built with OpenMP threading, a <code class="docutils literal notranslate"><span class="pre">getNumThreads</span></code>
 function is available; it returns 1 if threading is not on.
-The MachEnv also has a public parameter <code class="docutils literal notranslate"><span class="pre">OMEGA::VecLength</span></code> that can
+The MachEnv also has a public parameter <code class="docutils literal notranslate"><span class="pre">VecLength</span></code> that can
 be used to tune the vector length for CPU architectures. For
 GPU builds, this VecLength is set to 1.</p>
 <p>As noted previously, additional environments can be defined for
 subsets of a parent environment. There are three constructor
 interfaces for creating an environment:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">MachEnv</span><span class="w"> </span><span class="nf">MyNewEnv</span><span class="p">(</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">ParentEnv</span><span class="p">,</span><span class="w"> </span><span class="n">NewSize</span><span class="p">);</span>
-<span class="w">  </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">MachEnv</span><span class="w"> </span><span class="nf">MyNewEnv</span><span class="p">(</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">ParentEnv</span><span class="p">,</span><span class="w"> </span><span class="n">NewSize</span><span class="p">,</span><span class="w"> </span><span class="n">Begin</span><span class="p">,</span><span class="w"> </span><span class="n">Stride</span><span class="p">);</span>
-<span class="w">  </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">MachEnv</span><span class="w"> </span><span class="nf">MyNewEnv</span><span class="p">(</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">ParentEnv</span><span class="p">,</span><span class="w"> </span><span class="n">NewSize</span><span class="p">,</span><span class="w"> </span><span class="n">Tasks</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="n">MachEnv</span><span class="w"> </span><span class="nf">MyNewEnv</span><span class="p">(</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">ParentEnv</span><span class="p">,</span><span class="w"> </span><span class="n">NewSize</span><span class="p">);</span>
+<span class="w">  </span><span class="n">MachEnv</span><span class="w"> </span><span class="nf">MyNewEnv</span><span class="p">(</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">ParentEnv</span><span class="p">,</span><span class="w"> </span><span class="n">NewSize</span><span class="p">,</span><span class="w"> </span><span class="n">Begin</span><span class="p">,</span><span class="w"> </span><span class="n">Stride</span><span class="p">);</span>
+<span class="w">  </span><span class="n">MachEnv</span><span class="w"> </span><span class="nf">MyNewEnv</span><span class="p">(</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">ParentEnv</span><span class="p">,</span><span class="w"> </span><span class="n">NewSize</span><span class="p">,</span><span class="w"> </span><span class="n">Tasks</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>An optional additional argument exists for all three that can supply an
@@ -219,10 +219,10 @@ environment from a strided set of tasks starting at the <code class="docutils li
 (eg all odd tasks would have Begin=1 and Stride=2). The final
 interface creates a subset containing the selected tasks stored in
 a vector <code class="docutils literal notranslate"><span class="pre">Tasks</span></code>. Each new environment is given a <code class="docutils literal notranslate"><span class="pre">Name</span></code> and can be
-retrieved by name using <code class="docutils literal notranslate"><span class="pre">OMEGA::MachEnv::get(Name)</span></code>. Once retrieved,
+retrieved by name using <code class="docutils literal notranslate"><span class="pre">MachEnv::get(Name)</span></code>. Once retrieved,
 the other get functions listed above are used to get each data member.
 Because the new environments are subsets of the default environment, one
-additional function <code class="docutils literal notranslate"><span class="pre">OMEGA::MachEnv::isMember()</span></code> is provided so that
+additional function <code class="docutils literal notranslate"><span class="pre">MachEnv::isMember()</span></code> is provided so that
 non-member tasks can be excluded from calculations. The retrieval functions
 call from non-member tasks will return invalid values. Finally, there is
 a <code class="docutils literal notranslate"><span class="pre">removeEnv(Name)</span></code> function that can delete any individual defined
