@@ -25,6 +25,7 @@
 #include "OmegaKokkos.h"
 #include "Pacer.h"
 #include "TimeStepper.h"
+#include "VertCoord.h"
 #include "mpi.h"
 
 #include <iostream>
@@ -35,7 +36,7 @@ using namespace OMEGA;
 // The initialization routine for State testing. It calls various
 // init routines, including the creation of the default decomposition.
 
-int initStateTest() {
+void initStateTest() {
 
    int Err = 0;
    Error Err1;
@@ -60,20 +61,14 @@ int initStateTest() {
    Clock *ModelClock       = DefStepper->getClock();
 
    // Initialize the IO system
-   Err = IO::init(DefComm);
-   if (Err != 0)
-      LOG_ERROR("State: error initializing parallel IO");
+   IO::init(DefComm);
 
    // Initialize IOStreams - this does not yet validate the contents
    // of each file, only creates streams from Config
    IOStream::init(ModelClock);
 
    // Initialize Field infrastructure
-   Err = Field::init(ModelClock);
-   if (Err != 0) {
-      LOG_CRITICAL("State: Error initializing Fields");
-      return Err;
-   }
+   Field::init(ModelClock);
 
    // Create the default decomposition (initializes the decomposition)
    Decomp::init();
@@ -81,23 +76,16 @@ int initStateTest() {
    // Initialize the default halo
    Err = Halo::init();
    if (Err != 0)
-      LOG_ERROR("State: error initializing default halo");
+      ABORT_ERROR("State: error initializing default halo");
+
+   // Initialize the vertical coordinate (phase 1)
+   VertCoord::init1();
 
    // Initialize the default mesh
    HorzMesh::init();
 
-   // Get the number of vertical levels from Config
-   Config *OmegaConfig = Config::getOmegaConfig();
-   Config DimConfig("Dimension");
-   Err1 += OmegaConfig->get(DimConfig);
-   CHECK_ERROR_ABORT(Err1, "State: Dimension group not found in Config");
-
-   I4 NVertLevels;
-   Err1 += DimConfig.get("NVertLevels", NVertLevels);
-   CHECK_ERROR_ABORT(Err1, "State: NVertLevels not found in Dimension Config");
-
-   // Create vertical dimension
-   auto VertDim = Dimension::create("NVertLevels", NVertLevels);
+   // Initialize the vertical coordinate (phase 2)
+   VertCoord::init2();
 
    // Initialize tracers
    Tracers::init();
@@ -113,26 +101,19 @@ int initStateTest() {
 
    // Create a default ocean state
    Err = OceanState::init();
-   if (Err != 0) {
-      LOG_CRITICAL("ocnInit: Error initializing default state");
-      return Err;
-   }
+   if (Err != 0)
+      ABORT_ERROR("ocnInit: Error initializing default state");
 
    // Now that all fields have been defined, validate all the streams
    // contents
    bool StreamsValid = IOStream::validateAll();
-   if (!StreamsValid) {
-      LOG_CRITICAL("ocnInit: Error validating IO Streams");
-      return Err;
-   }
+   if (!StreamsValid)
+      ABORT_ERROR("ocnInit: Error validating IO Streams");
 
    // Read the state variables from the initial state stream
    Metadata ReqMeta; // no global metadata needed for init state read
-   Err = IOStream::read("InitialState", ModelClock, ReqMeta);
-   if (Err != IOStream::Success) {
-      LOG_CRITICAL("ocnInit: Error reading initial state from stream");
-      return Err;
-   }
+   Err1 = IOStream::read("InitialState", ModelClock, ReqMeta);
+   CHECK_ERROR_ABORT(Err1, "ocnInit: Error reading initial state from stream");
 
    // Finish initialization of initial state by filling halos and copying
    // to host. Current time level is zero.
@@ -140,7 +121,7 @@ int initStateTest() {
    DefState->exchangeHalo(0);
    DefState->copyToHost(0);
 
-   return Err;
+   return;
 }
 
 // Check for differences between layer thickness and normal velocity host arrays
@@ -153,9 +134,9 @@ int checkHost(OceanState *RefState, OceanState *TstState, int RefTimeLevel,
    RefState->getLayerThicknessH(LayerThicknessHRef, RefTimeLevel);
    TstState->getLayerThicknessH(LayerThicknessHTst, TstTimeLevel);
    for (int Cell = 0; Cell < RefState->NCellsAll; Cell++) {
-      for (int Level = 0; Level < RefState->NVertLevels; Level++) {
-         if (LayerThicknessHRef(Cell, Level) !=
-             LayerThicknessHTst(Cell, Level)) {
+      for (int Layer = 0; Layer < RefState->NVertLayers; Layer++) {
+         if (LayerThicknessHRef(Cell, Layer) !=
+             LayerThicknessHTst(Cell, Layer)) {
             count++;
          }
       }
@@ -166,9 +147,9 @@ int checkHost(OceanState *RefState, OceanState *TstState, int RefTimeLevel,
    RefState->getNormalVelocityH(NormalVelocityHRef, RefTimeLevel);
    TstState->getNormalVelocityH(NormalVelocityHTst, TstTimeLevel);
    for (int Edge = 0; Edge < RefState->NEdgesAll; Edge++) {
-      for (int Level = 0; Level < RefState->NVertLevels; Level++) {
-         if (NormalVelocityHRef(Edge, Level) !=
-             NormalVelocityHTst(Edge, Level)) {
+      for (int Layer = 0; Layer < RefState->NVertLayers; Layer++) {
+         if (NormalVelocityHRef(Edge, Layer) !=
+             NormalVelocityHTst(Edge, Layer)) {
             count++;
          }
       }
@@ -188,10 +169,10 @@ int checkDevice(OceanState *RefState, OceanState *TstState, int RefTimeLevel,
    RefState->getLayerThickness(LayerThicknessRef, RefTimeLevel);
    TstState->getLayerThickness(LayerThicknessTst, TstTimeLevel);
    parallelReduce(
-       "reduce", {RefState->NCellsAll, RefState->NVertLevels},
-       KOKKOS_LAMBDA(int Cell, int Level, int &Accum) {
-          if (LayerThicknessRef(Cell, Level) !=
-              LayerThicknessTst(Cell, Level)) {
+       "reduce", {RefState->NCellsAll, RefState->NVertLayers},
+       KOKKOS_LAMBDA(int Cell, int Layer, int &Accum) {
+          if (LayerThicknessRef(Cell, Layer) !=
+              LayerThicknessTst(Cell, Layer)) {
              Accum++;
           }
        },
@@ -203,10 +184,10 @@ int checkDevice(OceanState *RefState, OceanState *TstState, int RefTimeLevel,
    RefState->getNormalVelocity(NormalVelocityRef, RefTimeLevel);
    TstState->getNormalVelocity(NormalVelocityTst, TstTimeLevel);
    parallelReduce(
-       "reduce", {RefState->NCellsAll, RefState->NVertLevels},
-       KOKKOS_LAMBDA(int Cell, int Level, int &Accum) {
-          if (NormalVelocityRef(Cell, Level) !=
-              NormalVelocityTst(Cell, Level)) {
+       "reduce", {RefState->NCellsAll, RefState->NVertLayers},
+       KOKKOS_LAMBDA(int Cell, int Layer, int &Accum) {
+          if (NormalVelocityRef(Cell, Layer) !=
+              NormalVelocityTst(Cell, Layer)) {
              Accum++;
           }
        },
@@ -232,9 +213,7 @@ int main(int argc, char *argv[]) {
 
       // Call initialization routine to create default state and other
       // quantities
-      int Err = initStateTest();
-      if (Err != 0)
-         LOG_CRITICAL("State: Error initializing");
+      initStateTest();
 
       // Get default mesh, halo and time data
       HorzMesh *DefHorzMesh   = HorzMesh::getDefault();
@@ -245,12 +224,12 @@ int main(int argc, char *argv[]) {
 
       // Test retrieval of the default state
       OceanState *DefState = OceanState::getDefault();
-      int NVertLevels      = DefState->NVertLevels;
+      int NVertLayers      = DefState->NVertLayers;
       int NCellsAll        = DefState->NCellsAll;
       int NEdgesAll        = DefState->NEdgesAll;
       int CurTime          = 0;
       int NewTime          = 1;
-      if (DefState and NVertLevels > 0) {
+      if (DefState and NVertLayers > 0) {
          LOG_INFO("State: Default state retrieval PASS");
       } else {
          RetVal += 1;
@@ -270,8 +249,8 @@ int main(int argc, char *argv[]) {
       int Count1 = 0;
       int Count2 = 0;
       for (int Cell = 0; Cell < NCellsAll; Cell++) {
-         for (int Level = 0; Level < NVertLevels; Level++) {
-            R8 val = LayerThickHDef(Cell, Level);
+         for (int Layer = 0; Layer < NVertLayers; Layer++) {
+            R8 val = LayerThickHDef(Cell, Layer);
             if (val != 0.0)
                ++Count1;                     // check for all-zero array
             if (val < 0.0 and val > 300.0) { // out of range
@@ -292,9 +271,9 @@ int main(int argc, char *argv[]) {
 
          // Create new reference and test states with the number of time levels
          OceanState *RefState = OceanState::create(
-             "Reference", DefHorzMesh, DefHalo, NVertLevels, NTimeLevels);
+             "Reference", DefHorzMesh, DefHalo, NVertLayers, NTimeLevels);
          OceanState *TstState = OceanState::create("Test", DefHorzMesh, DefHalo,
-                                                   NVertLevels, NTimeLevels);
+                                                   NVertLayers, NTimeLevels);
 
          // Test successful creation
          if (TstState and RefState) { // true if non-null ptr
@@ -318,17 +297,17 @@ int main(int argc, char *argv[]) {
          RefState->getNormalVelocityH(NormalVelocityHRef, CurTime);
          TstState->getNormalVelocityH(NormalVelocityHTst, CurTime);
          for (int Cell = 0; Cell < NCellsAll; Cell++) {
-            for (int Level = 0; Level < NVertLevels; Level++) {
-               LayerThickHRef(Cell, Level) = LayerThickHDef(Cell, Level);
-               LayerThickHTst(Cell, Level) = LayerThickHDef(Cell, Level);
+            for (int Layer = 0; Layer < NVertLayers; Layer++) {
+               LayerThickHRef(Cell, Layer) = LayerThickHDef(Cell, Layer);
+               LayerThickHTst(Cell, Layer) = LayerThickHDef(Cell, Layer);
             }
          }
          for (int Edge = 0; Edge < NEdgesAll; Edge++) {
-            for (int Level = 0; Level < NVertLevels; Level++) {
-               NormalVelocityHRef(Edge, Level) =
-                   NormalVelocityHDef(Edge, Level);
-               NormalVelocityHTst(Edge, Level) =
-                   NormalVelocityHDef(Edge, Level);
+            for (int Layer = 0; Layer < NVertLayers; Layer++) {
+               NormalVelocityHRef(Edge, Layer) =
+                   NormalVelocityHDef(Edge, Layer);
+               NormalVelocityHTst(Edge, Layer) =
+                   NormalVelocityHDef(Edge, Layer);
             }
          }
          RefState->copyToDevice(CurTime);
@@ -341,18 +320,18 @@ int main(int argc, char *argv[]) {
          RefState->getNormalVelocityH(NormalVelocityHRef, NewTime);
          TstState->getNormalVelocityH(NormalVelocityHTst, NewTime);
          for (int Cell = 0; Cell < NCellsAll; Cell++) {
-            for (int Level = 0; Level < NVertLevels; Level++) {
-               LayerThickHRef(Cell, Level) = LayerThickHDef(Cell, Level) + 1;
-               LayerThickHTst(Cell, Level) = LayerThickHDef(Cell, Level) + 1;
+            for (int Layer = 0; Layer < NVertLayers; Layer++) {
+               LayerThickHRef(Cell, Layer) = LayerThickHDef(Cell, Layer) + 1;
+               LayerThickHTst(Cell, Layer) = LayerThickHDef(Cell, Layer) + 1;
             }
          }
 
          for (int Edge = 0; Edge < NEdgesAll; Edge++) {
-            for (int Level = 0; Level < NVertLevels; Level++) {
-               NormalVelocityHRef(Edge, Level) =
-                   NormalVelocityHDef(Edge, Level) + 1;
-               NormalVelocityHTst(Edge, Level) =
-                   NormalVelocityHDef(Edge, Level) + 1;
+            for (int Layer = 0; Layer < NVertLayers; Layer++) {
+               NormalVelocityHRef(Edge, Layer) =
+                   NormalVelocityHDef(Edge, Layer) + 1;
+               NormalVelocityHTst(Edge, Layer) =
+                   NormalVelocityHDef(Edge, Layer) + 1;
             }
          }
          RefState->copyToDevice(NewTime);
@@ -435,6 +414,7 @@ int main(int argc, char *argv[]) {
       Tendencies::clear();
       TimeStepper::clear();
       HorzMesh::clear();
+      VertCoord::clear();
       Halo::clear();
       Decomp::clear();
       MachEnv::removeAll();

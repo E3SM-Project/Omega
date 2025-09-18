@@ -121,9 +121,7 @@ int initHaloTest() {
    Config::readAll("omega.yml");
 
    // Initialize the IO system
-   IErr = IO::init(DefComm);
-   if (IErr != 0)
-      LOG_ERROR("HaloTest: error initializing parallel IO");
+   IO::init(DefComm);
 
    // Create the default decomposition (initializes the decomposition)
    Decomp::init();

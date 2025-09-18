@@ -27,7 +27,8 @@ HorzMesh *HorzMesh::DefaultHorzMesh = nullptr;
 std::map<std::string, std::unique_ptr<HorzMesh>> HorzMesh::AllHorzMeshes;
 
 //------------------------------------------------------------------------------
-// Initialize the mesh. Assumes that Decomp has already been initialized.
+// Initialize the mesh. Assumes that Decomp and VertCoord have already been
+// initialized.
 
 void HorzMesh::init() {
 
@@ -36,19 +37,10 @@ void HorzMesh::init() {
    // Retrieve the default decomposition
    Decomp *DefDecomp = Decomp::getDefault();
 
-   // Retrieve NVertLevels from Config
-   I4 NVertLevels;
-   Config *OmegaConfig = Config::getOmegaConfig();
-   Config DimConfig("Dimension");
-   Err += OmegaConfig->get(DimConfig);
-   CHECK_ERROR_ABORT(Err, "HorzMesh: Dimension group not found in Config");
-
-   Err += DimConfig.get("NVertLevels", NVertLevels);
-   CHECK_ERROR_ABORT(Err,
-                     "HorzMesh: NVertLevels not found in Dimension Config");
+   I4 NVertLayers = VertCoord::getDefault()->NVertLayers;
 
    // Create the default mesh and set pointer to it
-   HorzMesh::DefaultHorzMesh = create("Default", DefDecomp, NVertLevels);
+   HorzMesh::DefaultHorzMesh = create("Default", DefDecomp, NVertLayers);
 }
 
 //------------------------------------------------------------------------------
@@ -56,7 +48,7 @@ void HorzMesh::init() {
 
 HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
                    Decomp *MeshDecomp,      //< [in] Decomp for the new mesh
-                   I4 InNVertLevels         //< [in} num vertical levels
+                   I4 InNVertLayers         //< [in} num vertical layers
 ) {
 
    MeshName = Name;
@@ -64,8 +56,8 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
    // Retrieve mesh files name from Decomp
    MeshFileName = MeshDecomp->MeshFileName;
 
-   // Set NVertLevels
-   NVertLevels = InNVertLevels;
+   // Set NVertLayers
+   NVertLayers = InNVertLayers;
 
    // Retrieve mesh cell/edge/vertex totals from Decomp
    NCellsHalo  = MeshDecomp->NCellsHalo;
@@ -113,10 +105,7 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
    EdgesOnVertex  = MeshDecomp->EdgesOnVertex;
 
    // Open the mesh file for reading (assume IO has already been initialized)
-   I4 Err;
-   Err = OMEGA::IO::openFile(MeshFileID, MeshFileName, IO::ModeRead);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error opening mesh file");
+   IO::openFile(MeshFileID, MeshFileName, IO::ModeRead);
 
    // Create Omega Dimensions associated with this mesh
    createDimensions(MeshDecomp);
@@ -153,7 +142,7 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
    computeEdgeSign();
 
    // TODO: implement setMasks during Mesh constructor
-   setMasks(NVertLevels);
+   setMasks(NVertLayers);
 
    // set mesh scaling coefficients
    setMeshScaling();
@@ -164,7 +153,7 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
 /// AllHorzMeshes map
 HorzMesh *HorzMesh::create(const std::string &Name, //< [in] Name for new mesh
                            Decomp *MeshDecomp, //< [in] Decomp for the new mesh
-                           I4 InNVertLevels    //< [in] num vertical levels
+                           I4 InNVertLayers    //< [in] num vertical layers
 ) {
    // Check to see if a mesh of the same name already exists and
    // if so, exit with an error
@@ -177,7 +166,7 @@ HorzMesh *HorzMesh::create(const std::string &Name, //< [in] Name for new mesh
 
    // create a new mesh on the heap and put it in a map of
    // unique_ptrs, which will manage its lifetime
-   auto *NewHorzMesh = new HorzMesh(Name, MeshDecomp, InNVertLevels);
+   auto *NewHorzMesh = new HorzMesh(Name, MeshDecomp, InNVertLayers);
    AllHorzMeshes.emplace(Name, NewHorzMesh);
 
    return NewHorzMesh;
@@ -289,7 +278,6 @@ void HorzMesh::createDimensions(Decomp *MeshDecomp) {
 // Initialize the parallel IO decompositions for the mesh variables
 void HorzMesh::initParallelIO(Decomp *MeshDecomp) {
 
-   I4 Err;
    I4 NDims             = 1;
    IO::Rearranger Rearr = IO::RearrBox;
 
@@ -300,10 +288,8 @@ void HorzMesh::initParallelIO(Decomp *MeshDecomp) {
       CellID[Cell] = MeshDecomp->CellIDH(Cell) - 1;
    }
 
-   Err = IO::createDecomp(CellDecompR8, IO::IOTypeR8, NDims, CellDims,
-                          NCellsAll, CellID, Rearr);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error creating cell IO decomposition");
+   CellDecompR8 = IO::createDecomp(IO::IOTypeR8, NDims, CellDims, NCellsAll,
+                                   CellID, Rearr);
 
    // Create the IO decomp for arrays with (NEdges) dimensions
    std::vector<I4> EdgeDims{MeshDecomp->NEdgesGlobal};
@@ -312,10 +298,8 @@ void HorzMesh::initParallelIO(Decomp *MeshDecomp) {
       EdgeID[Edge] = MeshDecomp->EdgeIDH(Edge) - 1;
    }
 
-   Err = IO::createDecomp(EdgeDecompR8, IO::IOTypeR8, NDims, EdgeDims,
-                          NEdgesAll, EdgeID, Rearr);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error creating edge IO decomposition");
+   EdgeDecompR8 = IO::createDecomp(IO::IOTypeR8, NDims, EdgeDims, NEdgesAll,
+                                   EdgeID, Rearr);
 
    // Create the IO decomp for arrays with (NVertices) dimensions
    std::vector<I4> VertexDims{MeshDecomp->NVerticesGlobal};
@@ -324,10 +308,8 @@ void HorzMesh::initParallelIO(Decomp *MeshDecomp) {
       VertexID[Vertex] = MeshDecomp->VertexIDH(Vertex) - 1;
    }
 
-   Err = IO::createDecomp(VertexDecompR8, IO::IOTypeR8, NDims, VertexDims,
-                          NVerticesAll, VertexID, Rearr);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error creating vertex IO decomposition");
+   VertexDecompR8 = IO::createDecomp(IO::IOTypeR8, NDims, VertexDims,
+                                     NVerticesAll, VertexID, Rearr);
 
    // Create the IO decomp for arrays with (NEdges, 2*MaxEdges) dimensions
    NDims     = 2;
@@ -343,10 +325,8 @@ void HorzMesh::initParallelIO(Decomp *MeshDecomp) {
       }
    }
 
-   Err = IO::createDecomp(OnEdgeDecompR8, IO::IOTypeR8, NDims, OnEdgeDims2,
-                          OnEdgeSize2, OnEdgeOffset2, Rearr);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error creating OnEdge IO decomposition");
+   OnEdgeDecompR8 = IO::createDecomp(IO::IOTypeR8, NDims, OnEdgeDims2,
+                                     OnEdgeSize2, OnEdgeOffset2, Rearr);
 
    // Create the IO decomp for arrays with (NVertices, VertexDegree) dimensions
    std::vector<I4> OnVertexDims{MeshDecomp->NVerticesGlobal, VertexDegree};
@@ -359,10 +339,8 @@ void HorzMesh::initParallelIO(Decomp *MeshDecomp) {
       }
    }
 
-   Err = IO::createDecomp(OnVertexDecompR8, IO::IOTypeR8, NDims, OnVertexDims,
-                          OnVertexSize, OnVertexOffset, Rearr);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error creating OnVertex IO decomposition");
+   OnVertexDecompR8 = IO::createDecomp(IO::IOTypeR8, NDims, OnVertexDims,
+                                       OnVertexSize, OnVertexOffset, Rearr);
 
 } // end initParallelIO
 
@@ -370,39 +348,18 @@ void HorzMesh::initParallelIO(Decomp *MeshDecomp) {
 // Destroy parallel decompositions
 void HorzMesh::finalizeParallelIO() {
 
-   int Err = 0; // default return code
-
-   // Destroy the IO decomp for arrays with (NCells) dimensions
-   Err = IO::destroyDecomp(CellDecompR8);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error destroying cell IO decomposition");
-
-   // Destroy the IO decomp for arrays with (NEdges) dimensions
-   Err = IO::destroyDecomp(EdgeDecompR8);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error destroying edge IO decomposition");
-
-   // Destroy the IO decomp for arrays with (NVertices) dimensions
-   Err = IO::destroyDecomp(VertexDecompR8);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error destroying vertex IO decomposition");
-
-   // Destroy the IO decomp for arrays with (NEdges, 2*MaxEdges) dimensions
-   Err = IO::destroyDecomp(OnEdgeDecompR8);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error destroying OnEdge IO decomposition");
-
-   // Destroy the IO decomp for arrays with (NVertices, VertexDegree) dimensions
-   Err = IO::destroyDecomp(OnVertexDecompR8);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error destroying OnVertex IO decomposition");
+   IO::destroyDecomp(CellDecompR8);
+   IO::destroyDecomp(EdgeDecompR8);
+   IO::destroyDecomp(VertexDecompR8);
+   IO::destroyDecomp(OnEdgeDecompR8);
+   IO::destroyDecomp(OnVertexDecompR8);
 
 } // end finalizeParallelIO
 
 // Read 1D vertex array
 void HorzMesh::readVertexArray(HostArray1DReal &VertexArrayH,
                                const std::string &MPASName) {
-   int Err;
+   Error Err;
 
    std::string OmegaName;
    std::transform(MPASName.begin(), MPASName.end(), OmegaName.begin(),
@@ -413,9 +370,7 @@ void HorzMesh::readVertexArray(HostArray1DReal &VertexArrayH,
    int ArrayID;
    Err = IO::readArray(TmpArrayR8.data(), NVerticesAll, MPASName, MeshFileID,
                        VertexDecompR8, ArrayID);
-
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error reading {}", MPASName);
+   CHECK_ERROR_ABORT(Err, "HorzMesh: error reading {}", MPASName);
 
    // Create host array of desired precision and copy the read data into it
    VertexArrayH = HostArray1DReal(OmegaName + "H", NVerticesSize);
@@ -425,7 +380,7 @@ void HorzMesh::readVertexArray(HostArray1DReal &VertexArrayH,
 // Read 1D edge array
 void HorzMesh::readEdgeArray(HostArray1DReal &EdgeArrayH,
                              const std::string &MPASName) {
-   int Err;
+   Error Err;
 
    std::string OmegaName;
    std::transform(MPASName.begin(), MPASName.end(), OmegaName.begin(),
@@ -436,9 +391,7 @@ void HorzMesh::readEdgeArray(HostArray1DReal &EdgeArrayH,
    int ArrayID;
    Err = IO::readArray(TmpArrayR8.data(), NEdgesAll, MPASName, MeshFileID,
                        EdgeDecompR8, ArrayID);
-
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error reading {}", MPASName);
+   CHECK_ERROR_ABORT(Err, "HorzMesh: error reading {}", MPASName);
 
    // Create host array of desired precision and copy the read data into it
    EdgeArrayH = HostArray1DReal(OmegaName + "H", NEdgesSize);
@@ -448,7 +401,7 @@ void HorzMesh::readEdgeArray(HostArray1DReal &EdgeArrayH,
 // Read 1D cell array
 void HorzMesh::readCellArray(HostArray1DReal &CellArrayH,
                              const std::string &MPASName) {
-   int Err;
+   Error Err;
 
    std::string OmegaName;
    std::transform(MPASName.begin(), MPASName.end(), OmegaName.begin(),
@@ -459,9 +412,7 @@ void HorzMesh::readCellArray(HostArray1DReal &CellArrayH,
    int ArrayID;
    Err = IO::readArray(TmpArrayR8.data(), NCellsAll, MPASName, MeshFileID,
                        CellDecompR8, ArrayID);
-
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error reading {}", MPASName);
+   CHECK_ERROR_ABORT(Err, "HorzMesh: error reading {}", MPASName);
 
    // Create host array of desired precision and copy the read data into it
    CellArrayH = HostArray1DReal(OmegaName + "H", NCellsSize);
@@ -522,7 +473,7 @@ void HorzMesh::readMeasurements() {
    readCellArray(MeshDensityH, "meshDensity");
 
    // not using helper function since it kiteAreas is a 2d array
-   I4 Err;
+   Error Err;
 
    // Read into a temporary double precision array
    int KiteAreasOnVertexID;
@@ -532,8 +483,7 @@ void HorzMesh::readMeasurements() {
    Err = IO::readArray(TmpKiteAreasOnVertexR8.data(),
                        NVerticesAll * VertexDegree, "kiteAreasOnVertex",
                        MeshFileID, OnVertexDecompR8, KiteAreasOnVertexID);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error reading kiteAreasOnVertex");
+   CHECK_ERROR_ABORT(Err, "HorzMesh: error reading kiteAreasOnVertex");
 
    // Create and fill array with Real precision
    KiteAreasOnVertexH =
@@ -546,15 +496,14 @@ void HorzMesh::readMeasurements() {
 // Read the edge weights used in the discrete potential vorticity flux term
 void HorzMesh::readWeights() {
 
-   I4 Err;
+   Error Err;
 
    int WeightsOnEdgeID;
    HostArray2DR8 TmpWeightsOnEdgeR8("WeightsOnEdge", NEdgesSize, MaxEdges2);
    Err = IO::readArray(TmpWeightsOnEdgeR8.data(), NEdgesAll * MaxEdges2,
                        "weightsOnEdge", MeshFileID, OnEdgeDecompR8,
                        WeightsOnEdgeID);
-   if (Err != 0)
-      LOG_CRITICAL("HorzMesh: error reading weightsOnEdge");
+   CHECK_ERROR_ABORT(Err, "HorzMesh: error reading weightsOnEdge");
 
    WeightsOnEdgeH = HostArray2DReal("WeightsOnEdge", NEdgesSize, MaxEdges2);
    deepCopy(WeightsOnEdgeH, TmpWeightsOnEdgeR8);
@@ -629,9 +578,9 @@ void HorzMesh::computeEdgeSign() {
 // set computational masks for mesh elements
 // TODO: this is just a placeholder, implement actual masks for edges, cells,
 // and vertices
-void HorzMesh::setMasks(int NVertLevels) {
+void HorzMesh::setMasks(int NVertLayers) {
 
-   EdgeMask = Array2DReal("EdgeMask", NEdgesSize, NVertLevels);
+   EdgeMask = Array2DReal("EdgeMask", NEdgesSize, NVertLayers);
 
    OMEGA_SCOPE(LocEdgeMask, EdgeMask);
    OMEGA_SCOPE(LocCellsOnEdge, CellsOnEdge);
@@ -639,7 +588,7 @@ void HorzMesh::setMasks(int NVertLevels) {
 
    deepCopy(EdgeMask, 1.0);
    parallelFor(
-       {NEdgesAll, NVertLevels}, KOKKOS_LAMBDA(int Edge, int K) {
+       {NEdgesAll, NVertLayers}, KOKKOS_LAMBDA(int Edge, int K) {
           const I4 Cell1 = LocCellsOnEdge(Edge, 0);
           const I4 Cell2 = LocCellsOnEdge(Edge, 1);
           if (!(Cell1 >= 0 and Cell1 < LocNCellsAll) or

@@ -20,7 +20,7 @@ class TracerAuxVars {
    FluxTracerEdgeOption TracersOnEdgeChoice;
 
    TracerAuxVars(const std::string &AuxStateSuffix, const HorzMesh *Mesh,
-                 const I4 NVertLevels, const I4 NTracers);
+                 const I4 NVertLayers, const I4 NTracers);
 
    KOKKOS_FUNCTION void computeVarsOnEdge(int L, int IEdge, int KChunk,
                                           const Array2DReal &NormalVelEdge,

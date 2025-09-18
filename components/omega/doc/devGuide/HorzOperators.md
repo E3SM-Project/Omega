@@ -25,7 +25,7 @@ over mesh elements, for example
 ```c++
     auto mesh = OMEGA::HorzMesh::getDefault();
     DivergenceOnCell DivOnCell(mesh);
-    parallelFor({mesh->NCellsOwned, NVertLevels / VecLength}, KOKKOS_LAMBDA(int ICell, int KChunk) {
+    parallelFor({mesh->NCellsOwned, NVertLayers / VecLength}, KOKKOS_LAMBDA(int ICell, int KChunk) {
         // computes divergence of Vec for cells with indices (ICell, KChunk:KChunk+VecLength-1)
         // stores the result in DivVec
         DivOnCell(DivVec, ICell, KChunk, Vec);

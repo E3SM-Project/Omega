@@ -14,6 +14,7 @@
 #include "Decomp.h"
 #include "MachEnv.h"
 #include "OmegaKokkos.h"
+#include "VertCoord.h"
 
 #include <memory>
 #include <string>
@@ -68,7 +69,7 @@ class HorzMesh {
    /// Construct a new local mesh for a given decomposition
    HorzMesh(const std::string &Name, ///< [in] Name for mesh
             Decomp *Decomp,          ///< [in] Decomposition for mesh
-            I4 InNVertLevels         ///< [in] num vertical levels
+            I4 InNVertLayers         ///< [in] num vertical layers
    );
 
    // Forbid copy and move construction
@@ -80,7 +81,7 @@ class HorzMesh {
    // private function.
    void computeEdgeSign();
 
-   void setMasks(int NVertLevels);
+   void setMasks(int NVertLayers);
 
    void setMeshScaling();
 
@@ -96,7 +97,7 @@ class HorzMesh {
    // Note that all sizes are actual counts (1-based) so that loop extents
    // should always use the 0:NCellsXX-1 form.
 
-   I4 NVertLevels; ///< number of vertical levels
+   I4 NVertLayers; ///< number of vertical layers
 
    Array1DI4 NCellsHalo;      ///< num cells owned+halo for halo layer
    HostArray1DI4 NCellsHaloH; ///< num cells owned+halo for halo layer
@@ -272,7 +273,7 @@ class HorzMesh {
    /// AllHorzMeshes map
    static HorzMesh *create(const std::string &Name, ///< [in] Name for mesh
                            Decomp *Decomp,  ///< [in] Decomposition for mesh
-                           I4 InNVertLevels ///< [in] num vertival levels
+                           I4 InNVertLayers ///< [in] num vertival layers
    );
 
    /// Destructor - deallocates all memory and deletes a HorzMesh

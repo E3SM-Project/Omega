@@ -6,11 +6,15 @@ Omega:
     StartTime: 0001-01-01_00:00:00
     StopTime: 0001-01-01_02:00:00
     RunDuration: none
-  Dimension:
-    NVertLevels: 60
   Decomp:
     HaloWidth: 3
     DecompMethod: MetisKWay
+  IO:
+    IOTasks:  1
+    IOStride: 1
+    IOBaseTask: 0
+    IORearranger: box
+    IODefaultFormat: NetCDF4
   State:
     NTimeLevels: 2
   Advection:
@@ -18,6 +22,8 @@ Omega:
     FluxTracerType: Center
   WindStress:
     InterpType: Isotropic
+  VertCoord:
+    MovementWeightType: Uniform
   Tendencies:
     ThicknessFluxTendencyEnable: true
     PVTendencyEnable: true
@@ -49,6 +55,16 @@ Omega:
       DRhoDS: 0.8
       RhoT0S0: 1000.0
   IOStreams:
+    InitialVertCoord:
+      UsePointerFile: false
+      Filename: OmegaMesh.nc
+      Mode: read
+      Precision: double
+      Freq: 1
+      FreqUnits: OnStartup
+      UseStartEnd: false
+      Contents:
+        - InitVertCoord
     # InitialState should only be used when starting from scratch.
     # For restart runs, the frequency units should be changed from
     # "OnStartup" to "never" so that the initial state file is not read.

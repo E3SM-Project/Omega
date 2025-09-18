@@ -1,5 +1,4 @@
-//===-- infra/Dimension.cpp - OMEGA dimension implementation -----*- C++
-//-*-===//
+//===-- infra/Dimension.cpp - OMEGA dimension implementation ----*- C++ -*-===//
 //
 // Implementation of the field dimension class used by the multi-dimensional
 // Field class
@@ -48,13 +47,13 @@ std::shared_ptr<Dimension> Dimension::create(
       // Retrieve the previously defined dim and use that unless...
       Dim = get(Name);
 
-      // The already-defined dim has different properties, so the dimensions
-      // are not the same and we have a conflict
+      // If the already-defined dim has different properties, the dimensions
+      // are not the same and we have a conflict and should abort
       if ((Dim->GlobalLength != GlobalLength) or
           (Dim->LocalLength != LocalLength) or !Dim->Distributed) {
-         LOG_ERROR("Attempt to create dimension {} but a dimension with"
-                   " that name already exists with different properties",
-                   Name);
+         ABORT_ERROR("Attempt to create dimension {} but a dimension with"
+                     " that name already exists with different properties",
+                     Name);
          Dim = nullptr;
       }
 
@@ -85,13 +84,13 @@ Dimension::create(const std::string &Name, // [in] name of dimension
       // Retrieve the previously defined dim and use that unless...
       Dim = get(Name);
 
-      // The already-defined dim has different properties, so the dimensions
-      // are not the same and we have a conflict
+      // If the already-defined dim has different properties, the dimensions
+      // are not the same and we have a conflict and must abort
       if ((Dim->GlobalLength != GlobalLength) or
           (Dim->LocalLength != GlobalLength) or Dim->Distributed) {
-         LOG_ERROR("Attempt to create dimension {} but a dimension with"
-                   " that name already exists with different properties",
-                   Name);
+         ABORT_ERROR("Attempt to create dimension {} but a dimension with"
+                     " that name already exists with different properties",
+                     Name);
          Dim = nullptr;
       }
 
@@ -130,9 +129,8 @@ void Dimension::destroy(
    if (exists(Name)) {
       AllDims.erase(Name);
    } else {
-      LOG_ERROR("Attempt to destroy the dimension {} failed: "
-                "dimension does not exist or has not been defined.",
-                Name);
+      LOG_WARN("Ignoring attempt to destroy the non-existent dimension {}.",
+               Name);
    }
 
 } // end destroy
@@ -146,14 +144,11 @@ void Dimension::clear() { AllDims.clear(); }
 std::shared_ptr<Dimension>
 Dimension::get(const std::string &Name // [in] Name of dimension
 ) {
-   if (exists(Name)) {
-      return AllDims[Name];
-   } else {
-      LOG_ERROR("Cannot retrieve dimension {}: dimension does not exist"
-                " or has not net been defined",
-                Name);
-      return nullptr;
-   }
+   if (!exists(Name))
+      ABORT_ERROR("Cannot retrieve dimension {}: dimension does not exist.",
+                  Name);
+
+   return AllDims[Name];
 
 } // end get full dimension instance
 
@@ -176,9 +171,9 @@ bool Dimension::isDistributedDim(
       return ThisDim->Distributed;
 
    } else {
-      LOG_ERROR("Cannot check distribution of dimension {}: "
-                "dimension does not exist or has not been defined",
-                Name);
+      LOG_WARN("Cannot check distribution of dimension {}: "
+               "dimension does not exist or has not been defined",
+               Name);
       return false;
    }
 }
@@ -192,18 +187,16 @@ I4 Dimension::getLengthGlobal() const { return GlobalLength; }
 I4 Dimension::getDimLengthGlobal(
     const std::string &Name // [in] name of dimension
 ) {
-   I4 Length;
+   I4 Length = -1;
 
-   // Make sure dimension exists
+   // If dimension exists, return global length. Otherwise abort.
    if (exists(Name)) {
       std::shared_ptr<Dimension> ThisDim = AllDims[Name];
       Length                             = ThisDim->GlobalLength;
 
    } else {
-      LOG_ERROR("Cannot get global length of dimension {}: "
-                "dimension does not exist or has not been defined",
-                Name);
-      Length = -1;
+      ABORT_ERROR("Cannot get global length of non-existent dimension {}.",
+                  Name);
    }
 
    return Length;
@@ -219,18 +212,16 @@ I4 Dimension::getLengthLocal() const { return LocalLength; }
 I4 Dimension::getDimLengthLocal(
     const std::string &Name // [in] name of dimension
 ) {
-   I4 Length;
+   I4 Length = -1;
 
-   // Make sure dimension exists
+   // If dimension exists, return local length. Otherwise, abort.
    if (exists(Name)) {
       std::shared_ptr<Dimension> ThisDim = AllDims[Name];
       Length                             = ThisDim->LocalLength;
 
    } else {
-      LOG_ERROR("Cannot get local length of dimension {}: "
-                "dimension does not exist or has not been defined",
-                Name);
-      Length = -1;
+      ABORT_ERROR("Cannot get local length of non-existent dimension {}.",
+                  Name);
    }
 
    return Length;
@@ -249,8 +240,7 @@ Dimension::getDimOffset(const std::string &Name // [in] name of dimension
 
    // Abort if the dimension does not exist
    if (!exists(Name))
-      ABORT_ERROR("Cannot get offset array for dimension {}: "
-                  "dimension does not exist or has not been defined",
+      ABORT_ERROR("Cannot get offset array for non-existent dimension {}.",
                   Name);
 
    // Retrieve offset

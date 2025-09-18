@@ -46,11 +46,7 @@ int ocnRun(TimeInstant &CurrTime ///< [inout] current sim time
 
       // write restart file/output, anything needed post-timestep
 
-      Err = IOStream::writeAll(OmegaClock);
-      if (Err != 0) {
-         LOG_CRITICAL("Error writing streams at end of step");
-         break;
-      }
+      IOStream::writeAll(OmegaClock);
 
       LOG_INFO("ocnRun: Time step {} complete, clock time: {}", IStep,
                SimTime.getString(4, 4, "-"));

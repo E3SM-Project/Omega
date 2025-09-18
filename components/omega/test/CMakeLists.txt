@@ -447,3 +447,14 @@ add_omega_test(
     ocn/EosTest.cpp
     "-n;2"
 )
+
+################
+# VertCoord test
+################
+
+add_omega_test(
+    VERTCOORD_TEST
+    testVertCoord.exe
+    ocn/VertCoordTest.cpp
+    "-n;8"
+)

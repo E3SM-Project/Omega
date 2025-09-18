@@ -15,6 +15,7 @@
 #include "OmegaKokkos.h"
 #include "Pacer.h"
 #include "TimeStepper.h"
+#include "VertCoord.h"
 #include "mpi.h"
 
 #include <cmath>
@@ -44,7 +45,7 @@ struct TestSetup {
 };
 
 constexpr Geometry Geom   = Geometry::Spherical;
-constexpr int NVertLevels = 60;
+constexpr int NVertLayers = 60;
 
 int initState() {
    int Err = 0;
@@ -100,12 +101,7 @@ int initTendenciesTest(const std::string &mesh) {
 
    TimeStepper::init1();
 
-   int IOErr = IO::init(DefComm);
-   if (IOErr != 0) {
-      Err++;
-      LOG_ERROR("TendenciesTest: error initializing parallel IO");
-   }
-
+   IO::init(DefComm);
    Decomp::init(mesh);
 
    int HaloErr = Halo::init();
@@ -114,12 +110,9 @@ int initTendenciesTest(const std::string &mesh) {
       LOG_ERROR("TendenciesTest: error initializing default halo");
    }
 
+   VertCoord::init1();
    HorzMesh::init();
    Tracers::init();
-
-   const auto &Mesh = HorzMesh::getDefault();
-   std::shared_ptr<Dimension> VertDim =
-       Dimension::create("NVertLevels", NVertLevels);
 
    int StateErr = OceanState::init();
    if (StateErr != 0) {
@@ -149,10 +142,12 @@ int testTendencies() {
       return -1;
    }
 
-   const auto *Mesh = HorzMesh::getDefault();
+   const auto Mesh     = HorzMesh::getDefault();
+   const auto VCoord   = VertCoord::getDefault();
+   VCoord->NVertLayers = 12;
    // test creation of another tendencies
    Config *Options = Config::getOmegaConfig();
-   Tendencies::create("TestTendencies", Mesh, 12, 3, Options);
+   Tendencies::create("TestTendencies", Mesh, VCoord, 3, Options);
 
    // test retrievel of another tendencies
    if (Tendencies::get("TestTendencies")) {
@@ -171,6 +166,8 @@ int testTendencies() {
    } else {
       LOG_INFO("TendenciesTest: Non-default tendencies erase PASS");
    }
+
+   VCoord->NVertLayers = NVertLayers;
 
    // put NANs in every tendency variables
    deepCopy(DefTendencies->LayerThicknessTend, NAN);
@@ -223,10 +220,12 @@ void finalizeTendenciesTest() {
    Tracers::clear();
    AuxiliaryState::clear();
    OceanState::clear();
+   VertCoord::clear();
    Field::clear();
    Dimension::clear();
    TimeStepper::clear();
    HorzMesh::clear();
+   VertCoord::clear();
    Halo::clear();
    Decomp::clear();
    MachEnv::removeAll();

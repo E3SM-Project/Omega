@@ -14,7 +14,7 @@
 namespace OMEGA {
 
 /// Constructor for Teos10Eos
-Teos10Eos::Teos10Eos(int NVertLevels) : NVertLevels(NVertLevels) {
+Teos10Eos::Teos10Eos(int NVertLayers) : NVertLayers(NVertLayers) {
    SpecVolPCoeffs = Array2DReal("SpecVolPCoeffs", 6, VecLength);
 }
 
@@ -24,15 +24,15 @@ LinearEos::LinearEos() {}
 /// Constructor for Eos
 Eos::Eos(const std::string &Name_, ///< [in] Name for eos object
          const HorzMesh *Mesh,     ///< [in] Horizontal mesh
-         int NVertLevels           ///< [in] Number of vertical levels
+         int NVertLayers           ///< [in] Number of vertical layers
          )
-    : ComputeSpecVolTeos10(NVertLevels) {
-   SpecVol = Array2DReal("SpecVol", Mesh->NCellsAll, NVertLevels);
+    : ComputeSpecVolTeos10(NVertLayers) {
+   SpecVol = Array2DReal("SpecVol", Mesh->NCellsAll, NVertLayers);
    SpecVolDisplaced =
-       Array2DReal("SpecVolDisplaced", Mesh->NCellsAll, NVertLevels);
+       Array2DReal("SpecVolDisplaced", Mesh->NCellsAll, NVertLayers);
    // Array dimension lengths
    NCellsAll = Mesh->NCellsAll;
-   NChunks   = NVertLevels / VecLength;
+   NChunks   = NVertLayers / VecLength;
    Name      = Name_;
 
    defineFields();
@@ -61,11 +61,10 @@ void Eos::init() {
 
    if (!Instance) {
       Instance = new Eos("Default", HorzMesh::getDefault(),
-                         HorzMesh::getDefault()->NVertLevels);
+                         VertCoord::getDefault()->NVertLayers);
    }
 
    Error Err; // error code
-   HorzMesh *DefHorzMesh = HorzMesh::getDefault();
 
    /// Retrieve default eos
    Eos *eos = Eos::getInstance();
@@ -110,7 +109,7 @@ void Eos::init() {
    }
 } // end init
 
-/// Compute specific volume for all cells/levels (no displacement)
+/// Compute specific volume for all cells/layers (no displacement)
 void Eos::computeSpecVol(const Array2DReal &ConservTemp,
                          const Array2DReal &AbsSalinity,
                          const Array2DReal &Pressure) {
@@ -180,8 +179,6 @@ void Eos::computeSpecVolDisp(const Array2DReal &ConservTemp,
 /// Define IO fields and metadata for output
 void Eos::defineFields() {
 
-   I4 Err = 0;
-
    /// Set field names (append Name if not default)
    SpecVolFldName          = "SpecVol";
    SpecVolDisplacedFldName = "SpecVolDisplaced";
@@ -194,7 +191,7 @@ void Eos::defineFields() {
    int NDims = 2;
    std::vector<std::string> DimNames(NDims);
    DimNames[0] = "NCells";
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
 
    /// Create and register the specific volume field
    auto SpecVolField =
@@ -230,24 +227,12 @@ void Eos::defineFields() {
    auto EosGroup = FieldGroup::create(EosGroupName);
 
    // Add fields to the EOS group
-   Err = EosGroup->addField(SpecVolDisplacedFldName);
-   if (Err != 0)
-      LOG_ERROR("Eos::defineFields: Error adding {} to field group {}",
-                SpecVolDisplacedFldName, EosGroupName);
-   Err = EosGroup->addField(SpecVolFldName);
-   if (Err != 0)
-      LOG_ERROR("Eos::defineFields: Error adding {} to field group {}",
-                SpecVolFldName, EosGroupName);
+   EosGroup->addField(SpecVolDisplacedFldName);
+   EosGroup->addField(SpecVolFldName);
 
    // Attach Kokkos views to the fields
-   Err = SpecVolDisplacedField->attachData<Array2DReal>(SpecVolDisplaced);
-   if (Err != 0)
-      LOG_ERROR("Eos::defineFields: Error attaching data array to field {}",
-                SpecVolDisplacedFldName);
-   Err = SpecVolField->attachData<Array2DReal>(SpecVol);
-   if (Err != 0)
-      LOG_ERROR("Eos::defineFields: Error attaching data array to field {}",
-                SpecVolFldName);
+   SpecVolDisplacedField->attachData<Array2DReal>(SpecVolDisplaced);
+   SpecVolField->attachData<Array2DReal>(SpecVol);
 
 } // end defineIOFields
 

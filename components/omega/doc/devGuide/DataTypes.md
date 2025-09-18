@@ -5,11 +5,11 @@
 Omega supports all standard data types and uses some additional defined
 types to guarantee a specific level of precision. In particular, we
 define I4, I8, R4 and R8 types for 4-byte (32-bit) and 8-byte (64-bit)
-integer and floating point variables. Note that these exist in the
-Omega namespace so use the scoped form OMEGA::I4, etc.
+integer and floating point variables.
 In addition, we define a Real data type that is, by default,
 double precision (8 bytes/64-bit) but if the code is built with a
-`-DOMEGA_SINGLE_PRECISION` (see insert link to build system) preprocessor flag,
+`-DOMEGA_SINGLE_PRECISION` preprocessor flag
+(see [build system documentation](#omega-dev-cmake-build)),
 the default Real becomes single precision (4-byte/32-bit). For floating
 point variables, developers should use this Real type instead of the
 specific R4 or R8 forms unless the specific form is required
@@ -37,20 +37,27 @@ alias array types of the form `ArrayNDTT` where N is the dimension of
 the array and TT is the data type (I4, I8, R4, R8 or Real) corresponding
 to the types described above. The dimension refers to the number of
 ranks in the array and not the physical dimension. Although Kokkos
-supports Fortran ordering, we will use C ordering for array indices.
-Within Omega the default location for an Array should be on the device
+supports Fortran ordering, we use C ordering for array indices.
+Within Omega, the default location for an Array should be on the device
 with a similar type HostArrayNDTT defined for arrays needed on the host.
 As an example, we can define and allocate a device and host array using:
 ```c++
-   Array3dReal Temperature("Temperature",nTimeLevels, nCells, nVertLevels);
-   HostArray3dReal TemperatureHost("Temperature",nTimeLevels, nCells, nVertLevels);
+   Array3dReal Temperature("Temperature",nTimeLevels, nCells, nVertLayers);
+   HostArray3dReal TemperatureHost("Temperature",nTimeLevels, nCells, nVertLayers);
 ```
 Alternatively, you can use the copy functions to create a host copy
 from the device or vice versa.
 ```c++
    auto TemperatureHost = OMEGA::createHostMirrorCopy(Temperature);
 ```
-Finally, the arrays can be deallocated explicity using the class
+Note that MirrorCopy will perform a deep copy on creation, but will not
+automatically synchronize the copies during later computations. The
+synchronization must be performed manually after any changes to host or
+device arrays using a deepCopy call:
+```c++
+   deepCopy(destinationArray, sourceArray);
+```
+Finally, arrays can be deallocated explicity using the class
 deallocate method, eg `Temperature.deallocate();` or if they are local
 to a routine, they will be automatically deallocated when they fall out
 of scope on exit. More details on Kokkos arrays are available in the Kokkos

@@ -77,6 +77,13 @@ using ScratchMemSpace = ExecSpace::scratch_memory_space;
 using Kokkos::MemoryUnmanaged;
 using Kokkos::TeamThreadRange;
 
+/// team_size for hierarchical parallelism
+#ifdef OMEGA_TARGET_DEVICE
+constexpr int OMEGA_TEAMSIZE = 64;
+#else
+constexpr int OMEGA_TEAMSIZE = 1;
+#endif
+
 // Takes a functor that uses multidimensional indexing
 // and converts it into one that also accepts linear index
 template <class F, int Rank> struct LinearIdxWrapper : F {

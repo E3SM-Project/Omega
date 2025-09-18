@@ -7,12 +7,12 @@
 namespace OMEGA {
 
 VelocityDel2AuxVars::VelocityDel2AuxVars(const std::string &AuxStateSuffix,
-                                         const HorzMesh *Mesh, int NVertLevels)
-    : Del2Edge("VelDel2Edge" + AuxStateSuffix, Mesh->NEdgesSize, NVertLevels),
+                                         const HorzMesh *Mesh, int NVertLayers)
+    : Del2Edge("VelDel2Edge" + AuxStateSuffix, Mesh->NEdgesSize, NVertLayers),
       Del2DivCell("VelDel2DivCell" + AuxStateSuffix, Mesh->NCellsSize,
-                  NVertLevels),
+                  NVertLayers),
       Del2RelVortVertex("VelDel2RelVortVertex" + AuxStateSuffix,
-                        Mesh->NVerticesSize, NVertLevels),
+                        Mesh->NVerticesSize, NVertLayers),
       NEdgesOnCell(Mesh->NEdgesOnCell), EdgesOnCell(Mesh->EdgesOnCell),
       EdgeSignOnCell(Mesh->EdgeSignOnCell), DcEdge(Mesh->DcEdge),
       DvEdge(Mesh->DvEdge), AreaCell(Mesh->AreaCell),
@@ -24,13 +24,11 @@ VelocityDel2AuxVars::VelocityDel2AuxVars(const std::string &AuxStateSuffix,
 void VelocityDel2AuxVars::registerFields(const std::string &AuxGroupName,
                                          const std::string &MeshName) const {
 
-   int Err = 0; // Error flag for some calls
-
    // Create/define fields
    const Real FillValue = -9.99e30;
    int NDims            = 2;
    std::vector<std::string> DimNames(NDims);
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
    std::string DimSuffix;
    if (MeshName == "Default") {
       DimSuffix = "";
@@ -82,49 +80,20 @@ void VelocityDel2AuxVars::registerFields(const std::string &AuxGroupName,
    );
 
    // Add fields to Aux Field group
-   Err = FieldGroup::addFieldToGroup(Del2Edge.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", Del2Edge.label(),
-                AuxGroupName);
-
-   Err = FieldGroup::addFieldToGroup(Del2DivCell.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", Del2DivCell.label(),
-                AuxGroupName);
-
-   Err = FieldGroup::addFieldToGroup(Del2RelVortVertex.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", Del2RelVortVertex.label(),
-                AuxGroupName);
+   FieldGroup::addFieldToGroup(Del2Edge.label(), AuxGroupName);
+   FieldGroup::addFieldToGroup(Del2DivCell.label(), AuxGroupName);
+   FieldGroup::addFieldToGroup(Del2RelVortVertex.label(), AuxGroupName);
 
    // Attach data to fields
-   Err = Del2EdgeField->attachData<Array2DReal>(Del2Edge);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", Del2Edge.label());
-
-   Err = Del2DivCellField->attachData<Array2DReal>(Del2DivCell);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", Del2DivCell.label());
-
-   Err = Del2RelVortVertexField->attachData<Array2DReal>(Del2RelVortVertex);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", Del2RelVortVertex.label());
+   Del2EdgeField->attachData<Array2DReal>(Del2Edge);
+   Del2DivCellField->attachData<Array2DReal>(Del2DivCell);
+   Del2RelVortVertexField->attachData<Array2DReal>(Del2RelVortVertex);
 }
 
 void VelocityDel2AuxVars::unregisterFields() const {
-   int Err = 0;
-
-   Err = Field::destroy(Del2Edge.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", Del2Edge.label());
-
-   Err = Field::destroy(Del2DivCell.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", Del2DivCell.label());
-
-   Err = Field::destroy(Del2RelVortVertex.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", Del2RelVortVertex.label());
+   Field::destroy(Del2Edge.label());
+   Field::destroy(Del2DivCell.label());
+   Field::destroy(Del2RelVortVertex.label());
 }
 
 } // namespace OMEGA

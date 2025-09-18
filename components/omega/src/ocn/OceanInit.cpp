@@ -25,6 +25,7 @@
 #include "TimeMgr.h"
 #include "TimeStepper.h"
 #include "Tracers.h"
+#include "VertCoord.h"
 
 #include "mpi.h"
 
@@ -72,16 +73,8 @@ int initOmegaModules(MPI_Comm Comm) {
    // of each file, only creates streams from Config
    IOStream::init(ModelClock);
 
-   Err = IO::init(Comm);
-   if (Err != 0) {
-      ABORT_ERROR("ocnInit: Error initializing parallel IO");
-   }
-
-   Err = Field::init(ModelClock);
-   if (Err != 0) {
-      ABORT_ERROR("ocnInit: Error initializing Fields");
-   }
-
+   IO::init(Comm);
+   Field::init(ModelClock);
    Decomp::init();
 
    Err = Halo::init();
@@ -89,22 +82,9 @@ int initOmegaModules(MPI_Comm Comm) {
       ABORT_ERROR("ocnInit: Error initializing default halo");
    }
 
+   VertCoord::init1();
    HorzMesh::init();
-
-   // Create the vertical dimension - this will eventually move to
-   // a vertical mesh later
-   Config *OmegaConfig = Config::getOmegaConfig();
-   Config DimConfig("Dimension");
-   Error ConfigErr = OmegaConfig->get(DimConfig);
-   CHECK_ERROR_ABORT(ConfigErr, "ocnInit: Dimension group not found in Config");
-
-   I4 NVertLevels;
-   ConfigErr += DimConfig.get("NVertLevels", NVertLevels);
-   CHECK_ERROR_ABORT(ConfigErr,
-                     "ocnInit: NVertLevels not found in Dimension Config");
-
-   auto VertDim = OMEGA::Dimension::create("NVertLevels", NVertLevels);
-
+   VertCoord::init2();
    Tracers::init();
    AuxiliaryState::init();
    Tendencies::init();
@@ -126,8 +106,8 @@ int initOmegaModules(MPI_Comm Comm) {
    std::string SimTimeStr          = " "; // create SimulationTime metadata
    std::shared_ptr<Field> SimField = Field::get(SimMeta);
    SimField->addMetadata("SimulationTime", SimTimeStr);
-   int Err1 = IOStream::Success;
-   int Err2 = IOStream::Success;
+   Error Err1;
+   Error Err2;
 
    // read from initial state if this is starting a new simulation
    Metadata ReqMeta; // no requested metadata for initial state
@@ -140,7 +120,7 @@ int initOmegaModules(MPI_Comm Comm) {
 
    // One of the above two streams must be successful to initialize the
    // state and other fields used in the model
-   if (Err1 != IOStream::Success and Err2 != IOStream::Success) {
+   if (Err1.isFail() and Err2.isFail()) {
       ABORT_ERROR("Error initializing ocean variables from input streams");
    }
 

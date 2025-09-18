@@ -1,5 +1,4 @@
-//===-- Test driver for OMEGA Dimension class ---------------------*- C++
-//-*-===/
+//===-- Test driver for OMEGA Dimension class --------------------*- C++ -*-===/
 //
 /// \file
 /// \brief Test driver for OMEGA Dimension class
@@ -28,9 +27,7 @@ using namespace OMEGA;
 
 //------------------------------------------------------------------------------
 // Initialization routine to create dimensions
-int initDimensionTest() {
-
-   int Err = 0;
+void initDimensionTest() {
 
    // Initialize various environments
    MachEnv::init(MPI_COMM_WORLD);
@@ -39,15 +36,14 @@ int initDimensionTest() {
    MPI_Comm DefComm = DefEnv->getComm();
    Pacer::initialize(DefComm);
    Pacer::setPrefix("Omega:");
-   Err = IO::init(DefComm);
-   if (Err != 0) {
-      LOG_ERROR("IO initialization failed");
-      return Err;
-   }
+   LOG_INFO("------ Dimension unit tests ------");
 
    // Open config file
    Config("Omega");
    Config::readAll("omega.yml");
+
+   // Initialize parallel IO
+   IO::init(DefComm);
 
    // Initialize decomposition
    Decomp::init();
@@ -82,11 +78,9 @@ int initDimensionTest() {
        Dimension::create("NCells", NCellsGlobal, NCellsSize, CellOffset);
    std::shared_ptr<Dimension> EdgeDim =
        Dimension::create("NEdges", NEdgesGlobal, NEdgesSize, EdgeOffset);
-   I4 NVertLevels = 100;
+   I4 NVertLayers = 100;
    std::shared_ptr<Dimension> VertDim =
-       Dimension::create("NVertLevels", NVertLevels);
-
-   return Err;
+       Dimension::create("NVertLayers", NVertLayers);
 
 } // End initialization of Dimensions
 
@@ -104,13 +98,8 @@ int main(int argc, char **argv) {
    Kokkos::initialize();
 
    {
-      int Err1 = 0;
       // Call initialization to create sample dimensions
-      Err1 = initDimensionTest();
-      if (Err1 != 0) {
-         LOG_ERROR("Error initializating dimensions");
-         ++Err;
-      }
+      initDimensionTest();
 
       // Retrieve the default domain decomposition and set reference values
       Decomp *DefDecomp = Decomp::getDefault();
@@ -121,70 +110,51 @@ int main(int argc, char **argv) {
       I4 NEdgesLocRef = DefDecomp->NEdgesSize;
       I4 NEdgesGlbRef = DefDecomp->NEdgesGlobal;
       I4 NEdgesOwned  = DefDecomp->NEdgesOwned;
-      I4 NVertLvlsRef = 100;
+      I4 NVertLyrsRef = 100;
 
       // Retrieve the number of defined dimensions
       I4 NDimsRef = 3;
       I4 NDims    = Dimension::getNumDefinedDims();
-      if (NDims == NDimsRef) {
-         LOG_INFO("Retrieve number of dimensions: PASS");
-      } else {
-         LOG_ERROR("Retrieve number of dimensions: FAIL");
-         ++Err;
-      }
+      if (NDims != NDimsRef)
+         ABORT_ERROR("DimensionTest: Retrieve number of dimensions - FAIL");
 
       // Check to see if expected dimensions exist (and a non-existent one
       // doesn't)
-      if (Dimension::exists("NCells") and Dimension::exists("NEdges") and
-          Dimension::exists("NVertLevels") and !Dimension::exists("Garbage")) {
-         LOG_INFO("Test dimension existence function: PASS");
-      } else {
-         LOG_ERROR("Test dimension existence function: FAIL");
-      }
+      if (!Dimension::exists("NCells") or !Dimension::exists("NEdges") or
+          !Dimension::exists("NVertLayers") or Dimension::exists("Garbage"))
+         ABORT_ERROR("DimensionTest: dimension existence function - FAIL");
 
       // Test length retrieval by name
 
       I4 NCellsGlb = Dimension::getDimLengthGlobal("NCells");
       I4 NCellsLoc = Dimension::getDimLengthLocal("NCells");
-      if (NCellsGlb == NCellsGlbRef and NCellsLoc == NCellsLocRef) {
-         LOG_INFO("Length retrievals for NCells: PASS");
-      } else {
-         LOG_ERROR("Length retrievals for NCells: FAIL");
-         ++Err;
-      }
+      if (NCellsGlb != NCellsGlbRef or NCellsLoc != NCellsLocRef)
+         ABORT_ERROR("DimensionTest: Length retrieval NCells FAIL {} {} {} {}",
+                     NCellsGlb, NCellsGlbRef, NCellsLoc, NCellsLocRef);
 
       I4 NEdgesGlb = Dimension::getDimLengthGlobal("NEdges");
       I4 NEdgesLoc = Dimension::getDimLengthLocal("NEdges");
-      if (NEdgesGlb == NEdgesGlbRef and NEdgesLoc == NEdgesLocRef) {
-         LOG_INFO("Length retrievals for NEdges: PASS");
-      } else {
-         LOG_ERROR("Length retrievals for NEdges: FAIL");
-         ++Err;
-      }
+      if (NEdgesGlb != NEdgesGlbRef or NEdgesLoc != NEdgesLocRef)
+         ABORT_ERROR("DimensionTest: Length retrieval NEdges FAIL {} {} {} {}",
+                     NEdgesGlb, NEdgesGlbRef, NEdgesLoc, NEdgesLocRef);
 
-      I4 NVertLvlsGlb = Dimension::getDimLengthGlobal("NVertLevels");
-      I4 NVertLvlsLoc = Dimension::getDimLengthLocal("NVertLevels");
-      if (NVertLvlsGlb == NVertLvlsRef and NVertLvlsLoc == NVertLvlsRef) {
-         LOG_INFO("Length retrievals for NVertLevels: PASS");
-      } else {
-         LOG_ERROR("Length retrievals for NVertLevels: FAIL");
-         ++Err;
-      }
+      I4 NVertLyrsGlb = Dimension::getDimLengthGlobal("NVertLayers");
+      I4 NVertLyrsLoc = Dimension::getDimLengthLocal("NVertLayers");
+      if (NVertLyrsGlb != NVertLyrsRef or NVertLyrsLoc != NVertLyrsRef)
+         ABORT_ERROR(
+             "DimensionTest: Length retrieval NVertLayers FAIL {} {} {} {}",
+             NVertLyrsGlb, NVertLyrsRef, NVertLyrsLoc, NVertLyrsRef)
 
       // Test distributed property by name
-      if (Dimension::isDistributedDim("NCells") and
-          Dimension::isDistributedDim("NEdges") and
-          !Dimension::isDistributedDim("NVertLevels")) {
-         LOG_INFO("Test distributed property by name: PASS");
-      } else {
-         LOG_ERROR("Test distributed property by name: FAIL");
-         ++Err;
-      }
+      if (!Dimension::isDistributedDim("NCells") or
+          !Dimension::isDistributedDim("NEdges") or
+          Dimension::isDistributedDim("NVertLayers"))
+         ABORT_ERROR("DimensionTest: distributed property by name - FAIL");
 
       // Test get offset array by dim name
       HostArray1DI4 OffsetCell = Dimension::getDimOffset("NCells");
       HostArray1DI4 OffsetEdge = Dimension::getDimOffset("NEdges");
-      HostArray1DI4 OffsetVert = Dimension::getDimOffset("NVertLevels");
+      HostArray1DI4 OffsetVert = Dimension::getDimOffset("NVertLayers");
       I4 Count                 = 0;
       for (int N = 0; N < NCellsLocRef; ++N) {
          if (N < NCellsOwned) {
@@ -204,16 +174,12 @@ int main(int argc, char **argv) {
                ++Count;
          }
       }
-      for (int N = 0; N < NVertLvlsRef; ++N) {
+      for (int N = 0; N < NVertLyrsRef; ++N) {
          if (OffsetVert(N) != N)
             ++Count;
       }
-      if (Count == 0) {
-         LOG_INFO("Offset retrieval by name: PASS");
-      } else {
-         LOG_ERROR("Offset retrieval by name: FAIL");
-         ++Err;
-      }
+      if (Count > 0)
+         ABORT_ERROR("DimensionTest: Offset retrieval by name - FAIL");
 
       // Test iterators and also retrieval by instance
       for (auto Iter = Dimension::begin(); Iter != Dimension::end(); ++Iter) {
@@ -259,27 +225,24 @@ int main(int argc, char **argv) {
             }
             if (Count == 0)
                OffsetPass = true;
-         } else if (MyName == "NVertLevels") {
-            if (LengthLoc == NVertLvlsRef and LengthGlb == NVertLvlsRef and
+         } else if (MyName == "NVertLayers") {
+            if (LengthLoc == NVertLyrsRef and LengthGlb == NVertLyrsRef and
                 !Distrib)
                ScalarPass = true;
             Count = 0;
-            for (int N = 0; N < NVertLvlsRef; ++N) {
+            for (int N = 0; N < NVertLyrsRef; ++N) {
                if (OffsetTest(N) != N)
                   ++Count;
             }
             if (Count == 0)
                OffsetPass = true;
          } else {
-            LOG_ERROR("Unknown dimension name in iteration loop: FAIL");
-            ++Err;
+            ABORT_ERROR(
+                "DimensionTest: Unknown dimension {} in iteration loop: FAIL",
+                MyName);
          }
-         if (ScalarPass and OffsetPass) {
-            LOG_INFO("Retrieval by instance in loop: PASS");
-         } else {
-            LOG_ERROR("Retrieval by instance in loop: FAIL");
-            ++Err;
-         }
+         if (!ScalarPass or !OffsetPass)
+            ABORT_ERROR("DimensionTest: Retrieval by instance in loop: FAIL");
       } // end iteration over dimensions
 
       // Check retrieval of full dimension by name - just check scalars since
@@ -287,44 +250,29 @@ int main(int argc, char **argv) {
       std::shared_ptr<Dimension> TestDim = Dimension::get("NCells");
       NCellsGlb                          = TestDim->getLengthGlobal();
       NCellsLoc                          = TestDim->getLengthLocal();
-      if (NCellsGlb == NCellsGlbRef and NCellsLoc == NCellsLocRef and
-          TestDim->isDistributed()) {
-         LOG_INFO("Retrieval of full dim: PASS");
-      } else {
-         LOG_ERROR("Retrieval of full dim: FAIL");
-         ++Err;
-      }
+      if (NCellsGlb != NCellsGlbRef or NCellsLoc != NCellsLocRef or
+          !(TestDim->isDistributed()))
+         ABORT_ERROR("DimensionTest: Retrieval of full dim - FAIL");
 
       // Destroy a dimension
       Dimension::destroy("NCells");
-      if (Dimension::exists("NCells")) {
-         LOG_ERROR("Dimension destroy test: FAIL");
-         ++Err;
-      } else {
-         LOG_INFO("Dimension destroy test: PASS");
-      }
+      if (Dimension::exists("NCells"))
+         ABORT_ERROR("DimensionTest: destroy test - FAIL");
 
       // Test removal of all dims
       Dimension::clear();
       NDims = Dimension::getNumDefinedDims();
-      if (NDims == 0) {
-         LOG_INFO("Dimension clear test: PASS");
-      } else {
-         LOG_ERROR("Dimension clear test: FAIL");
-         ++Err;
-      }
+      if (NDims > 0)
+         ABORT_ERROR("DimensionTest: remove all test - FAIL");
    }
 
+   LOG_INFO("------ Dimension unit tests successful ------");
    // Clean up environments
    Decomp::clear();
    Kokkos::finalize();
    MPI_Finalize();
 
-   if (Err >= 256)
-      Err = 255;
-
    // End of testing
    return Err;
 }
-//===--- End test driver for Dimension
-//--------------------------------------===/
+//===--- End test driver for Dimension -------------------------------------===/

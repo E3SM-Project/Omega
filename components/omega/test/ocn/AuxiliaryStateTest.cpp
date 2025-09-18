@@ -14,6 +14,7 @@
 #include "Pacer.h"
 #include "TimeStepper.h"
 #include "Tracers.h"
+#include "VertCoord.h"
 #include "mpi.h"
 
 #include <cmath>
@@ -43,7 +44,7 @@ struct TestSetup {
 };
 
 constexpr Geometry Geom   = Geometry::Spherical;
-constexpr int NVertLevels = 60;
+constexpr int NVertLayers = 60;
 
 int initState() {
    int Err = 0;
@@ -90,6 +91,7 @@ int initAuxStateTest(const std::string &mesh) {
    MPI_Comm DefComm = DefEnv->getComm();
 
    initLogging(DefEnv);
+   LOG_INFO("------ Auxiliary State unit tests ------");
 
    // Open config file
    Config("Omega");
@@ -97,12 +99,7 @@ int initAuxStateTest(const std::string &mesh) {
 
    TimeStepper::init1();
 
-   int IOErr = IO::init(DefComm);
-   if (IOErr != 0) {
-      Err++;
-      LOG_ERROR("AuxStateTest: error initializing parallel IO");
-   }
-
+   IO::init(DefComm);
    Decomp::init(mesh);
 
    int HaloErr = Halo::init();
@@ -111,13 +108,10 @@ int initAuxStateTest(const std::string &mesh) {
       LOG_ERROR("AuxStateTest: error initializing default halo");
    }
 
+   VertCoord::init1();
    HorzMesh::init();
+
    Tracers::init();
-
-   const auto &Mesh = HorzMesh::getDefault();
-   // Horz dimensions created in HorzMesh
-   auto VertDim = Dimension::create("NVertLevels", NVertLevels);
-
    int StateErr = OceanState::init();
    if (StateErr != 0) {
       Err++;
@@ -284,10 +278,12 @@ int testAuxState() {
 void finalizeAuxStateTest() {
    Tracers::clear();
    OceanState::clear();
+   VertCoord::clear();
    Field::clear();
    Dimension::clear();
    TimeStepper::clear();
    HorzMesh::clear();
+   VertCoord::clear();
    Halo::clear();
    Decomp::clear();
    MachEnv::removeAll();
@@ -329,6 +325,8 @@ int main(int argc, char *argv[]) {
 
    if (RetVal >= 256)
       RetVal = 255;
+   if (RetVal == 0)
+      LOG_INFO("------ Auxiliary State unit tests successful ------");
 
    return RetVal;
 

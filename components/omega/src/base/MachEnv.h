@@ -185,7 +185,7 @@ class MachEnv {
    /// can be set here to a different task if the master task has
    /// become over-burdened by work or memory (eg in coupled mode when
    /// all components are using the same master).
-   int setMasterTask(const int TaskID ///< [in] new task to use as master
+   void setMasterTask(const int TaskID ///< [in] new task to use as master
    );
 
    /// Prints all members of a MachEnv (typically for debugging)

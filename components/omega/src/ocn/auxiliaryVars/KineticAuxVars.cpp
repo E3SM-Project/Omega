@@ -7,11 +7,11 @@
 namespace OMEGA {
 
 KineticAuxVars::KineticAuxVars(const std::string &AuxStateSuffix,
-                               const HorzMesh *Mesh, int NVertLevels)
+                               const HorzMesh *Mesh, int NVertLayers)
     : KineticEnergyCell("KineticEnergyCell" + AuxStateSuffix, Mesh->NCellsSize,
-                        NVertLevels),
+                        NVertLayers),
       VelocityDivCell("VelocityDivCell" + AuxStateSuffix, Mesh->NCellsSize,
-                      NVertLevels),
+                      NVertLayers),
       NEdgesOnCell(Mesh->NEdgesOnCell), EdgesOnCell(Mesh->EdgesOnCell),
       EdgeSignOnCell(Mesh->EdgeSignOnCell), DcEdge(Mesh->DcEdge),
       DvEdge(Mesh->DvEdge), AreaCell(Mesh->AreaCell) {}
@@ -20,8 +20,6 @@ void KineticAuxVars::registerFields(
     const std::string &AuxGroupName, // name of Auxiliary field group
     const std::string &MeshName      // name of horizontal mesh
 ) const {
-
-   int Err = 0; // error flag for some calls
 
    // Create fields
    const Real FillValue = -9.99e30;
@@ -36,7 +34,7 @@ void KineticAuxVars::registerFields(
 
    // Kinetic energy on cells
    DimNames[0]                 = "NCells" + DimSuffix;
-   DimNames[1]                 = "NVertLevels";
+   DimNames[1]                 = "NVertLayers";
    auto KineticEnergyCellField = Field::create(
        KineticEnergyCell.label(),                        // field name
        "kinetic energy of horizontal velocity on cells", // long name/describe
@@ -63,33 +61,17 @@ void KineticAuxVars::registerFields(
    );
 
    // Add fields to FieldGroup
-   Err = FieldGroup::addFieldToGroup(KineticEnergyCell.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", KineticEnergyCell.label(),
-                AuxGroupName);
-   Err = FieldGroup::addFieldToGroup(VelocityDivCell.label(), AuxGroupName);
-   if (Err != 0)
-      LOG_ERROR("Error adding field {} to group {}", VelocityDivCell.label(),
-                AuxGroupName);
+   FieldGroup::addFieldToGroup(KineticEnergyCell.label(), AuxGroupName);
+   FieldGroup::addFieldToGroup(VelocityDivCell.label(), AuxGroupName);
 
    // Attach data
-   Err = KineticEnergyCellField->attachData<Array2DReal>(KineticEnergyCell);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", KineticEnergyCell.label());
-
-   Err = VelocityDivCellField->attachData<Array2DReal>(VelocityDivCell);
-   if (Err != 0)
-      LOG_ERROR("Error attaching data to field {}", VelocityDivCell.label());
+   KineticEnergyCellField->attachData<Array2DReal>(KineticEnergyCell);
+   VelocityDivCellField->attachData<Array2DReal>(VelocityDivCell);
 }
 
 void KineticAuxVars::unregisterFields() const {
-   int Err = 0;
-   Err     = Field::destroy(KineticEnergyCell.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", KineticEnergyCell.label());
-   Err = Field::destroy(VelocityDivCell.label());
-   if (Err != 0)
-      LOG_ERROR("Error destroying field {}", VelocityDivCell.label());
+   Field::destroy(KineticEnergyCell.label());
+   Field::destroy(VelocityDivCell.label());
 }
 
 } // namespace OMEGA
