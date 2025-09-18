@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Omega Broadcast &mdash; Omega develop documentation</title>
+  <title>Broadcast &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -51,7 +51,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
@@ -89,12 +89,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Omega Broadcast</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#code-structure">Code Structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#ibroadcast-interface">IBroadcast Interface</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#integration-with-mpi">Integration with MPI</a></li>
-</ul>
-</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
@@ -166,7 +161,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Omega Broadcast</li>
+      <li class="breadcrumb-item active">Broadcast</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/devGuide/Broadcast.md.txt" rel="nofollow"> View page source</a>
       </li>
@@ -176,44 +171,49 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section class="tex2jax_ignore mathjax_ignore" id="omega-broadcast">
-<span id="omega-dev-broadcast"></span><h1>Omega Broadcast<a class="headerlink" href="#omega-broadcast" title="Permalink to this heading"></a></h1>
-<section id="code-structure">
-<h2>Code Structure<a class="headerlink" href="#code-structure" title="Permalink to this heading"></a></h2>
-<p>Omega Broadcasting functions are organized within two primary files:</p>
-<ol class="arabic simple">
-<li><p><strong>Header File</strong>: Located at <code class="docutils literal notranslate"><span class="pre">src/base/Broadcast.h</span></code>, this file declares
-various functions of the <code class="docutils literal notranslate"><span class="pre">Broadcast</span></code>. These functions are
-distinctively overloaded to accommodate multiple broadcasting needs.
-The key differentiators for these overloads are based on:</p>
-<ul class="simple">
-<li><p>The types of variables being broadcasted.</p></li>
-<li><p>The specific ordering of function arguments.</p></li>
-</ul>
-</li>
-<li><p><strong>Implementation File</strong>: The actual implementations of these declared
-functions are found in <code class="docutils literal notranslate"><span class="pre">src/base/Broadcast.cpp</span></code>.</p></li>
-</ol>
-</section>
-<section id="ibroadcast-interface">
-<h2>IBroadcast Interface<a class="headerlink" href="#ibroadcast-interface" title="Permalink to this heading"></a></h2>
-<p>Parallel to <code class="docutils literal notranslate"><span class="pre">Broadcast</span></code>, there is the <code class="docutils literal notranslate"><span class="pre">IBroadcast</span></code> interface. Currently under
-development, <code class="docutils literal notranslate"><span class="pre">IBroadcast</span></code> focuses on overloading functions for non-blocking
-broadcast operations. This aspect of the Omega Broadcasting system is
-designed to provide more efficient and asynchronous communication capabilities.</p>
-</section>
-<section id="integration-with-mpi">
-<h2>Integration with MPI<a class="headerlink" href="#integration-with-mpi" title="Permalink to this heading"></a></h2>
-<p>At their core, the Omega broadcast functions serve as wrappers around
-the MPI (Message Passing Interface) broadcast functions. They are
-intricately designed to:</p>
-<ul class="simple">
-<li><p>Retrieve values from the Omega Environment.</p></li>
-<li><p>Utilize Omega-specific data types.</p></li>
-<li><p>Seamlessly feed these values into the standard MPI functions for
-effective broadcasting.</p></li>
-</ul>
-</section>
+  <section id="broadcast">
+<span id="omega-dev-broadcast"></span><h1>Broadcast<a class="headerlink" href="#broadcast" title="Permalink to this heading"></a></h1>
+<p>In a parallel environment, it is sometimes necessary to broadcast values
+from a single task to all remaining tasks. Omega provides broadcast
+functions for scalars and vectors of all supported data types with the
+lone exception of a vector of strings. Scalar strings are supported and
+can be used to broadcast a string vector element-wise. All functions are
+simple wrappers around the relevant <code class="docutils literal notranslate"><span class="pre">MPI_Bcast</span></code> function.</p>
+<p>To broadcast a scalar of any type, there are several supported interfaces:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Broadcast</span><span class="p">(</span><span class="n">MyScalar</span><span class="p">);</span>
+<span class="n">Broadcast</span><span class="p">(</span><span class="n">MyScalar</span><span class="p">,</span><span class="w"> </span><span class="n">FromTask</span><span class="p">);</span>
+<span class="n">Broadcast</span><span class="p">(</span><span class="n">MyScalar</span><span class="p">,</span><span class="w"> </span><span class="n">AltMachEnv</span><span class="p">);</span>
+<span class="n">Broadcast</span><span class="p">(</span><span class="n">MyScalar</span><span class="p">,</span><span class="w"> </span><span class="n">AltMachEnv</span><span class="p">,</span><span class="w"> </span><span class="n">FromTask</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The first broadcasts a scalar from the master task to all other tasks in
+the default machine environment (set of MPI tasks). The second allows the
+user to broadcast from a task other than the master task, but still in the
+default environment.  The final two interfaces perform the same functions
+but operate only in the set of tasks belonging to a different MachEnv than
+the default. There are type-specific implementations for each, but all are
+aliased to these same generic interfaces and the combinations above are
+implemented using a combination of optional arguments and specific interfaces.</p>
+<p>Omega also provides for the broadcasts of a <code class="docutils literal notranslate"><span class="pre">std::vector</span></code> of any supported
+data type except strings. The interfaces are identical to those for scalars:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Broadcast</span><span class="p">(</span><span class="n">MyVector</span><span class="p">);</span>
+<span class="n">Broadcast</span><span class="p">(</span><span class="n">MyVector</span><span class="p">,</span><span class="w"> </span><span class="n">FromTask</span><span class="p">);</span>
+<span class="n">Broadcast</span><span class="p">(</span><span class="n">MyVector</span><span class="p">,</span><span class="w"> </span><span class="n">AltMachEnv</span><span class="p">);</span>
+<span class="n">Broadcast</span><span class="p">(</span><span class="n">MyVector</span><span class="p">,</span><span class="w"> </span><span class="n">AltMachEnv</span><span class="p">,</span><span class="w"> </span><span class="n">FromTask</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The implementation of a boolean vector is slightly different from the others
+because a <code class="docutils literal notranslate"><span class="pre">std::vector&lt;bool&gt;</span></code> uses an optimal packing that does not allow
+certain assumptions of storage for the MPI call. Instead, the boolean vector
+is converted to/from an integer vector within the broadcast routine and
+uses an MPI integer broadcast. This is hidden from the user. There is no
+interface for a vector of strings due to the complexity of extracting
+variable-length strings into a character vector for the MPI call. In the
+unlikely event such a broadcast is needed, users should simply loop through
+the vector and broadcast each scalar string individually.</p>
+<p>All of the interfaces above use the blocking MPI broadcast and include an
+implicit synchronization. For most use cases, this is adequate. However,
+non-blocking broadcasts may be added in the future should the need arise.</p>
 </section>
 
 

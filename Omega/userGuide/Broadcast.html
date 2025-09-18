@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Omega Broadcast &mdash; Omega develop documentation</title>
+  <title>Broadcast &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -51,19 +51,7 @@
 <li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
 <li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Omega Broadcast</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#broadcasting-functions">Broadcasting Functions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#blocking-broadcasting-functions">Blocking Broadcasting Functions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#including-the-broadcasting-functions-in-your-code">Including the Broadcasting Functions in Your Code</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#broadcasting-scalar-or-array-values">Broadcasting Scalar or Array Values</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#specifying-broadcasting-task-and-or-environment-in-omega">Specifying broadcasting task and/or environment in Omega</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#broadcasting-array-values">Broadcasting Array Values</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#supported-data-types-for-broadcasting">Supported Data Types for Broadcasting</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#non-blocking-broadcasting-functions">Non-blocking Broadcasting Functions</a></li>
-</ul>
-</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
@@ -101,7 +89,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Omega Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
@@ -173,7 +161,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Omega Broadcast</li>
+      <li class="breadcrumb-item active">Broadcast</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/userGuide/Broadcast.md.txt" rel="nofollow"> View page source</a>
       </li>
@@ -183,98 +171,14 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section class="tex2jax_ignore mathjax_ignore" id="omega-broadcast">
-<span id="omega-user-broadcast"></span><h1>Omega Broadcast<a class="headerlink" href="#omega-broadcast" title="Permalink to this heading"></a></h1>
-<section id="broadcasting-functions">
-<h2>Broadcasting Functions<a class="headerlink" href="#broadcasting-functions" title="Permalink to this heading"></a></h2>
-<p>Omega’s broadcasting functions offer developers a streamlined method for
-disseminating scalar and array values among MPI tasks. These functions are
-categorized into two types: Blocking and Non-blocking.</p>
-<section id="blocking-broadcasting-functions">
-<h3>Blocking Broadcasting Functions<a class="headerlink" href="#blocking-broadcasting-functions" title="Permalink to this heading"></a></h3>
-<p>When it comes to MPI broadcast operations, a blocking broadcast would imply
-that the function call to broadcast data to all processes in a group does
-not return until the data has been sent and correctly received by all the
-target processes.</p>
-</section>
-<section id="including-the-broadcasting-functions-in-your-code">
-<h3>Including the Broadcasting Functions in Your Code<a class="headerlink" href="#including-the-broadcasting-functions-in-your-code" title="Permalink to this heading"></a></h3>
-<p>To leverage Omega’s broadcasting functions, you must include the Broadcast.h
-header file in your source code:</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;Broadcast.h&quot;</span>
-</pre></div>
-</div>
-</section>
-<section id="broadcasting-scalar-or-array-values">
-<h3>Broadcasting Scalar or Array Values<a class="headerlink" href="#broadcasting-scalar-or-array-values" title="Permalink to this heading"></a></h3>
-<p>For broadcasting either scalar or array values, utilize the Broadcast
-function as demonstrated below:</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">I4</span><span class="w"> </span><span class="n">MyVal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
-
-<span class="c1">// Broadcasting from the master task</span>
-<span class="n">OMEGA</span><span class="o">::</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">MyVal</span><span class="p">);</span>
-</pre></div>
-</div>
-<p>The above example illustrates the broadcasting of an OMEGA::I4 type scalar
-value from the master task of the default Omega environment.</p>
-</section>
-<section id="specifying-broadcasting-task-and-or-environment-in-omega">
-<h3>Specifying broadcasting task and/or environment in Omega<a class="headerlink" href="#specifying-broadcasting-task-and-or-environment-in-omega" title="Permalink to this heading"></a></h3>
-<p>For developers seeking to modify the sending task or the Omega environment
-during broadcasting, Omega offers flexible syntax options. These additional
-arguments to the Broadcast function enable customization, while maintaining
-the simplicity of the basic broadcasting operation.</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">I4</span><span class="w"> </span><span class="n">MyVal</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
-<span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">RootTask</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
-
-<span class="c1">// Get a specific Omega Machine Environment</span>
-<span class="n">OMEGA</span><span class="o">::</span><span class="n">MachEnv</span><span class="w"> </span><span class="o">*</span><span class="n">SubsetEnv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">MachEnv</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;Subset&quot;</span><span class="p">);</span>
-
-<span class="c1">// broadcast from the master task of SubsetEnv environment</span>
-<span class="n">OMEGA</span><span class="o">::</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">MyVal</span><span class="p">,</span><span class="w"> </span><span class="n">SubsetEnv</span><span class="p">);</span>
-
-<span class="c1">// broadcast from task 1 of SubsetEnv environment</span>
-<span class="n">OMEGA</span><span class="o">::</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">MyVal</span><span class="p">,</span><span class="w"> </span><span class="n">SubsetEnv</span><span class="p">,</span><span class="w"> </span><span class="n">RootTask</span><span class="p">);</span>
-
-<span class="c1">// broadcast from task 1 of the default environment</span>
-<span class="n">OMEGA</span><span class="o">::</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">MyVal</span><span class="p">,</span><span class="w"> </span><span class="n">RootTask</span><span class="p">);</span>
-</pre></div>
-</div>
-</section>
-<section id="broadcasting-array-values">
-<h3>Broadcasting Array Values<a class="headerlink" href="#broadcasting-array-values" title="Permalink to this heading"></a></h3>
-<p>The syntax for broadcasting arrays is analogous to that used
-for scalar values:</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">OMEGA</span><span class="o">::</span><span class="n">R8</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyVector</span><span class="p">;</span>
-
-<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">MyVector</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="mf">1.0</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="n">OMEGA</span><span class="o">::</span><span class="n">Broadcast</span><span class="p">(</span><span class="n">MyVector</span><span class="p">,</span><span class="w"> </span><span class="n">RootTask</span><span class="p">);</span>
-</pre></div>
-</div>
-<p>This example shows how to broadcast an array of OMEGA::R8 type values,
-specifying the root task for broadcasting.</p>
-</section>
-<section id="supported-data-types-for-broadcasting">
-<h3>Supported Data Types for Broadcasting<a class="headerlink" href="#supported-data-types-for-broadcasting" title="Permalink to this heading"></a></h3>
-<p>The Broadcast functions are compatible with the following data types:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">OMEGA::I4</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">OMEGA::I8</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">OMEGA::R4</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">OMEGA::R8</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">bool</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">std::string</span></code> (NOTE: array of strings are not supported)</p></li>
-</ul>
-</section>
-</section>
-<section id="non-blocking-broadcasting-functions">
-<h2>Non-blocking Broadcasting Functions<a class="headerlink" href="#non-blocking-broadcasting-functions" title="Permalink to this heading"></a></h2>
-<p>This feature is currently under development and will offer asynchronous
-broadcasting capabilities.</p>
-</section>
+  <section id="broadcast">
+<span id="omega-user-broadcast"></span><h1>Broadcast<a class="headerlink" href="#broadcast" title="Permalink to this heading"></a></h1>
+<p>In any parallel code, there is sometimes a need to broadcast values from
+one processor to all other processors. This is implemented in Omega as a
+Broadcast. Functions are available to broadcast scalars or vectors of any
+supported data type. There are no user-configurable options for this
+functionality. More details can be found in the
+<a class="reference internal" href="../devGuide/Broadcast.html#omega-dev-broadcast"><span class="std std-ref">Developer Guide</span></a>.</p>
 </section>
 
 
