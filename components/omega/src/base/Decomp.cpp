@@ -870,8 +870,6 @@ void Decomp::partCellsMetisKWay(
     const std::vector<I4> &CellsOnCellInit // [in] cell nbrs in linear distrb
 ) {
 
-   int Err = 0; // internal error code for MPI and Metis/ParMetis
-
    // Retrieve some info on the MPI layout
    MPI_Comm Comm = InEnv->getComm();
    I4 NumTasks   = InEnv->getNumTasks();
@@ -902,9 +900,7 @@ void Decomp::partCellsMetisKWay(
             CellsOnCellBuf[n] = CellsOnCellInit[n];
          } // end loop CellsOnCell
       } // end if this is MyTask
-      Err = Broadcast(CellsOnCellBuf, InEnv, ITask);
-      if (Err != 0)
-         ABORT_ERROR("Decomp: Error communicating CellsOnCell info");
+      Broadcast(CellsOnCellBuf, InEnv, ITask);
 
       // Create the adjacency graph by aggregating the individual
       // chunks. Prune edges that don't have neighbors.
@@ -1265,10 +1261,8 @@ void Decomp::partCellsParMetisKWay(
 
       // broadcast the buffer to all tasks
       TimerFlag = Pacer::start("partCellsOwnerBcast");
-      int Err   = Broadcast(MsgBuf, InEnv, ITask);
+      Broadcast(MsgBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("partCellsOwnerBcast");
-      if (Err != MPI_SUCCESS)
-         ABORT_ERROR("Decomp:partCellsParMetisKWay: error broadcasting owners");
 
       // for each cell in the buffer, determine its location (task, local indx)
       // if it's on this task, store as an owned cell and gather nbr info for
@@ -1347,11 +1341,8 @@ void Decomp::partCellsParMetisKWay(
 
          // broadcast the buffer to all tasks
          TimerFlag = Pacer::start("partCellsHaloBCast");
-         int Err   = Broadcast(MsgBuf, InEnv, ITask);
+         Broadcast(MsgBuf, InEnv, ITask);
          TimerFlag = Pacer::stop("partCellsHaloBCast");
-         if (Err != MPI_SUCCESS)
-            ABORT_ERROR("Decomp:partCellsParMetisKWay: error broadcasting"
-                        " halo data");
 
          // for each cell in the buffer, determine location (task, local indx)
          // if it's needed by the halo, store the info and gather the nbrs for
@@ -1440,8 +1431,6 @@ void Decomp::partEdges(
     const std::vector<I4> &CellsOnEdgeInit // [in] cell nbrs for each edge
 ) {
 
-   I4 Err = 0; // default error code
-
    // Retrieve some info on the MPI layout
    MPI_Comm Comm = InEnv->getComm();
    I4 NumTasks   = InEnv->getNumTasks();
@@ -1527,10 +1516,8 @@ void Decomp::partEdges(
          }
       }
       // Broadcast this buffer
-      Err       = Broadcast(EdgeBuf, InEnv, ITask);
+      Broadcast(EdgeBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("partEdgesOwnerBcast") && TimerFlag;
-      if (Err != 0)
-         ABORT_ERROR("Decomp partEdges: Error broadcasting Edge owner info");
 
       // For each edge in the buffer, check to see if the task owns
       // the cell. If so, add the edge ID to the owned edges list.
@@ -1662,10 +1649,8 @@ void Decomp::partEdges(
          }
       }
       // Broadcast the list of edges owned by this task
-      Err       = Broadcast(EdgeBuf, InEnv, ITask);
+      Broadcast(EdgeBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("partEdgesFinalBcast") && TimerFlag;
-      if (Err != 0)
-         ABORT_ERROR("Decomp partEdges: Error in final broadcast");
 
       // Extract the buffer into a local search vector
       TimerFlag   = Pacer::start("partEdgesFinalSearch") && TimerFlag;
@@ -1711,8 +1696,6 @@ void Decomp::partVertices(
     const MachEnv *InEnv, ///< [in] input machine environment with MPI info
     const std::vector<I4> &CellsOnVertexInit // [in] cell nbrs for each vrtx
 ) {
-
-   I4 Err = 0; // default error code
 
    // Retrieve some info on the MPI layout
    MPI_Comm Comm = InEnv->getComm();
@@ -1799,10 +1782,8 @@ void Decomp::partVertices(
          }
       }
       // Broadcast this buffer
-      Err       = Broadcast(VrtxBuf, InEnv, ITask);
+      Broadcast(VrtxBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("partVerticesOwnedBcast") && TimerFlag;
-      if (Err != 0)
-         ABORT_ERROR("Decomp partVertices: error broadcasting owned vertices");
 
       // For each vertex in the buffer, check to see if the task owns
       // the cell. If so, add the vertex ID to the owned vertices list.
@@ -1935,10 +1916,8 @@ void Decomp::partVertices(
          }
       }
       // Broadcast the list of vertices owned by this task
-      Err       = Broadcast(VrtxBuf, InEnv, ITask);
+      Broadcast(VrtxBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("partVerticesFinalBcast") && TimerFlag;
-      if (Err != 0)
-         ABORT_ERROR("Decomp partVertices: error in final broadcast");
 
       // Extract the buffer into a local search vector
       TimerFlag   = Pacer::start("partVerticesFinalSearch") && TimerFlag;
@@ -1988,7 +1967,6 @@ void Decomp::rearrangeCellArrays(
     const std::vector<I4> &VerticesOnCellInit //< [in] vertices around cell
 ) {
 
-   int Err        = 0; // default return code
    bool TimerFlag = Pacer::start("rearrangeCellArrays");
 
    // Extract some MPI information
@@ -2047,9 +2025,7 @@ void Decomp::rearrangeCellArrays(
             }
          }
       }
-      Err = Broadcast(CellBuf, InEnv, ITask);
-      if (Err != 0)
-         ABORT_ERROR("rearrangeCellArrays: Error broadcasting cell buffer");
+      Broadcast(CellBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("rearrangeCellsBcast") && TimerFlag;
 
       // For each cell needed locally, we can compute the task and address
@@ -2118,7 +2094,6 @@ void Decomp::rearrangeEdgeArrays(
     const std::vector<I4> &VerticesOnEdgeInit //< [in] vertices at edge end
 ) {
 
-   int Err        = 0;    // default return code
    bool TimerFlag = true; // timer return value
 
    // Extract some MPI information
@@ -2187,9 +2162,7 @@ void Decomp::rearrangeEdgeArrays(
             }
          }
       }
-      Err = Broadcast(EdgeBuf, InEnv, ITask);
-      if (Err != 0)
-         ABORT_ERROR("rearrangeEdgeArrays: Error broadcasting edge buffer");
+      Broadcast(EdgeBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("rearrangeEdgeArraysBcast") && TimerFlag;
 
       // If the local Edge array has points in this buffer, extract the
@@ -2257,7 +2230,6 @@ void Decomp::rearrangeVertexArrays(
     const std::vector<I4> &EdgesOnVertexInit  //< [in] edges joined at vrtx
 ) {
 
-   int Err        = 0;    // default return code
    bool TimerFlag = true; // timer return code
 
    // Extract some MPI information
@@ -2317,9 +2289,7 @@ void Decomp::rearrangeVertexArrays(
             }
          }
       }
-      Err = Broadcast(VrtxBuf, InEnv, ITask);
-      if (Err != 0)
-         ABORT_ERROR("rearrangeVertexArrays: Error broadcasting buffer");
+      Broadcast(VrtxBuf, InEnv, ITask);
       TimerFlag = Pacer::stop("rearrangeVertexArraysBcast") && TimerFlag;
 
       // For each local vertex in the distribution, determine whether the

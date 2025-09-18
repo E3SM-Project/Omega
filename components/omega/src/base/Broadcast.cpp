@@ -11,87 +11,98 @@
 //===----------------------------------------------------------------------===//
 
 #include "Broadcast.h"
+#include "Error.h"
 
 namespace OMEGA {
 
 //------------------------------------------------------------------------------
 // Broadcast I4 scalar Value
-int Broadcast(I4 &Value, const MachEnv *InEnv, const int RankBcast) {
+void Broadcast(I4 &Value, const MachEnv *InEnv, const int RankBcast) {
    int RetVal, Root;
 
    Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
    RetVal = MPI_Bcast(&Value, 1, MPI_INT32_T, Root, InEnv->getComm());
+   if (RetVal != MPI_SUCCESS)
+      ABORT_ERROR("Broadcast I4: Error in MPI Broadcast");
 
-   return RetVal;
+   return;
 } // end Broadcast for I4 data type
 
-int Broadcast(I4 &Value, const int RankBcast) {
-   return Broadcast(Value, MachEnv::getDefault(), RankBcast);
+void Broadcast(I4 &Value, const int RankBcast) {
+   Broadcast(Value, MachEnv::getDefault(), RankBcast);
 } // end Broadcast for I4 data type
 
 //------------------------------------------------------------------------------
 // Broadcast I8 scalar Value
-int Broadcast(I8 &Value, const MachEnv *InEnv, const int RankBcast) {
+void Broadcast(I8 &Value, const MachEnv *InEnv, const int RankBcast) {
    int RetVal, Root;
 
    Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
    RetVal = MPI_Bcast(&Value, 1, MPI_INT64_T, Root, InEnv->getComm());
+   if (RetVal != MPI_SUCCESS)
+      ABORT_ERROR("Broadcast I8: Error in MPI Broadcast");
 
-   return RetVal;
+   return;
 } // end Broadcast for I8 data type
 
-int Broadcast(I8 &Value, const int RankBcast) {
-   return Broadcast(Value, MachEnv::getDefault(), RankBcast);
+void Broadcast(I8 &Value, const int RankBcast) {
+   Broadcast(Value, MachEnv::getDefault(), RankBcast);
 } // end Broadcast for I8 data type
 
 //------------------------------------------------------------------------------
 // Broadcast R4 scalar Value
-int Broadcast(R4 &Value, const MachEnv *InEnv, const int RankBcast) {
+void Broadcast(R4 &Value, const MachEnv *InEnv, const int RankBcast) {
    int RetVal, Root;
 
    Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
    RetVal = MPI_Bcast(&Value, 1, MPI_FLOAT, Root, InEnv->getComm());
+   if (RetVal != MPI_SUCCESS)
+      ABORT_ERROR("Broadcast R4: Error in MPI Broadcast");
 
-   return RetVal;
+   return;
 } // end Broadcast
 
-int Broadcast(R4 &Value, const int RankBcast) {
-   return Broadcast(Value, MachEnv::getDefault(), RankBcast);
+void Broadcast(R4 &Value, const int RankBcast) {
+   Broadcast(Value, MachEnv::getDefault(), RankBcast);
 } // end Broadcast
 
 //------------------------------------------------------------------------------
 // Broadcast R8 scalar Value
-int Broadcast(R8 &Value, const MachEnv *InEnv, const int RankBcast) {
+void Broadcast(R8 &Value, const MachEnv *InEnv, const int RankBcast) {
    int RetVal, Root;
 
    Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
    RetVal = MPI_Bcast(&Value, 1, MPI_DOUBLE, Root, InEnv->getComm());
+   if (RetVal != MPI_SUCCESS)
+      ABORT_ERROR("Broadcast R8: Error in MPI Broadcast");
 
-   return RetVal;
+   return;
 } // end Broadcast
 
-int Broadcast(R8 &Value, const int RankBcast) {
-   return Broadcast(Value, MachEnv::getDefault(), RankBcast);
+void Broadcast(R8 &Value, const int RankBcast) {
+   Broadcast(Value, MachEnv::getDefault(), RankBcast);
 } // end Broadcast
 
 //------------------------------------------------------------------------------
 // Broadcast bool scalar Value
-int Broadcast(bool &Value, const MachEnv *InEnv, const int RankBcast) {
+void Broadcast(bool &Value, const MachEnv *InEnv, const int RankBcast) {
    int RetVal, Root;
 
    Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
    RetVal = MPI_Bcast(&Value, 1, MPI_C_BOOL, Root, InEnv->getComm());
+   if (RetVal != MPI_SUCCESS)
+      ABORT_ERROR("Broadcast bool: Error in MPI Broadcast");
 
-   return RetVal;
+   return;
 } // end Broadcast
 
-int Broadcast(bool &Value, const int RankBcast) {
-   return Broadcast(Value, MachEnv::getDefault(), RankBcast);
+void Broadcast(bool &Value, const int RankBcast) {
+   Broadcast(Value, MachEnv::getDefault(), RankBcast);
 } // end Broadcast
 
 //------------------------------------------------------------------------------
 // Broadcast std::string Value
-int Broadcast(std::string &Value, const MachEnv *InEnv, const int RankBcast) {
+void Broadcast(std::string &Value, const MachEnv *InEnv, const int RankBcast) {
    int RetVal, Root, StrSize;
    MPI_Comm Comm = InEnv->getComm();
    int MyTask    = InEnv->getMyTask();
@@ -101,104 +112,131 @@ int Broadcast(std::string &Value, const MachEnv *InEnv, const int RankBcast) {
    if (MyTask == Root)
       StrSize = Value.length();
    RetVal = MPI_Bcast(&StrSize, 1, MPI_INT, Root, Comm);
+   if (RetVal != MPI_SUCCESS)
+      ABORT_ERROR("Broadcast string: Error in Broadcast of string size");
    if (MyTask != Root)
       Value.resize(StrSize);
 
    // Now broadcast the string
    RetVal =
        MPI_Bcast((void *)Value.c_str(), Value.size(), MPI_CHAR, Root, Comm);
+   if (RetVal != MPI_SUCCESS)
+      ABORT_ERROR("Broadcast string: Error in MPI Broadcast");
 
-   return RetVal;
+   return;
 } // end Broadcast
 
-int Broadcast(std::string &Value, const int RankBcast) {
-   return Broadcast(Value, MachEnv::getDefault(), RankBcast);
+void Broadcast(std::string &Value, const int RankBcast) {
+   Broadcast(Value, MachEnv::getDefault(), RankBcast);
 } // end Broadcast
 
 //------------------------------------------------------------------------------
 // Broadcast I4 array
-int Broadcast(std::vector<I4> &Value, const MachEnv *InEnv,
-              const int RankBcast) {
+void Broadcast(std::vector<I4> &Value, const MachEnv *InEnv,
+               const int RankBcast) {
    int RetVal, Root;
 
    Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
    RetVal = MPI_Bcast((void *)Value.data(), Value.size(), MPI_INT32_T, Root,
                       InEnv->getComm());
+   if (RetVal != MPI_SUCCESS)
+      ABORT_ERROR("Broadcast I4 vector: Error in MPI Broadcast");
 
-   return RetVal;
+   return;
 } // end Broadcast
 
-int Broadcast(std::vector<I4> &Value, const int RankBcast) {
-   return Broadcast(Value, MachEnv::getDefault(), RankBcast);
+void Broadcast(std::vector<I4> &Value, const int RankBcast) {
+   Broadcast(Value, MachEnv::getDefault(), RankBcast);
 } // end Broadcast
 
 //------------------------------------------------------------------------------
 // Broadcast I8 array
-int Broadcast(std::vector<I8> &Value, const MachEnv *InEnv,
-              const int RankBcast) {
+void Broadcast(std::vector<I8> &Value, const MachEnv *InEnv,
+               const int RankBcast) {
    int RetVal, Root;
 
    Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
    RetVal = MPI_Bcast((void *)Value.data(), Value.size(), MPI_INT64_T, Root,
                       InEnv->getComm());
+   if (RetVal != MPI_SUCCESS)
+      ABORT_ERROR("Broadcast I8 vector: Error in MPI Broadcast");
 
-   return RetVal;
+   return;
 } // end Broadcast
 
-int Broadcast(std::vector<I8> &Value, const int RankBcast) {
-   return Broadcast(Value, MachEnv::getDefault(), RankBcast);
+void Broadcast(std::vector<I8> &Value, const int RankBcast) {
+   Broadcast(Value, MachEnv::getDefault(), RankBcast);
 } // end Broadcast
 
 //------------------------------------------------------------------------------
 // Broadcast R4 array
-int Broadcast(std::vector<R4> &Value, const MachEnv *InEnv,
-              const int RankBcast) {
+void Broadcast(std::vector<R4> &Value, const MachEnv *InEnv,
+               const int RankBcast) {
    int RetVal, Root;
 
    Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
    RetVal = MPI_Bcast((void *)Value.data(), Value.size(), MPI_FLOAT, Root,
                       InEnv->getComm());
+   if (RetVal != MPI_SUCCESS)
+      ABORT_ERROR("Broadcast R4 vector: Error in MPI Broadcast");
 
-   return RetVal;
+   return;
 } // end Broadcast
 
-int Broadcast(std::vector<R4> &Value, const int RankBcast) {
-   return Broadcast(Value, MachEnv::getDefault(), RankBcast);
+void Broadcast(std::vector<R4> &Value, const int RankBcast) {
+   Broadcast(Value, MachEnv::getDefault(), RankBcast);
 } // end Broadcast
 
 //------------------------------------------------------------------------------
 // Broadcast R8 array
-int Broadcast(std::vector<R8> &Value, const MachEnv *InEnv,
-              const int RankBcast) {
+void Broadcast(std::vector<R8> &Value, const MachEnv *InEnv,
+               const int RankBcast) {
    int RetVal, Root;
 
    Root   = (RankBcast < 0) ? InEnv->getMasterTask() : RankBcast;
    RetVal = MPI_Bcast((void *)Value.data(), Value.size(), MPI_DOUBLE, Root,
                       InEnv->getComm());
+   if (RetVal != MPI_SUCCESS)
+      ABORT_ERROR("Broadcast R8 vector: Error in MPI Broadcast");
 
-   return RetVal;
+   return;
 } // end Broadcast
 
-int Broadcast(std::vector<R8> &Value, const int RankBcast) {
-   return Broadcast(Value, MachEnv::getDefault(), RankBcast);
+void Broadcast(std::vector<R8> &Value, const int RankBcast) {
+   Broadcast(Value, MachEnv::getDefault(), RankBcast);
 }
 
 //------------------------------------------------------------------------------
 // Broadcast bool array
-// Elements of vector<bool> seem to be non-addressable
-// int Broadcast(std::vector<bool> &Value, const MachEnv *InEnv, const int
-// RankBcast ) {
-//    int RetVal;
-//
-//    RetVal = MPI_Bcast((void *)Value.data(), Value.size(), MPI_C_BOOL,
-//    RankBcast, InEnv->getComm());
-//
-//    return RetVal;
-//} // end Broadcast
-//
-// int Broadcast(std::vector<bool> &Value, const int RankBcast
-//) {
-//    return Broadcast(Value, MachEnv::getDefault(), RankBcast);
-//}
+void Broadcast(std::vector<bool> &Value, const MachEnv *InEnv,
+               const int RankBcast) {
+   int RetVal;
+
+   // Due to special packing of std::vector<bool> we convert to an integer
+   I4 VecSize = Value.size();
+   std::vector<I4> TmpValue(VecSize);
+   for (int I = 0; I < VecSize; ++I) {
+      if (Value[I])
+         TmpValue[I] = 1;
+      else
+         TmpValue[I] = 0;
+   }
+   Broadcast(TmpValue, InEnv, RankBcast);
+
+   // Convert back to bool
+   for (int I = 0; I < VecSize; ++I) {
+      if (TmpValue[I] == 1)
+         Value[I] = true;
+      else
+         Value[I] = false;
+   }
+
+   return;
+}
+
+void Broadcast(std::vector<bool> &Value, const int RankBcast) {
+   Broadcast(Value, MachEnv::getDefault(), RankBcast);
+}
 
 } // namespace OMEGA
+//===----------------------------------------------------------------------===//
