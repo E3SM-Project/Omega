@@ -76,6 +76,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
@@ -112,6 +113,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul class="current">
@@ -259,7 +261,7 @@ The vertical advection algorithm will use this desired thickness to compute the 
 </section>
 <section id="algorithmic-formulation">
 <h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
-<p>In the layered non-Boussinesq equations solved in Omega (see <a class="reference internal" href="OmegaV1GoverningEqns.html"><span class="doc std std-doc">V0 governing equation document</span></a> for details), the prognostic variable for cell <span class="math notranslate nohighlight">\(i\)</span> and layer <span class="math notranslate nohighlight">\(k\)</span> is the pseudo thickness, <span class="math notranslate nohighlight">\(\tilde{h}_{i,k}\)</span>, so that the geometric thickness (in meters) is a diagnostic variable defined as:</p>
+<p>In the layered non-Boussinesq equations solved in Omega (see <a class="reference internal" href="OmegaV1GoverningEqns.html#omega-design-governing-eqns-omega1"><span class="std std-ref">V0 governing equation document</span></a> for details), the prognostic variable for cell <span class="math notranslate nohighlight">\(i\)</span> and layer <span class="math notranslate nohighlight">\(k\)</span> is the pseudo thickness, <span class="math notranslate nohighlight">\(\tilde{h}_{i,k}\)</span>, so that the geometric thickness (in meters) is a diagnostic variable defined as:</p>
 <div class="math notranslate nohighlight">
 \[ \Delta z_{i,k} = \rho_0 \alpha_{i,k} \tilde{h}_{i,k}. \]</div>
 <p>The pressure at vertical cell interfaces is the found by summing the pseudo thicknesses:</p>

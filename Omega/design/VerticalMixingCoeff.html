@@ -76,6 +76,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
@@ -112,6 +113,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul class="current">
@@ -318,7 +320,7 @@ N^2(k) = g \rho_0 \frac{\rho_{DD}(k) - \rho(k)}{z_m(k-1) - z_m(k)}\,.
 interface that would be in header file). Describe typical use cases. -->
 <p>It is assumed that viscosity and diffusivity will be stored at cell centers. Additionally, since they will be used elsewhere, it is assumed that zMid and N2 have been computed elsewhere (N2 in the density routine) and stored. Quantities such as squared shear and Richardson number are not needed outside of the vertical mixing routines, so are computed locally. Note: how topography will be dealt with has not been finalized yet, but will be adopted into the following once finalized.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">parallelFor</span><span class="p">(</span>
-<span class="w">    </span><span class="p">{</span><span class="n">NCellsAll</span><span class="p">,</span><span class="w"> </span><span class="n">NVertLevels</span><span class="p">},</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">{</span><span class="n">NCellsAll</span><span class="p">,</span><span class="w"> </span><span class="n">NVertLayers</span><span class="p">},</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 
 <span class="w">        </span><span class="c1">// Add background contribution to viscosity and diffusivity</span>
 <span class="w">        </span><span class="n">VertViscosity</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BackgroundViscosity</span><span class="p">;</span>

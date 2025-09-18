@@ -74,6 +74,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
@@ -110,6 +111,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul class="current">
@@ -201,7 +203,7 @@
 <span id="omega-design-tendency"></span><h1>Tendency<a class="headerlink" href="#tendency" title="Permalink to this heading"></a></h1>
 <section id="overview">
 <h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
-<p>The tendency terms in OMEGA are implemented as functors, which define an operation over a number of vertical levels for particular a cell, edge, or vertex.
+<p>The tendency terms in OMEGA are implemented as functors, which define an operation over a number of vertical layers for particular a cell, edge, or vertex.
 Tendency functors take information which remains constant during the forward simulation (such as <code class="docutils literal notranslate"><span class="pre">HorzMesh</span></code> and <code class="docutils literal notranslate"><span class="pre">Config</span></code>)  as constructor arguments.
 The <code class="docutils literal notranslate"><span class="pre">operator()</span></code> method is overloaded with the relevant discrete /parameterization.
 This approach allows for a modularization of the tendency terms that enables flexible groupings of work within larger cell/edge/vertex loops.
@@ -220,7 +222,7 @@ Each functor will implement a given tendency operation on a specific mesh locati
 </section>
 <section id="requirement-tendencies-must-allow-for-vectorization-on-cpu-architectures">
 <h3>2.3 Requirement: Tendencies must allow for vectorization on CPU architectures.<a class="headerlink" href="#requirement-tendencies-must-allow-for-vectorization-on-cpu-architectures" title="Permalink to this heading"></a></h3>
-<p>Tendency operations have inner loops over a chunk of vertical levels.
+<p>Tendency operations have inner loops over a chunk of vertical layers.
 The chunk size will be set to the vector length on CPU machines and 1 for GPUs.
 This will allow for the possibility of vectorization on CPUs.</p>
 </section>
@@ -281,8 +283,8 @@ Each tendency term will have a <code class="docutils literal notranslate"><span 
 </section>
 <section id="operator">
 <h4>4.2.2 operator<a class="headerlink" href="#operator" title="Permalink to this heading"></a></h4>
-<p>The operator method implements the tendency computation for a chunk of vertical levels at a given horizontal mesh location.
-The inner loop over a chunk of vertical levels enables CPU vectorization.</p>
+<p>The operator method implements the tendency computation for a chunk of vertical layers at a given horizontal mesh location.
+The inner loop over a chunk of vertical layers enables CPU vectorization.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">KOKKOS_FUNCTION</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">ThicknessFluxDivergenceOnCell</span><span class="o">::</span><span class="k">operator</span><span class="p">()(</span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Tend</span>
 <span class="w">                                                               </span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span>
 <span class="w">                                                               </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">,</span>

@@ -74,6 +74,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul class="current">
@@ -110,6 +111,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -210,8 +212,8 @@ supports Fortran ordering, we use C ordering for array indices.
 Within Omega, the default location for an Array should be on the device
 with a similar type HostArrayNDTT defined for arrays needed on the host.
 As an example, we can define and allocate a device and host array using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Array3dReal</span><span class="w"> </span><span class="n">Temperature</span><span class="p">(</span><span class="s">&quot;Temperature&quot;</span><span class="p">,</span><span class="n">nTimeLevels</span><span class="p">,</span><span class="w"> </span><span class="n">nCells</span><span class="p">,</span><span class="w"> </span><span class="n">nVertLevels</span><span class="p">);</span>
-<span class="w">   </span><span class="n">HostArray3dReal</span><span class="w"> </span><span class="n">TemperatureHost</span><span class="p">(</span><span class="s">&quot;Temperature&quot;</span><span class="p">,</span><span class="n">nTimeLevels</span><span class="p">,</span><span class="w"> </span><span class="n">nCells</span><span class="p">,</span><span class="w"> </span><span class="n">nVertLevels</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Array3dReal</span><span class="w"> </span><span class="n">Temperature</span><span class="p">(</span><span class="s">&quot;Temperature&quot;</span><span class="p">,</span><span class="n">nTimeLevels</span><span class="p">,</span><span class="w"> </span><span class="n">nCells</span><span class="p">,</span><span class="w"> </span><span class="n">nVertLayers</span><span class="p">);</span>
+<span class="w">   </span><span class="n">HostArray3dReal</span><span class="w"> </span><span class="n">TemperatureHost</span><span class="p">(</span><span class="s">&quot;Temperature&quot;</span><span class="p">,</span><span class="n">nTimeLevels</span><span class="p">,</span><span class="w"> </span><span class="n">nCells</span><span class="p">,</span><span class="w"> </span><span class="n">nVertLayers</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Alternatively, you can use the copy functions to create a host copy

@@ -74,6 +74,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul class="current">
@@ -117,6 +118,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -202,7 +204,7 @@ velocity divergence has the following structure:</p>
 <span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">KineticEnergyCell</span><span class="p">;</span>
 <span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">VelocityDivCell</span><span class="p">;</span>
 
-<span class="w">   </span><span class="n">KineticAuxVars</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">mesh</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NVertLevels</span><span class="p">);</span>
+<span class="w">   </span><span class="n">KineticAuxVars</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">mesh</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NVertLayers</span><span class="p">);</span>
 <span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">addMetaData</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
 <span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">defineIOFields</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
 

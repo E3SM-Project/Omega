@@ -74,6 +74,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
@@ -110,6 +111,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul class="current">
@@ -338,11 +340,11 @@ relevant MachEnv (eg defaultEnv.comm) and indxRange is a
 <code class="docutils literal notranslate"><span class="pre">std::vector</span></code> of length 2x the number of array dimensions.
 The entries of this vector will be the min, max index of
 each array dimension. So, for example an array dimensioned
-<code class="docutils literal notranslate"><span class="pre">(nCellsAll+1,</span> <span class="pre">nVertLevels+1)</span></code> might need to be summed over
-the <code class="docutils literal notranslate"><span class="pre">indxRange{0,</span> <span class="pre">nCellsOwned-1,</span> <span class="pre">0,</span> <span class="pre">nVertLevels-1}</span></code>. Note
+<code class="docutils literal notranslate"><span class="pre">(nCellsAll+1,</span> <span class="pre">nVertLayers+1)</span></code> might need to be summed over
+the <code class="docutils literal notranslate"><span class="pre">indxRange{0,</span> <span class="pre">nCellsOwned-1,</span> <span class="pre">0,</span> <span class="pre">nVertLayers-1}</span></code>. Note
 that the indxRange supports a constant scalar values only so
 does not support a variable index range like
-minLevelCell/maxLevelCell. That is best managed either
+minLayerCell/maxLayerCell. That is best managed either
 by masking with the sum-product interface below or
 ensuring the array has been set to zero in non-active
 entries.</p>

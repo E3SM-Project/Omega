@@ -74,6 +74,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul class="current">
@@ -118,6 +119,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -204,7 +206,7 @@ the array or between indexes defined in the specified <code class="docutils lite
 and dimension DD ranging from 1D to 5D. The <code class="docutils literal notranslate"><span class="pre">indexRange</span></code> vector is of length
 2x the number of array dimensions: e.g. for a 2D array the min and
 max indexes for a local sum might be
-<code class="docutils literal notranslate"><span class="pre">indexRange{0,</span> <span class="pre">nCellsOwned-1,</span> <span class="pre">0,</span> <span class="pre">nVertLevels-1}</span></code>. The index range vector
+<code class="docutils literal notranslate"><span class="pre">indexRange{0,</span> <span class="pre">nCellsOwned-1,</span> <span class="pre">0,</span> <span class="pre">nVertLayers-1}</span></code>. The index range vector
 is an optional parameter and, when absent, local sum defaults to
 min,max indexes of the array. Computed global sum is stored
 in <code class="docutils literal notranslate"><span class="pre">Result</span></code>. Any errors from the MPI collective call are passed back

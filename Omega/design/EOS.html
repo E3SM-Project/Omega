@@ -76,6 +76,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
@@ -112,6 +113,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul class="current">
@@ -287,7 +289,7 @@
 <span class="w">    </span><span class="k">private</span><span class="o">:</span>
 <span class="w">       </span><span class="n">EOSType</span><span class="w"> </span><span class="n">eosChoice</span><span class="p">;</span>
 <span class="w">       </span><span class="n">I4</span><span class="w"> </span><span class="n">NCellsAll</span><span class="p">;</span>
-<span class="w">       </span><span class="n">I4</span><span class="w"> </span><span class="n">NChunks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NVertLevels</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">VecLength</span><span class="p">;</span>
+<span class="w">       </span><span class="n">I4</span><span class="w"> </span><span class="n">NChunks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NVertLayers</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">VecLength</span><span class="p">;</span>
 <span class="w">       </span><span class="kt">void</span><span class="w"> </span><span class="nf">computeSpecVolTEOS10Poly75t</span><span class="p">();</span>
 <span class="w">       </span><span class="kt">void</span><span class="w"> </span><span class="nf">computeSpecVolLinear</span><span class="p">();</span>
 <span class="w">       </span><span class="kt">void</span><span class="w"> </span><span class="nf">truncateTempSal</span><span class="p">();</span>
@@ -326,13 +328,13 @@ methods. Modeled on the <code class="docutils literal notranslate"><span class="
 <li><p>determining the selected eos option</p></li>
 <li><p>allocating arrays</p></li>
 </ul>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Eos</span><span class="o">::</span><span class="n">Eos</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NVertLevels</span><span class="p">,</span><span class="w"> </span><span class="n">Config</span><span class="w"> </span><span class="o">*</span><span class="n">Options</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Eos</span><span class="o">::</span><span class="n">Eos</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NVertLayers</span><span class="p">,</span><span class="w"> </span><span class="n">Config</span><span class="w"> </span><span class="o">*</span><span class="n">Options</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The create method will take the same arguments as the constructor plus a name. It calls the constructor to
 create a new eos instance, and put it in the static map of all eos.
 It will return a pointer to the newly created object.</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Eos</span><span class="w"> </span><span class="o">*</span><span class="nf">Eos::create</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NVertLevels</span><span class="p">,</span><span class="w"> </span><span class="n">Config</span><span class="w"> </span><span class="o">*</span><span class="n">Options</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Eos</span><span class="w"> </span><span class="o">*</span><span class="nf">Eos::create</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NVertLayers</span><span class="p">,</span><span class="w"> </span><span class="n">Config</span><span class="w"> </span><span class="o">*</span><span class="n">Options</span><span class="p">);</span>
 </pre></div>
 </div>
 </section>

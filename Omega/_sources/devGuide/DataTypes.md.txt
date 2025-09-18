@@ -42,8 +42,8 @@ Within Omega, the default location for an Array should be on the device
 with a similar type HostArrayNDTT defined for arrays needed on the host.
 As an example, we can define and allocate a device and host array using:
 ```c++
-   Array3dReal Temperature("Temperature",nTimeLevels, nCells, nVertLevels);
-   HostArray3dReal TemperatureHost("Temperature",nTimeLevels, nCells, nVertLevels);
+   Array3dReal Temperature("Temperature",nTimeLevels, nCells, nVertLayers);
+   HostArray3dReal TemperatureHost("Temperature",nTimeLevels, nCells, nVertLayers);
 ```
 Alternatively, you can use the copy functions to create a host copy
 from the device or vice versa.

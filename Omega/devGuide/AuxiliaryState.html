@@ -74,6 +74,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul class="current">
@@ -116,6 +117,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -199,8 +201,8 @@ can be. The static method:</p>
 <section id="creation-of-non-default-auxiliary-states">
 <h2>Creation of non-default auxiliary states<a class="headerlink" href="#creation-of-non-default-auxiliary-states" title="Permalink to this heading"></a></h2>
 <p>A non-default auxiliary state can be created from a string <code class="docutils literal notranslate"><span class="pre">Name</span></code>, horizontal mesh <code class="docutils literal notranslate"><span class="pre">Mesh</span></code>, a number of
-vertical levels <code class="docutils literal notranslate"><span class="pre">NVertLevels</span></code>, and a number of Tracers <code class="docutils literal notranslate"><span class="pre">NTracers</span></code>:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">AuxiliaryState</span><span class="o">*</span><span class="w">  </span><span class="n">NewAuxState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">AuxiliaryState</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="n">NVertLevels</span><span class="p">,</span><span class="w"> </span><span class="n">NTracers</span><span class="p">);</span>
+vertical layers <code class="docutils literal notranslate"><span class="pre">NVertLayers</span></code>, and a number of Tracers <code class="docutils literal notranslate"><span class="pre">NTracers</span></code>:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">AuxiliaryState</span><span class="o">*</span><span class="w">  </span><span class="n">NewAuxState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">AuxiliaryState</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="n">NVertLayers</span><span class="p">,</span><span class="w"> </span><span class="n">NTracers</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>For conveniece, this returns a pointer to the newly created state. Given its name, a pointer to a named auxiliary state

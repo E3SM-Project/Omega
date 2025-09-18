@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Horizontal Mesh &mdash; Omega develop documentation</title>
+  <title>Vertical Coordinate &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -16,11 +16,13 @@
       <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
       <script src="../_static/doctools.js"></script>
       <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Horizontal Operators" href="HorzOperators.html" />
-    <link rel="prev" title="Halo Exchanges (Halo)" href="Halo.html" />
+    <link rel="next" title="Quick Start for Developers" href="../devGuide/QuickStart.html" />
+    <link rel="prev" title="Tridiagonal Solvers" href="TridiagonalSolvers.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -62,7 +64,7 @@
 <li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
 <li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
@@ -74,7 +76,12 @@
 <li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Vertical Coordinate</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#variables">Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-options">Configuration options</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
@@ -161,9 +168,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Horizontal Mesh</li>
+      <li class="breadcrumb-item active">Vertical Coordinate</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/userGuide/HorzMesh.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/userGuide/VertCoord.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -171,21 +178,33 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="horizontal-mesh">
-<span id="omega-user-horz-mesh"></span><h1>Horizontal Mesh<a class="headerlink" href="#horizontal-mesh" title="Permalink to this heading"></a></h1>
-<p>Omega uses the MPAS mesh specification found
-<a class="reference external" href="https://mpas-dev.github.io/files/documents/MPAS-MeshSpec.pdf">here</a>. The names
-of the mesh variables have been retained, with the caveat that they now begin
-with a capital letter.</p>
-<p>The Mesh class is meant to be a container for all mesh variables local to a
-decomposed sub-domain that can be easily passed among the dycore routines. It
-depends on a given <a class="reference internal" href="Decomp.html#omega-user-decomp"><span class="std std-ref">Decomp</span></a> and reproduces the
-cell/edge/vertex totals and connectivity information from that class. The Mesh
-class also creates parallel I/O decompositions that are used to read in the
-additional mesh variables, which are not required for Decomp.</p>
-<p>Currently, the Mesh class reads in all variables from the MPAS mesh
-specification except those read by <a class="reference internal" href="../devGuide/Decomp.html#omega-dev-decomp"><span class="std std-ref">Decomp</span></a>.
-This includes the following variables:</p>
+  <section id="vertical-coordinate">
+<span id="omega-user-vert-coord"></span><h1>Vertical Coordinate<a class="headerlink" href="#vertical-coordinate" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>Omega uses pseudo height, <span class="math notranslate nohighlight">\(\tilde{z} = \frac{p}{\rho_0 g}\)</span>,  as the vertical coordinate (<a class="reference internal" href="../design/OmegaV1GoverningEqns.html#omega-design-governing-eqns-omega1"><span class="std std-ref">V1 governing equation document</span></a>).
+In practice, <span class="math notranslate nohighlight">\(\tilde{z}\)</span> is not computed directly.
+Instead, the model tracks and evolves the pseudo-thickness, <span class="math notranslate nohighlight">\(\tilde{h} = \Delta \tilde{z}\)</span>, defined as the difference between adjacent layer interfaces.
+The pseudo height is essentially a normalized pressure coordinate, with the advantage that it has units of meters.
+The <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> class contains variables and functions relevant to keeping track of:</p>
+<ul class="simple">
+<li><p>the maximum possible number of layers in a cell, i.e. the extent of the vertical dimension (read in from the mesh file)</p></li>
+<li><p>the bottom depth of each cell (read in from the mesh file)</p></li>
+<li><p>the location of active vertical layers (used to set extents of vertical loop bounds):</p>
+<ul>
+<li><p>the max and min indices of active layers in each cell (read in from the mesh file)</p></li>
+<li><p>the max and min indices of active layers for edges and vertices at the bottom and top of the water column (computed from min/max cell layers)</p></li>
+</ul>
+</li>
+<li><p>pressure (computed from the layer thickness and surface pressure)</p></li>
+<li><p><span class="math notranslate nohighlight">\(z\)</span> height (computed from the bottom depth, specific volume, and layer thickness)</p></li>
+<li><p>geopotential (computed from the z height and tidal forcing)</p></li>
+<li><p>desired vertical interface locations (computed from pressure, reference layer pseudo thickness, and user-specified weights)</p></li>
+</ul>
+<p>Multiple instances of the vertical coordinate class can be created and accessed by a unique name.</p>
+</section>
+<section id="variables">
+<h2>Variables<a class="headerlink" href="#variables" title="Permalink to this heading"></a></h2>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Variable Name</p></th>
@@ -194,84 +213,114 @@ This includes the following variables:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>XCell, YCell, ZCell</p></td>
-<td><p>Cartesian coordinates of cell centers</p></td>
-<td><p>m</p></td>
-</tr>
-<tr class="row-odd"><td><p>XEdge, YEdge, ZEdge</p></td>
-<td><p>Cartesian coordinates of edge centers</p></td>
-<td><p>m</p></td>
-</tr>
-<tr class="row-even"><td><p>XVertex, YVertex, ZVertex</p></td>
-<td><p>Cartesian coordinates of vertices</p></td>
-<td><p>m</p></td>
-</tr>
-<tr class="row-odd"><td><p>BottomDepth</p></td>
-<td><p>Depth of the bottom of the ocean at cell centers</p></td>
-<td><p>m</p></td>
-</tr>
-<tr class="row-even"><td><p>FCell, FEdge, FVertex</p></td>
-<td><p>Coriolis parameter at cell centers/edges/vertices</p></td>
-<td><p>radians/s</p></td>
-</tr>
-<tr class="row-odd"><td><p>LonCell, LatCell</p></td>
-<td><p>Longitude/latitude coordinates of cell centers</p></td>
-<td><p>radians</p></td>
-</tr>
-<tr class="row-even"><td><p>LonEdge, LatEdge</p></td>
-<td><p>Longitude/latitude coordinates of edge centers</p></td>
-<td><p>radians</p></td>
-</tr>
-<tr class="row-odd"><td><p>LonVertex, LatVertex</p></td>
-<td><p>Longitude/latitude coordinates of vertices</p></td>
-<td><p>radians</p></td>
-</tr>
-<tr class="row-even"><td><p>AreaCell</p></td>
-<td><p>Area of each cell</p></td>
-<td><p>m^2</p></td>
-</tr>
-<tr class="row-odd"><td><p>AreaTriangle</p></td>
-<td><p>Area of each triangle in the dual grid</p></td>
-<td><p>m^2</p></td>
-</tr>
-<tr class="row-even"><td><p>KiteAreasOnVertex</p></td>
-<td><p>Area of the portions of each dual cell that are part of each cellsOnVertex</p></td>
-<td><p>m^2</p></td>
-</tr>
-<tr class="row-odd"><td><p>DvEdge</p></td>
-<td><p>Length of each edge, computed as the distance between verticesOnEdge</p></td>
-<td><p>m</p></td>
-</tr>
-<tr class="row-even"><td><p>DcEdge</p></td>
-<td><p>Length of each edge, computed as the distance between CellsOnEdge</p></td>
-<td><p>m</p></td>
-</tr>
-<tr class="row-odd"><td><p>AngleEdge</p></td>
-<td><p>Angle the edge normal makes with local eastward direction</p></td>
-<td><p>radians</p></td>
-</tr>
-<tr class="row-even"><td><p>MeshDensity</p></td>
-<td><p>Value of density function used to generate a particular mesh at cell centers</p></td>
+<tr class="row-even"><td><p>NVertLayers</p></td>
+<td><p>maximum number of vertical layers</p></td>
 <td><p>-</p></td>
 </tr>
-<tr class="row-odd"><td><p>WeightsOnEdge</p></td>
-<td><p>Reconstruction weights associated with each of the edgesOnEdge</p></td>
+<tr class="row-odd"><td><p>NVertLayersP1</p></td>
+<td><p>maximum number of vertical layers plus 1</p></td>
 <td><p>-</p></td>
+</tr>
+<tr class="row-even"><td><p>PressureInterface</p></td>
+<td><p>pressure at layer interfaces</p></td>
+<td><p>force per unit area at layer interfaces</p></td>
+</tr>
+<tr class="row-odd"><td><p>PressureMid</p></td>
+<td><p>pressure at layer mid points</p></td>
+<td><p>force per unit area at layer mid point</p></td>
+</tr>
+<tr class="row-even"><td><p>ZInterface</p></td>
+<td><p>z height of layer interfaces</p></td>
+<td><p>m</p></td>
+</tr>
+<tr class="row-odd"><td><p>ZMid</p></td>
+<td><p>z height of layer midpoint</p></td>
+<td><p>m</p></td>
+</tr>
+<tr class="row-even"><td><p>GeopotentialMid</p></td>
+<td><p>geopotential at layer mid points</p></td>
+<td><p>m<span class="math notranslate nohighlight">\(^2\)</span>/s<span class="math notranslate nohighlight">\(^2\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>LayerThicknessPStar</p></td>
+<td><p>desired layer thickness based on total perturbation from the reference thickness</p></td>
+<td><p>-</p></td>
+</tr>
+<tr class="row-even"><td><p>MinLayerCell</p></td>
+<td><p>first active layer for cell</p></td>
+<td><p>-</p></td>
+</tr>
+<tr class="row-odd"><td><p>MaxLayerCell</p></td>
+<td><p>last active layer for cell</p></td>
+<td><p>-</p></td>
+</tr>
+<tr class="row-even"><td><p>MinLayerEdgeTop</p></td>
+<td><p>min of the first active layers for cells on edge</p></td>
+<td><p>-</p></td>
+</tr>
+<tr class="row-odd"><td><p>MaxLayerEdgeTop</p></td>
+<td><p>min of the last active layer for cells on edge</p></td>
+<td><p>-</p></td>
+</tr>
+<tr class="row-even"><td><p>MinLayerEdgeBot</p></td>
+<td><p>max of the first active layer for cells on edge</p></td>
+<td><p>-</p></td>
+</tr>
+<tr class="row-odd"><td><p>MaxLayerEdgeBot</p></td>
+<td><p>max of the last active layer for cells on edge</p></td>
+<td><p>-</p></td>
+</tr>
+<tr class="row-even"><td><p>MinLayerVertexTop</p></td>
+<td><p>min of the first active layer for cells on vertex</p></td>
+<td><p>-</p></td>
+</tr>
+<tr class="row-odd"><td><p>MaxLayerVertexTop</p></td>
+<td><p>min of the last active layer for cells on vertex</p></td>
+<td><p>-</p></td>
+</tr>
+<tr class="row-even"><td><p>MinLayerVertexBot</p></td>
+<td><p>max of the first active layer for cells on vertex</p></td>
+<td><p>-</p></td>
+</tr>
+<tr class="row-odd"><td><p>MaxLayerVertexBot</p></td>
+<td><p>max of the last active layer for cells on vertex</p></td>
+<td><p>-</p></td>
+</tr>
+<tr class="row-even"><td><p>VertCoordMovementWeights</p></td>
+<td><p>weights to specify how total column thickness changes are distributed across layers</p></td>
+<td><p>-</p></td>
+</tr>
+<tr class="row-odd"><td><p>RefLayerThickness</p></td>
+<td><p>reference layer thickness used to distribute total column thickness changes</p></td>
+<td><p>m</p></td>
+</tr>
+<tr class="row-even"><td><p>BottomDepth</p></td>
+<td><p>positive down distance from the reference geoid to the bottom</p></td>
+<td><p>m</p></td>
 </tr>
 </tbody>
 </table>
-<p>In the future, the Mesh class will optionally compute the mesh variables that
-are dependent on the Cartesian mesh coordinates internally.
-This includes the various areas, lengths, angles, and weights needed for the
-TRiSK discretization (e.g. rows 5-11 in the table above).</p>
+</section>
+<section id="configuration-options">
+<h2>Configuration options<a class="headerlink" href="#configuration-options" title="Permalink to this heading"></a></h2>
+<p>The vertical coordinate movement can be specified by the <code class="docutils literal notranslate"><span class="pre">MovementWeightType</span></code> option in the configuration file.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">omega</span><span class="p">:</span>
+<span class="w">   </span><span class="nt">VertCoord</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">MovementWeightType</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Fixed</span><span class="p p-Indicator">,</span><span class="nv">Uniform</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<p>The option <code class="docutils literal notranslate"><span class="pre">Uniform</span></code> specifies that perturbations to the total pseudo-thickness of the water column is distributed evenly to all vertical layers.
+This is similar to the standard “z-star” coordinate in Boussinesq models.
+The option <code class="docutils literal notranslate"><span class="pre">Fixed</span></code> means that total pseudo-thickness perturbations are confined to the top layer, while all others remain constant.
+This is similar to the traditional “z” coordinate in Boussinesq models.</p>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="Halo.html" class="btn btn-neutral float-left" title="Halo Exchanges (Halo)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="HorzOperators.html" class="btn btn-neutral float-right" title="Horizontal Operators" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="TridiagonalSolvers.html" class="btn btn-neutral float-left" title="Tridiagonal Solvers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../devGuide/QuickStart.html" class="btn btn-neutral float-right" title="Quick Start for Developers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

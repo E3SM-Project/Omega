@@ -74,6 +74,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul class="current">
@@ -110,6 +111,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -191,7 +193,7 @@ created outside of a parallel region and are used inside a parallel loop
 over mesh elements, for example</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">mesh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">HorzMesh</span><span class="o">::</span><span class="n">getDefault</span><span class="p">();</span>
 <span class="w">    </span><span class="n">DivergenceOnCell</span><span class="w"> </span><span class="nf">DivOnCell</span><span class="p">(</span><span class="n">mesh</span><span class="p">);</span>
-<span class="w">    </span><span class="n">parallelFor</span><span class="p">({</span><span class="n">mesh</span><span class="o">-&gt;</span><span class="n">NCellsOwned</span><span class="p">,</span><span class="w"> </span><span class="n">NVertLevels</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">VecLength</span><span class="p">},</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">parallelFor</span><span class="p">({</span><span class="n">mesh</span><span class="o">-&gt;</span><span class="n">NCellsOwned</span><span class="p">,</span><span class="w"> </span><span class="n">NVertLayers</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">VecLength</span><span class="p">},</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">        </span><span class="c1">// computes divergence of Vec for cells with indices (ICell, KChunk:KChunk+VecLength-1)</span>
 <span class="w">        </span><span class="c1">// stores the result in DivVec</span>
 <span class="w">        </span><span class="n">DivOnCell</span><span class="p">(</span><span class="n">DivVec</span><span class="p">,</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">KChunk</span><span class="p">,</span><span class="w"> </span><span class="n">Vec</span><span class="p">);</span>

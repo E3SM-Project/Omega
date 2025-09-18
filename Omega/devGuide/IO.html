@@ -74,6 +74,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul class="current">
@@ -110,6 +111,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -303,7 +305,7 @@ defined using:</p>
 </pre></div>
 </div>
 <p>where FileID is the ID of an open file, the DimName is a <code class="docutils literal notranslate"><span class="pre">std::string</span></code>
-with the dimension name (eg NCells, NEdges, NVertices, NVertLevels or
+with the dimension name (eg NCells, NEdges, NVertices, NVertLayers or
 NTracers), length is the length of the full global array and DimID is
 the ID assigned to this dimension. Note that for reading a file, we
 supply the function:</p>
@@ -329,13 +331,13 @@ when the IO system was initialized, but can also be set explicitly to
 is generally preferred (see <a class="reference internal" href="../userGuide/IO.html#omega-user-io"><span class="std std-ref">UserGuide</span></a>). The GlobalIndx
 array describes the global location (as a zero-based offset) of each
 local array entry. This can be computed from the Omega Default Decomp
-arrays. For example, an array dimensioned (NCellsAll,NVertLevels) would
+arrays. For example, an array dimensioned (NCellsAll,NVertLayers) would
 have an offset computed using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">OffsetCell</span><span class="p">(</span><span class="n">NCellsAll</span><span class="o">*</span><span class="n">NVertLevels</span><span class="p">,</span><span class="mi">-1</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">OffsetCell</span><span class="p">(</span><span class="n">NCellsAll</span><span class="o">*</span><span class="n">NVertLayers</span><span class="p">,</span><span class="mi">-1</span><span class="p">);</span>
 <span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Add</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 <span class="w">   </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">Cell</span><span class="p">;</span><span class="w"> </span><span class="n">Cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">Cell</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NCellsOwned</span><span class="p">){</span>
-<span class="w">      </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NVertLevels</span><span class="p">){</span>
-<span class="w">         </span><span class="n">OffsetCell</span><span class="p">[</span><span class="n">Add</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">CellIDH</span><span class="p">(</span><span class="n">Cell</span><span class="p">)</span><span class="mi">-1</span><span class="p">)</span><span class="o">*</span><span class="n">NVertLevels</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">k</span><span class="p">;</span>
+<span class="w">      </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NVertLayers</span><span class="p">){</span>
+<span class="w">         </span><span class="n">OffsetCell</span><span class="p">[</span><span class="n">Add</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">CellIDH</span><span class="p">(</span><span class="n">Cell</span><span class="p">)</span><span class="mi">-1</span><span class="p">)</span><span class="o">*</span><span class="n">NVertLayers</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">k</span><span class="p">;</span>
 <span class="w">         </span><span class="n">Add</span><span class="o">++</span><span class="p">;</span>
 <span class="w">      </span><span class="p">}</span>
 <span class="w">   </span><span class="p">}</span>

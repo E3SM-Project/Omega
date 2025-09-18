@@ -74,6 +74,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul class="current">
@@ -110,6 +111,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -189,7 +191,7 @@ case, the first argument is a tendency array that gets updated by the
 contributon to the tendency for the given term. The functors are designed to be
 used inside a Kokkos parallel loop:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">parallelFor</span><span class="p">(</span>
-<span class="w">       </span><span class="p">{</span><span class="n">mesh</span><span class="o">-&gt;</span><span class="n">NCellsOwned</span><span class="p">,</span><span class="w"> </span><span class="n">NVertLevels</span><span class="p">},</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="p">{</span><span class="n">mesh</span><span class="o">-&gt;</span><span class="n">NCellsOwned</span><span class="p">,</span><span class="w"> </span><span class="n">NVertLayers</span><span class="p">},</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">          </span><span class="n">ThickFluxDixOnC</span><span class="p">(</span><span class="n">ThicknessTend</span><span class="p">,</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">KChunk</span><span class="p">,</span><span class="w"> </span><span class="n">ThickFluxEdge</span><span class="p">);</span>
 <span class="w">       </span><span class="p">});</span>
 </pre></div>
