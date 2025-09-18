@@ -52,7 +52,11 @@ Eos.computeSpecVolDisp(ConsrvTemp, AbsSalinity, Pressure, KDisp);
 where `KDisp` is the number of `k` levels you want to displace each specific volume level to.
 For example, to displace each level to one below, set `KDisp = 1`.
 
-## Removal of Eos
+## Bounds check (and truncation) for the state variables (under Teos-10)
+
+The implemented 75-term polynomial for the calculation of the specific volume under Teos-10 is considered valid for ocean states contained in the ''oceanographic funnel'' defined in [McDougall et al., 2003](https://journals.ametsoc.org/view/journals/atot/20/5/1520-0426_2003_20_730_aaceaf_2_0_co_2.xml). When using teos-10, the Eos uses member methods `calcSLimits(P)` and `calcTLimits(Sa, P)` to calculate the valid ranges of Sa and T given the pressure. The conservative temperature lower bound depends is set by the freezing temperature, using the member method `calcCtFreezing(Sa, P, SaturationFract)`. This method implements the polynomial approximation of the conservative freezing temperature (called `gsw_ct_freezing_poly` in the GSW package), which is known to produce erros in the (-5e-4 K, 6e-4 K) range. Once we calculate the upper and lower bounds of validity, the state variables are clipped to the valid range (if outside the bounds) before we run the specific volume calculation. The state fields themselves are not changed.
+
+ ## Removal of Eos
 
 To clear the Eos instance do:
 

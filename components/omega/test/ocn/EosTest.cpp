@@ -315,6 +315,34 @@ int checkValueGswcSpecVol() {
    return Err;
 }
 
+/// Test that the external GSW-C library returns the expected specific volume
+int checkValueCtFreezing() {
+   int Err         = 0;
+   const Real RTol = 1e-10;
+   Teos10Eos TestEos(1);
+   // TestEos->EosChoice = EosType::Teos10Eos;
+   constexpr Real SaturationFrac = 0.0;
+   constexpr Real P              = 500.0;
+   constexpr Real Sa             = 32.0;
+
+   ///
+   /// Get specific volume from GSW-C library
+   double CtFreezGswc = gsw_ct_freezing_poly(Sa, P, SaturationFrac);
+   double CtFreez     = TestEos.calcCtFreezing(Sa, P, SaturationFrac);
+   /// Check the value against the expected TEOS-10 value
+   bool Check = isApprox(CtFreezGswc, CtFreez, RTol);
+   if (!Check) {
+      Err++;
+      LOG_ERROR(
+          "checkValueCtFreezing: CtFreez isApprox FAIL, expected {}, got {}",
+          CtFreezGswc, CtFreez);
+   }
+   if (Err == 0) {
+      LOG_INFO("checkValueCtFreezing: PASS");
+   }
+   return Err;
+}
+
 // the main test (all in one to have the same log)
 // Single value test:
 // --> test calls the external GSW-C library
@@ -333,6 +361,7 @@ int eosTest(const std::string &MeshFile = "OmegaMesh.nc") {
 
    LOG_INFO("Single value checks:");
    Err += checkValueGswcSpecVol();
+   Err += checkValueCtFreezing();
 
    LOG_INFO("Full array checks:");
    Err += testEosLinear();
