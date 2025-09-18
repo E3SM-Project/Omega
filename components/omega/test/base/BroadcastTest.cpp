@@ -1,5 +1,4 @@
-//===-- Test driver for OMEGA Broadcast ----------------------------*- C++
-//-*-===/
+//===-- Test driver for OMEGA Broadcast --------------------------*- C++ -*-===/
 //
 /// \file
 /// \brief Test driver for OMEGA Broadcast
@@ -11,17 +10,21 @@
 //===-----------------------------------------------------------------------===/
 
 #include "Broadcast.h"
+#include "Error.h"
+#include "Logging.h"
+#include "MachEnv.h"
 #include "mpi.h"
 
 #include <iostream>
 
+using namespace OMEGA;
+
+//------------------------------------------------------------------------------
+// Test function templated by type. Tests both default and an alternate MachEnv
 template <class MyType>
-void TestBroadcast(OMEGA::MachEnv *Env, std::string TypeName, int *RetVal) {
+void TestBroadcast(MachEnv *DefEnv, MachEnv *AltEnv, std::string TypeName) {
 
-   const int MyTask     = Env->getMyTask();
-   const int IsMyMaster = Env->isMasterTask();
-   const int RootTask   = 2;
-
+   // Set test values based on type
    MyType MyVal, FromVal, ToVal;
 
    if constexpr (std::is_same_v<MyType, bool>) {
@@ -37,72 +40,101 @@ void TestBroadcast(OMEGA::MachEnv *Env, std::string TypeName, int *RetVal) {
       ToVal   = -1;
    }
 
+   // Test broadcasting value from master task in default environment
+   int MyTask      = DefEnv->getMyTask();
+   bool IsMyMaster = DefEnv->isMasterTask();
    if (IsMyMaster)
       MyVal = FromVal;
    else
       MyVal = ToVal;
 
-   // Test broadcasting value from master task
-   OMEGA::Broadcast(MyVal);
+   Broadcast(MyVal);
 
-   if (!IsMyMaster) {
-      if (MyVal == FromVal)
-         std::cout << TypeName << " scalar broadcast from a default task: PASS"
-                   << std::endl;
-      else {
-         std::cout << TypeName << " scalar broadcast from a default task: FAIL"
-                   << std::endl;
-         *RetVal += 1;
-      }
-   }
+   if (MyVal != FromVal)
+      ABORT_ERROR("BroadcastTest: scalar {} broadcast from master task: FAIL",
+                  TypeName);
 
+   // Test broadcasting from non-root task with default env
+   int RootTask = 2;
    if (MyTask == RootTask)
       MyVal = FromVal;
    else
       MyVal = ToVal;
 
-   // Test broadcasting value from a non-master task
-   OMEGA::Broadcast(MyVal, Env, RootTask);
+   Broadcast(MyVal, RootTask);
 
-   if (IsMyMaster) {
-      if (MyVal == FromVal)
-         std::cout << TypeName
-                   << " scalar broadcast from a non-master task: PASS"
-                   << std::endl;
-      else {
-         std::cout << TypeName
-                   << " scalar broadcast from a non-master task: FAIL"
-                   << std::endl;
-         *RetVal += 1;
-      }
-   }
+   if (MyVal != FromVal)
+      ABORT_ERROR(
+          "BroadcastTest: scalar {} broadcast from non-master task: FAIL",
+          TypeName);
 
+   // Test broadcasting value from a non-master task in default env using full
+   // interface
    if (MyTask == RootTask)
       MyVal = FromVal;
    else
       MyVal = ToVal;
 
-   // Test broadcasting value from a non-master task
-   OMEGA::Broadcast(MyVal, RootTask);
+   Broadcast(MyVal, DefEnv, RootTask);
 
-   if (IsMyMaster) {
+   if (MyVal != FromVal)
+      ABORT_ERROR(
+          "BroadcastTest: scalar {} broadcast from non-master task in full "
+          "interface: FAIL",
+          TypeName);
+
+   // Test scalar broadcast from master task in the alternative MachEnv
+   MyTask     = AltEnv->getMyTask();
+   IsMyMaster = AltEnv->isMasterTask();
+   if (IsMyMaster)
+      MyVal = FromVal;
+   else
+      MyVal = ToVal;
+
+   Broadcast(MyVal, AltEnv);
+
+   if (AltEnv->isMember()) {
+      if (MyVal != FromVal)
+         ABORT_ERROR(
+             "BroadcastTest: scalar {} broadcast in alt environment: FAIL",
+             TypeName);
+   } else { // if not a member of environment - should still have ToVal
       if (MyVal == FromVal)
-         std::cout << TypeName
-                   << " scalar broadcast from the default env.: PASS"
-                   << std::endl;
-      else {
-         std::cout << TypeName
-                   << " scalar broadcast from the default env.: FAIL"
-                   << std::endl;
-         *RetVal += 1;
-      }
-   }
+         ABORT_ERROR(
+             "BroadcastTest: scalar {} broadcast in alt environment: FAIL"
+             " for non-member task",
+             TypeName);
+   } // endif member of AltEnv
 
-   // length of vector<string> is not fixed
-   // elements of vector<bool> seems to be non-addressable
-   if constexpr (!std::is_same_v<MyType, std::string> &&
-                 !std::is_same_v<MyType, bool>) {
+   // Test scalar broadcast from non-master task in the alternative MachEnv
+   if (MyTask == RootTask)
+      MyVal = FromVal;
+   else
+      MyVal = ToVal;
 
+   Broadcast(MyVal, AltEnv, RootTask);
+
+   if (AltEnv->isMember()) {
+      if (MyVal != FromVal)
+         ABORT_ERROR(
+             "BroadcastTest: scalar {} broadcast in alt environment: FAIL",
+             TypeName);
+   } else { // if not a member of environment - should still have ToVal
+      if (MyVal == FromVal)
+         ABORT_ERROR(
+             "BroadcastTest: scalar {} broadcast in alt environment: FAIL"
+             " for non-member task",
+             TypeName);
+   } // endif member of AltEnv
+
+   // Test vector broadcasts for all but strings - use default env, non-master
+   //   - cannot broadcast strings since length of vector<string> is not fixed
+   MyTask     = DefEnv->getMyTask();
+   IsMyMaster = DefEnv->isMasterTask();
+
+   if constexpr (!std::is_same_v<MyType, std::string>) {
+
+      // create and fill a vector with appropriate type
       std::vector<MyType> MyVector;
 
       for (int i = 1; i <= 5; i++) {
@@ -112,24 +144,20 @@ void TestBroadcast(OMEGA::MachEnv *Env, std::string TypeName, int *RetVal) {
             MyVector.push_back(ToVal);
       }
 
-      // Test broadcasting value from a non-master task
-      OMEGA::Broadcast(MyVector, RootTask);
+      // Test broadcasting vector from a non-master task
+      Broadcast(MyVector, RootTask);
 
-      if (IsMyMaster) {
-         if (std::all_of(MyVector.cbegin(), MyVector.cend(),
-                         [&](MyType v) { return v == FromVal; }))
-            std::cout << TypeName
-                      << " vector broadcast from the default env.: PASS"
-                      << std::endl;
-         else {
-            std::cout << TypeName
-                      << " vector broadcast from the default env.: FAIL"
-                      << std::endl;
-            *RetVal += 1;
-         }
+      int Icount = 0;
+      for (int i = 0; i < 5; i++) {
+         if (MyVector[i] != FromVal)
+            ++Icount;
       }
-   }
-}
+      if (Icount > 0)
+         ABORT_ERROR("BroadcastTest: Vector {} broadcast FAIL", TypeName);
+
+   } // endif not string
+
+} // End test routine
 
 //------------------------------------------------------------------------------
 // The test driver for MachEnv. This tests the values stored in the Default
@@ -138,103 +166,58 @@ void TestBroadcast(OMEGA::MachEnv *Env, std::string TypeName, int *RetVal) {
 //
 int main(int argc, char *argv[]) {
 
-   int RetVal = 0;
-
    // Initialize the global MPI environment
    MPI_Init(&argc, &argv);
+   MachEnv::init(MPI_COMM_WORLD);
+   MachEnv *DefEnv  = MachEnv::getDefault();
+   MPI_Comm DefComm = DefEnv->getComm();
 
-   // Create reference values based on MPI_COMM_WORLD
-   int WorldSize;
-   MPI_Comm_size(MPI_COMM_WORLD, &WorldSize);
+   // Initialize the Logging system
+   initLogging(DefEnv);
+   LOG_INFO("------ Broadcast Unit Tests ------");
 
    // The subset environments create 4-task sub-environments so
    // make sure the unit test is run with at least 8 to adequately
    // test all subsets.
-   if (WorldSize < 8) {
-      std::cerr << "Please run unit test with at least 8 tasks" << std::endl;
-      std::cout << "MachEnv unit test: FAIL" << std::endl;
-      return -1;
-   }
-
-   // Initialize the Machine Environment class - this also creates
-   // the default MachEnv
-   OMEGA::MachEnv::init(MPI_COMM_WORLD);
-
-   // Get the Default environment
-   OMEGA::MachEnv *DefEnv = OMEGA::MachEnv::getDefault();
-
-   // I4 Broadcast tests
-   TestBroadcast<OMEGA::I4>(DefEnv, "I4", &RetVal);
-
-   // I8 Broadcast tests
-   TestBroadcast<OMEGA::I8>(DefEnv, "I8", &RetVal);
-
-   // R4 Broadcast tests
-   TestBroadcast<OMEGA::R4>(DefEnv, "R4", &RetVal);
-
-   // R8 Broadcast tests
-   TestBroadcast<OMEGA::R8>(DefEnv, "R8", &RetVal);
-
-   // Real Broadcast tests
-   TestBroadcast<OMEGA::Real>(DefEnv, "Real", &RetVal);
-
-   // boolean Broadcast tests
-   TestBroadcast<bool>(DefEnv, "bool", &RetVal);
-
-   // string Broadcast tests
-   TestBroadcast<std::string>(DefEnv, "string", &RetVal);
+   int WorldSize;
+   MPI_Comm_size(DefComm, &WorldSize);
+   if (WorldSize < 8)
+      ABORT_ERROR("BroadcastTest: FAIL Must run with at least 8 tasks");
 
    // Initialize general subset environment
-   int InclSize     = 4;
-   int InclTasks[4] = {1, 2, 5, 7};
-   OMEGA::MachEnv *SubsetEnv =
-       OMEGA::MachEnv::create("Subset", DefEnv, InclSize, InclTasks);
-   OMEGA::I4 MyVal;
+   int InclSize       = 4;
+   int InclTasks[4]   = {1, 2, 5, 7};
+   MachEnv *SubsetEnv = MachEnv::create("Subset", DefEnv, InclSize, InclTasks);
 
-   const int MyTask = DefEnv->getMyTask();
+   // I4 Broadcast tests
+   TestBroadcast<I4>(DefEnv, SubsetEnv, "I4");
 
-   if (MyTask == InclTasks[0])
-      MyVal = 1;
-   else
-      MyVal = -1;
+   // I8 Broadcast tests
+   TestBroadcast<I8>(DefEnv, SubsetEnv, "I8");
 
-   // Test broadcasting value within a subset-env
+   // R4 Broadcast tests
+   TestBroadcast<R4>(DefEnv, SubsetEnv, "R4");
 
-   OMEGA::I4 *pos =
-       std::find(std::begin(InclTasks), std::end(InclTasks), MyTask);
+   // R8 Broadcast tests
+   TestBroadcast<R8>(DefEnv, SubsetEnv, "R8");
 
-   if (pos != std::end(InclTasks))
-      OMEGA::Broadcast(MyVal, SubsetEnv);
+   // Real Broadcast tests
+   TestBroadcast<Real>(DefEnv, SubsetEnv, "Real");
 
-   if (pos != std::end(InclTasks)) {
-      if (MyVal == 1)
-         std::cout << "I4" << " sub-group broadcast at rank " << MyTask
-                   << " : PASS" << std::endl;
-      else {
-         std::cout << "I4" << " sub-group broadcast at rank " << MyTask
-                   << " : FAIL" << std::endl;
-         RetVal += 1;
-      }
-   } else {
-      if (MyVal == -1)
-         std::cout << "I4" << " sub-group broadcast at rank " << MyTask
-                   << " : PASS" << std::endl;
-      else {
-         std::cout << "I4" << " sub-group broadcast at rank " << MyTask
-                   << " : FAIL" << std::endl;
-         RetVal += 1;
-      }
-   }
+   // boolean Broadcast tests
+   TestBroadcast<bool>(DefEnv, SubsetEnv, "bool");
 
-   OMEGA::MachEnv::removeEnv("Subset");
+   // string Broadcast tests
+   TestBroadcast<std::string>(DefEnv, SubsetEnv, "string");
+
+   // Cleanup
+   MachEnv::removeEnv("Subset");
+   LOG_INFO("------ Broadcast Unit Tests Successful ------");
 
    // MPI_Status status;
    MPI_Finalize();
 
-   if (RetVal >= 256)
-      RetVal = 255;
-
-   return RetVal;
+   return 0; // if we made it here, return a success code
 
 } // end of main
 //===-----------------------------------------------------------------------===/
