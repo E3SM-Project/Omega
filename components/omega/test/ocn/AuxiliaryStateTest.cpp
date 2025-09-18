@@ -14,6 +14,7 @@
 #include "Pacer.h"
 #include "TimeStepper.h"
 #include "Tracers.h"
+#include "VertCoord.h"
 #include "mpi.h"
 
 #include <cmath>
@@ -43,7 +44,7 @@ struct TestSetup {
 };
 
 constexpr Geometry Geom   = Geometry::Spherical;
-constexpr int NVertLevels = 60;
+constexpr int NVertLayers = 60;
 
 int initState() {
    int Err = 0;
@@ -107,15 +108,8 @@ int initAuxStateTest(const std::string &mesh) {
       LOG_ERROR("AuxStateTest: error initializing default halo");
    }
 
-   // Horz dimensions created in HorzMesh
+   VertCoord::init1();
    HorzMesh::init();
-   const auto &Mesh = HorzMesh::getDefault();
-   // if NVertLevels is different from what HorzMesh initialized from the
-   // config, reset the vertical dimension
-   if (NVertLevels != Mesh->NVertLevels) {
-      Dimension::destroy("NVertLevels");
-      auto VertDim = Dimension::create("NVertLevels", NVertLevels);
-   }
 
    Tracers::init();
    int StateErr = OceanState::init();
@@ -284,10 +278,12 @@ int testAuxState() {
 void finalizeAuxStateTest() {
    Tracers::clear();
    OceanState::clear();
+   VertCoord::clear();
    Field::clear();
    Dimension::clear();
    TimeStepper::clear();
    HorzMesh::clear();
+   VertCoord::clear();
    Halo::clear();
    Decomp::clear();
    MachEnv::removeAll();

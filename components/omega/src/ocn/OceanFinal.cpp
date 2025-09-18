@@ -18,6 +18,7 @@
 #include "TimeMgr.h"
 #include "TimeStepper.h"
 #include "Tracers.h"
+#include "VertCoord.h"
 
 namespace OMEGA {
 
@@ -35,9 +36,11 @@ int ocnFinalize(const TimeInstant &CurrTime ///< [in] current sim time
    Tendencies::clear();
    AuxiliaryState::clear();
    OceanState::clear();
+   VertCoord::clear();
    Dimension::clear();
    Field::clear();
    HorzMesh::clear();
+   VertCoord::clear();
    Halo::clear();
    Decomp::clear();
    MachEnv::removeAll();

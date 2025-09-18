@@ -78,9 +78,9 @@ void initDimensionTest() {
        Dimension::create("NCells", NCellsGlobal, NCellsSize, CellOffset);
    std::shared_ptr<Dimension> EdgeDim =
        Dimension::create("NEdges", NEdgesGlobal, NEdgesSize, EdgeOffset);
-   I4 NVertLevels = 100;
+   I4 NVertLayers = 100;
    std::shared_ptr<Dimension> VertDim =
-       Dimension::create("NVertLevels", NVertLevels);
+       Dimension::create("NVertLayers", NVertLayers);
 
 } // End initialization of Dimensions
 
@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
       I4 NEdgesLocRef = DefDecomp->NEdgesSize;
       I4 NEdgesGlbRef = DefDecomp->NEdgesGlobal;
       I4 NEdgesOwned  = DefDecomp->NEdgesOwned;
-      I4 NVertLvlsRef = 100;
+      I4 NVertLyrsRef = 100;
 
       // Retrieve the number of defined dimensions
       I4 NDimsRef = 3;
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
       // Check to see if expected dimensions exist (and a non-existent one
       // doesn't)
       if (!Dimension::exists("NCells") or !Dimension::exists("NEdges") or
-          !Dimension::exists("NVertLevels") or Dimension::exists("Garbage"))
+          !Dimension::exists("NVertLayers") or Dimension::exists("Garbage"))
          ABORT_ERROR("DimensionTest: dimension existence function - FAIL");
 
       // Test length retrieval by name
@@ -138,23 +138,23 @@ int main(int argc, char **argv) {
          ABORT_ERROR("DimensionTest: Length retrieval NEdges FAIL {} {} {} {}",
                      NEdgesGlb, NEdgesGlbRef, NEdgesLoc, NEdgesLocRef);
 
-      I4 NVertLvlsGlb = Dimension::getDimLengthGlobal("NVertLevels");
-      I4 NVertLvlsLoc = Dimension::getDimLengthLocal("NVertLevels");
-      if (NVertLvlsGlb != NVertLvlsRef or NVertLvlsLoc != NVertLvlsRef)
+      I4 NVertLyrsGlb = Dimension::getDimLengthGlobal("NVertLayers");
+      I4 NVertLyrsLoc = Dimension::getDimLengthLocal("NVertLayers");
+      if (NVertLyrsGlb != NVertLyrsRef or NVertLyrsLoc != NVertLyrsRef)
          ABORT_ERROR(
-             "DimensionTest: Length retrieval NVertLevels FAIL {} {} {} {}",
-             NVertLvlsGlb, NVertLvlsRef, NVertLvlsLoc, NVertLvlsRef)
+             "DimensionTest: Length retrieval NVertLayers FAIL {} {} {} {}",
+             NVertLyrsGlb, NVertLyrsRef, NVertLyrsLoc, NVertLyrsRef)
 
       // Test distributed property by name
       if (!Dimension::isDistributedDim("NCells") or
           !Dimension::isDistributedDim("NEdges") or
-          Dimension::isDistributedDim("NVertLevels"))
+          Dimension::isDistributedDim("NVertLayers"))
          ABORT_ERROR("DimensionTest: distributed property by name - FAIL");
 
       // Test get offset array by dim name
       HostArray1DI4 OffsetCell = Dimension::getDimOffset("NCells");
       HostArray1DI4 OffsetEdge = Dimension::getDimOffset("NEdges");
-      HostArray1DI4 OffsetVert = Dimension::getDimOffset("NVertLevels");
+      HostArray1DI4 OffsetVert = Dimension::getDimOffset("NVertLayers");
       I4 Count                 = 0;
       for (int N = 0; N < NCellsLocRef; ++N) {
          if (N < NCellsOwned) {
@@ -174,7 +174,7 @@ int main(int argc, char **argv) {
                ++Count;
          }
       }
-      for (int N = 0; N < NVertLvlsRef; ++N) {
+      for (int N = 0; N < NVertLyrsRef; ++N) {
          if (OffsetVert(N) != N)
             ++Count;
       }
@@ -225,12 +225,12 @@ int main(int argc, char **argv) {
             }
             if (Count == 0)
                OffsetPass = true;
-         } else if (MyName == "NVertLevels") {
-            if (LengthLoc == NVertLvlsRef and LengthGlb == NVertLvlsRef and
+         } else if (MyName == "NVertLayers") {
+            if (LengthLoc == NVertLyrsRef and LengthGlb == NVertLyrsRef and
                 !Distrib)
                ScalarPass = true;
             Count = 0;
-            for (int N = 0; N < NVertLvlsRef; ++N) {
+            for (int N = 0; N < NVertLyrsRef; ++N) {
                if (OffsetTest(N) != N)
                   ++Count;
             }

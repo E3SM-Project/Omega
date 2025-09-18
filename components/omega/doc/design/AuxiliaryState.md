@@ -70,14 +70,14 @@ The constructor will be responsible for:
   * registering fields and metadata with the I/O infrastructure
 
 ```c++
-AuxiliaryState(const std::string &Name, const HorzMesh *Mesh, int NVertLevels);
+AuxiliaryState(const std::string &Name, const HorzMesh *Mesh, int NVertLayers);
 ```
 
 The create method will take the same arguments as the constructor, use it to
 create a new auxiliary state, and put it in the static map of all auxiliary
 states. It will return a pointer to the newly created state.
 ```c++
-AuxiliaryState* AuxiliaryState::create(const std::string &Name, const HorzMesh *Mesh, int NVertLevels);
+AuxiliaryState* AuxiliaryState::create(const std::string &Name, const HorzMesh *Mesh, int NVertLayers);
 ```
 
 #### 4.2.2 Initialization

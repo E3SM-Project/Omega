@@ -137,7 +137,7 @@ It is assumed that viscosity and diffusivity will be stored at cell centers. Add
 
 ```c++
 parallelFor(
-    {NCellsAll, NVertLevels}, KOKKOS_LAMBDA(int ICell, int K) {
+    {NCellsAll, NVertLayers}, KOKKOS_LAMBDA(int ICell, int K) {
 
         // Add background contribution to viscosity and diffusivity
         VertViscosity(ICell, K) = BackgroundViscosity;

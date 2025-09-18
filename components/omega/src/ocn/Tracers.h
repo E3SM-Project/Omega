@@ -25,6 +25,7 @@
 #include "Decomp.h"
 #include "Field.h"
 #include "Halo.h"
+#include "VertCoord.h"
 
 namespace OMEGA {
 
@@ -34,7 +35,7 @@ class Tracers {
  private:
    static I4 NumTracers;  ///< Total number of tracers defined at intialization
    static I4 NTimeLevels; ///< Number of time levels in tracer variable arrays
-   static I4 NVertLevels; ///< Number of vertical levels in tracer arrays
+   static I4 NVertLayers; ///< Number of vertical layers in tracer arrays
    static I4 NCellsOwned; ///< Number of cells owned by this task
    static I4 NCellsAll;   ///< Total number of local cells (owned + all halo)
    static I4 NCellsSize;  ///< Array size (incl padding, bndy cell)

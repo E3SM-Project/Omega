@@ -821,6 +821,9 @@ class Clock {
  public:
    // constructors/destructors
 
+   /// Default clock constructor
+   Clock(void);
+
    /// Construct a clock from start time and time step
    Clock(const TimeInstant StartTime, ///< [in] Start time for clock
          const TimeInterval TimeStep  ///< [in] Time step to advance clock

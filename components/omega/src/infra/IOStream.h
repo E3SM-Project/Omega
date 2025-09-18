@@ -260,11 +260,19 @@ class IOStream {
    );
 
    //---------------------------------------------------------------------------
+   /// Overloaded init with no args, helpful for tests where no Clock exists
+   static void init(void);
+
+   //---------------------------------------------------------------------------
    /// Performs a final write of any streams that have the OnShutdown option and
    /// then removes all streams to clean up.
    static void
    finalize(const Clock *ModelClock ///< [in] Model clock needed for time stamps
    );
+
+   //---------------------------------------------------------------------------
+   /// Overloaded finalize with no args, helpful for test where no Clock exists
+   static void finalize(void);
 
    //---------------------------------------------------------------------------
    /// Retrieves a previously defined stream by name.
@@ -313,6 +321,10 @@ class IOStream {
                      Metadata &ReqMetadata,   ///< [inout] Metadata desired
                      bool ForceRead = false ///< [in] opt: read even if not time
    );
+
+   //---------------------------------------------------------------------------
+   /// Overloaded simplified Read, reads stream regardless of time.
+   static Error read(const std::string &StreamName); ///< [in] Name of stream
 
    //---------------------------------------------------------------------------
    /// Writes a stream if it is time.

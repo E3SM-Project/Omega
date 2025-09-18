@@ -112,16 +112,16 @@ void initFieldTest() {
        Dimension::create("NEdges", NEdgesGlobal, NEdgesSize, EdgeOffset);
    std::shared_ptr<Dimension> VrtxDim = Dimension::create(
        "NVertices", NVerticesGlobal, NVerticesSize, VrtxOffset);
-   I4 NVertLevels = 100;
+   I4 NVertLayers = 100;
    std::shared_ptr<Dimension> VertDim =
-       Dimension::create("NVertLevels", NVertLevels);
+       Dimension::create("NVertLayers", NVertLayers);
    I4 NTracers                        = 2;
    std::shared_ptr<Dimension> TrcrDim = Dimension::create("NTracers", NTracers);
    I4 NTime                           = 2;
    std::shared_ptr<Dimension> TimeDim = Dimension::create("NTime", NTime);
    I4 NStuff                          = 2;
    std::shared_ptr<Dimension> StuffDim =
-       Dimension::create("NStuff", NVertLevels);
+       Dimension::create("NStuff", NVertLayers);
 
    // Create a model clock for time info
    Calendar::init("Gregorian");
@@ -170,7 +170,7 @@ void initFieldTest() {
        Field::create("Test1DR4H", "Test 1DR4 field on host", "Units1DR4H",
                      "var_name_1DR4", 0.0, 100000.0, 999, 1, DimNames);
 
-   DimNames[0] = "NVertLevels";
+   DimNames[0] = "NVertLayers";
    auto Test1DR8H =
        Field::create("Test1DR8H", "Test 1DR8 field on host", "Units1DR8H",
                      "var_name_1DR8", 0.0, 100000.0, 999, 1, DimNames);
@@ -192,7 +192,7 @@ void initFieldTest() {
        Field::create("Test1DR4", "Test 1DR4 field on device", "Units1DR4",
                      "var_name_1DR4", 0.0, 100000.0, 999, 1, DimNames);
 
-   DimNames[0] = "NVertLevels";
+   DimNames[0] = "NVertLayers";
    auto Test1DR8 =
        Field::create("Test1DR8", "Test 1DR8 field on device", "Units1DR8",
                      "var_name_1DR8", 0.0, 100000.0, 999, 1, DimNames);
@@ -201,25 +201,25 @@ void initFieldTest() {
    DimNames.resize(2);
 
    DimNames[0] = "NCells";
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
    auto Test2DI4H =
        Field::create("Test2DI4H", "Test 2DI4 field on host", "Units2DI4H",
                      "var_name_2DI4", 0, 100000, 999, 2, DimNames);
 
    DimNames[0] = "NEdges";
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
    auto Test2DI8H =
        Field::create("Test2DI8H", "Test 2DI8 field on host", "Units2DI8H",
                      "var_name_2DI8", 0, 100000, 999, 2, DimNames);
 
    DimNames[0] = "NVertices";
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
    auto Test2DR4H =
        Field::create("Test2DR4H", "Test 2DR4 field on host", "Units2DR4H",
                      "var_name_2DR4", 0.0, 100000.0, 999, 2, DimNames);
 
    DimNames[0] = "NCells";
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
    auto Test2DR8H =
        Field::create("Test2DR8H", "Test 2DR8 field on host", "Units2DR8H",
                      "var_name_2DR8", 0.0, 100000.0, 999, 2, DimNames);
@@ -227,25 +227,25 @@ void initFieldTest() {
    // 2D Fields on device
 
    DimNames[0] = "NCells";
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
    auto Test2DI4 =
        Field::create("Test2DI4", "Test 2DI4 field on device", "Units2DI4",
                      "var_name_2DI4", 0, 100000, 999, 2, DimNames);
 
    DimNames[0] = "NEdges";
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
    auto Test2DI8 =
        Field::create("Test2DI8", "Test 2DI8 field on device", "Units2DI8",
                      "var_name_2DI8", 0, 100000, 999, 2, DimNames);
 
    DimNames[0] = "NVertices";
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
    auto Test2DR4 =
        Field::create("Test2DR4", "Test 2DR4 field on device", "Units2DR4",
                      "var_name_2DR4", 0.0, 100000.0, 999, 2, DimNames);
 
    DimNames[0] = "NEdges";
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
    auto Test2DR8 =
        Field::create("Test2DR8", "Test 2DR8 field on device", "Units2DR8",
                      "var_name_2DR8", 0.0, 100000.0, 999, 2, DimNames);
@@ -254,7 +254,7 @@ void initFieldTest() {
 
    DimNames.resize(3);
    DimNames[0] = "NCells";
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
    DimNames[2] = "NTracers";
    auto Test3DI4 =
        Field::create("Test3DI4", "Test 3DI4 field on device", "Units3DI4",
@@ -262,7 +262,7 @@ void initFieldTest() {
 
    DimNames.resize(4);
    DimNames[0] = "NCells";
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
    DimNames[2] = "NTracers";
    DimNames[3] = "NTime";
    auto Test4DI8 =
@@ -271,7 +271,7 @@ void initFieldTest() {
 
    DimNames.resize(5);
    DimNames[0] = "NCells";
-   DimNames[1] = "NVertLevels";
+   DimNames[1] = "NVertLayers";
    DimNames[2] = "NTracers";
    DimNames[3] = "NTime";
    DimNames[4] = "NStuff";
@@ -300,36 +300,36 @@ void initFieldTest() {
    HostArray1DI4 Data1DI4H("Test1DI4H", NCellsSize);
    HostArray1DI8 Data1DI8H("Test1DI8H", NEdgesSize);
    HostArray1DR4 Data1DR4H("Test1DR4H", NVerticesSize);
-   HostArray1DR8 Data1DR8H("Test1DR8H", NVertLevels);
+   HostArray1DR8 Data1DR8H("Test1DR8H", NVertLayers);
 
-   HostArray2DI4 Data2DI4H("Test2DI4H", NCellsSize, NVertLevels);
-   HostArray2DI8 Data2DI8H("Test2DI8H", NEdgesSize, NVertLevels);
-   HostArray2DR4 Data2DR4H("Test2DR4H", NVerticesSize, NVertLevels);
-   HostArray2DR8 Data2DR8H("Test2DR8H", NCellsSize, NVertLevels);
+   HostArray2DI4 Data2DI4H("Test2DI4H", NCellsSize, NVertLayers);
+   HostArray2DI8 Data2DI8H("Test2DI8H", NEdgesSize, NVertLayers);
+   HostArray2DR4 Data2DR4H("Test2DR4H", NVerticesSize, NVertLayers);
+   HostArray2DR8 Data2DR8H("Test2DR8H", NCellsSize, NVertLayers);
 
    Array1DI4 Data1DI4("Test1DI4", NCellsSize);
    Array1DI8 Data1DI8("Test1DI8", NEdgesSize);
    Array1DR4 Data1DR4("Test1DR4", NVerticesSize);
-   Array1DR8 Data1DR8("Test1DR8", NVertLevels);
+   Array1DR8 Data1DR8("Test1DR8", NVertLayers);
 
-   Array2DI4 Data2DI4("Test2DI4", NCellsSize, NVertLevels);
-   Array2DI8 Data2DI8("Test2DI8", NEdgesSize, NVertLevels);
-   Array2DR4 Data2DR4("Test2DR4", NVerticesSize, NVertLevels);
-   Array2DR8 Data2DR8("Test2DR8", NEdgesSize, NVertLevels);
+   Array2DI4 Data2DI4("Test2DI4", NCellsSize, NVertLayers);
+   Array2DI8 Data2DI8("Test2DI8", NEdgesSize, NVertLayers);
+   Array2DR4 Data2DR4("Test2DR4", NVerticesSize, NVertLayers);
+   Array2DR8 Data2DR8("Test2DR8", NEdgesSize, NVertLayers);
 
-   Array3DI4 Data3DI4("Test3DI4", NCellsSize, NVertLevels, NTracers);
-   Array4DI8 Data4DI8("Test4DI8", NCellsSize, NVertLevels, NTracers, NTime);
-   Array5DR4 Data5DR4("Test5DR4", NCellsSize, NVertLevels, NTracers, NTime,
+   Array3DI4 Data3DI4("Test3DI4", NCellsSize, NVertLayers, NTracers);
+   Array4DI8 Data4DI8("Test4DI8", NCellsSize, NVertLayers, NTracers, NTime);
+   Array5DR4 Data5DR4("Test5DR4", NCellsSize, NVertLayers, NTracers, NTime,
                       NStuff);
 
    // Host arrays vertical vector
-   for (int K = 0; K < NVertLevels; ++K) {
+   for (int K = 0; K < NVertLayers; ++K) {
       Data1DR8H(K) = RefR8 + K;
    }
    // Host arrays on cells
    for (int Cell = 0; Cell < NCellsSize; ++Cell) {
       Data1DI4H(Cell) = RefI4 + Cell;
-      for (int K = 0; K < NVertLevels; ++K) {
+      for (int K = 0; K < NVertLayers; ++K) {
          Data2DI4H(Cell, K) = RefI4 + Cell + K;
          Data2DR8H(Cell, K) = RefR8 + Cell + K;
       }
@@ -337,25 +337,25 @@ void initFieldTest() {
    // Host arrays on edges
    for (int Edge = 0; Edge < NEdgesSize; ++Edge) {
       Data1DI8H(Edge) = RefI8 + Edge;
-      for (int K = 0; K < NVertLevels; ++K) {
+      for (int K = 0; K < NVertLayers; ++K) {
          Data2DI8H(Edge, K) = RefI8 + Edge + K;
       }
    }
    // Host arrays on vertices
    for (int Vrtx = 0; Vrtx < NVerticesSize; ++Vrtx) {
       Data1DR4H(Vrtx) = RefR4 + Vrtx;
-      for (int K = 0; K < NVertLevels; ++K) {
+      for (int K = 0; K < NVertLayers; ++K) {
          Data2DR4H(Vrtx, K) = RefR4 + Vrtx + K;
       }
    }
    // Device array vertical vector
    parallelFor(
-       {NVertLevels}, KOKKOS_LAMBDA(int K) { Data1DR8(K) = RefR8 + K; });
+       {NVertLayers}, KOKKOS_LAMBDA(int K) { Data1DR8(K) = RefR8 + K; });
    // Device arrays on cells
    parallelFor(
        {NCellsSize}, KOKKOS_LAMBDA(int Cell) {
           Data1DI4(Cell) = RefI4 + Cell;
-          for (int K = 0; K < NVertLevels; ++K) {
+          for (int K = 0; K < NVertLayers; ++K) {
              Data2DI4(Cell, K) = RefI4 + Cell + K;
              for (int Trcr = 0; Trcr < NTracers; ++Trcr) {
                 Data3DI4(Cell, K, Trcr) = RefI4 + Cell + K + Trcr;
@@ -374,7 +374,7 @@ void initFieldTest() {
    parallelFor(
        {NEdgesSize}, KOKKOS_LAMBDA(int Edge) {
           Data1DI8(Edge) = RefI8 + Edge;
-          for (int K = 0; K < NVertLevels; ++K) {
+          for (int K = 0; K < NVertLayers; ++K) {
              Data2DI8(Edge, K) = RefI8 + Edge + K;
              Data2DR8(Edge, K) = RefR8 + Edge + K;
           }
@@ -383,7 +383,7 @@ void initFieldTest() {
    parallelFor(
        {NVerticesSize}, KOKKOS_LAMBDA(int Vrtx) {
           Data1DR4(Vrtx) = RefR4 + Vrtx;
-          for (int K = 0; K < NVertLevels; ++K) {
+          for (int K = 0; K < NVertLayers; ++K) {
              Data2DR4(Vrtx, K) = RefR4 + Vrtx + K;
           }
        });
@@ -442,7 +442,7 @@ int main(int argc, char **argv) {
       I4 NCellsSize     = DefDecomp->NCellsSize;
       I4 NEdgesSize     = DefDecomp->NEdgesSize;
       I4 NVerticesSize  = DefDecomp->NVerticesSize;
-      I4 NVertLevels    = 100;
+      I4 NVertLayers    = 100;
       I4 NTracers       = 2;
       I4 NTime          = 2;
       I4 NStuff         = 2;
@@ -605,7 +605,7 @@ int main(int argc, char **argv) {
       TstEval<std::string>("Retrieve dim names 5 result 1", DimNames[0],
                            "NCells", Err);
       TstEval<std::string>("Retrieve dim names 5 result 2", DimNames[1],
-                           "NVertLevels", Err);
+                           "NVertLayers", Err);
       TstEval<std::string>("Retrieve dim names 5 result 3", DimNames[2],
                            "NTracers", Err);
       TstEval<std::string>("Retrieve dim names 5 result 4", DimNames[3],
@@ -721,7 +721,7 @@ int main(int argc, char **argv) {
       // Test values for correctness
       // Host arrays vertical vector
       int DataCount1 = 0;
-      for (int K = 0; K < NVertLevels; ++K) {
+      for (int K = 0; K < NVertLayers; ++K) {
          if (Data1DR8H(K) != RefR8 + K)
             ++DataCount1;
       }
@@ -734,7 +734,7 @@ int main(int argc, char **argv) {
       for (int Cell = 0; Cell < NCellsSize; ++Cell) {
          if (Data1DI4H(Cell) != RefI4 + Cell)
             ++DataCount1;
-         for (int K = 0; K < NVertLevels; ++K) {
+         for (int K = 0; K < NVertLayers; ++K) {
             if (Data2DI4H(Cell, K) != RefI4 + Cell + K)
                ++DataCount2;
             if (Data2DR8H(Cell, K) != RefR8 + Cell + K)
@@ -751,7 +751,7 @@ int main(int argc, char **argv) {
       for (int Edge = 0; Edge < NEdgesSize; ++Edge) {
          if (Data1DI8H(Edge) != RefI8 + Edge)
             ++DataCount1;
-         for (int K = 0; K < NVertLevels; ++K) {
+         for (int K = 0; K < NVertLayers; ++K) {
             if (Data2DI8H(Edge, K) != RefI8 + Edge + K)
                ++DataCount2;
          }
@@ -765,7 +765,7 @@ int main(int argc, char **argv) {
       for (int Vrtx = 0; Vrtx < NVerticesSize; ++Vrtx) {
          if (Data1DR4H(Vrtx) != RefR4 + Vrtx)
             ++DataCount1;
-         for (int K = 0; K < NVertLevels; ++K) {
+         for (int K = 0; K < NVertLayers; ++K) {
             if (Data2DR4H(Vrtx, K) != RefR4 + Vrtx + K)
                ++DataCount2;
          }
@@ -779,7 +779,7 @@ int main(int argc, char **argv) {
 
       // Device array vertical vector
       parallelReduce(
-          {NVertLevels},
+          {NVertLayers},
           KOKKOS_LAMBDA(int K, I4 &LCount) {
              if (Data1DR8(K) != RefR8 + K)
                 ++LCount;
@@ -794,7 +794,7 @@ int main(int argc, char **argv) {
           KOKKOS_LAMBDA(int Cell, I4 &LCount) {
              if (Data1DI4(Cell) != RefI4 + Cell)
                 ++LCount;
-             for (int K = 0; K < NVertLevels; ++K) {
+             for (int K = 0; K < NVertLayers; ++K) {
                 if (Data2DI4(Cell, K) != RefI4 + Cell + K)
                    ++LCount;
                 for (int Trcr = 0; Trcr < NTracers; ++Trcr) {
@@ -822,7 +822,7 @@ int main(int argc, char **argv) {
           KOKKOS_LAMBDA(int Edge, I4 &LCount) {
              if (Data1DI8(Edge) != RefI8 + Edge)
                 ++LCount;
-             for (int K = 0; K < NVertLevels; ++K) {
+             for (int K = 0; K < NVertLayers; ++K) {
                 if (Data2DI8(Edge, K) != RefI8 + Edge + K)
                    ++LCount;
                 if (Data2DR8(Edge, K) != RefR8 + Edge + K)
@@ -838,7 +838,7 @@ int main(int argc, char **argv) {
           KOKKOS_LAMBDA(int Vrtx, I4 &LCount) {
              if (Data1DR4(Vrtx) != RefR4 + Vrtx)
                 ++LCount;
-             for (int K = 0; K < NVertLevels; ++K) {
+             for (int K = 0; K < NVertLayers; ++K) {
                 if (Data2DR4(Vrtx, K) != RefR4 + Vrtx + K)
                    ++LCount;
              }

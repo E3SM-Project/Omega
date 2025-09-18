@@ -1,5 +1,4 @@
-//===-- Test driver for OMEGA Tracers -----------------------------*- C++
-//-*-===/
+//===-- Test driver for OMEGA Tracers -----------------------------*- C++-*-===/
 //
 /// \file
 /// \brief Test driver for OMEGA tracers class
@@ -23,6 +22,7 @@
 #include "OmegaKokkos.h"
 #include "Pacer.h"
 #include "TimeStepper.h"
+#include "VertCoord.h"
 #include "mpi.h"
 
 #include <iostream>
@@ -69,6 +69,9 @@ I4 initTracersTest() {
       return Err;
    }
 
+   // Initialize the vertical coordinate (phase 1)
+   VertCoord::init1();
+
    // Initialize the default mesh
    HorzMesh::init();
 
@@ -114,7 +117,7 @@ int main(int argc, char *argv[]) {
       I4 NTracers    = Tracers::getNumTracers();
       I4 NCellsOwned = DefHorzMesh->NCellsOwned;
       I4 NCellsSize  = DefHorzMesh->NCellsSize;
-      I4 NVertLevels = DefHorzMesh->NVertLevels;
+      I4 NVertLayers = VertCoord::getDefault()->NVertLayers;
       I4 NTimeLevels = DefTimeStepper->getNTimeLevels();
 
       // Get group names
@@ -229,7 +232,7 @@ int main(int argc, char *argv[]) {
 
       // Reference host array of current time level
       HostArray3DReal RefHostArray =
-          HostArray3DReal("RefHostArray", NTracers, NCellsSize, NVertLevels);
+          HostArray3DReal("RefHostArray", NTracers, NCellsSize, NVertLayers);
 
       // intialize tracer elements of all time levels
       for (I4 TimeLevel = 1; TimeLevel + NTimeLevels > 1; --TimeLevel) {
@@ -244,7 +247,7 @@ int main(int argc, char *argv[]) {
 
          for (I4 Tracer = 0; Tracer < NTracers; ++Tracer) {
             for (I4 Cell = 0; Cell < NCellsSize; Cell++) {
-               for (I4 Vert = 0; Vert < NVertLevels; Vert++) {
+               for (I4 Vert = 0; Vert < NVertLayers; Vert++) {
                   TempHostArray(Tracer, Cell, Vert) =
                       RefReal + Tracer + Cell + Vert + TimeLevel;
                   if (TimeLevel == 1)
@@ -258,7 +261,7 @@ int main(int argc, char *argv[]) {
 
       // Reference device array of new time level
       Array3DReal RefArray =
-          Array3DReal("RefArray", NTracers, NCellsSize, NVertLevels);
+          Array3DReal("RefArray", NTracers, NCellsSize, NVertLayers);
 
       Err = Tracers::getAll(RefArray, 1);
       if (Err != 0) {
@@ -292,7 +295,7 @@ int main(int argc, char *argv[]) {
 
       // check if time level shift works
       parallelReduce(
-          "reduce1", {NTracers, NCellsOwned, NVertLevels},
+          "reduce1", {NTracers, NCellsOwned, NVertLayers},
           KOKKOS_LAMBDA(I4 Tracer, I4 Cell, I4 Vert, I4 & Accum) {
              if (std::abs(CurArray(Tracer, Cell, Vert) -
                           RefArray(Tracer, Cell, Vert)) > 1e-9) {
@@ -327,7 +330,7 @@ int main(int argc, char *argv[]) {
          count = -1;
 
          parallelReduce(
-             "reduce2", {NCellsOwned, NVertLevels},
+             "reduce2", {NCellsOwned, NVertLayers},
              KOKKOS_LAMBDA(I4 Cell, I4 Vert, I4 & Accum) {
                 if (std::abs(CurTracer(Cell, Vert) -
                              (RefReal + Tracer + Cell + Vert + 1)) > 1e-9) {
@@ -358,7 +361,7 @@ int main(int argc, char *argv[]) {
          count = -1;
 
          parallelReduce(
-             "reduce3", {NCellsOwned, NVertLevels},
+             "reduce3", {NCellsOwned, NVertLayers},
              KOKKOS_LAMBDA(I4 Cell, I4 Vert, I4 & Accum) {
                 if (std::abs(RefFieldData(Cell, Vert) -
                              TestFieldData(Cell, Vert)) > 1e-9) {
@@ -394,7 +397,7 @@ int main(int argc, char *argv[]) {
          count = -1;
 
          parallelReduce(
-             "reduce4", {NCellsOwned, NVertLevels},
+             "reduce4", {NCellsOwned, NVertLayers},
              KOKKOS_LAMBDA(I4 Cell, I4 Vert, I4 & Accum) {
                 if (std::abs(RefFieldData(Cell, Vert) -
                              TestFieldData(Cell, Vert)) > 1e-9) {
@@ -424,7 +427,7 @@ int main(int argc, char *argv[]) {
       count = -1;
 
       parallelReduce(
-          "reduce5", {NCellsOwned, NVertLevels},
+          "reduce5", {NCellsOwned, NVertLayers},
           KOKKOS_LAMBDA(I4 Cell, I4 Vert, I4 & Accum) {
              if (std::abs(SaltTracerByName(Cell, Vert) -
                           SaltTracerByIndexVar(Cell, Vert)) > 1e-9) {
@@ -459,7 +462,7 @@ int main(int argc, char *argv[]) {
          }
 
          for (I4 Cell = 0; Cell < NCellsOwned; Cell++) {
-            for (I4 Vert = 0; Vert < NVertLevels; Vert++) {
+            for (I4 Vert = 0; Vert < NVertLayers; Vert++) {
                if (std::abs(RefHostArray(Tracer, Cell, Vert) -
                             TestHostArray(Cell, Vert)) > 1e-9)
                   ++count;
@@ -479,6 +482,7 @@ int main(int argc, char *argv[]) {
       Tracers::clear();
       TimeStepper::clear();
       HorzMesh::clear();
+      VertCoord::clear();
       Halo::clear();
       Decomp::clear();
       MachEnv::removeAll();

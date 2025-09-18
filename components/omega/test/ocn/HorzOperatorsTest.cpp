@@ -11,6 +11,7 @@
 #include "OceanTestCommon.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
+#include "VertCoord.h"
 #include "mpi.h"
 
 #include <cmath>
@@ -187,10 +188,10 @@ int testDivergence(Real RTol) {
    TestSetup Setup;
 
    const auto &Mesh      = HorzMesh::getDefault();
-   const int NVertLevels = 16;
+   const int NVertLayers = 16;
 
    // Prepare operator input
-   Array2DReal VecEdge("VecEdge", Mesh->NEdgesSize, NVertLevels);
+   Array2DReal VecEdge("VecEdge", Mesh->NEdgesSize, NVertLayers);
    Err += setVectorEdge(
        KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
           VecField[0] = Setup.exactVecX(X, Y);
@@ -199,16 +200,16 @@ int testDivergence(Real RTol) {
        VecEdge, EdgeComponent::Normal, Geom, Mesh);
 
    // Compute exact result
-   Array2DReal ExactDivCell("ExactDivCell", Mesh->NCellsOwned, NVertLevels);
+   Array2DReal ExactDivCell("ExactDivCell", Mesh->NCellsOwned, NVertLayers);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.exactDivVec(X, Y); },
        ExactDivCell, Geom, Mesh, OnCell, ExchangeHalos::No);
 
    // Compute numerical result
-   Array2DReal NumDivCell("NumDivCell", Mesh->NCellsOwned, NVertLevels);
+   Array2DReal NumDivCell("NumDivCell", Mesh->NCellsOwned, NVertLayers);
    DivergenceOnCell DivergenceCell(Mesh);
    parallelFor(
-       {Mesh->NCellsOwned, NVertLevels}, KOKKOS_LAMBDA(int ICell, int K) {
+       {Mesh->NCellsOwned, NVertLayers}, KOKKOS_LAMBDA(int ICell, int K) {
           DivergenceCell(NumDivCell, ICell, K, VecEdge);
        });
 
@@ -231,10 +232,10 @@ int testGradient(Real RTol) {
    TestSetup Setup;
 
    const auto &Mesh      = HorzMesh::getDefault();
-   const int NVertLevels = 16;
+   const int NVertLayers = 16;
 
    // Prepare operator input
-   Array2DReal ScalarCell("ScalarCell", Mesh->NCellsSize, NVertLevels);
+   Array2DReal ScalarCell("ScalarCell", Mesh->NCellsSize, NVertLayers);
    Err += setScalar(
        KOKKOS_LAMBDA(Real Coord1, Real Coord2) {
           return Setup.exactScalar(Coord1, Coord2);
@@ -242,7 +243,7 @@ int testGradient(Real RTol) {
        ScalarCell, Geom, Mesh, OnCell);
 
    // Compute exact result
-   Array2DReal ExactGradEdge("ExactGradEdge", Mesh->NEdgesOwned, NVertLevels);
+   Array2DReal ExactGradEdge("ExactGradEdge", Mesh->NEdgesOwned, NVertLayers);
    Err += setVectorEdge(
        KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
           VecField[0] = Setup.exactGradScalarX(X, Y);
@@ -252,9 +253,9 @@ int testGradient(Real RTol) {
 
    // Compute numerical result
    GradientOnEdge GradientEdge(Mesh);
-   Array2DReal NumGradEdge("NumGradEdge", Mesh->NEdgesOwned, NVertLevels);
+   Array2DReal NumGradEdge("NumGradEdge", Mesh->NEdgesOwned, NVertLayers);
    parallelFor(
-       {Mesh->NEdgesOwned, NVertLevels}, KOKKOS_LAMBDA(int IEdge, int K) {
+       {Mesh->NEdgesOwned, NVertLayers}, KOKKOS_LAMBDA(int IEdge, int K) {
           GradientEdge(NumGradEdge, IEdge, K, ScalarCell);
        });
 
@@ -276,10 +277,10 @@ int testCurl(Real RTol) {
    int Err = 0;
    TestSetup Setup;
    const auto &Mesh      = HorzMesh::getDefault();
-   const int NVertLevels = 16;
+   const int NVertLayers = 16;
 
    // Prepare operator input
-   Array2DReal VecEdge("VecEdge", Mesh->NEdgesSize, NVertLevels);
+   Array2DReal VecEdge("VecEdge", Mesh->NEdgesSize, NVertLayers);
    Err += setVectorEdge(
        KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
           VecField[0] = Setup.exactVecX(X, Y);
@@ -289,17 +290,17 @@ int testCurl(Real RTol) {
 
    // Compute exact result
    Array2DReal ExactCurlVertex("ExactCurlVertex", Mesh->NVerticesOwned,
-                               NVertLevels);
+                               NVertLayers);
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.exactCurlVec(X, Y); },
        ExactCurlVertex, Geom, Mesh, OnVertex, ExchangeHalos::No);
 
    // Compute numerical result
    Array2DReal NumCurlVertex("NumCurlVertex", Mesh->NVerticesOwned,
-                             NVertLevels);
+                             NVertLayers);
    CurlOnVertex CurlVertex(Mesh);
    parallelFor(
-       {Mesh->NVerticesOwned, NVertLevels}, KOKKOS_LAMBDA(int IVertex, int K) {
+       {Mesh->NVerticesOwned, NVertLayers}, KOKKOS_LAMBDA(int IVertex, int K) {
           CurlVertex(NumCurlVertex, IVertex, K, VecEdge);
        });
 
@@ -323,10 +324,10 @@ int testRecon(Real RTol) {
    TestSetup Setup;
 
    const auto &Mesh      = HorzMesh::getDefault();
-   const int NVertLevels = 16;
+   const int NVertLayers = 16;
 
    // Prepare operator input
-   Array2DReal VecEdge("VecEdge", Mesh->NEdgesSize, NVertLevels);
+   Array2DReal VecEdge("VecEdge", Mesh->NEdgesSize, NVertLayers);
    Err += setVectorEdge(
        KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
           VecField[0] = Setup.exactVecX(X, Y);
@@ -335,7 +336,7 @@ int testRecon(Real RTol) {
        VecEdge, EdgeComponent::Normal, Geom, Mesh);
 
    // Compute exact result
-   Array2DReal ExactReconEdge("ExactReconEdge", Mesh->NEdgesOwned, NVertLevels);
+   Array2DReal ExactReconEdge("ExactReconEdge", Mesh->NEdgesOwned, NVertLayers);
 
    Err += setVectorEdge(
        KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
@@ -346,10 +347,10 @@ int testRecon(Real RTol) {
        ExchangeHalos::No);
 
    // Compute numerical result
-   Array2DReal NumReconEdge("NumReconEdge", Mesh->NEdgesOwned, NVertLevels);
+   Array2DReal NumReconEdge("NumReconEdge", Mesh->NEdgesOwned, NVertLayers);
    TangentialReconOnEdge TanReconEdge(Mesh);
    parallelFor(
-       {Mesh->NEdgesOwned, NVertLevels}, KOKKOS_LAMBDA(int IEdge, int K) {
+       {Mesh->NEdgesOwned, NVertLayers}, KOKKOS_LAMBDA(int IEdge, int K) {
           TanReconEdge(NumReconEdge, IEdge, K, VecEdge);
        });
 
@@ -449,6 +450,8 @@ int initOperatorsTest(const std::string &MeshFile) {
       LOG_ERROR("OperatorsTest: error initializing default halo");
    }
 
+   VertCoord::init1();
+
    HorzMesh::init();
 
    return Err;
@@ -456,6 +459,7 @@ int initOperatorsTest(const std::string &MeshFile) {
 
 void finalizeOperatorsTest() {
    HorzMesh::clear();
+   VertCoord::clear();
    Dimension::clear();
    Halo::clear();
    Decomp::clear();

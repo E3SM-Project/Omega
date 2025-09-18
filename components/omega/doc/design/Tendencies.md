@@ -66,14 +66,14 @@ The constructor will be responsible for:
   * allocating tendency arrays
 
 ```c++
-Tendencies(const std::string &Name, const HorzMesh *Mesh, int NVertLevels, Config *Options);
+Tendencies(const std::string &Name, const HorzMesh *Mesh, int NVertLayers, Config *Options);
 ```
 
 The create method will take the same arguments as the constructor, use it to
 create a new tendencies instance, and put it in the static map of all tendencies.
 It will return a pointer to the newly created object.
 ```c++
-Tendencies* Tendencies::create(const std::string &Name, const HorzMesh *Mesh, int NVertLevels, Config *Options);
+Tendencies* Tendencies::create(const std::string &Name, const HorzMesh *Mesh, int NVertLayers, Config *Options);
 ```
 
 #### 4.2.2 Initialization

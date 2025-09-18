@@ -142,7 +142,7 @@ defined using:
    int DimID = IO::defineDim(FileID, DimName, Length);
 ```
 where FileID is the ID of an open file, the DimName is a ``std::string``
-with the dimension name (eg NCells, NEdges, NVertices, NVertLevels or
+with the dimension name (eg NCells, NEdges, NVertices, NVertLayers or
 NTracers), length is the length of the full global array and DimID is
 the ID assigned to this dimension. Note that for reading a file, we
 supply the function:
@@ -169,14 +169,14 @@ when the IO system was initialized, but can also be set explicitly to
 is generally preferred (see [UserGuide](#omega-user-IO)). The GlobalIndx
 array describes the global location (as a zero-based offset) of each
 local array entry. This can be computed from the Omega Default Decomp
-arrays. For example, an array dimensioned (NCellsAll,NVertLevels) would
+arrays. For example, an array dimensioned (NCellsAll,NVertLayers) would
 have an offset computed using:
 ```c++
-   std::vector<int> OffsetCell(NCellsAll*NVertLevels,-1);
+   std::vector<int> OffsetCell(NCellsAll*NVertLayers,-1);
    int Add = 0;
    for (int Cell; Cell = 0; Cell < NCellsOwned){
-      for (int k; k = 0; k < NVertLevels){
-         OffsetCell[Add] = (CellIDH(Cell)-1)*NVertLevels + k;
+      for (int k; k = 0; k < NVertLayers){
+         OffsetCell[Add] = (CellIDH(Cell)-1)*NVertLayers + k;
          Add++;
       }
    }

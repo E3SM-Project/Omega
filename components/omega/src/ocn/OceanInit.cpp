@@ -25,6 +25,7 @@
 #include "TimeMgr.h"
 #include "TimeStepper.h"
 #include "Tracers.h"
+#include "VertCoord.h"
 
 #include "mpi.h"
 
@@ -81,22 +82,9 @@ int initOmegaModules(MPI_Comm Comm) {
       ABORT_ERROR("ocnInit: Error initializing default halo");
    }
 
+   VertCoord::init1();
    HorzMesh::init();
-
-   // Create the vertical dimension - this will eventually move to
-   // a vertical mesh later
-   Config *OmegaConfig = Config::getOmegaConfig();
-   Config DimConfig("Dimension");
-   Error ConfigErr = OmegaConfig->get(DimConfig);
-   CHECK_ERROR_ABORT(ConfigErr, "ocnInit: Dimension group not found in Config");
-
-   I4 NVertLevels;
-   ConfigErr += DimConfig.get("NVertLevels", NVertLevels);
-   CHECK_ERROR_ABORT(ConfigErr,
-                     "ocnInit: NVertLevels not found in Dimension Config");
-
-   auto VertDim = OMEGA::Dimension::create("NVertLevels", NVertLevels);
-
+   VertCoord::init2();
    Tracers::init();
    AuxiliaryState::init();
    Tendencies::init();

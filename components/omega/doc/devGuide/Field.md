@@ -24,7 +24,7 @@ Field::init();
 ```
 which primarily defines the CodeMeta and SimMeta fields for later use.
 For array fields, the appropriate Dimensions must be defined. The default
-dimensions (eg NCells, NEdges, NVertLevels) will be defined by the relevant
+dimensions (eg NCells, NEdges, NVertLayers) will be defined by the relevant
 Mesh initialization and should be done before any Fields are defined.
 See {ref}`omega-dev-dimension`.
 

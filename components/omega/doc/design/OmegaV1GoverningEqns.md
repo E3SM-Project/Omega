@@ -1,3 +1,4 @@
+(omega-design-governing-eqns-omega1)=
 # Omega V1: Governing Equations
 
 <!--

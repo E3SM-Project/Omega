@@ -40,7 +40,7 @@ class OceanState {
    OceanState(const std::string &Name, ///< [in] Name for mesh
               HorzMesh *Mesh,          ///< [in] Horizontal mesh
               Halo *MeshHalo_,         ///< [in] Halo for Mesh
-              const int NVertLevels_,  ///< [in] Number of vertical levels
+              const int NVertLayers_,  ///< [in] Number of vertical layers
               const int NTimeLevels_   ///< [in] Number of time levels
    );
 
@@ -78,7 +78,7 @@ class OceanState {
    static const I4 MaxTimeLevels = 5; ///< Maximum number of time levels
 
    I4 NTimeLevels; ///< Number of time levels in state variable arrays
-   I4 NVertLevels; ///< Number of vertical levels in state variable arrays
+   I4 NVertLayers; ///< Number of vertical layers in state variable arrays
 
    // Prognostic variables
 
@@ -105,7 +105,7 @@ class OceanState {
    create(const std::string &Name, ///< [in] Name for mesh
           HorzMesh *Mesh,          ///< [in] Horizontal mesh
           Halo *MeshHalo,          ///< [in] Halo for Mesh
-          const int NVertLevels,   ///< [in] Number of vertical levels
+          const int NVertLayers,   ///< [in] Number of vertical layers
           const int NTimeLevels    ///< [in] Number of time levels
    );
 

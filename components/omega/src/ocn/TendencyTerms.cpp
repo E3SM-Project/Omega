@@ -14,6 +14,7 @@
 #include "HorzMesh.h"
 #include "OceanState.h"
 #include "Tracers.h"
+#include "VertCoord.h"
 
 namespace OMEGA {
 
@@ -47,9 +48,10 @@ VelocityHyperDiffOnEdge::VelocityHyperDiffOnEdge(const HorzMesh *Mesh)
 WindForcingOnEdge::WindForcingOnEdge(const HorzMesh *Mesh)
     : Enabled(false), EdgeMask(Mesh->EdgeMask) {}
 
-BottomDragOnEdge::BottomDragOnEdge(const HorzMesh *Mesh)
+BottomDragOnEdge::BottomDragOnEdge(const HorzMesh *Mesh,
+                                   const VertCoord *VCoord)
     : Enabled(false), Coeff(0), CellsOnEdge(Mesh->CellsOnEdge),
-      NVertLevels(Mesh->NVertLevels), EdgeMask(Mesh->EdgeMask) {}
+      NVertLayers(VCoord->NVertLayers), EdgeMask(Mesh->EdgeMask) {}
 
 TracerHorzAdvOnCell::TracerHorzAdvOnCell(const HorzMesh *Mesh)
     : NEdgesOnCell(Mesh->NEdgesOnCell), EdgesOnCell(Mesh->EdgesOnCell),

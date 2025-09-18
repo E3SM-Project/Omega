@@ -53,7 +53,7 @@ All tracers are stored in a vector of 3-dimensional device and host arrays.
 ```
 
 Each device and host array in the vector has dimensions corresponding to the
-number of tracers, the number of cells in the rank, and the vertical levels.
+number of tracers, the number of cells in the rank, and the vertical layers.
 
 The host tracer array (`TracerArraysH`) is internally managed, so users
 should not directly modify it in most cases.
