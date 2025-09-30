@@ -409,6 +409,7 @@ int main(int argc, char *argv[]) {
 
    RetVal += timeStepperTest();
 
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 

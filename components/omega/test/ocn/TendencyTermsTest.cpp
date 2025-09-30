@@ -1096,6 +1096,7 @@ int main(int argc, char *argv[]) {
 
    RetErr = tendencyTermsTest();
 
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 

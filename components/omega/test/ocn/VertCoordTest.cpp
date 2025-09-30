@@ -596,6 +596,7 @@ int main(int argc, char *argv[]) {
       Decomp::clear();
       MachEnv::removeAll();
    }
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 

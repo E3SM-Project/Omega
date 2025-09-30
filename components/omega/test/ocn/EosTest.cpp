@@ -361,6 +361,7 @@ int main(int argc, char *argv[]) {
    RetVal += eosTest();
 
    Eos::destroyInstance();
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 

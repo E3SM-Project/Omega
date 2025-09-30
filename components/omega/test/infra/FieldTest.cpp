@@ -888,6 +888,7 @@ int main(int argc, char **argv) {
    // Clean up environments
    Dimension::clear();
    Decomp::clear();
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 

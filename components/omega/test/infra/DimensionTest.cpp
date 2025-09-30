@@ -269,6 +269,7 @@ int main(int argc, char **argv) {
    LOG_INFO("------ Dimension unit tests successful ------");
    // Clean up environments
    Decomp::clear();
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 

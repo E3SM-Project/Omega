@@ -783,6 +783,7 @@ int main(int argc, char *argv[]) {
       if (Err == 0)
          LOG_INFO("HorzMeshTest: Successful completion");
    }
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 

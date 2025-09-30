@@ -499,6 +499,7 @@ int main(int argc, char *argv[]) {
 
    RetVal += operatorsTest();
 
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 
