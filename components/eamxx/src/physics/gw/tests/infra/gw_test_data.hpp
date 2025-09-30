@@ -3,7 +3,7 @@
 
 #include "physics/gw/gw_functions.hpp"
 #include "physics/share/physics_test_data.hpp"
-#include "share/eamxx_types.hpp"
+#include "share/core/eamxx_types.hpp"
 
 #include <array>
 #include <utility>
@@ -327,21 +327,28 @@ struct GwDragProfData : public PhysicsTestData {
 
   GwDragProfData(Int pcnst_, Int ncol_, bool do_taper_, Real dt_, Real effgw_, GwInit init_) :
     PhysicsTestData({
+      // 1d
       {ncol_},
+      // 2d
       {ncol_, init_.pver},
       {ncol_, init_.pver + 1},
       {ncol_, init_.pgwv*2 + 1},
+      // 3d
       {ncol_, init_.pver, pcnst_},
       {ncol_, init_.pgwv*2 + 1, init_.pver + 1},
       {ncol_, init_.pver + 1, 4},
       {ncol_, init_.pver, init_.pgwv*2 + 1},
+      // 1d
       {ncol_}
     },
     {
+      // 1d
       {&lat, &xv, &yv},
+      // 2d
       {&t, &pmid, &dpm, &rdpm, &nm, &ubm, &dse, &utgw, &vtgw, &ttgw, &dttdf, &dttke},
       {&ti, &pint, &piln, &rhoi, &ni, &ubi, &kvtt, &egwdffi},
       {&c},
+      // 3d
       {&q, &qtgw},
       {&tau},
       {&taucd},
@@ -851,16 +858,93 @@ struct GwOroSrcData : public PhysicsTestData {
   }
 };
 
+struct VdLuDecompData : public PhysicsTestData {
+  // Inputs
+  Int ncol, ntop, nbot;
+  Real *ksrf, *kv, *tmpi, *rpdel, *cc_top;
+  Real ztodt;
+  GwInit init;
+
+  // Outputs
+  Real *decomp_ca, *decomp_cc, *decomp_dnom, *decomp_ze;
+
+  VdLuDecompData(Int ncol_, Int ntop_, Int nbot_, Real ztodt_, GwInit init_) :
+    PhysicsTestData({
+      {ncol_},
+      {ncol_, init_.pver + 1},
+      {ncol_, init_.pver}
+    },
+    {
+      {&ksrf, &cc_top},
+      {&kv, &tmpi},
+      {&rpdel, &decomp_ca, &decomp_cc, &decomp_dnom, &decomp_ze}
+    }),
+    ncol(ncol_), ntop(ntop_), nbot(nbot_), ztodt(ztodt_), init(init_)
+  {}
+
+  PTD_STD_DEF_INIT(VdLuDecompData, 4, ncol, ntop, nbot, ztodt);
+
+  template <ekat::TransposeDirection::Enum D>
+  void transition()
+  {
+    PhysicsTestData::transition<D>();
+
+    init.transition<D>();
+
+    shift_int_scalar<D>(ntop);
+    shift_int_scalar<D>(nbot);
+  }
+};
+
+struct VdLuSolveData : public PhysicsTestData {
+  // Inputs
+  Int ncol, ntop, nbot;
+  Real *decomp_ca, *decomp_cc, *decomp_dnom, *decomp_ze, *cd_top;
+  GwInit init;
+
+  // Inputs/Outputs
+  Real *q;
+
+  VdLuSolveData(Int ncol_, Int ntop_, Int nbot_, GwInit init_) :
+    PhysicsTestData({
+      {ncol_, init_.pver},
+      {ncol_}
+    },
+    {
+      {&q, &decomp_ca, &decomp_cc, &decomp_dnom, &decomp_ze},
+      {&cd_top}
+    }),
+    ncol(ncol_), ntop(ntop_), nbot(nbot_), init(init_)
+  {}
+
+  PTD_STD_DEF_INIT(VdLuSolveData, 3, ncol, ntop, nbot);
+
+  template <ekat::TransposeDirection::Enum D>
+  void transition()
+  {
+    PhysicsTestData::transition<D>();
+
+    init.transition<D>();
+
+    shift_int_scalar<D>(ntop);
+    shift_int_scalar<D>(nbot);
+  }
+};
+
 // Glue functions to call fortran from from C++ with the Data struct
 void gwd_compute_tendencies_from_stress_divergence(GwdComputeTendenciesFromStressDivergenceData& d);
 void gwd_compute_tendencies_from_stress_divergence_f(GwdComputeTendenciesFromStressDivergenceData& d);
+void gw_prof_f(GwProfData& d);
 void gw_prof(GwProfData& d);
 void momentum_energy_conservation_f(MomentumEnergyConservationData& d);
 void momentum_energy_conservation(MomentumEnergyConservationData& d);
 void gwd_compute_stress_profiles_and_diffusivities_f(GwdComputeStressProfilesAndDiffusivitiesData& d);
 void gwd_compute_stress_profiles_and_diffusivities(GwdComputeStressProfilesAndDiffusivitiesData& d);
 void gwd_project_tau(GwdProjectTauData& d);
+void gwd_project_tau_f(GwdProjectTauData& d);
+void gwd_precalc_rhoi_f(GwdPrecalcRhoiData& d);
 void gwd_precalc_rhoi(GwdPrecalcRhoiData& d);
+void gw_drag_prof_f(GwDragProfData& d);
 void gw_drag_prof(GwDragProfData& d);
 void gw_front_project_winds(GwFrontProjectWindsData& d);
 void gw_front_gw_sources(GwFrontGwSourcesData& d);
@@ -870,9 +954,15 @@ void gw_heating_depth(GwHeatingDepthData& d);
 void gw_storm_speed(GwStormSpeedData& d);
 void gw_convect_gw_sources(GwConvectGwSourcesData& d);
 void gw_beres_src(GwBeresSrcData& d);
+void gw_ediff_f(GwEdiffData& d);
 void gw_ediff(GwEdiffData& d);
+void gw_diff_tend_f(GwDiffTendData& d);
 void gw_diff_tend(GwDiffTendData& d);
 void gw_oro_src(GwOroSrcData& d);
+void vd_lu_decomp_f(VdLuDecompData& d);
+void vd_lu_decomp(VdLuDecompData& d);
+void vd_lu_solve_f(VdLuSolveData& d);
+void vd_lu_solve(VdLuSolveData& d);
 
 extern "C" { // _f function decls
 }

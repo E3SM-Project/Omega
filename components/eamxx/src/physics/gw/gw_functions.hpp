@@ -3,7 +3,7 @@
 
 #include "physics/share/physics_constants.hpp"
 
-#include "share/eamxx_types.hpp"
+#include "share/core/eamxx_types.hpp"
 
 #include <ekat_pack_kokkos.hpp>
 #include <ekat_workspace.hpp>
@@ -143,6 +143,19 @@ struct Functions
     Real tndmax; // = huge(1._r8)
   };
 
+  KOKKOS_INLINE_FUNCTION
+  static void midpoint_interp(
+    const MemberType& team,
+    const uview_1d<const Real>& in,
+    const uview_1d<Real>& interp)
+  {
+    EKAT_KERNEL_REQUIRE(in.size() == interp.size() + 1);
+    Kokkos::parallel_for(
+      Kokkos::TeamVectorRange(team, 0, in.extent(0)-1), [&] (const int k) {
+        interp(k) = (in(k)+in(k+1)) / 2;
+    });
+  }
+
   //
   // --------- Init/Finalize Functions ---------
   //
@@ -201,20 +214,27 @@ struct Functions
     const uview_1d<Real>& utgw,
     const uview_1d<Real>& vtgw);
 
+  /*
+   * Compute profiles of background state quantities for the multiple
+   * gravity wave drag parameterization.
+   *
+   * The parameterization is assumed to operate only where water vapor
+   * concentrations are negligible in determining the density.
+   */
   KOKKOS_FUNCTION
   static void gw_prof(
     // Inputs
+    const MemberType& team,
     const Int& pver,
-    const Int& ncol,
-    const Spack& cpair,
-    const uview_1d<const Spack>& t,
-    const uview_1d<const Spack>& pmid,
-    const uview_1d<const Spack>& pint,
+    const Real& cpair,
+    const uview_1d<const Real>& t,
+    const uview_1d<const Real>& pmid,
+    const uview_1d<const Real>& pint,
     // Outputs
-    const uview_1d<Spack>& rhoi,
-    const uview_1d<Spack>& ti,
-    const uview_1d<Spack>& nm,
-    const uview_1d<Spack>& ni);
+    const uview_1d<Real>& rhoi,
+    const uview_1d<Real>& ti,
+    const uview_1d<Real>& nm,
+    const uview_1d<Real>& ni);
 
   KOKKOS_FUNCTION
   static void momentum_energy_conservation(
@@ -259,85 +279,92 @@ struct Functions
   KOKKOS_FUNCTION
   static void gwd_project_tau(
     // Inputs
+    const MemberType& team,
+    const Workspace& workspace,
+    const GwCommonInit& init,
     const Int& pver,
     const Int& pgwv,
-    const Int& ncol,
-    const uview_1d<const Int>& tend_level,
-    const uview_1d<const Spack>& tau,
-    const uview_1d<const Spack>& ubi,
-    const uview_1d<const Spack>& c,
-    const uview_1d<const Spack>& xv,
-    const uview_1d<const Spack>& yv,
+    const Int& tend_level,
+    const uview_2d<const Real>& tau,
+    const uview_1d<const Real>& ubi,
+    const uview_1d<const Real>& c,
+    const Real& xv,
+    const Real& yv,
     // Outputs
-    const uview_1d<Spack>& taucd);
+    const uview_2d<Real>& taucd);
 
   KOKKOS_FUNCTION
   static void gwd_precalc_rhoi(
     // Inputs
+    const MemberType& team,
+    const Workspace& workspace,
+    const GwCommonInit& init,
     const Int& pver,
     const Int& pgwv,
-    const Int& ncol,
-    const Spack& dt,
-    const uview_1d<const Int>& tend_level,
-    const uview_1d<const Spack>& pmid,
-    const uview_1d<const Spack>& pint,
-    const uview_1d<const Spack>& t,
-    const uview_1d<const Spack>& gwut,
-    const uview_1d<const Spack>& ubm,
-    const uview_1d<const Spack>& nm,
-    const uview_1d<const Spack>& rdpm,
-    const uview_1d<const Spack>& c,
-    const uview_1d<const Spack>& q,
-    const uview_1d<const Spack>& dse,
+    const Real& dt,
+    const Int& tend_level,
+    const uview_1d<const Real>& pmid,
+    const uview_1d<const Real>& pint,
+    const uview_1d<const Real>& t,
+    const uview_2d<const Real>& gwut,
+    const uview_1d<const Real>& ubm,
+    const uview_1d<const Real>& nm,
+    const uview_1d<const Real>& rdpm,
+    const uview_1d<const Real>& c,
+    const uview_2d<const Real>& q,
+    const uview_1d<const Real>& dse,
     // Outputs
-    const uview_1d<Spack>& egwdffi,
-    const uview_1d<Spack>& qtgw,
-    const uview_1d<Spack>& dttdf,
-    const uview_1d<Spack>& dttke,
-    const uview_1d<Spack>& ttgw);
+    const uview_1d<Real>& egwdffi,
+    const uview_2d<Real>& qtgw,
+    const uview_1d<Real>& dttdf,
+    const uview_1d<Real>& dttke,
+    const uview_1d<Real>& ttgw);
 
   KOKKOS_FUNCTION
   static void gw_drag_prof(
     // Inputs
+    const MemberType& team,
+    const Workspace& workspace,
+    const GwCommonInit& init,
     const Int& pver,
     const Int& pgwv,
-    const Int& ncol,
-    const uview_1d<const Int>& src_level,
-    const uview_1d<const Int>& tend_level,
+    const Int& src_level,
+    const Int& max_level,
+    const Int& tend_level,
     const bool& do_taper,
-    const Spack& dt,
-    const uview_1d<const Spack>& lat,
-    const uview_1d<const Spack>& t,
-    const uview_1d<const Spack>& ti,
-    const uview_1d<const Spack>& pmid,
-    const uview_1d<const Spack>& pint,
-    const uview_1d<const Spack>& dpm,
-    const uview_1d<const Spack>& rdpm,
-    const uview_1d<const Spack>& piln,
-    const uview_1d<const Spack>& rhoi,
-    const uview_1d<const Spack>& nm,
-    const uview_1d<const Spack>& ni,
-    const uview_1d<const Spack>& ubm,
-    const uview_1d<const Spack>& ubi,
-    const uview_1d<const Spack>& xv,
-    const uview_1d<const Spack>& yv,
-    const Spack& effgw,
-    const uview_1d<const Spack>& c,
-    const uview_1d<const Spack>& kvtt,
-    const uview_1d<const Spack>& q,
-    const uview_1d<const Spack>& dse,
+    const Real& dt,
+    const Real& lat,
+    const uview_1d<const Real>& t,
+    const uview_1d<const Real>& ti,
+    const uview_1d<const Real>& pmid,
+    const uview_1d<const Real>& pint,
+    const uview_1d<const Real>& dpm,
+    const uview_1d<const Real>& rdpm,
+    const uview_1d<const Real>& piln,
+    const uview_1d<const Real>& rhoi,
+    const uview_1d<const Real>& nm,
+    const uview_1d<const Real>& ni,
+    const uview_1d<const Real>& ubm,
+    const uview_1d<const Real>& ubi,
+    const Real& xv,
+    const Real& yv,
+    const Real& effgw,
+    const uview_1d<const Real>& c,
+    const uview_1d<const Real>& kvtt,
+    const uview_2d<const Real>& q,
+    const uview_1d<const Real>& dse,
     // Inputs/Outputs
-    const uview_1d<Spack>& tau,
+    const uview_2d<Real>& tau,
     // Outputs
-    const uview_1d<Spack>& utgw,
-    const uview_1d<Spack>& vtgw,
-    const uview_1d<Spack>& ttgw,
-    const uview_1d<Spack>& qtgw,
-    const uview_1d<Spack>& taucd,
-    const uview_1d<Spack>& egwdffi,
-    const uview_1d<Spack>& gwut,
-    const uview_1d<Spack>& dttdf,
-    const uview_1d<Spack>& dttke);
+    const uview_1d<Real>& utgw,
+    const uview_1d<Real>& vtgw,
+    const uview_1d<Real>& ttgw,
+    const uview_2d<Real>& qtgw,
+    const uview_2d<Real>& taucd,
+    const uview_1d<Real>& egwdffi,
+    const uview_2d<Real>& gwut,
+    const uview_1d<Real>& dttdf,
+    const uview_1d<Real>& dttke);
 
   KOKKOS_FUNCTION
   static void gw_front_project_winds(
@@ -481,34 +508,44 @@ struct Functions
   KOKKOS_FUNCTION
   static void gw_ediff(
     // Inputs
-    const Int& ncol,
+    const MemberType& team,
+    const Workspace& workspace,
     const Int& pver,
+    const Int& pgwv,
     const Int& kbot,
     const Int& ktop,
-    const uview_1d<const Int>& tend_level,
-    const uview_1d<const Spack>& gwut,
-    const uview_1d<const Spack>& ubm,
-    const uview_1d<const Spack>& nm,
-    const uview_1d<const Spack>& rho,
-    const Spack& dt,
-    const Spack& gravit,
-    const uview_1d<const Spack>& pmid,
-    const uview_1d<const Spack>& rdpm,
-    const uview_1d<const Spack>& c,
+    const Int& tend_level,
+    const Real& dt,
+    const uview_2d<const Real>& gwut,
+    const uview_1d<const Real>& ubm,
+    const uview_1d<const Real>& nm,
+    const uview_1d<const Real>& rho,
+    const uview_1d<const Real>& pmid,
+    const uview_1d<const Real>& rdpm,
+    const uview_1d<const Real>& c,
     // Outputs
-    const uview_1d<Spack>& egwdffi);
+    const uview_1d<Real>& egwdffi,
+    const uview_1d<Real>& decomp_ca,
+    const uview_1d<Real>& decomp_cc,
+    const uview_1d<Real>& decomp_dnom,
+    const uview_1d<Real>& decomp_ze);
 
   KOKKOS_FUNCTION
   static void gw_diff_tend(
     // Inputs
-    const Int& ncol,
+    const MemberType& team,
+    const Workspace& workspace,
     const Int& pver,
     const Int& kbot,
     const Int& ktop,
-    const uview_1d<const Spack>& q,
-    const Spack& dt,
+    const uview_1d<const Real>& q,
+    const Real& dt,
+    const uview_1d<const Real>& decomp_ca,
+    const uview_1d<const Real>& decomp_cc,
+    const uview_1d<const Real>& decomp_dnom,
+    const uview_1d<const Real>& decomp_ze,
       // Outputs
-    const uview_1d<Spack>& dq);
+    const uview_1d<Real>& dq);
 
   KOKKOS_FUNCTION
   static void gw_oro_src(
@@ -535,11 +572,45 @@ struct Functions
     const uview_1d<Spack>& yv,
     const uview_1d<Spack>& c);
 
+  KOKKOS_FUNCTION
+  static void vd_lu_decomp(
+    // Inputs
+    const MemberType& team,
+    const Int& pver,
+    const Real& ksrf,
+    const uview_1d<const Real>& kv,
+    const uview_1d<const Real>& tmpi,
+    const uview_1d<const Real>& rpdel,
+    const Real& ztodt,
+    const Real& cc_top,
+    const Int& ntop,
+    const Int& nbot,
+    // Outputs
+    const uview_1d<Real>& decomp_ca,
+    const uview_1d<Real>& decomp_cc,
+    const uview_1d<Real>& decomp_dnom,
+    const uview_1d<Real>& decomp_ze);
+
+  KOKKOS_FUNCTION
+  static void vd_lu_solve(
+    // Inputs
+    const MemberType& team,
+    const Workspace& workspace,
+    const Int& pver,
+    const uview_1d<const Real>& decomp_ca,
+    const uview_1d<const Real>& decomp_cc,
+    const uview_1d<const Real>& decomp_dnom,
+    const uview_1d<const Real>& decomp_ze,
+    const Int& ntop,
+    const Int& nbot,
+    const Real& cd_top,
+    // Inputs/Outputs
+    const uview_1d<Real>& q);
+
   //
   // --------- Members ---------
   //
   inline static GwCommonInit s_common_init;
-
 }; // struct Functions
 
 } // namespace gw
@@ -568,5 +639,7 @@ struct Functions
 # include "impl/gw_gw_diff_tend_impl.hpp"
 # include "impl/gw_gw_oro_src_impl.hpp"
 # include "impl/gw_gw_common_init_impl.hpp"
+# include "impl/gw_vd_lu_decomp_impl.hpp"
+# include "impl/gw_vd_lu_solve_impl.hpp"
 #endif // GPU && !KOKKOS_ENABLE_*_RELOCATABLE_DEVICE_CODE
 #endif // P3_FUNCTIONS_HPP

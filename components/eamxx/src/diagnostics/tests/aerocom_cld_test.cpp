@@ -2,8 +2,9 @@
 #include "diagnostics/aerocom_cld_util.hpp"
 #include "diagnostics/register_diagnostics.hpp"
 #include "share/field/field_utils.hpp"
+#include "share/field/field_impl.hpp"
 #include "share/grid/mesh_free_grids_manager.hpp"
-#include "share/util/eamxx_setup_random_test.hpp"
+#include "share/core/eamxx_setup_random_test.hpp"
 
 namespace scream {
 
@@ -178,6 +179,9 @@ TEST_CASE("aerocom_cld") {
     ei.deep_copy(10.0);
     nc.deep_copy(5.0);
     ni.deep_copy(1.0);
+    // Change one input timestamp, to prevent early return and trigger diag recalculation
+    t0 += 1;
+    cd.get_header().get_tracking().update_time_stamp(t0);
     diag->compute_diagnostic();
     diag->get_diagnostic().sync_to_host();
     diag_f = diag->get_diagnostic();
@@ -201,6 +205,9 @@ TEST_CASE("aerocom_cld") {
     cd_v(0, 3) = 0.3;
     cd_v(0, 4) = 0.2;
     cd.sync_to_dev();
+    // Change one input timestamp, to prevent early return and trigger diag recalculation
+    t0 += 1;
+    cd.get_header().get_tracking().update_time_stamp(t0);
     diag->compute_diagnostic();
     diag_f = diag->get_diagnostic();
     diag_f.sync_to_host();
@@ -214,6 +221,9 @@ TEST_CASE("aerocom_cld") {
     cd_v(0, 6) = 0.4;
     cd_v(0, 7) = 0.2;
     cd.sync_to_dev();
+    // Change one input timestamp, to prevent early return and trigger diag recalculation
+    t0 += 1;
+    cd.get_header().get_tracking().update_time_stamp(t0);
     diag->compute_diagnostic();
     diag_f = diag->get_diagnostic();
     diag_f.sync_to_host();
@@ -225,6 +235,9 @@ TEST_CASE("aerocom_cld") {
     cd_v(0, 6) = 0.0;
     cd_v(0, 7) = 0.1;
     cd.sync_to_dev();
+    // Change one input timestamp, to prevent early return and trigger diag recalculation
+    t0 += 1;
+    cd.get_header().get_tracking().update_time_stamp(t0);
     diag->compute_diagnostic();
     diag_f = diag->get_diagnostic();
     diag_f.sync_to_host();
@@ -238,6 +251,9 @@ TEST_CASE("aerocom_cld") {
     qc.deep_copy(1.0);
     qi.deep_copy(0.0);  // zero ice!
     cd.sync_to_dev();
+    // Change one input timestamp, to prevent early return and trigger diag recalculation
+    t0 += 1;
+    cd.get_header().get_tracking().update_time_stamp(t0);
     diag->compute_diagnostic();
     diag_f = diag->get_diagnostic();
     diag_f.sync_to_host();
@@ -249,6 +265,9 @@ TEST_CASE("aerocom_cld") {
     // Case 5b: test independence of ice and liq fractions
     qc.deep_copy(0.0);  // zero liq!
     qi.deep_copy(1.0);
+    // Change one input timestamp, to prevent early return and trigger diag recalculation
+    t0 += 1;
+    cd.get_header().get_tracking().update_time_stamp(t0);
     diag->compute_diagnostic();
     diag_f = diag->get_diagnostic();
     diag_f.sync_to_host();
@@ -286,6 +305,9 @@ TEST_CASE("aerocom_cld") {
     cd.sync_to_dev();
     qi.sync_to_dev();
     qc.sync_to_dev();
+    // Change one input timestamp, to prevent early return and trigger diag recalculation
+    t0 += 1;
+    cd.get_header().get_tracking().update_time_stamp(t0);
     diag->compute_diagnostic();
     diag_f = diag->get_diagnostic();
     diag_f.sync_to_host();

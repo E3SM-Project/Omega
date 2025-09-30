@@ -5,7 +5,7 @@
 #include "share/field/field_tracking.hpp"
 #include "share/field/field_alloc_prop.hpp"
 #include "share/util/eamxx_family_tracking.hpp"
-#include "share/eamxx_types.hpp"
+#include "share/core/eamxx_types.hpp"
 #include "share/util/eamxx_time_stamp.hpp"
 
 #include <vector>
@@ -87,6 +87,9 @@ public:
   //   - they have the same tracking, alloc_prop and extra data (they were created by alias above)
   //   - they have the same parent field and their subview info (form alloc prop) are the same
   bool is_aliasing (const FieldHeader& rhs) const;
+
+  bool may_be_filled () const { return has_extra_data("may_be_filled") and get_extra_data<bool>("may_be_filled"); }
+  void set_may_be_filled (const bool value) { set_extra_data("may_be_filled",value); }
 protected:
 
   // Friend this function, so it can set up a subfield header

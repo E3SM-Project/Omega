@@ -6,7 +6,7 @@
 #include "share/atm_process/SCDataManager.hpp"
 #include "share/atm_process/IOPDataManager.hpp"
 #include "share/field/field_identifier.hpp"
-#include "share/field/field_manager.hpp"
+#include "share/manager/field_manager.hpp"
 #include "share/property_checks/property_check.hpp"
 #include "share/field/field_request.hpp"
 #include "share/field/field.hpp"
@@ -116,6 +116,8 @@ public:
   void initialize (const TimeStamp& t0, const RunType run_type);
   void run (const double dt);
   void finalize ();
+
+  bool is_initialized () const { return m_is_initialized; }
 
   // Return the MPI communicator
   const ekat::Comm& get_comm () const { return m_comm; }
@@ -603,6 +605,8 @@ private:
 
   // The number of times this process needs to be subcycled
   int m_num_subcycles = 1;
+
+  bool m_is_initialized = false;
 
   // This can be queried by derived classes, in case they need to know which
   // iteration of the subcycle this is

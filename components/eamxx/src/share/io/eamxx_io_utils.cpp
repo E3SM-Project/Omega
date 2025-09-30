@@ -3,7 +3,7 @@
 #include "share/io/eamxx_scorpio_interface.hpp"
 #include "share/grid/library_grids_manager.hpp"
 #include "share/util/eamxx_utils.hpp"
-#include "share/eamxx_config.hpp"
+#include "share/core/eamxx_config.hpp"
 
 #include <ekat_string_utils.hpp>
 
@@ -131,7 +131,7 @@ create_diagnostic (const std::string& diag_field_name,
   // Note: the number for field_at_p/h can match positive integer/floating-point numbers
   // Start with a generic for a field name allowing for all letters, all numbers, dash, dot, plus, minus, product, and division
   // Escaping all the special ones just in case
-  std::string generic_field = "([A-Za-z0-9_.+\\-\\*\\÷]+)"; 
+  std::string generic_field = "([A-Za-z0-9_.+\\-\\*\\÷]+)";
   std::regex field_at_l (R"()" + generic_field + R"(_at_(lev_(\d+)|model_(top|bot))$)");
   std::regex field_at_p (R"()" + generic_field + R"(_at_(\d+(\.\d+)?)(hPa|mb|Pa)$)");
   std::regex field_at_h (R"()" + generic_field + R"(_at_(\d+(\.\d+)?)(m)_above_(sealevel|surface)$)");
@@ -148,6 +148,7 @@ create_diagnostic (const std::string& diag_field_name,
   std::regex zonal_avg (R"()" + generic_field + R"(_zonal_avg_(\d+)_bins$)");
   std::regex conditional_sampling (R"()" + generic_field + R"(_where_)" + generic_field + R"(_(gt|ge|eq|ne|le|lt)_([+-]?\d+(?:\.\d+)?)$)");
   std::regex binary_ops (generic_field + "_" "(plus|minus|times|over)" + "_" + generic_field + "$");
+  std::regex histogram (R"()" + generic_field + R"(_histogram_(\d+(\.\d+)?(_\d+(\.\d+)?)+)$)");
   std::regex vert_derivative (generic_field + "_(p|z)vert_derivative$");
 
   std::string diag_name;
@@ -239,20 +240,18 @@ create_diagnostic (const std::string& diag_field_name,
     params.set<std::string>("condition_operator", matches[3].str());
     params.set<std::string>("condition_value", matches[4].str());
   }
-  else if (std::regex_search(diag_field_name,matches,conditional_sampling)) {
-    diag_name = "ConditionalSampling";
-    params.set("grid_name", grid->name());
-    params.set<std::string>("input_field", matches[1].str());
-    params.set<std::string>("condition_field", matches[2].str());
-    params.set<std::string>("condition_operator", matches[3].str());
-    params.set<std::string>("condition_value", matches[4].str());
-  }
   else if (std::regex_search(diag_field_name,matches,binary_ops)) {
     diag_name = "BinaryOpsDiag";
     params.set("grid_name", grid->name());
     params.set<std::string>("field_1", matches[1].str());
     params.set<std::string>("field_2", matches[3].str());
     params.set<std::string>("binary_op", matches[2].str());
+  }
+  else if (std::regex_search(diag_field_name,matches,histogram)) {
+    diag_name = "HistogramDiag";
+    params.set("grid_name", grid->name());
+    params.set<std::string>("field_name", matches[1].str());
+    params.set<std::string>("bin_configuration", matches[2].str());
   }
   else
   {
@@ -266,54 +265,6 @@ create_diagnostic (const std::string& diag_field_name,
   diag->set_grids(gm);
 
   return diag;
-}
-
-std::pair<std::string, std::string>
-parse_field_alias (const std::string& field_spec)
-{
-  const std::string delimiter = ":=";
-  auto pos = field_spec.find(delimiter);
-  
-  if (pos == std::string::npos) {
-    // No alias found, return the field_spec as both alias and field name
-    std::string trimmed = ekat::trim(field_spec);
-    return {trimmed, trimmed};
-  }
-  
-  // Extract and trim alias and field name
-  std::string alias = ekat::trim(field_spec.substr(0, pos));
-  std::string field_name = ekat::trim(field_spec.substr(pos + delimiter.length()));
-  
-  EKAT_REQUIRE_MSG(!alias.empty() && !field_name.empty(),
-      "Error! Invalid field alias specification: '" + field_spec + "'\n"
-      "Expected format: 'alias:=field_name' where both alias and field_name are non-empty.\n");
-
-  auto another_pos = field_name.find(delimiter);
-  EKAT_REQUIRE_MSG(another_pos == std::string::npos,
-      "Error! Invalid field alias specification: '" + field_spec + "'\n"
-      "Multiple ':=' tokens found.\n");
-  return {alias, field_name};
-}
-
-std::pair<std::map<std::string, std::string>, std::vector<std::string>>
-process_field_aliases (const std::vector<std::string>& field_specs)
-{
-  std::map<std::string, std::string> alias_to_field_map;
-  std::vector<std::string> alias_names;
-  
-  for (const auto& spec : field_specs) {
-    auto [alias, field_name] = parse_field_alias(spec);
-    
-    // Check for duplicate aliases
-    EKAT_REQUIRE_MSG(alias_to_field_map.find(alias) == alias_to_field_map.end(),
-        "Error! Duplicate field alias found: '" + alias + "'\n"
-        "Each alias must be unique within the field list.\n");
-    
-    alias_to_field_map[alias] = field_name;
-    alias_names.push_back(alias);
-  }
-  
-  return {alias_to_field_map, alias_names};
 }
 
 } // namespace scream

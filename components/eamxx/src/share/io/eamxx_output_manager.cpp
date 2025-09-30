@@ -1,32 +1,28 @@
 #include "eamxx_output_manager.hpp"
 
-#include "share/io/scorpio_input.hpp"
 #include "share/io/eamxx_scorpio_interface.hpp"
+#include "share/io/scorpio_input.hpp"
 #include "share/util/eamxx_timing.hpp"
-#include "share/eamxx_config.hpp"
+#include "share/core/eamxx_config.hpp"
 
-#include <ekat_parameter_list.hpp>
 #include <ekat_comm.hpp>
+#include <ekat_parameter_list.hpp>
 #include <ekat_string_utils.hpp>
 
-#include <fstream>
-#include <memory>
 #include <chrono>
 #include <ctime>
+#include <fstream>
+#include <memory>
 
 namespace scream
 {
 
-OutputManager::
-~OutputManager ()
-{
-  finalize();
-}
+OutputManager::~OutputManager() { finalize(); }
 
-void OutputManager::
-initialize(const ekat::Comm& io_comm, const ekat::ParameterList& params,
-           const util::TimeStamp& run_t0, const util::TimeStamp& case_t0,
-           const bool is_model_restart_output, const RunType run_type)
+void
+OutputManager::initialize(const ekat::Comm &io_comm, const ekat::ParameterList &params,
+                          const util::TimeStamp &run_t0, const util::TimeStamp &case_t0,
+                          const bool is_model_restart_output, const RunType run_type)
 {
   // Sanity checks
   EKAT_REQUIRE_MSG (run_t0.is_valid(),
@@ -88,33 +84,41 @@ setup (const std::shared_ptr<fm_type>& field_mgr,
   } else {
     // Loop over all grids, creating an output stream for each
     for (auto it=fields_pl.sublists_names_cbegin(); it!=fields_pl.sublists_names_cend(); ++it) {
-      // If this is a GLL grid (or IO Grid is GLL) and PG2 fields
-      // were found above, we must reset the grid COL tag name to
-      // be "ncol_d" to avoid conflicting lengths with ncol on
-      // the PG2 grid.
-      if (pg2_grid_in_io_streams) {
-        const auto& grid_pl = fields_pl.sublist(*it);
-        bool reset_ncol_naming = false;
-        if (*it == "physics_gll") reset_ncol_naming = true;
-        if (grid_pl.isParameter("io_grid_name")) {
-          if (grid_pl.get<std::string>("io_grid_name") == "physics_gll") {
-            reset_ncol_naming = true;
-          }
-        }
-        if (reset_ncol_naming) {
-          field_mgr->get_grids_manager()->
-            get_grid_nonconst(grid_pl.get<std::string>("io_grid_name"))->
-              reset_field_tag_name(ShortFieldTagsNames::COL,"ncol_d");
-	      }
-      }
-
       // Verify this grid exists in FM
       EKAT_REQUIRE_MSG (field_mgr->get_grids_manager()->has_grid(*it),
           "Error! Output requested on grid '" + *it + "', but the field manager does not store such grid.\n");
 
       // This grid could be an alias. Get the grid name from the grid itself
       // as this is what the FieldManager expects.
-      const auto& gname = field_mgr->get_grids_manager()->get_grid(*it)->name();
+      const auto grid = field_mgr->get_grids_manager()->get_grid_nonconst(*it);
+      const auto& gname = grid->name();
+
+      // If this is a GLL grid (or Dyn Grid, with GLL grid set as aux_io_grid)
+      // and PG2 fields were found above, we must reset the grid COL tag name to
+      // be "ncol_d" to avoid conflicting lengths with ncol on the PG2 grid.
+      if (pg2_grid_in_io_streams) {
+        const auto& grid_pl = fields_pl.sublist(*it);
+        auto io_grid = grid;
+
+        std::string output_data_layout = "default";
+        if (grid_pl.isParameter("output_data_layout")) {
+          output_data_layout = grid_pl.get<std::string>("output_data_layout");
+        }
+        auto aux_grid = grid->get_aux_grid(output_data_layout);
+        if (aux_grid) {
+          io_grid = aux_grid;
+        } else {
+          EKAT_REQUIRE_MSG (output_data_layout=="native" or output_data_layout=="default",
+              "Error! Non-default output layout requested, but no aux grid found in this grid.\n"
+              " - grid name: " + grid->name() + "\n"
+              " - output_data_layout: " + output_data_layout + "\n"
+              " - suppored output layout choices: " + ekat::join(grid->get_aux_grids_keys(),",") + "\n");
+        }
+
+        if (io_grid->name()=="physics_gll") {
+          io_grid->reset_field_tag_name(ShortFieldTagsNames::COL,"ncol_d");
+        }
+      }
 
       auto output = std::make_shared<output_type>(m_io_comm,m_params,field_mgr,gname);
       output->set_logger(m_atm_logger);
@@ -190,11 +194,9 @@ setup (const std::shared_ptr<fm_type>& field_mgr,
                                                 skip_restart_if_rhist_not_found,m_avg_type,m_output_control);
 
     if (rhist_file=="") {
-      if (m_atm_logger) {
-        m_atm_logger->warn("[OutputManager::setup] The rhist file not found in rpointer.atm.\n"
-                           "  Continuing without restart, since 'skip_restart_if_rhist_not_found=true'.\n"
-                           "   - output yaml file for this stream: " + m_params.name() + "\n");
-      }
+      m_atm_logger->warn("[OutputManager::setup] The rhist file not found in rpointer.atm.\n"
+                         "  Continuing without restart, since 'skip_restart_if_rhist_not_found=true'.\n"
+                         "   - output yaml file for this stream: " + m_params.name() + "\n");
     } else {
 
       scorpio::register_file(rhist_file,scorpio::Read);
@@ -308,6 +310,12 @@ setup (const std::shared_ptr<fm_type>& field_mgr,
 }
 
 void OutputManager::
+set_logger(const std::shared_ptr<ekat::logger::LoggerBase>& atm_logger) {
+  EKAT_REQUIRE_MSG (atm_logger, "Error! Invalid logger pointer.\n");
+  m_atm_logger = atm_logger;
+}
+
+void OutputManager::
 add_global (const std::string& name, const std::shared_ptr<std::any>& global) {
   EKAT_REQUIRE_MSG (m_globals.find(name)==m_globals.end(),
       "Error! Global attribute was already set in this output manager.\n"
@@ -352,9 +360,7 @@ void OutputManager::init_timestep (const util::TimeStamp& start_of_step, const R
     return;
   }
 
-  if (m_atm_logger) {
-    m_atm_logger->debug("[OutputManager::init_timestep] filename_prefix: " + m_filename_prefix + "\n");
-  }
+  m_atm_logger->debug("[OutputManager::init_timestep] filename_prefix: " + m_filename_prefix + "\n");
 
   for (auto s : m_output_streams) {
     s->init_timestep(start_of_step);
@@ -379,9 +385,7 @@ void OutputManager::run(const util::TimeStamp& timestamp)
       "The most likely cause is an output frequency that is faster than the atm timestep.\n"
       "Try to increase 'frequency' and/or 'frequency_units' in your output yaml file.\n");
 
-  if (m_atm_logger) {
-    m_atm_logger->debug("[OutputManager::run] filename_prefix: " + m_filename_prefix + "\n");
-  }
+  m_atm_logger->debug("[OutputManager::run] filename_prefix: " + m_filename_prefix + "\n");
 
   using namespace scorpio;
 
@@ -451,10 +455,8 @@ void OutputManager::run(const util::TimeStamp& timestamp)
       rpointer << filespecs.filename << std::endl;
     }
 
-    if (m_atm_logger) {
-      m_atm_logger->info("[EAMxx::output_manager] - Writing " + e2str(filespecs.ftype) + ":");
-      m_atm_logger->info("[EAMxx::output_manager]      FILE: " + filespecs.filename);
-    }
+    m_atm_logger->info("[EAMxx::output_manager] - Writing " + e2str(filespecs.ftype) + ":");
+    m_atm_logger->info("[EAMxx::output_manager]      FILE: " + filespecs.filename);
   };
 
   if (is_output_step) {
@@ -478,9 +480,7 @@ void OutputManager::run(const util::TimeStamp& timestamp)
   const auto& fields_write_filename = is_output_step ? m_output_file_specs.filename : m_checkpoint_file_specs.filename;
   for (auto& it : m_output_streams) {
     // Note: filename only matters if is_output_step || is_full_checkpoint_step=true. In that case, it will definitely point to a valid file name.
-    if (m_atm_logger) {
-      m_atm_logger->debug("[OutputManager]: writing fields from grid " + it->get_io_grid()->name() + "...\n");
-    }
+    m_atm_logger->debug("[OutputManager]: writing fields from grid " + it->get_io_grid()->name() + "...\n");
     it->run(fields_write_filename,is_output_step,is_full_checkpoint_step,m_output_control.nsamples_since_last_write,is_t0_output);
   }
   stop_timer(timer_root+"::run_output_streams");
@@ -498,9 +498,7 @@ void OutputManager::run(const util::TimeStamp& timestamp)
     }
 
     auto write_global_data = [&](IOControl& control, IOFileSpecs& filespecs) {
-      if (m_atm_logger) {
-        m_atm_logger->debug("[OutputManager]: writing globals...\n");
-      }
+      m_atm_logger->debug("[OutputManager]: writing globals...\n");
 
       // Since we wrote to file we need to reset the timestamps
       control.last_write_ts = timestamp;
@@ -514,9 +512,13 @@ void OutputManager::run(const util::TimeStamp& timestamp)
         if (filespecs.ftype==FileType::HistoryRestart) {
           // Update the date of last write and sample size
           write_timestamp (filespecs.filename,"last_write",m_output_control.last_write_ts,true);
-          scorpio::set_attribute (filespecs.filename,"GLOBAL","last_output_filename",m_output_file_specs.filename);
           scorpio::set_attribute (filespecs.filename,"GLOBAL","num_snapshots_since_last_write",m_output_control.nsamples_since_last_write);
-          scorpio::set_attribute (filespecs.filename,"GLOBAL","last_output_file_num_snaps",m_output_file_specs.storage.num_snapshots_in_file);
+          if (m_output_file_specs.is_open) {
+            scorpio::set_attribute (filespecs.filename,"GLOBAL","last_output_file_num_snaps",m_output_file_specs.storage.num_snapshots_in_file);
+            scorpio::set_attribute (filespecs.filename,"GLOBAL","last_output_filename",m_output_file_specs.filename);
+          } else {
+            scorpio::set_attribute (filespecs.filename,"GLOBAL","last_output_filename","");
+          }
         }
         // Write these in both output and rhist file. The former, b/c we need these info when we postprocess
         // output, and the latter b/c we want to make sure these params don't change across restarts
@@ -620,7 +622,7 @@ void OutputManager::finalize()
   m_checkpoint_file_specs = {};
   m_case_t0 = {};
   m_run_t0 = {};
-  m_atm_logger = {};
+  m_atm_logger = console_logger(ekat::logger::LogLevel::warn);
 }
 
 long long OutputManager::res_dep_memory_footprint () const {
@@ -694,6 +696,7 @@ setup_internals (const std::shared_ptr<fm_type>& field_mgr,
         }
       }
       fields_pl.sublist(gname).set("field_names",fnames);
+      fields_pl.sublist(gname).set<std::string>("output_data_layout","native");
     }
     m_filename_prefix = m_params.get<std::string>("filename_prefix");
 
@@ -953,9 +956,6 @@ close_or_flush_if_needed (      IOFileSpecs& file_specs,
 void OutputManager::
 push_to_logger()
 {
-  // If no atm logger set then don't do anything
-  if (!m_atm_logger) return;
-
   auto bool_to_string = [](const bool x) {
     std::string y = x ? "YES" : "NO";
     return y;

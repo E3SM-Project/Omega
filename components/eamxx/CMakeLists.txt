@@ -51,8 +51,10 @@ if (SCREAM_CIME_BUILD)
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cime)
 endif ()
 
-# We want to use C++17 in EAMxx
-set(CMAKE_CXX_STANDARD 17)
+if (NOT CMAKE_CXX_STANDARD)
+  # Default to C++17 in EAMxx
+  set(CMAKE_CXX_STANDARD 17)
+endif()
 
 if (NOT SCREAM_CIME_BUILD)
   project(SCREAM CXX C Fortran)
@@ -71,20 +73,22 @@ endif()
 #                  Kokkos related settings                         #
 ####################################################################
 
+# Note: this only does anything for standalone eamxx. CIME cases will
+# use the sharedlib EKAT/kokkos
 if (Kokkos_ENABLE_CUDA)
   if (Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE)
     if (Kokkos_ENABLE_DEBUG_BOUNDS_CHECK)
       string (CONCAT msg
-          "Kokkos_ENALBE_CUDA_RELOCATABLE_DEVICE_CODE=ON, and Kokkos_ENALBE_DEBUG_BOUNDS_CHECK=ON.\n"
+          "Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON, and Kokkos_ENABLE_DEBUG_BOUNDS_CHECK=ON.\n"
           "   -> Disabling bounds checks, to prevent internal compiler errors.")
       message(WARNING "${msg}")
-      set (Kokkos_ENABLE_DEBUG_BOUNDS_CHECK OFF CACHE BOOL "" FORCE)
+      set(Kokkos_ENABLE_DEBUG_BOUNDS_CHECK OFF CACHE BOOL "" FORCE)
     else()
       string (CONCAT msg
-          "Kokkos_ENALBE_CUDA_RELOCATABLE_DEVICE_CODE=ON.\n"
+          "Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON.\n"
           "   -> Disabling bounds checks, to prevent internal compiler errors.")
       message(STATUS "${msg}")
-      set (Kokkos_ENABLE_DEBUG_BOUNDS_CHECK OFF CACHE BOOL "" FORCE)
+      set(Kokkos_ENABLE_DEBUG_BOUNDS_CHECK OFF CACHE BOOL "" FORCE)
     endif()
   endif()
 endif()
@@ -204,9 +208,6 @@ option(SCREAM_ENABLE_MAM "Whether to enable MAM aerosol support" ON)
 set(SCREAM_SMALL_KERNELS ${DEFAULT_SMALL_KERNELS} CACHE STRING "Use small, non-monolothic kokkos kernels for ALL components that support them")
 set(SCREAM_P3_SMALL_KERNELS ${SCREAM_SMALL_KERNELS} CACHE STRING "Use small, non-monolothic kokkos kernels for P3 only")
 set(SCREAM_SHOC_SMALL_KERNELS ${SCREAM_SMALL_KERNELS} CACHE STRING "Use small, non-monolothic kokkos kernels for SHOC only")
-if (NOT SCREAM_P3_SMALL_KERNELS AND NOT SCREAM_SHOC_SMALL_KERNELS)
-  set(EKAT_DISABLE_WORKSPACE_SHARING TRUE CACHE STRING "")
-endif()
 
 # Add RRTMGP settings. Note, we might consider also adding RRTMGP_EXPENSIVE_CHECKS
 # to turn on the RRTMGP internal checks here as well, via
@@ -306,11 +307,22 @@ check_pack_size(${SCREAM_PACK_SIZE} ${SCREAM_POSSIBLY_NO_PACK_SIZE} "possibly no
 
 # Handle input root
 if (SCREAM_MACHINE AND NOT SCREAM_INPUT_ROOT)
+  if (SCREAM_CIME_BUILD)
+    # Use xmlquery
+    execute_process(COMMAND ./xmlquery DIN_LOC_ROOT --value
+      WORKING_DIRECTORY ${CASEROOT}
+      RESULT_VARIABLE QC_STATUS
+      OUTPUT_VARIABLE QC_OUTPUT
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
+  else()
+    # There's no case to work with so we have to use query-cime
     execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/query-cime ${SCREAM_MACHINE} DIN_LOC_ROOT
     RESULT_VARIABLE QC_STATUS
     OUTPUT_VARIABLE QC_OUTPUT
     OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+  endif()
   if (QC_STATUS EQUAL 0)
     set(DEFAULT_SCREAM_INPUT_ROOT ${QC_OUTPUT})
   endif()
@@ -560,7 +572,11 @@ if (SCREAM_DOUBLE_PRECISION)
     set(SCREAM_Fortran_FLAGS -real-size 64)
   elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Cray")
     set(SCREAM_Fortran_FLAGS -s default32 -eZ)
-  else()
+  elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NVHPC")
+    #set(SCREAM_Fortran_FLAGS -real-size=8 -double-size=8) # these are nvidia flags, but dont need, already supports IEEE 754 floating-point standard
+  elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+    set(SCREAM_Fortran_FLAGS -fdefault-real-8 -fdefault-double-8)
+  else() # default, currently same as GNU
     set(SCREAM_Fortran_FLAGS -fdefault-real-8 -fdefault-double-8)
   endif()
 endif()
@@ -587,16 +603,6 @@ if (NOT DEFINED ENV{SCREAM_FAKE_ONLY})
   if (NOT SCREAM_LIB_ONLY)
     add_subdirectory(tests)
   endif()
-
-  # Generate eamxx_config.h and eamxx_config.f
-  include (EkatUtils)
-  EkatConfigFile(${CMAKE_CURRENT_SOURCE_DIR}/src/eamxx_config.h.in
-                 ${CMAKE_CURRENT_BINARY_DIR}/src/eamxx_config.h
-                 F90_FILE ${CMAKE_CURRENT_BINARY_DIR}/src/eamxx_config.f)
-
-  # Generate eamxx_version.h
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/eamxx_version.h.in
-                 ${CMAKE_CURRENT_BINARY_DIR}/src/eamxx_version.h)
 else()
   # This is a "fake" build of scream, to stress test the testing scripts.
   # We only need to build something in our tests folder

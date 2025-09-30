@@ -5,6 +5,7 @@ Used by buildnml. See buildnml for documetation.
 """
 
 import os, sys, re, pwd, grp, stat, getpass
+from pathlib import Path
 
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as md
@@ -996,11 +997,7 @@ def get_file_parameters(caseroot):
         result.extend(refine_type(item.text, force_type="array(file)"))
 
     # Remove duplicates. Not sure if an error would be warranted if dupes exist
-    result_no_dups = []
-    for item in result:
-        if item not in result:
-            result_no_dups.append(item)
-    return result_no_dups
+    return list(dict.fromkeys(result))
 
 ###############################################################################
 def create_input_data_list_file(case,caseroot):
@@ -1179,3 +1176,36 @@ def do_cime_vars_on_yaml_output_files(case, caseroot):
 ################################################################
 """)
         ordered_dump(scream_input, fd)
+
+###############################################################################
+def archive_case_docs(caseroot):
+###############################################################################
+    # Copy ALL eamxx input yaml/nml files to CaseDocs, for provenance
+    with SharedArea():
+        # We for sure have scream_input.yaml and namelist.nl
+        files = ['scream_input.yaml', 'namelist.nl']
+
+        caseroot = Path(caseroot)
+
+        # Get the XML configs, and find all output yaml files
+        eamxx_xml_file = caseroot / "namelist_scream.xml"
+
+        with open(eamxx_xml_file, "r") as fd:
+            eamxx_xml = ET.parse(fd).getroot()
+
+        scorpio = get_child(eamxx_xml,'scorpio')
+        out_files_xml = get_child(scorpio,"output_yaml_files",must_exist=False)
+        out_files = out_files_xml.text.split(",") if (out_files_xml is not None and out_files_xml.text is not None) else []
+
+        for fn in out_files:
+            # Get full name
+            src_yaml = Path(fn.strip())
+            files.append(src_yaml.name)
+
+        casedocs = caseroot / 'CaseDocs'
+        if casedocs.exists():
+            for f in files:
+                src = caseroot / 'run/data' / f
+                if src.exists():
+                    dst = caseroot / 'CaseDocs' / f
+                    safe_copy(src,dst)

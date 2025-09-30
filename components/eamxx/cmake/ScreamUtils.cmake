@@ -87,17 +87,17 @@ list(REMOVE_ITEM SCREAM_CUT_EXEC_OPTIONS USER_DEFINED_TEST_SESSION)
 function(CreateUnitTestExec exec_name test_srcs)
 ###############################################################################
   # Call Ekat function, with a couple of extra params
-  EkatCreateUnitTestExec("${exec_name}" "${test_srcs}" ${ARGN}
-    USER_DEFINED_TEST_SESSION LIBS scream_share scream_test_support)
+  # NTOE: this if statement will disappear, as soon as the share folder reorg
+  #       is completed, and we get rid of cyclic dep between share and io
+  #       Then, we will ask unit test to REALLY link against all they need
+  if (TARGET scream_test_support)
+    EkatCreateUnitTestExec("${exec_name}" "${test_srcs}" ${ARGN}
+      USER_DEFINED_TEST_SESSION LIBS scream_share eamxx_test_session scream_test_support)
+  else()
+    EkatCreateUnitTestExec("${exec_name}" "${test_srcs}" ${ARGN}
+      USER_DEFINED_TEST_SESSION LIBS eamxx_test_session)
+  endif()
 endfunction(CreateUnitTestExec)
-
-###############################################################################
-function(CreateADUnitTestExec exec_name)
-###############################################################################
-  # Call the function above specifying some params
-  CreateUnitTestExec("${exec_name}" "${SCREAM_SRC_DIR}/share/util/eamxx_ad_test.cpp"
-    LIBS scream_control scream_io diagnostics ${ARGN})
-endfunction(CreateADUnitTestExec)
 
 ###############################################################################
 function(CreateUnitTestFromExec test_name test_exec)
@@ -182,15 +182,6 @@ function(CreateUnitTest test_name test_srcs)
   CreateUnitTestFromExec("${test_name}" "${test_name}" ${options_TestPhase})
 
 endfunction(CreateUnitTest)
-
-###############################################################################
-function(CreateADUnitTest test_name)
-###############################################################################
-
-  # Call the function above specifying some params
-  CreateUnitTest("${test_name}" "${SCREAM_SRC_DIR}/share/util/eamxx_ad_test.cpp"
-    LABELS driver LIBS scream_control scream_io diagnostics ${ARGN})
-endfunction(CreateADUnitTest)
 
 ###############################################################################
 function(GetInputFile src_path)
