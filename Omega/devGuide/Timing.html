@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Domain Decomposition (Decomp) &mdash; Omega develop documentation</title>
+  <title>Timing &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Dimension" href="Dimension.html" />
-    <link rel="prev" title="Developing Omega Logging" href="Logging.html" />
+    <link rel="next" title="Omega V0: Shallow Water" href="../design/OmegaV0ShallowWater.html" />
+    <link rel="prev" title="Vertical Coordinate" href="VertCoord.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -93,7 +93,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Error.html">Error Handler</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
@@ -113,12 +113,17 @@
 <li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Timing.html">Timing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Timing.html#initialization">Initialization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Timing.html#writing-out-timing-data">Writing-out timing data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Timing.html#finalization">Finalization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Timing.html#basic-timer-use">Basic timer use</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Timing.html#advanced-timing-functions">Advanced timing functions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#initialization">Initialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#writing-out-timing-data">Writing-out timing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#finalization">Finalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#basic-timer-use">Basic timer use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#advanced-timing-functions">Advanced timing functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#conditional-mpi-barriers">Conditional MPI barriers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-parent-prefixes">Adding parent prefixes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#disabling-timers">Disabling timers</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -168,9 +173,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Domain Decomposition (Decomp)</li>
+      <li class="breadcrumb-item active">Timing</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/devGuide/Decomp.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/devGuide/Timing.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -178,128 +183,109 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="domain-decomposition-decomp">
-<span id="omega-dev-decomp"></span><h1>Domain Decomposition (Decomp)<a class="headerlink" href="#domain-decomposition-decomp" title="Permalink to this heading"></a></h1>
-<p>In order to run across nodes in a parallel computer, Omega subdivides the
-horizontal domain into subdomains that are distributed across the machine
-and communicate using message passing via the Message Passing Interface (MPI).
-To decompose the domain, we utilize the
-<a class="reference external" href="http://glaros.dtc.umn.edu/gkhome/metis/metis/overview">METIS/ParMETIS</a>
-libraries.  An Omega mesh is fully described by the
-<a class="reference external" href="https://mpas-dev.github.io/files/documents/MPAS-MeshSpec.pdf">MPAS Mesh Specification</a>
-which we will reproduce here eventually. The Decomp class decomposes
-the domain based on the index space and number of MPI tasks (currently
-one subdomain per task). Once decomposed, the Decomp class holds all
-of the index space information as described below.</p>
-<p>Within Omega, a default decomposition of the mesh is first created
-with the call:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w"> </span><span class="n">Decomp</span><span class="o">::</span><span class="n">init</span><span class="p">();</span>
+  <section class="tex2jax_ignore mathjax_ignore" id="timing">
+<span id="omega-dev-timing"></span><h1>Timing<a class="headerlink" href="#timing" title="Permalink to this heading"></a></h1>
+<p>The timing infrastructure builds upon the E3SM Pacer library for wall clock timing.
+Pacer integrates, whenever possible, platform-specific marker APIs.</p>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="initialization">
+<h1>Initialization<a class="headerlink" href="#initialization" title="Permalink to this heading"></a></h1>
+<p>To initialize the Pacer library call</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Pacer</span><span class="o">::</span><span class="n">initialize</span><span class="p">(</span><span class="n">Comm</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>This must be called very early in the init process, just after initializing
-the MachEnv, Config and IO.  Mesh information is first read using parallel
-IO into an equally-spaced linear decomposition, then partitioned by METIS or
-ParMETIS into a more optimal decomposition. The parallel ParMETIS
-implementation should be used to reduce the memory footprint for
-high-resolution configurations. Although the algorithmic method is similar,
-ParMETIS leads to a somewhat different partitioning than the serial METIS
-version. The serial version should give the same partition as the serial
-offline gpmetis tool used by MPAS when the same version of the METIS library
-is used.</p>
-<p>METIS requires information about the connectivity in the mesh. In particular,
-it needs the total number of cells and edges in the mesh and the connectivity
-given by the CellsOnCell array that stores the indices of neighboring cells
-for each cell. Once the cells have been partitioned, we determine multiple
-layers of halo cells that will be needed to avoid excessive communcation with
-remote neighboring subdomains. The CellsOnCell, EdgesOnCell
-and VerticesOnCell arrays are then distributed according to this cell
-partitioning. Edges and Vertices are then partitioned. Ownership of each
-edge/vertex is determined by the first (valid) cell index in the CellsOnEdge
-or CellsOnVertex for that edge/vertex. The remaining connectivity arrays
-(CellsOnEdge, EdgesOnEdge, VerticesOnEdge, CellsOnVertex, EdgesOnVertex)
-are the redistributed to match the edge and vertex distributions. Halos
-are filled to ensure all necessary edge and vertex information for the
-cell decomposition (and cell halos) are present in the subdomain.</p>
-<p>After the call to the Decomp initialization routine, a Decomp named
-Default has been created and can be retrieved with</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Decomp</span><span class="w"> </span><span class="o">*</span><span class="n">DefDecomp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Decomp</span><span class="o">::</span><span class="n">getDefault</span><span class="p">();</span>
+<p>where <code class="docutils literal notranslate"><span class="pre">Comm</span></code> is an MPI communicator.</p>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="writing-out-timing-data">
+<h1>Writing-out timing data<a class="headerlink" href="#writing-out-timing-data" title="Permalink to this heading"></a></h1>
+<p>To write out timing data call</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Pacer</span><span class="o">::</span><span class="n">print</span><span class="p">(</span><span class="n">FilePrefix</span><span class="p">,</span><span class="w"> </span><span class="n">PrintAllRanks</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>Once retrieved all Decomp members are public and can be accessed using</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">I4</span><span class="w"> </span><span class="n">NCells</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DefDecomp</span><span class="o">-&gt;</span><span class="n">NCells</span><span class="p">;</span>
-<span class="n">OMEGA</span><span class="o">::</span><span class="n">HostArray1DI4</span><span class="w"> </span><span class="n">CellIDH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DefDecomp</span><span class="o">-&gt;</span><span class="n">CellIDH</span><span class="p">;</span>
+<p>where <code class="docutils literal notranslate"><span class="pre">FilePrefix</span></code> is the prefix for all output files and an optional argument <code class="docutils literal notranslate"><span class="pre">PrintAllRanks</span></code> determines
+if all MPI ranks should print their data.</p>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="finalization">
+<h1>Finalization<a class="headerlink" href="#finalization" title="Permalink to this heading"></a></h1>
+<p>To finalize the Pacer library call</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Pacer</span><span class="o">::</span><span class="n">finalize</span><span class="p">();</span>
 </pre></div>
 </div>
-<p>Decomp is a container for all mesh index and connectivity arrays as
-described in the mesh specification above. In particular, it contains</p>
-<ul class="simple">
-<li><p>NCellsGlobal: the total number of cells</p></li>
-<li><p>NCellsAll: the total number of cells in the local partition</p></li>
-<li><p>NCellsSize: the length of the Cell array axis (typicall NCellsAll+1)</p></li>
-<li><p>NCellsOwned: the number of cells owned by this task</p></li>
-<li><p>NCellsHalo(i): the number of owned+halo cells for each halo layer</p></li>
-<li><p>Analogous size variables for Edges and Vertices</p></li>
-<li><p>MaxEdges: the max number of edges on a cell (and array size)</p></li>
-<li><p>VertexDegree: the number of cells/edges at each vertex</p></li>
-<li><p>CellID(NCellsSize): the global index for each local cell</p></li>
-<li><p>CellLoc(NCellsSize,2): the task and local index for every local cell
-(redundant for owned cells but gives the remote location for halo cells)</p></li>
-<li><p>Analogous arrays for Edges, Vertices</p></li>
-<li><p>CellsOnCell(NCellsSize,MaxEdges): the local index for neighbor cells
-across each cell edge</p></li>
-<li><p>EdgesOnCell(NCellsSize,MaxEdges): the local edge index for each cell edge</p></li>
-<li><p>VerticesOnCell(NCellsSize,MaxEdges): the local index for each cell vertex</p></li>
-<li><p>CellsOnEdge(NEdgesSize,2): the index of the 2 cells sharing an edge</p></li>
-<li><p>VerticesOnEdge(NEdgesSize,2): the vertex index at each edge endpoint</p></li>
-<li><p>EdgesOnEdge(NEdgesSize,MaxEdges x 2): the index for all edges contributing
-to an edge (all edges of the 2 cells sharing an edge)</p></li>
-<li><p>CellsOnVertex(NVerticesSize,VertexDegree): indices for all cells meeting
-at a vertex</p></li>
-<li><p>EdgesOnVertex(NVerticesSize,VertexDegree): indices for all edges meeting
-at a vertex</p></li>
-<li><p>NEdgesOnCell(NCellsSize): the number of actual edges on each cell</p></li>
-<li><p>NEdgesOnEdge(NEdgesSize): the number of actual edges on each edge</p></li>
-</ul>
-<p>For each of the arrays above, there is a copy of the array on the host and
-device (GPU) with the host array named with an extra H on the end
-(eg CellsOnCellH). All are Kokkos arrays so are accessed with (index) rather
-than [index] and for some of the arrays noted above are multi-dimensional.
-A typical host loop might then look something like:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">Cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">Cell</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NCellsOwned</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">Cell</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">   </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">Edge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">Edge</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NEdgesOnCell</span><span class="p">(</span><span class="n">Cell</span><span class="p">);</span><span class="w"> </span><span class="o">++</span><span class="n">Edge</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="n">VarH</span><span class="p">(</span><span class="n">Cell</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">VarH</span><span class="p">(</span><span class="n">Cell</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">FluxH</span><span class="p">(</span><span class="n">Cell</span><span class="p">,</span><span class="n">Edge</span><span class="p">);</span>
-<span class="w">   </span><span class="p">}</span>
-<span class="p">}</span>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="basic-timer-use">
+<h1>Basic timer use<a class="headerlink" href="#basic-timer-use" title="Permalink to this heading"></a></h1>
+<p>To time a region of code enclose it with calls to <code class="docutils literal notranslate"><span class="pre">Pacer::start</span></code> and <code class="docutils literal notranslate"><span class="pre">Pacer::stop</span></code> functions, like so</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">Level</span><span class="p">);</span>
+<span class="c1">// region of code to be timed</span>
+<span class="n">Pacer</span><span class="o">::</span><span class="n">stop</span><span class="p">(</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">Level</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>And on the device, we use <code class="docutils literal notranslate"><span class="pre">OMEGA::parallelFor</span></code> in place of <code class="docutils literal notranslate"><span class="pre">Kokkos::parallel_for</span></code>;</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">parallelFor</span><span class="p">(</span><span class="w"> </span><span class="p">{</span><span class="n">NCellsOwned</span><span class="p">,</span><span class="n">MaxEdges</span><span class="p">},</span>
-<span class="w">                       </span><span class="n">KOKKOS_LAMBDA</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">Cell</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">Edge</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Edge</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NEdgesOnCell</span><span class="p">(</span><span class="n">Cell</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="n">Var</span><span class="p">(</span><span class="n">Cell</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Var</span><span class="p">(</span><span class="n">Cell</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Flux</span><span class="p">(</span><span class="n">Cell</span><span class="p">,</span><span class="n">Edge</span><span class="p">);</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">});</span>
+<p>These functions take a string <code class="docutils literal notranslate"><span class="pre">Name</span></code> and a non-negative integer <code class="docutils literal notranslate"><span class="pre">Level</span></code>.
+The added timer will be active only if the timing level set in the config file is greater or equal to <code class="docutils literal notranslate"><span class="pre">Level</span></code>.</p>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="advanced-timing-functions">
+<h1>Advanced timing functions<a class="headerlink" href="#advanced-timing-functions" title="Permalink to this heading"></a></h1>
+<section id="conditional-mpi-barriers">
+<h2>Conditional MPI barriers<a class="headerlink" href="#conditional-mpi-barriers" title="Permalink to this heading"></a></h2>
+<p>Properly timing MPI communication might require inserting MPI barriers. It might be desirable
+to remove those barriers in production runs. Pacer provides a function</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Pacer</span><span class="o">::</span><span class="n">timingBarrier</span><span class="p">(</span><span class="n">TimerName</span><span class="p">,</span><span class="w"> </span><span class="n">Level</span><span class="p">,</span><span class="w"> </span><span class="n">Comm</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Any defined decomposition can be removed by name using</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Decomp</span><span class="o">::</span><span class="n">erase</span><span class="p">(</span><span class="n">Name</span><span class="p">);</span>
+<p>which adds an MPI barrier and puts a timer around it using the communicator <code class="docutils literal notranslate"><span class="pre">Comm</span></code>.
+Whether barriers added by this function are actually called can be controlled by the following functions</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="n">Pacer</span><span class="o">::</span><span class="n">enableTimingBarriers</span><span class="p">();</span>
+<span class="w">  </span><span class="n">Pacer</span><span class="o">::</span><span class="n">disableTimingBarriers</span><span class="p">();</span>
 </pre></div>
 </div>
-<p>and all decompositions <em>must</em> be removed before the Kokkos finalize call using</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Decomp</span><span class="o">::</span><span class="n">clear</span><span class="p">();</span>
+</section>
+<section id="adding-parent-prefixes">
+<h2>Adding parent prefixes<a class="headerlink" href="#adding-parent-prefixes" title="Permalink to this heading"></a></h2>
+<p>It might be desirable to add a prefix to a group of timers based on their parent timer.
+To enable this Pacer provides the <code class="docutils literal notranslate"><span class="pre">addParentPrefix()</span></code> and <code class="docutils literal notranslate"><span class="pre">removeParentPrefix()</span></code> functions.
+For example, the following call sequence</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;Parent&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="n">Pacer</span><span class="o">::</span><span class="n">addParentPrefix</span><span class="p">();</span>
+
+<span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;Child&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="n">Pacer</span><span class="o">::</span><span class="n">stop</span><span class="p">(</span><span class="s">&quot;Child&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+
+<span class="n">Pacer</span><span class="o">::</span><span class="n">removeParentPrefix</span><span class="p">();</span>
+<span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;Parent&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>which destroys all host and device arrays before Kokkos finalizes and removes
-the memory pool in which all the arrays are allocated. Failure to call clear
-before <code class="docutils literal notranslate"><span class="pre">Kokkos::finalize()</span></code> will result in an error.</p>
+<p>results in output where the “Child” timer shows up as “Parent:Child” in the output files.
+This is useful when timers are added inside general purpose routines, that are called
+from many places in the code, such as halo exchange.</p>
+</section>
+<section id="disabling-timers">
+<h2>Disabling timers<a class="headerlink" href="#disabling-timers" title="Permalink to this heading"></a></h2>
+<p>It might be desirable programmatically disable or enable timing. To allow that, Pacer provides
+the <code class="docutils literal notranslate"><span class="pre">disableTimers()</span></code> and <code class="docutils literal notranslate"><span class="pre">enableTimers()</span></code> functions. In the following call sequence</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Pacer</span><span class="o">::</span><span class="n">disableTiming</span><span class="p">();</span>
+
+<span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;Timer1&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="n">Pacer</span><span class="o">::</span><span class="n">stop</span><span class="p">(</span><span class="s">&quot;Timer1&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+
+<span class="n">Pacer</span><span class="o">::</span><span class="n">enableTiming</span><span class="p">();</span>
+
+<span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;Timer2&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="n">Pacer</span><span class="o">::</span><span class="n">stop</span><span class="p">(</span><span class="s">&quot;Timer2&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Timer1</span></code> is not timed while <code class="docutils literal notranslate"><span class="pre">Timer2</span></code> is. This is useful mainly when done conditionally.
+For example, the first call to some function takes much longer than subsequent calls,
+and having a detailed timing breakdown of the first call is not important. In that case,
+it might be desirable to have a separate timer for the first call with its child timers disabled.</p>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="Logging.html" class="btn btn-neutral float-left" title="Developing Omega Logging" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="Dimension.html" class="btn btn-neutral float-right" title="Dimension" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="VertCoord.html" class="btn btn-neutral float-left" title="Vertical Coordinate" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../design/OmegaV0ShallowWater.html" class="btn btn-neutral float-right" title="Omega V0: Shallow Water" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
