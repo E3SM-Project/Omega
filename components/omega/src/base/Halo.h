@@ -770,7 +770,9 @@ class Halo {
                          MeshElement ThisElem // index space Array is defined on
    ) {
       // Add more context for timers in this function
-      Pacer::addParentPrefix();
+      // BUG: fails when there is no parent timer
+      // Uncomment after fixing in Pacer
+      // Pacer::addParentPrefix();
 
       I4 IErr{0}; // error code
 
@@ -905,7 +907,9 @@ class Halo {
       MPI_Waitall(SendReqs.size(), SendReqs.data(), MPI_STATUS_IGNORE);
       Pacer::stop("Halo:waitSends", 4);
 
-      Pacer::removeParentPrefix();
+      // BUG: fails when there is no parent timer
+      // Uncomment after fixing in Pacer
+      // Pacer::removeParentPrefix();
 
       return IErr;
    } // end exchangeFullArrayHalo
