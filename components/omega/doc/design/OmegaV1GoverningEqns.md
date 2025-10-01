@@ -529,6 +529,7 @@ $$ (vh-momentum-reynolds1)
 
 Here we have also moved the Reynolds' average through the spatial integrals given the properties of the averaging.  Next we do a Reynolds' decomposition, this yields
 
+(omega-v1-vh-momentum-reynolds2)=
 $$
 \frac{d}{dt} \int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left< {\bf u} \right> \, d\tilde{z} \, dA
 & + \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}^{\text{top}}} \left( \left< {\bf u} \right> \otimes \left< {\bf u} \right> + \left< {\bf u}^\prime \otimes {\bf u}^\prime \right> \right) \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
@@ -727,6 +728,7 @@ In the tracer equation, we note that surface fluxes (e.g. latent heat fluxes) wi
 
 Omega will only predict the layer average normal velocity, so we drop the bold face on the $u$ terms except for the product of primes, which is specified in the next section.
 
+(omega-v1-momentum-eq)=
 $$
 \frac{\partial u_{e,k}}{\partial t}
 & + \left[ {\bf k} \cdot \nabla \times u_{e,k} +f_v\right]_e\left(u_{e,k}^{\perp}\right) + \left[\nabla K\right]_e  \\
