@@ -955,6 +955,7 @@ int main(int argc, char *argv[]) {
       // MPI_Status status;
    }
    LOG_INFO("------ DataTypes Unit Tests Successful ------");
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 

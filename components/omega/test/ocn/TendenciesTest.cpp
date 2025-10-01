@@ -262,6 +262,7 @@ int main(int argc, char *argv[]) {
 
    RetVal += tendenciesTest();
 
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 

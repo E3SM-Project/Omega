@@ -699,6 +699,7 @@ int main(int argc, char *argv[]) {
    CHECK_ERROR(Err, "Config: expected error retrieving removed config - PASS");
 
    // Finalize environments
+   Pacer::finalize();
    MPI_Finalize();
 
    return 0; // successful completion

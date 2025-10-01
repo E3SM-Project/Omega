@@ -240,6 +240,7 @@ int main(int argc, char **argv) {
    Dimension::clear();
    Halo::clear();
    Decomp::clear();
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 

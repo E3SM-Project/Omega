@@ -371,6 +371,7 @@ int main(int argc, char *argv[]) {
       printf("Global sum device A1DR4: %s (exp,act=%.10f,%.10f)\n", res, expR4,
              MyResR4);
    }
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 

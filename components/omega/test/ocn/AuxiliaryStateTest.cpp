@@ -320,6 +320,7 @@ int main(int argc, char *argv[]) {
 
    RetVal += auxStateTest();
 
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 

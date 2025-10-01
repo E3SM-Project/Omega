@@ -892,6 +892,7 @@ int main(int argc, char *argv[]) {
 
    RetVal += auxVarsTest();
 
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 

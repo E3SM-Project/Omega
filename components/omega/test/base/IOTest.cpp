@@ -729,6 +729,7 @@ int main(int argc, char *argv[]) {
 
       LOG_INFO("IOTest: Successful completion");
    }
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 

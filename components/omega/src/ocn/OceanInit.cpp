@@ -21,6 +21,7 @@
 #include "MachEnv.h"
 #include "OceanDriver.h"
 #include "OceanState.h"
+#include "Pacer.h"
 #include "Tendencies.h"
 #include "TimeMgr.h"
 #include "TimeStepper.h"
@@ -30,6 +31,49 @@
 #include "mpi.h"
 
 namespace OMEGA {
+
+namespace Timing {
+// Flag to determine if timing info should be printed from all ranks
+// Set by ocnInit. Access outside of this file is provided by
+// the printAllRanks() function below
+static bool PrintAllRanks = false;
+} // namespace Timing
+
+// Accessor function for the Timing::PrintAllRanks flag
+bool printTimingAllRanks() { return Timing::PrintAllRanks; }
+
+// Read timing configuration and set Pacer options
+static void readTimingConfig() {
+   Error Err;
+
+   Config *OmegaConfig = Config::getOmegaConfig();
+   Config TimingConfig("Timing");
+   Err += OmegaConfig->get(TimingConfig);
+   CHECK_ERROR_ABORT(Err, "Timing: Timing group not found in Config");
+
+   int TimingLevel;
+   Err += TimingConfig.get("Level", TimingLevel);
+   CHECK_ERROR_ABORT(Err, "Timing: Level not found in TimingConfig");
+   OMEGA_REQUIRE(TimingLevel >= 0, "Invalid timing level {} < 0", TimingLevel);
+   Pacer::setTimingLevel(TimingLevel);
+
+   bool AutoFence;
+   Err += TimingConfig.get("AutoFence", AutoFence);
+   CHECK_ERROR_ABORT(Err, "Timing: AutoFence not found in TimingConfig");
+   if (AutoFence) {
+      Pacer::enableAutoFence();
+   }
+
+   bool TimingBarriers;
+   Err += TimingConfig.get("TimingBarriers", TimingBarriers);
+   CHECK_ERROR_ABORT(Err, "Timing: TimingBarriers not found in TimingConfig");
+   if (TimingBarriers) {
+      Pacer::enableTimingBarriers();
+   }
+
+   Err += TimingConfig.get("PrintAllRanks", Timing::PrintAllRanks);
+   CHECK_ERROR_ABORT(Err, "Timing: PrintAllRanks not found in TimingConfig");
+}
 
 int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
 ) {
@@ -47,6 +91,8 @@ int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
    Config("Omega");
    Config::readAll("omega.yml");
    Config *OmegaConfig = Config::getOmegaConfig();
+
+   readTimingConfig();
 
    // initialize remaining Omega modules
    Err = initOmegaModules(Comm);

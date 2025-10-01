@@ -42,7 +42,20 @@ int ocnRun(TimeInstant &CurrTime ///< [inout] current sim time
       // call forcing routines, anything needed pre-timestep
 
       // do forward time step
-      DefTimeStepper->doStep(DefOceanState, SimTime);
+      // first call to doStep can sometimes take very long
+      // we want to time it separately and disable child timers
+      // for that timer
+      if (IStep == 1) {
+         Pacer::start("Stepper:firstDoStep", 1);
+         Pacer::disableTiming();
+         DefTimeStepper->doStep(DefOceanState, SimTime);
+         Pacer::enableTiming();
+         Pacer::stop("Stepper:firstDoStep", 1);
+      } else {
+         Pacer::start("Stepper:doStep", 1);
+         DefTimeStepper->doStep(DefOceanState, SimTime);
+         Pacer::stop("Stepper:doStep", 1);
+      }
 
       // write restart file/output, anything needed post-timestep
 

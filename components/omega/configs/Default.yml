@@ -1,4 +1,9 @@
 Omega:
+  Timing:
+    Level: 2
+    AutoFence: true
+    TimingBarriers: false
+    PrintAllRanks: false
   TimeIntegration:
     CalendarType: No Leap
     TimeStepper: Forward-Backward

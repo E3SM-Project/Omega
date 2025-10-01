@@ -94,9 +94,23 @@ if (NOT TARGET pacer)
 
     target_link_libraries(
         pacer
-        PUBLIC
+        PRIVATE
         gptl
+        Kokkos::kokkos
     )
+
+    target_compile_definitions(
+        pacer
+        PRIVATE
+        PACER_HAVE_KOKKOS=1
+     )
+    if (OMEGA_EXTERNAL_PROF)
+      target_compile_definitions(
+          pacer
+          PRIVATE
+          PACER_ADD_RANGES=1
+      )
+    endif()
 endif()
 
 # Add the parmetis and related libraries

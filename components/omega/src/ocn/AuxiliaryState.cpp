@@ -2,6 +2,7 @@
 #include "Config.h"
 #include "Field.h"
 #include "Logging.h"
+#include "Pacer.h"
 
 namespace OMEGA {
 
@@ -72,27 +73,36 @@ void AuxiliaryState::computeMomAux(const OceanState *State, int ThickTimeLevel,
    OMEGA_SCOPE(LocVelocityDel2Aux, VelocityDel2Aux);
    OMEGA_SCOPE(LocWindForcingAux, WindForcingAux);
 
+   Pacer::start("AuxState:computeMomAux", 1);
+
+   Pacer::start("AuxState:vertexAuxState1", 2);
    parallelFor(
        "vertexAuxState1", {Mesh->NVerticesAll, NChunks},
        KOKKOS_LAMBDA(int IVertex, int KChunk) {
           LocVorticityAux.computeVarsOnVertex(IVertex, KChunk, LayerThickCell,
                                               NormalVelEdge);
        });
+   Pacer::stop("AuxState:vertexAuxState1", 2);
 
+   Pacer::start("AuxState:cellAuxState1", 2);
    parallelFor(
        "cellAuxState1", {Mesh->NCellsAll, NChunks},
        KOKKOS_LAMBDA(int ICell, int KChunk) {
           LocKineticAux.computeVarsOnCell(ICell, KChunk, NormalVelEdge);
        });
+   Pacer::stop("AuxState:cellAuxState1", 2);
 
    const auto &VelocityDivCell = KineticAux.VelocityDivCell;
    const auto &RelVortVertex   = VorticityAux.RelVortVertex;
 
+   Pacer::start("AuxState:edgeAuxState1", 2);
    parallelFor(
        "edgeAuxState1", {Mesh->NEdgesAll}, KOKKOS_LAMBDA(int IEdge) {
           LocWindForcingAux.computeVarsOnEdge(IEdge);
        });
+   Pacer::stop("AuxState:edgeAuxState1", 2);
 
+   Pacer::start("AuxState:edgeAuxState2", 2);
    parallelFor(
        "edgeAuxState2", {Mesh->NEdgesAll, NChunks},
        KOKKOS_LAMBDA(int IEdge, int KChunk) {
@@ -102,25 +112,34 @@ void AuxiliaryState::computeMomAux(const OceanState *State, int ThickTimeLevel,
           LocVelocityDel2Aux.computeVarsOnEdge(IEdge, KChunk, VelocityDivCell,
                                                RelVortVertex);
        });
+   Pacer::stop("AuxState:edgeAuxState2", 2);
 
+   Pacer::start("AuxState:vertexAuxState2", 2);
    parallelFor(
        "vertexAuxState2", {Mesh->NVerticesAll, NChunks},
        KOKKOS_LAMBDA(int IVertex, int KChunk) {
           LocVelocityDel2Aux.computeVarsOnVertex(IVertex, KChunk);
        });
+   Pacer::stop("AuxState:vertexAuxState2", 2);
 
+   Pacer::start("AuxState:cellAuxState2", 2);
    parallelFor(
        "cellAuxState2", {Mesh->NCellsAll, NChunks},
        KOKKOS_LAMBDA(int ICell, int KChunk) {
           LocVelocityDel2Aux.computeVarsOnCell(ICell, KChunk);
        });
+   Pacer::stop("AuxState:cellAuxState2", 2);
 
+   Pacer::start("AuxState:cellAuxState3", 2);
    parallelFor(
        "cellAuxState3", {Mesh->NCellsAll, NChunks},
        KOKKOS_LAMBDA(int ICell, int KChunk) {
           LocLayerThicknessAux.computeVarsOnCells(ICell, KChunk,
                                                   LayerThickCell);
        });
+   Pacer::stop("AuxState:cellAuxState3", 2);
+
+   Pacer::stop("AuxState:computeMomAux", 1);
 }
 
 // Compute the auxiliary variables
@@ -138,23 +157,31 @@ void AuxiliaryState::computeAll(const OceanState *State,
 
    OMEGA_SCOPE(LocTracerAux, TracerAux);
 
+   Pacer::start("AuxState:computeAll", 1);
+
    computeMomAux(State, ThickTimeLevel, VelTimeLevel);
 
+   Pacer::start("AuxState:edgeAuxState4", 2);
    parallelFor(
        "edgeAuxState4", {NTracers, Mesh->NEdgesAll, NChunks},
        KOKKOS_LAMBDA(int LTracer, int IEdge, int KChunk) {
           LocTracerAux.computeVarsOnEdge(LTracer, IEdge, KChunk, NormalVelEdge,
                                          LayerThickCell, TracerArray);
        });
+   Pacer::stop("AuxState:edgeAuxState4", 2);
 
    const auto &MeanLayerThickEdge = LayerThicknessAux.MeanLayerThickEdge;
 
+   Pacer::start("AuxState:cellAuxState4", 2);
    parallelFor(
        "cellAuxState4", {NTracers, Mesh->NCellsAll, NChunks},
        KOKKOS_LAMBDA(int LTracer, int ICell, int KChunk) {
           LocTracerAux.computeVarsOnCells(LTracer, ICell, KChunk,
                                           MeanLayerThickEdge, TracerArray);
        });
+   Pacer::stop("AuxState:cellAuxState4", 2);
+
+   Pacer::stop("AuxState:computeAll", 1);
 }
 
 void AuxiliaryState::computeAll(const OceanState *State,

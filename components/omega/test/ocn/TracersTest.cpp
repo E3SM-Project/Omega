@@ -493,6 +493,7 @@ int main(int argc, char *argv[]) {
       if (RetVal == 0)
          LOG_INFO("Tracers: Successful completion");
    }
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 

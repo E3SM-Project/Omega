@@ -582,6 +582,7 @@ int main(int argc, char *argv[]) {
          LOG_INFO("HaloTest: Failed");
       }
    }
+   Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 
