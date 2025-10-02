@@ -26,6 +26,11 @@ enum class EosType {
    Teos10Eos  /// Roquet et al. 2015 75 term expansion
 };
 
+struct EosRange {
+   Real Lo;
+   Real Hi;
+};
+
 /// TEOS10 75-term Polynomial Equation of State
 class Teos10Eos {
  public:
@@ -52,7 +57,7 @@ class Teos10Eos {
          /// Calculate the local specific volume polynomial pressure
          /// coefficients
          calcPCoeffs(LocSpecVolPCoeffs, KVec, ConservTemp(ICell, K),
-                     AbsSalinity(ICell, K));
+                     AbsSalinity(ICell, K), Pressure(ICell, K));
 
          /// Calculate the specific volume at the given pressure
          /// If KDisp is 0, we use the current pressure, otherwise we use the
@@ -78,12 +83,17 @@ class Teos10Eos {
    /// TEOS-10 helpers
    /// Calculate pressure polynomial coefficients for TEOS-10
    KOKKOS_FUNCTION void calcPCoeffs(Array2DReal SpecVolPCoeffs, const I4 K,
-                                    const Real Ct, const Real Sa) const {
+                                    const Real Ct, const Real Sa,
+                                    const Real P) const {
       constexpr Real SAu    = 40.0 * 35.16504 / 35.0;
       constexpr Real CTu    = 40.0;
       constexpr Real DeltaS = 24.0;
-      Real Ss               = Kokkos::sqrt((Sa + DeltaS) / SAu);
-      Real Tt               = Ct / CTu;
+      EosRange SRange       = calcSLimits(P);
+      EosRange TRange       = calcTLimits(Sa, P);
+      Real SaInFunnel       = Kokkos::clamp(
+          Sa, SRange.Lo, SRange.Hi); // Salt limited to Poly75t valid range
+      Real Ss = Kokkos::sqrt((SaInFunnel + DeltaS) / SAu);
+      Real Tt = Kokkos::clamp(Ct, TRange.Lo, TRange.Hi) / CTu;
 
       /// Coefficients for the polynomial expansion
       constexpr Real V000 = 1.0769995862e-03;
@@ -205,8 +215,9 @@ class Teos10Eos {
    KOKKOS_FUNCTION Real calcDelta(const Array2DReal &SpecVolPCoeffs, const I4 K,
                                   const Real P) const {
 
-      constexpr Real Pu = 1e4;
-      Real Pp           = P / Pu;
+      constexpr Real Pu   = 1e4;
+      constexpr Real Pmax = 8000.0;
+      Real Pp = Kokkos::min(P, Pmax) / Pu; // P limited to Poly75t valid range
 
       Real Delta = ((((SpecVolPCoeffs(5, K) * Pp + SpecVolPCoeffs(4, K)) * Pp +
                       SpecVolPCoeffs(3, K)) *
@@ -220,20 +231,105 @@ class Teos10Eos {
    }
 
    /// Calculate reference profile for TEOS-10
-   KOKKOS_FUNCTION Real calcRefProfile(Real P) const {
-      constexpr Real Pu  = 1e4;
-      constexpr Real V00 = -4.4015007269e-05;
-      constexpr Real V01 = 6.9232335784e-06;
-      constexpr Real V02 = -7.5004675975e-07;
-      constexpr Real V03 = 1.7009109288e-08;
-      constexpr Real V04 = -1.6884162004e-08;
-      constexpr Real V05 = 1.9613503930e-09;
-      Real Pp            = P / Pu;
+   KOKKOS_FUNCTION Real calcRefProfile(const Real P) const {
+      constexpr Real Pu   = 1e4;
+      constexpr Real V00  = -4.4015007269e-05;
+      constexpr Real V01  = 6.9232335784e-06;
+      constexpr Real V02  = -7.5004675975e-07;
+      constexpr Real V03  = 1.7009109288e-08;
+      constexpr Real V04  = -1.6884162004e-08;
+      constexpr Real V05  = 1.9613503930e-09;
+      constexpr Real Pmax = 8000.0;
+      Real Pp = Kokkos::min(P, Pmax) / Pu; // P limited to Poly75t valid range
 
       Real V0 =
           (((((V05 * Pp + V04) * Pp + V03) * Pp + V02) * Pp + V01) * Pp + V00) *
           Pp;
       return V0;
+   }
+
+   /// Calculate S limits of validity given pressure p
+   KOKKOS_FUNCTION EosRange calcSLimits(const Real P) const {
+      Real Lo  = 0.0;
+      Real Hi  = 42.0;
+      Real Lo2 = P * 5e-3 - 2.5;
+      Real Lo3 = 30.0;
+
+      if (P >= 500.0 && P < 6500.0) {
+         Lo = Kokkos::max(Lo, Lo2);
+      } else if (P >= 6500.0) {
+         Lo = Kokkos::max(Lo, Lo3);
+      }
+      return {Lo, Hi};
+   }
+
+   /// Calculate T limits of validity given p,Sa
+   KOKKOS_FUNCTION EosRange calcTLimits(const Real Sa, const Real P) const {
+      Real Lo = -15.0;
+      Real Hi = 95.0;
+
+      if (P < 500.0) {
+         Lo = calcCtFreezing(Sa, P, 0.0_Real);
+      } else if (P < 6500.0) {
+         Lo = calcCtFreezing(Sa, 500.0_Real, 0.0_Real);
+         Hi = 31.66666666666667 - P * 3.333333333333334e-3;
+      } else {
+         Lo = calcCtFreezing(Sa, 500.0_Real, 0.0_Real);
+         Hi = 10.0;
+      }
+      return {Lo, Hi};
+   }
+
+   /// Calculates freezing CTemperature (polynomial error in [-5e-4,6e-4] K)
+   KOKKOS_FUNCTION Real calcCtFreezing(const Real Sa, const Real P,
+                                       const Real SaturationFract) const {
+      constexpr Real Sso = 35.16504;
+      constexpr Real C0  = 0.017947064327968736;
+      constexpr Real C1  = -6.076099099929818;
+      constexpr Real C2  = 4.883198653547851;
+      constexpr Real C3  = -11.88081601230542;
+      constexpr Real C4  = 13.34658511480257;
+      constexpr Real C5  = -8.722761043208607;
+      constexpr Real C6  = 2.082038908808201;
+      constexpr Real C7  = -7.389420998107497;
+      constexpr Real C8  = -2.110913185058476;
+      constexpr Real C9  = 0.2295491578006229;
+      constexpr Real C10 = -0.9891538123307282;
+      constexpr Real C11 = -0.08987150128406496;
+      constexpr Real C12 = 0.3831132432071728;
+      constexpr Real C13 = 1.054318231187074;
+      constexpr Real C14 = 1.065556599652796;
+      constexpr Real C15 = -0.7997496801694032;
+      constexpr Real C16 = 0.3850133554097069;
+      constexpr Real C17 = -2.078616693017569;
+      constexpr Real C18 = 0.8756340772729538;
+      constexpr Real C19 = -2.079022768390933;
+      constexpr Real C20 = 1.596435439942262;
+      constexpr Real C21 = 0.1338002171109174;
+      constexpr Real C22 = 1.242891021876471;
+
+      // Note: a = 0.502500117621 / Sso
+      constexpr Real A = 0.014289763856964;
+      constexpr Real B = 0.057000649899720;
+
+      Real Sar = Sa * 1.0e-2;
+      Real X   = Kokkos::sqrt(Sar);
+      Real Pr  = P * 1.0e-4;
+
+      Real CtFreez =
+          C0 + Sar * (C1 + X * (C2 + X * (C3 + X * (C4 + X * (C5 + C6 * X))))) +
+          Pr * (C7 + Pr * (C8 + C9 * Pr)) +
+          Sar * Pr *
+              (C10 + Pr * (C12 + Pr * (C15 + C21 * Sar)) +
+               Sar * (C13 + C17 * Pr + C19 * Sar) +
+               X * (C11 + Pr * (C14 + C18 * Pr) +
+                    Sar * (C16 + C20 * Pr + C22 * Sar)));
+
+      /* Adjust for the effects of dissolved air */
+      CtFreez = CtFreez - SaturationFract * (1e-3) * (2.4 - A * Sa) *
+                              (1.0 + B * (1.0 - Sa / Sso));
+
+      return CtFreez;
    }
 
  private:
