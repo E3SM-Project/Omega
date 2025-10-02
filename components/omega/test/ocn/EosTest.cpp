@@ -37,6 +37,12 @@ constexpr int NVertLevels = 60;
 
 /// Published values (TEOS-10 and linear) to test against
 const Real TeosExpValue = 0.0009732819628; // Expected value for TEOS-10 eos
+const Real TeosClampValue1 =
+    0.0009714522912320203; // Expected value for TEOS-10 eos clamping test 1
+const Real TeosClampValue2 =
+    0.0009662964459162306; // Expected value for TEOS-10 eos clamping test 2
+const Real TeosClampValue3 =
+    0.0010086299185825206; // Expected value for TEOS-10 eos clamping test 3
 const Real LinearExpValue =
     0.0009784735812133072; // Expected value for Linear eos
 
@@ -285,6 +291,117 @@ int testEosTeos10Displaced() {
    return Err;
 }
 
+int testEosTeos10Clamping() {
+   int Err          = 0;
+   const auto *Mesh = HorzMesh::getDefault();
+   /// Get Eos instance to test
+   Eos *TestEos       = Eos::getInstance();
+   TestEos->EosChoice = EosType::Teos10Eos;
+
+   /// Create and fill ocean state arrays
+   Array2DReal SArray = Array2DReal("SArray", Mesh->NCellsAll, NVertLevels);
+   Array2DReal TArray = Array2DReal("TArray", Mesh->NCellsAll, NVertLevels);
+   Array2DReal PArray = Array2DReal("PArray", Mesh->NCellsAll, NVertLevels);
+   /// Use Kokkos::deep_copy to fill the entire view with the ref value
+   /// Test with valid poly75t values first.
+   deepCopy(SArray, 35.0);
+   deepCopy(TArray, 5.0);
+   deepCopy(PArray, 400.0);
+   deepCopy(TestEos->SpecVol, 0.0);
+
+   /// Compute specific volume
+   TestEos->computeSpecVol(TArray, SArray, PArray);
+
+   /// Check all array values against expected value
+   int numMismatches   = 0;
+   Array2DReal SpecVol = TestEos->SpecVol;
+   parallelReduce(
+       "CheckSpecVolMatrix-Teos", {Mesh->NCellsAll, NVertLevels},
+       KOKKOS_LAMBDA(int i, int j, int &localCount) {
+          if (!isApprox(SpecVol(i, j), TeosClampValue1, RTol)) {
+             localCount++;
+          }
+       },
+       numMismatches);
+
+   auto SpecVolH = createHostMirrorCopy(SpecVol);
+   if (numMismatches != 0) {
+      Err++;
+      LOG_ERROR("EosTest: TEOS SpecVolClampingNone isApprox FAIL, "
+                "expected {}, got {} with {} mismatches",
+                TeosClampValue1, SpecVolH(1, 1), numMismatches);
+   }
+   if (Err == 0) {
+      LOG_INFO("EosTest SpecVolClampingNone TEOS-10: PASS");
+   }
+
+   /// Test with an ivalid poly75t salinity value second
+   deepCopy(SArray, 45.0);
+   deepCopy(TArray, 5.0);
+   deepCopy(PArray, 400.0);
+   deepCopy(TestEos->SpecVol, 0.0);
+
+   /// Compute specific volume
+   TestEos->computeSpecVol(TArray, SArray, PArray);
+
+   /// Check all array values against expected value
+   numMismatches = 0;
+   SpecVol       = TestEos->SpecVol;
+   parallelReduce(
+       "CheckSpecVolMatrix-Teos", {Mesh->NCellsAll, NVertLevels},
+       KOKKOS_LAMBDA(int i, int j, int &localCount) {
+          if (!isApprox(SpecVol(i, j), TeosClampValue2, RTol)) {
+             localCount++;
+          }
+       },
+       numMismatches);
+
+   SpecVolH = createHostMirrorCopy(SpecVol);
+   if (numMismatches != 0) {
+      Err++;
+      LOG_ERROR("EosTest: TEOS SpecVolClampingSalt isApprox FAIL, "
+                "expected {}, got {} with {} mismatches",
+                TeosClampValue2, SpecVolH(1, 1), numMismatches);
+   }
+   if (Err == 0) {
+      LOG_INFO("EosTest SpecVolClampingSalt TEOS-10: PASS");
+   }
+
+   /// Test with an ivalid poly75t temperature value third
+   deepCopy(SArray, 35.0);
+   deepCopy(TArray, 100.0);
+   deepCopy(PArray, 400.0);
+   deepCopy(TestEos->SpecVol, 0.0);
+
+   /// Compute specific volume
+   TestEos->computeSpecVol(TArray, SArray, PArray);
+
+   /// Check all array values against expected value
+   numMismatches = 0;
+   SpecVol       = TestEos->SpecVol;
+   parallelReduce(
+       "CheckSpecVolMatrix-Teos", {Mesh->NCellsAll, NVertLevels},
+       KOKKOS_LAMBDA(int i, int j, int &localCount) {
+          if (!isApprox(SpecVol(i, j), TeosClampValue3, RTol)) {
+             localCount++;
+          }
+       },
+       numMismatches);
+
+   SpecVolH = createHostMirrorCopy(SpecVol);
+   if (numMismatches != 0) {
+      Err++;
+      LOG_ERROR("EosTest: TEOS SpecVolClampingTemp isApprox FAIL, "
+                "expected {}, got {} with {} mismatches",
+                TeosClampValue3, SpecVolH(1, 1), numMismatches);
+   }
+   if (Err == 0) {
+      LOG_INFO("EosTest SpecVolClampingTemp TEOS-10: PASS");
+   }
+
+   return Err;
+}
+
 /// Finalize and clean up all test infrastructure
 void finalizeEosTest() {
    HorzMesh::clear();
@@ -296,8 +413,7 @@ void finalizeEosTest() {
 
 /// Test that the external GSW-C library returns the expected specific volume
 int checkValueGswcSpecVol() {
-   int Err         = 0;
-   const Real RTol = 1e-10;
+   int Err = 0;
 
    /// Get specific volume from GSW-C library
    double SpecVol = gsw_specvol(Sa, Ct, P);
@@ -317,8 +433,8 @@ int checkValueGswcSpecVol() {
 
 /// Test that the external GSW-C library returns the expected specific volume
 int checkValueCtFreezing() {
-   int Err         = 0;
-   const Real RTol = 1e-10;
+   int Err = 0;
+
    Teos10Eos TestEos(1);
    // TestEos->EosChoice = EosType::Teos10Eos;
    constexpr Real SaturationFrac = 0.0;
@@ -344,14 +460,19 @@ int checkValueCtFreezing() {
 }
 
 // the main test (all in one to have the same log)
-// Single value test:
-// --> test calls the external GSW-C library
+// Single value tests:
+// --> one test calls the external GSW-C library for specific volume
+// --> next test calls the external GSW-C library for freezing value
 // and compares the specific volume to the published value
 // Full array tests:
 // --> one tests the value on a Eos with linear option
 // --> next checks the value on a Eos with linear displaced option
 // --> next checks the value on a Eos with TEOS-10 option
 // --> next checks the value on a Eos with TEOS-10 displaced option
+// Clamping test:
+// --> test check the clamping works for values that (1) don't need
+// clamping, (2) need claiming on the salinity, and (3) need clamping
+// on the temperature
 int eosTest(const std::string &MeshFile = "OmegaMesh.nc") {
    int Err = initEosTest(MeshFile);
    if (Err != 0) {
@@ -368,6 +489,9 @@ int eosTest(const std::string &MeshFile = "OmegaMesh.nc") {
    Err += testEosLinearDisplaced();
    Err += testEosTeos10();
    Err += testEosTeos10Displaced();
+
+   LOG_INFO("Clamping check:");
+   Err += testEosTeos10Clamping();
 
    if (Err == 0) {
       LOG_INFO("EosTest: Successful completion");

@@ -25,9 +25,9 @@ enum class EosType {
    Teos10Eos  /// Roquet et al. 2015 75 term expansion
 };
 
-struct Range {
-   Real lo;
-   Real hi;
+struct EosRange {
+   Real Lo;
+   Real Hi;
 };
 
 /// TEOS10 75-term Polynomial Equation of State
@@ -87,12 +87,12 @@ class Teos10Eos {
       constexpr Real SAu    = 40.0 * 35.16504 / 35.0;
       constexpr Real CTu    = 40.0;
       constexpr Real DeltaS = 24.0;
-      Range Srange          = calcSLimits(P);
-      Range Trange          = calcTLimits(Sa, P);
+      EosRange SRange       = calcSLimits(P);
+      EosRange TRange       = calcTLimits(Sa, P);
       Real SaInFunnel       = Kokkos::clamp(
-          Sa, Srange.lo, Srange.hi); // Salt limited to Poly75t valid range
+          Sa, SRange.Lo, SRange.Hi); // Salt limited to Poly75t valid range
       Real Ss = Kokkos::sqrt((SaInFunnel + DeltaS) / SAu);
-      Real Tt = Kokkos::clamp(Ct, Trange.lo, Trange.hi) / CTu;
+      Real Tt = Kokkos::clamp(Ct, TRange.Lo, TRange.Hi) / CTu;
 
       /// Coefficients for the polynomial expansion
       constexpr Real V000 = 1.0769995862e-03;
@@ -248,87 +248,85 @@ class Teos10Eos {
    }
 
    /// Calculate S limits of validity given pressure p
-   KOKKOS_FUNCTION Range calcSLimits(const Real P) const {
-      Real lo  = 0.0;
-      Real hi  = 42.0;
-      Real lo2 = P * 5e-3 - 2.5;
-      Real lo3 = 30.0;
+   KOKKOS_FUNCTION EosRange calcSLimits(const Real P) const {
+      Real Lo  = 0.0;
+      Real Hi  = 42.0;
+      Real Lo2 = P * 5e-3 - 2.5;
+      Real Lo3 = 30.0;
 
       if (P >= 500.0 && P < 6500.0) {
-         lo = Kokkos::max(lo, lo2);
+         Lo = Kokkos::max(Lo, Lo2);
       } else if (P >= 6500.0) {
-         lo = Kokkos::max(lo, lo3);
+         Lo = Kokkos::max(Lo, Lo3);
       }
-      return {lo, hi};
+      return {Lo, Hi};
    }
 
    /// Calculate T limits of validity given p,Sa
-   KOKKOS_FUNCTION Range calcTLimits(const Real Sa, const Real P) const {
-      Real lo = -15.0;
-      Real hi = 95.0;
+   KOKKOS_FUNCTION EosRange calcTLimits(const Real Sa, const Real P) const {
+      Real Lo = -15.0;
+      Real Hi = 95.0;
 
       if (P < 500.0) {
-         lo = calcCtFreezing(Sa, P, Real{0.0});
+         Lo = calcCtFreezing(Sa, P, 0.0_Real);
       } else if (P < 6500.0) {
-         lo = calcCtFreezing(Sa, Real{500.0}, Real{0.0});
-         hi = 31.66666666666667 - P * 3.333333333333334e-3;
+         Lo = calcCtFreezing(Sa, 500.0_Real, 0.0_Real);
+         Hi = 31.66666666666667 - P * 3.333333333333334e-3;
       } else {
-         lo = calcCtFreezing(Sa, Real{500.0}, Real{0.0});
-         hi = 10.0;
+         Lo = calcCtFreezing(Sa, 500.0_Real, 0.0_Real);
+         Hi = 10.0;
       }
-      return {lo, hi};
+      return {Lo, Hi};
    }
 
    /// Calculates freezing CTemperature (polynomial error in [-5e-4,6e-4] K)
    KOKKOS_FUNCTION Real calcCtFreezing(const Real Sa, const Real P,
                                        const Real SaturationFract) const {
       constexpr Real Sso = 35.16504;
-      constexpr Real c0  = 0.017947064327968736;
-      constexpr Real c1  = -6.076099099929818;
-      constexpr Real c2  = 4.883198653547851;
-      constexpr Real c3  = -11.88081601230542;
-      constexpr Real c4  = 13.34658511480257;
-      constexpr Real c5  = -8.722761043208607;
-      constexpr Real c6  = 2.082038908808201;
-      constexpr Real c7  = -7.389420998107497;
-      constexpr Real c8  = -2.110913185058476;
-      constexpr Real c9  = 0.2295491578006229;
-      constexpr Real c10 = -0.9891538123307282;
-      constexpr Real c11 = -0.08987150128406496;
-      constexpr Real c12 = 0.3831132432071728;
-      constexpr Real c13 = 1.054318231187074;
-      constexpr Real c14 = 1.065556599652796;
-      constexpr Real c15 = -0.7997496801694032;
-      constexpr Real c16 = 0.3850133554097069;
-      constexpr Real c17 = -2.078616693017569;
-      constexpr Real c18 = 0.8756340772729538;
-      constexpr Real c19 = -2.079022768390933;
-      constexpr Real c20 = 1.596435439942262;
-      constexpr Real c21 = 0.1338002171109174;
-      constexpr Real c22 = 1.242891021876471;
+      constexpr Real C0  = 0.017947064327968736;
+      constexpr Real C1  = -6.076099099929818;
+      constexpr Real C2  = 4.883198653547851;
+      constexpr Real C3  = -11.88081601230542;
+      constexpr Real C4  = 13.34658511480257;
+      constexpr Real C5  = -8.722761043208607;
+      constexpr Real C6  = 2.082038908808201;
+      constexpr Real C7  = -7.389420998107497;
+      constexpr Real C8  = -2.110913185058476;
+      constexpr Real C9  = 0.2295491578006229;
+      constexpr Real C10 = -0.9891538123307282;
+      constexpr Real C11 = -0.08987150128406496;
+      constexpr Real C12 = 0.3831132432071728;
+      constexpr Real C13 = 1.054318231187074;
+      constexpr Real C14 = 1.065556599652796;
+      constexpr Real C15 = -0.7997496801694032;
+      constexpr Real C16 = 0.3850133554097069;
+      constexpr Real C17 = -2.078616693017569;
+      constexpr Real C18 = 0.8756340772729538;
+      constexpr Real C19 = -2.079022768390933;
+      constexpr Real C20 = 1.596435439942262;
+      constexpr Real C21 = 0.1338002171109174;
+      constexpr Real C22 = 1.242891021876471;
 
       // Note: a = 0.502500117621 / Sso
-      constexpr Real a = 0.014289763856964;
-      constexpr Real b = 0.057000649899720;
-
-      Real CtFreez;
+      constexpr Real A = 0.014289763856964;
+      constexpr Real B = 0.057000649899720;
 
       Real Sar = Sa * 1.0e-2;
       Real X   = Kokkos::sqrt(Sar);
       Real Pr  = P * 1.0e-4;
 
-      CtFreez =
-          c0 + Sar * (c1 + X * (c2 + X * (c3 + X * (c4 + X * (c5 + c6 * X))))) +
-          Pr * (c7 + Pr * (c8 + c9 * Pr)) +
+      Real CtFreez =
+          C0 + Sar * (C1 + X * (C2 + X * (C3 + X * (C4 + X * (C5 + C6 * X))))) +
+          Pr * (C7 + Pr * (C8 + C9 * Pr)) +
           Sar * Pr *
-              (c10 + Pr * (c12 + Pr * (c15 + c21 * Sar)) +
-               Sar * (c13 + c17 * Pr + c19 * Sar) +
-               X * (c11 + Pr * (c14 + c18 * Pr) +
-                    Sar * (c16 + c20 * Pr + c22 * Sar)));
+              (C10 + Pr * (C12 + Pr * (C15 + C21 * Sar)) +
+               Sar * (C13 + C17 * Pr + C19 * Sar) +
+               X * (C11 + Pr * (C14 + C18 * Pr) +
+                    Sar * (C16 + C20 * Pr + C22 * Sar)));
 
       /* Adjust for the effects of dissolved air */
-      CtFreez = CtFreez - SaturationFract * (1e-3) * (2.4 - a * Sa) *
-                              (1.0 + b * (1.0 - Sa / Sso));
+      CtFreez = CtFreez - SaturationFract * (1e-3) * (2.4 - A * Sa) *
+                              (1.0 + B * (1.0 - Sa / Sso));
 
       return CtFreez;
    }
