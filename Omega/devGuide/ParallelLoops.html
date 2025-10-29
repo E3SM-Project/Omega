@@ -92,6 +92,17 @@
 <li class="toctree-l3"><a class="reference internal" href="#parallelreduce">parallelReduce</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#hierarchical-parallelism">Hierarchical parallelism</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#inner-lambda">INNER_LAMBDA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#teambarrier">teamBarrier</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#kokkos-single">Kokkos::single</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parallelforouter">parallelForOuter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parallelreduceouter">parallelReduceOuter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parallelforinner">parallelForInner</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parallelreduceinner">parallelReduceInner</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parallelscaninner">parallelScanInner</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
@@ -247,7 +258,7 @@ As an example, the following snippet finds the maximum of <code class="docutils 
 <p>To perform reductions that are not sums, in addition to modifying the lambda body,
 the final reduction variable needs to be cast to the appropriate type. In the above example,
 <code class="docutils literal notranslate"><span class="pre">MaxA</span></code> is cast to <code class="docutils literal notranslate"><span class="pre">Kokkos::Max&lt;Real&gt;</span></code> to perform a max reduction.
-The <code class="docutils literal notranslate"><span class="pre">parallelReduce</span></code> wrapper supports performing multiple reduction at the same time.
+The <code class="docutils literal notranslate"><span class="pre">parallelReduce</span></code> wrapper supports performing multiple reductions at the same time.
 You can compute <code class="docutils literal notranslate"><span class="pre">SumA</span></code> and <code class="docutils literal notranslate"><span class="pre">MaxA</span></code> in one pass over the data:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">parallelReduce</span><span class="p">(</span>
 <span class="w">       </span><span class="p">{</span><span class="n">N1</span><span class="p">,</span><span class="w"> </span><span class="n">N2</span><span class="p">,</span><span class="w"> </span><span class="n">N3</span><span class="p">},</span>
@@ -258,7 +269,218 @@ You can compute <code class="docutils literal notranslate"><span class="pre">Sum
 <span class="w">       </span><span class="n">SumA</span><span class="p">,</span><span class="w"> </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">Max</span><span class="o">&lt;</span><span class="n">Real</span><span class="o">&gt;</span><span class="p">(</span><span class="n">MaxA</span><span class="p">));</span>
 </pre></div>
 </div>
-<p>Similarly to <code class="docutils literal notranslate"><span class="pre">parallelFor</span></code>, <code class="docutils literal notranslate"><span class="pre">parallelReduce</span></code> supports labels and up to five dimensions.</p>
+<p>There is no limit to how many reductions can be done at the same time.
+It is usually beneficial for performance to group a small number (2-8) of simple
+reductions together.
+Similarly to <code class="docutils literal notranslate"><span class="pre">parallelFor</span></code>, <code class="docutils literal notranslate"><span class="pre">parallelReduce</span></code> supports labels and up to five dimensions.</p>
+</section>
+</section>
+<section id="hierarchical-parallelism">
+<h2>Hierarchical parallelism<a class="headerlink" href="#hierarchical-parallelism" title="Permalink to this heading"></a></h2>
+<p>A more flexible alternative to flat parallelism is hierarchical parallelism.
+In general, Kokkos supports a three-level parallelism hierarchy of</p>
+<ul class="simple">
+<li><p>teams of a league</p></li>
+<li><p>threads of a team</p></li>
+<li><p>vector lanes of a thread</p></li>
+</ul>
+<p>In Omega, we simplify this design to a two-level hierarchy (outer and inner) that naturally
+corresponds to the  model parallelism in the horizontal and vertical dimensions.
+The outer level of parallelism in Omega corresponds to parallelism over Kokkos teams,
+whereas the inner level may be a combination of parallelism over team threads and thread vector lanes.
+The simplest example of a hierarchical parallel loop using Omega wrappers looks as follows</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">parallelForOuter</span><span class="p">(</span>
+<span class="w">       </span><span class="p">{</span><span class="n">NCells</span><span class="p">},</span>
+<span class="w">       </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">TeamMember</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Team</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">           </span><span class="n">parallelForInner</span><span class="p">(</span><span class="n">Team</span><span class="p">,</span><span class="w"> </span><span class="n">NVertLayers</span><span class="p">,</span><span class="w"> </span><span class="n">INNER_LAMBDA</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">KLayer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">               </span><span class="c1">// Inner body</span>
+<span class="w">           </span><span class="p">});</span>
+<span class="w">   </span><span class="p">});</span>
+</pre></div>
+</div>
+<p>Note the appearance of a variable named <code class="docutils literal notranslate"><span class="pre">Team</span></code> of type <code class="docutils literal notranslate"><span class="pre">TeamMember</span></code> in the outer lambda
+argument list. This variable handles launching of inner loops and team synchronization.
+The flexibility of hierarchical parallelism comes from:</p>
+<ul class="simple">
+<li><p>the possibility of the inner loop range to depend on the outer index</p></li>
+<li><p>the option to use different patterns at the outer and inner levels</p></li>
+<li><p>the option to have multiple parallel loops at the inner level</p></li>
+</ul>
+<p>The following outer iteration patterns are supported in Omega:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">parallelForOuter</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parallelReduceOuter</span></code></p></li>
+</ul>
+<p>The following inner iteration patterns are supported in Omega:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">parallelForInner</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parallelReduceInner</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parallelScanInner</span></code></p></li>
+</ul>
+<p>To provide even more flexibility, the outer loops support iterating over a multi-dimensional range.
+Currently, the inner loops are limited to one dimension.</p>
+<section id="inner-lambda">
+<h3>INNER_LAMBDA<a class="headerlink" href="#inner-lambda" title="Permalink to this heading"></a></h3>
+<p>When using hierarchical parallelism the outer loop lambda has to be annotated with <code class="docutils literal notranslate"><span class="pre">KOKKOS_LAMBDA</span></code> to
+be device accessible. In the inner lambda it must be possible to obtain correct results using capture by value (<code class="docutils literal notranslate"><span class="pre">[=]</span></code>).
+However, in some cases, better performance might be possible by using
+capture by reference (<code class="docutils literal notranslate"><span class="pre">[&amp;]</span></code>). For that reason, Omega provides the
+<code class="docutils literal notranslate"><span class="pre">INNER_LAMBDA</span></code> macro that expends to the best performing capture clause depending on the chosen
+architecture.</p>
+</section>
+<section id="teambarrier">
+<h3>teamBarrier<a class="headerlink" href="#teambarrier" title="Permalink to this heading"></a></h3>
+<p>When multiple parallel inner loops are present within one outer loop, synchronization within
+a thread team might be necessary. Omega provides the <code class="docutils literal notranslate"><span class="pre">teamBarrier</span></code> function that
+synchronizes the threads in a team, which can be called as follows.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">teamBarrier</span><span class="p">(</span><span class="n">Team</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This function may only be called at the outer level and needs to be called by every thread in a team.
+Failure to follow these rules might result in deadlocks.</p>
+</section>
+<section id="kokkos-single">
+<h3>Kokkos::single<a class="headerlink" href="#kokkos-single" title="Permalink to this heading"></a></h3>
+<p>When using hierarchical parallelism, it might be necessary to restrict execution to just one thread of a team.
+To do that Kokkos provides the <code class="docutils literal notranslate"><span class="pre">single</span></code> function. To execute a statement once per team with a single thread do</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">single</span><span class="p">(</span><span class="n">PerTeam</span><span class="p">(</span><span class="n">Team</span><span class="p">),</span><span class="w"> </span><span class="p">[</span><span class="o">=</span><span class="p">](){</span>
+<span class="w">      </span><span class="c1">// executed once per team (by one of the team threads)</span>
+<span class="w">  </span><span class="p">});</span>
+</pre></div>
+</div>
+</section>
+<section id="parallelforouter">
+<h3>parallelForOuter<a class="headerlink" href="#parallelforouter" title="Permalink to this heading"></a></h3>
+<p>To start outer iterations over a multidimensional index range the <code class="docutils literal notranslate"><span class="pre">parallelForOuter</span></code> wrapper is available.
+A call to <code class="docutils literal notranslate"><span class="pre">parallelForOuter</span></code> might look as follows.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">parallelForOuter</span><span class="p">(</span>
+<span class="w">       </span><span class="p">{</span><span class="n">N1</span><span class="p">},</span>
+<span class="w">       </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">TeamMember</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Team</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">           </span><span class="c1">// launch inner loops here</span>
+<span class="w">       </span><span class="p">});</span>
+</pre></div>
+</div>
+<p>Labels and multi-dimensional iteration ranges of up to five dimensions are supported by <code class="docutils literal notranslate"><span class="pre">parallelForOuter</span></code>.</p>
+</section>
+<section id="parallelreduceouter">
+<h3>parallelReduceOuter<a class="headerlink" href="#parallelreduceouter" title="Permalink to this heading"></a></h3>
+<p>To start outer reductions over a multi-dimensional index range the <code class="docutils literal notranslate"><span class="pre">parallelReduceOuter</span></code> wrapper is available.
+A call to <code class="docutils literal notranslate"><span class="pre">parallelReduceOuter</span></code> might look as follows.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Real</span><span class="w"> </span><span class="n">OuterSum</span><span class="p">;</span>
+<span class="w">   </span><span class="n">parallelReduceOuter</span><span class="p">(</span>
+<span class="w">       </span><span class="p">{</span><span class="n">N1</span><span class="p">},</span>
+<span class="w">       </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">TeamMember</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Team</span><span class="p">,</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Accum</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">           </span><span class="n">Real</span><span class="w"> </span><span class="n">InnerContribution</span><span class="p">;</span>
+<span class="w">           </span><span class="c1">// compute InnerContribution</span>
+<span class="w">           </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">single</span><span class="p">(</span><span class="n">PerTeam</span><span class="p">(</span><span class="n">Team</span><span class="p">),</span><span class="w"> </span><span class="p">[</span><span class="o">&amp;</span><span class="p">](){</span>
+<span class="w">               </span><span class="n">Accum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">InnerContribution</span><span class="p">;</span>
+<span class="w">           </span><span class="p">});</span>
+<span class="w">       </span><span class="p">},</span><span class="w"> </span><span class="n">OuterSum</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Note how in this example the addition of <code class="docutils literal notranslate"><span class="pre">InnerContribution</span></code> is done inside <code class="docutils literal notranslate"><span class="pre">Kokkos::single</span></code>
+with just one thread from a team. This shows how to add one contribution per team to the total sum.
+The reduction accumulator comes after the team member variable in the lambda argument list.
+Labels and multi-dimensional iteration ranges of up to five dimensions are supported in <code class="docutils literal notranslate"><span class="pre">parallelReduceOuter</span></code>.
+Different types of reductions (min, max) and multiple reducers are also supported.</p>
+</section>
+<section id="parallelforinner">
+<h3>parallelForInner<a class="headerlink" href="#parallelforinner" title="Permalink to this heading"></a></h3>
+<p>To launch inner parallel iterations Omega provides the
+<code class="docutils literal notranslate"><span class="pre">parallelForInner</span></code> wrapper. For example, the following code shows how to set every element of
+a 3D array in parallel using hierarchical parallelism.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Array3DReal</span><span class="w"> </span><span class="n">A</span><span class="p">(</span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">N1</span><span class="p">,</span><span class="w"> </span><span class="n">N2</span><span class="p">,</span><span class="w"> </span><span class="n">N3</span><span class="p">);</span>
+<span class="w">   </span><span class="n">parallelForOuter</span><span class="p">(</span>
+<span class="w">       </span><span class="p">{</span><span class="n">N1</span><span class="p">,</span><span class="w"> </span><span class="n">N2</span><span class="p">},</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">J2</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">TeamMember</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Team</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">parallelForInner</span><span class="p">(</span><span class="n">Team</span><span class="p">,</span><span class="w"> </span><span class="n">N3</span><span class="p">,</span><span class="w"> </span><span class="n">INNER_LAMBDA</span><span class="p">(</span><span class="n">Int</span><span class="w"> </span><span class="n">J3</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="n">A</span><span class="p">(</span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="n">J2</span><span class="p">,</span><span class="w"> </span><span class="n">J3</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">J1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">J2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">J3</span><span class="p">;</span>
+<span class="w">        </span><span class="p">});</span>
+<span class="w">    </span><span class="p">});</span>
+</pre></div>
+</div>
+<p>Labels are not supported by <code class="docutils literal notranslate"><span class="pre">parallelForInner</span></code> and only one-dimensional index range can be used.
+The inner loop range can depend on the outer loop index. For example, to set the elements below the main
+diagonal of a square matrix one can do:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">M</span><span class="p">(</span><span class="s">&quot;M&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">);</span>
+<span class="w">   </span><span class="n">parallelForOuter</span><span class="p">(</span>
+<span class="w">       </span><span class="p">{</span><span class="n">N</span><span class="p">},</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">TeamMember</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Team</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">parallelForInner</span><span class="p">(</span><span class="n">Team</span><span class="p">,</span><span class="w"> </span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="n">INNER_LAMBDA</span><span class="p">(</span><span class="n">Int</span><span class="w"> </span><span class="n">J2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="n">M</span><span class="p">(</span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="n">J2</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">J1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">J2</span><span class="p">;</span>
+<span class="w">        </span><span class="p">});</span>
+<span class="w">    </span><span class="p">});</span>
+</pre></div>
+</div>
+</section>
+<section id="parallelreduceinner">
+<h3>parallelReduceInner<a class="headerlink" href="#parallelreduceinner" title="Permalink to this heading"></a></h3>
+<p>To launch inner parallel reductions Omega provides the <code class="docutils literal notranslate"><span class="pre">parallelReduceInner</span></code> wrapper.
+For example, computing sums along the third dimension of a 3D array in parallel and storing them
+in a 2D array might be done as follows.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Array3DReal</span><span class="w"> </span><span class="n">A</span><span class="p">(</span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">N1</span><span class="p">,</span><span class="w"> </span><span class="n">N2</span><span class="p">,</span><span class="w"> </span><span class="n">N3</span><span class="p">);</span>
+<span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">B</span><span class="p">(</span><span class="s">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">N1</span><span class="p">,</span><span class="w"> </span><span class="n">N2</span><span class="p">);</span>
+<span class="w">   </span><span class="n">parallelForOuter</span><span class="p">(</span>
+<span class="w">       </span><span class="p">{</span><span class="n">N1</span><span class="p">,</span><span class="w"> </span><span class="n">N2</span><span class="p">},</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">J2</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">TeamMember</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Team</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Real</span><span class="w"> </span><span class="n">SumD3</span><span class="p">;</span>
+<span class="w">        </span><span class="n">parallelReduceInner</span><span class="p">(</span><span class="n">Team</span><span class="p">,</span><span class="w"> </span><span class="n">N3</span><span class="p">,</span><span class="w"> </span><span class="n">INNER_LAMBDA</span><span class="p">(</span><span class="n">Int</span><span class="w"> </span><span class="n">J3</span><span class="p">,</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Accum</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Accum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">A</span><span class="p">(</span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="n">J2</span><span class="p">,</span><span class="w"> </span><span class="n">J3</span><span class="p">);</span>
+<span class="w">        </span><span class="p">},</span><span class="w"> </span><span class="n">SumD3</span><span class="p">);</span>
+<span class="w">        </span><span class="n">B</span><span class="p">(</span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="n">J2</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SumD3</span><span class="p">;</span>
+<span class="w">    </span><span class="p">});</span>
+</pre></div>
+</div>
+<p>Labels are not supported by <code class="docutils literal notranslate"><span class="pre">parallelReduceInner</span></code> and only one-dimensional index range can be used.
+Different types of reductions (min, max) and multiple reducers are supported.
+For example, to additionally compute and store maxima along the third dimension of A do</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">C</span><span class="p">(</span><span class="s">&quot;C&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">N1</span><span class="p">,</span><span class="w"> </span><span class="n">N2</span><span class="p">);</span>
+<span class="w">   </span><span class="n">parallelForOuter</span><span class="p">(</span>
+<span class="w">       </span><span class="p">{</span><span class="n">N1</span><span class="p">,</span><span class="w"> </span><span class="n">N2</span><span class="p">},</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">J2</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">TeamMember</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Team</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Real</span><span class="w"> </span><span class="n">SumD3</span><span class="p">,</span><span class="w"> </span><span class="n">MaxD3</span><span class="p">;</span>
+<span class="w">        </span><span class="n">parallelReduceInner</span><span class="p">(</span><span class="n">Team</span><span class="p">,</span><span class="w"> </span><span class="n">N3</span><span class="p">,</span><span class="w"> </span><span class="n">INNER_LAMBDA</span><span class="p">(</span><span class="n">Int</span><span class="w"> </span><span class="n">J3</span><span class="p">,</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">&amp;</span><span class="n">AccumSum</span><span class="p">,</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">&amp;</span><span class="n">AccumMax</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">AccumSum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">A</span><span class="p">(</span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="n">J2</span><span class="p">,</span><span class="w"> </span><span class="n">J3</span><span class="p">);</span>
+<span class="w">            </span><span class="n">AccumMax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">Max</span><span class="p">(</span><span class="n">AccumMax</span><span class="p">,</span><span class="w"> </span><span class="n">A</span><span class="p">(</span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="n">J2</span><span class="p">,</span><span class="w"> </span><span class="n">J3</span><span class="p">));</span>
+<span class="w">        </span><span class="p">},</span><span class="w"> </span><span class="n">SumN3</span><span class="p">,</span><span class="w"> </span><span class="n">MaxN3</span><span class="p">);</span>
+<span class="w">        </span><span class="n">B</span><span class="p">(</span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="n">J2</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SumD3</span><span class="p">;</span>
+<span class="w">        </span><span class="n">C</span><span class="p">(</span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="n">J2</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MaxD3</span><span class="p">;</span>
+<span class="w">    </span><span class="p">});</span>
+</pre></div>
+</div>
+<p>Inner reductions are collective operations within a team. This means that the reduction results
+are available to every thread of a team, without any need for synchronization</p>
+</section>
+<section id="parallelscaninner">
+<h3>parallelScanInner<a class="headerlink" href="#parallelscaninner" title="Permalink to this heading"></a></h3>
+<p>To launch inner parallel scans Omega provides the <code class="docutils literal notranslate"><span class="pre">parallelScanInner</span></code> wrapper.
+For example, computing prefix sums (partial sums) along the third dimension of a 3D array might
+be done as follows.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Array3DReal</span><span class="w"> </span><span class="n">A</span><span class="p">(</span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">N1</span><span class="p">,</span><span class="w"> </span><span class="n">N2</span><span class="p">,</span><span class="w"> </span><span class="n">N3</span><span class="p">);</span>
+<span class="w">   </span><span class="n">Array3DReal</span><span class="w"> </span><span class="n">D</span><span class="p">(</span><span class="s">&quot;D&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">N1</span><span class="p">,</span><span class="w"> </span><span class="n">N2</span><span class="p">,</span><span class="w"> </span><span class="n">N3</span><span class="p">);</span>
+<span class="w">   </span><span class="n">parallelForOuter</span><span class="p">(</span>
+<span class="w">       </span><span class="p">{</span><span class="n">N1</span><span class="p">,</span><span class="w"> </span><span class="n">N2</span><span class="p">},</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">J2</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">TeamMember</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Team</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="n">parallelScanInner</span><span class="p">(</span><span class="n">Team</span><span class="p">,</span><span class="w"> </span><span class="n">N1</span><span class="p">,</span><span class="w"> </span><span class="n">INNER_LAMBDA</span><span class="p">(</span><span class="n">Int</span><span class="w"> </span><span class="n">J3</span><span class="p">,</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Accum</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">IsFinal</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Accum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">A</span><span class="p">(</span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="n">J2</span><span class="p">,</span><span class="w"> </span><span class="n">J3</span><span class="p">);</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">IsFinal</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">              </span><span class="n">D</span><span class="p">(</span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="n">J2</span><span class="p">,</span><span class="w"> </span><span class="n">J3</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Accum</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">});</span>
+<span class="w">       </span><span class="p">});</span>
+</pre></div>
+</div>
+<p>This example computes partial sums up to and including <code class="docutils literal notranslate"><span class="pre">A(J1,</span> <span class="pre">J2,</span> <span class="pre">J3)</span></code> because the accumulator is updated
+before the <code class="docutils literal notranslate"><span class="pre">if</span></code> statement. That is, it performs an inclusive scan. To compute an exclusive scan
+simply move the addition after the <code class="docutils literal notranslate"><span class="pre">if</span></code> statement.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="n">Real</span><span class="w"> </span><span class="n">FinalScanValue</span><span class="p">;</span>
+<span class="w">  </span><span class="n">parallelScanInner</span><span class="p">(</span><span class="n">Team</span><span class="p">,</span><span class="w"> </span><span class="n">N1</span><span class="p">,</span><span class="w"> </span><span class="n">INNER_LAMBDA</span><span class="p">(</span><span class="n">Int</span><span class="w"> </span><span class="n">J3</span><span class="p">,</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Accum</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">IsFinal</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">IsFinal</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="n">D</span><span class="p">(</span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="n">J2</span><span class="p">,</span><span class="w"> </span><span class="n">J3</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Accum</span><span class="p">;</span>
+<span class="w">       </span><span class="p">}</span>
+<span class="w">       </span><span class="n">Accum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">A</span><span class="p">(</span><span class="n">J1</span><span class="p">,</span><span class="w"> </span><span class="n">J2</span><span class="p">,</span><span class="w"> </span><span class="n">J3</span><span class="p">);</span>
+<span class="w">  </span><span class="p">},</span><span class="w"> </span><span class="n">FinalScanValue</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Moreover, this example illustrates that the final scan value can be obtained by providing
+an additional argument <code class="docutils literal notranslate"><span class="pre">FinalScanValue</span></code>. Labels are not supported by <code class="docutils literal notranslate"><span class="pre">parallelScanInner</span></code>
+and only one-dimensional index range can be used. In contrast to <code class="docutils literal notranslate"><span class="pre">parallelReduceInner</span></code>,
+<code class="docutils literal notranslate"><span class="pre">parallelScanInner</span></code> supports only sum-based scans and only one scan variable.</p>
 </section>
 </section>
 </section>
