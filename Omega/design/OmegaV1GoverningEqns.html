@@ -268,7 +268,7 @@ Add later, if it seems necessary. There is a toc on the left bar.
 <h2>1. Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
 <p>This design document describes the governing equations for Omega, the Ocean Model for E3SM Global Applications. Overall, Omega is an unstructured-mesh ocean model based on TRiSK numerical methods (<a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999109004434">Thuburn et al. 2009</a>) that is specifically designed for modern exascale computing architectures. The algorithms in Omega will be mostly identical to those in MPAS-Ocean, but it will be written in c++ rather than Fortran in order to take advantage of the Kokkos performance portability library to run on GPUs (<a class="reference external" href="https://ieeexplore.ieee.org/document/9485033">Trott et al. 2022</a>). Significant differences between MPAS-Ocean and Omega are:</p>
 <ol class="arabic simple">
-<li><p>Omega is non-Boussinesq. This means that the full 3D density is used everywhere, and results in a mass-conserving model. MPAS-Ocean and POP were Boussinesq, so that a reference density <span class="math notranslate nohighlight">\(\rho_0\)</span> is used in the pressure gradient term, and were therefore volume-conserving models. In Omega the layered mass-conservation equation is in terms of pressure-thickness (<span class="math notranslate nohighlight">\(h=\rho g \Delta z\)</span>). In MPAS-Ocean the simple thickness (<span class="math notranslate nohighlight">\(h=\Delta z\)</span>) is the prognostic volume variable (normalized by horizontal cell area).</p></li>
+<li><p>Omega is non-Boussinesq. This means that the full 3D density is used everywhere, and results in a mass-conserving model. MPAS-Ocean and POP were Boussinesq, so that a reference density <span class="math notranslate nohighlight">\(\rho_0\)</span> is used in the pressure gradient term, and were therefore volume-conserving models. In Omega the layered mass-conservation equation is in terms of pseudo-thickness (<span class="math notranslate nohighlight">\(\tilde{h}=-\Delta p / \rho_0 g\)</span>). In MPAS-Ocean the simple thickness (<span class="math notranslate nohighlight">\(h=\Delta z\)</span>) is the prognostic volume variable (normalized by horizontal cell area).</p></li>
 <li><p>Omega will use the updated equation of state TEOS10, while MPAS-Ocean used the Jackett-McDougall equation of state.</p></li>
 </ol>
 <p>The planned versions of Omega are:</p>
@@ -407,7 +407,7 @@ Griffies recommends a value of <span class="math notranslate nohighlight">\(\rho
 <ul class="simple">
 <li><p>It ensures that <span class="math notranslate nohighlight">\(\tilde{z}\)</span> varies identically to pressure.</p></li>
 <li><p>Units of <span class="math notranslate nohighlight">\(\tilde{z}\)</span>, <span class="math notranslate nohighlight">\(\tilde{h}\)</span>, and <span class="math notranslate nohighlight">\(\tilde{w}\)</span> are intuitive.</p></li>
-<li><p>It aligns layer thickness with pressure thickness: <span class="math notranslate nohighlight">\(\tilde{h} = \Delta \tilde{z} \propto \Delta p\)</span></p></li>
+<li><p>It aligns layer thickness with pseudo-thickness: <span class="math notranslate nohighlight">\(\tilde{h} = \Delta \tilde{z} \propto \Delta p\)</span></p></li>
 <li><p><span class="math notranslate nohighlight">\(\tilde{z}^{\text{floor}} \propto p^{\text{bot}}\)</span>, which aids barotropic pressure gradient calculation.</p></li>
 </ul>
 <p>This makes <span class="math notranslate nohighlight">\(\tilde{z}\)</span> a natural coordinate for a mass-conserving hydrostatic model.</p>
@@ -533,8 +533,7 @@ h_k = \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} dz.
 &amp;= \frac{1}{\rho_0} \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} \rho \, dz \\
 &amp;= \frac{1}{\rho_0 g} \left( p_{k}^{\text{bot}} - p_k^{\text{top}} \right)
 \end{split}\]</div>
-<p>which is the mass per unit area in the layer, normalized by <span class="math notranslate nohighlight">\(\rho_0\)</span>. This pseudo-thickness and layer-averaging will be used to express conservation laws in a mass-weighted coordinate system.  Pseudo-thickness, rather than geometric
-thickness will be the prognostic variable in Omega.</p>
+<p>which is the mass per unit area in the layer, normalized by <span class="math notranslate nohighlight">\(\rho_0\)</span>. This pseudo-thickness and layer-averaging will be used to express conservation laws in a mass-weighted coordinate system.  Pseudo-thickness, rather than geometric thickness will be the prognostic variable in Omega.</p>
 <p>The density-weighted average of any variable <span class="math notranslate nohighlight">\(\varphi({\bf x},t)\)</span> in layer <span class="math notranslate nohighlight">\(k\)</span> is</p>
 <div class="math notranslate nohighlight" id="equation-def-layer-average">
 <span class="eqno">(22)<a class="headerlink" href="#equation-def-layer-average" title="Permalink to this equation"></a></span>\[
@@ -895,7 +894,7 @@ thickness will be the prognostic variable in Omega.</p>
 &amp; + \left[ {\bf k} \cdot \nabla \times u_{e,k} +f_v\right]_e\left(u_{e,k}^{\perp}\right) + \left[\nabla K\right]_e  \\
 &amp; + \frac{\rho_0}{\left[\tilde{h}_{i,k}\right]_e} \left\{ \left[\left(u - u_k\right) \left\{\tilde{W}_{tr} \right\} \right]_{e,k}^\text{top} - \left[  \left(u - u_k\right) \left\{\tilde{W}_{tr} \right\} \right]_{e,k+1}^\text{top} \right\} \\
 &amp; = - \left(\nabla \Phi \right)_{e,k} - \frac{1}{\left[\tilde{h}_k\right]_e} \nabla \left( \tilde{h}_k \alpha_k p_k \right) - \frac{1}{\left[\tilde{h}_k\right]_e} \left\{ \left[ \alpha p \nabla \tilde{z}^{\text{top}}\right]_{e,k}^\text{top} -  \left[ \alpha p \nabla \tilde{z}^{\text{bot}}\right]_{e,k+1}^\text{top} \right\} \\
-&amp;  - \frac{1}{\left[\tilde{h}_{i,k}\right]_e} \nabla \cdot \left( \tilde{h}_k \left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;_k \right) - \frac{\rho_0}{\left[\tilde{h}_{i,k}\right]_e^\text{top}}  \left\{ \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{ u}^\prime \right&gt; \right]_{e,k}^\text{top} - \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{ u}^\prime \right&gt; \right]_{e,k+1} \right\}.
+&amp;  - \frac{1}{\left[\tilde{h}_{i,k}\right]_e} \nabla \cdot \left( \tilde{h}_k \left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;_k \right) - \frac{\rho_0}{\left[\tilde{h}_{i,k}\right]_e^\text{top}}  \left\{ \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{ u}^\prime \right&gt; \right]_{e,k}^\text{top} - \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{ u}^\prime \right&gt; \right]_{e,k+1}^\text{top} \right\}.
 \end{split}\]</div>
 <p><strong>Diagnostic Relations:</strong></p>
 <div class="math notranslate nohighlight" id="equation-discrete-pressure">
@@ -908,7 +907,7 @@ thickness will be the prognostic variable in Omega.</p>
 \]</div>
 <div class="math notranslate nohighlight" id="equation-discrete-z">
 <span class="eqno">(55)<a class="headerlink" href="#equation-discrete-z" title="Permalink to this equation"></a></span>\[
-z_{i,k}^{top} = z_{i}^{floor} + \sum_{k'=k}^{K_{max}} \alpha_{i,k'}h_{i,k'}
+z_{i,k}^{top} = z_{i}^{floor} + \rho_0 \sum_{k'=k}^{K_{max}} \alpha_{i,k'} \tilde{h}_{i,k'}
 \]</div>
 <p>We refer to these as the discrete equations, but time derivatives remain continuous. The time discretization is described in the <a class="reference internal" href="TimeStepping.html"><span class="std std-doc">time stepping design document</span></a>. The velocity, mass-thickness, and tracers are solved prognostically using <a class="reference internal" href="#equation-discrete-momentum">(52)</a>, <a class="reference internal" href="#equation-discrete-mass">(50)</a>, <a class="reference internal" href="#equation-discrete-tracer">(51)</a>. At the new time, these variables are used to compute pressure <a class="reference internal" href="#equation-discrete-pressure">(53)</a>, specific volume <a class="reference internal" href="#equation-discrete-eos">(54)</a>, and z-locations <a class="reference internal" href="#equation-discrete-z">(55)</a>. Additional variables are computed diagnostically at the new time: <span class="math notranslate nohighlight">\(\mathbf{u}^{\perp}\)</span>, <span class="math notranslate nohighlight">\(K\)</span>, <span class="math notranslate nohighlight">\(\zeta_a\)</span>, <span class="math notranslate nohighlight">\(z^{mid}\)</span>, <span class="math notranslate nohighlight">\(\Phi\)</span>, etc. The initial geopotential is simply <span class="math notranslate nohighlight">\(\Phi=gz\)</span>, but additional gravitational terms may be added later.</p>
 <p>The horizontal operators <span class="math notranslate nohighlight">\(\nabla\)</span>, <span class="math notranslate nohighlight">\(\nabla\cdot\)</span>, and <span class="math notranslate nohighlight">\(\nabla \times\)</span> are now in their discrete form. In the TRiSK design, gradients (<span class="math notranslate nohighlight">\(\nabla\)</span>) map cell centers to edges; divergence (<span class="math notranslate nohighlight">\(\nabla \cdot\)</span>) maps edge quantities to cells; and curl (<span class="math notranslate nohighlight">\(\nabla \times\)</span>) maps edges to vertices. The exact form of operators and interpolation stencils remain the same as those given in <a class="reference internal" href="OmegaV0ShallowWater.html#operator-formulation"><span class="std std-ref">Omega-0 operator formulation</span></a> The discrete version of terms common with Omega-0, such as advection, potential vorticity, and <span class="math notranslate nohighlight">\(\nabla K\)</span>, can be found in <a class="reference internal" href="OmegaV0ShallowWater.html#momentum-terms"><span class="std std-ref">Omega-0 Momentum Terms</span></a> and <a class="reference internal" href="OmegaV0ShallowWater.html#thickness-and-tracer-terms"><span class="std std-ref">Omega-0 Thickness and Tracer Terms</span></a>.</p>
@@ -1198,10 +1197,10 @@ Additional enhancements, such as non local tracer fluxes will be discussed in fu
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\tilde{h}_{i,k}\)</span></p></td>
-<td><p>layer mass-thickness</p></td>
-<td><p>kg/m<span class="math notranslate nohighlight">\(^2\)</span></p></td>
+<td><p>pseudo-thickness</p></td>
+<td><p>m</p></td>
 <td><p>cell</p></td>
-<td><p>LayerThickness</p></td>
+<td><p>PseudoThickness</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(k\)</span></p></td>
