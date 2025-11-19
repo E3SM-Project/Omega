@@ -106,6 +106,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Linting.html">Linting Code</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Docs.html">Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Testing.html">Testing Code</a></li>
 <li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
 <li class="toctree-l1"><a class="reference internal" href="DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ParallelLoops.html">Parallel loops</a></li>
@@ -212,10 +213,10 @@ branches.  To do this, go to the page for the
 <a class="reference external" href="https://github.com/E3SM-Project/E3SM">E3SM-Project/E3SM</a> repository and
 click on the <code class="docutils literal notranslate"><span class="pre">fork</span></code> button near the upper right corner.  Set “owner” to your
 GitHub username (this should be the default) and click “Create fork”.</p>
-<p>There is no need to have a separate for for Omega, since the Omega repository
-is also a fork of E3SM.  Your E3SM fork will server for both E3SM and Omega
+<p>There is no need to have a separate fork for Omega, since the Omega repository
+is also a fork of E3SM.  Your E3SM fork will serve for both E3SM and Omega
 development.  In fact, GitHub will not let you make an Omega fork if you
-already have an E3SM fork (or visa versa).</p>
+already have an E3SM fork (or vice versa).</p>
 </section>
 <section id="check-out-the-code">
 <h3>Check out the code<a class="headerlink" href="#check-out-the-code" title="Permalink to this heading"></a></h3>
@@ -246,7 +247,7 @@ git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </s
 <p>If you do not have conda set up in your own space yet, follow
 <a class="reference internal" href="CondaEnv.html#omega-dev-install-miniforge3"><span class="std std-ref">Installing Miniforge3</span></a> for instructions on how to install it.</p>
 <p>Activate the <code class="docutils literal notranslate"><span class="pre">base</span></code> conda environment.  Go to the base of the Omega branch you
-plan to develop and create conda environment for
+plan to develop and create a conda environment for
 linting your code and building the documentation:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>components/omega/
 conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>omega_dev<span class="w"> </span>--file<span class="w"> </span>dev-conda.txt
@@ -268,15 +269,15 @@ later on).</p>
 </section>
 </section>
 <section id="building-and-testing-omega">
-<h2>Building and testing Omega<a class="headerlink" href="#building-and-testing-omega" title="Permalink to this heading"></a></h2>
+<span id="omega-dev-quick-start-build-test"></span><h2>Building and testing Omega<a class="headerlink" href="#building-and-testing-omega" title="Permalink to this heading"></a></h2>
 <section id="polaris-ctest-utility">
-<h3>Polaris CTest Utility<a class="headerlink" href="#polaris-ctest-utility" title="Permalink to this heading"></a></h3>
+<span id="omega-dev-quick-start-ctest-util"></span><h3>Polaris CTest Utility<a class="headerlink" href="#polaris-ctest-utility" title="Permalink to this heading"></a></h3>
 <p>If you are using Polaris, you may wish to use its
 <a class="reference external" href="https://github.com/E3SM-Project/polaris/tree/main/utils/omega/ctest">Omega CTest utility</a>
-to buid and test Omega. The utility automates many of the steps below.</p>
+to build and test Omega. The utility automates many of the steps below.</p>
 </section>
 <section id="building-omega">
-<h3>Building Omega<a class="headerlink" href="#building-omega" title="Permalink to this heading"></a></h3>
+<span id="omega-dev-quick-start-build"></span><h3>Building Omega<a class="headerlink" href="#building-omega" title="Permalink to this heading"></a></h3>
 <p>In the Omega branch you would like to build, first update the submodules that
 Omega requires:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>submodule<span class="w"> </span>update<span class="w"> </span>--init<span class="w"> </span>--recursive<span class="w"> </span><span class="se">\</span>
@@ -288,7 +289,7 @@ Omega requires:</p>
 <span class="w">    </span>cime
 </pre></div>
 </div>
-<p>Since some systems require tests to be run on in a scratch space, it is a good
+<p>Since some systems require tests to be run in a scratch space, it is a good
 idea to build the code somewhere in your scratch space.  We will simply refer
 to the build directory as <code class="docutils literal notranslate"><span class="pre">$BUILD_DIR</span></code> and leave it up to you to decide where
 it is best to put it.  If you have previously built in <code class="docutils literal notranslate"><span class="pre">$BUILD_DIR</span></code>, you
@@ -300,8 +301,8 @@ mkdir<span class="w"> </span><span class="nv">$BUILD_DIR</span>
 </div>
 <p>Set <code class="docutils literal notranslate"><span class="pre">$PARMETIS_ROOT</span></code> to the appropriate location for Metis and Parmetis
 libraries built for your machine and compiler (see
-<a class="reference internal" href="#omega-dev-parmetis-libs"><span class="std std-ref">Metis and Parmetis libraries</span></a> below for some shared locations on some
-supported machines):</p>
+<a class="reference internal" href="#omega-dev-parmetis-libs"><span class="std std-ref">Metis and Parmetis libraries</span></a> below for shared locations on supported
+machines):</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">PARMETIS_ROOT</span><span class="o">=</span>&lt;parmetis_root&gt;
 </pre></div>
 </div>
@@ -391,8 +392,8 @@ to be run on a compute node.</p>
 <h3>Debugging tips<a class="headerlink" href="#debugging-tips" title="Permalink to this heading"></a></h3>
 <p>If Omega CTests are failing or simulations are crashing, setting
 <code class="docutils literal notranslate"><span class="pre">OMEGA_BUILD_TYPE</span></code> to <code class="docutils literal notranslate"><span class="pre">Debug</span></code> can be helpful for debugging purposes. If you
-need to identify which test has failed, it may be useful to examine the CMake
-ctest log file located at <code class="docutils literal notranslate"><span class="pre">$BUILD_DIR/Testing/Temporary/LastTest.log</span></code>.</p>
+need to identify which test has failed, it may be useful to examine the CTest
+log file located at <code class="docutils literal notranslate"><span class="pre">$BUILD_DIR/Testing/Temporary/LastTest.log</span></code>.</p>
 </section>
 <section id="metis-and-parmetis-libraries">
 <span id="omega-dev-parmetis-libs"></span><h3>Metis and Parmetis libraries<a class="headerlink" href="#metis-and-parmetis-libraries" title="Permalink to this heading"></a></h3>
@@ -473,15 +474,15 @@ used to but the hope is that it leads to a coherent code style in Omega.</p>
 <p>You may wish to consider using an integrated development environment (IDE) to
 develop your code.  A convenient option for developing on HPC is
 <a class="reference external" href="https://code.visualstudio.com/">Visual Studio Code (VS Code)</a>.  It has plugins
-for <a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools">c++</a>,
+for <a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools">C++</a>,
 <a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools">CMake</a>,
 <a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=ms-python.python">Python</a>,
 and so on.  If configured correctly, it should help to enforce the
 <a class="reference external" href="https://code.visualstudio.com/docs/cpp/cpp-ide#_code-formatting">code formatting style</a>
 by recognizing Omega’s <code class="docutils literal notranslate"><span class="pre">.clang-format</span></code> file.</p>
-<p>A convenient feature is the ability to connect to edit code directly on HPC
+<p>A convenient feature is the ability to connect and edit code directly on HPC
 systems from your laptop or desktop
-<a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh">using a n SSH connection</a>.</p>
+<a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh">using an SSH connection</a>.</p>
 <p>VS Code also provides a convenient way to preview the Markdown files used in
 the Omega documentation as you are writing them.</p>
 </section>

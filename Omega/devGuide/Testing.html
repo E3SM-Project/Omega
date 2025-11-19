@@ -1,0 +1,578 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Testing Code &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Data Types and Precision" href="DataTypes.html" />
+    <link rel="prev" title="Building the Documentation" href="BuildDocs.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Timing.html">Timing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Testing Code</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#running-the-polaris-omega-pr-test-suite">Running the Polaris <code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> Test Suite</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#prerequisites-build-omega-for-baseline-and-pr">Prerequisites: build Omega for baseline and PR</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setting-up-the-suite">Setting up the suite</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-suite">Running the suite</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#handling-test-failures">Handling test failures</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#test-execution-errors-for-baseline-polaris-e3sm-submodules-omega">Test execution errors for baseline (Polaris <code class="docutils literal notranslate"><span class="pre">e3sm_submodules/Omega</span></code>)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#test-execution-errors-for-your-branch">Test execution errors for your branch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#diffs-between-your-branch-and-baseline">Diffs between your branch and baseline</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#what-to-include-in-your-pr-testing-comment">What to include in your PR Testing comment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#updating-polaris">Updating Polaris</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#adding-new-omega-dimensions-or-variables">Adding new Omega dimensions or variables</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#updates-to-default-yml">Updates to Default.yml</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ParallelLoops.html">Parallel loops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timing.html#initialization">Initialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timing.html#writing-out-timing-data">Writing-out timing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timing.html#finalization">Finalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timing.html#basic-timer-use">Basic timer use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timing.html#advanced-timing-functions">Advanced timing functions</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV1GoverningEqns.html">Omega V1: Governing Equations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Testing Code</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/devGuide/Testing.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="testing-code">
+<span id="omega-dev-testing"></span><h1>Testing Code<a class="headerlink" href="#testing-code" title="Permalink to this heading"></a></h1>
+<p>For instructions on how to build Omega and run CTest unit tests, see
+<a class="reference internal" href="QuickStart.html#omega-dev-quick-start-build-test"><span class="std std-ref">Building and testing Omega</span></a>.</p>
+<section id="running-the-polaris-omega-pr-test-suite">
+<h2>Running the Polaris <code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> Test Suite<a class="headerlink" href="#running-the-polaris-omega-pr-test-suite" title="Permalink to this heading"></a></h2>
+<p>The CTest unit tests on their own are not sufficient to ensure that changes
+to Omega behave as expected.  Developers also need to run the regression tests
+in the form of the
+<a class="reference external" href="https://docs.e3sm.org/polaris/main/users_guide/ocean/suites.html#omega-pr-suite">omega_pr</a>
+test suite from Polaris.  The tests in the suite are defined in
+<a class="reference external" href="https://github.com/E3SM-Project/polaris/blob/main/polaris/suites/ocean/omega_pr.txt">omega_pr.txt</a>
+in the Polaris repository.</p>
+<p>You will run the suite twice: once using the Omega version vendored in Polaris
+under <code class="docutils literal notranslate"><span class="pre">e3sm_submodules/Omega</span></code> (the official baseline) and once using your
+development branch. This means you will need to
+<a class="reference internal" href="QuickStart.html#omega-dev-quick-start-build"><span class="std std-ref">build Omega</span></a> from both sources before
+running the suite. You may wish to use the <a class="reference internal" href="QuickStart.html#omega-dev-quick-start-ctest-util"><span class="std std-ref">Polaris CTest Utility</span></a>
+to automate the build and run the CTests for each.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>While the Omega <code class="docutils literal notranslate"><span class="pre">develop</span></code> branch often matches the Polaris submodule
+bit-for-bit (b4b), the submodule at <code class="docutils literal notranslate"><span class="pre">e3sm_submodules/Omega</span></code> is the
+authoritative baseline for regression comparison.</p>
+</div>
+<section id="prerequisites-build-omega-for-baseline-and-pr">
+<h3>Prerequisites: build Omega for baseline and PR<a class="headerlink" href="#prerequisites-build-omega-for-baseline-and-pr" title="Permalink to this heading"></a></h3>
+<p>Before setting up and running the <code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> suite, you must build Omega twice:</p>
+<ul class="simple">
+<li><p>Build the baseline from the Omega sources vendored by Polaris at
+<code class="docutils literal notranslate"><span class="pre">&lt;path-to-polaris-repo&gt;/e3sm_submodules/Omega</span></code>. Record the CMake build
+directory path as <code class="docutils literal notranslate"><span class="pre">BASELINE_BUILD</span></code> (used below with <code class="docutils literal notranslate"><span class="pre">polaris</span> <span class="pre">suite</span> <span class="pre">-p</span></code>).</p></li>
+<li><p>Build from your development (PR) branch. Record the CMake build directory
+path as <code class="docutils literal notranslate"><span class="pre">PR_BUILD</span></code> (also used with <code class="docutils literal notranslate"><span class="pre">-p</span></code>).</p></li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">-p</span></code> option passed to <code class="docutils literal notranslate"><span class="pre">polaris</span> <span class="pre">suite</span></code> should point to the CMake build
+directory for the corresponding branch (the directory where you ran CMake and
+invoked <code class="docutils literal notranslate"><span class="pre">./omega_build.sh</span></code>).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Run both baseline and PR suite on the same machine, CPU/GPU partition,
+compiler, and Omega build type (Debug/Release) to avoid false positive/negative
+diffs.</p>
+</div>
+</section>
+<section id="setting-up-the-suite">
+<h3>Setting up the suite<a class="headerlink" href="#setting-up-the-suite" title="Permalink to this heading"></a></h3>
+<p>If you have not yet set up Polaris, you will need to follow its
+<a class="reference external" href="https://docs.e3sm.org/polaris/main/developers_guide/quick_start.html">quick start</a>
+including <a class="reference external" href="https://docs.e3sm.org/polaris/main/developers_guide/quick_start.html#set-up-a-polaris-repository-for-beginners">cloning the repo</a>,
+<a class="reference external" href="https://docs.e3sm.org/polaris/main/developers_guide/quick_start.html#supported-machines">configuring the software environment</a>,
+and <a class="reference external" href="https://docs.e3sm.org/polaris/main/developers_guide/quick_start.html#activating-the-environment">activating the environment</a>.</p>
+<p>Then, with the Polaris environment active, you can set up the baseline
+<code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> suite as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">BASELINE_BUILD</span><span class="o">=</span>/path/to/build/from/polaris/e3sm_submodules/Omega
+<span class="nv">POLARIS_SCRATCH</span><span class="o">=</span>/path/to/scratch/polaris_testing/
+polaris<span class="w"> </span>suite<span class="w"> </span>-c<span class="w"> </span>ocean<span class="w"> </span>-t<span class="w"> </span>omega_pr<span class="w"> </span>--model<span class="w"> </span>omega<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-w<span class="w"> </span><span class="nv">$POLARIS_SCRATCH</span>/baseline_omega_pr<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-p<span class="w"> </span><span class="nv">$BASELINE_BUILD</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">$POLARIS_SCRATCH</span></code> is a directory within your scratch space that is
+useful for setting up and running the Polaris test suites and
+<code class="docutils literal notranslate"><span class="pre">$BASELINE_BUILD</span></code> is the directory where you built Omega from the Omega
+sources located at <code class="docutils literal notranslate"><span class="pre">&lt;polaris-repo&gt;/e3sm_submodules/Omega</span></code>, or where the
+Polaris CTest utility built it for you (e.g. <code class="docutils literal notranslate"><span class="pre">build_omega/build_chrysalis_intel</span></code>).</p>
+<p>Next, you can set up the <code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> for your development branch, using the
+baseline set up above:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PR_BUILD</span><span class="o">=</span>/path/to/omega/pr/branch/build
+<span class="nv">POLARIS_SCRATCH</span><span class="o">=</span>/path/to/scratch/polaris_testing/
+polaris<span class="w"> </span>suite<span class="w"> </span>-c<span class="w"> </span>ocean<span class="w"> </span>-t<span class="w"> </span>omega_pr<span class="w"> </span>--model<span class="w"> </span>omega<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-b<span class="w"> </span><span class="nv">$POLARIS_SCRATCH</span>/baseline_omega_pr<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-w<span class="w"> </span><span class="nv">$POLARIS_SCRATCH</span>/my_branch_omega_pr<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-p<span class="w"> </span><span class="nv">$PR_BUILD</span>
+</pre></div>
+</div>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">$POLARIS_SCRATCH</span></code> is the same scratch directory as above,
+<code class="docutils literal notranslate"><span class="pre">$PR_BUILD</span></code> is the directory where you build Omega from your
+development branch (or where the CTest utility built for you), and
+<code class="docutils literal notranslate"><span class="pre">my_branch_omega_pr</span></code> can be any name that helps you keep track of what you
+were testing.</p>
+</section>
+<section id="running-the-suite">
+<h3>Running the suite<a class="headerlink" href="#running-the-suite" title="Permalink to this heading"></a></h3>
+<p>First, run the baseline, e.g. for Slurm systems:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$POLARIS_SCRATCH</span>/baseline_omega_pr
+sbatch<span class="w"> </span>job_script.omega_pr.sh
+</pre></div>
+</div>
+<p>Note the job ID for the next step.  Next, run the suite for the test branch,
+waiting until the baseline is done:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$POLARIS_SCRATCH</span>/my_branch_omega_pr
+sbatch<span class="w"> </span>--kill-on-invalid-dep<span class="o">=</span>yes<span class="w"> </span>--dependency<span class="o">=</span>afterok:<span class="nv">$JOBID</span><span class="w"> </span>job_script.omega_pr.sh
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">$JOBID</span></code> is the JOB ID of the baseline slurm job.</p>
+<p>Monitor the jobs (e.g. <code class="docutils literal notranslate"><span class="pre">squeue</span> <span class="pre">-j</span> <span class="pre">$JOBID</span></code>) and take a look at combined
+stdout/stderr log in <code class="docutils literal notranslate"><span class="pre">polaris_omega_pr.o$JOBID</span></code> in each work directory to see
+whether the tests passed.  Report the results as part of any (non-trivial)
+Omega PR.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For other schedulers (e.g. PBS on Aurora), take a look at the machine’s
+documentation for equivalent commands.</p>
+</div>
+</section>
+<section id="handling-test-failures">
+<h3>Handling test failures<a class="headerlink" href="#handling-test-failures" title="Permalink to this heading"></a></h3>
+<p>What should you do if you see test failures?</p>
+<section id="test-execution-errors-for-baseline-polaris-e3sm-submodules-omega">
+<h4>Test execution errors for baseline (Polaris <code class="docutils literal notranslate"><span class="pre">e3sm_submodules/Omega</span></code>)<a class="headerlink" href="#test-execution-errors-for-baseline-polaris-e3sm-submodules-omega" title="Permalink to this heading"></a></h4>
+<p>If you see test execution failures in the baseline run from Polaris
+<code class="docutils literal notranslate"><span class="pre">e3sm_submodules/Omega</span></code>,
+these need to be reported as <a class="reference external" href="https://github.com/E3SM-Project/Omega/issues">issues</a>
+on the Omega repo, preferably mentioning a relevant Omega developer who may
+be able to investigate the cause of the failure.  Please provide the contents
+of the relevant log file for the failing test(s) and optionally the location of
+the tests (and log files) if other Omega developers will have access.</p>
+</section>
+<section id="test-execution-errors-for-your-branch">
+<h4>Test execution errors for your branch<a class="headerlink" href="#test-execution-errors-for-your-branch" title="Permalink to this heading"></a></h4>
+<p>If you see execution failures on the tests for your development branch, please
+take a look at the log files and attempt to debug the issues yourself first,
+then reach out to the Omega team if you need help.  In many cases, the test
+failures may related to changes that are required in Polaris, see
+<a class="reference internal" href="#omega-dev-testing-update-polaris"><span class="std std-ref">Updating Polaris</span></a> below.</p>
+</section>
+<section id="diffs-between-your-branch-and-baseline">
+<h4>Diffs between your branch and baseline<a class="headerlink" href="#diffs-between-your-branch-and-baseline" title="Permalink to this heading"></a></h4>
+<p>If diffs are expected:</p>
+<ul class="simple">
+<li><p>Document the diffs (in Omega PR comment)</p></li>
+<li><p>Update <code class="docutils literal notranslate"><span class="pre">e3sm_submodules/Omega</span></code> in Polaris (after merge of Omega PR)</p></li>
+</ul>
+<p>If <em>not</em> expected:</p>
+<ul class="simple">
+<li><p>Debug and eliminate</p></li>
+</ul>
+<p>If you see errors related to comparisons with the baseline, you will need to
+determine if these are expected based on the code changes or not.  If they
+are expected, you will need to document (in a PR comment) how large the
+differences are in the tests that show differences.  In addition, you will need
+to make a pull request to the Polaris repository to update the Omega submodule
+in <code class="docutils literal notranslate"><span class="pre">e3sm_submodules/Omega</span></code> once your branch has been merged so that the changes
+become the new baseline in Polaris.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We do not update <code class="docutils literal notranslate"><span class="pre">e3sm_submodules/Omega</span></code> after every branch is merged into
+<code class="docutils literal notranslate"><span class="pre">develop</span></code> on Omega to reduce maintenance burden.</p>
+</div>
+<p>If you see unexpected differences between the results for your development
+branch and those from the baseline, you should attempt to debug the cause yourself
+and then reach out to the Omega team if you need help.</p>
+<p>You may want to look at Polaris’
+<a class="reference external" href="https://github.com/E3SM-Project/polaris/blob/main/utils/bisect/README.md">bisect</a>
+utility to help debug which commit introduced the unexpected differences.</p>
+</section>
+</section>
+<section id="what-to-include-in-your-pr-testing-comment">
+<h3>What to include in your PR Testing comment<a class="headerlink" href="#what-to-include-in-your-pr-testing-comment" title="Permalink to this heading"></a></h3>
+<p>Please add a PR comment titled “Testing” that summarizes what you ran and the
+outcomes. Include the following so reviewers can validate apples-to-apples
+runs.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>At a minimum, you need to run both CTests and the <code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> suite on one
+machine and compiler.</p>
+</div>
+<ul class="simple">
+<li><p>CTest unit tests</p>
+<ul>
+<li><p>Machine(s) and partition/queue (if applicable)</p></li>
+<li><p>Compiler(s), and build type(s) (Debug/Release)</p></li>
+<li><p>Result: either “All tests passed” or a short list of failing tests with
+a one-line note each</p></li>
+</ul>
+</li>
+<li><p>Polaris <code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> regression suite</p>
+<ul>
+<li><p>Baseline run (Polaris <code class="docutils literal notranslate"><span class="pre">e3sm_submodules/Omega</span></code>)</p>
+<ul>
+<li><p>Build path used for -p (from Polaris <code class="docutils literal notranslate"><span class="pre">e3sm_submodules/Omega</span></code>)</p>
+<ul>
+<li><p>Work directory used for -w</p></li>
+</ul>
+</li>
+<li><p>PR branch run</p>
+<ul>
+<li><p>Build directory used for -p</p></li>
+<li><p>Work directory used for -w</p></li>
+</ul>
+</li>
+<li><p>Machine/partition, compiler, and build type (should match between baseline and PR)</p></li>
+<li><p>Result: “All tests passed” or a concise list of diffs/failures with a brief note</p></li>
+<li><p>If there are issues, add the path to the relevant log(s) (e.g.,
+polaris_omega_pr.o$JOBID) and a short excerpt if helpful</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Tests added/modified/impacted</p>
+<ul>
+<li><p>Briefly list any new or updated CTest or Polaris tests and what they cover</p></li>
+</ul>
+</li>
+<li><p>Performance PRs</p>
+<ul>
+<li><p>Link to the relevant PACE experiment and summarize before/after metrics</p></li>
+</ul>
+</li>
+</ul>
+<p>The <a class="reference external" href="https://github.com/E3SM-Project/polaris/blob/main/utils/omega/ctest/README.md">Omega CTest Utility</a>
+and the <code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> suite will produce output in a format you can copy/paste into the PR
+description. These outputs follow roughly the template below.  If you want to add the
+information manually, you can copy-paste template you can use in your PR comment:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>## Testing
+
+CTest unit tests
+- Machine: &lt;machine&gt;[, &lt;partition&gt;]
+- Compiler: &lt;compiler&gt;
+- Build type: &lt;Debug|Release&gt;
+- Result: All tests passed | Failures (X of Y): &lt;name&gt; (&lt;one-line note&gt;), ...
+
+Polaris omega_pr regression suite
+- Baseline build (-p): &lt;path/to/build of Polaris e3sm_submodules/Omega&gt;
+- Baseline workdir (-w): &lt;path/to/baseline_omega_pr&gt;
+- PR build (-p): &lt;path/to/pr/build&gt;
+- PR workdir (-w): &lt;path/to/my_branch_omega_pr&gt;
+- Machine/partition: &lt;machine&gt;[, &lt;partition&gt;]
+- Compiler/build type: &lt;compiler&gt;, &lt;Debug|Release&gt;
+- Result: All tests passed | Diffs/Failures: &lt;brief summary&gt;
+- Logs (if applicable): &lt;path/to/polaris_omega_pr.o$JOBID&gt;
+
+Tests added/modified/impacted
+- CTest: &lt;name&gt; — &lt;one-line purpose&gt;
+- Polaris: &lt;path or name&gt; — &lt;one-line purpose&gt;
+
+Performance (if applicable)
+- PACE: &lt;link&gt;
+- Before: &lt;metric(s)&gt;
+- After: &lt;metric(s)&gt;
+- Delta: &lt;summary&gt;
+</pre></div>
+</div>
+</section>
+<section id="updating-polaris">
+<span id="omega-dev-testing-update-polaris"></span><h3>Updating Polaris<a class="headerlink" href="#updating-polaris" title="Permalink to this heading"></a></h3>
+<p>Many Omega changes are likely to also require Polaris changes.  In such cases,
+it makes sense to co-develop your Omega branch and a Polaris branch.  The
+Omega branch will need to be merged first, then the <code class="docutils literal notranslate"><span class="pre">e3sm_submodules/Omega</span></code>
+submodule will need to be updated to include the Omega changes as part of
+the Polaris pull request.</p>
+<p>Here are some examples of Omega changes that will require corresponding
+Polaris changes.</p>
+<section id="adding-new-omega-dimensions-or-variables">
+<h4>Adding new Omega dimensions or variables<a class="headerlink" href="#adding-new-omega-dimensions-or-variables" title="Permalink to this heading"></a></h4>
+<p>If you add new Omega variables that have a corresponding MPAS-Ocean name,
+you need to add the mapping between the names to
+<a class="reference external" href="https://github.com/E3SM-Project/polaris/blob/main/polaris/ocean/model/mpaso_to_omega.yaml">mpaso_to_omega.yaml</a>.
+For more details, see the Polaris
+<a class="reference external" href="https://docs.e3sm.org/polaris/main/developers_guide/ocean/framework.html">Ocean Framework documentation</a>.</p>
+<p>For example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">dimensions</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Time</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">time</span>
+<span class="w">  </span><span class="nt">nVertLevels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NVertLayers</span>
+
+<span class="nt">variables</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">temperature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Temperature</span>
+<span class="w">  </span><span class="nt">salinity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Salinity</span>
+<span class="w">  </span><span class="nt">ssh</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SshCell</span>
+</pre></div>
+</div>
+<p>In each case, the keys are the MPAS-Ocean names and the values are the
+corresponding Omega names.</p>
+</section>
+<section id="updates-to-default-yml">
+<h4>Updates to Default.yml<a class="headerlink" href="#updates-to-default-yml" title="Permalink to this heading"></a></h4>
+<p>If you add or remove sections, config options, streams, etc. in
+<a class="reference external" href="https://github.com/E3SM-Project/Omega/blob/develop/components/omega/configs/Default.yml">Default.yml</a>,
+you may need to make corresponding changes to the YAML files for Polaris
+test cases for them to continue to work as expected.</p>
+<p>Whenever possible, we try to use a mapping between MPAS-Ocean namelist options
+and Omega config options within
+<a class="reference external" href="https://github.com/E3SM-Project/polaris/blob/main/polaris/ocean/model/mpaso_to_omega.yaml">mpaso_to_omega.yaml</a>.
+For example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">config</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">section</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">time_management</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TimeIntegration</span>
+<span class="w">  </span><span class="nt">options</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">config_start_time</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">StartTime</span>
+<span class="w">    </span><span class="nt">config_stop_time</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">StopTime</span>
+<span class="w">    </span><span class="nt">config_run_duration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RunDuration</span>
+<span class="w">    </span><span class="nt">config_calendar_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CalendarType</span>
+</pre></div>
+</div>
+<p>If you have added new Omega config sections or options that have corresponding
+MPAS-Ocean namelist sections or options, please add them to the map. In each
+case, the keys are the MPAS-Ocean names and the values are the corresponding
+Omega names.</p>
+<p>Frequently, there is no MPAS-Ocean equivalent to an Omega config option, and
+we currently do not try to map streams from MPAS-Ocean to Omega (their
+syntax is too different).  In such cases, we have do define Omega YAML config
+options and streams in each test case, and you may need to update each one
+with your changes.  Here is an example exerpt from the
+<a class="reference external" href="https://github.com/E3SM-Project/polaris/blob/main/polaris/tasks/ocean/manufactured_solution/forward.yaml">manufactured_solution</a>
+test:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Omega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Tendencies</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">VelDiffTendencyEnable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">VelHyperDiffTendencyEnable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">UseCustomTendency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">ManufacturedSolutionTendency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">IOStreams</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">InitialVertCoord</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">init.nc</span>
+<span class="w">    </span><span class="nt">InitialState</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">UsePointerFile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">init.nc</span>
+<span class="w">      </span><span class="nt">Contents</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NormalVelocity</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LayerThickness</span>
+<span class="w">    </span><span class="nt">RestartRead</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">    </span><span class="nt">History</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">output.nc</span>
+<span class="w">      </span><span class="nt">Freq</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">output_freq</span><span class="w"> </span><span class="p p-Indicator">}}</span>
+<span class="w">      </span><span class="nt">FreqUnits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Seconds</span>
+<span class="w">      </span><span class="nt">IfExists</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">append</span>
+<span class="w">      </span><span class="c1"># effectively never</span>
+<span class="w">      </span><span class="nt">FileFreq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9999</span>
+<span class="w">      </span><span class="nt">FileFreqUnits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">years</span>
+<span class="w">      </span><span class="nt">Contents</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NormalVelocity</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LayerThickness</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SshCell</span>
+</pre></div>
+</div>
+<p>For more details on updating either the map or the YAML files for individual
+tests, see the Polaris
+<a class="reference external" href="https://docs.e3sm.org/polaris/main/developers_guide/ocean/framework.html">Ocean Framework documentation</a>.</p>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="BuildDocs.html" class="btn btn-neutral float-left" title="Building the Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="DataTypes.html" class="btn btn-neutral float-right" title="Data Types and Precision" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
