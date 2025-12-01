@@ -59,6 +59,8 @@ Omega:
       DRhoDT: -0.2
       DRhoDS: 0.8
       RhoT0S0: 1000.0
+    ClampingEnable: false
+    EosLimits: Funnel
   IOStreams:
     InitialVertCoord:
       UsePointerFile: false

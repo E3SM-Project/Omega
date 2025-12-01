@@ -81,6 +81,12 @@ void Eos::init() {
    Err += EosConfig.get("EosType", EosTypeStr);
    CHECK_ERROR_ABORT(Err, "Eos::init: EosType subgroup not found in EosConfig");
 
+   std::string EosLimStr;
+   Err += EosConfig.get("EosLimits", EosLimStr);
+   CHECK_ERROR_ABORT(Err,
+                     "Eos::init: EosLimits subgroup not found in EosConfig");
+   /// EosLimits EosLimChoice;
+
    /// Set EosChoice and parameters based on EosTypeStr
    if (EosTypeStr == "Linear" or EosTypeStr == "linear") {
       Config EosLinConfig("Linear");
@@ -104,12 +110,23 @@ void Eos::init() {
    } else if ((EosTypeStr == "teos10") or (EosTypeStr == "teos-10") or
               (EosTypeStr == "TEOS-10")) {
       eos->EosChoice = EosType::Teos10Eos;
+      if (EosLimStr == "Funnel") {
+         eos->ComputeSpecVolTeos10.EosLimChoice = EosLimits::Funnel;
+      } else if (EosLimStr == "Cube") {
+         eos->ComputeSpecVolTeos10.EosLimChoice = EosLimits::Cube;
+      } else {
+         LOG_ERROR("Eos::init: Unknown EosLimits requested");
+         Err += EosConfig.get("ClampingEnable",
+                              eos->ComputeSpecVolTeos10.ClampingEnable);
+         CHECK_ERROR_ABORT(
+             Err, "Eos::init: Parameter ClampingEnable not found in EosConfig");
+      }
    } else {
       LOG_ERROR("Eos::init: Unknown EosType requested");
    }
 } // end init
 
-/// Compute specific volume for all cells/layers (no displacement)
+/// Compute specific volume for all cells/levels (no displacement)
 void Eos::computeSpecVol(const Array2DReal &ConservTemp,
                          const Array2DReal &AbsSalinity,
                          const Array2DReal &Pressure) {

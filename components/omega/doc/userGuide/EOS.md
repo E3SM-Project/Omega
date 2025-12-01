@@ -15,8 +15,12 @@ Eos:
       DRhoDT: -0.2
       DRhoDS: 0.8
       RhoT0S0: 1000.0
+   ClampingEnable: false
+   EosLimits: Funnel
 ```
 
-where `DRhoDT` is the thermal expansion coefficient ($\textrm{kg}/(\textrm{m}^3 \cdot ^{\circ}\textrm{C})$), `DRhoDS` is the saline contraction coefficient ($\textrm{kg}/\textrm{m}^3$), and `RhoT0S0` is the reference density at (T,S)=(0,0) (in $\textrm{kg}/\textrm{m}^3$).
+where `DRhoDT` is the thermal expansion coefficient ($\textrm{kg}/(\textrm{m}^3 \cdot ^{\circ}\textrm{C})$), `DRhoDS` is the saline contraction coefficient ($\textrm{kg}/\textrm{m}^3$), and `RhoT0S0` is the reference density at (T,S)=(0,0) (in $\textrm{kg}/\textrm{m}^3$). The `ClampingEnable` flag restricts the state variables to the ranges specified by the `EosLimits` options if turned on, or it issues a warning if off. Note that `ClampingEnable` and `EosLimits` are currently used only in the Teos-10 option.
 
 In addition to `SpecVol`, the displaced specific volume `SpecVolDisplaced` is also calculated by the EOS. This calculates the density of a parcel of fluid that is adiabatically displaced by a relative `k` levels, capturing the effects of pressure/depth changes. This is primarily used to calculate quantities for determining the water column stability (i.e. the stratification) and the vertical mixing coefficients (viscosity and diffusivity). Note: when using the linear EOS, `SpecVolDisplaced` will be the same as `SpecVol` since the specific volume calculation is independent of pressure/depth.
+
+When using TEOS-10, the state variables are checked against the range over which the polynomial is considered to be valid (see [Roquet et al. 2015](https://www.sciencedirect.com/science/article/pii/S1463500315000566)). The possible ranges are refered to as `Funnel` (by default) or `Cube` (wider range). If the values are outside of the accepted values, the code issues a warning. When `ClampingEnable=true`, the code uses the valid bounds for the specific volume calculation. Note that in that case, the state variable values themselves are not modified, only that they are not used as is in the calculation.
