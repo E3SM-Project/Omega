@@ -58,7 +58,11 @@
 <li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Equation of State (EOS)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Equation of State (EOS)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#displaced-specific-volume">Displaced Specific Volume</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#squared-brunt-vaisala-frequency">Squared Brunt Vaisala Frequency</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="Error.html">Error handling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
@@ -78,6 +82,7 @@
 <li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
@@ -123,6 +128,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html#finalization">Finalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html#basic-timer-use">Basic timer use</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html#advanced-timing-functions">Advanced timing functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -185,7 +191,7 @@
   <section class="tex2jax_ignore mathjax_ignore" id="equation-of-state-eos">
 <span id="omega-user-eos"></span><h1>Equation of State (EOS)<a class="headerlink" href="#equation-of-state-eos" title="Permalink to this heading"></a></h1>
 <p>The equation of state (EOS) for the ocean describes the relationship between specific volume of seawater (in <span class="math notranslate nohighlight">\(\textrm{m}^3/\textrm{kg}\)</span>; the reciprocal of density) and temperature (in <span class="math notranslate nohighlight">\(^{\circ}\textrm{C}\)</span>), salinity (in <span class="math notranslate nohighlight">\(\textrm{g/kg}\)</span>), and pressure (in <span class="math notranslate nohighlight">\(\textrm{dbar}\)</span>). Through the hydrostatic balance (which relates density/specific volume gradients to pressure gradients), the equation of state provides a connection between active tracers (temperature and salinity) and the fluid dynamics.</p>
-<p>Two choices of EOS are provided by Omega: a linear EOS and a TEOS-10 EOS. The linear EOS simplifies the relationship by excluding the influence of pressure and using constant expansion/contraction coefficients, making the specific volume a simple linear function of temperature and salinity. However, this option is only recommended for simpler idealized test cases as its accuracy is not sufficient for real ocean simulations. The TEOS-10 EOS is a 75-term polynomial expression from <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S1463500315000566">Roquet et al. 2015</a> that approximates the <a class="reference external" href="https://www.teos-10.org/pubs/TEOS-10_Manual.pdf">Thermodynamic Equation of Seawater 2010</a> , but in a less complex and more computationally efficient manner, and is the preferred EOS for real ocean simulations in Omega.</p>
+<p>Two choices of EOS are provided by Omega: a linear EOS and a TEOS-10 EOS. The linear EOS simplifies the relationship by excluding the influence of pressure and using constant expansion/contraction coefficients, making the specific volume a simple linear function of temperature and salinity. However, this option should only be used for simpler idealized test cases as it is not appropriate for realistic ocean simulations. The TEOS-10 EOS is a 75-term polynomial expression from <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S1463500315000566">Roquet et al. 2015</a> that approximates the <a class="reference external" href="https://www.teos-10.org/pubs/TEOS-10_Manual.pdf">Thermodynamic Equation of Seawater 2010</a>, but in a less complex and more computationally efficient manner, and is the preferred EOS for real ocean simulations in Omega.</p>
 <p>The user-configurable options are: <code class="docutils literal notranslate"><span class="pre">EosType</span></code> (choose either <code class="docutils literal notranslate"><span class="pre">Linear</span></code> or <code class="docutils literal notranslate"><span class="pre">Teos-10</span></code>), as well as the parameters needed for the linear EOS.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Eos</span><span class="p">:</span>
 <span class="w">   </span><span class="nt">EosType </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">teos10</span>
@@ -196,7 +202,15 @@
 </pre></div>
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">DRhoDT</span></code> is the thermal expansion coefficient (<span class="math notranslate nohighlight">\(\textrm{kg}/(\textrm{m}^3 \cdot ^{\circ}\textrm{C})\)</span>), <code class="docutils literal notranslate"><span class="pre">DRhoDS</span></code> is the saline contraction coefficient (<span class="math notranslate nohighlight">\(\textrm{kg}/\textrm{m}^3\)</span>), and <code class="docutils literal notranslate"><span class="pre">RhoT0S0</span></code> is the reference density at (T,S)=(0,0) (in <span class="math notranslate nohighlight">\(\textrm{kg}/\textrm{m}^3\)</span>).</p>
-<p>In addition to <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code>, the displaced specific volume <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> is also calculated by the EOS. This calculates the density of a parcel of fluid that is adiabatically displaced by a relative <code class="docutils literal notranslate"><span class="pre">k</span></code> levels, capturing the effects of pressure/depth changes. This is primarily used to calculate quantities for determining the water column stability (i.e. the stratification) and the vertical mixing coefficients (viscosity and diffusivity). Note: when using the linear EOS, <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> will be the same as <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> since the specific volume calculation is independent of pressure/depth.</p>
+<p>In addition to <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code>, the displaced specific volume <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> and <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code> are also calculated by the EOS.</p>
+<section id="displaced-specific-volume">
+<h2>Displaced Specific Volume<a class="headerlink" href="#displaced-specific-volume" title="Permalink to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">Eos</span></code> class calculates the density of a parcel of fluid that is adiabatically displaced by a relative <code class="docutils literal notranslate"><span class="pre">k</span></code> levels (<code class="docutils literal notranslate"><span class="pre">k</span></code> counted positive downward), capturing the effects of pressure/depth changes. This is primarily used to calculate quantities for determining the water column stability (i.e. the stratification) and the vertical mixing coefficients (viscosity and diffusivity). Note: when using the <code class="docutils literal notranslate"><span class="pre">Linear</span></code> EOS option, <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> will be the same as <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> since the specific volume calculation is independent of pressure/depth.</p>
+</section>
+<section id="squared-brunt-vaisala-frequency">
+<h2>Squared Brunt Vaisala Frequency<a class="headerlink" href="#squared-brunt-vaisala-frequency" title="Permalink to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">Eos</span></code> class also calculates the squared Brunt Vaisala Frequency, which is used by the <code class="docutils literal notranslate"><span class="pre">VertMix</span></code> class to determine water column stability for both the convective adjustment and shear-instability driven mixing. When using the <code class="docutils literal notranslate"><span class="pre">Linear</span></code> EOS option, the <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code> is calculated using linear coefficients. When using the <code class="docutils literal notranslate"><span class="pre">Teos-10</span></code> EOS option, the <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code> is calculated with non-linear coefficients according to the TOES-10. For both options, <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> must be calculated prior to calculating <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code>, as it is an input to the <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code> calculation.</p>
+</section>
 </section>
 
 

@@ -76,6 +76,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul class="current">
@@ -127,6 +128,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Timing.html#finalization">Finalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Timing.html#basic-timer-use">Basic timer use</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Timing.html#advanced-timing-functions">Advanced timing functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -209,9 +211,8 @@ can be. The static method:</p>
 </section>
 <section id="creation-of-non-default-auxiliary-states">
 <h2>Creation of non-default auxiliary states<a class="headerlink" href="#creation-of-non-default-auxiliary-states" title="Permalink to this heading"></a></h2>
-<p>A non-default auxiliary state can be created from a string <code class="docutils literal notranslate"><span class="pre">Name</span></code>, horizontal mesh <code class="docutils literal notranslate"><span class="pre">Mesh</span></code>, a number of
-vertical layers <code class="docutils literal notranslate"><span class="pre">NVertLayers</span></code>, and a number of Tracers <code class="docutils literal notranslate"><span class="pre">NTracers</span></code>:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">AuxiliaryState</span><span class="o">*</span><span class="w">  </span><span class="n">NewAuxState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">AuxiliaryState</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="n">NVertLayers</span><span class="p">,</span><span class="w"> </span><span class="n">NTracers</span><span class="p">);</span>
+<p>A non-default auxiliary state can be created from a string <code class="docutils literal notranslate"><span class="pre">Name</span></code>, horizontal mesh <code class="docutils literal notranslate"><span class="pre">Mesh</span></code>, halo layer <code class="docutils literal notranslate"><span class="pre">MeshHalo</span></code>, vertical coordinate <code class="docutils literal notranslate"><span class="pre">VCoord</span></code>, and a number of Tracers <code class="docutils literal notranslate"><span class="pre">NTracers</span></code>:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">AuxiliaryState</span><span class="o">*</span><span class="w">  </span><span class="n">NewAuxState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">AuxiliaryState</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="n">MeshHalo</span><span class="p">,</span><span class="w"> </span><span class="n">VCoord</span><span class="p">,</span><span class="w"> </span><span class="n">NTracers</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>For conveniece, this returns a pointer to the newly created state. Given its name, a pointer to a named auxiliary state
@@ -223,8 +224,8 @@ can be obtained at any time by calling the static <code class="docutils literal 
 <section id="computation-of-auxiliary-variables">
 <h2>Computation of auxiliary variables<a class="headerlink" href="#computation-of-auxiliary-variables" title="Permalink to this heading"></a></h2>
 <p>To compute all auxiliary variables stored in an auxiliary state <code class="docutils literal notranslate"><span class="pre">AuxState</span></code>,
-given ocean state <code class="docutils literal notranslate"><span class="pre">State</span></code> and time level <code class="docutils literal notranslate"><span class="pre">TimeLevel</span></code> do:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">AuxState</span><span class="p">.</span><span class="n">computeAll</span><span class="p">(</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">);</span>
+given ocean state <code class="docutils literal notranslate"><span class="pre">State</span></code>, an array of tracers <code class="docutils literal notranslate"><span class="pre">TracerArray</span></code>, and time level <code class="docutils literal notranslate"><span class="pre">TimeLevel</span></code> do:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">AuxState</span><span class="p">.</span><span class="n">computeAll</span><span class="p">(</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">TracerArray</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">);</span>
 </pre></div>
 </div>
 </section>

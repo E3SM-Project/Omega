@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Machine Environment (MachEnv) &mdash; Omega develop documentation</title>
+  <title>Vertical Mixing Coefficients &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -16,11 +16,13 @@
       <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
       <script src="../_static/doctools.js"></script>
       <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Model Configuration (Config)" href="Config.html" />
-    <link rel="prev" title="Data Types and Precision" href="DataTypes.html" />
+    <link rel="next" title="Quick Start for Developers" href="../devGuide/QuickStart.html" />
+    <link rel="prev" title="Timing" href="Timing.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -49,7 +51,7 @@
 <li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Users</a></li>
 <li class="toctree-l1"><a class="reference internal" href="OmegaBuild.html">CMake-based Omega Build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Omega Logging</a></li>
@@ -76,7 +78,15 @@
 <li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Timing.html">Timing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Vertical Mixing Coefficients</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#vertical-mixing-processes-types">Vertical Mixing Processes/Types</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#background-mixing">1. Background Mixing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#convective-mixing">2. Convective Mixing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#shear-mixing">3. Shear Mixing</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
@@ -172,9 +182,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Machine Environment (MachEnv)</li>
+      <li class="breadcrumb-item active">Vertical Mixing Coefficients</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/userGuide/MachEnv.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/userGuide/VerticalMixingCoeff.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -182,34 +192,78 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="machine-environment-machenv">
-<span id="omega-user-mach-env"></span><h1>Machine Environment (MachEnv)<a class="headerlink" href="#machine-environment-machenv" title="Permalink to this heading"></a></h1>
-<p>Within Omega, many aspects of the machine environment are stored
-in a class called MachEnv. These include message-passing parameters
-like MPI communicators and task information, number of threads
-if threaded, vector length for CPUs, GPU and node information as
-needed. Multiple environments are supported in case portions of the
-code need to run on subsets of tasks or in different contexts. A
-default environment is defined early in the initialization of the
-model and can be retrieved as described in the
-<a class="reference internal" href="../devGuide/MachEnv.html#omega-dev-mach-env"><span class="std std-ref">Developer’s Guide</span></a>.</p>
-<p>The user is not expected to set any parameters in MachEnv. All
-quantities are derived from either the job launch command
-(eg mpirun or srun) that defines the number of MPI tasks and tasks
-layouts or from machine parameters enforced during the build based
-on supported machine xml configurations.
-The latter include the pre-processing parameters
-<code class="docutils literal notranslate"><span class="pre">-DOMEGA_VECTOR_LENGTH=xx</span></code> and <code class="docutils literal notranslate"><span class="pre">-DOMEGA_THREADED</span></code> that define an
-optimal vector length for CPU code and turn on OpenMP threading
-if desired.</p>
+  <section class="tex2jax_ignore mathjax_ignore" id="vertical-mixing-coefficients">
+<span id="omega-user-vertmix"></span><h1>Vertical Mixing Coefficients<a class="headerlink" href="#vertical-mixing-coefficients" title="Permalink to this heading"></a></h1>
+<p>The vertical mixing module in Omega handles the parameterization of unresolved vertical mixing
+processes in the ocean. It calculates vertical diffusivity and viscosity coefficients that
+determine how properties (like momentum, heat, salt, and biogeochemical tracers) mix vertically
+in the ocean model. Currently, Omega offers three different mixing processes within the water column: (1) a constant
+background mixing value, (2) a convective instability mixing value, and (3) a Richardson number
+dependent shear instability driven mixing value from the <a class="reference external" href="https://journals.ametsoc.org/view/journals/phoc/11/11/1520-0485_1981_011_1443_povmin_2_0_co_2.xml">Pacanowski and Philander (1981)</a> parameterization. These are linearly additive and are describe a bit
+more in detail below. Other mixing processes and parameterizations, such as the the K Profile Parameterization <a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94rg01872">(KPP; Large et al., 1994)</a> will be added in the future.</p>
+<p>The user-configurable options are the following parameters in the yaml configuration file:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">VertMix</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Background</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Viscosity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-4</span><span class="w">    </span><span class="c1"># Background vertical viscosity (m²/s)</span>
+<span class="w">    </span><span class="nt">Diffusivity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-5</span><span class="w">  </span><span class="c1"># Background vertical diffusivity (m²/s)</span>
+<span class="w">  </span><span class="nt">Convective</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">         </span><span class="c1"># Enables the convective-induced mixing option</span>
+<span class="w">    </span><span class="nt">Diffusivity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w">     </span><span class="c1"># Convective mixing coefficient (m²/s)</span>
+<span class="w">    </span><span class="nt">TriggerBVF</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w">      </span><span class="c1"># Squared Brunt-Vaisala frequency threshold</span>
+<span class="w">  </span><span class="nt">Shear</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">         </span><span class="c1"># Enables the shear-instability driven mixing option</span>
+<span class="w">    </span><span class="nt">NuZero</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-2</span><span class="w">       </span><span class="c1"># Base viscosity coefficient</span>
+<span class="w">    </span><span class="nt">Alpha</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span><span class="w">           </span><span class="c1"># Stability parameter</span>
+<span class="w">    </span><span class="nt">Exponent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w">          </span><span class="c1"># Richardson number exponent</span>
+</pre></div>
+</div>
+<section id="vertical-mixing-processes-types">
+<h2>Vertical Mixing Processes/Types<a class="headerlink" href="#vertical-mixing-processes-types" title="Permalink to this heading"></a></h2>
+<section id="background-mixing">
+<h3>1. Background Mixing<a class="headerlink" href="#background-mixing" title="Permalink to this heading"></a></h3>
+<p>A constant background mixing value that represents small-scale mixing processes not explicitly resolved by the model. Typically, this is chosen to represent low values of vertical mixing
+happening in the ocean’s stratified interior.</p>
+</section>
+<section id="convective-mixing">
+<h3>2. Convective Mixing<a class="headerlink" href="#convective-mixing" title="Permalink to this heading"></a></h3>
+<p>Enhanced convective adjustment mixing that occurs in statically unstable regions of the water column to parameterize convection and homogenize properties. In Omega this is mixing is defaulted to occur when the squared Brunt Vaisala Frequency is less than 0.0 (unstable), and is off when equal to (neutral) or greater than (stable) 0.0.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\kappa =
+\begin{cases}
++\kappa_b + \kappa_{conv} \quad \text{ if } N^2 &lt; N^2_{crit}\\
++\kappa_b \quad \text{ if } N^2 \geq N^2_{crit}
+\end{cases}
+\end{split}\]</div>
+<p>This is different than some current implementations (i.e. in MPAS-Ocean and the CVMix package), where convective adjustment occurs both with unstable and neutral conditions (<span class="math notranslate nohighlight">\(N^2 \leq N^2_{crit}\)</span>). <span class="math notranslate nohighlight">\(\kappa_{conv}\)</span> and <span class="math notranslate nohighlight">\(N^2_{crit}\)</span> are constant parameters set in the <code class="docutils literal notranslate"><span class="pre">VertMix</span></code> section of the yaml file (<code class="docutils literal notranslate"><span class="pre">Diffusivity</span></code> and <code class="docutils literal notranslate"><span class="pre">TriggerBVF</span></code> under the <code class="docutils literal notranslate"><span class="pre">Convective</span></code> header).</p>
+</section>
+<section id="shear-mixing">
+<h3>3. Shear Mixing<a class="headerlink" href="#shear-mixing" title="Permalink to this heading"></a></h3>
+<p>Mixing induced by vertical velocity shear, implemented using the Pacanowski-Philander scheme, through the gradient Richardson number (ratio of buoyancy to shear).</p>
+<div class="math notranslate nohighlight">
+\[
+\nu = \frac{\nu_o}{(1+\alpha Ri)^n} + \nu_b\,,
+\]</div>
+<div class="math notranslate nohighlight">
+\[
+\kappa = \frac{\nu}{(1+\alpha Ri)} + \kappa_b\,.
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(Ri\)</span> is defined as:</p>
+<div class="math notranslate nohighlight">
+\[
+Ri = \frac{N^2}{\left|\frac{\partial \mathbf{U}}{\partial z}\right|^2}\,,
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(\nu_o\)</span>, <span class="math notranslate nohighlight">\(\alpha\)</span>, <span class="math notranslate nohighlight">\(n\)</span>, <span class="math notranslate nohighlight">\(\nu_b\)</span>, <span class="math notranslate nohighlight">\(\kappa_b\)</span> are constant parameters set in the <code class="docutils literal notranslate"><span class="pre">VertMix</span></code> section of the yaml file (<code class="docutils literal notranslate"><span class="pre">NuZero</span></code>, <code class="docutils literal notranslate"><span class="pre">Alpha</span></code>, <code class="docutils literal notranslate"><span class="pre">Exponent</span></code> under the <code class="docutils literal notranslate"><span class="pre">Shear</span></code> header and <code class="docutils literal notranslate"><span class="pre">Viscosity</span></code>, <code class="docutils literal notranslate"><span class="pre">Diffusivity</span></code> under the <code class="docutils literal notranslate"><span class="pre">Background</span></code> header). <span class="math notranslate nohighlight">\(N^2\)</span> is calculated by the EOS based on the ocean state and <span class="math notranslate nohighlight">\(\mathbf{U}\)</span> is the magnitude of the horizontal velocity. <span class="math notranslate nohighlight">\(N^2\)</span>, <span class="math notranslate nohighlight">\(\partial \mathbf{U}}{\partial z}\right|^2\)</span> and <span class="math notranslate nohighlight">\(Ri\)</span> of <code class="docutils literal notranslate"><span class="pre">K</span></code> are all defined at the cell center, top interface of layer <code class="docutils literal notranslate"><span class="pre">K</span></code>.  <span class="math notranslate nohighlight">\(N^2\)</span>, <span class="math notranslate nohighlight">\(\nu_{shear}\)</span> and <span class="math notranslate nohighlight">\(\kappa_{shear}\)</span> are set to zero for the surface layer. In a later development, the shear mixing option will be changed to the interior shear mixing formulation in <a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94rg01872">Large et al., 1994</a>.</p>
+</section>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="DataTypes.html" class="btn btn-neutral float-left" title="Data Types and Precision" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="Config.html" class="btn btn-neutral float-right" title="Model Configuration (Config)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="Timing.html" class="btn btn-neutral float-left" title="Timing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../devGuide/QuickStart.html" class="btn btn-neutral float-right" title="Quick Start for Developers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

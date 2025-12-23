@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Building the Documentation &mdash; Omega develop documentation</title>
+  <title>Vertical Mixing Coefficients &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Testing Code" href="Testing.html" />
-    <link rel="prev" title="Documentation" href="Docs.html" />
+    <link rel="next" title="Omega V0: Shallow Water" href="../design/OmegaV0ShallowWater.html" />
+    <link rel="prev" title="Timing" href="Timing.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -84,7 +84,7 @@
 <li class="toctree-l1"><a class="reference internal" href="CondaEnv.html">Development Conda Environment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Linting.html">Linting Code</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Docs.html">Documentation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildDocs.html">Building the Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Testing.html">Testing Code</a></li>
 <li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
 <li class="toctree-l1"><a class="reference internal" href="DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
@@ -122,7 +122,17 @@
 <li class="toctree-l1"><a class="reference internal" href="Timing.html#finalization">Finalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Timing.html#basic-timer-use">Basic timer use</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Timing.html#advanced-timing-functions">Advanced timing functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Vertical Mixing Coefficients</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#initialization-and-usage">Initialization and Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#class-structure">Class Structure</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#core-data-members">Core Data Members</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mixing-parameters">Mixing Parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#core-functionality-vertical-mixing-coefficient-calculation">Core Functionality (Vertical Mixing Coefficient Calculation)</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -172,9 +182,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Building the Documentation</li>
+      <li class="breadcrumb-item active">Vertical Mixing Coefficients</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/devGuide/BuildDocs.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/devGuide/VerticalMixingCoeff.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -182,28 +192,105 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section class="tex2jax_ignore mathjax_ignore" id="building-the-documentation">
-<span id="omega-dev-building-docs"></span><h1>Building the Documentation<a class="headerlink" href="#building-the-documentation" title="Permalink to this heading"></a></h1>
-<p>As long as you have followed the procedure in <a class="reference internal" href="CondaEnv.html#omega-dev-conda-env"><span class="std std-ref">Development Conda Environment</span></a> for
-setting up your conda environment, you will already have the packages available
-that you need to build the documentation.</p>
-<p>From the root of an Omega branch, run the following script to build the docs:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>components/omega/doc
-make<span class="w"> </span>clean<span class="w"> </span>html
+  <p>(omega-dev-vertmix) =</p>
+<section class="tex2jax_ignore mathjax_ignore" id="vertical-mixing-coefficients">
+<h1>Vertical Mixing Coefficients<a class="headerlink" href="#vertical-mixing-coefficients" title="Permalink to this heading"></a></h1>
+<p>Omega includes a <code class="docutils literal notranslate"><span class="pre">VertMix</span></code> class that provides functions that compute <code class="docutils literal notranslate"><span class="pre">VertDiff</span></code> and <code class="docutils literal notranslate"><span class="pre">VertVisc</span></code>, the
+vertical diffusivity and viscosity, where both are defined at the center of the cell and top of the layer.
+Currently the values of <code class="docutils literal notranslate"><span class="pre">VertDiff</span></code> and <code class="docutils literal notranslate"><span class="pre">VertVisc</span></code> are calculated using the linear combination of three options: (1) a
+constant background mixing value, (2) a convective instability mixing value, and (3) a Richardson
+number dependent shear mixing value from the <a class="reference external" href="https://journals.ametsoc.org/view/journals/phoc/11/11/1520-0485_1981_011_1443_povmin_2_0_co_2.xml">Pacanowski and Philander (1981)</a> parameterization. These options are linearly additive. In the future, additional additive options will be implemented, such as the K Profile Parameterization <a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94rg01872">(KPP; Large et al., 1994)</a>. For both the convective and shear mixing values <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code> is needed, which
+is calculated by the <code class="docutils literal notranslate"><span class="pre">EOS</span></code> class.</p>
+<section id="initialization-and-usage">
+<h2>Initialization and Usage<a class="headerlink" href="#initialization-and-usage" title="Permalink to this heading"></a></h2>
+<p>The primary class <code class="docutils literal notranslate"><span class="pre">VertMix</span></code> is implemented using the Singleton pattern to ensure a single instance manages all vertical mixing calculations.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Initialize VertMix</span>
+<span class="n">VertMix</span><span class="o">*</span><span class="w"> </span><span class="n">VMix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">VertMix</span><span class="o">::</span><span class="n">getInstance</span><span class="p">();</span>
+
+<span class="c1">// Compute mixing coefficients</span>
+<span class="n">VMix</span><span class="o">-&gt;</span><span class="n">computeVertMix</span><span class="p">(</span><span class="n">NormalVelocity</span><span class="p">,</span><span class="w"> </span><span class="n">TangentialVelocity</span><span class="p">,</span><span class="w"> </span><span class="n">BruntVaisalaFreqSq</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>You can view the documentation by opening <code class="docutils literal notranslate"><span class="pre">_build/html/index.html</span></code> in your
-choice of browsers or copy it to a web portal.</p>
-<p>If you run into errors or warnings related to changes you have made when you
-build the docs, check with the development team for help on fixing them.</p>
+</section>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading"></a></h2>
+<p>The initialization process reads parameters from the yaml configuration file with the following structure and
+default values:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">VertMix</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Background</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Viscosity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-4</span>
+<span class="w">    </span><span class="nt">Diffusivity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-5</span>
+<span class="w">  </span><span class="nt">Convective</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">Diffusivity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">    </span><span class="nt">TriggerBVF</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+<span class="w">  </span><span class="nt">Shear</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">NuZero</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.005</span>
+<span class="w">    </span><span class="nt">Alpha</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span>
+<span class="w">    </span><span class="nt">Exponent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0</span>
+</pre></div>
+</div>
+</section>
+<section id="class-structure">
+<h2>Class Structure<a class="headerlink" href="#class-structure" title="Permalink to this heading"></a></h2>
+<section id="core-data-members">
+<h3>Core Data Members<a class="headerlink" href="#core-data-members" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">VertDiff</span></code>: 2D array storing vertical diffusivity coefficients (m²/s)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VertVisc</span></code>: 2D array storing vertical viscosity coefficients (m²/s)</p></li>
+</ul>
+</section>
+<section id="mixing-parameters">
+<h3>Mixing Parameters<a class="headerlink" href="#mixing-parameters" title="Permalink to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p>Background Mixing:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">BackDiff</span></code>: Background vertical diffusivity (m²/s; Default: 1e-5)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BackVisc</span></code>: Background vertical viscosity (m²/s: Default: 1e-4)</p></li>
+</ul>
+</li>
+<li><p>Convective Mixing:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">EnableConvMix</span></code>: Flag to enable/disable convective mixing (Default: True)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ConvDiff</span></code>: Convective mixing coefficient (m²/s; Default: 1.0)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ConvTriggerBVF</span></code>: Trigger threshold for convective mixing (Default: 0.0)</p></li>
+</ul>
+</li>
+<li><p>Shear Mixing:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">EnableShearMix</span></code>: Flag to enable/disable shear mixing (Default: True)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ShearNuZero</span></code>: Base coefficient for Pacanowski-Philander scheme (Default: 0.005)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ShearAlpha</span></code>: Alpha parameter for P-P scheme (Default: 5.0)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ShearExponent</span></code>: Exponent parameter for P-P scheme (Default: 2.0)</p></li>
+</ul>
+</li>
+</ol>
+</section>
+</section>
+<section id="core-functionality-vertical-mixing-coefficient-calculation">
+<h2>Core Functionality (Vertical Mixing Coefficient Calculation)<a class="headerlink" href="#core-functionality-vertical-mixing-coefficient-calculation" title="Permalink to this heading"></a></h2>
+<p>The main computation is handled by:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">computeVertMix</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">NormalVelocity</span><span class="p">,</span>
+<span class="w">                   </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TangentialVelocity</span><span class="p">,</span>
+<span class="w">                   </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">BruntVaisalaFreqSq</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This method combines the effects of:</p>
+<ul class="simple">
+<li><p>Background mixing (constant coefficients)</p></li>
+<li><p>Convective mixing (triggered by static instability)</p></li>
+<li><p>Shear instability driven mixing (Pacanowski-Philander scheme; to be changed to <a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94rg01872">Large et al., 1994</a> shear mixing scheme in a later development)</p></li>
+</ul>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="Docs.html" class="btn btn-neutral float-left" title="Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="Testing.html" class="btn btn-neutral float-right" title="Testing Code" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="Timing.html" class="btn btn-neutral float-left" title="Timing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../design/OmegaV0ShallowWater.html" class="btn btn-neutral float-right" title="Omega V0: Shallow Water" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
