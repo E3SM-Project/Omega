@@ -225,8 +225,16 @@ The following time steppers are currently available:</p>
 </tbody>
 </table>
 <p>The time step refers to the main model time step used to advance the solution
-forward. The format is in <code class="docutils literal notranslate"><span class="pre">dddd_hh:mm:ss</span></code> for days, hours, minutes and
-seconds.</p>
+forward. The time step is specified as a formatted string and can be provided
+in any of the following forms:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">DDDD_HH:MM:SS(.sss...)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HH:MM:SS(.sss...)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MM:SS(.sss...)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SS(.sss...)</span></code></p></li>
+</ul>
+<p>Days, hours and minutes are optional but must be in order if included.
+Fractional seconds are optional.</p>
 <p>The StartTime refers to the starting time for the simulation. It is in the
 format <code class="docutils literal notranslate"><span class="pre">yyyy-mm-day_hh:mm:ss</span></code> for year, month, day, hour, minute, second.
 This refers to the initial start time; for a longer simulation, the current
@@ -254,7 +262,7 @@ RunDuration is used instead of the StopTime.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

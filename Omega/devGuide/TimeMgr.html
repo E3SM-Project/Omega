@@ -326,6 +326,17 @@ header file:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInterval</span><span class="w"> </span><span class="n">MyDeltaTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyTimeInstant2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">MyTimeInstant1</span><span class="p">;</span>
 </pre></div>
 </div>
+<p>Time intervals can also be created from a formatted string (this is the form
+used when reading configuration options like <code class="docutils literal notranslate"><span class="pre">TimeStep</span></code> and <code class="docutils literal notranslate"><span class="pre">RunDuration</span></code>).
+The supported string formats are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">DDDD_HH:MM:SS(.sss...)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HH:MM:SS(.sss...)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MM:SS(.sss...)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SS(.sss...)</span></code></p></li>
+</ul>
+<p>Days, hours and minutes are optional but must be in order if included.
+Fractional seconds are optional.</p>
 </section>
 <section id="alarm">
 <h3>5. Alarm<a class="headerlink" href="#alarm" title="Permalink to this heading"></a></h3>
@@ -464,7 +475,7 @@ time step:</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

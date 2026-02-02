@@ -196,8 +196,15 @@ time management of the simulation.</p>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">StartTime</span></code> and <code class="docutils literal notranslate"><span class="pre">StopTime</span></code> should be formatted strings in the form
 <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD_HH:MM:SS.SSSS</span></code> and the <code class="docutils literal notranslate"><span class="pre">RunDuration</span></code> should be a formatted string in
-the form <code class="docutils literal notranslate"><span class="pre">DDDD_HH:MM:SS.SSSS</span></code> (the actual width of each unit can be arbitrary
-and the separators can be any single non-numeric character). Either the
+one of the following forms:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">DDDD_HH:MM:SS(.sss...)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HH:MM:SS(.sss...)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MM:SS(.sss...)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SS(.sss...)</span></code></p></li>
+</ul>
+<p>The actual width of each unit can be arbitrary and the separators can be any
+single non-numeric character. Either the
 <code class="docutils literal notranslate"><span class="pre">StopTime</span></code> or <code class="docutils literal notranslate"><span class="pre">RunDuration</span></code> can be set to <code class="docutils literal notranslate"><span class="pre">none</span></code> in order to use the other to
 determine the duration of the run. If both are set and <code class="docutils literal notranslate"><span class="pre">StopTime</span> <span class="pre">-</span> <span class="pre">StartTime</span></code>
 is incosistent with <code class="docutils literal notranslate"><span class="pre">RunDuration</span></code>, then <code class="docutils literal notranslate"><span class="pre">RunDuration</span></code> is used for the
@@ -248,7 +255,7 @@ simulation. The supported calendar types are:</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
