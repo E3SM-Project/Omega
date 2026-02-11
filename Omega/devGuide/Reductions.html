@@ -116,9 +116,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#global-sum">Global sum</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#global-sum-with-product">Global sum with product</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#global-sum-multi-field">Global sum multi-field</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#global-sum-multi-field-with-product">Global sum multi-field with product</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#global-minval-and-maxval">Global minval and maxval</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#utility-functions-globalmin-globalmax">Utility functions globalMin globalMax</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
@@ -152,6 +150,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../design/IOStreams.html">IOStreams</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/SubmesoscaleEddies.html">Submesoscale Eddy Parameterization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/Tendency.html">Tendency</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/Tendencies.html">Tendencies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryVariables.html">Auxiliary variables</a></li>
@@ -198,19 +197,17 @@ data to a scalar value using either sum, min or max operators.</p>
 <h2>Global sum<a class="headerlink" href="#global-sum" title="Permalink to this heading"></a></h2>
 <p>For scalars, <code class="docutils literal notranslate"><span class="pre">globalSum</span></code> computes a reproducible sum of all scalars
 on MPI processors in a given MPI communicator:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TT</span><span class="w"> </span><span class="o">*</span><span class="n">Val</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span><span class="w"> </span><span class="n">TT</span><span class="w"> </span><span class="o">*</span><span class="n">Result</span><span class="p">)</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TT</span><span class="w"> </span><span class="n">Result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TT</span><span class="w"> </span><span class="n">Val</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>where <code class="docutils literal notranslate"><span class="pre">TT</span></code> is the data type I4, I8, R4 or R8. Computed sum is stored
-in <code class="docutils literal notranslate"><span class="pre">Result</span></code>. Any errors from the MPI collective call are passed back
-in the function <code class="docutils literal notranslate"><span class="pre">int</span></code> return code.</p>
+<p>where <code class="docutils literal notranslate"><span class="pre">TT</span></code> is the data type I4, I8, R4 or R8. The computed sum across
+MPI tasks is returned as the result.</p>
 <p>For arrays, <code class="docutils literal notranslate"><span class="pre">globalSum</span></code> first computes a local sum of the array before
-the global sum. The local sum is either between 0 and max indexes of
-the array or between indexes defined in the specified <code class="docutils literal notranslate"><span class="pre">indexRange</span></code>:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array</span><span class="p">,</span>
-<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span>
-<span class="w">              </span><span class="n">TT</span><span class="w"> </span><span class="o">*</span><span class="n">Result</span><span class="p">,</span>
-<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">indexRange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span>
+the sum across tasks of these local sums. The sum can be computed on a subset
+of the array indices as defined by an optional vector argument <code class="docutils literal notranslate"><span class="pre">indexRange</span></code>:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TT</span><span class="w"> </span><span class="n">Result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array</span><span class="p">,</span>
+<span class="w">                      </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span>
+<span class="w">                      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">indexRange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">);</span>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">ArrayTTDD</span></code> is either a host or device Omega array of type I4, I8, R4 or R8
@@ -219,88 +216,78 @@ and dimension DD ranging from 1D to 5D. The <code class="docutils literal notran
 max indexes for a local sum might be
 <code class="docutils literal notranslate"><span class="pre">indexRange{0,</span> <span class="pre">nCellsOwned-1,</span> <span class="pre">0,</span> <span class="pre">nVertLayers-1}</span></code>. The index range vector
 is an optional parameter and, when absent, local sum defaults to
-min,max indexes of the array. Computed global sum is stored
-in <code class="docutils literal notranslate"><span class="pre">Result</span></code>. Any errors from the MPI collective call are passed back
-in the function <code class="docutils literal notranslate"><span class="pre">int</span></code> return code.</p>
+min,max indexes of the array. The computed global sum is returned as
+the <code class="docutils literal notranslate"><span class="pre">Result</span></code>.</p>
 </section>
 <section id="global-sum-with-product">
 <h2>Global sum with product<a class="headerlink" href="#global-sum-with-product" title="Permalink to this heading"></a></h2>
 <p>This function signature</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array1</span><span class="p">,</span>
-<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array2</span><span class="p">,</span>
-<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span>
-<span class="w">              </span><span class="n">TT</span><span class="w"> </span><span class="o">*</span><span class="n">Result</span><span class="p">,</span>
-<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">indexRange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TT</span><span class="w"> </span><span class="n">Result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">Array1</span><span class="p">,</span>
+<span class="w">                      </span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">Array2</span><span class="p">,</span>
+<span class="w">                      </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span>
+<span class="w">                      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">indexRange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>performs a sum of element-by-element product <code class="docutils literal notranslate"><span class="pre">array1*array2</span></code>. The second
-array must be as big as the first array; if <code class="docutils literal notranslate"><span class="pre">indexRange</span></code> is provided, the
-indexes must be valid for both arrays. This signature can be used to
-mask the local sum of <code class="docutils literal notranslate"><span class="pre">array1</span></code> with values of masking <code class="docutils literal notranslate"><span class="pre">array2</span></code>.</p>
+array must be the same size and dimension of the first array; if <code class="docutils literal notranslate"><span class="pre">indexRange</span></code>
+is provided, the indexes must be valid for both arrays. This signature can be
+used to mask the local sum of <code class="docutils literal notranslate"><span class="pre">array1</span></code> with values of masking <code class="docutils literal notranslate"><span class="pre">array2</span></code>.</p>
 </section>
 <section id="global-sum-multi-field">
 <h2>Global sum multi-field<a class="headerlink" href="#global-sum-multi-field" title="Permalink to this heading"></a></h2>
-<p>To sum multiple fields at once, this function signature accepts a vector
-of scalars:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TT</span><span class="o">&gt;</span><span class="w"> </span><span class="n">scalars</span><span class="p">,</span>
-<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span>
-<span class="w">              </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TT</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">Result</span><span class="p">)</span>
+<p>For scalars, multiple fields can be summed with a single call. A multi-field
+interface for arrays is not yet supported.
+This function signature accepts a vector of scalars:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TT</span><span class="o">&gt;</span><span class="w"> </span><span class="n">Result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TT</span><span class="o">&gt;</span><span class="w"> </span><span class="n">scalars</span><span class="p">,</span>
+<span class="w">                                   </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>or arrays:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ArrayTTDD</span><span class="o">&gt;</span><span class="w"> </span><span class="n">arrays</span><span class="p">,</span>
-<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span>
-<span class="w">              </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TT</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">Result</span><span class="p">,</span>
-<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">indexRange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span>
+<p>The array interface (not yet supported) will be:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TT</span><span class="o">&gt;</span><span class="w"> </span><span class="n">Result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ArrayTTDD</span><span class="o">&gt;</span><span class="w"> </span><span class="n">arrays</span><span class="p">,</span>
+<span class="w">                                   </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span>
+<span class="w">                                   </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">indexRange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">);</span>
 </pre></div>
 </div>
-</section>
-<section id="global-sum-multi-field-with-product">
-<h2>Global sum multi-field with product<a class="headerlink" href="#global-sum-multi-field-with-product" title="Permalink to this heading"></a></h2>
-<p>This signature provides sums with masks for multiple fields:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ArrayTTDD</span><span class="o">&gt;</span><span class="w"> </span><span class="n">arrays1</span><span class="p">,</span>
-<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ArrayTTDD</span><span class="o">&gt;</span><span class="w"> </span><span class="n">arrays2</span><span class="p">,</span>
-<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span>
-<span class="w">              </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TT</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">Result</span><span class="p">,,</span>
-<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">indexRange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span>
+<p>A sum-with-product for multiple fields is also planned but not yet supported.
+Its signature will be:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TT</span><span class="o">&gt;</span><span class="w"> </span><span class="n">Result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalSum</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ArrayTTDD</span><span class="o">&gt;</span><span class="w"> </span><span class="n">arrays1</span><span class="p">,</span>
+<span class="w">                                   </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ArrayTTDD</span><span class="o">&gt;</span><span class="w"> </span><span class="n">arrays2</span><span class="p">,</span>
+<span class="w">                                   </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span>
+<span class="w">                                   </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">indexRange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">);</span>
 </pre></div>
 </div>
 </section>
 <section id="global-minval-and-maxval">
 <h2>Global minval and maxval<a class="headerlink" href="#global-minval-and-maxval" title="Permalink to this heading"></a></h2>
-<p>Functions <code class="docutils literal notranslate"><span class="pre">globalMinVal</span></code> and <code class="docutils literal notranslate"><span class="pre">globalMaxVal</span></code> provide interfaces similar
-to <code class="docutils literal notranslate"><span class="pre">globalSum</span></code> but reduce data with MIN and MAX operators:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">globalMinVal</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array</span><span class="p">,</span>
-<span class="w">                 </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span>
-<span class="w">                 </span><span class="n">TT</span><span class="w"> </span><span class="o">*</span><span class="n">Result</span><span class="p">,</span>
-<span class="w">                 </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">indexRange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span>
+<p>Functions <code class="docutils literal notranslate"><span class="pre">globalMinVal</span></code> and <code class="docutils literal notranslate"><span class="pre">globalMaxVal</span></code> provide interfaces analogous
+to <code class="docutils literal notranslate"><span class="pre">globalSum</span></code> but will find the minimum or maximum value, respectively, of a
+scalar or array across the global domain. The MinVal interfaces are:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TT</span><span class="w"> </span><span class="n">Result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalMinVal</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TT</span><span class="w"> </span><span class="n">Val</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">);</span><span class="w"> </span><span class="c1">// for a scalar</span>
 
-<span class="kt">int</span><span class="w"> </span><span class="n">globalMinVal</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array1</span><span class="p">,</span>
-<span class="w">                 </span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array2</span><span class="p">,</span>
-<span class="w">                 </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span>
-<span class="w">                 </span><span class="n">TT</span><span class="w"> </span><span class="o">*</span><span class="n">Result</span><span class="p">,</span>
-<span class="w">                 </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">indexRange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span>
+<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TT</span><span class="o">&gt;</span><span class="w"> </span><span class="n">Result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalMinVal</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TT</span><span class="o">&gt;</span><span class="w"> </span><span class="n">Vals</span><span class="p">,</span>
+<span class="w">                                      </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">);</span><span class="w"> </span><span class="c1">// multiple scalars</span>
 
-<span class="kt">int</span><span class="w"> </span><span class="n">globalMinVal</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ArrayTTDD</span><span class="o">&gt;</span><span class="w"> </span><span class="n">arrays</span><span class="p">,</span>
-<span class="w">                 </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span>
-<span class="w">                 </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TT</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">Result</span><span class="p">,</span>
-<span class="w">                 </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">indexRange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span>
+<span class="n">TT</span><span class="w"> </span><span class="n">Result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalMinVal</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array</span><span class="p">,</span>
+<span class="w">                         </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span>
+<span class="w">                         </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">indexRange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">);</span>
+
+<span class="n">TT</span><span class="w"> </span><span class="n">Result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalMinVal</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array1</span><span class="p">,</span>
+<span class="w">                         </span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array2</span><span class="p">,</span>
+<span class="w">                         </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span>
+<span class="w">                         </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">indexRange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">);</span>
+
+<span class="n">TT</span><span class="w"> </span><span class="n">Result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalMinVal</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ArrayTTDD</span><span class="o">&gt;</span><span class="w"> </span><span class="n">arrays</span><span class="p">,</span>
+<span class="w">                         </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span>
+<span class="w">                         </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">indexRange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span>
 </pre></div>
 </div>
-</section>
-<section id="utility-functions-globalmin-globalmax">
-<h2>Utility functions globalMin globalMax<a class="headerlink" href="#utility-functions-globalmin-globalmax" title="Permalink to this heading"></a></h2>
-<p>These functions are utility functions to compute global MIN and MAX
-across all MPI processors for a given scalar or array:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">globalMin</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TT</span><span class="w"> </span><span class="o">*</span><span class="n">scalar</span><span class="p">,</span>
-<span class="w">              </span><span class="n">TT</span><span class="w"> </span><span class="o">*</span><span class="n">Result</span><span class="p">,</span>
-<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">)</span>
-
-<span class="kt">int</span><span class="w"> </span><span class="n">globalMin</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">array</span><span class="p">,</span>
-<span class="w">              </span><span class="n">ArrayTTDD</span><span class="w"> </span><span class="n">Result</span><span class="p">,</span>
-<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">)</span>
-</pre></div>
-</div>
+<p>with identical MaxVal interfaces to find the maximum. WARNING - the use of a
+multiplicative mask to zero array entries works fine for global sums, but does
+not always lead to desireable results in the MinVal and MaxVal interfaces.
+Multiplying by a mask of 1s and 0s will result in 0 values in all masked
+entries and the MinVal and MaxVal will view these as actual entries unless
+limited by the indexRange argument. Care must be taken in the MinVal, MaxVal
+case to mask appropriately.</p>
 </section>
 </section>
 
