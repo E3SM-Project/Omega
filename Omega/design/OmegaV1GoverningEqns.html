@@ -328,7 +328,7 @@ Add later, if it seems necessary. There is a toc on the left bar.
 + \int_{\partial V(t)}\rho({\bf x},t)\, {\bf v}({\bf x},t) \left({\bf v}({\bf x},t) - {\bf v}_r \right) \cdot {\bf n} \, dA
 \\ &amp; \; \; \; =
 \int_{V(t)} \rho({\bf x},t) \, {\bf b}({\bf x},t)\, dV
-+ \int_{\partial V(t)} {\bf \tau}({\bf n},{\bf x},t)  \, dA
++ \int_{\partial V(t)} {\bf \tau}({\bf n},{\bf x},t) \, dA
 \end{split}\]</div>
 <p>The operator <span class="math notranslate nohighlight">\(\frac{d}{dt}\)</span> used here denotes the rate of change within a moving control volume, sometimes referred to as a Reynolds transport derivative. It differs from the partial derivative <span class="math notranslate nohighlight">\(\frac{\partial}{\partial t}\)</span>, which represents the local rate of change at a fixed point in space (Eulerian frame), and from the material derivative <span class="math notranslate nohighlight">\(\frac{D}{Dt}\)</span>, which follows an individual fluid parcel (Lagrangian frame). The use of <span class="math notranslate nohighlight">\(\frac{d}{dt}\)</span> allows for conservation laws to be expressed in a general framework that includes both stationary and moving control volumes, consistent with the Reynolds transport theorem.</p>
 <p>These equations are taken from <a class="reference external" href="https://doi.org/10.1016/C2012-0-00611-4">Kundu et al. 2016</a> (4.5) for mass conservation and (4.17) for momentum conservation.
@@ -434,7 +434,7 @@ Griffies recommends a value of <span class="math notranslate nohighlight">\(\rho
 <div class="math notranslate nohighlight" id="equation-top-bot-normal-pseudo">
 <span class="eqno">(12)<a class="headerlink" href="#equation-top-bot-normal-pseudo" title="Permalink to this equation"></a></span>\[
 {\bf n}^{\text{top}} \approx (-\nabla \tilde{z}^{\text{top}}, 1), \quad
-{\bf n}^{\text{bot}} \approx (-\nabla \tilde{z}^{\text{bot}}, 1)
+{\bf n}^{\text{bot}} \approx (\nabla \tilde{z}^{\text{bot}}, -1)
 \]</div>
 <p>Here we apply a small-slope approximation, assuming <span class="math notranslate nohighlight">\(|\nabla \tilde{z}| \ll 1\)</span>, and omit normalization factors for clarity. This approximation retains leading-order effects of slope while simplifying the surface geometry.</p>
 <p>To facilitate integration over a fixed horizontal domain, we introduce the following notation:</p>
@@ -514,7 +514,7 @@ Griffies recommends a value of <span class="math notranslate nohighlight">\(\rho
 &amp;=
 \int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} {\bf b}_{\perp} \, d\tilde{z} \, dA
 +
-\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \frac{{\bf \tau}}{\rho} \, d\tilde{z} \right) dl \\
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \frac{{\bf \tau}}{\rho} \, d\tilde{z} \right) {\bf n}_\perp  dl \\
 &amp;\quad
 + \int_A \left[ \frac{{\bf \tau}}{\rho} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
 - \int_A \left[ \frac{{\bf \tau}}{\rho} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA
@@ -693,7 +693,7 @@ h_k = \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} dz.
 &amp; + \int_A \rho_0 \, {\bf u} \left[ \tilde{w}_{tr} - \tilde{\bf u} \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA
 - \int_A \rho_0 \, {\bf u} \left[ \tilde{w}_{tr} - \tilde{\bf u} \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA \\
 &amp; = -\int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \left({\bf f} \times \mathbf{u} + \nabla \Phi \right) \, d\tilde{z} \, dA
-- \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \frac{\rho_0 p}{\rho} \, d\tilde{z} \right) dl \\
+- \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \frac{\rho_0 p}{\rho} \, d\tilde{z} \right) {\bf n}_\perp  dl \\
 &amp; - \int_A \left[ \frac{\rho_0 p}{\rho} \nabla \tilde{z}_k^{\text{top}} \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA
 + \int_A \left[ \frac{\rho_0 p}{\rho} \nabla \tilde{z}_k^{\text{bot}} \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
 \end{split}\]</div>
@@ -712,7 +712,7 @@ h_k = \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} dz.
 &amp; + \int_A \rho_0 \,\left&lt; {\bf u} \left[ \tilde{w}_{tr} - \tilde{\bf u} \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \right&gt; \, dA
 - \int_A \rho_0 \, \left&lt; {\bf u} \left[ \tilde{w}_{tr} - \tilde{\bf u} \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right&gt; \, dA \\
 &amp; = -\int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \, \left&lt;\left( {\bf f} \times \mathbf{u} + \nabla \Phi \right) \right&gt; \, d\tilde{z} \, dA
-- \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \left&lt; \frac{p}{\rho} \right&gt; \, d\tilde{z} \right) dl \\
+- \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \left&lt; \frac{p}{\rho} \right&gt; \, d\tilde{z} \right) {\bf n}_\perp dl \\
 &amp; - \int_A \rho_0 \left[ \left&lt; \frac{p}{\rho} \nabla \tilde{z}_k^{\text{top}} \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA
 + \int_A \rho_0 \left[ \left&lt; \frac{p}{\rho} \nabla \tilde{z}_k^{\text{bot}} \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
 \end{split}\]</div>
@@ -724,7 +724,7 @@ h_k = \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} dz.
 &amp; + \int_A \rho_0 \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
 &amp; - \int_A \rho_0 \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA  \\
 &amp; = - \int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \, \left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right) \, d\tilde{z} \, dA \\
-&amp; - \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \left(\left&lt; \alpha \right&gt; \left&lt;p \right&gt; + \left&lt;\alpha^\prime p^\prime\right&gt; \right) \, d\tilde{z} \right) dl \\
+&amp; - \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \left(\left&lt; \alpha \right&gt; \left&lt;p \right&gt; + \left&lt;\alpha^\prime p^\prime\right&gt; \right) \, d\tilde{z} \right) {\bf n}_\perp  dl \\
 &amp; - \int_A \rho_0 \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}}\right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
 &amp; + \int_A \rho_0 \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{bot}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}}\right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
 \end{split}\]</div>
@@ -736,7 +736,7 @@ h_k = \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} dz.
 &amp; + \int_A \rho_0 \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
 &amp; - \int_A \rho_0 \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA  \\
 &amp; = - \int_A \rho_0 \, \tilde{h}_k \overline{\left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right)}^{\tilde{z}}_k \, dA \\
-&amp; - \int_{\partial A} \rho_0 \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt; \left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) dl \\
+&amp; - \int_{\partial A} \rho_0 \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt; \left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) {\bf n}_\perp dl \\
 &amp; - \int_A \rho_0 \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
 &amp; + \int_A \rho_0 \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{bot}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
 \end{split}\]</div>
@@ -748,7 +748,7 @@ h_k = \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} dz.
 &amp; + \int_A \rho_0 \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
 &amp; - \int_A \rho_0 \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA  \\
 &amp; = - \int_A \rho_0 \, \tilde{h}_k \overline{\left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right)}^{\tilde{z}}_k \, dA \\
-&amp; - \int_{\partial A} \rho_0 \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt;}^{\tilde{z}}_k \overline{\left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) dl \\
+&amp; - \int_{\partial A} \rho_0 \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt;}^{\tilde{z}}_k \overline{\left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) {\bf n}_\perp dl \\
 &amp; - \int_A \rho_0 \left[\left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
 &amp; + \int_A \rho_0 \left[\left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{bot}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
 \end{split}\]</div>
@@ -882,7 +882,7 @@ h_k = \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} dz.
 - \rho_0 \left[ \tilde{W}_{tr} \right]_{k+1}^\text{top}
 = 0.
 \]</div>
-<p>In this equation, mass source term (<span class="math notranslate nohighlight">\(Q\)</span>), such as sources like river runoff, sea ice freshwater fluxes, precipitation, and evaporation are bound up in the surface value of <span class="math notranslate nohighlight">\(\tilde{W}_tr^{\text{top}}\)</span>.  The mass sources will be normalized by <span class="math notranslate nohighlight">\(\rho_0\)</span> to achieve consistent units.</p>
+<p>In this equation, mass source term (<span class="math notranslate nohighlight">\(Q\)</span>), such as sources like river runoff, sea ice freshwater fluxes, precipitation, and evaporation are bound up in the surface value of <span class="math notranslate nohighlight">\(\tilde{W}_{tr}^{\text{top}}\)</span>.  The mass sources will be normalized by <span class="math notranslate nohighlight">\(\rho_0\)</span> to achieve consistent units.</p>
 <p><strong>Tracer:</strong></p>
 <div class="math notranslate nohighlight" id="equation-discrete-tracer">
 <span class="eqno">(51)<a class="headerlink" href="#equation-discrete-tracer" title="Permalink to this equation"></a></span>\[\begin{split}
@@ -897,7 +897,7 @@ h_k = \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} dz.
 \frac{\partial u_{e,k}}{\partial t}
 &amp; + \left[ {\bf k} \cdot \nabla \times u_{e,k} +f_v\right]_e\left(u_{e,k}^{\perp}\right) + \left[\nabla K\right]_e  \\
 &amp; + \frac{\rho_0}{\left[\tilde{h}_{i,k}\right]_e} \left\{ \left[\left(u - u_k\right) \left\{\tilde{W}_{tr} \right\} \right]_{e,k}^\text{top} - \left[  \left(u - u_k\right) \left\{\tilde{W}_{tr} \right\} \right]_{e,k+1}^\text{top} \right\} \\
-&amp; = - \left(\nabla \Phi \right)_{e,k} - \frac{1}{\left[\tilde{h}_k\right]_e} \nabla \left( \tilde{h}_k \alpha_k p_k \right) - \frac{1}{\left[\tilde{h}_k\right]_e} \left\{ \left[ \alpha p \nabla \tilde{z}^{\text{top}}\right]_{e,k}^\text{top} -  \left[ \alpha p \nabla \tilde{z}^{\text{bot}}\right]_{e,k+1}^\text{top} \right\} \\
+&amp; = - \left(\nabla \Phi \right)_{e,k} - \frac{1}{\left[\tilde{h}_k\right]_e} \nabla \left( \tilde{h}_k \alpha_k p_k \right) - \frac{1}{\left[\tilde{h}_k\right]_e} \left\{ \left[ \alpha p \nabla \tilde{z}^{\text{top}}\right]_{e,k}^\text{top} -  \left[ \alpha p \nabla \tilde{z}^{\text{top}}\right]_{e,k+1}^\text{top} \right\} \\
 &amp;  - \frac{1}{\left[\tilde{h}_{i,k}\right]_e} \nabla \cdot \left( \tilde{h}_k \left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;_k \right) - \frac{\rho_0}{\left[\tilde{h}_{i,k}\right]_e^\text{top}}  \left\{ \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{ u}^\prime \right&gt; \right]_{e,k}^\text{top} - \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{ u}^\prime \right&gt; \right]_{e,k+1}^\text{top} \right\}.
 \end{split}\]</div>
 <p><strong>Diagnostic Relations:</strong></p>
@@ -1010,13 +1010,13 @@ z_{i,k}^{top} = z_{i}^{floor} + \rho_0 \sum_{k'=k}^{K_{max}} \alpha_{i,k'} \tild
 <p>If <a class="reference internal" href="#equation-weak-derivative">(62)</a> is averaged between <span class="math notranslate nohighlight">\(\tilde{z}_{k-1/2}^{\text{top}}\)</span> and <span class="math notranslate nohighlight">\(\tilde{z}_{k+1/2}^{\text{top}}\)</span>, we arrive at the expected form of the gradient centered on layer interfaces</p>
 <div class="math notranslate nohighlight" id="equation-weak-deriv-final">
 <span class="eqno">(63)<a class="headerlink" href="#equation-weak-deriv-final" title="Permalink to this equation"></a></span>\[
-\left[\frac{\partial \varphi}{\partial z}\right]_{avg} = \frac{\left(\varphi_k - \varphi_{k+1}\right)}{0.5 \left(\tilde{h}_k + \tilde{h}_{k+1}\right)}
+\left[\frac{\partial \varphi}{\partial \tilde{z}}\right]_{avg} = \frac{\left(\varphi_k - \varphi_{k+1}\right)}{0.5 \left(\tilde{h}_k + \tilde{h}_{k+1}\right)}
 \]</div>
 <p>where <span class="math notranslate nohighlight">\(0.5 \left(\tilde{h}_k + \tilde{h}_{k+1}\right)\)</span> is the distance between <span class="math notranslate nohighlight">\(\tilde{z}_{k-1/2}^{\text{top}}\)</span> and <span class="math notranslate nohighlight">\(\tilde{z}_{k+1/2}^{\text{top}}\)</span>.  A similar derivation can be followed to compute gradients across layer centers.  This will form discrete derivatives in Omega.</p>
 <p>With this, we can now fully discretize <a class="reference internal" href="#equation-discrete-mom-vert-diff">(60)</a> as</p>
 <div class="math notranslate nohighlight" id="equation-final-vert-vel-dissipation">
 <span class="eqno">(64)<a class="headerlink" href="#equation-final-vert-vel-dissipation" title="Permalink to this equation"></a></span>\[
--\frac{\rho_0}{\left[\tilde{h}_k\right]_e} \left\{ \left[\left&lt;u^\prime \tilde{w}_{tr}^\prime\right&gt; \right]_{e,k} - \left[\left&lt;u^\prime \tilde{w}_{tr}^\prime\right&gt; \right]_{e,k+1} \right\} = -\frac{\rho_0}{\left[\tilde{h}_k\right]_e} \left\{ \frac{\left(u_{e,k-1} - u_{e,k}\right)}{0.5 \left(\tilde{h}_{k-1} + \tilde{h}_{k}\right)} - \frac{\left(u_{e,k} - u_{e,k+1}\right)}{0.5 \left(\tilde{h}_k + \tilde{h}_{k+1}\right)} \right\}.
+-\frac{1}{\left[\tilde{h}_k\right]_e} \left\{ \left[\left&lt;u^\prime \tilde{w}_{tr}^\prime\right&gt; \right]_{e,k} - \left[\left&lt;u^\prime \tilde{w}_{tr}^\prime\right&gt; \right]_{e,k+1} \right\} = -\frac{1}{\left[\tilde{h}_k\right]_e} \left\{ \frac{\left(u_{e,k-1} - u_{e,k}\right)}{0.5 \left(\tilde{h}_{k-1} + \tilde{h}_{k}\right)} - \frac{\left(u_{e,k} - u_{e,k+1}\right)}{0.5 \left(\tilde{h}_k + \tilde{h}_{k+1}\right)} \right\}.
 \]</div>
 <p>This form can be interfaced with the Omega <a class="reference internal" href="TridiagonalSolver.html"><span class="std std-doc">tridiagonal solver</span></a> routine.</p>
 </section>
@@ -1030,18 +1030,18 @@ z_{i,k}^{top} = z_{i}^{floor} + \rho_0 \sum_{k'=k}^{K_{max}} \alpha_{i,k'} \tild
 <p>The wind forcing is applied as a top boundary condition during implicit vertical mixing as</p>
 <div class="math notranslate nohighlight">
 \[
-\frac{\tau_{e}}{[ \tilde{h}_{i,k}]_e}
+\frac{\tau_{e}}{\rho_0 [ \tilde{h}_{i,k}]_e}
 \]</div>
-<p>where <span class="math notranslate nohighlight">\(\tau\)</span> is the wind stress in Pa. Since the mass-thickness <span class="math notranslate nohighlight">\(\tilde{h}\)</span> is in kg/s/m<span class="math notranslate nohighlight">\(^2\)</span>, this results in the desired units of m/s<span class="math notranslate nohighlight">\(^2\)</span> for a momentum tendency term.</p>
+<p>where <span class="math notranslate nohighlight">\(\tau\)</span> is the wind stress in [Pa]. Since the pseudo-thickness <span class="math notranslate nohighlight">\(\tilde{h}\)</span> is in [m], this results in the desired units of [m s<span class="math notranslate nohighlight">\(^{-2}\)</span>] for a momentum tendency term.</p>
 </section>
 <section id="bottom-drag">
 <h4>Bottom Drag<a class="headerlink" href="#bottom-drag" title="Permalink to this heading"></a></h4>
 <p>Bottom Drag is applied as a bottom boundary condition during implicit vertical mixing as</p>
 <div class="math notranslate nohighlight" id="equation-discrete-mom-bottom">
 <span class="eqno">(65)<a class="headerlink" href="#equation-discrete-mom-bottom" title="Permalink to this equation"></a></span>\[
-- C_D \frac{u_{e,k}\left|u_{e,k}\right|}{[\alpha_{i,k}\tilde{h}_{i,k}]_e}.
+- C_D \frac{u_{e,k}\left|u_{e,k}\right|}{\rho_0[\alpha_{i,k}\tilde{h}_{i,k}]_e}.
 \]</div>
-<p>The units of specific volume times mass-thickness <span class="math notranslate nohighlight">\(\alpha h\)</span> are length (m), so that the full term has units of m/s<span class="math notranslate nohighlight">\(^2\)</span>.</p>
+<p>The units of the term in the denominator is length [m], so that the full term has units of [m s<span class="math notranslate nohighlight">\(^{-2}\)</span>].</p>
 </section>
 <section id="rayleigh-drag">
 <h4>Rayleigh Drag<a class="headerlink" href="#rayleigh-drag" title="Permalink to this heading"></a></h4>
@@ -1058,7 +1058,7 @@ z_{i,k}^{top} = z_{i}^{floor} + \rho_0 \sum_{k'=k}^{K_{max}} \alpha_{i,k'} \tild
 \[
 \frac{LHF}{C_p \rho_1}
 \]</div>
-<p>where <span class="math notranslate nohighlight">\(\rho_1\)</span> is the density in the top layer of Omega. This gives units of mK/s.</p>
+<p>where <span class="math notranslate nohighlight">\(\rho_1\)</span> is the density in the top layer of Omega. This gives units of [m K s<span class="math notranslate nohighlight">\(^-1\)</span>].</p>
 </section>
 <section id="freshwater-forcing">
 <h4>Freshwater forcing<a class="headerlink" href="#freshwater-forcing" title="Permalink to this heading"></a></h4>
@@ -1067,7 +1067,7 @@ z_{i,k}^{top} = z_{i}^{floor} + \rho_0 \sum_{k'=k}^{K_{max}} \alpha_{i,k'} \tild
 </section>
 <section id="horizontal-tracer-diffusion">
 <h3>Horizontal Tracer Diffusion<a class="headerlink" href="#horizontal-tracer-diffusion" title="Permalink to this heading"></a></h3>
-<p>As with momentum dissipation, the horizontal tracer diffusion arises from the <span class="math notranslate nohighlight">\(\left&lt;\mathbf{u}_k^\prime \varphi_k \right&gt;\)</span> and <span class="math notranslate nohighlight">\(\left&lt; \tilde{u}^\prime \varphi^\prime \right&gt;\)</span>.  As in MPAS-Ocean, the former term can be parameterized either as Laplacian or Biharmonic diffusion,</p>
+<p>As with momentum dissipation, the horizontal tracer diffusion arises from the <span class="math notranslate nohighlight">\(\left&lt;\mathbf{u}_k^\prime \varphi_{k}^\prime \right&gt;\)</span> and <span class="math notranslate nohighlight">\(\left&lt; \tilde{u}^\prime \varphi^\prime \right&gt;\)</span>.  As in MPAS-Ocean, the former term can be parameterized either as Laplacian or Biharmonic diffusion,</p>
 <div class="math notranslate nohighlight" id="equation-discrete-tracer-diff">
 <span class="eqno">(67)<a class="headerlink" href="#equation-discrete-tracer-diff" title="Permalink to this equation"></a></span>\[
 D^\varphi_{i,k} =  \kappa_{2,e} \nabla^2 \varphi_{i,k} - \kappa_{4,e} \nabla^4 \varphi_{i,k}.
@@ -1088,16 +1088,16 @@ D^\varphi_{i,k} =  \kappa_{2,e} \nabla^2 \varphi_{i,k} - \kappa_{4,e} \nabla^4 \
 <div class="math notranslate nohighlight" id="equation-discrete-tracer-del4">
 <span class="eqno">(69)<a class="headerlink" href="#equation-discrete-tracer-del4" title="Permalink to this equation"></a></span>\[
  -  \nabla \cdot \left( \kappa_{4,e} \nabla
-\right[
+\left[
 \nabla \cdot \left( \tilde{h}_{i,k} \nabla \varphi_{i,k} \right)
-\left]
+\right]
  \right).
 \]</div>
 <p>Each of these operators are written as horizontal stencils in the <a class="reference internal" href="OmegaV0ShallowWater.html#operator-formulation"><span class="std std-ref">Omega V0 Operator Formulation Section</span></a>.  Again we note that the variables in these equations are the layer average.</p>
 </section>
 <section id="horizontal-tracer-diffusion-across-a-sloping-surface">
 <h4>Horizontal tracer diffusion across a sloping surface<a class="headerlink" href="#horizontal-tracer-diffusion-across-a-sloping-surface" title="Permalink to this heading"></a></h4>
-<p>As with horizontal momentum dissipation, there is a turbulent flux of tracer across a sloping <span class="math notranslate nohighlight">\(\tilde{z}\)</span> interface.  We interpret the <span class="math notranslate nohighlight">\(\left&lt; \tilde{z}^\prime \varphi^\prime \right&gt;\)</span> as the projection of the horizontal turbulent flux across the sloping interface.  The form of the diffusion is similar, taking Laplacian diffusion as an example</p>
+<p>As with horizontal momentum dissipation, there is a turbulent flux of tracer across a sloping <span class="math notranslate nohighlight">\(\tilde{z}\)</span> interface.  We interpret the <span class="math notranslate nohighlight">\(\left&lt; \tilde{u}^\prime \varphi^\prime \right&gt;\)</span> as the projection of the horizontal turbulent flux across the sloping interface.  The form of the diffusion is similar, taking Laplacian diffusion as an example</p>
 <div class="math notranslate nohighlight">
 \[
  \nabla \cdot \left( \tilde{h}_{i} \kappa_{2,e} \nabla \varphi_{i} \right)_k.
@@ -1174,14 +1174,14 @@ Additional enhancements, such as non local tracer fluxes will be discussed in fu
 <tbody>
 <tr class="row-even"><td><p><span class="math notranslate nohighlight">\(D_{i,k}\)</span></p></td>
 <td><p>divergence</p></td>
-<td><p>1/s</p></td>
+<td><p>s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>cell</p></td>
 <td><p>Divergence</p></td>
 <td><p><span class="math notranslate nohighlight">\(D=\nabla\cdot\bf u\)</span></p></td>
 </tr>
 <tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(f_v\)</span></p></td>
 <td><p>Coriolis parameter</p></td>
-<td><p>1/s</p></td>
+<td><p>s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>vertex</p></td>
 <td><p>FVertex</p></td>
 <td><p><span class="math notranslate nohighlight">\(f = 2\Omega sin(\phi)\)</span>, <span class="math notranslate nohighlight">\(\Omega\)</span> rotation rate, <span class="math notranslate nohighlight">\(\phi\)</span> latitude</p></td>
@@ -1195,7 +1195,7 @@ Additional enhancements, such as non local tracer fluxes will be discussed in fu
 </tr>
 <tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(g\)</span></p></td>
 <td><p>gravitational acceleration</p></td>
-<td><p>m/s<span class="math notranslate nohighlight">\(^2\)</span></p></td>
+<td><p>m s<span class="math notranslate nohighlight">\(^{-2}\)</span></p></td>
 <td><p>constant</p></td>
 <td><p>Gravity</p></td>
 <td><p></p></td>
@@ -1204,285 +1204,306 @@ Additional enhancements, such as non local tracer fluxes will be discussed in fu
 <td><p>pseudo-thickness</p></td>
 <td><p>m</p></td>
 <td><p>cell</p></td>
-<td><p>PseudoThickness</p></td>
+<td><p>LayerThickness</p></td>
+<td><p><span class="math notranslate nohighlight">\(\tilde{h} = (\rho/\rho_0) h\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(h_{i,k}\)</span></p></td>
+<td><p>geometric layer thickness</p></td>
+<td><p>m</p></td>
+<td><p>cell</p></td>
+<td><p>GeometricThickness</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(k\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(k\)</span></p></td>
 <td><p>vertical index</p></td>
 <td><p></p></td>
 <td><p></p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\({\bf k}\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\({\bf k}\)</span></p></td>
 <td><p>vertical unit vector</p></td>
 <td><p></p></td>
 <td><p></p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(K_{min}\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(K_{min}\)</span></p></td>
 <td><p>shallowest active layer</p></td>
 <td><p></p></td>
 <td><p></p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(K_{max}\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(K_{max}\)</span></p></td>
 <td><p>deepest active layer</p></td>
 <td><p></p></td>
 <td><p></p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(K_{i,k}\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(K_{i,k}\)</span></p></td>
 <td><p>kinetic energy</p></td>
-<td><p>m<span class="math notranslate nohighlight">\(^2\)</span>/s<span class="math notranslate nohighlight">\(^2\)</span></p></td>
+<td><p>m<span class="math notranslate nohighlight">\(^2\)</span> s<span class="math notranslate nohighlight">\(^{-2}\)</span></p></td>
 <td><p>cell</p></td>
 <td><p>KineticEnergyCell</p></td>
 <td><p><span class="math notranslate nohighlight">\(K = \left| {\bf u} \right|^2 / 2\)</span></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(p_{i,k}\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(p_{i,k}\)</span></p></td>
 <td><p>pressure</p></td>
 <td><p>Pa</p></td>
 <td><p>cell</p></td>
 <td><p>Pressure</p></td>
 <td><p>see <a class="reference internal" href="#equation-discrete-pressure">(53)</a></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(p^{floor}_i\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(p^{floor}_i\)</span></p></td>
 <td><p>bottom pressure</p></td>
 <td><p>Pa</p></td>
 <td><p>cell</p></td>
 <td><p>PFloor</p></td>
 <td><p>pressure at ocean floor</p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(p^{surf}_i\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(p^{surf}_i\)</span></p></td>
 <td><p>surface pressure</p></td>
 <td><p>Pa</p></td>
 <td><p>cell</p></td>
 <td><p>PSurface</p></td>
 <td><p>due to atm. pressure, sea ice, ice shelves</p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(q_{v,k}\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(q_{v,k}\)</span></p></td>
 <td><p>potential vorticity</p></td>
-<td><p>1/m/s</p></td>
+<td><p>m<span class="math notranslate nohighlight">\(^{-1}\)</span> s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>vertex</p></td>
 <td><p>PotentialVorticity</p></td>
-<td><p><span class="math notranslate nohighlight">\(q = \left(\zeta+f\right)/h\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(q = \left(\zeta+f\right)/\tilde{h}\)</span></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(Ra\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(Ra\)</span></p></td>
 <td><p>Rayleigh drag coefficient</p></td>
-<td><p>1/s</p></td>
+<td><p>s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>constant</p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(S_{i,k}\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(S_{i,k}\)</span></p></td>
 <td><p>salinity</p></td>
 <td><p>PSU</p></td>
 <td><p>cell</p></td>
 <td><p>Salinity</p></td>
 <td><p>a tracer <span class="math notranslate nohighlight">\(\varphi\)</span></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(t\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(t\)</span></p></td>
 <td><p>time</p></td>
 <td><p>s</p></td>
 <td><p>none</p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\({\bf u}_k\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\({\bf u}_k\)</span></p></td>
 <td><p>velocity, vector form</p></td>
-<td><p>m/s</p></td>
+<td><p>m s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>-</p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(u_{e,k}\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(u_{e,k}\)</span></p></td>
 <td><p>velocity, normal to edge</p></td>
-<td><p>m/s</p></td>
+<td><p>m s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>edge</p></td>
 <td><p>NormalVelocity</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(u^\perp_{e,k}\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(u^\perp_{e,k}\)</span></p></td>
 <td><p>velocity, tangential to edge</p></td>
-<td><p>m/s</p></td>
+<td><p>m s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>edge</p></td>
 <td><p>TangentialVelocity</p></td>
 <td><p><span class="math notranslate nohighlight">\({\bf u}^\perp = {\bf k} \times {\bf u}\)</span></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\alpha_{i,k}\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\alpha_{i,k}\)</span></p></td>
 <td><p>specific volume</p></td>
-<td><p>m<span class="math notranslate nohighlight">\(^3\)</span>/kg</p></td>
+<td><p>m<span class="math notranslate nohighlight">\(^3\)</span> kg<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>cell</p></td>
 <td><p>SpecificVolume</p></td>
 <td><p><span class="math notranslate nohighlight">\(v = 1/\rho\)</span></p></td>
 </tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\tilde{u}_{i,k}\)</span></p></td>
+<td><p>projection of normal velocity across a pseudo height surface</p></td>
+<td><p>m s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
+<td><p>cell</p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
 <tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\tilde{w}_{i,k}\)</span></p></td>
 <td><p>vertical velocity across a pseudo height surface</p></td>
-<td><p>m/s</p></td>
+<td><p>m s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>cell</p></td>
 <td><p>VerticalVelocity</p></td>
 <td><p>volume transport per m<span class="math notranslate nohighlight">\(^2\)</span></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\tilde{u}_{i,k}\)</span></p></td>
-<td><p>projection of normal velocity across a pseudo height surface</p></td>
-<td><p>m/s</p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\tilde{w}_{tr\ i,k}\)</span></p></td>
+<td><p>net vertical transport through a moving surface</p></td>
+<td><p>m s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>cell</p></td>
-<td><p></p></td>
-<td><p></p></td>
+<td><p>NetVertTransportVelocity</p></td>
+<td><p>volume transport per m<span class="math notranslate nohighlight">\(^2\)</span></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\tilde{W}_{i,k}\)</span></p></td>
-<td><p>total velocity across a pseudo height surface <span class="math notranslate nohighlight">\(\tilde{W}_{i,k} \equiv \)</span>\tilde{w}<em>{i,k} - \tilde{u}</em>{i,k}$</p></td>
-<td><p>m/s</p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\tilde{W}_{tr\ i,k}\)</span></p></td>
+<td><p>total vertical velocity across a pseudo height surface</p></td>
+<td><p>m s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>cell</p></td>
-<td><p></p></td>
-<td><p></p></td>
+<td><p>TotalVertTransportVelocity</p></td>
+<td><p><span class="math notranslate nohighlight">\(\tilde{W}_{tr} \equiv \tilde{w}_{tr} - \tilde{u}\)</span></p></td>
 </tr>
 <tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\tilde{z}\)</span></p></td>
-<td><p>vertical coordinate</p></td>
+<td><p>vertical coordinate (pseudo-height)</p></td>
 <td><p>m</p></td>
 <td><p>-</p></td>
 <td><p></p></td>
 <td><p>positive upward</p></td>
 </tr>
 <tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\tilde{z}^{top}_{i,k}\)</span></p></td>
-<td><p>layer top z-location</p></td>
+<td><p>layer top <span class="math notranslate nohighlight">\(\tilde{z}\)</span>-location</p></td>
 <td><p>m</p></td>
 <td><p>cell</p></td>
 <td><p>ZTop</p></td>
 <td><p>see <a class="reference internal" href="#equation-discrete-z">(55)</a></p></td>
 </tr>
 <tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\tilde{z}^{mid}_{i,k}\)</span></p></td>
-<td><p>layer mid-depth z-location</p></td>
+<td><p>layer mid-depth <span class="math notranslate nohighlight">\(\tilde{z}\)</span>-location</p></td>
 <td><p>m</p></td>
 <td><p>cell</p></td>
 <td><p>ZMid</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\tilde{z}^{surf}_{i}\)</span></p></td>
-<td><p>ocean surface, i.e. sea surface height</p></td>
+<td><p>ocean surface <span class="math notranslate nohighlight">\(\tilde{z}\)</span>-location</p></td>
 <td><p>m</p></td>
 <td><p>cell</p></td>
 <td><p>ZSurface</p></td>
-<td><p>same as SSH in MPAS-Ocean</p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\tilde{z}^{floor}_{i}\)</span></p></td>
-<td><p>ocean floor z-location</p></td>
+<td><p>ocean floor <span class="math notranslate nohighlight">\(\tilde{z}\)</span>-location</p></td>
 <td><p>m</p></td>
 <td><p>cell</p></td>
 <td><p>ZFloor</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\({z}^{floor}_{i}\)</span></p></td>
+<td><p>ocean floor geometric z-location</p></td>
+<td><p>m</p></td>
+<td><p>cell</p></td>
+<td><p>GeometricZFloor</p></td>
 <td><p>-bottomDepth from MPAS-Ocean</p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\zeta_{v,k}\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\zeta_{v,k}\)</span></p></td>
 <td><p>relative vorticity</p></td>
-<td><p>1/s</p></td>
+<td><p>s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>vertex</p></td>
 <td><p>RelativeVorticity</p></td>
 <td><p><span class="math notranslate nohighlight">\(\zeta={\bf k} \cdot \left( \nabla \times {\bf u}\right)\)</span></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\zeta_a\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\zeta_a\)</span></p></td>
 <td><p>absolute vorticity (<span class="math notranslate nohighlight">\(\zeta + f\)</span>)</p></td>
-<td><p>1/s</p></td>
+<td><p>s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>vertex</p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\Theta_{i,k}\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\Theta_{i,k}\)</span></p></td>
 <td><p>conservative temperature</p></td>
 <td><p>C</p></td>
 <td><p>cell</p></td>
 <td><p>Temperature</p></td>
 <td><p>a tracer <span class="math notranslate nohighlight">\(\varphi\)</span></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\kappa_2\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\kappa_2\)</span></p></td>
 <td><p>tracer diffusion</p></td>
-<td><p>m<span class="math notranslate nohighlight">\(^2\)</span>/s</p></td>
+<td><p>m<span class="math notranslate nohighlight">\(^2\)</span> s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>cell</p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\kappa_4\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\kappa_4\)</span></p></td>
 <td><p>biharmonic tracer diffusion</p></td>
-<td><p>m<span class="math notranslate nohighlight">\(^4\)</span>/s</p></td>
+<td><p>m<span class="math notranslate nohighlight">\(^4\)</span> s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>cell</p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\kappa_v\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\kappa_v\)</span></p></td>
 <td><p>vertical tracer diffusion</p></td>
-<td><p>m<span class="math notranslate nohighlight">\(^2\)</span>/s</p></td>
+<td><p>m<span class="math notranslate nohighlight">\(^2\)</span> s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>cell</p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p>meshScaling</p></td>
+<tr class="row-even"><td><p>meshScaling</p></td>
 <td><p>variable that holds the scaling factor for biharmonic and laplacian mixing</p></td>
 <td><p>unitless</p></td>
 <td><p>edge</p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\nu_{2,e}\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\nu_{2,e}\)</span></p></td>
 <td><p>horizontal del2 viscosity scaled by mesh resolution</p></td>
-<td><p>m<span class="math notranslate nohighlight">\(^2\)</span>/s</p></td>
+<td><p>m<span class="math notranslate nohighlight">\(^2\)</span> s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>edge</p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\nu_{4,e}\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\nu_{4,e}\)</span></p></td>
 <td><p>horizontal biharmonic (del4) viscosity scaled by mesh resolution</p></td>
-<td><p>m<span class="math notranslate nohighlight">\(^4\)</span>/s</p></td>
+<td><p>m<span class="math notranslate nohighlight">\(^4\)</span> s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>edge</p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\nu_v\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\nu_v\)</span></p></td>
 <td><p>vertical momentum diffusion</p></td>
-<td><p>m<span class="math notranslate nohighlight">\(^2\)</span>/s</p></td>
+<td><p>m<span class="math notranslate nohighlight">\(^2\)</span> s<span class="math notranslate nohighlight">\(^{-1}\)</span></p></td>
 <td><p>edge</p></td>
 <td><p></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\varphi_{i,k}\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\varphi_{i,k}\)</span></p></td>
 <td><p>tracer</p></td>
-<td><p>kg/m<span class="math notranslate nohighlight">\(^3\)</span> or similar</p></td>
+<td><p>kg m<span class="math notranslate nohighlight">\(^{-3}\)</span> or similar</p></td>
 <td><p>cell</p></td>
 <td><p></p></td>
 <td><p>e.g. <span class="math notranslate nohighlight">\(\Theta\)</span>, <span class="math notranslate nohighlight">\(S\)</span></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\rho_{i,k}\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\rho_{i,k}\)</span></p></td>
 <td><p>density</p></td>
-<td><p>kg/m<span class="math notranslate nohighlight">\(^3\)</span></p></td>
+<td><p>kg m<span class="math notranslate nohighlight">\(^{-3}\)</span></p></td>
 <td><p>cell</p></td>
 <td><p>Density</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\rho_0\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\rho_0\)</span></p></td>
 <td><p>Reference density</p></td>
-<td><p>kg/m<span class="math notranslate nohighlight">\(^3\)</span></p></td>
+<td><p>kg m<span class="math notranslate nohighlight">\(^{-3}\)</span></p></td>
 <td><p></p></td>
 <td><p>constant</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\tau_i\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\tau_i\)</span></p></td>
 <td><p>wind stress</p></td>
-<td><p>Pa=N/m<span class="math notranslate nohighlight">\(^2\)</span></p></td>
+<td><p>Pa=N m<span class="math notranslate nohighlight">\(^{-2}\)</span></p></td>
 <td><p>edge</p></td>
 <td><p>SurfaceStress</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\Phi_{i,k}\)</span></p></td>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\Phi_{i,k}\)</span></p></td>
 <td><p>geopotential</p></td>
-<td><p></p></td>
+<td><p>m<span class="math notranslate nohighlight">\(^2\)</span> s<span class="math notranslate nohighlight">\(^{-2}\)</span></p></td>
 <td><p>cell</p></td>
 <td><p>Geopotential</p></td>
 <td><p><span class="math notranslate nohighlight">\(\partial \Phi / \partial z = g\)</span> for gravity</p></td>
 </tr>
-<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\omega\)</span></p></td>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\omega\)</span></p></td>
 <td><p>mass transport</p></td>
-<td><p>kg/s/m^2</p></td>
+<td><p>kg s<span class="math notranslate nohighlight">\(^{-1}\)</span> m<span class="math notranslate nohighlight">\(^{-2}\)</span></p></td>
 <td><p>cell</p></td>
 <td><p>VerticalTransport</p></td>
 <td><p><span class="math notranslate nohighlight">\(\omega=\rho_0 w\)</span></p></td>
