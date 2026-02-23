@@ -338,7 +338,7 @@ In all three equations, the first term is the change of the quantity within the 
 If the control surface moves with the fluid in a Lagrangian fashion, then <span class="math notranslate nohighlight">\({\bf v}_r={\bf v}\)</span> and the second term (flux through the boundary) vanishes—there is no net mass, momentum, or tracer transport across the moving surface.</p>
 <p>The momentum equation is an expression of Newton’s second law and includes two types of external forces.
 The first is the body force, represented here as <span class="math notranslate nohighlight">\({\bf b}({\bf x}, t)\)</span>, which encompasses any volumetric force acting throughout the fluid, such as gravitational acceleration or the Coriolis force. In some contexts, body forces may be expressible as the gradient of a potential, <span class="math notranslate nohighlight">\({\bf b} = -\nabla_{3D} \Phi\)</span>, but this is not assumed in general.
-The second is the surface force <span class="math notranslate nohighlight">\({\bf \tau}\)</span>, which acts on the boundary of the control volume and includes pressure and viscous stresses. These forces appear as surface integrals over the boundary and drive momentum exchange between adjacent fluid parcels or between the fluid and its environment.
+The second is the surface force or traction vector <span class="math notranslate nohighlight">\({\bf \tau} = \sigma \cdot {\bf n}\)</span>, which acts on the boundary of the control volume and includes pressure and viscous stresses. These forces appear as surface integrals over the boundary and drive momentum exchange between adjacent fluid parcels or between the fluid and its environment.
 The derivation of the momentum equation may also be found in <a class="reference external" href="https://eaglepubs.erau.edu/introductiontoaerospaceflightvehicles/chapter/conservation-of-momentum-momentum-equation/#chapter-260-section-2">Leishman 2025</a>, Chapter 21, equation 10.</p>
 </section>
 </section>
@@ -442,7 +442,7 @@ Griffies recommends a value of <span class="math notranslate nohighlight">\(\rho
 <li><p><span class="math notranslate nohighlight">\(A\)</span> is the horizontal footprint (in the <span class="math notranslate nohighlight">\(x\)</span>–<span class="math notranslate nohighlight">\(y\)</span> plane) of the control volume <span class="math notranslate nohighlight">\(V(t)\)</span>.</p></li>
 <li><p><span class="math notranslate nohighlight">\(dA\)</span> is the horizontal area element.</p></li>
 <li><p><span class="math notranslate nohighlight">\(\partial A\)</span> is the boundary of <span class="math notranslate nohighlight">\(A\)</span>, and <span class="math notranslate nohighlight">\(dl\)</span> is the line element along this boundary.</p></li>
-<li><p><span class="math notranslate nohighlight">\({\bf n}_\perp\)</span> is the outward-pointing unit normal vector in the horizontal plane, defined on <span class="math notranslate nohighlight">\(\partial A\)</span>. It lies in the <span class="math notranslate nohighlight">\(x\)</span>–<span class="math notranslate nohighlight">\(y\)</span> plane and is orthogonal to <span class="math notranslate nohighlight">\(dl\)</span>.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mathbf{n}_\perp\)</span> is the outward-pointing unit normal vector in the horizontal plane, defined on <span class="math notranslate nohighlight">\(\partial A\)</span>. It lies in the <span class="math notranslate nohighlight">\(x\)</span>–<span class="math notranslate nohighlight">\(y\)</span> plane and is orthogonal to <span class="math notranslate nohighlight">\(dl\)</span>.</p></li>
 </ul>
 <p>We now project the tracer equation <a class="reference internal" href="#equation-tr-vh-split-pseudo">(11)</a> onto a horizontal domain <span class="math notranslate nohighlight">\(A\)</span> (the footprint of the control volume), over which the top and bottom boundaries vary in height. The side walls remain fixed in time and space, but not vertical extent.</p>
 <p>The pseudo-height surfaces <span class="math notranslate nohighlight">\(\tilde{z}^{\text{top}}(x,y,t)\)</span> and <span class="math notranslate nohighlight">\(\tilde{z}^{\text{bot}}(x,y,t)\)</span> are not fixed in time, so their motion must be accounted for when computing vertical fluxes. We define <span class="math notranslate nohighlight">\(\tilde{w}_r\)</span> as the pseudo-height velocity of the interface:</p>
@@ -475,7 +475,7 @@ Griffies recommends a value of <span class="math notranslate nohighlight">\(\rho
 <div class="math notranslate nohighlight" id="equation-tr-vh-separation-pseudo">
 <span class="eqno">(16)<a class="headerlink" href="#equation-tr-vh-separation-pseudo" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{d}{dt} \int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \, \varphi \, d\tilde{z} \, dA
-&amp; + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \varphi \, {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
+&amp; + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \varphi \, {\bf u} \, d\tilde{z} \right) \cdot \mathbf{n}_\perp \, dl \\
 &amp; + \int_A \rho_0 \left\{\varphi \left[ \tilde{w}_{tr} - \tilde{ u} \right]\right\}_{\tilde{z} = \tilde{z}^{\text{top}}} dA \\
 &amp; - \int_A \rho_0 \left\{\varphi \left[ \tilde{w}_{tr} - \tilde{ u} \right]\right\}_{\tilde{z} = \tilde{z}^{\text{bot}}} dA
 = 0
@@ -487,18 +487,18 @@ Griffies recommends a value of <span class="math notranslate nohighlight">\(\rho
 <div class="math notranslate nohighlight" id="equation-vh-mass-pseudo">
 <span class="eqno">(17)<a class="headerlink" href="#equation-vh-mass-pseudo" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{d}{dt} \int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \, d\tilde{z} \, dA
-&amp; + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \, {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
-&amp; + \int_A \rho_0 \left\{\left[ \tilde{w}_{tr} - \tilde{ u} \right]\right\}_{\tilde{z} = \tilde{z}^{\text{top}}} dA \\
-&amp; - \int_A \rho_0 \left\{\left[ \tilde{w}_{tr} - \tilde{ u} \right]\right\}_{\tilde{z} = \tilde{z}^{\text{bot}}} dA
+&amp; + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \, {\bf u} \, d\tilde{z} \right) \cdot \mathbf{n}_\perp \, dl \\
+&amp; + \int_A \left\{\left[ \tilde{w}_{tr} - \tilde{ u} \right]\right\}_{\tilde{z} = \tilde{z}^{\text{top}}} dA \\
+&amp; - \int_A \left\{\left[ \tilde{w}_{tr} - \tilde{ u} \right]\right\}_{\tilde{z} = \tilde{z}^{\text{bot}}} dA
 = 0
 \end{split}\]</div>
 <p><strong>Tracer:</strong></p>
 <div class="math notranslate nohighlight" id="equation-vh-tracer-pseudo">
 <span class="eqno">(18)<a class="headerlink" href="#equation-vh-tracer-pseudo" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{d}{dt} \int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}}  \varphi \, d\tilde{z} \, dA
-&amp; + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}}  \varphi \, {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl &amp; \\
-&amp; + \int_A \rho_0 \left\{\varphi \left[\tilde{w}_{tr} - \tilde{ u} \right] \right\}_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA &amp; \\
-&amp; - \int_A \rho_0 \left\{\varphi \left[\tilde{w}_{tr} - \tilde{ u} \right] \right\}_{\tilde{z} = \tilde{z}^{\text{bot}}}\, dA
+&amp; + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}}  \varphi \, {\bf u} \, d\tilde{z} \right) \cdot \mathbf{n}_\perp \, dl &amp; \\
+&amp; + \int_A \left\{\varphi \left[\tilde{w}_{tr} - \tilde{ u} \right] \right\}_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA &amp; \\
+&amp; - \int_A \left\{\varphi \left[\tilde{w}_{tr} - \tilde{ u} \right] \right\}_{\tilde{z} = \tilde{z}^{\text{bot}}}\, dA
 &amp; = 0
 \end{split}\]</div>
 <p><strong>Momentum:</strong></p>
@@ -506,20 +506,21 @@ Griffies recommends a value of <span class="math notranslate nohighlight">\(\rho
 <span class="eqno">(19)<a class="headerlink" href="#equation-vh-momentum-pseudo" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{d}{dt} \int_{A} \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \, {\bf u} \, d\tilde{z} \, dA
 &amp;+
-\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \, {\bf u} \otimes {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \, {\bf u} \otimes {\bf u} \, d\tilde{z} \right) \cdot \mathbf{n}_\perp \, dl \\
 &amp;+
-\int_A \rho_0 \, \left\{{\bf u} \left[ \tilde{w}_{tr} - \tilde{ u} \right]\right\}_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+\int_A \, \left\{{\bf u} \left[ \tilde{w}_{tr} - \tilde{ u} \right]\right\}_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
 -
-\int_A \rho_0 \, \left\{{\bf u} \left[ \tilde{w}_{tr} - \tilde{ u} \right]\right\}_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA \\
+\int_A \, \left\{{\bf u} \left[ \tilde{w}_{tr} - \tilde{ u} \right]\right\}_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA \\
 &amp;=
 \int_A \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} {\bf b}_{\perp} \, d\tilde{z} \, dA
 +
-\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \frac{{\bf \tau}}{\rho} \, d\tilde{z} \right) {\bf n}_\perp  dl \\
+\int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}^{\text{top}}} \frac{{\bf \tau}_\perp}{\rho} \, d\tilde{z} \right) \mathbf{n}_\perp dl \\
 &amp;\quad
-+ \int_A \left[ \frac{{\bf \tau}}{\rho} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
-- \int_A \left[ \frac{{\bf \tau}}{\rho} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA
++ \int_A \left[ \frac{{\bf \tau}_\perp}{\rho} \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \, dA
+- \int_A \left[ \frac{{\bf \tau}_\perp}{\rho} \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \, dA
 \end{split}\]</div>
-<p>In <a class="reference internal" href="#equation-vh-momentum-pseudo">(19)</a>, <span class="math notranslate nohighlight">\(\mathbf{b}_\perp\)</span> is defined similarly to <span class="math notranslate nohighlight">\(\mathbf{n}_\perp\)</span>, it is the body force normal to <span class="math notranslate nohighlight">\(dl\)</span>. These equations express horizontal and vertical fluxes naturally in terms of pseudo-height, enabling fully consistent discretization in the vertical coordinate used for prognostic evolution.</p>
+<p>Here, we have divided by <span class="math notranslate nohighlight">\(\rho_0\)</span>, since it occurs in every term.</p>
+<p>In <a class="reference internal" href="#equation-vh-momentum-pseudo">(19)</a>, <span class="math notranslate nohighlight">\(\mathbf{b}_\perp\)</span> is defined similarly to <span class="math notranslate nohighlight">\(\mathbf{n}_\perp\)</span>, it is the body force normal to <span class="math notranslate nohighlight">\(dl\)</span>, and <span class="math notranslate nohighlight">\({\bf \tau}_\perp\)</span> is the horizontal component of the traction vector. These equations express horizontal and vertical fluxes naturally in terms of pseudo-height, enabling fully consistent discretization in the vertical coordinate used for prognostic evolution.</p>
 </section>
 <section id="vertical-discretization-for-the-layered-equations">
 <h2>7. Vertical Discretization for the Layered Equations<a class="headerlink" href="#vertical-discretization-for-the-layered-equations" title="Permalink to this heading"></a></h2>
@@ -608,10 +609,10 @@ h_k = \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} dz.
 <p>We first Reynolds’ average <a class="reference internal" href="#equation-vh-tracer-pseudo">(18)</a> and given the definition of the operator we can move the averaging past the derivatives and integrals without correction terms to yield</p>
 <div class="math notranslate nohighlight" id="equation-aintegral-tracer-first-reynolds">
 <span class="eqno">(28)<a class="headerlink" href="#equation-aintegral-tracer-first-reynolds" title="Permalink to this equation"></a></span>\[\begin{split}
-\frac{d}{dt} \int_A \int_{\tilde{z}_{k+1}^{\text{top}}}^{\tilde{z}_k^{\text{top}}} \left&lt;\varphi\right&gt; \, d\tilde{z} \, dA
-&amp; + \int_{\partial A} \left( \int_{\tilde{z}_{k+1}^{\text{bot}}}^{\tilde{z}_k^{\text{bot}}} \left&lt;\varphi \, {\bf u} \right&gt; \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl &amp; \\
-&amp; + \int_A \left&lt;\left\{ \rho_0 \varphi \left[\tilde{w}_{tr} - \tilde{ u} \right] \right\}\right&gt;_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA &amp; \\
-&amp; - \int_A \left&lt;\left\{ \rho_0 \varphi \left[\tilde{w}_{tr} - \tilde{ u} \right] \right\}\right&gt;_{\tilde{z} = \tilde{z}_k^{\text{bot}}}\, dA
+\frac{d}{dt} \int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left&lt;\varphi\right&gt; \, d\tilde{z} \, dA
+&amp; + \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left&lt;\varphi \, {\bf u} \right&gt; \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl &amp; \\
+&amp; + \int_A \left&lt;\left\{ \varphi \left[\tilde{w}_{tr} - \tilde{ u} \right] \right\}\right&gt;_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA &amp; \\
+&amp; - \int_A \left&lt;\left\{ \varphi \left[\tilde{w}_{tr} - \tilde{ u} \right] \right\}\right&gt;_{\tilde{z} = \tilde{z}_k^{\text{bot}}}\, dA
 &amp; = 0.
 \end{split}\]</div>
 <p>Next, we use a Reynolds’ decomposition on any terms involving products inside a Reynolds’ average,</p>
@@ -619,36 +620,36 @@ h_k = \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} dz.
 <span class="eqno">(29)<a class="headerlink" href="#equation-aintegral-tracer-reynolds" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{d}{dt} \int_A \int_{\tilde{z}_{k}^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left&lt;\varphi \right&gt; \, d\tilde{z} \, dA
 &amp; +
-\int_{\partial A} \left( \int_{\tilde{z}_{k}^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left(\left&lt;{\varphi}\right&gt;\left&lt;{\bf u}\right&gt; + \left&lt;\varphi^{\prime}{\bf u}^{\prime}\right&gt; \right) d\tilde{z} \right) \, \cdot {\bf n}_\perp \, dl &amp; \\
-&amp; + \int_A \left\{ \rho_0 \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; -\left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA &amp; \\
-&amp; - \int_A \left\{ \rho_0 \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; - \left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{bot}}}\, dA
+\int_{\partial A} \left( \int_{\tilde{z}_{k}^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left(\left&lt;{\varphi}\right&gt;\left&lt;{\bf u}\right&gt; + \left&lt;\varphi^{\prime}{\bf u}^{\prime}\right&gt; \right) d\tilde{z} \right) \, \cdot \mathbf{n}_\perp \, dl &amp; \\
+&amp; + \int_A \left\{ \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; -\left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA &amp; \\
+&amp; - \int_A \left\{ \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; - \left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{bot}}}\, dA
 &amp; = 0.
 \end{split}\]</div>
 <p>We can rewrite the first two terms in <a class="reference internal" href="#equation-aintegral-tracer-reynolds">(29)</a> using <a class="reference internal" href="#equation-def-layer-average-reynolds">(26)</a></p>
 <div class="math notranslate nohighlight" id="equation-aintegral-tracer">
 <span class="eqno">(30)<a class="headerlink" href="#equation-aintegral-tracer" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{d}{dt} \int_A \tilde{h}_k \, \overline{\left&lt;\varphi\right&gt;}^{\tilde{z}}_k \, dA
-&amp; + \int_{\partial A} \left( \tilde{h}_k \, \left[\overline{\left&lt;\varphi\right&gt; \left&lt;{\bf u}\right&gt; + \left&lt;\varphi^{\prime}{\bf u}^{\prime}\right&gt;}^{\tilde{z}}_k \right] \right) \cdot {\bf n}_\perp \, dl &amp; \\
-&amp; + \int_A \left\{ \rho_0 \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; -\left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA &amp; \\
-&amp; - \int_A \left\{ \rho_0 \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; - \left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{bot}}}\, dA
+&amp; + \int_{\partial A} \left( \tilde{h}_k \, \left[\overline{\left&lt;\varphi\right&gt; \left&lt;{\bf u}\right&gt; + \left&lt;\varphi^{\prime}{\bf u}^{\prime}\right&gt;}^{\tilde{z}}_k \right] \right) \cdot \mathbf{n}_\perp \, dl &amp; \\
+&amp; + \int_A \left\{ \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; -\left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA &amp; \\
+&amp; - \int_A \left\{ \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; - \left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{bot}}}\, dA
 &amp; = 0.
 \end{split}\]</div>
 <p>The second term is expanded utilizing <a class="reference internal" href="#equation-vertical-decomposition">(24)</a></p>
 <div class="math notranslate nohighlight" id="equation-aintegral-tracer2">
 <span class="eqno">(31)<a class="headerlink" href="#equation-aintegral-tracer2" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{d}{dt} \int_A \tilde{h}_k \, \overline{\left&lt;\varphi\right&gt;}^{\tilde{z}}_k \, dA
-&amp; + \int_{\partial A} \left( \tilde{h}_k \, \overline{\left(\overline{\left&lt;\varphi\right&gt;}^{\tilde{z}}_k + \delta \varphi\right)\left(\overline{\left&lt;{\bf u}\right&gt;}^{\tilde{z}}_k + \delta {\bf u}\right)}^{\tilde{z}}_k + \tilde{h}_k \overline{\left&lt;\varphi^{\prime}{\bf u}^{\prime}\right&gt;}^{\tilde{z}}_k \right) \cdot {\bf n}_\perp \, dl &amp; \\
-&amp; + \int_A \left\{ \rho_0 \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; -\left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA &amp; \\
-&amp; - \int_A \left\{ \rho_0 \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; - \left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{bot}}}\, dA
+&amp; + \int_{\partial A} \left( \tilde{h}_k \, \overline{\left(\overline{\left&lt;\varphi\right&gt;}^{\tilde{z}}_k + \delta \varphi\right)\left(\overline{\left&lt;{\bf u}\right&gt;}^{\tilde{z}}_k + \delta {\bf u}\right)}^{\tilde{z}}_k + \tilde{h}_k \overline{\left&lt;\varphi^{\prime}{\bf u}^{\prime}\right&gt;}^{\tilde{z}}_k \right) \cdot \mathbf{n}_\perp \, dl &amp; \\
+&amp; + \int_A \left\{ \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; -\left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA &amp; \\
+&amp; - \int_A \left\{ \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; - \left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{bot}}}\, dA
 &amp; = 0.
 \end{split}\]</div>
 <p>And then is simplified using <a class="reference internal" href="#equation-delta-vert-average">(27)</a></p>
 <div class="math notranslate nohighlight">
 \[\begin{split}
 \frac{d}{dt} \int_A \tilde{h}_k \, \overline{\left&lt;\varphi\right&gt;}^{\tilde{z}}_k \, dA
-&amp; + \int_{\partial A} \left[ \tilde{h}_k \, \left(\overline{\left&lt;\varphi\right&gt;}^{\tilde{z}}_k \overline{\left&lt;{\bf u}\right&gt;}^{\tilde{z}}_k + \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k + \overline{\left&lt;\varphi^{\prime}{\bf u}^{\prime}\right&gt;}^{\tilde{z}}_k \right)\right] \cdot {\bf n}_\perp \, dl &amp; \\
-&amp; + \int_A \left\{ \rho_0 \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; -\left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA &amp; \\
-&amp; - \int_A \left\{ \rho_0 \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; - \left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{bot}}}\, dA
+&amp; + \int_{\partial A} \left[ \tilde{h}_k \, \left(\overline{\left&lt;\varphi\right&gt;}^{\tilde{z}}_k \overline{\left&lt;{\bf u}\right&gt;}^{\tilde{z}}_k + \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k + \overline{\left&lt;\varphi^{\prime}{\bf u}^{\prime}\right&gt;}^{\tilde{z}}_k \right)\right] \cdot \mathbf{n}_\perp \, dl &amp; \\
+&amp; + \int_A \left\{ \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; -\left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA &amp; \\
+&amp; - \int_A \left\{ \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; - \left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{bot}}}\, dA
 &amp; = 0.
 \end{split}\]</div>
 <p>Given that the horizontal area is not changing in time, we can move the time derivative through the first integral.  We also invoke Green’s Theorem for the second integral to convert that from a surface integral to an area integral.  With these changes, the equation becomes</p>
@@ -656,8 +657,8 @@ h_k = \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} dz.
 <span class="eqno">(32)<a class="headerlink" href="#equation-reynolds-tracer-final" title="Permalink to this equation"></a></span>\[\begin{split}
 \int_A  \bigl\{ \frac{\partial \tilde{h}_k \, \overline{\left&lt;\varphi\right&gt;}^{\tilde{z}}_k}{\partial t}
 &amp; + \nabla \cdot \left[ \tilde{h}_k \, \left(\overline{\left&lt;\varphi\right&gt;}^{\tilde{z}}_k \overline{\left&lt;{\bf u}\right&gt;}^{\tilde{z}}_k + \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k + \overline{\left&lt;\varphi^{\prime}{\bf u}^{\prime}\right&gt;}^{\tilde{z}}_k \right)\right] &amp; \\
-&amp; + \left\{ \rho_0 \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; - \left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{top}}} &amp; \\
-&amp; - \left\{ \rho_0 \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; - \left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \bigr\}  \, dA
+&amp; + \left\{ \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; - \left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{top}}} &amp; \\
+&amp; - \left\{ \left[ \left&lt;\varphi\right&gt;\left&lt;\tilde{w}_{tr}\right&gt; + \left&lt;\varphi^{\prime} \tilde{w}_{tr}^\prime \right&gt; - \left&lt;\varphi\right&gt; \left&lt;\tilde{ u}\right&gt; - \left&lt;\varphi^{\prime} \tilde{ u}^{\prime}\right&gt; \right] \right\}_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \bigr\}  \, dA
 &amp; = 0.
 \end{split}\]</div>
 <p>A few comments on the last two lines of <a class="reference internal" href="#equation-reynolds-tracer-final">(32)</a>.  If only the first two terms of the integrals are retained, this represents the vertical advective and turbulent fluxes for a finite volume framework.  The second two terms represent the projection of the horizontal advective and turbulent fluxes into the direction normal to the sloping surface.  When the coordinate surfaces are flat <span class="math notranslate nohighlight">\(\nabla \tilde{z}^{\text{top}} = \nabla \tilde{z}^{\text{bot}} = 0\)</span> and the vertical fluxes are aligned with the normal to the coordinate surface reducing the equation to the expected z-coordinate, finite volume, formulation.</p>
@@ -666,9 +667,9 @@ h_k = \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} dz.
 <div class="math notranslate nohighlight" id="equation-layer-tracer">
 <span class="eqno">(33)<a class="headerlink" href="#equation-layer-tracer" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{\partial {\tilde h}_k \overline{\left&lt;\varphi\right&gt;}^{\tilde{z}}_k  }{\partial t}  &amp; + \nabla \cdot \left({\tilde h}_k \overline{\left&lt;\varphi\right&gt;}^{\tilde{z}}_k \overline{\left&lt;{\bf u}\right&gt;}^{\tilde{z}}_k\right) \\
-&amp; + \rho_0 \left\{ \left[ \left&lt;\varphi\right&gt; \left&lt;{\tilde w}_{tr}\right&gt; - \left&lt;\varphi\right&gt;\left&lt;\tilde{ u}\right&gt; \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} - \left[ \left&lt;\varphi\right&gt; \left&lt;{\tilde w}_{tr}\right&gt; - \left&lt;\varphi\right&gt;\left&lt;\tilde{ u}\right&gt; \right]_{{\tilde z}={\tilde z}_k^{\text{bot}}} \right\} \\
+&amp; + \left\{ \left[ \left&lt;\varphi\right&gt; \left&lt;{\tilde w}_{tr}\right&gt; - \left&lt;\varphi\right&gt;\left&lt;\tilde{ u}\right&gt; \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} - \left[ \left&lt;\varphi\right&gt; \left&lt;{\tilde w}_{tr}\right&gt; - \left&lt;\varphi\right&gt;\left&lt;\tilde{ u}\right&gt; \right]_{{\tilde z}={\tilde z}_k^{\text{bot}}} \right\} \\
 &amp; = - \nabla \cdot \left({\tilde h}_k \overline{\left&lt;\varphi^{\prime} {\bf u}^{\prime}\right&gt;}^{\tilde{z}}_k \, + {\tilde h}_k \overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k \right) \\
-&amp; - \rho_0 \left\{ \left[\left&lt; \varphi^\prime {\tilde w}_{tr}^{\prime} \right&gt; - \left&lt; \varphi^\prime \tilde{ u}^{\prime}\right&gt; \right]_{{\tilde z}={\tilde z}_{k}^{\text{top}}} - \left[\left&lt; \varphi^\prime {\tilde w}_{tr}^{\prime} \right&gt; - \left&lt; \varphi^\prime \tilde{ u}^{\prime}\right&gt; \right]_{{\tilde z}={\tilde z}_{k}^{\text{bot}}}\right\}.
+&amp; - \left\{ \left[\left&lt; \varphi^\prime {\tilde w}_{tr}^{\prime} \right&gt; - \left&lt; \varphi^\prime \tilde{ u}^{\prime}\right&gt; \right]_{{\tilde z}={\tilde z}_{k}^{\text{top}}} - \left[\left&lt; \varphi^\prime {\tilde w}_{tr}^{\prime} \right&gt; - \left&lt; \varphi^\prime \tilde{ u}^{\prime}\right&gt; \right]_{{\tilde z}={\tilde z}_{k}^{\text{bot}}}\right\}.
 \end{split}\]</div>
 <p>A few notes on the layer-averaged tracer equation. In this complete form, it includes three types of fluctuating quantities that must be dealt with: (1) the layer averaged, Reynolds’ averaged horizontal turbulent flux <span class="math notranslate nohighlight">\(\left( \overline{\left&lt;\varphi^{\prime} {\bf u}^{\prime}\right&gt;}^{\tilde{z}}_k \right)\)</span>, (2) the Reynolds’ average vertical turbulent flux <span class="math notranslate nohighlight">\(\left( \left&lt; \varphi^\prime {\tilde w}_{tr}^{\prime} \right&gt; - \left&lt; \varphi^\prime \tilde{u}^{\prime}\right&gt; \right)\)</span>, and (3) the layer-averaged product of deviations from the layer-integrated variables <span class="math notranslate nohighlight">\(\left(\overline{\delta \varphi \delta {\bf u}}^{\tilde{z}}_k \right)\)</span>. The details of the first two quantities will be discussed later in this document and follow-on design documents. The terms involving perturbations from the layer integrated quantity are necessary to extend beyond piecewise constant represenation of variables. In this equation, variables with no overline are the full field variable at the interfaces.</p>
 <p>The mass equation is identical to the tracer equation with <span class="math notranslate nohighlight">\(\varphi=1\)</span>.</p>
@@ -677,132 +678,150 @@ h_k = \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} dz.
 <span class="eqno">(34)<a class="headerlink" href="#equation-layer-mass" title="Permalink to this equation"></a></span>\[
 \frac{\partial {\tilde h}_k }{\partial t}
 + \nabla \cdot \left({\tilde h}_k \overline{\left&lt;{\bf u}\right&gt;}^{\tilde{z}}_k\right)
-+ \rho_0 \left[ \left&lt;{\tilde w}_{tr}\right&gt; - \left&lt;\tilde{ u}\right&gt; \right]_{{\tilde z}={\tilde z}_k^{\text{top}}}
-- \rho_0 \left[ \left&lt;{\tilde w}_{tr}\right&gt; - \left&lt;\tilde{ u}\right&gt; \right]_{{\tilde z}={\tilde z}_{k}^{\text{bot}}}
++ \left[ \left&lt;{\tilde w}_{tr}\right&gt; - \left&lt;\tilde{ u}\right&gt; \right]_{{\tilde z}={\tilde z}_k^{\text{top}}}
+- \left[ \left&lt;{\tilde w}_{tr}\right&gt; - \left&lt;\tilde{ u}\right&gt; \right]_{{\tilde z}={\tilde z}_{k}^{\text{bot}}}
 = 0.
 \]</div>
 </section>
 <section id="momentum">
 <h3>Momentum<a class="headerlink" href="#momentum" title="Permalink to this heading"></a></h3>
 <p>We now derive the horizontal momentum equation in our non-Boussinesq, hydrostatic framework, following the same finite-volume approach used for mass and tracer conservation.</p>
-<p>We begin from <a class="reference internal" href="#equation-vh-momentum-pseudo">(19)</a> and specify the body forces <span class="math notranslate nohighlight">\({\bf b}\)</span> and surface forces <span class="math notranslate nohighlight">\({\bf \tau}\)</span></p>
+<p>We specify the body forces:</p>
+<div class="math notranslate nohighlight" id="equation-body-forces">
+<span class="eqno">(35)<a class="headerlink" href="#equation-body-forces" title="Permalink to this equation"></a></span>\[
+\mathbf{b}_{\perp} = - \left({\bf f} \times \mathbf{u} + \nabla \Phi \right).
+\]</div>
+<p>The first term on the right hand side is the <strong>Coriolis force</strong>, where <span class="math notranslate nohighlight">\( \mathbf{f} \)</span> is the vector Coriolis vector (e.g., <span class="math notranslate nohighlight">\( f \hat{\mathbf{z}} \)</span> on the sphere).</p>
+<p>The second term on the right hand side represents the <strong>gravitational force</strong>, expressed in terms of the two-dimensional along-layer gradient of the gravitational potential <span class="math notranslate nohighlight">\( \Phi(x, y, z, t) \)</span>, which may include effects such as tides and self-attraction and loading.  Because layers may tilt, this gradient is not taken at constant <span class="math notranslate nohighlight">\(z\)</span> or <span class="math notranslate nohighlight">\(\tilde{z}\)</span>; instead it is the projection of <span class="math notranslate nohighlight">\(\nabla_{3D}\Phi\)</span> onto the tangent plane of the layer surface.</p>
+<p>Going forward, <span class="math notranslate nohighlight">\(\nabla\)</span> without a subscript will be used to represent along-layer gradients.</p>
+<p>We neglect viscous stresses and take the stress tensor to be purely isotropic pressure, so the traction vector on any surface is</p>
+<div class="math notranslate nohighlight" id="equation-surface-forces-perp">
+<span class="eqno">(36)<a class="headerlink" href="#equation-surface-forces-perp" title="Permalink to this equation"></a></span>\[
+{\bf \tau} = - p \mathbf{n},
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{n}\)</span> is the outward unit normal. In the horizontally projected momentum equation, only the horizontal component appears:</p>
+<div class="math notranslate nohighlight" id="equation-surface-forces">
+<span class="eqno">(37)<a class="headerlink" href="#equation-surface-forces" title="Permalink to this equation"></a></span>\[
+{\bf \tau}_\perp = - p \mathbf{n}_\perp,
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{n}_\perp\)</span> is the horizontal projection of <span class="math notranslate nohighlight">\(\mathbf{n}\)</span>. On vertical side walls, <span class="math notranslate nohighlight">\(\mathbf{n}_\perp = \mathbf{n}\)</span>; on sloping top and bottom interfaces, <span class="math notranslate nohighlight">\(\mathbf{n}_\perp \approx - \nabla \tilde{z}\)</span>.</p>
+<p>Substituting these into <a class="reference internal" href="#equation-vh-momentum-pseudo">(19)</a>, we arrive at:</p>
 <div class="math notranslate nohighlight" id="equation-vh-momentum-forces">
-<span class="eqno">(35)<a class="headerlink" href="#equation-vh-momentum-forces" title="Permalink to this equation"></a></span>\[\begin{split}
+<span class="eqno">(38)<a class="headerlink" href="#equation-vh-momentum-forces" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{d}{dt} \int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} {\bf u} \, d\tilde{z} \, dA
-&amp; + \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} {\bf u} \otimes {\bf u} \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
-&amp; + \int_A \rho_0 \, {\bf u} \left[ \tilde{w}_{tr} - \tilde{\bf u} \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA
-- \int_A \rho_0 \, {\bf u} \left[ \tilde{w}_{tr} - \tilde{\bf u} \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA \\
-&amp; = -\int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \left({\bf f} \times \mathbf{u} + \nabla \Phi \right) \, d\tilde{z} \, dA
-- \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \frac{\rho_0 p}{\rho} \, d\tilde{z} \right) {\bf n}_\perp  dl \\
-&amp; - \int_A \left[ \frac{\rho_0 p}{\rho} \nabla \tilde{z}_k^{\text{top}} \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA
-+ \int_A \left[ \frac{\rho_0 p}{\rho} \nabla \tilde{z}_k^{\text{bot}} \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
+&amp; + \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} {\bf u} \otimes {\bf u} \, d\tilde{z} \right) \cdot \mathbf{n}_\perp \, dl \\
+&amp; + \int_A \, {\bf u} \left[ \tilde{w}_{tr} - \tilde{\bf u} \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA
+- \int_A \, {\bf u} \left[ \tilde{w}_{tr} - \tilde{\bf u} \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA \\
+&amp; = -\int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left({\bf f} \times \mathbf{u} + \nabla \Phi \right) \, d\tilde{z} \, dA
+- \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \frac{p}{\rho} \, d\tilde{z} \right) \mathbf{n}_\perp dl \\
+&amp; + \int_A \left[ \frac{p}{\rho} \nabla \tilde{z}_k^{\text{top}} \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA
+- \int_A \left[ \frac{p}{\rho} \nabla \tilde{z}_k^{\text{bot}} \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
 \end{split}\]</div>
 <p>In this equation:</p>
 <ul class="simple">
-<li><p>The first term on the right hand side is the <strong>Coriolis force</strong>, where <span class="math notranslate nohighlight">\( \mathbf{f} \)</span> is the vector Coriolis vector (e.g., <span class="math notranslate nohighlight">\( f \hat{\mathbf{z}} \)</span> on the sphere).</p></li>
-<li><p>The second term on the right hand side represents the <strong>gravitational force</strong>, expressed in terms of the two-dimensional gradient of the gravitational potential <span class="math notranslate nohighlight">\( \Phi(x, y, z, t) \)</span>, which may include effects such as tides and self-attraction and loading.  This gradient is along layer (e.g. constant <span class="math notranslate nohighlight">\(\tilde{z}\)</span>) such that the gradient of <span class="math notranslate nohighlight">\(\Phi\)</span> doesn’t disappear.</p></li>
+<li><p>The first two terms are the body forces explained above.</p></li>
 <li><p>The final terms are the <strong>pressure force</strong>, which acts on the boundary surfaces and is naturally expressed as a surface integral. It gives rise to both horizontal pressure gradients and contributions from sloping surfaces.</p></li>
 <li><p>A negative sign is included for the pressure terms derived from the surface force terms. According to <a class="reference external" href="https://eaglepubs.erau.edu/introductiontoaerospaceflightvehicles/chapter/conservation-of-momentum-momentum-equation/#chapter-260-section-2">Leishman 2025</a>, Chapter 21, equation 2, “the negative sign indicates that the force is inward and in the opposite direction to the unit normal vector area, which always points <em>outward</em> by convention”. Also see discussion in <a class="reference external" href="https://doi.org/10.1016/C2012-0-00611-4">Kundu et al. 2016</a> page 104 and equation 4.26.</p></li>
 </ul>
-<p>As with the tracer derivation, we next Reynolds’ average <a class="reference internal" href="#equation-vh-momentum-forces">(35)</a>,</p>
+<p>As with the tracer derivation, we next Reynolds’ average <a class="reference internal" href="#equation-vh-momentum-forces">(38)</a>,</p>
 <div class="math notranslate nohighlight" id="equation-vh-momentum-reynolds1">
-<span class="eqno">(36)<a class="headerlink" href="#equation-vh-momentum-reynolds1" title="Permalink to this equation"></a></span>\[\begin{split}
+<span class="eqno">(39)<a class="headerlink" href="#equation-vh-momentum-reynolds1" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{d}{dt} \int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left&lt; {\bf u} \right&gt; \, d\tilde{z} \, dA
-&amp; + \int_{\partial A} \left( \int_{\tilde{z}^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left&lt; {\bf u} \otimes {\bf u} \right&gt; \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
-&amp; + \int_A \rho_0 \,\left&lt; {\bf u} \left[ \tilde{w}_{tr} - \tilde{\bf u} \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \right&gt; \, dA
-- \int_A \rho_0 \, \left&lt; {\bf u} \left[ \tilde{w}_{tr} - \tilde{\bf u} \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right&gt; \, dA \\
-&amp; = -\int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \, \left&lt;\left( {\bf f} \times \mathbf{u} + \nabla \Phi \right) \right&gt; \, d\tilde{z} \, dA
-- \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \left&lt; \frac{p}{\rho} \right&gt; \, d\tilde{z} \right) {\bf n}_\perp dl \\
-&amp; - \int_A \rho_0 \left[ \left&lt; \frac{p}{\rho} \nabla \tilde{z}_k^{\text{top}} \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA
-+ \int_A \rho_0 \left[ \left&lt; \frac{p}{\rho} \nabla \tilde{z}_k^{\text{bot}} \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
+&amp; + \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left&lt; {\bf u} \otimes {\bf u} \right&gt; \, d\tilde{z} \right) \cdot \mathbf{n}_\perp \, dl \\
+&amp; + \int_A \,\left&lt; {\bf u} \left[ \tilde{w}_{tr} - \tilde{\bf u} \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \right&gt; \, dA
+- \int_A \, \left&lt; {\bf u} \left[ \tilde{w}_{tr} - \tilde{\bf u} \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right&gt; \, dA \\
+&amp; = -\int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \, \left&lt; {\bf f} \times \mathbf{u} + \nabla \Phi \right&gt; \, d\tilde{z} \, dA
+- \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left&lt; \frac{p}{\rho} \right&gt; \, d\tilde{z} \right) \mathbf{n}_\perp dl \\
+&amp; + \int_A \left[ \left&lt; \frac{p}{\rho} \nabla \tilde{z}_k^{\text{top}} \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA
+- \int_A \left[ \left&lt; \frac{p}{\rho} \nabla \tilde{z}_k^{\text{bot}} \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
 \end{split}\]</div>
 <p>Here we have also moved the Reynolds’ average through the spatial integrals given the properties of the averaging.  Next we do a Reynolds’ decomposition, this yields</p>
 <div class="math notranslate nohighlight" id="equation-vh-momentum-reynolds2">
-<span class="eqno">(37)<a class="headerlink" href="#equation-vh-momentum-reynolds2" title="Permalink to this equation"></a></span>\[\begin{split}
+<span class="eqno">(40)<a class="headerlink" href="#equation-vh-momentum-reynolds2" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{d}{dt} \int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left&lt; {\bf u} \right&gt; \, d\tilde{z} \, dA
-&amp; + \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}^{\text{top}}} \left( \left&lt; {\bf u} \right&gt; \otimes \left&lt; {\bf u} \right&gt; + \left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt; \right) \, d\tilde{z} \right) \cdot {\bf n}_\perp \, dl \\
-&amp; + \int_A \rho_0 \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
-&amp; - \int_A \rho_0 \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA  \\
-&amp; = - \int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \, \left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right) \, d\tilde{z} \, dA \\
-&amp; - \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \left(\left&lt; \alpha \right&gt; \left&lt;p \right&gt; + \left&lt;\alpha^\prime p^\prime\right&gt; \right) \, d\tilde{z} \right) {\bf n}_\perp  dl \\
-&amp; - \int_A \rho_0 \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}}\right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
-&amp; + \int_A \rho_0 \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{bot}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}}\right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
+&amp; + \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left( \left&lt; {\bf u} \right&gt; \otimes \left&lt; {\bf u} \right&gt; + \left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt; \right) \, d\tilde{z} \right) \cdot \mathbf{n}_\perp dl \, dl \\
+&amp; + \int_A \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
+&amp; - \int_A \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA  \\
+&amp; = - \int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \, \left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right) \, d\tilde{z} \, dA \\
+&amp; - \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left(\left&lt; \alpha \right&gt; \left&lt;p \right&gt; + \left&lt;\alpha^\prime p^\prime\right&gt; \right) \, d\tilde{z} \right) \mathbf{n}_\perp dl \\
+&amp; + \int_A \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}}\right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
+&amp; - \int_A \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{bot}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}}\right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
 \end{split}\]</div>
-<p>In <a class="reference internal" href="#equation-vh-momentum-reynolds2">(37)</a> we have also used <span class="math notranslate nohighlight">\(\alpha = \frac{1}{\rho}\)</span> for notation conciseness.  The definition of the layer average <a class="reference internal" href="#equation-def-layer-average-reynolds">(26)</a> is now utilized on terms with vertical integrals to yield</p>
+<p>In <a class="reference internal" href="#equation-vh-momentum-reynolds2">(40)</a> we have also used <span class="math notranslate nohighlight">\(\alpha = \frac{1}{\rho}\)</span> for notation conciseness.  The definition of the layer average <a class="reference internal" href="#equation-def-layer-average-reynolds">(26)</a> is now utilized on terms with vertical integrals to yield</p>
 <div class="math notranslate nohighlight" id="equation-vh-momentum-reynolds-lay-avg">
-<span class="eqno">(38)<a class="headerlink" href="#equation-vh-momentum-reynolds-lay-avg" title="Permalink to this equation"></a></span>\[\begin{split}
+<span class="eqno">(41)<a class="headerlink" href="#equation-vh-momentum-reynolds-lay-avg" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{d}{dt} \int_A \tilde{h}_k \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k  \, dA
 &amp; + \int_{\partial A} \tilde{h}_k \left( \overline{\left&lt; {\bf u} \right&gt; \otimes \left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k + \overline{\left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;}^{\tilde{z}}_k  \right) \cdot {\bf n}_\perp \, dl \\
-&amp; + \int_A \rho_0 \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
-&amp; - \int_A \rho_0 \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA  \\
-&amp; = - \int_A \rho_0 \, \tilde{h}_k \overline{\left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right)}^{\tilde{z}}_k \, dA \\
-&amp; - \int_{\partial A} \rho_0 \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt; \left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) {\bf n}_\perp dl \\
-&amp; - \int_A \rho_0 \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
-&amp; + \int_A \rho_0 \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{bot}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
+&amp; + \int_A \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
+&amp; - \int_A \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA  \\
+&amp; = - \int_A \, \tilde{h}_k \overline{\left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right)}^{\tilde{z}}_k \, dA \\
+&amp; - \int_{\partial A} \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt; \left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) \mathbf{n}_\perp dl \\
+&amp; + \int_A \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
+&amp; - \int_A \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{bot}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
 \end{split}\]</div>
 <p>The next step is to decompose vertical averages of products. This yields</p>
 <div class="math notranslate nohighlight" id="equation-vh-momentum-reynolds-lay-avg2">
-<span class="eqno">(39)<a class="headerlink" href="#equation-vh-momentum-reynolds-lay-avg2" title="Permalink to this equation"></a></span>\[\begin{split}
+<span class="eqno">(42)<a class="headerlink" href="#equation-vh-momentum-reynolds-lay-avg2" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{d}{dt} \int_{A} \tilde{h}_k \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k  \, dA
 &amp; + \int_{\partial A} \tilde{h}_k \left( \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k \otimes \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k + \overline{\delta {\bf u} \otimes \delta {\bf u}}^{\tilde{z}}_k + \overline{\left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;}^{\tilde{z}}_k  \right) \cdot {\bf n}_\perp \, dl \\
-&amp; + \int_A \rho_0 \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
-&amp; - \int_A \rho_0 \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA  \\
-&amp; = - \int_A \rho_0 \, \tilde{h}_k \overline{\left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right)}^{\tilde{z}}_k \, dA \\
-&amp; - \int_{\partial A} \rho_0 \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt;}^{\tilde{z}}_k \overline{\left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) {\bf n}_\perp dl \\
-&amp; - \int_A \rho_0 \left[\left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
-&amp; + \int_A \rho_0 \left[\left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{bot}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
+&amp; + \int_A \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
+&amp; - \int_A \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA  \\
+&amp; = - \int_A \, \tilde{h}_k \overline{\left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right)}^{\tilde{z}}_k \, dA \\
+&amp; - \int_{\partial A} \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt;}^{\tilde{z}}_k \overline{\left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) \mathbf{n}_\perp dl \\
+&amp; + \int_A \left[\left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
+&amp; - \int_A \left[\left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{bot}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
 \end{split}\]</div>
 <p>We next use the Divergence theorem on the surface integrals and combine terms into fewer integrals on each side of the equation.</p>
 <div class="math notranslate nohighlight" id="equation-vh-momentum-reynolds-lay-avg3">
-<span class="eqno">(40)<a class="headerlink" href="#equation-vh-momentum-reynolds-lay-avg3" title="Permalink to this equation"></a></span>\[\begin{split}
+<span class="eqno">(43)<a class="headerlink" href="#equation-vh-momentum-reynolds-lay-avg3" title="Permalink to this equation"></a></span>\[\begin{split}
 \int_A \bigl\{ \frac{\partial\tilde{h}_k \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k}{\partial t}
 &amp; + \nabla \cdot \left[ \tilde{h}_k \left(\overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k \otimes \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k + \overline{\delta {\bf u} \otimes \delta {\bf u}}^{\tilde{z}}_k + \overline{\left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;}^{\tilde{z}}_k  \right) \right] \\
-&amp; + \rho_0 \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}^{\text{top}}} \\
-&amp; - \rho_0 \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}^{\text{bot}}} \bigr\} \, dA \\
-&amp; = - \int_A \bigl\{ \rho_0 \, \tilde{h}_k \overline{\left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right)}^{\tilde{z}}_k \\
-&amp; - \nabla \left[ \rho_0 \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt;}^{\tilde{z}}_k \overline{\left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) \right] \\
-&amp; - \rho_0 \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \\
-&amp; + \rho_0 \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{bot}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}}\bigr\} \, dA.
+&amp; + \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \\
+&amp; - \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \bigr\} \, dA \\
+&amp; = - \int_A \bigl\{ \, \tilde{h}_k \overline{\left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right)}^{\tilde{z}}_k \\
+&amp; - \nabla \left[ \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt;}^{\tilde{z}}_k \overline{\left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) \right] \\
+&amp; + \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \\
+&amp; - \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{bot}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}}\bigr\} \, dA.
 \end{split}\]</div>
 <p>Since the equation is fully inside the integral, the equation is true for any area and therefore we can write the layer averaged momentum equation as</p>
 <div class="math notranslate nohighlight" id="equation-vh-momentum-v1">
-<span class="eqno">(41)<a class="headerlink" href="#equation-vh-momentum-v1" title="Permalink to this equation"></a></span>\[\begin{split}
+<span class="eqno">(44)<a class="headerlink" href="#equation-vh-momentum-v1" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{\partial\tilde{h}_k \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k}{\partial t}
 &amp; + \nabla \cdot \left[ \tilde{h}_k \left( \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k \otimes \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k + \overline{\delta {\bf u} \otimes \delta {\bf u}}^{\tilde{z}}_k + \overline{\left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;}^{\tilde{z}}_k  \right) \right] \\
-&amp; + \rho_0 \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \\
-&amp; - \rho_0 \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \\
-&amp; = - \rho_0 \, \tilde{h}_k \overline{\left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right)}^{\tilde{z}}_k \\
-&amp; - \nabla \left[ \rho_0 \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt;}^{\tilde{z}}_k \overline{\left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) \right] \\
-&amp; - \rho_0 \left[ \left&lt; \alpha \right&gt; \left&lt;p \cdot \nabla \tilde{z}_k^{\text{top}}\right&gt; + \left&lt;\alpha^\prime \left(p \cdot \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \\
-&amp; + \rho_0 \left[ \left&lt; \alpha \right&gt; \left&lt;p \cdot \nabla \tilde{z}_k^{\text{bot}}\right&gt; + \left&lt;\alpha^\prime \left(p \cdot \nabla \tilde{z}_k^{\text{bot}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}}.
+&amp; + \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \\
+&amp; - \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \\
+&amp; = - \, \tilde{h}_k \overline{\left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right)}^{\tilde{z}}_k \\
+&amp; - \nabla \left[ \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt;}^{\tilde{z}}_k \overline{\left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) \right] \\
+&amp; + \left[ \left&lt; \alpha \right&gt; \left&lt;p \cdot \nabla \tilde{z}_k^{\text{top}}\right&gt; + \left&lt;\alpha^\prime \left(p \cdot \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \\
+&amp; - \left[ \left&lt; \alpha \right&gt; \left&lt;p \cdot \nabla \tilde{z}_k^{\text{bot}}\right&gt; + \left&lt;\alpha^\prime \left(p \cdot \nabla \tilde{z}_k^{\text{bot}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}}.
 \end{split}\]</div>
-<p>The product rule is used on the first two terms of <a class="reference internal" href="#equation-vh-momentum-v1">(41)</a> and then we multiply <a class="reference internal" href="#equation-layer-mass">(34)</a> by <span class="math notranslate nohighlight">\(\overline{\mathbf{u}}^{\tilde{z}}_k\)</span> and subtract it from <a class="reference internal" href="#equation-vh-momentum-v1">(41)</a>.  This yields</p>
+<p>The product rule is used on the first two terms of <a class="reference internal" href="#equation-vh-momentum-v1">(44)</a> and then we multiply <a class="reference internal" href="#equation-layer-mass">(34)</a> by <span class="math notranslate nohighlight">\(\overline{\mathbf{u}}^{\tilde{z}}_k\)</span> and subtract it from <a class="reference internal" href="#equation-vh-momentum-v1">(44)</a>.  This yields</p>
 <div class="math notranslate nohighlight" id="equation-vh-momentum-v2">
-<span class="eqno">(42)<a class="headerlink" href="#equation-vh-momentum-v2" title="Permalink to this equation"></a></span>\[\begin{split}
+<span class="eqno">(45)<a class="headerlink" href="#equation-vh-momentum-v2" title="Permalink to this equation"></a></span>\[\begin{split}
 \tilde{h}_k \frac{\partial \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k}{\partial t}
 &amp; + \tilde{h}_k \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k \cdot \nabla \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k + \nabla \cdot \left[ \tilde{h}_k \left(\overline{\delta {\bf u} \otimes \delta {\bf u}}^{\tilde{z}}_k + \overline{\left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;}^{\tilde{z}}_k  \right) \right] \\
-&amp; + \rho_0 \left(\left&lt;\mathbf{u}\right&gt; - \overline{\left&lt;\mathbf{u}\right&gt;}^{\tilde{z}}_k\right) \left\{ \left[ \left&lt;\tilde{w}_{tr}\right&gt; - \left&lt;\tilde{\bf u}\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[ \left&lt;\tilde{w}_{tr}\right&gt; - \left&lt;\tilde{\bf u}\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
-&amp; + \rho_0 \left\{ \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{\bf u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{\bf u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
-&amp; = - \rho_0 \, \tilde{h}_k \overline{\left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right)}^{\tilde{z}}_k \\
-&amp; - \nabla \left[ \rho_0 \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt;}^{\tilde{z}}_k \overline{\left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) \right] \\
-&amp; - \rho_0 \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \\
-&amp; +  \rho_0 \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{bot}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}}.
+&amp; + \left(\left&lt;\mathbf{u}\right&gt; - \overline{\left&lt;\mathbf{u}\right&gt;}^{\tilde{z}}_k\right) \left\{ \left[ \left&lt;\tilde{w}_{tr}\right&gt; - \left&lt;\tilde{\bf u}\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[ \left&lt;\tilde{w}_{tr}\right&gt; - \left&lt;\tilde{\bf u}\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
+&amp; + \left\{ \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{\bf u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{\bf u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
+&amp; = - \, \tilde{h}_k \overline{\left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right)}^{\tilde{z}}_k \\
+&amp; - \nabla \left[ \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt;}^{\tilde{z}}_k \overline{\left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) \right] \\
+&amp; + \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \\
+&amp; -  \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{bot}} \right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}}.
 \end{split}\]</div>
 <p>The previous equation is divided by <span class="math notranslate nohighlight">\(\tilde{h}_k\)</span>,</p>
 <div class="math notranslate nohighlight" id="equation-vh-momentum-v3">
-<span class="eqno">(43)<a class="headerlink" href="#equation-vh-momentum-v3" title="Permalink to this equation"></a></span>\[\begin{split}
+<span class="eqno">(46)<a class="headerlink" href="#equation-vh-momentum-v3" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{\partial \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k}{\partial t}
 &amp; + \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k \cdot \nabla \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k + \frac{1}{\tilde{h}_k} \nabla \cdot \left[ \tilde{h}_k \left(\overline{\delta {\bf u} \otimes \delta {\bf u}}^{\tilde{z}}_k + \overline{\left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;}^{\tilde{z}}_k  \right) \right] \\
-&amp; + \frac{\rho_0}{\tilde{h}_k} \left(\left&lt;\mathbf{u}\right&gt; - \overline{\left&lt;\mathbf{u}\right&gt;}^{\tilde{z}}_k\right) \left\{ \left[ \left&lt;\tilde{w}_{tr}\right&gt; - \left&lt;\tilde{\bf u}\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[ \left&lt;\tilde{w}_{tr}\right&gt; - \left&lt;\tilde{\bf u}\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
-&amp; + \frac{\rho_0}{\tilde{h}_k} \left\{ \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{\bf u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{\bf u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
-&amp; = - \rho_0 \, \overline{\left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right)}^{\tilde{z}}_k \\
-&amp; - \frac{1}{\tilde{h}_k} \nabla \left[ \rho_0 \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt;}^{\tilde{z}}_k \overline{\left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) \right] \\
-&amp; - \frac{\rho_0}{\tilde{h}_k} \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}^{\text{top}}\right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \\
-&amp; + \frac{\rho_0}{\tilde{h}_k} \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}^{\text{bot}}\right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}}.
+&amp; + \frac{1}{\tilde{h}_k} \left(\left&lt;\mathbf{u}\right&gt; - \overline{\left&lt;\mathbf{u}\right&gt;}^{\tilde{z}}_k\right) \left\{ \left[ \left&lt;\tilde{w}_{tr}\right&gt; - \left&lt;\tilde{\bf u}\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[ \left&lt;\tilde{w}_{tr}\right&gt; - \left&lt;\tilde{\bf u}\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
+&amp; + \frac{1}{\tilde{h}_k} \left\{ \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{\bf u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{\bf u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
+&amp; = - \, \overline{\left( {\bf f} \times \left&lt;\mathbf{u}\right&gt; + \nabla \left&lt;\Phi\right&gt; \right)}^{\tilde{z}}_k \\
+&amp; - \frac{1}{\tilde{h}_k} \nabla \left[ \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt;}^{\tilde{z}}_k \overline{\left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) \right] \\
+&amp; + \frac{1}{\tilde{h}_k} \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}}\right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \\
+&amp; - \frac{1}{\tilde{h}_k} \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{bot}}\right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}}.
 \end{split}\]</div>
 <p>The <span class="math notranslate nohighlight">\(\overline{\bf u}^{\tilde{z}}_k \cdot \nabla \overline{\bf u}^{\tilde{z}}_k\)</span> may be replaced with the vector identity</p>
 <div class="math notranslate nohighlight" id="equation-advection-identity">
-<span class="eqno">(44)<a class="headerlink" href="#equation-advection-identity" title="Permalink to this equation"></a></span>\[\begin{split}
+<span class="eqno">(47)<a class="headerlink" href="#equation-advection-identity" title="Permalink to this equation"></a></span>\[\begin{split}
 \begin{aligned}
 \overline{\left&lt;{\bf u}\right&gt;}^{\tilde{z}}_k \cdot \nabla \overline{\left&lt;{\bf u}\right&gt;}^{\tilde{z}}_k
 &amp; = (\nabla \times \overline{\left&lt;{\bf u}\right&gt;}^{\tilde{z}}_k) \times \overline{\left&lt;{\bf u}\right&gt;}^{\tilde{z}}_k + \nabla \frac{\left|\overline{\left&lt;{\bf u}\right&gt;}^{\tilde{z}}_k\right|^2}{2} \\
@@ -812,21 +831,21 @@ h_k = \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} dz.
 \end{aligned}
 \end{split}\]</div>
 <p>where <span class="math notranslate nohighlight">\(\zeta\)</span> is relative vorticity and <span class="math notranslate nohighlight">\(K\)</span> is kinetic energy.  This step separates the horizontal advection into non-divergent and non-rotational components, which is useful in the final TRiSK formulation.</p>
-<p>The Coriolis term in <a class="reference internal" href="#equation-vh-momentum-v3">(43)</a>, when projected into a local coordinate system can be written as</p>
+<p>The Coriolis term in <a class="reference internal" href="#equation-vh-momentum-v3">(46)</a>, when projected into a local coordinate system can be written as</p>
 <div class="math notranslate nohighlight" id="equation-coriolis-expansion">
-<span class="eqno">(45)<a class="headerlink" href="#equation-coriolis-expansion" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(48)<a class="headerlink" href="#equation-coriolis-expansion" title="Permalink to this equation"></a></span>\[
 {\bf f} \times \left&lt;\mathbf{u}\right&gt; = f \left&lt;\mathbf{u}\right&gt;^\perp + 2 \Omega \tilde{w}_{tr} \cos \phi
 \]</div>
 <p>We expect the second term above to be negligible for the ocean.  Ocean vertical velocities are largest (<span class="math notranslate nohighlight">\(\approx 10\)</span> cm) in the high latitudes, where <span class="math notranslate nohighlight">\(\cos \phi\)</span> is small.  Further, these large vertical velocities only arise in non-hydrostatic ocean models.  Therefore we expect this second term to always be small in Omega and will neglect it.</p>
-<p>Defining the absolute vorticity <span class="math notranslate nohighlight">\(\zeta_a\)</span> as <span class="math notranslate nohighlight">\(\zeta + f\)</span>, where <span class="math notranslate nohighlight">\(f\)</span> is the Coriolis parameter, which results from <a class="reference internal" href="#equation-coriolis-expansion">(45)</a>, <a class="reference internal" href="#equation-vh-momentum-v3">(43)</a> becomes,</p>
+<p>Defining the absolute vorticity <span class="math notranslate nohighlight">\(\zeta_a\)</span> as <span class="math notranslate nohighlight">\(\zeta + f\)</span>, where <span class="math notranslate nohighlight">\(f\)</span> is the Coriolis parameter, which results from <a class="reference internal" href="#equation-coriolis-expansion">(48)</a>, <a class="reference internal" href="#equation-vh-momentum-v3">(46)</a> becomes,</p>
 <div class="math notranslate nohighlight" id="equation-layer-momentum-final">
-<span class="eqno">(46)<a class="headerlink" href="#equation-layer-momentum-final" title="Permalink to this equation"></a></span>\[\begin{split}
+<span class="eqno">(49)<a class="headerlink" href="#equation-layer-momentum-final" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{\partial \overline{\left&lt; {\bf u} \right&gt;}^{\tilde{z}}_k}{\partial t}
 &amp; + \zeta_a {\overline{\left&lt;{\bf u}\right&gt;}^{\tilde{z}}_k}^{\perp} + \nabla K + \frac{1}{\tilde{h}_k} \nabla \cdot \left[ \tilde{h}_k \left(\overline{\delta {\bf u} \otimes \delta {\bf u}}^{\tilde{z}}_k + \overline{\left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;}^{\tilde{z}}_k  \right) \right] \\
-&amp; + \frac{\rho_0}{\tilde{h}_k} \left\{ \left[\left(\left&lt;\mathbf{u}\right&gt; - \overline{\left&lt;\mathbf{u}\right&gt;}^{\tilde{z}}_k\right) \left\{\left&lt;\tilde{w}_{tr}\right&gt; - \left&lt;\tilde{\bf u}\right&gt; \right\} \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[  \left(\left&lt;\mathbf{u}\right&gt; - \overline{\left&lt;\mathbf{u}\right&gt;}^{\tilde{z}}_k\right) \left\{\left&lt;\tilde{w}_{tr}\right&gt; - \left&lt;\tilde{\bf u}\right&gt; \right\} \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
-&amp; + \frac{\rho_0}{\tilde{h}_k}  \left\{ \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{\bf u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{\bf u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
-&amp; = - \rho_0 \, \overline{\nabla \left&lt;\Phi\right&gt;}^{\tilde{z}}_k - \frac{1}{\tilde{h}_k} \nabla \left[ \rho_0 \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt;}^{\tilde{z}}_k \overline{\left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) \right] \\
-&amp; - \frac{\rho_0}{\tilde{h}_k} \left\{ \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}}\right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}}
+&amp; + \frac{1}{\tilde{h}_k} \left\{ \left[\left(\left&lt;\mathbf{u}\right&gt; - \overline{\left&lt;\mathbf{u}\right&gt;}^{\tilde{z}}_k\right) \left\{\left&lt;\tilde{w}_{tr}\right&gt; - \left&lt;\tilde{\bf u}\right&gt; \right\} \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[  \left(\left&lt;\mathbf{u}\right&gt; - \overline{\left&lt;\mathbf{u}\right&gt;}^{\tilde{z}}_k\right) \left\{\left&lt;\tilde{w}_{tr}\right&gt; - \left&lt;\tilde{\bf u}\right&gt; \right\} \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
+&amp; + \frac{1}{\tilde{h}_k}  \left\{ \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{\bf u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{\bf u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
+&amp; = - \, \overline{\nabla \left&lt;\Phi\right&gt;}^{\tilde{z}}_k - \frac{1}{\tilde{h}_k} \nabla \left[ \tilde{h}_k \left( \overline{\left&lt; \alpha \right&gt;}^{\tilde{z}}_k \overline{\left&lt;p \right&gt;}^{\tilde{z}}_k + \overline{\delta \alpha \delta p}^{\tilde{z}}_k+ \overline{\left&lt;\alpha^\prime p^\prime\right&gt;}^{\tilde{z}}_k \right) \right] \\
+&amp; + \frac{1}{\tilde{h}_k} \left\{ \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{top}}\right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}}
 -  \left[ \left&lt; \alpha \right&gt; \left&lt;p \nabla \tilde{z}_k^{\text{bot}}\right&gt; + \left&lt;\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}} \right)^\prime\right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\}.
 \end{split}\]</div>
 <p>The <span class="math notranslate nohighlight">\(\delta X\)</span> terms in the layered equations are vertical deviations from the vertical layer average of a given quantity <span class="math notranslate nohighlight">\(X\)</span>.  We will assume these deviations are small and products of these deviations are even smaller.  Thus we will ignore most of these terms in Omega.  The exception is the pressure gradient force.  At this time we will assume piecewise constant approximations of the vertically continuous system, which is appropriate for the simple pressure gradient force targeted for early versions of Omega.  This assumption will be revisited at a later date.  We also note that these terms could potentially serve as a bridge to multiscale fluxes, as resolution is increased, these <span class="math notranslate nohighlight">\(\delta X\)</span> terms would get larger, but likely only for significantly higher resolution (e.g. 10s of meters).  However, these terms would have to be further analyzed and developed as these terms are only deviations from layer averages, not temporal averages as in the Reynolds’ approach.</p>
@@ -842,91 +861,91 @@ h_k = \int_{z_{k}^{\text{bot}}}^{z_k^{\text{top}}} dz.
 <p>With these three simplifications, the final continuous equations become</p>
 <p><strong>Tracer:</strong></p>
 <div class="math notranslate nohighlight" id="equation-layer-tracer-final-simple">
-<span class="eqno">(47)<a class="headerlink" href="#equation-layer-tracer-final-simple" title="Permalink to this equation"></a></span>\[\begin{split}
-\frac{\partial {\tilde h}_k \varphi_k}{\partial t}  &amp; + \nabla \cdot \left({\tilde h}_k \varphi_k {\bf u}_k\right) + \rho_0 \left\{ \left[ \varphi \tilde{W}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} - \left[ \varphi \tilde{W}_{tr} \right]_{{\tilde z}={\tilde z}_{k}^{\text{bot}}} \right\} \\
+<span class="eqno">(50)<a class="headerlink" href="#equation-layer-tracer-final-simple" title="Permalink to this equation"></a></span>\[\begin{split}
+\frac{\partial {\tilde h}_k \varphi_k}{\partial t}  &amp; + \nabla \cdot \left({\tilde h}_k \varphi_k {\bf u}_k\right) + \left\{ \left[ \varphi \tilde{W}_{tr} \right]_{{\tilde z}={\tilde z}_k^{\text{top}}} - \left[ \varphi \tilde{W}_{tr} \right]_{{\tilde z}={\tilde z}_{k}^{\text{bot}}} \right\} \\
 &amp; = - \nabla \cdot \left({\tilde h}_k \left&lt;\varphi^{\prime} {\bf u}^{\prime}\right&gt;_k\right) \\
-&amp; - \rho_0 \left\{ \left[\left&lt; \varphi^\prime {\tilde w}_{tr}^{\prime} \right&gt; - \left&lt; \varphi^\prime \tilde{ u}^{\prime}\right&gt; \right]_{{\tilde z}={\tilde z}_{k}^{\text{top}}} - \left[\left&lt; \varphi^\prime {\tilde w}_{tr}^{\prime} \right&gt; - \left&lt; \varphi^\prime \tilde{ u}^{\prime}\right&gt; \right]_{{\tilde z}={\tilde z}_{k}^{\text{bot}}}\right\}.
+&amp; - \left\{ \left[\left&lt; \varphi^\prime {\tilde w}_{tr}^{\prime} \right&gt; - \left&lt; \varphi^\prime \tilde{ u}^{\prime}\right&gt; \right]_{{\tilde z}={\tilde z}_{k}^{\text{top}}} - \left[\left&lt; \varphi^\prime {\tilde w}_{tr}^{\prime} \right&gt; - \left&lt; \varphi^\prime \tilde{ u}^{\prime}\right&gt; \right]_{{\tilde z}={\tilde z}_{k}^{\text{bot}}}\right\}.
 \end{split}\]</div>
 <p><strong>Mass:</strong></p>
 <div class="math notranslate nohighlight" id="equation-layer-mass-final-simple">
-<span class="eqno">(48)<a class="headerlink" href="#equation-layer-mass-final-simple" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(51)<a class="headerlink" href="#equation-layer-mass-final-simple" title="Permalink to this equation"></a></span>\[
 \frac{\partial {\tilde h}_k }{\partial t}
 + \nabla \cdot \left({\tilde h}_k {\bf u}_k\right)
-+ \rho_0 \left[ \tilde{W}_{tr} \right]_{{\tilde z}={\tilde z}_{k}^{\text{top}}}
-- \rho_0 \left[ \tilde{W}_{tr} \right]_{{\tilde z}={\tilde z}_{k}^{\text{bot}}}
++ \left[ \tilde{W}_{tr} \right]_{{\tilde z}={\tilde z}_{k}^{\text{top}}}
+- \left[ \tilde{W}_{tr} \right]_{{\tilde z}={\tilde z}_{k}^{\text{bot}}}
 = 0.
 \]</div>
 <p><strong>Velocity:</strong></p>
 <div class="math notranslate nohighlight" id="equation-layer-momentum-final-simple">
-<span class="eqno">(49)<a class="headerlink" href="#equation-layer-momentum-final-simple" title="Permalink to this equation"></a></span>\[\begin{split}
+<span class="eqno">(52)<a class="headerlink" href="#equation-layer-momentum-final-simple" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{\partial {\bf u}_k}{\partial t}
 &amp; + \zeta_a {{\bf u}_k}^{\perp} + \nabla K + \frac{1}{\tilde{h}_k} \nabla \cdot \left[ \tilde{h}_k \left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;_k \right] \\
-&amp; + \frac{\rho_0}{\tilde{h}_k} \left\{ \left[\left(\mathbf{u} - \mathbf{u}_k\right) \left\{\tilde{W}_{tr} \right\} \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[  \left(\mathbf{u} - \mathbf{u}_k\right) \left\{\tilde{W}_{tr} \right\} \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
-&amp; + \frac{\rho_0}{\tilde{h}_k}  \left\{ \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{ u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{ u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
+&amp; + \frac{1}{\tilde{h}_k} \left\{ \left[\left(\mathbf{u} - \mathbf{u}_k\right) \left\{\tilde{W}_{tr} \right\} \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[  \left(\mathbf{u} - \mathbf{u}_k\right) \left\{\tilde{W}_{tr} \right\} \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
+&amp; + \frac{1}{\tilde{h}_k}  \left\{ \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{ u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} - \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{ u}^\prime \right&gt; \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\} \\
 &amp; = - \left(\nabla \Phi \right)_k - \frac{1}{\tilde{h}_k} \nabla \left[ \tilde{h}_k \alpha_k p_k \right] \\
-&amp; - \frac{1}{\tilde{h}_k} \left\{ \left[ \alpha p \nabla \tilde{z}_k^{\text{top}}\right]_{\tilde{z} = \tilde{z}_k^{\text{top}}}
+&amp; + \frac{1}{\tilde{h}_k} \left\{ \left[ \alpha p \nabla \tilde{z}_k^{\text{top}}\right]_{\tilde{z} = \tilde{z}_k^{\text{top}}}
 -  \left[ \alpha p \nabla \tilde{z}_k^{\text{bot}}\right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \right\}.
 \end{split}\]</div>
-<p>In <a class="reference internal" href="#equation-layer-tracer-final-simple">(47)</a> and <a class="reference internal" href="#equation-layer-momentum-final-simple">(49)</a> we have not combined turbulent flux terms (e.g., <span class="math notranslate nohighlight">\(\left&lt;\varphi^\prime \tilde{W}_{tr}^\prime \right&gt;\)</span>) as the two terms that comprise this term (<span class="math notranslate nohighlight">\(\left&lt; \varphi^\prime {\tilde w}_{tr}^{\prime} \right&gt;\)</span> and <span class="math notranslate nohighlight">\(\left&lt; \varphi^\prime \tilde{ u}^{\prime}\right&gt;\)</span>) are fundamentally different processes that must be modeled separately.</p>
+<p>In <a class="reference internal" href="#equation-layer-tracer-final-simple">(50)</a> and <a class="reference internal" href="#equation-layer-momentum-final-simple">(52)</a> we have not combined turbulent flux terms (e.g., <span class="math notranslate nohighlight">\(\left&lt;\varphi^\prime \tilde{W}_{tr}^\prime \right&gt;\)</span>) as the two terms that comprise this term (<span class="math notranslate nohighlight">\(\left&lt; \varphi^\prime {\tilde w}_{tr}^{\prime} \right&gt;\)</span> and <span class="math notranslate nohighlight">\(\left&lt; \varphi^\prime \tilde{ u}^{\prime}\right&gt;\)</span>) are fundamentally different processes that must be modeled separately.</p>
 </section>
 </section>
 <section id="discrete-equations">
 <h2>10. Discrete Equations<a class="headerlink" href="#discrete-equations" title="Permalink to this heading"></a></h2>
-<p>In the following equations, the subscripts <span class="math notranslate nohighlight">\(i\)</span>, <span class="math notranslate nohighlight">\(e\)</span>, and <span class="math notranslate nohighlight">\(v\)</span> indicate cell, edge, and vertex locations and subscript <span class="math notranslate nohighlight">\(k\)</span> is the layer.  Square brackets <span class="math notranslate nohighlight">\([\cdot]_e\)</span> and <span class="math notranslate nohighlight">\([\cdot]_v\)</span> are quantities that are interpolated to edge and vertex locations. For vector quantities, <span class="math notranslate nohighlight">\(u_{e,k}\)</span> denotes the normal component at the center of the edge (where the normal component is the local <span class="math notranslate nohighlight">\({\bf n}_\perp\)</span> described in above sections), while <span class="math notranslate nohighlight">\(u_{e,k}^\perp\)</span> denotes the tangential component. We have switched from <span class="math notranslate nohighlight">\(\varphi_{i,k}^{bot}\)</span> to the identical <span class="math notranslate nohighlight">\(\varphi_{i,k+1}^{top}\)</span> for all variables in order for the notation to match the array names in the code. It is important to note that any term without a subscript <span class="math notranslate nohighlight">\(k\)</span> are quantities evaluated at that location and are <em><strong>not</strong></em> individual layer averages, but will be reconstructed as a function of neighboring layer average values.  For example, Eq (44) of <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999108002593">White and Adcroft (2008)</a> shows a third order reconstruction.  Finally, we note that in the equations below, it is assumed that <span class="math notranslate nohighlight">\(k\)</span> increases away from the surface.</p>
+<p>In the following equations, the subscripts <span class="math notranslate nohighlight">\(i\)</span>, <span class="math notranslate nohighlight">\(e\)</span>, and <span class="math notranslate nohighlight">\(v\)</span> indicate cell, edge, and vertex locations and subscript <span class="math notranslate nohighlight">\(k\)</span> is the layer.  Square brackets <span class="math notranslate nohighlight">\([\cdot]_e\)</span> and <span class="math notranslate nohighlight">\([\cdot]_v\)</span> are quantities that are interpolated to edge and vertex locations. For vector quantities, <span class="math notranslate nohighlight">\(u_{e,k}\)</span> denotes the normal component at the center of the edge (where the normal component is the local <span class="math notranslate nohighlight">\(\mathbf{n}_\perp\)</span> described in above sections), while <span class="math notranslate nohighlight">\(u_{e,k}^\perp\)</span> denotes the tangential component. We have switched from <span class="math notranslate nohighlight">\(\varphi_{i,k}^{bot}\)</span> to the identical <span class="math notranslate nohighlight">\(\varphi_{i,k+1}^{top}\)</span> for all variables in order for the notation to match the array names in the code. It is important to note that any term without a subscript <span class="math notranslate nohighlight">\(k\)</span> are quantities evaluated at that location and are <em><strong>not</strong></em> individual layer averages, but will be reconstructed as a function of neighboring layer average values.  For example, Eq (44) of <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999108002593">White and Adcroft (2008)</a> shows a third order reconstruction.  Finally, we note that in the equations below, it is assumed that <span class="math notranslate nohighlight">\(k\)</span> increases away from the surface.</p>
 <p><strong>Mass:</strong></p>
 <div class="math notranslate nohighlight" id="equation-discrete-mass">
-<span class="eqno">(50)<a class="headerlink" href="#equation-discrete-mass" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(53)<a class="headerlink" href="#equation-discrete-mass" title="Permalink to this equation"></a></span>\[
 \frac{\partial {\tilde h}_{i,k} }{\partial t}
 + \nabla \cdot \left(\left[{\tilde h}_k\right]_e {\bf u}_{e,k}\right)
-+ \rho_0 \left[ \tilde{W}_{tr} \right]_k^\text{top}
-- \rho_0 \left[ \tilde{W}_{tr} \right]_{k+1}^\text{top}
++ \left[ \tilde{W}_{tr} \right]_k^\text{top}
+- \left[ \tilde{W}_{tr} \right]_{k+1}^\text{top}
 = 0.
 \]</div>
 <p>In this equation, mass source term (<span class="math notranslate nohighlight">\(Q\)</span>), such as sources like river runoff, sea ice freshwater fluxes, precipitation, and evaporation are bound up in the surface value of <span class="math notranslate nohighlight">\(\tilde{W}_{tr}^{\text{top}}\)</span>.  The mass sources will be normalized by <span class="math notranslate nohighlight">\(\rho_0\)</span> to achieve consistent units.</p>
 <p><strong>Tracer:</strong></p>
 <div class="math notranslate nohighlight" id="equation-discrete-tracer">
-<span class="eqno">(51)<a class="headerlink" href="#equation-discrete-tracer" title="Permalink to this equation"></a></span>\[\begin{split}
-\frac{\partial {\tilde h}_{i,k} \varphi_{i,k}}{\partial t}  &amp; + \nabla \cdot \left(\left[{\tilde h}_{i,k} \varphi_{i,k}\right]_e {\bf u}_{e,k}\right) + \rho_0 \left\{ \left[ \varphi \tilde{W}_{tr} \right]_k^\text{top} - \left[ \varphi \tilde{W}_{tr} \right]_{k+1}^\text{top} \right\} \\
-&amp; = - \nabla \cdot \left({\tilde h}_k \left&lt;\varphi^{\prime} {\bf u}^{\prime}\right&gt;_k \right) - \rho_0 \left\{ \left[\left&lt; \varphi^\prime {\tilde w}_{tr}^{\prime} \right&gt; - \left&lt; \varphi^\prime \tilde{ u}^{\prime}\right&gt; \right]_k^\text{top} - \left[\left&lt; \varphi^\prime {\tilde w}_{tr}^{\prime} \right&gt; - \left&lt; \varphi^\prime \tilde{ u}^{\prime}\right&gt; \right]_{k+1}^\text{top} \right\}.
+<span class="eqno">(54)<a class="headerlink" href="#equation-discrete-tracer" title="Permalink to this equation"></a></span>\[\begin{split}
+\frac{\partial {\tilde h}_{i,k} \varphi_{i,k}}{\partial t}  &amp; + \nabla \cdot \left(\left[{\tilde h}_{i,k} \varphi_{i,k}\right]_e {\bf u}_{e,k}\right) + \left\{ \left[ \varphi \tilde{W}_{tr} \right]_k^\text{top} - \left[ \varphi \tilde{W}_{tr} \right]_{k+1}^\text{top} \right\} \\
+&amp; = - \nabla \cdot \left({\tilde h}_k \left&lt;\varphi^{\prime} {\bf u}^{\prime}\right&gt;_k \right) - \left\{ \left[\left&lt; \varphi^\prime {\tilde w}_{tr}^{\prime} \right&gt; - \left&lt; \varphi^\prime \tilde{ u}^{\prime}\right&gt; \right]_k^\text{top} - \left[\left&lt; \varphi^\prime {\tilde w}_{tr}^{\prime} \right&gt; - \left&lt; \varphi^\prime \tilde{ u}^{\prime}\right&gt; \right]_{k+1}^\text{top} \right\}.
 \end{split}\]</div>
 <p>In the tracer equation, we note that surface fluxes (e.g. latent heat fluxes) will appear in the surface value of the vertical turbulent tracer flux (e.g., <span class="math notranslate nohighlight">\(\left[\left&lt;\varphi^\prime \tilde{w}_{tr}^\prime\right&gt;\right]_{k=0}^\text{top}\)</span>).  The surface fluxes will also include effects from volumetric surface fluxes that carry a non zero tracer value. The terms on the second line represent the small scale turbulence and the form used in Omega to represent these terms will be discussed in the next section.</p>
 <p><strong>Velocity:</strong></p>
 <p>Omega will only predict the layer average normal velocity, so we drop the bold face on the <span class="math notranslate nohighlight">\(u\)</span> terms except for the product of primes, which is specified in the next section.</p>
 <div class="math notranslate nohighlight" id="equation-discrete-momentum">
-<span class="eqno">(52)<a class="headerlink" href="#equation-discrete-momentum" title="Permalink to this equation"></a></span>\[\begin{split}
+<span class="eqno">(55)<a class="headerlink" href="#equation-discrete-momentum" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{\partial u_{e,k}}{\partial t}
 &amp; + \left[ {\bf k} \cdot \nabla \times u_{e,k} +f_v\right]_e\left(u_{e,k}^{\perp}\right) + \left[\nabla K\right]_e  \\
-&amp; + \frac{\rho_0}{\left[\tilde{h}_{i,k}\right]_e} \left\{ \left[\left(u - u_k\right) \left\{\tilde{W}_{tr} \right\} \right]_{e,k}^\text{top} - \left[  \left(u - u_k\right) \left\{\tilde{W}_{tr} \right\} \right]_{e,k+1}^\text{top} \right\} \\
-&amp; = - \left(\nabla \Phi \right)_{e,k} - \frac{1}{\left[\tilde{h}_k\right]_e} \nabla \left( \tilde{h}_k \alpha_k p_k \right) - \frac{1}{\left[\tilde{h}_k\right]_e} \left\{ \left[ \alpha p \nabla \tilde{z}^{\text{top}}\right]_{e,k}^\text{top} -  \left[ \alpha p \nabla \tilde{z}^{\text{top}}\right]_{e,k+1}^\text{top} \right\} \\
-&amp;  - \frac{1}{\left[\tilde{h}_{i,k}\right]_e} \nabla \cdot \left( \tilde{h}_k \left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;_k \right) - \frac{\rho_0}{\left[\tilde{h}_{i,k}\right]_e^\text{top}}  \left\{ \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{ u}^\prime \right&gt; \right]_{e,k}^\text{top} - \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{ u}^\prime \right&gt; \right]_{e,k+1}^\text{top} \right\}.
+&amp; + \frac{1}{\left[\tilde{h}_{i,k}\right]_e} \left\{ \left[\left(u - u_k\right) \left\{\tilde{W}_{tr} \right\} \right]_{e,k}^\text{top} - \left[  \left(u - u_k\right) \left\{\tilde{W}_{tr} \right\} \right]_{e,k+1}^\text{top} \right\} \\
+&amp; = - \left(\nabla \Phi \right)_{e,k} - \frac{1}{\left[\tilde{h}_k\right]_e} \nabla \left( \tilde{h}_k \alpha_k p_k \right) + \frac{1}{\left[\tilde{h}_k\right]_e} \left\{ \left[ \alpha p \nabla \tilde{z}^{\text{top}}\right]_{e,k}^\text{top} -  \left[ \alpha p \nabla \tilde{z}^{\text{bot}}\right]_{e,k+1}^\text{top} \right\} \\
+&amp;  - \frac{1}{\left[\tilde{h}_{i,k}\right]_e} \nabla \cdot \left( \tilde{h}_k \left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;_k \right) - \frac{1}{\left[\tilde{h}_{i,k}\right]_e^\text{top}}  \left\{ \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{ u}^\prime \right&gt; \right]_{e,k}^\text{top} - \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; - \left&lt; \mathbf{u}^\prime \tilde{ u}^\prime \right&gt; \right]_{e,k+1}^\text{top} \right\}.
 \end{split}\]</div>
 <p><strong>Diagnostic Relations:</strong></p>
 <div class="math notranslate nohighlight" id="equation-discrete-pressure">
-<span class="eqno">(53)<a class="headerlink" href="#equation-discrete-pressure" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(56)<a class="headerlink" href="#equation-discrete-pressure" title="Permalink to this equation"></a></span>\[
  p_{i,k} = p_{i}^{surf} + g\rho_0 \sum_{k'=1}^{k-1} \tilde{h}_{i,k'} + \frac{1}{2} g\rho_0 \tilde{h}_{i,k}
  \]</div>
 <div class="math notranslate nohighlight" id="equation-discrete-eos">
-<span class="eqno">(54)<a class="headerlink" href="#equation-discrete-eos" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(57)<a class="headerlink" href="#equation-discrete-eos" title="Permalink to this equation"></a></span>\[
 \alpha_{i,k} = f_{eos}(p_{i,k},\Theta_{i,k},S_{i,k})
 \]</div>
 <div class="math notranslate nohighlight" id="equation-discrete-z">
-<span class="eqno">(55)<a class="headerlink" href="#equation-discrete-z" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(58)<a class="headerlink" href="#equation-discrete-z" title="Permalink to this equation"></a></span>\[
 z_{i,k}^{top} = z_{i}^{floor} + \rho_0 \sum_{k'=k}^{K_{max}} \alpha_{i,k'} \tilde{h}_{i,k'}
 \]</div>
-<p>We refer to these as the discrete equations, but time derivatives remain continuous. The time discretization is described in the <a class="reference internal" href="TimeStepping.html"><span class="std std-doc">time stepping design document</span></a>. The velocity, mass-thickness, and tracers are solved prognostically using <a class="reference internal" href="#equation-discrete-momentum">(52)</a>, <a class="reference internal" href="#equation-discrete-mass">(50)</a>, <a class="reference internal" href="#equation-discrete-tracer">(51)</a>. At the new time, these variables are used to compute pressure <a class="reference internal" href="#equation-discrete-pressure">(53)</a>, specific volume <a class="reference internal" href="#equation-discrete-eos">(54)</a>, and z-locations <a class="reference internal" href="#equation-discrete-z">(55)</a>. Additional variables are computed diagnostically at the new time: <span class="math notranslate nohighlight">\(\mathbf{u}^{\perp}\)</span>, <span class="math notranslate nohighlight">\(K\)</span>, <span class="math notranslate nohighlight">\(\zeta_a\)</span>, <span class="math notranslate nohighlight">\(z^{mid}\)</span>, <span class="math notranslate nohighlight">\(\Phi\)</span>, etc. The initial geopotential is simply <span class="math notranslate nohighlight">\(\Phi=gz\)</span>, but additional gravitational terms may be added later.</p>
+<p>We refer to these as the discrete equations, but time derivatives remain continuous. The time discretization is described in the <a class="reference internal" href="TimeStepping.html"><span class="std std-doc">time stepping design document</span></a>. The velocity, mass-thickness, and tracers are solved prognostically using <a class="reference internal" href="#equation-discrete-momentum">(55)</a>, <a class="reference internal" href="#equation-discrete-mass">(53)</a>, <a class="reference internal" href="#equation-discrete-tracer">(54)</a>. At the new time, these variables are used to compute pressure <a class="reference internal" href="#equation-discrete-pressure">(56)</a>, specific volume <a class="reference internal" href="#equation-discrete-eos">(57)</a>, and z-locations <a class="reference internal" href="#equation-discrete-z">(58)</a>. Additional variables are computed diagnostically at the new time: <span class="math notranslate nohighlight">\(\mathbf{u}^{\perp}\)</span>, <span class="math notranslate nohighlight">\(K\)</span>, <span class="math notranslate nohighlight">\(\zeta_a\)</span>, <span class="math notranslate nohighlight">\(z^{mid}\)</span>, <span class="math notranslate nohighlight">\(\Phi\)</span>, etc. The initial geopotential is simply <span class="math notranslate nohighlight">\(\Phi=gz\)</span>, but additional gravitational terms may be added later.</p>
 <p>The horizontal operators <span class="math notranslate nohighlight">\(\nabla\)</span>, <span class="math notranslate nohighlight">\(\nabla\cdot\)</span>, and <span class="math notranslate nohighlight">\(\nabla \times\)</span> are now in their discrete form. In the TRiSK design, gradients (<span class="math notranslate nohighlight">\(\nabla\)</span>) map cell centers to edges; divergence (<span class="math notranslate nohighlight">\(\nabla \cdot\)</span>) maps edge quantities to cells; and curl (<span class="math notranslate nohighlight">\(\nabla \times\)</span>) maps edges to vertices. The exact form of operators and interpolation stencils remain the same as those given in <a class="reference internal" href="OmegaV0ShallowWater.html#operator-formulation"><span class="std std-ref">Omega-0 operator formulation</span></a> The discrete version of terms common with Omega-0, such as advection, potential vorticity, and <span class="math notranslate nohighlight">\(\nabla K\)</span>, can be found in <a class="reference internal" href="OmegaV0ShallowWater.html#momentum-terms"><span class="std std-ref">Omega-0 Momentum Terms</span></a> and <a class="reference internal" href="OmegaV0ShallowWater.html#thickness-and-tracer-terms"><span class="std std-ref">Omega-0 Thickness and Tracer Terms</span></a>.</p>
 </section>
 <section id="sub-gridscale-parameterizations">
 <h2>11. Sub gridscale parameterizations<a class="headerlink" href="#sub-gridscale-parameterizations" title="Permalink to this heading"></a></h2>
 <section id="horizontal-velocity-dissipation">
 <h3>Horizontal Velocity Dissipation<a class="headerlink" href="#horizontal-velocity-dissipation" title="Permalink to this heading"></a></h3>
-<p>There are two terms related to horizontal momentum dissipation in <a class="reference internal" href="#equation-discrete-momentum">(52)</a> that need to be parameterized, <span class="math notranslate nohighlight">\(\left&lt;\mathbf{u}^\prime \tilde{u}^\prime \right&gt;_k\)</span> and <span class="math notranslate nohighlight">\(\frac{1}{\left[\tilde{h}_{i,k}\right]_e} \nabla \cdot \left( \tilde{h}_k \left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;_k \right)\)</span>.  The former only arises from the layer integration in pseudo-height coordinates, we interpret this term as the projection of the horizontal momentum dissipation that crosses <span class="math notranslate nohighlight">\(\tilde{z}\)</span> interfaces.  Given this, we discuss the form of the horizontal dissipation parameterization first and return to the second term in a later subsection.</p>
+<p>There are two terms related to horizontal momentum dissipation in <a class="reference internal" href="#equation-discrete-momentum">(55)</a> that need to be parameterized, <span class="math notranslate nohighlight">\(\left&lt;\mathbf{u}^\prime \tilde{u}^\prime \right&gt;_k\)</span> and <span class="math notranslate nohighlight">\(\frac{1}{\left[\tilde{h}_{i,k}\right]_e} \nabla \cdot \left( \tilde{h}_k \left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;_k \right)\)</span>.  The former only arises from the layer integration in pseudo-height coordinates, we interpret this term as the projection of the horizontal momentum dissipation that crosses <span class="math notranslate nohighlight">\(\tilde{z}\)</span> interfaces.  Given this, we discuss the form of the horizontal dissipation parameterization first and return to the second term in a later subsection.</p>
 <p>As in MPAS-Ocean, parameterization of the horizontal momentum dissipation is through Laplacian or Biharmonic dissipation,</p>
 <div class="math notranslate nohighlight" id="equation-discrete-mom-diss">
-<span class="eqno">(56)<a class="headerlink" href="#equation-discrete-mom-diss" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(59)<a class="headerlink" href="#equation-discrete-mom-diss" title="Permalink to this equation"></a></span>\[
 \frac{1}{\left[\tilde{h}_{i,k}\right]_e} \nabla \cdot \left( \tilde{h}_k \left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt;_k \right) =  \nu_{2,e} \nabla^2 u_{e,k} - \nu_{4,e} \nabla^4 u_{e,k}.
 \]</div>
-<p>Again, the quantities in <a class="reference internal" href="#equation-discrete-mom-diss">(56)</a> are layer averaged.  The gradient of <span class="math notranslate nohighlight">\(\tilde{h}\)</span> is assumed to be small relative to the stress tensor to allow the utilization of traditional parameterization of the dissipation. In <a class="reference internal" href="#equation-discrete-mom-diss">(56)</a>, the viscosities are defined as</p>
+<p>Again, the quantities in <a class="reference internal" href="#equation-discrete-mom-diss">(59)</a> are layer averaged.  The gradient of <span class="math notranslate nohighlight">\(\tilde{h}\)</span> is assumed to be small relative to the stress tensor to allow the utilization of traditional parameterization of the dissipation. In <a class="reference internal" href="#equation-discrete-mom-diss">(59)</a>, the viscosities are defined as</p>
 <div class="math notranslate nohighlight">
 \[
 \nu_{2,e} = \nu_2 \times \text{meshScaling}_{2,e}
@@ -940,7 +959,7 @@ z_{i,k}^{top} = z_{i}^{floor} + \rho_0 \sum_{k'=k}^{K_{max}} \alpha_{i,k'} \tild
 <section id="laplacian-dissipation-del2">
 <h4>Laplacian dissipation (del2)<a class="headerlink" href="#laplacian-dissipation-del2" title="Permalink to this heading"></a></h4>
 <div class="math notranslate nohighlight" id="equation-discrete-mom-del2">
-<span class="eqno">(57)<a class="headerlink" href="#equation-discrete-mom-del2" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(60)<a class="headerlink" href="#equation-discrete-mom-del2" title="Permalink to this equation"></a></span>\[
  \nu_{2,e} \nabla^2 u_{e,k} = \nu_{2,e} \left( \nabla D_{i,k} - \nabla^{\perp} \zeta_{v,k} \right)
 \]</div>
 <p>where <span class="math notranslate nohighlight">\(D\)</span> is divergence and <span class="math notranslate nohighlight">\(\zeta\)</span> is relative vorticity. See <a class="reference internal" href="OmegaV0ShallowWater.html#del2-momentum-dissipation"><span class="std std-ref">Omega V0 Section 3.4.4</span></a> for further details.</p>
@@ -949,7 +968,7 @@ z_{i,k}^{top} = z_{i}^{floor} + \rho_0 \sum_{k'=k}^{K_{max}} \alpha_{i,k'} \tild
 <h4>Biharmonic dissipation (del4)<a class="headerlink" href="#biharmonic-dissipation-del4" title="Permalink to this heading"></a></h4>
 <p>As in <a class="reference internal" href="OmegaV0ShallowWater.html#del4-momentum-dissipation"><span class="std std-ref">Omega V0 Section 3.4.5</span></a>, biharmonic momentum dissipation is computed with two applications of the Del2 operator above.</p>
 <div class="math notranslate nohighlight" id="equation-discrete-mom-del4">
-<span class="eqno">(58)<a class="headerlink" href="#equation-discrete-mom-del4" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(61)<a class="headerlink" href="#equation-discrete-mom-del4" title="Permalink to this equation"></a></span>\[
  - \nu_{4,e} \nabla^4 u_{e,k}
 = - \nu_{4,e} \nabla^2 \left( \nabla^2 u_{e,k} \right)
 \]</div>
@@ -959,15 +978,15 @@ z_{i,k}^{top} = z_{i}^{floor} + \rho_0 \sum_{k'=k}^{K_{max}} \alpha_{i,k'} \tild
 <h3>Velocity dissipation across a sloping <span class="math notranslate nohighlight">\(\tilde{z}\)</span> surface<a class="headerlink" href="#velocity-dissipation-across-a-sloping-tilde-z-surface" title="Permalink to this heading"></a></h3>
 <p>We interpret <span class="math notranslate nohighlight">\(\left&lt;\mathbf{u}^\prime \tilde{u}^\prime \right&gt;\)</span> as the dissipation of momentum across the sloping <span class="math notranslate nohighlight">\(\tilde{z}\)</span> surface.</p>
 <div class="math notranslate nohighlight" id="equation-discrete-mom-flux-sloping">
-<span class="eqno">(59)<a class="headerlink" href="#equation-discrete-mom-flux-sloping" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(62)<a class="headerlink" href="#equation-discrete-mom-flux-sloping" title="Permalink to this equation"></a></span>\[
 \left&lt;\mathbf{u}^\prime \tilde{u}^\prime \right&gt; = \left\{\left[\nu_{2,e} \left( \nabla \tilde{D}_{i} - \nabla^{\perp} \tilde{\zeta}_{v} \right)\right]_k - \left[\nu_{4,e} \nabla^2 \left( \nabla^2 \tilde{u}_{e,k} \right)\right]_k\right\}
 \]</div>
-<p>While it looks very similar to <a class="reference internal" href="#equation-discrete-mom-del2">(57)</a> - <a class="reference internal" href="#equation-discrete-mom-del4">(58)</a>, there are a few critical differences.  First, the normal velocities in the divergence and relative vorticity in <a class="reference internal" href="#equation-discrete-mom-flux-sloping">(59)</a> are the reconstructed velocity at the top of the cell along an edge, not the layer average.  Second, the velocities in the divergence and relative vorticity are only the projection across the interface (hence the tilde on <span class="math notranslate nohighlight">\(D\)</span> and <span class="math notranslate nohighlight">\(\zeta\)</span>), computed in a discrete sense following</p>
+<p>While it looks very similar to <a class="reference internal" href="#equation-discrete-mom-del2">(60)</a> - <a class="reference internal" href="#equation-discrete-mom-del4">(61)</a>, there are a few critical differences.  First, the normal velocities in the divergence and relative vorticity in <a class="reference internal" href="#equation-discrete-mom-flux-sloping">(62)</a> are the reconstructed velocity at the top of the cell along an edge, not the layer average.  Second, the velocities in the divergence and relative vorticity are only the projection across the interface (hence the tilde on <span class="math notranslate nohighlight">\(D\)</span> and <span class="math notranslate nohighlight">\(\zeta\)</span>), computed in a discrete sense following</p>
 <div class="math notranslate nohighlight">
 \[
 \left[\tilde{u}_{e}\right]_k = u_e \nabla \tilde{z}_{e,k}
 \]</div>
-<p>in this relation, we have moved the subscript <span class="math notranslate nohighlight">\(k\)</span> off the variable itself to prevent confusion with the layer average.  With this definition, <a class="reference internal" href="#equation-discrete-mom-flux-sloping">(59)</a> goes to zero for flat layer surfaces.</p>
+<p>in this relation, we have moved the subscript <span class="math notranslate nohighlight">\(k\)</span> off the variable itself to prevent confusion with the layer average.  With this definition, <a class="reference internal" href="#equation-discrete-mom-flux-sloping">(62)</a> goes to zero for flat layer surfaces.</p>
 <section id="vertical-velocity-dissipation">
 <h4>Vertical velocity dissipation<a class="headerlink" href="#vertical-velocity-dissipation" title="Permalink to this heading"></a></h4>
 <p>The vertical turbulent momentum stress is most commonly parameterized as a down-gradient process, i.e.,</p>
@@ -975,19 +994,19 @@ z_{i,k}^{top} = z_{i}^{floor} + \rho_0 \sum_{k'=k}^{K_{max}} \alpha_{i,k'} \tild
 \[
 \left[ \left&lt;\mathbf{u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right]_{e,k} = -\frac{\nu_v \rho}{\rho_0} \left[\frac{\partial u}{\partial \tilde{z}}\right]_{e,k}
 \]</div>
-<p>Plugging this relation into the last part of <a class="reference internal" href="#equation-discrete-momentum">(52)</a></p>
+<p>Plugging this relation into the last part of <a class="reference internal" href="#equation-discrete-momentum">(55)</a></p>
 <div class="math notranslate nohighlight" id="equation-discrete-mom-vert-diff">
-<span class="eqno">(60)<a class="headerlink" href="#equation-discrete-mom-vert-diff" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(63)<a class="headerlink" href="#equation-discrete-mom-vert-diff" title="Permalink to this equation"></a></span>\[
 \frac{1}{\left[\tilde{h}_{i,k}\right]_{e,k}}  \left\{ \left[ \nu_v \left[\frac{\partial u}{\partial \tilde{z}}\right]_{e,k} \right]_{e,k} - \left[ \nu_v \left[\frac{\partial u}{\partial \tilde{z}}\right]_{e,k} \right]_{e,k+1}  \right\}
 \]</div>
 <section id="vertical-derivatives-in-a-finite-volume-framework">
 <h5>Vertical derivatives in a finite volume framework<a class="headerlink" href="#vertical-derivatives-in-a-finite-volume-framework" title="Permalink to this heading"></a></h5>
 <p>Since, Omega will predict layer average quantities (e.g., <span class="math notranslate nohighlight">\(u_k\)</span>), it’s not immediately clear that a traditional discretization is appropriate as there is a discontinuity in the predicted variables at layer interfaces.  To circumvent this problem, we turn to weak derivatives instead of traditional pointwise forms.  A weak derivative of <span class="math notranslate nohighlight">\(\varphi\)</span> is defined as</p>
 <div class="math notranslate nohighlight" id="equation-weak-derivative-defn">
-<span class="eqno">(61)<a class="headerlink" href="#equation-weak-derivative-defn" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(64)<a class="headerlink" href="#equation-weak-derivative-defn" title="Permalink to this equation"></a></span>\[
 \int_{\tilde{z}_{k+1/2}^{\text{top}}}^{\tilde{z}_{k-1/2}^{\text{top}}} \varphi^\prime \psi d\tilde{z} = \varphi \psi - \int_{\tilde{z}_{k+1/2}^{\text{top}}}^{\tilde{z}_{k-1/2}^{\text{top}}} \varphi \psi^\prime d\tilde{z}.
 \]</div>
-<p>Here <span class="math notranslate nohighlight">\(\psi\)</span> is a smooth test function.  If we choose <span class="math notranslate nohighlight">\(\psi\)</span> such that it has compact support on the interval <span class="math notranslate nohighlight">\((\tilde{z}_{k+1/2}^{\text{top}},\tilde{z}_{k-1/2}^{\text{top}})\)</span> then the first term on the right hand side of <a class="reference internal" href="#equation-weak-derivative-defn">(61)</a> is zero.  Using the fact that Omega predicts layer averages, the integral on the right hand side can be broken into</p>
+<p>Here <span class="math notranslate nohighlight">\(\psi\)</span> is a smooth test function.  If we choose <span class="math notranslate nohighlight">\(\psi\)</span> such that it has compact support on the interval <span class="math notranslate nohighlight">\((\tilde{z}_{k+1/2}^{\text{top}},\tilde{z}_{k-1/2}^{\text{top}})\)</span> then the first term on the right hand side of <a class="reference internal" href="#equation-weak-derivative-defn">(64)</a> is zero.  Using the fact that Omega predicts layer averages, the integral on the right hand side can be broken into</p>
 <div class="math notranslate nohighlight">
 \[
 -\int_{\tilde{z}_{k+1/2}^{\text{top}}}^{\tilde{z}_{k-1/2}^{\text{top}}} \varphi \psi^\prime d\tilde{z} = - \int_{\tilde{z}_{k+1/2}^{\text{top}}}^{\tilde{z}_{k}^{\text{top}}} \varphi_{k+1} \psi(z)^\prime d\tilde{z} - \int_{\tilde{z}_{k}^{\text{top}}}^{\tilde{z}_{k-1/2}^{\text{top}}} \varphi_k \psi(z)^\prime d\tilde{z}.
@@ -1004,18 +1023,18 @@ z_{i,k}^{top} = z_{i}^{floor} + \rho_0 \sum_{k'=k}^{K_{max}} \alpha_{i,k'} \tild
 \]</div>
 <p>Since we are able to pick any test function that satisfies our assumptions, we choose the dirac delta function and rewrite the previous equation as</p>
 <div class="math notranslate nohighlight" id="equation-weak-derivative">
-<span class="eqno">(62)<a class="headerlink" href="#equation-weak-derivative" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(65)<a class="headerlink" href="#equation-weak-derivative" title="Permalink to this equation"></a></span>\[
 \varphi^\prime(z) = \left(\varphi_k - \varphi_{k+1}\right) \delta \left(z-\tilde{z}_{k}^{\text{top}}\right).
 \]</div>
-<p>If <a class="reference internal" href="#equation-weak-derivative">(62)</a> is averaged between <span class="math notranslate nohighlight">\(\tilde{z}_{k-1/2}^{\text{top}}\)</span> and <span class="math notranslate nohighlight">\(\tilde{z}_{k+1/2}^{\text{top}}\)</span>, we arrive at the expected form of the gradient centered on layer interfaces</p>
+<p>If <a class="reference internal" href="#equation-weak-derivative">(65)</a> is averaged between <span class="math notranslate nohighlight">\(\tilde{z}_{k-1/2}^{\text{top}}\)</span> and <span class="math notranslate nohighlight">\(\tilde{z}_{k+1/2}^{\text{top}}\)</span>, we arrive at the expected form of the gradient centered on layer interfaces</p>
 <div class="math notranslate nohighlight" id="equation-weak-deriv-final">
-<span class="eqno">(63)<a class="headerlink" href="#equation-weak-deriv-final" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(66)<a class="headerlink" href="#equation-weak-deriv-final" title="Permalink to this equation"></a></span>\[
 \left[\frac{\partial \varphi}{\partial \tilde{z}}\right]_{avg} = \frac{\left(\varphi_k - \varphi_{k+1}\right)}{0.5 \left(\tilde{h}_k + \tilde{h}_{k+1}\right)}
 \]</div>
 <p>where <span class="math notranslate nohighlight">\(0.5 \left(\tilde{h}_k + \tilde{h}_{k+1}\right)\)</span> is the distance between <span class="math notranslate nohighlight">\(\tilde{z}_{k-1/2}^{\text{top}}\)</span> and <span class="math notranslate nohighlight">\(\tilde{z}_{k+1/2}^{\text{top}}\)</span>.  A similar derivation can be followed to compute gradients across layer centers.  This will form discrete derivatives in Omega.</p>
-<p>With this, we can now fully discretize <a class="reference internal" href="#equation-discrete-mom-vert-diff">(60)</a> as</p>
+<p>With this, we can now fully discretize <a class="reference internal" href="#equation-discrete-mom-vert-diff">(63)</a> as</p>
 <div class="math notranslate nohighlight" id="equation-final-vert-vel-dissipation">
-<span class="eqno">(64)<a class="headerlink" href="#equation-final-vert-vel-dissipation" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(67)<a class="headerlink" href="#equation-final-vert-vel-dissipation" title="Permalink to this equation"></a></span>\[
 -\frac{1}{\left[\tilde{h}_k\right]_e} \left\{ \left[\left&lt;u^\prime \tilde{w}_{tr}^\prime\right&gt; \right]_{e,k} - \left[\left&lt;u^\prime \tilde{w}_{tr}^\prime\right&gt; \right]_{e,k+1} \right\} = -\frac{1}{\left[\tilde{h}_k\right]_e} \left\{ \frac{\left(u_{e,k-1} - u_{e,k}\right)}{0.5 \left(\tilde{h}_{k-1} + \tilde{h}_{k}\right)} - \frac{\left(u_{e,k} - u_{e,k+1}\right)}{0.5 \left(\tilde{h}_k + \tilde{h}_{k+1}\right)} \right\}.
 \]</div>
 <p>This form can be interfaced with the Omega <a class="reference internal" href="TridiagonalSolver.html"><span class="std std-doc">tridiagonal solver</span></a> routine.</p>
@@ -1038,7 +1057,7 @@ z_{i,k}^{top} = z_{i}^{floor} + \rho_0 \sum_{k'=k}^{K_{max}} \alpha_{i,k'} \tild
 <h4>Bottom Drag<a class="headerlink" href="#bottom-drag" title="Permalink to this heading"></a></h4>
 <p>Bottom Drag is applied as a bottom boundary condition during implicit vertical mixing as</p>
 <div class="math notranslate nohighlight" id="equation-discrete-mom-bottom">
-<span class="eqno">(65)<a class="headerlink" href="#equation-discrete-mom-bottom" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(68)<a class="headerlink" href="#equation-discrete-mom-bottom" title="Permalink to this equation"></a></span>\[
 - C_D \frac{u_{e,k}\left|u_{e,k}\right|}{\rho_0[\alpha_{i,k}\tilde{h}_{i,k}]_e}.
 \]</div>
 <p>The units of the term in the denominator is length [m], so that the full term has units of [m s<span class="math notranslate nohighlight">\(^{-2}\)</span>].</p>
@@ -1047,7 +1066,7 @@ z_{i,k}^{top} = z_{i}^{floor} + \rho_0 \sum_{k'=k}^{K_{max}} \alpha_{i,k'} \tild
 <h4>Rayleigh Drag<a class="headerlink" href="#rayleigh-drag" title="Permalink to this heading"></a></h4>
 <p>Rayleigh drag is a simple drag applied to every cell.  It is used to ensure stability during spin-up.</p>
 <div class="math notranslate nohighlight" id="equation-discrete-mom-ra">
-<span class="eqno">(66)<a class="headerlink" href="#equation-discrete-mom-ra" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(69)<a class="headerlink" href="#equation-discrete-mom-ra" title="Permalink to this equation"></a></span>\[
 - Ra \, u_{e,k}
 \]</div>
 </section>
@@ -1069,15 +1088,15 @@ z_{i,k}^{top} = z_{i}^{floor} + \rho_0 \sum_{k'=k}^{K_{max}} \alpha_{i,k'} \tild
 <h3>Horizontal Tracer Diffusion<a class="headerlink" href="#horizontal-tracer-diffusion" title="Permalink to this heading"></a></h3>
 <p>As with momentum dissipation, the horizontal tracer diffusion arises from the <span class="math notranslate nohighlight">\(\left&lt;\mathbf{u}_k^\prime \varphi_{k}^\prime \right&gt;\)</span> and <span class="math notranslate nohighlight">\(\left&lt; \tilde{u}^\prime \varphi^\prime \right&gt;\)</span>.  As in MPAS-Ocean, the former term can be parameterized either as Laplacian or Biharmonic diffusion,</p>
 <div class="math notranslate nohighlight" id="equation-discrete-tracer-diff">
-<span class="eqno">(67)<a class="headerlink" href="#equation-discrete-tracer-diff" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(70)<a class="headerlink" href="#equation-discrete-tracer-diff" title="Permalink to this equation"></a></span>\[
 D^\varphi_{i,k} =  \kappa_{2,e} \nabla^2 \varphi_{i,k} - \kappa_{4,e} \nabla^4 \varphi_{i,k}.
 \]</div>
-<p>As in <a class="reference internal" href="#equation-discrete-mom-diss">(56)</a>, we have defined <span class="math notranslate nohighlight">\(\kappa_{2,e} = \kappa_2 \times \text{meshScaling}_{4,e}\)</span> and <span class="math notranslate nohighlight">\(\kappa_{2,e} = \kappa_2 \times \text{meshScaling}_{4,e}\)</span>, where <span class="math notranslate nohighlight">\(\kappa_2\)</span> and <span class="math notranslate nohighlight">\(\kappa_4\)</span> are the constant values specified in the YAML configuration file.  We also assume that <span class="math notranslate nohighlight">\(\varphi_{i,k} \nabla^2 \kappa_{2,e}\)</span> is small relative to <span class="math notranslate nohighlight">\(\kappa_{2,e} \nabla^2 \varphi_{i,k}\)</span>.</p>
+<p>As in <a class="reference internal" href="#equation-discrete-mom-diss">(59)</a>, we have defined <span class="math notranslate nohighlight">\(\kappa_{2,e} = \kappa_2 \times \text{meshScaling}_{4,e}\)</span> and <span class="math notranslate nohighlight">\(\kappa_{2,e} = \kappa_2 \times \text{meshScaling}_{4,e}\)</span>, where <span class="math notranslate nohighlight">\(\kappa_2\)</span> and <span class="math notranslate nohighlight">\(\kappa_4\)</span> are the constant values specified in the YAML configuration file.  We also assume that <span class="math notranslate nohighlight">\(\varphi_{i,k} \nabla^2 \kappa_{2,e}\)</span> is small relative to <span class="math notranslate nohighlight">\(\kappa_{2,e} \nabla^2 \varphi_{i,k}\)</span>.</p>
 <section id="laplacian-diffusion-del2">
 <h4>Laplacian diffusion (del2)<a class="headerlink" href="#laplacian-diffusion-del2" title="Permalink to this heading"></a></h4>
 <p>The Laplacian may be written as the divergence of the gradient,</p>
 <div class="math notranslate nohighlight" id="equation-discrete-tracer-del2">
-<span class="eqno">(68)<a class="headerlink" href="#equation-discrete-tracer-del2" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(71)<a class="headerlink" href="#equation-discrete-tracer-del2" title="Permalink to this equation"></a></span>\[
 \nabla \cdot \left(\tilde{h}_k \left&lt;\varphi^\prime u^\prime \right&gt;_k \right) = \nabla \cdot \left( \tilde{h}_{i,k} \kappa_{2,e} \nabla \varphi_{i,k} \right).
 \]</div>
 <p>See <a class="reference internal" href="OmegaV0ShallowWater.html#del2-tracer-diffusion"><span class="std std-ref">Omega V0 Section 3.5.2</span></a> for details of this calculation.</p>
@@ -1086,7 +1105,7 @@ D^\varphi_{i,k} =  \kappa_{2,e} \nabla^2 \varphi_{i,k} - \kappa_{4,e} \nabla^4 \
 <h4>Biharmonic diffusion (del4)<a class="headerlink" href="#biharmonic-diffusion-del4" title="Permalink to this heading"></a></h4>
 <p>The biharmonic is a Laplacian operator applied twice,</p>
 <div class="math notranslate nohighlight" id="equation-discrete-tracer-del4">
-<span class="eqno">(69)<a class="headerlink" href="#equation-discrete-tracer-del4" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(72)<a class="headerlink" href="#equation-discrete-tracer-del4" title="Permalink to this equation"></a></span>\[
  -  \nabla \cdot \left( \kappa_{4,e} \nabla
 \left[
 \nabla \cdot \left( \tilde{h}_{i,k} \nabla \varphi_{i,k} \right)
@@ -1102,15 +1121,15 @@ D^\varphi_{i,k} =  \kappa_{2,e} \nabla^2 \varphi_{i,k} - \kappa_{4,e} \nabla^4 \
 \[
  \nabla \cdot \left( \tilde{h}_{i} \kappa_{2,e} \nabla \varphi_{i} \right)_k.
 \]</div>
-<p>While this is similar in form, this uses the reconstruction at the top of the layer and not the layer averages directly as in <a class="reference internal" href="#equation-discrete-tracer-del2">(68)</a>.</p>
+<p>While this is similar in form, this uses the reconstruction at the top of the layer and not the layer averages directly as in <a class="reference internal" href="#equation-discrete-tracer-del2">(71)</a>.</p>
 </section>
 </section>
 <section id="vertical-tracer-diffusion">
 <h3>Vertical tracer diffusion<a class="headerlink" href="#vertical-tracer-diffusion" title="Permalink to this heading"></a></h3>
-<p>The vertical tracer diffusion arises from the <span class="math notranslate nohighlight">\(\rho_0\left(\left[\left&lt;\varphi^\prime \tilde{w}_{tr}^\prime \right&gt; \right]_k - \left[\left&lt;\varphi^\prime \tilde{w}_{tr}^\prime \right&gt; \right]_{k+1} \right)\)</span> term. Discretization of this term differs from the vertical velocity diffusion. In the tracer equation, the quantity being updated is the mass-weighted tracer <span class="math notranslate nohighlight">\(\tilde{h}_k \varphi\)</span>, while in the momentum equation, the variable is simply the velocity <span class="math notranslate nohighlight">\(\bf u\)</span>, without multiplication by pseudo-thickness <span class="math notranslate nohighlight">\(\tilde{h}_k\)</span>. This difference affects how vertical mixing is handled. For the momentum equation, the vertical mixing term includes an explicit <span class="math notranslate nohighlight">\(1/\tilde{h}_k\)</span> factor, which makes it easy to rearrange the equation into a standard tridiganal form that can be solved implicitly (<a class="reference internal" href="#equation-final-vert-vel-dissipation">(64)</a>). However, in the tracer equation <a class="reference internal" href="#equation-layer-tracer-final-simple">(47)</a>, because <span class="math notranslate nohighlight">\(\tilde{h}_k\)</span> is included in the prognostic variable <span class="math notranslate nohighlight">\(\tilde{h}_k \varphi_k\)</span> and not divided through as in the velocity equation.  Thus isolating <span class="math notranslate nohighlight">\(\varphi_k^{n+1}\)</span> becomes more difficult, where <span class="math notranslate nohighlight">\(n\)</span> is an index of timestep. In particular, if <span class="math notranslate nohighlight">\(\tilde{h}_k^{n+1}\)</span> were treated implicitly, the left-hand side of <a class="reference internal" href="#equation-layer-tracer-final-simple">(47)</a> would involve the product of two unknowns <span class="math notranslate nohighlight">\(\tilde{h}_k^{n+1}\)</span> and <span class="math notranslate nohighlight">\(\varphi_k^{n+1}\)</span>, resulting in a non-linear system. This nonlinearity prevents the formation of the standard tridiagonal matrix for <span class="math notranslate nohighlight">\(\varphi_k^{n+1}\)</span>, unlike in the vertical momentum diffusion. To address this, Omega follows the approach used in the MPAS-Ocean: the tracer update is split into two steps. First, a provisional tracer field is computed with all processes except vertical mixing (e.g. advection, horizontal mixing). Then, vertical tracer diffusion is applied in a separate implicit step using this provisional field.</p>
+<p>The vertical tracer diffusion arises from the <span class="math notranslate nohighlight">\(\rho_0\left(\left[\left&lt;\varphi^\prime \tilde{w}_{tr}^\prime \right&gt; \right]_k - \left[\left&lt;\varphi^\prime \tilde{w}_{tr}^\prime \right&gt; \right]_{k+1} \right)\)</span> term. Discretization of this term differs from the vertical velocity diffusion. In the tracer equation, the quantity being updated is the mass-weighted tracer <span class="math notranslate nohighlight">\(\tilde{h}_k \varphi\)</span>, while in the momentum equation, the variable is simply the velocity <span class="math notranslate nohighlight">\(\bf u\)</span>, without multiplication by pseudo-thickness <span class="math notranslate nohighlight">\(\tilde{h}_k\)</span>. This difference affects how vertical mixing is handled. For the momentum equation, the vertical mixing term includes an explicit <span class="math notranslate nohighlight">\(1/\tilde{h}_k\)</span> factor, which makes it easy to rearrange the equation into a standard tridiganal form that can be solved implicitly (<a class="reference internal" href="#equation-final-vert-vel-dissipation">(67)</a>). However, in the tracer equation <a class="reference internal" href="#equation-layer-tracer-final-simple">(50)</a>, because <span class="math notranslate nohighlight">\(\tilde{h}_k\)</span> is included in the prognostic variable <span class="math notranslate nohighlight">\(\tilde{h}_k \varphi_k\)</span> and not divided through as in the velocity equation.  Thus isolating <span class="math notranslate nohighlight">\(\varphi_k^{n+1}\)</span> becomes more difficult, where <span class="math notranslate nohighlight">\(n\)</span> is an index of timestep. In particular, if <span class="math notranslate nohighlight">\(\tilde{h}_k^{n+1}\)</span> were treated implicitly, the left-hand side of <a class="reference internal" href="#equation-layer-tracer-final-simple">(50)</a> would involve the product of two unknowns <span class="math notranslate nohighlight">\(\tilde{h}_k^{n+1}\)</span> and <span class="math notranslate nohighlight">\(\varphi_k^{n+1}\)</span>, resulting in a non-linear system. This nonlinearity prevents the formation of the standard tridiagonal matrix for <span class="math notranslate nohighlight">\(\varphi_k^{n+1}\)</span>, unlike in the vertical momentum diffusion. To address this, Omega follows the approach used in the MPAS-Ocean: the tracer update is split into two steps. First, a provisional tracer field is computed with all processes except vertical mixing (e.g. advection, horizontal mixing). Then, vertical tracer diffusion is applied in a separate implicit step using this provisional field.</p>
 <p>During the tracer update, Omega first computes a provisional tracer field that excludes vertical turbulent mixing to obtain <span class="math notranslate nohighlight">\(\varphi^{n+1}\)</span>. This temporary tracer update is given by</p>
 <div class="math notranslate nohighlight" id="equation-provision-tracer-update">
-<span class="eqno">(70)<a class="headerlink" href="#equation-provision-tracer-update" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(73)<a class="headerlink" href="#equation-provision-tracer-update" title="Permalink to this equation"></a></span>\[
 \varphi^{*} = \frac{\tilde{h}_k^{n} \varphi^{n} + \Delta t  (\text{Adv} + \text{Diff}_{\text{H}})}{\tilde{h}_k^{n+1}}.
 \]</div>
 <p>where the term “<span class="math notranslate nohighlight">\(\text{Adv}\)</span>” represents resolved tracer advection and includes both horizontal transport and resolved vertical transport by the projected vertical velocity <span class="math notranslate nohighlight">\(\tilde{W}_{tr}\)</span>, and the “<span class="math notranslate nohighlight">\(\text{Diff}_{\text{H}}\)</span>” term represents horizontal tracer diffusion including the harmonic and biharmonic diffusion.
@@ -1119,7 +1138,7 @@ Once the provisional tracer field (<span class="math notranslate nohighlight">\(
 \[
 \frac{\rho_0}{\tilde{h}_k} \left\{\left[\left&lt;\varphi^\prime \tilde{w}_{tr}^\prime \right&gt;\right]_k - \left[\left&lt;\varphi^\prime \tilde{w}_{tr}^\prime \right&gt;\right]_{k+1} \right\}
 \]</div>
-<p>Taking a traditional down gradient approximation and using <a class="reference internal" href="#equation-weak-deriv-final">(63)</a> the vertical turbulent flux can be applied using a tridiagonal solver (<span class="math notranslate nohighlight">\(\mathcal{L}\)</span>) in the
+<p>Taking a traditional down gradient approximation and using <a class="reference internal" href="#equation-weak-deriv-final">(66)</a> the vertical turbulent flux can be applied using a tridiagonal solver (<span class="math notranslate nohighlight">\(\mathcal{L}\)</span>) in the
 <a class="reference internal" href="TridiagonalSolver.html"><span class="doc std std-doc">tridiagonal solver</span></a> in the implicit vertical mixing step:
 <div class="math notranslate nohighlight">
 \[
@@ -1132,7 +1151,7 @@ Additional enhancements, such as non local tracer fluxes will be discussed in fu
 <h3>MPAS-Ocean Equations of Motion<a class="headerlink" href="#mpas-ocean-equations-of-motion" title="Permalink to this heading"></a></h3>
 <p>The MPAS-Ocean layered formulation are provided here for reference. MPAS-Ocean solves for momentum, thickness, and tracers at layer <span class="math notranslate nohighlight">\(k\)</span>. These are continuous in the horizontal and discrete in the vertical.</p>
 <div class="math notranslate nohighlight" id="equation-mpaso-continuous-momentum">
-<span class="eqno">(71)<a class="headerlink" href="#equation-mpaso-continuous-momentum" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(74)<a class="headerlink" href="#equation-mpaso-continuous-momentum" title="Permalink to this equation"></a></span>\[
 \frac{\partial {\bf u}_k}{\partial t}
 + \frac{1}{2}\nabla \left| {\bf u}_k \right|^2
 + ( {\bf k} \cdot \nabla \times {\bf u}_k) {\bf u}^\perp_k
@@ -1145,11 +1164,11 @@ Additional enhancements, such as non local tracer fluxes will be discussed in fu
 + \frac{\partial }{\partial z} \left( \nu_v \frac{\partial {\bf u}_k}{\partial z} \right),
 \]</div>
 <div class="math notranslate nohighlight" id="equation-mpaso-continuous-thickness">
-<span class="eqno">(72)<a class="headerlink" href="#equation-mpaso-continuous-thickness" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(75)<a class="headerlink" href="#equation-mpaso-continuous-thickness" title="Permalink to this equation"></a></span>\[
 \frac{\partial h_k}{\partial t} + \nabla \cdot \left( h_k^e {\bf u}_k \right) + w_k^{bot} - w_k^{top} = 0,
 \]</div>
 <div class="math notranslate nohighlight" id="equation-mpaso-continuous-tracer">
-<span class="eqno">(73)<a class="headerlink" href="#equation-mpaso-continuous-tracer" title="Permalink to this equation"></a></span>\[
+<span class="eqno">(76)<a class="headerlink" href="#equation-mpaso-continuous-tracer" title="Permalink to this equation"></a></span>\[
 \frac{\partial h_k\varphi_k}{\partial t} + \nabla \cdot \left( h_k^e\varphi_k^e {\bf u}_k \right)
 + \varphi_k^{bot} w_k^{bot} - \varphi_k^{top} w_k^{top}
 = \nabla\cdot\left(h_k^e \kappa_h \nabla\varphi_k \right)
@@ -1254,7 +1273,7 @@ Additional enhancements, such as non local tracer fluxes will be discussed in fu
 <td><p>Pa</p></td>
 <td><p>cell</p></td>
 <td><p>Pressure</p></td>
-<td><p>see <a class="reference internal" href="#equation-discrete-pressure">(53)</a></p></td>
+<td><p>see <a class="reference internal" href="#equation-discrete-pressure">(56)</a></p></td>
 </tr>
 <tr class="row-even"><td><p><span class="math notranslate nohighlight">\(p^{floor}_i\)</span></p></td>
 <td><p>bottom pressure</p></td>
@@ -1366,7 +1385,7 @@ Additional enhancements, such as non local tracer fluxes will be discussed in fu
 <td><p>m</p></td>
 <td><p>cell</p></td>
 <td><p>ZTop</p></td>
-<td><p>see <a class="reference internal" href="#equation-discrete-z">(55)</a></p></td>
+<td><p>see <a class="reference internal" href="#equation-discrete-z">(58)</a></p></td>
 </tr>
 <tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\tilde{z}^{mid}_{i,k}\)</span></p></td>
 <td><p>layer mid-depth <span class="math notranslate nohighlight">\(\tilde{z}\)</span>-location</p></td>
