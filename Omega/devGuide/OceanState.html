@@ -219,37 +219,36 @@ passed to the PDE solver routines for tendency and auxiliary variable calculatio
 <p>For now, member variables that are host arrays have variable names are appended with an
 <code class="docutils literal notranslate"><span class="pre">H</span></code>.  Array variable names not ending in <code class="docutils literal notranslate"><span class="pre">H</span></code> are device arrays.  For a given time level,
 host to device array is performed via:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">copyToDevice</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">State</span><span class="o">-&gt;</span><span class="n">copyToDevice</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>and a copy from device to host is performed by:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">copyToHost</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">State</span><span class="o">-&gt;</span><span class="n">copyToHost</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>Eventually, the host arrays will be eliminated when <code class="docutils literal notranslate"><span class="pre">IO</span></code> and <code class="docutils literal notranslate"><span class="pre">Halo</span></code> are extended to
+<p>These functions validate the <code class="docutils literal notranslate"><span class="pre">TimeLevel</span></code> via <code class="docutils literal notranslate"><span class="pre">OMEGA_REQUIRE</span></code> and will abort if invalid.
+Eventually, the host arrays will be eliminated when <code class="docutils literal notranslate"><span class="pre">IO</span></code> and <code class="docutils literal notranslate"><span class="pre">Halo</span></code> are extended to
 handle host &lt;-&gt; device transfers.</p>
 <p>A time level update to advance the solution at the end of a model timestep is done by:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">updateTimeLevels</span><span class="p">();</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">State</span><span class="o">-&gt;</span><span class="n">updateTimeLevels</span><span class="p">();</span>
 </pre></div>
 </div>
 <p>This shifts the time level indices within the <code class="docutils literal notranslate"><span class="pre">State</span></code> instance. A halo exchange is
 also performed on these arrays and the IOFields data pointer is attached
 to the current time level.</p>
 <p>The arrays associated with a given time level can be accessed with the functions:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">LayerThick</span><span class="p">;</span>
-<span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getLayerThickness</span><span class="p">(</span><span class="n">LayerThick</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">);</span>
-<span class="n">Array2DReal</span><span class="w"> </span><span class="n">NormVel</span><span class="p">;</span>
-<span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getNormalVelocity</span><span class="p">(</span><span class="n">NormVel</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">LayerThick</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getLayerThickness</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
+<span class="n">Array2DReal</span><span class="w"> </span><span class="n">NormVel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getNormalVelocity</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>for the device arrays and</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">HostArray2DReal</span><span class="w"> </span><span class="n">LayerThickH</span><span class="p">;</span>
-<span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getLayerThicknessH</span><span class="p">(</span><span class="n">LayerThickH</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">);</span>
-<span class="n">HostArray2DReal</span><span class="w"> </span><span class="n">NormVelH</span><span class="p">;</span>
-<span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getNormalVelocityH</span><span class="p">(</span><span class="n">NormVelH</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">HostArray2DReal</span><span class="w"> </span><span class="n">LayerThickH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getLayerThicknessH</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
+<span class="n">HostArray2DReal</span><span class="w"> </span><span class="n">NormVelH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getNormalVelocityH</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>for the host arrays. The time level convention is:</p>
+<p>for the host arrays. These functions return the arrays directly and will abort
+via <code class="docutils literal notranslate"><span class="pre">OMEGA_REQUIRE</span></code> if an invalid <code class="docutils literal notranslate"><span class="pre">TimeLevel</span></code> is provided.</p>
+<p>The time level convention is:</p>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>time level</p></th>
