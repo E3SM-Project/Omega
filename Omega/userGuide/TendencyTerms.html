@@ -16,6 +16,8 @@
       <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
       <script src="../_static/doctools.js"></script>
       <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -66,7 +68,10 @@
 <li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Tendency Terms</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tendency Terms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#second-order-horizontal-advection-algorithm">Second Order Horizontal Advection Algorithm</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
@@ -217,16 +222,19 @@ tendency terms are currently implemented:</p>
 <tr class="row-even"><td><p>TracerHorzAdvOnCell</p></td>
 <td><p>horizontal advection of thickness-weighted tracers</p></td>
 </tr>
-<tr class="row-odd"><td><p>TracerDiffOnCell</p></td>
+<tr class="row-odd"><td><p>TracerHighOrderHorzAdvOnCell</p></td>
+<td><p>second order horizontal advection of thickness-weighted tracers</p></td>
+</tr>
+<tr class="row-even"><td><p>TracerDiffOnCell</p></td>
 <td><p>horizontal diffusion of thickness-weighted tracers</p></td>
 </tr>
-<tr class="row-even"><td><p>TracerHyperDiffOnCell</p></td>
+<tr class="row-odd"><td><p>TracerHyperDiffOnCell</p></td>
 <td><p>biharmonic horizontal mixing of thickness-weighted tracers</p></td>
 </tr>
-<tr class="row-odd"><td><p>WindForcingOnEdge</p></td>
+<tr class="row-even"><td><p>WindForcingOnEdge</p></td>
 <td><p>forcing by wind stress, defined on edges</p></td>
 </tr>
-<tr class="row-even"><td><p>BottomDragOnEdge</p></td>
+<tr class="row-odd"><td><p>BottomDragOnEdge</p></td>
 <td><p>bottom drag, defined on edges</p></td>
 </tr>
 </tbody>
@@ -289,36 +297,128 @@ the currently available tendency terms:</p>
 <td><p>TracerHorzAdvTendencyEnable</p></td>
 <td><p>enable/disable term</p></td>
 </tr>
-<tr class="row-even"><td><p>TracerDiffOnCell</p></td>
-<td><p>TracerDiffTendencyEnable</p></td>
-<td><p>enable/disable term</p></td>
+<tr class="row-even"><td><p></p></td>
+<td><p>HorzTracerFluxOrder</p></td>
+<td><p>1 for standard linear advection</p></td>
 </tr>
-<tr class="row-odd"><td><p></p></td>
-<td><p>EddyDiff2</p></td>
-<td><p>horizontal diffusion coefficient</p></td>
-</tr>
-<tr class="row-even"><td><p>TracerHyperDiffOnCell</p></td>
-<td><p>TracerHyperDiffTendencyEnable</p></td>
-<td><p>enable/disable term</p></td>
-</tr>
-<tr class="row-odd"><td><p></p></td>
-<td><p>EddyDiff4</p></td>
-<td><p>biharmonic horizontal mixing coeffienct for tracers</p></td>
-</tr>
-<tr class="row-even"><td><p>WindForcingOnEdge</p></td>
-<td><p>WindForcingTendencyEnable</p></td>
-<td><p>enable/disable term</p></td>
-</tr>
-<tr class="row-odd"><td><p>BottomDragOnEdge</p></td>
-<td><p>BottomDragTendencyEnable</p></td>
+<tr class="row-odd"><td><p>TracerHighOrderHorzAdvOnCell</p></td>
+<td><p>TracerHorzAdvTendencyEnable</p></td>
 <td><p>enable/disable term</p></td>
 </tr>
 <tr class="row-even"><td><p></p></td>
+<td><p>HorzTracerFluxOrder</p></td>
+<td><p>2 for second order advection algorithm</p></td>
+</tr>
+<tr class="row-odd"><td><p>TracerDiffOnCell</p></td>
+<td><p>TracerDiffTendencyEnable</p></td>
+<td><p>enable/disable term</p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p>EddyDiff2</p></td>
+<td><p>horizontal diffusion coefficient</p></td>
+</tr>
+<tr class="row-odd"><td><p>TracerHyperDiffOnCell</p></td>
+<td><p>TracerHyperDiffTendencyEnable</p></td>
+<td><p>enable/disable term</p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p>EddyDiff4</p></td>
+<td><p>biharmonic horizontal mixing coeffienct for tracers</p></td>
+</tr>
+<tr class="row-odd"><td><p>WindForcingOnEdge</p></td>
+<td><p>WindForcingTendencyEnable</p></td>
+<td><p>enable/disable term</p></td>
+</tr>
+<tr class="row-even"><td><p>BottomDragOnEdge</p></td>
+<td><p>BottomDragTendencyEnable</p></td>
+<td><p>enable/disable term</p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
 <td><p>BottomDragCoeff</p></td>
 <td><p>bottom drag coefficient</p></td>
 </tr>
 </tbody>
 </table>
+<section id="second-order-horizontal-advection-algorithm">
+<h2>Second Order Horizontal Advection Algorithm<a class="headerlink" href="#second-order-horizontal-advection-algorithm" title="Permalink to this heading"></a></h2>
+<p>The horizontal advection is done independently within each ocean layer
+so a two dimensional scheme is required to advect mixing ratios.
+The second order horizontal advection scheme is described in the paper</p>
+<p>William C. Skamarock and Almut Gassmann,
+“Conservative Transport Schemes for Spherical Geodesic Grids: High-Order Flux Operators for ODE-Based Time Integration”
+Monthly Weather Review, Vol 139: Issue 9, pp 2962–2975, 2011. doi.org/10.1175/MWR-D-10-05056.1</p>
+<p>and only a summary of a few equations from that paper are reproduced here.</p>
+<p>The conservative form of the scalar transport equation
+within a fluid is given in equation (1) of Skamarock and Gassmann,
+<div class="math notranslate nohighlight">
+\[
+ \frac{\partial(\rho\psi)}{\partial t} = -\nabla\cdot\mathbf{V}\rho\psi
+\]</div>
+
+where <span class="math notranslate nohighlight">\(\rho\)</span> is the fluid density, <span class="math notranslate nohighlight">\(\psi\)</span> is the mixing ratio, and <span class="math notranslate nohighlight">\(\mathbf{V}\)</span> is
+the fluid velocity. This is simplified by assuming that <span class="math notranslate nohighlight">\(\rho\)</span> is constant and cancels out.
+The advection scheme for a finite volume method involves approximating this equation along an element
+edge at a certain time step and multiplying by the time step length to get an approximate scalar transport
+from element to element during the time step.
+The left hand side of this equation is a time derivative and for Omega this is handled by standard Runge—Kutta methods and
+not discussed here but can be found in the Skamarock and Gassmann paper.
+The right hand side of this equation is the spatial derivative that needs to be evaluated by the Omega horizontal advection scheme.
+Omega ocean uses unstructured Voronoi meshes and a
+finite volume scheme with <span class="math notranslate nohighlight">\(\psi\)</span> defined on cell centers. A first order approximation
+to the spatial derivative of the left hand termacross a single edge of an element would be the difference of <span class="math notranslate nohighlight">\(\psi\)</span> at
+element centroids divided by the distance from cell centroid to cell centroid.  This is expressed in equation (5) of the paper.
+For edge <span class="math notranslate nohighlight">\(i\)</span> between elements <span class="math notranslate nohighlight">\(i+1/2\)</span> and <span class="math notranslate nohighlight">\(i-1/2\)</span>,
+<div class="math notranslate nohighlight">
+\[
+ \frac{\partial(u\psi_i)}{\partial x} = \frac{1}{\Delta x}[F_{i+1/2}(u\psi) - F_{i-1/2}(u\psi)] + O(\Delta x^2).
+\]</div>
+
+Where <span class="math notranslate nohighlight">\(u\)</span> is <span class="math notranslate nohighlight">\(\mathbf{V}\cdot\mathbf{n}\)</span> where <span class="math notranslate nohighlight">\(\mathbf{n}\)</span> is the unit normal along the edge being evaluated and <span class="math notranslate nohighlight">\(F\)</span> is the evaluation
+of <span class="math notranslate nohighlight">\(\psi\)</span> for the elements on each side of the edge being evaluated.
+This is used when the TracerHorzAdvOnCell user option is active and HorzTracerFluxOrder is 1.
+To make the comparison to higher order methods explicit, this first order method is equivalent to defining <span class="math notranslate nohighlight">\(\psi\)</span> as a linear function,
+<span class="math notranslate nohighlight">\(\psi = c_0 + c_x x + c_y y\)</span>, between the two elements sharing the edge <span class="math notranslate nohighlight">\(i\)</span> and taking the directed derivative along the edge.</p>
+<p>For higher order flux calculations, higher order derivatives of <span class="math notranslate nohighlight">\(\psi\)</span> are needed and for the user option of
+TracerHorzAdvOnCell along with HorzTracerFluxOrder set to 2, a quadratic approximation of <span class="math notranslate nohighlight">\(\psi\)</span> is used,
+<div class="math notranslate nohighlight">
+\[
+\psi = c_0 + c_x x + c_y y + c_{xx} x^2 + c_{xy} xy + c_{yy} y^2,
+\]</div>
+
+defined for each edge in the mesh. The six coefficients in this quadratic equation are calculated from
+a least squares fit of <span class="math notranslate nohighlight">\(\psi\)</span> in a neighborhood of elements around an edge. The
+least squares fit is defined in equation (12) of the paper,
+<div class="math notranslate nohighlight">
+\[
+ \mathbf{f = (P^T P)^{-1}P^T s = Bs}
+\]</div>
+
+where the vector <span class="math notranslate nohighlight">\(\mathbf{f} = [c_0,c_x,c_y,c_{xx},c_{xy},c_{yy}]\)</span> and <span class="math notranslate nohighlight">\(\mathbf{P}\)</span> is an <span class="math notranslate nohighlight">\(m\times 6\)</span> matrix with each row,
+<span class="math notranslate nohighlight">\((1,x_i,y_i,x_i^2,x_iy_i,y_i^2)\)</span>, based on the cell center coordinates where there is one row for each of the <span class="math notranslate nohighlight">\(m\)</span> elements in the neighborhood.
+This results in a <span class="math notranslate nohighlight">\(6\times m\)</span> matrix <span class="math notranslate nohighlight">\(\mathbf{B}\)</span>. The values of <span class="math notranslate nohighlight">\(\mathbf{s}\)</span> are the mixing ratios,
+<span class="math notranslate nohighlight">\(\mathbf{s}=[\psi_0, \psi_1,...,\psi_m]\)</span>, of the elements in the neighborhood at the time step being evaluated.
+Note that <span class="math notranslate nohighlight">\(\mathbf{B}\)</span> depends on the mesh geometry only, so only needs to
+be computed once for each edge during initialization. Since only the second order terms are used to determine the
+second order derivatives needed for the higher order flux corrections to the lower order linear flux given above
+and the derivatives are taken along a line connecting
+cell centers, the amount of data that needs to be stored is minimized and <span class="math notranslate nohighlight">\(\mathbf{B}\)</span> reduces to a vector.</p>
+<p>The second order derivatives of <span class="math notranslate nohighlight">\(\psi\)</span> are then combined as shown in equation (11) of Skamarock and Gassmann to get
+a second order horizontal transport algorithm.</p>
+<p>The computation of these second order fluxes is complicated by having to do these computations on a sphere.
+Figure 2 from the Skamarock and Gassmann paper describs the slight modifications needed to compute the entries
+of the <span class="math notranslate nohighlight">\(\mathbf{P}\)</span> matrix for a spherical geometry where the distances need to be measured as arc lengths along
+the surface.</p>
+<p>In practice, the convergence of this higher order algorithm on a sphere is slightly below
+second order. For the advection of a <span class="math notranslate nohighlight">\(\psi\)</span> in the shape of a cosine bell
+being advected around a sphere and compared with the analytic solution, the spatial convergence for grid refinement
+is about order 1.7 as shown in  <a class="reference internal" href="#tracer-higher-order-convergence"><span class="std std-numref">Fig. 1</span></a>:</p>
+<figure class="align-center" id="tracer-higher-order-convergence">
+<a class="reference internal image-reference" href="../_images/higher_order_tracer_convergence_on_sphere.jpeg"><img alt="../_images/higher_order_tracer_convergence_on_sphere.jpeg" src="../_images/higher_order_tracer_convergence_on_sphere.jpeg" style="width: 600px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Tracer higer order convergence example of a cosine bell advected on a sphere showing an order 1.71 convergence rate</span><a class="headerlink" href="#tracer-higher-order-convergence" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+</section>
 </section>
 
 

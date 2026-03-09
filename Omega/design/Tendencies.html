@@ -256,14 +256,23 @@ a static map of all tendencies and a pointer to the default tendencies instance 
 retrieval.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Tendencies</span><span class="p">{</span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span>
+<span class="w">   </span><span class="c1">// Arrays for accumulating tendencies</span>
 <span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">LayerThicknessTend</span><span class="p">;</span>
 <span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">NormalVelocityTend</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array3DReal</span><span class="w"> </span><span class="n">TracerTend</span><span class="p">;</span>
+<span class="w">   </span><span class="c1">// Instances of tendency terms</span>
 <span class="w">   </span><span class="n">ThicknessFluxDivOnCell</span><span class="w"> </span><span class="n">ThicknessFluxDiv</span><span class="p">;</span>
 <span class="w">   </span><span class="n">PotentialVortHAdvOnEdge</span><span class="w"> </span><span class="n">PotientialVortHAdv</span><span class="p">;</span>
 <span class="w">   </span><span class="n">KEGradOnEdge</span><span class="w"> </span><span class="n">KEGrad</span><span class="p">;</span>
 <span class="w">   </span><span class="n">SSHGradOnEdge</span><span class="w"> </span><span class="n">SSHGrad</span><span class="p">;</span>
 <span class="w">   </span><span class="n">VelocityDiffusionOnEdge</span><span class="w"> </span><span class="n">VelocityDiffusion</span><span class="p">;</span>
 <span class="w">   </span><span class="n">VelocityHyperDiffOnEdge</span><span class="w"> </span><span class="n">VelocityHyperDiff</span><span class="p">;</span>
+<span class="w">   </span><span class="n">WindForcingOnEdge</span><span class="w"> </span><span class="n">WindForcing</span><span class="p">;</span>
+<span class="w">   </span><span class="n">BottomDragOnEdge</span><span class="w"> </span><span class="n">BottomDrag</span><span class="p">;</span>
+<span class="w">   </span><span class="n">TracerDiffOnCell</span><span class="w"> </span><span class="n">TracerDiffusion</span><span class="p">;</span>
+<span class="w">   </span><span class="n">TracerHyperDiffOnCell</span><span class="w"> </span><span class="n">TracerHyperDiff</span><span class="p">;</span>
+<span class="w">   </span><span class="n">TracerHorzAdvOnCell</span><span class="w"> </span><span class="n">TracerHorzAdv</span><span class="p">;</span>
+<span class="w">   </span><span class="n">TracerHighOrderHorzAdvOnCell</span><span class="w"> </span><span class="n">TracerHighOrderHorzAdv</span><span class="p">;</span>
 <span class="w"> </span><span class="k">private</span><span class="o">:</span>
 <span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">Tendencies</span><span class="w"> </span><span class="o">*</span><span class="n">DefaultTendencies</span><span class="p">;</span>
 <span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">Tendencies</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">AllTendencies</span><span class="p">;</span>
@@ -298,15 +307,15 @@ It will return a pointer to the newly created object.</p>
 <section id="initialization">
 <h4>4.2.2 Initialization<a class="headerlink" href="#initialization" title="Permalink to this heading"></a></h4>
 <p>The init method will create the default tendencies and return an error code:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">Tendencies::init</span><span class="p">();</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">Tendencies::init</span><span class="p">();</span>
 </pre></div>
 </div>
 </section>
 <section id="retrieval">
 <h4>4.2.3 Retrieval<a class="headerlink" href="#retrieval" title="Permalink to this heading"></a></h4>
 <p>There will be methods for getting the default and non-default tendencies instances:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Tendencies</span><span class="w"> </span><span class="o">*</span><span class="nf">Tendencies::getDefault</span><span class="p">();</span>
-<span class="n">Tendencies</span><span class="w"> </span><span class="o">*</span><span class="nf">Tendencies::get</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="n">Tendencies</span><span class="w"> </span><span class="o">*</span><span class="nf">Tendencies::getDefault</span><span class="p">();</span>
+<span class="k">static</span><span class="w"> </span><span class="n">Tendencies</span><span class="w"> </span><span class="o">*</span><span class="nf">Tendencies::get</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">);</span>
 </pre></div>
 </div>
 </section>
@@ -314,15 +323,15 @@ It will return a pointer to the newly created object.</p>
 <h4>4.2.4 Computation<a class="headerlink" href="#computation" title="Permalink to this heading"></a></h4>
 <p>The ‘computeAll’ method will compute and accumulate all layer thickness and normal velocity tendencies using the ocean
 state and auxiliary state from a given time level:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Tendencies::computeAllTendencies</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">OceanState</span><span class="w"> </span><span class="o">*</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">AuxilaryState</span><span class="w"> </span><span class="o">*</span><span class="n">AuxState</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Tendencies::computeAllTendencies</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">OceanState</span><span class="w"> </span><span class="o">*</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">AuxilaryState</span><span class="w"> </span><span class="o">*</span><span class="n">AuxState</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Array3DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TracerArray</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">VelTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="n">Time</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The layer thickness tendencies will be computed with a method:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Tendencies::computeThicknessTendencies</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">OceanState</span><span class="w"> </span><span class="o">*</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">AuxilaryState</span><span class="w"> </span><span class="o">*</span><span class="n">AuxState</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Tendencies::computeThicknessTendencies</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">OceanState</span><span class="w"> </span><span class="o">*</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">AuxilaryState</span><span class="w"> </span><span class="o">*</span><span class="n">AuxState</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">VelTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="n">Time</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The normal velocity tendencies will be computed with a method:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Tendencies::computeVelocityTendencies</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">OceanState</span><span class="w"> </span><span class="o">*</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">AuxilaryState</span><span class="w"> </span><span class="o">*</span><span class="n">AuxState</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Tendencies::computeVelocityTendencies</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">OceanState</span><span class="w"> </span><span class="o">*</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">AuxilaryState</span><span class="w"> </span><span class="o">*</span><span class="n">AuxState</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">VelTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="n">Time</span><span class="p">);</span>
 </pre></div>
 </div>
 </section>
@@ -332,8 +341,8 @@ state and auxiliary state from a given time level:</p>
 when they are no longer in scope. The erase method
 will remove a named tendencies instance, whereas the clear method will remove all of
 them. Both will call the destructor in the process.</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Tendencies::erase</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">);</span>
-<span class="kt">void</span><span class="w"> </span><span class="nf">Tendencies::clear</span><span class="p">();</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">Tendencies::erase</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">);</span>
+<span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">Tendencies::clear</span><span class="p">();</span>
 </pre></div>
 </div>
 </section>
