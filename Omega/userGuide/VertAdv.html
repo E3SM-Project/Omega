@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Auxiliary State &mdash; Omega develop documentation</title>
+  <title>Vertical Advection &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Tendency Terms" href="TendencyTerms.html" />
-    <link rel="prev" title="Auxiliary Variables" href="AuxiliaryVariables.html" />
+    <link rel="next" title="Quick Start for Developers" href="../devGuide/QuickStart.html" />
+    <link rel="prev" title="Vertical Mixing Coefficients" href="VerticalMixingCoeff.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -65,7 +65,7 @@
 <li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
 <li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
@@ -77,7 +77,11 @@
 <li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Timing.html">Timing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
-<li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Vertical Advection</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-options">Configuration Options</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
@@ -175,9 +179,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Auxiliary State</li>
+      <li class="breadcrumb-item active">Vertical Advection</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/userGuide/AuxiliaryState.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/userGuide/VertAdv.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -185,19 +189,86 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="auxiliary-state">
-<span id="omega-user-aux-state"></span><h1>Auxiliary State<a class="headerlink" href="#auxiliary-state" title="Permalink to this heading"></a></h1>
-<p>The <code class="docutils literal notranslate"><span class="pre">AuxiliaryState</span></code> class provides a container for the <a class="reference internal" href="AuxiliaryVariables.html#omega-user-aux-vars"><span class="std std-ref">auxiliary variables</span></a> in Omega.
-Upon creation of an <code class="docutils literal notranslate"><span class="pre">AuxiliaryState</span></code> instance, these variables are allocated and registered with the IO infrastructure.
-There are no user-configurable options.</p>
+  <section id="vertical-advection">
+<span id="omega-user-vert-adv"></span><h1>Vertical Advection<a class="headerlink" href="#vertical-advection" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>In Omega, vertical advection represents the transport of mass, momentum, and
+tracer quantities along the vertical coordinate due to vertical motion within a
+water column. In the context of Omega’s
+<a class="reference internal" href="../design/OmegaV1GoverningEqns.html#omega-design-governing-eqns-omega1"><span class="std std-ref">governing equations</span></a>, vertical advection
+contributes to the tendencies of pseudo-thickness, horizontal velocity, and
+tracer fields. Vertical motion is inferred from the divergence of horizontal
+flow through the continuity equation and is necessary for accurately
+representing vertical transport in three-dimensional ocean simulations.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">VertAdv</span></code> class contains variables and functions for computing the vertical
+velocity and the tendencies of <code class="docutils literal notranslate"><span class="pre">LayerThickness</span></code>, <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">Tracers</span></code>. The algorithms used are determined by options specified in the
+configuration file.</p>
+</section>
+<section id="configuration-options">
+<h2>Configuration Options<a class="headerlink" href="#configuration-options" title="Permalink to this heading"></a></h2>
+<p>Within the <code class="docutils literal notranslate"><span class="pre">Tendencies</span></code> group of the configuration file, flags are used to
+enable or disable the contribution of vertical advection to the tendencies of
+thickness, velocity, and tracers:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Configuration name</p></th>
+<th class="head"><p>Options</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ThicknessVertAdvTendencyEnable</p></td>
+<td><p>true / false</p></td>
+</tr>
+<tr class="row-odd"><td><p>VelocityVertAdvTendencyEnable</p></td>
+<td><p>true / false</p></td>
+</tr>
+<tr class="row-even"><td><p>TracerVertAdvTendencyEnable</p></td>
+<td><p>true / false</p></td>
+</tr>
+</tbody>
+</table>
+<p>Within the <code class="docutils literal notranslate"><span class="pre">Advection</span></code> group, options are provided to configure the algorithms
+used to compute the tracer tendencies:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Configuration name</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Options</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>VerticalTracerFluxOrder</p></td>
+<td><p>order of accuracy used for the tracer flux calculation</p></td>
+<td><p>2, 3, or 4</p></td>
+</tr>
+<tr class="row-odd"><td><p>VerticalTracerFluxLimiterEnable</p></td>
+<td><p>selects the tracer tendency algorithm</p></td>
+<td><p>true / false</p></td>
+</tr>
+<tr class="row-even"><td><p>Coef3rdOrder</p></td>
+<td><p>coefficient used for blending 3rd- and 4th-order fluxes when <code class="docutils literal notranslate"><span class="pre">VerticalTracerFluxOrder</span> <span class="pre">==</span> <span class="pre">3</span></code></p></td>
+<td><p>0.0 - 1.0</p></td>
+</tr>
+</tbody>
+</table>
+<p>For <code class="docutils literal notranslate"><span class="pre">VerticalTracerFluxLimiterEnable</span></code>, <code class="docutils literal notranslate"><span class="pre">true</span></code> enables flux-corrected transport,
+and <code class="docutils literal notranslate"><span class="pre">false</span></code> selects the standard algorithm. For <code class="docutils literal notranslate"><span class="pre">Coef3rdOrder</span></code>, <code class="docutils literal notranslate"><span class="pre">1</span></code> corresponds
+to purely 3rd-order, <code class="docutils literal notranslate"><span class="pre">0</span></code> purely 4th-order.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">VertAdv</span></code> class provides four fields that can be written to output by
+adding them to the contents of an output stream in the configuration file:
+<code class="docutils literal notranslate"><span class="pre">VerticalVelocity</span></code>, <code class="docutils literal notranslate"><span class="pre">TotalVerticalVelocity</span></code>, <code class="docutils literal notranslate"><span class="pre">VertFlux</span></code>, and <code class="docutils literal notranslate"><span class="pre">LowOrderVertFlux</span></code>.
+These fields collectively make up the <code class="docutils literal notranslate"><span class="pre">VertAdv</span></code> output group.</p>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="AuxiliaryVariables.html" class="btn btn-neutral float-left" title="Auxiliary Variables" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="TendencyTerms.html" class="btn btn-neutral float-right" title="Tendency Terms" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="VerticalMixingCoeff.html" class="btn btn-neutral float-left" title="Vertical Mixing Coefficients" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../devGuide/QuickStart.html" class="btn btn-neutral float-right" title="Quick Start for Developers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

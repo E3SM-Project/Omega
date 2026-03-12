@@ -77,6 +77,7 @@
 <li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Timing.html">Timing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
@@ -123,6 +124,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html#basic-timer-use">Basic timer use</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html#advanced-timing-functions">Advanced timing functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertAdv.html">Vertical Advection</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -218,55 +220,51 @@ This includes the following variables:</p>
 <td><p>Cartesian coordinates of vertices</p></td>
 <td><p>m</p></td>
 </tr>
-<tr class="row-odd"><td><p>BottomDepth</p></td>
-<td><p>Depth of the bottom of the ocean at cell centers</p></td>
-<td><p>m</p></td>
-</tr>
-<tr class="row-even"><td><p>FCell, FEdge, FVertex</p></td>
+<tr class="row-odd"><td><p>FCell, FEdge, FVertex</p></td>
 <td><p>Coriolis parameter at cell centers/edges/vertices</p></td>
 <td><p>radians/s</p></td>
 </tr>
-<tr class="row-odd"><td><p>LonCell, LatCell</p></td>
+<tr class="row-even"><td><p>LonCell, LatCell</p></td>
 <td><p>Longitude/latitude coordinates of cell centers</p></td>
 <td><p>radians</p></td>
 </tr>
-<tr class="row-even"><td><p>LonEdge, LatEdge</p></td>
+<tr class="row-odd"><td><p>LonEdge, LatEdge</p></td>
 <td><p>Longitude/latitude coordinates of edge centers</p></td>
 <td><p>radians</p></td>
 </tr>
-<tr class="row-odd"><td><p>LonVertex, LatVertex</p></td>
+<tr class="row-even"><td><p>LonVertex, LatVertex</p></td>
 <td><p>Longitude/latitude coordinates of vertices</p></td>
 <td><p>radians</p></td>
 </tr>
-<tr class="row-even"><td><p>AreaCell</p></td>
+<tr class="row-odd"><td><p>AreaCell</p></td>
 <td><p>Area of each cell</p></td>
 <td><p>m^2</p></td>
 </tr>
-<tr class="row-odd"><td><p>AreaTriangle</p></td>
+<tr class="row-even"><td><p>AreaTriangle</p></td>
 <td><p>Area of each triangle in the dual grid</p></td>
 <td><p>m^2</p></td>
 </tr>
-<tr class="row-even"><td><p>KiteAreasOnVertex</p></td>
+<tr class="row-odd"><td><p>KiteAreasOnVertex</p></td>
 <td><p>Area of the portions of each dual cell that are part of each cellsOnVertex</p></td>
 <td><p>m^2</p></td>
 </tr>
-<tr class="row-odd"><td><p>DvEdge</p></td>
+<tr class="row-even"><td><p>DvEdge</p></td>
 <td><p>Length of each edge, computed as the distance between verticesOnEdge</p></td>
 <td><p>m</p></td>
 </tr>
-<tr class="row-even"><td><p>DcEdge</p></td>
+<tr class="row-odd"><td><p>DcEdge</p></td>
 <td><p>Length of each edge, computed as the distance between CellsOnEdge</p></td>
 <td><p>m</p></td>
 </tr>
-<tr class="row-odd"><td><p>AngleEdge</p></td>
+<tr class="row-even"><td><p>AngleEdge</p></td>
 <td><p>Angle the edge normal makes with local eastward direction</p></td>
 <td><p>radians</p></td>
 </tr>
-<tr class="row-even"><td><p>MeshDensity</p></td>
+<tr class="row-odd"><td><p>MeshDensity</p></td>
 <td><p>Value of density function used to generate a particular mesh at cell centers</p></td>
 <td><p>-</p></td>
 </tr>
-<tr class="row-odd"><td><p>WeightsOnEdge</p></td>
+<tr class="row-even"><td><p>WeightsOnEdge</p></td>
 <td><p>Reconstruction weights associated with each of the edgesOnEdge</p></td>
 <td><p>-</p></td>
 </tr>

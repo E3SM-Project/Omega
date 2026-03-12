@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Driver &mdash; Omega develop documentation</title>
+  <title>Vertical Advection &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Equation of State (EOS)" href="EOS.html" />
-    <link rel="prev" title="Model Configuration (Config)" href="Config.html" />
+    <link rel="next" title="Omega V0: Shallow Water" href="../design/OmegaV0ShallowWater.html" />
+    <link rel="prev" title="Vertical Mixing Coefficients" href="VerticalMixingCoeff.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -92,12 +92,7 @@
 <li class="toctree-l1"><a class="reference internal" href="ParallelLoops.html">Parallel loops</a></li>
 <li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Driver</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#ocninit">ocnInit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#ocnrun">ocnRun</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#ocnfinalize">ocnFinalize</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
@@ -129,7 +124,12 @@
 <li class="toctree-l1"><a class="reference internal" href="Timing.html#basic-timer-use">Basic timer use</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Timing.html#advanced-timing-functions">Advanced timing functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
-<li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Vertical Advection</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#initialization">Initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#variables">Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#methods">Methods</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -180,9 +180,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Driver</li>
+      <li class="breadcrumb-item active">Vertical Advection</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/devGuide/Driver.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/devGuide/VertAdv.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -190,61 +190,118 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="driver">
-<span id="omega-dev-driver"></span><h1>Driver<a class="headerlink" href="#driver" title="Permalink to this heading"></a></h1>
-<p>The Omega Driver consists of methods to run the Omega ocean model in either
-standalone mode or as a component of E3SM. In both cases, the execution of Omega
-is divided into three phases, carried out by the <code class="docutils literal notranslate"><span class="pre">ocnInit</span></code>, <code class="docutils literal notranslate"><span class="pre">ocnRun</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">ocnFinalize</span></code> methods. An interface layer to translate data types of the parent
-model to and from internal Omega data types will also be needed for running
-Omega as a component. For standalone mode, a <code class="docutils literal notranslate"><span class="pre">main</span></code> function is defined to
-serve as the top-level driver. The driver methods will evolve as more modules
-are developed and as Omega is integrated with E3SM.</p>
-<section id="ocninit">
-<h2>ocnInit<a class="headerlink" href="#ocninit" title="Permalink to this heading"></a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">ocnInit</span></code> method initializes everything needed to run the Omega ocean model,
-and has the following interface:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">ocnInit</span><span class="p">(</span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span><span class="w"> </span><span class="n">Calendar</span><span class="w"> </span><span class="o">&amp;</span><span class="n">OmegaCal</span><span class="p">,</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">StartTime</span><span class="p">,</span><span class="w"> </span><span class="n">Alarm</span><span class="w"> </span><span class="o">&amp;</span><span class="n">EndAlarm</span><span class="p">);</span>
+  <section id="vertical-advection">
+<span id="omega-dev-vert-adv"></span><h1>Vertical Advection<a class="headerlink" href="#vertical-advection" title="Permalink to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">VertAdv</span></code> class contains methods and arrays for calculating vertical
+velocities and the tendencies of thickness, horizontal velocity, and tracers due
+to vertical advection.</p>
+<section id="initialization">
+<h2>Initialization<a class="headerlink" href="#initialization" title="Permalink to this heading"></a></h2>
+<p>The default <code class="docutils literal notranslate"><span class="pre">VertAdv</span></code> instance is created by calling <code class="docutils literal notranslate"><span class="pre">VertAdv::init()</span></code> method.
+The default <code class="docutils literal notranslate"><span class="pre">HorzMesh</span></code>, <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code>, and <code class="docutils literal notranslate"><span class="pre">Tracers</span></code> objects must be initialized
+first. The default instance is retrieved by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertAdv</span> <span class="o">*</span><span class="n">DefVertAdv</span> <span class="o">=</span> <span class="n">VertAdv</span><span class="p">::</span><span class="n">getDefault</span><span class="p">();</span>
 </pre></div>
 </div>
-<p>It requires an MPI communicator as input, as well as a yaml configuration file
-named <code class="docutils literal notranslate"><span class="pre">omega.yml</span></code> in the directory Omega is launched from. Default configuration
-files are currently kept in the <code class="docutils literal notranslate"><span class="pre">configs</span></code> directory, eventually an automated
-tool will extract default configuration options from module header files and
-build the default config file. The <code class="docutils literal notranslate"><span class="pre">ocnInit</span></code> method will read the configuration
-options into the static <code class="docutils literal notranslate"><span class="pre">ConfigAll</span></code> object. The time management options that
-determine the duration of the simulation are read from the Config object and
-stored in <code class="docutils literal notranslate"><span class="pre">OmegaCal</span></code>, <code class="docutils literal notranslate"><span class="pre">StartTime</span></code>, and <code class="docutils literal notranslate"><span class="pre">EndAlarm</span></code>, which are output by the
-method. The <code class="docutils literal notranslate"><span class="pre">init()</span></code> methods for each Omega module necessary to run the ocean
-model are called. An integer error code is returned.</p>
+<p>Additional instances can be created with the <code class="docutils literal notranslate"><span class="pre">create</span></code> method, which calls the
+constructor and places the new instance in a map identified with the label
+<code class="docutils literal notranslate"><span class="pre">Name</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertAdv</span> <span class="o">*</span><span class="n">VertAdv</span><span class="p">::</span><span class="n">create</span><span class="p">(</span><span class="n">const</span> <span class="n">std</span><span class="p">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">Name</span><span class="p">,</span> <span class="o">///&lt;</span> <span class="p">[</span><span class="ow">in</span><span class="p">]</span> <span class="n">name</span> <span class="k">for</span> <span class="n">new</span> <span class="n">VertAdv</span>
+                         <span class="n">const</span> <span class="n">HorzMesh</span> <span class="o">*</span><span class="n">Mesh</span><span class="p">,</span>    <span class="o">///&lt;</span> <span class="p">[</span><span class="ow">in</span><span class="p">]</span> <span class="n">associated</span> <span class="n">HorzMesh</span>
+                         <span class="n">const</span> <span class="n">VertCoord</span> <span class="o">*</span><span class="n">VCoord</span><span class="p">,</span> <span class="o">///&lt;</span> <span class="p">[</span><span class="ow">in</span><span class="p">]</span> <span class="n">associated</span> <span class="n">VertCoord</span>
+                         <span class="n">Config</span> <span class="o">*</span><span class="n">Options</span>          <span class="o">///&lt;</span> <span class="p">[</span><span class="ow">in</span><span class="p">]</span> <span class="n">configuration</span> <span class="n">options</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>This instance is retrieved with the get method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertAdv</span> <span class="o">*</span><span class="n">NewVertAdv</span> <span class="o">=</span> <span class="n">VertAdv</span><span class="p">::</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Name&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The constructor reads configuration options, stores some info from the
+<code class="docutils literal notranslate"><span class="pre">HorzMesh</span></code>, <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code>, and <code class="docutils literal notranslate"><span class="pre">Tracers</span></code> objects, allocates needed arrays,
+and defines <code class="docutils literal notranslate"><span class="pre">Field</span></code> metadata.</p>
 </section>
-<section id="ocnrun">
-<h2>ocnRun<a class="headerlink" href="#ocnrun" title="Permalink to this heading"></a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">ocnRun</span></code> method advances the model over the interval defined by time
-management options, integrating from the start time until the <code class="docutils literal notranslate"><span class="pre">EndAlarm</span></code> is
-ringing. The interface is:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">ocnRun</span><span class="p">(</span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CurrTime</span><span class="p">,</span><span class="w"> </span><span class="n">Alarm</span><span class="w"> </span><span class="o">&amp;</span><span class="n">EndAlarm</span><span class="p">);</span>
-</pre></div>
-</div>
-<p>The <code class="docutils literal notranslate"><span class="pre">TimeStep</span></code> is retrieved from the default <code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code> object initialized
-during <code class="docutils literal notranslate"><span class="pre">ocnInit</span></code> and used with the value of <code class="docutils literal notranslate"><span class="pre">CurrTime</span></code> on input to construct
-a <code class="docutils literal notranslate"><span class="pre">Clock</span></code> object which manages the time loop. The <code class="docutils literal notranslate"><span class="pre">EndAlarm</span></code> is attached to
-the <code class="docutils literal notranslate"><span class="pre">Clock</span></code> to signal the end of the time loop. Eventually, there will be
-periodic alarms also attached to the <code class="docutils literal notranslate"><span class="pre">Clock</span></code> to trigger forcings, writing
-output, restarts, etc. As the time loop advances, the <code class="docutils literal notranslate"><span class="pre">doStep</span></code> method of the
-<code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code> object is called to update the ocean model until the <code class="docutils literal notranslate"><span class="pre">EndAlarm</span></code>
-is triggered. The updated <code class="docutils literal notranslate"><span class="pre">CurrTime</span></code> and status of <code class="docutils literal notranslate"><span class="pre">EndAlarm</span></code> are returned,
-along with an integer error code.</p>
+<section id="variables">
+<h2>Variables<a class="headerlink" href="#variables" title="Permalink to this heading"></a></h2>
+<p>The following arrays are stored as members of the <code class="docutils literal notranslate"><span class="pre">VertAdv</span></code> class.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable Name</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Dimensions</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>VerticalVelocity</p></td>
+<td><p>Real</p></td>
+<td><p>NCellsSize, NVertLayersP1</p></td>
+</tr>
+<tr class="row-odd"><td><p>TotalVerticalVelocity</p></td>
+<td><p>Real</p></td>
+<td><p>NCellsSize, NVertLayersP1</p></td>
+</tr>
+<tr class="row-even"><td><p>VertFlux</p></td>
+<td><p>Real</p></td>
+<td><p>NTracers, NCellsSize, NVertLayersP1</p></td>
+</tr>
+<tr class="row-odd"><td><p>LowOrderVertFlux</p></td>
+<td><p>Real</p></td>
+<td><p>NTracers, NCellsSize, NVertLayersP1</p></td>
+</tr>
+</tbody>
+</table>
+<p>The <code class="docutils literal notranslate"><span class="pre">VerticalVelocity</span></code> represents the raw vertical pseudovelocity through the
+top interfaces of cell layers, computed from the divergence of the horizontal
+velocity. The <code class="docutils literal notranslate"><span class="pre">TotalVerticalVelocity</span></code> is the transport velocity and includes
+corrections applied to the <code class="docutils literal notranslate"><span class="pre">VerticalVelocity</span></code>. The <code class="docutils literal notranslate"><span class="pre">VertFlux</span></code> and
+<code class="docutils literal notranslate"><span class="pre">LowOrderVertFlux</span></code> store tracer fluxes at layer interfaces. The specific
+numerical algorithms to compute these fluxes are chosen by the user through
+configuration options.</p>
 </section>
-<section id="ocnfinalize">
-<h2>ocnFinalize<a class="headerlink" href="#ocnfinalize" title="Permalink to this heading"></a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">ocnFinalize</span></code> method is needed to clean up all the objects allocated by the
-model. The interface is:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">ocnFinalize</span><span class="p">(</span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CurrTime</span><span class="p">);</span>
+<section id="methods">
+<h2>Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">VerticalVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">TotalVerticalVelocity</span></code> arrays are computed by
+calling the <code class="docutils literal notranslate"><span class="pre">computeVerticalVelocity</span></code> method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertAdv</span><span class="p">::</span><span class="n">computeVerticalVelocity</span><span class="p">(</span><span class="n">NormalVelocity</span><span class="p">,</span> <span class="n">FluxLayerThickEdge</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">CurrTime</span></code> is input in case a restart file needs to be written. An integer
-error code is returned.</p>
+<p>This method takes as input the <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> field from the <code class="docutils literal notranslate"><span class="pre">OceanState</span></code>
+object, and the <code class="docutils literal notranslate"><span class="pre">FluxLayerThickEdge</span></code> field from the <code class="docutils literal notranslate"><span class="pre">AuxiliaryState</span></code>. At
+present, <code class="docutils literal notranslate"><span class="pre">TotalVerticalVelocity</span></code> is equivalent to <code class="docutils literal notranslate"><span class="pre">VerticalVelocity</span></code>;
+additional corrections will be added in subsequent updates. The
+<code class="docutils literal notranslate"><span class="pre">TotalVerticalVelocity</span></code> array is used by each of the tendency methods,
+therefore <code class="docutils literal notranslate"><span class="pre">computeVerticalVelocity</span></code> must be called before any tendency
+computations.</p>
+<p>There are three methods for computing vertical advection tendencies of
+thickness, horizontal velocity and tracers that are called from the time
+stepper: <code class="docutils literal notranslate"><span class="pre">computeThicknessVAdvTend</span></code>, <code class="docutils literal notranslate"><span class="pre">computeVelocityVAdvTend</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">computeTracerVAdvTend</span></code>. Each method updates the corresponding tendency array
+in place (inout).</p>
+<p>Only the thickness tendency array is passed to the <code class="docutils literal notranslate"><span class="pre">computeThicknessVAdvTend</span></code>
+method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertAdv</span><span class="p">::</span><span class="n">computeThicknessVAdvTend</span><span class="p">(</span><span class="n">ThickTend</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">computeVelocityVAdvTend</span></code> method requires the <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and
+<code class="docutils literal notranslate"><span class="pre">FluxLayerThickEdge</span></code> fields, in addition to the velocity tendency array:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertAdv</span><span class="p">::</span><span class="n">computeVelocityVAdvTend</span><span class="p">(</span><span class="n">VelTend</span><span class="p">,</span> <span class="n">NormalVelocity</span><span class="p">,</span> <span class="n">FluxLayerThickEdge</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The tracer vertical advection tendency depends on the configured settings.
+The <code class="docutils literal notranslate"><span class="pre">computeTracerVAdvTend</span></code> method takes as arguments the full 3D array of
+tracers, a thickness array (selected based on the configured advection
+algorithm) and a <code class="docutils literal notranslate"><span class="pre">TimeInterval</span></code> representing the time step, along with the
+tracer tendency array:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertAdv</span><span class="p">::</span><span class="n">computeTracerVAdvTend</span><span class="p">(</span><span class="n">TracerTend</span><span class="p">,</span> <span class="n">TracerArray</span><span class="p">,</span> <span class="n">Thickness</span><span class="p">,</span> <span class="n">TimeStep</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>For the standard advection algorithm, <code class="docutils literal notranslate"><span class="pre">LayerThickness</span></code> from the <code class="docutils literal notranslate"><span class="pre">OceanState</span></code> is
+passed as the thickness argument; for the FCT algorithm, the <code class="docutils literal notranslate"><span class="pre">ProvThickness</span></code>
+from the <code class="docutils literal notranslate"><span class="pre">AuxiliaryState</span></code> is used instead.</p>
+<p>This method first calls <code class="docutils literal notranslate"><span class="pre">computeVerticalFluxes</span></code> to compute the tracer fluxes at
+layer interfaces, using the order of accuracy specified in the configuration
+file. It then dispatches to the selected advection algorithm (standard or FCT)
+to compute the tracer tendencies.</p>
 </section>
 </section>
 
@@ -252,8 +309,8 @@ error code is returned.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="Config.html" class="btn btn-neutral float-left" title="Model Configuration (Config)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="EOS.html" class="btn btn-neutral float-right" title="Equation of State (EOS)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="VerticalMixingCoeff.html" class="btn btn-neutral float-left" title="Vertical Mixing Coefficients" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../design/OmegaV0ShallowWater.html" class="btn btn-neutral float-right" title="Omega V0: Shallow Water" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
