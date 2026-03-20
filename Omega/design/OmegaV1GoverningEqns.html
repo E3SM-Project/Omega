@@ -217,6 +217,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PGrad.html">Pressure Gradient</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
@@ -785,7 +786,7 @@ Because the projection operator is linear and commutes with spatial derivatives 
 \end{split}\]</div>
 <p>Here we have also moved the resolved component projection operator through the spatial integrals given the properties of the operator.  Next we decompose the nonlinear products into resolved and unresolved components, this yields</p>
 <div class="math notranslate nohighlight" id="equation-vh-momentum-reynolds2">
-<span class="eqno">(42)<a class="headerlink" href="#equation-vh-momentum-reynolds2" title="Permalink to this equation"></a></span>\[\begin{split}
+<span id="omega-v1-vh-momentum-reynolds2"></span><span class="eqno">(42)<a class="headerlink" href="#equation-vh-momentum-reynolds2" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{d}{dt} \int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left&lt; {\bf u} \right&gt; \, d\tilde{z} \, dA
 &amp; + \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \left( \left&lt; {\bf u} \right&gt; \otimes \left&lt; {\bf u} \right&gt; + \left&lt; {\bf u}^\prime \otimes {\bf u}^\prime \right&gt; \right) \, d\tilde{z} \right) \cdot \mathbf{n}_\perp dl \, dl \\
 &amp; + \int_A \, \left[ \left(\left&lt; {\bf u} \right&gt; \left&lt; \tilde{w}_{tr} \right&gt; + \left&lt;{\bf u}^\prime \tilde{w}_{tr}^\prime \right&gt; \right) - \left(\left&lt;{\bf u}\right&gt; \left&lt;\tilde{\bf u}\right&gt; + \left&lt; {\bf u}^\prime \tilde{\bf u}^\prime \right&gt; \right) \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
@@ -936,7 +937,7 @@ Because the projection operator is linear and commutes with spatial derivatives 
 <p><strong>Velocity:</strong></p>
 <p>Omega will only predict the layer average normal velocity, so we drop the bold face on the <span class="math notranslate nohighlight">\(u\)</span> terms except for the product of primes, which is specified in the next section.</p>
 <div class="math notranslate nohighlight" id="equation-discrete-momentum">
-<span class="eqno">(57)<a class="headerlink" href="#equation-discrete-momentum" title="Permalink to this equation"></a></span>\[\begin{split}
+<span id="omega-v1-momentum-eq"></span><span class="eqno">(57)<a class="headerlink" href="#equation-discrete-momentum" title="Permalink to this equation"></a></span>\[\begin{split}
 \frac{\partial u_{e,k}}{\partial t}
 &amp; + \left[ {\bf k} \cdot \nabla \times u_{e,k} +f_v\right]_e\left(u_{e,k}^{\perp}\right) + \left[\nabla K\right]_e  \\
 &amp; + \frac{1}{\left[\tilde{h}_{i,k}\right]_e} \left\{ \left[\left(u - u_k\right) \left\{\tilde{W}_{tr} \right\} \right]_{e,k}^\text{top} - \left[  \left(u - u_k\right) \left\{\tilde{W}_{tr} \right\} \right]_{e,k+1}^\text{top} \right\} \\
