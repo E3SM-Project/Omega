@@ -222,6 +222,7 @@ defined in the Omega input configuration file in an IOStreams section:</p>
 <span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ocn.hist.$SimTime</span>
 <span class="w">      </span><span class="nt">Mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write</span>
 <span class="w">      </span><span class="nt">IfExists</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">replace</span>
+<span class="w">      </span><span class="c1">#FileFormat: adios (optional format if different from default pnetcdf)</span>
 <span class="w">      </span><span class="nt">Precision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">double</span>
 <span class="w">      </span><span class="nt">Freq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 <span class="w">      </span><span class="nt">FreqUnits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">months</span>
@@ -288,6 +289,9 @@ file. When re-running an interval, this will also over-write existing
 slices corresponding to the simulation time if they exist in the file.</p></li>
 </ul>
 </li>
+<li><p><strong>FileFormat:</strong> An optional field that can be used if the file has a format
+incompatible with the default IO format. If not supplied, the stream
+will use the default format.</p></li>
 <li><p><strong>Precision:</strong> A field that determines whether floating point numbers are
 written in full (double) precision or reduced (single). Acceptable values
 are double or single. If not present, double is assumed, but a warning

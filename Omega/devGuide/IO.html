@@ -226,32 +226,36 @@ rearranger method, and the default file format
 <p>As mentioned above, most I/O operations will take place within the IOStreams
 module, but the base IO functions can be accessed directly. To open and close
 files for reading/writing, use:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">IO</span><span class="o">::</span><span class="n">openFile</span><span class="p">(</span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">Filename</span><span class="p">,</span><span class="w"> </span><span class="n">Mode</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">IO</span><span class="o">::</span><span class="n">openFileRead</span><span class="p">(</span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">Filename</span><span class="p">,</span><span class="w"> </span><span class="n">FileFormat</span><span class="p">(</span><span class="n">optional</span><span class="p">));</span>
 <span class="w">   </span><span class="n">IO</span><span class="o">::</span><span class="n">closeFile</span><span class="p">(</span><span class="n">FileID</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">IO</span><span class="o">::</span><span class="n">openFile</span><span class="p">(</span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">Filename</span><span class="p">,</span><span class="w"> </span><span class="n">Mode</span><span class="p">,</span><span class="w"> </span><span class="n">Format</span><span class="p">,</span><span class="w"> </span><span class="n">IfExists</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">NewFile</span><span class="p">;</span>
+<span class="w">   </span><span class="n">IO</span><span class="o">::</span><span class="n">openFileWrite</span><span class="p">(</span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">Filename</span><span class="p">,</span><span class="w"> </span><span class="n">NewFile</span><span class="p">,</span><span class="w"> </span><span class="n">IfExists</span><span class="p">,</span><span class="w"> </span><span class="n">FileFormat</span><span class="p">(</span><span class="n">opt</span><span class="p">));</span>
 <span class="w">   </span><span class="n">IO</span><span class="o">::</span><span class="n">closeFile</span><span class="p">(</span><span class="n">FileID</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>In both case, an integer FileID is assigned to the open file which is then
 used by all subsequent operations. The Filename is a <code class="docutils literal notranslate"><span class="pre">std::string</span></code> that
-should include the full path and name of the file. The mode can be either
-<code class="docutils literal notranslate"><span class="pre">OMEGA::IO::ModeRead</span></code> or <code class="docutils literal notranslate"><span class="pre">OMEGA::IO::ModeWrite</span></code>. The shorter interface
-uses default values for the file format, overwrite behavior and precision.
-In the longer interface, the user must supply these values using the enums:</p>
+should include the full path and name of the file. If the optional FileFormat
+is not supplied, the default file format (currently pnetcdf) is used. Supported
+file formats are shown below. The IfExists argument specifies the behavior
+for writing a file when the file already exists. It is an optional argument
+except when the FileFormat argument is needed; in that case, both must be
+supplied. The available options for IfExists are also shown below.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">/// Supported file formats</span>
 <span class="k">enum</span><span class="w"> </span><span class="nc">FileFmt</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="n">FmtPnetCDF</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_PNETCDF</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; Parallel NetCDF</span>
 <span class="w">   </span><span class="n">FmtNetCDF3</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_NETCDF</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; NetCDF3 classic format</span>
-<span class="w">   </span><span class="n">FmtPnetCDF</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_PNETCDF</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; Parallel NetCDF3</span>
-<span class="w">   </span><span class="n">FmtNetCDF4c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_NETCDF4C</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; NetCDF4 (HDF5-compatible) cmpressed</span>
+<span class="w">   </span><span class="n">FmtNetCDF4c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_NETCDF4C</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; NetCDF4 (HDF5-compatible) compressed</span>
 <span class="w">   </span><span class="n">FmtNetCDF4p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_NETCDF4P</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; NetCDF4 (HDF5-compatible) parallel</span>
-<span class="w">   </span><span class="n">FmtNetCDF4</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_NETCDF4P</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; NetCDF4 (HDF5-compatible) parallel</span>
-<span class="w">   </span><span class="n">FmtHDF5</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_HDF5</span><span class="p">,</span><span class="w">     </span><span class="c1">///&lt; native HDF5 format</span>
-<span class="w">   </span><span class="n">FmtADIOS</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_ADIOS</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; ADIOS format</span>
-<span class="w">   </span><span class="n">FmtUnknown</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="mi">-1</span><span class="p">,</span><span class="w">                  </span><span class="c1">///&lt; Unknown or undefined</span>
-<span class="w">   </span><span class="n">FmtDefault</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_NETCDF4C</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; NetCDF4 is default</span>
+<span class="w">   </span><span class="n">FmtNetCDF4z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_NETCDF4P_NCZARR</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; NetCDF4 (HDF5) NCZarr</span>
+<span class="w">   </span><span class="n">FmtADIOS</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_ADIOS</span><span class="p">,</span><span class="w">           </span><span class="c1">///&lt; ADIOS parallel</span>
+<span class="w">   </span><span class="n">FmtADIOSC</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_ADIOSC</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; ADIOS parallel with compression</span>
+<span class="w">   </span><span class="n">FmtHDF5</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_HDF5</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; native HDF5 parallel</span>
+<span class="w">   </span><span class="n">FmtHDF5C</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_HDF5C</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; native HDF5 parallel w compression</span>
+<span class="w">   </span><span class="n">FmtDefault</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">PIO_IOTYPE_PNETCDF</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; PNETCDF is default</span>
 <span class="p">};</span>
 
 <span class="c1">/// Behavior (for output files) when a file already exists</span>
@@ -262,10 +266,9 @@ In the longer interface, the user must supply these values using the enums:</p>
 <span class="p">};</span>
 </pre></div>
 </div>
-<p>with the defaults for each being <code class="docutils literal notranslate"><span class="pre">IO::FmtDefault</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">IO::IfExists::Fail</span></code>. The E3SM standard format is currently
-NetCDF4. Earlier NetCDF formats should be avoided, but are provided in
-case an input file is in an earlier format.</p>
+<p>The defaults for each are <code class="docutils literal notranslate"><span class="pre">IO::FmtDefault</span></code> for file format and
+<code class="docutils literal notranslate"><span class="pre">IO::IfExists::Fail</span></code> for IfExists. Earlier NetCDF formats should be avoided,
+but are provided in case an input file is in an earlier format.</p>
 <p>Once the file is open, data is read/written using one of two interfaces,
 depending on whether the array is decomposed across MPI tasks or not. For
 large decomposed arrays, the interface is:</p>
