@@ -48,6 +48,8 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Users</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">CMake-based Omega Build</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#if-you-are-using-polaris">If You Are Using Polaris</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#general-build-overview">General Build Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#standalone-build">Standalone Build</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#e3sm-component-build">E3SM Component Build</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#manual-preparation-for-e3sm-component-build">Manual Preparation for E3SM Component Build</a></li>
@@ -197,6 +199,25 @@
 <span id="omega-user-build"></span><h1>CMake-based Omega Build<a class="headerlink" href="#cmake-based-omega-build" title="Permalink to this heading"></a></h1>
 <p>Omega’s build system is constructed using the CMake build tool,
 offering a strong foundation for managing the building process.</p>
+<p>This page describes how to build Omega in general (outside Polaris or within
+other workflows).</p>
+<section id="if-you-are-using-polaris">
+<h2>If You Are Using Polaris<a class="headerlink" href="#if-you-are-using-polaris" title="Permalink to this heading"></a></h2>
+<p>If you are already using Polaris to set up tasks or suites, you typically do
+not need to build Omega manually. In that workflow, use Polaris auto-build
+during <code class="docutils literal notranslate"><span class="pre">polaris</span> <span class="pre">setup</span></code> or <code class="docutils literal notranslate"><span class="pre">polaris</span> <span class="pre">suite</span></code>.</p>
+<ul class="simple">
+<li><p>Polaris quick start (developers):
+<a class="reference external" href="https://docs.e3sm.org/polaris/main/developers_guide/quick_start.html">https://docs.e3sm.org/polaris/main/developers_guide/quick_start.html</a></p></li>
+<li><p>Building E3SM components:
+<a class="reference external" href="https://docs.e3sm.org/polaris/main/developers_guide/quick_start.html#building-e3sm-components">https://docs.e3sm.org/polaris/main/developers_guide/quick_start.html#building-e3sm-components</a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> suite:
+<a class="reference external" href="https://docs.e3sm.org/polaris/main/users_guide/ocean/suites.html#omega-pr-suite">https://docs.e3sm.org/polaris/main/users_guide/ocean/suites.html#omega-pr-suite</a></p></li>
+</ul>
+<p>Standalone/manual and Polaris-based build workflows are both supported.</p>
+</section>
+<section id="general-build-overview">
+<h2>General Build Overview<a class="headerlink" href="#general-build-overview" title="Permalink to this heading"></a></h2>
 <p>The Omega build system has two modes: standalone and E3SM component.</p>
 <p>For standalone build, the Omega build creates a generic E3SM case and
 reads build configurations from the case. In E3SM component build, the
@@ -206,6 +227,7 @@ environment variables based on the computing system where the build is
 taking place, as well as user input from the CMake command-line.</p>
 <p>For the Omega build system to function, a Python interpreter is necessary.
 The minimum version of CMake is 3.21.</p>
+</section>
 <section id="standalone-build">
 <h2>Standalone Build<a class="headerlink" href="#standalone-build" title="Permalink to this heading"></a></h2>
 <p>CMake and Omega prefer an out-of-source build. This enables a user to build

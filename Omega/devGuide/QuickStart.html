@@ -276,6 +276,22 @@ later on).</p>
 </section>
 <section id="building-and-testing-omega">
 <span id="omega-dev-quick-start-build-test"></span><h2>Building and testing Omega<a class="headerlink" href="#building-and-testing-omega" title="Permalink to this heading"></a></h2>
+<p>If you are using Polaris, you generally should not need to manually build
+Omega. Instead, rely on Polaris auto-build during <code class="docutils literal notranslate"><span class="pre">polaris</span> <span class="pre">setup</span></code> or
+<code class="docutils literal notranslate"><span class="pre">polaris</span> <span class="pre">suite</span></code>:</p>
+<ul class="simple">
+<li><p>Polaris quick start (developers):
+<a class="reference external" href="https://docs.e3sm.org/polaris/main/developers_guide/quick_start.html">https://docs.e3sm.org/polaris/main/developers_guide/quick_start.html</a></p></li>
+<li><p>Building E3SM components:
+<a class="reference external" href="https://docs.e3sm.org/polaris/main/developers_guide/quick_start.html#building-e3sm-components">https://docs.e3sm.org/polaris/main/developers_guide/quick_start.html#building-e3sm-components</a></p></li>
+</ul>
+<p>For Omega development, you are expected to validate changes with the Polaris
+<code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> suite before non-trivial PRs (see <a class="reference internal" href="Testing.html#omega-dev-testing"><span class="std std-ref">Testing Code</span></a>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> suite:
+<a class="reference external" href="https://docs.e3sm.org/polaris/main/users_guide/ocean/suites.html#omega-pr-suite">https://docs.e3sm.org/polaris/main/users_guide/ocean/suites.html#omega-pr-suite</a></p></li>
+</ul>
+<p>Both Polaris-based and standalone/manual workflows are supported.</p>
 <section id="polaris-ctest-utility">
 <span id="omega-dev-quick-start-ctest-util"></span><h3>Polaris CTest Utility<a class="headerlink" href="#polaris-ctest-utility" title="Permalink to this heading"></a></h3>
 <p>If you are using Polaris, you may wish to use its
@@ -284,58 +300,15 @@ to build and test Omega. The utility automates many of the steps below.</p>
 </section>
 <section id="building-omega">
 <span id="omega-dev-quick-start-build"></span><h3>Building Omega<a class="headerlink" href="#building-omega" title="Permalink to this heading"></a></h3>
-<p>In the Omega branch you would like to build, first update the submodules that
-Omega requires:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>submodule<span class="w"> </span>update<span class="w"> </span>--init<span class="w"> </span>--recursive<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>externals/YAKL<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>externals/ekat<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>externals/scorpio<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>externals/cpptrace<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>components/omega/external<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>cime
-</pre></div>
-</div>
-<p>Since some systems require tests to be run in a scratch space, it is a good
-idea to build the code somewhere in your scratch space.  We will simply refer
-to the build directory as <code class="docutils literal notranslate"><span class="pre">$BUILD_DIR</span></code> and leave it up to you to decide where
-it is best to put it.  If you have previously built in <code class="docutils literal notranslate"><span class="pre">$BUILD_DIR</span></code>, you
-very likely need to remove it first and start fresh:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>rm<span class="w"> </span>-rf<span class="w"> </span><span class="nv">$BUILD_DIR</span>
-mkdir<span class="w"> </span><span class="nv">$BUILD_DIR</span>
-<span class="nb">cd</span><span class="w"> </span><span class="nv">$BUILD_DIR</span>
-</pre></div>
-</div>
-<p>Set <code class="docutils literal notranslate"><span class="pre">$PARMETIS_ROOT</span></code> to the appropriate location for Metis and Parmetis
-libraries built for your machine and compiler (see
-<a class="reference internal" href="#omega-dev-parmetis-libs"><span class="std std-ref">Metis and Parmetis libraries</span></a> below for shared locations on supported
-machines):</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">PARMETIS_ROOT</span><span class="o">=</span>&lt;parmetis_root&gt;
-</pre></div>
-</div>
-<p>Run CMake for the build type, machine and compiler you want:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>-DOMEGA_BUILD_TYPE<span class="o">=</span>&lt;build_type&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>-DOMEGA_CIME_COMPILER<span class="o">=</span>&lt;compiler&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>-DOMEGA_CIME_MACHINE<span class="o">=</span>&lt;machine&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>-DOMEGA_PARMETIS_ROOT<span class="o">=</span><span class="si">${</span><span class="nv">PARMETIS_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>-DOMEGA_BUILD_TEST<span class="o">=</span>ON<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>-Wno-dev<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>-S<span class="w"> </span>&lt;omega_branch&gt;/components/omega<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>-B<span class="w"> </span>.
-</pre></div>
-</div>
-<p>where <code class="docutils literal notranslate"><span class="pre">&lt;build_type&gt;</span></code> is either <code class="docutils literal notranslate"><span class="pre">Debug</span></code> or <code class="docutils literal notranslate"><span class="pre">Release</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;omega_branch&gt;</span></code> is the
-path to the base of the Omega branch you want to build, and where <code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;</span></code>
-and <code class="docutils literal notranslate"><span class="pre">&lt;compiler&gt;</span></code> are the current machine and a compiler supported by E3SM on
-that machine (see
-<a class="reference external" href="https://github.com/E3SM-Project/Omega/blob/develop/cime_config/machines/config_machines.xml">config_machines.xml</a>).</p>
-<p>The command above will configure Omega to build CTests
-(<code class="docutils literal notranslate"><span class="pre">-DOMEGA_BUILD_TEST=ON</span></code>), which is recommended.</p>
-<p>If CMake configuration runs correctly, you should have an <code class="docutils literal notranslate"><span class="pre">omega_build.sh</span></code>
-script that you can run to build Omega:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>./omega_build.sh
-</pre></div>
-</div>
+<p>If you are not using Polaris, follow the standalone/manual CMake workflow in
+<a class="reference internal" href="CMakeBuild.html#omega-dev-cmake-build"><span class="std std-ref">Omega Build with CMake</span></a>.</p>
+<p>At a high level:</p>
+<ol class="arabic simple">
+<li><p>Update required submodules.</p></li>
+<li><p>Configure CMake in an out-of-source build directory.</p></li>
+<li><p>Build with <code class="docutils literal notranslate"><span class="pre">./omega_build.sh</span></code>.</p></li>
+<li><p>Run unit tests with <code class="docutils literal notranslate"><span class="pre">./omega_ctest.sh</span></code>.</p></li>
+</ol>
 </section>
 <section id="getting-test-meshes">
 <span id="omega-dev-quick-start-getting-meshes"></span><h3>Getting test meshes<a class="headerlink" href="#getting-test-meshes" title="Permalink to this heading"></a></h3>
@@ -405,7 +378,7 @@ log file located at <code class="docutils literal notranslate"><span class="pre"
 <span id="omega-dev-parmetis-libs"></span><h3>Metis and Parmetis libraries<a class="headerlink" href="#metis-and-parmetis-libraries" title="Permalink to this heading"></a></h3>
 <p>The following table shows locations for Metis and Parmetis libraries on
 supported E3SM machines. The pattern is:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">polaris_base</span><span class="o">&gt;/&lt;</span><span class="n">machine</span><span class="o">&gt;/</span><span class="n">spack</span><span class="o">/</span><span class="n">dev_polaris_0_8_0_</span><span class="o">&lt;</span><span class="n">compiler</span><span class="o">&gt;</span><span class="n">_</span><span class="o">&lt;</span><span class="n">mpi</span><span class="o">&gt;/</span><span class="n">var</span><span class="o">/</span><span class="n">spack</span><span class="o">/</span><span class="n">environments</span><span class="o">/</span><span class="n">dev_polaris_0_8_0_</span><span class="o">&lt;</span><span class="n">compiler</span><span class="o">&gt;</span><span class="n">_</span><span class="o">&lt;</span><span class="n">mpi</span><span class="o">&gt;/.</span><span class="n">spack</span><span class="o">-</span><span class="n">env</span><span class="o">/</span><span class="n">view</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">polaris_base</span><span class="o">&gt;/&lt;</span><span class="n">machine</span><span class="o">&gt;/</span><span class="n">spack</span><span class="o">/</span><span class="n">dev_polaris_1</span><span class="mf">.0.0</span><span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">spack</span><span class="o">/</span><span class="n">environments</span><span class="o">/</span><span class="n">spack_env_</span><span class="o">&lt;</span><span class="n">compiler</span><span class="o">&gt;</span><span class="n">_</span><span class="o">&lt;</span><span class="n">mpi</span><span class="o">&gt;/.</span><span class="n">spack</span><span class="o">-</span><span class="n">env</span><span class="o">/</span><span class="n">view</span>
 </pre></div>
 </div>
 <table class="docutils align-default">
@@ -418,48 +391,44 @@ supported E3SM machines. The pattern is:</p>
 <tbody>
 <tr class="row-even"><td><p>aurora</p></td>
 <td><p>oneapi-ifx</p></td>
-<td><p>/lus/flare/projects/E3SM_Dec/soft/polaris/aurora/spack/dev_polaris_0_8_0_oneapi-ifx_mpich/var/spack/environments/dev_polaris_0_8_0_oneapi-ifx_mpich/.spack-env/view</p></td>
+<td><p>/lus/flare/projects/E3SM_Dec/soft/polaris/aurora/spack/dev_polaris_1.0.0/var/spack/environments/spack_env_oneapi-ifx_mpich/.spack-env/view</p></td>
 </tr>
-<tr class="row-odd"><td><p>chicoma-cpu</p></td>
-<td><p>gnu</p></td>
-<td><p>/usr/projects/e3sm/polaris/chicoma-cpu/spack/dev_polaris_0_8_0_gnu_mpich/var/spack/environments/dev_polaris_0_8_0_gnu_mpich/.spack-env/view</p></td>
-</tr>
-<tr class="row-even"><td rowspan="2"><p>chrysalis</p></td>
+<tr class="row-odd"><td rowspan="2"><p>chrysalis</p></td>
 <td><p>intel</p></td>
-<td><p>/lcrc/soft/climate/polaris/chrysalis/spack/dev_polaris_0_8_0_intel_openmpi/var/spack/environments/dev_polaris_0_8_0_intel_openmpi/.spack-env/view</p></td>
+<td><p>/lcrc/soft/climate/polaris/chrysalis/spack/dev_polaris_1.0.0/var/spack/environments/spack_env_intel_openmpi/.spack-env/view</p></td>
 </tr>
-<tr class="row-odd"><td><p>gnu</p></td>
-<td><p>/lcrc/soft/climate/polaris/chrysalis/spack/dev_polaris_0_8_0_gnu_openmpi/var/spack/environments/dev_polaris_0_8_0_gnu_openmpi/.spack-env/view</p></td>
+<tr class="row-even"><td><p>gnu</p></td>
+<td><p>/lcrc/soft/climate/polaris/chrysalis/spack/dev_polaris_1.0.0/var/spack/environments/spack_env_gnu_openmpi/.spack-env/view</p></td>
 </tr>
-<tr class="row-even"><td rowspan="6"><p>frontier</p></td>
+<tr class="row-odd"><td rowspan="6"><p>frontier</p></td>
 <td><p>craygnu</p></td>
-<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_8_0_craygnu_mpich/var/spack/environments/dev_polaris_0_8_0_craygnu_mpich/.spack-env/view</p></td>
+<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_10_0_craygnu_mpich/var/spack/environments/dev_polaris_0_10_0_craygnu_mpich/.spack-env/view</p></td>
 </tr>
-<tr class="row-odd"><td><p>craygnu-mphipcc</p></td>
-<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_8_0_craygnu-mphipcc_mpich/var/spack/environments/dev_polaris_0_8_0_craygnu-mphipcc_mpich/.spack-env/view</p></td>
+<tr class="row-even"><td><p>craygnu-mphipcc</p></td>
+<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_10_0_craygnu-mphipcc_mpich/var/spack/environments/dev_polaris_0_10_0_craygnu-mphipcc_mpich/.spack-env/view</p></td>
 </tr>
-<tr class="row-even"><td><p>craycray</p></td>
-<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_8_0_craycray_mpich/var/spack/environments/dev_polaris_0_8_0_craycray_mpich/.spack-env/view</p></td>
+<tr class="row-odd"><td><p>craycray</p></td>
+<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_10_0_craycray_mpich/var/spack/environments/dev_polaris_0_10_0_craycray_mpich/.spack-env/view</p></td>
 </tr>
-<tr class="row-odd"><td><p>craycray-mphipcc</p></td>
-<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_8_0_craycray-mphipcc_mpich/var/spack/environments/dev_polaris_0_8_0_craycray-mphipcc_mpich/.spack-env/view</p></td>
+<tr class="row-even"><td><p>craycray-mphipcc</p></td>
+<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_10_0_craycray-mphipcc_mpich/var/spack/environments/dev_polaris_0_10_0_craycray-mphipcc_mpich/.spack-env/view</p></td>
 </tr>
-<tr class="row-even"><td><p>crayamd</p></td>
-<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_8_0_crayamd_mpich/var/spack/environments/dev_polaris_0_8_0_crayamd_mpich/.spack-env/view</p></td>
+<tr class="row-odd"><td><p>crayamd</p></td>
+<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_10_0_crayamd_mpich/var/spack/environments/dev_polaris_0_10_0_crayamd_mpich/.spack-env/view</p></td>
 </tr>
-<tr class="row-odd"><td><p>crayamd-mphipcc</p></td>
-<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_8_0_crayamd-mphipcc_mpich/var/spack/environments/dev_polaris_0_8_0_crayamd-mphipcc_mpich/.spack-env/view</p></td>
+<tr class="row-even"><td><p>crayamd-mphipcc</p></td>
+<td><p>/ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_10_0_crayamd-mphipcc_mpich/var/spack/environments/dev_polaris_0_10_0_crayamd-mphipcc_mpich/.spack-env/view</p></td>
 </tr>
-<tr class="row-even"><td rowspan="2"><p>pm-cpu</p></td>
+<tr class="row-odd"><td rowspan="2"><p>pm-cpu</p></td>
 <td><p>gnu</p></td>
-<td><p>/global/cfs/cdirs/e3sm/software/polaris/pm-cpu/spack/dev_polaris_0_8_0_gnu_mpich/var/spack/environments/dev_polaris_0_8_0_gnu_mpich/.spack-env/view</p></td>
+<td><p>/global/cfs/cdirs/e3sm/software/polaris/pm-cpu/spack/dev_polaris_1.0.0/var/spack/environments/spack_env_gnu_mpich/.spack-env/view</p></td>
 </tr>
-<tr class="row-odd"><td><p>intel</p></td>
-<td><p>/global/cfs/cdirs/e3sm/software/polaris/pm-cpu/spack/dev_polaris_0_8_0_intel_mpich/var/spack/environments/dev_polaris_0_8_0_intel_mpich/.spack-env/view</p></td>
+<tr class="row-even"><td><p>intel</p></td>
+<td><p>/global/cfs/cdirs/e3sm/software/polaris/pm-cpu/spack/dev_polaris_1.0.0/var/spack/environments/spack_env_intel_mpich/.spack-env/view</p></td>
 </tr>
-<tr class="row-even"><td><p>pm-gpu</p></td>
+<tr class="row-odd"><td><p>pm-gpu</p></td>
 <td><p>gnugpu</p></td>
-<td><p>/global/cfs/cdirs/e3sm/software/polaris/pm-gpu/spack/dev_polaris_0_8_0_gnugpu_mpich/var/spack/environments/dev_polaris_0_8_0_gnugpu_mpich/.spack-env/view</p></td>
+<td><p>/global/cfs/cdirs/e3sm/software/polaris/pm-gpu/spack/dev_polaris_1.0.0/var/spack/environments/spack_env_gnugpu_mpich/.spack-env/view</p></td>
 </tr>
 </tbody>
 </table>
