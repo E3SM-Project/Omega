@@ -1,0 +1,562 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vertical Advection &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Vertical Coordinate" href="VertCoord.html" />
+    <link rel="prev" title="Tridiagonal Solver" href="TridiagonalSolver.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertAdv.html">Vertical Advection</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Testing.html">Testing Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/ParallelLoops.html">Parallel loops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html#initialization">Initialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html#writing-out-timing-data">Writing-out timing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html#finalization">Finalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html#basic-timer-use">Basic timer use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html#advanced-timing-functions">Advanced timing functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertAdv.html">Vertical Advection</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OmegaV1GoverningEqns.html">Omega V1: Governing Equations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SubmesoscaleEddies.html">Submesoscale Eddy Parameterization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Vertical Advection</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-compute-transport-pseudo-velocity">2.1 Requirement: Compute transport pseudo-velocity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-advection-scheme-flexibility">2.2 Requirement: Advection scheme flexibility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-compute-tendencies-for-mass-velocity-and-tracers">2.3 Requirement: Compute tendencies for mass, velocity, and tracers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-modular-design">2.4 Requirement: Modular design</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-monotonicity-checks">2.5 Desired: Monotonicity checks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pseudo-velocity">3.1 Pseudo-velocity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mass-thickness">3.2 Mass (Thickness)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#velocity">3.3 Velocity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tracers">3.4 Tracers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#creation-destruction-retrieval">4.2.1 Creation, Destruction, Retrieval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pseudo-velocity-computation">4.2.2 Pseudo-velocity computation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tendency-computations">4.2.3 Tendency computations</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Vertical Advection</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/VertAdv.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="vertical-advection">
+<span id="omega-design-vert-adv"></span><h1>Vertical Advection<a class="headerlink" href="#vertical-advection" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>The Vertical Advection module is responsible for the vertical transport of mass,
+momentum, and tracers within Omega. This implementation is consistent with
+Omega’s non-Boussinesq governing equations, where the prognostic vertical
+coordinate is a pseudo-height, effectively a normalized pressure coordinate. The
+methods compute the tendencies associated with the vertical advection terms in
+the governing equations, and are designed to allow for flexibility in numerical
+scheme configuration.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-compute-transport-pseudo-velocity">
+<h3>2.1 Requirement: Compute transport pseudo-velocity<a class="headerlink" href="#requirement-compute-transport-pseudo-velocity" title="Permalink to this heading"></a></h3>
+<p>Compute the transport pseudo-velocity through vertical layer interfaces based on
+the divergence of the horizontal velocity field. Allow for possible movement of
+layer interfaces and tilt of layer interfaces</p>
+</section>
+<section id="requirement-advection-scheme-flexibility">
+<h3>2.2 Requirement: Advection scheme flexibility<a class="headerlink" href="#requirement-advection-scheme-flexibility" title="Permalink to this heading"></a></h3>
+<p>Support for multiple possible reconstruction schemes, allowing users to select
+among different orders of accuracy and upwinding at runtime through
+configuration options. Standard and monotonic flux-corrected transport (FCT)
+advection algorithms are available for the tracer tendency calculations.</p>
+</section>
+<section id="requirement-compute-tendencies-for-mass-velocity-and-tracers">
+<h3>2.3 Requirement: Compute tendencies for mass, velocity, and tracers<a class="headerlink" href="#requirement-compute-tendencies-for-mass-velocity-and-tracers" title="Permalink to this heading"></a></h3>
+<p>Separate methods are needed to compute the vertical-advection tendencies
+for mass, velocity, and tracers. Mass (<code class="docutils literal notranslate"><span class="pre">LayerThickness</span></code>) and horizontal
+velocity (<code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code>) are stored as 2-D arrays. <code class="docutils literal notranslate"><span class="pre">LayerThickness</span></code> is
+cell-centered, while <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> is defined on edges. These tendencies
+use a second-order flux formulation that ensures strict conservation and energy
+consistency with the continuity equation. <code class="docutils literal notranslate"><span class="pre">Tracers</span></code> is a 3-D, cell-centered
+array. The tracer tendencies are computed using a configurable flux-form scheme
+that supports multiple interface reconstruction options.</p>
+</section>
+<section id="requirement-modular-design">
+<h3>2.4 Requirement: Modular design<a class="headerlink" href="#requirement-modular-design" title="Permalink to this heading"></a></h3>
+<p>The vertical advection module must consist of classes and methods that are easily
+incorporated into different time-integration schemes and maintain compatibility
+with the Omega driver framework.</p>
+</section>
+<section id="desired-monotonicity-checks">
+<h3>2.5 Desired: Monotonicity checks<a class="headerlink" href="#desired-monotonicity-checks" title="Permalink to this heading"></a></h3>
+<p>The vertical advection module should include optional monotonicity checks to
+ensure that reconstructed tracer fields remain physically bounded and free of
+spurious oscillations when using the FCT scheme.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>The <a class="reference internal" href="OmegaV1GoverningEqns.html#omega-design-governing-eqns-omega1"><span class="std std-ref">Omega V1 Governing Equations</span></a> describe
+the evolution of mass, velocity, and tracers, including the contributions
+from vertical advection.</p>
+<section id="pseudo-velocity">
+<h3>3.1 Pseudo-velocity<a class="headerlink" href="#pseudo-velocity" title="Permalink to this heading"></a></h3>
+<p>The vertical pseudo-velocity is derived from the divergence of the horizontal
+velocity <span class="math notranslate nohighlight">\(d\tilde{w} / d\tilde{z} = - \nabla \cdot {\bf u}.\)</span> In
+discrete form, the pseudo-velocity at the top interface of layer <span class="math notranslate nohighlight">\(k\)</span> in cell
+<span class="math notranslate nohighlight">\(i\)</span> is computed from the thickness-weighted divergence of horizontal velocity:</p>
+<div class="math notranslate nohighlight">
+\[
+\tilde{w}_{i,k-1/2} = \tilde{w}_{i,k+1/2} +
+\frac{1}{A_i} \sum_{e\in EC(i)} n_{e,i} [\tilde{h}_{i,k}]_{e} u_{e,k} l_e,
+\]</div>
+<p>using the TRiSK formulation of the discrete divergence operator (see
+<a class="reference internal" href="OmegaV0ShallowWater.html#omega-design-shallow-water-omega0"><span class="std std-ref">V0 design document</span></a>). The boundary
+conditions at the top and bottom interfaces set the pseudo-velocity to zero.</p>
+<p>The vertical pseudo-velocity <span class="math notranslate nohighlight">\(\tilde{w}\)</span> is represented in the code by
+<code class="docutils literal notranslate"><span class="pre">VerticalVelocity</span></code>. The equations below use the transport pseudo-velocity
+$\tilde{W}_{tr} which incorporates optional corrections on the pseudo-velocity
+arising from interface motion, contributions from the horizontal velocity
+through tilted interfaces, and surface source terms. This is represented in the
+code by <code class="docutils literal notranslate"><span class="pre">TotalVerticalVelocity</span></code>.</p>
+</section>
+<section id="mass-thickness">
+<h3>3.2 Mass (Thickness)<a class="headerlink" href="#mass-thickness" title="Permalink to this heading"></a></h3>
+<p>The time evolution of the pseudo-thickness (represented in the code as
+<code class="docutils literal notranslate"><span class="pre">LayerThickness</span></code>) due to vertical transport is</p>
+<div class="math notranslate nohighlight">
+\[
+\tilde{h}^{n+1}_{i,k} = \tilde{h}^{n}_{i,k} +
+\Delta t \left( \left[\tilde{W}_{tr}\right]_{k+1/2} -
+\left[\tilde{W}_{tr}\right]_{k-1/2} \right).
+\]</div>
+<p>This second-order form ensures exact conservation of total column thickness and
+numerical stability.</p>
+</section>
+<section id="velocity">
+<h3>3.3 Velocity<a class="headerlink" href="#velocity" title="Permalink to this heading"></a></h3>
+<p>The velocity equation governs the evolution of the horizontal velocity field
+(<code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code>),</p>
+<div class="math notranslate nohighlight">
+\[
+u^{n+1}_{e,k} = u^{n}_{e,k} +
+\frac{\Delta t}{\left[\tilde{h}_{i,k} \right]_{e}} \left( \left[U \tilde{W}_{tr} \right]_{e,k+1/2} -
+\left[U \tilde{W}_{tr} \right]_{e,k-1/2} \right),
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(U = u - \tilde{u}\)</span> removes the component of the horizontal velocity normal to
+a tilted interface. Square brackets <span class="math notranslate nohighlight">\([\,]\)</span> denote interpolation of quantities
+from cell centers to edges or from the middle of a layer to an interface.</p>
+</section>
+<section id="tracers">
+<h3>3.4 Tracers<a class="headerlink" href="#tracers" title="Permalink to this heading"></a></h3>
+<p>The contribution of vertical advection to tracer transport is expressed as</p>
+<div class="math notranslate nohighlight">
+\[
+\tilde{h}^{n+1}_{i,k} \tilde{\phi}^{n+1}_{i,k} = \tilde{h}^{n}_{i,k} \tilde{\phi}^{n}_{i,k} +
+\Delta t \left( \left[ \phi \tilde{W}_{tr} \right]_{k+1/2} -
+\left[ \phi \tilde{W}_{tr} \right]_{k-1/2} \right).
+\]</div>
+<p>A variety of options are available for the scheme used to reconstruct the tracer
+values at interfaces <span class="math notranslate nohighlight">\([\phi]_{k\pm1/2}\)</span> (order of accuracy, standard advection vs.
+flux-corrected transport) which can be selected at runtime via configuration.</p>
+</section>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>An <code class="docutils literal notranslate"><span class="pre">enum</span> <span class="pre">class</span></code> is used for the selection of the reconstruction scheme for the
+fluxes at layer interfaces:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">VertFluxOption</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Second</span><span class="p">,</span><span class="w"> </span><span class="c1">/// 2nd-order centered</span>
+<span class="w">    </span><span class="n">Third</span><span class="p">,</span><span class="w">  </span><span class="c1">/// 3rd-order upwind</span>
+<span class="w">    </span><span class="n">Fourth</span><span class="w">  </span><span class="c1">/// 4th-order centered</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Another <code class="docutils literal notranslate"><span class="pre">enum</span> <span class="pre">class</span></code> specifies the tracer advection scheme:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">VertAdvOption</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Standard</span><span class="p">,</span><span class="w"> </span><span class="c1">/// standard non-monotonic scheme</span>
+<span class="w">    </span><span class="n">FCT</span><span class="p">,</span><span class="w">      </span><span class="c1">/// flux-corrected transport scheme</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">VertAdv</span></code> class provides the core functionality for vertical advection.
+It defines the data structures, configuration parameters, and compute methods
+needed for performing advective vertical transport.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">VertAdv</span><span class="p">{</span>
+<span class="w">   </span><span class="c1">// Logicals to enable/disable advection of specific fields</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">ThickVertAdvEnabled</span><span class="p">;</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">VelVertAdvEnabled</span><span class="p">;</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">TracerVertAdvEnabled</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">// Enum options</span>
+<span class="w">   </span><span class="n">VertFluxOption</span><span class="w"> </span><span class="n">VertFluxChoice</span><span class="p">;</span>
+<span class="w">   </span><span class="n">VertAdvOption</span><span class="w"> </span><span class="n">VertAdvChoice</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">// Core data arrays</span>
+<span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">VerticalVelocity</span><span class="p">;</span><span class="w">      </span><span class="c1">/// pseudo-velocity through top of cell</span>
+<span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">TotalVerticalVelocity</span><span class="p">;</span><span class="w"> </span><span class="c1">/// transport velocity through top of cell</span>
+<span class="w">   </span><span class="n">Array3DReal</span><span class="w"> </span><span class="n">VerticalFlux</span><span class="p">;</span><span class="w">          </span><span class="c1">/// tracer fluxes at vertical interfaces</span>
+<span class="w">   </span><span class="n">Array3DReal</span><span class="w"> </span><span class="n">LowOrderVerticalFlux</span><span class="p">;</span><span class="w">  </span><span class="c1">/// low order fluxes for FCT</span>
+
+<span class="w">   </span><span class="c1">// Compute methods</span>
+<span class="w">   </span><span class="n">computeVerticalVelocity</span><span class="p">(...);</span>
+<span class="w">   </span><span class="n">computeThicknessVAdvTend</span><span class="p">(...);</span>
+<span class="w">   </span><span class="n">computeVelocityVadvTend</span><span class="p">(...);</span>
+<span class="w">   </span><span class="n">computeTracerVadvTend</span><span class="p">(...);</span>
+<span class="w">   </span><span class="n">computeVerticalFluxes</span><span class="p">(...);</span>
+<span class="w">   </span><span class="n">computeStdVAdvTend</span><span class="p">(...);</span>
+<span class="w">   </span><span class="n">computeFCTVAdvTend</span><span class="p">(...);</span>
+
+<span class="w">   </span><span class="c1">// Mesh dimensions</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">NVertLayers</span><span class="p">;</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">NVertLayersP1</span><span class="p">;</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">NCellsOwned</span><span class="p">;</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">NCellsAll</span><span class="p">;</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">NCellsSize</span><span class="p">;</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">NEdgesOwned</span><span class="p">;</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">NEdgesAll</span><span class="p">;</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">NEdgesSize</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">// Vertical loop bounds from VertCoord</span>
+<span class="w">   </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">MinLayerCell</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">MaxLayerCell</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">MinLayerEdgeBot</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">MaxLayerEdgeTop</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">// Arrays from HorzMesh</span>
+<span class="w">   </span><span class="n">Array2DI4</span><span class="w"> </span><span class="n">CellsOnEdge</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array2DI4</span><span class="w"> </span><span class="n">EdgesOnCell</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array1DI4</span><span class="w"> </span><span class="n">NEdgesOnCell</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array1DReal</span><span class="w"> </span><span class="n">AreaCell</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array1DReal</span><span class="w"> </span><span class="n">DvEdge</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">EdgeSignOnCell</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<section id="creation-destruction-retrieval">
+<h4>4.2.1 Creation, Destruction, Retrieval<a class="headerlink" href="#creation-destruction-retrieval" title="Permalink to this heading"></a></h4>
+<p>Like other Omega components, instances of the <code class="docutils literal notranslate"><span class="pre">VertAdv</span></code> class will be stored in
+a static map and a <code class="docutils literal notranslate"><span class="pre">DefVAdv</span></code> pointer will point to the default instance.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">VertAdv</span><span class="w"> </span><span class="o">*</span><span class="n">VertAdv</span><span class="o">::</span><span class="n">DefVAdv</span><span class="p">;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">VertAdv</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">VertAdv</span><span class="o">::</span><span class="n">AllVAdv</span>
+</pre></div>
+</div>
+<p>Methods are required for construction, destruction, and retrieval. After
+construction, object pointers are inserted in the map; upon destruction, they
+are removed. Utility functions provide access to the default <code class="docutils literal notranslate"><span class="pre">VertAdv</span></code> instance
+and any non-default instances.</p>
+<p>An initialization method <code class="docutils literal notranslate"><span class="pre">init</span></code> is responsible for reading configuration
+parameters and creating the default <code class="docutils literal notranslate"><span class="pre">VertAdv</span></code> object.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">VertAdv::init</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+<section id="pseudo-velocity-computation">
+<h4>4.2.2 Pseudo-velocity computation<a class="headerlink" href="#pseudo-velocity-computation" title="Permalink to this heading"></a></h4>
+<p>The quantities required by this method are either stored locally in the
+<code class="docutils literal notranslate"><span class="pre">VertAdv</span></code> object, or are fetched from  the <code class="docutils literal notranslate"><span class="pre">State</span></code> and <code class="docutils literal notranslate"><span class="pre">AuxState</span></code> objects.</p>
+<p>This method computes the vertical pseudo-velocity based on the divergence of
+the horizontal velocity field. A <code class="docutils literal notranslate"><span class="pre">parallelForOuter</span></code> construct iterates over the
+cells in the horizontal mesh. Within each cell, a <code class="docutils literal notranslate"><span class="pre">parallelForInner</span></code> iterates
+through the active layers to compute the divergence of horizontal velocity,
+storing the result in scratch space. After the divergence is computed, a
+<code class="docutils literal notranslate"><span class="pre">parallelScanInner</span></code> performs a prefix sum to obtain the vertical pseudo-velocity
+at each layer interface. These pseudo-velocities are stored in the
+<code class="docutils literal notranslate"><span class="pre">VerticalVelocity</span></code> member array. The transport pseudo-velocity
+<code class="docutils literal notranslate"><span class="pre">TotalVerticalVelocity</span></code> is then computed from the <code class="docutils literal notranslate"><span class="pre">VerticalVelocity</span></code> and
+any desired corrections. <code class="docutils literal notranslate"><span class="pre">TotalVerticalVelocity</span></code> is used by the tendency
+methods below.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="n">VertAdv</span><span class="o">::</span><span class="n">computeVerticalVelocity</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">NormalVelocity</span><span class="p">,</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">FluxLayerThickEdge</span><span class="p">,</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="n">Dt</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="tendency-computations">
+<h4>4.2.3 Tendency computations<a class="headerlink" href="#tendency-computations" title="Permalink to this heading"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">computeThicknessVAdvTend</span></code>, <code class="docutils literal notranslate"><span class="pre">computeVelocityVadvTend</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">computeTracerVadvTend</span></code> methods are designed to be called by the
+<code class="docutils literal notranslate"><span class="pre">Tendencies</span></code> class methods.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">computeThicknessVAdvTend</span></code> method computes the vertical advection tendency
+for pseudo-thickness (<code class="docutils literal notranslate"><span class="pre">LayerThickness</span></code>). The parallel execution of the
+computation is straightforward.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">VertAdv::computeThicknessVAdvTend</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Tend</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">ThickVertAdvEnabled</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+
+<span class="w">   </span><span class="n">OmegaScope</span><span class="p">(</span><span class="n">LocTotVertVel</span><span class="p">,</span><span class="w"> </span><span class="n">TotalVerticalVelocity</span><span class="p">);</span>
+
+<span class="w">   </span><span class="n">parallelForOuter</span><span class="p">(...,</span>
+<span class="w">      </span><span class="n">parallelForInner</span><span class="p">(...,</span>
+<span class="w">         </span><span class="n">Tend</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">LocTotVertVel</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">-</span>
+<span class="w">                           </span><span class="n">LocTotVertVel</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">);</span>
+<span class="w">      </span><span class="p">);</span>
+<span class="w">   </span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">computeVelocityVadvTend</span></code> method computes the vertical advection tendency
+for horizontal velocity (<code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code>). The method requires the
+<code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> field from the <code class="docutils literal notranslate"><span class="pre">State</span></code> object and the <code class="docutils literal notranslate"><span class="pre">FluxLayerThickEdge</span></code>
+field from the <code class="docutils literal notranslate"><span class="pre">AuxState</span></code> object as input. A <code class="docutils literal notranslate"><span class="pre">parallelForOuter</span></code> loop iterates
+over the edges in the horizontal mesh, and a <code class="docutils literal notranslate"><span class="pre">parallelForInner</span></code> loop iterates
+over the active layer interfaces. At each interface, <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and
+<code class="docutils literal notranslate"><span class="pre">FluxLayerThickEdge</span></code> are used to compute <span class="math notranslate nohighlight">\(du/dz\)</span>, and <code class="docutils literal notranslate"><span class="pre">TotalVerticalVelocity</span></code>
+is interpolated from cell centers to edges. The product of these, <span class="math notranslate nohighlight">\(W du/dz\)</span> is
+averaged from interfaces to the middle of each layer and accumulated into the
+velocity tendency.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="n">VertAdv</span><span class="o">::</span><span class="n">computeVelocityVAdvTend</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Tend</span><span class="p">,</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">NormalVelocity</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">FluxLayerThickEdge</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">computeTracerVAdvTend</span></code> method serves as an interface that calls
+<code class="docutils literal notranslate"><span class="pre">computeVerticalFluxes</span></code> to compute the needed tracer fluxes based on specified
+configuration options and then dispatches to either the standard advection
+algorithm, or the FCT scheme depending on runtime configuration.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="n">VertAdv</span><span class="o">::</span><span class="n">computeTracerVadvTend</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Array3DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Tend</span><span class="p">,</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Array3DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Tracers</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">computeStdVAdvTend</span></code> method performs the standard advection update by
+looping over the cells and interfaces using nested <code class="docutils literal notranslate"><span class="pre">parallelForOuter</span></code> and
+<code class="docutils literal notranslate"><span class="pre">parallelForInner</span></code> constructs.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">computeFCTVAdvTend</span></code> method implements the flux-corrected transport scheme
+developed by <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/0021999179900512">Zalesak 1979</a>.
+We use by default the FCT formulation of
+<a class="reference external" href="https://journals.ametsoc.org/view/journals/mwre/139/9/mwr-d-10-05056.1.xml">Skamarack &amp; Gassmann 2011</a>.
+At each interface, both a high-order flux (chosen via configuration) and a
+low-order flux (1st-order upwind) are computed in <code class="docutils literal notranslate"><span class="pre">computeVerticalFluxes</span></code>.
+These fluxes are then blended and limited to ensure monotone transport.</p>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<p>Unit tests are required for each compute method to verify correct operation and
+numerical consistency. In addition, convergence tests with the
+<a class="reference external" href="https://docs.e3sm.org/polaris/main/users_guide/ocean/tasks/merry_go_round.html">merry-go-round</a>
+test case should confirm the expected order of accuracy of the tracer fluxes.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="TridiagonalSolver.html" class="btn btn-neutral float-left" title="Tridiagonal Solver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="VertCoord.html" class="btn btn-neutral float-right" title="Vertical Coordinate" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
