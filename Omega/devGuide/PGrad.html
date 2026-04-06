@@ -1,0 +1,446 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pressure Gradient (PGrad) &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Timing" href="Timing.html" />
+    <link rel="prev" title="Vertical Coordinate" href="VertCoord.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertAdv.html">Vertical Advection</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Testing.html">Testing Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ParallelLoops.html">Parallel loops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Pressure Gradient (PGrad)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pressuregradtype-enum">PressureGradType enum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#initialization">Initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-additional-instances">Creating additional instances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#constructor-behavior">Constructor behavior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#computing-the-pressure-gradient">Computing the pressure gradient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#functors">Functors</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pressuregradcentered">PressureGradCentered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pressuregradhighorder">PressureGradHighOrder</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-members">Data members</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#removal">Removal</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timing.html#initialization">Initialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timing.html#writing-out-timing-data">Writing-out timing data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timing.html#finalization">Finalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timing.html#basic-timer-use">Basic timer use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timing.html#advanced-timing-functions">Advanced timing functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV1GoverningEqns.html">Omega V1: Governing Equations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/SubmesoscaleEddies.html">Submesoscale Eddy Parameterization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Pressure Gradient (PGrad)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/devGuide/PGrad.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="pressure-gradient-pgrad">
+<span id="omega-dev-pgrad"></span><h1>Pressure Gradient (PGrad)<a class="headerlink" href="#pressure-gradient-pgrad" title="Permalink to this heading"></a></h1>
+<p>Omega includes a <code class="docutils literal notranslate"><span class="pre">PressureGrad</span></code> class that computes horizontal pressure gradient
+tendencies for the non-Boussinesq momentum equation. The implementation supports a
+centered difference scheme as the default, with a placeholder for future high-order
+methods. The class follows the same factory pattern used by other Omega modules.</p>
+<section id="pressuregradtype-enum">
+<h2>PressureGradType enum<a class="headerlink" href="#pressuregradtype-enum" title="Permalink to this heading"></a></h2>
+<p>An enumeration of the available pressure gradient schemes is defined in <code class="docutils literal notranslate"><span class="pre">PGrad.h</span></code>:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">PressureGradType</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">Centered</span><span class="p">,</span><span class="w"> </span><span class="n">HighOrder1</span><span class="p">,</span><span class="w"> </span><span class="n">HighOrder2</span><span class="w"> </span><span class="p">};</span>
+</pre></div>
+</div>
+<p>This is used to select which pressure gradient method is applied at runtime.</p>
+</section>
+<section id="initialization">
+<h2>Initialization<a class="headerlink" href="#initialization" title="Permalink to this heading"></a></h2>
+<p>An instance of <code class="docutils literal notranslate"><span class="pre">PressureGrad</span></code> requires both a <a class="reference internal" href="HorzMesh.html#omega-dev-horz-mesh"><span class="std std-ref"><code class="docutils literal notranslate"><span class="pre">HorzMesh</span></code></span></a> and
+a <a class="reference internal" href="VertCoord.html#omega-dev-vert-coord"><span class="std std-ref"><code class="docutils literal notranslate"><span class="pre">VertCoord</span></code></span></a>, so these classes and all of their dependencies
+must be initialized before <code class="docutils literal notranslate"><span class="pre">PressureGrad</span></code> can be initialized. The static method:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">::</span><span class="n">init</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>initializes the default <code class="docutils literal notranslate"><span class="pre">PressureGrad</span></code> instance using the default <code class="docutils literal notranslate"><span class="pre">HorzMesh</span></code> and
+<code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> instances and the global Omega configuration. A pointer to the default
+instance can be retrieved at any time using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">*</span><span class="w"> </span><span class="n">DefPGrad</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">::</span><span class="n">getDefault</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+<section id="creating-additional-instances">
+<h2>Creating additional instances<a class="headerlink" href="#creating-additional-instances" title="Permalink to this heading"></a></h2>
+<p>Additional named instances can be created using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">*</span><span class="w"> </span><span class="n">MyPGrad</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="s">&quot;MyPGrad&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="n">VCoord</span><span class="p">,</span><span class="w"> </span><span class="n">Options</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">Mesh</span></code> is a pointer to a <code class="docutils literal notranslate"><span class="pre">HorzMesh</span></code>, <code class="docutils literal notranslate"><span class="pre">VCoord</span></code> is a pointer to a <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">Options</span></code> is a pointer to the <code class="docutils literal notranslate"><span class="pre">Config</span></code>. A named instance can be retrieved later
+using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">*</span><span class="w"> </span><span class="n">MyPGrad</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;MyPGrad&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="constructor-behavior">
+<h2>Constructor behavior<a class="headerlink" href="#constructor-behavior" title="Permalink to this heading"></a></h2>
+<p>The constructor reads the <code class="docutils literal notranslate"><span class="pre">PressureGrad</span></code> section from the configuration, stores
+references to mesh and vertical coordinate data needed for computation, and enables
+the appropriate functor based on the configured <code class="docutils literal notranslate"><span class="pre">PressureGradType</span></code>. It also allocates
+placeholder arrays for tidal potential and self-attraction/loading, which are intended
+to be populated by a future tidal forcing module. Currently these arrays are initialized
+to zero.</p>
+</section>
+<section id="computing-the-pressure-gradient">
+<h2>Computing the pressure gradient<a class="headerlink" href="#computing-the-pressure-gradient" title="Permalink to this heading"></a></h2>
+<p>To compute pressure gradient tendencies and accumulate them into a tendency array:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">PGrad</span><span class="o">-&gt;</span><span class="n">computePressureGrad</span><span class="p">(</span><span class="n">Tend</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">VCoord</span><span class="p">,</span><span class="w"> </span><span class="n">EqState</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Tend</span></code> is a 2D array <code class="docutils literal notranslate"><span class="pre">(NEdgesAll</span> <span class="pre">×</span> <span class="pre">NVertLayers)</span></code> that the pressure gradient
+tendency is accumulated into</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">State</span></code> is the current <code class="docutils literal notranslate"><span class="pre">OceanState</span></code>, from which layer thickness is extracted
+at the given <code class="docutils literal notranslate"><span class="pre">TimeLevel</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VCoord</span></code> provides pressure, interface height, and geopotential fields</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">EqState</span></code> provides the specific volume field</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TimeLevel</span></code> selects which time level of the state to use</p></li>
+</ul>
+<p>The method uses hierarchical Kokkos parallelism: an outer <code class="docutils literal notranslate"><span class="pre">parallelForOuter</span></code> loop
+iterates over edges, and an inner <code class="docutils literal notranslate"><span class="pre">parallelForInner</span></code> loop iterates over vertical
+chunks. The appropriate functor is dispatched based on <code class="docutils literal notranslate"><span class="pre">PressureGradChoice</span></code>.</p>
+</section>
+<section id="functors">
+<h2>Functors<a class="headerlink" href="#functors" title="Permalink to this heading"></a></h2>
+<section id="pressuregradcentered">
+<h3>PressureGradCentered<a class="headerlink" href="#pressuregradcentered" title="Permalink to this heading"></a></h3>
+<p>This functor implements a centered difference approximation of the pressure gradient
+tendency. For each edge, it first computes the layer-invariant tidal and
+self-attraction/loading contribution:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">GradGeoPot</span> <span class="o">=</span> <span class="n">grad</span><span class="p">(</span><span class="n">TidalPotential</span><span class="p">)</span> <span class="o">+</span> <span class="n">grad</span><span class="p">(</span><span class="n">SelfAttractionLoading</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Then, for each vertical layer <code class="docutils literal notranslate"><span class="pre">K</span></code>, it computes three terms:</p>
+<ol class="arabic simple">
+<li><p><strong>Montgomery potential gradient</strong>: The average of the horizontal gradients of the
+Montgomery potential (<span class="math notranslate nohighlight">\(\alpha p + g z\)</span>) at the top (interface <code class="docutils literal notranslate"><span class="pre">K</span></code>) and bottom
+(interface <code class="docutils literal notranslate"><span class="pre">K+1</span></code>) of the layer. This compactly represents the combined effect
+of the pressure gradient and the geopotential contribution from tilted coordinate
+surfaces.</p></li>
+<li><p><strong>Specific volume correction</strong>: A correction term equal to the edge-averaged
+pressure at mid-layer multiplied by the horizontal gradient of specific volume.
+This accounts for horizontal density variations that are not captured by the
+Montgomery potential form.</p></li>
+<li><p><strong>Tidal and geopotential forcing</strong> (<code class="docutils literal notranslate"><span class="pre">GradGeoPot</span></code>): The external geopotential
+contribution from tidal forcing and self-attraction/loading, applied uniformly
+across all layers at an edge.</p></li>
+</ol>
+<p>The tendency update for each layer is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Tend</span><span class="p">(</span><span class="n">IEdge</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span> <span class="o">+=</span> <span class="n">EdgeMask</span><span class="p">(</span><span class="n">IEdge</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">GradMontPot</span> <span class="o">+</span> <span class="n">PGradAlpha</span> <span class="o">-</span> <span class="n">GradGeoPot</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">EdgeMask</span></code> is applied to enforce land boundary conditions. The functor operator
+signature is:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">KOKKOS_FUNCTION</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="k">operator</span><span class="p">()(</span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Tend</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">IEdge</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">KChunk</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">PressureMid</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">PressureInterface</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ZInterface</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">Array1DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TidalPotential</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">Array1DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">SelfAttractionLoading</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">SpecVol</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="pressuregradhighorder">
+<h3>PressureGradHighOrder<a class="headerlink" href="#pressuregradhighorder" title="Permalink to this heading"></a></h3>
+<p>This functor is a placeholder for a future high-order pressure gradient implementation
+suitable for ice shelf cavities and complex bathymetry. Currently it performs no
+computation (a no-op).</p>
+</section>
+</section>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading"></a></h2>
+<p>The pressure gradient type is selected in the input YAML file:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">PressureGrad</span><span class="p">:</span>
+<span class="w">   </span><span class="nt">PressureGradType</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;centered&#39;</span>
+</pre></div>
+</div>
+<p>Valid options for <code class="docutils literal notranslate"><span class="pre">PressureGradType</span></code> are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">'centered'</span></code> or <code class="docutils literal notranslate"><span class="pre">'Centered'</span></code>: centered difference approximation (default)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'HighOrder1'</span></code>: first high-order method (placeholder, future implementation)</p></li>
+</ul>
+<p>If an unrecognized value is provided, the implementation falls back to the centered
+scheme and logs an informational message.</p>
+</section>
+<section id="data-members">
+<h2>Data members<a class="headerlink" href="#data-members" title="Permalink to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">PressureGrad</span></code> class stores the following key data:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Member</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEdgesAll</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">I4</span></code></p></td>
+<td><p>Total number of edges including halo</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NChunks</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">I4</span></code></p></td>
+<td><p>Number of vertical chunks for vectorization</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NVertLayers</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">I4</span></code></p></td>
+<td><p>Number of vertical layers</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NVertLayersP1</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">I4</span></code></p></td>
+<td><p>Number of vertical layers plus one</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MinLayerEdgeBot</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Array1DI4</span></code></p></td>
+<td><p>Minimum active layer index for each edge</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">MaxLayerEdgeTop</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Array1DI4</span></code></p></td>
+<td><p>Maximum active layer index for each edge</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TidalPotential</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Array1DReal</span></code></p></td>
+<td><p>Tidal potential (placeholder, currently zero)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SelfAttractionLoading</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Array1DReal</span></code></p></td>
+<td><p>Self-attraction and loading term (placeholder, currently zero)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CenteredPGrad</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PressureGradCentered</span></code></p></td>
+<td><p>Centered pressure gradient functor</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">HighOrderPGrad</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PressureGradHighOrder</span></code></p></td>
+<td><p>High-order pressure gradient functor</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PressureGradChoice</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PressureGradType</span></code></p></td>
+<td><p>Selected pressure gradient method</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="removal">
+<h2>Removal<a class="headerlink" href="#removal" title="Permalink to this heading"></a></h2>
+<p>To remove all <code class="docutils literal notranslate"><span class="pre">PressureGrad</span></code> instances:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">::</span><span class="n">clear</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>To remove a specific named instance:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">::</span><span class="n">erase</span><span class="p">(</span><span class="s">&quot;MyPGrad&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="VertCoord.html" class="btn btn-neutral float-left" title="Vertical Coordinate" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Timing.html" class="btn btn-neutral float-right" title="Timing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
