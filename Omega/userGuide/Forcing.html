@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fields and Metadata (Field) &mdash; Omega develop documentation</title>
+  <title>Forcing &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Parallel IO (IO)" href="IO.html" />
-    <link rel="prev" title="Error handling" href="Error.html" />
+    <link rel="next" title="Quick Start for Developers" href="../devGuide/QuickStart.html" />
+    <link rel="prev" title="Vertical Advection" href="VertAdv.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -58,7 +58,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Error.html">Error handling</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
@@ -79,7 +79,20 @@
 <li class="toctree-l1"><a class="reference internal" href="Timing.html">Timing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Forcing.html">Forcing</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Forcing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#wind-forcing">Wind forcing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#wind-forcing-configuration">Wind forcing configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#required-input-fields">Required input fields</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#surface-tracer-restoring">Surface tracer restoring</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#surface-tracer-restoring-configuration">Surface tracer restoring configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#restoring-target-fields">Restoring target fields</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#notes">Notes</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
@@ -181,9 +194,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Fields and Metadata (Field)</li>
+      <li class="breadcrumb-item active">Forcing</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/userGuide/Field.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/userGuide/Forcing.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -191,35 +204,103 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="fields-and-metadata-field">
-<span id="omega-user-field"></span><h1>Fields and Metadata (Field)<a class="headerlink" href="#fields-and-metadata-field" title="Permalink to this heading"></a></h1>
-<p>Within OMEGA, each module registers fields that it owns together with the
-metadata associated with that field. Metadata must be compliant with the
-Climate and Forecast <a class="reference external" href="http://cfconventions.org/">(CF) metadata conventions.</a>
-This information can then be used by IOStreams or other modules that may
-require metadata information. Two special fields are defined internally as
-CodeMeta and FieldMeta to hold any global metadata not associated with a
-data field, but may be required for provenance. Required metadata are enforced
-by the Field create method but additional metadata can be added after field
-creation. The data array holding field values can be attached/retrieved and
-updated whenever needed.</p>
-<p>Groups of fields can also be defined to provide a shortcut to a list of fields
-commonly used together, like the model state or tracer groups. This reduces the
-size of the input YAML configuration. The user can select which fields or field
-groups they wish to include via the streams section of the input YAML
-configuration file. This is described further in {ref} <code class="docutils literal notranslate"><span class="pre">omega-user-iostreams</span></code>.
-There are no user-configurable options for the Field class itself since all
-fields are defined and updated internally, but further details on the methods
-and implementation can be found in the <a class="reference internal" href="../devGuide/Field.html#omega-dev-field"><span class="std std-ref">Fields and Metadata (Field)</span></a> section of the
-Developer’s Guide.</p>
+  <section class="tex2jax_ignore mathjax_ignore" id="forcing">
+<span id="omega-user-forcing"></span><h1>Forcing<a class="headerlink" href="#forcing" title="Permalink to this heading"></a></h1>
+<p>This page documents the user-facing configuration and behavior for current forcing in Omega:</p>
+<ul class="simple">
+<li><p>Wind forcing</p></li>
+<li><p>Surface tracer restoring</p></li>
+</ul>
+<section id="wind-forcing">
+<h2>Wind forcing<a class="headerlink" href="#wind-forcing" title="Permalink to this heading"></a></h2>
+<p>Wind forcing adds momentum tendency from surface wind stress.</p>
+<section id="wind-forcing-configuration">
+<h3>Wind forcing configuration<a class="headerlink" href="#wind-forcing-configuration" title="Permalink to this heading"></a></h3>
+<p>Wind forcing behavior is controlled by two configuration blocks:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Omega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">WindStress</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">InterpType</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Isotropic</span>
+
+<span class="w">  </span><span class="nt">Tendencies</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">WindForcingTendencyEnable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">WindStress.InterpType</span></code></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Isotropic</span></code>: isotropic cell-to-edge interpolation for wind stress</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Anisotropic</span></code>: anisotropic interpolation option</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Tendencies.WindForcingTendencyEnable</span></code>: switch to enable wind forcing tendency</p></li>
+</ul>
+</section>
+<section id="required-input-fields">
+<h3>Required input fields<a class="headerlink" href="#required-input-fields" title="Permalink to this heading"></a></h3>
+<p>Wind forcing uses auxiliary wind-stress fields:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">WindStressZonal</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">WindStressMeridional</span></code></p></li>
+</ul>
+<p>These are used to form edge-normal stress (<code class="docutils literal notranslate"><span class="pre">NormalStressEdge</span></code>) that enters
+momentum tendencies.</p>
+</section>
+</section>
+<section id="surface-tracer-restoring">
+<h2>Surface tracer restoring<a class="headerlink" href="#surface-tracer-restoring" title="Permalink to this heading"></a></h2>
+<p>Surface tracer restoring applies a piston-velocity tendency, or damping, at the ocean
+surface for selected tracers. This is implemented to mitigate drifts in chosen tracers
+(most often salinity) by nudging the model’s simulated tracer values towards observed climatological values.
+This process prevents oceanic regimes from shifting away from reality due to errors in surface freshwater
+forcing (in the case of salinity restoring). Currently, it is applied everywhere when enabled.</p>
+<section id="surface-tracer-restoring-configuration">
+<h3>Surface tracer restoring configuration<a class="headerlink" href="#surface-tracer-restoring-configuration" title="Permalink to this heading"></a></h3>
+<p>Surface tracer restoring is controlled by two configuration blocks:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Omega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">SurfaceRestoring</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">TracersToRestore</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Temperature</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Salinity</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">PistonVelocity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.585e-5</span>
+
+<span class="w">  </span><span class="nt">Tendencies</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">SurfaceTracerRestoringEnable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TracersToRestore</span></code>: list of tracer names that restoring is applied to</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PistonVelocity</span></code>: restoring rate coefficient</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SurfaceTracerRestoringEnable</span></code>: switch to enable surface tracer restoring</p></li>
+</ul>
+<p>When restoring is enabled, Omega resolves <code class="docutils literal notranslate"><span class="pre">TracersToRestore</span></code> into an internal
+list of tracer IDs and applies restoring only to tracers in that list.</p>
+</section>
+<section id="restoring-target-fields">
+<h3>Restoring target fields<a class="headerlink" href="#restoring-target-fields" title="Permalink to this heading"></a></h3>
+<p>Surface restoring uses auxiliary fields:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TracersMonthlySurfClimoCell</span></code>: restoring target climatological values</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SurfTracerRestoringDiffsCell</span></code>: computed target-minus-state differences</p></li>
+</ul>
+<p>The restoring tendency is computed at the surface layer only and is limited by
+the configured <code class="docutils literal notranslate"><span class="pre">PistonVelocity</span></code> and target-minus-state difference.</p>
+</section>
+</section>
+<section id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>If a tracer is not listed in <code class="docutils literal notranslate"><span class="pre">TracersToRestore</span></code>, no restoring tendency is
+applied to that tracer.</p></li>
+<li><p>If surface restoring is enabled but no tracer IDs are available at tendency
+compute-time, Omega aborts with an error.</p></li>
+</ul>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="Error.html" class="btn btn-neutral float-left" title="Error handling" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="IO.html" class="btn btn-neutral float-right" title="Parallel IO (IO)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="VertAdv.html" class="btn btn-neutral float-left" title="Vertical Advection" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../devGuide/QuickStart.html" class="btn btn-neutral float-right" title="Quick Start for Developers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

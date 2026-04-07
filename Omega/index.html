@@ -78,6 +78,7 @@
 <li class="toctree-l1"><a class="reference internal" href="userGuide/Timing.html">Timing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Forcing.html">Forcing</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
@@ -126,6 +127,7 @@
 <li class="toctree-l1"><a class="reference internal" href="devGuide/Timing.html#advanced-timing-functions">Advanced timing functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="devGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 <li class="toctree-l1"><a class="reference internal" href="devGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Forcing.html">Forcing</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -236,10 +238,14 @@ component of E3SM for comparison purposes.</p>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/HorzMesh.html">Horizontal Mesh</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/HorzOperators.html">Horizontal Operators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/AuxiliaryVariables.html">Auxiliary Variables</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/AuxiliaryVariables.html#see-also">See Also</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/AuxiliaryState.html">Auxiliary State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/TendencyTerms.html">Tendency Terms</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="userGuide/TendencyTerms.html#second-order-horizontal-advection-algorithm">Second Order Horizontal Advection Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/TendencyTerms.html#see-also">See Also</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/Tendencies.html">Tendencies</a></li>
@@ -276,6 +282,12 @@ component of E3SM for comparison purposes.</p>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/VertAdv.html">Vertical Advection</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="userGuide/VertAdv.html#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="userGuide/VertAdv.html#configuration-options">Configuration Options</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Forcing.html">Forcing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/Forcing.html#wind-forcing">Wind forcing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/Forcing.html#surface-tracer-restoring">Surface tracer restoring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/Forcing.html#notes">Notes</a></li>
 </ul>
 </li>
 </ul>
@@ -361,6 +373,7 @@ component of E3SM for comparison purposes.</p>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/AuxiliaryVariables.html#constructor">Constructor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/AuxiliaryVariables.html#compute-member-functions">Compute member functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/AuxiliaryVariables.html#implemented-groups">Implemented groups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/AuxiliaryVariables.html#see-also">See Also</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="devGuide/AuxiliaryState.html">Auxiliary State</a><ul>
@@ -370,7 +383,10 @@ component of E3SM for comparison purposes.</p>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/AuxiliaryState.html#removal-of-auxiliary-states">Removal of auxiliary states</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/TendencyTerms.html">Tendency Terms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/TendencyTerms.html#see-also">See Also</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="devGuide/Tendencies.html">Tendencies</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/Tendencies.html#initialization">Initialization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/Tendencies.html#creation-of-non-default-tendencies">Creation of non-default tendencies</a></li>
@@ -449,6 +465,12 @@ component of E3SM for comparison purposes.</p>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/VertAdv.html#initialization">Initialization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/VertAdv.html#variables">Variables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/VertAdv.html#methods">Methods</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Forcing.html">Forcing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Forcing.html#wind-forcing-design">Wind forcing design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Forcing.html#surface-tracer-restoring-design">Surface tracer restoring design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Forcing.html#notes">Notes</a></li>
 </ul>
 </li>
 </ul>

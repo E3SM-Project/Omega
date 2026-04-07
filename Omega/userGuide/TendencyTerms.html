@@ -70,6 +70,7 @@
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Tendency Terms</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#second-order-horizontal-advection-algorithm">Second Order Horizontal Advection Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#see-also">See Also</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
@@ -84,6 +85,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Timing.html">Timing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Forcing.html">Forcing</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
@@ -132,6 +134,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html#advanced-timing-functions">Advanced timing functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Forcing.html">Forcing</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -243,6 +246,9 @@ tendency terms are currently implemented:</p>
 <tr class="row-odd"><td><p>BottomDragOnEdge</p></td>
 <td><p>bottom drag, defined on edges</p></td>
 </tr>
+<tr class="row-even"><td><p>SurfaceTracerRestoringOnCell</p></td>
+<td><p>surface tracer restoring, defined on cells</p></td>
+</tr>
 </tbody>
 </table>
 <p>Among the internal data stored by each functor is a <code class="docutils literal notranslate"><span class="pre">bool</span></code> which can enable or
@@ -343,6 +349,10 @@ the currently available tendency terms:</p>
 <td><p>BottomDragCoeff</p></td>
 <td><p>bottom drag coefficient</p></td>
 </tr>
+<tr class="row-even"><td><p>SurfaceTracerRestoringOnCell</p></td>
+<td><p>SurfaceTracerRestoringEnable</p></td>
+<td><p>enable/disable term</p></td>
+</tr>
 </tbody>
 </table>
 <section id="second-order-horizontal-advection-algorithm">
@@ -424,6 +434,11 @@ is about order 1.7 as shown in  <a class="reference internal" href="#tracer-high
 <p><span class="caption-number">Fig. 1 </span><span class="caption-text">Tracer higer order convergence example of a cosine bell advected on a sphere showing an order 1.71 convergence rate</span><a class="headerlink" href="#tracer-higher-order-convergence" title="Permalink to this image"></a></p>
 </figcaption>
 </figure>
+</section>
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Permalink to this heading"></a></h2>
+<p>Additional information on forcing (currently wind forcing and surface tracer
+restoring) is detailed in <a class="reference internal" href="Forcing.html#omega-user-forcing"><span class="std std-ref">Forcing</span></a>.</p>
 </section>
 </section>
 

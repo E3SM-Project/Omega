@@ -79,6 +79,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Timing.html">Timing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Forcing.html">Forcing</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul class="current">
@@ -109,7 +110,10 @@
 <li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Tendency Terms</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tendency Terms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
@@ -127,6 +131,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Timing.html#advanced-timing-functions">Advanced timing functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Forcing.html">Forcing</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -229,7 +234,13 @@ implemented:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">TracerHighOrderHorzAdvOnCell</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">TracerDiffOnCell</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">TracerHyperDiffOnCell</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SurfaceTracerRestoringOnCell</span></code></p></li>
 </ul>
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Permalink to this heading"></a></h2>
+<p>Additional information on forcing (currently wind forcing and surface tracer
+restoring) is detailed in <a class="reference internal" href="Forcing.html#omega-dev-forcing"><span class="std std-ref">Forcing</span></a>.</p>
+</section>
 </section>
 
 

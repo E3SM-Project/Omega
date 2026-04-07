@@ -64,7 +64,10 @@
 <li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
 <li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Auxiliary Variables</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Auxiliary Variables</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
@@ -79,6 +82,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Timing.html">Timing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Forcing.html">Forcing</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
@@ -127,6 +131,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html#advanced-timing-functions">Advanced timing functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Forcing.html">Forcing</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -259,8 +264,19 @@ For example, the value of thickness used in advective flux can be centered or up
 <tr class="row-even"><td><p>NormalStressEdge</p></td>
 <td><p>normal component of wind stress on edge</p></td>
 </tr>
+<tr class="row-odd"><td><p>SurfTracerRestoringDiffsCell</p></td>
+<td><p>surface tracer restoring differences on cells</p></td>
+</tr>
+<tr class="row-even"><td><p>TracersMonthlySurfClimoCell</p></td>
+<td><p>monthly climatology values to restore to for surface tracer on cells</p></td>
+</tr>
 </tbody>
 </table>
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Permalink to this heading"></a></h2>
+<p>Additional information on forcing (currently wind forcing and surface tracer
+restoring) is detailed in <a class="reference internal" href="Forcing.html#omega-user-forcing"><span class="std std-ref">Forcing</span></a>.</p>
+</section>
 </section>
 
 
