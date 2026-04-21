@@ -201,10 +201,13 @@
 <section class="tex2jax_ignore mathjax_ignore" id="equation-of-state-eos">
 <h1>Equation of State (EOS)<a class="headerlink" href="#equation-of-state-eos" title="Permalink to this heading"></a></h1>
 <p>Omega includes an <code class="docutils literal notranslate"><span class="pre">Eos</span></code> class that provides functions that compute <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code>, <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code>,
-and <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code>. Current EOS options are a linear EOS or an EOS computed using the TEOS-10
-75 term expansion from <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S1463500315000566">Roquet et al. 2015</a>.
-If <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> is calculated with the linear EOS option, it will be equal to <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> as there
-is no pressure/depth dependence for the linear EOS. <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> computes specific volume
+and <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code>. Current EOS options are a linear EOS, a constant EOS,
+or an EOS computed using the TEOS-10 75 term expansion from
+<a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S1463500315000566">Roquet et al. 2015</a>.
+If <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> is calculated with the linear or constant EOS option,
+it will be equal to <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> as there is no pressure/depth dependence for
+those EOS options. For the constant EOS option, <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> is set to <code class="docutils literal notranslate"><span class="pre">1/RhoSw</span></code>
+for all active cells/layers. <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> computes specific volume
 adiabatically displaced to <code class="docutils literal notranslate"><span class="pre">K</span> <span class="pre">+</span> <span class="pre">KDisp</span></code> (where <code class="docutils literal notranslate"><span class="pre">K</span></code> counted positive downward, ie <code class="docutils literal notranslate"><span class="pre">K+1</span></code> is one layer below <code class="docutils literal notranslate"><span class="pre">K</span></code>). Note: <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> must be calculated before <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code>, as
 <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> is an input for the <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code> calculation. If the linear EOS option is used, then the <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code>
 is calculated using linear coefficients. If the TEOS-10 option is used, the <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code> is calculated with non-linear
@@ -212,12 +215,13 @@ coefficients according to the <a class="reference external" href="https://www.te
 for the <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code> TEOS-10 option that differ from how it is calculated in the TEOS-10 toolbox:
 (1) gravity is assumed to be constant and not a function of depth and latitude, and (2) the interface value of the specific volume is
 calculated as the average between two layer values, rather than being recalculated using the interface values of temperature,
-salinity, and pressure. Both of these assumptions incur less than a 1% error.</p>
+salinity, and pressure. Both of these assumptions incur less than a 1% error.
+For the constant EOS option, <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code> is identically zero.</p>
 <section id="eos-type">
 <h2>Eos type<a class="headerlink" href="#eos-type" title="Permalink to this heading"></a></h2>
 <p>An enumeration listing all implemented schemes is provided. It needs to be extended every time an
 EOS is added. It is used to identify which EOS method is to be used at run time.</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">EosType</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">LinearEos</span><span class="p">,</span><span class="w"> </span><span class="n">Teos10Eos</span><span class="w"> </span><span class="p">};</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">EosType</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">LinearEos</span><span class="p">,</span><span class="w"> </span><span class="n">Teos10Eos</span><span class="p">,</span><span class="w"> </span><span class="n">ConstantEos</span><span class="w"> </span><span class="p">};</span>
 </pre></div>
 </div>
 </section>
