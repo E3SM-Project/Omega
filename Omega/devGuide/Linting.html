@@ -90,6 +90,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#bypassing-linting">Bypassing Linting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#linting-c-code">Linting C++ Code</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#linting-python-code">Linting Python Code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#linting-fortran-code">Linting Fortran Code</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#updating-the-linting-pacakge">Updating the linting pacakge</a></li>
 </ul>
 </li>
@@ -253,6 +254,16 @@ with f-strings,
 pre-commit<span class="w"> </span>run<span class="w"> </span>flynt<span class="w"> </span>--all-files
 pre-commit<span class="w"> </span>run<span class="w"> </span>flake8<span class="w"> </span>--all-files
 pre-commit<span class="w"> </span>run<span class="w"> </span>mypy<span class="w"> </span>--all-files
+</pre></div>
+</div>
+<p>You can specify one more more files instead of <code class="docutils literal notranslate"><span class="pre">--all-files</span></code>.</p>
+</section>
+<section id="linting-fortran-code">
+<h2>Linting Fortran Code<a class="headerlink" href="#linting-fortran-code" title="Permalink to this heading"></a></h2>
+<p>The tool used to lint Fortran code is
+<a class="reference external" href="https://fortitude.readthedocs.io/en/stable/">fortitude</a>.</p>
+<p>You can run  this tool individually if you need to:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pre</span><span class="o">-</span><span class="n">commit</span> <span class="n">run</span> <span class="n">fortitude</span> <span class="o">--</span><span class="nb">all</span><span class="o">-</span><span class="n">files</span>
 </pre></div>
 </div>
 <p>You can specify one more more files instead of <code class="docutils literal notranslate"><span class="pre">--all-files</span></code>.</p>
