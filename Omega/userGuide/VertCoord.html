@@ -79,7 +79,6 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Vertical Coordinate</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#variables">Variables</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#configuration-options">Configuration options</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="PGrad.html">Pressure Gradient</a></li>
@@ -256,9 +255,9 @@ The <code class="docutils literal notranslate"><span class="pre">VertCoord</span
 <td><p>geopotential at layer mid points</p></td>
 <td><p>m<span class="math notranslate nohighlight">\(^2\)</span>/s<span class="math notranslate nohighlight">\(^2\)</span></p></td>
 </tr>
-<tr class="row-odd"><td><p>LayerThicknessPStar</p></td>
+<tr class="row-odd"><td><p>LayerThicknessTarget</p></td>
 <td><p>desired layer thickness based on total perturbation from the reference thickness</p></td>
-<td><p>-</p></td>
+<td><p>m</p></td>
 </tr>
 <tr class="row-even"><td><p>MinLayerCell</p></td>
 <td><p>first active layer for cell</p></td>
@@ -304,7 +303,7 @@ The <code class="docutils literal notranslate"><span class="pre">VertCoord</span
 <td><p>weights to specify how total column thickness changes are distributed across layers</p></td>
 <td><p>-</p></td>
 </tr>
-<tr class="row-odd"><td><p>RefLayerThickness</p></td>
+<tr class="row-odd"><td><p>RefPseudoThickness</p></td>
 <td><p>reference layer thickness used to distribute total column thickness changes</p></td>
 <td><p>m</p></td>
 </tr>
@@ -314,19 +313,6 @@ The <code class="docutils literal notranslate"><span class="pre">VertCoord</span
 </tr>
 </tbody>
 </table>
-</section>
-<section id="configuration-options">
-<h2>Configuration options<a class="headerlink" href="#configuration-options" title="Permalink to this heading"></a></h2>
-<p>The vertical coordinate movement can be specified by the <code class="docutils literal notranslate"><span class="pre">MovementWeightType</span></code> option in the configuration file.</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">omega</span><span class="p">:</span>
-<span class="w">   </span><span class="nt">VertCoord</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">MovementWeightType</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Fixed</span><span class="p p-Indicator">,</span><span class="nv">Uniform</span><span class="p p-Indicator">]</span>
-</pre></div>
-</div>
-<p>The option <code class="docutils literal notranslate"><span class="pre">Uniform</span></code> specifies that perturbations to the total pseudo-thickness of the water column is distributed evenly to all vertical layers.
-This is similar to the standard “z-star” coordinate in Boussinesq models.
-The option <code class="docutils literal notranslate"><span class="pre">Fixed</span></code> means that total pseudo-thickness perturbations are confined to the top layer, while all others remain constant.
-This is similar to the traditional “z” coordinate in Boussinesq models.</p>
 </section>
 </section>
 
