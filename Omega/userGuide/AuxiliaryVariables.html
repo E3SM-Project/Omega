@@ -214,26 +214,26 @@ For example, the value of thickness used in advective flux can be centered or up
 <tr class="row-odd"><td><p>VelocityDivCell</p></td>
 <td><p>divergence of horizontal velocity</p></td>
 </tr>
-<tr class="row-even"><td><p>FluxLayerThickEdge</p></td>
-<td><p>layer thickness used for fluxes through edges. May be centered, upwinded, or a combination of the two</p></td>
+<tr class="row-even"><td><p>FluxPseudoThickEdge</p></td>
+<td><p>pseudo-thickness used for fluxes through edges. May be centered, upwinded, or a combination of the two</p></td>
 </tr>
-<tr class="row-odd"><td><p>MeanLayerThickEdge</p></td>
-<td><p>layer thickness averaged from cell center to edges</p></td>
+<tr class="row-odd"><td><p>MeanPseudoThickEdge</p></td>
+<td><p>pseudo-thickness averaged from cell center to edges</p></td>
 </tr>
 <tr class="row-even"><td><p>RelVortVertex</p></td>
 <td><p>curl of horizontal velocity, defined at vertices</p></td>
 </tr>
 <tr class="row-odd"><td><p>NormRelVortVertex</p></td>
-<td><p>curl of horizontal velocity divided by layer thickness</p></td>
+<td><p>curl of horizontal velocity divided by pseudo-thickness</p></td>
 </tr>
 <tr class="row-even"><td><p>NormPlanetVortVertex</p></td>
-<td><p>earth’s rotational rate (Coriolis parameter, f) divided by layer thickness</p></td>
+<td><p>earth’s rotational rate (Coriolis parameter, f) divided by pseudo-thickness</p></td>
 </tr>
 <tr class="row-odd"><td><p>NormRelVortEdge</p></td>
-<td><p>curl of horizontal velocity divided by layer thickness, averaged from vertices to edges</p></td>
+<td><p>curl of horizontal velocity divided by pseudo-thickness, averaged from vertices to edges</p></td>
 </tr>
 <tr class="row-even"><td><p>NormPlanetVortEdge</p></td>
-<td><p>earth’s rotational rate (Coriolis parameter, f) divided by layer thickness, averaged from vertices to edges</p></td>
+<td><p>earth’s rotational rate (Coriolis parameter, f) divided by pseudo-thickness, averaged from vertices to edges</p></td>
 </tr>
 <tr class="row-odd"><td><p>VelDel2Edge</p></td>
 <td><p>laplacian of horizontal velocity on edges</p></td>

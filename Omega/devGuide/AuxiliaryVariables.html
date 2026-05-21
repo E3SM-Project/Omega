@@ -270,7 +270,7 @@ variables or other auxiliary variables. There is no output argument, they write
 their results directly to the member arrays. There might be more than one
 compute function, if variables located on different mesh elements are grouped
 together. For example, the <code class="docutils literal notranslate"><span class="pre">VorticityAuxVars</span></code> class provides both</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">computeVarsOnVertex</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">IVertex</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">LayerThickCell</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">NormalVelEdge</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">computeVarsOnVertex</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">IVertex</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">PseudoThickCell</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">NormalVelEdge</span><span class="p">);</span>
 <span class="kt">void</span><span class="w"> </span><span class="nf">computeVarsOnEdge</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">IEdge</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">);</span>
 </pre></div>
 </div>
@@ -297,12 +297,12 @@ arguments, because it operates only on the class member arrays.</p>
 <td><p>VelocityDiv</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p>LayerThicknessAuxVars</p></td>
-<td><p>FluxLayerThickEdge</p></td>
+<tr class="row-even"><td><p>PseudoThicknessAuxVars</p></td>
+<td><p>FluxPseudoThickEdge</p></td>
 <td><p>Center or Upwind</p></td>
 </tr>
 <tr class="row-odd"><td><p></p></td>
-<td><p>MeanLayerThickEdge</p></td>
+<td><p>MeanPseudoThickEdge</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p>VorticityAuxVars</p></td>

@@ -206,7 +206,7 @@ already been initialized.</p>
 <span class="p">);</span>
 </pre></div>
 </div>
-<p>allocates the <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">LayerThickness</span></code> arrays for a given number of time levels.
+<p>allocates the <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code> arrays for a given number of time levels.
 The current time level is then registered with the IO infrastructure.</p>
 <p>After initialization, the default state object can be retrieved via:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="p">::</span><span class="n">OceanState</span> <span class="o">*</span><span class="n">State</span> <span class="o">=</span> <span class="n">OMEGA</span><span class="p">::</span><span class="n">OceanState</span><span class="p">::</span><span class="n">getDefault</span><span class="p">();</span>
@@ -240,12 +240,12 @@ handle host &lt;-&gt; device transfers.</p>
 also performed on these arrays and the IOFields data pointer is attached
 to the current time level.</p>
 <p>The arrays associated with a given time level can be accessed with the functions:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">LayerThick</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getLayerThickness</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">PseudoThick</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getPseudoThickness</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
 <span class="n">Array2DReal</span><span class="w"> </span><span class="n">NormVel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getNormalVelocity</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>for the device arrays and</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">HostArray2DReal</span><span class="w"> </span><span class="n">LayerThickH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getLayerThicknessH</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">HostArray2DReal</span><span class="w"> </span><span class="n">PseudoThickH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getPseudoThicknessH</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
 <span class="n">HostArray2DReal</span><span class="w"> </span><span class="n">NormVelH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getNormalVelocityH</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
 </pre></div>
 </div>

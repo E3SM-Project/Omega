@@ -188,7 +188,7 @@
              
   <section id="ocean-state">
 <span id="omega-user-state"></span><h1>Ocean State<a class="headerlink" href="#ocean-state" title="Permalink to this heading"></a></h1>
-<p>The <code class="docutils literal notranslate"><span class="pre">OceanState</span></code> class provides a container for the non-tracer prognostic variables in Omega, namely <code class="docutils literal notranslate"><span class="pre">normalVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">layerThickness</span></code>.
+<p>The <code class="docutils literal notranslate"><span class="pre">OceanState</span></code> class provides a container for the non-tracer prognostic variables in Omega, namely <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code>.
 Upon creation of a <code class="docutils literal notranslate"><span class="pre">OceanState</span></code> instance, these variables are allocated and registered with the IO infrastructure.
 The class contains a method to update the time levels for the state variables between timesteps.
 This involves a halo update, time level index update, and updating the <code class="docutils literal notranslate"><span class="pre">IOFields</span></code> data references.</p>

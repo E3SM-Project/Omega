@@ -210,10 +210,10 @@ The <code class="docutils literal notranslate"><span class="pre">VertCoord</span
 <li><p>the max and min indices of active layers for edges and vertices at the bottom and top of the water column (computed from min/max cell layers)</p></li>
 </ul>
 </li>
-<li><p>pressure (computed from the layer thickness and surface pressure)</p></li>
-<li><p><span class="math notranslate nohighlight">\(z\)</span> height (computed from the bottom depth, specific volume, and layer thickness)</p></li>
-<li><p>geopotential (computed from the z height and tidal forcing)</p></li>
-<li><p>desired vertical interface locations (computed from pressure, reference layer pseudo thickness, and user-specified weights)</p></li>
+<li><p>pressure (computed from the pseudo-thickness and surface pressure)</p></li>
+<li><p>geometric height (computed from the bottom depth, specific volume, and pseudo-thickness)</p></li>
+<li><p>geopotential (computed from the geometric height and tidal forcing)</p></li>
+<li><p>desired vertical interface locations (computed from pressure, reference layer pseudo-thickness, and user-specified weights)</p></li>
 </ul>
 <p>Multiple instances of the vertical coordinate class can be created and accessed by a unique name.</p>
 </section>
@@ -243,21 +243,21 @@ The <code class="docutils literal notranslate"><span class="pre">VertCoord</span
 <td><p>pressure at layer mid points</p></td>
 <td><p>force per unit area at layer mid point</p></td>
 </tr>
-<tr class="row-even"><td><p>ZInterface</p></td>
-<td><p>z height of layer interfaces</p></td>
+<tr class="row-even"><td><p>GeomZInterface</p></td>
+<td><p>geometric height of layer interfaces</p></td>
 <td><p>m</p></td>
 </tr>
-<tr class="row-odd"><td><p>ZMid</p></td>
-<td><p>z height of layer midpoint</p></td>
+<tr class="row-odd"><td><p>GeomZMid</p></td>
+<td><p>geometric height of layer midpoint</p></td>
 <td><p>m</p></td>
 </tr>
 <tr class="row-even"><td><p>GeopotentialMid</p></td>
 <td><p>geopotential at layer mid points</p></td>
 <td><p>m<span class="math notranslate nohighlight">\(^2\)</span>/s<span class="math notranslate nohighlight">\(^2\)</span></p></td>
 </tr>
-<tr class="row-odd"><td><p>LayerThicknessTarget</p></td>
-<td><p>desired layer thickness based on total perturbation from the reference thickness</p></td>
-<td><p>m</p></td>
+<tr class="row-odd"><td><p>PseudoThicknessTarget</p></td>
+<td><p>desired pseudo-thickness based on total perturbation from the reference pseudo-thickness</p></td>
+<td><p>-</p></td>
 </tr>
 <tr class="row-even"><td><p>MinLayerCell</p></td>
 <td><p>first active layer for cell</p></td>
@@ -304,10 +304,10 @@ The <code class="docutils literal notranslate"><span class="pre">VertCoord</span
 <td><p>-</p></td>
 </tr>
 <tr class="row-odd"><td><p>RefPseudoThickness</p></td>
-<td><p>reference layer thickness used to distribute total column thickness changes</p></td>
+<td><p>reference pseudo-thickness used to distribute total column thickness changes</p></td>
 <td><p>m</p></td>
 </tr>
-<tr class="row-even"><td><p>BottomDepth</p></td>
+<tr class="row-even"><td><p>BottomGeomDepth</p></td>
 <td><p>positive down distance from the reference geoid to the bottom</p></td>
 <td><p>m</p></td>
 </tr>

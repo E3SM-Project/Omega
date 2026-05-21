@@ -237,15 +237,15 @@ can be obtained at any time by calling the static <code class="docutils literal 
 </section>
 <section id="computation-of-tendencies">
 <h2>Computation of tendencies<a class="headerlink" href="#computation-of-tendencies" title="Permalink to this heading"></a></h2>
-<p>To compute all tendencies for layer thickness, normal velocity, and tracer equations,
+<p>To compute all tendencies for pseudo-thickness, normal velocity, and tracer equations,
 given ocean state, <code class="docutils literal notranslate"><span class="pre">State</span></code>, a group of auxiliary variables, <code class="docutils literal notranslate"><span class="pre">AuxState</span></code>, an array of tracers,
 <code class="docutils literal notranslate"><span class="pre">TracerArray</span></code>, thickness time level <code class="docutils literal notranslate"><span class="pre">ThickTimeLevel</span></code>, velocity time level <code class="docutils literal notranslate"><span class="pre">VelTimeLevel</span></code>,
 and time instant <code class="docutils literal notranslate"><span class="pre">Time</span></code> do:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Tendencies</span><span class="p">.</span><span class="n">computeAllTendencies</span><span class="p">(</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">AuxState</span><span class="p">,</span><span class="w"> </span><span class="n">TracerArray</span><span class="p">,</span><span class="w"> </span><span class="n">ThickTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="n">VelTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="n">Time</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>To call only the layer thickness tendency terms:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Tendencies</span><span class="p">.</span><span class="n">computeThicknessTendencies</span><span class="p">(</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">AuxState</span><span class="p">,</span><span class="w"> </span><span class="n">ThickTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="n">VelTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="n">Time</span><span class="p">);</span>
+<p>To call only the pseudo-thickness tendency terms:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Tendencies</span><span class="p">.</span><span class="n">computePseudoThicknessTendencies</span><span class="p">(</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">AuxState</span><span class="p">,</span><span class="w"> </span><span class="n">ThickTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="n">VelTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="n">Time</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>To call only the normal velocity tendency terms:</p>

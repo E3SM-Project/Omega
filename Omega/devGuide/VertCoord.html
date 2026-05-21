@@ -208,7 +208,7 @@
 <p>These arguments provide flexibility, particularly for unit testing. When <code class="docutils literal notranslate"><span class="pre">init(false)</span></code> is used, the method skips reading
 the <code class="docutils literal notranslate"><span class="pre">InitialVertCoord</span></code> stream. This is useful for unit tests that rely on meshes lacking the fields required by that stream.
 In this case, the min/max layer arrays are initialized with default values based on the number of vertical layers, and
-<code class="docutils literal notranslate"><span class="pre">bottomDepth</span></code> remains uninitialized. Some tests may utilize a specific number of vertical layers that differs from what is
+<code class="docutils literal notranslate"><span class="pre">BottomGeomDepth</span></code> remains uninitialized. Some tests may utilize a specific number of vertical layers that differs from what is
 defined in the mesh file. To handle this, the <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> can be initialized with <code class="docutils literal notranslate"><span class="pre">init(false,</span> <span class="pre">LocNVertLayers)</span></code> to explicitly
 set the number of vertical layers. An argument for <code class="docutils literal notranslate"><span class="pre">ReadStream</span></code> must be provided in order to explicitly set <code class="docutils literal notranslate"><span class="pre">NVertLayers</span></code>.
 For example, <code class="docutils literal notranslate"><span class="pre">init(42)</span></code> is invalid, <code class="docutils literal notranslate"><span class="pre">init(false,</span> <span class="pre">42)</span></code> must be called instead.</p>
@@ -253,11 +253,11 @@ Finally, it registers variables with <code class="docutils literal notranslate">
 <td><p>Real</p></td>
 <td><p>NCellsSize, NVertLayers</p></td>
 </tr>
-<tr class="row-even"><td><p>ZInterface</p></td>
+<tr class="row-even"><td><p>GeomZInterface</p></td>
 <td><p>Real</p></td>
 <td><p>NCellsSize, NVertLayersP1</p></td>
 </tr>
-<tr class="row-odd"><td><p>ZMid</p></td>
+<tr class="row-odd"><td><p>GeomZMid</p></td>
 <td><p>Real</p></td>
 <td><p>NCellsSize, NVertLayers</p></td>
 </tr>
@@ -265,7 +265,7 @@ Finally, it registers variables with <code class="docutils literal notranslate">
 <td><p>Real</p></td>
 <td><p>NCellsSize, NVertLayers</p></td>
 </tr>
-<tr class="row-odd"><td><p>LayerThicknessTarget</p></td>
+<tr class="row-odd"><td><p>PseudoThicknessTarget</p></td>
 <td><p>Real</p></td>
 <td><p>NCellsSize, NVertLayers</p></td>
 </tr>
@@ -317,7 +317,7 @@ Finally, it registers variables with <code class="docutils literal notranslate">
 <td><p>Real</p></td>
 <td><p>NCellsSize, NVertLayers</p></td>
 </tr>
-<tr class="row-even"><td><p>BottomDepth</p></td>
+<tr class="row-even"><td><p>BottomGeomDepth</p></td>
 <td><p>Real</p></td>
 <td><p>NCellsSize</p></td>
 </tr>
@@ -337,7 +337,7 @@ Finally, it registers variables with <code class="docutils literal notranslate">
 </section>
 <section id="use-of-hierarchical-parallelism">
 <h2>Use of hierarchical parallelism<a class="headerlink" href="#use-of-hierarchical-parallelism" title="Permalink to this heading"></a></h2>
-<p>The methods <code class="docutils literal notranslate"><span class="pre">computePressure</span></code> and <code class="docutils literal notranslate"><span class="pre">computeZHeight</span></code> are similar in that they use hierarchical parallelism to split the work for horizontal cells over teams of threads, with a <code class="docutils literal notranslate"><span class="pre">parallel_for</span></code>.
+<p>The methods <code class="docutils literal notranslate"><span class="pre">computePressure</span></code> and <code class="docutils literal notranslate"><span class="pre">computeGeomZHeight</span></code> are similar in that they use hierarchical parallelism to split the work for horizontal cells over teams of threads, with a <code class="docutils literal notranslate"><span class="pre">parallel_for</span></code>.
 This is done with a <code class="docutils literal notranslate"><span class="pre">TeamPolicy</span></code>:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">Policy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TeamPolicy</span><span class="p">(</span><span class="n">NCellsAll</span><span class="p">,</span><span class="w"> </span><span class="n">OMEGA_TEAMSIZE</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
 </pre></div>
@@ -360,13 +360,13 @@ The <code class="docutils literal notranslate"><span class="pre">parallel_scan</
 </pre></div>
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">KMax</span></code> and <code class="docutils literal notranslate"><span class="pre">KMin</span></code> are the maximum and minimum active vertical layer indices.
-In <code class="docutils literal notranslate"><span class="pre">computeTargetThickness</span></code> an outer loop divides the horizontal cells over teams of threads as above, however, there is a nested <code class="docutils literal notranslate"><span class="pre">parallel_reduce</span></code> that computes the column sum of the reference layer thicknesses times the vertical coordinate movement weights among threads in a team:</p>
+In <code class="docutils literal notranslate"><span class="pre">computeTargetThickness</span></code> an outer loop divides the horizontal cells over teams of threads as above, however, there is a nested <code class="docutils literal notranslate"><span class="pre">parallel_reduce</span></code> that computes the column sum of the reference pseudo-thicknesses times the vertical coordinate movement weights among threads in a team:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Real</span><span class="w"> </span><span class="n">SumWh</span><span class="w"> </span><span class="mi">0</span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 <span class="n">Kokkos</span><span class="o">::</span><span class="n">parallel_reduce</span><span class="p">(</span>
 <span class="w">    </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">TeamThreadRange</span><span class="p">(</span><span class="n">Member</span><span class="p">,</span><span class="w"> </span><span class="n">KMin</span><span class="p">,</span><span class="w"> </span><span class="n">KMax</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">),</span>
 <span class="w">    </span><span class="p">[</span><span class="o">=</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">K</span><span class="p">,</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">&amp;</span><span class="n">LocalWh</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">       </span><span class="n">LocalWh</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">VertCoordMovementWeights</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">)</span><span class="w"> </span><span class="o">*</span>
-<span class="w">                  </span><span class="n">RefLayerThickness</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">);</span>
+<span class="w">                  </span><span class="n">RefPseudoThickness</span><span class="p">(</span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">);</span>
 <span class="w">    </span><span class="p">},</span>
 <span class="w">    </span><span class="n">SumWh</span><span class="p">);</span>
 </pre></div>

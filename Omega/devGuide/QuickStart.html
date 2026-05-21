@@ -317,17 +317,14 @@ meshes. At the moment, mesh files need to be copied or linked to specifically
 named files under the <code class="docutils literal notranslate"><span class="pre">test</span></code> directory. Appropriate mesh files can be
 downloaded from:</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://web.lcrc.anl.gov/public/e3sm/inputdata/ocn/mpas-o/oQU240/ocean.QU.240km.151209.nc">Ocean Mesh</a></p></li>
-<li><p><a class="reference external" href="https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/polaris_cache/global_convergence/icos/cosine_bell/Icos480/init/initial_state.230220.nc">Global Mesh</a></p></li>
-<li><p><a class="reference external" href="https://gist.github.com/mwarusz/f8caf260398dbe140d2102ec46a41268/raw/e3c29afbadc835797604369114321d93fd69886d/PlanarPeriodic48x48.nc">Planar Mesh</a></p></li>
+<li><p><a class="reference external" href="https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/ocean.QU.240km.omega_vars.260518.nc">Ocean Mesh</a></p></li>
+<li><p><a class="reference external" href="https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/cosine_bell_icos480.omega_vars.260518.nc">Global Mesh</a></p></li>
+<li><p><a class="reference external" href="https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/PlanarPeriodic48x48.omega_vars.260518.nc">Planar Mesh</a></p></li>
 </ul>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>-O<span class="w"> </span>ocean_test_mesh.nc<span class="w"> </span>https://web.lcrc.anl.gov/public/e3sm/inputdata/ocn/mpas-o/oQU240/ocean.QU.240km.151209.nc
-wget<span class="w"> </span>-O<span class="w"> </span>global_test_mesh.nc<span class="w"> </span>https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/polaris_cache/global_convergence/icos/cosine_bell/Icos480/init/initial_state.230220.nc
-wget<span class="w"> </span>-O<span class="w"> </span>planar_test_mesh.nc<span class="w"> </span>https://gist.github.com/mwarusz/f8caf260398dbe140d2102ec46a41268/raw/e3c29afbadc835797604369114321d93fd69886d/PlanarPeriodic48x48.nc
-<span class="nb">cd</span><span class="w"> </span><span class="nb">test</span>
-ln<span class="w"> </span>-sf<span class="w">  </span>../ocean_test_mesh.nc<span class="w"> </span>OmegaMesh.nc
-ln<span class="w"> </span>-sf<span class="w">  </span>../global_test_mesh.nc<span class="w"> </span>OmegaSphereMesh.nc
-ln<span class="w"> </span>-sf<span class="w">  </span>../planar_test_mesh.nc<span class="w"> </span>OmegaPlanarMesh.nc
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nb">test</span>
+wget<span class="w"> </span>-O<span class="w"> </span>OmegaMesh.nc<span class="w"> </span>https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/ocean.QU.240km.omega_vars.260518.nc
+wget<span class="w"> </span>-O<span class="w"> </span>OmegaSphereMesh.nc<span class="w"> </span>https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/cosine_bell_icos480.omega_vars.260518.nc
+wget<span class="w"> </span>-O<span class="w"> </span>OmegaPlanarMesh.nc<span class="w"> </span>https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/PlanarPeriodic48x48.omega_vars.260518.nc
 <span class="nb">cd</span><span class="w"> </span>..
 </pre></div>
 </div>

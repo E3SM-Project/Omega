@@ -198,7 +198,7 @@ of the <code class="docutils literal notranslate"><span class="pre">HorzMesh</sp
 the constructor:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="k">auto</span><span class="w"> </span><span class="n">Mesh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">HorzMesh</span><span class="o">::</span><span class="n">getDefault</span><span class="p">();</span>
 <span class="w">   </span><span class="k">auto</span><span class="w"> </span><span class="n">Options</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Config</span><span class="o">::</span><span class="n">getOmegaConfig</span><span class="p">();</span>
-<span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">ThicknessFluxDivOnCell</span><span class="w"> </span><span class="nf">ThickFluxDivOnC</span><span class="p">(</span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="n">Options</span><span class="p">));</span>
+<span class="w">   </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PseudoThicknessFluxDivOnCell</span><span class="w"> </span><span class="nf">ThickFluxDivOnC</span><span class="p">(</span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="n">Options</span><span class="p">));</span>
 </pre></div>
 </div>
 <p>Each functor is called like a function to compute tendency values for a range
@@ -217,7 +217,7 @@ used inside a Kokkos parallel loop:</p>
 <p>The following tendency terms for the shallow water equations are currently
 implemented:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">ThicknessFluxDivOnCell</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PseudoThicknessFluxDivOnCell</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">PotentialVortHAdvOnEdge</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">KEGradOnEdge</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">SSHGradOnEdge</span></code></p></li>

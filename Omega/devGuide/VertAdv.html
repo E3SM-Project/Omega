@@ -233,11 +233,11 @@ and defines <code class="docutils literal notranslate"><span class="pre">Field</
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>VerticalVelocity</p></td>
+<tr class="row-even"><td><p>VerticalPseudoVelocity</p></td>
 <td><p>Real</p></td>
 <td><p>NCellsSize, NVertLayersP1</p></td>
 </tr>
-<tr class="row-odd"><td><p>TotalVerticalVelocity</p></td>
+<tr class="row-odd"><td><p>TotalVerticalPseudoVelocity</p></td>
 <td><p>Real</p></td>
 <td><p>NCellsSize, NVertLayersP1</p></td>
 </tr>
@@ -251,41 +251,41 @@ and defines <code class="docutils literal notranslate"><span class="pre">Field</
 </tr>
 </tbody>
 </table>
-<p>The <code class="docutils literal notranslate"><span class="pre">VerticalVelocity</span></code> represents the raw vertical pseudovelocity through the
-top interfaces of cell layers, computed from the divergence of the horizontal
-velocity. The <code class="docutils literal notranslate"><span class="pre">TotalVerticalVelocity</span></code> is the transport velocity and includes
-corrections applied to the <code class="docutils literal notranslate"><span class="pre">VerticalVelocity</span></code>. The <code class="docutils literal notranslate"><span class="pre">VertFlux</span></code> and
+<p>The <code class="docutils literal notranslate"><span class="pre">VerticalPseudoVelocity</span></code> represents the raw vertical pseudo-velocity through
+the top interfaces of cell layers, computed from the divergence of the horizontal
+velocity. The <code class="docutils literal notranslate"><span class="pre">TotalVerticalPseudoVelocity</span></code> is the transport pseudo-velocity and
+includes corrections applied to the <code class="docutils literal notranslate"><span class="pre">VerticalPseudoVelocity</span></code>. The <code class="docutils literal notranslate"><span class="pre">VertFlux</span></code> and
 <code class="docutils literal notranslate"><span class="pre">LowOrderVertFlux</span></code> store tracer fluxes at layer interfaces. The specific
 numerical algorithms to compute these fluxes are chosen by the user through
 configuration options.</p>
 </section>
 <section id="methods">
 <h2>Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">VerticalVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">TotalVerticalVelocity</span></code> arrays are computed by
-calling the <code class="docutils literal notranslate"><span class="pre">computeVerticalVelocity</span></code> method:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertAdv</span><span class="p">::</span><span class="n">computeVerticalVelocity</span><span class="p">(</span><span class="n">NormalVelocity</span><span class="p">,</span> <span class="n">FluxLayerThickEdge</span><span class="p">);</span>
+<p>The <code class="docutils literal notranslate"><span class="pre">VerticalPseudoVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">TotalVerticalPseudoVelocity</span></code> arrays are
+computed by calling the <code class="docutils literal notranslate"><span class="pre">computeVerticalPseudoVelocity</span></code> method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertAdv</span><span class="p">::</span><span class="n">computeVerticalPseudoVelocity</span><span class="p">(</span><span class="n">NormalVelocity</span><span class="p">,</span> <span class="n">FluxPseudoThickEdge</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>This method takes as input the <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> field from the <code class="docutils literal notranslate"><span class="pre">OceanState</span></code>
-object, and the <code class="docutils literal notranslate"><span class="pre">FluxLayerThickEdge</span></code> field from the <code class="docutils literal notranslate"><span class="pre">AuxiliaryState</span></code>. At
-present, <code class="docutils literal notranslate"><span class="pre">TotalVerticalVelocity</span></code> is equivalent to <code class="docutils literal notranslate"><span class="pre">VerticalVelocity</span></code>;
-additional corrections will be added in subsequent updates. The
-<code class="docutils literal notranslate"><span class="pre">TotalVerticalVelocity</span></code> array is used by each of the tendency methods,
-therefore <code class="docutils literal notranslate"><span class="pre">computeVerticalVelocity</span></code> must be called before any tendency
-computations.</p>
+object, and the <code class="docutils literal notranslate"><span class="pre">FluxPseudoThickEdge</span></code> field from the <code class="docutils literal notranslate"><span class="pre">AuxiliaryState</span></code>. At
+present, <code class="docutils literal notranslate"><span class="pre">TotalVerticalPseudoVelocity</span></code> is equivalent to
+<code class="docutils literal notranslate"><span class="pre">VerticalPseudoVelocity</span></code>; additional corrections will be added in subsequent
+updates. The <code class="docutils literal notranslate"><span class="pre">TotalVerticalPseudoVelocity</span></code> array is used by each of the
+tendency methods, therefore <code class="docutils literal notranslate"><span class="pre">computeVerticalPseudoVelocity</span></code> must be called
+before any tendency computations.</p>
 <p>There are three methods for computing vertical advection tendencies of
 thickness, horizontal velocity and tracers that are called from the time
-stepper: <code class="docutils literal notranslate"><span class="pre">computeThicknessVAdvTend</span></code>, <code class="docutils literal notranslate"><span class="pre">computeVelocityVAdvTend</span></code>, and
+stepper: <code class="docutils literal notranslate"><span class="pre">computePseudoThicknessVAdvTend</span></code>, <code class="docutils literal notranslate"><span class="pre">computeVelocityVAdvTend</span></code>, and
 <code class="docutils literal notranslate"><span class="pre">computeTracerVAdvTend</span></code>. Each method updates the corresponding tendency array
 in place (inout).</p>
-<p>Only the thickness tendency array is passed to the <code class="docutils literal notranslate"><span class="pre">computeThicknessVAdvTend</span></code>
+<p>Only the thickness tendency array is passed to the <code class="docutils literal notranslate"><span class="pre">computePseudoThicknessVAdvTend</span></code>
 method:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertAdv</span><span class="p">::</span><span class="n">computeThicknessVAdvTend</span><span class="p">(</span><span class="n">ThickTend</span><span class="p">);</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertAdv</span><span class="p">::</span><span class="n">computePseudoThicknessVAdvTend</span><span class="p">(</span><span class="n">ThickTend</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">computeVelocityVAdvTend</span></code> method requires the <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and
-<code class="docutils literal notranslate"><span class="pre">FluxLayerThickEdge</span></code> fields, in addition to the velocity tendency array:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertAdv</span><span class="p">::</span><span class="n">computeVelocityVAdvTend</span><span class="p">(</span><span class="n">VelTend</span><span class="p">,</span> <span class="n">NormalVelocity</span><span class="p">,</span> <span class="n">FluxLayerThickEdge</span><span class="p">);</span>
+<code class="docutils literal notranslate"><span class="pre">FluxPseudoThickEdge</span></code> fields, in addition to the velocity tendency array:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertAdv</span><span class="p">::</span><span class="n">computeVelocityVAdvTend</span><span class="p">(</span><span class="n">VelTend</span><span class="p">,</span> <span class="n">NormalVelocity</span><span class="p">,</span> <span class="n">FluxPseudoThickEdge</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The tracer vertical advection tendency depends on the configured settings.
@@ -296,8 +296,8 @@ tracer tendency array:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertAdv</span><span class="p">::</span><span class="n">computeTracerVAdvTend</span><span class="p">(</span><span class="n">TracerTend</span><span class="p">,</span> <span class="n">TracerArray</span><span class="p">,</span> <span class="n">Thickness</span><span class="p">,</span> <span class="n">TimeStep</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>For the standard advection algorithm, <code class="docutils literal notranslate"><span class="pre">LayerThickness</span></code> from the <code class="docutils literal notranslate"><span class="pre">OceanState</span></code> is
-passed as the thickness argument; for the FCT algorithm, the <code class="docutils literal notranslate"><span class="pre">ProvThickness</span></code>
+<p>For the standard advection algorithm, <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code> from the <code class="docutils literal notranslate"><span class="pre">OceanState</span></code> is
+passed as the thickness argument; for the FCT algorithm, the <code class="docutils literal notranslate"><span class="pre">ProvPseudoThickness</span></code>
 from the <code class="docutils literal notranslate"><span class="pre">AuxiliaryState</span></code> is used instead.</p>
 <p>This method first calls <code class="docutils literal notranslate"><span class="pre">computeVerticalFluxes</span></code> to compute the tracer fluxes at
 layer interfaces, using the order of accuracy specified in the configuration

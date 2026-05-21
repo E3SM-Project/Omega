@@ -343,7 +343,7 @@ representing two time levels <code class="docutils literal notranslate"><span cl
 <p>conceptually performs the following update
 <code class="docutils literal notranslate"><span class="pre">State1(TimeLevel1)</span> <span class="pre">=</span> <span class="pre">State2(TimeLevel2)</span> <span class="pre">+</span> <span class="pre">Coeff</span> <span class="pre">*</span> <span class="pre">Tend</span></code>
 element-wise for every state variable. To perform this update only for
-layer thickness do</p>
+pseudo-thickness do</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">updateThicknessByTend</span><span class="p">(</span><span class="n">State1</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel1</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">State2</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel2</span><span class="p">,</span><span class="w"> </span><span class="n">Coeff</span><span class="p">);</span>
 </pre></div>
 </div>

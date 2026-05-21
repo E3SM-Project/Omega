@@ -203,7 +203,7 @@ tracer fields. Vertical motion is inferred from the divergence of horizontal
 flow through the continuity equation and is necessary for accurately
 representing vertical transport in three-dimensional ocean simulations.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">VertAdv</span></code> class contains variables and functions for computing the vertical
-velocity and the tendencies of <code class="docutils literal notranslate"><span class="pre">LayerThickness</span></code>, <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code>, and
+velocity and the tendencies of <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code>, <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code>, and
 <code class="docutils literal notranslate"><span class="pre">Tracers</span></code>. The algorithms used are determined by options specified in the
 configuration file.</p>
 </section>
@@ -259,8 +259,8 @@ and <code class="docutils literal notranslate"><span class="pre">false</span></c
 to purely 3rd-order, <code class="docutils literal notranslate"><span class="pre">0</span></code> purely 4th-order.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">VertAdv</span></code> class provides four fields that can be written to output by
 adding them to the contents of an output stream in the configuration file:
-<code class="docutils literal notranslate"><span class="pre">VerticalVelocity</span></code>, <code class="docutils literal notranslate"><span class="pre">TotalVerticalVelocity</span></code>, <code class="docutils literal notranslate"><span class="pre">VertFlux</span></code>, and <code class="docutils literal notranslate"><span class="pre">LowOrderVertFlux</span></code>.
-These fields collectively make up the <code class="docutils literal notranslate"><span class="pre">VertAdv</span></code> output group.</p>
+<code class="docutils literal notranslate"><span class="pre">VerticalPseudoVelocity</span></code>, <code class="docutils literal notranslate"><span class="pre">TotalVerticalPseudoVelocity</span></code>, <code class="docutils literal notranslate"><span class="pre">VertFlux</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">LowOrderVertFlux</span></code>. These fields collectively make up the <code class="docutils literal notranslate"><span class="pre">VertAdv</span></code> output group.</p>
 </section>
 </section>
 
