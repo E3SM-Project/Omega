@@ -224,12 +224,14 @@ is added. It is used to identify a time stepper at run time.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code> class is a base class for all Omega time steppers. It stores
 as members common data needed by every time stepper. These include a name and
 time stepping method as well as some time tracking variables, including
-StartTime, StopTime, TimeStep, a Clock and an EndAlarm. Its <code class="docutils literal notranslate"><span class="pre">doStep</span></code> method
-defines the interface that every time stepper needs to implement. In addition to this
-method, it provides a number of other methods that can divided into two groups.
-The first group is for general time stepper management. The second group is
-utility functions that provide common functionality that can be re-used in
-implementation of different time steppers.</p>
+a Clock, TimeStep, StartTime, StopTime (optional) and an EndAlarm (optional).
+The StopTime and EndAlarm are optional, because in coupled E3SM simulations the
+components do not know the StopTime and therefore no EndAlarm can be created.
+Its <code class="docutils literal notranslate"><span class="pre">doStep</span></code> method defines the interface that every time stepper needs to
+implement. In addition to this method, it provides a number of other methods
+that can divided into two groups. The first group is for general time stepper
+management. The second group is utility functions that provide common
+functionality that can be re-used in implementation of different time steppers.</p>
 <section id="do-step-method">
 <h3>Do step method<a class="headerlink" href="#do-step-method" title="Permalink to this heading"></a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">doStep</span></code> method is the main method of every time stepper class. It exists
@@ -264,14 +266,25 @@ retrieved at any time using:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TimeStepper</span><span class="o">*</span><span class="w"> </span><span class="n">DefTimeStepper</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TimeStepper</span><span class="o">::</span><span class="n">getDefault</span><span class="p">();</span>
 </pre></div>
 </div>
+<p>In standalone simulations, <code class="docutils literal notranslate"><span class="pre">TimeStepper::init1();</span></code> will read the StartTime from
+the configuration file. For coupled simulations the StartTime is provided by
+the coupler, overriding the value defined in the configuration file.
+In this case, the first phase of time stepper initialization would look like:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// coupled simulations have a start time but no stop time</span>
+<span class="n">TimeInitParams</span><span class="w"> </span><span class="n">TimeParams</span><span class="p">{</span><span class="n">StartTime</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">nullopt</span><span class="p">};</span>
+
+<span class="c1">// initialize TimeStepper with coupler provided start time</span>
+<span class="n">TimeStepper</span><span class="o">::</span><span class="n">init1</span><span class="p">(</span><span class="n">TimeParams</span><span class="p">);</span>
+</pre></div>
+</div>
 </section>
 <section id="creation-of-non-default-time-steppers">
 <h4>Creation of non-default time steppers<a class="headerlink" href="#creation-of-non-default-time-steppers" title="Permalink to this heading"></a></h4>
 <p>A non-default time stepper can be created from a string <code class="docutils literal notranslate"><span class="pre">Name</span></code>, time stepper
 type <code class="docutils literal notranslate"><span class="pre">Type</span></code>, <code class="docutils literal notranslate"><span class="pre">TimeStep</span></code>, <code class="docutils literal notranslate"><span class="pre">StartTime</span></code>, <code class="docutils literal notranslate"><span class="pre">EndTime</span></code>, tendencies <code class="docutils literal notranslate"><span class="pre">Tend</span></code>,
 auxiliary state <code class="docutils literal notranslate"><span class="pre">AuxState</span></code>, horizontal mesh <code class="docutils literal notranslate"><span class="pre">Mesh</span></code>, and halo layer <code class="docutils literal notranslate"><span class="pre">MyHalo</span></code></p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TimeStepper</span><span class="o">*</span><span class="w">  </span><span class="n">NewTimeStepper</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TimeStepper</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">Type</span><span class="p">,</span><span class="w"> </span><span class="n">StartTime</span><span class="p">,</span>
-<span class="w">         </span><span class="n">EndTime</span><span class="p">,</span><span class="w"> </span><span class="n">TimeStep</span><span class="p">,</span><span class="w"> </span><span class="n">Tend</span><span class="p">,</span><span class="w"> </span><span class="n">AuxState</span><span class="p">,</span><span class="w"> </span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="n">MyHalo</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TimeStepper</span><span class="o">*</span><span class="w">  </span><span class="n">NewTimeStepper</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TimeStepper</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">Type</span><span class="p">,</span><span class="w"> </span><span class="n">TimeStep</span><span class="p">,</span>
+<span class="w">          </span><span class="n">StartTime</span><span class="p">,</span><span class="w"> </span><span class="n">EndTime</span><span class="p">,</span><span class="w"> </span><span class="n">Tend</span><span class="p">,</span><span class="w"> </span><span class="n">AuxState</span><span class="p">,</span><span class="w"> </span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="n">MyHalo</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>For convenience, this returns a pointer to the newly created time stepper.
