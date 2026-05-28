@@ -113,6 +113,7 @@ design/Config
 design/DataTypes
 design/Decomp
 design/Driver
+design/DynamicInputStreams
 design/EOS
 design/Error
 design/Halo
