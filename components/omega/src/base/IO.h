@@ -321,6 +321,18 @@ Error readArray(void *Array,                ///< [out] array to be read
                 int Frame = -1 ///< [in] opt frame if multiple time slices
 );
 
+/// Queries a variable's dimension names, global lengths, and native data type
+/// from an open file. Returns a non-zero error code if the variable is not
+/// found or if any dimension metadata cannot be read.
+Error getVarInfo(
+    int FileID,                         ///< [in] ID of open file
+    const std::string &VarName,         ///< [in] variable name to query
+    int &NVarDims,                      ///< [out] number of dimensions
+    std::vector<std::string> &DimNames, ///< [out] name of each dimension
+    std::vector<I4> &DimLengths,        ///< [out] global length of each dim
+    IODataType &NativeType              ///< [out] native data type in file
+);
+
 /// Reads a non-distributed variable. We use a void pointer here to create
 /// a generic interface for all types. Arrays are assumed to be in contiguous
 /// storage so the arrays of any dimension are treated as a 1-d array with

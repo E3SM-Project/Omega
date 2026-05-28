@@ -106,6 +106,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <tuple>
 
 namespace OMEGA {
 
@@ -149,6 +150,16 @@ class IOStream {
 
    /// Flag to determine whether the Contents have been validated or not
    bool Validated;
+
+   /// If true, fields in this stream are not required to be pre-registered;
+   /// their metadata and dimensions are discovered from the input file at
+   /// read time and registered dynamically.
+   bool DynamicFields;
+
+   /// Cache for dynamically-created 2D SCORPIO decompositions keyed on
+   /// (mesh dimension name, secondary dimension size). Created on demand and
+   /// reused across restarts to avoid rebuilding identical decompositions.
+   static std::map<std::tuple<std::string, I4>, int> DynamicDecomps;
 
    //---- Private utility functions to support public interfaces
    /// Creates a new stream and adds to the list of all streams, based on
@@ -236,6 +247,24 @@ class IOStream {
    /// account the field's type and any reduced precision conversion
    IO::IODataType getFieldIOType(
        std::shared_ptr<Field> FieldPtr ///< [in] field to extract type
+   );
+
+   /// Discovers a field's metadata from an open file, registers the necessary
+   /// Dimension (if new), allocates R8 storage, registers the Field, builds
+   /// a SCORPIO decomposition, and reads data with type promotion to R8.
+   /// Returns a non-zero error code on any failure.
+   Error registerAndReadDynamicField(
+       int FileID,                  ///< [in] open SCORPIO file ID
+       const std::string &FieldName ///< [in] variable name in file and Omega
+   );
+
+   /// Returns a cached SCORPIO decomposition for a 2D dynamic field with the
+   /// given mesh dimension and secondary dimension size. Creates and caches a
+   /// new decomposition on first use.
+   int getOrCreateDynamicDecomp(
+       const std::string &MeshDimName, ///< [in] name of the mesh dimension
+       I4 NGlobalMesh,                 ///< [in] global size of mesh dimension
+       I4 NSecondary                   ///< [in] size of secondary dimension
    );
 
    /// Builds a filename based on time information and a filename template
@@ -333,6 +362,14 @@ class IOStream {
    /// the end of initialization to ensure all Fields have been defined.
    /// Returns true if all streams are valid.
    static bool validateAll();
+
+   //---------------------------------------------------------------------------
+   /// Reads every stream that has DynamicFields=true. Intended to be called
+   /// once during initialization, after HorzMesh::init() has registered the
+   /// mesh dimensions and before any code that consumes the resulting fields.
+   /// Returns an accumulated error code; callers should CHECK_ERROR_ABORT.
+   static Error readAllDynamic(const Clock *ModelClock ///< [in] Model clock
+   );
 
    //---------------------------------------------------------------------------
    /// Reads a stream if it is time.

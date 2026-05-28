@@ -189,6 +189,11 @@ static int initOmegaModulesImpl(MPI_Comm Comm) {
    }
 
    HorzMesh::init();
+
+   // Read any dynamic-field streams now that mesh dimensions are registered.
+   Error DynErr = IOStream::readAllDynamic(ModelClock);
+   CHECK_ERROR_ABORT(DynErr, "ocnInit: Error reading dynamic input streams");
+
    VertCoord::init();
    Tracers::init();
    VertAdv::init();

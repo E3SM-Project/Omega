@@ -28,6 +28,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <tuple>
 #include <typeindex>
 #include <typeinfo>
 
@@ -35,6 +36,7 @@ namespace OMEGA {
 
 // Create static class members
 std::map<std::string, std::shared_ptr<IOStream>> IOStream::AllStreams;
+std::map<std::tuple<std::string, I4>, int> IOStream::DynamicDecomps;
 
 //------------------------------------------------------------------------------
 // Initializes all streams defined in the input configuration file. This
@@ -110,6 +112,11 @@ void IOStream::finalize(
    // Remove all streams
    AllStreams.clear();
 
+   // Free any cached dynamic decompositions
+   for (auto &Entry : DynamicDecomps)
+      IO::destroyDecomp(Entry.second);
+   DynamicDecomps.clear();
+
    return;
 
 } // End finalize
@@ -179,6 +186,13 @@ bool IOStream::validate() {
    // Return if already validated
    if (Validated)
       return ReturnVal;
+
+   // Dynamic streams skip field existence checks: fields are not registered
+   // until readStream is called, which happens after validateAll().
+   if (DynamicFields) {
+      Validated = true;
+      return ReturnVal;
+   }
 
    // Expand group names to list of individual fields
    // First identify any group names in the Contents
@@ -251,6 +265,27 @@ bool IOStream::validateAll() {
    return ReturnVal;
 
 } // End validateAll
+
+//------------------------------------------------------------------------------
+// Reads every stream with DynamicFields=true. Intended to be called once
+// during initialization, after HorzMesh::init() has registered the mesh
+// dimensions. Returns an accumulated error so the caller can CHECK_ERROR_ABORT.
+Error IOStream::readAllDynamic(const Clock *ModelClock // [in] Model clock
+) {
+
+   Error Err;
+
+   for (auto Iter = AllStreams.begin(); Iter != AllStreams.end(); ++Iter) {
+      std::shared_ptr<IOStream> ThisStream = Iter->second;
+      if (ThisStream->DynamicFields) {
+         Metadata EmptyMeta;
+         Err += ThisStream->readStream(ModelClock, EmptyMeta, false);
+      }
+   }
+
+   return Err;
+
+} // End readAllDynamic
 
 //------------------------------------------------------------------------------
 // Reads a single stream if it is time.
@@ -355,6 +390,7 @@ IOStream::IOStream() {
    PtrFilename        = " ";
    UseStartEnd        = false;
    Validated          = false;
+   DynamicFields      = false;
 }
 
 //------------------------------------------------------------------------------
@@ -434,8 +470,10 @@ void IOStream::create(const std::string &StreamName, //< [in] name of stream
    // present, assume full (double) precision
    std::string PrecisionString;
    Err += StreamConfig.get("Precision", PrecisionString);
-   if (Err.isFail())
+   if (Err.isFail()) {
       PrecisionString = "double";
+      Err.reset();
+   }
    NewStream->setPrecisionFlag(PrecisionString);
 
    // Set the action to take if a file already exists
@@ -635,6 +673,13 @@ void IOStream::create(const std::string &StreamName, //< [in] name of stream
 
    // The contents list has not yet been validated.
    NewStream->Validated = false;
+
+   // Check for DynamicFields flag (optional, defaults to false).
+   // Dynamic streams discover field metadata at read time; the fields
+   // need not be pre-registered in the global field registry.
+   bool DynFields           = false;
+   Error ErrDyn             = StreamConfig.get("DynamicFields", DynFields);
+   NewStream->DynamicFields = ErrDyn.isSuccess() ? DynFields : false;
 
    // If we have made it to this point, we have a valid stream to add to
    // the list
@@ -2281,6 +2326,210 @@ Error IOStream::readFieldData(
 } // End readFieldData
 
 //------------------------------------------------------------------------------
+// Returns a cached SCORPIO decomposition for a 2D dynamic field. The decomp
+// is keyed on (mesh dimension name, secondary dimension size). All dynamic
+// decompositions use R8 type so SCORPIO handles promotion from the native type.
+int IOStream::getOrCreateDynamicDecomp(
+    const std::string &MeshDimName, // [in] name of the mesh dimension
+    I4 NGlobalMesh,                 // [in] global size of mesh dimension
+    I4 NSecondary                   // [in] size of secondary dimension
+) {
+
+   auto Key = std::make_tuple(MeshDimName, NSecondary);
+   auto It  = DynamicDecomps.find(Key);
+   if (It != DynamicDecomps.end())
+      return It->second;
+
+   // Build the 2D global-offset array. For local cell J with 0-based global
+   // index GlobalJ, the offsets for secondary indices 0..NSecondary-1 are
+   // GlobalJ * NSecondary + I (row-major order matching HostArray2DR8 layout).
+   I4 LocalMeshSize         = Dimension::getDimLengthLocal(MeshDimName);
+   HostArray1DI4 MeshOffset = Dimension::getDimOffset(MeshDimName);
+   I4 LocalSize             = LocalMeshSize * NSecondary;
+
+   std::vector<int> GlobalIndx(LocalSize, -1);
+   for (int J = 0; J < LocalMeshSize; ++J) {
+      I4 GlobalJ = MeshOffset(J);
+      if (GlobalJ < 0)
+         continue; // ghost / padding cell — excluded from IO
+      for (int I = 0; I < NSecondary; ++I) {
+         int LocalAdd         = J * NSecondary + I;
+         GlobalIndx[LocalAdd] = GlobalJ * NSecondary + I;
+      }
+   }
+
+   std::vector<int> GlobalDims = {static_cast<int>(NGlobalMesh),
+                                  static_cast<int>(NSecondary)};
+   int DecompID = IO::createDecomp(IO::IOTypeR8, 2, GlobalDims, LocalSize,
+                                   GlobalIndx, IO::DefaultRearr);
+   DynamicDecomps[Key] = DecompID;
+   return DecompID;
+
+} // End getOrCreateDynamicDecomp
+
+//------------------------------------------------------------------------------
+// Discovers a field's metadata from an open file, registers the secondary
+// Dimension (if new and absent), allocates R8 storage, registers the Field,
+// builds a SCORPIO decomposition, and reads the data with promotion to R8.
+Error IOStream::registerAndReadDynamicField(
+    int FileID,                  // [in] open SCORPIO file ID
+    const std::string &FieldName // [in] variable name in file and Omega
+) {
+
+   Error Err;
+
+   // Step 1: Query field info from file (dimension names, lengths, type).
+   int NVarDims;
+   std::vector<std::string> FileDimNames;
+   std::vector<I4> FileDimLengths;
+   IO::IODataType NativeType;
+   Err = IO::getVarInfo(FileID, FieldName, NVarDims, FileDimNames,
+                        FileDimLengths, NativeType);
+   if (Err.isFail())
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "IOStream::registerAndReadDynamicField: "
+                   "Cannot find variable {} in stream {}",
+                   FieldName, Name);
+
+   // Step 2: Classify dimensions as mesh (distributed) or secondary.
+   std::string MeshDimName      = "";
+   I4 MeshGlobalLength          = 0;
+   std::string SecondaryDimName = "";
+   I4 SecondaryLength           = 0;
+   int NumMeshDims              = 0;
+   int NumSecondaryDims         = 0;
+
+   for (int IDim = 0; IDim < NVarDims; ++IDim) {
+      const std::string &DimName = FileDimNames[IDim];
+      if (Dimension::exists(DimName) && Dimension::isDistributedDim(DimName)) {
+         MeshDimName      = DimName;
+         MeshGlobalLength = FileDimLengths[IDim];
+         ++NumMeshDims;
+      } else {
+         SecondaryDimName = DimName;
+         SecondaryLength  = FileDimLengths[IDim];
+         ++NumSecondaryDims;
+      }
+   }
+
+   // Step 3: Validate — exactly one mesh dim, at most one secondary dim.
+   if (NumMeshDims != 1)
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "IOStream::registerAndReadDynamicField: "
+                   "Dynamic field {} in stream {} must have exactly one mesh "
+                   "dimension (NCells, NEdges, or NVertices); found {}",
+                   FieldName, Name, NumMeshDims);
+   if (NumSecondaryDims > 1)
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "IOStream::registerAndReadDynamicField: "
+                   "Dynamic field {} in stream {} has {} secondary dimensions; "
+                   "at most one is supported",
+                   FieldName, Name, NumSecondaryDims);
+
+   // Step 4: Register secondary dimension if present.
+   if (NumSecondaryDims == 1) {
+      if (Dimension::exists(SecondaryDimName)) {
+         I4 ExistingLength = Dimension::getDimLengthGlobal(SecondaryDimName);
+         if (ExistingLength != SecondaryLength)
+            RETURN_ERROR(Err, ErrorCode::Fail,
+                         "IOStream::registerAndReadDynamicField: "
+                         "Dimension {} already exists with length {} but file "
+                         "has length "
+                         "{} for field {} in stream {}",
+                         SecondaryDimName, ExistingLength, SecondaryLength,
+                         FieldName, Name);
+         // else: dimension already exists with matching length — reuse it.
+      } else {
+         Dimension::create(SecondaryDimName, SecondaryLength);
+      }
+   }
+
+   // Step 5: Check for field name collision.
+   if (Field::exists(FieldName))
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "IOStream::registerAndReadDynamicField: "
+                   "Field {} already exists in the field registry; "
+                   "name collision in stream {}",
+                   FieldName, Name);
+
+   // Step 6: Build dimension list and create Field with R8 storage.
+   std::vector<std::string> FieldDims;
+   FieldDims.push_back(MeshDimName);
+   if (NumSecondaryDims == 1)
+      FieldDims.push_back(SecondaryDimName);
+
+   int NumFieldDims = FieldDims.size();
+   Field::create(FieldName, "", "", "", R8(0), R8(0), R8(0), NumFieldDims,
+                 FieldDims, false);
+
+   // Step 7: Allocate R8 host storage and attach to field.
+   I4 LocalMeshSize = Dimension::getDimLengthLocal(MeshDimName);
+   if (NumSecondaryDims == 0) {
+      HostArray1DR8 DataArr(FieldName, LocalMeshSize);
+      Kokkos::deep_copy(DataArr, R8(0));
+      Field::attachFieldData(FieldName, DataArr);
+   } else {
+      HostArray2DR8 DataArr(FieldName, LocalMeshSize, SecondaryLength);
+      Kokkos::deep_copy(DataArr, R8(0));
+      Field::attachFieldData(FieldName, DataArr);
+   }
+
+   // Step 8: Obtain a SCORPIO decomposition for reading.
+   // For 1D fields, build and destroy a temporary decomposition (matching the
+   // pattern used by readFieldData). For 2D fields, use the cached decomp.
+   int DecompID         = -1;
+   bool Destroy1DDecomp = false;
+   I4 LocalSize = LocalMeshSize * (NumSecondaryDims == 0 ? 1 : SecondaryLength);
+
+   if (NumSecondaryDims == 0) {
+      HostArray1DI4 MeshOffset = Dimension::getDimOffset(MeshDimName);
+      std::vector<int> GlobalIndx(LocalMeshSize, -1);
+      for (int I = 0; I < LocalMeshSize; ++I)
+         GlobalIndx[I] = MeshOffset(I);
+      std::vector<int> GlobalDims = {static_cast<int>(MeshGlobalLength)};
+      DecompID = IO::createDecomp(IO::IOTypeR8, 1, GlobalDims, LocalMeshSize,
+                                  GlobalIndx, IO::DefaultRearr);
+      Destroy1DDecomp = true;
+   } else {
+      DecompID = getOrCreateDynamicDecomp(MeshDimName, MeshGlobalLength,
+                                          SecondaryLength);
+   }
+
+   // Step 9: Read data into an R8 buffer; SCORPIO promotes from the native
+   // type.
+   std::vector<R8> DataR8(LocalSize);
+   int VarID;
+   Err = IO::readArray(DataR8.data(), LocalSize, FieldName, FileID, DecompID,
+                       VarID);
+
+   if (Destroy1DDecomp)
+      IO::destroyDecomp(DecompID);
+
+   if (Err.isFail())
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "IOStream::registerAndReadDynamicField: "
+                   "Error reading data for field {} in stream {}",
+                   FieldName, Name);
+
+   // Step 10: Copy R8 buffer into the field's Kokkos host array.
+   if (NumSecondaryDims == 0) {
+      HostArray1DR8 Data = Field::get(FieldName)->getDataArray<HostArray1DR8>();
+      for (int I = 0; I < LocalMeshSize; ++I)
+         Data(I) = DataR8[I];
+   } else {
+      HostArray2DR8 Data = Field::get(FieldName)->getDataArray<HostArray2DR8>();
+      for (int J = 0; J < LocalMeshSize; ++J)
+         for (int I = 0; I < SecondaryLength; ++I)
+            Data(J, I) = DataR8[J * SecondaryLength + I];
+   }
+
+   LOG_INFO("IOStream: Registered and read dynamic field {} from stream {}",
+            FieldName, Name);
+   return Err;
+
+} // End registerAndReadDynamicField
+
+//------------------------------------------------------------------------------
 // Reads a stream if it is time. This is the internal read function used by the
 // public read interface.
 Error IOStream::readStream(
@@ -2396,13 +2645,23 @@ Error IOStream::readStream(
    // For each field in the contents, define field and read field data
    for (auto IFld = Contents.begin(); IFld != Contents.end(); ++IFld) {
 
-      // Retrieve the field name and pointer
-      std::string FieldName            = *IFld;
-      std::shared_ptr<Field> ThisField = Field::get(FieldName);
+      std::string FieldName = *IFld;
 
-      // Extract the data pointer and read the data array
-      int FieldID; // not currently used but available if field metadata needed
-      Err += readFieldData(ThisField, InFileID, AllDimIDs, FieldID);
+      if (DynamicFields) {
+         // Dynamic path: discover metadata from file, register dimension and
+         // field if not already present, allocate storage, and read data.
+         Error DynErr = registerAndReadDynamicField(InFileID, FieldName);
+         CHECK_ERROR_ABORT(
+             DynErr,
+             "IOStream::readStream: Failed to register/read dynamic field {} "
+             "in stream {}",
+             FieldName, Name);
+      } else {
+         // Standard path: look up pre-registered field and read data.
+         std::shared_ptr<Field> ThisField = Field::get(FieldName);
+         int FieldID;
+         Err += readFieldData(ThisField, InFileID, AllDimIDs, FieldID);
+      }
 
    } // End loop over field list
 
