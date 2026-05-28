@@ -35,6 +35,7 @@ userGuide/Error
 userGuide/Field
 userGuide/IO
 userGuide/IOStreams
+userGuide/DynamicInputStreams
 userGuide/Halo
 userGuide/HorzMesh
 userGuide/HorzOperators
@@ -81,6 +82,7 @@ devGuide/Error
 devGuide/Field
 devGuide/IO
 devGuide/IOStreams
+devGuide/DynamicInputStreams
 devGuide/Halo
 devGuide/HorzMesh
 devGuide/HorzOperators
