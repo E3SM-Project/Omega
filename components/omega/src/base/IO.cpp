@@ -769,6 +769,80 @@ Error readArray(void *Array,                // [out] array to be read
 } // End IOReadArray
 
 //------------------------------------------------------------------------------
+// Queries a variable's dimension names, global lengths, and native data type
+// from an open file. Returns an error code if the variable is not found or
+// if dimension metadata cannot be read.
+Error getVarInfo(
+    int FileID,                         // [in] ID of open file
+    const std::string &VarName,         // [in] variable name to query
+    int &NVarDims,                      // [out] number of dimensions
+    std::vector<std::string> &DimNames, // [out] name of each dimension
+    std::vector<I4> &DimLengths,        // [out] global length of each dim
+    IODataType &NativeType              // [out] native data type in file
+) {
+
+   Error Err;
+   int PIOErr = 0;
+
+   // Get variable ID
+   int VarID = -1;
+   PIOErr    = PIOc_inq_varid(FileID, VarName.c_str(), &VarID);
+   if (PIOErr != PIO_NOERR)
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "IO::getVarInfo: Variable {} not found in file", VarName);
+
+   // Get number of dimensions
+   PIOErr = PIOc_inq_varndims(FileID, VarID, &NVarDims);
+   if (PIOErr != PIO_NOERR)
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "IO::getVarInfo: Error getting ndims for variable {}",
+                   VarName);
+
+   // Get native data type
+   nc_type VarType;
+   PIOErr = PIOc_inq_vartype(FileID, VarID, &VarType);
+   if (PIOErr != PIO_NOERR)
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "IO::getVarInfo: Error getting type for variable {}",
+                   VarName);
+   NativeType = static_cast<IODataType>(VarType);
+
+   // Get dimension IDs
+   std::vector<int> DimIDs(NVarDims);
+   PIOErr = PIOc_inq_vardimid(FileID, VarID, DimIDs.data());
+   if (PIOErr != PIO_NOERR)
+      RETURN_ERROR(Err, ErrorCode::Fail,
+                   "IO::getVarInfo: Error getting dimids for variable {}",
+                   VarName);
+
+   // Get dimension names and lengths
+   DimNames.resize(NVarDims);
+   DimLengths.resize(NVarDims);
+   for (int IDim = 0; IDim < NVarDims; ++IDim) {
+      char DimName[PIO_MAX_NAME + 1] = {'\0'};
+      PIOErr = PIOc_inq_dimname(FileID, DimIDs[IDim], DimName);
+      if (PIOErr != PIO_NOERR)
+         RETURN_ERROR(
+             Err, ErrorCode::Fail,
+             "IO::getVarInfo: Error getting name for dim {} of variable {}",
+             IDim, VarName);
+      DimNames[IDim] = DimName;
+
+      PIO_Offset DimLen;
+      PIOErr = PIOc_inq_dimlen(FileID, DimIDs[IDim], &DimLen);
+      if (PIOErr != PIO_NOERR)
+         RETURN_ERROR(
+             Err, ErrorCode::Fail,
+             "IO::getVarInfo: Error getting length for dim {} of variable {}",
+             IDim, VarName);
+      DimLengths[IDim] = static_cast<I4>(DimLen);
+   }
+
+   return Err;
+
+} // End getVarInfo
+
+//------------------------------------------------------------------------------
 // Reads a non-distributed variable. Uses a void pointer for generic interface.
 // All arrays are assumed to be in contiguous storage. Returns an error code so
 // that the calling routine can re-try on failure.

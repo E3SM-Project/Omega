@@ -294,6 +294,46 @@ add_omega_test(
     "-n;8"
 )
 
+##############################
+# DynamicInputStream test
+##############################
+
+add_omega_test(
+    DYNAMIC_IOSTREAM_TEST
+    testDynamicIOStream.exe
+    infra/DynamicInputStreamTest.cpp
+    "-n;8"
+)
+
+##################################################
+# DynamicInputStream error-condition tests
+# Each must abort (MPI_Abort) — marked WILL_FAIL
+##################################################
+
+add_omega_test(
+    DYNAMIC_IOSTREAM_COLLISION_TEST
+    testDynamicIOStreamCollision.exe
+    infra/DynamicInputStreamCollisionTest.cpp
+    "-n;8"
+)
+set_tests_properties(DYNAMIC_IOSTREAM_COLLISION_TEST PROPERTIES WILL_FAIL true)
+
+add_omega_test(
+    DYNAMIC_IOSTREAM_DIM_CONFLICT_TEST
+    testDynamicIOStreamDimConflict.exe
+    infra/DynamicInputStreamDimConflictTest.cpp
+    "-n;8"
+)
+set_tests_properties(DYNAMIC_IOSTREAM_DIM_CONFLICT_TEST PROPERTIES WILL_FAIL true)
+
+add_omega_test(
+    DYNAMIC_IOSTREAM_BAD_FIELD_TEST
+    testDynamicIOStreamBadField.exe
+    infra/DynamicInputStreamBadFieldTest.cpp
+    "-n;8"
+)
+set_tests_properties(DYNAMIC_IOSTREAM_BAD_FIELD_TEST PROPERTIES WILL_FAIL true)
+
 #####################
 # TendencyTerms test
 #####################
