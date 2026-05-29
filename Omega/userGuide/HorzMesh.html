@@ -200,7 +200,26 @@ class also creates parallel I/O decompositions that are used to read in the
 additional mesh variables, which are not required for Decomp.</p>
 <p>Currently, the Mesh class reads in all variables from the MPAS mesh
 specification except those read by <a class="reference internal" href="../devGuide/Decomp.html#omega-dev-decomp"><span class="std std-ref">Decomp</span></a>.
-This includes the following variables:</p>
+These are all read using the input <a class="reference internal" href="IOStreams.html#omega-user-iostreams"><span class="std std-ref">IOStream</span></a> HorzMeshIn</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="nt">IOStreams</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">HorzMeshIn</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">UsePointerFile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">OmegaMesh.nc</span>
+<span class="w">      </span><span class="nt">Mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read</span>
+<span class="w">      </span><span class="nt">Precision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">double</span>
+<span class="w">      </span><span class="nt">Freq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">      </span><span class="nt">FreqUnits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">OnStartup</span>
+<span class="w">      </span><span class="nt">UseStartEnd</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">Contents</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">HorzMeshIn</span>
+</pre></div>
+</div>
+<p>Only the Filename should be changed by the user to point to the relevant input
+mesh file. The mesh Filename is sometimes overridden by the driver routine in
+the case of unit tests using an optional argument to the
+<a class="reference internal" href="../devGuide/Decomp.html#omega-dev-decomp"><span class="std std-ref">decomposition</span></a>. The input contents are defined by the
+HorzMeshIn <a class="reference internal" href="../devGuide/Field.html#omega-dev-field"><span class="std std-ref">FieldGroup</span></a> that currently includes the following
+variables:</p>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Variable Name</p></th>
@@ -271,6 +290,12 @@ This includes the following variables:</p>
 </tr>
 </tbody>
 </table>
+<p>In addition, some mesh metadata are read from the file and stored as mesh
+variables. These include <code class="docutils literal notranslate"><span class="pre">OnSphere</span></code> (or <code class="docutils literal notranslate"><span class="pre">on_a_sphere</span></code> for backcompatibility),
+<code class="docutils literal notranslate"><span class="pre">IsPeriodic</span></code> (<code class="docutils literal notranslate"><span class="pre">is_periodic</span></code>), <code class="docutils literal notranslate"><span class="pre">SphereRadius</span></code> (<code class="docutils literal notranslate"><span class="pre">sphere_radius</span></code>),
+<code class="docutils literal notranslate"><span class="pre">XPeriod</span></code> (<code class="docutils literal notranslate"><span class="pre">x_period</span></code>), and <code class="docutils literal notranslate"><span class="pre">YPeriod</span></code> (<code class="docutils literal notranslate"><span class="pre">y_period</span></code>). The two flags
+OnSphere and IsPeriodic are stored as YES/NO strings in the metadata but as
+boolean flags in the code.</p>
 <p>In the future, the Mesh class will optionally compute the mesh variables that
 are dependent on the Cartesian mesh coordinates internally.
 This includes the various areas, lengths, angles, and weights needed for the

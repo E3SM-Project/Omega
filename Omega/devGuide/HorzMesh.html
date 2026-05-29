@@ -192,18 +192,21 @@
 Specification</a>.
 A mesh object is created by the <code class="docutils literal notranslate"><span class="pre">init</span></code> method, which assumes that <code class="docutils literal notranslate"><span class="pre">Decomp</span></code> has
 already been initialized.</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Decomp</span><span class="o">::</span><span class="n">init</span><span class="p">();</span>
-<span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">HorzMesh</span><span class="o">::</span><span class="n">init</span><span class="p">();</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Decomp</span><span class="o">::</span><span class="n">init</span><span class="p">();</span>
+<span class="n">OMEGA</span><span class="o">::</span><span class="n">HorzMesh</span><span class="o">::</span><span class="n">init</span><span class="p">(</span><span class="n">ModelClock</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>The constructor replicates the subdomain mesh cell/edge/vertex counts and
+<p>The model clock should be the ocean model clock and is required by the IOStream
+routines that read the HorzMesh variables from the input stream
+<a class="reference internal" href="../userGuide/HorzMesh.html#omega-user-horz-mesh"><span class="std std-ref">HorzMeshIn</span></a>.
+The constructor replicates the subdomain mesh cell/edge/vertex counts and
 connectivity information from Decomp so this information can be passed among the
 computational routines, alongside the other local mesh information.  It then
-creates several parallel I/O decompositions and reads in the remaining subdomain
-mesh information.  Finally, any mesh information needed on the device is copied
-from the host to a device Kokkos array. Arrays such as the coordinate variables,
-which are not involved in tendency calculations, are not transferred to the
-device. These tasks are organized into several private methods. Eventually,
+reads most of the remaining mesh variables (coordinates, lengths, areas)
+from the input HorzMeshIn IOStream. A few variables, like masks and operator
+scaling are computed internally. After reading, the init routine fills all
+halos and synchronizes the host and device copies of the mesh variables.
+These tasks are organized into several private methods. Eventually,
 dependent mesh variables will be computed from the minimum set of required mesh
 information.</p>
 <p>After initialization, the default mesh object can be retrieved via:</p>
@@ -228,13 +231,11 @@ passed to the PDE solver routines:</p>
 </pre></div>
 </div>
 <p>For member variables that are host arrays, variable names are appended with an
-<code class="docutils literal notranslate"><span class="pre">H</span></code>.  Array variable names not ending in <code class="docutils literal notranslate"><span class="pre">H</span></code> are device arrays.  The copy from
-host to device array is performed in the constructor via:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">AreaCell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">createDeviceMirrorCopy</span><span class="p">(</span><span class="n">AreaCellH</span><span class="p">);</span>
-</pre></div>
-</div>
+<code class="docutils literal notranslate"><span class="pre">H</span></code>.  Array variable names not ending in <code class="docutils literal notranslate"><span class="pre">H</span></code> are device arrays.</p>
 <p>The device arrays are deallocated by the <code class="docutils literal notranslate"><span class="pre">HorzMesh::clear()</span></code> method, which is
-necessary before calling <code class="docutils literal notranslate"><span class="pre">Kokkos::finalize</span></code>.</p>
+necessary before calling <code class="docutils literal notranslate"><span class="pre">Kokkos::finalize</span></code>. Because Field and IOStream also
+have references to HorzMesh variables, the <code class="docutils literal notranslate"><span class="pre">IOStream::clear()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">Field::clear()</span></code> should also be called to ensure all device arrays are removed.</p>
 </section>
 
 
