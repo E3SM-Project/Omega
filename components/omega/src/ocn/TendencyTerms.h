@@ -301,12 +301,12 @@ class VelocityHyperDiffOnEdge {
 };
 
 /// Wind forcing
-class WindForcingOnEdge {
+class SrfStressForcingOnEdge {
  public:
    bool Enabled = false;
 
    /// constructor declaration
-   WindForcingOnEdge(const HorzMesh *Mesh, const VertCoord *VCoord);
+   SrfStressForcingOnEdge(const HorzMesh *Mesh, const VertCoord *VCoord);
 
    /// The functor takes the edge index, vertical chunk index, and arrays for
    /// normal wind stress and edge pseudo-thickness, outputs tendency array
@@ -361,6 +361,86 @@ class BottomDragOnEdge {
    Array2DI4 CellsOnEdge;
    Array2DReal EdgeMask;
    Array1DI4 MaxLayerEdgeTop;
+};
+
+/// Coupled freshwater flux forcing for thickness equation.
+class SrfThicknessForcingOnCell {
+ public:
+   bool Enabled = false;
+
+   SrfThicknessForcingOnCell(const HorzMesh *Mesh, const VertCoord *VCoord);
+
+   KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 ICell,
+                                   const Array1DReal &SnowFlux,
+                                   const Array1DReal &RainFlux,
+                                   const Array1DReal &EvaporationFlux,
+                                   const Array1DReal &SeaIceFreshWaterFlux,
+                                   const Array1DReal &IceRunoffFlux,
+                                   const Array1DReal &RiverRunoffFlux,
+                                   const Array1DReal &SeaIceSaltFlux) const {
+
+      const I4 KTop = MinLayerCell(ICell);
+      if (KTop > MaxLayerCell(ICell)) {
+         return;
+      }
+
+      const Real FreshWaterFlux = SnowFlux(ICell) + RainFlux(ICell) +
+                                  EvaporationFlux(ICell) +
+                                  SeaIceFreshWaterFlux(ICell) +
+                                  IceRunoffFlux(ICell) + RiverRunoffFlux(ICell);
+
+      Tend(ICell, KTop) += (FreshWaterFlux + SeaIceSaltFlux(ICell)) / RhoSw;
+   }
+
+ private:
+   Array1DI4 MinLayerCell;
+   Array1DI4 MaxLayerCell;
+};
+
+/// Coupled surface flux forcing for active tracers.
+class SrfTracerForcingOnCell {
+ public:
+   bool Enabled = false;
+
+   SrfTracerForcingOnCell(const HorzMesh *Mesh, const VertCoord *VCoord,
+                          I4 TempTracerIndex, I4 SaltTracerIndex);
+
+   KOKKOS_FUNCTION void operator()(const Array3DReal &Tend, I4 ICell,
+                                   const Array1DReal &LatentHeatFlux,
+                                   const Array1DReal &SensibleHeatFlux,
+                                   const Array1DReal &LongWaveHeatFluxUp,
+                                   const Array1DReal &LongWaveHeatFluxDown,
+                                   const Array1DReal &SeaIceHeatFlux,
+                                   const Array1DReal &ShortWaveHeatFlux,
+                                   const Array1DReal &SnowFlux,
+                                   const Array1DReal &IceRunoffFlux,
+                                   const Array1DReal &SeaIceSaltFlux) const {
+
+      const I4 KTop = MinLayerCell(ICell);
+      if (KTop > MaxLayerCell(ICell)) {
+         return;
+      }
+
+      if (TempIndex >= 0) {
+         const Real HeatFlux =
+             LatentHeatFlux(ICell) + SensibleHeatFlux(ICell) +
+             LongWaveHeatFluxUp(ICell) + LongWaveHeatFluxDown(ICell) +
+             SeaIceHeatFlux(ICell) + ShortWaveHeatFlux(ICell) -
+             (SnowFlux(ICell) + IceRunoffFlux(ICell)) * LatIce;
+
+         Tend(TempIndex, ICell, KTop) += HeatFlux * HFluxFac;
+      }
+
+      if (SaltIndex >= 0) {
+         Tend(SaltIndex, ICell, KTop) += SeaIceSaltFlux(ICell) * SFluxFac;
+      }
+   }
+
+ private:
+   I4 TempIndex;
+   I4 SaltIndex;
+   Array1DI4 MinLayerCell;
+   Array1DI4 MaxLayerCell;
 };
 
 // Tracer horizontal advection term
@@ -571,7 +651,7 @@ class TracerHyperDiffOnCell {
 };
 
 /// Surface tracer restoring term
-class SurfaceTracerRestoringOnCell {
+class SrfTracerRestoringOnCell {
  public:
    bool Enabled;
    Real PistonVelocity  = 1.585e-5; ///< piston velocity
@@ -580,7 +660,7 @@ class SurfaceTracerRestoringOnCell {
    /// Need to add under sea ice restoring option when that is available
 
    /// constructor declaration
-   SurfaceTracerRestoringOnCell(const HorzMesh *Mesh);
+   SrfTracerRestoringOnCell(const HorzMesh *Mesh);
 
    /// The functor takes the cell index and the array for the tracer surface
    /// restoring values, outputs tendency array

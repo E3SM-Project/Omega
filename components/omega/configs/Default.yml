@@ -30,9 +30,9 @@ Omega:
     HorzTracerFluxOrder: 2
     VerticalTracerFluxLimiterEnable: true
     VerticalTracerFluxOrder: 3
-  WindStress:
+  SrfStress:
     InterpType: Isotropic
-  SurfaceRestoring:
+  SrfRestoring:
     TracersToRestore: [Temperature, Salinity]
     PistonVelocity: 1.585e-5
   PressureGrad:
@@ -47,10 +47,12 @@ Omega:
     VelHyperDiffTendencyEnable: true
     ViscDel4: 1.2e11
     DivFactor: 1.0
-    WindForcingTendencyEnable: false
-    SurfaceTracerRestoringEnable: false
+    SrfStressForcingTendencyEnable: false
+    SrfTracerRestoringEnable: false
     BottomDragTendencyEnable: false
     BottomDragCoeff: 0.0
+    SrfThicknessForcingTendencyEnable: false
+    SrfTracerForcingTendencyEnable: false
     TracerHorzAdvTendencyEnable: true
     TracerDiffTendencyEnable: true
     EddyDiff2: 10.0
@@ -135,6 +137,16 @@ Omega:
       EndTime: 99999-12-31_00:00:00
       Contents:
         - Restart
+    Forcing:
+      UsePointerFile: false
+      Filename: forcing.nc
+      Mode: read
+      Precision: double
+      Freq: 1
+      FreqUnits: days
+      UseStartEnd: false
+      Contents:
+        - Forcing
     RestartWrite:
       UsePointerFile: true
       PointerFilename: ocn.pointer

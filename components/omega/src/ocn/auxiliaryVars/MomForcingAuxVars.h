@@ -1,5 +1,5 @@
-#ifndef OMEGA_AUX_WIND_H
-#define OMEGA_AUX_WIND_H
+#ifndef OMEGA_AUX_MOM_H
+#define OMEGA_AUX_MOM_H
 
 #include "DataTypes.h"
 #include "HorzMesh.h"
@@ -11,14 +11,14 @@
 
 namespace OMEGA {
 
-class WindForcingAuxVars {
+class MomForcingAuxVars {
  public:
    Array1DReal NormalStressEdge;
    Array1DReal ZonalStressCell;
    Array1DReal MeridStressCell;
    InterpCellToEdgeOption InterpChoice;
 
-   WindForcingAuxVars(const std::string &AuxStateSuffix, const HorzMesh *Mesh);
+   MomForcingAuxVars(const std::string &AuxStateSuffix, const HorzMesh *Mesh);
 
    KOKKOS_FUNCTION void computeVarsOnEdge(int IEdge) const {
       const Real ZonalStressEdge = Interp(IEdge, ZonalStressCell, InterpChoice);
@@ -29,8 +29,7 @@ class WindForcingAuxVars {
           Kokkos::sin(AngleEdge(IEdge)) * MeridStressEdge;
    }
 
-   void registerFields(const std::string &AuxGroupName,
-                       const std::string &MeshName) const;
+   void registerFields(const std::string &MeshName) const;
    void unregisterFields() const;
 
  private:

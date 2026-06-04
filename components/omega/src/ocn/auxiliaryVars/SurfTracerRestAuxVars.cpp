@@ -14,8 +14,7 @@ SurfTracerRestAuxVars::SurfTracerRestAuxVars(const std::string &AuxStateSuffix,
                                   NTracers, Mesh->NCellsSize) {}
 
 void SurfTracerRestAuxVars::registerFields(
-    const std::string &AuxGroupName, // name of Auxiliary field group
-    const std::string &MeshName      // name of horizontal mesh
+    const std::string &MeshName // name of horizontal mesh
 ) const {
 
    // Create fields
@@ -43,9 +42,8 @@ void SurfTracerRestAuxVars::registerFields(
                      NDims,     // number of dimensions
                      DimNames); // dim names
 
-   // Add fields to FieldGroup
-   FieldGroup::addFieldToGroup(TracersMonthlySurfClimoCell.label(),
-                               AuxGroupName);
+   // Add fields to Forcing FieldGroup
+   FieldGroup::addFieldToGroup(TracersMonthlySurfClimoCell.label(), "Forcing");
 
    // Attach data
    TracersMonthlySurfClimoCellField->attachData<Array2DReal>(

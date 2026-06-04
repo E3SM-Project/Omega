@@ -34,6 +34,7 @@ The following auxiliary variables are currently available:
 | NormalStressEdge | normal component of wind stress on edge
 | SurfTracerRestoringDiffsCell | surface tracer restoring differences on cells
 | TracersMonthlySurfClimoCell | monthly climatology values to restore to for surface tracer on cells
+| SurfInsituTemperature | insitu (potential) temperature at surface layer in Celsius
 
 ## See Also
 

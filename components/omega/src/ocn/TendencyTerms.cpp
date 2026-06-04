@@ -60,8 +60,8 @@ VelocityHyperDiffOnEdge::VelocityHyperDiffOnEdge(const HorzMesh *Mesh,
       MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
 
-WindForcingOnEdge::WindForcingOnEdge(const HorzMesh *Mesh,
-                                     const VertCoord *VCoord)
+SrfStressForcingOnEdge::SrfStressForcingOnEdge(const HorzMesh *Mesh,
+                                               const VertCoord *VCoord)
     : Enabled(false), EdgeMask(VCoord->EdgeMask),
       MinLayerEdgeBot(VCoord->MinLayerEdgeBot) {}
 
@@ -70,6 +70,17 @@ BottomDragOnEdge::BottomDragOnEdge(const HorzMesh *Mesh,
     : Enabled(false), Coeff(0), CellsOnEdge(Mesh->CellsOnEdge),
       NVertLayers(VCoord->NVertLayers), EdgeMask(VCoord->EdgeMask),
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
+
+SrfThicknessForcingOnCell::SrfThicknessForcingOnCell(const HorzMesh *Mesh,
+                                                     const VertCoord *VCoord)
+    : MinLayerCell(VCoord->MinLayerCell), MaxLayerCell(VCoord->MaxLayerCell) {}
+
+SrfTracerForcingOnCell::SrfTracerForcingOnCell(const HorzMesh *Mesh,
+                                               const VertCoord *VCoord,
+                                               I4 TempTracerIndex,
+                                               I4 SaltTracerIndex)
+    : TempIndex(TempTracerIndex), SaltIndex(SaltTracerIndex),
+      MinLayerCell(VCoord->MinLayerCell), MaxLayerCell(VCoord->MaxLayerCell) {}
 
 TracerHorzAdvOnCell::TracerHorzAdvOnCell(const HorzMesh *Mesh,
                                          const VertCoord *VCoord)
@@ -111,8 +122,7 @@ TracerHyperDiffOnCell::TracerHyperDiffOnCell(const HorzMesh *Mesh,
       MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
 
-SurfaceTracerRestoringOnCell::SurfaceTracerRestoringOnCell(
-    const HorzMesh *Mesh) {}
+SrfTracerRestoringOnCell::SrfTracerRestoringOnCell(const HorzMesh *Mesh) {}
 
 void TracerHorzAdvOnCell::init() {
    const HorzMesh *Mesh = this->HorzontalMesh;

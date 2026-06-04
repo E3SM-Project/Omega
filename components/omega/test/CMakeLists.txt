@@ -335,6 +335,17 @@ target_compile_definitions(
   TENDENCYTERMS_TEST_SPHERE
 )
 
+################
+# Forcing test
+################
+
+add_omega_test(
+    FORCING_FILE_TEST
+    testForcingFile.exe
+    ocn/ForcingTest.cpp
+    "-n;8"
+)
+
 #################
 # Tendencies test
 #################

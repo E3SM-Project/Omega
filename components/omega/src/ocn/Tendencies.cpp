@@ -13,6 +13,7 @@
 #include "Eos.h"
 #include "Error.h"
 #include "Field.h"
+#include "Forcing.h"
 #include "OceanState.h"
 #include "PGrad.h"
 #include "Pacer.h"
@@ -219,10 +220,11 @@ void Tendencies::readConfig(Config *OmegaConfig ///< [in] Omega config
    CHECK_ERROR_ABORT(
        Err, "Tendencies: TracerDiffTendencyEnable not found in TendConfig");
 
-   Err +=
-       TendConfig.get("WindForcingTendencyEnable", this->WindForcing.Enabled);
+   Err += TendConfig.get("SrfStressForcingTendencyEnable",
+                         this->SrfStressForcing.Enabled);
    CHECK_ERROR_ABORT(
-       Err, "Tendencies: WindForcingTendencyEnable not found in TendConfig");
+       Err,
+       "Tendencies: SrfStressForcingTendencyEnable not found in TendConfig");
 
    Err += TendConfig.get("BottomDragTendencyEnable", this->BottomDrag.Enabled);
    CHECK_ERROR_ABORT(
@@ -231,6 +233,18 @@ void Tendencies::readConfig(Config *OmegaConfig ///< [in] Omega config
    Err += TendConfig.get("BottomDragCoeff", this->BottomDrag.Coeff);
    CHECK_ERROR_ABORT(Err,
                      "Tendencies: BottomDragCoeff not found in TendConfig");
+
+   Err += TendConfig.get("SrfThicknessForcingTendencyEnable",
+                         this->SrfThicknessForcing.Enabled);
+   CHECK_ERROR_ABORT(
+       Err,
+       "Tendencies: SrfThicknessForcingTendencyEnable not found in TendConfig");
+
+   Err += TendConfig.get("SrfTracerForcingTendencyEnable",
+                         this->SrfTracerForcing.Enabled);
+   CHECK_ERROR_ABORT(
+       Err,
+       "Tendencies: SrfTracerForcingTendencyEnable not found in TendConfig");
 
    if (this->TracerDiffusion.Enabled) {
       Err += TendConfig.get("EddyDiff2", this->TracerDiffusion.EddyDiff2);
@@ -252,21 +266,20 @@ void Tendencies::readConfig(Config *OmegaConfig ///< [in] Omega config
    CHECK_ERROR_ABORT(
        Err, "Tendencies: PressureGradTendencyEnable not found in TendConfig");
 
-   Err += TendConfig.get("SurfaceTracerRestoringEnable",
-                         this->SurfaceTracerRestoring.Enabled);
+   Err += TendConfig.get("SrfTracerRestoringEnable",
+                         this->SrfTracerRestoring.Enabled);
    CHECK_ERROR_ABORT(
-       Err, "Tendencies: SurfaceTracerRestoringEnable not found in TendConfig");
-   if (this->SurfaceTracerRestoring.Enabled) {
-      Config SurfRestConfig("SurfaceRestoring");
-      Err += OmegaConfig->get(SurfRestConfig);
-      Err += SurfRestConfig.get("PistonVelocity",
-                                this->SurfaceTracerRestoring.PistonVelocity);
+       Err, "Tendencies: SrfTracerRestoringEnable not found in TendConfig");
+   if (this->SrfTracerRestoring.Enabled) {
+      Config SrfRestConfig("SrfRestoring");
+      Err += OmegaConfig->get(SrfRestConfig);
+      Err += SrfRestConfig.get("PistonVelocity",
+                               this->SrfTracerRestoring.PistonVelocity);
       CHECK_ERROR_ABORT(
-          Err,
-          "Tendencies: PistonVelocity not found in SurfaceRestoringConfig");
+          Err, "Tendencies: PistonVelocity not found in SrfRestoringConfig");
 
       std::vector<std::string> TracersToRestore;
-      SurfRestConfig.get("TracersToRestore", TracersToRestore);
+      SrfRestConfig.get("TracersToRestore", TracersToRestore);
 
       // Enable restoring for specified individual tracers
       I4 NumInvalidTracers = 0;
@@ -298,11 +311,11 @@ void Tendencies::readConfig(Config *OmegaConfig ///< [in] Omega config
                      NumInvalidTracers);
       }
 
-      this->SurfaceTracerRestoring.NTracersToRestore =
+      this->SrfTracerRestoring.NTracersToRestore =
           static_cast<I4>(TracerIdsToRestoreVec.size());
-      this->SurfaceTracerRestoring.TracerIdsToRestore = Array1DI4(
-          "TracerIdsToRestore", this->SurfaceTracerRestoring.NTracersToRestore);
-      deepCopy(this->SurfaceTracerRestoring.TracerIdsToRestore,
+      this->SrfTracerRestoring.TracerIdsToRestore = Array1DI4(
+          "TracerIdsToRestore", this->SrfTracerRestoring.NTracersToRestore);
+      deepCopy(this->SrfTracerRestoring.TracerIdsToRestore,
                HostArray1DI4(TracerIdsToRestoreVec.data(),
                              TracerIdsToRestoreVec.size()));
    }
@@ -378,9 +391,11 @@ Tendencies::Tendencies(const std::string &Name_, ///< [in] Name for tendencies
       PseudoThicknessFluxDiv(Mesh, VCoord), PotentialVortHAdv(Mesh, VCoord),
       KEGrad(Mesh, VCoord), SSHGrad(Mesh, VCoord),
       VelocityDiffusion(Mesh, VCoord), VelocityHyperDiff(Mesh, VCoord),
-      WindForcing(Mesh, VCoord), BottomDrag(Mesh, VCoord),
+      SrfStressForcing(Mesh, VCoord), BottomDrag(Mesh, VCoord),
+      SrfThicknessForcing(Mesh, VCoord),
+      SrfTracerForcing(Mesh, VCoord, Tracers::IndxTemp, Tracers::IndxSalt),
       TracerDiffusion(Mesh, VCoord), TracerHyperDiff(Mesh, VCoord),
-      TracerHorzAdv(Mesh, VCoord), SurfaceTracerRestoring(Mesh),
+      TracerHorzAdv(Mesh, VCoord), SrfTracerRestoring(Mesh),
       CustomThicknessTend(InCustomThicknessTend),
       CustomVelocityTend(InCustomVelocityTend), EqState(EqState), PGrad(PGrad) {
 
@@ -426,6 +441,7 @@ void Tendencies::computePseudoThicknessTendenciesOnly(
 
    OMEGA_SCOPE(LocPseudoThicknessTend, PseudoThicknessTend);
    OMEGA_SCOPE(LocThicknessFluxDiv, PseudoThicknessFluxDiv);
+   OMEGA_SCOPE(LocSrfThicknessForcing, SrfThicknessForcing);
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
 
@@ -469,6 +485,33 @@ void Tendencies::computePseudoThicknessTendenciesOnly(
    VAdv->computePseudoThicknessVAdvTend(PseudoThicknessTend);
    Pacer::stop("Tend:computePseudoThicknessVAdvTend", 2);
 
+   if (LocSrfThicknessForcing.Enabled) {
+      Pacer::start("Tend:srfThicknessForcing", 2);
+      const auto *ForcingState = Forcing::getDefault();
+
+      const auto &SnowFlux = ForcingState->TracerForcingAux.SnowFluxCell;
+      const auto &RainFlux = ForcingState->TracerForcingAux.RainFluxCell;
+      const auto &EvaporationFlux =
+          ForcingState->TracerForcingAux.EvaporationFluxCell;
+      const auto &SeaIceFreshWaterFlux =
+          ForcingState->TracerForcingAux.SeaIceFreshWaterFluxCell;
+      const auto &IceRunoffFlux =
+          ForcingState->TracerForcingAux.IceRunoffFluxCell;
+      const auto &RiverRunoffFlux =
+          ForcingState->TracerForcingAux.RiverRunoffFluxCell;
+      const auto &SeaIceSaltFlux =
+          ForcingState->TracerForcingAux.SeaIceSaltFluxCell;
+
+      parallelFor(
+          {Mesh->NCellsAll}, KOKKOS_LAMBDA(int ICell) {
+             LocSrfThicknessForcing(LocPseudoThicknessTend, ICell, SnowFlux,
+                                    RainFlux, EvaporationFlux,
+                                    SeaIceFreshWaterFlux, IceRunoffFlux,
+                                    RiverRunoffFlux, SeaIceSaltFlux);
+          });
+      Pacer::stop("Tend:srfThicknessForcing", 2);
+   }
+
    if (CustomThicknessTend) {
       Pacer::start("Tend:customThicknessTend", 2);
       CustomThicknessTend(LocPseudoThicknessTend, State, AuxState,
@@ -498,7 +541,7 @@ void Tendencies::computeVelocityTendenciesOnly(
    OMEGA_SCOPE(LocSSHGrad, SSHGrad);
    OMEGA_SCOPE(LocVelocityDiffusion, VelocityDiffusion);
    OMEGA_SCOPE(LocVelocityHyperDiff, VelocityHyperDiff);
-   OMEGA_SCOPE(LocWindForcing, WindForcing);
+   OMEGA_SCOPE(LocSrfStressForcing, SrfStressForcing);
    OMEGA_SCOPE(LocBottomDrag, BottomDrag);
    OMEGA_SCOPE(MinLayerEdgeBot, VCoord->MinLayerEdgeBot);
    OMEGA_SCOPE(MaxLayerEdgeTop, VCoord->MaxLayerEdgeTop);
@@ -620,11 +663,13 @@ void Tendencies::computeVelocityTendenciesOnly(
    Pacer::stop("Tend:computeVelocityVAdvTend", 2);
 
    // Compute wind forcing
-   const auto &NormalStressEdge = AuxState->WindForcingAux.NormalStressEdge;
+   const auto *ForcingState     = Forcing::getDefault();
+   const auto &NormalStressEdge = ForcingState->MomForcingAux.NormalStressEdge;
    const auto &MeanPseudoThickEdge =
        AuxState->PseudoThicknessAux.MeanPseudoThickEdge;
-   if (LocWindForcing.Enabled) {
-      Pacer::start("Tend:windForcing", 2);
+
+   if (LocSrfStressForcing.Enabled) {
+      Pacer::start("Tend:srfStressForcing", 2);
       parallelForOuter(
           {Mesh->NEdgesAll}, KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
              const int KMin   = MinLayerEdgeBot(IEdge);
@@ -632,11 +677,11 @@ void Tendencies::computeVelocityTendenciesOnly(
              const int KRange = vertRangeChunked(KMin, KMax);
              parallelForInner(
                  Team, KRange, INNER_LAMBDA(int KChunk) {
-                    LocWindForcing(LocNormalVelocityTend, IEdge, KChunk,
-                                   NormalStressEdge, MeanPseudoThickEdge);
+                    LocSrfStressForcing(LocNormalVelocityTend, IEdge, KChunk,
+                                        NormalStressEdge, MeanPseudoThickEdge);
                  });
           });
-      Pacer::stop("Tend:windForcing", 2);
+      Pacer::stop("Tend:srfStressForcing", 2);
    }
 
    // Compute bottom drag
@@ -688,7 +733,8 @@ void Tendencies::computeTracerTendenciesOnly(
    OMEGA_SCOPE(LocTracerHorzAdv, TracerHorzAdv);
    OMEGA_SCOPE(LocTracerDiffusion, TracerDiffusion);
    OMEGA_SCOPE(LocTracerHyperDiff, TracerHyperDiff);
-   OMEGA_SCOPE(LocSurfaceTracerRestoring, SurfaceTracerRestoring);
+   OMEGA_SCOPE(LocSrfTracerRestoring, SrfTracerRestoring);
+   OMEGA_SCOPE(LocSrfTracerForcing, SrfTracerForcing);
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
    OMEGA_SCOPE(MinLayerEdgeBot, VCoord->MinLayerEdgeBot);
@@ -792,25 +838,57 @@ void Tendencies::computeTracerTendenciesOnly(
    Pacer::stop("Tend:computeTracerVAdvTend", 2);
 
    // compute tracer surface restoring
+   const auto *ForcingState = Forcing::getDefault();
    const Array2DReal &TracersMonthlySurfClimo =
-       AuxState->SurfTracerRestAux.TracersMonthlySurfClimoCell;
-   const I4 NTracersToRestore = LocSurfaceTracerRestoring.NTracersToRestore;
-   const auto &TracerIdsToRestore =
-       LocSurfaceTracerRestoring.TracerIdsToRestore;
-   if (LocSurfaceTracerRestoring.Enabled && NTracersToRestore > 0) {
-      Pacer::start("Tend:surfaceTracerRestoring", 2);
+       ForcingState->SurfTracerRestAux.TracersMonthlySurfClimoCell;
+   const I4 NTracersToRestore     = LocSrfTracerRestoring.NTracersToRestore;
+   const auto &TracerIdsToRestore = LocSrfTracerRestoring.TracerIdsToRestore;
+   if (LocSrfTracerRestoring.Enabled && NTracersToRestore > 0) {
+      Pacer::start("Tend:srfTracerRestoring", 2);
       parallelFor(
           {NTracersToRestore, Mesh->NCellsAll},
           KOKKOS_LAMBDA(int R, int ICell) {
              const int KMin = MinLayerCell(ICell);
              const int L    = TracerIdsToRestore(R);
-             LocSurfaceTracerRestoring(LocTracerTend, L, ICell, KMin,
-                                       TracersMonthlySurfClimo, TracerArray);
+             LocSrfTracerRestoring(LocTracerTend, L, ICell, KMin,
+                                   TracersMonthlySurfClimo, TracerArray);
           });
-      Pacer::stop("Tend:surfaceTracerRestoring", 2);
+      Pacer::stop("Tend:srfTracerRestoring", 2);
+   }
+
+   // compute tracer forcing tendency
+   if (LocSrfTracerForcing.Enabled) {
+      Pacer::start("Tend:srfTracerForcing", 2);
+      const auto &LatentHeatFlux =
+          ForcingState->TracerForcingAux.LatentHeatFluxCell;
+      const auto &SensibleHeatFlux =
+          ForcingState->TracerForcingAux.SensibleHeatFluxCell;
+      const auto &LongWaveHeatFluxUp =
+          ForcingState->TracerForcingAux.LongWaveHeatFluxUpCell;
+      const auto &LongWaveHeatFluxDown =
+          ForcingState->TracerForcingAux.LongWaveHeatFluxDownCell;
+      const auto &SeaIceHeatFlux =
+          ForcingState->TracerForcingAux.SeaIceHeatFluxCell;
+      const auto &ShortWaveHeatFlux =
+          ForcingState->TracerForcingAux.ShortWaveHeatFluxCell;
+      const auto &SnowFlux = ForcingState->TracerForcingAux.SnowFluxCell;
+      const auto &IceRunoffFlux =
+          ForcingState->TracerForcingAux.IceRunoffFluxCell;
+      const auto &SeaIceSaltFlux =
+          ForcingState->TracerForcingAux.SeaIceSaltFluxCell;
+
+      parallelFor(
+          {Mesh->NCellsAll}, KOKKOS_LAMBDA(int ICell) {
+             LocSrfTracerForcing(
+                 LocTracerTend, ICell, LatentHeatFlux, SensibleHeatFlux,
+                 LongWaveHeatFluxUp, LongWaveHeatFluxDown, SeaIceHeatFlux,
+                 ShortWaveHeatFlux, SnowFlux, IceRunoffFlux, SeaIceSaltFlux);
+          });
+      Pacer::stop("Tend:srfTracerForcing", 2);
    }
 
    Pacer::stop("Tend:computeTracerTendenciesOnly", 1);
+
 } // end tracer tendency compute
 
 void Tendencies::computePseudoThicknessTendencies(

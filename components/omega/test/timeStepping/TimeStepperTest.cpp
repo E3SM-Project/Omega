@@ -22,6 +22,7 @@
 #include "Eos.h"
 #include "Error.h"
 #include "Field.h"
+#include "Forcing.h"
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
@@ -249,8 +250,8 @@ int initTimeStepperTest(const std::string &mesh) {
    TestTendencies->TracerHorzAdv.Enabled          = false;
    TestTendencies->TracerDiffusion.Enabled        = false;
    TestTendencies->TracerHyperDiff.Enabled        = false;
-   TestTendencies->WindForcing.Enabled            = false;
-   TestTendencies->SurfaceTracerRestoring.Enabled = false;
+   TestTendencies->SrfStressForcing.Enabled       = false;
+   TestTendencies->SrfTracerRestoring.Enabled     = false;
    TestTendencies->BottomDrag.Enabled             = false;
    DefVAdv->ThickVertAdvEnabled                   = false;
    DefVAdv->VelVertAdvEnabled                     = false;
@@ -290,6 +291,7 @@ void timeLoop(TimeInstant TimeStart, Real TimeEnd) {
 }
 
 void finalizeTimeStepperTest() {
+   Forcing::clear();
    Tracers::clear();
    TimeStepper::clear();
    PressureGrad::clear();

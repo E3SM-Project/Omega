@@ -5,6 +5,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Error.h"
+#include "Forcing.h"
 #include "IOStream.h"
 #include "OceanDriver.h"
 #include "OceanState.h"
@@ -43,6 +45,19 @@ int ocnRun(TimeInstant &CurrTime ///< [inout] current sim time
       ++IStep;
 
       // call forcing routines, anything needed pre-timestep
+      Metadata ReqMeta;
+      Error ReadErr =
+          IOStream::read("Forcing", OmegaClock, ReqMeta, true /* ForceRead */);
+      if (ReadErr.isFail()) {
+         CHECK_ERROR(ReadErr, "ocnRun: failed to read Forcing stream");
+         Err = 1;
+         break;
+      }
+
+      Err += Forcing::getDefault()->exchangeHalo();
+      if (Err != 0) {
+         ABORT_ERROR("ocnRun: failed to exchange forcing halos");
+      }
 
       // do forward time step
       // first call to doStep can sometimes take very long

@@ -14,6 +14,7 @@
 #include "Eos.h"
 #include "Error.h"
 #include "Field.h"
+#include "Forcing.h"
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
@@ -150,8 +151,8 @@ int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
    DefState->exchangeHalo(CurTimeLevel);
    DefState->copyToHost(CurTimeLevel);
 
-   AuxiliaryState *DefAuxState = AuxiliaryState::getDefault();
-   DefAuxState->exchangeHalo();
+   Forcing *DefForcing = Forcing::getDefault();
+   DefForcing->exchangeHalo();
 
    // Now update tracers - assume using same time level index
    Err = Tracers::exchangeHalo(CurTimeLevel);
@@ -190,6 +191,7 @@ static int initOmegaModulesImpl(MPI_Comm Comm) {
 
    HorzMesh::init(ModelClock);
    VertCoord::init();
+   Forcing::init();
    Tracers::init();
    VertAdv::init();
    AuxiliaryState::init();
@@ -197,11 +199,11 @@ static int initOmegaModulesImpl(MPI_Comm Comm) {
    PressureGrad::init();
    Tendencies::init();
 
-   // Validate SurfaceTracerRestoring configuration
+   // Validate SrfTracerRestoring configuration
    Tendencies *DefTend = Tendencies::getDefault();
-   if (DefTend->SurfaceTracerRestoring.Enabled &&
-       DefTend->SurfaceTracerRestoring.NTracersToRestore == 0) {
-      ABORT_ERROR("OceanInit: SurfaceTracerRestoring is enabled but "
+   if (DefTend->SrfTracerRestoring.Enabled &&
+       DefTend->SrfTracerRestoring.NTracersToRestore == 0) {
+      ABORT_ERROR("OceanInit: SrfTracerRestoring is enabled but "
                   "TracersToRestore is empty");
    }
 

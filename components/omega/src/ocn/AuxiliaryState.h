@@ -3,6 +3,7 @@
 
 #include "Config.h"
 #include "DataTypes.h"
+#include "Forcing.h"
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "OceanState.h"
@@ -12,11 +13,9 @@
 #include "VertCoord.h"
 #include "auxiliaryVars/KineticAuxVars.h"
 #include "auxiliaryVars/PseudoThicknessAuxVars.h"
-#include "auxiliaryVars/SurfTracerRestAuxVars.h"
 #include "auxiliaryVars/TracerAuxVars.h"
 #include "auxiliaryVars/VelocityDel2AuxVars.h"
 #include "auxiliaryVars/VorticityAuxVars.h"
-#include "auxiliaryVars/WindForcingAuxVars.h"
 
 #include <memory>
 #include <string>
@@ -42,8 +41,6 @@ class AuxiliaryState {
    TracerAuxVars TracerAux;
    VorticityAuxVars VorticityAux;
    VelocityDel2AuxVars VelocityDel2Aux;
-   WindForcingAuxVars WindForcingAux;
-   SurfTracerRestAuxVars SurfTracerRestAux;
 
    ~AuxiliaryState();
 

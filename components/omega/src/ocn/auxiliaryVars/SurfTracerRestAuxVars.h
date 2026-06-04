@@ -18,8 +18,7 @@ class SurfTracerRestAuxVars {
    SurfTracerRestAuxVars(const std::string &AuxStateSuffix,
                          const HorzMesh *Mesh, const I4 NTracers);
 
-   void registerFields(const std::string &AuxGroupName,
-                       const std::string &MeshName) const;
+   void registerFields(const std::string &MeshName) const;
    void unregisterFields() const;
 };
 

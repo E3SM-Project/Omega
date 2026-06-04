@@ -69,10 +69,13 @@ constexpr Real CpFw = pcd::pure_water_specific_heat_capacity_reference;
 constexpr Real CpSw = pcd::seawater_specific_heat_capacity_reference;
 // Specific heat capacity of seawater ~ J/(kg*K) (from Physical Constants
 // Dictionary)
+constexpr Real Cp0Sw =
+    3991.86795711963; // Specific heat capacity of seawater for Teos-10
 constexpr Real CpIce = pcd::sea_ice_specific_heat_capacity_reference;
 // Specific heat capacity of ice ~ J/(kg*K) (from Physical Constants Dictionary)
 constexpr Real LatIce = pcd::latent_heat_of_fusion_reference;
-// Latent heat of fusion ~ J/kg (from Physical Constants Dictionary)
+// Latent heat of fusion of fresh ice at 0°C ~ J/kg (from Physical Constants
+// Dictionary)
 constexpr Real LatVap = pcd::latent_heat_of_vaporization_reference;
 // Latent heat of vaporization ~ J/kg (from Physical Constants Dictionary)
 constexpr Real LatSub = pcd::latent_heat_of_sublimation_reference;
@@ -98,7 +101,11 @@ constexpr Real Rad2Deg =
     pcd::radian; // Radians to degrees (from Physical Constants Dictionary)
 constexpr Real Deg2Rad =
     pcd::degree; // Degrees to radians (from Physical Constants Dictionary)
-constexpr Real Salt2PPt   = 1000.0;    // Salinity (kg/kg) to parts per thousand
+constexpr Real Salt2PPt = 1000.0;   // Salinity (kg/kg) to parts per thousand
+constexpr Real SS0      = 35.16504; // Standard Ocean Reference Salinity (g/kg)
+constexpr Real Psu2Gpkg =
+    SS0 / 35.0; // unit conversion factor for salinities (psu --> g/kg)
+constexpr Real Sfac       = 0.0248826675584615; // sfac  =  1/(40*Psu2Gpkg)
 constexpr Real PPt2Salt   = 1.0e-3;    // Parts per thousand to salinity (kg/kg)
 constexpr Real Mass2Sv    = 1.0e-12;   // Mass flux (kg/s) to Sverdrup
 constexpr Real Heat2Pw    = 4.186e-15; // Heat flux (W) to Petawatt
@@ -109,11 +116,12 @@ constexpr Real Pa2Db      = 1.0e-4;    // Pascal to Decibar
 constexpr Real Cm2M       = 1.0e-2;    // Centimeters to meters
 constexpr Real M2Cm       = 1.0e2;     // Meters to centimeters
 constexpr Real HFluxFac =
-    1.0 / (RhoSw * CpSw);         // Heat flux (W/m^2) to temp flux (C*m/s)
+    1.0 / (RhoSw * Cp0Sw); // Heat flux (W/m^2) to Conserv Temp flux (C*m/s)
 constexpr Real FwFluxFac = 1.e-6; // Fw flux (kg/m^2/s) to salt((msu/psu)*m/s)
 constexpr Real SaltFac =
-    -OcnRefSal * FwFluxFac;    // Fw flux (kg/m^2/s) to salt flux (msu*m/s)
-constexpr Real SFluxFac = 1.0; // Salt flux (kg/m^2/s) to salt flux (msu*m/s)
+    -OcnRefSal * FwFluxFac; // Fw flux (kg/m^2/s) to salt flux (msu*m/s)
+constexpr Real SFluxFac =
+    1.e3 / RhoSw; // Salt flux (kg/m^2/s) to salinity flux (m*(g/kg)/s)
 
 } // namespace OMEGA
 #endif

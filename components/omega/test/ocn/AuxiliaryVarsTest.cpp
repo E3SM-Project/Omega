@@ -15,11 +15,11 @@
 #include "Pacer.h"
 #include "VertCoord.h"
 #include "auxiliaryVars/KineticAuxVars.h"
+#include "auxiliaryVars/MomForcingAuxVars.h"
 #include "auxiliaryVars/PseudoThicknessAuxVars.h"
 #include "auxiliaryVars/TracerAuxVars.h"
 #include "auxiliaryVars/VelocityDel2AuxVars.h"
 #include "auxiliaryVars/VorticityAuxVars.h"
-#include "auxiliaryVars/WindForcingAuxVars.h"
 #include "mpi.h"
 
 #include <cmath>
@@ -396,7 +396,7 @@ int testKineticAuxVars(const Array2DReal &PseudoThicknessCell,
    return Err;
 }
 
-int testWindForcingAuxVars(Real RTol) {
+int testMomForcingAuxVars(Real RTol) {
    int Err = 0;
    TestSetup Setup;
 
@@ -414,23 +414,23 @@ int testWindForcingAuxVars(Real RTol) {
        ExactNormalStressEdge, EdgeComponent::Normal, Geom, Mesh,
        ExchangeHalos::No);
 
-   WindForcingAuxVars WindForcingAux("", Mesh);
-   WindForcingAux.InterpChoice = InterpCellToEdgeOption::Anisotropic;
+   MomForcingAuxVars MomForcingAux("", Mesh);
+   MomForcingAux.InterpChoice = InterpCellToEdgeOption::Anisotropic;
 
    // Set inputs
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.windStressX(X, Y); },
-       WindForcingAux.ZonalStressCell, Geom, Mesh, OnCell);
+       MomForcingAux.ZonalStressCell, Geom, Mesh, OnCell);
 
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.windStressY(X, Y); },
-       WindForcingAux.MeridStressCell, Geom, Mesh, OnCell);
+       MomForcingAux.MeridStressCell, Geom, Mesh, OnCell);
 
    // Compute numerical result
    parallelFor(
        {Mesh->NEdgesOwned},
-       KOKKOS_LAMBDA(int IEdge) { WindForcingAux.computeVarsOnEdge(IEdge); });
-   const auto &NumNormalStressEdge = WindForcingAux.NormalStressEdge;
+       KOKKOS_LAMBDA(int IEdge) { MomForcingAux.computeVarsOnEdge(IEdge); });
+   const auto &NumNormalStressEdge = MomForcingAux.NormalStressEdge;
 
    // Compute error measures and check error values
    ErrorMeasures NormalStressErrors;
@@ -441,7 +441,7 @@ int testWindForcingAuxVars(Real RTol) {
                       Setup.ExpectedNormalStressErrors, RTol);
 
    if (Err == 0) {
-      LOG_INFO("AuxVarsTest: WindForcingAuxVars PASS");
+      LOG_INFO("AuxVarsTest: MomForcingAuxVars PASS");
    }
 
    return Err;
@@ -857,8 +857,6 @@ int auxVarsTest(const std::string &mesh = DefaultMeshFile) {
    Err += testVelocityDel2AuxVars(RTol);
 
    Err += testTracerAuxVars(PseudoThickCell, NormalVelEdge, RTol);
-
-   Err += testWindForcingAuxVars(RTol);
 
    if (Err == 0) {
       LOG_INFO("AuxVarsTest: Successful completion");

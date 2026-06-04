@@ -66,12 +66,14 @@ class Tendencies {
    SSHGradOnEdge SSHGrad;
    VelocityDiffusionOnEdge VelocityDiffusion;
    VelocityHyperDiffOnEdge VelocityHyperDiff;
-   WindForcingOnEdge WindForcing;
+   SrfStressForcingOnEdge SrfStressForcing;
    BottomDragOnEdge BottomDrag;
+   SrfThicknessForcingOnCell SrfThicknessForcing;
+   SrfTracerForcingOnCell SrfTracerForcing;
    TracerHorzAdvOnCell TracerHorzAdv;
    TracerDiffOnCell TracerDiffusion;
    TracerHyperDiffOnCell TracerHyperDiff;
-   SurfaceTracerRestoringOnCell SurfaceTracerRestoring;
+   SrfTracerRestoringOnCell SrfTracerRestoring;
 
    std::string Name;
 

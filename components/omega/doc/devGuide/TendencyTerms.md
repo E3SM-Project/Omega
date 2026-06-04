@@ -35,13 +35,13 @@ implemented:
 - `SSHGradOnEdge`
 - `VelocityDiffusionOnEdge`
 - `VelocityHyperDiffOnEdge`
-- `WindForcingOnEdge`
+- `SrfStressForcingOnEdge`
 - `BottomDragOnEdge`
 - `TracerHorzAdvOnCell`
 - `TracerHighOrderHorzAdvOnCell`
 - `TracerDiffOnCell`
 - `TracerHyperDiffOnCell`
-- `SurfaceTracerRestoringOnCell`
+- `SrfTracerRestoringOnCell`
 
 ## See Also
 

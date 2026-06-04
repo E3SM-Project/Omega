@@ -18,9 +18,9 @@ tendency terms are currently implemented:
 | TracerHighOrderHorzAdvOnCell | second order horizontal advection of thickness-weighted tracers
 | TracerDiffOnCell | horizontal diffusion of thickness-weighted tracers
 | TracerHyperDiffOnCell | biharmonic horizontal mixing of thickness-weighted tracers
-| WindForcingOnEdge | forcing by wind stress, defined on edges
+| SrfStressForcingOnEdge | forcing by wind stress, defined on edges
 | BottomDragOnEdge | bottom drag, defined on edges
-| SurfaceTracerRestoringOnCell | surface tracer restoring, defined on cells
+| SrfTracerRestoringOnCell | surface tracer restoring, defined on cells
 
 Among the internal data stored by each functor is a `bool` which can enable or
 disable the contribution of that particular term to the tendency. These flags
@@ -52,10 +52,10 @@ the currently available tendency terms:
 | | EddyDiff2 | horizontal diffusion coefficient
 | TracerHyperDiffOnCell | TracerHyperDiffTendencyEnable | enable/disable term
 | | EddyDiff4 | biharmonic horizontal mixing coeffienct for tracers
-| WindForcingOnEdge | WindForcingTendencyEnable | enable/disable term
+| SrfStressForcingOnEdge | SrfStressForcingTendencyEnable | enable/disable term
 | BottomDragOnEdge | BottomDragTendencyEnable | enable/disable term
 | | BottomDragCoeff | bottom drag coefficient
-| SurfaceTracerRestoringOnCell | SurfaceTracerRestoringEnable | enable/disable term
+| SrfTracerRestoringOnCell | SrfTracerRestoringEnable | enable/disable term
 
 ## Second Order Horizontal Advection Algorithm
 
