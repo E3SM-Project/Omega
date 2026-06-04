@@ -70,6 +70,14 @@ volume arrays, do
 Eos.computeBruntVaisalaFreqSq(ConservTemp, AbsSalinity, Pressure, SpecVol);
 ```
 
+## Helper functions for conversion
+
+To provide the surface in-situ temperature that the coupler requires, use the helper function that converts conservative temperature (the state variable when using Teos-10) into potential temperature, given the absolute salinity and pressure arrays:
+
+```c++
+Eos.calcPtFromCt(ConsrvTemp, AbsSalinity, Pressure);
+```
+
 ## Removal of Eos
 
 To clear the Eos instance do:
