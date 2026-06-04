@@ -76,7 +76,7 @@ class AuxiliaryState {
    void readConfigOptions(Config *OmegaConfig);
 
    /// Exchange halo
-   I4 exchangeHalo();
+   void exchangeHalo();
 
    // Compute all auxiliary variables needed for pseudo-thickness equation
    void computePseudoThicknessAux(const OceanState *State,

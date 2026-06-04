@@ -2141,8 +2141,6 @@ int testPenetratingShortwaveOnCell(int NVertLayers, Real RTol) {
 
 void initTendTest(const std::string &MeshFile, int NVertLayers) {
 
-   Error Err;
-
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv  = MachEnv::getDefault();
    MPI_Comm DefComm = DefEnv->getComm();
@@ -2169,13 +2167,8 @@ void initTendTest(const std::string &MeshFile, int NVertLayers) {
    Clock *ModelClock       = DefStepper->getClock();
 
    IO::init(DefComm);
-
    Decomp::init(MeshFile);
-
-   int HaloErr = Halo::init();
-   if (HaloErr != 0) {
-      ABORT_ERROR("TendencyTermsTest: error initializing default halo");
-   }
+   Halo::init();
 
    Field::init(ModelClock);    // Fields are used in streams
    IOStream::init(ModelClock); // initialize streams for mesh reading
