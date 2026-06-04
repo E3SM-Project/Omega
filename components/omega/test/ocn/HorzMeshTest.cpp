@@ -55,9 +55,7 @@ void initHorzMeshTest() {
    Decomp::init();
 
    // Initialize the default halo
-   int Err = Halo::init();
-   if (Err != 0)
-      ABORT_ERROR("HorzMeshTest: error initializing default halo");
+   Halo::init();
 
    // Create a dummy model clock
    Calendar::init("No Leap");

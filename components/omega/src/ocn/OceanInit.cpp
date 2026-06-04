@@ -154,10 +154,7 @@ int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
    DefAuxState->exchangeHalo();
 
    // Now update tracers - assume using same time level index
-   Err = Tracers::exchangeHalo(CurTimeLevel);
-   if (Err != 0) {
-      ABORT_ERROR("Error updating tracer halo after restart");
-   }
+   Tracers::exchangeHalo(CurTimeLevel);
    Tracers::copyToHost(CurTimeLevel);
 
    return Err;
@@ -182,12 +179,7 @@ static int initOmegaModulesImpl(MPI_Comm Comm) {
    IO::init(Comm);
    Field::init(ModelClock);
    Decomp::init();
-
-   Err = Halo::init();
-   if (Err != 0) {
-      ABORT_ERROR("ocnInit: Error initializing default halo");
-   }
-
+   Halo::init();
    HorzMesh::init(ModelClock);
    VertCoord::init();
    Tracers::init();

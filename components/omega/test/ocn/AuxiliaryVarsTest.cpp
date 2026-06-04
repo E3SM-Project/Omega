@@ -781,8 +781,7 @@ int testTracerAuxVars(const Array2DReal &PseudoThickCell,
 }
 //------------------------------------------------------------------------------
 // The initialization routine for aux vars testing
-int initAuxVarsTest(const std::string &mesh) {
-   int Err = 0;
+void initAuxVarsTest(const std::string &mesh) {
 
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv  = MachEnv::getDefault();
@@ -797,12 +796,7 @@ int initAuxVarsTest(const std::string &mesh) {
 
    IO::init(DefComm);
    Decomp::init(mesh);
-
-   int HaloErr = Halo::init();
-   if (HaloErr != 0) {
-      Err++;
-      LOG_ERROR("AuxVarsTest: error initializing default halo");
-   }
+   Halo::init();
 
    // Create dummy clock for IO
    Calendar::init("No Leap");
@@ -820,7 +814,7 @@ int initAuxVarsTest(const std::string &mesh) {
    // NVertLayers value
    VertCoord::init(false, NVertLayers);
 
-   return Err;
+   return;
 }
 
 void finalizeAuxVarsTest() {
@@ -834,10 +828,8 @@ void finalizeAuxVarsTest() {
 }
 
 int auxVarsTest(const std::string &mesh = DefaultMeshFile) {
-   int Err = initAuxVarsTest(mesh);
-   if (Err != 0) {
-      LOG_CRITICAL("AuxVarsTest: Error initializing");
-   }
+   int Err = 0;
+   initAuxVarsTest(mesh);
 
    const auto &Mesh = HorzMesh::getDefault();
 

@@ -159,12 +159,7 @@ int initTimeStepperTest(const std::string &mesh) {
 
    IO::init(DefComm);
    Decomp::init(mesh);
-
-   int HaloErr = Halo::init();
-   if (HaloErr != 0) {
-      Err++;
-      LOG_ERROR("TimeStepperTest: error initializing default halo");
-   }
+   Halo::init();
 
    // Initialize IO streams
    Field::init(ModelClock);

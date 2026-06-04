@@ -101,8 +101,6 @@ Real tendTest(const int NLayers, VertAdv *VAdv) {
 // Initialize needed modules
 void initVertAdvTest() {
 
-   I4 Err;
-
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv  = MachEnv::getDefault();
    MPI_Comm DefComm = DefEnv->getComm();
@@ -130,9 +128,7 @@ void initVertAdvTest() {
    IOStream::init(ModelClock);
 
    // Initialize the default halo
-   Err = Halo::init();
-   if (Err != 0)
-      ABORT_ERROR("VertAdvTest: error initializing default halo");
+   Halo::init();
 
    // Read and initialize the default mesh
    HorzMesh::init(ModelClock);

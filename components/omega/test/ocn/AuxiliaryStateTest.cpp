@@ -86,8 +86,7 @@ int initState() {
 
 //------------------------------------------------------------------------------
 // The initialization routine for aux vars testing
-int initAuxStateTest(const std::string &mesh) {
-   int Err = 0;
+void initAuxStateTest(const std::string &mesh) {
 
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv  = MachEnv::getDefault();
@@ -111,12 +110,7 @@ int initAuxStateTest(const std::string &mesh) {
    // Initialize streams
    Field::init(ModelClock);
    IOStream::init(ModelClock);
-
-   int HaloErr = Halo::init();
-   if (HaloErr != 0) {
-      Err++;
-      LOG_ERROR("AuxStateTest: error initializing default halo");
-   }
+   Halo::init();
 
    HorzMesh::init(ModelClock);
 
@@ -125,15 +119,14 @@ int initAuxStateTest(const std::string &mesh) {
    Tracers::init();
    int StateErr = OceanState::init();
    if (StateErr != 0) {
-      Err++;
-      LOG_ERROR("AuxStateTest: error initializing default state");
+      ABORT_ERROR("AuxStateTest: error initializing default state");
    }
 
    VertAdv::init();
 
    Eos::init();
 
-   return Err;
+   return;
 }
 
 int testAuxState() {
@@ -335,10 +328,8 @@ void finalizeAuxStateTest() {
 }
 
 int auxStateTest(const std::string &MeshFile = "OmegaMesh.nc") {
-   int Err = initAuxStateTest(MeshFile);
-   if (Err != 0) {
-      LOG_CRITICAL("AuxStateTest: Error initializing");
-   }
+   int Err = 0;
+   initAuxStateTest(MeshFile);
 
    const auto &Mesh = HorzMesh::getDefault();
 
