@@ -59,6 +59,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Equation of State (EOS)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#teos-10-helper-conversions">TEOS-10 Helper Conversions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#displaced-specific-volume">Displaced Specific Volume</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#squared-brunt-vaisala-frequency">Squared Brunt Vaisala Frequency</a></li>
 </ul>
@@ -207,6 +208,22 @@
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">DRhoDT</span></code> is the thermal expansion coefficient (<span class="math notranslate nohighlight">\(\textrm{kg}/(\textrm{m}^3 \cdot ^{\circ}\textrm{C})\)</span>), <code class="docutils literal notranslate"><span class="pre">DRhoDS</span></code> is the saline contraction coefficient (<span class="math notranslate nohighlight">\(\textrm{kg}/\textrm{m}^3\)</span>), and <code class="docutils literal notranslate"><span class="pre">RhoT0S0</span></code> is the reference density at (T,S)=(0,0) (in <span class="math notranslate nohighlight">\(\textrm{kg}/\textrm{m}^3\)</span>).</p>
 <p>In addition to <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code>, the displaced specific volume <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> and <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code> are also calculated by the EOS.</p>
+<section id="teos-10-helper-conversions">
+<h2>TEOS-10 Helper Conversions<a class="headerlink" href="#teos-10-helper-conversions" title="Permalink to this heading"></a></h2>
+<p>When using the <code class="docutils literal notranslate"><span class="pre">teos10</span></code> EOS option, helper methods are available for common
+temperature conversions used by ocean thermodynamics workflows:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">calcCtFreezing(Sa,</span> <span class="pre">P,</span> <span class="pre">SaturationFract)</span></code> computes the Conservative
+Temperature freezing point from absolute salinity and pressure.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">calcPtFromCt(Sa,</span> <span class="pre">Ct)</span></code> converts Conservative Temperature to potential
+temperature.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">calcCtFromPt(Sa,</span> <span class="pre">Pt)</span></code> converts potential temperature to Conservative
+Temperature.</p></li>
+</ul>
+<p>These helper methods are available through the EOS implementation but do not
+replace the standard <code class="docutils literal notranslate"><span class="pre">computeSpecVol</span></code>, <code class="docutils literal notranslate"><span class="pre">computeSpecVolDisp</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">computeBruntVaisalaFreqSq</span></code> calculations.</p>
+</section>
 <section id="displaced-specific-volume">
 <h2>Displaced Specific Volume<a class="headerlink" href="#displaced-specific-volume" title="Permalink to this heading"></a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">Eos</span></code> class calculates the density of a parcel of fluid that is adiabatically displaced by a relative <code class="docutils literal notranslate"><span class="pre">k</span></code> levels (<code class="docutils literal notranslate"><span class="pre">k</span></code> counted positive downward), capturing the effects of pressure/depth changes. This is primarily used to calculate quantities for determining the water column stability (i.e. the stratification) and the vertical mixing coefficients (viscosity and diffusivity). Note: when using the <code class="docutils literal notranslate"><span class="pre">Linear</span></code> or <code class="docutils literal notranslate"><span class="pre">constant</span></code> EOS option, <code class="docutils literal notranslate"><span class="pre">SpecVolDisplaced</span></code> will be the same as <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> since the specific volume calculation is independent of pressure/depth.</p>

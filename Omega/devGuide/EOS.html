@@ -99,6 +99,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#eos-type">Eos type</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#initialization">Initialization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#computation-of-eos">Computation of Eos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#helper-functions-for-conversion">Helper functions for conversion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#removal-of-eos">Removal of Eos</a></li>
 </ul>
 </li>
@@ -251,6 +252,31 @@ volume arrays, do</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Eos</span><span class="p">.</span><span class="n">computeBruntVaisalaFreqSq</span><span class="p">(</span><span class="n">ConservTemp</span><span class="p">,</span><span class="w"> </span><span class="n">AbsSalinity</span><span class="p">,</span><span class="w"> </span><span class="n">Pressure</span><span class="p">,</span><span class="w"> </span><span class="n">SpecVol</span><span class="p">);</span>
 </pre></div>
 </div>
+</section>
+<section id="helper-functions-for-conversion">
+<h2>Helper functions for conversion<a class="headerlink" href="#helper-functions-for-conversion" title="Permalink to this heading"></a></h2>
+<p>The TEOS-10 implementation includes helper functions for temperature
+conversions and freezing-point calculations.</p>
+<p>To compute conservative freezing temperature from absolute salinity and
+pressure, use</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ComputeSpecVolTeos10</span><span class="p">.</span><span class="n">calcCtFreezing</span><span class="p">(</span><span class="n">Sa</span><span class="p">,</span><span class="w"> </span><span class="n">P</span><span class="p">,</span><span class="w"> </span><span class="n">SaturationFract</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This helper follows the TEOS-10 polynomial approximation used by
+<code class="docutils literal notranslate"><span class="pre">gsw_ct_freezing_poly</span></code> in the GSW toolbox.</p>
+<p>To convert Conservative Temperature to potential temperature through the EOS
+interface, use</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Eos</span><span class="p">.</span><span class="n">calcPtFromCt</span><span class="p">(</span><span class="n">Sa</span><span class="p">,</span><span class="w"> </span><span class="n">Ct</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>To convert potential temperature back to Conservative Temperature through the
+EOS interface, use</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Eos</span><span class="p">.</span><span class="n">calcCtFromPt</span><span class="p">(</span><span class="n">Sa</span><span class="p">,</span><span class="w"> </span><span class="n">Pt</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>For <code class="docutils literal notranslate"><span class="pre">EosType::Teos10Eos</span></code>, these wrappers dispatch to TEOS-10 helper formulas.
+For non-TEOS options (<code class="docutils literal notranslate"><span class="pre">LinearEos</span></code> and <code class="docutils literal notranslate"><span class="pre">ConstantEos</span></code>), the wrappers return the
+input temperature unchanged.</p>
 </section>
 <section id="removal-of-eos">
 <h2>Removal of Eos<a class="headerlink" href="#removal-of-eos" title="Permalink to this heading"></a></h2>
