@@ -85,6 +85,10 @@ Omega:
       NuZero: 0.005
       Alpha: 5.0
       Exponent: 2.0
+  ManufacturedSolution:
+    WavelengthX: 5.0e6
+    WavelengthY: 4.33013e6
+    Amplitude: 1.0
   IOStreams:
     HorzMeshIn:
       UsePointerFile: false
@@ -176,7 +180,3 @@ Omega:
       EndTime: 0001-07-31_00:00:00
       Contents:
         - Tracers
-  ManufacturedSolution:
-    WavelengthX: 5.0e6
-    WavelengthY: 4.33013e6
-    Amplitude: 1.0
