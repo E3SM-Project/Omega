@@ -2146,6 +2146,7 @@
 			<var_struct name="ecosysAuxiliary"/>
 			<var name="accumulatedFrazilIceMass"/>
 			<var name="accumulatedFrazilIceSalinity"/>
+			<var name="accumulatedFrazilIceEnergy"/>
 			<var name="accumulatedLandIceMass"/>
 			<var name="accumulatedLandIceHeat"/>
 			<var name="accumulatedLandIceFrazilMass"/>
@@ -2515,6 +2516,10 @@
 		<!-- FIELDS FOR FRAZIL ICE -->
 		<var name="accumulatedFrazilIceMass" type="real" dimensions="nCells Time" units="kg m^-2"
 			 description="Mass per unit area of frazil ice produced. Reset to zero at each coupling interval"
+			 packages="frazilIce"
+		/>
+		<var name="accumulatedFrazilIceEnergy" type="real" dimensions="nCells Time" units="J m^-2"
+			 description="Accumulated frazil ice energy per unit area. Reset to zero at each coupling interval"
 			 packages="frazilIce"
 		/>
 		<var name="accumulatedFrazilIceSalinity" type="real" dimensions="nCells Time" units="kg m^-2"
