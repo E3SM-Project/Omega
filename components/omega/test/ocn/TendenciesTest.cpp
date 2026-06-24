@@ -126,11 +126,7 @@ int initTendenciesTest(const std::string &mesh) {
    Field::init(ModelClock);
    IOStream::init(ModelClock);
 
-   int HaloErr = Halo::init();
-   if (HaloErr != 0) {
-      Err++;
-      LOG_ERROR("TendenciesTest: error initializing default halo");
-   }
+   Halo::init();
 
    // Read mesh
    HorzMesh::init(ModelClock);

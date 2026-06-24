@@ -202,9 +202,7 @@ int setScalar(const Functor &Fun, const Array &ScalarElement, Geometry Geom,
 
    if (ExchangeHalosOpt == ExchangeHalos::Yes) {
       auto MyHalo = Halo::getDefault();
-      Err         = MyHalo->exchangeFullArrayHalo(ScalarElement, Element);
-      if (Err != 0)
-         LOG_ERROR("setScalarElement: error in halo exchange");
+      MyHalo->exchangeFullArrayHalo(ScalarElement, Element);
    }
    return Err;
 }
@@ -362,9 +360,7 @@ int setVectorEdge(const Functor &Fun, const Array &VectorFieldEdge,
 
    if (ExchangeHalosOpt == ExchangeHalos::Yes) {
       auto MyHalo = Halo::getDefault();
-      Err         = MyHalo->exchangeFullArrayHalo(VectorFieldEdge, OnEdge);
-      if (Err != 0)
-         LOG_ERROR("setVectorEdge: error in halo exchange");
+      MyHalo->exchangeFullArrayHalo(VectorFieldEdge, OnEdge);
    }
    return Err;
 }

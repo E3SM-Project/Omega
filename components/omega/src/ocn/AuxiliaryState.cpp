@@ -437,13 +437,10 @@ void AuxiliaryState::readConfigOptions(Config *OmegaConfig) {
 //------------------------------------------------------------------------------
 // Perform auxiliary state halo exchange
 // Note that only non-computed auxiliary variables needs to be exchanged
-I4 AuxiliaryState::exchangeHalo() {
-   I4 Err = 0;
+void AuxiliaryState::exchangeHalo() {
 
-   Err +=
-       MeshHalo->exchangeFullArrayHalo(WindForcingAux.ZonalStressCell, OnCell);
-   Err +=
-       MeshHalo->exchangeFullArrayHalo(WindForcingAux.MeridStressCell, OnCell);
+   MeshHalo->exchangeFullArrayHalo(WindForcingAux.ZonalStressCell, OnCell);
+   MeshHalo->exchangeFullArrayHalo(WindForcingAux.MeridStressCell, OnCell);
 
    // Performing halo exchange on individual tracers because full halo exchange
    // on a 2D array assumes the first dimension is the vertical
@@ -452,10 +449,10 @@ I4 AuxiliaryState::exchangeHalo() {
    for (I4 LTracer = 0; LTracer < NTracers; ++LTracer) {
       auto TracerSurfClimoCell = Kokkos::subview(
           SurfTracerRestAux.TracersMonthlySurfClimoCell, LTracer, Kokkos::ALL);
-      Err += MeshHalo->exchangeFullArrayHalo(TracerSurfClimoCell, OnCell);
+      MeshHalo->exchangeFullArrayHalo(TracerSurfClimoCell, OnCell);
    }
 
-   return Err;
+   return;
 
 } // end exchangeHalo
 

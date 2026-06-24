@@ -18,6 +18,7 @@
 #include "Config.h"
 #include "DataTypes.h"
 #include "Decomp.h"
+#include "Error.h"
 #include "IO.h"
 #include "Logging.h"
 #include "MachEnv.h"
@@ -39,7 +40,7 @@ using namespace OMEGA;
 // any elements differ the test is a failure and an error is returned.
 
 template <typename T>
-int haloExchangeTest(
+Error haloExchangeTest(
     Halo *MyHalo,
     T InitArray,  /// Array initialized based on global IDs of mesh elements
     T &TestArray, /// Array only initialized in owned elements
@@ -47,37 +48,20 @@ int haloExchangeTest(
     MeshElement ThisElem = OnCell /// index space, cell by default
 ) {
 
-   I4 IErr   = 0; // error code
-   I4 RetErr = 0; // return error code
+   Error RetErr; // return error code
 
    // Set total array size and ensure arrays are of same size
    I4 NTot = InitArray.size();
-   if (NTot != TestArray.size()) {
-      LOG_ERROR("HaloTest: {} arrays must be of same size", Label);
-      LOG_INFO("HaloTest: {} exchange test FAIL", Label);
-      RetErr += 1;
-      return RetErr;
-   }
+   OMEGA_REQUIRE(NTot == TestArray.size(),
+                 "HaloTest: FAIL {} arrays must be of same size", Label);
 
    // Perform halo exchange
-   IErr = MyHalo->exchangeFullArrayHalo(TestArray, ThisElem);
-   if (IErr != 0) {
-      LOG_ERROR("HaloTest: Error during {} halo exchange", Label);
-      LOG_INFO("HaloTest: {} exchange test FAIL", Label);
-      RetErr += 1;
-      return RetErr;
-   }
+   MyHalo->exchangeFullArrayHalo(TestArray, ThisElem);
 
    // Confirm all elements are identical, if not set error code
    if (!arraysEqual(TestArray, InitArray)) {
-      IErr = -1;
-   }
-
-   if (IErr == 0) {
-      LOG_INFO("HaloTest: {} exchange test PASS", Label);
-   } else {
-      LOG_INFO("HaloTest: {} exchange test FAIL", Label);
-      RetErr += 1;
+      RetErr +=
+          Error(ErrorCode::Fail, "HaloTest: {} exchange test FAIL", Label);
    }
 
    return RetErr;
@@ -88,9 +72,7 @@ int haloExchangeTest(
 // Initialization routine for Halo tests. Calls all the init routines needed
 // to create the default Halo.
 
-int initHaloTest() {
-
-   I4 IErr{0};
+void initHaloTest() {
 
    // Initialize the machine environment and fetch the default environment
    // pointer and the MPI communicator
@@ -100,6 +82,7 @@ int initHaloTest() {
 
    // Initialize the logging system
    initLogging(DefEnv);
+   LOG_INFO("------ Halo Unit Tests ------");
 
    // Open config file
    Config("Omega");
@@ -112,11 +95,9 @@ int initHaloTest() {
    Decomp::init();
 
    // Initialize the default halo
-   IErr = Halo::init();
-   if (IErr != 0)
-      LOG_ERROR("HaloTest: error initializing default halo");
+   Halo::init();
 
-   return IErr;
+   return;
 
 } // end initHaloTest
 
@@ -132,8 +113,7 @@ int initHaloTest() {
 int main(int argc, char *argv[]) {
 
    // Error tracking variables
-   I4 TotErr = 0;
-   I4 IErr   = 0;
+   Error TotErr;
 
    // Initialize global MPI environment and Kokkos
    MPI_Init(&argc, &argv);
@@ -143,9 +123,7 @@ int main(int argc, char *argv[]) {
    {
 
       // Call Halo test initialization routine
-      IErr = initHaloTest();
-      if (IErr != 0)
-         LOG_ERROR("HaloTest: initHaloTest error");
+      initHaloTest();
 
       // Retrieve pointer to default halo
       Halo *DefHalo = Halo::getDefault();
@@ -561,20 +539,15 @@ int main(int argc, char *argv[]) {
       Decomp::clear();
       MachEnv::removeAll();
 
-      if (TotErr == 0) {
-         LOG_INFO("HaloTest: Successful completion");
-      } else {
-         LOG_INFO("HaloTest: Failed");
-      }
+      CHECK_ERROR_ABORT(TotErr, "HaloTest: FAIL");
+      // if we made it here, unit tests successful
+      LOG_INFO("------ Halo Unit Tests Successful ------");
    }
    Pacer::finalize();
    Kokkos::finalize();
    MPI_Finalize();
 
-   if (TotErr >= 256)
-      TotErr = 255;
-
-   return TotErr;
+   return 0;
 
 } // end of main
 //===-----------------------------------------------------------------------===/

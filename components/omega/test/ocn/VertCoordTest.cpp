@@ -31,9 +31,7 @@
 
 using namespace OMEGA;
 
-int initVertCoordTest() {
-
-   int Err = 0;
+void initVertCoordTest() {
 
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv  = MachEnv::getDefault();
@@ -62,9 +60,7 @@ int initVertCoordTest() {
    IOStream::init(ModelClock);
 
    // Initialize the default halo
-   Err = Halo::init();
-   if (Err != 0)
-      LOG_ERROR("VertCoordTest: error initializing default halo");
+   Halo::init();
 
    // Initialize the default mesh
    HorzMesh::init(ModelClock);
@@ -72,7 +68,7 @@ int initVertCoordTest() {
    // Initialize the default vertical coordinate
    VertCoord::init();
 
-   return Err;
+   return;
 } // end initVertCoordTest
 
 //------------------------------------------------------------------------------
@@ -89,9 +85,8 @@ int main(int argc, char *argv[]) {
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
    {
-      int Err = initVertCoordTest();
-      if (Err != 0)
-         ABORT_ERROR("VertCoordTest: Error initializing");
+      int Err = 0;
+      initVertCoordTest();
 
       auto *DefVertCoord = VertCoord::getDefault();
       auto *DefMesh      = HorzMesh::getDefault();

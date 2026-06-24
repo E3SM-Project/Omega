@@ -1,10 +1,9 @@
-//===-- Test driver for OMEGA Pressure Gradient (PGrad) --------------*-
-// C++-*-===/
+//===-- Test driver for OMEGA Pressure Gradient (PGrad) --------*- // C++-*-===/
 //
 /// \file
 /// \brief Test driver for PressureGrad module
 //
-//===----------------------------------------------------------------------===/
+//===-----------------------------------------------------------------------===/
 
 #include "PGrad.h"
 
@@ -33,9 +32,6 @@
 using namespace OMEGA;
 
 void initPGradTest() {
-
-   Error Err;
-   int Err1;
 
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv  = MachEnv::getDefault();
@@ -67,11 +63,7 @@ void initPGradTest() {
    IOStream::init(ModelClock);
 
    // Initialize the default halo
-   Err1 = Halo::init();
-   if (Err1 != 0) {
-      LOG_ERROR("PGrad: error initializing default halo");
-      Err += Error(ErrorCode::Fail, "PGrad: error initializing default halo");
-   }
+   Halo::init();
 
    // Initialize the default mesh
    HorzMesh::init(ModelClock);
@@ -87,8 +79,6 @@ void initPGradTest() {
 
    // Initialize tracers
    Tracers::init();
-
-   CHECK_ERROR_ABORT(Err, "PGrad: error during initialization");
 }
 
 int main(int argc, char *argv[]) {

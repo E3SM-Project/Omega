@@ -74,7 +74,7 @@ class AuxiliaryState {
    void readConfigOptions(Config *OmegaConfig);
 
    /// Exchange halo
-   I4 exchangeHalo();
+   void exchangeHalo();
 
    // Compute auxiliary variables for vertical dynamics
    void computeMomVertAux(const OceanState *State,

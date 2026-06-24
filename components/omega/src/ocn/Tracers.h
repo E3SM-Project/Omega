@@ -187,7 +187,7 @@ class Tracers {
    //---------------------------------------------------------------------------
 
    /// Exchange halo
-   static I4 exchangeHalo(const I4 TimeLevel ///< [in] tracer time level
+   static void exchangeHalo(const I4 TimeLevel ///< [in] tracer time level
    );
 
    /// increment time levels
