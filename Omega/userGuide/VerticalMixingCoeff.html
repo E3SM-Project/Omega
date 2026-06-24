@@ -83,7 +83,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#vertical-mixing-processes-types">Vertical Mixing Processes/Types</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#background-mixing">1. Background Mixing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#convective-mixing">2. Convective Mixing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#shear-mixing">3. Shear Mixing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#shear-instability-driven-mixing">3. Shear-Instability-Driven Mixing</a></li>
 </ul>
 </li>
 </ul>
@@ -202,9 +202,8 @@
 processes in the ocean. It calculates vertical diffusivity and viscosity coefficients that
 determine how properties (like momentum, heat, salt, and biogeochemical tracers) mix vertically
 in the ocean model. Currently, Omega offers three different mixing processes within the water column: (1) a constant
-background mixing value, (2) a convective instability mixing value, and (3) a Richardson number
-dependent shear instability driven mixing value from the <a class="reference external" href="https://journals.ametsoc.org/view/journals/phoc/11/11/1520-0485_1981_011_1443_povmin_2_0_co_2.xml">Pacanowski and Philander (1981)</a> parameterization. These are linearly additive and are describe a bit
-more in detail below. Other mixing processes and parameterizations, such as the the K Profile Parameterization <a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94rg01872">(KPP; Large et al., 1994)</a> will be added in the future.</p>
+background mixing value, (2) a convective instability mixing value, and (3) a Richardson number-dependent shear-instability-driven mixing value from the <a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/94RG01872">Large et al (1994)</a> or LMD94 shear instability driven mixing parameterization. These are linearly additive and are describe a bit
+more in detail below. Other mixing processes and parameterizations, such as the the K Profile Parameterization <a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94rg01872">(KPP; Large et al., 1994)</a> will be added in the future. In addition to diffusivity and viscosity coefficients, the vertical mixing module calculates the gradient Richardson number and smooths that gradient Richardson number using a 1-2-1 filter before using it in the shear instability driven mixing calculation.</p>
 <p>The user-configurable options are the following parameters in the yaml configuration file:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">VertMix</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">Background</span><span class="p">:</span>
@@ -216,48 +215,49 @@ more in detail below. Other mixing processes and parameterizations, such as the 
 <span class="w">    </span><span class="nt">TriggerBVF</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w">      </span><span class="c1"># Squared Brunt-Vaisala frequency threshold</span>
 <span class="w">  </span><span class="nt">Shear</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">         </span><span class="c1"># Enables the shear-instability driven mixing option</span>
-<span class="w">    </span><span class="nt">NuZero</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-2</span><span class="w">       </span><span class="c1"># Base viscosity coefficient</span>
-<span class="w">    </span><span class="nt">Alpha</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span><span class="w">           </span><span class="c1"># Stability parameter</span>
-<span class="w">    </span><span class="nt">Exponent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w">          </span><span class="c1"># Richardson number exponent</span>
+<span class="w">    </span><span class="nt">BaseShearValue</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.005</span><span class="w"> </span><span class="c1"># Base viscosity/diffusivity value</span>
+<span class="w">    </span><span class="nt">RiCrit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.7</span><span class="w">          </span><span class="c1"># Critical Richardson number</span>
+<span class="w">    </span><span class="nt">Exponent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.0</span><span class="w">        </span><span class="c1"># Richardson number exponent</span>
+<span class="w">    </span><span class="nt">RiSmoothLoops</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w">     </span><span class="c1"># Number of Richardson number smoothing loops</span>
 </pre></div>
 </div>
 <section id="vertical-mixing-processes-types">
 <h2>Vertical Mixing Processes/Types<a class="headerlink" href="#vertical-mixing-processes-types" title="Permalink to this heading"></a></h2>
 <section id="background-mixing">
 <h3>1. Background Mixing<a class="headerlink" href="#background-mixing" title="Permalink to this heading"></a></h3>
-<p>A constant background mixing value that represents small-scale mixing processes not explicitly resolved by the model. Typically, this is chosen to represent low values of vertical mixing
-happening in the ocean’s stratified interior.</p>
+<p>A constant background mixing value that represents small-scale mixing processes not explicitly resolved or modeled. Typically, this is chosen to represent low values of vertical mixing happening in the ocean’s stratified interior and is assumed roughly equivalent to the globally averaged interior mixing from all sources (e.g., from internal wave breaking).</p>
 </section>
 <section id="convective-mixing">
 <h3>2. Convective Mixing<a class="headerlink" href="#convective-mixing" title="Permalink to this heading"></a></h3>
-<p>Enhanced convective adjustment mixing that occurs in statically unstable regions of the water column to parameterize convection and homogenize properties. In Omega this is mixing is defaulted to occur when the squared Brunt Vaisala Frequency is less than 0.0 (unstable), and is off when equal to (neutral) or greater than (stable) 0.0.</p>
+<p>Enhanced convective adjustment mixing that occurs in statically unstable regions of the water column to parameterize convection and homogenize properties. In Omega this mixing is defaulted to occur when the squared Brunt Vaisala Frequency is less than 0.0 (unstable), and is off when equal to (neutral) or greater than (stable) 0.0. The convective diffusivity is thus added to the background diffusivity (<span class="math notranslate nohighlight">\(\kappa_b\)</span>) to form the total diffusivity coefficient <span class="math notranslate nohighlight">\(\kappa\)</span>.</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}
 \kappa =
 \begin{cases}
-+\kappa_b + \kappa_{conv} \quad \text{ if } N^2 &lt; N^2_{crit}\\
-+\kappa_b \quad \text{ if } N^2 \geq N^2_{crit}
+\kappa_b + \kappa_{conv} \quad \text{ if } N^2 &lt; N^2_{crit}\\
+\kappa_b \quad \text{ if } N^2 \geq N^2_{crit}
 \end{cases}
 \end{split}\]</div>
 <p>This is different than some current implementations (i.e. in MPAS-Ocean and the CVMix package), where convective adjustment occurs both with unstable and neutral conditions (<span class="math notranslate nohighlight">\(N^2 \leq N^2_{crit}\)</span>). <span class="math notranslate nohighlight">\(\kappa_{conv}\)</span> and <span class="math notranslate nohighlight">\(N^2_{crit}\)</span> are constant parameters set in the <code class="docutils literal notranslate"><span class="pre">VertMix</span></code> section of the yaml file (<code class="docutils literal notranslate"><span class="pre">Diffusivity</span></code> and <code class="docutils literal notranslate"><span class="pre">TriggerBVF</span></code> under the <code class="docutils literal notranslate"><span class="pre">Convective</span></code> header).</p>
 </section>
-<section id="shear-mixing">
-<h3>3. Shear Mixing<a class="headerlink" href="#shear-mixing" title="Permalink to this heading"></a></h3>
-<p>Mixing induced by vertical pseudo-velocity shear, implemented using the Pacanowski-Philander scheme, through the gradient Richardson number (ratio of buoyancy to shear).</p>
+<section id="shear-instability-driven-mixing">
+<h3>3. Shear-Instability-Driven Mixing<a class="headerlink" href="#shear-instability-driven-mixing" title="Permalink to this heading"></a></h3>
+<p>Mixing induced by vertical pseudo-velocity shear, implemented using the LMD94 scheme, through the gradient Richardson number (ratio of buoyancy to shear).</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\nu_{shear} = \kappa_{shear} =
+\begin{cases}
+\nu_o \quad \text{ if } Ri_g &lt; 0\\
+\nu_o \left[1 - \left( \frac{Ri_g}{Ri_{crit}} \right)^2 \right]^p \text{ if } 0 \leq Ri_g &lt; Ri_{crit}\\
+0.0 \quad \text{ if } Ri_{crit} \leq Ri_g
+\end{cases}
+\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\nu_o\)</span>, <span class="math notranslate nohighlight">\(Ri_{crit}\)</span>, and <span class="math notranslate nohighlight">\(p\)</span> are constant parameters set in the <code class="docutils literal notranslate"><span class="pre">VertMix</span></code> section of the yaml file (<code class="docutils literal notranslate"><span class="pre">BaseShearValue</span></code>, <code class="docutils literal notranslate"><span class="pre">RiCrit</span></code>, and <code class="docutils literal notranslate"><span class="pre">Exponent</span></code> under the <code class="docutils literal notranslate"><span class="pre">Shear</span></code> header). <span class="math notranslate nohighlight">\(Ri_g\)</span> is defined as:</p>
 <div class="math notranslate nohighlight">
 \[
-\nu = \frac{\nu_o}{(1+\alpha Ri)^n} + \nu_b\,,
+Ri_g = \frac{N^2}{\left|\frac{\partial \mathbf{U}}{\partial z}\right|^2}\,,
 \]</div>
-<div class="math notranslate nohighlight">
-\[
-\kappa = \frac{\nu}{(1+\alpha Ri)} + \kappa_b\,.
-\]</div>
-<p>where <span class="math notranslate nohighlight">\(Ri\)</span> is defined as:</p>
-<div class="math notranslate nohighlight">
-\[
-Ri = \frac{N^2}{\left|\frac{\partial \mathbf{U}}{\partial z}\right|^2}\,,
-\]</div>
-<p>where <span class="math notranslate nohighlight">\(\nu_o\)</span>, <span class="math notranslate nohighlight">\(\alpha\)</span>, <span class="math notranslate nohighlight">\(n\)</span>, <span class="math notranslate nohighlight">\(\nu_b\)</span>, <span class="math notranslate nohighlight">\(\kappa_b\)</span> are constant parameters set in the <code class="docutils literal notranslate"><span class="pre">VertMix</span></code> section of the yaml file (<code class="docutils literal notranslate"><span class="pre">NuZero</span></code>, <code class="docutils literal notranslate"><span class="pre">Alpha</span></code>, <code class="docutils literal notranslate"><span class="pre">Exponent</span></code> under the <code class="docutils literal notranslate"><span class="pre">Shear</span></code> header and <code class="docutils literal notranslate"><span class="pre">Viscosity</span></code>, <code class="docutils literal notranslate"><span class="pre">Diffusivity</span></code> under the <code class="docutils literal notranslate"><span class="pre">Background</span></code> header). <span class="math notranslate nohighlight">\(N^2\)</span> is calculated by the EOS based on the ocean state and <span class="math notranslate nohighlight">\(\mathbf{U}\)</span> is the magnitude of the horizontal velocity. <span class="math notranslate nohighlight">\(N^2\)</span>, <span class="math notranslate nohighlight">\(\partial \mathbf{U}}{\partial z}\right|^2\)</span> and <span class="math notranslate nohighlight">\(Ri\)</span> of <code class="docutils literal notranslate"><span class="pre">K</span></code> are all defined at the cell center, top interface of layer <code class="docutils literal notranslate"><span class="pre">K</span></code>.  <span class="math notranslate nohighlight">\(N^2\)</span>, <span class="math notranslate nohighlight">\(\nu_{shear}\)</span> and <span class="math notranslate nohighlight">\(\kappa_{shear}\)</span> are set to zero for the surface layer. In a later development, the shear mixing option will be changed to the interior shear mixing formulation in <a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94rg01872">Large et al., 1994</a>.</p>
+<p>where <span class="math notranslate nohighlight">\(N^2\)</span> is calculated by the EOS based on the ocean state and <span class="math notranslate nohighlight">\(\mathbf{U}\)</span> is the magnitude of the horizontal velocity. <span class="math notranslate nohighlight">\(Ri_g\)</span> is calculated by the vertical mixing module and then smoothed with a 1-2-1 (vertical) filter before being used to calculate the shear-instability-driven mixing. <span class="math notranslate nohighlight">\(N^2\)</span>, <span class="math notranslate nohighlight">\(\left| \frac{\partial \mathbf{U}}{\partial z}\right|^2\)</span> and <span class="math notranslate nohighlight">\(Ri_g\)</span> of <code class="docutils literal notranslate"><span class="pre">k</span></code> are all defined at the cell center, top interface of layer <code class="docutils literal notranslate"><span class="pre">k</span></code>. <span class="math notranslate nohighlight">\(N^2\)</span>, <span class="math notranslate nohighlight">\(\nu\)</span> and <span class="math notranslate nohighlight">\(\kappa\)</span> are set to zero at the surface.</p>
 </section>
 </section>
 </section>
