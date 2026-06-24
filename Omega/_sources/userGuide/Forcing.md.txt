@@ -4,40 +4,40 @@
 
 This page documents the user-facing configuration and behavior for current forcing in Omega:
 
-- Wind forcing
+- Surface stress forcing (e.g. wind stress)
 - Surface tracer restoring
 
-## Wind forcing
+## Surface stress forcing
 
-Wind forcing adds momentum tendency from surface wind stress.
+Surface stress forcing adds momentum tendency from surface stress (e.g. wind).
 
-### Wind forcing configuration
+### Surface stress forcing configuration
 
-Wind forcing behavior is controlled by two configuration blocks:
+Surface stress forcing behavior is controlled by two configuration blocks:
 
 ```yaml
 Omega:
-  WindStress:
+  SfcStress:
     InterpType: Isotropic
 
   Tendencies:
-    WindForcingTendencyEnable: true
+    SfcStressForcingTendencyEnable: true
 ```
 
-- `WindStress.InterpType`
-  - `Isotropic`: isotropic cell-to-edge interpolation for wind stress
+- `SfcStress.InterpType`
+  - `Isotropic`: isotropic cell-to-edge interpolation for surface stress
   - `Anisotropic`: anisotropic interpolation option
-- `Tendencies.WindForcingTendencyEnable`: switch to enable wind forcing tendency
+- `Tendencies.SfcStressForcingTendencyEnable`: switch to enable surface stress forcing tendency
 
 ### Required input fields
 
-Wind forcing uses auxiliary wind-stress fields:
+Surface stress forcing uses surface stress input fields:
 
-- `WindStressZonal`
-- `WindStressMeridional`
+- `SfcStressZonal`
+- `SfcStressMeridional`
 
-These are used to form edge-normal stress (`NormalStressEdge`) that enters
-momentum tendencies.
+These are stored in forcing variables and used to form edge-normal stress
+(`NormalStressEdge`) that enters momentum tendencies.
 
 ## Surface tracer restoring
 

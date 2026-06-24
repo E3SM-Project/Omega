@@ -5,36 +5,37 @@
 This page describes design and implementation details for forcing-related
 pathways in Omega, currently this includes:
 
-- Wind forcing
+- Surface stress forcing (e.g. wind stress)
 - Surface tracer restoring
 
-## Wind forcing design
+## Surface stress forcing design
 
-### Wind forcing data flow
+### Surface stress forcing data flow
 
 1. External fields provide:
-   - `WindStressZonal`
-   - `WindStressMeridional`
-2. Auxiliary-state compute builds `NormalStressEdge` from those fields.
-3. Tendency term applies wind-stress forcing to edge-normal velocity tendency.
+   - `SfcStressZonal`
+   - `SfcStressMeridional`
+2. Forcing compute builds `NormalStressEdge` from those fields.
+3. Tendency term applies surface stress forcing to edge-normal velocity tendency.
 
-### Wind forcing key classes/components
+### Surface stress forcing key classes/components
 
-- `WindForcingAuxVars`
-  - Stores wind-stress cell fields and computed `NormalStressEdge`
+- `SfcStressForcingVars`
+  - Stores surface stress cell fields and computed `NormalStressEdge`
   - Applies configured interpolation choice (`InterpType`)
-- `AuxiliaryState::computeMomAux`
-  - Calls `WindForcingAuxVars::computeVarsOnEdge`
-- `WindForcingOnEdge` tendency term
+- `Forcing`
+  - Calls `SfcStressForcingVars::computeVarsOnEdge` from
+    `computeSfcStressForcingOnEdge`
+- `SfcStressForcingOnEdge` tendency term
   - Adds contribution proportional to normal stress and inverse layer
     thickness in the surface layer
 
-### Wind forcing config coupling
+### Surface stress forcing config coupling
 
-- `Omega.WindStress.InterpType`
+- `Omega.SfcStress.InterpType`
   - mapped to `InterpCellToEdgeOption`
-- `Omega.Tendencies.WindForcingTendencyEnable`
-  - gates execution of wind forcing tendency kernel
+- `Omega.Tendencies.SfcStressForcingTendencyEnable`
+  - gates execution of surface stress forcing tendency kernel
 
 ## Surface tracer restoring design
 

@@ -124,10 +124,10 @@
 <li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Forcing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#wind-forcing-design">Wind forcing design</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#wind-forcing-data-flow">Wind forcing data flow</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#wind-forcing-key-classes-components">Wind forcing key classes/components</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#wind-forcing-config-coupling">Wind forcing config coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#surface-stress-forcing-design">Surface stress forcing design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#surface-stress-forcing-data-flow">Surface stress forcing data flow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#surface-stress-forcing-key-classes-components">Surface stress forcing key classes/components</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#surface-stress-forcing-config-coupling">Surface stress forcing config coupling</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#surface-tracer-restoring-design">Surface tracer restoring design</a><ul>
@@ -206,39 +206,40 @@
 <p>This page describes design and implementation details for forcing-related
 pathways in Omega, currently this includes:</p>
 <ul class="simple">
-<li><p>Wind forcing</p></li>
+<li><p>Surface stress forcing (e.g. wind stress)</p></li>
 <li><p>Surface tracer restoring</p></li>
 </ul>
-<section id="wind-forcing-design">
-<h2>Wind forcing design<a class="headerlink" href="#wind-forcing-design" title="Permalink to this heading"></a></h2>
-<section id="wind-forcing-data-flow">
-<h3>Wind forcing data flow<a class="headerlink" href="#wind-forcing-data-flow" title="Permalink to this heading"></a></h3>
+<section id="surface-stress-forcing-design">
+<h2>Surface stress forcing design<a class="headerlink" href="#surface-stress-forcing-design" title="Permalink to this heading"></a></h2>
+<section id="surface-stress-forcing-data-flow">
+<h3>Surface stress forcing data flow<a class="headerlink" href="#surface-stress-forcing-data-flow" title="Permalink to this heading"></a></h3>
 <ol class="arabic simple">
 <li><p>External fields provide:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">WindStressZonal</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">WindStressMeridional</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SfcStressZonal</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SfcStressMeridional</span></code></p></li>
 </ul>
 </li>
-<li><p>Auxiliary-state compute builds <code class="docutils literal notranslate"><span class="pre">NormalStressEdge</span></code> from those fields.</p></li>
-<li><p>Tendency term applies wind-stress forcing to edge-normal velocity tendency.</p></li>
+<li><p>Forcing compute builds <code class="docutils literal notranslate"><span class="pre">NormalStressEdge</span></code> from those fields.</p></li>
+<li><p>Tendency term applies surface stress forcing to edge-normal velocity tendency.</p></li>
 </ol>
 </section>
-<section id="wind-forcing-key-classes-components">
-<h3>Wind forcing key classes/components<a class="headerlink" href="#wind-forcing-key-classes-components" title="Permalink to this heading"></a></h3>
+<section id="surface-stress-forcing-key-classes-components">
+<h3>Surface stress forcing key classes/components<a class="headerlink" href="#surface-stress-forcing-key-classes-components" title="Permalink to this heading"></a></h3>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">WindForcingAuxVars</span></code></p>
+<li><p><code class="docutils literal notranslate"><span class="pre">SfcStressForcingVars</span></code></p>
 <ul>
-<li><p>Stores wind-stress cell fields and computed <code class="docutils literal notranslate"><span class="pre">NormalStressEdge</span></code></p></li>
+<li><p>Stores surface stress cell fields and computed <code class="docutils literal notranslate"><span class="pre">NormalStressEdge</span></code></p></li>
 <li><p>Applies configured interpolation choice (<code class="docutils literal notranslate"><span class="pre">InterpType</span></code>)</p></li>
 </ul>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">AuxiliaryState::computeMomAux</span></code></p>
+<li><p><code class="docutils literal notranslate"><span class="pre">Forcing</span></code></p>
 <ul>
-<li><p>Calls <code class="docutils literal notranslate"><span class="pre">WindForcingAuxVars::computeVarsOnEdge</span></code></p></li>
+<li><p>Calls <code class="docutils literal notranslate"><span class="pre">SfcStressForcingVars::computeVarsOnEdge</span></code> from
+<code class="docutils literal notranslate"><span class="pre">computeSfcStressForcingOnEdge</span></code></p></li>
 </ul>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">WindForcingOnEdge</span></code> tendency term</p>
+<li><p><code class="docutils literal notranslate"><span class="pre">SfcStressForcingOnEdge</span></code> tendency term</p>
 <ul>
 <li><p>Adds contribution proportional to normal stress and inverse layer
 thickness in the surface layer</p></li>
@@ -246,17 +247,17 @@ thickness in the surface layer</p></li>
 </li>
 </ul>
 </section>
-<section id="wind-forcing-config-coupling">
-<h3>Wind forcing config coupling<a class="headerlink" href="#wind-forcing-config-coupling" title="Permalink to this heading"></a></h3>
+<section id="surface-stress-forcing-config-coupling">
+<h3>Surface stress forcing config coupling<a class="headerlink" href="#surface-stress-forcing-config-coupling" title="Permalink to this heading"></a></h3>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">Omega.WindStress.InterpType</span></code></p>
+<li><p><code class="docutils literal notranslate"><span class="pre">Omega.SfcStress.InterpType</span></code></p>
 <ul>
 <li><p>mapped to <code class="docutils literal notranslate"><span class="pre">InterpCellToEdgeOption</span></code></p></li>
 </ul>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">Omega.Tendencies.WindForcingTendencyEnable</span></code></p>
+<li><p><code class="docutils literal notranslate"><span class="pre">Omega.Tendencies.SfcStressForcingTendencyEnable</span></code></p>
 <ul>
-<li><p>gates execution of wind forcing tendency kernel</p></li>
+<li><p>gates execution of surface stress forcing tendency kernel</p></li>
 </ul>
 </li>
 </ul>

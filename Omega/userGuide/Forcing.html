@@ -80,8 +80,8 @@
 <li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Forcing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#wind-forcing">Wind forcing</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#wind-forcing-configuration">Wind forcing configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#surface-stress-forcing">Surface stress forcing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#surface-stress-forcing-configuration">Surface stress forcing configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#required-input-fields">Required input fields</a></li>
 </ul>
 </li>
@@ -203,42 +203,42 @@
 <span id="omega-user-forcing"></span><h1>Forcing<a class="headerlink" href="#forcing" title="Permalink to this heading"></a></h1>
 <p>This page documents the user-facing configuration and behavior for current forcing in Omega:</p>
 <ul class="simple">
-<li><p>Wind forcing</p></li>
+<li><p>Surface stress forcing (e.g. wind stress)</p></li>
 <li><p>Surface tracer restoring</p></li>
 </ul>
-<section id="wind-forcing">
-<h2>Wind forcing<a class="headerlink" href="#wind-forcing" title="Permalink to this heading"></a></h2>
-<p>Wind forcing adds momentum tendency from surface wind stress.</p>
-<section id="wind-forcing-configuration">
-<h3>Wind forcing configuration<a class="headerlink" href="#wind-forcing-configuration" title="Permalink to this heading"></a></h3>
-<p>Wind forcing behavior is controlled by two configuration blocks:</p>
+<section id="surface-stress-forcing">
+<h2>Surface stress forcing<a class="headerlink" href="#surface-stress-forcing" title="Permalink to this heading"></a></h2>
+<p>Surface stress forcing adds momentum tendency from surface stress (e.g. wind).</p>
+<section id="surface-stress-forcing-configuration">
+<h3>Surface stress forcing configuration<a class="headerlink" href="#surface-stress-forcing-configuration" title="Permalink to this heading"></a></h3>
+<p>Surface stress forcing behavior is controlled by two configuration blocks:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Omega</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">WindStress</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">SfcStress</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">InterpType</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Isotropic</span>
 
 <span class="w">  </span><span class="nt">Tendencies</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">WindForcingTendencyEnable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">SfcStressForcingTendencyEnable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 </pre></div>
 </div>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">WindStress.InterpType</span></code></p>
+<li><p><code class="docutils literal notranslate"><span class="pre">SfcStress.InterpType</span></code></p>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">Isotropic</span></code>: isotropic cell-to-edge interpolation for wind stress</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Isotropic</span></code>: isotropic cell-to-edge interpolation for surface stress</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Anisotropic</span></code>: anisotropic interpolation option</p></li>
 </ul>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">Tendencies.WindForcingTendencyEnable</span></code>: switch to enable wind forcing tendency</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Tendencies.SfcStressForcingTendencyEnable</span></code>: switch to enable surface stress forcing tendency</p></li>
 </ul>
 </section>
 <section id="required-input-fields">
 <h3>Required input fields<a class="headerlink" href="#required-input-fields" title="Permalink to this heading"></a></h3>
-<p>Wind forcing uses auxiliary wind-stress fields:</p>
+<p>Surface stress forcing uses surface stress input fields:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">WindStressZonal</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">WindStressMeridional</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SfcStressZonal</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SfcStressMeridional</span></code></p></li>
 </ul>
-<p>These are used to form edge-normal stress (<code class="docutils literal notranslate"><span class="pre">NormalStressEdge</span></code>) that enters
-momentum tendencies.</p>
+<p>These are stored in forcing variables and used to form edge-normal stress
+(<code class="docutils literal notranslate"><span class="pre">NormalStressEdge</span></code>) that enters momentum tendencies.</p>
 </section>
 </section>
 <section id="surface-tracer-restoring">

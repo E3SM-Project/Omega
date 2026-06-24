@@ -18,7 +18,7 @@ tendency terms are currently implemented:
 | TracerHighOrderHorzAdvOnCell | second order horizontal advection of thickness-weighted tracers
 | TracerDiffOnCell | horizontal diffusion of thickness-weighted tracers
 | TracerHyperDiffOnCell | biharmonic horizontal mixing of thickness-weighted tracers
-| WindForcingOnEdge | forcing by wind stress, defined on edges
+| SfcStressForcingOnEdge | forcing by surface stress (e.g. wind), defined on edges
 | BottomDragOnEdge | bottom drag, defined on edges
 | SurfaceTracerRestoringOnCell | surface tracer restoring, defined on cells
 
@@ -52,7 +52,7 @@ the currently available tendency terms:
 | | EddyDiff2 | horizontal diffusion coefficient
 | TracerHyperDiffOnCell | TracerHyperDiffTendencyEnable | enable/disable term
 | | EddyDiff4 | biharmonic horizontal mixing coeffienct for tracers
-| WindForcingOnEdge | WindForcingTendencyEnable | enable/disable term
+| SfcStressForcingOnEdge | SfcStressForcingTendencyEnable | enable/disable term
 | BottomDragOnEdge | BottomDragTendencyEnable | enable/disable term
 | | BottomDragCoeff | bottom drag coefficient
 | SurfaceTracerRestoringOnCell | SurfaceTracerRestoringEnable | enable/disable term
