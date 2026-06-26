@@ -48,6 +48,9 @@ the currently available tendency terms:
 | | HorzTracerFluxOrder | 1 for standard linear advection
 | TracerHighOrderHorzAdvOnCell | TracerHorzAdvTendencyEnable | enable/disable term
 | | HorzTracerFluxOrder | 2 for second order advection algorithm
+| | HorzTracerFluxLimiterEnable | enable montonic flux corrected transport (FCT)
+| | HorzTracerFluxLimiterBudgetsEnable | enable budgets if FCT is enabled
+| | HorzTracerFluxLimiterMonotonicityCheckEnable | enable check for monononic if FCT is enabled
 | TracerDiffOnCell | TracerDiffTendencyEnable | enable/disable term
 | | EddyDiff2 | horizontal diffusion coefficient
 | TracerHyperDiffOnCell | TracerHyperDiffTendencyEnable | enable/disable term
