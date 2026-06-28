@@ -90,22 +90,8 @@ $$
 $$
 
 ### 3.2 High-order Pressure Gradient
-The high order pressure gradient will be based on the {ref}`full volume integral form <omega-v1-vh-momentum-reynolds2>` of the geopotential and pressure terms:
-$$
-T^p &= - \int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \, \left( \nabla \left<\Phi\right> \right) \, d\tilde{z} \, dA \\
-& - \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \left(\left< \alpha \right> \left<p \right> + \left<\alpha^\prime p^\prime\right> \right) \, d\tilde{z} \right) dl \\
-& - \int_A \rho_0 \left[ \left< \alpha \right> \left<p \nabla \tilde{z}_k^{\text{top}} \right> + \left<\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{top}}\right)^\prime\right> \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
-& + \int_A \rho_0 \left[ \left< \alpha \right> \left<p \nabla \tilde{z}_k^{\text{bot}} \right> + \left<\alpha^\prime \left(p \nabla \tilde{z}_k^{\text{bot}}\right)^\prime\right> \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
-$$
-To obtain the expression that will be used, we neglect the turbulent correlations and drop the Reynold's average notation for single variables:
-$$
-T^p &= - \int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \, \left( \nabla \Phi \right) \, d\tilde{z} \, dA \\
-& - \int_{\partial A} \left( \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_0 \left(\alpha p \right) \, d\tilde{z} \right) dl \\
-& - \int_A \rho_0 \left[ \alpha \left<p \nabla \tilde{z}_k^{\text{top}} \right> \right]_{\tilde{z} = \tilde{z}_k^{\text{top}}} \, dA \\
-& + \int_A \rho_0 \left[ \alpha \left<p \nabla \tilde{z}_k^{\text{bot}} \right> \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
-$$
-These volume and area integrals will be computed using quadrature to account for the variability of $\alpha$ with the reconstructed values of temperature, salinity, and pressure at the quadrature points.
-The complete details for the high-order pressure gradient will be the subject of a future design document.
+The high order pressure gradient will be based on the {ref}`full volume integral form <omega-v1-vh-momentum-reynolds2>` of the geopotential and pressure terms, evaluating the side-wall integral of $\alpha p$ together with the sloping-interface metric terms by quadrature and accounting for the variability of $\alpha$ with reconstructed temperature, salinity, and pressure.
+The complete design — including the reference-state equation-of-state expansion that bounds TEOS-10 cost, the mean-preserving reconstructions, and the discrete hydrostatic consistency property that keeps thin, steeply sloped layers robust — is given in the {ref}`Higher-Order Horizontal Pressure Gradient <omega-design-pressure-grad-high-order>` design document.
 
 %### 3.3 Barotropic Pressure Gradient
 %
@@ -162,8 +148,8 @@ class PressureGrad{
 
         // Instances of functors
         PressureGradCentered CenteredPGrad;
-        PressureGradHighOrder HighOrderPGrad1; // To be implemented later
-        PressureGradHighOrder HighOrderPGrad2; // Multiple high order options are likely in the future
+        PressureGradHighOrder HighOrderPGrad; // high-order finite-volume scheme (see PGradHighOrder.md)
+        // Additional high-order variants may be added in the future
 
         // Pressure gradient choice from config
         PressureGradType PressureGradChoice;
@@ -187,9 +173,9 @@ The user will select a pressure gradient option at runtime in the input yaml fil
 An `enum class` will be used to specify options for the pressure gradient used for an Omega simulation:
 ```c++
 enum class PressureGradType{
-   Centered,
-   HighOrder1,
-   HighOrder2
+   Centered,     // 2nd-order Montgomery scheme (this document)
+   FiniteVolume  // high-order finite-volume scheme (see PGradHighOrder.md)
+   // , <FutureVariant>  // additional high-order option, added when implemented
 }
 ```
 ### 4.2 Methods
