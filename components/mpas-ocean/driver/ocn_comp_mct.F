@@ -3391,8 +3391,7 @@ contains
              ! Calculate energy associated with frazil mass transfer to sea ice if frazil has accumulated
              if ( accumulatedFrazilIceMass(i) > 0.0_RKIND ) then
 
-              !seaIceEnergy(i) = accumulatedFrazilIceMass(i) * config_frazil_heat_of_fusion
-              seaIceEnergy(i) = accumulatedFrazilIceEnergy(i)
+              seaIceEnergy(i) = accumulatedFrazilIceMass(i) * config_frazil_heat_of_fusion
 
              ! Otherwise calculate the melt potential where avgTracersSurfaceValue represents only the
              ! top layer of the ocean
@@ -3410,6 +3409,7 @@ contains
              o2x_o(index_o2x_Fioo_frazil, n) = accumulatedFrazilIceMass(i) / ocn_cpl_dt
              o2x_o(index_o2x_Fioo_frazils, n) = accumulatedFrazilIceMass(i)/ 1000.0_RKIND * &
                 config_frazil_sea_ice_reference_salinity / ocn_cpl_dt
+             !defined positive to be consistent with Fioo_q when frazil is formed
              o2x_o(index_o2x_Fioo_frazilh, n) = accumulatedFrazilIceEnergy(i)/ ocn_cpl_dt 
 
           else

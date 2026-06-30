@@ -605,8 +605,8 @@ contains
                   ! flux positive, because freezing ice releases heat.
                   !sumArray(10) = sumArray(10) - areaCell(iCell) * config_frazil_heat_of_fusion &
                   !               * (accumulatedFrazilIceMassNew(iCell) - accumulatedFrazilIceMassOld(iCell))/dt
-                  sumArray(10) = sumArray(10) + areaCell(iCell) &
-                                  * (accumulatedFrazilIceEnergyNew(iCell) - accumulatedFrazilIceEnergyOld(iCell))/dt
+                  sumArray(10) = sumArray(10) - areaCell(iCell) &
+                                  * (accumulatedFrazilIceEnergyNew(iCell) - accumulatedFrazilIceEnergyOld(iCell))/dt                        
                enddo
             end if
 
@@ -996,7 +996,6 @@ v=accumulatedIcebergTemperatureFlux*rho_sw*cp_sw; write(m,"('IcebergTemperatureF
                 end if
             enddo
 
-            ! START HERE
             if (config_use_frazil_ice_formation) then
                do iCell = 1, nCellsSolve
                   do k = minLevelCell(iCell), maxLevelCell(iCell)
