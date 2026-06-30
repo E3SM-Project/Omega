@@ -1,0 +1,657 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ocean State Validation &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Submesoscale Eddy Parameterization" href="SubmesoscaleEddies.html" />
+    <link rel="prev" title="State" href="State.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Forcing.html">Forcing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Testing.html">Testing Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/ParallelLoops.html">Parallel loops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/PGrad.html">Pressure Gradient (PGrad)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Forcing.html">Forcing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OmegaV1GoverningEqns.html">Omega V1: Governing Equations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Ocean State Validation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-check-for-nan-values">2.1 Requirement: Check for NaN values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-check-for-out-of-bounds-values">2.2 Requirement: Check for out-of-bounds values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-validate-pseudothickness">2.3 Requirement: Validate PseudoThickness</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-validate-kineticenergycell">2.4 Requirement: Validate KineticEnergyCell</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-validate-temperature-tracer">2.5 Requirement: Validate Temperature tracer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-validate-salinity-tracer">2.6 Requirement: Validate Salinity tracer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-gpu-cpu-portability">2.7 Requirement: GPU/CPU portability</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-informative-error-reporting">2.8 Requirement: Informative error reporting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-graceful-handling-of-absent-tracers">2.9 Requirement: Graceful handling of absent tracers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-configurable-abort-on-error-behavior">2.10 Requirement: Configurable abort-on-error behavior</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-configurable-valid-ranges">2.11 Desired: Configurable valid ranges</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-configurable-validation-frequency">2.12 Desired: Configurable validation frequency</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#checkoceanstate-public">4.2.1 <code class="docutils literal notranslate"><span class="pre">checkOceanState</span></code> (public)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#validateoceanstate-public">4.2.2 <code class="docutils literal notranslate"><span class="pre">validateOceanState</span></code> (public)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#checkarray2d-file-local-helper">4.2.3 <code class="docutils literal notranslate"><span class="pre">checkArray2D</span></code> (file-local helper)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#checktracerarray-file-local-helper">4.2.4 <code class="docutils literal notranslate"><span class="pre">checkTracerArray</span></code> (file-local helper)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#getvalidationabortconfig-file-local-helper">4.2.5 <code class="docutils literal notranslate"><span class="pre">getValidationAbortConfig</span></code> (file-local helper)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#abortwithmessage-file-local-helper">4.2.6 <code class="docutils literal notranslate"><span class="pre">abortWithMessage</span></code> (file-local helper)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-valid-state-passes-without-abort">5.1 Test: Valid state passes without abort</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#negative-tests-invalid-values-are-detected">5.2 Negative tests: invalid values are detected</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="SubmesoscaleEddies.html">Submesoscale Eddy Parameterization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Ocean State Validation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/StateValidation.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <!--- OMEGA Ocean State Validation requirements and design ------------------->
+<section class="tex2jax_ignore mathjax_ignore" id="ocean-state-validation">
+<span id="omega-design-state-validation"></span><h1>Ocean State Validation<a class="headerlink" href="#ocean-state-validation" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>The Ocean State Validation module provides a mechanism for checking the
+physical plausibility of the ocean prognostic state and selected auxiliary
+variables at runtime. After each timestep (or at user-defined intervals) the
+model can call <code class="docutils literal notranslate"><span class="pre">validateOceanState</span></code> to scan every owned cell and vertical layer
+for NaN (Not-a-Number) values and values that lie outside a pre-defined
+physically meaningful range. Any detected anomaly is reported through the
+OMEGA logging infrastructure as a critical error message.</p>
+<p>Whether the run is aborted on detection is controlled by two runtime
+configuration options under <code class="docutils literal notranslate"><span class="pre">Omega::State::Validation</span></code>:</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">AbortOnNan</span></code></strong> (default: <code class="docutils literal notranslate"><span class="pre">true</span></code>) — when <code class="docutils literal notranslate"><span class="pre">true</span></code>, the presence of any NaN
+values in a checked field causes the run to be terminated via <code class="docutils literal notranslate"><span class="pre">MPI_Abort</span></code>
+(with a full stack backtrace printed first).</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">AbortOnOOB</span></code></strong> (default: <code class="docutils literal notranslate"><span class="pre">false</span></code>) — when <code class="docutils literal notranslate"><span class="pre">true</span></code>, out-of-bounds values
+trigger the same hard abort.</p></li>
+</ul>
+<p>When both flags are <code class="docutils literal notranslate"><span class="pre">false</span></code> and errors are detected, a critical-level log
+message is emitted and the run continues rather than being terminated.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-check-for-nan-values">
+<h3>2.1 Requirement: Check for NaN values<a class="headerlink" href="#requirement-check-for-nan-values" title="Permalink to this heading"></a></h3>
+<p>The validation function must detect NaN values in the ocean state fields.
+NaNs indicate a numerical instability or a programming error, and their
+presence in the prognostic state makes continued time-stepping meaningless.
+Every element of each validated array must be tested.</p>
+</section>
+<section id="requirement-check-for-out-of-bounds-values">
+<h3>2.2 Requirement: Check for out-of-bounds values<a class="headerlink" href="#requirement-check-for-out-of-bounds-values" title="Permalink to this heading"></a></h3>
+<p>In addition to NaN detection, the validation function must check that every
+element of each validated field lies within a physically plausible range.
+Values outside these ranges indicate catastrophic model failure and should
+halt the simulation before corrupted output is written to disk.</p>
+</section>
+<section id="requirement-validate-pseudothickness">
+<h3>2.3 Requirement: Validate PseudoThickness<a class="headerlink" href="#requirement-validate-pseudothickness" title="Permalink to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code> must be validated for each owned cell over all vertical
+layers. The valid range is <span class="math notranslate nohighlight">\([10^{-10},\, 1000]\)</span> m.
+Negative or near-zero layer thicknesses indicate numerical collapse of the
+column and must be caught immediately.</p>
+</section>
+<section id="requirement-validate-kineticenergycell">
+<h3>2.4 Requirement: Validate KineticEnergyCell<a class="headerlink" href="#requirement-validate-kineticenergycell" title="Permalink to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">KineticEnergyCell</span></code> from the kinematic auxiliary state must be validated for
+each owned cell over all vertical layers. The valid range is <span class="math notranslate nohighlight">\([0,\, 10]\)</span>
+m<span class="math notranslate nohighlight">\(^2\)</span> s<span class="math notranslate nohighlight">\(^{-2}\)</span>.  Negative kinetic energies are unphysical, and values
+exceeding 10 m<span class="math notranslate nohighlight">\(^2\)</span> s<span class="math notranslate nohighlight">\(^{-2}\)</span> correspond to current speeds above
+<span class="math notranslate nohighlight">\(\sim 4.5\)</span> m s<span class="math notranslate nohighlight">\(^{-1}\)</span>, which are unrealistic for the open ocean.</p>
+</section>
+<section id="requirement-validate-temperature-tracer">
+<h3>2.5 Requirement: Validate Temperature tracer<a class="headerlink" href="#requirement-validate-temperature-tracer" title="Permalink to this heading"></a></h3>
+<p>Ocean Conservative Temperature must be validated for each owned cell over
+all vertical layers. The valid range is <span class="math notranslate nohighlight">\([-10,\, 50]\)</span> °C.
+This broad range accommodates all realistic oceanographic regimes including
+polar and hydrothermal vent environments.</p>
+</section>
+<section id="requirement-validate-salinity-tracer">
+<h3>2.6 Requirement: Validate Salinity tracer<a class="headerlink" href="#requirement-validate-salinity-tracer" title="Permalink to this heading"></a></h3>
+<p>Ocean Absolute Salinity must be validated for each owned cell over all
+vertical layers. The valid range is <span class="math notranslate nohighlight">\([-2,\, 60]\)</span> g kg<span class="math notranslate nohighlight">\(^{-1}\)</span>.
+Values below <span class="math notranslate nohighlight">\(-2\)</span> g kg<span class="math notranslate nohighlight">\(^{-1}\)</span> are unphysical and values above 60 g kg<span class="math notranslate nohighlight">\(^{-1}\)</span>
+are outside the valid domain of the TEOS-10 equation of state.</p>
+</section>
+<section id="requirement-gpu-cpu-portability">
+<h3>2.7 Requirement: GPU/CPU portability<a class="headerlink" href="#requirement-gpu-cpu-portability" title="Permalink to this heading"></a></h3>
+<p>All validation kernels must execute on both CPU and GPU hardware using the
+Kokkos parallel programming model and therefore must be expressed as Kokkos
+parallel reductions.</p>
+</section>
+<section id="requirement-informative-error-reporting">
+<h3>2.8 Requirement: Informative error reporting<a class="headerlink" href="#requirement-informative-error-reporting" title="Permalink to this heading"></a></h3>
+<p>On detection of any failure the module must log a critical-level message that
+identifies the field name, the nature of the problem (NaN or out-of-bounds),
+and the number of offending elements.</p>
+</section>
+<section id="requirement-graceful-handling-of-absent-tracers">
+<h3>2.9 Requirement: Graceful handling of absent tracers<a class="headerlink" href="#requirement-graceful-handling-of-absent-tracers" title="Permalink to this heading"></a></h3>
+<p>If the Temperature or Salinity tracer is not present in the tracer registry
+(e.g. in configurations that do not activate active tracers) the
+corresponding check must be skipped silently rather than causing an error.</p>
+</section>
+<section id="requirement-configurable-abort-on-error-behavior">
+<h3>2.10 Requirement: Configurable abort-on-error behavior<a class="headerlink" href="#requirement-configurable-abort-on-error-behavior" title="Permalink to this heading"></a></h3>
+<p>The user must be able to independently control whether NaN errors and
+out-of-bounds errors cause the run to abort.  Two boolean YAML options
+(<code class="docutils literal notranslate"><span class="pre">AbortOnNan</span></code> and <code class="docutils literal notranslate"><span class="pre">AbortOnOOB</span></code>, both nested under
+<code class="docutils literal notranslate"><span class="pre">Omega::State::Validation</span></code>) govern this:</p>
+<ul class="simple">
+<li><p>When <code class="docutils literal notranslate"><span class="pre">AbortOnNan:</span> <span class="pre">true</span></code>, any detected NaN value triggers a hard abort via
+<code class="docutils literal notranslate"><span class="pre">MPI_Abort</span></code> (with a stack backtrace printed beforehand).</p></li>
+<li><p>When <code class="docutils literal notranslate"><span class="pre">AbortOnOOB:</span> <span class="pre">true</span></code>, any detected out-of-bounds value triggers the same
+hard abort.</p></li>
+<li><p>When both are <code class="docutils literal notranslate"><span class="pre">false</span></code>, errors are logged at critical severity and the run
+continues.</p></li>
+</ul>
+<p>The defaults are <code class="docutils literal notranslate"><span class="pre">AbortOnNan:</span> <span class="pre">true</span></code> and <code class="docutils literal notranslate"><span class="pre">AbortOnOOB:</span> <span class="pre">false</span></code>.</p>
+</section>
+<section id="desired-configurable-valid-ranges">
+<h3>2.11 Desired: Configurable valid ranges<a class="headerlink" href="#desired-configurable-valid-ranges" title="Permalink to this heading"></a></h3>
+<p>In the future it may be desirable to allow the user to override the default
+valid ranges through the OMEGA configuration system (e.g. for idealised
+process studies that intentionally use non-oceanic parameter values).</p>
+</section>
+<section id="desired-configurable-validation-frequency">
+<h3>2.12 Desired: Configurable validation frequency<a class="headerlink" href="#desired-configurable-validation-frequency" title="Permalink to this heading"></a></h3>
+<p>In the future it may be desirable to allow the user to control whether
+validation is performed every timestep, every N timesteps, or only at
+specific points in the run (e.g. after restart reads).</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>No complex numerical algorithms are required. Each field is checked with two
+independent <code class="docutils literal notranslate"><span class="pre">parallelReduce</span></code> passes over the domain, restricted to active
+cells where <code class="docutils literal notranslate"><span class="pre">CellMask(i,</span> <span class="pre">k)</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> (inactive cells, such as land cells, are
+skipped):</p>
+<ol class="arabic simple">
+<li><p><strong>NaN pass</strong> – counts elements for which <code class="docutils literal notranslate"><span class="pre">Kokkos::isnan(val)</span></code> is <code class="docutils literal notranslate"><span class="pre">true</span></code>.</p></li>
+<li><p><strong>Bounds pass</strong> – counts elements that are finite yet lie outside
+<span class="math notranslate nohighlight">\([\text{MinVal},\, \text{MaxVal}]\)</span>.</p></li>
+</ol>
+<p>Separating the two passes avoids potentially undefined behaviour when
+comparing NaN values with <code class="docutils literal notranslate"><span class="pre">&lt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&gt;</span></code>.</p>
+<p>For a 2-D field <span class="math notranslate nohighlight">\(f_{i,k}\)</span> with <span class="math notranslate nohighlight">\(i \in [0,\, N_\text{cells})\)</span> and
+<span class="math notranslate nohighlight">\(k \in [0,\, N_\text{vert})\)</span> the two counts are:</p>
+<div class="math notranslate nohighlight">
+\[
+N_\text{NaN}    = \sum_{i,k} M_{i,k}\,\mathbf{1}[\,\text{isnan}(f_{i,k})\,]
+\]</div>
+<div class="math notranslate nohighlight">
+\[
+N_\text{OOB}    = \sum_{i,k} M_{i,k}\,\mathbf{1}[\,\lnot\,\text{isnan}(f_{i,k})
+                   \land (f_{i,k} &lt; f_\text{min} \lor f_{i,k} &gt; f_\text{max})\,]
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(M_{i,k}\)</span> is <code class="docutils literal notranslate"><span class="pre">CellMask(i,</span> <span class="pre">k)</span></code> (1 for active cell-layer, 0 for
+inactive).</p>
+<p>For a 3-D tracer array <span class="math notranslate nohighlight">\(T_{n,i,k}\)</span> the same expressions are applied at a
+fixed tracer index <span class="math notranslate nohighlight">\(n\)</span>.</p>
+<p>The validation traverses only the <code class="docutils literal notranslate"><span class="pre">NCellsOwned</span></code> cells (excluding halo cells)
+to avoid double-counting in the parallel decomposition.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>The module is implemented as a free function (<code class="docutils literal notranslate"><span class="pre">validateOceanState</span></code>) plus two
+file-local helper functions. It does not introduce a class or persistent state.</p>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>The valid ranges for each field are compile-time constants embedded in the
+implementation:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>MinVal</p></th>
+<th class="head"><p>MaxVal</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code></p></td>
+<td><p>1×10⁻¹⁰</p></td>
+<td><p>1000</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">KineticEnergyCell</span></code></p></td>
+<td><p>0</p></td>
+<td><p>10</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Temperature</span></code></p></td>
+<td><p>−10</p></td>
+<td><p>50</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Salinity</span></code></p></td>
+<td><p>−2</p></td>
+<td><p>60</p></td>
+</tr>
+</tbody>
+</table>
+<p>The abort-on-error behavior is governed by two runtime YAML options nested
+under <code class="docutils literal notranslate"><span class="pre">Omega::State::Validation</span></code>:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>YAML key</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AbortOnNan</span></code></p></td>
+<td><p>bool</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p>Abort via <code class="docutils literal notranslate"><span class="pre">MPI_Abort</span></code> when NaNs are detected</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AbortOnOOB</span></code></p></td>
+<td><p>bool</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+<td><p>Abort via <code class="docutils literal notranslate"><span class="pre">MPI_Abort</span></code> when OOBs are detected</p></td>
+</tr>
+</tbody>
+</table>
+<p>When both flags are <code class="docutils literal notranslate"><span class="pre">false</span></code> and errors are found, a CRITICAL log message is
+emitted and the run continues.</p>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>The module introduces one file-local plain struct:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span><span class="w"> </span><span class="nc">ValidationAbortConfig</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">AbortOnOOB</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">AbortOnNan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>This struct is populated by <code class="docutils literal notranslate"><span class="pre">getValidationAbortConfig</span></code> (see §4.2.5) and
+consumed by <code class="docutils literal notranslate"><span class="pre">validateOceanState</span></code>. All other types are the existing
+<code class="docutils literal notranslate"><span class="pre">OceanState</span></code>, <code class="docutils literal notranslate"><span class="pre">AuxiliaryState</span></code>, <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code>, and <code class="docutils literal notranslate"><span class="pre">Tracers</span></code> types from the
+OMEGA ocean component.</p>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<section id="checkoceanstate-public">
+<h4>4.2.1 <code class="docutils literal notranslate"><span class="pre">checkOceanState</span></code> (public)<a class="headerlink" href="#checkoceanstate-public" title="Permalink to this heading"></a></h4>
+<p>Performs all field checks and returns separate NaN and out-of-bounds counts:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">I4</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="n">checkOceanState</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">OceanState</span><span class="w"> </span><span class="o">*</span><span class="n">State</span><span class="p">,</span>
+<span class="w">                                  </span><span class="k">const</span><span class="w"> </span><span class="n">AuxiliaryState</span><span class="w"> </span><span class="o">*</span><span class="n">AuxState</span><span class="p">,</span>
+<span class="w">                                  </span><span class="k">const</span><span class="w"> </span><span class="n">VertCoord</span><span class="w"> </span><span class="o">*</span><span class="n">VCoord</span><span class="p">,</span>
+<span class="w">                                  </span><span class="n">I4</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Checks all fields described in Section 2, skipping inactive cells
+(<code class="docutils literal notranslate"><span class="pre">CellMask</span> <span class="pre">==</span> <span class="pre">0</span></code>). Logs critical messages for each type of error. Returns
+<code class="docutils literal notranslate"><span class="pre">{TotalNaNs,</span> <span class="pre">TotalOOBs}</span></code> where both values are 0 if all checks pass. Does
+<strong>not</strong> abort. Suitable for calling from tests.</p>
+</section>
+<section id="validateoceanstate-public">
+<h4>4.2.2 <code class="docutils literal notranslate"><span class="pre">validateOceanState</span></code> (public)<a class="headerlink" href="#validateoceanstate-public" title="Permalink to this heading"></a></h4>
+<p>Production entry-point that applies the configured abort policy on failure:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">validateOceanState</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">OceanState</span><span class="w"> </span><span class="o">*</span><span class="n">State</span><span class="p">,</span>
+<span class="w">                        </span><span class="k">const</span><span class="w"> </span><span class="n">AuxiliaryState</span><span class="w"> </span><span class="o">*</span><span class="n">AuxState</span><span class="p">,</span>
+<span class="w">                        </span><span class="k">const</span><span class="w"> </span><span class="n">VertCoord</span><span class="w"> </span><span class="o">*</span><span class="n">VCoord</span><span class="p">,</span>
+<span class="w">                        </span><span class="n">I4</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Calls <code class="docutils literal notranslate"><span class="pre">checkOceanState</span></code> to obtain <code class="docutils literal notranslate"><span class="pre">{NaNs,</span> <span class="pre">OOBs}</span></code>, then reads
+<code class="docutils literal notranslate"><span class="pre">ValidationAbortConfig</span></code> via <code class="docutils literal notranslate"><span class="pre">getValidationAbortConfig</span></code>. Aborts via
+<code class="docutils literal notranslate"><span class="pre">abortWithMessage</span></code> (which logs at CRITICAL severity, prints a stack
+backtrace, and calls <code class="docutils literal notranslate"><span class="pre">MPI_Abort</span></code>) if:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">NaNs</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> <strong>and</strong> <code class="docutils literal notranslate"><span class="pre">AbortOnNan</span></code> is <code class="docutils literal notranslate"><span class="pre">true</span></code>, <strong>or</strong></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">OOBs</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> <strong>and</strong> <code class="docutils literal notranslate"><span class="pre">AbortOnOOB</span></code> is <code class="docutils literal notranslate"><span class="pre">true</span></code>.</p></li>
+</ul>
+<p>If neither abort condition is met but errors were detected, a CRITICAL log
+message is emitted and the function returns normally.</p>
+</section>
+<section id="checkarray2d-file-local-helper">
+<h4>4.2.3 <code class="docutils literal notranslate"><span class="pre">checkArray2D</span></code> (file-local helper)<a class="headerlink" href="#checkarray2d-file-local-helper" title="Permalink to this heading"></a></h4>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">I4</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="n">checkArray2D</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Arr</span><span class="p">,</span>
+<span class="w">                                      </span><span class="n">I4</span><span class="w"> </span><span class="n">NRows</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">NCols</span><span class="p">,</span>
+<span class="w">                                      </span><span class="n">Real</span><span class="w"> </span><span class="n">MinVal</span><span class="p">,</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">MaxVal</span><span class="p">,</span>
+<span class="w">                                      </span><span class="kt">bool</span><span class="w"> </span><span class="n">CheckMin</span><span class="p">,</span>
+<span class="w">                                      </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CellMask</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Performs the NaN and bounds counts for a 2-D device array over the first
+<code class="docutils literal notranslate"><span class="pre">NRows</span></code> rows and <code class="docutils literal notranslate"><span class="pre">NCols</span></code> columns, restricted to active cells
+(<code class="docutils literal notranslate"><span class="pre">CellMask(Row,</span> <span class="pre">Col)</span> <span class="pre">&gt;</span> <span class="pre">0</span></code>). When <code class="docutils literal notranslate"><span class="pre">CheckMin</span></code> is <code class="docutils literal notranslate"><span class="pre">false</span></code> only the upper
+bound is enforced (not needed for any current field but useful for future
+extension). Returns <code class="docutils literal notranslate"><span class="pre">{NaNCount,</span> <span class="pre">OutOfRangeCount}</span></code>.</p>
+</section>
+<section id="checktracerarray-file-local-helper">
+<h4>4.2.4 <code class="docutils literal notranslate"><span class="pre">checkTracerArray</span></code> (file-local helper)<a class="headerlink" href="#checktracerarray-file-local-helper" title="Permalink to this heading"></a></h4>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">I4</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="n">checkTracerArray</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Array3DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Tracers3D</span><span class="p">,</span>
+<span class="w">                                          </span><span class="n">I4</span><span class="w"> </span><span class="n">TracerIdx</span><span class="p">,</span>
+<span class="w">                                          </span><span class="n">I4</span><span class="w"> </span><span class="n">NCells</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">NVert</span><span class="p">,</span>
+<span class="w">                                          </span><span class="n">Real</span><span class="w"> </span><span class="n">MinVal</span><span class="p">,</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">MaxVal</span><span class="p">,</span>
+<span class="w">                                          </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CellMask</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Performs the NaN and bounds counts for a single tracer slice (identified by
+<code class="docutils literal notranslate"><span class="pre">TracerIdx</span></code>) of the 3-D tracer array, restricted to active cells
+(<code class="docutils literal notranslate"><span class="pre">CellMask(Cell,</span> <span class="pre">K)</span> <span class="pre">&gt;</span> <span class="pre">0</span></code>). Returns <code class="docutils literal notranslate"><span class="pre">{NaNCount,</span> <span class="pre">OutOfRangeCount}</span></code>.</p>
+</section>
+<section id="getvalidationabortconfig-file-local-helper">
+<h4>4.2.5 <code class="docutils literal notranslate"><span class="pre">getValidationAbortConfig</span></code> (file-local helper)<a class="headerlink" href="#getvalidationabortconfig-file-local-helper" title="Permalink to this heading"></a></h4>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="n">ValidationAbortConfig</span><span class="w"> </span><span class="nf">getValidationAbortConfig</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>Reads the two boolean options <code class="docutils literal notranslate"><span class="pre">AbortOnNan</span></code> and <code class="docutils literal notranslate"><span class="pre">AbortOnOOB</span></code> from the OMEGA
+config under <code class="docutils literal notranslate"><span class="pre">Omega::State::Validation</span></code> and returns a populated
+<code class="docutils literal notranslate"><span class="pre">ValidationAbortConfig</span></code>. If the config node is absent the struct’s
+default-initialised values (<code class="docutils literal notranslate"><span class="pre">AbortOnNan</span> <span class="pre">=</span> <span class="pre">true</span></code>, <code class="docutils literal notranslate"><span class="pre">AbortOnOOB</span> <span class="pre">=</span> <span class="pre">false</span></code>) are
+returned unchanged.</p>
+</section>
+<section id="abortwithmessage-file-local-helper">
+<h4>4.2.6 <code class="docutils literal notranslate"><span class="pre">abortWithMessage</span></code> (file-local helper)<a class="headerlink" href="#abortwithmessage-file-local-helper" title="Permalink to this heading"></a></h4>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">abortWithMessage</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Msg</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Logs <code class="docutils literal notranslate"><span class="pre">Msg</span></code> at critical severity, prints a stack backtrace using <code class="docutils literal notranslate"><span class="pre">cpptrace</span></code>,
+then calls <code class="docutils literal notranslate"><span class="pre">MPI_Abort</span></code> on the default OMEGA communicator with error code
+<code class="docutils literal notranslate"><span class="pre">ErrorCode::Critical</span></code>.</p>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test-valid-state-passes-without-abort">
+<h3>5.1 Test: Valid state passes without abort<a class="headerlink" href="#test-valid-state-passes-without-abort" title="Permalink to this heading"></a></h3>
+<p>A unit test constructs a minimal OMEGA environment (MachEnv, Decomp,
+HorzMesh, VertCoord, Tracers, OceanState, AuxiliaryState) using the standard
+test mesh <code class="docutils literal notranslate"><span class="pre">OmegaMesh.nc</span></code>.  All state arrays are filled with physically
+plausible values:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code> = 100 m (valid range [1×10⁻¹⁰, 1000])</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> = 0 m s⁻¹ (not directly validated but required for
+<code class="docutils literal notranslate"><span class="pre">KineticEnergyCell</span></code> to be zero)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Temperature</span></code> = 10 °C (valid range [−10, 50])</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Salinity</span></code> = 35 g kg⁻¹ (valid range [−2, 60])</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">AuxiliaryState::computeAll</span></code> is called to populate <code class="docutils literal notranslate"><span class="pre">KineticEnergyCell</span></code>
+before <code class="docutils literal notranslate"><span class="pre">validateOceanState</span></code> is invoked.</p>
+<p>The test passes if <code class="docutils literal notranslate"><span class="pre">validateOceanState</span></code> returns without calling <code class="docutils literal notranslate"><span class="pre">MPI_Abort</span></code>.</p>
+<p>Tests requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.9.</p>
+</section>
+<section id="negative-tests-invalid-values-are-detected">
+<h3>5.2 Negative tests: invalid values are detected<a class="headerlink" href="#negative-tests-invalid-values-are-detected" title="Permalink to this heading"></a></h3>
+<p>The public <code class="docutils literal notranslate"><span class="pre">checkOceanState</span></code> function is used for negative tests so that
+errors can be detected without triggering <code class="docutils literal notranslate"><span class="pre">MPI_Abort</span></code>. Each sub-test:</p>
+<ol class="arabic simple">
+<li><p>Resets the state to valid values via <code class="docutils literal notranslate"><span class="pre">restoreValidState</span></code>.</p></li>
+<li><p>Injects a single type of invalid value (NaN or OOB) into one field using
+a <code class="docutils literal notranslate"><span class="pre">parallelFor</span></code> kernel that overwrites all owned cell-layer entries.</p></li>
+<li><p>Calls <code class="docutils literal notranslate"><span class="pre">checkOceanState</span></code>, which returns <code class="docutils literal notranslate"><span class="pre">{NaNs,</span> <span class="pre">OOBs}</span></code>, and verifies that
+the sum <code class="docutils literal notranslate"><span class="pre">NaNs</span> <span class="pre">+</span> <span class="pre">OOBs</span></code> is greater than zero.</p></li>
+</ol>
+<p>The following sub-tests are implemented:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Sub-test</p></th>
+<th class="head"><p>Injected value</p></th>
+<th class="head"><p>Field</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">testNaNPseudoThickness</span></code></p></td>
+<td><p>NaN</p></td>
+<td><p>PseudoThickness</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">testOOBHighPseudoThickness</span></code></p></td>
+<td><p>2000 m (&gt; max 1000 m)</p></td>
+<td><p>PseudoThickness</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">testOOBLowPseudoThickness</span></code></p></td>
+<td><p>−1 m (&lt; min 1×10⁻¹⁰)</p></td>
+<td><p>PseudoThickness</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">testNaNKineticEnergy</span></code></p></td>
+<td><p>NaN</p></td>
+<td><p>KineticEnergyCell</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">testOOBKineticEnergy</span></code></p></td>
+<td><p>9999 J kg⁻¹ (&gt; max 10)</p></td>
+<td><p>KineticEnergyCell</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">testNaNTemperature</span></code></p></td>
+<td><p>NaN</p></td>
+<td><p>Temperature</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">testOOBTemperature</span></code></p></td>
+<td><p>9999 °C (&gt; max 50)</p></td>
+<td><p>Temperature</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">testNaNSalinity</span></code></p></td>
+<td><p>NaN</p></td>
+<td><p>Salinity</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">testOOBSalinity</span></code></p></td>
+<td><p>9999 g kg⁻¹ (&gt; max 60)</p></td>
+<td><p>Salinity</p></td>
+</tr>
+</tbody>
+</table>
+<p>Tests requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.10.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="State.html" class="btn btn-neutral float-left" title="State" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="SubmesoscaleEddies.html" class="btn btn-neutral float-right" title="Submesoscale Eddy Parameterization" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
