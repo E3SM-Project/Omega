@@ -385,6 +385,14 @@ class TracerHorzAdvOnCell {
    Real Coef3rdOrder = 0.25;
    TracerHorzAdvOnCell(const HorzMesh *Mesh, const VertCoord *VCoord,
                        const VertAdv *VAdv);
+#if (0)
+   ~TracerHorzAdvOnCell() {
+      if (ComputeBudgets) {
+         Field::destroy(ActiveTracerHorizontalAdvectionEdgeFlux.label());
+         Field::destroy(ActiveTracerHorizontalAdvectionTendency.label());
+      }
+   }
+#endif
    void init();
    KOKKOS_FUNCTION void operator()(const I4 L, const I4 IEdge, const I4 KChunk,
                                    const Array3DReal &TracerCell,

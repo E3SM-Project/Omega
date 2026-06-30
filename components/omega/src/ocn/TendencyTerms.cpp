@@ -183,6 +183,40 @@ void TracerHorzAdvOnCell::init() {
          ActiveTracerHorizontalAdvectionTendency =
              Array3DReal("FCTActiveTracerHorizontalAdvectionTendency", NTracers,
                          NCellsAll, NVertLayers);
+         const int NDims             = 1;
+         const std::string GroupName = "AuxiliaryState";
+         std::vector<std::string> FluxDimNames(NDims, "NEdges");
+         auto BudgetAdvectionEdgeFlux = Field::create(
+             ActiveTracerHorizontalAdvectionEdgeFlux.label(),    // field name
+             "Tracer FCT Horizontal Advection Edge Flux Budget", // long name or
+                                                                 // description
+             "",                                                 // units
+             "",                             // CF standard Name
+             0,                              // min valid value
+             std::numeric_limits<I4>::max(), // max valid value
+             NDims,                          // number of dimensions
+             FluxDimNames                    // dimension names
+         );
+         BudgetAdvectionEdgeFlux->attachData<Array3DReal>(
+             ActiveTracerHorizontalAdvectionEdgeFlux);
+         FieldGroup::addFieldToGroup(
+             ActiveTracerHorizontalAdvectionEdgeFlux.label(), GroupName);
+         std::vector<std::string> TendDimNames(NDims, "NCells");
+         auto BudgetAdvectionCellTend = Field::create(
+             ActiveTracerHorizontalAdvectionTendency.label(), // field name
+             "Tracer FCT Horizontal Advection Cell Flux "
+             "Tendency",                     // long name or description
+             "",                             // units
+             "",                             // CF standard Name
+             0,                              // min valid value
+             std::numeric_limits<I4>::max(), // max valid value
+             NDims,                          // number of dimensions
+             TendDimNames                    // dimension names
+         );
+         BudgetAdvectionCellTend->attachData<Array3DReal>(
+             ActiveTracerHorizontalAdvectionTendency);
+         FieldGroup::addFieldToGroup(
+             ActiveTracerHorizontalAdvectionTendency.label(), GroupName);
       }
    }
 }

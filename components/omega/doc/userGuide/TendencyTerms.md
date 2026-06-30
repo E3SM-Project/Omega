@@ -45,12 +45,12 @@ the currently available tendency terms:
 | | ViscDel4 | horizontal biharmonic mixing coefficient for normal velocity
 | | DivFactor | scale factor for the divergence term
 | TracerHorzAdvOnCell | TracerHorzAdvTendencyEnable | enable/disable term
-| | HorzTracerFluxOrder | 1 for standard linear advection
+| | HorzTracerFluxOrder | 2 for standard linear advection
 | TracerHighOrderHorzAdvOnCell | TracerHorzAdvTendencyEnable | enable/disable term
-| | HorzTracerFluxOrder | 2 for second order advection algorithm
-| | HorzTracerFluxLimiterEnable | enable montonic flux corrected transport (FCT)
-| | HorzTracerFluxLimiterBudgetsEnable | enable budgets if FCT is enabled
-| | HorzTracerFluxLimiterMonotonicityCheckEnable | enable check for monononic if FCT is enabled
+| | HorzTracerFluxOrder | 3 for second order advection algorithm
+| | HorzTracerFluxLimiterEnable | enable/disable monotonic flux corrected transport (FCT)
+| | HorzTracerFluxLimiterBudgetsEnable | enable/disable budgets if FCT is enabled
+| | HorzTracerFluxLimiterMonotonicityCheckEnable | enable/disable check for mon-mononic values if FCT is enabled
 | TracerDiffOnCell | TracerDiffTendencyEnable | enable/disable term
 | | EddyDiff2 | horizontal diffusion coefficient
 | TracerHyperDiffOnCell | TracerHyperDiffTendencyEnable | enable/disable term
@@ -97,13 +97,13 @@ $$
 $$
 Where $u$ is $\mathbf{V}\cdot\mathbf{n}$ where $\mathbf{n}$ is the unit normal along the edge being evaluated and $F$ is the evaluation
 of $\psi$ for the elements on each side of the edge being evaluated.
-This is used when the TracerHorzAdvOnCell user option is active and HorzTracerFluxOrder is 1.
+This is used when the TracerHorzAdvOnCell user option is active and HorzTracerFluxOrder is 2.
 To make the comparison to higher order methods explicit, this first order method is equivalent to defining $\psi$ as a linear function,
 $\psi = c_0 + c_x x + c_y y$, between the two elements sharing the edge $i$ and taking the directed derivative along the edge.
 
 
 For higher order flux calculations, higher order derivatives of $\psi$ are needed and for the user option of
-TracerHorzAdvOnCell along with HorzTracerFluxOrder set to 2, a quadratic approximation of $\psi$ is used,
+TracerHorzAdvOnCell along with HorzTracerFluxOrder set to 3, a quadratic approximation of $\psi$ is used,
 $$
 \psi = c_0 + c_x x + c_y y + c_{xx} x^2 + c_{xy} xy + c_{yy} y^2,
 $$
@@ -142,6 +142,49 @@ is about order 1.7 as shown in  {numref}`tracer-higher-order-convergence`:
 :width: 600 px
 Tracer higer order convergence example of a cosine bell advected on a sphere showing an order 1.71 convergence rate
 ```
+
+### Monotonic Flux Limiting Transport for Second Order Horizontal Advection
+
+It is well known that higher order (order 2 and above) scheme for numerically integrating fluxes suffer
+from dispersive "ripples" in the results particularly near steep gradients.  Lower order schemes
+produce no ripples but suffer from excessive numerical diffusion. Flux-corrected transport (FCT) is a
+technique which embodies the best of both schemes.
+
+The implementation of a monotonic flux-corrected transport (FCT) in Omega follows a standard algorithm as given in
+
+Zalesak, S. T. (1979). Fully multidimensional flux-corrected transport algorithms for fluids.
+Journal of Computational Physics, 31(3), 335–362. DOI: 10.1016/0021-9991(79)90051-2
+
+The procedure is as follows given the notation above:
+1. Compute $F^L_{i+1/2}(u\psi)$, the transportive flux by some low order scheme guarenteed to give
+monotonic (ripple-free) results.
+2. Compute  $F^H_{i+1/2}(u\psi)$, the transportative flux by some high order scheme.
+3. Define the "antififfusive flux":
+$$
+A_{i+1/2}(u\psi) = F^H_{i+1/2}(u\psi) - F^L_{i+1/2}(u\psi)
+$$
+4. Compute the updated low order ("transported and diffused") "td" solution:
+$$
+ w^{td}_i = w^n_i - \frac{1}{\Delta x}[F_{i+1/2}(u\psi) - F_{i-1/2}(u\psi)]
+$$
+5. Limit he $A_{i+1/2}(u\psi)$ in a manner such that $w^{n+1}$ as computed below is free of extrema
+not found in $w^{td}$ = $w^n$;
+$$
+A^C_{i+1/2}(u\psi) =  C_{i+1/2}(u\psi) A_{i+1/2}(u\psi), \quad  \quad   0 \leq C_{i+1/2} \leq 1
+$$
+6. Finally apply hte limited antidiffusive fluxes:
+$$
+ w^{n+1}_i = w^{td}_i - \frac{1}{\Delta x}[A^C_{i+1/2}(u\psi) - A^C_{i-1/2}(u\psi)]
+$$
+
+
+```{figure} images/higher_order_tracer_convergence_on_sphere_FCT.jpeg
+:name:  tracer-higher-order-convergence_FCT
+:align: center
+:width: 600 px
+Tracer higer order convergence example of a cosine bell advected on a sphere with FCT showing an order 2.23 convergence rate
+```
+
 
 ## See Also
 
