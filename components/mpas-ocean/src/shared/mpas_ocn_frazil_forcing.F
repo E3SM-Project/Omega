@@ -487,15 +487,9 @@ contains
 
       logical :: underFloatingLandIce, underLandIce ! indicates if we are under land ice
 
-      logical :: reduceResidual !if True, ice formation brings layer temperature closer to Tfreeze
-      !if False, original formulation that does not account for mass loss,
-      !leaving the layer supercooled
-
       real (kind=RKIND) :: potential  ! scalar holding freezing/melt potential
       real (kind=RKIND) :: freezingEnergy  ! energy available for freezing, positive definite
       real (kind=RKIND) :: meltingEnergy ! energy available for melting, positive definite
-
-      reduceResidual = .false.
 
       ! if frazil is not enabled, return
       if(.not. frazilFormationOn) return
@@ -645,14 +639,7 @@ contains
             frazilSalinity = min( frazilSalinity, activeTracers(indexSalinity, k, iCell) )
 
             ! new frazil ice formation measured in meters
-            if (reduceResidual == .true.) then
-               newFrazilIceThickness = freezingEnergy / &
-                  (config_frazil_ice_density * config_frazil_heat_of_fusion + &
-                  rho_sw * config_specific_heat_sea_water * oceanFreezingTemperature * &
-                  config_frazil_ice_density / density(k,iCell))
-            else
-               newFrazilIceThickness = freezingEnergy / (config_frazil_heat_of_fusion * config_frazil_ice_density)
-            end if
+            newFrazilIceThickness = freezingEnergy / (config_frazil_heat_of_fusion * config_frazil_ice_density)
             ! limit the frazil formed appropriately
             newFrazilIceThickness = min(newFrazilIceThickness, layerThickness(k,iCell) * config_frazil_fractional_thickness_limit)
 
@@ -712,10 +699,10 @@ contains
                                                  / dt
 
               ! ocean fluid temperature is modified due to mixing of existing water with meltwater at the freezing point
-              ! NJ: more consistent with the layer tendency
+              ! more consistent with the layer tendency
               !frazilTemperatureTendency(k,iCell) = frazilTemperatureTendency(k,iCell) + &
               !     meltedFrazilIceThickness * oceanFreezingTemperature * config_frazil_ice_density / density(k,iCell) / dt
-              ! NJ: original
+              ! original formulation
               frazilTemperatureTendency(k,iCell) = frazilTemperatureTendency(k,iCell) + &
                    meltedFrazilIceThickness * oceanFreezingTemperature / dt
               ! keep track of new frazil ice
