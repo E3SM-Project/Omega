@@ -1,0 +1,1172 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analysis &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Broadcast" href="Broadcast.html" />
+    <link rel="prev" title="Omega V1: Governing Equations" href="OmegaV1GoverningEqns.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Forcing.html">Forcing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Testing.html">Testing Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/ParallelLoops.html">Parallel loops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/PGrad.html">Pressure Gradient (PGrad)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Forcing.html">Forcing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OmegaV1GoverningEqns.html">Omega V1: Governing Equations</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Analysis</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-composable-operator-framework">2.1 Requirement: Composable operator framework</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-availability-of-all-model-variables">2.2 Requirement: Availability of all model variables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-field-access-via-dependency-declaration">2.3 Requirement: Field access via dependency declaration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-operator-registration-and-factory">2.4 Requirement: Operator registration and factory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-multi-input-and-multi-output-operators">2.5 Requirement: Multi-input and multi-output operators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-computation-caching">2.6 Requirement: Computation caching</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-time-operators">2.7 Requirement: Time operators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-stream-integration">2.8 Requirement: Stream integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-polaris-compatibility">2.9 Requirement: Polaris compatibility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-requested-initial-analysis-capability">2.10 Requirement: Requested initial analysis capability</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#operator-composition-and-dependency-resolution">3.1 Operator Composition and Dependency Resolution</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#operator-dependencies">3.1.1 Operator dependencies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dependency-graph-construction">3.1.2 Dependency graph construction</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#operator-factory-and-registration">3.2 Operator Factory and Registration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#templated-operator-specializations">3.2.1 Templated operator specializations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#registration">3.2.2 Registration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#factory-operator-creation">3.2.3 Factory operator creation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#runtime-dispatch">3.3 Runtime Dispatch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#alarm-model">3.4 Alarm Model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#analysisgroup-configuration">3.5 AnalysisGroup Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#configuration">4.1.1 Configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#classes">4.1.2 Classes</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#operator-chain-string-convention">4.2 Operator chain string convention</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-individual-operator-correctness">5.1 Test: Individual operator correctness</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-dependency-resolution-and-execution-order">5.2 Test: Dependency resolution and execution order</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-alarm-system">5.3 Test: Alarm system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-factory-registration-and-type-dispatch">5.4 Test: Factory registration and type dispatch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-configuration-parsing-and-validation">5.5 Test: Configuration parsing and validation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-end-to-end-integration">5.6 Test: End-to-end integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-advanced-dag-features-future">5.7 Test: Advanced DAG features (future)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Coupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="StateValidation.html">Ocean State Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SubmesoscaleEddies.html">Submesoscale Eddy Parameterization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Analysis</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/Analysis.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <!--- OMEGA Analysis Module design document ---------------------------------->
+<section class="tex2jax_ignore mathjax_ignore" id="analysis">
+<span id="omega-design-analysis"></span><h1>Analysis<a class="headerlink" href="#analysis" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>The Omega Analysis module provides in-situ computation of desired analysis
+fields from the ocean model state. Analysis fields are computed on-the-fly
+during simulation runtime and written to output streams at user-specified
+intervals, providing an alternative to extensive offline post-processing.</p>
+<p>The framework is built on a composable operator architecture where operators
+can be chained together to produce analysis outputs. This approach enables
+user flexibility, avoids the proliferation of hard-coded analysis routines,
+and supports future extensibility without architecture changes. The initial
+delivery (v1) provides a set of bundled <code class="docutils literal notranslate"><span class="pre">AnalysisGroup</span></code> types; full
+user-configurable operator composition is planned for subsequent updates.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-composable-operator-framework">
+<h3>2.1 Requirement: Composable operator framework<a class="headerlink" href="#requirement-composable-operator-framework" title="Permalink to this heading"></a></h3>
+<p>The Analysis system depends on simple, composable operators where each
+operator performs a single, well-defined transformation. This enables:</p>
+<ul class="simple">
+<li><p>New analysis outputs via configuration rather than new code</p></li>
+<li><p>Testing of individual operations in isolation</p></li>
+<li><p>Reuse of common operations (spatial and temporal reductions, binary
+operations) across analysis computations</p></li>
+</ul>
+</section>
+<section id="requirement-availability-of-all-model-variables">
+<h3>2.2 Requirement: Availability of all model variables<a class="headerlink" href="#requirement-availability-of-all-model-variables" title="Permalink to this heading"></a></h3>
+<p>All simulation variables produced by the model and available for I/O in
+Omega must be available to the Analysis module. Variables produced by the
+Analysis system should also be available for further Analysis computation.</p>
+</section>
+<section id="requirement-field-access-via-dependency-declaration">
+<h3>2.3 Requirement: Field access via dependency declaration<a class="headerlink" href="#requirement-field-access-via-dependency-declaration" title="Permalink to this heading"></a></h3>
+<p>Operators must declare their input field dependencies at construction time.
+During initialization, the orchestrator resolves dependencies and provides
+operators with persistent pointers/references to input fields (from simulation
+model fields or upstream operators). Operators retain these references and
+access fields directly during <code class="docutils literal notranslate"><span class="pre">compute()</span></code>.</p>
+</section>
+<section id="requirement-operator-registration-and-factory">
+<h3>2.4 Requirement: Operator registration and factory<a class="headerlink" href="#requirement-operator-registration-and-factory" title="Permalink to this heading"></a></h3>
+<p>New operators must be registerable via a factory pattern, without changes to
+the core analysis architecture. Operators self-register during initialization,
+and the orchestrator queries the factory for operators by name. This
+facilitates future extensibility; new operators integrate into the analysis
+framework without modifying orchestration code.</p>
+</section>
+<section id="requirement-multi-input-and-multi-output-operators">
+<h3>2.5 Requirement: Multi-input and multi-output operators<a class="headerlink" href="#requirement-multi-input-and-multi-output-operators" title="Permalink to this heading"></a></h3>
+<p>Operators must be able to accept multiple input fields and produce multiple
+output fields. Multi-input capability enables operators that combine fields
+(e.g., binary operations, vector operations requiring multiple components).
+Multi-output capability allows operators to simultaneously return separable
+results (e.g., components of a vector field, or the components of a spatial
+gradient).</p>
+</section>
+<section id="requirement-computation-caching">
+<h3>2.6 Requirement: Computation caching<a class="headerlink" href="#requirement-computation-caching" title="Permalink to this heading"></a></h3>
+<p>When multiple output streams or analysis fields depend on the same
+intermediate result, that result must be computed once per timestep and
+cached. Timestamp-based cache validation prevents stale results.</p>
+</section>
+<section id="requirement-time-operators">
+<h3>2.7 Requirement: Time operators<a class="headerlink" href="#requirement-time-operators" title="Permalink to this heading"></a></h3>
+<p>Time-based operations (mean, min, max over a period) must be regular
+operators within the analysis framework, enabling composition with spatial
+operations. Time period specification should be flexible (not limited to
+hard-coded groups).</p>
+</section>
+<section id="requirement-stream-integration">
+<h3>2.8 Requirement: Stream integration<a class="headerlink" href="#requirement-stream-integration" title="Permalink to this heading"></a></h3>
+<p>Analysis fields must be integrated into the Omega output stream framework.
+Configurable output stream parameters (filename, precision, period, etc.)
+must be provided for fields produced by the analysis system. Fields will be
+written to output with associated metadata.</p>
+</section>
+<section id="requirement-polaris-compatibility">
+<h3>2.9 Requirement: Polaris compatibility<a class="headerlink" href="#requirement-polaris-compatibility" title="Permalink to this heading"></a></h3>
+<p>Output from the Analysis module must be compatible with Polaris for
+post-processing.</p>
+</section>
+<section id="requirement-requested-initial-analysis-capability">
+<h3>2.10 Requirement: Requested initial analysis capability<a class="headerlink" href="#requirement-requested-initial-analysis-capability" title="Permalink to this heading"></a></h3>
+<p>Initial delivery of the Analysis system will supply operators necessary for
+computing a specified set of Analysis outputs:</p>
+<ul class="simple">
+<li><p>Global stats: global reduction to mean, min, max, and standard deviation
+of configurable fields</p></li>
+<li><p>AMOC: stream function for Atlantic meridional overturning circulation</p></li>
+<li><p>Eddy stats</p></li>
+</ul>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<section id="operator-composition-and-dependency-resolution">
+<h3>3.1 Operator Composition and Dependency Resolution<a class="headerlink" href="#operator-composition-and-dependency-resolution" title="Permalink to this heading"></a></h3>
+<p>The Analysis system represents computations as a directed acyclic graph (DAG)
+where nodes are operators and edges represent data dependencies. A single
+Analysis field computation is defined by a string name that may expand into
+multiple operators forming a chain.</p>
+<section id="operator-dependencies">
+<h4>3.1.1 Operator dependencies<a class="headerlink" href="#operator-dependencies" title="Permalink to this heading"></a></h4>
+<p>Each operator <span class="math notranslate nohighlight">\(\mathcal{O}_i\)</span> produces one or more output fields and requires
+zero or more input fields:</p>
+<div class="math notranslate nohighlight">
+\[ \{\mathcal{O}_i^{\text{out},1}, \mathcal{O}_i^{\text{out},2}, \ldots\} =
+f_i(\mathcal{I}_{i,1}, \mathcal{I}_{i,2}, \ldots, \mathcal{I}_{i,k}) \]</div>
+<p>where each input <span class="math notranslate nohighlight">\(\mathcal{I}_{i,j}\)</span> is either:</p>
+<ul class="simple">
+<li><p>A simulation field from the model (terminal node, no incoming operator edge)</p></li>
+<li><p>An output of another operator <span class="math notranslate nohighlight">\(\mathcal{O}_j\)</span> (creating dependency edge
+<span class="math notranslate nohighlight">\(\mathcal{O}_j \to \mathcal{O}_i\)</span>)</p></li>
+</ul>
+<p><strong>Operator chains:</strong> A single Analysis field name <span class="math notranslate nohighlight">\(a\)</span> may parse into an
+ordered sequence of operators:</p>
+<div class="math notranslate nohighlight">
+\[ a \xmapsto{\text{parse}} \{\mathcal{O}_1, \mathcal{O}_2, \ldots,
+\mathcal{O}_m\} \]</div>
+<p>where intermediate operators produce fields consumed by subsequent operators
+in the chain, and only the terminal operator <span class="math notranslate nohighlight">\(\mathcal{O}_m\)</span> writes to the
+output stream.</p>
+<p><strong>Shared intermediates:</strong> When multiple Analysis fields require the same
+intermediate result, the dependency resolver identifies structurally
+equivalent operators via signature matching:</p>
+<div class="math notranslate nohighlight">
+\[ \text{sig}(\mathcal{O}) = (\text{type}(\mathcal{O}),
+\{\mathcal{I}_1, \mathcal{I}_2, \ldots\}) \]</div>
+<p>Two operators with identical signatures are merged into a single node in the
+DAG, preventing redundant computation.</p>
+<blockquote>
+<div><p><strong>v1 implementation note:</strong> The full DAG construction algorithm below is
+the target design. The v1 implementation uses a simpler approximation:
+operator chains are parsed left-to-right and nodes are appended in natural
+dependency order; dependency edges are resolved post-hoc by matching
+operator input names against other operators’ output names. Signature-based
+deduplication, cycle detection, and formal topological sort are planned for
+subsequent updates.</p>
+</div></blockquote>
+</section>
+<section id="dependency-graph-construction">
+<h4>3.1.2 Dependency graph construction<a class="headerlink" href="#dependency-graph-construction" title="Permalink to this heading"></a></h4>
+<p><strong>Algorithm</strong>: <span class="math notranslate nohighlight">\(\texttt{Analysis::buildDependencyGraph}\)</span></p>
+<p>Input: Set of requested Analysis field names <span class="math notranslate nohighlight">\(\mathcal{A} = \{a_1, a_2,
+\ldots, a_n\}\)</span> from all output streams</p>
+<p>Output: Directed acyclic graph <span class="math notranslate nohighlight">\(\mathcal{G} = (\mathcal{V}, \mathcal{E})\)</span>
+where <span class="math notranslate nohighlight">\(\mathcal{V}\)</span> are operator nodes and <span class="math notranslate nohighlight">\(\mathcal{E}\)</span> are data dependency
+edges, with topological ordering <span class="math notranslate nohighlight">\(\pi : \mathcal{V} \to \mathbb{N}\)</span></p>
+<p><strong>Phase 1</strong>: Parse and expand operator chains</p>
+<ol class="arabic simple">
+<li><p>Initialize: <span class="math notranslate nohighlight">\(\mathcal{V} \leftarrow \emptyset\)</span>, <span class="math notranslate nohighlight">\(\mathcal{E} \leftarrow
+\emptyset\)</span>, <span class="math notranslate nohighlight">\(\Sigma \leftarrow \emptyset\)</span> (signature cache)</p></li>
+<li><p><strong>For</strong> each analysis field <span class="math notranslate nohighlight">\(a \in \mathcal{A}\)</span>:</p>
+<ul class="simple">
+<li><p>Parse string into chain of operators: <span class="math notranslate nohighlight">\(\{\mathcal{O}_1, \ldots,
+\mathcal{O}_m\} \leftarrow \texttt{parseOperatorChain}(a)\)</span></p></li>
+<li><p><strong>For</strong> <span class="math notranslate nohighlight">\(i = 1\)</span> to <span class="math notranslate nohighlight">\(m\)</span>:</p>
+<ul>
+<li><p>Compute signature: <span class="math notranslate nohighlight">\(s \leftarrow \text{sig}(\mathcal{O}_i)\)</span></p></li>
+<li><p><strong>If</strong> <span class="math notranslate nohighlight">\(s \in \Sigma\)</span> (operator already exists):</p>
+<ul>
+<li><p>Retrieve existing node: <span class="math notranslate nohighlight">\(v \leftarrow \Sigma[s]\)</span></p></li>
+<li><p><strong>If</strong> <span class="math notranslate nohighlight">\(i = m\)</span> (final operator): Add <span class="math notranslate nohighlight">\(a\)</span> to <span class="math notranslate nohighlight">\(v\)</span>’s output list</p></li>
+</ul>
+</li>
+<li><p><strong>Else</strong> (create new node):</p>
+<ul>
+<li><p>Create node: <span class="math notranslate nohighlight">\(v \leftarrow \text{OperatorNode}(\mathcal{O}_i)\)</span></p></li>
+<li><p><strong>If</strong> <span class="math notranslate nohighlight">\(i = m\)</span> (final operator): add output for node <span class="math notranslate nohighlight">\(v\)</span> to
+stream for <span class="math notranslate nohighlight">\(a\)</span>, set alarm period</p></li>
+<li><p><strong>Else</strong> (intermediate operator): no stream output, computed
+on-demand when downstream alarm rings</p></li>
+<li><p>Add to graph: <span class="math notranslate nohighlight">\(\mathcal{V} \leftarrow \mathcal{V} \cup \{v\}\)</span></p></li>
+<li><p>Cache signature: <span class="math notranslate nohighlight">\(\Sigma \leftarrow \Sigma \cup \{(s, v)\}\)</span></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p><strong>Phase 2</strong>: Resolve dependencies</p>
+<ol class="arabic simple">
+<li><p><strong>For</strong> each operator node <span class="math notranslate nohighlight">\(v \in \mathcal{V}\)</span>:</p>
+<ul class="simple">
+<li><p>Let <span class="math notranslate nohighlight">\(\mathcal{I}(v) = \{\mathcal{I}_1, \ldots, \mathcal{I}_n\}\)</span> be
+input fields for <span class="math notranslate nohighlight">\(v\)</span></p></li>
+<li><p><strong>For</strong> each required input <span class="math notranslate nohighlight">\(\mathcal{I}_j \in \mathcal{I}(v)\)</span>:</p>
+<ul>
+<li><p><strong>If</strong> <span class="math notranslate nohighlight">\(\mathcal{I}_j\)</span> is a simulation field from the model:
+terminal dependency, no edge needed</p></li>
+<li><p><strong>Else if</strong> <span class="math notranslate nohighlight">\(\exists\ u \in \mathcal{V}\)</span> such that <span class="math notranslate nohighlight">\(\mathcal{I}_j
+\in \text{outputs}(u)\)</span>:</p>
+<ul>
+<li><p>Add dependency edge: <span class="math notranslate nohighlight">\(\mathcal{E} \leftarrow \mathcal{E} \cup
+\{(u, v)\}\)</span></p></li>
+<li><p>Propagate alarms: <strong>For</strong> each <span class="math notranslate nohighlight">\(\text{Alarm} \in
+v.\text{ComputeAlarms}\)</span>:</p>
+<ul>
+<li><p><strong>If</strong> <span class="math notranslate nohighlight">\(\text{alarm} \notin u.\text{ComputeAlarms}\)</span>:</p>
+<ul>
+<li><p><span class="math notranslate nohighlight">\(u.\text{ComputeAlarms} \leftarrow
+u.\text{ComputeAlarms} \cup \{\text{Alarm}\}\)</span>
+(upstream nodes observe all downstream alarms)</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>Else</strong> (field not found): ERROR</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p><strong>Phase 3</strong>: Validate acyclicity</p>
+<ol class="arabic simple">
+<li><p>Detect cycles using depth-first search with recursion stack:
+<div class="math notranslate nohighlight">
+\[\begin{split} \text{hasCycle}(\mathcal{G}) = \begin{cases} \texttt{true} &amp; \text{if }
+\exists \text{ path } v_1 \to v_2 \to \cdots \to v_n \to v_1 \\
+\texttt{false} &amp; \text{otherwise} \end{cases} \end{split}\]</div>
+</p>
+<ul class="simple">
+<li><p><strong>If</strong> cycle detected: ERROR</p></li>
+</ul>
+</li>
+</ol>
+<p><strong>Phase 4</strong>: Topological sort</p>
+<ol class="arabic simple">
+<li><p>Compute topological ordering <span class="math notranslate nohighlight">\(\pi : \mathcal{V} \to \{0, 1, \ldots,
+|\mathcal{V}|-1\}\)</span> using Kahn’s algorithm:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\text{inDegree}(v) \leftarrow |\{u \in \mathcal{V} : (u,v) \in
+\mathcal{E}\}|\)</span> for all <span class="math notranslate nohighlight">\(v\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(Q \leftarrow \{v \in \mathcal{V} : \text{inDegree}(v) = 0\}\)</span></p></li>
+<li><p><strong>While</strong> <span class="math notranslate nohighlight">\(Q \neq \emptyset\)</span>:</p>
+<ul>
+<li><p>Remove <span class="math notranslate nohighlight">\(v\)</span> from <span class="math notranslate nohighlight">\(Q\)</span>; assign <span class="math notranslate nohighlight">\(\pi(v) \leftarrow \text{order}\)</span>;
+increment order; append <span class="math notranslate nohighlight">\(v\)</span> to sorted list</p></li>
+<li><p>For each <span class="math notranslate nohighlight">\((v, w) \in \mathcal{E}\)</span>: decrement
+<span class="math notranslate nohighlight">\(\text{inDegree}(w)\)</span>; if zero, add <span class="math notranslate nohighlight">\(w\)</span> to <span class="math notranslate nohighlight">\(Q\)</span></p></li>
+</ul>
+</li>
+<li><p><strong>If</strong> <span class="math notranslate nohighlight">\(|\text{sorted}| \neq |\mathcal{V}|\)</span>: ERROR (cycle)</p></li>
+</ul>
+</li>
+<li><p>Return <span class="math notranslate nohighlight">\(\mathcal{G}\)</span> with ordering <span class="math notranslate nohighlight">\(\pi\)</span></p></li>
+</ol>
+</section>
+</section>
+<section id="operator-factory-and-registration">
+<h3>3.2 Operator Factory and Registration<a class="headerlink" href="#operator-factory-and-registration" title="Permalink to this heading"></a></h3>
+<p>The operator factory provides a runtime registry that maps operator type
+names to constructor functions. This enables:</p>
+<ul class="simple">
+<li><p><strong>Decentralized registration</strong>: Operators register themselves via a
+template helper before <code class="docutils literal notranslate"><span class="pre">main()</span></code> executes</p></li>
+<li><p><strong>Dynamic instantiation</strong>: The orchestrator creates operators by name
+without hard-coded switch statements</p></li>
+<li><p><strong>Type-safe dispatch</strong>: The factory selects the correct templated
+specialization based on the input field’s runtime metadata (scalar type,
+rank, memory location)</p></li>
+<li><p><strong>Extensibility</strong>: New operators can be added without modifying
+orchestration code</p></li>
+</ul>
+<section id="templated-operator-specializations">
+<h4>3.2.1 Templated operator specializations<a class="headerlink" href="#templated-operator-specializations" title="Permalink to this heading"></a></h4>
+<p>Analysis operators are class templates parameterized on the concrete Kokkos
+array type <code class="docutils literal notranslate"><span class="pre">ArrayT</span></code> of their primary input field:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">ArrayT</span><span class="o">&gt;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SpatialMaxOp</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">AnalysisOperator</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">};</span>
+</pre></div>
+</div>
+<p>The factory registers all combinations of scalar type (I4/I8/R4/R8), rank
+(1–5), and memory location (Device/Host/Both) for each operator template:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">AnalysisOpFactory</span><span class="o">::</span><span class="n">registerAllArrayVariants</span><span class="o">&lt;</span><span class="n">SpatialMaxOp</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;SpatialMax&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>At operator creation time, the factory inspects the primary upstream Field’s
+metadata to select the matching specialization.</p>
+</section>
+<section id="registration">
+<h4>3.2.2 Registration<a class="headerlink" href="#registration" title="Permalink to this heading"></a></h4>
+<p><strong>Algorithm</strong>: <code class="docutils literal notranslate"><span class="pre">AnalysisOpFactory::registerAllArrayVariants&lt;OpT&gt;(BaseName)</span></code></p>
+<ol class="arabic simple">
+<li><p>Expand <code class="docutils literal notranslate"><span class="pre">OMEGA_ANALYSIS_ARRAY_TYPES</span></code> macro over all (DType, Rank, MemLoc,
+ArrayT) combinations</p></li>
+<li><p>For each combination, call <code class="docutils literal notranslate"><span class="pre">registerOperator</span></code> with key
+<code class="docutils literal notranslate"><span class="pre">baseName</span> <span class="pre">+</span> <span class="pre">&quot;_&quot;</span> <span class="pre">+</span> <span class="pre">ArrayT</span> <span class="pre">+</span> <span class="pre">&quot;_&quot;</span> <span class="pre">+</span> <span class="pre">memloc</span></code> and a lambda that constructs
+<code class="docutils literal notranslate"><span class="pre">OpT&lt;ArrayT&gt;(UpstreamNames,</span> <span class="pre">Options)</span></code></p></li>
+<li><p>Validate key is unique (abort on duplicate)</p></li>
+</ol>
+<p>All base analysis operators are registered at program startup by
+<code class="docutils literal notranslate"><span class="pre">registerAllBaseAnalysisOperators()</span></code>, called from <code class="docutils literal notranslate"><span class="pre">Analysis::init()</span></code>.</p>
+</section>
+<section id="factory-operator-creation">
+<h4>3.2.3 Factory operator creation<a class="headerlink" href="#factory-operator-creation" title="Permalink to this heading"></a></h4>
+<p><strong>Algorithm</strong>: <code class="docutils literal notranslate"><span class="pre">AnalysisOpFactory::createOp</span></code></p>
+<p><strong>Input</strong>: Operator type name, upstream field names, configuration options</p>
+<p><strong>Output</strong>: <code class="docutils literal notranslate"><span class="pre">unique_ptr&lt;AnalysisOperator&gt;</span></code> with the correct typed specialization</p>
+<ol class="arabic simple">
+<li><p>Retrieve the primary upstream Field from the Field registry</p></li>
+<li><p>Extract <code class="docutils literal notranslate"><span class="pre">ArrayDataType</span></code>, rank, and <code class="docutils literal notranslate"><span class="pre">ArrayMemLoc</span></code> from Field metadata</p></li>
+<li><p>Build fully-qualified type key: <code class="docutils literal notranslate"><span class="pre">OpType</span> <span class="pre">+</span> <span class="pre">&quot;_&quot;</span> <span class="pre">+</span> <span class="pre">ArrayTypeName</span> <span class="pre">+</span> <span class="pre">&quot;_&quot;</span> <span class="pre">+</span> <span class="pre">MemLoc</span></code></p></li>
+<li><p>Look up constructor in registry; abort if not found</p></li>
+<li><p>Invoke constructor with <code class="docutils literal notranslate"><span class="pre">(UpstreamNames,</span> <span class="pre">Options)</span></code> and return result</p></li>
+</ol>
+</section>
+</section>
+<section id="runtime-dispatch">
+<h3>3.3 Runtime Dispatch<a class="headerlink" href="#runtime-dispatch" title="Permalink to this heading"></a></h3>
+<p>The main Analysis computational loop is executed every timestep.
+Dependencies are traversed recursively so that upstream operators are always
+fresh when a downstream operator needs them. Caching prevents redundant work
+when multiple downstream operators share an upstream.</p>
+<blockquote>
+<div><p><strong>v1 implementation note:</strong> The loop over <code class="docutils literal notranslate"><span class="pre">SortedOperators</span></code> below assumes
+a topological ordering computed by <code class="docutils literal notranslate"><span class="pre">buildDependencyGraph</span></code>. In v1, nodes
+are iterated in insertion order (which is naturally dependency-correct for
+linearly chained operators). The full topological sort and
+<code class="docutils literal notranslate"><span class="pre">computeRecursive</span></code> are the target design.</p>
+</div></blockquote>
+<p><strong>Algorithm</strong>: <code class="docutils literal notranslate"><span class="pre">Analysis::computeAll</span></code></p>
+<p><strong>Input</strong>: Topologically sorted operator list, current timestamp</p>
+<p><strong>Output</strong>: Updated Analysis fields written to registered output streams</p>
+<ol class="arabic simple">
+<li><p><strong>For</strong> each <span class="math notranslate nohighlight">\(\texttt{Op} \in \texttt{SortedOperators}\)</span>:</p>
+<ul class="simple">
+<li><p><strong>If</strong> any alarm in <span class="math notranslate nohighlight">\(\texttt{Op.ComputeAlarms}\)</span> is ringing:</p>
+<ul>
+<li><p><span class="math notranslate nohighlight">\(\texttt{computeRecursive(Op, TimeStamp)}\)</span></p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><span class="math notranslate nohighlight">\(\texttt{computeRecursive(Op, TimeStamp)}\)</span>:</p>
+<ul class="simple">
+<li><p><strong>If</strong> <span class="math notranslate nohighlight">\(\texttt{Op.FieldComputed}\)</span> <strong>AND</strong>
+<span class="math notranslate nohighlight">\(\texttt{Op.LastComputed == TimeStamp}\)</span>: return (cache hit)</p></li>
+<li><p><strong>For</strong> each <span class="math notranslate nohighlight">\(\texttt{UpstreamOp} \in \texttt{Op.Upstreams}\)</span>:</p>
+<ul>
+<li><p><span class="math notranslate nohighlight">\(\texttt{computeRecursive(UpstreamOp, TimeStamp)}\)</span></p></li>
+</ul>
+</li>
+<li><p><span class="math notranslate nohighlight">\(\texttt{Op.compute(TimeStamp)}\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\texttt{Op.LastComputed} \leftarrow \texttt{TimeStamp}\)</span>;
+<span class="math notranslate nohighlight">\(\texttt{Op.FieldComputed} \leftarrow \texttt{true}\)</span></p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="alarm-model">
+<h3>3.4 Alarm Model<a class="headerlink" href="#alarm-model" title="Permalink to this heading"></a></h3>
+<p>Each <code class="docutils literal notranslate"><span class="pre">OperatorNode</span></code> holds a vector of non-owning alarm pointers
+(<code class="docutils literal notranslate"><span class="pre">vector&lt;Alarm*&gt;</span> <span class="pre">ComputeAlarms</span></code>). An operator is triggered when any of its
+alarms rings.</p>
+<ul class="simple">
+<li><p><strong>Discrete-sampling (non-temporal-reduction) terminal operators</strong>: borrow a
+raw pointer to the write alarm of the associated output stream. The stream
+owns this alarm.</p></li>
+<li><p><strong>Temporal reduction terminal operators</strong>: require two alarms. An
+<strong>accumulation alarm</strong> controls how frequently a sample is added to the
+running sum; its interval is a user-configurable <code class="docutils literal notranslate"><span class="pre">AccumulationInterval</span></code>
+parameter (defaulting to every timestep in v1). An <strong>output alarm</strong>
+(borrowed from the associated stream, as for discrete-sampling operators)
+controls when the accumulated sum is divided by the sample count and
+written to output. Accumulation alarms are owned by the <code class="docutils literal notranslate"><span class="pre">Analysis</span></code> object
+as <code class="docutils literal notranslate"><span class="pre">vector&lt;unique_ptr&lt;Alarm&gt;&gt;</span> <span class="pre">AccumulationAlarms</span></code>. Each temporal reduction
+operator’s <code class="docutils literal notranslate"><span class="pre">ComputeAlarms</span></code> vector contains two pointers: a raw pointer to
+its accumulation alarm and a raw pointer to its output alarm.</p></li>
+<li><p><strong>Intermediate (non-terminal) operators</strong>: receive alarm pointers
+propagated from their downstream operators. Propagation is performed by
+<code class="docutils literal notranslate"><span class="pre">Analysis::propagateAlarmsUpstream()</span></code>, which iterates until no further
+changes occur.</p></li>
+</ul>
+<p>This design ensures alarms have a clear single owner (a stream or the Analysis
+class) while allowing any number of operator nodes to observe them.</p>
+<blockquote>
+<div><p><strong>v1 constraint:</strong> Temporal reduction periods must be evenly divisible into the
+restart interval. This is validated during <code class="docutils literal notranslate"><span class="pre">createAnalysisGroupStreams()</span></code> to
+ensure proper checkpoint/restart behavior.</p>
+</div></blockquote>
+</section>
+<section id="analysisgroup-configuration">
+<h3>3.5 AnalysisGroup Configuration<a class="headerlink" href="#analysisgroup-configuration" title="Permalink to this heading"></a></h3>
+<p>Each child node of the <code class="docutils literal notranslate"><span class="pre">Analysis:</span></code> group in the configuration YAML file
+represents an <code class="docutils literal notranslate"><span class="pre">AnalysisGroup</span></code>. The orchestrator iterates over these nodes during
+initialization and dispatches to the appropriate handler:</p>
+<ul class="simple">
+<li><p><strong>Named pre-defined groups</strong> (e.g. <code class="docutils literal notranslate"><span class="pre">GlobalStats</span></code>): Dispatched by name to
+a derived <code class="docutils literal notranslate"><span class="pre">AnalysisGroup</span></code> subclass. The subclass reads its own config
+parameters and constructs the appropriate operator chains and output
+streams internally.</p></li>
+<li><p><strong>Custom user-defined groups</strong> (future): Config nodes not matching a
+pre-defined name will be parsed as user-defined groups of composable
+operator chains using the full chain-parsing and DAG machinery described
+in Section 3.1.</p></li>
+</ul>
+<p>Example config structure:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Omega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Analysis</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">GlobalStats</span><span class="p">:</span><span class="w">              </span><span class="c1"># pre-defined bundled group</span>
+<span class="w">      </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">Fields</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;NormalVelocity&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;Temperature&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;Salinity&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">SpatialStats</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;Max&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;Min&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;Mean&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;StdDev&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">ReductionPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;1Day&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;1Month&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">SampleFreq</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;1Hour&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">global.stats.$Y</span>
+<span class="w">      </span><span class="nt">Stream</span><span class="p">:</span><span class="w">                 </span><span class="c1"># define optional stream parameters</span>
+<span class="w">        </span><span class="nt">FileFreq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">        </span><span class="nt">FileFreqUnits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">years</span>
+<span class="w">    </span><span class="nt">MyCustomGroup</span><span class="p">:</span><span class="w">            </span><span class="c1"># future: user-defined composable group</span>
+<span class="w">      </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">OperatorChains</span><span class="p">:</span><span class="w">         </span><span class="c1"># final DSL syntax to be determined</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;FieldA_Op1_Op2(FieldB)&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;Op3(FieldC,FieldD)_Op4&quot;</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">custom.analysis.$Y.$M</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="configuration">
+<h4>4.1.1 Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">Analysis</span></code> config node is a map of group names to group-specific config
+sub-nodes. Each group sub-node must contain at minimum an <code class="docutils literal notranslate"><span class="pre">Enable</span></code> boolean
+key. Additional keys are group-specific. The <code class="docutils literal notranslate"><span class="pre">AnalysisGroup</span></code> base class
+provides a <code class="docutils literal notranslate"><span class="pre">StreamParams</span></code> helper for translating group config options into
+<code class="docutils literal notranslate"><span class="pre">IOStream::create</span></code> arguments. Each group may generate multiple output
+streams depending on its configuration; for example, a <code class="docutils literal notranslate"><span class="pre">GlobalStats</span></code> group
+with multiple reduction periods (e.g., <code class="docutils literal notranslate"><span class="pre">[&quot;1Day&quot;,</span> <span class="pre">&quot;1Month&quot;]</span></code>) will create
+separate streams for each period, grouping operator chains by their output
+frequency and whether they perform temporal reduction (e.g., TimeMeanOp) or
+discrete sampling (i.e., instantaneous snapshots).</p>
+</section>
+<section id="classes">
+<h4>4.1.2 Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h4>
+<section id="analysisoperator">
+<h5>AnalysisOperator<a class="headerlink" href="#analysisoperator" title="Permalink to this heading"></a></h5>
+<p>The <code class="docutils literal notranslate"><span class="pre">AnalysisOperator</span></code> class is the abstract base class from which all
+concrete operators are derived. It is parameterized on the Kokkos array
+type <code class="docutils literal notranslate"><span class="pre">ArrayT</span></code> in derived classes. Output field data arrays are allocated as
+members of the derived class and created in the constructor; the Field
+registry entry is also created at construction time. The <code class="docutils literal notranslate"><span class="pre">initialize()</span></code>
+method is called after all fields exist, primarily to store mesh/env
+pointers needed by <code class="docutils literal notranslate"><span class="pre">compute()</span></code>.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Temporal operators have an accumulation phase and an operation/output phase</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">AnalysisOperator</span><span class="w"> </span><span class="p">{</span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span>
+<span class="w">   </span><span class="n">AnalysisOperator</span><span class="p">();</span>
+
+<span class="w">   </span><span class="o">~</span><span class="n">AnalysisOperator</span><span class="p">();</span>
+
+<span class="w">   </span><span class="c1">/// Return name for this operator type</span>
+<span class="w">   </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="nf">getOperatorType</span><span class="p">();</span>
+
+<span class="w">   </span><span class="c1">/// Return unique name for this operator instance.</span>
+<span class="w">   </span><span class="c1">/// Derived from the concatenated upstream field names and operator type,</span>
+<span class="w">   </span><span class="c1">/// e.g. &quot;Temperature_SpatialMean_TimeMean1Day&quot;</span>
+<span class="w">   </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="nf">getName</span><span class="p">();</span>
+
+<span class="w">   </span><span class="c1">/// Return names of fields required by this operator</span>
+<span class="w">   </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">getInputFieldNames</span><span class="p">();</span>
+
+<span class="w">   </span><span class="c1">/// Return names of output fields produced by this operator</span>
+<span class="w">   </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">getOutputFieldNames</span><span class="p">();</span>
+
+<span class="w">   </span><span class="c1">/// Returns true if the output field has already been computed for TimeStamp</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="nf">isCacheValid</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TimeStamp</span><span class="p">);</span>
+
+<span class="w">   </span><span class="c1">/// Initialize operator: store mesh/env pointers needed by compute().</span>
+<span class="w">   </span><span class="k">virtual</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">MachEnv</span><span class="w"> </span><span class="o">*</span><span class="n">InEnv</span><span class="p">,</span>
+<span class="w">                           </span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span>
+<span class="w">                           </span><span class="k">const</span><span class="w"> </span><span class="n">VertCoord</span><span class="w"> </span><span class="o">*</span><span class="n">VCoord</span><span class="p">,</span>
+<span class="w">                           </span><span class="n">Config</span><span class="w"> </span><span class="n">Options</span><span class="p">);</span>
+
+<span class="w">   </span><span class="c1">/// Set period alarm for temporal reduction operators</span>
+<span class="w">   </span><span class="c1">/// Default implementation does nothing (non-temporal operators ignore this)</span>
+<span class="w">   </span><span class="k">virtual</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setPeriodAlarm</span><span class="p">(</span><span class="n">Alarm</span><span class="w"> </span><span class="o">*</span><span class="n">Alarm</span><span class="p">);</span>
+
+<span class="w">   </span><span class="c1">/// Perform computation of Analysis fields. Retrieves input data from the</span>
+<span class="w">   </span><span class="c1">/// Field registry using input field names. Writes to operator-owned output</span>
+<span class="w">   </span><span class="c1">/// arrays which are attached to the Field registry.</span>
+<span class="w">   </span><span class="k">virtual</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TimeStamp</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+
+<span class="w"> </span><span class="k">protected</span><span class="o">:</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">OperatorTypeName</span><span class="p">;</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">InstanceName</span><span class="p">;</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">InputNames</span><span class="p">;</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">OutputNames</span><span class="p">;</span>
+
+<span class="w">   </span><span class="n">TimeInstant</span><span class="w"> </span><span class="n">LastComputed</span><span class="p">;</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">FieldComputed</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Helper utilities for building operator <code class="docutils literal notranslate"><span class="pre">Config</span></code> objects inline:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Create a Config from key-value pairs</span>
+<span class="c1">// Usage: makeOpConfig(opParam(&quot;Period&quot;, &quot;1day&quot;), opParam(&quot;Layer&quot;, 10))</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span>
+<span class="n">OpParam</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">opParam</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Key</span><span class="p">,</span><span class="w"> </span><span class="n">T</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">Value</span><span class="p">);</span>
+
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="p">,</span><span class="w"> </span><span class="k">typename</span><span class="p">...</span><span class="w"> </span><span class="n">Args</span><span class="o">&gt;</span>
+<span class="n">Config</span><span class="w"> </span><span class="n">makeOpConfig</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">T</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">Param</span><span class="p">,</span><span class="w"> </span><span class="n">Args</span><span class="p">...</span><span class="w"> </span><span class="n">OtherArgs</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>These helpers enable in-code construction of <code class="docutils literal notranslate"><span class="pre">Config</span></code> objects for passing
+parameters to operator constructors, using the same YAML-based <code class="docutils literal notranslate"><span class="pre">Config</span></code>
+interface that reads from configuration files. This provides a uniform
+parameter-passing mechanism: operators receive a <code class="docutils literal notranslate"><span class="pre">Config</span></code> object whether
+instantiated from user config or programmatically by a bundled
+<code class="docutils literal notranslate"><span class="pre">AnalysisGroup</span></code>. The pattern avoids constructor signature proliferation as
+operators gain parameters, maintains type safety via <code class="docutils literal notranslate"><span class="pre">Config::get&lt;T&gt;()</span></code>, and
+allows operator-specific validation and defaults to be centralized in the
+constructor.</p>
+</section>
+<section id="example-derived-operator-spatialmaxop">
+<h5>Example derived operator — SpatialMaxOp<a class="headerlink" href="#example-derived-operator-spatialmaxop" title="Permalink to this heading"></a></h5>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">ArrayT</span><span class="o">&gt;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SpatialMaxOp</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">AnalysisOperator</span><span class="w"> </span><span class="p">{</span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span>
+<span class="w">   </span><span class="k">using</span><span class="w"> </span><span class="n">ScalarT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">ArrayT</span><span class="o">::</span><span class="n">non_const_value_type</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">/// Constructor: sets InputNames, creates output Field and data array.</span>
+<span class="w">   </span><span class="c1">/// InstanceName = UpstreamNames[0] + &quot;_SpatialMax&quot;</span>
+<span class="w">   </span><span class="n">SpatialMaxOp</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">UpstreamNames</span><span class="p">,</span>
+<span class="w">                </span><span class="n">Config</span><span class="w"> </span><span class="n">Options</span><span class="p">);</span>
+
+<span class="w">   </span><span class="c1">/// Retrieves typed input array from the Field registry and calls</span>
+<span class="w">   </span><span class="c1">/// globalMaxVal() to compute the MPI-global maximum.</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TimeStamp</span><span class="p">)</span><span class="w"> </span><span class="k">override</span><span class="p">;</span>
+
+<span class="w"> </span><span class="k">private</span><span class="o">:</span>
+<span class="w">   </span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">;</span>
+<span class="w">   </span><span class="k">const</span><span class="w"> </span><span class="n">VertCoord</span><span class="w"> </span><span class="o">*</span><span class="n">VCoord</span><span class="p">;</span>
+<span class="w">   </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">/// Output data — one scalar value stored as a 1D Array of length 1</span>
+<span class="w">   </span><span class="k">typename</span><span class="w"> </span><span class="nc">Array1D</span><span class="o">&lt;</span><span class="n">ScalarT</span><span class="o">&gt;::</span><span class="n">type</span><span class="w"> </span><span class="n">OutputData</span><span class="p">;</span>
+<span class="w">   </span><span class="n">ScalarT</span><span class="w"> </span><span class="n">SpatialMax</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
+<section id="analysisopfactory">
+<h5>AnalysisOpFactory<a class="headerlink" href="#analysisopfactory" title="Permalink to this heading"></a></h5>
+<p>Factory class for creating <code class="docutils literal notranslate"><span class="pre">AnalysisOperator</span></code> instances. The class
+itself is a singleton with all static methods; internally it maintains a
+Meyer’s singleton registry map. The factory dispatches to the correct
+templated specialization at runtime by inspecting the primary upstream
+Field’s metadata.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">AnalysisOpFactory</span><span class="w"> </span><span class="p">{</span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span>
+<span class="w">   </span><span class="k">using</span><span class="w"> </span><span class="n">CreatorFunc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">AnalysisOperator</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">       </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">UpstreamNames</span><span class="p">,</span><span class="w"> </span><span class="n">Config</span><span class="w"> </span><span class="n">Options</span><span class="p">)</span><span class="o">&gt;</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">/// Register a single operator variant by string label</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">registerOperator</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Label</span><span class="p">,</span>
+<span class="w">                                </span><span class="n">CreatorFunc</span><span class="w"> </span><span class="n">Creator</span><span class="p">);</span>
+
+<span class="w">   </span><span class="c1">/// Create an operator instance. Inspects Field metadata of UpstreamNames[0]</span>
+<span class="w">   </span><span class="c1">/// to select the correct templated specialization.</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">AnalysisOperator</span><span class="o">&gt;</span><span class="w"> </span><span class="n">createOp</span><span class="p">(</span>
+<span class="w">       </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">OpType</span><span class="p">,</span>
+<span class="w">       </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">UpstreamNames</span><span class="p">,</span>
+<span class="w">       </span><span class="n">Config</span><span class="w"> </span><span class="n">Options</span>
+<span class="w">   </span><span class="p">);</span>
+
+<span class="w">   </span><span class="c1">/// Register all scalar type × rank × memory location variants of a</span>
+<span class="w">   </span><span class="c1">/// templated operator class.</span>
+<span class="w">   </span><span class="c1">/// Usage: registerAllArrayVariants&lt;SpatialMaxOp&gt;(&quot;SpatialMax&quot;);</span>
+<span class="w">   </span><span class="k">template</span><span class="o">&lt;</span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="o">&gt;</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">OperatorTemplate</span><span class="o">&gt;</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">registerAllArrayVariants</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">BaseName</span><span class="p">);</span>
+
+<span class="w">   </span><span class="c1">/// Check if operator type is registered</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">hasOperator</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Type</span><span class="p">);</span>
+
+<span class="w"> </span><span class="k">private</span><span class="o">:</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">CreatorFunc</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">registry</span><span class="p">();</span><span class="w"> </span><span class="c1">// Meyer&#39;s singleton</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="nf">getArrayTypeName</span><span class="p">(</span><span class="n">ArrayDataType</span><span class="w"> </span><span class="n">DType</span><span class="p">,</span>
+<span class="w">                                       </span><span class="n">I4</span><span class="w"> </span><span class="n">Rank</span><span class="p">,</span>
+<span class="w">                                       </span><span class="n">ArrayMemLoc</span><span class="w"> </span><span class="n">MemLoc</span><span class="p">);</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>All base analysis operators are registered by calling:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Analysis::registerAllBaseAnalysisOperators</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>from <code class="docutils literal notranslate"><span class="pre">Analysis::init()</span></code> before any operators are instantiated.</p>
+</section>
+<section id="operatornode">
+<h5>OperatorNode<a class="headerlink" href="#operatornode" title="Permalink to this heading"></a></h5>
+<p>Internal representation of a node in the Analysis operator graph.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span><span class="w"> </span><span class="nc">OperatorNode</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">AnalysisOperator</span><span class="o">&gt;</span><span class="w"> </span><span class="n">Op</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Operator instance (owned)</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">OperatorNode</span><span class="o">*&gt;</span><span class="w"> </span><span class="n">Upstreams</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Upstream dependencies (non-owning)</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">StreamNames</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Associated output stream names</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Alarm</span><span class="o">*&gt;</span><span class="w"> </span><span class="n">ComputeAlarms</span><span class="p">;</span><span class="w">    </span><span class="c1">///&lt; Alarms triggering compute (non-owning)</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Operators with a non-empty <code class="docutils literal notranslate"><span class="pre">StreamNames</span></code> vector are terminal nodes whose
+output is written to one or more output streams. Operators with an empty
+<code class="docutils literal notranslate"><span class="pre">StreamNames</span></code> vector are intermediate nodes computed on demand when a
+downstream alarm rings.</p>
+</section>
+<section id="analysisgroup">
+<h5>AnalysisGroup<a class="headerlink" href="#analysisgroup" title="Permalink to this heading"></a></h5>
+<p><code class="docutils literal notranslate"><span class="pre">AnalysisGroup</span></code> is the abstract base class for bundled analysis groups. In
+v1, concrete derived classes (e.g. <code class="docutils literal notranslate"><span class="pre">GlobalStats</span></code>) encapsulate the config
+parsing, operator construction, and stream creation for a named analysis
+group. In the future, the same base class will support user-defined custom
+groups specified entirely in config, where the user supplies composable
+operator chains within the group’s config node.</p>
+<p>The base class provides a <code class="docutils literal notranslate"><span class="pre">StreamParams</span></code> helper for translating group config
+into <code class="docutils literal notranslate"><span class="pre">IOStream::create</span></code> arguments, and <code class="docutils literal notranslate"><span class="pre">createAnalysisGroupStreams()</span></code> which
+groups operator chains by their output period and type, validates temporal
+reduction periods against the restart interval, and creates the associated
+<code class="docutils literal notranslate"><span class="pre">IOStream</span></code> objects.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">AnalysisGroup</span><span class="w"> </span><span class="p">{</span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span>
+<span class="w">   </span><span class="k">virtual</span><span class="w"> </span><span class="o">~</span><span class="n">AnalysisGroup</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">default</span><span class="p">;</span>
+
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="nf">getName</span><span class="p">();</span>
+
+<span class="w">   </span><span class="c1">/// Groups operator chains by stream characteristics, creates IOStream</span>
+<span class="w">   </span><span class="c1">/// objects, associates operator output fields with streams, and stores</span>
+<span class="w">   </span><span class="c1">/// AnalysisStream metadata on the Analysis orchestrator.</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">createAnalysisGroupStreams</span><span class="p">(</span>
+<span class="w">       </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">GroupName</span><span class="p">,</span>
+<span class="w">       </span><span class="n">Config</span><span class="w"> </span><span class="o">&amp;</span><span class="n">AnalysisGroupOptions</span><span class="p">,</span>
+<span class="w">       </span><span class="n">Analysis</span><span class="w"> </span><span class="o">*</span><span class="n">AnalysisMgr</span>
+<span class="w">   </span><span class="p">);</span>
+
+<span class="w"> </span><span class="k">protected</span><span class="o">:</span>
+<span class="w">   </span><span class="c1">/// Metadata about a single operator chain within this group</span>
+<span class="w">   </span><span class="k">struct</span><span class="w"> </span><span class="nc">OpChainInfo</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">ChainStr</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Operator instance name (output field name)</span>
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">FreqStr</span><span class="p">;</span><span class="w">  </span><span class="c1">///&lt; Period/frequency string, e.g. &quot;1day&quot;, &quot;6hour&quot;</span>
+<span class="w">      </span><span class="kt">bool</span><span class="w"> </span><span class="n">IsTimeReduction</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; true = temporal reduction; false = discrete sample</span>
+<span class="w">   </span><span class="p">};</span>
+
+<span class="w">   </span><span class="c1">/// Template for constructing an IOStream config for this group&#39;s output</span>
+<span class="w">   </span><span class="k">struct</span><span class="w"> </span><span class="nc">StreamParams</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">StreamParams</span><span class="p">();</span><span class="w">  </span><span class="c1">// default values for all IOStream options</span>
+<span class="w">      </span><span class="kt">void</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Overrides</span><span class="p">);</span>
+<span class="w">      </span><span class="n">Config</span><span class="w"> </span><span class="nf">toConfig</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">Params</span><span class="p">;</span>
+<span class="w">   </span><span class="p">};</span>
+
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">GroupName</span><span class="p">;</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">OpChainInfo</span><span class="o">&gt;</span><span class="w"> </span><span class="n">OpChainInfos</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; All operator chains in this group</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
+<section id="globalstats-derived-analysisgroup">
+<h5>GlobalStats (derived AnalysisGroup)<a class="headerlink" href="#globalstats-derived-analysisgroup" title="Permalink to this heading"></a></h5>
+<p><code class="docutils literal notranslate"><span class="pre">GlobalStats</span></code> is the first concrete <code class="docutils literal notranslate"><span class="pre">AnalysisGroup</span></code> subclass. It reads
+<code class="docutils literal notranslate"><span class="pre">Fields</span></code>, <code class="docutils literal notranslate"><span class="pre">SpatialStats</span></code>, <code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code>, and <code class="docutils literal notranslate"><span class="pre">SampleFreq</span></code> from the group
+config and constructs a matrix of spatial-reduction operator chains, each
+optionally followed by a temporal reduction operator. The <code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code>
+parameter specifies temporal reduction intervals (e.g., “1Day”, “1Month”)
+for outputs computed by temporal reduction operators such as <code class="docutils literal notranslate"><span class="pre">TimeMeanOp</span></code>,
+while the <code class="docutils literal notranslate"><span class="pre">SampleFreq</span></code> parameter specifies discrete sampling intervals for
+instantaneous snapshots of the analysis fields.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">GlobalStats</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">AnalysisGroup</span><span class="w"> </span><span class="p">{</span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span>
+<span class="w">   </span><span class="n">GlobalStats</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">GroupName</span><span class="p">,</span>
+<span class="w">               </span><span class="n">Config</span><span class="w"> </span><span class="o">&amp;</span><span class="n">AnalysisGroupOptions</span><span class="p">,</span>
+<span class="w">               </span><span class="n">Analysis</span><span class="w"> </span><span class="o">*</span><span class="n">AnalysisMgr</span><span class="p">);</span>
+<span class="w">   </span><span class="o">~</span><span class="n">GlobalStats</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">default</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>For each <code class="docutils literal notranslate"><span class="pre">(field,</span> <span class="pre">stat,</span> <span class="pre">period)</span></code> combination, the constructor builds a chain
+string of the form <code class="docutils literal notranslate"><span class="pre">FieldName_SpatialStat_TimeMeanPeriod</span></code> and calls
+<code class="docutils literal notranslate"><span class="pre">AnalysisMgr-&gt;parseChainAndBuildOps()</span></code>. For each
+<code class="docutils literal notranslate"><span class="pre">(field,</span> <span class="pre">stat,</span> <span class="pre">samplefreq)</span></code> combination, it builds <code class="docutils literal notranslate"><span class="pre">FieldName_SpatialStat</span></code> chains.
+After all chains are registered, it calls <code class="docutils literal notranslate"><span class="pre">createAnalysisGroupStreams()</span></code>.</p>
+</section>
+<section id="id1">
+<h5>Analysis<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h5>
+<p><code class="docutils literal notranslate"><span class="pre">Analysis</span></code> is the top-level orchestrator class. It owns the <code class="docutils literal notranslate"><span class="pre">OperatorNode</span></code>
+list, the accumulation alarms for temporal reduction operators. It is
+responsible for reading the config, constructing <code class="docutils literal notranslate"><span class="pre">AnalysisGroup</span></code> instances,
+resolving operator dependencies, and scheduling compute calls via the
+alarm system.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Analysis</span><span class="w"> </span><span class="p">{</span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span>
+<span class="w">   </span><span class="c1">/// Initialize the Analysis module: register all base operators,</span>
+<span class="w">   </span><span class="c1">/// retrieve mesh/vertcoord/clock, create the Default Analysis instance.</span>
+<span class="w">   </span><span class="c1">/// Must be called after HorzMesh, VertCoord, and TimeStepper are initialized.</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">init</span><span class="p">();</span>
+
+<span class="w">   </span><span class="c1">/// Create a named Analysis instance</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">Analysis</span><span class="w"> </span><span class="o">*</span><span class="nf">create</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">,</span>
+<span class="w">                           </span><span class="k">const</span><span class="w"> </span><span class="n">MachEnv</span><span class="w"> </span><span class="o">*</span><span class="n">Env</span><span class="p">,</span>
+<span class="w">                           </span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span>
+<span class="w">                           </span><span class="k">const</span><span class="w"> </span><span class="n">VertCoord</span><span class="w"> </span><span class="o">*</span><span class="n">VCoord</span><span class="p">,</span>
+<span class="w">                           </span><span class="n">Clock</span><span class="w"> </span><span class="o">*</span><span class="n">ModelClock</span><span class="p">,</span>
+<span class="w">                           </span><span class="n">Config</span><span class="w"> </span><span class="o">*</span><span class="n">Options</span><span class="p">);</span>
+
+<span class="w">   </span><span class="c1">/// Called each timestep to trigger all operators whose alarms are ringing</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">computeAll</span><span class="p">();</span>
+
+<span class="w">   </span><span class="c1">/// Parse an underscore-delimited operator chain string and register all</span>
+<span class="w">   </span><span class="c1">/// operators in the chain that do not yet exist as Fields</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">parseChainAndBuildOps</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">OpChainStr</span><span class="p">);</span>
+
+<span class="w">   </span><span class="c1">/// Instantiate a single operator and append it as an OperatorNode</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">registerAnalysisOp</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">OpName</span><span class="p">,</span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">UpstreamNames</span><span class="p">,</span>
+<span class="w">                            </span><span class="n">Config</span><span class="w"> </span><span class="n">Options</span><span class="p">);</span>
+
+<span class="w">   </span><span class="c1">/// Get a pointer to the model clock (used by AnalysisGroup for stream creation)</span>
+<span class="w">   </span><span class="n">Clock</span><span class="w"> </span><span class="o">*&amp;</span><span class="nf">getModelClock</span><span class="p">();</span>
+
+<span class="w">   </span><span class="c1">/// Check whether a node with FullOpName is already registered</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="nf">OpNodeExists</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">FullOpName</span><span class="p">);</span>
+
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">Analysis</span><span class="w"> </span><span class="o">*</span><span class="nf">getDefault</span><span class="p">();</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">finalize</span><span class="p">();</span>
+<span class="w">   </span><span class="o">~</span><span class="n">Analysis</span><span class="p">();</span>
+
+<span class="w"> </span><span class="k">private</span><span class="o">:</span>
+<span class="w">   </span><span class="c1">/// Accumulation alarms owned by Analysis for temporal reduction operators</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">Alarm</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">AccumulationAlarms</span><span class="p">;</span>
+
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">Analysis</span><span class="w"> </span><span class="o">*</span><span class="n">DefAnalysis</span><span class="p">;</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">Analysis</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">AllAnalysisObjects</span><span class="p">;</span>
+
+<span class="w">   </span><span class="n">Analysis</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">,</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="n">MachEnv</span><span class="w"> </span><span class="o">*</span><span class="n">Env</span><span class="p">,</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="n">VertCoord</span><span class="w"> </span><span class="o">*</span><span class="n">VCoord</span><span class="p">,</span>
+<span class="w">            </span><span class="n">Clock</span><span class="w"> </span><span class="o">*</span><span class="n">ModelClock</span><span class="p">,</span>
+<span class="w">            </span><span class="n">Config</span><span class="w"> </span><span class="o">*</span><span class="n">Options</span><span class="p">);</span>
+
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Name</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Clock</span><span class="w"> </span><span class="o">*</span><span class="n">ModelClock</span><span class="p">;</span>
+<span class="w">   </span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">;</span>
+<span class="w">   </span><span class="k">const</span><span class="w"> </span><span class="n">VertCoord</span><span class="w"> </span><span class="o">*</span><span class="n">VCoord</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">/// All registered operator nodes</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">OperatorNode</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">OpNodes</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">// Private Methods</span>
+
+<span class="w">   </span><span class="c1">/// Register all built-in operator types with the AnalysisOpFactory</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">registerAllBaseAnalysisOperators</span><span class="p">();</span>
+
+<span class="w">   </span><span class="c1">/// Post-hoc dependency resolution: match input field names against</span>
+<span class="w">   </span><span class="c1">/// other nodes&#39; output field names to populate Upstreams vectors.</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">buildOperatorDependencies</span><span class="p">();</span>
+
+<span class="w">   </span><span class="c1">/// Set ComputeAlarms on terminal nodes and propagate alarms upstream.</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">setComputeAlarms</span><span class="p">();</span>
+
+<span class="w">   </span><span class="c1">/// Iteratively propagate downstream alarms to upstream nodes</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">propagateAlarmsUpstream</span><span class="p">();</span>
+
+<span class="w">   </span><span class="n">Analysis</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Analysis</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">delete</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Analysis</span><span class="p">(</span><span class="n">Analysis</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="p">)</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="k">delete</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="operator-chain-string-convention">
+<h3>4.2 Operator chain string convention<a class="headerlink" href="#operator-chain-string-convention" title="Permalink to this heading"></a></h3>
+<p>Operator instance names (and the names of the Fields they produce) follow
+the convention that each component is separated by an underscore character:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">FieldName_Op1</span><span class="p">[</span><span class="n">Params</span><span class="p">]</span><span class="n">_Op2</span><span class="p">[</span><span class="n">Params</span><span class="p">]</span><span class="o">...</span>
+</pre></div>
+</div>
+<p>Examples:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Temperature_SpatialMax</span></code> — spatial maximum of Temperature</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NormalVelocity_SpatialMean_TimeMean1day</span></code> — 1-day time average of the
+spatial mean of NormalVelocity</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PseudoThickness_SpatialStdDev</span></code> — spatial standard deviation of
+PseudoThickness (implicitly requires <code class="docutils literal notranslate"><span class="pre">PseudoThickness_SpatialMean</span></code> as a
+shared intermediate)</p></li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">parseChainAndBuildOps()</span></code> method splits on <code class="docutils literal notranslate"><span class="pre">_</span></code>, reconstructs the running
+prefix at each node, and creates an operator only if the corresponding output
+Field does not already exist — enabling natural sharing of intermediate
+results without an explicit signature cache.</p>
+<blockquote>
+<div><p><strong>Note on operator chain syntax</strong>: The exact form of operator chain strings
+shown in examples throughout this document represents a preliminary syntax
+for the v1 implementation. The final syntax for fully composable
+user-defined operator chains will be refined in future versions. The current
+v1 implementation focuses on pre-defined bundled groups (e.g.,
+<code class="docutils literal notranslate"><span class="pre">GlobalStats</span></code>) with group-specific configuration parameters.</p>
+</div></blockquote>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test-individual-operator-correctness">
+<h3>5.1 Test: Individual operator correctness<a class="headerlink" href="#test-individual-operator-correctness" title="Permalink to this heading"></a></h3>
+<p>For each operator type (SpatialMax, SpatialMin, SpatialMean, SpatialStdDev,
+TimeMean in the first batch), construct a small test mesh with analytic field
+values. Call <code class="docutils literal notranslate"><span class="pre">compute()</span></code> directly and verify output against a known-answer
+solution. For TimeMean specifically, verify accumulation over multiple
+timesteps, verify correct mean calculation at period end, and test with
+different <code class="docutils literal notranslate"><span class="pre">AccumulationInterval</span></code> settings. This unit test validates each
+operator in isolation before integration testing.</p>
+</section>
+<section id="test-dependency-resolution-and-execution-order">
+<h3>5.2 Test: Dependency resolution and execution order<a class="headerlink" href="#test-dependency-resolution-and-execution-order" title="Permalink to this heading"></a></h3>
+<p>Create configurations with shared intermediate operators (e.g.,
+<code class="docutils literal notranslate"><span class="pre">Field_SpatialMean_TimeMean1day</span></code> and <code class="docutils literal notranslate"><span class="pre">Field_SpatialStdDev</span></code> both requiring
+<code class="docutils literal notranslate"><span class="pre">Field_SpatialMean</span></code>). Verify that <code class="docutils literal notranslate"><span class="pre">buildOperatorDependencies()</span></code> correctly
+populates the <code class="docutils literal notranslate"><span class="pre">Upstreams</span></code> vectors, that intermediate results are computed
+exactly once per timestep (cache validation), and that upstream operators
+complete before downstream operators execute (correct execution order). This
+test verifies DAG construction and cache-based deduplication.</p>
+</section>
+<section id="test-alarm-system">
+<h3>5.3 Test: Alarm system<a class="headerlink" href="#test-alarm-system" title="Permalink to this heading"></a></h3>
+<p>Create operators with multiple downstream consumers at different frequencies.
+Verify that <code class="docutils literal notranslate"><span class="pre">propagateAlarmsUpstream()</span></code> correctly propagates alarms from
+terminal nodes to all upstream dependencies. Verify that <code class="docutils literal notranslate"><span class="pre">setPeriodAlarm()</span></code>
+correctly injects period alarms for temporal reduction operators. Verify that
+TimeMeanOp correctly accumulates samples during the accumulation phase and
+finalizes when the period alarm rings. Verify that operators with multiple
+alarms in <code class="docutils literal notranslate"><span class="pre">ComputeAlarms</span></code> trigger when ANY alarm rings. Verify that
+intermediate (non-terminal) operators with empty <code class="docutils literal notranslate"><span class="pre">StreamNames</span></code> are computed
+on-demand when downstream alarms ring and do not create output files. This
+test verifies the alarm-driven scheduling mechanism.</p>
+</section>
+<section id="test-factory-registration-and-type-dispatch">
+<h3>5.4 Test: Factory registration and type dispatch<a class="headerlink" href="#test-factory-registration-and-type-dispatch" title="Permalink to this heading"></a></h3>
+<p>Verify that all base analysis operators register correctly via
+<code class="docutils literal notranslate"><span class="pre">registerAllBaseAnalysisOperators()</span></code>. Verify that the factory can instantiate
+operators for all supported array types (I4/I8/R4/R8, ranks 1-5,
+Device/Host/Both). Verify that <code class="docutils literal notranslate"><span class="pre">AnalysisOpFactory::createOp()</span></code> correctly
+inspects upstream Field metadata (scalar type, rank, memory location) and
+selects the matching template specialization. Verify that appropriate errors
+are produced when requesting unregistered operator types or array type
+combinations. This test verifies the extensibility mechanism and type-safe
+dispatch.</p>
+</section>
+<section id="test-configuration-parsing-and-validation">
+<h3>5.5 Test: Configuration parsing and validation<a class="headerlink" href="#test-configuration-parsing-and-validation" title="Permalink to this heading"></a></h3>
+<p>Verify that <code class="docutils literal notranslate"><span class="pre">parseChainAndBuildOps()</span></code> correctly handles valid operator chain
+strings and reuses existing intermediate Fields rather than creating
+duplicates. Verify that <code class="docutils literal notranslate"><span class="pre">parseChainAndBuildOps()</span></code> produces informative error
+messages for unrecognized operator names or missing input fields. Verify that
+<code class="docutils literal notranslate"><span class="pre">makeOpConfig()</span></code> and <code class="docutils literal notranslate"><span class="pre">opParam()</span></code> helper functions correctly construct Config
+objects for inline parameter passing. Verify that operator constructors
+correctly extract and validate parameters from Config objects, with appropriate
+error handling for missing required parameters or invalid types. Verify that
+<code class="docutils literal notranslate"><span class="pre">createAnalysisGroupStreams()</span></code> correctly groups operator chains by period and
+type, validates temporal reduction periods against the restart interval via
+<code class="docutils literal notranslate"><span class="pre">TimeInterval::isDivisibleBy()</span></code>, and creates the expected set of IOStream
+objects. Verify that <code class="docutils literal notranslate"><span class="pre">StreamParams::apply()</span></code> correctly overrides default stream
+parameters with group-specific configuration. This test verifies the user
+interface and configuration system.</p>
+</section>
+<section id="test-end-to-end-integration">
+<h3>5.6 Test: End-to-end integration<a class="headerlink" href="#test-end-to-end-integration" title="Permalink to this heading"></a></h3>
+<p>Complete system test exercising all components from configuration parsing
+through NetCDF output for global statistics. Advance the clock through one
+or more output periods, and verify that output files contain the expected
+fields with correct values. This test validates the complete workflow with
+real mesh and I/O.</p>
+</section>
+<section id="test-advanced-dag-features-future">
+<h3>5.7 Test: Advanced DAG features (future)<a class="headerlink" href="#test-advanced-dag-features-future" title="Permalink to this heading"></a></h3>
+<p>Once the full DAG construction algorithm is implemented, create configurations
+with circular dependencies and verify that cycle detection produces appropriate
+errors. Test signature-based deduplication to ensure structurally equivalent
+operators are merged into single nodes. Verify formal topological sort produces
+correct execution ordering for complex DAGs. This test validates future
+enhancements to dependency resolution.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="OmegaV1GoverningEqns.html" class="btn btn-neutral float-left" title="Omega V1: Governing Equations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Broadcast.html" class="btn btn-neutral float-right" title="Broadcast" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
