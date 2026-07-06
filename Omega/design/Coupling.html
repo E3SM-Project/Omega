@@ -1,0 +1,745 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Surface Coupling &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="DataTypes" href="DataTypes.html" />
+    <link rel="prev" title="Config" href="Config.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Forcing.html">Forcing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Testing.html">Testing Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/ParallelLoops.html">Parallel loops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/PGrad.html">Pressure Gradient (PGrad)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Forcing.html">Forcing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OmegaV1GoverningEqns.html">Omega V1: Governing Equations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Surface Coupling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-own-coupling-field-storage">2.1 Requirement: Own coupling field storage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-clean-driver-boundary">2.2 Requirement: Clean driver boundary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-field-system-integration">2.3 Requirement: Field system integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-per-coupling-interval-operations">2.4 Requirement: Per-coupling-interval operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-driver-architecture-agnosticism">2.5 Requirement: Driver architecture agnosticism</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-coupling-interval-tracking">2.6 Requirement: Coupling interval tracking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-coupler-conversion-layer">2.7 Requirement: Coupler conversion layer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-extensible-design">2.8 Requirement: Extensible design</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#creation-and-initialization">4.2.1 Creation and Initialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#retrieval">4.2.2 Retrieval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#attaching-coupler-data">4.2.3 Attaching coupler data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#import-apply-update-export">4.2.4 Import, Apply, Update, Export</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#conversion-methods">4.2.5 Conversion Methods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#destruction-and-removal">4.2.6 Destruction and removal</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#driver-interface-bridge">4.3 Driver Interface Bridge</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#name-based-field-index-mapping">4.3.1 Name-based Field Index Mapping</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#interval-accumulation">4.4 Interval Accumulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#extensibility">4.5 Extensibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-import-round-trip">5.1 Test: Import round-trip</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-apply-imported-fields-to-forcing">5.2 Test: Apply imported fields to Forcing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-running-average-accumulation-and-conversion">5.3 Test: Running-average accumulation and conversion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-export-round-trip-and-reset">5.4 Test: Export round-trip and reset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-object-lifecycle">5.5 Test: Object lifecycle</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="StateValidation.html">Ocean State Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SubmesoscaleEddies.html">Submesoscale Eddy Parameterization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Surface Coupling</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/Coupling.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="surface-coupling">
+<span id="omega-design-ocn-coupler"></span><h1>Surface Coupling<a class="headerlink" href="#surface-coupling" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code> class manages all fields exchanged between Omega and
+the coupled system (via MCT or MOAB drivers). It owns import and export
+coupling field arrays, unpacks driver attribute-vector data into typed
+Omega arrays, applies imported fields to internal forcing state,
+accumulates export fields over each coupling interval, and repacks them
+for the driver. The design cleanly separates driver-specific operations
+(handled in a Fortran/C++ bridge layer) from the C++ class, is agnostic
+to the underlying driver architecture, and is extensible for future
+fields (BGC, waves, land-ice).</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-own-coupling-field-storage">
+<h3>2.1 Requirement: Own coupling field storage<a class="headerlink" href="#requirement-own-coupling-field-storage" title="Permalink to this heading"></a></h3>
+<p>The class must own all coupling fields as <code class="docutils literal notranslate"><span class="pre">Array1DReal</span></code>/<code class="docutils literal notranslate"><span class="pre">HostArray1DReal</span></code>
+arrays indexed over ocean cells, consistent with other Omega field
+storage.</p>
+</section>
+<section id="requirement-clean-driver-boundary">
+<h3>2.2 Requirement: Clean driver boundary<a class="headerlink" href="#requirement-clean-driver-boundary" title="Permalink to this heading"></a></h3>
+<p>The driver interface layer (Fortran/C++ bridge) must handle all
+driver-specific operations (index lookups, attribute vector layouts,
+MCT/MOAB protocol). The C++ class receives and returns plain arrays of
+doubles with no direct dependencies on MCT, MOAB, or other coupling
+infrastructure.</p>
+</section>
+<section id="requirement-field-system-integration">
+<h3>2.3 Requirement: Field system integration<a class="headerlink" href="#requirement-field-system-integration" title="Permalink to this heading"></a></h3>
+<p>All coupling fields must be registerable with Omega’s Field system for
+diagnostic output. Not yet implemented in the initial pass.</p>
+</section>
+<section id="requirement-per-coupling-interval-operations">
+<h3>2.4 Requirement: Per-coupling-interval operations<a class="headerlink" href="#requirement-per-coupling-interval-operations" title="Permalink to this heading"></a></h3>
+<p>The class must provide methods to import fields, pass the received
+import fields to the appropriate forcing class member variables,
+accumulate export quantities each ocean timestep, and export
+accumulated fields. Accumulators are reset as part of the export step,
+so no separate reset call is required in the run loop.</p>
+<p><code class="docutils literal notranslate"><span class="pre">applyImportFields</span></code> writes directly into <code class="docutils literal notranslate"><span class="pre">Forcing</span></code> member arrays, the
+same arrays populated by file-based input in standalone runs. This
+keeps <code class="docutils literal notranslate"><span class="pre">Forcing</span></code> agnostic to whether its data originates from the
+coupler or from a file, and <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code> itself has no user-facing
+runtime configuration options; all configuration comes from the
+coupler at initialization (see 4.1.1).</p>
+</section>
+<section id="requirement-driver-architecture-agnosticism">
+<h3>2.5 Requirement: Driver architecture agnosticism<a class="headerlink" href="#requirement-driver-architecture-agnosticism" title="Permalink to this heading"></a></h3>
+<p>The class must support both MCT and MOAB layouts without conditional
+compilation. The data layout (MCT column-major vs MOAB field-major) is
+configured at runtime through the bridge layer.</p>
+</section>
+<section id="requirement-coupling-interval-tracking">
+<h3>2.6 Requirement: Coupling interval tracking<a class="headerlink" href="#requirement-coupling-interval-tracking" title="Permalink to this heading"></a></h3>
+<p>The class must track the coupling interval using Omega’s <code class="docutils literal notranslate"><span class="pre">Alarm</span></code> system,
+creating an internal periodic alarm at initialization to manage when
+per-coupling-interval operations should occur.</p>
+</section>
+<section id="requirement-coupler-conversion-layer">
+<h3>2.7 Requirement: Coupler conversion layer<a class="headerlink" href="#requirement-coupler-conversion-layer" title="Permalink to this heading"></a></h3>
+<p>Unit conversions and state variable transformations between Omega’s
+internal representation and coupler expectations (e.g., conservative
+temperature → in situ temperature, absolute → practical salinity) must
+be supported, and must be done once per coupling interval rather than
+every ocean timestep, since evaluating the EOS polynomial is expensive.
+Converted and unconverted representations must not both be reachable
+from outside the class, to prevent unit confusion. Temperature
+conversion is implemented (4.2.5); practical salinity conversion is a
+TODO (see 2.8).</p>
+</section>
+<section id="requirement-extensible-design">
+<h3>2.8 Requirement: Extensible design<a class="headerlink" href="#requirement-extensible-design" title="Permalink to this heading"></a></h3>
+<p>Adding new coupling fields must require only localized changes: add
+array members and update import/export logic. No restructuring of class
+interfaces or method signatures should be needed.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>Export fields are accumulated on-device each ocean timestep using Welford’s
+online running-average algorithm, rather than a running sum divided at
+export time:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">KOKKOS_INLINE_FUNCTION</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">updateAverage</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">OldAvg</span><span class="p">,</span>
+<span class="w">                                          </span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">NewValue</span><span class="p">,</span>
+<span class="w">                                          </span><span class="k">const</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">NAccumSteps</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="k">return</span><span class="w"> </span><span class="n">OldAvg</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">NewValue</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">OldAvg</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">NAccumSteps</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This produces the same interval-mean result as a naive sum-then-divide, but
+avoids growing partial sums. Instantaneous fields (e.g. <code class="docutils literal notranslate"><span class="pre">SSH</span></code>) bypass
+accumulation and are read directly from their source at export time.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>An enum class specifies the coupled driver layout:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">CouplingLayout</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">MCT</span><span class="p">,</span><span class="w"> </span><span class="n">MOAB</span><span class="w"> </span><span class="p">};</span>
+</pre></div>
+</div>
+<p>All initialization inputs are supplied by the coupler at runtime and
+bundled into a single struct, rather than passed as separate arguments:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span><span class="w"> </span><span class="nc">CouplingInitParams</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">NImportFields</span><span class="p">;</span>
+<span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">NExportFields</span><span class="p">;</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">ImportIdx</span><span class="p">;</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">ExportIdx</span><span class="p">;</span>
+<span class="w">   </span><span class="n">TimeInterval</span><span class="w"> </span><span class="n">CouplingTimeStep</span><span class="p">;</span>
+<span class="w">   </span><span class="n">CouplingLayout</span><span class="w"> </span><span class="n">Layout</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code> has no user-facing runtime configuration options.</p>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code> lives in <code class="docutils literal notranslate"><span class="pre">src/ocn/</span></code> alongside <code class="docutils literal notranslate"><span class="pre">AuxiliaryState</span></code> and
+<code class="docutils literal notranslate"><span class="pre">OceanState</span></code>. It has no direct driver dependencies. The bridge layer in
+<code class="docutils literal notranslate"><span class="pre">src/drivers/coupled/</span></code> is the only code that calls it.</p>
+<p>Import (x2o) and export (o2x) fields are grouped into two small container
+classes, rather than flat members directly on <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code>. Each is
+constructed with a name <code class="docutils literal notranslate"><span class="pre">Suffix</span></code> and <code class="docutils literal notranslate"><span class="pre">Mesh</span></code> so multiple named <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code>
+instances don’t collide on Kokkos view labels:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// x2o: Coupler to Ocean. Host-only; applyImportFields() copies to the</span>
+<span class="c1">// device arrays owned by Forcing.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CplToOcnFields</span><span class="w"> </span><span class="p">{</span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span>
+<span class="w">   </span><span class="n">HostArray1DReal</span><span class="w"> </span><span class="n">SfcStressZonal</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Foxx_taux  [N m⁻²]</span>
+<span class="w">   </span><span class="n">HostArray1DReal</span><span class="w"> </span><span class="n">SfcStressMerid</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Foxx_tauy  [N m⁻²]</span>
+
+<span class="w">   </span><span class="n">CplToOcnFields</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Suffix</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">);</span>
+<span class="p">};</span>
+
+<span class="c1">// o2x: Ocean to Coupler. Averaged fields keep a private device array</span>
+<span class="c1">// (updated each ocean timestep, native Omega units) plus a public host</span>
+<span class="c1">// mirror (converted units, packed into the driver buffer). Device</span>
+<span class="c1">// arrays are private so external code cannot read them in native units</span>
+<span class="c1">// and mistake them for the (unit-converted) host mirrors.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OcnToCplFields</span><span class="w"> </span><span class="p">{</span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span>
+<span class="w">   </span><span class="n">HostArray1DReal</span><span class="w"> </span><span class="n">AvgSfcTemperatureH</span><span class="p">;</span><span class="w">     </span><span class="c1">///&lt; So_t   [K], in situ approx</span>
+<span class="w">   </span><span class="n">HostArray1DReal</span><span class="w"> </span><span class="n">AvgSfcSalinityH</span><span class="p">;</span><span class="w">        </span><span class="c1">///&lt; So_s   [g kg⁻¹], TODO: practical</span>
+<span class="w">   </span><span class="n">HostArray1DReal</span><span class="w"> </span><span class="n">AvgSfcVelocityZonalH</span><span class="p">;</span><span class="w">   </span><span class="c1">///&lt; So_u   [m s⁻¹]</span>
+<span class="w">   </span><span class="n">HostArray1DReal</span><span class="w"> </span><span class="n">AvgSfcVelocityMeridH</span><span class="p">;</span><span class="w">   </span><span class="c1">///&lt; So_v   [m s⁻¹]</span>
+<span class="w">   </span><span class="n">HostArray1DReal</span><span class="w"> </span><span class="n">InstSshCellH</span><span class="p">;</span><span class="w">           </span><span class="c1">///&lt; So_ssh [m], instantaneous</span>
+
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">updateFields</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">OceanState</span><span class="w"> </span><span class="o">*</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Array3DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TracerArray</span><span class="p">,</span>
+<span class="w">                     </span><span class="n">I4</span><span class="w"> </span><span class="n">NAccumSteps</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">NCellsOwned</span><span class="p">);</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">copyToHost</span><span class="p">();</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">resetFields</span><span class="p">();</span>
+
+<span class="w">   </span><span class="n">OcnToCplFields</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Suffix</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">);</span>
+
+<span class="w"> </span><span class="k">private</span><span class="o">:</span>
+<span class="w">   </span><span class="n">Array1DReal</span><span class="w"> </span><span class="n">AvgSfcTemperature</span><span class="p">;</span><span class="w">      </span><span class="c1">///&lt; [°C], conservative temperature</span>
+<span class="w">   </span><span class="n">Array1DReal</span><span class="w"> </span><span class="n">AvgSfcSalinity</span><span class="p">;</span><span class="w">         </span><span class="c1">///&lt; [g kg⁻¹], absolute salinity</span>
+<span class="w">   </span><span class="n">Array1DReal</span><span class="w"> </span><span class="n">AvgSfcVelocityZonal</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array1DReal</span><span class="w"> </span><span class="n">AvgSfcVelocityMerid</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">// Scratch buffer for the in situ/Kelvin conversion in copyToHost()</span>
+<span class="w">   </span><span class="n">Array1DReal</span><span class="w"> </span><span class="n">InSituTempScratch</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">updateFields</span></code> (accumulation) and the conversion in <code class="docutils literal notranslate"><span class="pre">copyToHost</span></code> both
+need direct access to the device arrays, so that logic lives on
+<code class="docutils literal notranslate"><span class="pre">OcnToCplFields</span></code> itself rather than on <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code>;
+<code class="docutils literal notranslate"><span class="pre">SfcCoupling::updateExportFields</span></code> is now a thin wrapper that just calls
+<code class="docutils literal notranslate"><span class="pre">OcnToCpl.updateFields(...)</span></code> and increments <code class="docutils literal notranslate"><span class="pre">NAccumSteps</span></code>.</p>
+<p>Only the fields above are wired up in the initial implementation. The
+remaining fields from the original field list are deferred to follow-on
+work and added the same way (4.5): SW/LW heat fluxes, latent/sensible
+heat, snow/rain/evaporation, sea-ice and iceberg heat/freshwater fluxes,
+<code class="docutils literal notranslate"><span class="pre">SeaIceSaltFlux</span></code> (renamed from <code class="docutils literal notranslate"><span class="pre">SeaIceSalinityFlux</span></code>), river/ice runoff,
+ice fraction, <code class="docutils literal notranslate"><span class="pre">WindSpeed10m</span></code> (needed for KPP), sea-ice/atmospheric
+pressure, SSH gradients, sea-ice formation heat (to be renamed once
+sign-definite, e.g. melt potential), frazil ice mass, and freshwater heat
+flux.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SfcCoupling</span><span class="w"> </span><span class="p">{</span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Name</span><span class="p">;</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">NCellsOwned</span><span class="p">;</span><span class="w">      </span><span class="c1">///&lt; Number of cells owned by this task</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">NImportFields</span><span class="p">;</span><span class="w">    </span><span class="c1">///&lt; Num of fields in the x2o pointer array</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">NExportFields</span><span class="p">;</span><span class="w">    </span><span class="c1">///&lt; Num of fields in the o2x pointer array</span>
+
+<span class="w">   </span><span class="n">CplToOcnFields</span><span class="w"> </span><span class="n">CplToOcn</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Coupler to Ocean (x2o)</span>
+<span class="w">   </span><span class="n">OcnToCplFields</span><span class="w"> </span><span class="n">OcnToCpl</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Ocean to Coupler (o2x)</span>
+<span class="w">   </span><span class="n">Alarm</span><span class="w"> </span><span class="n">CouplingAlarm</span><span class="p">;</span><span class="w">     </span><span class="c1">///&lt; Alarm for the coupling interval</span>
+
+<span class="w">   </span><span class="c1">// Unmanaged, strided views over the driver&#39;s raw x2o/o2x buffers</span>
+<span class="w">   </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">View</span><span class="o">&lt;</span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">**</span><span class="p">,</span><span class="w"> </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">LayoutStride</span><span class="p">,</span><span class="w"> </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">HostSpace</span><span class="p">,</span>
+<span class="w">                </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">MemoryTraits</span><span class="o">&lt;</span><span class="n">Kokkos</span><span class="o">::</span><span class="n">Unmanaged</span><span class="o">&gt;&gt;</span>
+<span class="w">       </span><span class="n">CplToOcnView</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">View</span><span class="o">&lt;</span><span class="n">Real</span><span class="w"> </span><span class="o">**</span><span class="p">,</span><span class="w"> </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">LayoutStride</span><span class="p">,</span><span class="w"> </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">HostSpace</span><span class="p">,</span>
+<span class="w">                </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">MemoryTraits</span><span class="o">&lt;</span><span class="n">Kokkos</span><span class="o">::</span><span class="n">Unmanaged</span><span class="o">&gt;&gt;</span>
+<span class="w">       </span><span class="n">OcnToCplView</span><span class="p">;</span>
+
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">SfcCoupling</span><span class="w"> </span><span class="o">*</span><span class="nf">create</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span>
+<span class="w">                              </span><span class="kt">int</span><span class="w"> </span><span class="n">NImportFields</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NExportFields</span><span class="p">,</span>
+<span class="w">                              </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ImportIdx</span><span class="p">,</span>
+<span class="w">                              </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ExportIdx</span><span class="p">,</span>
+<span class="w">                              </span><span class="n">TimeStepper</span><span class="w"> </span><span class="o">*</span><span class="n">Stepper</span><span class="p">,</span>
+<span class="w">                              </span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CouplingTimeStep</span><span class="p">,</span>
+<span class="w">                              </span><span class="k">const</span><span class="w"> </span><span class="n">CouplingLayout</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Layout</span><span class="p">);</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">CouplingInitParams</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Params</span><span class="p">);</span>
+<span class="w">   </span><span class="o">~</span><span class="n">SfcCoupling</span><span class="p">();</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">clear</span><span class="p">();</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">erase</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Name</span><span class="p">);</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">SfcCoupling</span><span class="w"> </span><span class="o">*</span><span class="nf">getDefault</span><span class="p">();</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">SfcCoupling</span><span class="w"> </span><span class="o">*</span><span class="nf">get</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Name</span><span class="p">);</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="nf">getNAccumSteps</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">attachData</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">*</span><span class="n">CplToOcnData</span><span class="p">,</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">*</span><span class="n">OcnToCplData</span><span class="p">);</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">importFromCoupler</span><span class="p">();</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">exportToCoupler</span><span class="p">();</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">applyImportFields</span><span class="p">(</span><span class="n">Forcing</span><span class="w"> </span><span class="o">*</span><span class="n">Forcing</span><span class="p">);</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">updateExportFields</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">OceanState</span><span class="w"> </span><span class="o">*</span><span class="n">State</span><span class="p">,</span>
+<span class="w">                           </span><span class="k">const</span><span class="w"> </span><span class="n">Array3DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TracerArray</span><span class="p">);</span>
+
+<span class="w"> </span><span class="k">private</span><span class="o">:</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">NAccumSteps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">   </span><span class="n">CouplingLayout</span><span class="w"> </span><span class="n">Layout</span><span class="p">;</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">ImportIdx</span><span class="p">;</span>
+<span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">ExportIdx</span><span class="p">;</span>
+
+<span class="w">   </span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">View</span><span class="o">&gt;</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">ownedSubView</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">View</span><span class="w"> </span><span class="o">&amp;</span><span class="n">V</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Temperature conversion (2.7) is implemented in <code class="docutils literal notranslate"><span class="pre">copyToHost</span></code> (4.2.5);
+practical-salinity conversion is a TODO, so <code class="docutils literal notranslate"><span class="pre">AvgSfcSalinityH</span></code> is still
+absolute salinity.</p>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<section id="creation-and-initialization">
+<h4>4.2.1 Creation and Initialization<a class="headerlink" href="#creation-and-initialization" title="Permalink to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">init</span></code> retrieves the default <code class="docutils literal notranslate"><span class="pre">HorzMesh</span></code> and <code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code>, validates that
+the coupling interval is not shorter than, and is evenly divisible by, the
+ocean timestep (aborting otherwise), then calls <code class="docutils literal notranslate"><span class="pre">create</span></code> to build the
+default instance:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">SfcCoupling::init</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">CouplingInitParams</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Params</span><span class="p">);</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">create</span></code> allocates the <code class="docutils literal notranslate"><span class="pre">CplToOcn</span></code>/<code class="docutils literal notranslate"><span class="pre">OcnToCpl</span></code> field containers sized to
+<code class="docutils literal notranslate"><span class="pre">NCellsOwned</span></code>, stores the index maps and <code class="docutils literal notranslate"><span class="pre">Layout</span></code>, and constructs
+<code class="docutils literal notranslate"><span class="pre">CouplingAlarm</span></code> on <code class="docutils literal notranslate"><span class="pre">Stepper</span></code>’s <code class="docutils literal notranslate"><span class="pre">Clock</span></code>:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="n">SfcCoupling</span><span class="w"> </span><span class="o">*</span><span class="nf">SfcCoupling::create</span><span class="p">(</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NImportFields</span><span class="p">,</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">NExportFields</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ImportIdx</span><span class="p">,</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ExportIdx</span><span class="p">,</span><span class="w"> </span><span class="n">TimeStepper</span><span class="w"> </span><span class="o">*</span><span class="n">Stepper</span><span class="p">,</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">TimeInterval</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CouplingTimeStep</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">CouplingLayout</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Layout</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="retrieval">
+<h4>4.2.2 Retrieval<a class="headerlink" href="#retrieval" title="Permalink to this heading"></a></h4>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">SfcCoupling</span><span class="w"> </span><span class="o">*</span><span class="nf">SfcCoupling::getDefault</span><span class="p">();</span>
+<span class="n">SfcCoupling</span><span class="w"> </span><span class="o">*</span><span class="nf">SfcCoupling::get</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Other portions of the code can inquire whether it is running in coupled
+mode by doing:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">SfcCoupling</span><span class="o">::</span><span class="n">getDefault</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// no instance of SfcCoupling, therefore running in standalone mode</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="attaching-coupler-data">
+<h4>4.2.3 Attaching coupler data<a class="headerlink" href="#attaching-coupler-data" title="Permalink to this heading"></a></h4>
+<p>Before import/export, <code class="docutils literal notranslate"><span class="pre">attachData</span></code> wraps the driver’s raw <code class="docutils literal notranslate"><span class="pre">x2o</span></code>/<code class="docutils literal notranslate"><span class="pre">o2x</span></code>
+pointers in unmanaged, layout-strided Kokkos views, computing the
+layout-dependent stride once rather than on every element access: MCT
+lays fields out as <code class="docutils literal notranslate"><span class="pre">(NCellsOwned,</span> <span class="pre">NImportFields)</span></code> (field index strides
+fastest), MOAB as <code class="docutils literal notranslate"><span class="pre">(NImportFields,</span> <span class="pre">NCellsOwned)</span></code> (cell index strides
+fastest).</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">SfcCoupling::attachData</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">*</span><span class="n">CplToOcnData</span><span class="p">,</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">*</span><span class="n">OcnToCplData</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="import-apply-update-export">
+<h4>4.2.4 Import, Apply, Update, Export<a class="headerlink" href="#import-apply-update-export" title="Permalink to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">importFromCoupler</span></code> looks up each field’s column index from <code class="docutils literal notranslate"><span class="pre">ImportIdx</span></code>
+and copies it out of <code class="docutils literal notranslate"><span class="pre">CplToOcnView</span></code> into the corresponding <code class="docutils literal notranslate"><span class="pre">CplToOcn</span></code>
+array.</p>
+<p><code class="docutils literal notranslate"><span class="pre">applyImportFields</span></code> deep-copies <code class="docutils literal notranslate"><span class="pre">CplToOcn</span></code> arrays into the matching
+<code class="docutils literal notranslate"><span class="pre">Forcing</span></code> arrays (e.g. <code class="docutils literal notranslate"><span class="pre">Forcing-&gt;SfcStressForcing.ZonalStressCell</span></code>),
+restricted to the owned-cell subview since <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code> has no halo
+information; <code class="docutils literal notranslate"><span class="pre">Forcing</span></code> is responsible for the halo exchange. Called once
+per coupling interval, directly after <code class="docutils literal notranslate"><span class="pre">importFromCoupler</span></code>, outside the
+ocean timestep loop.</p>
+<p><code class="docutils literal notranslate"><span class="pre">updateExportFields</span></code> is called <em>within</em> the ocean timestep loop. It
+updates each <code class="docutils literal notranslate"><span class="pre">OcnToCpl</span></code> running average in place using Welford’s
+algorithm (3), then increments <code class="docutils literal notranslate"><span class="pre">NAccumSteps</span></code>. Velocity currently uses a
+placeholder constant (<code class="docutils literal notranslate"><span class="pre">1e-4</span></code>) pending vector reconstruction, to avoid
+producing zero (and therefore divide-by-zero/infinite flux) velocities
+downstream in the coupler; this is a known limitation to revisit before
+production use.</p>
+<p><code class="docutils literal notranslate"><span class="pre">exportToCoupler</span></code> calls <code class="docutils literal notranslate"><span class="pre">OcnToCpl.copyToHost()</span></code>, which converts and
+copies device arrays to their host mirrors (SSH is read directly from
+<code class="docutils literal notranslate"><span class="pre">VertCoord</span></code>’s host SSH array, since it is instantaneous and not
+accumulated), then packs the host mirrors into <code class="docutils literal notranslate"><span class="pre">OcnToCplView</span></code> at their
+export indices, then resets <code class="docutils literal notranslate"><span class="pre">OcnToCpl</span></code> and <code class="docutils literal notranslate"><span class="pre">NAccumSteps</span></code> for the next
+interval. Resetting is folded into <code class="docutils literal notranslate"><span class="pre">exportToCoupler</span></code>; there is no
+separate <code class="docutils literal notranslate"><span class="pre">resetAccumulators</span></code> call in the run loop.</p>
+<p>A rough sketch of how/when these functions are called within <code class="docutils literal notranslate"><span class="pre">OcnRun</span></code>:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// fetch default OceanState, TimeStepper, and SfcCoupling</span>
+<span class="n">OceanState</span><span class="w"> </span><span class="o">*</span><span class="n">DefOceanState</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">OceanState</span><span class="o">::</span><span class="n">getDefault</span><span class="p">();</span>
+<span class="n">TimeStepper</span><span class="w"> </span><span class="o">*</span><span class="n">DefTimeStepper</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TimeStepper</span><span class="o">::</span><span class="n">getDefault</span><span class="p">();</span>
+<span class="n">SfcCoupling</span><span class="w"> </span><span class="o">*</span><span class="n">DefSfcCoupling</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SfcCoupling</span><span class="o">::</span><span class="n">getDefault</span><span class="p">();</span>
+
+<span class="n">DefSfcCoupling</span><span class="o">-&gt;</span><span class="n">attachData</span><span class="p">(</span><span class="n">CplToOcnData</span><span class="p">,</span><span class="w"> </span><span class="n">OcnToCplData</span><span class="p">);</span>
+
+<span class="c1">// these two could be wrapped into a single call</span>
+<span class="n">DefSfcCoupling</span><span class="o">-&gt;</span><span class="n">importFromCoupler</span><span class="p">();</span>
+<span class="n">DefSfcCoupling</span><span class="o">-&gt;</span><span class="n">applyImportFields</span><span class="p">(</span><span class="n">DefForcing</span><span class="p">);</span>
+
+<span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">Err</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="p">(</span><span class="n">DefSfcCoupling</span><span class="o">-&gt;</span><span class="n">CouplingAlarm</span><span class="p">.</span><span class="n">isRinging</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="n">DefTimeStepper</span><span class="o">-&gt;</span><span class="n">doStep</span><span class="p">(</span><span class="n">DefOceanState</span><span class="p">,</span><span class="w"> </span><span class="n">SimTime</span><span class="p">);</span>
+
+<span class="w">   </span><span class="n">DefSfcCoupling</span><span class="o">-&gt;</span><span class="n">updateExportFields</span><span class="p">(</span><span class="n">DefOceanState</span><span class="p">,</span><span class="w"> </span><span class="n">TracerArray</span><span class="p">);</span>
+
+<span class="p">}</span>
+
+<span class="c1">// if coupler tells us, force write restart stream</span>
+
+<span class="n">DefSfcCoupling</span><span class="o">-&gt;</span><span class="n">exportToCoupler</span><span class="p">();</span><span class="w"> </span><span class="c1">// also resets accumulators</span>
+</pre></div>
+</div>
+</section>
+<section id="conversion-methods">
+<h4>4.2.5 Conversion Methods<a class="headerlink" href="#conversion-methods" title="Permalink to this heading"></a></h4>
+<p>Conversion happens in <code class="docutils literal notranslate"><span class="pre">copyToHost</span></code>, once per coupling interval rather
+than every ocean timestep, since the EOS conversion polynomial is
+expensive. Conservative temperature is converted to potential
+temperature via a local <code class="docutils literal notranslate"><span class="pre">Teos10Eos</span></code> instance’s <code class="docutils literal notranslate"><span class="pre">calcPtFromCt</span></code> (only
+under <code class="docutils literal notranslate"><span class="pre">EosType::Teos10Eos</span></code>; otherwise passed through unconverted), then
+shifted to Kelvin (<code class="docutils literal notranslate"><span class="pre">+</span> <span class="pre">TkFrz</span></code>) as an in situ approximation. The result is
+written to a private scratch buffer (<code class="docutils literal notranslate"><span class="pre">InSituTempScratch</span></code>) rather than
+in place, so the device <code class="docutils literal notranslate"><span class="pre">AvgSfcTemperature</span></code> array driving the running
+average (3) always stays in native (deg C, conservative) units. A
+local <code class="docutils literal notranslate"><span class="pre">Teos10Eos</span></code> is constructed rather than reusing <code class="docutils literal notranslate"><span class="pre">Eos::getInstance()</span></code>
+since <code class="docutils literal notranslate"><span class="pre">calcPtFromCt</span></code> needs no config-derived state, avoiding exposure of
+<code class="docutils literal notranslate"><span class="pre">Eos</span></code> internals. Salinity conversion (absolute → practical) is a TODO;
+<code class="docutils literal notranslate"><span class="pre">AvgSfcSalinityH</span></code> is currently absolute salinity, copied through
+unconverted.</p>
+<p>The device arrays backing the conversion (<code class="docutils literal notranslate"><span class="pre">AvgSfcTemperature</span></code>,
+<code class="docutils literal notranslate"><span class="pre">AvgSfcSalinity</span></code>, …) are private members of <code class="docutils literal notranslate"><span class="pre">OcnToCplFields</span></code>; only the
+post-conversion host mirrors are public. This prevents external code
+from reading the native-unit device arrays and confusing them with the
+converted host mirrors – a hazard motivated by <code class="docutils literal notranslate"><span class="pre">copyToHost</span></code> itself
+needing to reach into <code class="docutils literal notranslate"><span class="pre">VertCoord::SshCell</span></code> (a raw device array) to
+populate <code class="docutils literal notranslate"><span class="pre">InstSshCellH</span></code>, which showed how easy it is to mix up
+device/host and native/converted units without this guard.</p>
+</section>
+<section id="destruction-and-removal">
+<h4>4.2.6 Destruction and removal<a class="headerlink" href="#destruction-and-removal" title="Permalink to this heading"></a></h4>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">SfcCoupling::erase</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Name</span><span class="p">);</span>
+<span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">SfcCoupling::clear</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>The destructor does not detach <code class="docutils literal notranslate"><span class="pre">CouplingAlarm</span></code> from the shared <code class="docutils literal notranslate"><span class="pre">Clock</span></code>;
+callers must ensure <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code> instances outlive the <code class="docutils literal notranslate"><span class="pre">Clock</span></code>, consistent
+with other <code class="docutils literal notranslate"><span class="pre">Alarm</span></code> owners in Omega.</p>
+</section>
+</section>
+<section id="driver-interface-bridge">
+<h3>4.3 Driver Interface Bridge<a class="headerlink" href="#driver-interface-bridge" title="Permalink to this heading"></a></h3>
+<p>The bridge layer in <code class="docutils literal notranslate"><span class="pre">src/drivers/coupled/</span></code> is not yet implemented; it will
+provide <code class="docutils literal notranslate"><span class="pre">extern</span> <span class="pre">&quot;C&quot;</span></code> entry points, called from the Fortran driver
+(<code class="docutils literal notranslate"><span class="pre">ocn_comp_mct.F90</span></code>), that build a <code class="docutils literal notranslate"><span class="pre">CouplingInitParams</span></code> and call
+<code class="docutils literal notranslate"><span class="pre">SfcCoupling::init</span></code>. The coupling interval and ocean timestep are
+independent: the driver calls <code class="docutils literal notranslate"><span class="pre">ocn_run_mct</span></code> once per coupling interval;
+the ocean can take multiple timesteps within it.</p>
+<section id="name-based-field-index-mapping">
+<h4>4.3.1 Name-based Field Index Mapping<a class="headerlink" href="#name-based-field-index-mapping" title="Permalink to this heading"></a></h4>
+<p>At startup, the Fortran bridge will populate parallel arrays of Omega
+field names and driver column indices and pass them into
+<code class="docutils literal notranslate"><span class="pre">CouplingInitParams::ImportIdx</span></code>/<code class="docutils literal notranslate"><span class="pre">ExportIdx</span></code>. This approach is
+driver-agnostic: MCT and MOAB differ only in how column indices are
+obtained.</p>
+</section>
+</section>
+<section id="interval-accumulation">
+<h3>4.4 Interval Accumulation<a class="headerlink" href="#interval-accumulation" title="Permalink to this heading"></a></h3>
+<p>Export fields accumulate a running average each ocean timestep via
+Welford’s algorithm (3), in native Omega units; <code class="docutils literal notranslate"><span class="pre">SSH</span></code> is read directly
+from its source at export time instead of being accumulated. Unit
+conversion (4.2.5) is deferred to <code class="docutils literal notranslate"><span class="pre">copyToHost</span></code>/<code class="docutils literal notranslate"><span class="pre">exportToCoupler</span></code>, so it
+runs once per interval rather than once per accumulation step.
+<code class="docutils literal notranslate"><span class="pre">exportToCoupler</span></code> resets all accumulators after packing, so no separate
+reset call is needed in the run loop. Interval summation (as opposed to
+averaging), needed for flux-like fields, is not yet implemented; it can
+reuse <code class="docutils literal notranslate"><span class="pre">NAccumSteps</span></code> (average x steps) or a dedicated accumulation path
+once flux fields are added.</p>
+</section>
+<section id="extensibility">
+<h3>4.5 Extensibility<a class="headerlink" href="#extensibility" title="Permalink to this heading"></a></h3>
+<p>To add a new coupling field:</p>
+<ol class="arabic simple">
+<li><p>Add an <code class="docutils literal notranslate"><span class="pre">Array1DReal</span></code>/<code class="docutils literal notranslate"><span class="pre">HostArray1DReal</span></code> member to <code class="docutils literal notranslate"><span class="pre">CplToOcnFields</span></code> or
+<code class="docutils literal notranslate"><span class="pre">OcnToCplFields</span></code> in <code class="docutils literal notranslate"><span class="pre">SfcCoupling.h</span></code>, and initialize it in the
+corresponding constructor</p></li>
+<li><p>Add an unpack/pack call in <code class="docutils literal notranslate"><span class="pre">importFromCoupler</span></code>/<code class="docutils literal notranslate"><span class="pre">exportToCoupler</span></code> (and,
+for export fields, an update in <code class="docutils literal notranslate"><span class="pre">updateExportFields</span></code>)</p></li>
+<li><p>Add the name/index entry in the Fortran bridge file</p></li>
+<li><p>Fill the field in <code class="docutils literal notranslate"><span class="pre">applyImportFields()</span></code> or <code class="docutils literal notranslate"><span class="pre">updateExportFields()</span></code></p></li>
+</ol>
+<p>No changes to method signatures or ordering constraints are needed.</p>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test-import-round-trip">
+<h3>5.1 Test: Import round-trip<a class="headerlink" href="#test-import-round-trip" title="Permalink to this heading"></a></h3>
+<p>Attach synthetic <code class="docutils literal notranslate"><span class="pre">x2o</span></code> buffers with known, cell-varying values, call
+<code class="docutils literal notranslate"><span class="pre">importFromCoupler</span></code>, and verify the <code class="docutils literal notranslate"><span class="pre">CplToOcn</span></code> arrays match expected
+values. Test both MCT and MOAB layouts.</p>
+<ul class="simple">
+<li><p>tests requirement 2.1, 2.2, 2.5</p></li>
+</ul>
+</section>
+<section id="test-apply-imported-fields-to-forcing">
+<h3>5.2 Test: Apply imported fields to Forcing<a class="headerlink" href="#test-apply-imported-fields-to-forcing" title="Permalink to this heading"></a></h3>
+<p>Populate <code class="docutils literal notranslate"><span class="pre">CplToOcn</span></code> arrays directly, call <code class="docutils literal notranslate"><span class="pre">applyImportFields</span></code>, and verify
+the owned-cell subview of the matching <code class="docutils literal notranslate"><span class="pre">Forcing</span></code> arrays matches.</p>
+<ul class="simple">
+<li><p>tests requirement 2.1, 2.4</p></li>
+</ul>
+</section>
+<section id="test-running-average-accumulation-and-conversion">
+<h3>5.3 Test: Running-average accumulation and conversion<a class="headerlink" href="#test-running-average-accumulation-and-conversion" title="Permalink to this heading"></a></h3>
+<p>Advance the model clock through a known number of ocean timesteps within
+one coupling interval, calling <code class="docutils literal notranslate"><span class="pre">updateExportFields</span></code> with cell- and
+step-varying tracer values each timestep (using the coupling <code class="docutils literal notranslate"><span class="pre">Alarm</span></code> to
+end the loop, as in the sketch in 4.2.4). Verify <code class="docutils literal notranslate"><span class="pre">NAccumSteps</span></code> matches
+the step count and, after <code class="docutils literal notranslate"><span class="pre">copyToHost</span></code> (the only sanctioned way to read
+the averages), the resulting host-mirror averages match the analytic
+mean within round-off tolerance. <code class="docutils literal notranslate"><span class="pre">EosType</span></code> is forced to <code class="docutils literal notranslate"><span class="pre">constant</span></code> for
+the test suite so <code class="docutils literal notranslate"><span class="pre">calcPtFromCt</span></code> is an identity, isolating the <code class="docutils literal notranslate"><span class="pre">+TkFrz</span></code>
+Kelvin shift; salinity is checked unconverted (practical conversion is a
+TODO).</p>
+<ul class="simple">
+<li><p>tests requirement 2.4, 2.6, 2.7</p></li>
+</ul>
+</section>
+<section id="test-export-round-trip-and-reset">
+<h3>5.4 Test: Export round-trip and reset<a class="headerlink" href="#test-export-round-trip-and-reset" title="Permalink to this heading"></a></h3>
+<p>Populate <code class="docutils literal notranslate"><span class="pre">OcnToCpl</span></code> averages via <code class="docutils literal notranslate"><span class="pre">updateExportFields</span></code> (seeded to the
+target value using <code class="docutils literal notranslate"><span class="pre">NAccumSteps</span> <span class="pre">==</span> <span class="pre">0</span></code>), call <code class="docutils literal notranslate"><span class="pre">exportToCoupler</span></code>, and
+verify the packed <code class="docutils literal notranslate"><span class="pre">o2x</span></code> buffer matches expected values (temperature
+offset by <code class="docutils literal notranslate"><span class="pre">TkFrz</span></code>) for both MCT and MOAB layouts. Also verify <code class="docutils literal notranslate"><span class="pre">OcnToCpl</span></code>
+host mirrors and <code class="docutils literal notranslate"><span class="pre">NAccumSteps</span></code> are zeroed afterward.</p>
+<ul class="simple">
+<li><p>tests requirement 2.1, 2.4, 2.5, 2.7</p></li>
+</ul>
+</section>
+<section id="test-object-lifecycle">
+<h3>5.5 Test: Object lifecycle<a class="headerlink" href="#test-object-lifecycle" title="Permalink to this heading"></a></h3>
+<p>Create a non-default, named <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code>, verify it can be retrieved
+with <code class="docutils literal notranslate"><span class="pre">get</span></code>, erase it, and verify retrieval afterward fails.</p>
+<ul class="simple">
+<li><p>tests requirement 2.8</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Config.html" class="btn btn-neutral float-left" title="Config" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="DataTypes.html" class="btn btn-neutral float-right" title="DataTypes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
