@@ -123,6 +123,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#variables">Variables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#removal">Removal</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#use-of-hierarchical-parallelism">Use of hierarchical parallelism</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#layer-masking">Layer masking</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="PGrad.html">Pressure Gradient (PGrad)</a></li>
@@ -144,6 +145,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../design/Driver.html">Driver and Component Layer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/FillValues.html">Fill Values</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/Halo.html">Halo</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/HorzMeshClass.html">Horizontal Mesh</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/Logging.html">Logging</a></li>
@@ -385,6 +387,46 @@ In <code class="docutils literal notranslate"><span class="pre">computeTargetThi
 The vector length on GPUs is set to 1 to maximize parallelism.
 The <code class="docutils literal notranslate"><span class="pre">computeGeopotential</span></code> method uses hierarchical parallelism in a very similar way to <code class="docutils literal notranslate"><span class="pre">computeTargetThickness</span></code>, except that it doesn’t require a column sum.
 It has an outer <code class="docutils literal notranslate"><span class="pre">parallel_for</span></code> that splits horizontal cells into teams and an inner <code class="docutils literal notranslate"><span class="pre">parallel_for</span></code> that does vertical computations in chunks.</p>
+</section>
+<section id="layer-masking">
+<h2>Layer masking<a class="headerlink" href="#layer-masking" title="Permalink to this heading"></a></h2>
+<p>Field arrays are auto-filled with <code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code> when they are attached to a <code class="docutils literal notranslate"><span class="pre">Field</span></code> (see the <a class="reference internal" href="../design/FillValues.html"><span class="std std-doc">Fill Values design</span></a>).
+Compute kernels only write to active layers, so inactive layers naturally retain the fill value.
+After an initial-condition or restart read, however, state and tracer arrays come from the input file and may hold zeros (or arbitrary values) in inactive and boundary layers.
+<code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> provides a family of helper methods that enforce the correct layer pattern on such arrays.
+All of them use the inclusive <code class="docutils literal notranslate"><span class="pre">[Min,</span> <span class="pre">Max]</span></code> active-layer convention consistent with <code class="docutils literal notranslate"><span class="pre">computeGeomZHeight</span></code>/<code class="docutils literal notranslate"><span class="pre">computePressure</span></code>, and use hierarchical parallelism (an outer <code class="docutils literal notranslate"><span class="pre">parallelForOuter</span></code> over the horizontal dimension and an inner <code class="docutils literal notranslate"><span class="pre">parallelForInner</span></code> over the vertical layers).</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Element</p></th>
+<th class="head"><p>Zones applied</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">zeroEdgeField(Arr,</span> <span class="pre">NEdgesAll)</span></code></p></td>
+<td><p>edge</p></td>
+<td><p>sets <code class="docutils literal notranslate"><span class="pre">[MinLayerEdgeTop,</span> <span class="pre">MaxLayerEdgeBot]</span></code> to 0; layers outside retain their fill value</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">applyEdgeLayerMask(Arr,</span> <span class="pre">NEdgesAll)</span></code></p></td>
+<td><p>edge</p></td>
+<td><p>three-zone: outside <code class="docutils literal notranslate"><span class="pre">[MinLayerEdgeTop,</span> <span class="pre">MaxLayerEdgeBot]</span></code> → <code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code>; inside that but outside <code class="docutils literal notranslate"><span class="pre">[MinLayerEdgeBot,</span> <span class="pre">MaxLayerEdgeTop]</span></code> → 0; active layers unchanged</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">applyCellLayerMask(Arr,</span> <span class="pre">NCellsAll)</span></code></p></td>
+<td><p>cell</p></td>
+<td><p>two-zone: outside <code class="docutils literal notranslate"><span class="pre">[MinLayerCell,</span> <span class="pre">MaxLayerCell]</span></code> → <code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code>; active layers unchanged</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">applyVertexLayerMask(Arr,</span> <span class="pre">NVerticesAll)</span></code></p></td>
+<td><p>vertex</p></td>
+<td><p>two-zone: outside <code class="docutils literal notranslate"><span class="pre">[MinLayerVertexTop,</span> <span class="pre">MaxLayerVertexBot]</span></code> → <code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code>; active layers unchanged</p></td>
+</tr>
+</tbody>
+</table>
+<p>Cell fields have no boundary (zero) zone because a cell column is either active or inactive at a given layer, with no neighbor-dependent partial-activity range.
+Vertex fields also have no zeroed boundary zone, but for a different reason: a boundary vertex with one or more active surrounding cells holds valid, generally non-zero data (for example, relative vorticity computed from its active surrounding edges over the full <code class="docutils literal notranslate"><span class="pre">[MinLayerVertexTop,</span> <span class="pre">MaxLayerVertexBot]</span></code> range), so the entire valid range is kept rather than zeroed.
+This is unlike a flux-type edge field, where the normal flux through a face bordering land genuinely vanishes.
+The flux-type edge fields handled by <code class="docutils literal notranslate"><span class="pre">zeroEdgeField</span></code> (for example <code class="docutils literal notranslate"><span class="pre">NormalVelocityTend</span></code> and <code class="docutils literal notranslate"><span class="pre">VelocityDel2Aux.Del2Edge</span></code>) are zeroed before being recomputed each time step so that boundary edges carry 0 rather than <code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code>.
+The <code class="docutils literal notranslate"><span class="pre">apply*LayerMask</span></code> methods are driven through <code class="docutils literal notranslate"><span class="pre">OceanState::applyLayerMasks</span></code>, which is called once from <code class="docutils literal notranslate"><span class="pre">ocnInit</span></code> after the IC/restart read: it applies the edge mask to <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and the cell mask to <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code>, <code class="docutils literal notranslate"><span class="pre">Temperature</span></code>, and <code class="docutils literal notranslate"><span class="pre">Salinity</span></code>.
+<code class="docutils literal notranslate"><span class="pre">applyVertexLayerMask</span></code> has no production caller yet because no vertex-based state field is read from the IC/restart; it is provided for completeness and verified by the fill-value CTest.</p>
 </section>
 </section>
 

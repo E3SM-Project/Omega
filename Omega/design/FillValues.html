@@ -1,0 +1,757 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fill Values &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Halo" href="Halo.html" />
+    <link rel="prev" title="ErrorHandler (Error)" href="Error.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Forcing.html">Forcing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Testing.html">Testing Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/ParallelLoops.html">Parallel loops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/PGrad.html">Pressure Gradient (PGrad)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Forcing.html">Forcing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OmegaV1GoverningEqns.html">Omega V1: Governing Equations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Analysis.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Coupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Fill Values</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-centralized-fill-value-constants">2.1 Requirement: Centralized fill value constants</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-standard-fill-values-matching-netcdf-c">2.2 Requirement: Standard fill values matching NetCDF-C</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-automatic-array-initialization-at-attach-time">2.3 Requirement: Automatic array initialization at attach time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-no-fill-value-argument-in-field-create">2.4 Requirement: No fill value argument in Field::create()</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-inactive-layers-contain-fill-values-in-output">2.5 Requirement: Inactive layers contain fill values in output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-valid-values-at-domain-boundary-edges-and-vertices">2.6 Desired: Valid values at domain boundary edges and vertices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-ctests">2.7 Requirement: CTests</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#constants-fillvalue-definitions-in-fillvalues-h">4.1.1 Constants: FillValue definitions in FillValues.h</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-struct-changes">4.1.2 Class/struct changes</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#field-attachdata-auto-fill">4.2.1 Field::attachData() auto-fill</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#no-per-module-manual-initialization-required">4.2.2 No per-module manual initialization required</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ordering-invariant-and-anti-patterns">4.2.3 Ordering invariant and anti-patterns</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-level-changes-removing-fillvalue-from-field-create-calls">4.3 Module-level changes: removing FillValue from Field::create() calls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#boundary-edge-and-vertex-handling">4.4 Boundary edge and vertex handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#edge-flux-field-masking">4.5 Edge flux field masking</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-fill-constant-values">5.1 Test: fill constant values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-attachdata-auto-fill">5.2 Test: attachData auto-fill</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-inactive-layers-contain-fill-values">5.3 Test: inactive layers contain fill values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-normalvelocity-three-zone-fill-zero-real-pattern">5.4 Test: NormalVelocity three-zone fill/zero/real pattern</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-applycelllayermask-two-zone-pattern">5.5 Test: applyCellLayerMask two-zone pattern</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-applyvertexlayermask-two-zone-pattern">5.6 Test: applyVertexLayerMask two-zone pattern</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="StateValidation.html">Ocean State Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SubmesoscaleEddies.html">Submesoscale Eddy Parameterization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Fill Values</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/FillValues.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="fill-values">
+<span id="omega-design-fill-values"></span><h1>Fill Values<a class="headerlink" href="#fill-values" title="Permalink to this heading"></a></h1>
+<p><strong>Table of Contents</strong></p>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="#overview">Overview</a></p></li>
+<li><p><a class="reference internal" href="#requirements">Requirements</a></p></li>
+<li><p><a class="reference internal" href="#algorithmic-formulation">Algorithmic Formulation</a></p></li>
+<li><p><a class="reference internal" href="#design">Design</a></p></li>
+<li><p><a class="reference internal" href="#verification-and-testing">Verification and Testing</a></p></li>
+</ol>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>Omega supports output of ocean fields to NetCDF files via I/O streams. Each field
+carries a declared fill value stored as metadata under the <code class="docutils literal notranslate"><span class="pre">_FillValue</span></code> attribute,
+which marks entries that are undefined or outside the active domain. Currently, fill
+value constants are declared locally in each module with inconsistent values
+(typically <code class="docutils literal notranslate"><span class="pre">-9.99e30</span></code> for real-valued fields, <code class="docutils literal notranslate"><span class="pre">-999</span></code> for integers). These values do
+not match the NetCDF-C standard fill values that analysis tools and visualization
+software commonly expect. Additionally, the Kokkos arrays backing these fields are
+never explicitly initialized with fill values: inactive ocean layers (model layers
+below <code class="docutils literal notranslate"><span class="pre">MaxLayerCell</span></code>) hold uninitialized memory rather than a well-defined sentinel,
+and the distinction between “no data” and “zero” is lost.</p>
+<p>This design standardizes fill values across all Omega fields to match the NetCDF-C
+standard, ensures that field arrays are automatically initialized with the correct
+fill value when data is attached to a <code class="docutils literal notranslate"><span class="pre">Field</span></code>, and verifies through CTests that the
+resulting behavior is correct for inactive layers and for edge/vertex fields at
+domain boundaries.</p>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-centralized-fill-value-constants">
+<h3>2.1 Requirement: Centralized fill value constants<a class="headerlink" href="#requirement-centralized-fill-value-constants" title="Permalink to this heading"></a></h3>
+<p>Fill value constants must be defined in a single location in Omega that is accessible
+to all modules. Scatter of locally-declared constants has produced inconsistencies
+(e.g., <code class="docutils literal notranslate"><span class="pre">-9.99e30</span></code> vs <code class="docutils literal notranslate"><span class="pre">-9.99E+30</span></code>) and makes future maintenance error-prone.</p>
+</section>
+<section id="requirement-standard-fill-values-matching-netcdf-c">
+<h3>2.2 Requirement: Standard fill values matching NetCDF-C<a class="headerlink" href="#requirement-standard-fill-values-matching-netcdf-c" title="Permalink to this heading"></a></h3>
+<p>Fill value constants must exactly match the NetCDF-C standard values (<code class="docutils literal notranslate"><span class="pre">NC_FILL_*</span></code>)
+as exposed by the SCORPIO library (<code class="docutils literal notranslate"><span class="pre">PIO_FILL_*</span></code> in <code class="docutils literal notranslate"><span class="pre">pio.h</span></code>). Using standard values
+ensures compatibility with NetCDF-aware tools (ncview, Xarray, NCO, etc.) that
+recognize and handle fill values automatically. The required values are:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Type</p></th>
+<th class="head"><p>Omega name</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>I4</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">FillValueI4</span></code></p></td>
+<td><p>-2147483647 (<code class="docutils literal notranslate"><span class="pre">PIO_FILL_INT</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>I8</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">FillValueI8</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PIO_FILL_INT64</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>R4</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">FillValueR4</span></code></p></td>
+<td><p>9.9692099683868690e+36f (<code class="docutils literal notranslate"><span class="pre">PIO_FILL_FLOAT</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>R8</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">FillValueR8</span></code></p></td>
+<td><p>9.9692099683868690e+36 (<code class="docutils literal notranslate"><span class="pre">PIO_FILL_DOUBLE</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p>Real</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code></p></td>
+<td><p>Alias for <code class="docutils literal notranslate"><span class="pre">FillValueR4</span></code> or <code class="docutils literal notranslate"><span class="pre">FillValueR8</span></code> depending on build</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="requirement-automatic-array-initialization-at-attach-time">
+<h3>2.3 Requirement: Automatic array initialization at attach time<a class="headerlink" href="#requirement-automatic-array-initialization-at-attach-time" title="Permalink to this heading"></a></h3>
+<p>When <code class="docutils literal notranslate"><span class="pre">Field::attachData()</span></code> is called, the attached Kokkos array must be
+automatically initialized with the standard fill value for the array’s element
+type before any compute routine runs. The fill value is deduced from
+<code class="docutils literal notranslate"><span class="pre">typename</span> <span class="pre">T::value_type</span></code> at <code class="docutils literal notranslate"><span class="pre">attachData()</span></code> time using the constants in
+<code class="docutils literal notranslate"><span class="pre">FillValues.h</span></code> (<code class="docutils literal notranslate"><span class="pre">FillValueI4</span></code>, <code class="docutils literal notranslate"><span class="pre">FillValueI8</span></code>, <code class="docutils literal notranslate"><span class="pre">FillValueR4</span></code>, or <code class="docutils literal notranslate"><span class="pre">FillValueR8</span></code>),
+so the caller does not need to specify it. This guarantees that inactive ocean
+layers (below <code class="docutils literal notranslate"><span class="pre">MaxLayerCell</span></code>) and any other undefined entries contain a
+well-defined sentinel in output, without requiring each module to manually
+perform the fill.</p>
+</section>
+<section id="requirement-no-fill-value-argument-in-field-create">
+<h3>2.4 Requirement: No fill value argument in Field::create()<a class="headerlink" href="#requirement-no-fill-value-argument-in-field-create" title="Permalink to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">FillValue</span></code> argument is removed from <code class="docutils literal notranslate"><span class="pre">Field::create()</span></code>. Because the fill
+value is always one of the standard constants determined by the array element
+type, specifying it at field creation time is redundant. The fill value and the
+<code class="docutils literal notranslate"><span class="pre">_FillValue</span></code> metadata entry are set automatically when <code class="docutils literal notranslate"><span class="pre">attachData()</span></code> is called.</p>
+</section>
+<section id="requirement-inactive-layers-contain-fill-values-in-output">
+<h3>2.5 Requirement: Inactive layers contain fill values in output<a class="headerlink" href="#requirement-inactive-layers-contain-fill-values-in-output" title="Permalink to this heading"></a></h3>
+<p>After compute routines execute, model layers with index <code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">&gt;</span> <span class="pre">MaxLayerCell(ICell)</span></code>
+must contain the declared fill value in output. With automatic initialization at
+attach time (Requirement 2.3) and compute routines that only write to active layers,
+this is satisfied without changes to individual compute functions.</p>
+</section>
+<section id="desired-valid-values-at-domain-boundary-edges-and-vertices">
+<h3>2.6 Desired: Valid values at domain boundary edges and vertices<a class="headerlink" href="#desired-valid-values-at-domain-boundary-edges-and-vertices" title="Permalink to this heading"></a></h3>
+<p>Edge and vertex fields at valid boundaries adjacent to land or to bathymetry must
+contain computed valid values, not fill values. Switching from zero-initialization
+to fill-value initialization must not silently break any boundary computation that
+previously assumed zero defaults. This mirrors a problem encountered in MPAS-Ocean
+when initializing <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> with a fill value rather than zero: code that
+implicitly assumed zero at land boundaries produced incorrect results. During
+implementation, all compute routines for edge/vertex fields must be audited to
+confirm that every valid boundary entry receives an explicit computed value. As an
+example of what such an audit can reveal: <code class="docutils literal notranslate"><span class="pre">TracerHorzAdvOnCell</span></code> accumulated its
+internal working array <code class="docutils literal notranslate"><span class="pre">HighOrderFlxHorz</span></code> over a cell’s full active layer range
+without clamping to each contributing edge’s active range, reading fill values from
+edges shallower than the cell — see Section 4.5 for the resolution.</p>
+</section>
+<section id="requirement-ctests">
+<h3>2.7 Requirement: CTests<a class="headerlink" href="#requirement-ctests" title="Permalink to this heading"></a></h3>
+<p>CTests must verify Requirements 2.1–2.3, 2.5, and Desired Requirement 2.6. The
+three-zone boundary behavior (2.6) is exercised for <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> via the edge
+mask; the two-zone cell and vertex masks are verified with synthetic cell and
+vertex fields.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>No new numerical algorithm is introduced. The key behavioral change is in
+<code class="docutils literal notranslate"><span class="pre">Field::attachData&lt;T&gt;()</span></code>, which gains a fill step equivalent to:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Kokkos</span><span class="o">::</span><span class="n">deep_copy</span><span class="p">(</span><span class="n">InDataArray</span><span class="p">,</span><span class="w"> </span><span class="n">fill_scalar</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">fill_scalar</span></code> is the typed fill value extracted from the field’s <code class="docutils literal notranslate"><span class="pre">FieldMeta</span></code>
+map (stored as <code class="docutils literal notranslate"><span class="pre">std::any</span></code> under key <code class="docutils literal notranslate"><span class="pre">&quot;_FillValue&quot;</span></code>), and the element type
+<code class="docutils literal notranslate"><span class="pre">typename</span> <span class="pre">T::value_type</span></code> of the Kokkos view determines the <code class="docutils literal notranslate"><span class="pre">std::any_cast</span></code> type.
+<code class="docutils literal notranslate"><span class="pre">Kokkos::deep_copy</span></code> with a scalar source broadcasts that value to every element of
+the view and dispatches correctly for both host and device memory spaces.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="constants-fillvalue-definitions-in-fillvalues-h">
+<h4>4.1.1 Constants: FillValue definitions in FillValues.h<a class="headerlink" href="#constants-fillvalue-definitions-in-fillvalues-h" title="Permalink to this heading"></a></h4>
+<p>The fill value constants are defined in a new lightweight header
+<code class="docutils literal notranslate"><span class="pre">components/omega/src/base/FillValues.h</span></code>. The values match the NetCDF-C <code class="docutils literal notranslate"><span class="pre">NC_FILL_*</span></code>
+constants (which are identical to the SCORPIO <code class="docutils literal notranslate"><span class="pre">PIO_FILL_*</span></code> constants), but are
+written as numeric literals so that the header can be included from any context
+without pulling in <code class="docutils literal notranslate"><span class="pre">pio.h</span></code> or <code class="docutils literal notranslate"><span class="pre">mpi.h</span></code>, which carry strict include-order requirements.</p>
+<p>A type-indexed variable template <code class="docutils literal notranslate"><span class="pre">FillValue&lt;T&gt;</span></code> is the primary definition. Its
+primary template is intentionally left undefined so that instantiation with an
+unsupported type produces a link error. Explicit specializations are provided for
+each supported scalar type:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span>
+<span class="k">constexpr</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="n">FillValue</span><span class="p">;</span><span class="w">  </span><span class="c1">// primary template intentionally undefined</span>
+
+<span class="k">template</span><span class="w"> </span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="kr">inline</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">FillValue</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">-2147483647</span><span class="p">;</span><span class="w">             </span><span class="c1">// NC_FILL_INT</span>
+<span class="k">template</span><span class="w"> </span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="kr">inline</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="n">I8</span><span class="w"> </span><span class="n">FillValue</span><span class="o">&lt;</span><span class="n">I8</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">-9223372036854775806LL</span><span class="p">;</span><span class="w">  </span><span class="c1">// NC_FILL_INT64</span>
+<span class="k">template</span><span class="w"> </span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="kr">inline</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="n">R4</span><span class="w"> </span><span class="n">FillValue</span><span class="o">&lt;</span><span class="n">R4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">9.9692099683868690e+36f</span><span class="p">;</span><span class="w"> </span><span class="c1">// NC_FILL_FLOAT</span>
+<span class="k">template</span><span class="w"> </span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="kr">inline</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="n">R8</span><span class="w"> </span><span class="n">FillValue</span><span class="o">&lt;</span><span class="n">R8</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">9.9692099683868690e+36</span><span class="p">;</span><span class="w">  </span><span class="c1">// NC_FILL_DOUBLE</span>
+</pre></div>
+</div>
+<p>Named aliases are provided for readability in comparison and test code:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">constexpr</span><span class="w"> </span><span class="n">I4</span><span class="w">   </span><span class="n">FillValueI4</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">FillValue</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="k">constexpr</span><span class="w"> </span><span class="n">I8</span><span class="w">   </span><span class="n">FillValueI8</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">FillValue</span><span class="o">&lt;</span><span class="n">I8</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="k">constexpr</span><span class="w"> </span><span class="n">R4</span><span class="w">   </span><span class="n">FillValueR4</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">FillValue</span><span class="o">&lt;</span><span class="n">R4</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="k">constexpr</span><span class="w"> </span><span class="n">R8</span><span class="w">   </span><span class="n">FillValueR8</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">FillValue</span><span class="o">&lt;</span><span class="n">R8</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="cp">#if defined(SINGLE_PRECISION)</span>
+<span class="k">constexpr</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">FillValueReal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FillValue</span><span class="o">&lt;</span><span class="n">R4</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="cp">#else</span>
+<span class="k">constexpr</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="n">FillValueReal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FillValue</span><span class="o">&lt;</span><span class="n">R8</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="cp">#endif</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">FillValues.h</span></code> is included from <code class="docutils literal notranslate"><span class="pre">Field.h</span></code>. Because every module that creates or
+uses fields already includes <code class="docutils literal notranslate"><span class="pre">Field.h</span></code> (directly or transitively), no additional
+include directives are needed in module source files.</p>
+</section>
+<section id="class-struct-changes">
+<h4>4.1.2 Class/struct changes<a class="headerlink" href="#class-struct-changes" title="Permalink to this heading"></a></h4>
+<p>No new classes or structs are introduced. The changes are confined to:</p>
+<ul class="simple">
+<li><p>new header <code class="docutils literal notranslate"><span class="pre">FillValues.h</span></code> with constants (Section 4.1.1)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FillValues.h</span></code> included from <code class="docutils literal notranslate"><span class="pre">Field.h</span></code></p></li>
+<li><p>the <code class="docutils literal notranslate"><span class="pre">attachData</span></code> template methods in <code class="docutils literal notranslate"><span class="pre">Field.h</span></code> / <code class="docutils literal notranslate"><span class="pre">Field.cpp</span></code> (Section 4.2)</p></li>
+<li><p>removal of local fill value declarations in module files (Section 4.3)</p></li>
+</ul>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<section id="field-attachdata-auto-fill">
+<h4>4.2.1 Field::attachData() auto-fill<a class="headerlink" href="#field-attachdata-auto-fill" title="Permalink to this heading"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">attachData&lt;T&gt;()</span></code> instance method and the <code class="docutils literal notranslate"><span class="pre">attachFieldData&lt;T&gt;()</span></code> static helper
+in <code class="docutils literal notranslate"><span class="pre">components/omega/src/infra/Field.h</span></code> gain a private fill step controlled by an
+optional <code class="docutils literal notranslate"><span class="pre">FillOnAttach</span></code> parameter (default <code class="docutils literal notranslate"><span class="pre">true</span></code>):</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span>
+<span class="kt">void</span><span class="w"> </span><span class="n">attachData</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="o">&amp;</span><span class="n">InDataArray</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">FillOnAttach</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">OMEGA_ASSERT</span><span class="p">(</span><span class="n">isKokkosArray</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">                 </span><span class="s">&quot;Field::attachData requires Kokkos array as input&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">DataArray</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">InDataArray</span><span class="p">);</span>
+<span class="w">    </span><span class="n">DataType</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">checkArrayType</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="w">    </span><span class="n">MemLoc</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="n">findArrayMemLoc</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">FillOnAttach</span><span class="p">)</span>
+<span class="w">        </span><span class="n">fillWithValue</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">InDataArray</span><span class="p">);</span><span class="w"> </span><span class="c1">// auto-fill with type-deduced FillValue</span>
+<span class="p">}</span>
+
+<span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span>
+<span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">attachFieldData</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">FieldName</span><span class="p">,</span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="o">&amp;</span><span class="n">InDataArray</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">FillOnAttach</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The default <code class="docutils literal notranslate"><span class="pre">FillOnAttach</span> <span class="pre">=</span> <span class="pre">true</span></code> preserves the fill behavior for the normal
+initialization workflow (fresh arrays attached before any data is written). Pass
+<code class="docutils literal notranslate"><span class="pre">FillOnAttach</span> <span class="pre">=</span> <span class="pre">false</span></code> when re-attaching an existing data-filled array where the
+fill must not overwrite computed values — see Section 4.2.3 for the canonical use case.</p>
+<p>The private helper <code class="docutils literal notranslate"><span class="pre">fillWithValue&lt;T&gt;()</span></code> performs the following steps:</p>
+<ol class="arabic simple">
+<li><p>Derives the element type as <code class="docutils literal notranslate"><span class="pre">typename</span> <span class="pre">T::non_const_value_type</span></code> (using the
+non-const form so that const view types resolve to the same underlying type).</p></li>
+<li><p>Looks up the fill value via <code class="docutils literal notranslate"><span class="pre">FillValue&lt;ValType&gt;</span></code>, a constexpr variable template
+specialization from <code class="docutils literal notranslate"><span class="pre">FillValues.h</span></code>. Supporting a new type requires only adding
+one specialization there; no changes to <code class="docutils literal notranslate"><span class="pre">fillWithValue</span></code> are needed.</p></li>
+<li><p>Stores the typed fill value in <code class="docutils literal notranslate"><span class="pre">FieldMeta[&quot;_FillValue&quot;]</span></code> (the NetCDF/CF
+standard attribute name), making it available to IO and metadata queries.</p></li>
+<li><p>Calls <code class="docutils literal notranslate"><span class="pre">Kokkos::deep_copy(InDataArray,</span> <span class="pre">scalar)</span></code> to broadcast the scalar to every
+element of the view. This works for host views (<code class="docutils literal notranslate"><span class="pre">HostArray*</span></code>), device views
+(<code class="docutils literal notranslate"><span class="pre">Array*</span></code>), and all dimensionalities (1D–5D) without additional dispatch.</p></li>
+<li><p>Only the view being attached is filled; no assumption is made about whether the
+other memory space (host or device) has been attached.</p></li>
+</ol>
+<p>Ordering invariants preserved by this design:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Field::create()</span></code> is always called before <code class="docutils literal notranslate"><span class="pre">attachData()</span></code>, so the field exists
+in <code class="docutils literal notranslate"><span class="pre">AllFields</span></code> before fill time.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">&quot;_FillValue&quot;</span></code> metadata entry is set at <code class="docutils literal notranslate"><span class="pre">attachData()</span></code> time, which precedes
+any IO write operation in the initialization workflow.</p></li>
+<li><p>Restart reads happen after <code class="docutils literal notranslate"><span class="pre">attachData()</span></code> and overwrite fill entries with data
+from the restart file.</p></li>
+<li><p>Compute routines run after initialization and overwrite active entries, leaving
+inactive entries (below <code class="docutils literal notranslate"><span class="pre">MaxLayerCell</span></code>) at the fill value.</p></li>
+</ul>
+</section>
+<section id="no-per-module-manual-initialization-required">
+<h4>4.2.2 No per-module manual initialization required<a class="headerlink" href="#no-per-module-manual-initialization-required" title="Permalink to this heading"></a></h4>
+<p>Because <code class="docutils literal notranslate"><span class="pre">attachData()</span></code> handles initialization automatically, no module needs to
+call an explicit fill routine. Modules may still call <code class="docutils literal notranslate"><span class="pre">Kokkos::deep_copy</span></code> or
+similar to set specific values, but this is independent of fill-value management.</p>
+</section>
+<section id="ordering-invariant-and-anti-patterns">
+<h4>4.2.3 Ordering invariant and anti-patterns<a class="headerlink" href="#ordering-invariant-and-anti-patterns" title="Permalink to this heading"></a></h4>
+<p><strong>Invariant</strong>: <code class="docutils literal notranslate"><span class="pre">attachData()</span></code> with <code class="docutils literal notranslate"><span class="pre">FillOnAttach</span> <span class="pre">=</span> <span class="pre">true</span></code> (the default) must always
+be called <em>before</em> any real values are written to the array. Any data written before
+such a call is silently overwritten by the auto-fill step and is dead code.</p>
+<p>Three anti-patterns discovered and corrected during implementation:</p>
+<p><strong>Class A — Wasted pre-fill</strong>: A <code class="docutils literal notranslate"><span class="pre">deepCopy</span></code> (or equivalent write) is applied to an
+array before <code class="docutils literal notranslate"><span class="pre">defineFields()</span></code> calls <code class="docutils literal notranslate"><span class="pre">attachData()</span></code> on it. Because <code class="docutils literal notranslate"><span class="pre">attachData()</span></code>
+overwrites the entire array, the earlier write has no effect.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// WRONG: initial value is overwritten by attachData()</span>
+<span class="n">deepCopy</span><span class="p">(</span><span class="n">SpecVol</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="n">_Real</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">RhoSw</span><span class="p">);</span>
+<span class="n">defineFields</span><span class="p">();</span><span class="w"> </span><span class="c1">// calls attachData(), fills SpecVol with FillValueReal</span>
+</pre></div>
+</div>
+<p><strong>Class B — Compute-time re-initialization</strong>: A <code class="docutils literal notranslate"><span class="pre">deepCopy(arr,</span> <span class="pre">0)</span></code> (or any scalar)
+at the top of a recurring compute method resets the entire array on every timestep,
+overwriting the correct fill values in inactive layers with zero.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// WRONG: destroys fill values in inactive layers every timestep</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">Foo::compute</span><span class="p">(...)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">deepCopy</span><span class="p">(</span><span class="n">LocArr</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="w">    </span><span class="n">parallelFor</span><span class="p">({</span><span class="n">NCellsAll</span><span class="p">},</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="n">I4</span><span class="w"> </span><span class="n">ICell</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// writes only active layers KMin..KMax</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The correct pattern for Classes A and B is to do nothing: <code class="docutils literal notranslate"><span class="pre">attachData()</span></code> sets the
+fill value once at initialization, and compute kernels that iterate only over active
+layers naturally leave inactive layers at the fill value.</p>
+<p><strong>Class C — Time-level pointer update</strong>: <code class="docutils literal notranslate"><span class="pre">attachData()</span></code> is called each timestep to
+re-point the IO field to the newly-current time-level array (e.g., in
+<code class="docutils literal notranslate"><span class="pre">OceanState::updateTimeLevels()</span></code> and <code class="docutils literal notranslate"><span class="pre">Tracers::updateTimeLevels()</span></code>). The array
+already contains the just-computed state. Calling <code class="docutils literal notranslate"><span class="pre">attachData()</span></code> with the default
+<code class="docutils literal notranslate"><span class="pre">FillOnAttach</span> <span class="pre">=</span> <span class="pre">true</span></code> here would silently destroy the computed values before IO
+writes them. This is the most dangerous anti-pattern because the model runs to
+completion without aborting, but all output fields contain fill values.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// WRONG: destroys computed state before IO can write it</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">OceanState::updateTimeLevels</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">CurTimeIndex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">CurTimeIndex</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">NTimeLevels</span><span class="p">;</span>
+<span class="w">    </span><span class="n">Field</span><span class="o">::</span><span class="n">attachFieldData</span><span class="o">&lt;</span><span class="n">Array2DReal</span><span class="o">&gt;</span><span class="p">(</span><span class="n">NormalVelocityFldName</span><span class="p">,</span>
+<span class="w">                                        </span><span class="n">NormalVelocity</span><span class="p">[</span><span class="n">CurTimeIndex</span><span class="p">]);</span><span class="w"> </span><span class="c1">// fills!</span>
+<span class="p">}</span>
+
+<span class="c1">// CORRECT: pointer update only, computed values preserved</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">OceanState::updateTimeLevels</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">CurTimeIndex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">CurTimeIndex</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">NTimeLevels</span><span class="p">;</span>
+<span class="w">    </span><span class="n">Field</span><span class="o">::</span><span class="n">attachFieldData</span><span class="o">&lt;</span><span class="n">Array2DReal</span><span class="o">&gt;</span><span class="p">(</span><span class="n">NormalVelocityFldName</span><span class="p">,</span>
+<span class="w">                                        </span><span class="n">NormalVelocity</span><span class="p">[</span><span class="n">CurTimeIndex</span><span class="p">],</span><span class="w"> </span><span class="nb">false</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>A related instance occurs in the IO write path when the time-coordinate array is
+populated before <code class="docutils literal notranslate"><span class="pre">attachFieldData(&quot;time&quot;,</span> <span class="pre">OutTime)</span></code> is called. The correct pattern
+is to attach first (which fills the single-element array with the fill value), then
+assign the elapsed time to <code class="docutils literal notranslate"><span class="pre">OutTime(0)</span></code>. Because Kokkos host views share backing
+memory, the assignment is visible through the stored pointer before the field is
+written to the file.</p>
+</section>
+</section>
+<section id="module-level-changes-removing-fillvalue-from-field-create-calls">
+<h3>4.3 Module-level changes: removing FillValue from Field::create() calls<a class="headerlink" href="#module-level-changes-removing-fillvalue-from-field-create-calls" title="Permalink to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">FillValue</span></code> parameter is removed from <code class="docutils literal notranslate"><span class="pre">Field::create()</span></code>. All ~50 call sites
+across Omega drop the fill value argument. The pattern is:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// BEFORE — explicit fill value argument</span>
+<span class="n">Field</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="n">FieldName</span><span class="p">,</span><span class="w"> </span><span class="n">Description</span><span class="p">,</span><span class="w"> </span><span class="n">Units</span><span class="p">,</span><span class="w"> </span><span class="n">StdName</span><span class="p">,</span>
+<span class="w">              </span><span class="n">ValidMin</span><span class="p">,</span><span class="w"> </span><span class="n">ValidMax</span><span class="p">,</span><span class="w"> </span><span class="n">FillValueReal</span><span class="p">,</span><span class="w"> </span><span class="n">NDims</span><span class="p">,</span><span class="w"> </span><span class="n">DimNames</span><span class="p">);</span>
+
+<span class="c1">// AFTER — fill value is deduced automatically from the array type at attachData()</span>
+<span class="n">Field</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="n">FieldName</span><span class="p">,</span><span class="w"> </span><span class="n">Description</span><span class="p">,</span><span class="w"> </span><span class="n">Units</span><span class="p">,</span><span class="w"> </span><span class="n">StdName</span><span class="p">,</span>
+<span class="w">              </span><span class="n">ValidMin</span><span class="p">,</span><span class="w"> </span><span class="n">ValidMax</span><span class="p">,</span><span class="w"> </span><span class="n">NDims</span><span class="p">,</span><span class="w"> </span><span class="n">DimNames</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">Tracers::define()</span></code> helper in <code class="docutils literal notranslate"><span class="pre">src/ocn/Tracers.h</span></code> / <code class="docutils literal notranslate"><span class="pre">Tracers.cpp</span></code> and
+<code class="docutils literal notranslate"><span class="pre">TracerDefs.inc</span></code> also have their <code class="docutils literal notranslate"><span class="pre">FillValue</span></code> parameter and arguments removed,
+since <code class="docutils literal notranslate"><span class="pre">Tracers::define()</span></code> calls <code class="docutils literal notranslate"><span class="pre">Field::create()</span></code> internally.</p>
+</section>
+<section id="boundary-edge-and-vertex-handling">
+<h3>4.4 Boundary edge and vertex handling<a class="headerlink" href="#boundary-edge-and-vertex-handling" title="Permalink to this heading"></a></h3>
+<p>During implementation, all compute routines that populate fields defined on mesh
+edges or vertices must be audited to confirm that every valid boundary entry —
+including edges and vertices adjacent to land cells and edges at the base of the
+water column — receives an explicit computed value rather than relying on
+zero-initialization. Where such reliance is found, an explicit assignment must be
+added. The CTest in Section 5.5 detects regressions after the change.</p>
+</section>
+<section id="edge-flux-field-masking">
+<h3>4.5 Edge flux field masking<a class="headerlink" href="#edge-flux-field-masking" title="Permalink to this heading"></a></h3>
+<p>Edge fields that represent fluxes normal to the edge face — such as
+<code class="docutils literal notranslate"><span class="pre">NormalVelocityTend</span></code>, <code class="docutils literal notranslate"><span class="pre">VelocityDel2Aux.Del2Edge</span></code>, and <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> itself —
+must carry zeros (not fill values) in the boundary layer sub-ranges
+<code class="docutils literal notranslate"><span class="pre">[MinLayerEdgeTop,</span> <span class="pre">MinLayerEdgeBot)</span></code> and <code class="docutils literal notranslate"><span class="pre">(MaxLayerEdgeTop,</span> <span class="pre">MaxLayerEdgeBot]</span></code>,
+where one neighboring cell is active but the other is not. Two helper methods
+are added to <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> (<code class="docutils literal notranslate"><span class="pre">components/omega/src/ocn/VertCoord.h/.cpp</span></code>):</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">zeroEdgeField(Array2DReal</span> <span class="pre">&amp;Arr,</span> <span class="pre">I4</span> <span class="pre">NEdgesAll)</span></code></strong> — zeros all layers in
+<code class="docutils literal notranslate"><span class="pre">[MinLayerEdgeTop,</span> <span class="pre">MaxLayerEdgeBot]</span></code>. Used before recomputing a flux-type edge
+field each time step so that boundary edges show 0, not <code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code>. Layers
+outside the valid range retain their fill value from <code class="docutils literal notranslate"><span class="pre">attachData()</span></code>. Called for:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">NormalVelocityTend</span></code> at the start of <code class="docutils literal notranslate"><span class="pre">Tendencies::computeVelocityTendenciesOnly()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VelocityDel2Aux.Del2Edge</span></code> before the <code class="docutils literal notranslate"><span class="pre">edgeAuxState2</span></code> kernel in
+<code class="docutils literal notranslate"><span class="pre">AuxiliaryState::computeMomAux()</span></code>, because the Del4 hyperdiffusion kernel
+accumulates <code class="docutils literal notranslate"><span class="pre">Del2Edge</span></code> over all edges sharing a cell or vertex; fill values in
+boundary layers of a neighbouring edge would corrupt <code class="docutils literal notranslate"><span class="pre">Del2DivCell</span></code> and
+<code class="docutils literal notranslate"><span class="pre">Del2RelVortVertex</span></code>.</p></li>
+</ul>
+<p><strong><code class="docutils literal notranslate"><span class="pre">applyEdgeLayerMask(Array2DReal</span> <span class="pre">&amp;Arr,</span> <span class="pre">I4</span> <span class="pre">NEdgesAll)</span></code></strong> — enforces the full
+three-zone mask on an edge field after IC or restart read: layers outside
+<code class="docutils literal notranslate"><span class="pre">[MinLayerEdgeTop,</span> <span class="pre">MaxLayerEdgeBot]</span></code> are set to <code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code>; layers inside
+<code class="docutils literal notranslate"><span class="pre">[MinLayerEdgeTop,</span> <span class="pre">MaxLayerEdgeBot]</span></code> but outside the active range
+<code class="docutils literal notranslate"><span class="pre">[MinLayerEdgeBot,</span> <span class="pre">MaxLayerEdgeTop]</span></code> are set to 0; active layers are left
+unchanged.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">applyCellLayerMask(Array2DReal</span> <span class="pre">&amp;Arr,</span> <span class="pre">I4</span> <span class="pre">NCellsAll)</span></code></strong> — enforces the
+two-zone mask on a cell field after IC or restart read: layers outside the
+active range <code class="docutils literal notranslate"><span class="pre">[MinLayerCell,</span> <span class="pre">MaxLayerCell]</span></code> are set to <code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code>; active
+layers are left unchanged. Cell fields have no boundary (zero) zone because a
+cell column is either active or inactive at a given layer — there is no
+neighbor-dependent partial-activity range as there is for edges and vertices.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">applyVertexLayerMask(Array2DReal</span> <span class="pre">&amp;Arr,</span> <span class="pre">I4</span> <span class="pre">NVerticesAll)</span></code></strong> — enforces the
+two-zone mask on a vertex field: layers outside <code class="docutils literal notranslate"><span class="pre">[MinLayerVertexTop,</span> <span class="pre">MaxLayerVertexBot]</span></code> are set to <code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code>; active layers are left
+unchanged. Unlike an edge, a vertex does <strong>not</strong> have a zeroed boundary zone: a
+boundary vertex with one or more active surrounding cells holds valid, generally
+non-zero data (for example, relative vorticity at such a vertex is computed from
+its active surrounding edges — see <code class="docutils literal notranslate"><span class="pre">VorticityAuxVars::computeVarsOnVertex</span></code>, which
+loops over the full <code class="docutils literal notranslate"><span class="pre">[MinLayerVertexTop,</span> <span class="pre">MaxLayerVertexBot]</span></code> range). Zeroing that
+boundary band would discard real signal, so the whole valid range is kept. There
+is currently no vertex-based state field read from IC/restart, so this method has
+no production caller yet; it is provided for completeness and is exercised by the
+CTest (Section 5.6).</p>
+<p>All three <code class="docutils literal notranslate"><span class="pre">apply*LayerMask</span></code> methods use the inclusive <code class="docutils literal notranslate"><span class="pre">[Min,</span> <span class="pre">Max]</span></code> layer
+convention consistent with <code class="docutils literal notranslate"><span class="pre">computeGeomZHeight</span></code>/<code class="docutils literal notranslate"><span class="pre">computePressure</span></code>. They are
+driven through <code class="docutils literal notranslate"><span class="pre">OceanState::applyLayerMasks(TimeLevel)</span></code>
+(<code class="docutils literal notranslate"><span class="pre">src/ocn/OceanState.cpp</span></code>), which is called from <code class="docutils literal notranslate"><span class="pre">ocnInit</span></code> (<code class="docutils literal notranslate"><span class="pre">OceanInit.cpp</span></code>)
+after <code class="docutils literal notranslate"><span class="pre">exchangeHalo</span></code> and before <code class="docutils literal notranslate"><span class="pre">copyToHost</span></code>. <code class="docutils literal notranslate"><span class="pre">applyLayerMasks</span></code> applies the
+edge mask to <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and the cell mask to <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Temperature</span></code>, and <code class="docutils literal notranslate"><span class="pre">Salinity</span></code> — the state and tracer fields read from
+IC/restart.</p>
+<p>Fields that are <em>not</em> fluxes — <code class="docutils literal notranslate"><span class="pre">MeanPseudoThickEdge</span></code>, <code class="docutils literal notranslate"><span class="pre">FluxPseudoThickEdge</span></code> —
+are genuinely undefined at boundary edges (interpolating thickness when one
+neighboring cell is land has no physical meaning) and therefore correctly retain
+<code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code> in those layers; no zeroing is applied to them.
+<code class="docutils literal notranslate"><span class="pre">VorticityAux</span></code> on edges is already computed over the full valid range
+<code class="docutils literal notranslate"><span class="pre">[MinLayerEdgeTop,</span> <span class="pre">MaxLayerEdgeBot]</span></code>, so it requires no additional masking.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">HighOrderFlxHorz</span></code> in <code class="docutils literal notranslate"><span class="pre">TracerHorzAdvOnCell</span></code></strong> — the 3-D working array
+<code class="docutils literal notranslate"><span class="pre">(NTracers,</span> <span class="pre">NEdgesSize,</span> <span class="pre">NVertLayers)</span></code> that accumulates horizontal tracer flux
+contributions per edge requires separate treatment. The edge-pass overload of
+<code class="docutils literal notranslate"><span class="pre">TracerHorzAdvOnCell::operator()</span></code> writes <code class="docutils literal notranslate"><span class="pre">HighOrderFlxHorz(L,</span> <span class="pre">IEdge,</span> <span class="pre">K)</span></code> only
+for layers <code class="docutils literal notranslate"><span class="pre">K</span> <span class="pre">∈</span> <span class="pre">[0,</span> <span class="pre">MaxLayerEdgeTop(IEdge)]</span></code>; layers beyond that index retain
+their fill values from <code class="docutils literal notranslate"><span class="pre">attachData()</span></code>. The cell-pass overload then reads
+<code class="docutils literal notranslate"><span class="pre">HighOrderFlxHorz</span></code> over the cell’s own active range <code class="docutils literal notranslate"><span class="pre">[MinLayerCell,</span> <span class="pre">MaxLayerCell]</span></code>,
+which for cells adjacent to shallower edges extends past <code class="docutils literal notranslate"><span class="pre">MaxLayerEdgeTop</span></code> of
+those edges — reading fill values and corrupting active-layer tracer tendencies.
+The fix is to add <code class="docutils literal notranslate"><span class="pre">MinLayerEdgeBot</span></code> and <code class="docutils literal notranslate"><span class="pre">MaxLayerEdgeTop</span></code> as members of
+<code class="docutils literal notranslate"><span class="pre">TracerHorzAdvOnCell</span></code> and clamp the cell-pass inner loop to
+<code class="docutils literal notranslate"><span class="pre">[max(KStart,</span> <span class="pre">MinLayerEdgeBot(IEdge)),</span> <span class="pre">min(KEnd,</span> <span class="pre">MaxLayerEdgeTop(IEdge)+1))</span></code>.
+This follows the identical pattern already used by <code class="docutils literal notranslate"><span class="pre">PseudoThicknessFluxDivOnCell</span></code>,
+<code class="docutils literal notranslate"><span class="pre">TracerDiffOnCell</span></code>, <code class="docutils literal notranslate"><span class="pre">TracerAuxVars::computeVarsOnCells</span></code>, and every other
+cell-level flux-accumulation kernel, and avoids the need to zero
+<code class="docutils literal notranslate"><span class="pre">HighOrderFlxHorz</span></code> before the edge pass each timestep.</p>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<p>A test <code class="docutils literal notranslate"><span class="pre">test/ocn/FillValueTest.cpp</span></code> is added and registered as <code class="docutils literal notranslate"><span class="pre">FILL_VALUE_TEST</span></code>
+with 8 MPI tasks (building <code class="docutils literal notranslate"><span class="pre">testFillValue.exe</span></code>) using <code class="docutils literal notranslate"><span class="pre">add_omega_test()</span></code> in the
+test <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code>. The test performs a full ocean initialization (matching
+the <code class="docutils literal notranslate"><span class="pre">StateTest</span></code> pattern: <code class="docutils literal notranslate"><span class="pre">MachEnv</span></code>, logging, Config, <code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code>, IO, <code class="docutils literal notranslate"><span class="pre">Field</span></code>,
+<code class="docutils literal notranslate"><span class="pre">IOStream</span></code>, <code class="docutils literal notranslate"><span class="pre">Decomp</span></code>, <code class="docutils literal notranslate"><span class="pre">Halo</span></code>, <code class="docutils literal notranslate"><span class="pre">HorzMesh</span></code>, <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code>, <code class="docutils literal notranslate"><span class="pre">Tracers</span></code>,
+<code class="docutils literal notranslate"><span class="pre">AuxiliaryState</span></code>, <code class="docutils literal notranslate"><span class="pre">PressureGrad</span></code>, <code class="docutils literal notranslate"><span class="pre">Tendencies</span></code>, <code class="docutils literal notranslate"><span class="pre">OceanState</span></code>), reads the initial
+state, exchanges halos, and applies <code class="docutils literal notranslate"><span class="pre">applyEdgeLayerMask</span></code> to <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code>
+before running its assertions. Each test counts mismatches and, on any failure,
+accumulates an <code class="docutils literal notranslate"><span class="pre">Error(ErrorCode::Fail,</span> <span class="pre">...)</span></code> into a top-level <code class="docutils literal notranslate"><span class="pre">Error</span></code> whose
+final state sets the process return code.</p>
+<section id="test-fill-constant-values">
+<h3>5.1 Test: fill constant values<a class="headerlink" href="#test-fill-constant-values" title="Permalink to this heading"></a></h3>
+<p>Verify that each Omega fill value constant exactly equals its NetCDF-C
+counterpart (<code class="docutils literal notranslate"><span class="pre">FillValueI4</span> <span class="pre">==</span> <span class="pre">NC_FILL_INT</span></code>, <code class="docutils literal notranslate"><span class="pre">FillValueI8</span> <span class="pre">==</span> <span class="pre">NC_FILL_INT64</span></code>,
+<code class="docutils literal notranslate"><span class="pre">FillValueR4</span> <span class="pre">==</span> <span class="pre">NC_FILL_FLOAT</span></code>, <code class="docutils literal notranslate"><span class="pre">FillValueR8</span> <span class="pre">==</span> <span class="pre">NC_FILL_DOUBLE</span></code>), comparing
+directly against the <code class="docutils literal notranslate"><span class="pre">&lt;netcdf.h&gt;</span></code> <code class="docutils literal notranslate"><span class="pre">NC_FILL_*</span></code> macros.</p>
+<p>Tests requirements: 2.1, 2.2, 2.7</p>
+</section>
+<section id="test-attachdata-auto-fill">
+<h3>5.2 Test: attachData auto-fill<a class="headerlink" href="#test-attachdata-auto-fill" title="Permalink to this heading"></a></h3>
+<p>Create a <code class="docutils literal notranslate"><span class="pre">Field</span></code>, allocate a Kokkos host array whose elements are all set to a
+distinct sentinel (<code class="docutils literal notranslate"><span class="pre">0</span></code>), then call <code class="docutils literal notranslate"><span class="pre">attachData()</span></code>. Verify that after the call
+every element of the array equals <code class="docutils literal notranslate"><span class="pre">FillValueR8</span></code>.</p>
+<p>Tests requirements: 2.3, 2.7</p>
+</section>
+<section id="test-inactive-layers-contain-fill-values">
+<h3>5.3 Test: inactive layers contain fill values<a class="headerlink" href="#test-inactive-layers-contain-fill-values" title="Permalink to this heading"></a></h3>
+<p>After <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> initialization, verify that the cell field <code class="docutils literal notranslate"><span class="pre">GeomZMid</span></code> carries
+<code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code> in every inactive layer (<code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">&gt;=</span> <span class="pre">MaxLayerCell(ICell)</span></code>) for all
+owned cells. This confirms that the auto-fill applied at <code class="docutils literal notranslate"><span class="pre">attachData()</span></code> time
+survives initialization for inactive layers.</p>
+<p>Tests requirements: 2.5, 2.7</p>
+</section>
+<section id="test-normalvelocity-three-zone-fill-zero-real-pattern">
+<h3>5.4 Test: NormalVelocity three-zone fill/zero/real pattern<a class="headerlink" href="#test-normalvelocity-three-zone-fill-zero-real-pattern" title="Permalink to this heading"></a></h3>
+<p>After full state initialization, IC read, halo exchange, and
+<code class="docutils literal notranslate"><span class="pre">VertCoord::applyEdgeLayerMask()</span></code>, verify that <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> satisfies the
+three-zone invariant for every owned edge:</p>
+<ul class="simple">
+<li><p><strong>Fully inactive layers</strong> (outside <code class="docutils literal notranslate"><span class="pre">[MinLayerEdgeTop,</span> <span class="pre">MaxLayerEdgeBot]</span></code>):
+equal <code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code>.</p></li>
+<li><p><strong>Boundary layers</strong> (inside <code class="docutils literal notranslate"><span class="pre">[MinLayerEdgeTop,</span> <span class="pre">MaxLayerEdgeBot]</span></code> but outside
+<code class="docutils literal notranslate"><span class="pre">[MinLayerEdgeBot,</span> <span class="pre">MaxLayerEdgeTop]</span></code>): equal <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+<li><p><strong>Active layers</strong> (<code class="docutils literal notranslate"><span class="pre">[MinLayerEdgeBot,</span> <span class="pre">MaxLayerEdgeTop]</span></code>): not equal to
+<code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code> (for a quiescent IC the value is <code class="docutils literal notranslate"><span class="pre">0</span></code>, which is valid).</p></li>
+</ul>
+<p>This guards against two regressions: (a) the original zero-initialization
+assumption (boundary layers silently filled with zero before <code class="docutils literal notranslate"><span class="pre">attachData()</span></code>
+was changed) and (b) IC files that store zeros in inactive layers, which
+<code class="docutils literal notranslate"><span class="pre">applyEdgeLayerMask</span></code> must replace with <code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code>.</p>
+<p>Tests requirements: 2.5, 2.6, 2.7</p>
+</section>
+<section id="test-applycelllayermask-two-zone-pattern">
+<h3>5.5 Test: applyCellLayerMask two-zone pattern<a class="headerlink" href="#test-applycelllayermask-two-zone-pattern" title="Permalink to this heading"></a></h3>
+<p>Allocate a synthetic cell field, fill it with a sentinel value (≠ 0 and
+≠ <code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code>), apply <code class="docutils literal notranslate"><span class="pre">VertCoord::applyCellLayerMask()</span></code>, and verify for every
+owned cell that:</p>
+<ul class="simple">
+<li><p><strong>Inactive layers</strong> (outside <code class="docutils literal notranslate"><span class="pre">[MinLayerCell,</span> <span class="pre">MaxLayerCell]</span></code>): equal
+<code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code>.</p></li>
+<li><p><strong>Active layers</strong> (<code class="docutils literal notranslate"><span class="pre">[MinLayerCell,</span> <span class="pre">MaxLayerCell]</span></code>): retain the sentinel value.</p></li>
+</ul>
+<p>Using a sentinel rather than IC data gives an exact check that the mask
+overwrites only the inactive layers.</p>
+<p>Tests requirements: 2.5, 2.7</p>
+</section>
+<section id="test-applyvertexlayermask-two-zone-pattern">
+<h3>5.6 Test: applyVertexLayerMask two-zone pattern<a class="headerlink" href="#test-applyvertexlayermask-two-zone-pattern" title="Permalink to this heading"></a></h3>
+<p>Allocate a synthetic vertex field, fill it with the same sentinel value, apply
+<code class="docutils literal notranslate"><span class="pre">VertCoord::applyVertexLayerMask()</span></code>, and verify for every owned vertex that:</p>
+<ul class="simple">
+<li><p><strong>Inactive layers</strong> (outside <code class="docutils literal notranslate"><span class="pre">[MinLayerVertexTop,</span> <span class="pre">MaxLayerVertexBot]</span></code>): equal
+<code class="docutils literal notranslate"><span class="pre">FillValueReal</span></code>.</p></li>
+<li><p><strong>Active layers</strong> (<code class="docutils literal notranslate"><span class="pre">[MinLayerVertexTop,</span> <span class="pre">MaxLayerVertexBot]</span></code>): retain the
+sentinel value.</p></li>
+</ul>
+<p>Vertices have no zeroed boundary zone (a boundary vertex holds valid data), so
+the whole valid range is checked for the sentinel. Because no vertex-based state
+field is read from IC/restart, this synthetic test is the primary coverage for
+<code class="docutils literal notranslate"><span class="pre">applyVertexLayerMask</span></code>.</p>
+<p>Tests requirements: 2.5, 2.7</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Error.html" class="btn btn-neutral float-left" title="ErrorHandler (Error)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Halo.html" class="btn btn-neutral float-right" title="Halo" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
