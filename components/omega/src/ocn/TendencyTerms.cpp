@@ -183,6 +183,8 @@ void TracerHorzAdvOnCell::init() {
          ActiveTracerHorizontalAdvectionTendency =
              Array3DReal("FCTActiveTracerHorizontalAdvectionTendency", NTracers,
                          NCellsAll, NVertLayers);
+	 deepCopy(ActiveTracerHorizontalAdvectionEdgeFlux, 0.0);
+	 deepCopy(ActiveTracerHorizontalAdvectionTendency, 0.0);
          const int NDims             = 1;
          const std::string GroupName = "AuxiliaryState";
          std::vector<std::string> FluxDimNames(NDims, "NEdges");

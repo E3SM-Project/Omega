@@ -15,7 +15,6 @@ tendency terms are currently implemented:
 | VelocityDiffusionOnEdge | Laplacian horizontal mixing, defined on edges
 | VelocityHyperDiffOnEdge | biharmonic horizontal mixing, defined on edges
 | TracerHorzAdvOnCell | horizontal advection of thickness-weighted tracers
-| TracerHighOrderHorzAdvOnCell | second order horizontal advection of thickness-weighted tracers
 | TracerDiffOnCell | horizontal diffusion of thickness-weighted tracers
 | TracerHyperDiffOnCell | biharmonic horizontal mixing of thickness-weighted tracers
 | SfcStressForcingOnEdge | forcing by surface stress (e.g. wind), defined on edges
@@ -46,7 +45,6 @@ the currently available tendency terms:
 | | DivFactor | scale factor for the divergence term
 | TracerHorzAdvOnCell | TracerHorzAdvTendencyEnable | enable/disable term
 | | HorzTracerFluxOrder | 2 for standard linear advection
-| TracerHighOrderHorzAdvOnCell | TracerHorzAdvTendencyEnable | enable/disable term
 | | HorzTracerFluxOrder | 3 for second order advection algorithm
 | | HorzTracerFluxLimiterEnable | enable/disable monotonic flux corrected transport (FCT)
 | | HorzTracerFluxLimiterBudgetsEnable | enable/disable budgets if FCT is enabled
@@ -185,6 +183,17 @@ $$
 Tracer higer order convergence example of a cosine bell advected on a sphere with FCT showing an order 2.23 convergence rate
 ```
 
+
+When monotonic flux limiting is used then there are two diagnostic options that can be enabled, 
+HorzTracerFluxLimiterBudgetsEnable and HorzTracerFluxLimiterMonotonicityCheckEnable. The 
+HorzTracerFluxLimiterMonotonicityCheckEnable flag enables a post-transport check that the
+resulting values are indeed monotone as required by the algorithm and any discrepancies are 
+printed along with information on where they occur. 
+
+The HorzTracerFluxLimiterBudgetsEnable option enables the output of two diagnostic fields to the 
+output mesh file.  One is the "FCTActiveTracerHorizontalAdvectionEdgeFlux" variable which is the
+edge flux across every side of every element. The other is the "FCTActiveTracerHorizontalAdvectionTendency"
+variable which is the cell-centered value of the advection tendency.  
 
 ## See Also
 
