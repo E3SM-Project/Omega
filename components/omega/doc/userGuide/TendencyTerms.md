@@ -184,16 +184,43 @@ Tracer higer order convergence example of a cosine bell advected on a sphere wit
 ```
 
 
-When monotonic flux limiting is used then there are two diagnostic options that can be enabled, 
-HorzTracerFluxLimiterBudgetsEnable and HorzTracerFluxLimiterMonotonicityCheckEnable. The 
+When monotonic flux limiting is used then there are two diagnostic options that can be enabled,
+HorzTracerFluxLimiterBudgetsEnable and HorzTracerFluxLimiterMonotonicityCheckEnable. The
 HorzTracerFluxLimiterMonotonicityCheckEnable flag enables a post-transport check that the
-resulting values are indeed monotone as required by the algorithm and any discrepancies are 
-printed along with information on where they occur. 
+resulting values are indeed monotone as required by the algorithm and any discrepancies are
+printed along with information on where they occur.
 
-The HorzTracerFluxLimiterBudgetsEnable option enables the output of two diagnostic fields to the 
+The HorzTracerFluxLimiterBudgetsEnable option enables the output of two diagnostic fields to the
 output mesh file.  One is the "FCTActiveTracerHorizontalAdvectionEdgeFlux" variable which is the
 edge flux across every side of every element. The other is the "FCTActiveTracerHorizontalAdvectionTendency"
-variable which is the cell-centered value of the advection tendency.  
+variable which is the cell-centered value of the advection tendency.
+
+
+### Monotonic Flux Limiting Transport Example of Limiting Ripple Effect
+
+The effect of monotonic higher order FCT horizontal transport verses just higher order horizontal transport
+can be seen in the Polaris test of the slotted cylinder. The cylinder is advected for one revolution under
+a constant velocity field. The result is advecting the solution back to the original configuration as
+an exact solution. The difference between the initial condition and the advected solution is the error
+in the advection scheme. This difference is shown in the following two plots for non-monotonic and monotonic
+advection.
+
+```{figure} images/higher_order_slotted_cylinder_non_monotonic_diff.jpg
+:name:  tracer-error-in-higher-order-convergence_non-monotonic
+:align: center
+:width: 600 px
+Error in a tracer higher order convergence example of a slotted cylinder advected on a sphere with the standard third order advection
+algorithm with no FCT flux correction. Notice the ringing due to the sharp edges of the tracer distribution.
+```
+
+```{figure} images/higher_order_slotted_cylinder_FCT_diff.jpg
+:name:  tracer-error-in-higher-order-convergence_FCT
+:align: center
+:width: 600 px
+Error Tracer higher order convergence example of a slotted cylinder advected on a sphere with FCT monotone
+flux correction. Notice the reduction in ringing around the sharp edges of the tracer distribution.
+```
+
 
 ## See Also
 

@@ -93,7 +93,7 @@ TracerHorzAdvOnCell::TracerHorzAdvOnCell(const HorzMesh *Mesh,
       TracerCur(), NEdgesOnCell(Mesh->NEdgesOnCell),
       EdgesOnCell(Mesh->EdgesOnCell), CellsOnEdge(Mesh->CellsOnEdge),
       MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
-      MaxLayerEdgeTop(VCoord->MinLayerEdgeTop),
+      MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop),
       EdgeSignOnCell(Mesh->EdgeSignOnCell), DvEdge(Mesh->DvEdge),
       AreaCell(Mesh->AreaCell),
       VerticalPseudoVelocity(VAdv->VerticalPseudoVelocity), HProvInv(),
@@ -174,6 +174,17 @@ void TracerHorzAdvOnCell::init() {
       WorkTend = Array2DReal("WorkTend", NCellsAll + 1, NVertLayers);
       FlxIn    = Array2DReal("FlxIn", NCellsAll + 1, NVertLayers);
       FlxOut   = Array2DReal("FlxOut", NCellsAll + 1, NVertLayers);
+      deepCopy(HProvInv, 0.0);
+      deepCopy(HNewInv, 0.0);
+      deepCopy(HProv, 0.0);
+      deepCopy(TracerCur, 0.0);
+      deepCopy(TracerMax, 0.0);
+      deepCopy(TracerMin, 0.0);
+      deepCopy(HighOrderFlx, 0.0);
+      deepCopy(LowOrderFlx, 0.0);
+      deepCopy(WorkTend, 0.0);
+      deepCopy(FlxIn, 0.0);
+      deepCopy(FlxOut, 0.0);
       if (ComputeBudgets) {
          const int NTracers = Tracers::getNumTracers();
          const int NEdges   = Mesh->NEdgesHaloH(1);
@@ -183,8 +194,8 @@ void TracerHorzAdvOnCell::init() {
          ActiveTracerHorizontalAdvectionTendency =
              Array3DReal("FCTActiveTracerHorizontalAdvectionTendency", NTracers,
                          NCellsAll, NVertLayers);
-	 deepCopy(ActiveTracerHorizontalAdvectionEdgeFlux, 0.0);
-	 deepCopy(ActiveTracerHorizontalAdvectionTendency, 0.0);
+         deepCopy(ActiveTracerHorizontalAdvectionEdgeFlux, 0.0);
+         deepCopy(ActiveTracerHorizontalAdvectionTendency, 0.0);
          const int NDims             = 1;
          const std::string GroupName = "AuxiliaryState";
          std::vector<std::string> FluxDimNames(NDims, "NEdges");
