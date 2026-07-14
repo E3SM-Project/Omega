@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ocean State &mdash; Omega develop documentation</title>
+  <title>Surface Coupling &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Time Manager (TimeMgr)" href="TimeMgr.html" />
-    <link rel="prev" title="Tendencies" href="Tendencies.html" />
+    <link rel="next" title="Omega V0: Shallow Water" href="../design/OmegaV0ShallowWater.html" />
+    <link rel="prev" title="Forcing" href="Forcing.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -113,7 +113,7 @@
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time stepping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
@@ -125,7 +125,14 @@
 <li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Forcing.html">Forcing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="SfcCoupling.html">Surface Coupling</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Surface Coupling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#initialization">Initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creation-of-non-default-surface-coupling-objects">Creation of non-default surface coupling objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-exchange">Data exchange</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#units">Units</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#removal-of-surface-coupling-objects">Removal of surface coupling objects</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
@@ -182,9 +189,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Ocean State</li>
+      <li class="breadcrumb-item active">Surface Coupling</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/devGuide/OceanState.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/devGuide/SfcCoupling.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -192,108 +199,94 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="ocean-state">
-<span id="omega-dev-ocean-state"></span><h1>Ocean State<a class="headerlink" href="#ocean-state" title="Permalink to this heading"></a></h1>
-<p>The Omega <code class="docutils literal notranslate"><span class="pre">OceanState</span></code> class
-A state object is created by the <code class="docutils literal notranslate"><span class="pre">init</span></code> method, which assumes that <code class="docutils literal notranslate"><span class="pre">Decomp</span></code> and <code class="docutils literal notranslate"><span class="pre">HorzMesh</span></code> have
-already been initialized.</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Decomp</span><span class="o">::</span><span class="n">init</span><span class="p">();</span>
-<span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">HorzMesh</span><span class="o">::</span><span class="n">init</span><span class="p">();</span>
-<span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">OceanState</span><span class="o">::</span><span class="n">init</span><span class="p">();</span>
+  <section class="tex2jax_ignore mathjax_ignore" id="surface-coupling">
+<span id="omega-dev-sfc-coupling"></span><h1>Surface Coupling<a class="headerlink" href="#surface-coupling" title="Permalink to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code> class manages the variables exchanged to (<code class="docutils literal notranslate"><span class="pre">o2x</span></code>) and from
+(<code class="docutils literal notranslate"><span class="pre">x2o</span></code>) the coupler. It handles import/export of the raw coupler data,
+application of imported fields to the <a class="reference internal" href="Forcing.html#omega-dev-forcing"><span class="std std-ref"><code class="docutils literal notranslate"><span class="pre">Forcing</span></code></span></a> object,
+and accumulation of export fields over the coupling interval. It is possible
+to have multiple <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code> instances; every instance has a name and is
+tracked in a static C++ map called <code class="docutils literal notranslate"><span class="pre">AllSfcCoupling</span></code>.</p>
+<section id="initialization">
+<h2>Initialization<a class="headerlink" href="#initialization" title="Permalink to this heading"></a></h2>
+<p>The static method:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">SfcCoupling</span><span class="o">::</span><span class="n">init</span><span class="p">(</span><span class="n">CouplingInitParams</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>The create method:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OceanState</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="c1">///&lt; [in] Name for mesh</span>
-<span class="w">                   </span><span class="n">HorzMesh</span><span class="w"> </span><span class="o">*</span><span class="n">Mesh</span><span class="p">,</span><span class="w">          </span><span class="c1">///&lt; [in] Horizontal mesh</span>
-<span class="w">                   </span><span class="n">Decomp</span><span class="w"> </span><span class="o">*</span><span class="n">MeshDecomp</span><span class="p">,</span><span class="w">      </span><span class="c1">///&lt; [in] Decomp for Mesh</span>
-<span class="w">                   </span><span class="n">Halo</span><span class="w"> </span><span class="o">*</span><span class="n">MeshHalo_</span><span class="p">,</span><span class="w">         </span><span class="c1">///&lt; [in] Halo for Mesh</span>
-<span class="w">                   </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NVertLayers_</span><span class="p">,</span><span class="w">  </span><span class="c1">///&lt; [in] Number of vertical layers</span>
-<span class="w">                   </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NTimeLevels_</span><span class="w">   </span><span class="c1">///&lt; [in] Number of time levels</span>
-<span class="p">);</span>
+<p>initializes the default <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code> given a <code class="docutils literal notranslate"><span class="pre">CouplingInitParams</span></code> struct
+(number of import/export fields, name-to-index maps, coupling time step, and
+coupling <code class="docutils literal notranslate"><span class="pre">Layout</span></code>, i.e. <code class="docutils literal notranslate"><span class="pre">MCT</span></code> or <code class="docutils literal notranslate"><span class="pre">MOAB</span></code>) supplied by the coupler. A pointer to
+the default instance can be retrieved at any time using:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">SfcCoupling</span><span class="o">*</span><span class="w"> </span><span class="n">DefSfcCoupling</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">SfcCoupling</span><span class="o">::</span><span class="n">getDefault</span><span class="p">();</span>
 </pre></div>
 </div>
-<p>allocates the <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code> arrays for a given number of time levels.
-The current time level is then registered with the IO infrastructure.</p>
-<p>After initialization, the default state object can be retrieved via:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="p">::</span><span class="n">OceanState</span> <span class="o">*</span><span class="n">State</span> <span class="o">=</span> <span class="n">OMEGA</span><span class="p">::</span><span class="n">OceanState</span><span class="p">::</span><span class="n">getDefault</span><span class="p">();</span>
+</section>
+<section id="creation-of-non-default-surface-coupling-objects">
+<h2>Creation of non-default surface coupling objects<a class="headerlink" href="#creation-of-non-default-surface-coupling-objects" title="Permalink to this heading"></a></h2>
+<p>A non-default instance can be created with the static <code class="docutils literal notranslate"><span class="pre">create</span></code> method,
+which returns a pointer to the newly created object:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">SfcCoupling</span><span class="o">*</span><span class="w"> </span><span class="n">NewSfcCoupling</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">SfcCoupling</span><span class="o">::</span><span class="n">create</span><span class="p">(</span>
+<span class="w">    </span><span class="n">Name</span><span class="p">,</span><span class="w"> </span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="n">NImportFields</span><span class="p">,</span><span class="w"> </span><span class="n">NExportFields</span><span class="p">,</span><span class="w"> </span><span class="n">ImportIdxMap</span><span class="p">,</span><span class="w"> </span><span class="n">ExportIdxMap</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Stepper</span><span class="p">,</span><span class="w"> </span><span class="n">CouplingTimeStep</span><span class="p">,</span><span class="w"> </span><span class="n">Layout</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">OceanState</span></code> is meant to be a container that allows the non-tracer prognostic variables to be
-passed to the PDE solver routines for tendency and auxiliary variable calculation. For example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">AuxiliaryState</span><span class="p">::</span><span class="n">compute</span><span class="p">(</span><span class="n">OceanState</span> <span class="o">*</span><span class="n">State</span><span class="p">)</span> <span class="n">const</span> <span class="p">{</span>
-  <span class="o">...</span>
-<span class="p">}</span>
+<p>Given its name, a pointer to a named instance can be obtained at any time:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">SfcCoupling</span><span class="o">*</span><span class="w"> </span><span class="n">NewSfcCoupling</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">SfcCoupling</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">Name</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>For now, member variables that are host arrays have variable names are appended with an
-<code class="docutils literal notranslate"><span class="pre">H</span></code>.  Array variable names not ending in <code class="docutils literal notranslate"><span class="pre">H</span></code> are device arrays.  For a given time level,
-host to device array is performed via:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">State</span><span class="o">-&gt;</span><span class="n">copyToDevice</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
+</section>
+<section id="data-exchange">
+<h2>Data exchange<a class="headerlink" href="#data-exchange" title="Permalink to this heading"></a></h2>
+<p>Before import/export, unmanaged views must be attached to the raw coupler
+data pointers:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">SfcCoupling</span><span class="p">.</span><span class="n">attachData</span><span class="p">(</span><span class="n">CplToOcnData</span><span class="p">,</span><span class="w"> </span><span class="n">OcnToCplData</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>and a copy from device to host is performed by:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">State</span><span class="o">-&gt;</span><span class="n">copyToHost</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
+<p>To copy data from the coupler into the <code class="docutils literal notranslate"><span class="pre">CplToOcn</span></code> fields, and from the
+<code class="docutils literal notranslate"><span class="pre">OcnToCpl</span></code> fields back out to the coupler:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">SfcCoupling</span><span class="p">.</span><span class="n">importFromCoupler</span><span class="p">();</span>
+<span class="n">SfcCoupling</span><span class="p">.</span><span class="n">exportToCoupler</span><span class="p">();</span>
 </pre></div>
 </div>
-<p>These functions validate the <code class="docutils literal notranslate"><span class="pre">TimeLevel</span></code> via <code class="docutils literal notranslate"><span class="pre">OMEGA_REQUIRE</span></code> and will abort if invalid.
-Eventually, the host arrays will be eliminated when <code class="docutils literal notranslate"><span class="pre">IO</span></code> and <code class="docutils literal notranslate"><span class="pre">Halo</span></code> are extended to
-handle host &lt;-&gt; device transfers.</p>
-<p>A time level update to advance the solution at the end of a model timestep is done by:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">State</span><span class="o">-&gt;</span><span class="n">updateTimeLevels</span><span class="p">();</span>
+<p>Imported fields are applied to a <code class="docutils literal notranslate"><span class="pre">Forcing</span></code> object with:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">SfcCoupling</span><span class="p">.</span><span class="n">applyImportFields</span><span class="p">(</span><span class="n">ForcingPtr</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>This shifts the time level indices within the <code class="docutils literal notranslate"><span class="pre">State</span></code> instance. A halo exchange is
-also performed on these arrays and the IOFields data pointer is attached
-to the current time level.</p>
-<p>The arrays associated with a given time level can be accessed with the functions:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">PseudoThick</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getPseudoThickness</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
-<span class="n">Array2DReal</span><span class="w"> </span><span class="n">NormVel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getNormalVelocity</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
+<p>Export fields are accumulated (running average) each ocean time step with:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">SfcCoupling</span><span class="p">.</span><span class="n">updateExportFields</span><span class="p">(</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">TracerArray</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>for the device arrays and</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">HostArray2DReal</span><span class="w"> </span><span class="n">PseudoThickH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getPseudoThicknessH</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
-<span class="n">HostArray2DReal</span><span class="w"> </span><span class="n">NormVelH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getNormalVelocityH</span><span class="p">(</span><span class="n">TimeLevel</span><span class="p">);</span>
+</section>
+<section id="units">
+<h2>Units<a class="headerlink" href="#units" title="Permalink to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">OcnToCplFields</span></code>’s averaged temperature is Conservative Temperature (deg C)
+on device (<code class="docutils literal notranslate"><span class="pre">AvgSfcTemperature</span></code>), invariant at all times. <code class="docutils literal notranslate"><span class="pre">copyToHost()</span></code>
+converts it to in-situ temperature in Kelvin (via TEOS-10, when in use)
+into the host mirror <code class="docutils literal notranslate"><span class="pre">AvgSfcTemperatureH</span></code>, once per coupling interval.
+All other averaged fields keep the same units and value on host and device.</p>
+<p>To keep this invariant, <code class="docutils literal notranslate"><span class="pre">OcnToCplFields</span></code>’s averaged device arrays are
+private: they can only be written via <code class="docutils literal notranslate"><span class="pre">updateAverages()</span></code> (called each
+ocean time step from <code class="docutils literal notranslate"><span class="pre">updateExportFields()</span></code>) and read via <code class="docutils literal notranslate"><span class="pre">copyToHost()</span></code>.</p>
+</section>
+<section id="removal-of-surface-coupling-objects">
+<h2>Removal of surface coupling objects<a class="headerlink" href="#removal-of-surface-coupling-objects" title="Permalink to this heading"></a></h2>
+<p>To erase a specific named instance use <code class="docutils literal notranslate"><span class="pre">erase</span></code>:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">SfcCoupling</span><span class="o">::</span><span class="n">erase</span><span class="p">(</span><span class="n">Name</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>for the host arrays. These functions return the arrays directly and will abort
-via <code class="docutils literal notranslate"><span class="pre">OMEGA_REQUIRE</span></code> if an invalid <code class="docutils literal notranslate"><span class="pre">TimeLevel</span></code> is provided.</p>
-<p>The time level convention is:</p>
-<table class="docutils align-default">
-<thead>
-<tr class="row-odd"><th class="head"><p>time level</p></th>
-<th class="head"><p><code class="docutils literal notranslate"><span class="pre">TimeLevel</span></code></p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>New</p></td>
-<td><p>1</p></td>
-</tr>
-<tr class="row-odd"><td><p>Current</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-even"><td><p>Previous</p></td>
-<td><p>-1</p></td>
-</tr>
-<tr class="row-odd"><td><p>Two time levels ago</p></td>
-<td><p>-2</p></td>
-</tr>
-<tr class="row-even"><td><p>etc.</p></td>
-<td><p>etc.</p></td>
-</tr>
-</tbody>
-</table>
-<p>For a <code class="docutils literal notranslate"><span class="pre">State</span></code> with <code class="docutils literal notranslate"><span class="pre">NTimeLevels</span> <span class="pre">=</span> <span class="pre">1</span></code>, only the current time level, <code class="docutils literal notranslate"><span class="pre">TimeLevel=0</span></code> is
-availiable.</p>
-<p>The state arrays are deallocated by the <code class="docutils literal notranslate"><span class="pre">OceanState::clear()</span></code> method, which is
-necessary before calling <code class="docutils literal notranslate"><span class="pre">Kokkos::finalize</span></code>.</p>
+<p>To clear all instances do:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">SfcCoupling</span><span class="o">::</span><span class="n">clear</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="Tendencies.html" class="btn btn-neutral float-left" title="Tendencies" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="TimeMgr.html" class="btn btn-neutral float-right" title="Time Manager (TimeMgr)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="Forcing.html" class="btn btn-neutral float-left" title="Forcing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../design/OmegaV0ShallowWater.html" class="btn btn-neutral float-right" title="Omega V0: Shallow Water" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
