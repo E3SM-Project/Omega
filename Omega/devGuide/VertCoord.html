@@ -122,6 +122,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Vertical Coordinate</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#initialization">Initialization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#variables">Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#surface-pressure">Surface pressure</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#removal">Removal</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#use-of-hierarchical-parallelism">Use of hierarchical parallelism</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#layer-masking">Layer masking</a></li>
@@ -328,8 +329,36 @@ Finally, it registers variables with <code class="docutils literal notranslate">
 <td><p>Real</p></td>
 <td><p>NCellsSize</p></td>
 </tr>
+<tr class="row-odd"><td><p>SurfacePressure</p></td>
+<td><p>Real</p></td>
+<td><p>NCellsSize</p></td>
+</tr>
 </tbody>
 </table>
+</section>
+<section id="surface-pressure">
+<h2>Surface pressure<a class="headerlink" href="#surface-pressure" title="Permalink to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">SurfacePressure</span></code> is the relative pressure (gauge pressure) at the top of the ocean column and
+is the top boundary condition used by <code class="docutils literal notranslate"><span class="pre">computePressure</span></code>. It is owned by <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> and its host
+mirror is <code class="docutils literal notranslate"><span class="pre">SurfacePressureH</span></code>.</p>
+<p>Unlike the other <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> fields, whose data come from the mesh file (<code class="docutils literal notranslate"><span class="pre">InitVertCoord</span></code> group)
+during construction, <code class="docutils literal notranslate"><span class="pre">SurfacePressure</span></code> is a prognostic quantity read from the initial-condition
+or restart file. <code class="docutils literal notranslate"><span class="pre">defineFields()</span></code> therefore registers it and adds it to the <code class="docutils literal notranslate"><span class="pre">State</span></code> and <code class="docutils literal notranslate"><span class="pre">Restart</span></code>
+field groups (creating those groups if <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> initializes before <code class="docutils literal notranslate"><span class="pre">OceanState</span></code>). Because
+those streams are read later in <code class="docutils literal notranslate"><span class="pre">ocnInit</span></code>, the data are written directly into the attached device
+array.</p>
+<p><code class="docutils literal notranslate"><span class="pre">SurfacePressure</span></code> is registered as an <a class="reference internal" href="IOStreams.html#omega-dev-iostreams"><span class="std std-ref">optional read</span></a>
+(<code class="docutils literal notranslate"><span class="pre">Field::setOptionalRead(true)</span></code>), so it is not required to be present in the initial-condition or
+restart file. When the variable is absent, the read is skipped and the array retains the fill
+value written by <code class="docutils literal notranslate"><span class="pre">attachData</span></code>. After the read, <code class="docutils literal notranslate"><span class="pre">initSurfacePressure()</span></code> must be called: it detects
+that leftover fill value on the owned cells and, if found, defaults the whole array to zero, then
+exchanges the halo and copies the device array to the host mirror:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">VertCoord</span><span class="o">::</span><span class="n">getDefault</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">initSurfacePressure</span><span class="p">(</span><span class="n">Halo</span><span class="o">::</span><span class="n">getDefault</span><span class="p">());</span>
+</pre></div>
+</div>
+<p>Eventually <code class="docutils literal notranslate"><span class="pre">SurfacePressure</span></code> will be updated each timestep via the coupler as a weighted sum of
+atmosphere, sea-ice, and land-ice pressure; that forcing update will live in a separate forcing
+class that writes into this array.</p>
 </section>
 <section id="removal">
 <h2>Removal<a class="headerlink" href="#removal" title="Permalink to this heading"></a></h2>

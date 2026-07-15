@@ -194,10 +194,18 @@
              
   <section id="ocean-state">
 <span id="omega-user-state"></span><h1>Ocean State<a class="headerlink" href="#ocean-state" title="Permalink to this heading"></a></h1>
-<p>The <code class="docutils literal notranslate"><span class="pre">OceanState</span></code> class provides a container for the non-tracer prognostic variables in Omega, namely <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code>.
-Upon creation of a <code class="docutils literal notranslate"><span class="pre">OceanState</span></code> instance, these variables are allocated and registered with the IO infrastructure.
+<p>The <code class="docutils literal notranslate"><span class="pre">OceanState</span></code> class provides a container for the non-tracer prognostic variables in Omega:
+<code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code>.
+Upon creation of an <code class="docutils literal notranslate"><span class="pre">OceanState</span></code> instance, these variables are allocated and registered with the
+IO infrastructure as part of the <code class="docutils literal notranslate"><span class="pre">State</span></code> and <code class="docutils literal notranslate"><span class="pre">Restart</span></code> field groups, so they are read from the
+initial-condition file and written to restart files.
 The class contains a method to update the time levels for the state variables between timesteps.
 This involves a halo update, time level index update, and updating the <code class="docutils literal notranslate"><span class="pre">IOFields</span></code> data references.</p>
+<p>The relative pressure at the top of the ocean column, <code class="docutils literal notranslate"><span class="pre">SurfacePressure</span></code>, is owned by the
+<a class="reference internal" href="VertCoord.html#omega-user-vert-coord"><span class="std std-ref">vertical coordinate</span></a> rather than the <code class="docutils literal notranslate"><span class="pre">OceanState</span></code>, since it is the top
+boundary condition of the pressure field. It is still registered in the <code class="docutils literal notranslate"><span class="pre">State</span></code> and <code class="docutils literal notranslate"><span class="pre">Restart</span></code>
+field groups, so it continues to be written to restart files and read from the initial-condition
+and restart files when present; if it is absent, it defaults to zero.</p>
 </section>
 
 

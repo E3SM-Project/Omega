@@ -377,6 +377,17 @@ can be retrieved, but are used only by the IOStream capability:</p>
 <p>The first determines whether the unlimited time dimension should be added
 during IO operations. The second determines whether any of the dimensions
 are distributed across MPI tasks so that parallel IO is required.</p>
+<p>A field can also be marked as an optional read, which controls what happens
+when the field’s variable is missing from an input file:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">setOptionalRead</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">IsOptionalRead</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">isOptionalRead</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>Fields are required by default (<code class="docutils literal notranslate"><span class="pre">isOptionalRead()</span></code> returns <code class="docutils literal notranslate"><span class="pre">false</span></code>). When a
+field is marked optional and its variable is absent from a read stream’s file,
+the <a class="reference internal" href="IOStreams.html#omega-dev-iostreams"><span class="std std-ref">IOStream</span></a> read skips it, leaving the attached array
+at its <a class="reference internal" href="../design/FillValues.html#omega-design-fill-values"><span class="std std-ref">fill value</span></a> instead of failing. The owning
+module is responsible for detecting that fill value and substituting a default.</p>
 <p>The data and metadata stored in a field can be retrieved using several
 functions.  To retrieve a pointer to the full Field, use:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Field</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyField</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">MyFieldName</span><span class="p">);</span>

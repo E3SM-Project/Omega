@@ -471,6 +471,12 @@ from the restart file.</p></li>
 <li><p>Compute routines run after initialization and overwrite active entries, leaving
 inactive entries (below <code class="docutils literal notranslate"><span class="pre">MaxLayerCell</span></code>) at the fill value.</p></li>
 </ul>
+<p>The fill value also serves as the “not read” sentinel for optional reads. A field
+marked with <code class="docutils literal notranslate"><span class="pre">Field::setOptionalRead(true)</span></code> that is absent from an input file is
+skipped by the IOStream read and keeps the fill value from <code class="docutils literal notranslate"><span class="pre">attachData()</span></code>; the
+owning module detects the fill value afterward and substitutes a default. For
+example, <code class="docutils literal notranslate"><span class="pre">VertCoord::SurfacePressure</span></code> defaults to zero when it is not present in
+the initial-condition or restart file.</p>
 </section>
 <section id="no-per-module-manual-initialization-required">
 <h4>4.2.2 No per-module manual initialization required<a class="headerlink" href="#no-per-module-manual-initialization-required" title="Permalink to this heading"></a></h4>

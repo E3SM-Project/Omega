@@ -79,6 +79,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Vertical Coordinate</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#variables">Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#surface-pressure">Surface pressure</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#inactive-and-boundary-layers-in-output">Inactive and boundary layers in output</a></li>
 </ul>
 </li>
@@ -203,7 +204,9 @@
 <span id="omega-user-vert-coord"></span><h1>Vertical Coordinate<a class="headerlink" href="#vertical-coordinate" title="Permalink to this heading"></a></h1>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
-<p>Omega uses pseudo height, <span class="math notranslate nohighlight">\(\tilde{z} = \frac{p}{\rho_0 g}\)</span>,  as the vertical coordinate (<a class="reference internal" href="../design/OmegaV1GoverningEqns.html#omega-design-governing-eqns-omega1"><span class="std std-ref">V1 governing equation document</span></a>).
+<p>Omega uses pseudo height, <span class="math notranslate nohighlight">\(\tilde{z} = \frac{p}{\rho_0 g}\)</span>,  as the vertical coordinate (<a class="reference internal" href="../design/OmegaV1GoverningEqns.html#omega-design-governing-eqns-omega1"><span class="std std-ref">V1 governing equation document</span></a>),
+where <span class="math notranslate nohighlight">\(p\)</span> is <strong>relative pressure</strong> (gauge pressure, i.e., absolute pressure minus the standard atmosphere of 101325 Pa).
+With this definition, <span class="math notranslate nohighlight">\(\tilde{z} = 0\)</span> at the sea surface under standard atmospheric forcing.
 In practice, <span class="math notranslate nohighlight">\(\tilde{z}\)</span> is not computed directly.
 Instead, the model tracks and evolves the pseudo-thickness, <span class="math notranslate nohighlight">\(\tilde{h} = \Delta \tilde{z}\)</span>, defined as the difference between adjacent layer interfaces.
 The pseudo height is essentially a normalized pressure coordinate, with the advantage that it has units of meters.
@@ -243,12 +246,12 @@ The <code class="docutils literal notranslate"><span class="pre">VertCoord</span
 <td><p>-</p></td>
 </tr>
 <tr class="row-even"><td><p>PressureInterface</p></td>
-<td><p>pressure at layer interfaces</p></td>
-<td><p>force per unit area at layer interfaces</p></td>
+<td><p>relative pressure (gauge pressure) at layer interfaces</p></td>
+<td><p>Pa</p></td>
 </tr>
 <tr class="row-odd"><td><p>PressureMid</p></td>
-<td><p>pressure at layer mid points</p></td>
-<td><p>force per unit area at layer mid point</p></td>
+<td><p>relative pressure (gauge pressure) at layer midpoints</p></td>
+<td><p>Pa</p></td>
 </tr>
 <tr class="row-even"><td><p>GeomZInterface</p></td>
 <td><p>geometric height of layer interfaces</p></td>
@@ -318,8 +321,28 @@ The <code class="docutils literal notranslate"><span class="pre">VertCoord</span
 <td><p>positive down distance from the reference geoid to the bottom</p></td>
 <td><p>m</p></td>
 </tr>
+<tr class="row-odd"><td><p>SurfacePressure</p></td>
+<td><p>relative pressure (gauge pressure) at the top of the ocean column</p></td>
+<td><p>Pa</p></td>
+</tr>
 </tbody>
 </table>
+</section>
+<section id="surface-pressure">
+<h2>Surface pressure<a class="headerlink" href="#surface-pressure" title="Permalink to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">SurfacePressure</span></code> is the relative pressure (gauge pressure, i.e., absolute pressure minus the
+standard atmosphere of 101325 Pa) at the top of the ocean column. It is the top boundary
+condition used when integrating layer pressures downward in <code class="docutils literal notranslate"><span class="pre">computePressure</span></code>, and is
+effectively <span class="math notranslate nohighlight">\(\tilde{z}\)</span> at the top of the water column (times a scaling factor).
+Unlike the other pressure variables, which are recomputed each timestep, <code class="docutils literal notranslate"><span class="pre">SurfacePressure</span></code> is
+registered in the <code class="docutils literal notranslate"><span class="pre">State</span></code> and <code class="docutils literal notranslate"><span class="pre">Restart</span></code> field groups, so it is written to restart files and read
+from the initial-condition and restart files when present. The read is optional: if
+<code class="docutils literal notranslate"><span class="pre">SurfacePressure</span></code> is not present in the file, it defaults to zero rather than causing an error.
+For a free-surface ocean run with standard atmospheric forcing, the surface pressure is
+zero (0 Pa), so it may simply be omitted from the initial-condition file.
+For a coupled ocean–atmosphere run, <code class="docutils literal notranslate"><span class="pre">SurfacePressure</span></code> holds the anomaly of the atmospheric
+surface pressure from the standard atmosphere; eventually it will be updated each timestep
+via the coupler as a weighted sum of atmosphere, sea-ice, and land-ice pressure.</p>
 </section>
 <section id="inactive-and-boundary-layers-in-output">
 <h2>Inactive and boundary layers in output<a class="headerlink" href="#inactive-and-boundary-layers-in-output" title="Permalink to this heading"></a></h2>

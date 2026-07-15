@@ -213,7 +213,12 @@ already been initialized.</p>
 </pre></div>
 </div>
 <p>allocates the <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code> arrays for a given number of time levels.
-The current time level is then registered with the IO infrastructure.</p>
+The current time level of <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code> are registered with the IO
+infrastructure and added to the <code class="docutils literal notranslate"><span class="pre">State</span></code> and <code class="docutils literal notranslate"><span class="pre">Restart</span></code> field groups.
+The <code class="docutils literal notranslate"><span class="pre">SurfacePressure</span></code> array is owned by <a class="reference internal" href="VertCoord.html#omega-dev-vert-coord"><span class="std std-ref"><code class="docutils literal notranslate"><span class="pre">VertCoord</span></code></span></a> but is also added to
+these two groups so it is written to restart files and read from the initial-condition and restart
+files when present. Its read is optional, so it defaults to zero when absent (see the
+<a class="reference internal" href="VertCoord.html#omega-dev-vert-coord"><span class="std std-ref"><code class="docutils literal notranslate"><span class="pre">VertCoord</span></code></span></a> guide).</p>
 <p>After initialization, the default state object can be retrieved via:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="p">::</span><span class="n">OceanState</span> <span class="o">*</span><span class="n">State</span> <span class="o">=</span> <span class="n">OMEGA</span><span class="p">::</span><span class="n">OceanState</span><span class="p">::</span><span class="n">getDefault</span><span class="p">();</span>
 </pre></div>
@@ -257,6 +262,8 @@ to the current time level.</p>
 </div>
 <p>for the host arrays. These functions return the arrays directly and will abort
 via <code class="docutils literal notranslate"><span class="pre">OMEGA_REQUIRE</span></code> if an invalid <code class="docutils literal notranslate"><span class="pre">TimeLevel</span></code> is provided.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">SurfacePressure</span></code> array used as the top boundary condition for layer pressures is owned by
+<a class="reference internal" href="VertCoord.html#omega-dev-vert-coord"><span class="std std-ref"><code class="docutils literal notranslate"><span class="pre">VertCoord</span></code></span></a>; see that guide for how it is accessed and initialized.</p>
 <p>The time level convention is:</p>
 <table class="docutils align-default">
 <thead>
