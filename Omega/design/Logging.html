@@ -337,12 +337,18 @@ stored in the log destination.</p>
 compile time, where <code class="docutils literal notranslate"><span class="pre">&lt;pattern&gt;</span></code> represents a format in the form of <code class="docutils literal notranslate"><span class="pre">%flag</span></code>,
 similar to the strftime function. This pattern defines the layout of the log
 message.</p>
-<p>Users can control which MPI ranks generate log files using
-<code class="docutils literal notranslate"><span class="pre">-D</span> <span class="pre">OMEGA_LOG_TASKS=&lt;tasks-pattern&gt;</span></code> at compile time. The <code class="docutils literal notranslate"><span class="pre">&lt;tasks-pattern&gt;</span></code> is
-either all for all tasks to generate log files, or comma-separated MPI rank
-numbers, or a range of MPI ranks with a dash. For example,
-<code class="docutils literal notranslate"><span class="pre">-D</span> <span class="pre">OMEGA_LOG_TASKS=0,2-3</span></code> indicates that MPI ranks 0, 2, and 3 generate log
-files.</p>
+<p>Users can control which MPI ranks generate log files using the
+<code class="docutils literal notranslate"><span class="pre">OMEGA_LOG_TASKS</span></code> selector, which is resolved at runtime against the Omega MPI
+sub-communicator. The selector is read from the <code class="docutils literal notranslate"><span class="pre">OMEGA_LOG_TASKS</span></code> environment
+variable; when it is unset, logging defaults to the master rank only. The
+<code class="docutils literal notranslate"><span class="pre">&lt;selector&gt;</span></code> accepts <code class="docutils literal notranslate"><span class="pre">*</span></code> (all ranks), <code class="docutils literal notranslate"><span class="pre">m</span></code> or <code class="docutils literal notranslate"><span class="pre">master</span></code> (the sub-communicator
+master rank), a single rank number, a comma-separated list of ranks, an
+inclusive dash range, or any combination of lists and ranges. For example,
+<code class="docutils literal notranslate"><span class="pre">OMEGA_LOG_TASKS=0,2-3</span></code> makes MPI ranks 0, 2, and 3 generate log files. A
+malformed selector logs a warning on the master rank and falls back to
+master-rank-only logging; ranks outside the sub-communicator simply produce no
+log. When setting the <code class="docutils literal notranslate"><span class="pre">*</span></code> selector via the environment variable, quote it (for
+example <code class="docutils literal notranslate"><span class="pre">OMEGA_LOG_TASKS='*'</span></code>) to prevent shell glob expansion.</p>
 </section>
 <section id="class-structs-data-types">
 <h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
