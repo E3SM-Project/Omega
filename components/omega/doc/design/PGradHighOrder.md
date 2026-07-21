@@ -50,13 +50,20 @@ This design is shaped by three competing principles:
    steeply sloped layers. The PGF alone cannot guarantee this, but it is a necessary
    ingredient.
 
-A guiding choice that follows from principles 2 and 3 is that the relevant metric of
-success is **low absolute PGF error at affordable (coarse) resolution**, not high
+A guiding choice that follows from principles 2 and 3 is that the metric of success *for
+simulations* is **low absolute PGF error at affordable (coarse) resolution**, not high
 asymptotic order of convergence. Omega will be strongly resource-limited in how fine a
 mesh it can run, so a scheme whose error is small at coarse resolution is preferred over
 one with a steeper convergence slope but larger coarse-resolution error. Order of
 accuracy is configurable and a fourth-order variant is targeted, but it is a means to the
 end of coarse-resolution accuracy, not the objective itself.
+
+The measured convergence rate plays a different but equally essential role: it is the
+**verification** metric. A scheme that does not converge at its designed order is
+mis-implemented, and no amount of favorable absolute error excuses that. The two metrics
+therefore answer two different questions and both must be satisfied — *is the code correct?*
+(convergence rate at the designed order) and *is it useful at the resolutions we can run?*
+(absolute error).
 
 ## 2 Requirements
 
@@ -65,8 +72,9 @@ end of coarse-resolution accuracy, not the objective itself.
 The high-order PGF must produce substantially lower absolute error than
 `PressureGradCentered` at the coarse-to-moderate resolutions Omega can afford to run,
 for representative stratified columns with horizontal gradients of temperature, salinity,
-surface pressure, and coordinate slope. Convergence rate is a secondary diagnostic, not
-the primary acceptance criterion.
+surface pressure, and coordinate slope. Absolute error at affordable resolution is what
+determines whether the scheme is *useful*; it is complemented by the separate verification
+requirement in §2.6, which determines whether it is *correct*.
 
 ### 2.2 Requirement: Bounded TEOS-10 cost
 
@@ -109,7 +117,20 @@ configuration group and `PressureGradType` enum, leaving `Centered` as the defau
 sub-options (horizontal reconstruction order, vertical-reconstruction mode, quadrature) must
 be configurable, and the centered scheme must be recoverable as the lowest-order limit.
 
-### 2.6 Desired: Extensibility to sixth order and to tidal/geoid geopotential terms
+### 2.6 Requirement: Verified order of accuracy
+
+The implemented scheme must converge, under refinement of a smooth manufactured or
+quasi-analytic reference solution, at the order of accuracy it is configured for
+(nominally fourth order for the targeted variant, second order when reduced to the
+centered limit). This is a verification requirement: a measured slope that falls short of
+the designed order indicates a defect in the implementation — a mis-weighted quadrature
+point, an inconsistent reconstruction stencil, a dropped correction term — and must be
+diagnosed rather than accepted, even when the absolute error at coarse resolution already
+satisfies Requirement 2.1. The two requirements are independent and both are gating:
+Requirement 2.1 establishes that the scheme is useful at the resolutions Omega can afford,
+Requirement 2.6 establishes that it is the scheme the design describes.
+
+### 2.7 Desired: Extensibility to sixth order and to tidal/geoid geopotential terms
 
 The framework should accommodate a future higher-order variant (e.g. sixth order, added to
 the `PressureGradType` enum when implemented) and the
@@ -306,7 +327,7 @@ provided by `VertCoord` (`GeomZMid`/`GeomZInterface`, `GeopotentialMid`; compute
 {ref}`omega-design-governing-eqns-omega1` Eqs. discrete-z and the geopotential relation).
 Its layer average and edge-normal gradient are evaluated with the same high-order edge
 reconstruction [](#edge-grad). The tidal-potential and self-attraction-and-loading
-contributions enter through `VertCoord` and are differenced identically (Requirement 2.6);
+contributions enter through `VertCoord` and are differenced identically (Requirement 2.7);
 they are zero in early Omega versions.
 
 The two metric terms (third and fourth lines of [](#ho-target)) use the **same** edge-normal
@@ -487,9 +508,11 @@ quasi-analytic, layer-mean TEOS-10 reference solution (`reference.py`, surface-a
 so the principal changes are scheme selection and revised pass criteria, plus two full-model
 acceptance tests.
 
-Because the design optimizes for **coarse-resolution accuracy** rather than convergence rate
-(§1), the primary pass/fail gate is an absolute error tolerance at a representative coarse
-resolution, with the convergence slope demoted to a loose secondary diagnostic.
+The testing plan applies the two independent gates set out in §1: an **absolute error
+tolerance at a representative coarse resolution** (Requirement 2.1), which establishes that
+the scheme helps at the resolutions Omega can afford, and a **measured order of convergence**
+(Requirement 2.6), which verifies that the implementation is the scheme this design
+describes. Neither substitutes for the other, and both must pass.
 
 ### 5.1 Test: Two-column HPGA convergence (extend existing)
 
@@ -505,21 +528,30 @@ schemes:
   layer-mean analytic HPGA (unchanged). For the high-order scheme the layer-mean comparison
   remains the correct target, since the scheme is a finite-volume, layer-averaged
   discretization.
-- **Primary pass criterion (new):** at a representative coarse resolution (e.g. the coarsest
-  in `horiz_resolutions`), the absolute RMS HPGA error vs. the reference must be below a
-  tolerance, **and** the high-order RMS error must be below the centered RMS error at that
+- **Accuracy gate (new, Requirement 2.1):** at a representative coarse resolution (e.g. the
+  coarsest in `horiz_resolutions`), the absolute RMS HPGA error vs. the reference must be below
+  a tolerance, **and** the high-order RMS error must be below the centered RMS error at that
   same resolution (the scheme must demonstrably help where it matters).
+- **Verification gate (Requirement 2.6):** the measured slope of RMS error vs. resolution,
+  `omega_vs_reference_convergence_rate_*`, must fall within a band around the configured order
+  of accuracy — nominally ~4 for the fourth-order variant and ~2 when the scheme is run in its
+  centered limit. This band is retuned from its present values rather than loosened; a slope
+  outside it fails the test and is treated as an implementation defect to be diagnosed, not as
+  a tolerance to be widened.
+- **Asymptotic range (implementation-time task):** it is not yet established that the existing
+  `horiz_resolutions` sweep spans a range where a fourth-order slope is cleanly measurable —
+  the sweep may be too coarse to have entered the asymptotic regime at its fine end, or fine
+  enough that the reference solution's own quadrature error and roundoff contaminate the slope.
+  Determining the usable window, and extending or tightening the sweep (and, if needed, the
+  order of the Gauss quadrature in `reference.py`) so the designed order can be resolved, is
+  part of implementing this test.
 - **Consistency check (retained):** `omega_vs_polaris_rms_threshold` (~1e-10 m/s²) — Omega's
   forward output must still match the Python-computed HPGA, confirming the implementation
   matches the intended discretization.
-- **Secondary diagnostic (loosened):** the `omega_vs_reference_convergence_rate_*` band and
-  `omega_vs_reference_high_res_rms_threshold` are retained but relaxed/retuned; the
-  convergence slope is reported and required only to be no worse than the centered scheme,
-  not to hit a specific order. New cfg keys mirror the existing ones
-  (`horiz_press_grad.cfg`), e.g. a coarse-resolution tolerance and a
-  `high_order_vs_centered` ratio gate.
+- **Cfg keys.** New keys mirror the existing ones (`horiz_press_grad.cfg`): a coarse-resolution
+  absolute tolerance, a `high_order_vs_centered` ratio gate, and per-scheme expected-rate bands.
 
-Tests Requirements 2.1, 2.2 (via the bounded-EOS implementation exercised), 2.4, 2.5.
+Tests Requirements 2.1, 2.2 (via the bounded-EOS implementation exercised), 2.4, 2.5, 2.6.
 
 ### 5.2 Unit test: Discrete hydrostatic consistency (exact resting state)
 
