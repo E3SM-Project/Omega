@@ -1,0 +1,434 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analysis &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Quick Start for Developers" href="../devGuide/QuickStart.html" />
+    <link rel="prev" title="Surface Coupling" href="SfcCoupling.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Forcing.html">Forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SfcCoupling.html">Surface Coupling</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Analysis</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-overview">Configuration Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#common-configuration-parameters">Common Configuration Parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#analysis-groups">Analysis Groups</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#stream-parameters">Stream Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#globalstats">GlobalStats</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#usage-notes">Usage Notes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#temporal-reduction-period-constraint">Temporal Reduction Period Constraint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#field-availability">Field Availability</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#intermediate-results">Intermediate Results</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#future-extensions">Future Extensions</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Testing.html">Testing Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/ParallelLoops.html">Parallel loops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/PGrad.html">Pressure Gradient (PGrad)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Forcing.html">Forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/SfcCoupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Analysis.html">Analysis</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV1GoverningEqns.html">Omega V1: Governing Equations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Analysis.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Coupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/FillValues.html">Fill Values</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/StateValidation.html">Ocean State Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/SubmesoscaleEddies.html">Submesoscale Eddy Parameterization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Analysis</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/userGuide/Analysis.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="analysis">
+<span id="omega-user-analysis"></span><h1>Analysis<a class="headerlink" href="#analysis" title="Permalink to this heading"></a></h1>
+<p>The Analysis module provides in-situ computation of diagnostic fields from the
+ocean model state during a simulation. Analysis fields are computed on the fly
+at user-specified frequencies and written to output streams, eliminating the
+need to store large volumes of raw model output for offline post-processing.</p>
+<p>In the initial delivery, analysis is configured through pre-defined bundled
+<strong>AnalysisGroups</strong> such as <code class="docutils literal notranslate"><span class="pre">GlobalStats</span></code>. These bundles provide convenient
+shorthands for commonly-used analysis patterns and are configured entirely
+through the YAML input file. Future updates will add user-defined composable
+operator chains for fully customizable analysis, though the capability of
+using pre-defined bundled groups will persist as convenient defaults.</p>
+<section id="background">
+<h2>Background<a class="headerlink" href="#background" title="Permalink to this heading"></a></h2>
+<p>The Analysis module supports two output modes:</p>
+<ul class="simple">
+<li><p><strong>Temporal reduction:</strong> Time-averaged output over a specified period (e.g.,
+daily or monthly means). Fields are accumulated each timestep; the reduction
+is finalized and written at the end of each period. Temporal reduction is
+configured with the <code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> parameter. When using temporal
+reduction, the reduction period must be evenly divisible into the restart
+interval. This ensures that temporal reduction states can be properly
+checkpointed and restored. For calendars with variable month lengths, restart
+intervals based on months can only be divided by reduction periods based on
+months or periods of 1 day or whole-number fractions of a day, e.g., 6 hours.
+The Analysis system validates that the reduction period divides evenly into
+the restart interval during initialization and will abort if this requirement
+is violated.</p></li>
+<li><p><strong>Instantaneous output:</strong> Snapshots of analysis fields written at specified
+frequencies (e.g., every 6 hours). Instantaneous output is configured with the
+<code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code> parameter.</p></li>
+</ul>
+</section>
+<section id="configuration-overview">
+<h2>Configuration Overview<a class="headerlink" href="#configuration-overview" title="Permalink to this heading"></a></h2>
+<p>Analysis groups are configured in the YAML input file under <code class="docutils literal notranslate"><span class="pre">Omega:</span> <span class="pre">Analysis:</span></code>.
+Each group can be independently enabled or disabled. The initial delivery
+provides the <code class="docutils literal notranslate"><span class="pre">GlobalStats</span></code> group.</p>
+<section id="common-configuration-parameters">
+<h3>Common Configuration Parameters<a class="headerlink" href="#common-configuration-parameters" title="Permalink to this heading"></a></h3>
+<p>All AnalysisGroups support the following parameters:</p>
+<ul class="simple">
+<li><p><strong>Enable:</strong> Required boolean (<code class="docutils literal notranslate"><span class="pre">true</span></code> or <code class="docutils literal notranslate"><span class="pre">false</span></code>). Enables or disables the
+group.</p></li>
+<li><p><strong>Filename:</strong> Required string. Template for output filenames with optional
+time-based variables (<code class="docutils literal notranslate"><span class="pre">$Y</span></code>, <code class="docutils literal notranslate"><span class="pre">$M</span></code>, <code class="docutils literal notranslate"><span class="pre">$D</span></code>, <code class="docutils literal notranslate"><span class="pre">$h</span></code>, <code class="docutils literal notranslate"><span class="pre">$m</span></code>, <code class="docutils literal notranslate"><span class="pre">$s</span></code>). The group
+automatically appends frequency and type information to the filename.</p></li>
+<li><p><strong>Stream:</strong> Optional map of IOStream parameters to customize output behavior.
+See <a class="reference internal" href="#stream-parameters">Stream Parameters</a> below for details.</p></li>
+</ul>
+</section>
+</section>
+<section id="analysis-groups">
+<h2>Analysis Groups<a class="headerlink" href="#analysis-groups" title="Permalink to this heading"></a></h2>
+<p>Each AnalysisGroup encapsulates a set of related analysis operations. Groups
+inherit from the <code class="docutils literal notranslate"><span class="pre">AnalysisGroup</span></code> base class, which provides common
+functionality for operator chain construction and stream management.</p>
+<p>When initialized, each group:</p>
+<ol class="arabic simple">
+<li><p>Parses its configuration to determine which operator chains to build</p></li>
+<li><p>Registers operator chains with the Analysis orchestrator</p></li>
+<li><p>Groups chains by output frequency and type (time reduction vs. instantaneous
+output)</p></li>
+<li><p>Creates IOStream objects for each unique temporal configuration</p></li>
+</ol>
+<p>All groups automatically handle intermediate operator sharing—if multiple
+chains require the same intermediate result, it is computed once and reused.
+Groups also validate that temporal reduction periods divide evenly into the
+restart interval to ensure proper checkpoint/restart behavior.</p>
+<section id="stream-parameters">
+<h3>Stream Parameters<a class="headerlink" href="#stream-parameters" title="Permalink to this heading"></a></h3>
+<p>All AnalysisGroups support the optional <code class="docutils literal notranslate"><span class="pre">Stream</span></code> sub-node for customizing
+IOStream output parameters. If omitted, defaults are used.</p>
+<p><strong>Default values set by the Analysis module:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">UsePointerFile:</span> <span class="pre">false</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">IfExists:</span> <span class="pre">append</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Precision:</span> <span class="pre">double</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">UseStartEnd:</span> <span class="pre">false</span></code></p></li>
+</ul>
+<p>All other Stream parameters (<code class="docutils literal notranslate"><span class="pre">FileFreq</span></code>, <code class="docutils literal notranslate"><span class="pre">FileFreqUnits</span></code>, <code class="docutils literal notranslate"><span class="pre">PointerFilename</span></code>,
+<code class="docutils literal notranslate"><span class="pre">StartTime</span></code>, <code class="docutils literal notranslate"><span class="pre">EndTime</span></code>) are empty or disabled by default.</p>
+<p><strong>Note:</strong> The <code class="docutils literal notranslate"><span class="pre">Filename</span></code>, <code class="docutils literal notranslate"><span class="pre">Freq</span></code>, and <code class="docutils literal notranslate"><span class="pre">FreqUnits</span></code> stream parameters are set
+automatically by <code class="docutils literal notranslate"><span class="pre">AnalysisGroup</span></code> configuration. Any user-specified values for
+these parameters will be overwritten.</p>
+<p>For complete IOStream documentation, see the
+<a class="reference internal" href="IOStreams.html#omega-user-iostreams"><span class="std std-ref">IOStreams</span></a> section of the User’s Guide.</p>
+</section>
+<section id="globalstats">
+<h3>GlobalStats<a class="headerlink" href="#globalstats" title="Permalink to this heading"></a></h3>
+<p>Computes global spatial statistics (mean, min, max, standard deviation) for
+user-specified fields.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Omega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Analysis</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">GlobalStats</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">Fields</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Temperature</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">GeomZInterface</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Salinity</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">NormalVelocity</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">SpatialStats</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Mean</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Max</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Min</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">StdDev</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">ReductionPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1Day</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1Month</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">SnapshotPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">6Hour</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">global.stats.$Y</span>
+<span class="w">      </span><span class="nt">Stream</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">FileFreq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">        </span><span class="nt">FileFreqUnits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">years</span>
+<span class="w">        </span><span class="nt">Precision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">single</span>
+</pre></div>
+</div>
+<p><strong>Group-Specific Parameters:</strong></p>
+<ul class="simple">
+<li><p><strong>Fields:</strong> Required list of field names to analyze. The simulation will
+abort if a requested field does not exist.</p></li>
+<li><p><strong>SpatialStats:</strong> Required list of spatial operators.</p></li>
+<li><p><strong>ReductionPeriod:</strong> Optional list of time periods for temporal reduction
+(e.g., <code class="docutils literal notranslate"><span class="pre">1Hour</span></code>, <code class="docutils literal notranslate"><span class="pre">1Day</span></code>, <code class="docutils literal notranslate"><span class="pre">1Month</span></code>, <code class="docutils literal notranslate"><span class="pre">1Year</span></code>). Each period must divide evenly
+into the restart interval. At least one of <code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> or
+<code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code> must be specified.</p></li>
+<li><p><strong>SnapshotPeriod:</strong> Optional list of intervals for instantaneous output
+(e.g., <code class="docutils literal notranslate"><span class="pre">1Hour</span></code>, <code class="docutils literal notranslate"><span class="pre">6Hour</span></code>, <code class="docutils literal notranslate"><span class="pre">1Day</span></code>). At least one of <code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> or
+<code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code> must be specified.</p></li>
+</ul>
+<p><strong>Output fields:</strong>
+For each <code class="docutils literal notranslate"><span class="pre">(Field,</span> <span class="pre">SpatialStat)</span></code> combination:</p>
+<ul class="simple">
+<li><p>Instantaneous output: <code class="docutils literal notranslate"><span class="pre">FieldName_SpatialStat</span></code> (e.g.,
+<code class="docutils literal notranslate"><span class="pre">Temperature_SpatialMean</span></code>)</p></li>
+<li><p>Temporal reduction: <code class="docutils literal notranslate"><span class="pre">FieldName_SpatialStat_TimeMeanPeriod</span></code> (e.g.,
+<code class="docutils literal notranslate"><span class="pre">Temperature_SpatialMean_TimeMean1Day</span></code>)</p></li>
+</ul>
+<p><strong>Output streams:</strong>
+Automatically created and named:</p>
+<ul class="simple">
+<li><p>Time reduction: <code class="docutils literal notranslate"><span class="pre">GlobalStats_FreqTimeStats</span></code> (e.g.,
+<code class="docutils literal notranslate"><span class="pre">GlobalStats_1DayTimeStats</span></code>)</p></li>
+<li><p>Instantaneous output: <code class="docutils literal notranslate"><span class="pre">GlobalStats_FreqInstants</span></code> (e.g.,
+<code class="docutils literal notranslate"><span class="pre">GlobalStats_6HourInstants</span></code>)</p></li>
+</ul>
+</section>
+</section>
+<section id="usage-notes">
+<h2>Usage Notes<a class="headerlink" href="#usage-notes" title="Permalink to this heading"></a></h2>
+<section id="temporal-reduction-period-constraint">
+<h3>Temporal Reduction Period Constraint<a class="headerlink" href="#temporal-reduction-period-constraint" title="Permalink to this heading"></a></h3>
+<p>When using temporal reduction (<code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code>), the period must divide
+evenly into the restart interval to ensure proper checkpoint/restart behavior.
+The Analysis module validates this during initialization. For example, if the
+restart interval is 6 months, valid periods include <code class="docutils literal notranslate"><span class="pre">6hours</span></code>, <code class="docutils literal notranslate"><span class="pre">1Day</span></code>, <code class="docutils literal notranslate"><span class="pre">1Month</span></code>,
+<code class="docutils literal notranslate"><span class="pre">2Months</span></code>, <code class="docutils literal notranslate"><span class="pre">3Months</span></code>, and <code class="docutils literal notranslate"><span class="pre">6Months</span></code>, but <code class="docutils literal notranslate"><span class="pre">5Days</span></code> or <code class="docutils literal notranslate"><span class="pre">7Months</span></code> are invalid.</p>
+</section>
+<section id="field-availability">
+<h3>Field Availability<a class="headerlink" href="#field-availability" title="Permalink to this heading"></a></h3>
+<p>The Analysis module initializes after the model state and validates that all
+requested fields exist. If a requested field is not found, the simulation
+aborts during initialization with an error message.</p>
+</section>
+<section id="intermediate-results">
+<h3>Intermediate Results<a class="headerlink" href="#intermediate-results" title="Permalink to this heading"></a></h3>
+<p>Some analysis operators require intermediate computations. For example,
+computing the standard deviation requires the mean as input. Currently, when
+configuring the <code class="docutils literal notranslate"><span class="pre">SpatialStats</span></code> list, users must include both <code class="docutils literal notranslate"><span class="pre">Mean</span></code> and
+<code class="docutils literal notranslate"><span class="pre">StdDev</span></code> if standard deviation is desired. The mean computation will be
+automatically shared if multiple statistics require it.</p>
+</section>
+</section>
+<section id="future-extensions">
+<h2>Future Extensions<a class="headerlink" href="#future-extensions" title="Permalink to this heading"></a></h2>
+<p>The Analysis framework is designed for extensibility. Future versions will
+include:</p>
+<ul class="simple">
+<li><p><strong>User-defined composable operator chains:</strong> Full control over operator
+composition specified directly in the configuration file, enabling custom
+analysis workflows beyond the pre-defined bundles.</p></li>
+<li><p><strong>Additional pre-defined analysis groups:</strong> Bundled groups for common
+analysis patterns such as AMOC stream function, eddy statistics, regional
+diagnostics, and more.</p></li>
+<li><p><strong>Additional operators:</strong> Vertical operations, horizontal gradients, spatial
+filtering, and custom transformations.</p></li>
+</ul>
+<p>The bundled <code class="docutils literal notranslate"><span class="pre">AnalysisGroup</span></code> types like <code class="docutils literal notranslate"><span class="pre">GlobalStats</span></code> will persist as convenient
+shorthands for commonly-used analysis outputs, even as the composable operator
+capability becomes available.</p>
+<p>For detailed information about the Analysis architecture, operator composition,
+dependency resolution, and extending the module with new operators or groups,
+see the <a class="reference internal" href="../devGuide/Analysis.html#omega-dev-analysis"><span class="std std-ref">Analysis</span></a> section of the Developer’s Guide.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="SfcCoupling.html" class="btn btn-neutral float-left" title="Surface Coupling" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../devGuide/QuickStart.html" class="btn btn-neutral float-right" title="Quick Start for Developers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
