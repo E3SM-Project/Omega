@@ -499,6 +499,29 @@ out of scope here and flagged as follow-up:
   momentum equations ({ref}`omega-design-governing-eqns-omega1` §9), which become non-negligible
   only at much higher resolution.
 
+### 4.4 Retention of the centered implementation
+
+`PressureGradCentered` (PGrad.h:25) is deliberately **kept as a separate functor** rather
+than reimplemented as the lowest-order configuration of `PressureGradHighOrder`, even though
+§3.9 shows the latter reduces to it. The redundancy is small — the centered functor is a
+header-only, ~40-line loop body with no supporting machinery of its own — and it buys two
+things that a single implementation cannot provide:
+
+1. **An independent cross-check.** The two functors read the mesh, `VertCoord`, and EOS state
+   through separately written code. Their agreement to round-off (§5.5) therefore tests the
+   shared upstream state — edge masks, interface indexing, `VertCoord` conventions — and not
+   just the PGF arithmetic. Collapsing them would make that comparison self-referential: a
+   defect upstream of the order switch would appear identically in both limits and cancel.
+2. **A stable default.** The algebraic reduction of §3.9 does not imply bit-for-bit agreement,
+   because the reduced high-order path performs the same operations in a different order.
+   Replacing the default PGF would be an answer-changing change for every existing
+   configuration, which this design does not require.
+
+Removing `PressureGradCentered` becomes reasonable once `FiniteVolume` is promoted to the
+default and has served out its period as the reference implementation. That is deliberately
+left as **follow-up work**, to be taken up as a separate, answer-changing change with its own
+baseline step — not as part of this design.
+
 ## 5 Verification and Testing
 
 Testing reuses and extends the Polaris `horiz_press_grad` task family
@@ -517,13 +540,28 @@ describes. Neither substitutes for the other, and both must pass.
 ### 5.1 Test: Two-column HPGA convergence (extend existing)
 
 Extend the four existing variants — `temperature_gradient`, `salinity_gradient`,
-`surface_pressure_gradient`, `ztilde_gradient` — to run both the centered and high-order
-schemes:
+`surface_pressure_gradient`, `ztilde_gradient` — to run the centered scheme and the new
+scheme at two orders:
 
 - **Scheme selection.** Add `PressureGrad: { PressureGradType: FiniteVolume, … }` to
-  `forward.yaml` and parametrize each task over `centered` vs. `high_order`. The forward step
-  still runs a single time step with only `PressureGradTendencyEnable: true`, reading the PGF
-  acceleration from `NormalVelocityTend`.
+  `forward.yaml` and parametrize each task over three configurations:
+  - `centered` — the legacy `PressureGradCentered` functor, unchanged;
+  - `finite_volume_order4` — `ReconstructionOrder: 4`, `VerticalReconstruction: ppm` (the
+    target);
+  - `finite_volume_order2` — the same code in its centered limit (`ReconstructionOrder: 2`,
+    `VerticalReconstruction: constant`, midpoint quadrature).
+
+  (These variant names are provisional; the final spelling follows Polaris' naming conventions
+  and is settled on the Polaris side. What matters here is that the last two are the *same*
+  implementation at two orders, distinct from the legacy functor.)
+
+  The third configuration exists because the order-2 verification gate below must exercise the
+  *new* implementation. Running the legacy functor under a "second order" label would measure
+  the convergence of code this design does not change, and would leave the new code's
+  lowest-order path unverified. It also supplies the round-off comparison of §5.5 at every
+  resolution rather than at a single configuration. The forward step still runs a single time
+  step with only `PressureGradTendencyEnable: true`, reading the PGF acceleration from
+  `NormalVelocityTend`.
 - **Reference.** `reference.py`/`analysis.py` compare `NormalVelocityTend` against the
   layer-mean analytic HPGA (unchanged). For the high-order scheme the layer-mean comparison
   remains the correct target, since the scheme is a finite-volume, layer-averaged
@@ -534,10 +572,10 @@ schemes:
   same resolution (the scheme must demonstrably help where it matters).
 - **Verification gate (Requirement 2.6):** the measured slope of RMS error vs. resolution,
   `omega_vs_reference_convergence_rate_*`, must fall within a band around the configured order
-  of accuracy — nominally ~4 for the fourth-order variant and ~2 when the scheme is run in its
-  centered limit. This band is retuned from its present values rather than loosened; a slope
-  outside it fails the test and is treated as an implementation defect to be diagnosed, not as
-  a tolerance to be widened.
+  of accuracy — nominally ~4 for `finite_volume_order4` and ~2 for `finite_volume_order2`
+  (and for `centered`, whose band is unchanged from today). This band is retuned from its
+  present values rather than loosened; a slope outside it fails the test and is treated as an
+  implementation defect to be diagnosed, not as a tolerance to be widened.
 - **Asymptotic range (implementation-time task):** it is not yet established that the existing
   `horiz_resolutions` sweep spans a range where a fourth-order slope is cleanly measurable —
   the sweep may be too coarse to have entered the asymptotic regime at its fine end, or fine
@@ -549,7 +587,8 @@ schemes:
   forward output must still match the Python-computed HPGA, confirming the implementation
   matches the intended discretization.
 - **Cfg keys.** New keys mirror the existing ones (`horiz_press_grad.cfg`): a coarse-resolution
-  absolute tolerance, a `high_order_vs_centered` ratio gate, and per-scheme expected-rate bands.
+  absolute tolerance, a `finite_volume_vs_centered` ratio gate, and per-scheme expected-rate
+  bands.
 
 Tests Requirements 2.1, 2.2 (via the bounded-EOS implementation exercised), 2.4, 2.5, 2.6.
 
@@ -582,9 +621,20 @@ the down-slope evolution agrees with the reference behavior; spurious mixing/vel
 attributable to PGF error is reduced relative to the centered scheme. This tests Requirements
 2.1 and 2.3 under realistic, coupled conditions.
 
-### 5.5 Test: Reduction to the centered scheme (regression)
+### 5.5 Test: Reduction to the centered scheme (permanent regression)
 
 Configure the high-order option in its lowest-order limit (§3.9:
 `ReconstructionOrder: 2`, `VerticalReconstruction: constant`, midpoint quadrature) and confirm
 it reproduces `PressureGradCentered` to round-off on the two-column test. This guards
 Requirement 2.5 and protects the existing default during refactoring.
+
+This test is retained permanently rather than treated as a one-time transition check, and
+that choice is the reason `PressureGradCentered` is kept as a separate implementation rather
+than reimplemented as the lowest-order configuration of `PressureGradHighOrder` (§4.4). The
+two functors read the mesh, `VertCoord`, and EOS state through independently written code, so
+their agreement to round-off is evidence about *shared upstream* state as well as about the
+PGF arithmetic: a wrong edge mask, a mis-indexed interface array, or a misinterpreted
+`VertCoord` convention shows up as a disagreement. Were the centered scheme replaced by an
+order-2 configuration of the new code, this comparison would reduce to comparing an
+implementation against itself, and any defect upstream of the order switch would cancel out
+of it.
