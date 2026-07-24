@@ -254,6 +254,16 @@ class HorzMesh {
    Array1DReal MeshScalingDel4;      /// Coef to biharmonic mixing terms
    HostArray1DReal MeshScalingDel4H; /// Coef to biharmonic mixing terms
 
+   // Vector reconstruction
+   Array1DI4 NCellReconstructEdges;      /// Num of edges used in stencil
+   HostArray1DI4 NCellReconstructEdgesH; /// Num of edges used in stencil
+
+   Array2DI4 ReconstructStencilCell;      /// Two edge wide stencil
+   HostArray2DI4 ReconstructStencilCellH; /// Two edge wide stencil
+
+   Array3DReal ReconstructWeightsCell;      /// Least Squares Weights
+   HostArray3DReal ReconstructWeightsCellH; /// Least Squares Weights
+
    // Methods
 
    /// Initialize Omega local mesh and create default mesh
