@@ -652,5 +652,50 @@ class MasksAndCoefficients {
    Array2DReal BoundaryCell;
    Array3DReal DerivTwo;
 };
+
+// Reconstruct edge normal vector field at cell centers
+class VectorReconstructOnCell {
+ public:
+   VectorReconstructOnCell(HorzMesh const *Mesh);
+   // Currently only support computing Zonal/Meridional (X/Y) for
+   // spherical (planar) meshes on a single vertical layer
+   KOKKOS_FUNCTION void operator()(const Array1DReal &UReconstructX,
+                                   const Array1DReal &UReconstructY, int ICell,
+                                   const Array1DReal &VecEdge) const {
+
+      Real Ux = 0._Real, Uy = 0._Real, Uz = 0._Real;
+
+      for (int J = 0; J < NCellReconstructEdges(ICell); ++J) {
+         const I4 JEdge   = ReconstructStencilCell(ICell, J);
+         const Real Field = VecEdge(JEdge);
+
+         Ux += ReconstructWeightsCell(ICell, 0, J) * Field;
+         Uy += ReconstructWeightsCell(ICell, 1, J) * Field;
+         Uz += ReconstructWeightsCell(ICell, 2, J) * Field;
+      }
+
+      if (OnSphere) {
+         const Real clat = Kokkos::cos(LatCell(ICell));
+         const Real slat = Kokkos::sin(LatCell(ICell));
+         const Real clon = Kokkos::cos(LonCell(ICell));
+         const Real slon = Kokkos::sin(LonCell(ICell));
+
+         // cartesian to local geographic
+         UReconstructX(ICell) = -slon * Ux + clon * Uy;
+         UReconstructY(ICell) = -(clon * Ux + slon * Uy) * slat + Uz * clat;
+      } else {
+         UReconstructX(ICell) = Ux;
+         UReconstructY(ICell) = Uy;
+      }
+   }
+
+ private:
+   bool OnSphere;
+   Array1DI4 NCellReconstructEdges;
+   Array2DI4 ReconstructStencilCell;
+   Array3DReal ReconstructWeightsCell;
+   Array1DReal LatCell;
+   Array1DReal LonCell;
+};
 } // namespace OMEGA
 #endif

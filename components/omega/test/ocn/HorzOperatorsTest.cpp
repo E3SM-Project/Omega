@@ -31,14 +31,17 @@ struct TestSetupPlane {
    Real Lx = 1;
    Real Ly = SqrtThree / 2;
 
-   ErrorMeasures ExpectedDivErrors         = {0.00124886886594427027,
-                                              0.00124886886590974385};
-   ErrorMeasures ExpectedGradErrors        = {0.00125026071878537952,
-                                              0.00134354611117262204};
-   ErrorMeasures ExpectedCurlErrors        = {0.161365663569699946,
-                                              0.161348016897141039};
-   ErrorMeasures ExpectedReconErrors       = {0.00450897496974901352,
-                                              0.00417367308684470691};
+   ErrorMeasures ExpectedDivErrors   = {0.00124886886594427027,
+                                        0.00124886886590974385};
+   ErrorMeasures ExpectedGradErrors  = {0.00125026071878537952,
+                                        0.00134354611117262204};
+   ErrorMeasures ExpectedCurlErrors  = {0.161365663569699946,
+                                        0.161348016897141039};
+   ErrorMeasures ExpectedReconErrors = {0.00450897496974901352,
+                                        0.00417367308684470691};
+   // vector reconstruction is spherical-only; unused placeholder kept only
+   // so the (untemplated) test function compiles for all TestSetup variants
+   ErrorMeasures ExpectedVectorReconErrors = {0.0, 0.0};
    ErrorMeasures ExpectedAnisoInterpErrors = {0.0026762081503380526,
                                               0.003058198461518835};
    ErrorMeasures ExpectedIsoInterpErrors   = {0.004279097382993937,
@@ -88,6 +91,8 @@ struct TestSetupSphere1 {
                                               0.025202095212756463};
    ErrorMeasures ExpectedReconErrors       = {0.0206375134079833517,
                                               0.00692590524910695858};
+   ErrorMeasures ExpectedVectorReconErrors = {0.003308078126087204,
+                                              0.0029425911574823007};
    ErrorMeasures ExpectedAnisoInterpErrors = {0.0024015775047603197,
                                               0.0018490649516209202};
    ErrorMeasures ExpectedIsoInterpErrors   = {0.007438367234983312,
@@ -138,6 +143,8 @@ struct TestSetupSphere2 {
                                               0.00204725417666192042};
    ErrorMeasures ExpectedReconErrors       = {0.0254271921029878764,
                                               0.00419630561428921064};
+   ErrorMeasures ExpectedVectorReconErrors = {0.0006982813838413156,
+                                              0.0006104530488293548};
    ErrorMeasures ExpectedAnisoInterpErrors = {0.0014465229922953644,
                                               0.001643777653612931};
    ErrorMeasures ExpectedIsoInterpErrors   = {0.004755875091568591,
@@ -318,7 +325,7 @@ int testCurl(Real RTol) {
    return Err;
 }
 
-int testRecon(Real RTol) {
+int testTangentRecon(Real RTol) {
    int Err = 0;
    TestSetup Setup;
 
@@ -363,6 +370,75 @@ int testRecon(Real RTol) {
 
    if (Err == 0) {
       LOG_INFO("OperatorsTest: Recon PASS");
+   }
+
+   return Err;
+}
+
+// Reconstructs the Cartesian vector field at cell centers from edge-normal
+// values using the least-squares weights/stencil in the mesh and compares
+// the magnitude of the reconstructed vector against the exact magnitude at
+// cell centers. This currently only supports spherical meshes, so it is a
+// no-op for planar meshes.
+int testVectorReconstruction(Real RTol) {
+   int Err = 0;
+
+   // Vector reconstruction weights/stencil are only available for spherical
+   // meshes (see VectorReconstructOnCell)
+   if constexpr (Geom != Geometry::Spherical) {
+      return Err;
+   }
+
+   TestSetup Setup;
+
+   const auto &Mesh = HorzMesh::getDefault();
+
+   // Prepare operator input: edge-normal component of the exact vector field
+   // (VectorReconstructOnCell currently only supports a single vertical
+   // layer, so we use rank-1 arrays here)
+   Array1DReal VecEdge("VecEdge", Mesh->NEdgesSize);
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real Lon, Real Lat) {
+          VecField[0] = Setup.exactVecX(Lon, Lat);
+          VecField[1] = Setup.exactVecY(Lon, Lat);
+       },
+       VecEdge, EdgeComponent::Normal, Geom, Mesh);
+
+   // Compute exact magnitude of the vector field at cell centers
+   Array1DReal ExactMagCell("ExactMagCell", Mesh->NCellsOwned);
+   Err += setScalar(
+       KOKKOS_LAMBDA(Real Lon, Real Lat) {
+          return vecMagnitude(Setup.exactVecX(Lon, Lat),
+                              Setup.exactVecY(Lon, Lat));
+       },
+       ExactMagCell, Geom, Mesh, OnCell, ExchangeHalos::No);
+
+   // Compute numerical reconstruction at cell centers
+   Array1DReal UReconstructX("UReconstructX", Mesh->NCellsOwned);
+   Array1DReal UReconstructY("UReconstructY", Mesh->NCellsOwned);
+   VectorReconstructOnCell ReconstructCell(Mesh);
+   parallelFor(
+       {Mesh->NCellsOwned}, KOKKOS_LAMBDA(int ICell) {
+          ReconstructCell(UReconstructX, UReconstructY, ICell, VecEdge);
+       });
+
+   // Magnitude of the numerical reconstruction
+   Array1DReal NumMagCell("NumMagCell", Mesh->NCellsOwned);
+   parallelFor(
+       {Mesh->NCellsOwned}, KOKKOS_LAMBDA(int ICell) {
+          NumMagCell(ICell) =
+              vecMagnitude(UReconstructX(ICell), UReconstructY(ICell));
+       });
+
+   // Compute error measures
+   ErrorMeasures ReconErrors;
+   Err += computeErrors(ReconErrors, NumMagCell, ExactMagCell, Mesh, OnCell);
+   // Check error values
+   Err += checkErrors("OperatorsTest", "VectorReconstruction", ReconErrors,
+                      Setup.ExpectedVectorReconErrors, RTol);
+
+   if (Err == 0) {
+      LOG_INFO("OperatorsTest: VectorReconstruction PASS");
    }
 
    return Err;
@@ -979,7 +1055,8 @@ int operatorsTest(const std::string &MeshFile = DefaultMeshFile) {
    Err += testDivergence(RTol);
    Err += testGradient(RTol);
    Err += testCurl(RTol);
-   Err += testRecon(RTol);
+   Err += testTangentRecon(RTol);
+   Err += testVectorReconstruction(RTol);
    Err += testInterpCellToEdge(RTol);
    Err += testsecondderivativeoncellconstructor(RTol);
    Err += testsecondderivativeoncellDeterminePlanerPatchGeometry(RTol);
