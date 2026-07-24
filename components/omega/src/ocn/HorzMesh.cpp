@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "HorzMesh.h"
+#include "Config.h"
 #include "DataTypes.h"
 #include "Decomp.h"
 #include "Dimension.h"
@@ -19,6 +20,7 @@
 #include "Halo.h"
 #include "IOStream.h"
 #include "OmegaKokkos.h"
+#include "Reductions.h"
 
 #include <limits>
 
@@ -431,16 +433,98 @@ void HorzMesh::computeEdgeSign() {
 // equations so viscosity and diffusion scale with mesh.
 void HorzMesh::computeMeshScaling() {
 
+   Config *OmegaConfig = Config::getOmegaConfig();
+   Config HmixConfig("Hmix");
+   Error Err = OmegaConfig->get(HmixConfig);
+   CHECK_ERROR_ABORT(Err,
+                     "HorzMesh: Hmix group not found in input configuration");
+
+   bool ScaleWithMesh;
+   bool UseRefWidth;
+   Real MaxMeshDensity;
+   Real RefWidth;
+
+   Err += HmixConfig.get("HmixScaleWithMesh", ScaleWithMesh);
+   Err += HmixConfig.get("MaxMeshDensity", MaxMeshDensity);
+   Err += HmixConfig.get("HmixUseRefWidth", UseRefWidth);
+   Err += HmixConfig.get("HmixRefWidth", RefWidth);
+   CHECK_ERROR_ABORT(
+       Err, "HorzMesh: error reading mesh scaling configuration");
+
    OMEGA_SCOPE(o_MeshScalingDel2, MeshScalingDel2);
    OMEGA_SCOPE(o_MeshScalingDel4, MeshScalingDel4);
 
-   // TODO: implement mesh scaling by cell area, only no scaling
-   // option for now
-   parallelFor(
-       {NEdgesAll}, KOKKOS_LAMBDA(int Edge) {
-          o_MeshScalingDel2(Edge) = 1.0;
-          o_MeshScalingDel4(Edge) = 1.0;
-       });
+   if (ScaleWithMesh && UseRefWidth) {
+      OMEGA_REQUIRE(RefWidth > 0.0_Real,
+                    "HorzMesh: HmixRefWidth must be positive, got {}",
+                    RefWidth);
+
+      OMEGA_SCOPE(o_AreaCell, AreaCell);
+      OMEGA_SCOPE(o_CellsOnEdge, CellsOnEdge);
+      OMEGA_SCOPE(o_RefWidth, RefWidth);
+
+      // Compute an effective cell width at each edge by treating the two
+      // adjacent cells as circles, following MPAS-Ocean.
+      parallelFor(
+          {NEdgesAll}, KOKKOS_LAMBDA(int Edge) {
+             const int Cell0 = o_CellsOnEdge(Edge, 0);
+             const int Cell1 = o_CellsOnEdge(Edge, 1);
+             const Real CellWidth =
+                 2.0_Real *
+                 Kokkos::sqrt((o_AreaCell(Cell0) + o_AreaCell(Cell1)) /
+                              (2.0_Real * Pi));
+             const Real Del2Scale = CellWidth / o_RefWidth;
+
+             o_MeshScalingDel2(Edge) = Del2Scale;
+             o_MeshScalingDel4(Edge) =
+                 Del2Scale * Del2Scale * Del2Scale;
+          });
+
+   } else if (ScaleWithMesh) {
+      // A negative configured value requests the global maximum of the mesh
+      // density, matching MPAS-Ocean's legacy scaling behavior.
+      if (MaxMeshDensity < 0.0_Real) {
+         Real MaxMeshDensityLocal = 0.0_Real;
+         for (int Cell = 0; Cell < NCellsOwned; ++Cell)
+            MaxMeshDensityLocal =
+                std::max(MaxMeshDensityLocal, MeshDensityH(Cell));
+
+         Halo *HorzMeshHalo = Halo::get(MeshName);
+         MaxMeshDensity =
+             globalMaxVal(MaxMeshDensityLocal, HorzMeshHalo->getComm());
+         HmixConfig.set("MaxMeshDensity", MaxMeshDensity);
+      }
+
+      OMEGA_REQUIRE(MaxMeshDensity > 0.0_Real,
+                    "HorzMesh: MaxMeshDensity must be positive, got {}",
+                    MaxMeshDensity);
+
+      OMEGA_SCOPE(o_CellsOnEdge, CellsOnEdge);
+      OMEGA_SCOPE(o_MeshDensity, MeshDensity);
+      OMEGA_SCOPE(o_MaxMeshDensity, MaxMeshDensity);
+
+      parallelFor(
+          {NEdgesAll}, KOKKOS_LAMBDA(int Edge) {
+             const int Cell0 = o_CellsOnEdge(Edge, 0);
+             const int Cell1 = o_CellsOnEdge(Edge, 1);
+             const Real AvgDensity =
+                 0.5_Real *
+                 (o_MeshDensity(Cell0) + o_MeshDensity(Cell1));
+             const Real DensityRatio = AvgDensity / o_MaxMeshDensity;
+
+             o_MeshScalingDel2(Edge) =
+                 1.0_Real / Kokkos::pow(DensityRatio, 0.25_Real);
+             o_MeshScalingDel4(Edge) =
+                 1.0_Real / Kokkos::pow(DensityRatio, 0.75_Real);
+          });
+
+   } else {
+      parallelFor(
+          {NEdgesAll}, KOKKOS_LAMBDA(int Edge) {
+             o_MeshScalingDel2(Edge) = 1.0_Real;
+             o_MeshScalingDel4(Edge) = 1.0_Real;
+          });
+   }
 
    MeshScalingDel2H = createHostMirrorCopy(MeshScalingDel2);
    MeshScalingDel4H = createHostMirrorCopy(MeshScalingDel4);

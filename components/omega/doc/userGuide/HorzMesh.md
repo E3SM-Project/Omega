@@ -52,3 +52,31 @@ bring older meshes into compliance.
 In the future, the Mesh class will optionally compute internally those fields
 the specification marks as *could be computed internally* — the areas, lengths,
 angles, and weights needed for the TRiSK discretization.
+
+### Horizontal mixing mesh scaling
+
+The `Hmix` configuration controls whether Laplacian and biharmonic mixing
+coefficients vary with horizontal mesh size:
+
+```yaml
+  Hmix:
+    HmixScaleWithMesh: false
+    MaxMeshDensity: -1.0
+    HmixUseRefWidth: false
+    HmixRefWidth: 30.0e3
+```
+
+When `HmixScaleWithMesh` is false, both scaling coefficients are one. When it
+is true and `HmixUseRefWidth` is true, Omega computes the effective cell width
+at each edge from the areas of its two adjacent cells. The Laplacian scaling
+is the ratio of this width to `HmixRefWidth`, and the biharmonic scaling is the
+cube of that ratio.
+
+When `HmixUseRefWidth` is false, Omega uses the legacy MPAS-Ocean scaling based
+on `MeshDensity`. A negative `MaxMeshDensity` requests that Omega compute its
+global value from the mesh during initialization.
+
+In the future, the Mesh class will optionally compute the mesh variables that
+are dependent on the Cartesian mesh coordinates internally.
+This includes the various areas, lengths, angles, and weights needed for the
+TRiSK discretization (e.g. rows 5-11 in the table above).
