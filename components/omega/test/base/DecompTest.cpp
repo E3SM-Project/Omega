@@ -85,6 +85,7 @@ int main(int argc, char *argv[]) {
       I4 NCellsOwned     = DefDecomp->NCellsOwned;
       I4 NEdgesGlobal    = DefDecomp->NEdgesGlobal;
       I4 NEdgesOwned     = DefDecomp->NEdgesOwned;
+      I4 NEdgesAll       = DefDecomp->NEdgesAll;
       I4 NVerticesGlobal = DefDecomp->NVerticesGlobal;
       I4 NVerticesOwned  = DefDecomp->NVerticesOwned;
 
@@ -125,6 +126,39 @@ int main(int argc, char *argv[]) {
       if (SumVertices != RefSumVertices)
          ABORT_ERROR("DecompTest: Sum vertex ID test FAIL {} {}", SumVertices,
                      RefSumVertices);
+
+      // Test the vector-reconstruction stencil arrays (spherical meshes
+      // only): each owned cell's count is in range, active entries are
+      // resolvable local edges, and padding columns carry the NEdgesAll
+      // sentinel (confirms no compaction, so columns stay aligned with
+      // ReconstructWeightsCell).
+      if (DefDecomp->OnSphere) {
+         I4 MaxEdges2 = DefDecomp->MaxEdges2;
+         HostArray1DI4 NCellReconstructEdgesH =
+             DefDecomp->NCellReconstructEdgesH;
+         HostArray2DI4 ReconstructStencilCellH =
+             DefDecomp->ReconstructStencilCellH;
+         I4 LocalReconErrors = 0;
+         for (int Cell = 0; Cell < NCellsOwned; ++Cell) {
+            I4 NStencil = NCellReconstructEdgesH(Cell);
+            if (NStencil <= 0 || NStencil > MaxEdges2)
+               ++LocalReconErrors;
+            for (int J = 0; J < MaxEdges2; ++J) {
+               I4 StencilEdge = ReconstructStencilCellH(Cell, J);
+               if (J < NStencil) {
+                  if (StencilEdge < 0 || StencilEdge > NEdgesAll)
+                     ++LocalReconErrors;
+               } else if (StencilEdge != NEdgesAll) {
+                  ++LocalReconErrors;
+               }
+            }
+         }
+         I4 ReconErrors = globalSum(LocalReconErrors, Comm);
+         if (ReconErrors != 0)
+            ABORT_ERROR("DecompTest: ReconstructStencilCell consistency "
+                        "test FAIL {}",
+                        ReconErrors);
+      }
 
       // Clean up
       Decomp::clear();
