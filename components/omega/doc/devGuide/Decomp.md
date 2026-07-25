@@ -67,6 +67,7 @@ described in the mesh specification above. In particular, it contains
   - NCellsHalo(i): the number of owned+halo cells for each halo layer
   - Analogous size variables for Edges and Vertices
   - MaxEdges: the max number of edges on a cell (and array size)
+  - MaxEdges2: the max number of edges on a edge
   - VertexDegree: the number of cells/edges at each vertex
   - CellID(NCellsSize): the global index for each local cell
   - CellLoc(NCellsSize,2): the task and local index for every local cell
@@ -86,6 +87,12 @@ described in the mesh specification above. In particular, it contains
     at a vertex
   - NEdgesOnCell(NCellsSize): the number of actual edges on each cell
   - NEdgesOnEdge(NEdgesSize): the number of actual edges on each edge
+  - NCellReconstructEdges(NCellsSize): number of edges in the vector
+    reconstruction stencil for each cell (spherical meshes only)
+  - ReconstructStencilCell(NCellsSize,MaxEdges2): edge indices in the
+    vector reconstruction stencil for each cell (spherical meshes only)
+  - OnSphere: whether the mesh is spherical, read from the mesh file to
+    gate the reconstruction stencil arrays above
 
 For each of the arrays above, there is a copy of the array on the host and
 device (GPU) with the host array named with an extra H on the end
