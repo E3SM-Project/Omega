@@ -837,6 +837,46 @@ std::shared_ptr<Field> FieldGroup::getFieldFromGroup(
 }
 
 //------------------------------------------------------------------------------
+// Regional mask functions
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// Set regional mask for this field
+void Field::setRegionalMask(const Array1DI4 &Mask) {
+   // Validate input mask is allocated
+   if (Mask.data() == nullptr) {
+      LOG_ERROR("Field::setRegionalMask: attempting to set unallocated mask "
+                "for field {}",
+                FldName);
+      return;
+   }
+   // Shallow copy - just copy the view, not the data
+   RegionalMask        = Mask;
+   HasRegionalMaskSet = true;
+}
+
+//------------------------------------------------------------------------------
+// Get regional mask for this field
+Array1DI4 Field::getRegionalMask() const {
+   // Defensive check: if mask was set but pointer is now null, that's a bug
+   if (HasRegionalMaskSet && RegionalMask.data() == nullptr) {
+      LOG_CRITICAL("Field::getRegionalMask: mask was set for field {} but is "
+                   "now deallocated - lifetime bug!",
+                   FldName);
+      ABORT("Field regional mask lifetime error");
+   }
+   return RegionalMask;
+}
+
+//------------------------------------------------------------------------------
+// Check if field has a regional mask
+bool Field::hasRegionalMask() const {
+   // Return whether setRegionalMask() was called, not pointer state
+   // This way we can detect if mask *should* be there but isn't
+   return HasRegionalMaskSet;
+}
+
+//------------------------------------------------------------------------------
 
 } // namespace OMEGA
 //===----------------------------------------------------------------------===//
