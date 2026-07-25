@@ -851,7 +851,7 @@ void Field::setRegionalMask(const Array1DI4 &Mask) {
       return;
    }
    // Shallow copy - just copy the view, not the data
-   RegionalMask        = Mask;
+   RegionalMask       = Mask;
    HasRegionalMaskSet = true;
 }
 
