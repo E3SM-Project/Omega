@@ -181,14 +181,48 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
 
    } // end constructor
 
+   /// Initializes the operator after all Fields exist. Determines the index
+   /// space (cells, edges, or vertices) from the first input field's horizontal
+   /// dimension name and stores the appropriate MinLayer/MaxLayer arrays
+   /// from VertCoord for bounding the inner vertical loop.
+   void initialize(const MachEnv *Env, const HorzMesh *InMesh,
+                   const VertCoord *InVCoord, Config Options) override {
+
+      AnalysisOperator::initialize(Env, InMesh, InVCoord, Options);
+
+      constexpr I4 InputRank = ArrayT::rank;
+      if constexpr (InputRank > 1) {
+         auto Field1 = Field::get(InputNames[0]);
+         std::vector<std::string> DimNames;
+         Field1->getDimNames(DimNames);
+         // Horizontal dimension is 2nd-to-last for 2D/3D
+         std::string IndexSpaceName = DimNames[InputRank - 2];
+
+         if (IndexSpaceName == "NCells") {
+            MinLayer = VCoord->MinLayerCell;
+            MaxLayer = VCoord->MaxLayerCell;
+         } else if (IndexSpaceName == "NEdges") {
+            MinLayer = VCoord->MinLayerEdgeBot;
+            MaxLayer = VCoord->MaxLayerEdgeTop;
+         } else if (IndexSpaceName == "NVertices") {
+            MinLayer = VCoord->MinLayerVertexBot;
+            MaxLayer = VCoord->MaxLayerVertexTop;
+         } else {
+            ABORT_ERROR("BinaryMultiplyOp: Unknown index space {}",
+                        IndexSpaceName);
+         }
+      }
+
+   } // end initialize
+
    /// Computes the element-wise multiplication by retrieving both input
    /// data arrays and performing parallel multiplication using hierarchical
    /// parallelism (outer loop over horizontal dimension, inner loop over
-   /// vertical layers). Supports 1D (horizontal only), 2D (horizontal ×
-   /// vertical), and 3D (additional outer dimension × horizontal × vertical)
-   /// arrays. Also supports vertical expansion where a 1D field value is
-   /// replicated across all vertical layers when multiplying with 2D/3D fields.
-   /// Updates output data, timestamp, and computed flag.
+   /// vertical layers bounded by MinLayer/MaxLayer). Supports 1D (horizontal
+   /// only), 2D (horizontal × vertical), and 3D (additional outer dimension ×
+   /// horizontal × vertical) arrays. Also supports vertical expansion where a
+   /// 1D field value is replicated across all vertical layers when multiplying
+   /// with 2D/3D fields. Updates output data, timestamp, and computed flag.
    void compute(const TimeInstant &TimeStamp ///< [in] current timestamp
                 ) override {
 
@@ -206,28 +240,34 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
          // 1D case: horizontal field only, no vertical structure
          auto Data2 = Field2->template getDataArray<ArrayT>();
          parallelFor(
-             {NHorizDim}, KOKKOS_LAMBDA(int iHoriz) {
-                Output(iHoriz) =
-                    static_cast<ScalarT>(static_cast<Real>(Data1(iHoriz)) *
-                                         static_cast<Real>(Data2(iHoriz)));
+             {NHorizDim}, KOKKOS_LAMBDA(int IHoriz) {
+                Output(IHoriz) =
+                    static_cast<ScalarT>(static_cast<Real>(Data1(IHoriz)) *
+                                         static_cast<Real>(Data2(IHoriz)));
              });
 
       } else if constexpr (InputRank == 2) {
          // 2D case: hierarchical parallelism over horizontal × vertical
+         // Inner loop bounded by MinLayer/MaxLayer for partial columns
 
-         OMEGA_SCOPE(LocNVertSize, NVertSize);
+         OMEGA_SCOPE(LocMinLayer, MinLayer);
+         OMEGA_SCOPE(LocMaxLayer, MaxLayer);
 
          if (IsVerticalExpansion) {
             // Vertical expansion: Data2 is 1D, replicate across vertical layers
             auto Data2_1D = Field2->template getDataArray<Array1DReal>();
             parallelForOuter(
                 "BinaryMultiply2D_VertExpand", LaunchConfig({NHorizDim}),
-                KOKKOS_LAMBDA(int iHoriz, const TeamMember &Team) {
-                   const Real Data2Val = static_cast<Real>(Data2_1D(iHoriz));
+                KOKKOS_LAMBDA(int IHoriz, const TeamMember &Team) {
+                   const Real Data2Val = static_cast<Real>(Data2_1D(IHoriz));
+                   const I4 KMin       = LocMinLayer(IHoriz);
+                   const I4 KMax       = LocMaxLayer(IHoriz);
+                   const I4 KRange     = vertRange(KMin, KMax);
                    parallelForInner(
-                       Team, LocNVertSize, INNER_LAMBDA(int K) {
-                          Output(iHoriz, K) = static_cast<ScalarT>(
-                              static_cast<Real>(Data1(iHoriz, K)) * Data2Val);
+                       Team, KRange, INNER_LAMBDA(int KIdx) {
+                          const I4 K         = KMin + KIdx;
+                          Output(IHoriz, K)  = static_cast<ScalarT>(
+                              static_cast<Real>(Data1(IHoriz, K)) * Data2Val);
                        });
                 });
          } else {
@@ -235,20 +275,26 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
             auto Data2 = Field2->template getDataArray<ArrayT>();
             parallelForOuter(
                 "BinaryMultiply2D", LaunchConfig({NHorizDim}),
-                KOKKOS_LAMBDA(int iHoriz, const TeamMember &Team) {
+                KOKKOS_LAMBDA(int IHoriz, const TeamMember &Team) {
+                   const I4 KMin   = LocMinLayer(IHoriz);
+                   const I4 KMax   = LocMaxLayer(IHoriz);
+                   const I4 KRange = vertRange(KMin, KMax);
                    parallelForInner(
-                       Team, LocNVertSize, INNER_LAMBDA(int K) {
-                          Output(iHoriz, K) = static_cast<ScalarT>(
-                              static_cast<Real>(Data1(iHoriz, K)) *
-                              static_cast<Real>(Data2(iHoriz, K)));
+                       Team, KRange, INNER_LAMBDA(int KIdx) {
+                          const I4 K        = KMin + KIdx;
+                          Output(IHoriz, K) = static_cast<ScalarT>(
+                              static_cast<Real>(Data1(IHoriz, K)) *
+                              static_cast<Real>(Data2(IHoriz, K)));
                        });
                 });
          }
 
       } else if constexpr (InputRank == 3) {
          // 3D case: hierarchical parallelism over dim0 × horizontal × vertical
+         // Inner loop bounded by MinLayer/MaxLayer for partial columns
 
-         OMEGA_SCOPE(LocNVertSize, NVertSize);
+         OMEGA_SCOPE(LocMinLayer, MinLayer);
+         OMEGA_SCOPE(LocMaxLayer, MaxLayer);
          const I4 Dim0 = Data1.extent(0);
 
          if (IsVerticalExpansion) {
@@ -256,12 +302,16 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
             auto Data2_1D = Field2->template getDataArray<Array1DReal>();
             parallelForOuter(
                 "BinaryMultiply3D_VertExpand", LaunchConfig({Dim0, NHorizDim}),
-                KOKKOS_LAMBDA(int i0, int iHoriz, const TeamMember &Team) {
-                   const Real Data2Val = static_cast<Real>(Data2_1D(iHoriz));
+                KOKKOS_LAMBDA(int I0, int IHoriz, const TeamMember &Team) {
+                   const Real Data2Val = static_cast<Real>(Data2_1D(IHoriz));
+                   const I4 KMin       = LocMinLayer(IHoriz);
+                   const I4 KMax       = LocMaxLayer(IHoriz);
+                   const I4 KRange     = vertRange(KMin, KMax);
                    parallelForInner(
-                       Team, LocNVertSize, INNER_LAMBDA(int K) {
-                          Output(i0, iHoriz, K) = static_cast<ScalarT>(
-                              static_cast<Real>(Data1(i0, iHoriz, K)) *
+                       Team, KRange, INNER_LAMBDA(int KIdx) {
+                          const I4 K             = KMin + KIdx;
+                          Output(I0, IHoriz, K)  = static_cast<ScalarT>(
+                              static_cast<Real>(Data1(I0, IHoriz, K)) *
                               Data2Val);
                        });
                 });
@@ -270,12 +320,16 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
             auto Data2 = Field2->template getDataArray<ArrayT>();
             parallelForOuter(
                 "BinaryMultiply3D", LaunchConfig({Dim0, NHorizDim}),
-                KOKKOS_LAMBDA(int i0, int iHoriz, const TeamMember &Team) {
+                KOKKOS_LAMBDA(int I0, int IHoriz, const TeamMember &Team) {
+                   const I4 KMin   = LocMinLayer(IHoriz);
+                   const I4 KMax   = LocMaxLayer(IHoriz);
+                   const I4 KRange = vertRange(KMin, KMax);
                    parallelForInner(
-                       Team, LocNVertSize, INNER_LAMBDA(int K) {
-                          Output(i0, iHoriz, K) = static_cast<ScalarT>(
-                              static_cast<Real>(Data1(i0, iHoriz, K)) *
-                              static_cast<Real>(Data2(i0, iHoriz, K)));
+                       Team, KRange, INNER_LAMBDA(int KIdx) {
+                          const I4 K            = KMin + KIdx;
+                          Output(I0, IHoriz, K) = static_cast<ScalarT>(
+                              static_cast<Real>(Data1(I0, IHoriz, K)) *
+                              static_cast<Real>(Data2(I0, IHoriz, K)));
                        });
                 });
          }
@@ -314,6 +368,12 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
 
    /// Whether Field2 is 1D and should be replicated across vertical dimension
    bool IsVerticalExpansion;
+
+   /// Min active layer index for each horizontal point (only for 2D/3D arrays)
+   Array1DI4 MinLayer;
+
+   /// Max active layer index for each horizontal point (only for 2D/3D arrays)
+   Array1DI4 MaxLayer;
 
 }; // end class BinaryMultiplyOp
 
