@@ -860,10 +860,9 @@ void Field::setRegionalMask(const Array1DI4 &Mask) {
 Array1DI4 Field::getRegionalMask() const {
    // Defensive check: if mask was set but pointer is now null, that's a bug
    if (HasRegionalMaskSet && RegionalMask.data() == nullptr) {
-      LOG_CRITICAL("Field::getRegionalMask: mask was set for field {} but is "
-                   "now deallocated - lifetime bug!",
-                   FldName);
-      ABORT("Field regional mask lifetime error");
+      ABORT_ERROR("Field::getRegionalMask: mask was set for field {} but is "
+                  "now deallocated.",
+                  FldName);
    }
    return RegionalMask;
 }
