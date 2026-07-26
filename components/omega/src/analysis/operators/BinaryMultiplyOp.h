@@ -1,0 +1,322 @@
+#ifndef OMEGA_BINARYMULTIPLYOP_H
+#define OMEGA_BINARYMULTIPLYOP_H
+
+//===-- analysis/operators/BinaryMultiplyOp.h -------------------*- C++ -*-===//
+//
+/// \file
+/// \brief Defines the BinaryMultiplyOp operator for element-wise field
+/// multiplication
+///
+/// BinaryMultiplyOp performs element-wise multiplication of two fields with
+/// matching dimensions. This operator is useful for computing products like:
+/// - Flux calculations (velocity × area)
+/// - Density-weighted quantities (field × density)
+/// - Coordinate transformations (field1 × field2)
+///
+/// The operator supports two modes:
+/// 1. Same-rank multiplication: Both fields have the same dimensions
+///    Output(i,j,...) = Field1(i,j,...) × Field2(i,j,...)
+///
+/// 2. Vertical expansion: Field1 is 2D/3D and Field2 is 1D (horizontal only)
+///    The 1D field value is replicated across all vertical layers
+///    Output(i,j) = Field1(i,j) × Field2(i)
+///
+/// Example usage in operator chain:
+/// \code
+///   VerticalVelocity_BinaryMultiply(AreaCell)
+/// \endcode
+/// Computes the vertical flux by multiplying 2D vertical velocity by 1D cell
+/// area, with the area value replicated across all vertical layers.
+///
+//===----------------------------------------------------------------------===//
+
+#include "AnalysisOperator.h"
+
+namespace OMEGA {
+
+/// BinaryMultiplyOp performs element-wise multiplication of two fields.
+/// Supports both same-rank multiplication and vertical expansion where 1D
+/// fields are replicated across all vertical layers when multiplying with 2D/3D
+/// fields. The output field has the same dimensions as the first input field.
+template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
+ public:
+   /// Scalar type extracted from the input array type
+   using ScalarT = typename ArrayT::non_const_value_type;
+
+   /// Output array type - same as input array types
+   using OutputArrayT = ArrayT;
+
+   /// Constructs a BinaryMultiplyOp operator. Retrieves both input field
+   /// dimensions and metadata, validates that they match, creates output
+   /// Field for the product, allocates output data array, and registers
+   /// the output Field. The output Field name is constructed as
+   /// Field1Name + "_BinaryMultiply(" + Field2Name + ")_Product".
+   BinaryMultiplyOp(const std::vector<std::string>
+                        &UpstreamNames, ///< [in] input field names
+                    Config Options      ///< [in] operator config
+                    )
+       : AnalysisOperator("BinaryMultiply") {
+
+      // Store input field names
+      // UpstreamNames[0] = first field
+      // UpstreamNames[1] = second field
+      InputNames = UpstreamNames;
+
+      if (InputNames.size() < 2) {
+         ABORT_ERROR("BinaryMultiplyOp: Requires 2 input fields");
+      }
+
+      // Retrieve both input fields
+      auto Field1 = Field::get(InputNames[0]);
+      auto Field2 = Field::get(InputNames[1]);
+      auto Data1  = Field1->template getDataArray<ArrayT>();
+
+      // Get rank information for both fields
+      const I4 Rank1 = ArrayT::rank;
+      const I4 Rank2 = Field2->getNumDims();
+
+      // Store whether Field2 is 1D (will be expanded vertically if Field1 is
+      // 2D/3D)
+      IsVerticalExpansion = (Rank1 > 1 && Rank2 == 1);
+
+      // Validate dimension compatibility
+      if (!IsVerticalExpansion && Rank1 != Rank2) {
+         ABORT_ERROR("BinaryMultiplyOp: Input fields must have same rank or "
+                     "second field must be 1D for vertical expansion, got "
+                     "ranks {} and {}",
+                     Rank1, Rank2);
+      }
+
+      // For same-rank case, validate all dimensions match
+      if (!IsVerticalExpansion) {
+         auto Data2 = Field2->template getDataArray<ArrayT>();
+         for (I4 dim = 0; dim < Rank1; ++dim) {
+            if (Data1.extent(dim) != Data2.extent(dim)) {
+               ABORT_ERROR("BinaryMultiplyOp: Dimension {} mismatch: "
+                           "Field1={}, Field2={}",
+                           dim, Data1.extent(dim), Data2.extent(dim));
+            }
+         }
+      } else {
+         // For vertical expansion case, validate horizontal dimensions match
+         auto Data2_1D = Field2->template getDataArray<Array1DReal>();
+         if (Data1.extent(Rank1 - 2) != Data2_1D.extent(0)) {
+            ABORT_ERROR("BinaryMultiplyOp: Horizontal dimension mismatch for "
+                        "vertical expansion: "
+                        "Field1 horizontal dim={}, Field2 size={}",
+                        Data1.extent(Rank1 - 2), Data2_1D.extent(0));
+         }
+      }
+
+      // Store dimensions based on rank
+      if (Rank1 == 1) {
+         // 1D: horizontal only (cells/edges/vertices), no vertical structure
+         NHorizDim = Data1.extent(0);
+         NVertSize = 1; // No vertical dimension
+      } else if (Rank1 == 2) {
+         // 2D: NHorizDim × NVertSize
+         NHorizDim = Data1.extent(0);
+         NVertSize = Data1.extent(1);
+      } else if (Rank1 == 3) {
+         // 3D: OuterDim × NHorizDim × NVertSize
+         NHorizDim = Data1.extent(1);
+         NVertSize = Data1.extent(2);
+      } else {
+         ABORT_ERROR("BinaryMultiplyOp: Unsupported rank {}. "
+                     "Supports 1D, 2D, and 3D arrays",
+                     Rank1);
+      }
+
+      // Get dimension info from first field
+      auto NDims = Field1->getNumDims();
+      std::vector<std::string> DimNames;
+      Field1->getDimNames(DimNames);
+
+      // Construct output field name and set instance name
+      std::string OutputFieldName =
+          InputNames[0] + "_" + InputNames[1] + "_Product";
+      OutputNames  = {OutputFieldName};
+      InstanceName = OutputFieldName;
+
+      // Get metadata from both input fields
+      std::string Descr1, Units1, StdName1;
+      std::string Descr2, Units2, StdName2;
+
+      Field1->getMetadata("Description", Descr1);
+      Field1->getMetadata("Units", Units1);
+      Field1->getMetadata("StdName", StdName1);
+
+      Field2->getMetadata("Description", Descr2);
+      Field2->getMetadata("Units", Units2);
+      Field2->getMetadata("StdName", StdName2);
+
+      // Combine metadata for output
+      std::string OutputDescr   = "Product of " + Descr1 + " and " + Descr2;
+      std::string OutputUnits   = combineUnits(Units1, Units2);
+      std::string OutputStdName = ""; // No standard name for generic product
+
+      // Create output Field
+      auto OutputField =
+          Field::create(OutputNames[0],
+                        OutputDescr,   // Description
+                        OutputUnits,   // Units (combined)
+                        OutputStdName, // Standard name
+                        -std::numeric_limits<ScalarT>::max(), // Min valid value
+                        std::numeric_limits<ScalarT>::max(),  // Max valid value
+                        NDims,                                // Rank
+                        DimNames                              // Dimension names
+          );
+
+      // Allocate output data array matching input layout
+      OutputData = OutputArrayT(OutputNames[0] + "_out", Data1.layout());
+
+      // Attach output data array to Field
+      OutputField->template attachData<OutputArrayT>(OutputData);
+
+      // Propagate regional mask from first input to output if present
+      // (Binary operations preserve the spatial structure of the first input)
+      if (Field1->hasRegionalMask()) {
+         OutputField->setRegionalMask(Field1->getRegionalMask());
+      }
+
+   } // end constructor
+
+   /// Computes the element-wise multiplication by retrieving both input
+   /// data arrays and performing parallel multiplication using hierarchical
+   /// parallelism (outer loop over horizontal dimension, inner loop over
+   /// vertical layers). Supports 1D (horizontal only), 2D (horizontal ×
+   /// vertical), and 3D (additional outer dimension × horizontal × vertical)
+   /// arrays. Also supports vertical expansion where a 1D field value is
+   /// replicated across all vertical layers when multiplying with 2D/3D fields.
+   /// Updates output data, timestamp, and computed flag.
+   void compute(const TimeInstant &TimeStamp ///< [in] current timestamp
+                ) override {
+
+      // Get array rank for conditional logic
+      constexpr I4 InputRank = ArrayT::rank;
+
+      // Retrieve input Fields
+      auto Field1 = Field::get(InputNames[0]);
+      auto Field2 = Field::get(InputNames[1]);
+      auto Data1  = Field1->template getDataArray<ArrayT>();
+
+      auto Output = OutputData;
+
+      if constexpr (InputRank == 1) {
+         // 1D case: horizontal field only, no vertical structure
+         auto Data2 = Field2->template getDataArray<ArrayT>();
+         parallelFor(
+             {NHorizDim}, KOKKOS_LAMBDA(int iHoriz) {
+                Output(iHoriz) =
+                    static_cast<ScalarT>(static_cast<Real>(Data1(iHoriz)) *
+                                         static_cast<Real>(Data2(iHoriz)));
+             });
+
+      } else if constexpr (InputRank == 2) {
+         // 2D case: hierarchical parallelism over horizontal × vertical
+
+         OMEGA_SCOPE(LocNVertSize, NVertSize);
+
+         if (IsVerticalExpansion) {
+            // Vertical expansion: Data2 is 1D, replicate across vertical layers
+            auto Data2_1D = Field2->template getDataArray<Array1DReal>();
+            parallelForOuter(
+                "BinaryMultiply2D_VertExpand", LaunchConfig({NHorizDim}),
+                KOKKOS_LAMBDA(int iHoriz, const TeamMember &Team) {
+                   const Real Data2Val = static_cast<Real>(Data2_1D(iHoriz));
+                   parallelForInner(
+                       Team, LocNVertSize, INNER_LAMBDA(int K) {
+                          Output(iHoriz, K) = static_cast<ScalarT>(
+                              static_cast<Real>(Data1(iHoriz, K)) * Data2Val);
+                       });
+                });
+         } else {
+            // Same rank: element-wise multiplication
+            auto Data2 = Field2->template getDataArray<ArrayT>();
+            parallelForOuter(
+                "BinaryMultiply2D", LaunchConfig({NHorizDim}),
+                KOKKOS_LAMBDA(int iHoriz, const TeamMember &Team) {
+                   parallelForInner(
+                       Team, LocNVertSize, INNER_LAMBDA(int K) {
+                          Output(iHoriz, K) = static_cast<ScalarT>(
+                              static_cast<Real>(Data1(iHoriz, K)) *
+                              static_cast<Real>(Data2(iHoriz, K)));
+                       });
+                });
+         }
+
+      } else if constexpr (InputRank == 3) {
+         // 3D case: hierarchical parallelism over dim0 × horizontal × vertical
+
+         OMEGA_SCOPE(LocNVertSize, NVertSize);
+         const I4 Dim0 = Data1.extent(0);
+
+         if (IsVerticalExpansion) {
+            // Vertical expansion: Data2 is 1D, replicate across vertical layers
+            auto Data2_1D = Field2->template getDataArray<Array1DReal>();
+            parallelForOuter(
+                "BinaryMultiply3D_VertExpand", LaunchConfig({Dim0, NHorizDim}),
+                KOKKOS_LAMBDA(int i0, int iHoriz, const TeamMember &Team) {
+                   const Real Data2Val = static_cast<Real>(Data2_1D(iHoriz));
+                   parallelForInner(
+                       Team, LocNVertSize, INNER_LAMBDA(int K) {
+                          Output(i0, iHoriz, K) = static_cast<ScalarT>(
+                              static_cast<Real>(Data1(i0, iHoriz, K)) *
+                              Data2Val);
+                       });
+                });
+         } else {
+            // Same rank: element-wise multiplication
+            auto Data2 = Field2->template getDataArray<ArrayT>();
+            parallelForOuter(
+                "BinaryMultiply3D", LaunchConfig({Dim0, NHorizDim}),
+                KOKKOS_LAMBDA(int i0, int iHoriz, const TeamMember &Team) {
+                   parallelForInner(
+                       Team, LocNVertSize, INNER_LAMBDA(int K) {
+                          Output(i0, iHoriz, K) = static_cast<ScalarT>(
+                              static_cast<Real>(Data1(i0, iHoriz, K)) *
+                              static_cast<Real>(Data2(i0, iHoriz, K)));
+                       });
+                });
+         }
+      }
+
+      // Update cache validity markers
+      LastComputed  = TimeStamp;
+      FieldComputed = true;
+
+   } // end compute
+
+ private:
+   /// Combines units from two fields for the product
+   std::string combineUnits(const std::string &Units1,
+                            const std::string &Units2) {
+      if (Units1.empty() && Units2.empty()) {
+         return "";
+      } else if (Units1.empty()) {
+         return Units2;
+      } else if (Units2.empty()) {
+         return Units1;
+      } else {
+         // Combine with multiplication notation
+         return Units1 + " * " + Units2;
+      }
+   }
+
+   /// Output data array holding the product field values
+   OutputArrayT OutputData;
+
+   /// Number of points in horizontal dimension (cells, edges, or vertices)
+   I4 NHorizDim;
+
+   /// Vertical size of the array
+   I4 NVertSize;
+
+   /// Whether Field2 is 1D and should be replicated across vertical dimension
+   bool IsVerticalExpansion;
+
+}; // end class BinaryMultiplyOp
+
+} // end namespace OMEGA
+
+#endif
