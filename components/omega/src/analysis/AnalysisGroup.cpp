@@ -38,13 +38,27 @@ void AnalysisGroup::parseTemporalPeriods(Config &AnalysisGroupOptions) {
 //------------------------------------------------------------------------------
 void AnalysisGroup::buildTemporalChains(
     const std::vector<std::string> &ChainStems, Config &AnalysisGroupOptions,
-    Analysis *AnalysisManager) {
+    Analysis *AnalysisManager, const std::vector<Config> &ChainConfigs) {
+
+   // Validate ChainConfigs size if provided
+   if (!ChainConfigs.empty() && ChainConfigs.size() != ChainStems.size()) {
+      ABORT_ERROR("AnalysisGroup::buildTemporalChains: ChainConfigs size ({}) "
+                  "does not match ChainStems size ({})",
+                  ChainConfigs.size(), ChainStems.size());
+   }
 
    // Parse temporal periods from config
    parseTemporalPeriods(AnalysisGroupOptions);
 
    // Build temporal reduction chains for each stem
-   for (const auto &StemStr : ChainStems) {
+   for (size_t i = 0; i < ChainStems.size(); ++i) {
+      const auto &StemStr = ChainStems[i];
+
+      // Get config for this chain (empty Config if not provided)
+      Config ChainConfig;
+      if (!ChainConfigs.empty()) {
+         ChainConfig = ChainConfigs[i];
+      }
 
       // Create temporal reduction chains: Stem -> TimeMean<Period>
       for (const auto &ReductionPeriod : ReductionPeriodList) {
@@ -54,15 +68,15 @@ void AnalysisGroup::buildTemporalChains(
          // Store metadata for stream creation
          OpChainInfos.push_back(OpChainInfo{ChainStr, ReductionPeriod, true});
 
-         // Parse chain and instantiate operators
-         AnalysisManager->parseChainAndBuildOps(ChainStr);
+         // Parse chain and instantiate operators (empty Config is fine)
+         AnalysisManager->parseChainAndBuildOps(ChainStr, ChainConfig);
       }
 
       // Create instantaneous snapshot chains (if requested)
       if (!SnapshotPeriodList.empty()) {
          // Parse stem chain if not already built (operators may exist from
          // reduction chains above, parseChainAndBuildOps handles duplicates)
-         AnalysisManager->parseChainAndBuildOps(StemStr);
+         AnalysisManager->parseChainAndBuildOps(StemStr, ChainConfig);
 
          // Store metadata for each snapshot frequency
          for (const auto &SnapshotPeriod : SnapshotPeriodList) {
