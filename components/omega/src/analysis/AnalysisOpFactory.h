@@ -155,6 +155,134 @@ class AnalysisOpFactory {
 #undef REGISTER_VARIANT
    } // end registerAllArrayVariants
 
+   /// Registers only 1D array type variants of a templated operator class.
+   /// Used for operators that only support 1D arrays. Uses SFINAE to prevent
+   /// template instantiation for non-1D array types at compile time.
+
+   // Helper: enabled only for 1D arrays - registers the operator variant
+   template <template <typename> class OperatorTemplate, typename ArrayT>
+   static std::enable_if_t<ArrayRank<ArrayT>::Is1D, void>
+   register1DVariantHelper(const std::string &baseName,
+                           const std::string &typeName,
+                           const std::string &memLocName) {
+      registerOperator(baseName + "_" + typeName + "_" + memLocName,
+                       [](const std::vector<std::string> &names, Config c) {
+                          return std::make_unique<OperatorTemplate<ArrayT>>(
+                              names, c);
+                       });
+   }
+
+   // Helper: enabled only for non-1D arrays - does nothing (no-op)
+   template <template <typename> class OperatorTemplate, typename ArrayT>
+   static std::enable_if_t<!ArrayRank<ArrayT>::Is1D, void>
+   register1DVariantHelper(const std::string &, const std::string &,
+                           const std::string &) {
+      // No-op for 2D, 3D, etc. - prevents template instantiation
+   }
+
+   // Public method that expands over all array types but only registers 1D
+   template <template <typename> class OperatorTemplate>
+   static void
+   register1DVariants(const std::string &baseName ///< [in] base operator name
+   ) {
+// Define a macro that calls the SFINAE helper for each array type
+#define REGISTER_1D_VARIANT(dtype, rank, memloc, ArrayT)                \
+   register1DVariantHelper<OperatorTemplate, ArrayT>(baseName, #ArrayT, \
+                                                     #memloc);
+
+      // Expand over all array types; SFINAE filters out non-1D at compile time
+      OMEGA_ANALYSIS_ARRAY_TYPES(REGISTER_1D_VARIANT)
+#undef REGISTER_1D_VARIANT
+   } // end register1DVariants
+
+   /// Registers only 2D array type variants of a templated operator class.
+   /// Used for operators that only support 2D arrays. Uses SFINAE to prevent
+   /// template instantiation for non-2D array types at compile time.
+
+   // Helper: enabled only for 2D arrays - registers the operator variant
+   template <template <typename> class OperatorTemplate, typename ArrayT>
+   static std::enable_if_t<ArrayRank<ArrayT>::Is2D, void>
+   register2DVariantHelper(const std::string &baseName,
+                           const std::string &typeName,
+                           const std::string &memLocName) {
+      registerOperator(baseName + "_" + typeName + "_" + memLocName,
+                       [](const std::vector<std::string> &names, Config c) {
+                          return std::make_unique<OperatorTemplate<ArrayT>>(
+                              names, c);
+                       });
+   }
+
+   // Helper: enabled only for non-2D arrays - does nothing (no-op)
+   template <template <typename> class OperatorTemplate, typename ArrayT>
+   static std::enable_if_t<!ArrayRank<ArrayT>::Is2D, void>
+   register2DVariantHelper(const std::string &, const std::string &,
+                           const std::string &) {
+      // No-op for 1D, 3D, etc. - prevents template instantiation
+   }
+
+   // Public method that expands over all array types but only registers 2D
+   template <template <typename> class OperatorTemplate>
+   static void
+   register2DVariants(const std::string &baseName ///< [in] base operator name
+   ) {
+// Define a macro that calls the SFINAE helper for each array type
+#define REGISTER_2D_VARIANT(dtype, rank, memloc, ArrayT)                \
+   register2DVariantHelper<OperatorTemplate, ArrayT>(baseName, #ArrayT, \
+                                                     #memloc);
+
+      // Expand over all array types; SFINAE filters out non-2D at compile time
+      OMEGA_ANALYSIS_ARRAY_TYPES(REGISTER_2D_VARIANT)
+#undef REGISTER_2D_VARIANT
+   } // end register2DVariants
+
+   /// Registers only 2D Real array type variants of a templated operator class.
+   /// Used for operators that only support 2D Real arrays. Uses SFINAE to
+   /// prevent template instantiation for non-2D or non-Real array types at
+   /// compile time.
+
+   // Helper: enabled only for 2D Real arrays - registers the operator variant
+   template <template <typename> class OperatorTemplate, typename ArrayT>
+   static std::enable_if_t<
+       ArrayRank<ArrayT>::Is2D &&
+           std::is_same_v<typename ArrayT::non_const_value_type, Real>,
+       void>
+   register2DRealVariantHelper(const std::string &baseName,
+                               const std::string &typeName,
+                               const std::string &memLocName) {
+      registerOperator(baseName + "_" + typeName + "_" + memLocName,
+                       [](const std::vector<std::string> &names, Config c) {
+                          return std::make_unique<OperatorTemplate<ArrayT>>(
+                              names, c);
+                       });
+   }
+
+   // Helper: enabled only for non-2D or non-Real arrays - does nothing (no-op)
+   template <template <typename> class OperatorTemplate, typename ArrayT>
+   static std::enable_if_t<
+       !ArrayRank<ArrayT>::Is2D ||
+           !std::is_same_v<typename ArrayT::non_const_value_type, Real>,
+       void>
+   register2DRealVariantHelper(const std::string &, const std::string &,
+                               const std::string &) {
+      // No-op for 1D, 3D, or non-Real types - prevents template instantiation
+   }
+
+   // Public method that expands over all array types but only registers 2D Real
+   template <template <typename> class OperatorTemplate>
+   static void register2DRealVariants(
+       const std::string &baseName ///< [in] base operator name
+   ) {
+// Define a macro that calls the SFINAE helper for each array type
+#define REGISTER_2D_REAL_VARIANT(dtype, rank, memloc, ArrayT)               \
+   register2DRealVariantHelper<OperatorTemplate, ArrayT>(baseName, #ArrayT, \
+                                                         #memloc);
+
+      // Expand over all array types; SFINAE filters out non-2D-Real at compile
+      // time
+      OMEGA_ANALYSIS_ARRAY_TYPES(REGISTER_2D_REAL_VARIANT)
+#undef REGISTER_2D_REAL_VARIANT
+   } // end register2DRealVariants
+
  private:
    /// Returns a reference to the static registry map (Meyer's singleton).
    /// The map associates operator variant keys with constructor functions.
