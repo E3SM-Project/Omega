@@ -28,10 +28,18 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include "operators/BinnedAccumulatorOp.h"
+#include "operators/BinaryMultiplyOp.h"
+#include "operators/ExtractRegionOp.h"
+#include "operators/PrefixSumOp.h"
+#include "operators/PseudoToGeometricOp.h"
+#include "operators/ScalarMultiplyOp.h"
+#include "operators/CoordinateBinningOp.h"
 #include "operators/SpatialMaxOp.h"
 #include "operators/SpatialMeanOp.h"
 #include "operators/SpatialMinOp.h"
 #include "operators/SpatialStdDevOp.h"
 #include "operators/TimeMeanOp.h"
+#include "operators/TransectAccumulatorOp.h"
 
 #endif
