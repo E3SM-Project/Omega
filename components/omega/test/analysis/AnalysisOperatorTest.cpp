@@ -86,12 +86,26 @@ template <typename ArrayType> struct TestHelper {
                std::function<ScalarT(I4)> ValueFunc) {
 
       auto DimNames = getDimNames();
+
+      // Set ValidMin/ValidMax based on scalar type to avoid bad_any_cast
+      ScalarT ValidMin, ValidMax;
+      if constexpr (std::is_integral_v<ScalarT>) {
+         ValidMin = std::numeric_limits<ScalarT>::lowest();
+         ValidMax = std::numeric_limits<ScalarT>::max();
+      } else if constexpr (std::is_same_v<ScalarT, float>) {
+         ValidMin = -1.0e30f;
+         ValidMax = 1.0e30f;
+      } else {
+         ValidMin = -1.0e30;
+         ValidMax = 1.0e30;
+      }
+
       auto TestField =
           Field::create(FieldName, "Test field for multi-type validation", "m",
-                        "", -1.0e30, 1.0e30, 1, DimNames);
+                        "", ValidMin, ValidMax, 1, DimNames);
 
       ArrayType TestData(FieldName + "_data", Dims[0]);
-      TestField->attachData<ArrayType>(TestData);
+      TestField->template attachData<ArrayType>(TestData, false);
 
       auto TestDataHost = Kokkos::create_mirror_view(TestData);
       for (I4 i = 0; i < Dims[0]; ++i) {
@@ -107,12 +121,26 @@ template <typename ArrayType> struct TestHelper {
                std::function<ScalarT(I4, I4)> ValueFunc) {
 
       auto DimNames = getDimNames();
+
+      // Set ValidMin/ValidMax based on scalar type to avoid bad_any_cast
+      ScalarT ValidMin, ValidMax;
+      if constexpr (std::is_integral_v<ScalarT>) {
+         ValidMin = std::numeric_limits<ScalarT>::lowest();
+         ValidMax = std::numeric_limits<ScalarT>::max();
+      } else if constexpr (std::is_same_v<ScalarT, float>) {
+         ValidMin = -1.0e30f;
+         ValidMax = 1.0e30f;
+      } else {
+         ValidMin = -1.0e30;
+         ValidMax = 1.0e30;
+      }
+
       auto TestField =
           Field::create(FieldName, "Test field for multi-type validation", "m",
-                        "", -1.0e30, 1.0e30, 2, DimNames);
+                        "", ValidMin, ValidMax, 2, DimNames);
 
       ArrayType TestData(FieldName + "_data", Dims[0], Dims[1]);
-      TestField->attachData<ArrayType>(TestData);
+      TestField->template attachData<ArrayType>(TestData, false);
 
       auto TestDataHost = Kokkos::create_mirror_view(TestData);
       for (I4 i = 0; i < Dims[0]; ++i) {
@@ -130,12 +158,26 @@ template <typename ArrayType> struct TestHelper {
                std::function<ScalarT(I4, I4, I4)> ValueFunc) {
 
       auto DimNames = getDimNames();
+
+      // Set ValidMin/ValidMax based on scalar type to avoid bad_any_cast
+      ScalarT ValidMin, ValidMax;
+      if constexpr (std::is_integral_v<ScalarT>) {
+         ValidMin = std::numeric_limits<ScalarT>::lowest();
+         ValidMax = std::numeric_limits<ScalarT>::max();
+      } else if constexpr (std::is_same_v<ScalarT, float>) {
+         ValidMin = -1.0e30f;
+         ValidMax = 1.0e30f;
+      } else {
+         ValidMin = -1.0e30;
+         ValidMax = 1.0e30;
+      }
+
       auto TestField =
           Field::create(FieldName, "Test field for multi-type validation", "m",
-                        "", -1.0e30, 1.0e30, 3, DimNames);
+                        "", ValidMin, ValidMax, 3, DimNames);
 
       ArrayType TestData(FieldName + "_data", Dims[0], Dims[1], Dims[2]);
-      TestField->attachData<ArrayType>(TestData);
+      TestField->template attachData<ArrayType>(TestData, false);
 
       auto TestDataHost = Kokkos::create_mirror_view(TestData);
       for (I4 i = 0; i < Dims[0]; ++i) {
@@ -231,10 +273,9 @@ void testSpatialMaxOpType(const std::string &TypeName, const MachEnv *Env,
    }
 
    // Create and compute operator
-   Config EmptyConfig;
    auto MaxOp =
-       AnalysisOpFactory::createOp("SpatialMax", {FieldName}, EmptyConfig);
-   MaxOp->initialize(Env, Mesh, VCoord, EmptyConfig);
+       AnalysisOpFactory::createOp("SpatialMax", {FieldName}, makeOpConfig());
+   MaxOp->initialize(Env, Mesh, VCoord, makeOpConfig());
 
    TimeInstant TestTime;
    MaxOp->compute(TestTime);
@@ -309,10 +350,9 @@ void testSpatialMinOpType(const std::string &TypeName, const MachEnv *Env,
    ScalarT ExpectedMin = static_cast<ScalarT>(100);
 
    // Create and compute operator
-   Config EmptyConfig;
    auto MinOp =
-       AnalysisOpFactory::createOp("SpatialMin", {FieldName}, EmptyConfig);
-   MinOp->initialize(Env, Mesh, VCoord, EmptyConfig);
+       AnalysisOpFactory::createOp("SpatialMin", {FieldName}, makeOpConfig());
+   MinOp->initialize(Env, Mesh, VCoord, makeOpConfig());
 
    TimeInstant TestTime;
    MinOp->compute(TestTime);
@@ -421,10 +461,9 @@ void testSpatialMeanOpType(const std::string &TypeName, const MachEnv *Env,
                        static_cast<Real>(TotalElements);
 
    // Create and compute operator
-   Config EmptyConfig;
    auto MeanOp =
-       AnalysisOpFactory::createOp("SpatialMean", {FieldName}, EmptyConfig);
-   MeanOp->initialize(Env, Mesh, VCoord, EmptyConfig);
+       AnalysisOpFactory::createOp("SpatialMean", {FieldName}, makeOpConfig());
+   MeanOp->initialize(Env, Mesh, VCoord, makeOpConfig());
 
    TimeInstant TestTime;
    MeanOp->compute(TestTime);
@@ -539,18 +578,17 @@ void testSpatialStdDevOpType(const std::string &TypeName, const MachEnv *Env,
 
    // SpatialStdDevOp requires a pre-existing _SpatialMean field for the input.
    // Create and compute a SpatialMeanOp first so that field is registered.
-   Config EmptyConfig;
    auto MeanOp =
-       AnalysisOpFactory::createOp("SpatialMean", {FieldName}, EmptyConfig);
-   MeanOp->initialize(Env, Mesh, VCoord, EmptyConfig);
+       AnalysisOpFactory::createOp("SpatialMean", {FieldName}, makeOpConfig());
+   MeanOp->initialize(Env, Mesh, VCoord, makeOpConfig());
 
    TimeInstant TestTime;
    MeanOp->compute(TestTime);
 
    // Now create and compute the StdDev operator
-   auto StdDevOp =
-       AnalysisOpFactory::createOp("SpatialStdDev", {FieldName}, EmptyConfig);
-   StdDevOp->initialize(Env, Mesh, VCoord, EmptyConfig);
+   auto StdDevOp = AnalysisOpFactory::createOp("SpatialStdDev", {FieldName},
+                                               makeOpConfig());
+   StdDevOp->initialize(Env, Mesh, VCoord, makeOpConfig());
    StdDevOp->compute(TestTime);
 
    // Get result. The operator attaches output as Array1DReal (always Real type
