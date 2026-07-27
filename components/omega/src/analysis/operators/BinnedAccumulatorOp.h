@@ -1,7 +1,7 @@
 #ifndef OMEGA_BINNEDACCUMULATOROP_H
 #define OMEGA_BINNEDACCUMULATOROP_H
 
-//===-- analysis/operators/BinnedAccumulatorOp.h - BinnedAccumulatorOp -*- C++ -*-===//
+//===-- analysis/operators/BinnedAccumulatorOp.h ----------------*- C++ -*-===//
 //
 /// \file
 /// \brief Defines the BinnedAccumulatorOp operator for binned accumulation
@@ -51,9 +51,10 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
    using ScalarT = typename ArrayT::non_const_value_type;
 
    /// Output array type depends on input rank:
-   /// For 2D input (e.g., NCells x NVertLevels), output is 2D (NumBins x NVertLevels)
-   /// For 1D input (e.g., NCells), output is 1D (NumBins)
-   using OutputArrayT = std::conditional_t<ArrayT::rank == 2, Array2DR8, Array1DR8>;
+   /// For 2D input (e.g., NCells x NVertLevels), output is 2D (NumBins x
+   /// NVertLevels) For 1D input (e.g., NCells), output is 1D (NumBins)
+   using OutputArrayT =
+       std::conditional_t<ArrayT::rank == 2, Array2DR8, Array1DR8>;
 
    /// Constructs a BinnedAccumulatorOp operator. Reads the required NumBins
    /// configuration parameter, creates the output Field for binned
@@ -131,7 +132,7 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
 
       // Create output Field dimensions
       std::string NumBinsDimName = "NumBins" + InputNames[1];
-      auto NumBinsDim = Dimension::create(NumBinsDimName, NumBins);
+      auto NumBinsDim            = Dimension::create(NumBinsDimName, NumBins);
 
       // Replace horizontal dimension with bin dimension
       std::vector<std::string> OutputDimNames;
@@ -142,16 +143,16 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
       }
 
       // Create output Field
-      auto OutputField = Field::create(
-          OutputNames[0],
-          "Binned accumulation of " + ValueDescr, // Description
-          ValueUnits,                              // Units
-          ValueStdName,                            // Standard name
-          ValueValidMin,                           // Min valid
-          ValueValidMax,                           // Max valid
-          InputRank,                               // Rank
-          OutputDimNames                           // Dimension names
-      );
+      auto OutputField =
+          Field::create(OutputNames[0],
+                        "Binned accumulation of " + ValueDescr, // Description
+                        ValueUnits,                             // Units
+                        ValueStdName,                           // Standard name
+                        ValueValidMin,                          // Min valid
+                        ValueValidMax,                          // Max valid
+                        InputRank,                              // Rank
+                        OutputDimNames // Dimension names
+          );
 
       // Allocate output and local accumulation arrays
       if (InputRank == 1) {
@@ -177,7 +178,8 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
       // Call base class initialization to store Mesh, VCoord, and Comm
       AnalysisOperator::initialize(Env, InMesh, InVCoord, Options);
 
-      // Determine index space, set number of owned entities, and MinLayer/MaxLayer
+      // Determine index space, set number of owned entities, and
+      // MinLayer/MaxLayer
       auto ValueField = Field::get(InputNames[0]);
       std::vector<std::string> DimNames;
       ValueField->getDimNames(DimNames);
@@ -196,7 +198,8 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
          MinLayer = VCoord->MinLayerVertexBot;
          MaxLayer = VCoord->MaxLayerVertexTop;
       } else {
-         ABORT_ERROR("BinnedAccumulatorOp: Unknown index space {}", IndexSpaceName);
+         ABORT_ERROR("BinnedAccumulatorOp: Unknown index space {}",
+                     IndexSpaceName);
       }
 
    } // end initialize
@@ -247,10 +250,8 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
    /// Computes binned accumulation for 1D input. Zeroes the local array,
    /// then atomically accumulates owned-entity values into bins, and
    /// performs MPI_Allreduce to obtain global totals.
-   void computeAccum1D(const ArrayT &ValueData,
-                       const Array1DI4 &BinIndexData,
-                       const Array1DI4 &MaskData,
-                       bool LocalUseMask) {
+   void computeAccum1D(const ArrayT &ValueData, const Array1DI4 &BinIndexData,
+                       const Array1DI4 &MaskData, bool LocalUseMask) {
 
       auto LocalAccumData = LocalAccum;
       auto LocalNumBins   = NumBins;
@@ -258,9 +259,8 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
 
       // Zero local accumulation array
       parallelFor(
-          {LocalNumBins}, KOKKOS_LAMBDA(int IBin) {
-             LocalAccumData(IBin) = 0.0;
-          });
+          {LocalNumBins},
+          KOKKOS_LAMBDA(int IBin) { LocalAccumData(IBin) = 0.0; });
 
       // Accumulate values into bins (only owned entities, not halo)
       // Atomic adds handle multiple threads writing to the same bin
@@ -294,13 +294,11 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
    } // end computeAccum1D
 
    /// Computes binned accumulation for 2D input using hierarchical parallelism:
-   /// outer loop over owned horizontal entities, inner loop over vertical levels.
-   /// Zeroes the local array, accumulates with atomic adds, then performs
-   /// MPI_Allreduce to obtain global totals.
-   void computeAccum2D(const ArrayT &ValueData,
-                       const Array1DI4 &BinIndexData,
-                       const Array1DI4 &MaskData,
-                       bool LocalUseMask) {
+   /// outer loop over owned horizontal entities, inner loop over vertical
+   /// levels. Zeroes the local array, accumulates with atomic adds, then
+   /// performs MPI_Allreduce to obtain global totals.
+   void computeAccum2D(const ArrayT &ValueData, const Array1DI4 &BinIndexData,
+                       const Array1DI4 &MaskData, bool LocalUseMask) {
 
       auto LocalAccumData = LocalAccum;
       auto LocalNumBins   = NumBins;
@@ -309,9 +307,8 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
 
       // Zero local accumulation array
       parallelFor(
-          {LocalNumBins, LocalVertSize}, KOKKOS_LAMBDA(int IBin, int K) {
-             LocalAccumData(IBin, K) = 0.0;
-          });
+          {LocalNumBins, LocalVertSize},
+          KOKKOS_LAMBDA(int IBin, int K) { LocalAccumData(IBin, K) = 0.0; });
 
       // Accumulate values into bins (only owned entities, not halo)
       // Hierarchical parallelism: outer over horizontal, inner over vertical
@@ -344,7 +341,6 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
       auto LocalAccumHost = createHostMirrorCopy(LocalAccum);
 
       auto OutputDataHost = createHostMirrorCopy(OutputData);
-
 
       // Sum local accumulations across all ranks
       I4 TotalSize = NumBins * VertSize;
