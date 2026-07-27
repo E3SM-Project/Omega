@@ -119,9 +119,13 @@ class Analysis {
    /// all operators in the chain that do not yet exist as Fields. For
    /// example, "Temperature_SpatialMean_TimeMean1day" parses into three
    /// operators. If intermediate operators already exist (shared by other
-   /// chains), they are reused rather than duplicated.
+   /// chains), they are reused rather than duplicated. Optionally accepts
+   /// a Config object containing parameters for operators in the chain.
    void parseChainAndBuildOps(
-       const std::string &OpChainStr ///< [in] underscore-delimited chain string
+       const std::string
+           &OpChainStr, ///< [in] underscore-delimited chain string
+       const Config &OpConfig =
+           Config() ///< [in] optional operator configuration
    );
 
    /// Instantiates a single operator via the factory and appends it as
