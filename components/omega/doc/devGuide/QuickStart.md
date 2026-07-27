@@ -124,14 +124,14 @@ Some tests require a valid Omega mesh file. Different tests require different
 meshes. At the moment, mesh files need to be copied or linked to specifically
 named files under the `test` directory. Appropriate mesh files can be
 downloaded from:
-- [Ocean Mesh](https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/ocean.QU.240km.omega_vars.260518.nc)
-- [Global Mesh](https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/cosine_bell_icos480.omega_vars.260518.nc)
-- [Planar Mesh](https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/PlanarPeriodic48x48.omega_vars.260518.nc)
+- [Ocean Mesh](https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/ocean.QU.240km.omega_vars.260727.nc)
+- [Global Mesh](https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/cosine_bell_icos480.omega_vars.260727.nc)
+- [Planar Mesh](https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/PlanarPeriodic48x48.omega_vars.260720.nc)
 ```sh
 cd test
-wget -O OmegaMesh.nc https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/ocean.QU.240km.omega_vars.260518.nc
-wget -O OmegaSphereMesh.nc https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/cosine_bell_icos480.omega_vars.260518.nc
-wget -O OmegaPlanarMesh.nc https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/PlanarPeriodic48x48.omega_vars.260518.nc
+wget -O OmegaMesh.nc https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/ocean.QU.240km.omega_vars.260727.nc
+wget -O OmegaSphereMesh.nc https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/cosine_bell_icos480.omega_vars.260727.nc
+wget -O OmegaPlanarMesh.nc https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/PlanarPeriodic48x48.omega_vars.260720.nc
 cd ..
 ```
 
