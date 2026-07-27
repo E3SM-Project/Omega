@@ -152,6 +152,9 @@ Analysis::Analysis(const std::string &InName, const MachEnv *InEnv,
             GlobalStats GlobalStatsGroup(NamePrefix + GroupName, GroupCfg,
                                          this);
             continue;
+         } else if (GroupName == "MOC") {
+            MOC MOCGroup(NamePrefix + GroupName, GroupCfg, this);
+            continue;
          }
 
          // User-defined custom groups not yet supported
@@ -174,17 +177,34 @@ Analysis::Analysis(const std::string &InName, const MachEnv *InEnv,
 //------------------------------------------------------------------------------
 // Parses an underscore-delimited operator chain string and instantiates
 // operators for each node in the chain. For example,
-// "Temperature_SpatialMean_TimeMean1day" parses into three operators.
+// "Temperature_SpatialMean_TimeMean1day" parses into two operators
+// (SpatialMeanOp and TimeMeanOp; Temperature is the source field).
 // If an intermediate operator already exists (shared by another chain),
 // it is reused rather than duplicated. This natural sharing mechanism
 // avoids redundant computation of common intermediate results.
-void Analysis::parseChainAndBuildOps(const std::string &OpChainStr) {
+void Analysis::parseChainAndBuildOps(const std::string &OpChainStr,
+                                     const Config &OpConfig) {
 
-   // Split the chain string on underscore delimiters
+   // Split the chain string on underscore delimiters, but not within
+   // parentheses
    std::vector<std::string> ChainVec;
-   std::stringstream OpChainSS(OpChainStr);
    std::string Part;
-   while (std::getline(OpChainSS, Part, '_')) {
+   int Depth = 0;
+   for (char C : OpChainStr) {
+      if (C == '(') {
+         ++Depth;
+         Part += C;
+      } else if (C == ')') {
+         --Depth;
+         Part += C;
+      } else if (C == '_' && Depth == 0) {
+         ChainVec.push_back(Part);
+         Part.clear();
+      } else {
+         Part += C;
+      }
+   }
+   if (!Part.empty()) {
       ChainVec.push_back(Part);
    }
 
@@ -206,7 +226,7 @@ void Analysis::parseChainAndBuildOps(const std::string &OpChainStr) {
 
          // Spatial operators (SpatialMean, SpatialMax, etc.)
          if (ChainNode.find("Spatial") != std::string::npos) {
-            registerAnalysisOp(ChainNode, {Upstream}, makeOpConfig());
+            registerAnalysisOp(ChainNode, {Upstream}, OpConfig);
             continue;
          }
 
@@ -220,10 +240,81 @@ void Analysis::parseChainAndBuildOps(const std::string &OpChainStr) {
             }
             std::string TimeOp  = ChainNode.substr(0, Pos);
             std::string FreqStr = ChainNode.substr(Pos);
-            registerAnalysisOp(TimeOp, {Upstream},
-                               makeOpConfig(opParam("Period", FreqStr)));
+
+            // Merge OpConfig with Period parameter for temporal operators
+            Config TimeOpConfig = OpConfig;
+            TimeOpConfig.add("Period", FreqStr);
+            registerAnalysisOp(TimeOp, {Upstream}, TimeOpConfig);
             continue;
          }
+
+         // PseudoToGeometric operator
+         // Note: This operator creates output field named Upstream +
+         // "_Geometric" so we need to update CurChainStr to match the actual
+         // field name
+         if (ChainNode == "PseudoToGeometric") {
+            registerAnalysisOp(ChainNode, {Upstream}, OpConfig);
+            continue;
+         }
+
+         // CoordinateBinning operator
+         if (ChainNode == "CoordinateBinning") {
+            registerAnalysisOp(ChainNode, {Upstream}, OpConfig);
+            continue;
+         }
+
+         // PrefixSum operator
+         if (ChainNode == "PrefixSum") {
+            registerAnalysisOp(ChainNode, {Upstream}, OpConfig);
+            continue;
+         }
+
+         // Parenthesized-argument operators: e.g. "BinaryMultiply(Field2)"
+         // or "ScalarMultiply(1.0e-6)" or "ExtractRegion(Atlantic)"
+         // For BinaryMultiply, the argument is a second upstream field name.
+         // For ScalarMultiply, the argument is a scalar value passed via
+         // Config. For ExtractRegion, the argument is a mask name passed via
+         // Config.
+         auto LParen = ChainNode.find('(');
+         if (LParen != std::string::npos) {
+            auto RParen = ChainNode.find(')');
+            if (RParen == std::string::npos || RParen < LParen) {
+               ABORT_ERROR("Analysis: Mismatched parentheses in chain token {}",
+                           ChainNode);
+            }
+            std::string OpName = ChainNode.substr(0, LParen);
+            std::string ArgStr =
+                ChainNode.substr(LParen + 1, RParen - LParen - 1);
+
+            // ScalarMultiply takes a scalar value, not a field name
+            if (OpName == "ScalarMultiply") {
+               Config ScalarOpConfig = OpConfig;
+               ScalarOpConfig.add("Scalar", ArgStr);
+               registerAnalysisOp(OpName, {Upstream}, ScalarOpConfig);
+            } else if (OpName == "ExtractRegion") {
+               // ExtractRegion takes a mask name, not a field name
+               Config ExtractRegionConfig = OpConfig;
+               ExtractRegionConfig.add("MaskName", ArgStr);
+               registerAnalysisOp(OpName, {Upstream}, ExtractRegionConfig);
+            } else if (OpName == "BinnedAccumulator") {
+               // BinnedAccumulator takes data field (Upstream) and bin index
+               // field (ArgStr)
+               registerAnalysisOp(OpName, {Upstream, ArgStr}, OpConfig);
+            } else if (OpName == "TransectAccumulator") {
+               // TransectAccumulator takes data field (Upstream) and transect
+               // name (ArgStr) Construct mask and sign field names from
+               // transect name
+               std::string MaskFieldName = "TransectEdgeMask" + ArgStr;
+               std::string SignFieldName = "TransectEdgeMaskSign" + ArgStr;
+               registerAnalysisOp(
+                   OpName, {Upstream, MaskFieldName, SignFieldName}, OpConfig);
+            } else {
+               // Other operators (like BinaryMultiply) take a field name
+               registerAnalysisOp(OpName, {Upstream, ArgStr}, OpConfig);
+            }
+            continue;
+         }
+
          ABORT_ERROR("Analysis: Error trying to parse {}. No Field or "
                      "Operator named {}",
                      OpChainStr, ChainNode);
