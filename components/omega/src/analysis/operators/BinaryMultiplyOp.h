@@ -50,7 +50,7 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
    /// dimensions and metadata, validates that they match, creates output
    /// Field for the product, allocates output data array, and registers
    /// the output Field. The output Field name is constructed as
-   /// Field1Name + "_BinaryMultiply(" + Field2Name + ")_Product".
+   /// Field1Name + "_" + Field2Name + "_Product".
    BinaryMultiplyOp(const std::vector<std::string>
                         &UpstreamNames, ///< [in] input field names
                     Config Options      ///< [in] operator config
@@ -184,13 +184,41 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
    /// Initializes the operator after all Fields exist. Determines the index
    /// space (cells, edges, or vertices) from the first input field's horizontal
    /// dimension name and stores the appropriate MinLayer/MaxLayer arrays
-   /// from VertCoord for bounding the inner vertical loop.
+   /// from VertCoord for bounding the inner vertical loop. Also determines
+   /// whether the horizontal dimension is mesh-distributed and stores the
+   /// appropriate owned count for MPI-correct parallel loops.
    void initialize(const MachEnv *Env, const HorzMesh *InMesh,
                    const VertCoord *InVCoord, Config Options) override {
 
       AnalysisOperator::initialize(Env, InMesh, InVCoord, Options);
 
       constexpr I4 InputRank = ArrayT::rank;
+
+      // For 1D arrays, check if it's a mesh dimension to determine owned count
+      if constexpr (InputRank == 1) {
+         auto Field1 = Field::get(InputNames[0]);
+         std::vector<std::string> DimNames;
+         Field1->getDimNames(DimNames);
+         std::string IndexSpaceName = DimNames[0];
+
+         IsMeshDimension =
+             (IndexSpaceName == "NCells" || IndexSpaceName == "NEdges" ||
+              IndexSpaceName == "NVertices");
+
+         if (IsMeshDimension) {
+            if (IndexSpaceName == "NCells") {
+               NHorizOwned = Mesh->NCellsOwned;
+            } else if (IndexSpaceName == "NEdges") {
+               NHorizOwned = Mesh->NEdgesOwned;
+            } else if (IndexSpaceName == "NVertices") {
+               NHorizOwned = Mesh->NVerticesOwned;
+            }
+         } else {
+            ABORT_ERROR("BinaryMultiplyOp: Unknown index space {}",
+                        IndexSpaceName);
+         }
+      }
+
       if constexpr (InputRank > 1) {
          auto Field1 = Field::get(InputNames[0]);
          std::vector<std::string> DimNames;
@@ -198,15 +226,22 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
          // Horizontal dimension is 2nd-to-last for 2D/3D
          std::string IndexSpaceName = DimNames[InputRank - 2];
 
+         IsMeshDimension =
+             (IndexSpaceName == "NCells" || IndexSpaceName == "NEdges" ||
+              IndexSpaceName == "NVertices");
+
          if (IndexSpaceName == "NCells") {
-            MinLayer = VCoord->MinLayerCell;
-            MaxLayer = VCoord->MaxLayerCell;
+            MinLayer    = VCoord->MinLayerCell;
+            MaxLayer    = VCoord->MaxLayerCell;
+            NHorizOwned = Mesh->NCellsOwned;
          } else if (IndexSpaceName == "NEdges") {
-            MinLayer = VCoord->MinLayerEdgeBot;
-            MaxLayer = VCoord->MaxLayerEdgeTop;
+            MinLayer    = VCoord->MinLayerEdgeBot;
+            MaxLayer    = VCoord->MaxLayerEdgeTop;
+            NHorizOwned = Mesh->NEdgesOwned;
          } else if (IndexSpaceName == "NVertices") {
-            MinLayer = VCoord->MinLayerVertexBot;
-            MaxLayer = VCoord->MaxLayerVertexTop;
+            MinLayer    = VCoord->MinLayerVertexBot;
+            MaxLayer    = VCoord->MaxLayerVertexTop;
+            NHorizOwned = Mesh->NVerticesOwned;
          } else {
             ABORT_ERROR("BinaryMultiplyOp: Unknown index space {}",
                         IndexSpaceName);
@@ -240,7 +275,7 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
          // 1D case: horizontal field only, no vertical structure
          auto Data2 = Field2->template getDataArray<ArrayT>();
          parallelFor(
-             {NHorizDim}, KOKKOS_LAMBDA(int IHoriz) {
+             {NHorizOwned}, KOKKOS_LAMBDA(int IHoriz) {
                 Output(IHoriz) =
                     static_cast<ScalarT>(static_cast<Real>(Data1(IHoriz)) *
                                          static_cast<Real>(Data2(IHoriz)));
@@ -257,7 +292,7 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
             // Vertical expansion: Data2 is 1D, replicate across vertical layers
             auto Data2_1D = Field2->template getDataArray<Array1DReal>();
             parallelForOuter(
-                "BinaryMultiply2D_VertExpand", LaunchConfig({NHorizDim}),
+                "BinaryMultiply2D_VertExpand", LaunchConfig({NHorizOwned}),
                 KOKKOS_LAMBDA(int IHoriz, const TeamMember &Team) {
                    const Real Data2Val = static_cast<Real>(Data2_1D(IHoriz));
                    const I4 KMin       = LocMinLayer(IHoriz);
@@ -265,8 +300,8 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
                    const I4 KRange     = vertRange(KMin, KMax);
                    parallelForInner(
                        Team, KRange, INNER_LAMBDA(int KIdx) {
-                          const I4 K         = KMin + KIdx;
-                          Output(IHoriz, K)  = static_cast<ScalarT>(
+                          const I4 K        = KMin + KIdx;
+                          Output(IHoriz, K) = static_cast<ScalarT>(
                               static_cast<Real>(Data1(IHoriz, K)) * Data2Val);
                        });
                 });
@@ -274,7 +309,7 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
             // Same rank: element-wise multiplication
             auto Data2 = Field2->template getDataArray<ArrayT>();
             parallelForOuter(
-                "BinaryMultiply2D", LaunchConfig({NHorizDim}),
+                "BinaryMultiply2D", LaunchConfig({NHorizOwned}),
                 KOKKOS_LAMBDA(int IHoriz, const TeamMember &Team) {
                    const I4 KMin   = LocMinLayer(IHoriz);
                    const I4 KMax   = LocMaxLayer(IHoriz);
@@ -301,7 +336,8 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
             // Vertical expansion: Data2 is 1D, replicate across vertical layers
             auto Data2_1D = Field2->template getDataArray<Array1DReal>();
             parallelForOuter(
-                "BinaryMultiply3D_VertExpand", LaunchConfig({Dim0, NHorizDim}),
+                "BinaryMultiply3D_VertExpand",
+                LaunchConfig({Dim0, NHorizOwned}),
                 KOKKOS_LAMBDA(int I0, int IHoriz, const TeamMember &Team) {
                    const Real Data2Val = static_cast<Real>(Data2_1D(IHoriz));
                    const I4 KMin       = LocMinLayer(IHoriz);
@@ -309,8 +345,8 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
                    const I4 KRange     = vertRange(KMin, KMax);
                    parallelForInner(
                        Team, KRange, INNER_LAMBDA(int KIdx) {
-                          const I4 K             = KMin + KIdx;
-                          Output(I0, IHoriz, K)  = static_cast<ScalarT>(
+                          const I4 K            = KMin + KIdx;
+                          Output(I0, IHoriz, K) = static_cast<ScalarT>(
                               static_cast<Real>(Data1(I0, IHoriz, K)) *
                               Data2Val);
                        });
@@ -319,7 +355,7 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
             // Same rank: element-wise multiplication
             auto Data2 = Field2->template getDataArray<ArrayT>();
             parallelForOuter(
-                "BinaryMultiply3D", LaunchConfig({Dim0, NHorizDim}),
+                "BinaryMultiply3D", LaunchConfig({Dim0, NHorizOwned}),
                 KOKKOS_LAMBDA(int I0, int IHoriz, const TeamMember &Team) {
                    const I4 KMin   = LocMinLayer(IHoriz);
                    const I4 KMax   = LocMaxLayer(IHoriz);
@@ -363,8 +399,14 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
    /// Number of points in horizontal dimension (cells, edges, or vertices)
    I4 NHorizDim;
 
+   /// Number of owned points in horizontal dimension (for MPI correctness)
+   I4 NHorizOwned;
+
    /// Vertical size of the array
    I4 NVertSize;
+
+   /// Whether the horizontal dimension is a mesh-distributed dimension
+   bool IsMeshDimension;
 
    /// Whether Field2 is 1D and should be replicated across vertical dimension
    bool IsVerticalExpansion;
