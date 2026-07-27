@@ -133,8 +133,9 @@ template <typename ArrayT> class BinaryMultiplyOp : public AnalysisOperator {
       Field1->getDimNames(DimNames);
 
       // Construct output field name and set instance name
+      // Format: Input1_BinaryMultiply(Input2) to match chain syntax
       std::string OutputFieldName =
-          InputNames[0] + "_" + InputNames[1] + "_Product";
+          InputNames[0] + "_BinaryMultiply(" + InputNames[1] + ")";
       OutputNames  = {OutputFieldName};
       InstanceName = OutputFieldName;
 

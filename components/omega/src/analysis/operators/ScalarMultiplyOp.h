@@ -62,12 +62,22 @@ template <typename ArrayT> class ScalarMultiplyOp : public AnalysisOperator {
       // Store input field names
       InputNames = UpstreamNames;
 
-      // Read required scalar parameter from configuration
-      Error Err = Options.get("Scalar", Scalar);
-
-      if (Err.isFail()) {
-         ABORT_ERROR("ScalarMultiplyOp: Required parameter 'Scalar' not found "
-                     "in configuration");
+      // Read required scalar parameter from configuration.
+      // Read as string first to preserve the original representation for field
+      // naming (std::to_string loses precision, e.g. "1.0e-6" -> "0.000001").
+      std::string ScalarStr;
+      Error Err = Options.get("Scalar", ScalarStr);
+      if (Err.isSuccess()) {
+         Scalar = static_cast<Real>(std::stod(ScalarStr));
+      } else {
+         // Fallback: try reading directly as Real
+         Err = Options.get("Scalar", Scalar);
+         if (Err.isFail()) {
+            ABORT_ERROR(
+                "ScalarMultiplyOp: Required parameter 'Scalar' not found "
+                "in configuration");
+         }
+         ScalarStr = std::to_string(Scalar);
       }
 
       // Read optional InPlace parameter (default: false)
@@ -85,10 +95,13 @@ template <typename ArrayT> class ScalarMultiplyOp : public AnalysisOperator {
       std::vector<std::string> DimNames;
       InputField->getDimNames(DimNames);
 
-      // Construct output field name and set instance name
-      std::string OutputFieldName = InputNames[0] + "_ScalarMultiply";
-      OutputNames                 = {OutputFieldName};
-      InstanceName                = OutputFieldName;
+      // Construct output field name and set instance name.
+      // Use the original scalar string to match the chain string
+      // representation.
+      std::string OutputFieldName =
+          InputNames[0] + "_ScalarMultiply(" + ScalarStr + ")";
+      OutputNames  = {OutputFieldName};
+      InstanceName = OutputFieldName;
 
       // Get input metadata
       std::string InputDescr, InputUnits, InputStdName;

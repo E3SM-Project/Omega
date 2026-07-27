@@ -115,7 +115,7 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
       PseudoField->getDimNames(DimNames);
 
       // Construct output field name and set instance name
-      std::string OutputFieldName = InputNames[0] + "_Geometric";
+      std::string OutputFieldName = InputNames[0] + "_PseudoToGeometric";
       OutputNames                 = {OutputFieldName};
       InstanceName                = OutputFieldName;
 
@@ -248,11 +248,11 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
       if constexpr (InputRank == 1) {
          // 1D case: horizontal field only, no vertical structure
          parallelFor(
-             {NHorizDim}, KOKKOS_LAMBDA(int iHoriz) {
-                Real SpecVolHoriz = getSpecVol(iHoriz, 0);
-                Output(iHoriz) =
+             {NHorizDim}, KOKKOS_LAMBDA(int IHoriz) {
+                Real SpecVolHoriz = getSpecVol(IHoriz, 0);
+                Output(IHoriz) =
                     static_cast<ScalarT>((RhoSw * SpecVolHoriz) *
-                                         static_cast<Real>(PseudoData(iHoriz)));
+                                         static_cast<Real>(PseudoData(IHoriz)));
              });
 
       } else if constexpr (InputRank == 2) {
@@ -268,9 +268,9 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
 
          parallelForOuter(
              "PseudoToGeometric2D", LaunchConfig({NHorizDim}),
-             KOKKOS_LAMBDA(int iHoriz, const TeamMember &Team) {
-                const I4 KMin   = LocMinLayer(iHoriz);
-                const I4 KMax   = LocMaxLayer(iHoriz);
+             KOKKOS_LAMBDA(int IHoriz, const TeamMember &Team) {
+                const I4 KMin   = LocMinLayer(IHoriz);
+                const I4 KMax   = LocMaxLayer(IHoriz);
                 const I4 KRange = vertRange(KMin, KMax);
 
                 parallelForInner(
@@ -284,29 +284,29 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
                           if (K == 0) {
                              // Top interface: horizontally interpolate at top
                              // layer
-                             SpecVolAtK = getSpecVol(iHoriz, 0);
+                             SpecVolAtK = getSpecVol(IHoriz, 0);
                           } else if (K == LocNVertSize - 1) {
                              // Bottom interface: horizontally interpolate at
                              // bottom
                              SpecVolAtK =
-                                 getSpecVol(iHoriz, SpecVolNVertSize - 1);
+                                 getSpecVol(IHoriz, SpecVolNVertSize - 1);
                           } else {
                              // Interior interface: horiz interp then vert
                              // average
-                             Real SpecVolAbove = getSpecVol(iHoriz, K - 1);
-                             Real SpecVolBelow = getSpecVol(iHoriz, K);
+                             Real SpecVolAbove = getSpecVol(IHoriz, K - 1);
+                             Real SpecVolBelow = getSpecVol(IHoriz, K);
                              SpecVolAtK =
                                  0.5_Real * (SpecVolAbove + SpecVolBelow);
                           }
                        } else {
                           // Same vertical staggering: horizontal interpolation
                           // only
-                          SpecVolAtK = getSpecVol(iHoriz, K);
+                          SpecVolAtK = getSpecVol(IHoriz, K);
                        }
 
-                       Output(iHoriz, K) = static_cast<ScalarT>(
+                       Output(IHoriz, K) = static_cast<ScalarT>(
                            (RhoSw * SpecVolAtK) *
-                           static_cast<Real>(PseudoData(iHoriz, K)));
+                           static_cast<Real>(PseudoData(IHoriz, K)));
                     });
              });
 
@@ -326,9 +326,9 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
 
          parallelForOuter(
              "PseudoToGeometric3D", LaunchConfig({Dim0, NHorizDim}),
-             KOKKOS_LAMBDA(int i0, int iHoriz, const TeamMember &Team) {
-                const I4 KMin   = LocMinLayer(iHoriz);
-                const I4 KMax   = LocMaxLayer(iHoriz);
+             KOKKOS_LAMBDA(int i0, int IHoriz, const TeamMember &Team) {
+                const I4 KMin   = LocMinLayer(IHoriz);
+                const I4 KMax   = LocMaxLayer(IHoriz);
                 const I4 KRange = vertRange(KMin, KMax);
 
                 parallelForInner(
@@ -342,29 +342,29 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
                           if (K == 0) {
                              // Top interface: horizontally interpolate at top
                              // layer
-                             SpecVolAtK = getSpecVol(iHoriz, 0);
+                             SpecVolAtK = getSpecVol(IHoriz, 0);
                           } else if (K == LocNVertSize - 1) {
                              // Bottom interface: horizontally interpolate at
                              // bottom
                              SpecVolAtK =
-                                 getSpecVol(iHoriz, SpecVolNVertSize - 1);
+                                 getSpecVol(IHoriz, SpecVolNVertSize - 1);
                           } else {
                              // Interior interface: horiz interp then vert
                              // average
-                             Real SpecVolAbove = getSpecVol(iHoriz, K - 1);
-                             Real SpecVolBelow = getSpecVol(iHoriz, K);
+                             Real SpecVolAbove = getSpecVol(IHoriz, K - 1);
+                             Real SpecVolBelow = getSpecVol(IHoriz, K);
                              SpecVolAtK =
                                  0.5_Real * (SpecVolAbove + SpecVolBelow);
                           }
                        } else {
                           // Same vertical staggering: horizontal interpolation
                           // only
-                          SpecVolAtK = getSpecVol(iHoriz, K);
+                          SpecVolAtK = getSpecVol(IHoriz, K);
                        }
 
-                       Output(i0, iHoriz, K) = static_cast<ScalarT>(
+                       Output(i0, IHoriz, K) = static_cast<ScalarT>(
                            (RhoSw * SpecVolAtK) *
-                           static_cast<Real>(PseudoData(i0, iHoriz, K)));
+                           static_cast<Real>(PseudoData(i0, IHoriz, K)));
                     });
              });
       }
@@ -393,25 +393,25 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
       /// For edge-based fields, averages from 2 adjacent cells.
       /// For vertex-based fields, averages from VertexDegree adjacent cells.
       KOKKOS_INLINE_FUNCTION
-      Real operator()(const I4 iHoriz, ///< Horizontal index
+      Real operator()(const I4 IHoriz, ///< Horizontal index
                       const I4 K       ///< Vertical layer
       ) const {
 
          if (IndexSpaceType == IndexSpace::Cell) {
             // Cell-based: use directly
-            return SpecVolData(iHoriz, K);
+            return SpecVolData(IHoriz, K);
 
          } else if (IndexSpaceType == IndexSpace::Edge) {
             // Edge-based: average from 2 adjacent cells
-            const I4 Cell1 = CellsOnEdge(iHoriz, 0);
-            const I4 Cell2 = CellsOnEdge(iHoriz, 1);
+            const I4 Cell1 = CellsOnEdge(IHoriz, 0);
+            const I4 Cell2 = CellsOnEdge(IHoriz, 1);
             return 0.5_Real * (SpecVolData(Cell1, K) + SpecVolData(Cell2, K));
 
          } else { // IndexSpace::Vertex
             // Vertex-based: average from VertexDegree adjacent cells
             Real SpecVolSum = 0.0_Real;
             for (int j = 0; j < VertexDegree; ++j) {
-               const I4 Cell = CellsOnVertex(iHoriz, j);
+               const I4 Cell = CellsOnVertex(IHoriz, j);
                SpecVolSum += SpecVolData(Cell, K);
             }
             return SpecVolSum / static_cast<Real>(VertexDegree);

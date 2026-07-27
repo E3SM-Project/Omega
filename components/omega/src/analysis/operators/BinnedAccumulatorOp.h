@@ -29,8 +29,10 @@
 ///
 /// Example usage in operator chain:
 /// \code
-///   NormalVelocity_BinnedAccumulator
+///   NormalVelocity_BinnedAccumulator(LatCell_BinIndex)
 /// \endcode
+/// where LatCell_BinIndex is the bin index field produced by
+/// CoordinateBinningOp.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -117,7 +119,8 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
       ValueField->getDimNames(ValueDimNames);
 
       // Construct output field name and set instance name
-      std::string OutputFieldName = InputNames[0] + "_BinnedAccum";
+      // Format: Input_BinnedAccumulator(BinIndexField) to match chain syntax
+      std::string OutputFieldName = InputNames[0] + "_BinnedAccumulator(" + InputNames[1] + ")";
       OutputNames                 = {OutputFieldName};
       InstanceName                = OutputFieldName;
 
