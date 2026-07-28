@@ -919,6 +919,8 @@ void IOStream::writeFieldMeta(
 
       // Get name
       std::string MetaName = IMeta->first;
+      if (MetaName == "IOName")
+         continue; // internal control key, not a CF attribute
       // Get value after determining the data type
       std::any MetaVal = IMeta->second;
       if (MetaVal.type() == typeid(I8)) {
@@ -2671,9 +2673,15 @@ void IOStream::writeStream(
       // Reduce floating point precision if requested
       IO::IODataType MyIOType = getFieldIOType(ThisField);
 
+      // Use IOName metadata as the netCDF variable name if present
+      std::string OutputName = FieldName;
+      if (ThisField->hasMetadata("IOName")) {
+         ThisField->getMetadata("IOName", OutputName);
+      }
+
       // Define the field and assign a FieldID
       int FieldID =
-          defineVar(OutFileID, FieldName, MyIOType, NDims, FieldDims.data());
+          defineVar(OutFileID, OutputName, MyIOType, NDims, FieldDims.data());
 
       FieldIDs[FieldName] = FieldID;
 

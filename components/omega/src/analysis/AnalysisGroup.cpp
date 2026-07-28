@@ -17,6 +17,19 @@ namespace OMEGA {
 std::string AnalysisGroup::getName() { return GroupName; } // end getName
 
 //------------------------------------------------------------------------------
+// Sets the IOName metadata on an output Field so that IOStream will write
+// it under a legible name rather than the full operator-chain string.
+// This metadata is purely cosmetic and only affects the netCDF variable name
+// in output files - the field lookup system continues to use the internal
+// operator-chain name. If the field does not exist, this is a no-op.
+void AnalysisGroup::setOutputIOName(const std::string &InternalFieldName,
+                                    const std::string &IOName) {
+   if (Field::exists(InternalFieldName)) {
+      Field::get(InternalFieldName)->addMetadata("IOName", IOName);
+   }
+}
+
+//------------------------------------------------------------------------------
 void AnalysisGroup::parseTemporalPeriods(Config &AnalysisGroupOptions) {
    Error Err1;
    Error Err2;
@@ -70,6 +83,12 @@ void AnalysisGroup::buildTemporalChains(
 
          // Parse chain and instantiate operators (empty Config is fine)
          AnalysisManager->parseChainAndBuildOps(ChainStr, ChainConfig);
+
+         // Apply IOName if specified in config
+         std::string IOName;
+         if (ChainConfig.get("IOName", IOName).isSuccess()) {
+            setOutputIOName(ChainStr, IOName + "_TimeMean" + ReductionPeriod);
+         }
       }
 
       // Create instantaneous snapshot chains (if requested)
@@ -77,6 +96,12 @@ void AnalysisGroup::buildTemporalChains(
          // Parse stem chain if not already built (operators may exist from
          // reduction chains above, parseChainAndBuildOps handles duplicates)
          AnalysisManager->parseChainAndBuildOps(StemStr, ChainConfig);
+
+         // Apply IOName if specified in config
+         std::string IOName;
+         if (ChainConfig.get("IOName", IOName).isSuccess()) {
+            setOutputIOName(StemStr, IOName);
+         }
 
          // Store metadata for each snapshot frequency
          for (const auto &SnapshotPeriod : SnapshotPeriodList) {
