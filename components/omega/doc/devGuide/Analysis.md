@@ -200,6 +200,14 @@ field(s).
 | `SpatialMean` | 1 | 1 | scalar (`Array1DReal`, dimension `Scalar`) | `_SpatialMean` | — | Global mean of the input field. |
 | `SpatialStdDev` | 2 (the field and its `_SpatialMean`) | 1 | scalar (`Array1DReal`, dimension `Scalar`) | `_SpatialStdDev` | — | Global standard deviation of the input field. Requires the field's `SpatialMean` as an upstream input, which is added to its input list automatically. |
 | `TimeMean` | 1 | 1 | same rank and dimensions as the input (`Real`) | `_TimeMean<period>` | `Period` (string, e.g. `"1Day"`) | Time average of the input field over a configurable period (e.g. `1Day`). Accumulates every time step and finalizes the mean when the period alarm rings. Output name embeds the period, e.g. `_TimeMean1Day`. |
+| `BinaryMultiply` | 2 | 1 | same as first input | `_BinaryMultiply(<field2>)` | — | Element-wise multiplication of two fields. Supports vertical expansion (1D field replicated across vertical layers when multiplied with 2D/3D field). |
+| `BinnedAccumulator` | 2 (data field, bin index field) | 1 | replaces horizontal dimension with `NumBins` | `_BinnedAccumulator(<binfield>)` | `NumBins` (I4) | Accumulates field values into spatial bins. Uses MPI reduction for global totals. Automatically applies regional mask if attached to input Field. |
+| `CoordinateBinning` | 1 | 1 | 1D integer (`Array1DI4`) | `_BinIndex` | `NumBins` (I4), `MinBin` (Real, optional), `MaxBin` (Real, optional) | Assigns mesh entities to bins based on coordinate values (e.g., latitude). Computed once during initialization and cached. |
+| `ExtractRegion` | 1 | 1 | same as input | `_<RegionName>` | `MaskName` (string) | Applies regional mask to field by multiplying values with mask. Attaches mask to output Field for downstream operators. Supports mask intersection. |
+| `PrefixSum` | 1 | 1 | same as input | `_PrefixSum` | `Dimension` (I4), `Reverse` (bool, default false) | Cumulative summation along specified dimension. Forward (start→end) or reverse (end→start) scan. |
+| `PseudoToGeometric` | 1 | 1 | same as input | `_Geometric` | — | Converts pseudo-height coordinates to geometric coordinates using specific volume. Handles vertical grid staggering automatically. |
+| `ScalarMultiply` | 1 | 1 | same as input | `_ScalarMultiply(<value>)` | `Scalar` (string, parsed to Real) | Multiplies field by scalar constant. Can be used for unit conversions (e.g., ×1e-6 for Sverdrups). |
+| `TransectAccumulator` | 3 (data field, mask field, sign field) | 1 | 1D vertical profile | `_TransectAccumulator(<transect>)` | `TransectName` (string) | Accumulates transport across transect edges. Only supports 2D Real arrays for the data field. Uses MPI reduction for global totals. |
 
 ## Operator factory and type dispatch
 
@@ -219,6 +227,19 @@ location, registering a creator lambda for each. The currently enabled ranks
 are 1 through 3 (the 4D and 5D entries are present but commented out because
 Omega currently utilizes no arrays with rank $>$ 3, and each registered
 operator variant increases compile time and binary size).
+
+For operators that only support specific array ranks, the factory provides
+specialized registration methods using SFINAE (Substitution Failure Is Not An
+Error) to prevent invalid template instantiations at compile time:
+
+- `register1DVariants` — registers only 1D array variants (horizontal fields without vertical structure)
+- `register2DVariants` — registers only 2D array variants (horizontal × vertical)
+- `register2DRealVariants` — registers only 2D Real array variants (excludes integer types)
+
+These methods use compile-time type checking to filter out incompatible array
+types, reducing compile time and binary size while catching type errors early.
+The SFINAE helpers (`register1DVariantHelper`, etc.) expand over all array types
+but only register the matching variants, with no-op branches for mismatched types.
 
 At creation time, the orchestrator calls:
 ```c++
@@ -249,6 +270,22 @@ operator kind is identified from the token (a `Spatial` prefix denotes a
 spatial reduction; a `Time` prefix denotes a temporal reduction, with the
 period parsed from the first digit in the token) and the operator is created
 via the factory and wrapped in an `OperatorNode`.
+
+**Parenthesized arguments:** The parser supports operators with parenthesized
+arguments for passing field names, scalar values, or other parameters. The
+parser respects parenthesis depth when splitting on underscores, so
+`Field_BinaryMultiply(OtherField)_ScalarMultiply(1.0e-6)` correctly parses as
+three tokens: `Field`, `BinaryMultiply(OtherField)`, and `ScalarMultiply(1.0e-6)`.
+Different operators interpret parenthesized arguments differently:
+- `BinaryMultiply(FieldName)` — second input field name
+- `ScalarMultiply(Value)` — scalar value (parsed from string to Real)
+- `ExtractRegion(MaskName)` — mask field name passed via Config
+- `BinnedAccumulator(BinIndexField)` — bin index field name
+- `TransectAccumulator(TransectName)` — transect name for mask lookup
+
+An optional `Config` parameter can be passed to `parseChainAndBuildOps()` to
+provide operator-specific configuration that applies to all operators in the
+chain (e.g., binning parameters, integration direction).
 
 After all groups have registered their chains, the constructor resolves the
 graph edges with `buildOperatorDependencies()`, which matches each node's
@@ -349,6 +386,61 @@ appends a `TimeMean` operator to produce a time-averaged chain (for example
 the discrete-sampling chain for instantaneous output. It then calls
 `createAnalysisGroupStreams()` to create the corresponding output streams. At
 least one of `ReductionPeriod` or `SnapshotPeriod` must be present.
+
+### MOC
+
+`MOC` computes the Meridional Overturning Circulation (MOC) streamfunction
+using two methods: latitude-binned regional MOC and transect-based MOC.
+Configuration specifies binning parameters, region/transect names, and output
+frequencies:
+
+```yaml
+MOC:
+  Enable: true
+  NumBins: 180                  # Number of latitude bins
+  MinLat: -90.0                 # Minimum latitude in degrees
+  MaxLat: 90.0                  # Maximum latitude in degrees
+  Regions: [Global, Atlantic]   # Regional MOC (latitude × depth)
+  Transects: [Drake, Atlantic26N]  # Transect MOC (depth only)
+  ReductionPeriod: [1Month]
+  SnapshotPeriod: [1Day]
+```
+
+**Latitude-binned MOC** computes the streamfunction as a function of latitude
+and depth for each specified region. The constructor builds a complex operator
+chain for each region:
+1. `LatCell_CoordinateBinning` — assigns cells to latitude bins (initialization only, shared across regions)
+2. `VerticalPseudoVelocity_PseudoToGeometric` — converts to geometric coordinates
+3. `VerticalVelocity_BinaryMultiply(AreaCell)` — computes vertical flux
+4. `[Optional] VerticalFlux_ExtractRegion(RegionMask)` — applies regional mask (for non-global regions)
+5. `VerticalFlux_BinnedAccumulator(LatCell_BinIndex)` — accumulates flux into latitude bins
+6. `BinnedFlux_PrefixSum` — horizontal integration (south to north)
+7. `MOC_ScalarMultiply(1.0e-6)` — converts to Sverdrups (Sv)
+
+**Transect-based MOC** computes the streamfunction across specific transects
+as a function of depth only. The constructor builds a chain for each transect:
+1. `PseudoThickness_PseudoToGeometric` — converts to geometric layer thickness
+2. `LayerThickness_BinaryMultiply(NormalVelocity)` — thickness × velocity
+3. `EdgeTransport_BinaryMultiply(DvEdge)` — transport × edge width
+4. `TransportField_TransectAccumulator(TransectName)` — accumulates across transect edges
+5. `TransectTransport_PrefixSum` — vertical integration (bottom to top, reverse)
+6. `TransectMOC_ScalarMultiply(1.0e-6)` — converts to Sverdrups
+
+For each chain, the constructor stores an operator configuration (`Config`)
+containing parameters like `NumBins`, `Dimension`, `Reverse`, and `TransectName`
+in a `ChainConfigs` vector. These configs are passed to `buildTemporalChains()`,
+which appends temporal operators and applies custom `IOName` metadata to
+produce user-friendly output variable names (e.g., `MOC_streamfunction_Global`
+instead of the full operator chain string). At least one of `Regions` or
+`Transects` must be specified.
+
+```{note}
+Regional and transect masks are not yet implemented in the Omega infrastructure.
+The `Regions` configuration currently only supports `[Global]`, and `Transects`
+is a placeholder. The operator infrastructure (ExtractRegionOp,
+TransectAccumulatorOp) is fully implemented and ready for use once mask fields
+become available.
+```
 
 ## Extensibility
 
