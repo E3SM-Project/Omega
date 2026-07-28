@@ -100,6 +100,28 @@ The Metadata corresponding to ForcingTime will then be read from the file
 and inserted as the Metadata value. If no metadata is to be read from the
 file, then an empty ReqMetadata variable can be passed.
 
+### IOName Metadata for User-Friendly Output Variable Names
+
+Fields written to netCDF files can optionally specify a custom output variable
+name using the `IOName` metadata field. By default, IOStream uses the field's
+internal name (which may be a long operator chain string like
+`VerticalPseudoVelocity_PseudoToGeometric_BinaryMultiply_...`) as the netCDF
+variable name. Setting `IOName` metadata allows specifying a more readable name
+for end users:
+
+```c++
+   MyField->addMetadata("IOName", "MOC_streamfunction_Global");
+```
+
+During output, IOStream checks for the presence of `IOName` metadata and uses it
+as the netCDF variable name if found, falling back to the field's internal name
+otherwise. The `IOName` metadata is automatically filtered out of CF attribute
+writing since it is an internal control key, not a CF-compliant attribute.
+
+This feature is particularly useful for analysis outputs where operator chain
+names are long and technical, but output files should have concise, descriptive
+variable names.
+
 As described in the [User Guide](#omega-user-iostreams), all streams are
 defined in the input configuration file and most other IOStream functions
 are associated either with that initialization or to support the read/write
