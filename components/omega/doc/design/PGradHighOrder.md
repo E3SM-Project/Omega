@@ -999,6 +999,7 @@ Which tests gate which phase:
 | §5.3 Seamount resting state | gates | rerun; error should drop further |
 | §5.4 Overflow | gates | rerun |
 | §5.5 Reduction to centered | gates | rerun unchanged |
+| §5.6 Cost check | gates | gates; stencil width must not change the EOS count |
 
 The A4 diagnostic within §5.3 is run *before* Phase 1 implementation and uses the existing centered
 scheme, so it gates nothing but informs whether the work should proceed as prioritized (§4.5.3).
@@ -1054,11 +1055,20 @@ Extend the four existing variants — `temperature_gradient`, `salinity_gradient
 - **Consistency check (retained):** `omega_vs_polaris_rms_threshold` (~1e-10 m/s²) — Omega's
   forward output must still match the Python-computed HPGA, confirming the implementation
   matches the intended discretization.
+- **Horizontal-contrast sweep (new, assumption A2):** the `temperature_gradient` and
+  `salinity_gradient` variants are run at several amplitudes of the horizontal contrast, up to and
+  beyond values typical of ocean fronts. The equation-of-state expansion [](#alpha-taylor) is taken
+  about a state shared across the edge, so its error grows with that contrast, and A2 (§3.7.6) is
+  the assumption that the first-order expansion remains adequate. **Pass:** the error at fixed
+  resolution grows no faster than linearly with the contrast amplitude, and repeating the largest
+  amplitude with the second-order expansion of §3.3 changes the answer by less than the accuracy
+  gate above. If it does not, the second-order expansion becomes the default rather than an option.
 - **Cfg keys.** New keys mirror the existing ones (`horiz_press_grad.cfg`): a coarse-resolution
-  absolute tolerance, a `finite_volume_vs_centered` ratio gate, and per-scheme expected-rate
-  bands.
+  absolute tolerance, a `finite_volume_vs_centered` ratio gate, per-scheme expected-rate bands, and
+  the contrast amplitudes for the sweep.
 
-Tests Requirements 2.1, 2.2 (via the bounded-EOS implementation exercised), 2.4, 2.5, 2.6.
+**Covers:** Requirements 2.1, 2.2 (the bounded-EOS path is exercised), 2.4, 2.5, 2.6; the last row
+of the §3.7.3 table (horizontal structure in $\Theta$, $S$); assumptions A1, A2, A3.
 
 ### 5.2 Unit test: Discrete hydrostatic consistency (exact resting state)
 
@@ -1101,13 +1111,17 @@ until whichever resolution is chosen there is in place; this test therefore doub
 acceptance criterion for that prerequisite. It is implemented as a fast C++ unit test and also run
 as a configuration of the Polaris two-column task.
 
+**Covers:** Requirement 2.3 in full; rows 1–5 of the §3.7.3 table; the round-off floor of §3.7.5.
+
 ### 5.3 Test: Seamount resting state (steep-layer robustness)
 
-Use the Polaris seamount task with tilted layers over a seamount and a horizontally uniform
-$T$/$S$ stratification, integrated for a fixed period. **Pass:** the maximum spurious velocity
-stays below a threshold and is substantially smaller for the high-order scheme than for the
-centered scheme. This is the dynamical counterpart of §5.2 (the same resting state, now run
-forward in the full solver) and the direct test of Requirement 2.3.
+Use the Polaris seamount task with layers tilted over a seamount and a stratification that is a
+function of pressure alone — note that this gives layer means that *differ* between neighboring
+columns wherever the layers tilt (§3.7.1), which is the situation the test is meant to create.
+Integrate for a fixed period. **Pass:** the maximum spurious velocity stays below a threshold and
+is substantially smaller for the new scheme than for the centered scheme. This is the dynamical
+counterpart of §5.2 — the same resting state, now run forward in the full solver — and the direct
+test of Requirement 2.3.
 
 **Testing assumption A4 (§3.7.6).** Run the seamount case twice: once with a stratification Phase 1
 resolves exactly ($\Theta$, $S$ linear in pressure) and once with a realistic profile. Spurious
@@ -1119,13 +1133,36 @@ phasing, and it should be run **before** Phase 1 implementation is finished, wit
 scheme on the realistic profile as the control. A null result would not invalidate the design, but
 it would change its priority.
 
+**Testing assumption A5 (§3.3.1).** Because the expansion point is shared per edge, the discrete PGF
+is no longer exactly the gradient of a single scalar, and could in principle inject vorticity. Add a
+diagnostic that takes the curl of the PGF tendency on this task. For a profile the scheme resolves
+exactly it must be zero to machine precision, since the tendency itself is; that case is a
+consistency check on the diagnostic rather than a test of A5. The test of A5 is the realistic
+profile: **pass** if the resulting vorticity tendency is small compared with the physical vorticity
+tendencies in the same run, and no larger than the corresponding quantity from the centered scheme.
+If it is not, the shared expansion point needs to be revisited — for instance by holding it fixed
+over a cell's edges at the cost of a weaker cancellation.
+
+**Covers:** Requirement 2.3 under dynamics; assumptions A3, A4, A5.
+
 ### 5.4 Test: Overflow (full non-Boussinesq dynamics)
 
-Use the Polaris overflow task to exercise the PGF within the full non-Boussinesq equations
-with strongly sloping layers and active dynamics. **Pass:** the solution remains stable and
-the down-slope evolution agrees with the reference behavior; spurious mixing/velocity
-attributable to PGF error is reduced relative to the centered scheme. This tests Requirements
-2.1 and 2.3 under realistic, coupled conditions.
+Use the Polaris overflow task to exercise the PGF within the full non-Boussinesq equations with
+strongly sloping layers and active dynamics. Unlike the seamount task, the state here is neither
+resting nor close to a profile the scheme resolves exactly, so this is the test of how the scheme
+behaves where none of the exact-cancellation results apply and the residual of §2.3.4 is all there
+is. **Pass:** the solution remains stable and the down-slope evolution agrees with the reference
+behavior; spurious mixing and velocity attributable to PGF error are reduced relative to the
+centered scheme.
+
+This is also the most demanding test of assumption A2: the overflow front carries a large horizontal
+temperature contrast across edges with steeply sloping layers, which is exactly where the shared
+edge expansion point [](#edge-ref) is worked hardest. If the §5.1 contrast sweep indicates the
+second-order equation-of-state expansion is needed, this task is where that judgment is confirmed
+under dynamics.
+
+**Covers:** Requirements 2.1 and 2.3 under realistic, coupled conditions; the last two rows of the
+§3.7.3 table; assumptions A2, A3.
 
 ### 5.5 Test: Reduction to the centered scheme (permanent regression)
 
@@ -1138,6 +1175,48 @@ confirms the wider stencil collapses correctly to the two-cell one.
 Note that this configuration is not a supported production setting (§4.1.1); it exists so that this
 comparison is possible. Keeping it costs one branch in the reconstruction and one in the
 equation-of-state expansion.
+
+**Covers:** Requirement 2.5; §3.9.
+
+### 5.6 Cost check
+
+Requirement 2.2 bounds the number of TEOS-10 evaluations, and nothing above tests it — the scheme
+could satisfy every accuracy gate while quietly calling the equation of state inside the quadrature
+loop. Two cheap checks close that:
+
+- **Evaluation count.** With an instrumented `Eos`, confirm the number of specific-volume
+  evaluations per time step is one per cell per layer and is **unchanged** when `QuadraturePoints`
+  and `HorzOrder` are varied. This is the property Requirement 2.2 actually states, and it is a
+  counter comparison, not a timing measurement, so it is deterministic and suitable for CI.
+- **Wall time.** Record PGF kernel time relative to `PressureGradCentered` on a representative
+  configuration, as a performance regression guard. The expected cost is dominated by the per-edge
+  layer integrals (§4.1.3), roughly three times as many as a cell-based formulation on a hexagonal
+  mesh; a result far above that suggests the per-cell coefficients are being recomputed per edge
+  rather than cached.
+
+**Covers:** Requirement 2.2.
+
+### 5.7 Coverage summary
+
+| Requirement / assumption | Verified by |
+|---|---|
+| 2.1 Accuracy at affordable resolution | §5.1 accuracy gate; §5.3; §5.4 |
+| 2.2 Bounded TEOS-10 cost | §5.6 |
+| 2.3 Robustness for thin, sloped layers | §5.2 (machine precision); §5.3 (under dynamics) |
+| 2.4 Consistency with model state | §5.1 (layer-mean reference); §5.2 (reconstruction unit test) |
+| 2.5 Runtime-selectable, backward compatible | §5.1 (three configurations); §5.5 |
+| 2.6 Verified order of accuracy | §5.1 verification gate |
+| A1 Edge accuracy ≠ cell accuracy | §5.1 verification gate (Phase 2) |
+| A2 EOS expansion adequate across an edge | §5.1 contrast sweep; §5.4 |
+| A3 Residual small enough in practice | §5.1 accuracy gate; §5.3; §5.4 |
+| A4 PGF error causes the instability | §5.3 diagnostic, run before Phase 1 completes |
+| A5 Spurious vorticity negligible | §5.3 curl diagnostic |
+| §3.7.4 `VertCoord` prerequisite | §5.2 (cannot pass until resolved) |
+| §3.7.5 Round-off floor | §5.2, run in both precisions |
+
+Requirement 2.7 (extensibility) is not testable directly; it is addressed by the configuration
+design of §4.1.1 and by the phase structure of §4.5, which is itself the evidence that the framework
+extends without restructuring.
 
 This test is retained permanently rather than treated as a one-time transition check, and
 that choice is the reason `PressureGradCentered` is kept as a separate implementation rather
