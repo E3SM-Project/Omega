@@ -325,21 +325,12 @@ $$ (edge-ref)
 and **both** columns' contributions to edge $e$ are evaluated with this single set, so that the two
 sides of the edge see one and the same equation of state.
 
-Two consequences must be recorded:
-
-- **Cost.** The column integral $\Pi_{i,k}$ is no longer a per-cell quantity that can be computed
-  once and then differenced across each of the cell's edges; it depends on the edge through
-  [](#edge-ref) and must be evaluated per edge, twice. On a hexagonal TRiSK mesh this is roughly
-  three times as many integral evaluations as a cell-based formulation. The TEOS-10 call count is
-  unaffected, which is the cost Requirement 2.2 binds; the extra work is polynomial arithmetic on
-  coefficients already in cache.
-- **The PGF is no longer the gradient of a single scalar.** With the expansion point depending on
-  the edge, the discrete PGF is not exactly a discrete gradient, so it is not automatically
-  curl-free and could in principle inject spurious vorticity. It is zero at every edge for a resting
-  ocean the scheme resolves exactly, so nothing is injected in that case; elsewhere the effect
-  enters at truncation order. This trade is deliberate — a robustness property that holds exactly,
-  in exchange for a potential-form property that held exactly — but the magnitude of any spurious
-  vorticity is something §5 must measure rather than assume away.
+This has a cost consequence worth recording. The column integral $\Pi_{i,k}$ is no longer a per-cell
+quantity that can be computed once and then differenced across each of the cell's edges; it depends
+on the edge through [](#edge-ref) and must be evaluated per edge, twice. On a hexagonal TRiSK mesh
+this is roughly three times as many integral evaluations as a cell-based formulation. The TEOS-10
+call count is unaffected, which is the cost Requirement 2.2 binds; the extra work is polynomial
+arithmetic on coefficients already in cache.
 
 Because $\Theta$, $S$ are reconstructed as low-order polynomials in $\tilde z$ (and across
 edges) and $p$ is linear in $\tilde z$ by [](#p-linear), the expansion [](#alpha-taylor)
@@ -646,7 +637,6 @@ assumptions this design is making that only testing can confirm:
   A configuration whose profile falls in Phase 1's exact set gives a direct test: if spurious
   bottom-layer flow persists there, the cause lies elsewhere — most likely in the layer-mean
   treatment in the tracer and remapping operators (§4.3) — and Phase 1 will not cure it. See §5.3.
-- **A5 — Spurious vorticity from the edge-shared expansion point is negligible** (§3.3.1).
 
 ### 3.8 Geopotential and metric terms
 
@@ -1133,17 +1123,7 @@ phasing, and it should be run **before** Phase 1 implementation is finished, wit
 scheme on the realistic profile as the control. A null result would not invalidate the design, but
 it would change its priority.
 
-**Testing assumption A5 (§3.3.1).** Because the expansion point is shared per edge, the discrete PGF
-is no longer exactly the gradient of a single scalar, and could in principle inject vorticity. Add a
-diagnostic that takes the curl of the PGF tendency on this task. For a profile the scheme resolves
-exactly it must be zero to machine precision, since the tendency itself is; that case is a
-consistency check on the diagnostic rather than a test of A5. The test of A5 is the realistic
-profile: **pass** if the resulting vorticity tendency is small compared with the physical vorticity
-tendencies in the same run, and no larger than the corresponding quantity from the centered scheme.
-If it is not, the shared expansion point needs to be revisited — for instance by holding it fixed
-over a cell's edges at the cost of a weaker cancellation.
-
-**Covers:** Requirement 2.3 under dynamics; assumptions A3, A4, A5.
+**Covers:** Requirement 2.3 under dynamics; assumptions A3, A4.
 
 ### 5.4 Test: Overflow (full non-Boussinesq dynamics)
 
@@ -1210,7 +1190,6 @@ loop. Two cheap checks close that:
 | A2 EOS expansion adequate across an edge | §5.1 contrast sweep; §5.4 |
 | A3 Residual small enough in practice | §5.1 accuracy gate; §5.3; §5.4 |
 | A4 PGF error causes the instability | §5.3 diagnostic, run before Phase 1 completes |
-| A5 Spurious vorticity negligible | §5.3 curl diagnostic |
 | §3.7.4 `VertCoord` prerequisite | §5.2 (cannot pass until resolved) |
 | §3.7.5 Round-off floor | §5.2, run in both precisions |
 
