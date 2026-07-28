@@ -65,6 +65,34 @@ therefore answer two different questions and both must be satisfied — *is the 
 (convergence rate at the designed order) and *is it useful at the resolutions we can run?*
 (absolute error).
 
+### 1.1 Why this work is delivered in two phases
+
+Realistic global configurations run with `PressureGradCentered` show spurious flow in the
+bottom layer over sloping bathymetry, large enough to drive numerical instability. What is
+missing there is not high-order accuracy — it is *consistency*: the centered scheme does not
+account for the pressure force on a layer's sloping top and bottom interfaces at all, and the
+resulting error accumulates downward through the column (§3.7.3). That error is present at
+second order and does not require a fourth-order scheme to remove.
+
+The work is therefore split so the consistency fix can be delivered and tested on its own:
+
+- **Phase 1 — a consistent second-order scheme.** The finite-volume control-volume form,
+  the sloping-interface integral, the equation-of-state expansion about a state shared across
+  each edge, and a mean-preserving *linear* reconstruction of $\Theta$ and $S$ in pressure.
+  The horizontal operator is the same two-cell stencil the centered scheme already uses, so
+  the scheme remains second order in the horizontal. What Phase 1 buys is the robustness
+  property of Requirement 2.3: the pressure gradient is zero to machine precision for any
+  resting ocean whose profile varies linearly with pressure, no matter how the layers tilt.
+- **Phase 2 — fourth order.** A parabolic vertical reconstruction and a wider horizontal
+  stencil, plus the option of a second-order equation-of-state expansion. This raises the
+  order of accuracy; it does not change the robustness property, which Phase 1 already
+  establishes and Phase 2 must preserve.
+
+The two phases share one implementation, one set of configuration options, and one test
+suite; Phase 2 widens settings that Phase 1 puts in place. Section 3 marks which parts of
+the formulation belong to which phase, and §4.5 records what each phase delivers and what it
+depends on.
+
 ## 2 Requirements
 
 ### 2.1 Requirement: Higher accuracy than the centered scheme at affordable resolution
@@ -130,8 +158,10 @@ of $\Theta$, $S$, $p$, or $z$.
 
 The high-order scheme must be selectable at runtime through the existing `PressureGrad`
 configuration group and `PressureGradType` enum, leaving `Centered` as the default. Its
-sub-options (horizontal reconstruction order, vertical-reconstruction mode, quadrature) must
-be configurable, and the centered scheme must be recoverable as the lowest-order limit.
+sub-options (edge stencil width, vertical-reconstruction mode, quadrature) must be configurable,
+and the centered scheme must be recoverable as a configuration of the new one. The two phases must
+share one set of configuration keys, so that a configuration written for Phase 1 continues to work
+unchanged when Phase 2 lands.
 
 ### 2.6 Requirement: Verified order of accuracy
 
@@ -321,59 +351,119 @@ Adcroft-style analytic integration to TEOS-10.
 ### 3.4 Mean-preserving vertical reconstruction
 
 Within layer $k$ of column $i$ we reconstruct the conservative temperature and absolute
-salinity as
+salinity as deviations from the prognostic layer means,
 
 $$
-\Theta(\tilde z) = \Theta_{i,k} + \Theta'_{i,k}(\tilde z), \qquad
-S(\tilde z) = S_{i,k} + S'_{i,k}(\tilde z),
+\Theta(p) = \Theta_{i,k} + \Theta'_{i,k}(p), \qquad
+S(p) = S_{i,k} + S'_{i,k}(p),
 $$ (vert-recon)
 
-where $\Theta'_{i,k}$, $S'_{i,k}$ are parabolic (PPM-style) deviations built from the
-neighboring layer means and constrained to **integrate to zero over the layer**
-($\int_{\tilde z_k^{\text{bot}}}^{\tilde z_k^{\text{top}}} \Theta'_{i,k}\, d\tilde z = 0$).
-This mean-preserving property (Requirement 2.4) guarantees the PGF uses the same layer-mean
-state as the rest of the model; the reconstruction only supplies the smoother sub-layer
-shape needed to integrate $\alpha p$ to high order. The "constant density within a layer"
-assumption of an isopycnal model is recovered exactly by the degenerate choice
-$\Theta'_{i,k} = S'_{i,k} = 0$, which is available as the cheapest configuration.
+where the deviations are polynomials in pressure built from the neighboring layer means and
+constrained to **integrate to zero over the layer**
+($\int_{p_{i,k}^{\text{top}}}^{p_{i,k}^{\text{bot}}} \Theta'_{i,k}\, dp = 0$). Because pressure
+and $\tilde z$ differ within a column only by a fixed linear map [](#p-linear), a polynomial in
+one is a polynomial of the same degree in the other; pressure is used here because it is the
+variable in which the profiles of two neighboring columns can be compared (§3.7).
+
+The mean-preserving property (Requirement 2.4) guarantees the PGF uses the same layer-mean state
+as the rest of the model; the reconstruction only supplies the sub-layer shape needed to integrate
+$\alpha p$.
+
+**Phase 1 uses linear deviations; Phase 2 uses parabolic (PPM-style) ones.** The degree sets the
+scheme's exact set in §3.7.3 directly: linear deviations make the scheme exact for profiles that
+vary linearly with pressure, parabolic ones for profiles that vary quadratically.
+
+That correspondence only holds if the reconstruction actually reproduces those profiles, which
+places two requirements on how the deviations are built:
+
+- **The estimator must be exact on a non-uniform vertical grid.** Omega's layers are not of equal
+  thickness, and a slope or curvature formula derived assuming equal thickness will not recover a
+  linear profile exactly when they are not. The estimator must be built from the layer means and
+  the actual interface pressures, and must return the exact slope (Phase 1) or slope and curvature
+  (Phase 2) when the underlying profile is of that degree, for any distribution of layer
+  thicknesses. This is testable directly and is part of the unit test in §5.2.
+- **Any limiter must be inactive on such profiles.** Monotonicity limiters are not required by the
+  PGF and are not applied by default here, since the reconstruction feeds an integral rather than
+  an advective flux. If one is later added for robustness, it must leave smooth monotone data
+  untouched, or it will break the cancellation of §3.7.2 precisely where the profile is well
+  resolved.
+
+The isopycnal-model assumption of constant properties within a layer is the degenerate choice
+$\Theta'_{i,k} = S'_{i,k} = 0$. This is retained as a **verification-only** configuration — it is
+what makes the reduction to the centered scheme in §3.9 possible, and it isolates compressibility
+on its own in §5.2 — but it is not a supported production setting in either phase, because it
+gives up the exactness for linearly varying profiles that Requirement 2.3.3 asks for.
 
 ### 3.5 Analytic layer integral of the side-wall term
 
-Combining [](#p-linear), [](#alpha-taylor), and [](#vert-recon), the side-wall integrand
-$\alpha p$ in a single column/layer is a polynomial in $\tilde z$: with first-order $\alpha$
-and parabolic $\Theta', S'$, $\alpha$ is parabolic and $p$ is linear, so $\alpha p$ is cubic
-and is integrated **exactly** by a two-point Gauss-Legendre rule over the layer:
+Combining [](#p-linear), [](#alpha-taylor), and [](#vert-recon), the side-wall integrand $\alpha p$
+within a single column and layer is a polynomial in pressure. With the first-order equation-of-state
+expansion, $\alpha$ inherits the degree of the reconstruction: linear in Phase 1, parabolic in
+Phase 2. Multiplying by $p$ gives a quadratic (Phase 1) or cubic (Phase 2) integrand, and in both
+cases the layer integral
 
 $$
-\Pi_{i,k} \equiv \int_{\tilde z_k^{\text{bot}}}^{\tilde z_k^{\text{top}}} \alpha\, p \; d\tilde z
-\;=\; \tilde h_{i,k} \sum_{q} w_q \, \alpha\!\left(\tilde z_q\right) p\!\left(\tilde z_q\right),
+\Pi_{i,k} \equiv \frac{1}{g}\int_{p_{i,k}^{\text{top}}}^{p_{i,k}^{\text{bot}}} \alpha\, p \; dp
+\;=\; \frac{\Delta p_{i,k}}{g} \sum_{q} w_q \, \alpha\!\left(p_q\right) p\!\left(p_q\right),
 $$ (sidewall-int)
 
-with Gauss nodes $\tilde z_q$ and weights $w_q$ on the layer, and $\alpha(\tilde z_q)$,
-$p(\tilde z_q)$ from [](#alpha-taylor) and [](#p-linear). No TEOS-10 calls occur inside the
-sum. The quadrature order is configurable and is matched to the reconstruction so the
-integral is exact for the reconstructed polynomial.
+is evaluated **exactly** by a two-point Gauss–Legendre rule, which is exact through cubic. The nodes
+$p_q$ and weights $w_q$ are on the layer's pressure interval, and $\alpha(p_q)$ comes from
+[](#alpha-taylor). No TEOS-10 calls occur inside the sum.
 
-### 3.6 Horizontal reconstruction and the edge gradient
+The quadrature is configurable, but it is not a free accuracy knob: it must be **at least** exact for
+the reconstructed integrand, or condition 2 of §3.7.2 fails and the cancellation is lost. Raising it
+beyond that changes nothing, since the integrand is a polynomial of known degree. Lowering it — to
+midpoint, say — is meaningful only as the verification configuration of §3.9.
 
-The discrete tendency lives at edge $e$ and is the edge-normal projection of the PGF. The
-side-wall line integral $\int_{\partial A}(\cdots)\,dl$ in [](#ho-target) becomes, on the
-TRiSK C-grid, the difference of the two adjacent columns' face contributions across the
-edge, divided by the cell-center distance $d_e$:
+### 3.6 The edge operator
+
+The discrete tendency lives at edge $e$ and is the edge-normal projection of the PGF. The side-wall
+line integral $\int_{\partial A}(\cdots)\,dl$ in [](#ho-target) becomes, on the TRiSK C-grid, the
+difference of the two adjacent columns' contributions across the edge, divided by the cell-center
+distance $d_e$:
 
 $$
-\left[\nabla_n \Pi\right]_{e,k} = \frac{1}{d_e}\sum_{i \in CE(e)} -n_{e,i}\, \widehat{\Pi}_{i,k},
+\left[\nabla_n \Pi\right]_{e,k} = \frac{1}{d_e}\sum_{i \in CE(e)} -n_{e,i}\, \Pi_{i,k}^{(e)},
 $$ (edge-grad)
 
-where $\widehat\Pi_{i,k}$ is the column integral [](#sidewall-int) reconstructed to the edge.
-To reach fourth order, $\Theta$, $S$ (and hence $\alpha$ and $\Pi$) are reconstructed from
-cell centers to the edge with a **cubic** reconstruction consistent with the TRiSK edge
-stencils used elsewhere in Omega (the same neighborhood used for high-order tracer
-reconstruction; cf. the third-order interface reconstruction noted at
-{ref}`omega-design-governing-eqns-omega1` §10, White & Adcroft 2008). The lowest-order limit
-(two-cell, centered) reproduces the operator already used by `PressureGradCentered`. We do
-**not** assume anything constant across the edge — the horizontal density contrast between
-adjacent columns is fully reconstructed.
+where $\Pi_{i,k}^{(e)}$ is column $i$'s layer integral [](#sidewall-int) evaluated with the
+equation-of-state coefficients shared across edge $e$ [](#edge-ref). **Phase 1 uses this operator as
+written** — the same two-cell stencil `PressureGradCentered` uses, so the horizontal accuracy is
+unchanged from today. Everything Phase 1 gains is in the vertical and in the interface terms.
+
+Nothing is assumed constant across the edge: the horizontal contrast in $\Theta$ and $S$ between the
+two columns enters at full strength through the two column integrals. What Phase 1 does *not* do is
+raise the order of the horizontal difference, which is Phase 2's job.
+
+#### 3.6.1 Raising the horizontal order without losing the cancellation (Phase 2)
+
+The natural way to reach fourth order — reconstruct $\Theta$ and $S$ from cell centers to the edge
+with a cubic stencil, then form $\alpha p$ there — **would forfeit the robustness property of §3.7**.
+It is worth being explicit about this, because it is the approach a reader would reasonably assume.
+The cancellation is a statement about a *pair* of columns bounding one control volume; a quantity
+interpolated to the edge from four or more cells does not belong to any control volume, and there is
+no reason for the pressure and geopotential terms built from it to balance. Accuracy at the cell
+centers does not carry over to a cancellation at the edge between them (assumption A1, §3.7.6).
+
+The constraint Phase 2 must satisfy instead is:
+
+> The higher-order edge operator must be expressible as a **weighted sum of two-column pair
+> contributions**, each pair built exactly as in Phase 1 — with its own shared expansion point and
+> its own control volume.
+
+Because each pair contribution is individually zero for a resting ocean in the exact set, any
+weighted sum of them is zero as well, and the machine-precision property is inherited rather than
+re-derived. A fourth-order edge-normal difference built from the nearest and next-nearest cells
+along the normal, with each cell pair contributing its own Phase 1 integral, satisfies this; a
+scheme that reconstructs to the edge first does not.
+
+Constructing such a stencil on Omega's unstructured TRiSK mesh is the **principal open design
+question of Phase 2** and is deliberately not settled here. The relevant machinery — the wider edge
+neighborhoods used for high-order tracer reconstruction, cf.
+{ref}`omega-design-governing-eqns-omega1` §10 and White & Adcroft (2008) — exists, but its accuracy
+on variable-resolution meshes and the cost of the extra pair evaluations both need assessment before
+the form is fixed. Phase 1 does not depend on the answer.
 
 ### 3.7 Where the cancellation is exact, and where it is not
 
@@ -384,10 +474,10 @@ and must therefore test. It does *not* rely on subtracting a background profile.
 
 #### 3.7.1 Why "uniform $\Theta$ and $S$" is the wrong condition
 
-An earlier draft of this design required the scheme to return zero whenever the layer means
-$\Theta_{i,k}$, $S_{i,k}$ are the same in both cells of an edge, for any tilt and any vertical
-profile. **That requirement cannot be met, and asking for it would send the implementation chasing
-an impossible target.**
+The natural way to state the robustness property is to require the scheme to return zero whenever
+the layer means $\Theta_{i,k}$, $S_{i,k}$ are the same in both cells of an edge, for any tilt and
+any vertical profile. **That requirement cannot be met, and asking for it would send the
+implementation chasing an impossible target.**
 
 When coordinate surfaces tilt relative to surfaces of constant pressure, layer $k$ in one column and
 layer $k$ in its neighbor cover *different pressure ranges*. Each column builds its own
@@ -601,26 +691,46 @@ they complete the force balance on the layer's control volume (§3.1.1).
 
 ### 3.9 Reduction to the centered scheme
 
-As a consistency check, the high-order scheme collapses to the implemented
-`PressureGradCentered` form
-($T^p_{e,k} = -\nabla M + \tfrac12(p_0+p_1)\nabla\alpha - \nabla\Phi$, with
-$M = \alpha p + g z$) in the joint limit of: constant in-layer reconstruction
-($\Theta' = S' = 0$, §3.4), midpoint quadrature in place of [](#sidewall-int), and two-cell
-centered horizontal differencing (§3.6). This guarantees the new code reproduces the existing
-scheme in its lowest-order configuration and provides a direct path for regression testing.
+The new scheme collapses to the implemented `PressureGradCentered` form
+($T^p_{e,k} = -\nabla M + \tfrac12(p_0+p_1)\nabla\alpha - \nabla\Phi$, with $M = \alpha p + g z$)
+in one configuration: **specific volume constant within each layer**, meaning both
+$\Theta' = S' = 0$ and the equation-of-state expansion [](#alpha-taylor) truncated to $\alpha_0$,
+combined with the two-cell edge operator [](#edge-grad). This is the isopycnal-model assumption,
+and it is the verification-only mode of §3.4.
+
+Two things fall out of that configuration that are worth noting, because they show the reduction is
+structural rather than a special case bolted on:
+
+- With $\alpha$ constant in the layer, $\alpha p$ is linear in pressure, so the sloping-interface
+  average [](#metric-divdiff) reduces *exactly* to the average of the two cells' interface values.
+  The interface term does not need to be switched off to recover the centered scheme; it degenerates
+  on its own.
+- For the same reason, the layer integral [](#sidewall-int) is exact under any symmetric quadrature
+  rule, midpoint included, so the quadrature setting does not enter the reduction either.
+
+What remains is the Montgomery-potential algebra, and the two forms agree. This gives a direct
+regression path (§5.5) and confirms the new code reproduces the existing scheme where it should.
+The agreement is algebraic, not bit-for-bit — the operations are performed in a different order
+(§4.4).
 
 ### 3.10 Per-step algorithm summary
 
+Steps 1–3 are per cell and layer; step 4 is per edge and layer. Phase differences are marked.
+
 1. From `VertCoord`: read `PressureInterface`, `PressureMid`, `GeomZInterface`/`GeomZMid`,
-   geopotential, and interface pseudo-heights (already computed diagnostically each step).
-2. Per cell-layer: obtain $\alpha_0$ (= existing `Eos::SpecVol`) and the derivatives
-   $\alpha_\Theta, \alpha_S, \alpha_p$ from one TEOS-10 evaluation ([](#alpha-derivs)).
-3. Per cell-layer: build mean-preserving PPM deviations $\Theta', S'$ ([](#vert-recon)).
-4. Per edge-layer: reconstruct edge quantities (cubic, §3.6) using interface locations and
-   quadrature nodes shared by the pressure and geopotential terms (the discrete hydrostatic
-   consistency requirement, §3.7); evaluate the analytic layer integral [](#sidewall-int),
-   the geopotential gradient, and the metric terms (§3.8); assemble $T^p_{e,k}$ and accumulate
-   into the tendency with `EdgeMask`.
+   geopotential, and interface pseudo-heights (already computed diagnostically each step). The
+   geometric height must satisfy condition 3 of §3.7.2; see the prerequisite in §3.7.4.
+2. Obtain $\alpha_0$ (= the existing `Eos::SpecVol` field) and the derivatives
+   $\alpha_\Theta, \alpha_S, \alpha_p$ from one TEOS-10 evaluation ([](#alpha-derivs)). Both phases
+   need all four; Phase 2 optionally adds second derivatives (§3.3).
+3. Build the mean-preserving deviations $\Theta', S'$ ([](#vert-recon)) — **linear in Phase 1,
+   parabolic in Phase 2** — using the actual non-uniform interface pressures (§3.4).
+4. For each edge: form the shared expansion point [](#edge-ref) from the two adjacent cells;
+   evaluate each column's layer integral [](#sidewall-int) with those shared coefficients; add the
+   sloping-interface terms [](#metric-divdiff) and the geopotential difference (§3.8); assemble
+   $T^p_{e,k}$ and accumulate into the tendency with `EdgeMask`. **Phase 1** uses the two-cell
+   operator [](#edge-grad); **Phase 2** uses the wider stencil of §3.6.1, built as a weighted sum of
+   such two-cell pair contributions.
 
 ## 4 Design
 
@@ -646,19 +756,34 @@ enum class PressureGradType {
 };
 ```
 
-New sub-options for the high-order scheme:
+New sub-options for the high-order scheme. Both phases use the same keys; Phase 2 adds values
+rather than keys, so no configuration written for Phase 1 needs to change when Phase 2 lands:
 
 ```yaml
     PressureGrad:
        PressureGradType: 'FiniteVolume'   # Centered | FiniteVolume
-       ReconstructionOrder: 4             # horizontal cell->edge order (2 = centered limit)
-       VerticalReconstruction: 'ppm'      # 'constant' (isopycnal limit) | 'ppm'
+       HorzOrder: 2                       # 2 = two-cell stencil (Phase 1); 4 = wide stencil (Phase 2)
+       VerticalReconstruction: 'linear'   # 'linear' (Phase 1) | 'ppm' (Phase 2)
+                                          #  | 'constant' (verification only, see below)
        QuadraturePoints: 2                # per-layer Gauss points for the side-wall integral
 ```
 
-The fourth-order target is `ReconstructionOrder: 4` with parabolic (`ppm`) vertical
-reconstruction. The centered scheme is recovered by `ReconstructionOrder: 2` and
-`VerticalReconstruction: 'constant'` (§3.9).
+- **Phase 1 default and target:** `HorzOrder: 2`, `VerticalReconstruction: 'linear'`.
+- **Phase 2 target:** `HorzOrder: 4`, `VerticalReconstruction: 'ppm'`.
+- `QuadraturePoints: 2` is exact for the integrand in both phases (§3.5) and should not normally be
+  changed. It is a knob because lowering it is needed for the verification configuration below, not
+  because raising it buys accuracy.
+
+`VerticalReconstruction: 'constant'` sets the specific volume constant within each layer — both
+$\Theta' = S' = 0$ and the equation-of-state expansion truncated to $\alpha_0$. It is **verification
+only**: combined with `HorzOrder: 2` it recovers `PressureGradCentered` (§3.9) and supports the
+permanent regression test of §5.5, and it isolates compressibility in §5.2. It is not a supported
+production setting, because it gives up the exactness for linearly varying profiles that
+Requirement 2.3.3 asks for. The implementation should log a warning if it is selected outside a
+test.
+
+`HorzOrder` selects the width of the edge *stencil* — how many cell pairs contribute — not the order
+of an interpolation of $\Theta$ and $S$ onto the edge. The distinction is not cosmetic; see §3.6.1.
 
 #### 4.1.2 New EOS support
 
@@ -706,11 +831,28 @@ KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge, I4 KChunk,
                                 const;
 ```
 
-(The existing centered signature is unchanged.) Additional cached members hold the cubic
-edge-reconstruction stencil and weights. The functor implements §3.3–§3.8 per edge and
-vertical chunk — sharing interface locations and quadrature nodes between the pressure and
-geopotential terms to satisfy discrete hydrostatic consistency (§3.7) — accumulating into
-`Tend` with `EdgeMask`, exactly as the centered functor does.
+(The existing centered signature is unchanged.) Additional cached members hold the quadrature nodes
+and weights and, in Phase 2, the wide-stencil cell lists and weights. The functor implements
+§3.3–§3.8 per edge and vertical chunk, accumulating into `Tend` with `EdgeMask`, exactly as the
+centered functor does.
+
+Two aspects of the loop structure follow from §3.3.1 and are worth stating here, because they differ
+from the obvious implementation:
+
+- **The layer integral is computed inside the edge loop, not cached per cell.** Both adjacent
+  columns' integrals [](#sidewall-int) use equation-of-state coefficients formed at the edge
+  [](#edge-ref), so the same cell yields a different integral at each of its edges. The per-cell
+  quantities that *can* be cached are the four EOS coefficients and the reconstruction slopes, which
+  is where the TEOS-10 cost lives; the per-edge work is polynomial arithmetic on those cached
+  values. This is what keeps Requirement 2.2 satisfied despite roughly three times as many integral
+  evaluations on a hexagonal mesh.
+- **Phase 2's wide stencil is a loop over cell pairs, not a wider interpolation.** Each pair
+  contributes a complete Phase 1 evaluation with its own shared expansion point, and the pair
+  results are combined with the stencil weights (§3.6.1). Implementing Phase 2 as a wider
+  reconstruction feeding a single evaluation would be simpler and would break the property of §3.7.
+
+The Phase 1 and Phase 2 code paths differ only in the reconstruction degree (§3.4) and in whether
+the pair loop has one entry or several. There is one functor, not two.
 
 ### 4.2 Methods
 
@@ -784,6 +926,55 @@ default and has served out its period as the reference implementation. That is d
 left as **follow-up work**, to be taken up as a separate, answer-changing change with its own
 baseline step — not as part of this design.
 
+### 4.5 What each phase delivers and depends on
+
+#### 4.5.1 Phase 1 — a consistent second-order scheme
+
+**Delivers.** The finite-volume control-volume form (§3.1.1); the sloping-interface integral
+(§3.8), which the centered scheme omits entirely; the equation-of-state expansion about a state
+shared across each edge (§3.3.1); mean-preserving linear reconstruction of $\Theta$ and $S$ in
+pressure (§3.4). The result is a pressure gradient that is zero to machine precision for any
+resting ocean whose profile varies linearly with pressure, at any tilt, thickness, or bathymetry
+(§3.7.3) — Requirement 2.3 in full.
+
+**Does not deliver.** Fourth-order accuracy. The horizontal operator is the same two-cell stencil
+in use today (§3.6), so horizontal truncation error is unchanged from `PressureGradCentered`.
+Requirements 2.1 and 2.6 are met at second order only.
+
+**Depends on.** The `VertCoord` geopotential decision of §3.7.4, which must be settled *before*
+implementation starts — the machine-precision property is unreachable without it, and option 1 (the
+recommendation) is answer-changing and needs its own baseline step. Nothing else in Phase 1 depends
+on unresolved questions.
+
+**Code and cost.** Three new `Eos` derivative fields and one new method (§4.1.2); the
+`PressureGradHighOrder` functor; no new TEOS-10 evaluations per cell and layer (Requirement 2.2),
+with roughly three times as many polynomial layer integrals on a hexagonal mesh (§4.1.3).
+
+#### 4.5.2 Phase 2 — fourth order
+
+**Delivers.** Parabolic vertical reconstruction (§3.4), widening the exact set to profiles that vary
+quadratically with pressure; a wide horizontal stencil (§3.6.1); optionally a second-order
+equation-of-state expansion (§3.3). Requirements 2.1 and 2.6 at fourth order.
+
+**Must preserve.** Everything Phase 1 establishes. In particular the machine-precision property must
+survive the wider stencil, which is why §3.6.1 constrains that stencil to be a weighted sum of
+two-column pair contributions rather than a reconstruction to the edge. The §5.2 gate is rerun
+unchanged for Phase 2.
+
+**Open question.** The form of the wide stencil on Omega's unstructured, variable-resolution TRiSK
+mesh is not settled by this design (§3.6.1). Resolving it — including the cost of the additional
+pair evaluations — is the first task of Phase 2 and does not block Phase 1.
+
+#### 4.5.3 Suggested order of work
+
+1. Settle the `VertCoord` geopotential question (§3.7.4) and take the baseline step it requires.
+2. Run the assumption-A4 diagnostic of §5.3, which uses the *existing* centered scheme and so can be
+   done immediately and in parallel with step 1. If spurious bottom-layer flow survives a profile
+   that Phase 1 would resolve exactly, the cause is elsewhere in the model and the priority of this
+   work should be reconsidered before it is built.
+3. Implement and verify Phase 1 against §5.1, §5.2, §5.3, and §5.5.
+4. Take up Phase 2, starting from the stencil question in §3.6.1.
+
 ## 5 Verification and Testing
 
 Testing reuses and extends the Polaris `horiz_press_grad` task family
@@ -799,52 +990,67 @@ the scheme helps at the resolutions Omega can afford, and a **measured order of 
 (Requirement 2.6), which verifies that the implementation is the scheme this design
 describes. Neither substitutes for the other, and both must pass.
 
+Which tests gate which phase:
+
+| Test | Phase 1 | Phase 2 |
+|---|---|---|
+| §5.1 Two-column convergence | gates, at second order | gates, at fourth order |
+| §5.2 Machine-precision cancellation | gates | rerun unchanged; must still pass |
+| §5.3 Seamount resting state | gates | rerun; error should drop further |
+| §5.4 Overflow | gates | rerun |
+| §5.5 Reduction to centered | gates | rerun unchanged |
+
+The A4 diagnostic within §5.3 is run *before* Phase 1 implementation and uses the existing centered
+scheme, so it gates nothing but informs whether the work should proceed as prioritized (§4.5.3).
+
 ### 5.1 Test: Two-column HPGA convergence (extend existing)
 
 Extend the four existing variants — `temperature_gradient`, `salinity_gradient`,
-`surface_pressure_gradient`, `ztilde_gradient` — to run the centered scheme and the new
-scheme at two orders:
+`surface_pressure_gradient`, `ztilde_gradient` — to run the centered scheme alongside the new one:
 
 - **Scheme selection.** Add `PressureGrad: { PressureGradType: FiniteVolume, … }` to
   `forward.yaml` and parametrize each task over three configurations:
   - `centered` — the legacy `PressureGradCentered` functor, unchanged;
-  - `finite_volume_order4` — `ReconstructionOrder: 4`, `VerticalReconstruction: ppm` (the
-    target);
-  - `finite_volume_order2` — the same code in its centered limit (`ReconstructionOrder: 2`,
-    `VerticalReconstruction: constant`, midpoint quadrature).
+  - `finite_volume_phase1` — `HorzOrder: 2`, `VerticalReconstruction: linear`;
+  - `finite_volume_phase2` — `HorzOrder: 4`, `VerticalReconstruction: ppm` (added when Phase 2
+    lands).
 
-  (These variant names are provisional; the final spelling follows Polaris' naming conventions
-  and is settled on the Polaris side. What matters here is that the last two are the *same*
+  (These variant names are provisional; the final spelling follows Polaris' naming conventions and
+  is settled on the Polaris side. What matters here is that the last two are the *same*
   implementation at two orders, distinct from the legacy functor.)
 
-  The third configuration exists because the order-2 verification gate below must exercise the
-  *new* implementation. Running the legacy functor under a "second order" label would measure
-  the convergence of code this design does not change, and would leave the new code's
-  lowest-order path unverified. It also supplies the round-off comparison of §5.5 at every
-  resolution rather than at a single configuration. The forward step still runs a single time
-  step with only `PressureGradTendencyEnable: true`, reading the PGF acceleration from
-  `NormalVelocityTend`.
+  `finite_volume_phase1` is not a stand-in for the legacy scheme: it is second order in the
+  horizontal like `centered`, but it is *consistent*, so its absolute error should be markedly
+  lower even though its convergence slope is the same. Both must be run, and the comparison between
+  them is the clearest single measure of what Phase 1 buys. Running only the legacy functor under a
+  "second order" label would measure the convergence of code this design does not change and leave
+  the new code's Phase 1 path unverified.
+
+  The forward step still runs a single time step with only `PressureGradTendencyEnable: true`,
+  reading the PGF acceleration from `NormalVelocityTend`.
 - **Reference.** `reference.py`/`analysis.py` compare `NormalVelocityTend` against the
   layer-mean analytic HPGA (unchanged). For the high-order scheme the layer-mean comparison
   remains the correct target, since the scheme is a finite-volume, layer-averaged
   discretization.
 - **Accuracy gate (new, Requirement 2.1):** at a representative coarse resolution (e.g. the
   coarsest in `horiz_resolutions`), the absolute RMS HPGA error vs. the reference must be below
-  a tolerance, **and** the high-order RMS error must be below the centered RMS error at that
-  same resolution (the scheme must demonstrably help where it matters).
+  a tolerance, **and** the new scheme's RMS error must be below the centered RMS error at that
+  same resolution (the scheme must demonstrably help where it matters). This gate applies to
+  Phase 1, where it is the primary measure of value, since Phase 1 does not change the
+  convergence slope.
 - **Verification gate (Requirement 2.6):** the measured slope of RMS error vs. resolution,
   `omega_vs_reference_convergence_rate_*`, must fall within a band around the configured order
-  of accuracy — nominally ~4 for `finite_volume_order4` and ~2 for `finite_volume_order2`
-  (and for `centered`, whose band is unchanged from today). This band is retuned from its
+  of accuracy — nominally ~2 for `finite_volume_phase1` and for `centered` (whose band is
+  unchanged from today), and ~4 for `finite_volume_phase2`. This band is retuned from its
   present values rather than loosened; a slope outside it fails the test and is treated as an
   implementation defect to be diagnosed, not as a tolerance to be widened.
-- **Asymptotic range (implementation-time task):** it is not yet established that the existing
-  `horiz_resolutions` sweep spans a range where a fourth-order slope is cleanly measurable —
-  the sweep may be too coarse to have entered the asymptotic regime at its fine end, or fine
-  enough that the reference solution's own quadrature error and roundoff contaminate the slope.
-  Determining the usable window, and extending or tightening the sweep (and, if needed, the
-  order of the Gauss quadrature in `reference.py`) so the designed order can be resolved, is
-  part of implementing this test.
+- **Asymptotic range (Phase 2 implementation-time task):** it is not yet established that the
+  existing `horiz_resolutions` sweep spans a range where a fourth-order slope is cleanly
+  measurable — the sweep may be too coarse to have entered the asymptotic regime at its fine end,
+  or fine enough that the reference solution's own quadrature error and roundoff contaminate the
+  slope. Determining the usable window, and extending or tightening the sweep (and, if needed, the
+  order of the Gauss quadrature in `reference.py`) so the designed order can be resolved, is part
+  of implementing Phase 2. Phase 1's second-order slope is measurable on the existing sweep.
 - **Consistency check (retained):** `omega_vs_polaris_rms_threshold` (~1e-10 m/s²) — Omega's
   forward output must still match the Python-computed HPGA, confirming the implementation
   matches the intended discretization.
@@ -879,6 +1085,13 @@ Three groups of profiles are run:
   place of [](#metric-divdiff), and (b) a cell-local expansion point in place of [](#edge-ref).
   Both must *fail* the machine-precision check. Without these, a passing result could just as easily
   come from a symmetry of the test setup as from the scheme being right.
+
+A separate and much smaller unit test covers the reconstruction estimator on its own (§3.4): given
+layer means sampled from a profile of the reconstruction's own degree on a **deliberately
+non-uniform** set of layer thicknesses, the recovered slope (Phase 1) or slope and curvature
+(Phase 2) must match the exact values to round-off. This is worth testing separately because it is
+the most likely place for the machine-precision gate above to fail, and it localizes the failure
+immediately.
 
 The test is also run in a single-precision build, to measure the round-off floor of §3.7.5 and
 settle whether the perturbation form is needed.
@@ -916,10 +1129,15 @@ attributable to PGF error is reduced relative to the centered scheme. This tests
 
 ### 5.5 Test: Reduction to the centered scheme (permanent regression)
 
-Configure the high-order option in its lowest-order limit (§3.9:
-`ReconstructionOrder: 2`, `VerticalReconstruction: constant`, midpoint quadrature) and confirm
-it reproduces `PressureGradCentered` to round-off on the two-column test. This guards
-Requirement 2.5 and protects the existing default during refactoring.
+Configure the new scheme in the verification-only mode of §3.9 — `HorzOrder: 2`,
+`VerticalReconstruction: constant` — and confirm it reproduces `PressureGradCentered` to round-off
+on the two-column test. This guards Requirement 2.5 and protects the existing default during
+refactoring. The test is established with Phase 1 and rerun unchanged for Phase 2, where it also
+confirms the wider stencil collapses correctly to the two-cell one.
+
+Note that this configuration is not a supported production setting (§4.1.1); it exists so that this
+comparison is possible. Keeping it costs one branch in the reconstruction and one in the
+equation-of-state expansion.
 
 This test is retained permanently rather than treated as a one-time transition check, and
 that choice is the reason `PressureGradCentered` is kept as a separate implementation rather
