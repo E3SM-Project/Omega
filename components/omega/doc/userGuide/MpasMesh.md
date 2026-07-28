@@ -258,7 +258,7 @@ conventions:
 `angleEdge` may be defined equivalently as the angle that the positive normal
 direction $\vec{u}$ makes with the local eastward direction (shown in
 {ref}`fig-angle-edge`), or as the angle that the positive tangential direction
-$\vec{v}$ makes with the local northward direction. 
+$\vec{v}$ makes with the local northward direction.
 
 ```{figure} images/angleEdge.png
 :name: fig-angle-edge
