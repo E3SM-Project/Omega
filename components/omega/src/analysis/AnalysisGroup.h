@@ -81,6 +81,12 @@ class AnalysisGroup {
                             ///< instantaneous output
    };
 
+   /// Sets the IOName metadata on an output Field so IOStream writes it under
+   /// a legible name rather than the full operator-chain string.
+   /// No-op if the field does not exist.
+   static void setOutputIOName(const std::string &InternalFieldName,
+                               const std::string &IOName);
+
    /// Template for constructing IOStream configurations for this group's
    /// output. Provides default values for all IOStream creation parameters.
    /// Derived classes can override defaults using group-specific config options

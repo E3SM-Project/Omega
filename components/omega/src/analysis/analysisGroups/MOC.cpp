@@ -90,7 +90,7 @@ MOC::MOC(const std::string &GroupName, Config &AnalysisGroupOptions,
       // For global MOC, use empty string (no mask)
       std::string RegionMaskName;
       if (RegionName != "Global") {
-         RegionMaskName = "regionMask" + RegionName;
+         RegionMaskName = "RegionMask" + RegionName;
       }
 
       // Build the MOC operator chain for this region
@@ -199,8 +199,8 @@ std::string MOC::buildMOCChain(const std::string &RegionName,
            "Dimension",
            0), // PrefixSum: integrate along bin/latitude dimension (horizontal)
        opParam("Reverse",
-               false) // PrefixSum: forward integration (south-to-north)
-   );
+               false), // PrefixSum: forward integration (south-to-north)
+       opParam("IOName", std::string("MOC_streamfunction_") + RegionName));
 
    // Append config to vector (indexed in same order as RegionList/ChainStems)
    ChainConfigs.push_back(ChainConfig);
@@ -298,8 +298,9 @@ std::string MOC::buildTransectMOCChain(const std::string &TransectName,
        opParam("Dimension",
                0), // PrefixSum: integrate along vertical dimension
                    // (dim 0 of a 1D array from TransectAccumulatorOp)
-       opParam("Reverse", true) // PrefixSum: bottom-to-top integration
-   );
+       opParam("Reverse", true), // PrefixSum: bottom-to-top integration
+       opParam("IOName",
+               std::string("MOC_streamfunction_transect_") + TransectName));
 
    // Append config to vector (indexed in same order as combined
    // RegionList+TransectList/ChainStems)
