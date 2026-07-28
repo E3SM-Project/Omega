@@ -11,6 +11,7 @@ This page documents the user-facing configuration and behavior for current forci
 
 Surface stress forcing adds momentum tendency from surface stress (e.g. wind).
 
+(omega-user-forcing-sfc-stress)=
 ### Surface stress forcing configuration
 
 Surface stress forcing behavior is controlled by two configuration blocks:
@@ -28,6 +29,8 @@ Omega:
   - `Isotropic`: isotropic cell-to-edge interpolation for surface stress
   - `Anisotropic`: anisotropic interpolation option
 - `Tendencies.SfcStressForcingTendencyEnable`: switch to enable surface stress forcing tendency
+
+See {ref}`Interpolate cells to edges <omega-user-horz-operators-interp>` for a detailed description of the cell-to-edge interpolation operators (Isotropic and Anisotropic) used by SfcStress.InterpType.
 
 ### Required input fields
 

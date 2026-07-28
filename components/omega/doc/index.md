@@ -28,6 +28,7 @@ userGuide/Config
 userGuide/Broadcast
 userGuide/Logging
 userGuide/Driver
+userGuide/MpasMesh
 userGuide/Decomp
 userGuide/Dimension
 userGuide/EOS
