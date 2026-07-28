@@ -120,9 +120,10 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
 
       // Construct output field name and set instance name
       // Format: Input_BinnedAccumulator(BinIndexField) to match chain syntax
-      std::string OutputFieldName = InputNames[0] + "_BinnedAccumulator(" + InputNames[1] + ")";
-      OutputNames                 = {OutputFieldName};
-      InstanceName                = OutputFieldName;
+      std::string OutputFieldName =
+          InputNames[0] + "_BinnedAccumulator(" + InputNames[1] + ")";
+      OutputNames  = {OutputFieldName};
+      InstanceName = OutputFieldName;
 
       // Get input metadata
       std::string ValueDescr, ValueUnits, ValueStdName;
