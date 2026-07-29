@@ -768,6 +768,33 @@ class LinearEos {
       }
    }
 
+   /// Calculate the linear specific volume and its three first derivatives
+   /// over a vertical chunk of a cell. With
+   ///    SpecVol = 1 / (RhoT0S0 + DRhodT * Ct + DRhodS * Sa)
+   /// the derivatives are -DRhodT * SpecVol^2 and -DRhodS * SpecVol^2, and
+   /// the linear EOS has no pressure dependence at all.
+   KOKKOS_FUNCTION void
+   calcSpecVolDerivs(Array2DReal SpecVol, Array2DReal SpecVolDCt,
+                     Array2DReal SpecVolDSa, Array2DReal SpecVolDP, I4 ICell,
+                     I4 KChunk, const Array2DReal &ConservTemp,
+                     const Array2DReal &AbsSalinity) const {
+
+      const I4 KStart = chunkStart(KChunk, MinLayerCell(ICell));
+      const I4 KLen   = chunkLength(KChunk, KStart, MaxLayerCell(ICell));
+
+      for (int KVec = 0; KVec < KLen; ++KVec) {
+         const I4 K = KStart + KVec;
+         const Real Sv =
+             1.0_Real / (RhoT0S0 + (DRhodT * ConservTemp(ICell, K) +
+                                    DRhodS * AbsSalinity(ICell, K)));
+
+         SpecVol(ICell, K)    = Sv;
+         SpecVolDCt(ICell, K) = -DRhodT * Sv * Sv;
+         SpecVolDSa(ICell, K) = -DRhodS * Sv * Sv;
+         SpecVolDP(ICell, K)  = 0.0_Real;
+      }
+   }
+
  private:
    Array1DI4 MinLayerCell;
    Array1DI4 MaxLayerCell;
@@ -794,6 +821,29 @@ class ConstantEos {
       for (int KVec = 0; KVec < KLen; ++KVec) {
          const I4 K        = KStart + KVec;
          SpecVol(ICell, K) = 1.0_Real / RhoSw;
+      }
+   }
+
+   /// Calculate the constant specific volume and its three first derivatives
+   /// over a vertical chunk of a cell. The specific volume does not depend on
+   /// temperature, salinity or pressure, so all three derivatives vanish.
+   KOKKOS_FUNCTION void
+   calcSpecVolDerivs(Array2DReal SpecVol, Array2DReal SpecVolDCt,
+                     Array2DReal SpecVolDSa, Array2DReal SpecVolDP, I4 ICell,
+                     I4 KChunk, const Array2DReal &ConservTemp,
+                     const Array2DReal &AbsSalinity) const {
+
+      const I4 KStart = chunkStart(KChunk, MinLayerCell(ICell));
+      const I4 KLen   = chunkLength(KChunk, KStart, MaxLayerCell(ICell));
+      (void)ConservTemp;
+      (void)AbsSalinity;
+
+      for (int KVec = 0; KVec < KLen; ++KVec) {
+         const I4 K           = KStart + KVec;
+         SpecVol(ICell, K)    = 1.0_Real / RhoSw;
+         SpecVolDCt(ICell, K) = 0.0_Real;
+         SpecVolDSa(ICell, K) = 0.0_Real;
+         SpecVolDP(ICell, K)  = 0.0_Real;
       }
    }
 
