@@ -557,7 +557,7 @@ contains
       !$omp         sumNewThicknessWeightedSaltContent, oceanFreezingTemperature, potential, &
       !$omp         freezingEnergy, meltingEnergy, frazilSalinity, newFrazilIceThickness, &
       !$omp         newThicknessWeightedSaltContent, meltedFrazilIceThickness, &
-      !$omp         meltedThicknessWeightedSaltContent, newFrazilEnergy, meltedFrazilEnergy)
+      !$omp         meltedThicknessWeightedSaltContent, newFrazilEnergy, meltedFrazilEnergy, &
       !$omp         sumNewFrazilEnergy, newFrazilEnergy)
       do iCell=1,nCells
 
