@@ -34,6 +34,17 @@ class Teos10Eos {
    /// constructor declaration
    Teos10Eos(const VertCoord *VCoord);
 
+   /// Normalization used by the Roquet et al. 2015 75-term polynomial. The
+   /// polynomial is written in the normalized variables
+   ///    Ss = sqrt((Sa + DeltaS) / SaNorm), Tt = Ct / CtNorm, Pp = P * PNorm
+   /// with P the relative pressure in dbar. These are shared by the specific
+   /// volume and by its derivatives, so that both are evaluated at exactly
+   /// the same normalized state.
+   static constexpr Real SaNorm = 40.0 * SS0 / 35.0; ///< salinity scale (g/kg)
+   static constexpr Real CtNorm = 40.0;   ///< temperature scale (degC)
+   static constexpr Real DeltaS = 24.0;   ///< salinity offset (g/kg)
+   static constexpr Real PNorm  = 1.0e-4; ///< pressure scale (1/dbar)
+
    //   The functor takes the full arrays of specific volume (inout),
    //   the indices ICell and KChunk, and the ocean tracers (conservative)
    //   temperature, (absolute) salinity, and relative pressure (gauge pressure,
@@ -83,11 +94,8 @@ class Teos10Eos {
    KOKKOS_FUNCTION void calcPCoeffs(Real (&SpecVolPCoeffs)[6 * VecLength],
                                     const I4 KVec, const Real Ct,
                                     const Real Sa) const {
-      constexpr Real SaNorm = 40.0 * 35.16504 / 35.0;
-      constexpr Real CtNorm = 40.0;
-      constexpr Real DeltaS = 24.0;
-      Real Ss               = Kokkos::sqrt((Sa + DeltaS) / SaNorm);
-      Real Tt               = Ct / CtNorm;
+      Real Ss = Kokkos::sqrt((Sa + DeltaS) / SaNorm);
+      Real Tt = Ct / CtNorm;
 
       /// Coefficients for the polynomial expansion
       constexpr Real V000 = 1.0769995862e-03;
@@ -207,8 +215,7 @@ class Teos10Eos {
    KOKKOS_FUNCTION Real calcDelta(const Real (&SpecVolPCoeffs)[6 * VecLength],
                                   const I4 KVec, const Real P) const {
 
-      constexpr Real PNorm = 1e-4;
-      Real Pp              = P * PNorm;
+      Real Pp = P * PNorm;
 
       Real Delta = ((((SpecVolPCoeffs[5 + 6 * KVec] * Pp +
                        SpecVolPCoeffs[4 + 6 * KVec]) *
@@ -226,19 +233,336 @@ class Teos10Eos {
 
    /// Calculate reference profile for TEOS-10
    KOKKOS_FUNCTION Real calcRefProfile(Real P) const {
-      constexpr Real PNorm = 1e-4;
-      constexpr Real V00   = -4.4015007269e-05;
-      constexpr Real V01   = 6.9232335784e-06;
-      constexpr Real V02   = -7.5004675975e-07;
-      constexpr Real V03   = 1.7009109288e-08;
-      constexpr Real V04   = -1.6884162004e-08;
-      constexpr Real V05   = 1.9613503930e-09;
-      Real Pp              = P * PNorm;
+      constexpr Real V00 = -4.4015007269e-05;
+      constexpr Real V01 = 6.9232335784e-06;
+      constexpr Real V02 = -7.5004675975e-07;
+      constexpr Real V03 = 1.7009109288e-08;
+      constexpr Real V04 = -1.6884162004e-08;
+      constexpr Real V05 = 1.9613503930e-09;
+      Real Pp            = P * PNorm;
 
       Real V0 =
           (((((V05 * Pp + V04) * Pp + V03) * Pp + V02) * Pp + V01) * Pp + V00) *
           Pp;
       return V0;
+   }
+
+   /// Calculate pressure polynomial coefficients for the derivative of the
+   /// TEOS-10 specific volume with respect to the normalized temperature Tt.
+   ///
+   /// The coefficients are the analytic Tt-derivative of the 75-term
+   /// polynomial in calcPCoeffs above: A(i,j,k) = (j+1) * V(i,j+1,k). They are
+   /// the same values used by Teos10BruntVaisalaFreqSq::calcAlpha, regrouped
+   /// here by power of pressure to match the calcPCoeffs/calcDelta split.
+   /// The Tt-derivative is one degree lower in pressure than the specific
+   /// volume itself, so there are five coefficients rather than six.
+   KOKKOS_FUNCTION void calcPCoeffsDTt(Real (&DTtPCoeffs)[5 * VecLength],
+                                       const I4 KVec, const Real Ss,
+                                       const Real Tt) const {
+
+      constexpr Real A000 = -1.56497346750e-5;
+      constexpr Real A001 = 1.85057654290e-5;
+      constexpr Real A002 = -1.17363867310e-6;
+      constexpr Real A003 = -3.65270065530e-7;
+      constexpr Real A004 = 3.14540999020e-7;
+      constexpr Real A010 = 5.55242129680e-5;
+      constexpr Real A011 = -2.34332137060e-5;
+      constexpr Real A012 = 4.26100574800e-6;
+      constexpr Real A013 = 5.73918103180e-7;
+      constexpr Real A020 = -4.95634777770e-5;
+      constexpr Real A021 = 2.37838968519e-5;
+      constexpr Real A022 = -1.38397620111e-6;
+      constexpr Real A030 = 2.76445290808e-5;
+      constexpr Real A031 = -1.36408749928e-5;
+      constexpr Real A032 = -2.53411666056e-7;
+      constexpr Real A040 = -4.02698077700e-6;
+      constexpr Real A041 = 2.53683834070e-6;
+      constexpr Real A050 = 1.23258565608e-6;
+      constexpr Real A100 = 3.50095997640e-5;
+      constexpr Real A101 = -9.56770881560e-6;
+      constexpr Real A102 = -5.56991545570e-6;
+      constexpr Real A103 = -2.72956962370e-7;
+      constexpr Real A110 = -7.48716846880e-5;
+      constexpr Real A111 = -4.73566167220e-7;
+      constexpr Real A112 = 7.82747741600e-7;
+      constexpr Real A120 = 7.24244384490e-5;
+      constexpr Real A121 = -1.03676320965e-5;
+      constexpr Real A122 = 2.32856664276e-8;
+      constexpr Real A130 = -3.50383492616e-5;
+      constexpr Real A131 = 5.18268711320e-6;
+      constexpr Real A140 = -1.65263794500e-6;
+      constexpr Real A200 = -4.35926785610e-5;
+      constexpr Real A201 = 1.11008347650e-5;
+      constexpr Real A202 = 5.46207488340e-6;
+      constexpr Real A210 = 7.18156455200e-5;
+      constexpr Real A211 = 5.85666925900e-6;
+      constexpr Real A212 = -1.31462208134e-6;
+      constexpr Real A220 = -4.30608991440e-5;
+      constexpr Real A221 = 9.49659182340e-7;
+      constexpr Real A230 = 1.74814722392e-5;
+      constexpr Real A300 = 3.45324618280e-5;
+      constexpr Real A301 = -9.84471178440e-6;
+      constexpr Real A302 = -1.35441856270e-6;
+      constexpr Real A310 = -3.73971683740e-5;
+      constexpr Real A311 = -9.76522784000e-7;
+      constexpr Real A320 = 6.85899736680e-6;
+      constexpr Real A400 = -1.19594097880e-5;
+      constexpr Real A401 = 2.59092252600e-6;
+      constexpr Real A410 = 7.71906784880e-6;
+      constexpr Real A500 = 1.38645945810e-6;
+
+      DTtPCoeffs[4 + 5 * KVec] = A004;
+      DTtPCoeffs[3 + 5 * KVec] = A013 * Tt + A103 * Ss + A003;
+      DTtPCoeffs[2 + 5 * KVec] = ((A032 * Tt + A122 * Ss + A022) * Tt +
+                                  (A212 * Ss + A112) * Ss + A012) *
+                                     Tt +
+                                 ((A302 * Ss + A202) * Ss + A102) * Ss + A002;
+      DTtPCoeffs[1 + 5 * KVec] =
+          (((A041 * Tt + A131 * Ss + A031) * Tt + (A221 * Ss + A121) * Ss +
+            A021) *
+               Tt +
+           ((A311 * Ss + A211) * Ss + A111) * Ss + A011) *
+              Tt +
+          (((A401 * Ss + A301) * Ss + A201) * Ss + A101) * Ss + A001;
+      DTtPCoeffs[0 + 5 * KVec] =
+          ((((A050 * Tt + A140 * Ss + A040) * Tt + (A230 * Ss + A130) * Ss +
+             A030) *
+                Tt +
+            ((A320 * Ss + A220) * Ss + A120) * Ss + A020) *
+               Tt +
+           (((A410 * Ss + A310) * Ss + A210) * Ss + A110) * Ss + A010) *
+              Tt +
+          ((((A500 * Ss + A400) * Ss + A300) * Ss + A200) * Ss + A100) * Ss +
+          A000;
+   }
+
+   /// Calculate pressure polynomial coefficients for the derivative of the
+   /// TEOS-10 specific volume with respect to the normalized salinity Ss.
+   ///
+   /// As above, these are the analytic Ss-derivative of the 75-term
+   /// polynomial: B(i,j,k) = (i+1) * V(i+1,j,k), the same values used by
+   /// Teos10BruntVaisalaFreqSq::calcBeta.
+   KOKKOS_FUNCTION void calcPCoeffsDSs(Real (&DSsPCoeffs)[5 * VecLength],
+                                       const I4 KVec, const Real Ss,
+                                       const Real Tt) const {
+
+      constexpr Real B000 = -3.10389819760e-4;
+      constexpr Real B001 = 2.42624687470e-5;
+      constexpr Real B002 = -5.84844329840e-7;
+      constexpr Real B003 = 3.63101885150e-7;
+      constexpr Real B004 = -1.11471254230e-7;
+      constexpr Real B010 = 3.50095997640e-5;
+      constexpr Real B011 = -9.56770881560e-6;
+      constexpr Real B012 = -5.56991545570e-6;
+      constexpr Real B013 = -2.72956962370e-7;
+      constexpr Real B020 = -3.74358423440e-5;
+      constexpr Real B021 = -2.36783083610e-7;
+      constexpr Real B022 = 3.91373870800e-7;
+      constexpr Real B030 = 2.41414794830e-5;
+      constexpr Real B031 = -3.45587736550e-6;
+      constexpr Real B032 = 7.76188880920e-9;
+      constexpr Real B040 = -8.75958731540e-6;
+      constexpr Real B041 = 1.29567177830e-6;
+      constexpr Real B050 = -3.30527589000e-7;
+      constexpr Real B100 = 1.33856134076e-3;
+      constexpr Real B101 = -6.95849219480e-5;
+      constexpr Real B102 = -9.62445031940e-6;
+      constexpr Real B103 = 3.34926075600e-8;
+      constexpr Real B110 = -8.71853571220e-5;
+      constexpr Real B111 = 2.22016695300e-5;
+      constexpr Real B112 = 1.09241497668e-5;
+      constexpr Real B120 = 7.18156455200e-5;
+      constexpr Real B121 = 5.85666925900e-6;
+      constexpr Real B122 = -1.31462208134e-6;
+      constexpr Real B130 = -2.87072660960e-5;
+      constexpr Real B131 = 6.33106121560e-7;
+      constexpr Real B140 = 8.74073611960e-6;
+      constexpr Real B200 = -2.55143801811e-3;
+      constexpr Real B201 = 1.12412331915e-4;
+      constexpr Real B202 = 1.47789320994e-5;
+      constexpr Real B210 = 1.03597385484e-4;
+      constexpr Real B211 = -2.95341353532e-5;
+      constexpr Real B212 = -4.06325568810e-6;
+      constexpr Real B220 = -5.60957525610e-5;
+      constexpr Real B221 = -1.46478417600e-6;
+      constexpr Real B230 = 6.85899736680e-6;
+      constexpr Real B300 = 2.32344279772e-3;
+      constexpr Real B301 = -6.92888744480e-5;
+      constexpr Real B302 = -7.12478989080e-6;
+      constexpr Real B310 = -4.78376391520e-5;
+      constexpr Real B311 = 1.03636901040e-5;
+      constexpr Real B320 = 1.54381356976e-5;
+      constexpr Real B400 = -1.05461852535e-3;
+      constexpr Real B401 = 1.54637136265e-5;
+      constexpr Real B410 = 6.93229729050e-6;
+      constexpr Real B500 = 1.91594743830e-4;
+
+      DSsPCoeffs[4 + 5 * KVec] = B004;
+      DSsPCoeffs[3 + 5 * KVec] = B013 * Tt + B103 * Ss + B003;
+      DSsPCoeffs[2 + 5 * KVec] = ((B032 * Tt + B122 * Ss + B022) * Tt +
+                                  (B212 * Ss + B112) * Ss + B012) *
+                                     Tt +
+                                 ((B302 * Ss + B202) * Ss + B102) * Ss + B002;
+      DSsPCoeffs[1 + 5 * KVec] =
+          (((B041 * Tt + B131 * Ss + B031) * Tt + (B221 * Ss + B121) * Ss +
+            B021) *
+               Tt +
+           ((B311 * Ss + B211) * Ss + B111) * Ss + B011) *
+              Tt +
+          (((B401 * Ss + B301) * Ss + B201) * Ss + B101) * Ss + B001;
+      DSsPCoeffs[0 + 5 * KVec] =
+          ((((B050 * Tt + B140 * Ss + B040) * Tt + (B230 * Ss + B130) * Ss +
+             B030) *
+                Tt +
+            ((B320 * Ss + B220) * Ss + B120) * Ss + B020) *
+               Tt +
+           (((B410 * Ss + B310) * Ss + B210) * Ss + B110) * Ss + B010) *
+              Tt +
+          ((((B500 * Ss + B400) * Ss + B300) * Ss + B200) * Ss + B100) * Ss +
+          B000;
+   }
+
+   /// Evaluate one of the degree-4 derivative pressure polynomials assembled
+   /// by calcPCoeffsDTt or calcPCoeffsDSs. P is relative pressure in dbar.
+   KOKKOS_FUNCTION Real calcDeltaDeriv(const Real (&DPCoeffs)[5 * VecLength],
+                                       const I4 KVec, const Real P) const {
+
+      Real Pp = P * PNorm;
+
+      Real DDelta =
+          (((DPCoeffs[4 + 5 * KVec] * Pp + DPCoeffs[3 + 5 * KVec]) * Pp +
+            DPCoeffs[2 + 5 * KVec]) *
+               Pp +
+           DPCoeffs[1 + 5 * KVec]) *
+              Pp +
+          DPCoeffs[0 + 5 * KVec];
+
+      return DDelta;
+   }
+
+   /// Evaluate the derivative of the TEOS-10 pressure polynomial with respect
+   /// to pressure, from the coefficients calcPCoeffs has already assembled for
+   /// the specific volume itself. P is relative pressure in dbar and the
+   /// result is per dbar.
+   KOKKOS_FUNCTION Real calcDeltaDP(const Real (&SpecVolPCoeffs)[6 * VecLength],
+                                    const I4 KVec, const Real P) const {
+
+      Real Pp = P * PNorm;
+
+      Real DDelta = (((5.0_Real * SpecVolPCoeffs[5 + 6 * KVec] * Pp +
+                       4.0_Real * SpecVolPCoeffs[4 + 6 * KVec]) *
+                          Pp +
+                      3.0_Real * SpecVolPCoeffs[3 + 6 * KVec]) *
+                         Pp +
+                     2.0_Real * SpecVolPCoeffs[2 + 6 * KVec]) *
+                        Pp +
+                    SpecVolPCoeffs[1 + 6 * KVec];
+
+      return DDelta * PNorm;
+   }
+
+   /// Calculate the derivative of the TEOS-10 reference profile with respect
+   /// to pressure. P is relative pressure in dbar and the result is per dbar.
+   /// The reference profile does not depend on temperature or salinity, so it
+   /// contributes only to the pressure derivative -- but it must not be left
+   /// out of that one.
+   KOKKOS_FUNCTION Real calcRefProfileDP(Real P) const {
+      constexpr Real V00 = -4.4015007269e-05;
+      constexpr Real V01 = 6.9232335784e-06;
+      constexpr Real V02 = -7.5004675975e-07;
+      constexpr Real V03 = 1.7009109288e-08;
+      constexpr Real V04 = -1.6884162004e-08;
+      constexpr Real V05 = 1.9613503930e-09;
+      Real Pp            = P * PNorm;
+
+      Real DV0 =
+          (((((6.0_Real * V05 * Pp + 5.0_Real * V04) * Pp + 4.0_Real * V03) *
+                 Pp +
+             3.0_Real * V02) *
+                Pp +
+            2.0_Real * V01) *
+               Pp +
+           V00);
+
+      return DV0 * PNorm;
+   }
+
+   /// Calculate the TEOS-10 specific volume and its three first derivatives at
+   /// a single state. P is the relative pressure (gauge pressure in Pa, i.e.
+   /// absolute pressure minus the standard atmosphere). The derivatives are
+   /// returned per degC, per (g/kg), and per Pa respectively.
+   KOKKOS_FUNCTION void calcSpecVolAndDerivs(const Real Ct, const Real Sa,
+                                             const Real P, Real &SpecVol,
+                                             Real &SpecVolDCt, Real &SpecVolDSa,
+                                             Real &SpecVolDP) const {
+
+      Real SpecVolPCoeffs[6 * VecLength];
+      Real DTtPCoeffs[5 * VecLength];
+      Real DSsPCoeffs[5 * VecLength];
+
+      const Real Ss  = Kokkos::sqrt((Sa + DeltaS) / SaNorm);
+      const Real Tt  = Ct / CtNorm;
+      const Real Pdb = P * Pa2Db;
+
+      calcPCoeffs(SpecVolPCoeffs, 0, Ct, Sa);
+      calcPCoeffsDTt(DTtPCoeffs, 0, Ss, Tt);
+      calcPCoeffsDSs(DSsPCoeffs, 0, Ss, Tt);
+
+      SpecVol = calcRefProfile(Pdb) + calcDelta(SpecVolPCoeffs, 0, Pdb);
+
+      /// Chain rule from the normalized variables of the polynomial to the
+      /// physical ones: dTt/dCt = 1 / CtNorm, dSs/dSa = 1 / (2 SaNorm Ss),
+      /// and dPdb/dP = Pa2Db.
+      SpecVolDCt = calcDeltaDeriv(DTtPCoeffs, 0, Pdb) / CtNorm;
+      SpecVolDSa =
+          calcDeltaDeriv(DSsPCoeffs, 0, Pdb) * 0.5_Real / (SaNorm * Ss);
+      SpecVolDP =
+          (calcRefProfileDP(Pdb) + calcDeltaDP(SpecVolPCoeffs, 0, Pdb)) * Pa2Db;
+   }
+
+   /// Calculate the TEOS-10 specific volume and its three first derivatives
+   /// over a vertical chunk of a cell. Pressure is the relative pressure in
+   /// Pa; the derivatives are per degC, per (g/kg), and per Pa.
+   KOKKOS_FUNCTION void
+   calcSpecVolDerivs(Array2DReal SpecVol, Array2DReal SpecVolDCt,
+                     Array2DReal SpecVolDSa, Array2DReal SpecVolDP, I4 ICell,
+                     I4 KChunk, const Array2DReal &ConservTemp,
+                     const Array2DReal &AbsSalinity,
+                     const Array2DReal &Pressure) const {
+
+      Real SpecVolPCoeffs[6 * VecLength];
+      Real DTtPCoeffs[5 * VecLength];
+      Real DSsPCoeffs[5 * VecLength];
+
+      const I4 KStart = chunkStart(KChunk, MinLayerCell(ICell));
+      const I4 KLen   = chunkLength(KChunk, KStart, MaxLayerCell(ICell));
+
+      for (int KVec = 0; KVec < KLen; ++KVec) {
+         const I4 K     = KStart + KVec;
+         const Real Ct  = ConservTemp(ICell, K);
+         const Real Sa  = AbsSalinity(ICell, K);
+         const Real Ss  = Kokkos::sqrt((Sa + DeltaS) / SaNorm);
+         const Real Tt  = Ct / CtNorm;
+         const Real Pdb = Pressure(ICell, K) * Pa2Db;
+
+         /// Assemble the pressure polynomial coefficients for the specific
+         /// volume and for its temperature and salinity derivatives. All three
+         /// use the same normalized state, so the equation of state is
+         /// evaluated only once per cell and layer.
+         calcPCoeffs(SpecVolPCoeffs, KVec, Ct, Sa);
+         calcPCoeffsDTt(DTtPCoeffs, KVec, Ss, Tt);
+         calcPCoeffsDSs(DSsPCoeffs, KVec, Ss, Tt);
+
+         SpecVol(ICell, K) =
+             calcRefProfile(Pdb) + calcDelta(SpecVolPCoeffs, KVec, Pdb);
+
+         SpecVolDCt(ICell, K) = calcDeltaDeriv(DTtPCoeffs, KVec, Pdb) / CtNorm;
+         SpecVolDSa(ICell, K) =
+             calcDeltaDeriv(DSsPCoeffs, KVec, Pdb) * 0.5_Real / (SaNorm * Ss);
+         SpecVolDP(ICell, K) =
+             (calcRefProfileDP(Pdb) + calcDeltaDP(SpecVolPCoeffs, KVec, Pdb)) *
+             Pa2Db;
+      }
    }
 
    /// Calculate 2nd derivative of Gibbs wrt pot temp at ref P for TEOS-10
