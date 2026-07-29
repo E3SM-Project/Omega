@@ -70,6 +70,67 @@ volume arrays, do
 Eos.computeBruntVaisalaFreqSq(ConservTemp, AbsSalinity, Pressure, SpecVol);
 ```
 
+## First derivatives of specific volume
+
+The `Eos` class can also compute the first derivatives of the specific volume
+with respect to conservative temperature, absolute salinity, and pressure,
+together with the specific volume itself:
+
+```c++
+Eos.computeSpecVolAndDerivs(ConservTemp, AbsSalinity, Pressure);
+```
+
+`Pressure` is the relative pressure (gauge pressure in Pa) as elsewhere in
+`Eos`, and the derivatives are returned per `degC`, per `(g/kg)`, and per `Pa`
+respectively. Note the pressure derivative is per Pascal, not per decibar.
+
+The results are stored in the `SpecVolDCt`, `SpecVolDSa` and `SpecVolDP`
+members alongside `SpecVol`, and all three are registered as fields in the
+`Eos` group so they can be written to a stream. Because `SpecVol` is computed
+here as well, `computeSpecVolAndDerivs` replaces a call to `computeSpecVol`
+rather than accompanying one; calling both would evaluate the equation of state
+twice. The valid range of the derivative fields spans the full range of `Real`
+rather than starting at zero, since the salinity derivative is negative
+everywhere and the temperature derivative is negative in cold, nearly fresh
+water.
+
+The two methods are kept separate rather than always computing the derivatives
+because they roughly double the TEOS-10 arithmetic per cell and layer, and only
+the higher-order pressure gradient needs them.
+
+All four values come from a single pass over the equation of state. For
+`EosType::Teos10Eos` the derivatives are the analytic derivatives of the same
+75-term polynomial used for the specific volume, evaluated at the same
+normalized state, so no second call to the equation of state is made. The
+pressure derivative reuses the pressure coefficients already assembled for the
+specific volume; the temperature and salinity derivatives need coefficient sets
+of their own but share the normalization and the square root. For
+`EosType::LinearEos` the derivatives are `-DRhoDT` and `-DRhoDS` times the
+square of the specific volume, with no pressure dependence, and for
+`EosType::ConstantEos` all three vanish.
+
+The thermal expansion and haline contraction coefficients used by the
+`BruntVaisalaFreqSq` calculation are formed from these same derivatives,
+`alpha = SpecVolDCt / SpecVol` and `beta = -SpecVolDSa / SpecVol`, so the
+polynomial coefficients exist in only one place.
+
+### A note on GSW-C
+
+The GSW toolbox may be redistributed only without modification, so the
+derivative routines in GSW-C are not ported or adapted here; they also could
+not be called from a Kokkos device kernel. The implementation instead
+differentiates the published Roquet et al. 2015 polynomial that `Teos10Eos`
+already carries. GSW-C is used unmodified, through its public API, as an
+independent check in the unit test.
+
+That test compares against `gsw_specvol_first_derivatives` over a range of
+states and finds agreement of order `1e-14` for the temperature and salinity
+derivatives. The pressure derivative agrees only to about `2e-12`, and the
+difference is on the GSW-C side: its `v_P` is evaluated from coefficients that
+have been pre-multiplied by their pressure exponents and rounded, whereas the
+Omega implementation differentiates the full-precision coefficients and matches
+the exact derivative to roughly `1e-16`.
+
 ## Helper functions for conversion
 
 The TEOS-10 implementation includes helper functions for temperature
