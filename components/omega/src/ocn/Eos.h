@@ -1104,14 +1104,20 @@ class Eos {
    Array2DReal SpecVol;            ///< Specific volume field at level centers
    Array2DReal SpecVolDisplaced;   ///< Displaced specific volume field
    Array2DReal BruntVaisalaFreqSq; ///< Squared Brunt-Vaisala frequency field
+   Array2DReal SpecVolDCt;         ///< d(SpecVol)/d(ConservTemp), per degC
+   Array2DReal SpecVolDSa;         ///< d(SpecVol)/d(AbsSalinity), per (g/kg)
+   Array2DReal SpecVolDP;          ///< d(SpecVol)/d(Pressure), per Pa
 
    std::string SpecVolFldName; ///< Field name for specific volume
    std::string
        SpecVolDisplacedFldName; ///< Field name for displaced specific volume
    std::string BruntVaisalaFreqSqFldName; ///< Field name for squared
                                           ///< Brunt-Vaisala frequency
-   std::string EosGroupName;              ///< EOS group name (for config)
-   std::string Name;                      ///< Name of this EOS instance
+   std::string SpecVolDCtFldName; ///< Field name for temperature derivative
+   std::string SpecVolDSaFldName; ///< Field name for salinity derivative
+   std::string SpecVolDPFldName;  ///< Field name for pressure derivative
+   std::string EosGroupName;      ///< EOS group name (for config)
+   std::string Name;              ///< Name of this EOS instance
 
    /// Compute specific volume for all cells/layers
    void computeSpecVol(const Array2DReal &ConservTemp,
@@ -1122,6 +1128,17 @@ class Eos {
    void computeSpecVolDisp(const Array2DReal &ConservTemp,
                            const Array2DReal &AbsSalinity,
                            const Array2DReal &Pressure, I4 KDisp);
+
+   /// Compute specific volume together with its first derivatives with respect
+   /// to conservative temperature, absolute salinity and pressure, in a single
+   /// pass over the equation of state. Pressure is the relative pressure in Pa
+   /// and the derivatives are returned per degC, per (g/kg) and per Pa. The
+   /// results are stored in the SpecVol, SpecVolDCt, SpecVolDSa and SpecVolDP
+   /// members. Since SpecVol is computed here too, this replaces rather than
+   /// accompanies a call to computeSpecVol.
+   void computeSpecVolAndDerivs(const Array2DReal &ConservTemp,
+                                const Array2DReal &AbsSalinity,
+                                const Array2DReal &Pressure);
 
    /// Compute squared Brunt-Vaisala frequency for all cells/layers
    void computeBruntVaisalaFreqSq(const Array2DReal &ConservTemp,
