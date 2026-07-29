@@ -521,8 +521,10 @@ class TracerHorzAdvOnCell {
       const I4 KMin = MinLayerEdgeBot(IEdge);
       const I4 KMax = MaxLayerEdgeTop(IEdge);
       parallelForInner(
-          Team, Range(KMin, KMax),
-          INNER_LAMBDA(int K) { HighOrderFlx(IEdge, K) = 0; });
+          Team, Range(KMin, KMax), INNER_LAMBDA(int K) {
+             HighOrderFlx(IEdge, K) = 0;
+             LowOrderFlx(IEdge, K)  = 0;
+          });
       // Compute 3rd or 4th fluxes where requested.
       for (int I = 0; I < NAdvCellsForEdge(IEdge); ++I) {
          const I4 ICell   = AdvCellsForEdge(IEdge, I);
@@ -728,12 +730,18 @@ class TracerHorzAdvOnCell {
       // Check tracer values against local min,max to detect
       // non-monotone values and write warning if found
       if (TracerCur(ICell, K) < TracerMin(ICell, K) - Eps) {
-         printf("Horizontal minimum out of bounds on tracer: %lg %lg\n",
-                TracerMin(ICell, K), TracerCur(ICell, K));
+         Kokkos::printf(
+             "Horizontal minimum out of bounds on cell %d, level %d "
+             "new tracer value %lg is smaller than previous tracer minimum "
+             "%lg\n",
+             ICell, K, TracerCur(ICell, K), TracerMin(ICell, K));
       }
       if (TracerCur(ICell, K) > TracerMax(ICell, K) + Eps) {
-         printf("Horizontal maximum out of bounds on tracer: %lg %lg\n",
-                TracerMax(ICell, K), TracerCur(ICell, K));
+         Kokkos::printf(
+             "Horizontal maximum out of bounds on cell %d, level %d "
+             "new tracer value %lg is larger than previous tracer maximum "
+             "%lg\n",
+             ICell, K, TracerCur(ICell, K), TracerMax(ICell, K));
       }
    }
 
