@@ -205,7 +205,21 @@ $$ (ho-target)
 The four terms are: the geopotential (gravity) body force integrated over the layer
 volume; the side-wall integral of $\alpha p$ (the pressure traction on the cell faces); and
 two metric terms accounting for the pressure traction on the sloping top and bottom layer
-interfaces. This is the Adcroft et al. (2008) finite-volume route — the net pressure force
+interfaces.
+
+```{note}
+The signs on the two metric terms are inherited from
+{ref}`omega-design-governing-eqns-omega1` and have not been independently re-derived here. Applying
+Leibniz' rule to lines 2–4 so that they telescope to $-\int\rho_0\nabla(\alpha p)\,d\tilde z$
+appears to require the opposite signs on those two lines; with the signs as printed, the discrete
+resting-state cancellation of §3.7 leaves a factor of two rather than zero. This may be a difference
+in how $\nabla\tilde z^{\text{top}}$ or the traction normal is defined rather than an error.
+`OmegaV1GoverningEqns.md` is not maintained against the code and cannot settle it. The convention
+must be re-derived from $\tilde z \equiv -p/(\rho_0 g)$ against the conventions the code actually
+fixes — `PressureGradCentered` for the tendency sign, `CellsOnEdge` ordering and `EdgeMask`, and
+`VertCoord` for accumulation direction and interface indexing — before implementation, using the
+§3.9 reduction to the centered scheme as the check with a known answer.
+``` This is the Adcroft et al. (2008) finite-volume route — the net pressure force
 on each control volume is obtained by integrating in-situ pressure over the faces, rather
 than by forming the pointwise product $\alpha\nabla p$. We adopt this form because it
 matches Omega's non-Boussinesq layer-integral momentum equation exactly and is the form
@@ -503,7 +517,8 @@ For each edge and layer:
    two cells' interface values.
 3. **The geopotential is built from that same profile.** The geometric height entering
    $g\nabla z$ must be the integral of the same $\hat\alpha$, layer by layer, down to a common
-   anchor. This one is currently *not* satisfied; see §3.7.4.
+   anchor. Satisfying this requires a per-edge correction to the geometric height difference;
+   see §3.7.4.
 
 Conditions 2 and 3 are about the discretization alone and are under the implementation's control.
 Meeting them means the scheme returns the **exact pressure gradient of the water column it has
@@ -561,44 +576,80 @@ which is nonzero whenever $\alpha$ varies with depth and interfaces are displace
 **accumulates downward**: the deeper the layer, the more layers contribute to the sum. The vertical
 contrast in *in-situ* $\alpha$ is dominated by compressibility (a few percent over the full ocean
 depth, against a few tenths of a percent from $\Theta$ and $S$), and that is exactly the part
-Phase 1 cancels. Whether this downward accumulation is in fact what produces the bottom-layer noise
+Phase 1 cancels.
+
+This first-order behaviour has since been **measured**, and it is no longer an assertion. On the
+Polaris `horiz_press_grad` resting-state configurations (uniform $\Theta$, $S$, flat floor, tilted
+coordinate), `PressureGradCentered` gives a fitted exponent of $1.0000$ in the coordinate tilt at
+three vertical resolutions, and the `ztilde_gradient` variant converges at $\approx 1.1$ in
+horizontal resolution once the bottom layer is included in the comparison. Two independent
+measurements of the same first-order behaviour, in agreement. The corresponding absolute errors reach
+$2\times10^{-5}\ \mathrm{m\,s^{-2}}$ at a coordinate tilt of 50 m/km with 256 m layers — the order of
+the bottom-layer error seen in realistic global configurations. Whether this downward accumulation is in fact what produces the bottom-layer noise
 seen in realistic global configurations is a plausible diagnosis, not an established one; it is
 carried as A4 in §3.7.6 and tested in §5.3.
 
-#### 3.7.4 A prerequisite in `VertCoord`
+#### 3.7.4 Condition 3 and the geopotential
 
-Condition 3 is a constraint on `VertCoord`, not on `PGrad`, and **it is not currently satisfied**.
-`VertCoord::computeGeomZHeight` builds $z$ by accumulating
-$\Delta z = \rho_0\,\alpha_{i,k}\,\tilde h_{i,k}$ — a midpoint rule using the layer-mean specific
-volume, working upward from the bottom. If the pressure term integrates a reconstructed
-$\hat\alpha$ while the geopotential term differences a $z$ built this way, the two are working from
-**different specific volumes**, and the cancellation fails at $O(\alpha_{pp}\tilde h^2)$ — precisely
-the order Phase 1 exists to recover. Worse, because $z$ is a running sum up the column, the mismatch
-**accumulates over every layer between the anchor and the layer in question** rather than staying
-local.
+Condition 3 constrains how the geopotential term is built. Two questions arise, and they have
+different answers; an earlier revision of this design conflated them and drew the wrong conclusion
+from the first.
 
-This is a prerequisite for Phase 1, not an implementation detail. There are three ways to resolve
-it:
+**The quadrature question, which is already settled.** `VertCoord::computeGeomZHeight` builds $z$ by
+accumulating $\Delta z = \rho_0\,\alpha_{i,k}\,\tilde h_{i,k}$ — apparently a midpoint rule, where
+condition 3 asks for the integral of the reconstructed $\hat\alpha$. For a Phase 1 reconstruction
+these are **the same quantity**. Integrating [](#alpha-taylor) with the linear deviations of §3.4
+over the layer,
 
-1. **Align `VertCoord`.** Integrate $z$ using the same reconstruction the PGF uses. Satisfies
-   condition 3 outright, but changes answers for every existing configuration and modifies a module
-   the PGF does not own.
-2. **Build $z$ increments inside the PGF.** Leave `VertCoord` alone and have the PGF form its own
-   layer $z$ increments from its own $\hat\alpha$. No answer change elsewhere, but it creates a
-   second, slightly different $z$ in the model, which Requirement 2.4 exists to prevent.
-3. **Accept the mismatch and document the error floor.** The guarantee of §3.7.2 weakens from "zero
-   to machine precision" to "zero to $O(\alpha_{pp}\tilde h^2)$ accumulated over the column", and the
-   test in §5.2 cannot pass.
+$$
+\frac{1}{g}\int_{p^{\text{top}}_{i,k}}^{p^{\text{bot}}_{i,k}} \hat\alpha_{i,k}(p)\,dp
+= \frac{\alpha_{0}\,\Delta p_{i,k}}{g} = \rho_0\,\alpha_{i,k}\,\tilde h_{i,k},
+$$ (z-increment-exact)
 
-**Recommendation: option 1.** Options 2 and 3 both give up the property this phase exists to
-deliver. The change is answer-changing but small and well contained, and it is worth having on its
-own merits: it makes the model's $z$ a more accurate integral of the hydrostatic relation. The
-decision must be made before Phase 1 implementation begins, and it needs a baseline step (§5).
+because $\int \Theta'\,dp = \int S'\,dp = 0$ by the mean-preserving constraint, and
+$\int (p - p^{\text{mid}})\,dp = 0$ because $p^{\text{mid}}$ is the exact arithmetic midpoint of the
+two interface pressures. The midpoint rule *is* the exact layer integral of a Phase 1
+$\hat\alpha$. No change to `VertCoord` is required, there is no answer-changing baseline step, and
+Requirement 2.4 is satisfied by construction rather than by negotiation — the PGF and the rest of
+the model share one $z$ because they compute the same thing.
 
-One related question is deliberately left to implementation time: `VertCoord` builds $z$ upward from
-the bathymetry while pressure is built downward from the surface, so the two accumulate round-off
-from opposite ends of the column. Whether the PGF should re-anchor its own accumulation is a
-round-off question (§3.7.5), not a consistency one — condition 3 is satisfied either way.
+This is a Phase-1-only result and Phase 2 must re-examine it. Parabolic deviations are fine provided
+they remain mean-preserving, but the second-order equation-of-state expansion of §3.3 contributes
+$\tfrac12\alpha_{pp}(p-p^{\text{mid}})^2$ and cross terms such as
+$\tfrac12\alpha_{\Theta\Theta}\Theta'^2$, none of which integrate to zero over the layer. If that
+option is adopted, [](#z-increment-exact) no longer holds and the question returns.
+
+**The sharing question, which is the real constraint.** What condition 3 actually requires is that
+the geopotential be built from the *same* $\hat\alpha$ the pressure terms use — and §3.3.1 makes
+that an **edge** quantity, since its coefficients and expansion point are averages over the two
+cells of the edge. A cell-based $z$ cannot carry an edge-dependent $\hat\alpha$ however it is
+integrated. Two mismatches follow, both $O(\alpha_{pp}(\Delta p^{\text{mid}}_e)^2)$ per layer and
+both accumulating down the column:
+
+1. `VertCoord`'s $z$ uses the exact per-cell TEOS-10 $\alpha$; the PGF uses the edge-shared
+   linearized $\hat\alpha$. The residual is the
+   $\tfrac12\alpha_{pp}(p^{\text{mid}}_i - \bar p^e)^2$ term.
+2. The geopotential body force is the gradient of $\Phi$ **at fixed pseudo-height**, i.e. at fixed
+   pressure. Differencing each column's layer-mean $\Phi$ across the edge compares layer means taken
+   over *different* pressure ranges whenever the interfaces tilt, and that difference does not
+   vanish for a resting ocean.
+
+**Resolution: the PGF computes a per-edge correction to the `VertCoord` $z$ difference**, built from
+the edge-shared $\hat\alpha$ and accumulated down the column. Stated as a correction rather than a
+replacement, this does not create the second, slightly different $z$ that Requirement 2.4 exists to
+prevent: `GeomZInterface`/`GeomZMid` remain the model's one geometric height and are unchanged, and
+the PGF adds a term to a *difference* that is identically zero when the two columns' interfaces are
+level. Accumulating only the correction, rather than re-deriving $z$, also preserves most of the
+precision headroom §3.7.5 warns is otherwise consumed, since the correction is small by
+construction.
+
+The implementation consequence is recorded in §4.1.3: the correction is a column prefix sum and
+therefore cannot live inside a per-edge, per-vertical-chunk kernel call.
+
+One related question is left to implementation time: `VertCoord` builds $z$ upward from the
+bathymetry while pressure is built downward from the surface, so the two accumulate round-off from
+opposite ends of the column. Which end the correction accumulates from is a round-off question
+(§3.7.5), not a consistency one — condition 3 is satisfied either way.
 
 #### 3.7.5 Round-off in the deep ocean
 
@@ -672,6 +723,19 @@ $\hat\alpha\!\left(p^{\text{top}}\right) p^{\text{top}}$ when the interface is l
 columns. Because $\hat\alpha(p)$ is a low-order polynomial (§3.3), this integral is evaluated in
 closed form at no meaningful cost.
 
+**Implement this as an integral, not as an average multiplied by a slope.** Since
+$\nabla_n\tilde z^{\text{top}}_{e,k} = -(p^{\text{top}}_{R} - p^{\text{top}}_{L})/(\rho_0 g\,d_e)$,
+the divisor in [](#metric-divdiff) and the slope it multiplies cancel identically, and the whole
+term is
+
+$$
+\frac{1}{g\,d_e}\int_{p^{\text{top}}_{L,k}}^{p^{\text{top}}_{R,k}} \hat\alpha(p)\, p \; dp .
+$$ (metric-integral)
+
+Forming the average literally divides by a quantity that is zero wherever the interfaces are level,
+which is most of the domain; the reduction noted above is a $0/0$ in that form and is well defined
+only in [](#metric-integral).
+
 The tempting alternative — averaging the two cells' interface values,
 $\tfrac12[(\hat\alpha p)_L + (\hat\alpha p)_R]$ — agrees with [](#metric-divdiff) only when the
 tilt is small, and leaves behind a residual that grows with the square of the tilt and does *not*
@@ -714,7 +778,8 @@ Steps 1–3 are per cell and layer; step 4 is per edge and layer. Phase differen
 
 1. From `VertCoord`: read `PressureInterface`, `PressureMid`, `GeomZInterface`/`GeomZMid`,
    geopotential, and interface pseudo-heights (already computed diagnostically each step). The
-   geometric height must satisfy condition 3 of §3.7.2; see the prerequisite in §3.7.4.
+   geometric height must satisfy condition 3 of §3.7.2, which requires the per-edge correction of
+   §3.7.4; `VertCoord` itself needs no change.
 2. Obtain $\alpha_0$ (= the existing `Eos::SpecVol` field) and the derivatives
    $\alpha_\Theta, \alpha_S, \alpha_p$ from one TEOS-10 evaluation ([](#alpha-derivs)). Both phases
    need all four; Phase 2 optionally adds second derivatives (§3.3).
@@ -722,7 +787,8 @@ Steps 1–3 are per cell and layer; step 4 is per edge and layer. Phase differen
    parabolic in Phase 2** — using the actual non-uniform interface pressures (§3.4).
 4. For each edge: form the shared expansion point [](#edge-ref) from the two adjacent cells;
    evaluate each column's layer integral [](#sidewall-int) with those shared coefficients; add the
-   sloping-interface terms [](#metric-divdiff) and the geopotential difference (§3.8); assemble
+   sloping-interface terms [](#metric-integral) and the corrected geopotential difference (§3.8,
+   §3.7.4); assemble
    $T^p_{e,k}$ and accumulate into the tendency with `EdgeMask`. **Phase 1** uses the two-cell
    operator [](#edge-grad); **Phase 2** uses the wider stencil of §3.6.1, built as a weighted sum of
    such two-cell pair contributions.
@@ -772,10 +838,17 @@ rather than keys, so no configuration written for Phase 1 needs to change when P
 `VerticalReconstruction: 'constant'` sets the specific volume constant within each layer — both
 $\Theta' = S' = 0$ and the equation-of-state expansion truncated to $\alpha_0$. It is **verification
 only**: combined with `HorzOrder: 2` it recovers `PressureGradCentered` (§3.9) and supports the
-permanent regression test of §5.5, and it isolates compressibility in §5.2. It is not a supported
-production setting, because it gives up the exactness for linearly varying profiles that
-Requirement 2.3.3 asks for. The implementation should log a warning if it is selected outside a
-test.
+permanent regression test of §5.5. It is not a supported production setting, because it gives up the
+exactness for linearly varying profiles that Requirement 2.3.3 asks for. The implementation should
+log a warning if it is selected outside a test.
+
+`'constant'` is **not** the compressibility-only configuration, and the two are easy to confuse.
+Truncating the expansion to $\alpha_0$ discards $\alpha_p$, which is exactly the term that makes the
+scheme exact for the "uniform $\Theta$, $S$; compressibility only" row of §3.7.3. The configuration
+that isolates compressibility is `'linear'` applied to a vertically uniform $\Theta$, $S$ profile:
+the reconstruction slopes are then zero on their own, $\alpha_p$ is retained, and no separate
+setting is needed. Tests that mean to isolate compressibility — including §5.2 — must select
+`'linear'`, not `'constant'`.
 
 `HorzOrder` selects the width of the edge *stencil* — how many cell pairs contribute — not the order
 of an interpolation of $\Theta$ and $S$ onto the edge. The distinction is not cosmetic; see §3.6.1.
@@ -859,6 +932,19 @@ from the obvious implementation:
   contributes a complete Phase 1 evaluation with its own shared expansion point, and the pair
   results are combined with the stencil weights (§3.6.1). Implementing Phase 2 as a wider
   reconstruction feeding a single evaluation would be simpler and would break the property of §3.7.
+- **The geopotential correction of §3.7.4 is a column scan and cannot live in this functor.** It is a
+  prefix sum down each column with edge-dependent coefficients, so it is not expressible as an
+  independent per-vertical-chunk operation. It is computed in a separate kernel that fills a per-edge
+  array,
+
+  ```c++
+  Array2DReal GeopotCorrection;  ///< (NEdgesAll, NVertLayers), owned by PressureGrad
+  ```
+
+  with a `parallelForOuter` over edges and a `parallelScanInner` down the column, in the same shape
+  as `VertCoord::computeGeomZHeight`. The functor then reads it chunk-wise like any other input. The
+  cost is one edge-sized 2-D array and one column scan per edge per step. This is the one structural
+  addition Phase 1 makes beyond the per-edge, per-chunk pattern the centered scheme uses.
 
 The Phase 1 and Phase 2 code paths differ only in the reconstruction degree (§3.4) and in whether
 the pair loop has one entry or several. There is one functor, not two.
@@ -950,14 +1036,16 @@ resting ocean whose profile varies linearly with pressure, at any tilt, thicknes
 in use today (§3.6), so horizontal truncation error is unchanged from `PressureGradCentered`.
 Requirements 2.1 and 2.6 are met at second order only.
 
-**Depends on.** The `VertCoord` geopotential decision of §3.7.4, which must be settled *before*
-implementation starts — the machine-precision property is unreachable without it, and option 1 (the
-recommendation) is answer-changing and needs its own baseline step. Nothing else in Phase 1 depends
-on unresolved questions.
+**Depends on.** Nothing unresolved. The `VertCoord` geopotential question of §3.7.4 is settled
+there: no change to `VertCoord` is needed and no baseline step is required, because the midpoint rule
+is already the exact layer integral of a Phase 1 $\hat\alpha$. What condition 3 does require — the
+per-edge geopotential correction — is part of this phase's own implementation (§4.1.3), not a
+prerequisite in another module.
 
 **Code and cost.** Three new `Eos` derivative fields and one new method (§4.1.2); the
-`PressureGradHighOrder` functor; no new TEOS-10 evaluations per cell and layer (Requirement 2.2),
-with roughly three times as many polynomial layer integrals on a hexagonal mesh (§4.1.3).
+`PressureGradHighOrder` functor; the per-edge geopotential correction array and its column scan
+(§3.7.4, §4.1.3); no new TEOS-10 evaluations per cell and layer (Requirement 2.2), with roughly
+three times as many polynomial layer integrals on a hexagonal mesh (§4.1.3).
 
 #### 4.5.2 Phase 2 — fourth order
 
@@ -976,13 +1064,18 @@ pair evaluations — is the first task of Phase 2 and does not block Phase 1.
 
 #### 4.5.3 Suggested order of work
 
-1. Settle the `VertCoord` geopotential question (§3.7.4) and take the baseline step it requires.
+1. Write the discrete form out in full — including the interface-metric sign convention, which
+   $\hat\alpha$ the interface integral uses when the two columns' reconstructions differ, and the
+   exact form of the per-edge geopotential correction (§3.7.4) — and confirm numerically that it
+   returns zero for a profile linear in pressure at large tilt. Doing this in the Polaris
+   two-column harness makes it executable and doubles as the reference implementation §5.1 needs.
 2. Run the assumption-A4 diagnostic of §5.3, which uses the *existing* centered scheme and so can be
    done immediately and in parallel with step 1. If spurious bottom-layer flow survives a profile
    that Phase 1 would resolve exactly, the cause is elsewhere in the model and the priority of this
    work should be reconsidered before it is built.
 3. Implement and verify Phase 1 against §5.1, §5.2, §5.3, and §5.5.
-4. Take up Phase 2, starting from the stencil question in §3.6.1.
+4. Take up Phase 2, starting from the stencil question in §3.6.1. Re-examine [](#z-increment-exact)
+   before adopting the second-order equation-of-state expansion.
 
 ## 5 Verification and Testing
 
@@ -1021,7 +1114,8 @@ Extend the four existing variants — `temperature_gradient`, `salinity_gradient
 - **Scheme selection.** Add `PressureGrad: { PressureGradType: FiniteVolume, … }` to
   `forward.yaml` and parametrize each task over three configurations:
   - `centered` — the legacy `PressureGradCentered` functor, unchanged;
-  - `finite_volume_phase1` — `HorzOrder: 2`, `VerticalReconstruction: linear`;
+  - `finite_volume_phase1` — `HorzOrder: 2`, `VerticalReconstruction: linear`,
+    `QuadraturePoints: 2`;
   - `finite_volume_phase2` — `HorzOrder: 4`, `VerticalReconstruction: ppm` (added when Phase 2
     lands).
 
@@ -1050,10 +1144,17 @@ Extend the four existing variants — `temperature_gradient`, `salinity_gradient
   convergence slope.
 - **Verification gate (Requirement 2.6):** the measured slope of RMS error vs. resolution,
   `omega_vs_reference_convergence_rate_*`, must fall within a band around the configured order
-  of accuracy — nominally ~2 for `finite_volume_phase1` and for `centered` (whose band is
-  unchanged from today), and ~4 for `finite_volume_phase2`. This band is retuned from its
-  present values rather than loosened; a slope outside it fails the test and is treated as an
-  implementation defect to be diagnosed, not as a tolerance to be widened.
+  of accuracy — nominally ~2 for `finite_volume_phase1` and ~4 for `finite_volume_phase2`. This band
+  is retuned from its present values rather than loosened; a slope outside it fails the test and is
+  treated as an implementation defect to be diagnosed, not as a tolerance to be widened.
+
+  **The `centered` bands are *not* uniform across the four variants and must be set per variant from
+  measurement.** Measured on chrysalis with the bottom layer included, `PressureGradCentered` gives
+  $\approx 1.6$ (`temperature_gradient`), $\approx 1.8$ (`salinity_gradient`), $\approx 2.0$
+  (`surface_pressure_gradient`) and $\approx 1.1$ (`ztilde_gradient`). The last is the first-order
+  resting-state behaviour of §3.7.3 showing up directly, and it is the reason a single "~2 for
+  centered" band would fail three variants out of four. This corrects an earlier statement here that
+  the `centered` band was unchanged from its present values.
 - **Asymptotic range (Phase 2 implementation-time task):** it is not yet established that the
   existing `horiz_resolutions` sweep spans a range where a fourth-order slope is cleanly
   measurable — the sweep may be too coarse to have entered the asymptotic regime at its fine end,
@@ -1092,18 +1193,25 @@ copying identical layer means into both columns would not exercise the property 
 Three groups of profiles are run:
 
 - **Profiles the scheme resolves exactly:** $\Theta$, $S$ linear in pressure, including the constant
-  case, which isolates compressibility on its own. **Pass:** the PGF is zero at every edge and layer
-  to **machine precision** (double-precision builds; the threshold tracks `Real`'s epsilon and the
-  size of the hydrostatic terms, not a physical tolerance). Phase 1 and Phase 2 must both pass.
+  case, which isolates compressibility on its own. Run these with
+  `VerticalReconstruction: 'linear'`, **not** `'constant'` — see §4.1.1; `'constant'` discards
+  $\alpha_p$ and so cannot be exact for compressibility. **Pass:** the PGF is zero at every edge and
+  layer to **machine precision** (double-precision builds; the threshold tracks `Real`'s epsilon and
+  the size of the hydrostatic terms, not a physical tolerance). Phase 1 and Phase 2 must both pass.
 - **Profiles it does not:** $\Theta$, $S$ quadratic in pressure, then a realistic profile.
   **Pass:** the residual shrinks like $\tilde h^2$ (Phase 1) and $\tilde h^3$ (Phase 2) as the
   vertical grid is refined at fixed tilt, matching §3.7.3. A residual that does not shrink at the
   tabulated rate means one of the three conditions in §3.7.2 has been broken somewhere in the
   implementation; it is a bug to find, not a tolerance to widen.
 - **Guard tests:** rerun an exactly resolved profile with (a) the endpoint-average interface term in
-  place of [](#metric-divdiff), and (b) a cell-local expansion point in place of [](#edge-ref).
-  Both must *fail* the machine-precision check. Without these, a passing result could just as easily
-  come from a symmetry of the test setup as from the scheme being right.
+  place of [](#metric-integral), (b) a cell-local expansion point in place of [](#edge-ref), and
+  (c) the per-edge geopotential correction of §3.7.4 disabled. All three must *fail* the
+  machine-precision check. Without these, a passing result could just as easily come from a symmetry
+  of the test setup as from the scheme being right — and guard (c) in particular is the direct
+  evidence that the geopotential correction is load-bearing rather than decorative.
+
+  Guards must be checked against a deliberately broken configuration, not only against a passing
+  one. A guard that cannot fire is worse than no guard, because it looks like protection.
 
 A separate and much smaller unit test covers the reconstruction estimator on its own (§3.4): given
 layer means sampled from a profile of the reconstruction's own degree on a **deliberately
@@ -1115,10 +1223,10 @@ immediately.
 The test is also run in a single-precision build, to measure the round-off floor of §3.7.5 and
 settle whether the perturbation form is needed.
 
-Condition 3 of §3.7.2 depends on `VertCoord` (§3.7.4), so the machine-precision check cannot pass
-until whichever resolution is chosen there is in place; this test therefore doubles as the
-acceptance criterion for that prerequisite. It is implemented as a fast C++ unit test and also run
-as a configuration of the Polaris two-column task.
+Condition 3 of §3.7.2 requires the per-edge geopotential correction of §3.7.4, so the
+machine-precision check cannot pass until that is in place; this test, together with guard (c)
+above, is its acceptance criterion. It is implemented as a fast C++ unit test and also run as a
+configuration of the Polaris two-column task.
 
 **Covers:** Requirement 2.3 in full; rows 1–5 of the §3.7.3 table; the round-off floor of §3.7.5.
 
@@ -1209,7 +1317,7 @@ loop. Two cheap checks close that:
 | A2 EOS expansion adequate across an edge | §5.1 contrast sweep; §5.4 |
 | A3 Residual small enough in practice | §5.1 accuracy gate; §5.3; §5.4 |
 | A4 PGF error causes the instability | §5.3 diagnostic, run before Phase 1 completes |
-| §3.7.4 `VertCoord` prerequisite | §5.2 (cannot pass until resolved) |
+| §3.7.4 per-edge geopotential correction | §5.2 (cannot pass without it; guard (c) tests it directly) |
 | §3.7.5 Round-off floor | §5.2, run in both precisions |
 
 Requirement 2.7 (extensibility) is not testable directly; it is addressed by the configuration
