@@ -291,10 +291,15 @@ $$
 $$ (alpha-derivs)
 
 The four coefficients in [](#alpha-derivs) are obtained from a **single** evaluation of the
-TEOS-10 polynomial, since the first derivatives reuse the same polynomial coefficients (the
+TEOS-10 polynomial: the derivatives are analytic derivatives of that same polynomial, taken
+at the same normalized state, so no second call to the equation of state occurs (they are the
 same quantities computed by `gsw.specvol_first_derivatives`, which the Polaris reference
-solution already uses). Indeed $\alpha_0$ is exactly the `Eos::SpecVol` field Omega already
-computes, so only the three derivative fields are additional work.
+solution already uses). The arithmetic is not free — $\alpha_p$ reuses the pressure
+coefficients assembled for $\alpha_0$, but $\alpha_\Theta$ and $\alpha_S$ need coefficient
+sets of their own — though it shares the square root and the normalization, and it is the
+*call count*, not the polynomial arithmetic, that Requirement 2.2 bounds. Indeed $\alpha_0$ is
+exactly the `Eos::SpecVol` field Omega already computes, so only the three derivative fields
+are additional work.
 
 The first-order expansion [](#alpha-taylor) is the default. A second-order expansion (adding
 $\alpha_{\Theta\Theta}$, $\alpha_{SS}$, $\alpha_{\Theta S}$, $\alpha_{pp}$, …) is an option
@@ -780,24 +785,38 @@ of an interpolation of $\Theta$ and $S$ onto the edge. The distinction is not co
 `PressureGradHighOrder` needs $\alpha$ together with its first derivatives. The `Eos` class
 (Eos.h) currently exposes `computeSpecVol`, `computeSpecVolDisp`, and
 `computeBruntVaisalaFreqSq`, but no specific-volume derivatives. This design adds one method
-and three device fields:
+and three device arrays:
 
 ```c++
 // New on the Eos class
-Array2DReal SpecVolDThetaCons; ///< d(alpha)/d(ConservTemp) at cell centers
-Array2DReal SpecVolDSalt;      ///< d(alpha)/d(AbsSalinity)  at cell centers
-Array2DReal SpecVolDPressure;  ///< d(alpha)/d(Pressure)     at cell centers
+Array2DReal SpecVolDCt; ///< d(alpha)/d(ConservTemp) at cell centers
+Array2DReal SpecVolDSa; ///< d(alpha)/d(AbsSalinity) at cell centers
+Array2DReal SpecVolDP;  ///< d(alpha)/d(Pressure)    at cell centers
 
-/// Compute specific volume AND its first derivatives in one TEOS-10 pass
+// Pressure is relative pressure in Pa; the derivatives are returned per degC,
+// per (g/kg), and per Pa respectively, into the members above and SpecVol.
 void computeSpecVolAndDerivs(const Array2DReal &ConservTemp,
                              const Array2DReal &AbsSalinity,
                              const Array2DReal &Pressure);
 ```
 
-The TEOS-10 derivatives reuse the polynomial coefficients already assembled inside the
-`Teos10Eos` functor (`calcPCoeffs`/`calcDelta`), so the marginal cost over `computeSpecVol`
-is the derivative arithmetic only (Requirement 2.2). The linear and constant EOS options
-supply trivial analytic derivatives.
+`Eos` owns the derivative arrays exactly as it owns `SpecVol`, `SpecVolDisplaced` and
+`BruntVaisalaFreqSq`: they are allocated in the constructor and registered as `Field`s in the
+`Eos` group, so they can be written to a stream and any number of consumers can read them
+without each allocating its own copy. Their valid range must permit negative values —
+$\alpha_S < 0$ everywhere, and $\alpha_\Theta < 0$ in cold fresh water — unlike `SpecVol`.
+
+Because `computeSpecVolAndDerivs` fills `SpecVol` as well, it replaces rather than accompanies
+a call to `computeSpecVol`; the two are kept separate so that the derivative arithmetic is
+paid only where it is needed.
+
+The TEOS-10 derivatives are obtained by differentiating the 75-term polynomial analytically.
+The pressure derivative reuses the coefficients `calcPCoeffs` already assembles for
+$\alpha$ itself and so is free; the $\Theta$ and $S_A$ derivatives need their own coefficient
+sets, built from the same $s$ and $t$ (no additional square root). The marginal cost over
+`computeSpecVol` is therefore roughly two extra coefficient assemblies and no additional
+TEOS-10 evaluation, which is what Requirement 2.2 bounds. The linear and constant EOS
+options supply trivial analytic derivatives.
 
 #### 4.1.3 `PressureGradHighOrder` functor
 
@@ -813,11 +832,11 @@ KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge, I4 KChunk,
                                 const Array1DReal &TidalPotential,
                                 const Array1DReal &SelfAttractionLoading,
                                 const Array2DReal &SpecVol,
-                                const Array2DReal &ConservTemp,    // new
-                                const Array2DReal &AbsSalinity,    // new
-                                const Array2DReal &SpecVolDThetaCons, // new
-                                const Array2DReal &SpecVolDSalt,      // new
-                                const Array2DReal &SpecVolDPressure)  // new
+                                const Array2DReal &ConservTemp,  // new
+                                const Array2DReal &AbsSalinity,  // new
+                                const Array2DReal &SpecVolDCt,   // new
+                                const Array2DReal &SpecVolDSa,   // new
+                                const Array2DReal &SpecVolDP)    // new
                                 const;
 ```
 
