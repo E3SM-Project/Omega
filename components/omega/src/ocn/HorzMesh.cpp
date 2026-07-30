@@ -1044,14 +1044,14 @@ void HorzMesh::defineMeshFields() {
       auto ReconstructWeightsCellField = Field::create(
           FieldName, // field name
           "weights to reconstruct Cartesian vector field from edge-"
-          "normal values at cell centers",  // long name
-          "",                               // units
-          "",                               // CF standard name
-          std::numeric_limits<Real>::min(), // min valid value
-          std::numeric_limits<Real>::max(), // max valid value
-          NDims,                            // num of dimensions
-          DimNames,                         // dimension names
-          false                             // not time dependent
+          "normal values at cell centers",     // long name
+          "",                                  // units
+          "",                                  // CF standard name
+          std::numeric_limits<Real>::lowest(), // min valid value
+          std::numeric_limits<Real>::max(),    // max valid value
+          NDims,                               // num of dimensions
+          DimNames,                            // dimension names
+          false                                // not time dependent
       );
       MeshGroupIn->addField(FieldName);
       Field::attachFieldData<Array3DReal>(FieldName, ReconstructWeightsCell);

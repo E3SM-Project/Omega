@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
             for (int J = 0; J < MaxEdges2; ++J) {
                I4 StencilEdge = ReconstructStencilCellH(Cell, J);
                if (J < NStencil) {
-                  if (StencilEdge < 0 || StencilEdge > NEdgesAll)
+                  if (StencilEdge < 0 || StencilEdge >= NEdgesAll)
                      ++LocalReconErrors;
                } else if (StencilEdge != NEdgesAll) {
                   ++LocalReconErrors;

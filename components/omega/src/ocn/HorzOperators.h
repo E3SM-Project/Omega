@@ -675,14 +675,14 @@ class VectorReconstructOnCell {
       }
 
       if (OnSphere) {
-         const Real clat = Kokkos::cos(LatCell(ICell));
-         const Real slat = Kokkos::sin(LatCell(ICell));
-         const Real clon = Kokkos::cos(LonCell(ICell));
-         const Real slon = Kokkos::sin(LonCell(ICell));
+         const Real CLat = Kokkos::cos(LatCell(ICell));
+         const Real SLat = Kokkos::sin(LatCell(ICell));
+         const Real CLon = Kokkos::cos(LonCell(ICell));
+         const Real SLon = Kokkos::sin(LonCell(ICell));
 
          // cartesian to local geographic
-         UReconstructX(ICell) = -slon * Ux + clon * Uy;
-         UReconstructY(ICell) = -(clon * Ux + slon * Uy) * slat + Uz * clat;
+         UReconstructX(ICell) = -SLon * Ux + CLon * Uy;
+         UReconstructY(ICell) = -(CLon * Ux + SLon * Uy) * SLat + Uz * CLat;
       } else {
          UReconstructX(ICell) = Ux;
          UReconstructY(ICell) = Uy;

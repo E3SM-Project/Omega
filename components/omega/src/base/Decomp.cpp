@@ -730,9 +730,7 @@ Decomp::Decomp(
       }
    }
 
-   // ReconstructStencilCell - translated the same way as EdgesOnCell, but
-   // without compaction: column J must stay in place so it remains aligned
-   // with column J of ReconstructWeightsCell (read separately in HorzMesh).
+   // ReconstructStencilCell - translated the same way as EdgesOnCell
    // NCellReconstructEdgesH is a count, not an ID, and needs no translation.
    // Only spherical meshes currently have this array.
    if (OnSphere) {
