@@ -463,7 +463,12 @@ class SfcTracerForcingOnCell {
       }
 
       if (TempIndex >= 0) {
-
+         const Real PTopDb = PressureMid(ICell, KTop) * Pa2Db;
+         const Real SaTop  = SaltIndex >= 0
+                                 ? TracerCell(SaltIndex, ICell, KTop)
+                                 : 0.0_Real; // not sure we want zero here?
+         const Real CtFrz =
+             Eos::calcCtFreezing(EosChoice, SaTop, PTopDb, 0.0_Real);
          const Real CtTop = TracerCell(TempIndex, ICell, KTop);
 
          // CT tendencies are due to direct heat fluxes + pot enthalpy fluxes
