@@ -89,8 +89,11 @@ $$
  T^p_{e,k} = \frac{1}{2d_e}\left(\sum_{i\in CE(e)} -n_{e,i} M_{i,k+1/2} + \sum_{i\in CE(e)} -n_{e,i} M_{i,k-1/2}\right) + \frac{1}{2}\left(\sum_{i\in CE(e)} p_{i,k}\right)  \frac{1}{d_e} \sum_{i\in CE(e)} -n_{e,i}\alpha_{i,k} + \frac{1}{d_e} \sum_{i\in CE(e)} -n_{e,i} (\phi_{TP,i} + \phi_{SAL,i}).
 $$
 
-### 3.2 High-order Pressure Gradient
-The high order pressure gradient will be based on the {ref}`full volume integral form <omega-v1-vh-momentum-reynolds2>` of the geopotential and pressure terms, evaluating the side-wall integral of $\alpha p$ together with the sloping-interface metric terms by quadrature and accounting for the variability of $\alpha$ with reconstructed temperature, salinity, and pressure.
+### 3.2 Finite-volume Pressure Gradient
+The `FiniteVolume` pressure gradient starts from the {ref}`full volume integral form <omega-v1-vh-momentum-reynolds2>` of the geopotential and pressure terms.
+Because Omega's pseudo-height coordinate is defined as $\tilde{z} = -p/(\rho_0 g)$ with no offset, surfaces of constant $\tilde{z}$ are surfaces of constant pressure, so $\nabla_{\tilde{z}} p \equiv 0$ and that form's pressure terms — the side-wall integral of $\alpha p$ and the two sloping-interface metric terms — sum identically to zero.
+The scheme therefore reduces to the geopotential compared at constant pressure, with the variability of $\alpha$ entering through reconstructed temperature, salinity, and pressure.
+Note that this holds for any ALE layering of pseudo-height: the layer interfaces themselves are tilted and move in time, and it is precisely their differing pressures in neighbouring columns that the scheme has to resolve.
 The complete design — including the reference-state equation-of-state expansion that bounds TEOS-10 cost, the mean-preserving reconstructions, and the discrete hydrostatic consistency property that keeps thin, steeply sloped layers robust — is given in the {ref}`Higher-Order Horizontal Pressure Gradient <omega-design-pressure-grad-high-order>` design document.
 
 %### 3.3 Barotropic Pressure Gradient
@@ -148,8 +151,8 @@ class PressureGrad{
 
         // Instances of functors
         PressureGradCentered CenteredPGrad;
-        PressureGradHighOrder HighOrderPGrad; // high-order finite-volume scheme (see PGradHighOrder.md)
-        // Additional high-order variants may be added in the future
+        PressureGradFiniteVolume FiniteVolumePGrad; // see PGradHighOrder.md
+        // Additional variants may be added in the future
 
         // Pressure gradient choice from config
         PressureGradType PressureGradChoice;
@@ -174,8 +177,8 @@ An `enum class` will be used to specify options for the pressure gradient used f
 ```c++
 enum class PressureGradType{
    Centered,     // 2nd-order Montgomery scheme (this document)
-   FiniteVolume  // high-order finite-volume scheme (see PGradHighOrder.md)
-   // , <FutureVariant>  // additional high-order option, added when implemented
+   FiniteVolume  // layer-integrated finite-volume scheme (see PGradHighOrder.md)
+   // , <FutureVariant>  // additional option, added when implemented
 }
 ```
 ### 4.2 Methods
@@ -246,7 +249,7 @@ void PressureGrad::computePressureGrad(const Array2DReal &Tend,
                                        const I4 TimeLevel) {
 
    OMEGA_SCOPE(LocCenteredPGrad, CenteredPGrad);
-   OMEGA_SCOPE(LocHighOrderPGrad, HighOrderPGrad);
+   OMEGA_SCOPE(LocFiniteVolumePGrad, FiniteVolumePGrad);
    OMEGA_SCOPE(LocMinLayerEdgeBot, MinLayerEdgeBot);
    OMEGA_SCOPE(LocMaxLayerEdgeTop, MaxLayerEdgeTop);
 
@@ -291,8 +294,8 @@ void PressureGrad::computePressureGrad(const Array2DReal &Tend,
              parallelForInner(
                  Team, KRange,
                  INNER_LAMBDA(int KChunk) {
-                    LocHighOrderPGrad(Tend, IEdge, KChunk, PressureMid,
-                                      Geopotential, SpecVol);
+                    LocFiniteVolumePGrad(Tend, IEdge, KChunk, PressureMid,
+                                         Geopotential, SpecVol);
                  });
           });
 
