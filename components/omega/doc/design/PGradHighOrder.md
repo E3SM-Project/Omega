@@ -524,165 +524,98 @@ what makes the reduction to the centered scheme in §3.9 possible, and it isolat
 on its own in §5.2 — but it is not a supported production setting in either phase, because it
 gives up the exactness for linearly varying profiles that Requirement 2.3.3 asks for.
 
-### 3.5 The remainder relative to the centered scheme
+### 3.5 Evaluating the fixed-pressure difference
 
-Equation [](#ho-exact) is not evaluated directly. It is evaluated as the centered scheme plus a
-remainder, for one reason: the fixed-pressure height difference is a small residual of two large
-quantities, and grouping the large parts so that they cancel *analytically* rather than in floating
-point is what preserves the precision §3.7.5 is about.
+Equation [](#ho-exact) is not evaluated by building each column's $z_i(p)$ and subtracting. It is
+evaluated by **differencing the integrand first and integrating the difference**, which is what
+makes the exactness of §3.7 structural rather than the outcome of a cancellation.
 
-**`PressureGradCentered` is the first-order fixed-pressure shift, exactly.** This is an algebraic
-identity about the code in `PGrad.h`, not an approximation, and it is the pivot of this section.
-Write $\Delta_e f \equiv \sum_{i\in CE(e)} -n_{e,i}\,f_i$ so that $[\nabla_n f]_e = \Delta_e f/d_e$,
-and let $q_{i,k}$ = `PressureInterface`, $Z_{i,k}$ = `GeomZInterface`, $\alpha_{i,k}$ = `SpecVol`,
-with layer $k$ bounded by interfaces $k$ and $k+1$. Define
+Write $\Delta_e f \equiv \sum_{i\in CE(e)} -n_{e,i}\,f_i$, so that $[\nabla_n f]_e = \Delta_e f/d_e$,
+and let $\Delta_e z(p)$ be the fixed-pressure height difference [](#ho-exact) integrates.
+Differentiating [](#z-of-p) gives the relation the whole scheme rests on:
 
 $$
-\mathcal{S}_{e,k} \;\equiv\; \tfrac{1}{2}\left(\Delta_e Z_{k} + \Delta_e Z_{k+1}\right)
-\;+\; \frac{\bar\alpha_{e,k}}{2g}\left(\Delta_e q_{k} + \Delta_e q_{k+1}\right),
+\frac{d}{dp}\,\Delta_e z(p) \;=\; -\,\frac{1}{g}\,\Delta_e \hat\alpha(p),
 \qquad
-\bar\alpha_{e,k} = \tfrac{1}{2}\!\!\sum_{i \in CE(e)}\!\! \alpha_{i,k}.
-$$ (centered-shift)
+\Delta_e \hat\alpha(p) \equiv \hat\alpha^{(e)}_R(p) - \hat\alpha^{(e)}_L(p),
+$$ (dz-dp)
 
-Then $T^{p,\text{ctr}}_{e,k} = -\frac{g}{d_e}\,\mathcal{S}_{e,k} - \left[\nabla_n(\phi_{TP}+\phi_{SAL})\right]_e$. The proof is two lines: with
-$M_{i,k\pm} = \alpha_{i,k}\,q_{i,\cdot} + g Z_{i,\cdot}$, the identity
-$\Delta_e(\alpha q) = \bar\alpha\,\Delta_e q + \bar q\,\Delta_e \alpha$ splits the Montgomery
-difference, and the $\bar q\,\Delta_e\alpha$ halves cancel the scheme's $\bar p\,\nabla\alpha$ term
-**term for term**, because $\tfrac12(\bar q_{k} + \bar q_{k+1}) = \bar p^{\text{mid}}_{e,k}$ exactly
-— `PressureMid` is the exact arithmetic midpoint of the two interface pressures
-(`VertCoord.cpp:1067`).
+in which both columns are evaluated at **the same pressure** $p$. Two rules fix what that means,
+and between them they are the whole of the robustness property:
 
-What [](#centered-shift) *is*, physically: Taylor-shifting each column's height from its own
-interface pressure to a pressure common to both gives
-$z_i(p) = Z_{i,k} - \frac{\alpha}{g}\left(p - q_{i,k}\right) + O\!\left((p-q_{i,k})^2\right)$, hence
+- **One shared coefficient set at each pressure.** For $p$ in edge layer $k$, both columns use the
+  edge-shared coefficients and expansion state [](#edge-ref) of *that edge layer* — not of each
+  column's own layer $k$, which under tilt spans a different pressure range (§3.7.2, condition 1).
+- **Each column supplies its own $\Theta(p)$, $S(p)$**, from whichever of *its own* layers contains
+  $p$, using that layer's mean-preserving reconstruction (§3.4).
 
-$$
-g\left[\nabla_n z\right]_{p} \;=\; g\left[\nabla_n Z\right]_{k}
-\;+\; \alpha \left[\nabla_n q\right]_{k} \;+\; O\!\left(\frac{\alpha_p}{g}(\Delta_e q)^2\right).
-$$ (first-order-shift)
-
-So $\mathcal{S}_{e,k}$ is the trapezoidal average over the layer's two interfaces of the
-**first-order** conversion from fixed layer index to fixed pressure, with the layer-mean $\alpha$
-standing in for $\hat\alpha$ at the interface. The centered scheme's entire Montgomery-potential
-apparatus is that conversion and nothing else, and its error is the conversion's truncation. This is
-why §3.7.3's first-order behaviour is what it is, and it is the sharpest available statement of what
-Phase 1 fixes: **Phase 1 computes the centered scheme's error and removes it.**
-
-**The remainder.** Define
+With those, the $\bar\alpha_0$ and $\bar\alpha_p\,(p-\bar p^{e})$ terms of [](#alpha-taylor) are
+identical in the two columns and cancel in the difference, leaving
 
 $$
-\mathcal{R}_{e,k} \;\equiv\; \frac{1}{\Delta p_{e,k}}
-\int_{p^{\text{top}}_{e,k}}^{p^{\text{bot}}_{e,k}} \Delta_e z(p)\; dp \;-\; \mathcal{S}_{e,k},
-\qquad
-T^p_{e,k} = -\frac{g}{d_e}\left(\mathcal{S}_{e,k} + \mathcal{R}_{e,k}\right)
-- \left[\nabla_n(\phi_{TP}+\phi_{SAL})\right]_e ,
-$$ (ho-discrete)
+\Delta_e \hat\alpha(p) \;=\; \bar\alpha_{\Theta}^{e,k}\,\Delta_e\Theta(p)
+\;+\; \bar\alpha_{S}^{e,k}\,\Delta_e S(p).
+$$ (dalpha)
 
-with $z_i(p)$ from [](#z-of-p) built on the edge-shared $\hat\alpha^{(e)}$. Equation
-[](#ho-discrete) is exactly [](#ho-exact) rewritten; `VertCoord`'s $Z$ enters through
-$\mathcal{S}$ and leaves again through $\mathcal{R}$, and cancels in exact arithmetic. That is what
-keeps Requirement 2.4 satisfied — the scheme does not construct a second geometric height, it
-constructs a correction to a difference — and it is why the split is a numerical device rather than
-a change of target.
+**This is the central property of the scheme.** [](#dalpha) is a product of a coefficient with the
+horizontal contrast in reconstructed $\Theta$ and $S$ *at matched pressure*, and that contrast is
+**identically zero, pointwise**, whenever the two columns' reconstructions describe the same water
+(§3.7.2, condition 1). Four consequences follow, and they replace a chain of separate arguments an
+earlier formulation of this section needed:
 
-$\mathcal{R}$ has four sources. Three are local to the layer; the fourth is not.
+1. **Exactness does not depend on the coefficients.** Whatever $\bar\alpha_\Theta$,
+   $\bar\alpha_S$ are, they multiply zero. The edge-shared expansion point of §3.3.1 remains the
+   right choice on *accuracy* grounds, but the robustness property no longer rests on it.
+2. **Exactness does not depend on the quadrature.** The integrand is zero at every point, so any
+   rule integrates it to zero. Quadrature order is therefore an ordinary accuracy knob (§4.1.1),
+   not a correctness requirement.
+3. **Exactness does not depend on the interfaces lining up.** Where the two columns' layers are
+   offset — at 50 m/km and 64 m layers they are offset by nearly three layer thicknesses, and
+   overlap not at all — [](#dalpha) is still evaluated at matched pressure and is still zero.
+4. **Compressibility drops out of the horizontal gradient entirely.** $\bar\alpha_p$ does not appear
+   in [](#dalpha). This is correct physics rather than an approximation: if $\Theta$ and $S$ are
+   horizontally uniform then so is $\alpha(p)$, and a horizontally uniform compressibility exerts no
+   horizontal pressure gradient. It is *only* because `PressureGradCentered` compares at fixed layer
+   index that compressibility appears in its error at all (§3.9).
 
-1. **Interface value versus layer mean.** [](#centered-shift) weights $\Delta_e q$ by the layer-mean
-   $\bar\alpha_{e,k}$ where [](#first-order-shift) calls for $\hat\alpha^{(e)}$ evaluated *at the
-   interface*. Contributes $\propto \hat\alpha'\,\Delta p_{k}\,\Delta_e q_{k}$ per interface, with
-   opposite sign at the layer's top and bottom.
-2. **Second and higher order in the shift.** The $O((\Delta_e q)^2)$ term of
-   [](#first-order-shift). Its column-symmetric part cancels in the edge difference; what survives
-   is $-\frac{(\Delta_e q_k)^2}{8g}\,\Delta_e \hat\alpha'$ and higher, i.e. it is driven by the
-   *horizontal contrast* in compressibility, not by compressibility itself.
-3. **Layer average versus interface trapezoid.** [](#ho-discrete) averages $\Delta_e z(p)$ over the
-   edge control volume's pressure range; [](#centered-shift) takes the mean of two interface values.
-   The gap is set by the curvature $\frac{d^2}{dp^2}\Delta_e z = -\frac{1}{g}\Delta_e\hat\alpha'$.
-4. **The `VertCoord` height is built from a different $\hat\alpha$.** `VertCoord` accumulates
-   $\Delta Z = \rho_0\,\alpha_{i,k}\,\tilde h_{i,k}$, which by §3.7.4's [](#z-increment-exact) is the
-   exact layer integral of a *cell-local* Phase 1 $\hat\alpha$. The scheme's water column is the
-   *edge-shared* one, whose layer mean is
+#### 3.5.1 The column scan
 
-   $$
-   \left\langle\hat\alpha^{(e)}_{i,k}\right\rangle = \bar\alpha_0^{e,k} + \bar\alpha_\Theta^{e,k}\left(\Theta_{i,k}-\bar\Theta^{e,k}\right) + \bar\alpha_S^{e,k}\left(S_{i,k}-\bar S^{e,k}\right) + \bar\alpha_p^{e,k}\left(p^{\text{mid}}_{i,k}-\bar p^{e,k}\right),
-   $$ (alpha-edge-layer-mean)
-
-   the first-order Taylor estimate of $\alpha_{i,k}$ from the edge state. The per-layer mismatch
-
-   $$
-   \varepsilon_{i,k} = \rho_0\,\tilde h_{i,k}\left(\alpha_{i,k} - \left\langle\hat\alpha^{(e)}_{i,k}\right\rangle\right)
-   $$ (eos-remainder)
-
-   is therefore precisely the **second-order Taylor remainder of the equation of state across the
-   edge**, and its edge difference **accumulates down the column**. This is the one non-local source,
-   and it is why Phase 1 needs a column scan (§4.1.3). It also identifies source 4 with assumption A2
-   (§3.7.6): the same second-order EOS expansion that would answer A2 shrinks this source directly.
-
-Three requirements on how $\mathcal{R}$ is built, all of them testable:
-
-- **R1 — built from the edge-shared $\hat\alpha^{(e)}$** of [](#edge-ref), so that condition 1 of
-  §3.7.2 is met. Guard test (b) of §5.2 checks this.
-- **R2 — evaluated analytically, never as a numerical difference.** Each of the four sources above
-  is a small quantity with a closed form. Forming $\mathcal{R}$ by computing
-  $\frac{1}{\Delta p}\int \Delta_e z\,dp$ and $\mathcal{S}$ separately and subtracting them would
-  throw away exactly the precision the split exists to protect.
-- **R3 — $\mathcal{R}_{e,k} = -\mathcal{S}_{e,k}$ to round-off whenever
-  $\hat\alpha^{(e)}_L(p) \equiv \hat\alpha^{(e)}_R(p)$.** This is the machine-precision property of
-  Requirement 2.3.1 restated in the form the implementation must satisfy, and it is what §5.2 tests.
-  Note that it makes the test *sharper* than a check that the tendency is small: $\mathcal{S}$ is
-  the centered scheme's answer on the same state, which §3.7.3 measures at $2\times10^{-5}$
-  m s$^{-2}$, so R3 asserts a cancellation of ten orders of magnitude against a known nonzero
-  reference rather than against zero.
-
-#### 3.5.1 Accumulating without cancellation
-
-$\mathcal{S}_{e,k}$ as written in [](#centered-shift) is the sum of two terms of order 200 m, at a
-coordinate tilt of 50 m/km over a 4 km edge, that cancel to a few millimetres. That is
-`PressureGradCentered`'s existing round-off exposure, not something the new scheme introduces
-(§3.7.5), but the same algebra that produced [](#centered-shift) removes it, and the design
-recommends doing so.
-
-Let $\Gamma_{e,k} = \Delta_e Z_{k} + \frac{\bar\alpha_{e,k}}{g}\Delta_e q_{k}$ and
-$\Gamma^{+}_{e,k} = \Delta_e Z_{k+1} + \frac{\bar\alpha_{e,k}}{g}\Delta_e q_{k+1}$, so that
-$\mathcal{S}_{e,k} = \tfrac12(\Gamma_{e,k} + \Gamma^{+}_{e,k})$. Using
-$Z_{i,k+1} - Z_{i,k} = -\rho_0\alpha_{i,k}\tilde h_{i,k}$ and
-$q_{i,k+1} - q_{i,k} = \rho_0 g \tilde h_{i,k}$ together with the same product rule as before,
+$\Delta_e z$ is accumulated down each edge's column from the sea surface. Let $\bar q_k$ be the
+edge-layer interface pressures and $D_k \equiv \Delta_e z(\bar q_k)$. Then
 
 $$
-\Gamma^{+}_{e,k} - \Gamma_{e,k} = -\,\rho_0 \, \overline{\tilde h}_{e,k}\, \Delta_e \alpha_{k},
-\qquad
-\Gamma_{e,k+1} - \Gamma^{+}_{e,k}
-= \frac{\Delta_e q_{k+1}}{g}\left(\bar\alpha_{e,k+1} - \bar\alpha_{e,k}\right).
-$$ (gamma-increments)
+D_{k+1} \;=\; D_k \;-\; \frac{1}{g}\int_{\bar q_k}^{\bar q_{k+1}} \Delta_e\hat\alpha(p)\; dp,
+$$ (d-recurrence)
 
-Both increments are products of a small factor with a bounded one — the *horizontal* contrast in
-specific volume within a layer, and the *vertical* contrast between adjacent layers — so
-$\mathcal{S}$ can be walked down the column with no cancellation of large numbers anywhere, starting
-from $\Gamma_{e,1}$, which is the inverse-barometer residual at the sea surface and is itself small
-for a state at rest.
+and the layer mean [](#ho-exact) needs is obtained from $D_k$ and a second moment of the same
+integrand over the same interval. Both integrals use the same quadrature points, and at each point
+each column's $\Theta$, $S$ come from the layer of that column containing the point.
 
-[](#gamma-increments) should be reconciled against §3.7.3's [](#centered-error), which describes the
-same quantity in a different grouping, as a check on both. In the limit [](#centered-error) is written
-for — specific volume horizontally uniform within each layer, thickness merely redistributed — the
-first increment vanishes identically and the second one carries the whole signal, reproducing
-[](#centered-error)'s downward accumulation through the horizontal displacement of the interfaces.
-The two expressions are expected to agree up to a $k$-independent constant fixed by the anchor, and
-confirming that (including the constant, and without assuming
-$\sum_j \Delta_e\tilde h_j = 0$) is one of the algebraic checks assigned to the reference derivation
-in §4.5.3.
+**The anchor.** $D_1 = \Delta_e z(\bar q_1)$ at the sea surface, where the two columns are at
+different surface pressures. It is the sea-surface height difference corrected to a common pressure,
 
-Consequences worth stating, because they change several things downstream:
+$$
+D_1 \;=\; \Delta_e Z_1 \;-\; \frac{1}{g}\sum_{i \in CE(e)} -n_{e,i} \int_{p^{\text{surf}}_i}^{\bar q_1} \hat\alpha^{(e)}_i(p)\,dp ,
+$$ (anchor)
 
-- Both $\mathcal{S}$ and source 4 of $\mathcal{R}$ are column prefix sums. They should be
-  accumulated in the same scan, from the same end of the column (§3.7.4 closing note), and cost one
-  scan rather than two.
-- The perturbation form §3.7.5 holds in reserve becomes unnecessary in double precision and probably
-  in single as well. That is now a measurement (§5.2 in both precisions) with a plausible expected
-  answer rather than an open question.
-- The reduction to `PressureGradCentered` (§3.9) becomes *algebraic* rather than bit-for-bit,
-  because [](#gamma-increments) evaluates $\mathcal{S}$ in a different order from `PGrad.h`. This is
-  the trade the design accepts: §4.4 already expects agreement to round-off rather than bit-for-bit,
-  and it is a better cross-check for being arithmetically independent.
+with both short integrals in closed form and taken inside each column's own top layer. For a resting
+ocean whose sea surface satisfies the inverse-barometer relation, $D_1$ is zero exactly — the surface
+tilts precisely so as to compensate the horizontal gradient in $p^{\text{surf}}$. **Exactness of the
+scheme therefore inherits the consistency of `VertCoord`'s sea-surface height with its surface
+pressure**, which is a dependency worth stating: it is the one place the PGF's robustness reaches
+outside the PGF.
+
+**Every quantity in the scan is small.** $D_k$ is the fixed-pressure height difference — of order
+$10^{-1}$ m for a realistic baroclinic column and zero for a resting one, against the $10^{2}$ m
+height *differences at fixed layer index* that a scheme comparing at fixed index has to form and
+cancel. The increments in [](#d-recurrence) are smaller still, being integrals of a horizontal
+contrast. There is no cancellation of large quantities anywhere in the scheme, which is what §3.7.5
+is about.
+
+**`VertCoord`'s geometric height is used once**, for $\Delta_e Z_1$ in [](#anchor) — the free-surface
+height difference. It is not accumulated and not re-derived, so Requirement 2.4 is met by the PGF
+not constructing a geometric height at all: it constructs a *difference*, which is not a height
+field.
 
 ### 3.6 The edge operator
 
@@ -767,38 +700,47 @@ the layer means, and it is stated next.
 
 For each edge and layer:
 
-1. **Both sides of the edge use the same specific-volume profile.** The two columns must evaluate
-   $\hat\alpha$ as one and the same function of pressure over the pressure range the layer spans.
-   This is what the edge-shared expansion point of §3.3.1 delivers, and under the reduced target of
-   §3.2 it is the *only* remaining mechanism by which exactness can fail on a resolved profile.
-2. **The two columns are compared at a common pressure, to all orders retained.** Layer $k$ spans
-   different pressure ranges in the two columns, so $[\nabla_n z]_p$ requires shifting each
-   column's height from its own interface pressures to a pressure shared with its neighbour.
-   Truncating that shift at first order is what `PressureGradCentered` does, and its truncation is
-   the whole of the error Phase 1 removes; the shift must therefore be carried to the order of the
-   reconstruction, which is what §3.5's sources 1–3 supply.
-3. **The height being shifted is the hydrostatic integral of that same profile.** `VertCoord`'s
-   $Z$ is built from each cell's own exact TEOS-10 $\alpha$, not from the edge-shared
-   $\hat\alpha^{(e)}$, so the difference between the two must be accounted for. This is §3.5's
-   source 4, and it is a column prefix sum; see §3.7.4.
+1. **Both columns describe the same water, as a function of pressure, over the whole column.** The
+   two columns must evaluate $\hat\alpha$ as one and the same function of $p$ — not merely within a
+   layer, but at **every pressure from the anchor down**, since [](#z-of-p) integrates from the
+   surface and [](#d-recurrence) accumulates from it.
 
-Conditions 2 and 3 are about the discretization alone and are under the implementation's control.
-Meeting them means the scheme returns the **exact pressure gradient of the water column it has
-reconstructed** — it contributes no error of its own beyond the reconstruction. Condition 1 is
-about the state: it holds when the reconstruction reproduces the true profile, and fails, by
-however much the reconstruction misses, when it does not. Meeting all three gives a PGF that is
-**zero to machine precision**, for any tilt, any layer thickness, and any bathymetry.
+   **This is stronger than it looks, and stating it per layer is a trap.** An earlier revision of this
+   design required only that the two columns agree "over the pressure range the layer spans", and
+   satisfied it by sharing the equation-of-state expansion across the edge **at fixed layer index**
+   ([](#edge-ref)). Under tilt, fixed layer index is not fixed pressure: column $L$'s layer $k$ and
+   column $R$'s layer $k$ span different pressure ranges, so at a given pressure the two columns were
+   using expansions about different states, and $\hat\alpha^{(e)}$ became a *discontinuous
+   piecewise-linear function whose breakpoints sat at different pressures in the two columns*. The two
+   columns then integrated genuinely different functions even for a profile both reconstructed
+   exactly, and the scheme missed exactness by
+   $O(\alpha_{pp}\,\delta p\,\Delta_e p^{\text{mid}})$ — first order in tilt, and therefore a
+   *tilt-independent fraction* of the signal. Measured at $2\times10^{-3}$ of the centered scheme's
+   answer, flat across three decades of tilt (§6.3).
 
-Note that conditions 2 and 3 are, between them, exactly the requirement R3 of §3.5 — that
-$\mathcal{R}$ cancel $\mathcal{S}$ to round-off on a resolved profile. Stating them separately is
-useful because they fail in distinguishable ways: a defect in condition 2 leaves a residual local
-to the layer, while a defect in condition 3 leaves one that grows with depth. §5.2's guard tests
-are arranged to tell them apart.
+   Every other comparison in this design had already been moved to fixed pressure; that one had not.
+   [](#dalpha) is the repair: differencing at matched pressure before integrating makes the condition
+   hold pointwise and by construction.
 
-The point worth carrying away, because it is what makes this tractable, is that **the reconstructed
-profile does not have to be accurate for the cancellation to be exact — it only has to be shared.**
-The scheme needs the two columns to describe *one* water column, not the *right* one. Accuracy is a
-separate concern, addressed by reconstruction order.
+2. **The two columns are differenced at a common pressure, before integration.** This is
+   [](#dz-dp)–[](#dalpha). Integrating each column separately and subtracting satisfies condition 1
+   only to the order of whatever shift is used to reconcile the two, and reintroduces the
+   large-number cancellation §3.7.5 is about.
+3. **The anchor is consistent.** [](#anchor) must be zero for a resting ocean, which requires
+   `VertCoord`'s sea-surface height to satisfy the inverse-barometer relation against its own surface
+   pressure. Unlike conditions 1 and 2 this is not under the PGF's control; it is a dependency on
+   upstream state, and §5.2 tests it by construction.
+
+Conditions 2 and 3 are about the discretization and the state it is handed. Condition 1 is about
+whether the *reconstruction* reproduces the true profile: it holds exactly for profiles in the exact
+set of §3.7.3, and fails by however much the reconstruction misses when it does not. Meeting all
+three gives a PGF that is **zero to machine precision**, for any tilt, any layer thickness, and any
+bathymetry.
+
+What makes this tractable, and is worth carrying away, is that condition 1 is now checked *pointwise*
+rather than assembled: [](#dalpha) is zero at each quadrature point or it is not. There is no
+cancellation between terms to get right, and consequently no way to satisfy the resting-state gate
+while being subtly wrong — which the previous formulation permitted (§6.3).
 
 #### 3.7.3 Which water columns cancel exactly
 
@@ -857,106 +799,84 @@ the bottom-layer error seen in realistic global configurations. Whether this dow
 seen in realistic global configurations is a plausible diagnosis, not an established one; it is
 carried as A4 in §3.7.6 and tested in §5.3.
 
-#### 3.7.4 Condition 3 and the column scan
+#### 3.7.4 What `VertCoord` supplies, and what it does not
 
-Condition 3 constrains how the height being shifted is built. Two questions arise, and they have
-different answers; they are easy to conflate, and doing so leads to the conclusion that `VertCoord`
-must be changed, which it need not be.
+`VertCoord` is the source of `PressureInterface`, `PressureMid`, `PseudoThickness` and the
+sea-surface height that [](#anchor) differences. It is **not** the source of the height the scheme
+integrates: [](#d-recurrence) builds $\Delta_e z$ from the reconstruction alone, so the question of
+whether `VertCoord`'s $z$ is built from the same $\hat\alpha$ the PGF uses does not arise.
 
-**The quadrature question, which is settled.** `VertCoord::computeGeomZHeight` builds $z$ by
-accumulating $\Delta z = \rho_0\,\alpha_{i,k}\,\tilde h_{i,k}$ — apparently a midpoint rule, where
-condition 3 asks for the integral of the reconstructed $\hat\alpha$. For a Phase 1 reconstruction
-these are **the same quantity**. Integrating [](#alpha-taylor) with the linear deviations of §3.4
-over the layer,
+That is a simplification worth recording, because it disposes of two questions earlier revisions of
+this design spent effort on.
+
+**The quadrature question, which is settled and now moot.**
+`VertCoord::computeGeomZHeight` accumulates $\Delta z = \rho_0\,\alpha_{i,k}\,\tilde h_{i,k}$ —
+apparently a midpoint rule. For a Phase 1 reconstruction it is the exact layer integral:
 
 $$
 \frac{1}{g}\int_{p^{\text{top}}_{i,k}}^{p^{\text{bot}}_{i,k}} \hat\alpha_{i,k}(p)\,dp
 = \frac{\alpha_{0}\,\Delta p_{i,k}}{g} = \rho_0\,\alpha_{i,k}\,\tilde h_{i,k},
 $$ (z-increment-exact)
 
-because $\int \Theta'\,dp = \int S'\,dp = 0$ by the mean-preserving constraint, and
-$\int (p - p^{\text{mid}})\,dp = 0$ because $p^{\text{mid}}$ is the exact arithmetic midpoint of the
-two interface pressures. The midpoint rule *is* the exact layer integral of a Phase 1
-$\hat\alpha$. No change to `VertCoord` is required, there is no answer-changing baseline step, and
-Requirement 2.4 is satisfied by construction rather than by negotiation — the PGF and the rest of
-the model share one $z$ because they compute the same thing.
+because $\int \Theta'\,dp = \int S'\,dp = 0$ by the mean-preserving constraint and
+$\int (p - p^{\text{mid}})\,dp = 0$ because `PressureMid` is the exact arithmetic midpoint of the two
+interface pressures. This remains true and remains useful — it is why no change to `VertCoord` and no
+answer-changing baseline step is required — but the scheme no longer depends on it, since it no
+longer accumulates `VertCoord`'s $z$.
 
-This is a Phase-1-only result and Phase 2 must re-examine it. Parabolic deviations are fine provided
-they remain mean-preserving, but the second-order equation-of-state expansion of §3.3 contributes
-$\tfrac12\alpha_{pp}(p-p^{\text{mid}})^2$ and cross terms such as
-$\tfrac12\alpha_{\Theta\Theta}\Theta'^2$, none of which integrate to zero over the layer. If that
-option is adopted, [](#z-increment-exact) no longer holds and the question returns.
+**The sharing question, which [](#dalpha) answers directly.** Whether a cell-based $z$ can carry an
+edge-dependent $\hat\alpha$ was the right question to ask of a formulation that differenced two
+separately accumulated column integrals. It does not arise for one that differences the integrand:
+there is no per-column integral to reconcile, and the per-layer mismatch between `VertCoord`'s
+increment and the edge-shared profile's — which an earlier revision carried as a column prefix sum —
+is not part of the scheme.
 
-**The sharing question, which is the real constraint.** What condition 3 actually requires is that
-the height be the hydrostatic integral of the *same* $\hat\alpha$ the fixed-pressure shift uses —
-and §3.3.1 makes that an **edge** quantity, since its coefficients and expansion point are averages
-over the two cells of the edge. A cell-based $Z$ cannot carry an edge-dependent $\hat\alpha$ however
-it is integrated. This is §3.5's source 4, and it is $O(\alpha_{pp}(\Delta p^{\text{mid}}_e)^2)$ per
-layer, accumulating down the column. §3.5 gives its closed form: the edge-shared profile's layer mean
-is [](#alpha-edge-layer-mean), the per-layer mismatch against `VertCoord`'s increment is the
-second-order equation-of-state remainder [](#eos-remainder), and what the scheme needs is $\Delta_e$
-of its running sum down the column.
+**Two exact simplifications** follow from taking the edge control volume as the average of the two
+columns' interface pressures, $p^{\text{top}}_{e,k} = \bar q_k$ and
+$p^{\text{bot}}_{e,k} = \bar q_{k+1}$, and are worth using in the implementation:
 
-**Resolution: the PGF accumulates $\Delta_e$ of $\varepsilon_{i,k}$ down each edge's column**, built
-from the edge-shared $\hat\alpha$, and adds it to the local terms of $\mathcal{R}$. This does not
-create the second, slightly different $z$ that Requirement 2.4 exists to prevent:
-`GeomZInterface`/`GeomZMid` remain the model's one geometric height and are unchanged, and what the
-PGF accumulates is a per-edge *difference* of second-order EOS remainders, identically zero when the
-two columns' states coincide.
+- $p^{\text{mid}}_{e,k}$ is **exactly** the edge average of the two columns' own layer midpoints;
+- $\Delta p_{e,k}$ is **exactly** the edge average of the two columns' own layer thicknesses.
 
-Two things about it are easy to get wrong.
+Both follow from `PressureMid` being the exact arithmetic midpoint, and both were confirmed
+numerically.
 
-- **This piece is genuinely small; the scheme as a whole is not a small correction.** Source 4 is
-  second order in the cross-edge pressure contrast, so accumulating it consumes little precision. But
-  sources 1–3, and $\mathcal{S}$ itself, are the same size as the terms they correct — at 50 m/km both
-  are $\approx 0.5$ m s$^{-2}$ before cancellation. Writing something as a "correction" therefore buys
-  no precision on its own; what buys it is [](#gamma-increments) and §3.5.1, which remove the
-  cancellation algebraically.
-- **The scan is not optional and not a detail.** §4.1.3 records the implementation consequence: a
-  column prefix sum cannot live inside a per-edge, per-vertical-chunk kernel call. Both this scan and
-  $\mathcal{S}$'s accumulation via [](#gamma-increments) are prefix sums and should share one pass.
-
-One related question is left to implementation time: `VertCoord` builds $z$ upward from the
-bathymetry while pressure is built downward from the surface, so the two accumulate round-off from
-opposite ends of the column. Which end the scan of this section and the accumulation of
-[](#gamma-increments) run from is a round-off question (§3.7.5), not a consistency one — condition 3
-is satisfied either way. It is now a single decision rather than two, since both should share one
-pass.
+**One question is left to implementation time**: which end of the column [](#d-recurrence)
+accumulates from. `VertCoord` builds $z$ upward from the bathymetry while pressure is built downward
+from the surface. Accumulating from the surface is the natural choice, since [](#anchor) is a surface
+condition and the sea-surface height difference is small and well conditioned; accumulating from the
+sea floor requires an anchor at the bathymetry, where the two columns may have different bottom
+pressures. Measured in double precision the two agree to round-off, so this is a round-off question
+(§3.7.5) and not a consistency one.
 
 #### 3.7.5 Round-off in the deep ocean
 
-Separate from everything above, and not fixed by it, is how much precision the cancellation
-consumes. At 4000 m the hydrostatic height difference across a steeply tilted edge is of order
-$10^{2}$ m, while the part of it that survives in the edge tendency is of order
-$10^{-3}$ m — the millimetre-scale residual of [](#centered-shift). Roughly five significant digits
-are consumed there, and roughly ten by the time the tendency is formed against a signal of order
-$10^{-6}\ \mathrm{m\,s^{-2}}$ times $d_e$. Double precision leaves adequate margin; a
-`OMEGA_SINGLE_PRECISION` build does not, and the machine-precision cancellation of §3.7.2 would
-simply be invisible beneath round-off.
+An earlier formulation of this scheme differenced two column integrals of order $10^{2}$ m to obtain
+a residual of order $10^{-3}$ m, consuming roughly five significant digits before the physics
+appeared and roughly ten by the time the tendency was formed. That is `PressureGradCentered`'s
+existing arithmetic, and it is the reason this section exists.
 
-Three points.
+**[](#dz-dp) removes the exposure rather than managing it.** Every quantity in the scan is a
+difference *before* it is an integral: [](#dalpha) is a horizontal contrast, [](#d-recurrence)
+accumulates integrals of that contrast, and $D_k$ is the answer itself. No large quantity is formed
+anywhere, so nothing large has to cancel. The scheme's conditioning is therefore set by the size of
+the baroclinic signal, not by the size of the hydrostatic terms.
 
-- **This exposure belongs to `PressureGradCentered`, not to the new scheme.** It is entirely in
-  $\mathcal{S}_{e,k}$ as [](#centered-shift) writes it — two terms of order 200 m cancelling to
-  millimetres — which is what the default PGF has always computed. $\mathcal{R}$ adds none of its
-  own: requirement R2 of §3.5 exists precisely so that every one of its four sources is formed from
-  quantities that are individually small. Any conclusion reached here therefore applies to the
-  centered scheme as well, and it would be wrong to treat a single-precision round-off floor as an
-  objection to `FiniteVolume` specifically.
-- **§3.5.1 removes it, in both schemes.** Accumulating $\mathcal{S}$ through
-  [](#gamma-increments) never forms the two large terms at all. If that form is adopted — and the
-  design recommends it — the ten-digit estimate above does not apply to the implemented scheme, and
-  the expected answer to the single-precision question changes from "probably fails" to "probably
-  passes". That is a prediction to be measured (§5.2, run in both precisions), not an assumption.
-- **The perturbation form remains in reserve and is probably not needed.** It would subtract a local
-  reference profile from $\hat\alpha$ before integrating and add its contribution back analytically.
-  This is *not* a Shchepetkin–McWilliams (2003)-style reference-profile subtraction in the usual
-  sense: the reference is local to the edge and layer, its contribution cancels identically rather
-  than approximately, and the accuracy of the scheme does not depend at all on how well it matches
-  the local column — so it does not degrade in the strong-gradient, steep-layer regions where a
-  global reference profile would. It changes nothing in exact arithmetic. With
-  [](#gamma-increments) in place it addresses a problem that has already been removed
-  algebraically, so it should be adopted only against a measurement.
+Three consequences.
+
+- **The ten-digit estimate does not apply to this scheme.** It applies to `PressureGradCentered`,
+  which still forms and cancels $10^{2}$ m quantities, and to any formulation that reconciles two
+  separately accumulated column integrals. Measured, restructuring the accumulation this way
+  recovered about three decimal digits of headroom on a tilted coordinate — the largest increment
+  being $\sim 10^{-3}$ of the height difference it replaces (§6.3).
+- **A single-precision build is expected to pass §5.2**, where previously it was expected to fail.
+  That is a prediction to be measured (§5.2 is run in both precisions), not an assumption, and it
+  should be measured alongside `PressureGradCentered` so the comparison is interpretable.
+- **The perturbation form is not needed and is not specified.** It would have subtracted a local
+  reference profile from $\hat\alpha$ before integrating and added its contribution back
+  analytically. It addressed a problem that differencing first removes algebraically. If a
+  single-precision measurement ever contradicts the paragraph above, this is the direction to look,
+  but it should not be built speculatively.
 
 #### 3.7.6 Assumptions that still need testing
 
@@ -973,12 +893,13 @@ assumptions this design is making that only testing can confirm:
   which is why §3.6.1's stencil constraint could be dropped.
 - **A2 — The EOS expansion is good enough across the edge.** [](#alpha-taylor) is expanded about the
   shared edge state [](#edge-ref), and its error grows with the horizontal contrast in $\Theta$ and
-  $S$ across the edge and with the layer's pressure range. Whether the first-order expansion suffices
-  in frontal regions, or whether the second-order option of §3.3 is needed, is an open question.
-  A2 is now measurable more directly than by an accuracy sweep alone: §3.5's source 4 *is* the
-  second-order remainder of that expansion, so the magnitude of the accumulated part of
-  $\mathcal{R}$ relative to its local part is a running diagnostic of how hard the expansion is being
-  worked. Reporting that ratio is cheap and should be done.
+  $S$ across the edge. Whether the first-order expansion suffices in frontal regions, or whether the
+  second-order option of §3.3 is needed, is an open question — though a narrower one than it was, since
+  [](#dalpha) makes the coefficients multiply a quantity that is zero on the exact set, so A2 bears on
+  accuracy only and not on robustness. Measured, the second-order remainder relative to $\alpha$ is
+  $8\times10^{-6}$ on the hardest configuration available (a 12 °C contrast across a 4 km edge) and
+  $\le 2\times10^{-9}$ on the resting-state variants (§6.3). The first-order expansion is not being
+  worked near its limit, and `temperature_gradient` at coarse resolution is the configuration to watch.
 - **A3 — The residual outside the exact set is small enough in practice.** The $O(\tilde h^2)$ and
   $O(\tilde h^3)$ entries in §3.7.3 describe how the error *scales*; how large it actually is at the
   vertical resolutions Omega can afford is unknown.
@@ -988,17 +909,18 @@ assumptions this design is making that only testing can confirm:
   bottom-layer flow persists there, the cause lies elsewhere — most likely in the layer-mean
   treatment in the tracer and remapping operators (§4.3) — and Phase 1 will not cure it. See §5.3.
 - **A5 — The treatment at the top and bottom of the column is adequate.** [](#ho-exact) averages over
-  the edge control volume's pressure range $[p^{\text{top}}_{e,k}, p^{\text{bot}}_{e,k}]$, which in
-  general is not either column's own range, so each column's reconstruction must be evaluated
-  slightly outside the layer it was built for. In the interior this is a small extrapolation across a
-  smooth reconstruction and is harmless. At the surface, where the two columns have different
-  $p^{\text{surf}}$, and at the sea floor, where they may have different `maxLevelCell` and where a
-  partial cell carries the whole signal for the Polaris `bathymetry_step` configuration, it is not
-  obviously harmless and **has not been tested** — the reference derivation was run with equal layer
-  counts in both columns. The extrapolation must be defined explicitly, and whichever choice is made
-  must reduce to a single function when the two reconstructions coincide, or condition 1 of §3.7.2
-  fails at the column ends. §5.1's `bathymetry_step` and `surface_pressure_gradient` variants are
-  where it is measured.
+  the edge control volume's pressure range, which in general is not either column's own, so near the
+  sea floor — where the two columns may have different `maxLevelCell`, and where a partial cell carries
+  the whole signal for the Polaris `bathymetry_step` configuration — a column's deepest reconstruction
+  must be evaluated slightly below its own floor.
+
+  **A5 is an accuracy assumption, not a robustness one.** [](#dalpha) is evaluated at matched pressure
+  whether or not the evaluation point lies inside the layer the reconstruction was built for, and on
+  the exact set an extrapolated reconstruction still reproduces the true profile, so $\Delta_e\Theta(p)$
+  is still zero and exactness survives. What extrapolation costs is accuracy off the exact set, and how
+  much is unmeasured: the derivation harness ran with equal layer counts in both columns. §5.1's
+  `bathymetry_step` and `surface_pressure_gradient` variants are where it is measured, and the rule
+  used must be stated explicitly rather than left to fall out of the implementation.
 
 ### 3.8 Scope: the reduction and the vertical coordinate
 
@@ -1024,46 +946,84 @@ $g\,\nabla z + \nabla(\phi_{TP}+\phi_{SAL})$; $z$ enters as `VertCoord`'s `GeomZ
 supplied by `VertCoord` and differenced with [](#edge-grad) (Requirement 2.7). They are zero in early
 Omega versions and are unaffected by anything in §3.5.
 
-### 3.9 Reduction to the centered scheme
+### 3.9 Relationship to the centered scheme
 
-Setting $\mathcal{R}_{e,k} \equiv 0$ in [](#ho-discrete) recovers `PressureGradCentered` exactly.
-That is the content of [](#centered-shift), which is an algebraic identity about the implemented
-code rather than a limit reached by tuning options, so the reduction is **structural in the strict
-sense**: there is one term, the reduction is switching it off, and it holds at any tilt, any layer
-thickness and any stratification.
+`PressureGradCentered` is **exactly** the first-order conversion of a height difference taken at
+fixed layer index into one taken at fixed pressure. This is an algebraic identity about the
+implemented code rather than an approximate correspondence, and it has been confirmed numerically to
+$0.5\,\epsilon$ of the hydrostatic scale over fifty states, including the bottom partial cell and
+configurations where the two columns' `maxLevelCell` differ (§6.2).
 
-The reduction is therefore exercised by a single configuration switch, `RemainderEnable: false`
-(§4.1.1), which doubles as guard test (c) of §5.2. The agreement is algebraic rather than bit-for-bit
-if §3.5.1's accumulation is used, since that evaluates $\mathcal{S}$ in a different order from
-`PGrad.h` (§4.4); it would be bit-for-bit if [](#centered-shift) were assembled literally, and that is
-a deliberate trade against round-off.
+Let $q_{i,k}$ = `PressureInterface`, $Z_{i,k}$ = `GeomZInterface`, $\alpha_{i,k}$ = `SpecVol`, and
 
-Because the reduction holds at any tilt, §5.5 should be run *at* nonzero tilt and over a sweep of
-tilts. That is not merely permitted, it is the stronger test: the whole of the difference between the
-two schemes is $\mathcal{R}$, so a tilt sweep confirms that $\mathcal{S}$ alone reproduces
-`PressureGradCentered` and that both schemes are in fact responding to tilt. A reduction demonstrated
-only on level interfaces would establish much less.
+$$
+\mathcal{S}_{e,k} \;=\; \tfrac{1}{2}\left(\Delta_e Z_{k} + \Delta_e Z_{k+1}\right)
+\;+\; \frac{\bar\alpha_{e,k}}{2g}\left(\Delta_e q_{k} + \Delta_e q_{k+1}\right),
+\qquad
+\bar\alpha_{e,k} = \tfrac{1}{2}\!\!\sum_{i \in CE(e)}\!\! \alpha_{i,k}.
+$$ (centered-shift)
+
+Then the centered tendency is exactly
+
+$$
+T^{p,\text{ctr}}_{e,k} = -\frac{g}{d_e}\,\mathcal{S}_{e,k} - \left[\nabla_n(\phi_{TP}+\phi_{SAL})\right]_e .
+$$ (centered-identity)
+
+The proof is two lines: with
+$M = gZ + \alpha q$, the identity $\Delta_e(\alpha q) = \bar\alpha\,\Delta_e q + \bar q\,\Delta_e\alpha$
+splits the Montgomery difference, and the $\bar q\,\Delta_e\alpha$ halves cancel the scheme's
+$\bar p\,\nabla\alpha$ term **term for term**, because
+$\tfrac12(\bar q_{k} + \bar q_{k+1}) = \bar p^{\text{mid}}_{e,k}$ exactly — `PressureMid` is the exact
+arithmetic midpoint (`VertCoord.cpp:1067`).
+
+Three things this buys, and one it does not.
+
+- **It explains the error the centered scheme makes.** Taylor-shifting each column's height from its
+  own interface pressure to a common one gives
+  $z_i(p) = Z_{i,k} - \tfrac{\alpha}{g}(p - q_{i,k}) + O((p-q_{i,k})^2)$, so $\mathcal{S}$ is the
+  first-order truncation of what [](#ho-exact) asks for. `PressureGradCentered`'s entire
+  Montgomery-potential apparatus is that conversion and nothing else, and its error is the
+  conversion's truncation — which is why §3.7.3's first-order behaviour is what it is, and why
+  compressibility appears in that error even though it cannot appear in the true horizontal gradient
+  (§3.5, consequence 4).
+- **It gives a regression test with a known answer.** §5.5 asserts [](#centered-shift) against
+  `PressureGradCentered` directly. Because the two functors read the mesh, `VertCoord` and EOS state
+  through independently written code, their agreement tests the shared upstream state — edge masks,
+  interface indexing, `VertCoord` conventions — and not just the PGF arithmetic (§4.4).
+- **It bounds the difference between the two schemes.** They agree to
+  $O\!\left((\Delta_e p)^2\right)$, so a `FiniteVolume` answer far from `Centered` at small tilt
+  indicates a defect in one of them rather than a property of the physics.
+
+**What it does not give is a configuration switch that reduces one scheme to the other.**
+[](#dz-dp) is not built by adding a correction to [](#centered-shift); it differences the integrand
+and never forms $\mathcal{S}$ at all. There is therefore no `FiniteVolume` setting that recovers
+`PressureGradCentered` bit-for-bit or to round-off, and §5.5 tests the identity above rather than a
+reduced configuration. An earlier revision of this design proposed such a switch; it was a property
+of a formulation that has been replaced, and the identity is the more useful half of it in any case,
+since it can be asserted as a unit test without running the new scheme at all.
 
 ### 3.10 Per-step algorithm summary
 
 Steps 1–3 are per cell and layer; step 4 is a per-edge column scan; step 5 is per edge and layer.
 Phase differences are marked.
 
-1. From `VertCoord`: read `PressureInterface`, `PressureMid`, `GeomZInterface`, `PseudoThickness`,
-   and the tidal/SAL potentials (already computed diagnostically each step). `VertCoord` itself
-   needs no change and no baseline step (§3.7.4).
+1. From `VertCoord`: read `PressureInterface`, `PressureMid`, `PseudoThickness`, the sea-surface
+   height and the tidal/SAL potentials (already computed diagnostically each step). `VertCoord`
+   itself needs no change and no baseline step (§3.7.4).
 2. Obtain $\alpha_0$ (= the existing `Eos::SpecVol` field) and the derivatives
-   $\alpha_\Theta, \alpha_S, \alpha_p$ from one TEOS-10 evaluation ([](#alpha-derivs)). Both phases
-   need all four; Phase 2 optionally adds second derivatives (§3.3).
-3. Build the mean-preserving deviations $\Theta', S'$ ([](#vert-recon)) — **linear in Phase 1,
+   $\alpha_\Theta$, $\alpha_S$ from one TEOS-10 evaluation ([](#alpha-derivs)). $\alpha_p$ is not
+   required by [](#dalpha) and is needed only for the anchor [](#anchor); Phase 2 optionally adds
+   second derivatives (§3.3).
+3. Build the mean-preserving deviations $\Theta'$, $S'$ ([](#vert-recon)) — **linear in Phase 1,
    parabolic in Phase 2** — using the actual non-uniform interface pressures (§3.4).
-4. For each edge, in one column scan: form the shared expansion point [](#edge-ref) layer by layer;
-   accumulate $\mathcal{S}_{e,k}$ through [](#gamma-increments) and the source-4 part of
-   $\mathcal{R}_{e,k}$ through §3.7.4, from the same end of the column (§3.7.4 closing note).
-5. For each edge and layer: add the local sources 1–3 of $\mathcal{R}_{e,k}$ (§3.5), assemble
-   [](#ho-discrete) with the tidal/SAL difference, and accumulate into `Tend` with `EdgeMask`.
-   **Phase 1** uses the two-cell operator [](#edge-grad); **Phase 2** uses the wider stencil of
-   §3.6.1.
+4. For each edge, in one column scan from the sea surface: form the anchor [](#anchor); then for each
+   edge layer form the shared coefficients [](#edge-ref), evaluate [](#dalpha) at the layer's
+   quadrature points — each column's $\Theta$, $S$ taken from *its own* layer containing that pressure
+   — and advance $D_k$ by [](#d-recurrence).
+5. For each edge and layer: form the layer mean of $\Delta_e z$ from $D_k$ and the second moment of
+   the same integrand, assemble [](#ho-exact) with the tidal/SAL difference, and accumulate into
+   `Tend` with `EdgeMask`. **Phase 1** uses the two-cell operator [](#edge-grad); **Phase 2** uses the
+   wider stencil of §3.6.1.
 
 ## 4 Design
 
@@ -1097,24 +1057,28 @@ rather than keys, so no configuration written for Phase 1 needs to change when P
        PressureGradType: 'FiniteVolume'   # Centered | FiniteVolume
        HorzOrder: 2                       # 2 = two-cell stencil (Phase 1); 4 = wide stencil (Phase 2)
        VerticalReconstruction: 'linear'   # 'linear' (Phase 1) | 'ppm' (Phase 2)
-       RemainderEnable: true              # false = verification only, reduces to Centered (§3.9)
+       QuadraturePoints: 2                # per-edge-layer points for the matched-pressure integrand
 ```
 
 - **Phase 1 default and target:** `HorzOrder: 2`, `VerticalReconstruction: 'linear'`,
-  `RemainderEnable: true`.
+  `QuadraturePoints: 2`.
 - **Phase 2 target:** `HorzOrder: 4`, `VerticalReconstruction: 'ppm'`.
 
-`RemainderEnable: false` switches off $\mathcal{R}_{e,k}$, which by [](#centered-shift) leaves
-exactly `PressureGradCentered` (§3.9). It is **verification only**: it supports the permanent
-regression test of §5.5 and serves as guard test (c) of §5.2. It is not a supported production
-setting — it *is* the default scheme, reached by a more expensive path — and the implementation
-should log a warning if it is selected outside a test.
+`QuadraturePoints` sets the number of points at which [](#dalpha) is evaluated within each edge
+layer. **It is an accuracy setting only.** Because the integrand is zero *pointwise* on the exact set
+(§3.5, consequence 2), no quadrature rule can break the robustness property, and the choice therefore
+trades cost against accuracy off the exact set with nothing else at stake. Two points is exact for
+the piecewise-linear Phase 1 integrand within a sub-interval and is the default; more is worth
+considering only where the two columns' interfaces are strongly offset, since the integrand is
+piecewise linear with breakpoints at the union of the two columns' interfaces and a fixed rule does
+not resolve those breaks.
 
 `HorzOrder` selects the width of the edge stencil used by [](#edge-grad). It is purely an accuracy
 setting: it carries no constraint from the robustness property (§3.6.1).
 
-There is no vertical quadrature setting: the one integrand in [](#ho-discrete) is nearly constant
-across the layer and is evaluated in closed form (§3.2). `FiniteVolume` names the layer-integrated
+There is no setting that reduces the scheme to `PressureGradCentered`: [](#dz-dp) differences the
+integrand rather than correcting the centered form, so no term can be switched off to recover it
+(§3.9). `FiniteVolume` names the layer-integrated
 control-volume form of §3.1 rather than a face-by-face assembly of the pressure traction, which is
 the narrower sense Adcroft et al. (2008) use.
 
@@ -1125,7 +1089,11 @@ needs no setting of its own. Tests that mean to isolate compressibility, includi
 
 #### 4.1.2 New EOS support
 
-`PressureGradFiniteVolume` needs $\alpha$ together with its first derivatives. The `Eos` class
+`PressureGradFiniteVolume` needs $\alpha$ together with its first derivatives. Note that
+[](#dalpha) uses only $\alpha_\Theta$ and $\alpha_S$ — $\alpha_p$ cancels in the matched-pressure
+difference and is required only by the anchor [](#anchor). The three derivative arrays are provided
+together regardless, since `Eos` computes them from one evaluation and `BruntVaisalaFreqSq` already
+consumes $\alpha_p$. The `Eos` class
 (Eos.h) currently exposes `computeSpecVol`, `computeSpecVolDisp`, and
 `computeBruntVaisalaFreqSq`, but no specific-volume derivatives. This design adds one method
 and three device arrays:
@@ -1196,25 +1164,24 @@ Three aspects of the loop structure differ from the obvious implementation:
   is where the TEOS-10 cost lives; the per-edge work is polynomial arithmetic on those cached
   values. This is what keeps Requirement 2.2 satisfied despite roughly three times as many column
   evaluations on a hexagonal mesh.
-- **The column scan of §3.10 step 4 cannot live in this functor.** $\mathcal{S}_{e,k}$ via
-  [](#gamma-increments) and source 4 of $\mathcal{R}_{e,k}$ are both prefix sums down each column
-  with edge-dependent coefficients, so neither is expressible as an independent per-vertical-chunk
-  operation. They are computed together in a separate kernel filling two per-edge arrays,
+- **The column scan of §3.10 step 4 cannot live in this functor.** [](#d-recurrence) is a prefix sum
+  down each column with edge-dependent coefficients, so it is not expressible as an independent
+  per-vertical-chunk operation. It is computed in a separate kernel filling one per-edge array,
 
   ```c++
-  Array2DReal ShiftFirstOrder;  ///< (NEdgesAll, NVertLayers) — S_{e,k}, eq. (centered-shift)
-  Array2DReal RemainderAccum;   ///< (NEdgesAll, NVertLayers) — source 4 of R_{e,k}, §3.7.4
+  Array2DReal DeltaZFixedP;  ///< (NEdgesAll, NVertLayers) — D_k, eq. (d-recurrence)
   ```
 
-  with a `parallelForOuter` over edges and a `parallelScanInner` down the column, in the same shape
-  as `VertCoord::computeGeomZHeight`. The functor then reads them chunk-wise like any other input.
-  The cost is two edge-sized 2-D arrays and one column scan per edge per step. This is the one
-  structural addition Phase 1 makes beyond the per-edge, per-chunk pattern the centered scheme uses,
-  and it is not optional: §3.5's requirement R2 rules out forming either quantity by subtracting
-  large numbers inside the chunk loop.
-- **$\mathcal{R}$'s local sources are the only part that is a plain per-chunk computation.** Sources
-  1–3 of §3.5 depend on the layer's own interface pressures, thicknesses and reconstruction slopes,
-  and belong in the functor.
+  with a `parallelForOuter` over edges and a `parallelScanInner` down the column, in the same shape as
+  `VertCoord::computeGeomZHeight`. The functor then reads it chunk-wise like any other input. The cost
+  is one edge-sized 2-D array and one column scan per edge per step, and it is the one structural
+  addition Phase 1 makes beyond the per-edge, per-chunk pattern the centered scheme uses.
+- **Each column's $\Theta$, $S$ are looked up by pressure, not by layer index.** At each quadrature
+  point of edge layer $k$, [](#dalpha) needs the reconstruction of whichever of *that column's* layers
+  contains the point, which under tilt is generally not layer $k$ (§3.7.2, condition 1). Within the
+  column scan the two indices advance monotonically alongside $k$, so this is a pair of incremented
+  cursors rather than a search — but it is a real difference from the obvious implementation, and
+  getting it wrong reintroduces exactly the defect condition 1 warns about.
 
 The Phase 1 and Phase 2 code paths differ only in the reconstruction degree (§3.4) and in the width
 of the edge stencil (§3.6.1). There is one functor, not two.
@@ -1295,11 +1262,11 @@ baseline step — not as part of this design.
 
 #### 4.5.1 Phase 1 — a consistent second-order scheme
 
-**Delivers.** The exact fixed-pressure geopotential difference [](#ho-exact), evaluated as
-`PressureGradCentered` plus the remainder $\mathcal{R}_{e,k}$ (§3.5); the equation-of-state expansion
-about a state shared across each edge (§3.3.1); mean-preserving linear reconstruction of $\Theta$ and
-$S$ in pressure (§3.4); the per-edge column scan that supplies $\mathcal{S}$ and $\mathcal{R}$'s
-accumulated part (§3.7.4, §4.1.3). The result is a pressure gradient that is zero to machine
+**Delivers.** The exact fixed-pressure geopotential difference [](#ho-exact), evaluated by
+differencing the integrand at matched pressure and integrating the difference (§3.5); the
+equation-of-state expansion about a state shared across each edge (§3.3.1); mean-preserving linear
+reconstruction of $\Theta$ and $S$ in pressure (§3.4); the per-edge column scan [](#d-recurrence) and
+its anchor [](#anchor). The result is a pressure gradient that is zero to machine
 precision for any resting ocean whose profile varies linearly with pressure, at any tilt, thickness,
 or bathymetry (§3.7.3) — Requirement 2.3 in full.
 
@@ -1307,10 +1274,10 @@ or bathymetry (§3.7.3) — Requirement 2.3 in full.
 in use today (§3.6), so horizontal truncation error is unchanged from `PressureGradCentered`.
 Requirements 2.1 and 2.6 are met at second order only.
 
-**Depends on.** Nothing unresolved. The `VertCoord` question of §3.7.4 is settled there: no change to
-`VertCoord` is needed and no baseline step is required, because the midpoint rule is already the exact
-layer integral of a Phase 1 $\hat\alpha$. What condition 3 does require — the column scan — is part
-of this phase's own implementation (§4.1.3), not a prerequisite in another module.
+**Depends on.** No change to `VertCoord` and no baseline step (§3.7.4); the scheme does not
+accumulate `VertCoord`'s geometric height at all, using the sea-surface height once in [](#anchor).
+The one genuine dependency on upstream state is condition 3 of §3.7.2 — that `VertCoord`'s
+sea-surface height be consistent with its surface pressure — which it already satisfies.
 
 **Open at implementation time.** Two items, neither of them blocking. Which end of the column the
 scan accumulates from (§3.7.4 closing note) is a round-off question, settled by measurement. And the
@@ -1319,7 +1286,7 @@ rather than inherited — it is the one part of the formulation the reference de
 since it ran with equal layer counts in both columns.
 
 **Code and cost.** Three new `Eos` derivative fields and one new method (§4.1.2); the
-`PressureGradFiniteVolume` functor; two per-edge arrays and one column scan (§3.7.4, §4.1.3); no new
+`PressureGradFiniteVolume` functor; one per-edge array and one column scan (§3.5.1, §4.1.3); no new
 TEOS-10 evaluations per cell and layer (Requirement 2.2), with roughly three times as many column
 evaluations on a hexagonal mesh (§4.1.3). Most of the arithmetic is in the column scan.
 
@@ -1351,13 +1318,14 @@ Requirement 2.6, because exactness does not constrain it (§3.6.1).
    the confirmed result in the reduced form of §3.5, and to settle four things this design leaves to
    it:
 
-   - the closed form of each of $\mathcal{R}$'s four sources, with requirement R2 of §3.5 satisfied —
-     no source formed by subtracting large numbers;
-   - the reconciliation of [](#gamma-increments) against [](#centered-error), including the anchor
-     constant (§3.5.1);
-   - which end of the column the scan accumulates from (§3.7.4);
-   - the top- and bottom-of-column treatment, assumption A5 (§3.7.6), which the existing derivation
-     did not cover.
+   - the closed-form quadrature of [](#dalpha) and of the second moment [](#ho-exact) needs, together
+     with the per-column pressure lookup that feeds them;
+   - the anchor [](#anchor), including confirmation that it is zero for a resting ocean at the
+     initialized sea-surface height;
+   - which end of the column [](#d-recurrence) accumulates from (§3.7.4);
+   - the rule used where a column's deepest reconstruction is evaluated below its own floor, and how
+     much accuracy it costs off the exact set (assumption A5, §3.7.6).
+
 2. Run the assumption-A4 diagnostic of §5.3, which uses the *existing* centered scheme and so can be
    done immediately and in parallel with step 1. If spurious bottom-layer flow survives a profile
    that Phase 1 would resolve exactly, the cause is elsewhere in the model and the priority of this
@@ -1487,12 +1455,16 @@ Three groups of profiles are run:
   **machine precision** (double-precision builds; the threshold tracks `Real`'s epsilon and the size
   of the hydrostatic terms, not a physical tolerance). Phase 1 and Phase 2 must both pass.
 
-  Assert this in the sharper form of §3.5's requirement R3 — that
-  $\mathcal{R}_{e,k} = -\mathcal{S}_{e,k}$ to round-off — and report both quantities, not only their
-  sum. $\mathcal{S}$ is the centered scheme's answer on the same state and is nonzero and
-  tilt-dependent; checking against it turns a comparison with zero into a cancellation of ten orders
-  of magnitude against a known reference, and it is what distinguishes a working scheme from one that
-  has stopped responding to tilt at all.
+  Report the tendency alongside `PressureGradCentered`'s on the same state, which is nonzero and
+  tilt-dependent (§3.9). A pass is then a cancellation of ten orders of magnitude against a known
+  nonzero reference rather than a comparison with zero, which is what makes it hard to pass by
+  accident.
+
+  Also assert the property one level down, at the integrand: [](#dalpha) must be zero **at every
+  quadrature point**, not merely in the integral. This is the sharpest available form of the test,
+  it localizes a failure to the layer and column that caused it, and it is the check that a
+  per-layer-index sharing rule fails (§3.7.2, condition 1).
+
 - **Profiles it does not:** $\Theta$, $S$ quadratic in pressure, then a realistic profile.
   **Pass:** the residual shrinks like $\tilde h^2$ (Phase 1) and $\tilde h^3$ (Phase 2) as the
   vertical grid is refined at fixed tilt, matching §3.7.3. A residual that does not shrink at the
@@ -1505,16 +1477,20 @@ Three groups of profiles are run:
 
   | guard | breaks | expected to fire because |
   |---|---|---|
-  | (a) **tilt sensitivity** — assert $\mathcal{S}_{e,k}$ and $\mathcal{R}_{e,k}$ are *individually* nonzero and grow with tilt | nothing; this one runs on the passing configuration | a bug that zeroed the tilt response would satisfy every other check in this section perfectly. This is the guard against mistaking "no tilt terms" for "correct tilt terms" |
-  | (b) cell-local expansion point in place of [](#edge-ref) | condition 1, §3.7.2 | the two columns then use different approximations to one equation of state, so $z_i(p)$ differ by more than a constant (§3.3.1) |
-  | (c) `RemainderEnable: false` | conditions 2 and 3 | this is exactly `PressureGradCentered` (§3.9), whose error on this state is the thing Phase 1 removes |
-  | (d) source 4 of $\mathcal{R}$ omitted, local sources retained | condition 3 only | isolates the column scan: a residual that grows with depth rather than being flat down the column |
-  | (e) $\mathcal{R}$'s local sources truncated at first order | condition 2 only | isolates the fixed-pressure shift, leaving a residual local to each layer |
+  | (a) **tilt sensitivity** — assert the tendency and `PressureGradCentered`'s differ, and that the latter grows with tilt | nothing; this one runs on the passing configuration | a bug that zeroed the tilt response would satisfy every other check in this section perfectly. This is the guard against mistaking "no tilt terms" for "correct tilt terms" |
+  | (b) **coefficients shared by layer index** in place of edge layer | condition 1 | at a given pressure the two columns then use expansions about different states, so [](#dalpha) is no longer identically zero. **This is the defect that made an earlier formulation fail**, and it is the guard most worth having |
+  | (c) **each column evaluated at its own layer $k$** rather than at matched pressure | condition 2 | differencing at fixed layer index instead of fixed pressure; recovers something close to `PressureGradCentered` |
+  | (d) **anchor taken as $\Delta_e Z_1$ alone**, dropping the short integrals of [](#anchor) | condition 3 | leaves a depth-independent offset in $D_k$, so the residual is flat down the column rather than growing — distinguishable from (b) and (c) |
+  | (e) **cell-local expansion point** in place of [](#edge-ref) | accuracy only | should **not** break exactness under [](#dalpha), since the coefficients multiply zero. If it does fire, condition 1 is not implemented as specified |
 
-  Guards (d) and (e) are the pair that makes a failure diagnosable: condition 2 and condition 3 fail
-  in distinguishable ways (§3.7.2), and running both tells the implementer which one is broken without
-  another round trip. Guard (a) is the one to write first, because it is the only one that can fire on
-  a configuration where every other check passes.
+  Guard (e) is the inverted one and is worth keeping for that reason: under the previous formulation
+  it broke exactness, and under this one it must not. It is the cheapest available confirmation that
+  the reformulation did what it was meant to do.
+
+  Guards (b), (c) and (d) break conditions 1, 2 and 3 respectively and leave residuals with different
+  depth structure, so running all three localizes a failure without another round trip. Guard (a) is
+  the one to write first, because it is the only one that can fire on a configuration where every
+  other check passes.
 
   Guards must be checked against a deliberately broken configuration, not only against a passing
   one. A guard that cannot fire is worse than no guard, because it looks like protection.
@@ -1526,14 +1502,11 @@ non-uniform** set of layer thicknesses, the recovered slope (Phase 1) or slope a
 the most likely place for the machine-precision gate above to fail, and it localizes the failure
 immediately.
 
-The test is also run in a single-precision build, to measure the round-off floor of §3.7.5. Note that
-§3.7.5 now predicts this should *pass* if [](#gamma-increments) is used for $\mathcal{S}$, and that
-the same measurement applies to `PressureGradCentered`; running the centered scheme alongside is what
+The test is also run in a single-precision build. §3.7.5 predicts it should *pass*, because
+[](#dz-dp) forms no large quantities; running `PressureGradCentered` alongside, which does, is what
 makes the result interpretable.
 
-Condition 3 of §3.7.2 requires the column scan of §3.7.4, so the machine-precision check cannot pass
-until that is in place; this test, together with guards (c) and (d) above, is its acceptance
-criterion. It is implemented as a fast C++ unit test and also run as a configuration of the Polaris
+It is implemented as a fast C++ unit test and also run as a configuration of the Polaris
 two-column task.
 
 **Covers:** Requirement 2.3 in full; rows 1–5 of the §3.7.3 table; the round-off floor of §3.7.5.
@@ -1581,28 +1554,25 @@ under dynamics.
 
 ### 5.5 Test: Reduction to the centered scheme (permanent regression)
 
-Configure the new scheme with `HorzOrder: 2`, `RemainderEnable: false` and confirm it reproduces
-`PressureGradCentered` to round-off on the two-column test. This guards Requirement 2.5 and protects
-the existing default during refactoring. The test is established with Phase 1 and rerun unchanged for
-Phase 2, where it also confirms the wider stencil collapses correctly to the two-cell one.
+Assert [](#centered-identity) against `PressureGradCentered` directly, on the two-column test, across
+a sweep of tilts. This is a unit test of the *identity* of §3.9, not of a reduced configuration of the
+new scheme: [](#dz-dp) differences the integrand and never forms [](#centered-shift), so there is no
+setting that recovers the centered scheme (§3.9, final paragraph).
 
-**Run it at nonzero tilt, and at several tilts.** Per §3.9 the reduction is exact at any tilt, so a
-level-interface configuration would be a weaker test than the design supports — and a tilt sweep here
-is what confirms that $\mathcal{S}$ alone is reproducing the centered scheme rather than the two
-schemes agreeing because neither is responding to tilt.
+It guards Requirement 2.5 and protects the existing default during refactoring, and it is cheap —
+[](#centered-shift) is a few lines and needs none of the new machinery. Because the two functors read
+the mesh, `VertCoord` and EOS state through independently written code, their agreement tests the
+shared upstream state — edge masks, interface indexing, `VertCoord` conventions — and not just the PGF
+arithmetic (§4.4). Measured, it holds to $0.5\,\epsilon$ of the hydrostatic scale over fifty states
+(§6.2).
 
-Note that `RemainderEnable: false` is not a supported production setting (§4.1.1); it exists so that
-this comparison is possible. Keeping it costs one branch.
+Expect agreement to round-off rather than bit-for-bit. In addition to the operation-order argument of
+§4.4, `PressureMid` may be formed as $\tilde z_{\text{bot}} + \tfrac12\tilde h$ rather than as the mean
+of the two interface pressures; those are algebraically identical but not bit-for-bit.
 
-This test is retained permanently rather than treated as a one-time transition check, and that choice
-is the reason `PressureGradCentered` is kept as a separate implementation rather than reimplemented as
-the lowest-order configuration of `PressureGradFiniteVolume` (§4.4). The two functors read the mesh,
-`VertCoord`, and EOS state through independently written code, so their agreement to round-off is
-evidence about *shared upstream* state as well as about the PGF arithmetic: a wrong edge mask, a
-mis-indexed interface array, or a misinterpreted `VertCoord` convention shows up as a disagreement.
-Were the centered scheme replaced by an order-2 configuration of the new code, this comparison would
-reduce to comparing an implementation against itself, and any defect upstream of the order switch
-would cancel out of it.
+A second, weaker check is worth running alongside: the `FiniteVolume` and `Centered` tendencies must
+agree to $O((\Delta_e p)^2)$ as the tilt is reduced. That is the only sense in which the two schemes
+now reduce to one another, and a violation indicates a defect in one of them.
 
 **Covers:** Requirement 2.5; §3.9.
 
@@ -1613,8 +1583,9 @@ could satisfy every accuracy gate while quietly calling the equation of state in
 Two cheap checks close that:
 
 - **Evaluation count.** With an instrumented `Eos`, confirm the number of specific-volume
-  evaluations per time step is one per cell per layer and is **unchanged** when `HorzOrder` and
-  `VerticalReconstruction` are varied. This is the property Requirement 2.2 actually states, and it is
+  evaluations per time step is one per cell per layer and is **unchanged** when `HorzOrder`,
+  `VerticalReconstruction` and `QuadraturePoints` are varied. The last is the one that matters most
+  here, since the quadrature loop is where an equation-of-state call would most naturally creep in. This is the property Requirement 2.2 actually states, and it is
   a counter comparison, not a timing measurement, so it is deterministic and suitable for CI.
 - **Wall time.** Record PGF kernel time relative to `PressureGradCentered` on a representative
   configuration, as a performance regression guard. The expected cost is dominated by the per-edge
@@ -1639,9 +1610,11 @@ Two cheap checks close that:
 | A3 Residual small enough in practice | §5.1 accuracy gate; §5.3; §5.4 |
 | A4 PGF error causes the instability | §5.3 diagnostic, run before Phase 1 completes |
 | A5 Top- and bottom-of-column treatment | §5.1 `bathymetry_step` and `surface_pressure_gradient` |
-| §3.5 remainder is load-bearing | §5.2 guards (c), (d), (e); §5.5 at nonzero tilt |
+| §3.7.2 condition 1, shared at matched pressure | §5.2 guard (b), and the per-quadrature-point assertion |
+| §3.7.2 condition 2, differenced before integration | §5.2 guard (c) |
+| §3.7.2 condition 3, the anchor | §5.2 guard (d) |
 | §3.5 the scheme responds to tilt at all | §5.2 guard (a); §5.5 tilt sweep |
-| §3.7.4 column scan | §5.2 (cannot pass without it; guard (d) isolates it) |
+| §3.9 the centered identity | §5.5, as a standalone unit test |
 | §3.7.5 Round-off floor | §5.2, run in both precisions, alongside `Centered` |
 
 Requirement 2.7 (extensibility) is not testable directly; it is addressed by the configuration
@@ -1673,7 +1646,7 @@ $\alpha(p)$, sharing no code with the scheme under test.
 | exactness on the exact set, independent of tilt | §3.7.3 | residual at the round-off floor, $9\times10^{-16}$ to $9\times10^{-15}$, **not growing** across 0.5–200 m/km at 16 and 64 layers. `Centered` on the same states is exactly first order in tilt |
 | $O(\tilde h^2)$ off the exact set | §3.7.3 | quadratic-in-$p$ profile at 50 m/km: rates 2.21, 2.14, 2.09, 2.05 under vertical refinement |
 | the edge-shared expansion point is load-bearing | §3.3.1 | replacing it with a cell-local one costs $2.2\times10^{-9}$ to $3.0\times10^{-5}$ across the tilt range — §5.2 guard (b) |
-| the fixed-pressure comparison is the whole scheme, not a correction | §3.5, §3.7.4 | omitting it costs $2.8\times10^{-3}$ to $1.1$ m s$^{-2}$ — three to five orders larger than any other guard, and the reason §3.5 presents $\mathcal{R}$ as a component rather than a refinement |
+| the fixed-pressure comparison is the whole scheme, not a correction | §3.5 | omitting it costs $2.8\times10^{-3}$ to $1.1$ m s$^{-2}$ — three to five orders larger than any other guard |
 
 Three limits on what this establishes, all of them live.
 
@@ -1682,11 +1655,11 @@ Three limits on what this establishes, all of them live.
   is assumption A5 of §3.7.6.
 - **Nothing has been run in Omega**, or through the real Polaris task machinery, so the interaction
   with p-star initialization and partial cells is untested.
-- **The rows above were measured on an assembly of all four pressure terms**, not on [](#ho-discrete).
-  Given that those terms cancel to $3\times10^{-15}$ relative, what the exactness and $O(\tilde h^2)$
-  rows measured *was* the geopotential term alone, so they carry over — but by that argument rather
-  than by direct measurement, and confirming it against [](#ho-discrete) is the first task of §4.5.3
-  step 1.
+- **The rows above were measured on an assembly of all four pressure terms**, not on the form §3.5
+  specifies. Given that those terms cancel to $3\times10^{-15}$ relative, what the exactness and
+  $O(\tilde h^2)$ rows measured *was* the geopotential term alone, so they carry over — but by that
+  argument rather than by direct measurement. §6.3 records what happened when it was measured
+  directly.
 
 ### 6.2 Corrections owed to `OmegaV1GoverningEqns.md`
 
@@ -1706,3 +1679,68 @@ be made there rather than left as local overrides here.
    $\mathbf n^{\text{top}} \approx (-\nabla\tilde z^{\text{top}}, 1)$, unnormalized. The derivation in
    §3.1 here uses Leibniz' rule directly, so neither the corrected [](#ho-target) nor [](#ho-exact)
    depends on that approximation.
+
+### 6.3 Measurements from the Polaris reference implementation
+
+A second round of measurement, on the Polaris two-column harness at
+`polaris/tasks/ocean/horiz_press_grad` and asserted by `pytest`, confirmed two claims of §3 and
+falsified a third. It is the reason §3.5 differences the integrand rather than correcting
+[](#centered-shift).
+
+**Confirmed — the centered identity (§3.9).** [](#centered-shift) reproduces the Polaris centered
+HPGA to at most $0.5\,\epsilon$ of the hydrostatic scale, over fifty states: both resting-state tilt
+sweeps in full, and the four gradient variants at their coarsest and finest resolution. It holds in
+the bottom partial cell and at tilts where the two columns' `maxLevelCell` differ. The check is not
+vacuous — plausible mis-derivations miss by $700\times$ the tolerance (cell-local instead of
+edge-averaged $\alpha$), $1.2\times10^{6}$ (top interface instead of the trapezoid) and
+$2\times10^{9}$ (dropping the pressure term).
+
+**Confirmed — accumulating small quantities recovers precision (§3.7.5).** The largest increment of
+a cancellation-free accumulation, against the fixed-index height difference it replaces:
+$1.1\times10^{-3}$ at 256 m layers and 50 m/km, $2.7\times10^{-4}$ at 64 m, $2.0\times10^{-4}$ on a
+200 m/km bathymetry step — about three decimal digits of headroom on a tilted coordinate. The
+gradient variants gain little only because their coordinate is flat and there is nothing to save.
+
+**Falsified — sharing the equation-of-state expansion by layer index.** On a configuration inside the
+exact set, a formulation that built each column's height integral separately and reconciled the two
+missed exactness by $\approx 2\times10^{-3}$ of the centered scheme's answer, **flat across three
+decades of tilt**, where the robustness property asks for round-off. A brute-force evaluation of
+[](#ho-exact) by direct quadrature — sharing no code with the closed forms — missed by the same
+amount, which is what identified the target rather than the algebra as the problem. The tilt
+independence is the signature: the mismatch is $O(\alpha_{pp}\,\delta p\,\Delta_e p^{\text{mid}})$,
+first order in tilt, as is the signal. §3.7.2's condition 1 records the diagnosis and [](#dalpha) the
+repair.
+
+Worth noting for scale: at 64 m layers and 50 m/km the two columns' layer $k$ are offset by 2.8 layer
+thicknesses and **do not overlap in pressure at all**. Any formulation that pairs by layer index is
+differencing unrelated water there.
+
+### 6.4 Corrections carried over from the reference implementation
+
+Five items, all confirmed numerically on the Polaris side and folded into §3–§5 above.
+
+1. **[](#centered-error) reconciles only in the redistribution limit.** Summation by parts on a
+   cancellation-free accumulation gives [](#centered-error) plus a $k$-independent anchor constant
+   **only when $\sum_j \Delta_e\tilde h_j = 0$** — the two columns having equal total pseudo-thickness.
+   A `z_tilde_bot` tilt gives them different pseudo-bottom depths, so this does not hold in
+   `hydrostatic_consistency`, the configuration the design cites. [](#centered-error) should be read
+   as the redistribution-limit statement its own derivation assumes.
+2. **Sources of a correction are not individually small.** An earlier formulation required each
+   component of its remainder to be "a small quantity". Measured, the largest was exactly the size of
+   the term it corrected — necessarily, since it is the term that cancels it. The requirement that
+   matters is that no component be *formed by subtracting large quantities*, which is a statement
+   about how each is evaluated rather than about its magnitude. §3.5.1 states it that way.
+3. **Two exact simplifications** hold when the edge control volume is the average of the two columns'
+   interface pressures: the edge layer's mid-pressure is exactly the edge average of the two columns'
+   own layer midpoints, and its thickness exactly the edge average of theirs. Both follow from
+   `PressureMid` being the exact arithmetic midpoint. §3.7.4 records them.
+4. **`gsw` units.** `gsw.specvol_first_derivatives(SA, CT, p)` takes pressure in **dbar** and returns
+   the pressure derivative of specific volume per **Pa** — the convention of neither argument. The
+   Omega unit test of §4.1.2 should assert this against a centred finite difference in Pa, and
+   explicitly against being wrong by the factor $10^{4}$.
+5. **Initializing $\Theta$ and $S$ as layer means.** Omega's prognostic $\Theta$, $S$ are layer means
+   and §3.4 reconstructs them as mean-preserving, so a test initial condition should supply layer
+   means rather than midpoint samples. Changing this moves the Polaris resting-state baselines by
+   3–39% (and the gradient variants by $\le 0.02\%$), so the recorded `Centered` baseline and the
+   Omega-vs-Polaris comparison both move with it. This is a property of the test configuration, not
+   of the scheme, but it invalidates any comparison against the earlier baseline.
