@@ -180,9 +180,14 @@ pressure**, which captures both compressibility and smooth stratification to lea
 **2.3.4 Everywhere else, substantially smaller error than the centered scheme.** For realistic
 profiles, which no reconstruction reproduces exactly, some residual PGF is unavoidable and is
 *correct* — the two neighboring columns genuinely do hold slightly different water (§3.7.1). The
-requirement is that this residual shrink at least one order faster in layer thickness than
-`PressureGradCentered` does, and that it not be swamped by errors the scheme itself introduces
+requirement is that this residual be substantially smaller than `PressureGradCentered`'s at the
+resolutions Omega can afford, and that it not be swamped by errors the scheme itself introduces
 through an inconsistent geopotential or a truncated fixed-pressure comparison.
+
+The comparison is made on **absolute error at the resolutions Omega can afford**, not on relative
+convergence order. The two schemes converge at similar rates on smooth profiles, so an
+order-of-convergence gate against the centered scheme would not express what this requirement is
+for; §6.5 gives the measurements behind that choice and §5.1 the gate that implements it.
 
 These properties must hold without reference to any background or reference profile, so that they
 hold equally in the warm pool, at the poles, and over a seamount.
@@ -388,10 +393,8 @@ that a four-term force balance would need several delicate arguments to secure.
   [](#z-of-p) the two $z_i(p)$ differ by a constant fixed by the anchors, and $[\nabla_n z]_p$ is
   *pointwise* zero at every pressure. The integral in [](#ho-exact) is then zero regardless of
   the tilt, the layer thicknesses, the bathymetry, or the quadrature used to evaluate it. There
-  are no terms to pair and no signs to get right. For a resting ocean the anchors agree by the
-  inverse-barometer relation — $z^{\text{surf}}_i$ tilts exactly so as to compensate a horizontal
-  gradient in $p^{\text{surf}}_i$ — which is the state the `surface_pressure_gradient` Polaris
-  variant initializes.
+  are no terms to pair and no signs to get right. For a resting ocean the anchors agree as well,
+  the sea surface tilting exactly so as to compensate a horizontal gradient in $p^{\text{surf}}$.
 - **The vertical quadrature is not an accuracy knob.** $[\nabla_n z]_p$ varies across the layer
   only through $\frac{d}{dp}[\nabla_n z]_p = -\frac{1}{g}[\nabla_n\hat\alpha]_p$, the horizontal
   contrast in specific volume at fixed pressure — a quantity that is *small* and that vanishes
@@ -560,12 +563,17 @@ $$ (dalpha)
 **This is the central property of the scheme.** [](#dalpha) is a product of a coefficient with the
 horizontal contrast in reconstructed $\Theta$ and $S$ *at matched pressure*, and that contrast is
 **identically zero, pointwise**, whenever the two columns' reconstructions describe the same water
-(§3.7.2, condition 1). Four consequences follow, and they replace a chain of separate arguments an
-earlier formulation of this section needed:
+(§3.7.2, condition 1). Four consequences follow:
 
-1. **Exactness does not depend on the coefficients.** Whatever $\bar\alpha_\Theta$,
-   $\bar\alpha_S$ are, they multiply zero. The edge-shared expansion point of §3.3.1 remains the
-   right choice on *accuracy* grounds, but the robustness property no longer rests on it.
+1. **Exactness does not depend on the coefficients' values, but does depend on their being
+   shared.** Whatever $\bar\alpha_\Theta$, $\bar\alpha_S$ are, they multiply zero — so *which*
+   shared set is used is an accuracy question, and selecting it by edge layer rather than by some
+   other rule cannot break the robustness property. What is load-bearing is that **one** set
+   multiply both columns: [](#dalpha) collapses to a coefficient times a contrast only then. Give
+   each column its own expansion point and the $\bar\alpha_0$ and $\bar\alpha_p$ terms no longer
+   cancel, and exactness is lost — measured at $10^{-5}$, which is guard (e) of §5.2. The
+   edge-shared expansion point of §3.3.1 is therefore load-bearing, and it is load-bearing for
+   *sharing* rather than for where the point sits.
 2. **Exactness does not depend on the quadrature.** The integrand is zero at every point, so any
    rule integrates it to zero. Quadrature order is therefore an ordinary accuracy knob (§4.1.1),
    not a correctness requirement.
@@ -598,12 +606,34 @@ $$
 D_1 \;=\; \Delta_e Z_1 \;-\; \frac{1}{g}\sum_{i \in CE(e)} -n_{e,i} \int_{p^{\text{surf}}_i}^{\bar q_1} \hat\alpha^{(e)}_i(p)\,dp ,
 $$ (anchor)
 
-with both short integrals in closed form and taken inside each column's own top layer. For a resting
-ocean whose sea surface satisfies the inverse-barometer relation, $D_1$ is zero exactly — the surface
-tilts precisely so as to compensate the horizontal gradient in $p^{\text{surf}}$. **Exactness of the
-scheme therefore inherits the consistency of `VertCoord`'s sea-surface height with its surface
-pressure**, which is a dependency worth stating: it is the one place the PGF's robustness reaches
-outside the PGF.
+with both short integrals in closed form and taken inside each column's own top layer, and both
+vanishing where the two columns share a surface pressure.
+
+$D_1$ is **computed, not assumed**: it is whatever the model's geometric heights and surface
+pressures imply, evaluated at a common pressure. Like every other quantity in the scan it is a
+fixed-pressure height difference, and it is zero exactly when the state carries no horizontal
+pressure gradient at the surface — which is what a state at rest means. A state that is only
+approximately at rest carries a real gradient there, and the scheme reports it. The anchor is
+therefore not a place where the scheme assumes anything about the state; it is the $k=1$ instance
+of the same comparison [](#d-recurrence) makes at every other interface.
+
+**Which end of the column the anchor sits at is a conditioning choice.**
+`VertCoord::computeGeomZHeight` sets $Z_{i,\,\text{bot}} = -\text{BottomGeomDepth}_i$ and accumulates
+$\Delta z = \rho_0\,\alpha_{i,k}\,\tilde h_{i,k}$ **upward**: the bathymetry is prescribed and the
+sea-surface height is derived, so
+
+$$
+\Delta_e Z_{\text{surf}} = -\Delta_e H + \frac{1}{g}\,\Delta_e\!\left[\sum_k \alpha_{i,k}\,\Delta p_{i,k}\right].
+$$ (ssh-difference)
+
+The bracket is not an error. It is how the model defines geometric height, and the PGF must see the
+model's own $z$ — a scheme that returns zero for the state the model actually holds is what
+Requirement 2.3.1 asks for, so using the derived sea-surface height is self-consistent and correct.
+What [](#ssh-difference) does show is that $\Delta_e Z_{\text{surf}}$ is a difference of two
+column-length accumulations yielding a small result, where $-\Delta_e H$ is exact input and vanishes
+identically for a flat floor. The sea-floor anchor is therefore better conditioned in floating point,
+at the cost of a larger common-pressure excursion and a partial cell to handle where `maxLevelCell`
+differs. §3.7.4 records what is and is not established about the choice.
 
 **Every quantity in the scan is small.** $D_k$ is the fixed-pressure height difference — of order
 $10^{-1}$ m for a realistic baroclinic column and zero for a resting one, against the $10^{2}$ m
@@ -705,33 +735,27 @@ For each edge and layer:
    layer, but at **every pressure from the anchor down**, since [](#z-of-p) integrates from the
    surface and [](#d-recurrence) accumulates from it.
 
-   **This is stronger than it looks, and stating it per layer is a trap.** An earlier revision of this
-   design required only that the two columns agree "over the pressure range the layer spans", and
-   satisfied it by sharing the equation-of-state expansion across the edge **at fixed layer index**
-   ([](#edge-ref)). Under tilt, fixed layer index is not fixed pressure: column $L$'s layer $k$ and
-   column $R$'s layer $k$ span different pressure ranges, so at a given pressure the two columns were
-   using expansions about different states, and $\hat\alpha^{(e)}$ became a *discontinuous
-   piecewise-linear function whose breakpoints sat at different pressures in the two columns*. The two
-   columns then integrated genuinely different functions even for a profile both reconstructed
-   exactly, and the scheme missed exactness by
-   $O(\alpha_{pp}\,\delta p\,\Delta_e p^{\text{mid}})$ — first order in tilt, and therefore a
-   *tilt-independent fraction* of the signal. Measured at $2\times10^{-3}$ of the centered scheme's
-   answer, flat across three decades of tilt (§6.3).
-
-   Every other comparison in this design had already been moved to fixed pressure; that one had not.
-   [](#dalpha) is the repair: differencing at matched pressure before integrating makes the condition
-   hold pointwise and by construction.
+   **The per-layer version of this condition is not sufficient, and the difference is the whole
+   reason for [](#dalpha).** Requiring the two columns to agree only "over the pressure range the
+   layer spans" is satisfiable while the scheme still misses exactness by three orders of magnitude,
+   because [](#z-of-p) integrates from the surface and [](#d-recurrence) accumulates from it: two
+   column integrals taken over different pressure ranges, with different layer partitions, have
+   nothing forcing them to agree. Differencing the integrand at matched pressure makes the condition
+   hold pointwise and by construction, and it is verifiable pointwise — [](#dalpha) is zero at a
+   quadrature point or it is not. §6.5 gives the measurements.
 
 2. **The two columns are differenced at a common pressure, before integration.** This is
    [](#dz-dp)–[](#dalpha). Integrating each column separately and subtracting satisfies condition 1
    only to the order of whatever shift is used to reconcile the two, and reintroduces the
    large-number cancellation §3.7.5 is about.
-3. **The anchor is consistent.** [](#anchor) must be zero for a resting ocean, which requires
-   `VertCoord`'s sea-surface height to satisfy the inverse-barometer relation against its own surface
-   pressure. Unlike conditions 1 and 2 this is not under the PGF's control; it is a dependency on
-   upstream state, and §5.2 tests it by construction.
+3. **The anchor is shifted to a common pressure too.** [](#anchor), not $\Delta_e Z_1$. Wherever
+   surface pressure varies horizontally the two columns' sea surfaces sit at different pressures, so
+   the comparison condition 2 imposes in the interior must be made at the top of the column as well.
+   This is the $k=1$ instance of condition 2 rather than a separate idea, but it is stated separately
+   because it is a distinct place in the code and fails in a distinguishable way — a depth-independent
+   offset in $D_k$ (§5.2, guard (d)).
 
-Conditions 2 and 3 are about the discretization and the state it is handed. Condition 1 is about
+Conditions 2 and 3 are about the discretization alone. Condition 1 is about
 whether the *reconstruction* reproduces the true profile: it holds exactly for profiles in the exact
 set of §3.7.3, and fails by however much the reconstruction misses when it does not. Meeting all
 three gives a PGF that is **zero to machine precision**, for any tilt, any layer thickness, and any
@@ -770,8 +794,10 @@ Two consequences deserve emphasis:
   ocean does not exist, but linear-in-pressure captures compressibility exactly and smooth
   stratification to leading order, which is most of what a real column looks like over a single
   layer. It satisfies Requirement 2.3.3.
-- `PressureGradCentered` is only first order in layer thickness for *every* stratified profile,
-  including a horizontally uniform one.
+- `PressureGradCentered` carries a first-order-in-tilt error for *every* stratified profile,
+  including a horizontally uniform one. Its order in layer thickness is profile-dependent (§6.5), so
+  the advantage Phase 1 offers is best stated as an absolute error ratio at a given resolution rather
+  than as a difference in convergence rate.
 
 That last point is worth showing, since it identifies the error Phase 1 targets. Take specific
 volume uniform in the horizontal within each layer, and let the coordinate merely redistribute
@@ -788,12 +814,12 @@ contrast in *in-situ* $\alpha$ is dominated by compressibility (a few percent ov
 depth, against a few tenths of a percent from $\Theta$ and $S$), and that is exactly the part
 Phase 1 cancels.
 
-This first-order behaviour has since been **measured**, and it is no longer an assertion. On the
-Polaris `horiz_press_grad` resting-state configurations (uniform $\Theta$, $S$, flat floor, tilted
-coordinate), `PressureGradCentered` gives a fitted exponent of $1.0000$ in the coordinate tilt at
-three vertical resolutions, and the `ztilde_gradient` variant converges at $\approx 1.1$ in
-horizontal resolution once the bottom layer is included in the comparison. Two independent
-measurements of the same first-order behaviour, in agreement. The corresponding absolute errors reach
+`PressureGradCentered` is exactly first order in the **coordinate tilt**: measured fitted exponent
+$1.0000$ at three vertical resolutions on the Polaris resting-state configurations, with the
+`ztilde_gradient` variant converging at $\approx 1.1$ in horizontal resolution once the bottom layer
+is included. Its order in **layer thickness** is profile-dependent and is not reliably first — it
+reaches second order and beyond on smooth resting profiles (§6.5) — so the tilt exponent, not the
+thickness order, is the robust statement. The corresponding absolute errors reach
 $2\times10^{-5}\ \mathrm{m\,s^{-2}}$ at a coordinate tilt of 50 m/km with 256 m layers — the order of
 the bottom-layer error seen in realistic global configurations. Whether this downward accumulation is in fact what produces the bottom-layer noise
 seen in realistic global configurations is a plausible diagnosis, not an established one; it is
@@ -806,10 +832,9 @@ sea-surface height that [](#anchor) differences. It is **not** the source of the
 integrates: [](#d-recurrence) builds $\Delta_e z$ from the reconstruction alone, so the question of
 whether `VertCoord`'s $z$ is built from the same $\hat\alpha$ the PGF uses does not arise.
 
-That is a simplification worth recording, because it disposes of two questions earlier revisions of
-this design spent effort on.
+Two questions that would otherwise arise therefore do not.
 
-**The quadrature question, which is settled and now moot.**
+**The quadrature question.**
 `VertCoord::computeGeomZHeight` accumulates $\Delta z = \rho_0\,\alpha_{i,k}\,\tilde h_{i,k}$ —
 apparently a midpoint rule. For a Phase 1 reconstruction it is the exact layer integral:
 
@@ -824,12 +849,11 @@ interface pressures. This remains true and remains useful — it is why no chang
 answer-changing baseline step is required — but the scheme no longer depends on it, since it no
 longer accumulates `VertCoord`'s $z$.
 
-**The sharing question, which [](#dalpha) answers directly.** Whether a cell-based $z$ can carry an
-edge-dependent $\hat\alpha$ was the right question to ask of a formulation that differenced two
-separately accumulated column integrals. It does not arise for one that differences the integrand:
-there is no per-column integral to reconcile, and the per-layer mismatch between `VertCoord`'s
-increment and the edge-shared profile's — which an earlier revision carried as a column prefix sum —
-is not part of the scheme.
+**The sharing question.** Whether a cell-based $z$ can carry an edge-dependent $\hat\alpha$ would
+matter to a formulation that differenced two separately accumulated column integrals. It does not
+arise for one that differences the integrand: there is no per-column integral to reconcile, and the
+per-layer mismatch between `VertCoord`'s increment and the edge-shared profile's is not part of the
+scheme.
 
 **Two exact simplifications** follow from taking the edge control volume as the average of the two
 columns' interface pressures, $p^{\text{top}}_{e,k} = \bar q_k$ and
@@ -841,20 +865,28 @@ $p^{\text{bot}}_{e,k} = \bar q_{k+1}$, and are worth using in the implementation
 Both follow from `PressureMid` being the exact arithmetic midpoint, and both were confirmed
 numerically.
 
-**One question is left to implementation time**: which end of the column [](#d-recurrence)
-accumulates from. `VertCoord` builds $z$ upward from the bathymetry while pressure is built downward
-from the surface. Accumulating from the surface is the natural choice, since [](#anchor) is a surface
-condition and the sea-surface height difference is small and well conditioned; accumulating from the
-sea floor requires an anchor at the bathymetry, where the two columns may have different bottom
-pressures. Measured in double precision the two agree to round-off, so this is a round-off question
-(§3.7.5) and not a consistency one.
+**Which end of the column to anchor at is left to implementation time.** `VertCoord` builds $z$
+upward from the bathymetry while pressure is built downward from the surface, so the two accumulate
+round-off from opposite ends, and [](#ssh-difference) favours the sea floor on conditioning grounds:
+$-\Delta_e H$ is exact input where $\Delta_e Z_{\text{surf}}$ is the small residual of two
+column-length sums. Either is correct; measured in double precision the two directions agree to
+round-off. This is a round-off question, not a consistency one.
+
+One consequence is worth recording for whoever builds the reference implementation. A test harness
+that anchors its geometric column at a *prescribed* sea surface and derives the bathymetry is
+constructing the state from the opposite end to `VertCoord`, which prescribes the bathymetry and
+derives the sea surface. The two agree only if the derived quantity is what is written to the initial
+condition and the same $\Delta z$ increment is used on both sides — a round trip that is easy to
+break silently and that nothing in this design would catch. That the existing Omega-vs-Polaris
+comparison holds to $10^{-16}$–$10^{-13}$ on the centered scheme, which reads `GeomZInterface`
+directly, is the evidence that it currently holds.
 
 #### 3.7.5 Round-off in the deep ocean
 
-An earlier formulation of this scheme differenced two column integrals of order $10^{2}$ m to obtain
-a residual of order $10^{-3}$ m, consuming roughly five significant digits before the physics
-appeared and roughly ten by the time the tendency was formed. That is `PressureGradCentered`'s
-existing arithmetic, and it is the reason this section exists.
+A scheme that differences two column integrals of order $10^{2}$ m to obtain a residual of order
+$10^{-3}$ m consumes roughly five significant digits before the physics appears, and roughly ten by
+the time the tendency is formed. That is `PressureGradCentered`'s arithmetic, and it is the reason
+this section exists.
 
 **[](#dz-dp) removes the exposure rather than managing it.** Every quantity in the scan is a
 difference *before* it is an integral: [](#dalpha) is a horizontal contrast, [](#d-recurrence)
@@ -869,7 +901,7 @@ Three consequences.
   separately accumulated column integrals. Measured, restructuring the accumulation this way
   recovered about three decimal digits of headroom on a tilted coordinate — the largest increment
   being $\sim 10^{-3}$ of the height difference it replaces (§6.3).
-- **A single-precision build is expected to pass §5.2**, where previously it was expected to fail.
+- **A single-precision build is expected to pass §5.2.**
   That is a prediction to be measured (§5.2 is run in both precisions), not an assumption, and it
   should be measured alongside `PressureGradCentered` so the comparison is interpretable.
 - **The perturbation form is not needed and is not specified.** It would have subtracted a local
@@ -998,9 +1030,8 @@ Three things this buys, and one it does not.
 [](#dz-dp) is not built by adding a correction to [](#centered-shift); it differences the integrand
 and never forms $\mathcal{S}$ at all. There is therefore no `FiniteVolume` setting that recovers
 `PressureGradCentered` bit-for-bit or to round-off, and §5.5 tests the identity above rather than a
-reduced configuration. An earlier revision of this design proposed such a switch; it was a property
-of a formulation that has been replaced, and the identity is the more useful half of it in any case,
-since it can be asserted as a unit test without running the new scheme at all.
+reduced configuration — which is the more useful test in any case, since it can be asserted without
+running the new scheme at all.
 
 ### 3.10 Per-step algorithm summary
 
@@ -1276,11 +1307,12 @@ Requirements 2.1 and 2.6 are met at second order only.
 
 **Depends on.** No change to `VertCoord` and no baseline step (§3.7.4); the scheme does not
 accumulate `VertCoord`'s geometric height at all, using the sea-surface height once in [](#anchor).
-The one genuine dependency on upstream state is condition 3 of §3.7.2 — that `VertCoord`'s
-sea-surface height be consistent with its surface pressure — which it already satisfies.
+All three conditions of §3.7.2 are properties of the PGF's own discretization; none is a dependency
+on another module.
 
 **Open at implementation time.** Two items, neither of them blocking. Which end of the column the
-scan accumulates from (§3.7.4 closing note) is a round-off question, settled by measurement. And the
+scan anchors at (§3.7.4) — where the sea floor is preferred on conditioning grounds and the
+measurement supporting the alternative may not be discriminating. And the
 treatment at the top and bottom of the column, assumption A5 of §3.7.6, has to be defined explicitly
 rather than inherited — it is the one part of the formulation the reference derivation did not cover,
 since it ran with equal layer counts in both columns.
@@ -1393,12 +1425,16 @@ Extend the four existing variants — `temperature_gradient`, `salinity_gradient
   layer-mean analytic HPGA (unchanged). For `FiniteVolume` the layer-mean comparison
   remains the correct target, since the scheme is a finite-volume, layer-averaged
   discretization.
-- **Accuracy gate (new, Requirement 2.1):** at a representative coarse resolution (e.g. the
-  coarsest in `horiz_resolutions`), the absolute RMS HPGA error vs. the reference must be below
-  a tolerance, **and** the new scheme's RMS error must be below the centered RMS error at that
-  same resolution (the scheme must demonstrably help where it matters). This gate applies to
-  Phase 1, where it is the primary measure of value, since Phase 1 does not change the
-  convergence slope.
+- **Accuracy gate (new, Requirements 2.1 and 2.3.4):** at a representative coarse resolution (e.g.
+  the coarsest in `horiz_resolutions`), the absolute RMS HPGA error vs. the reference must be below
+  a tolerance, **and** the new scheme's RMS error must be below the centered RMS error at that same
+  resolution. This gate applies to Phase 1, where it is the primary measure of value.
+
+  **This is also the gate for Requirement 2.3.4.** Set the ratio per variant from the measurements
+  in §6.5 — the advantage is 6.5× at 256 m layers and 2.4× at 64 m on a smooth curved profile, ~400×
+  on a stepped bathymetry — and take it at the coarse end of the sweep. Do **not** add a gate
+  requiring the new scheme's convergence slope to exceed the centered scheme's: the two converge at
+  similar rates on smooth profiles, so such a gate fails where nothing is wrong.
 - **Verification gate (Requirement 2.6):** the measured slope of RMS error vs. resolution,
   `omega_vs_reference_convergence_rate_*`, must fall within a band around the configured order
   of accuracy — nominally ~2 for `finite_volume_phase1` and ~4 for `finite_volume_phase2`. This band
@@ -1442,6 +1478,34 @@ of the §3.7.3 table (horizontal structure in $\Theta$, $S$); assumptions A1, A2
 This is the primary test of the steep-layer robustness property (Requirement 2.3, §3.7). It follows
 the table in §3.7.3 row by row rather than being a single pass/fail.
 
+**Run the machine-precision gate with a horizontally uniform surface pressure.** Both integrals in
+[](#anchor) then vanish identically and the two columns' sea-surface heights are equal by
+construction, so the anchor contributes nothing and the gate tests the scheme rather than the
+initialization. This costs nothing: surface-pressure gradients are exercised separately by §5.1,
+where the reference solution supplies the expected value.
+
+Where surface pressure *does* vary horizontally, the state carries a real fixed-pressure height
+difference at the surface and the scheme is right to report it — **expect it, and assert it against a
+computed value rather than against zero.** Two things make zero the wrong expectation there, and the
+second is not removable:
+
+- an initialization that balances the surface against a *reference* density $\rho_0$ rather than the
+  in-situ density leaves a residual of relative size $(\alpha - 1/\rho_0)/\alpha$. In a pressure-based
+  coordinate the in-situ balance is available in closed form — $z^{\text{surf}}$ is
+  $-\tfrac1g\int\alpha\,dp$ over the surface pressure, a quadrature of a known integrand rather than
+  the fixed-point solve a height-based Boussinesq model would need — so this part *can* be removed if
+  a configuration wants to;
+- [](#anchor) integrates $\hat\alpha^{(e)}$, the reconstruction, not the true $\alpha$. Exact
+  cancellation at the surface would require the sea-surface height to be consistent with the
+  *scheme's own linearized profile*, which is not something an initializer can reasonably be asked
+  for. A residual at the equation-of-state linearization level therefore survives any physically
+  correct initialization.
+
+The second point is derived here and has not been measured; the estimate is that it is some two
+orders below the first. Either way the conclusion for testing is the same, and it is why the first
+paragraph exists: **do not put the exactness gate on a configuration with a varying surface
+pressure.**
+
 Set up a two-column (or seamount) configuration with the coordinate interfaces deliberately tilted
 between the columns — including steep slopes and thin layers — and initialize the layer means as the
 **exact layer averages** of a prescribed continuous profile $\Theta(p)$, $S(p)$. Under tilt those
@@ -1475,22 +1539,31 @@ Three groups of profiles are run:
   symmetry of the test setup, or from the scheme having become insensitive to tilt, as from the scheme
   being right.
 
-  | guard | breaks | expected to fire because |
+  | guard | breaks | expected |
   |---|---|---|
-  | (a) **tilt sensitivity** — assert the tendency and `PressureGradCentered`'s differ, and that the latter grows with tilt | nothing; this one runs on the passing configuration | a bug that zeroed the tilt response would satisfy every other check in this section perfectly. This is the guard against mistaking "no tilt terms" for "correct tilt terms" |
-  | (b) **coefficients shared by layer index** in place of edge layer | condition 1 | at a given pressure the two columns then use expansions about different states, so [](#dalpha) is no longer identically zero. **This is the defect that made an earlier formulation fail**, and it is the guard most worth having |
-  | (c) **each column evaluated at its own layer $k$** rather than at matched pressure | condition 2 | differencing at fixed layer index instead of fixed pressure; recovers something close to `PressureGradCentered` |
-  | (d) **anchor taken as $\Delta_e Z_1$ alone**, dropping the short integrals of [](#anchor) | condition 3 | leaves a depth-independent offset in $D_k$, so the residual is flat down the column rather than growing — distinguishable from (b) and (c) |
-  | (e) **cell-local expansion point** in place of [](#edge-ref) | accuracy only | should **not** break exactness under [](#dalpha), since the coefficients multiply zero. If it does fire, condition 1 is not implemented as specified |
+  | (a) **tilt sensitivity** — assert the tendency and `PressureGradCentered`'s differ, and that the latter grows with tilt | nothing; runs on the passing configuration | must **pass**. A bug that zeroed the tilt response would satisfy every other check here perfectly |
+  | (b) **cell-local expansion point** in place of [](#edge-ref) | condition 1 | fires, at $10^{-5}$. Two expansion points mean the $\bar\alpha_0$ and $\bar\alpha_p$ terms no longer cancel in [](#dalpha) (§3.5, consequence 1) |
+  | (c) **each column's $\Theta$, $S$ taken from its own layer $k$** rather than from the layer containing the pressure | condition 2 | **cannot be made to fire** on any configuration currently available — see the warning below |
+  | (d) **anchor taken as $\Delta_e Z_1$ alone**, dropping the short integrals of [](#anchor) | condition 3 | fires, but only where the two columns' surface pressures differ; flat with depth, which distinguishes it from (b) |
 
-  Guard (e) is the inverted one and is worth keeping for that reason: under the previous formulation
-  it broke exactness, and under this one it must not. It is the cheapest available confirmation that
-  the reformulation did what it was meant to do.
+  Note that *which* shared coefficient set is used — selected by edge layer, by layer index, or
+  otherwise — is deliberately **not** a guard: §3.5 consequence 1 says exactness cannot depend on it,
+  and measurement confirms no effect (§6.5). A test asserting otherwise would be asserting something
+  false.
 
-  Guards (b), (c) and (d) break conditions 1, 2 and 3 respectively and leave residuals with different
-  depth structure, so running all three localizes a failure without another round trip. Guard (a) is
-  the one to write first, because it is the only one that can fire on a configuration where every
-  other check passes.
+  Guard (a) is the one to write first, because it is the only one that can fire on a configuration
+  where every other check passes.
+
+  **A warning that must not be lost, because it is the largest untested risk in the scheme.** Guard
+  (c) **cannot be made to fire on any configuration in the Polaris family.** The exact-set variant's
+  profile is a single line in pressure over the whole column, so every layer's mean-preserving
+  reconstruction is that same line and looking up the wrong layer costs nothing; on the curved
+  variant the two rules differ by less than a factor of two, which is not a usable discriminator
+  either. **An implementation that looks up a column's state by layer index will therefore pass
+  every exactness and accuracy check specified in this section.** The lookup must be pinned by
+  direct property tests instead — that it returns a layer other than $k$ under tilt, and one whose
+  interfaces actually bracket the pressure — and those tests are not optional. Whether an
+  answer-level guard becomes available once the layer *integral* is formed is an open question.
 
   Guards must be checked against a deliberately broken configuration, not only against a passing
   one. A guard that cannot fire is worse than no guard, because it looks like protection.
@@ -1701,15 +1774,19 @@ $1.1\times10^{-3}$ at 256 m layers and 50 m/km, $2.7\times10^{-4}$ at 64 m, $2.0
 200 m/km bathymetry step — about three decimal digits of headroom on a tilted coordinate. The
 gradient variants gain little only because their coordinate is flat and there is nothing to save.
 
-**Falsified — sharing the equation-of-state expansion by layer index.** On a configuration inside the
-exact set, a formulation that built each column's height integral separately and reconciled the two
-missed exactness by $\approx 2\times10^{-3}$ of the centered scheme's answer, **flat across three
-decades of tilt**, where the robustness property asks for round-off. A brute-force evaluation of
-[](#ho-exact) by direct quadrature — sharing no code with the closed forms — missed by the same
-amount, which is what identified the target rather than the algebra as the problem. The tilt
-independence is the signature: the mismatch is $O(\alpha_{pp}\,\delta p\,\Delta_e p^{\text{mid}})$,
-first order in tilt, as is the signal. §3.7.2's condition 1 records the diagnosis and [](#dalpha) the
-repair.
+**Falsified — building each column's height integral separately and reconciling the two.** On a
+configuration inside the exact set, that formulation missed exactness by
+$\approx 2\times10^{-3}$ of the centered scheme's answer, **flat across three decades of tilt**,
+where the robustness property asks for round-off. A brute-force evaluation of [](#ho-exact) by direct
+quadrature — sharing no code with the closed forms — missed by the same amount, which is what
+identified the target rather than the algebra as the problem, and prompted [](#dz-dp).
+
+**The mechanism of that failure was never established.** Two candidate explanations were proposed
+and both were later excluded by measurement: sharing the equation-of-state expansion at fixed layer
+index rather than at fixed pressure (no effect at all, §6.5), and extrapolating a reconstruction
+beyond its own layer (benign, §6.5). The formulation is abandoned, so the question is left open
+rather than pursued. What matters for the design is the positive result in §6.5: differencing the
+integrand is exact pointwise, which the failed formulation never was.
 
 Worth noting for scale: at 64 m layers and 50 m/km the two columns' layer $k$ are offset by 2.8 layer
 thicknesses and **do not overlap in pressure at all**. Any formulation that pairs by layer index is
@@ -1744,3 +1821,60 @@ Five items, all confirmed numerically on the Polaris side and folded into §3–
    3–39% (and the gradient variants by $\le 0.02\%$), so the recorded `Centered` baseline and the
    Omega-vs-Polaris comparison both move with it. This is a property of the test configuration, not
    of the scheme, but it invalidates any comparison against the earlier baseline.
+
+### 6.5 Measurements of the scheme as specified
+
+The scheme of §3.5 was implemented in the Polaris two-column harness and measured. These are the
+numbers Omega should expect to reproduce, and the two places where they contradict this document.
+
+**Exactness (Requirement 2.3.1) — met.** On a resting profile exactly linear in pressure, across the
+full tilt sweep at 256/128/64 m layers: [](#dalpha) is zero at every quadrature point to
+$5.3\times10^{-21}$ m³ kg⁻¹, about $10^{-17}$ of specific volume; $D_k$ is zero at every edge
+interface to $1.4\times10^{-15}$ m; and the assembled tendency is $2\times10^{-18}$ m s⁻².
+`PressureGradCentered` on the same states ranges from $6.8\times10^{-10}$ to $2.6\times10^{-5}$
+m s⁻². On a profile *outside* the exact set the same pointwise quantity is $2.9\times10^{-8}$, eleven
+orders larger, so the check is not returning zero unconditionally.
+
+Report **absolute** tendencies. At the smallest tilts the residual sits at $2\times10^{-14}$ rather
+than $2\times10^{-18}$ m s⁻², not because the scheme is worse but because the floor is round-off of
+the $\sim\!7\times10^{3}$ m hydrostatic scale.
+
+**Accuracy off the exact set — the gain is real but modest, and narrows.** On a smooth curved resting
+profile the scheme converges at 1.55–2.02, the $O(\tilde h^2)$ §3.7.3 predicts — but
+`PressureGradCentered` converges at 1.88–2.93 from a larger starting value, so the advantage falls
+from 6.5× at 256 m to 2.4× at 64 m. On a stepped bathymetry it is ~400×. This is what prompted the
+restatement of Requirement 2.3.4, and expectations for Omega should be set from these numbers rather
+than from the exact-set ones.
+
+**The anchor (§3.5.1).** Exactly zero where the two columns share a surface pressure, which is why
+§5.2 puts the exactness gate there. On the one Polaris configuration where they do not, whose sea
+surface is initialized from a reference-density balance, it is $6.1\times10^{-4}$ m — the residual of
+two 3.57 m terms, of relative size $(\alpha - 1/\rho_0)/\alpha$. That is a gradient the state genuinely
+carries, not a defect: measured against a quasi-analytic reference there, the scheme gives an RMS
+error of $3.9\times10^{-10}$ against `PressureGradCentered`'s $8.1\times10^{-10}$.
+
+Note for anyone tempted to remove that residual by initializing against the in-situ density instead.
+It would shrink but not vanish, because [](#anchor) integrates $\hat\alpha^{(e)}$ rather than the true
+$\alpha$, so exact cancellation would require the sea surface to be consistent with the scheme's own
+linearized profile. Estimated at the equation-of-state linearization level, some two orders below the
+$6.1\times10^{-4}$ m above — derived, not measured.
+
+**Assumption A5 — benign, as §3.7.6 predicted.** Clamping to the outermost valid layer and
+extrapolating its reconstruction leaves exactness unaffected, including where the two columns reach
+different `maxLevelCell` and where the deepest edge layer extends 65% of its thickness below the
+shallower floor.
+
+**Two claims of this document that measurement contradicted.**
+
+1. **Selecting the shared coefficient set by layer index rather than by pressure has no effect**:
+   $5.10\times10^{-21}$ against $5.33\times10^{-21}$. §3.5 consequence 1 explains why — whatever the
+   set is, it multiplies a contrast that is zero — and §3.7.2 has been corrected accordingly. What
+   *is* load-bearing is that one set multiply **both** columns: giving each its own breaks exactness
+   at $10^{-5}$.
+2. **`PressureGradCentered` is not first order in layer thickness on these profiles.** On a resting
+   profile linear in pressure its error falls 3.9× and then 9.8× under successive halvings, checked
+   at a tilt where both columns have identical valid-layer counts so that masking is excluded. §3.7.3
+   and Requirement 2.3.4 have been corrected.
+
+**Regression status.** `HPGAFiniteVolume` is written alongside the existing `HPGA`, and `HPGA` is
+bit-identical to the previous reference run, so adding the scheme moves nothing already measured.
