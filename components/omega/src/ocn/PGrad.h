@@ -126,13 +126,14 @@ class PressureGradFiniteVolume {
        const VertCoord *VCoord ///< [in] Vertical coordinate
    );
 
-   KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge, I4 KChunk,
-                                   const Array2DReal &PressureMid,
-                                   const Array2DReal &PressureInterface,
-                                   const Array2DReal &GeomZInterface,
-                                   const Array1DReal &TidalPotential,
-                                   const Array1DReal &SelfAttractionLoading,
-                                   const Array2DReal &SpecVol) const {
+   KOKKOS_FUNCTION void operator()(
+       const Array2DReal &Tend, I4 IEdge, I4 KChunk,
+       const Array2DReal &PressureMid, const Array2DReal &PressureInterface,
+       const Array2DReal &GeomZInterface, const Array1DReal &TidalPotential,
+       const Array1DReal &SelfAttractionLoading, const Array2DReal &SpecVol,
+       const Array2DReal &ConservTemp, const Array2DReal &AbsSalinity,
+       const Array2DReal &SpecVolDCt, const Array2DReal &SpecVolDSa,
+       const Array2DReal &SpecVolDP) const {
 
       // Placeholder: for now, no-op (future finite-volume implementation)
       const I4 KStart = chunkStart(KChunk, MinLayerEdgeBot(IEdge));
@@ -191,12 +192,19 @@ class PressureGrad {
    }
    I4 getQuadraturePoints() const { return FiniteVolumePGrad.QuadraturePoints; }
 
-   // Compute pressure gradient tendencies and add into Tend array
+   // Compute pressure gradient tendencies and add into Tend array. The
+   // FiniteVolume scheme additionally needs the layer-mean conservative
+   // temperature and absolute salinity, which it reconstructs in pressure,
+   // and the specific volume derivatives held by Eos. The Centered scheme
+   // ignores them.
    void computePressureGrad(Array2DReal &Tend, const Array2DReal &PressureMid,
                             const Array2DReal &PressureInterface,
                             const Array2DReal &SpecVol,
                             const Array2DReal &GeomZInterface,
-                            const Array2DReal &PseudoThick) const;
+                            const Array2DReal &PseudoThick,
+                            const Array2DReal &ConservTemp,
+                            const Array2DReal &AbsSalinity,
+                            const Eos *EqState) const;
 
  private:
    // Construct a new pressure gradient object

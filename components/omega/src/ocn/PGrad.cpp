@@ -210,12 +210,12 @@ PressureGrad *PressureGrad::get(const std::string &Name ///< [in] Name of
 
 //------------------------------------------------------------------------------
 // Compute pressure gradient tendencies and add into Tend array
-void PressureGrad::computePressureGrad(Array2DReal &Tend,
-                                       const Array2DReal &PressureMid,
-                                       const Array2DReal &PressureInterface,
-                                       const Array2DReal &SpecVol,
-                                       const Array2DReal &GeomZInterface,
-                                       const Array2DReal &PseudoThick) const {
+void PressureGrad::computePressureGrad(
+    Array2DReal &Tend, const Array2DReal &PressureMid,
+    const Array2DReal &PressureInterface, const Array2DReal &SpecVol,
+    const Array2DReal &GeomZInterface, const Array2DReal &PseudoThick,
+    const Array2DReal &ConservTemp, const Array2DReal &AbsSalinity,
+    const Eos *EqState) const {
 
    OMEGA_SCOPE(LocCenteredPGrad, CenteredPGrad);
    OMEGA_SCOPE(LocFiniteVolumePGrad, FiniteVolumePGrad);
@@ -245,6 +245,12 @@ void PressureGrad::computePressureGrad(Array2DReal &Tend,
 
    } else {
 
+      // The specific volume derivatives come from Eos, which computes them
+      // from the same single equation-of-state evaluation as SpecVol
+      const Array2DReal SpecVolDCt = EqState->SpecVolDCt;
+      const Array2DReal SpecVolDSa = EqState->SpecVolDSa;
+      const Array2DReal SpecVolDP  = EqState->SpecVolDP;
+
       // computes finite-volume geopotential and pressure gradient tendency
       parallelForOuter(
           "pgrad-finitevolume", {NEdgesAll},
@@ -255,10 +261,11 @@ void PressureGrad::computePressureGrad(Array2DReal &Tend,
 
              parallelForInner(
                  Team, KRange, INNER_LAMBDA(int KChunk) {
-                    LocFiniteVolumePGrad(Tend, IEdge, KChunk, PressureMid,
-                                         PressureInterface, GeomZInterface,
-                                         LocTidalPotential,
-                                         LocSelfAttractionLoading, SpecVol);
+                    LocFiniteVolumePGrad(
+                        Tend, IEdge, KChunk, PressureMid, PressureInterface,
+                        GeomZInterface, LocTidalPotential,
+                        LocSelfAttractionLoading, SpecVol, ConservTemp,
+                        AbsSalinity, SpecVolDCt, SpecVolDSa, SpecVolDP);
                  });
           });
    }

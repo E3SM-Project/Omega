@@ -153,9 +153,12 @@ int testPGradConfig(const HorzMesh *Mesh,   ///< [in] Horizontal mesh
                       VCoord->NVertLayers);
    deepCopy(TendFV, 0.0_Real);
 
-   FVPGrad->computePressureGrad(TendFV, VCoord->PressureMid,
-                                VCoord->PressureInterface, EqState->SpecVol,
-                                VCoord->GeomZInterface, PseudoThick);
+   Array2DReal ConservTemp = Tracers::getByName(0, "Temperature");
+   Array2DReal AbsSalinity = Tracers::getByName(0, "Salinity");
+
+   FVPGrad->computePressureGrad(
+       TendFV, VCoord->PressureMid, VCoord->PressureInterface, EqState->SpecVol,
+       VCoord->GeomZInterface, PseudoThick, ConservTemp, AbsSalinity, EqState);
 
    I4 NBad = 0;
    parallelReduce(
@@ -369,7 +372,8 @@ int main(int argc, char *argv[]) {
 
          const auto &PressureInterface = VCoord->PressureInterface;
          DefPGrad->computePressureGrad(Tend, PressureMid, PressureInterface,
-                                       SpecVol, GeomZInterface, PseudoThick);
+                                       SpecVol, GeomZInterface, PseudoThick,
+                                       Temp, Salinity, DefEos);
 
          // compute errors
          Real MaxValue = 0.0_Real;
