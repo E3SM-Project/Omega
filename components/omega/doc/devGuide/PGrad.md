@@ -155,8 +155,9 @@ Valid options for `PressureGradType` are:
 - `'finiteVolume'` or `'FiniteVolume'`: layer-integrated finite-volume method
   (placeholder, future implementation)
 
-If an unrecognized value is provided, the implementation falls back to the centered
-scheme and logs an informational message.
+An unrecognized value is a fatal error rather than a silent fallback to the
+centered scheme, so that a typo -- or a configuration naming a scheme that no
+longer exists -- cannot produce a run that looks like a passing centered run.
 
 ## Data members
 

@@ -104,8 +104,12 @@ PressureGrad::PressureGrad(
       PressureGradChoice              = PressureGradType::FiniteVolume;
       this->FiniteVolumePGrad.Enabled = true;
    } else {
-      LOG_INFO(
-          "PGrad: Unknown PressureGradType in config, defaulting to centered");
+      // Aborting rather than falling back to the centered scheme: a silent
+      // fallback turns a typo, or a configuration naming a scheme that no
+      // longer exists, into a run that looks like a passing Centered run
+      ABORT_ERROR("PressureGrad: unknown PressureGradType '{}'; valid values "
+                  "are 'Centered' and 'FiniteVolume'",
+                  PGradTypeStr);
    }
 
    // Read the FiniteVolume sub-options. All three are optional so that a
