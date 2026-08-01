@@ -37,8 +37,15 @@ The pressure gradient method is configured in the input YAML file under the
 
 ```yaml
 PressureGrad:
-   PressureGradType: 'centered'
+   PressureGradType: 'Centered'   # Centered | FiniteVolume
+   HorzOrder: 2                   # FiniteVolume only
+   VerticalReconstruction: 'linear'
+   QuadraturePoints: 2
 ```
+
+An unrecognized `PressureGradType` is a fatal error rather than a silent
+fallback to the centered scheme, so that a typo cannot produce a run that looks
+like a passing centered run.
 
 ### Available Methods
 
@@ -46,14 +53,43 @@ PressureGrad:
 - Computes the pressure gradient using a centered finite-difference approximation
   of the Montgomery potential gradient and specific volume correction
 - Suitable for global ocean simulations without ice shelf cavities
-- Default and currently the only fully implemented option
+- The default, and the reference implementation the finite-volume scheme is
+  checked against
 
 **Finite Volume** (`'FiniteVolume'` or `'finiteVolume'`)
-- Placeholder for a layer-integrated, finite-volume pressure gradient method that
-  compares the geopotential of neighboring columns at a common pressure
-- Intended for simulations with ice shelf cavities and steep bathymetry where the
-  centered scheme may be inaccurate
-- Not yet implemented; selecting this option produces zero pressure gradient tendency
+- Compares the geopotential of the two columns sharing an edge at a **common
+  pressure**, rather than at a common layer index
+- Gives a pressure gradient that is zero to machine precision for any resting
+  ocean whose temperature and salinity vary linearly with pressure, at any
+  coordinate tilt, layer thickness or bathymetry
+- Intended for simulations with ice shelf cavities and steep bathymetry, where
+  the centered scheme carries an error that is first order in the coordinate
+  tilt and accumulates downward through the column
+- Second order in the horizontal, using the same two-cell stencil as the
+  centered scheme
+
+### Finite-volume sub-options
+
+These apply only when `PressureGradType` is `FiniteVolume`. All three are
+optional; a configuration written without them gets the values below.
+
+| Option | Default | Meaning |
+| ------ | ------- | ------- |
+| `HorzOrder` | `2` | Width of the edge stencil. `2` is the two-cell stencil. `4`, a wider stencil, is reserved for a later phase and is rejected with an error |
+| `VerticalReconstruction` | `'linear'` | Degree of the mean-preserving reconstruction of temperature and salinity in pressure. `'ppm'` is reserved for a later phase and is rejected with an error |
+| `QuadraturePoints` | `2` | Number of points, 1 to 4, at which the integrand is evaluated within each edge layer |
+
+`QuadraturePoints` is an **accuracy setting only**. The quantity being
+integrated is zero at every point for any profile the reconstruction resolves
+exactly, so no choice of quadrature can affect that exactness; the setting
+trades cost against accuracy elsewhere. Two points is exact for the integrand
+within a sub-interval and is the default. More is worth considering only where
+neighbouring columns' layer interfaces are strongly offset in pressure.
+
+There is no setting that reduces the finite-volume scheme to the centered one.
+The two are separate implementations, which is deliberate: their agreement is
+used as a cross-check on the mesh, vertical coordinate and equation-of-state
+state they both read.
 
 ## Dependencies
 
