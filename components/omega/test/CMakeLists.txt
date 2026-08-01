@@ -385,6 +385,20 @@ add_omega_test(
   "-n;1"
 )
 
+# The pressure gradient exactness gate is run in single precision as well.
+# The finite-volume scheme differences the integrand before integrating it and
+# so forms no large quantities anywhere, which predicts that the cancellation
+# should survive the reduced precision; running PressureGradCentered alongside,
+# which does form and cancel large quantities, is what makes the result
+# interpretable.
+add_omega_test(
+  PGRAD_SINGLE_PRECISION_TEST
+  testPGradSinglePrecision.exe
+  ocn/PGradTest.cpp
+  "-n;1"
+  single_precision
+)
+
 ##################
 # State test
 ##################
