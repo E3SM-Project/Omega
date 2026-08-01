@@ -41,6 +41,13 @@ Omega:
   PressureGrad:
     # Centered | FiniteVolume
     PressureGradType: Centered
+    # The remaining options apply to the FiniteVolume scheme only
+    # 2 = two-cell stencil (Phase 1); 4 = wide stencil (Phase 2)
+    HorzOrder: 2
+    # 'linear' (Phase 1) | 'ppm' (Phase 2)
+    VerticalReconstruction: linear
+    # quadrature points per edge layer; an accuracy setting only
+    QuadraturePoints: 2
   Tendencies:
     ThicknessFluxTendencyEnable: true
     PVTendencyEnable: true

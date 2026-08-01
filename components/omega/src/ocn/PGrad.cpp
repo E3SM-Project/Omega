@@ -108,6 +108,55 @@ PressureGrad::PressureGrad(
           "PGrad: Unknown PressureGradType in config, defaulting to centered");
    }
 
+   // Read the FiniteVolume sub-options. All three are optional so that a
+   // configuration written before they existed still parses; where a key is
+   // absent the Phase 1 default is used. Phase 2 will add values to these
+   // keys rather than new keys, so a Phase 1 configuration will continue to
+   // work unchanged.
+   I4 HorzOrder = FiniteVolumePGrad.HorzOrder;
+   if (PGradConfig.existsVar("HorzOrder"))
+      Err += PGradConfig.get("HorzOrder", HorzOrder);
+
+   std::string VertReconStr = "linear";
+   if (PGradConfig.existsVar("VerticalReconstruction"))
+      Err += PGradConfig.get("VerticalReconstruction", VertReconStr);
+
+   I4 QuadraturePoints = FiniteVolumePGrad.QuadraturePoints;
+   if (PGradConfig.existsVar("QuadraturePoints"))
+      Err += PGradConfig.get("QuadraturePoints", QuadraturePoints);
+
+   CHECK_ERROR_ABORT(Err, "PressureGrad: error reading PressureGrad options");
+
+   // Validate. Values reserved for Phase 2 are rejected outright rather than
+   // silently falling back to the Phase 1 setting, which would make a Phase 2
+   // run look like a Phase 1 pass.
+   if (HorzOrder != 2)
+      ABORT_ERROR("PressureGrad: HorzOrder {} is not implemented in Phase 1 "
+                  "of the FiniteVolume pressure gradient; only HorzOrder 2 "
+                  "(the two-cell stencil) is available",
+                  HorzOrder);
+
+   if (VertReconStr == "linear" || VertReconStr == "Linear") {
+      FiniteVolumePGrad.VertRecon = PressureGradVertRecon::Linear;
+   } else if (VertReconStr == "ppm" || VertReconStr == "PPM") {
+      ABORT_ERROR("PressureGrad: VerticalReconstruction '{}' is not "
+                  "implemented in Phase 1 of the FiniteVolume pressure "
+                  "gradient; only 'linear' is available",
+                  VertReconStr);
+   } else {
+      ABORT_ERROR("PressureGrad: unknown VerticalReconstruction '{}'; valid "
+                  "values are 'linear' (Phase 1) and 'ppm' (Phase 2)",
+                  VertReconStr);
+   }
+
+   if (QuadraturePoints < 1 || QuadraturePoints > MaxPGradQuadPoints)
+      ABORT_ERROR("PressureGrad: QuadraturePoints {} is out of range; must be "
+                  "between 1 and {}",
+                  QuadraturePoints, MaxPGradQuadPoints);
+
+   FiniteVolumePGrad.HorzOrder        = HorzOrder;
+   FiniteVolumePGrad.QuadraturePoints = QuadraturePoints;
+
    // Temporary: initialization of tidal potential and SAL
    TidalPotential = Array1DReal("TidalPotential", Mesh->NCellsSize);
    SelfAttractionLoading =

@@ -25,6 +25,18 @@ enum class PressureGradType {
    // , <FutureVariant>  ///< e.g. a 6th-order option, added when implemented
 };
 
+/// Mean-preserving vertical reconstruction of ConservTemp and AbsSalinity in
+/// pressure used by the FiniteVolume scheme. The degree of the reconstruction
+/// sets the scheme's exact set: linear deviations make the scheme exact for
+/// profiles that vary linearly with pressure.
+enum class PressureGradVertRecon {
+   Linear ///< linear deviations (Phase 1)
+   // , PPM  ///< parabolic (PPM-style) deviations (Phase 2)
+};
+
+/// Largest number of quadrature points supported within an edge layer
+inline constexpr I4 MaxPGradQuadPoints = 4;
+
 // Centered pressure gradient functor
 class PressureGradCentered {
  public:
@@ -97,6 +109,17 @@ class PressureGradFiniteVolume {
  public:
    bool Enabled;
 
+   // Options cached from the PressureGrad config group by the PressureGrad
+   // constructor, which is also where they are validated. Phase 1 implements
+   // HorzOrder 2 and VertRecon Linear only.
+   //
+   // QuadraturePoints is a pure accuracy knob: the matched-pressure integrand
+   // is zero pointwise for any profile the reconstruction resolves exactly, so
+   // no quadrature rule can break the robustness property.
+   I4 HorzOrder                    = 2;
+   PressureGradVertRecon VertRecon = PressureGradVertRecon::Linear;
+   I4 QuadraturePoints             = 2;
+
    // constructor declaration
    PressureGradFiniteVolume(
        const HorzMesh *Mesh,   ///< [in] Horizontal mesh
@@ -159,6 +182,14 @@ class PressureGrad {
 
    // Destructor
    ~PressureGrad();
+
+   // Accessors for the configured scheme and its options
+   PressureGradType getType() const { return PressureGradChoice; }
+   I4 getHorzOrder() const { return FiniteVolumePGrad.HorzOrder; }
+   PressureGradVertRecon getVertRecon() const {
+      return FiniteVolumePGrad.VertRecon;
+   }
+   I4 getQuadraturePoints() const { return FiniteVolumePGrad.QuadraturePoints; }
 
    // Compute pressure gradient tendencies and add into Tend array
    void computePressureGrad(Array2DReal &Tend, const Array2DReal &PressureMid,

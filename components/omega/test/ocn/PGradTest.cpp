@@ -91,6 +91,96 @@ void initPGradTest() {
    CHECK_ERROR_ABORT(Err, "PGrad: error during initialization");
 }
 
+// Check that the PressureGrad configuration group is parsed as expected and
+// that a FiniteVolume instance can be created and dispatched to. The
+// FiniteVolume sub-options are read from the same group as PressureGradType
+// and default to the Phase 1 values when a key is absent.
+int testPGradConfig(const HorzMesh *Mesh,   ///< [in] Horizontal mesh
+                    const VertCoord *VCoord ///< [in] Vertical coordinate
+) {
+
+   int Err = 0;
+
+   // The default instance is built from the PressureGrad group in the
+   // config, which selects the centered scheme
+   PressureGrad *DefPGrad = PressureGrad::getDefault();
+
+   if (DefPGrad->getType() == PressureGradType::Centered) {
+      LOG_INFO("PGradTest: default PressureGradType parse PASS");
+   } else {
+      LOG_ERROR("PGradTest: default PressureGradType parse FAIL");
+      ++Err;
+   }
+
+   // The Phase 1 sub-option values, whether read from the config or taken
+   // from the defaults
+   if (DefPGrad->getHorzOrder() == 2 &&
+       DefPGrad->getVertRecon() == PressureGradVertRecon::Linear &&
+       DefPGrad->getQuadraturePoints() >= 1) {
+      LOG_INFO("PGradTest: FiniteVolume sub-option parse PASS");
+   } else {
+      LOG_ERROR("PGradTest: FiniteVolume sub-option parse FAIL: HorzOrder={} "
+                "QuadraturePoints={}",
+                DefPGrad->getHorzOrder(), DefPGrad->getQuadraturePoints());
+      ++Err;
+   }
+
+   // Create a second instance that selects the FiniteVolume scheme. The
+   // sub-config shares its node with the parent, so resetting the type here
+   // is what the new instance sees. Note the explicit std::string: a string
+   // literal would select the boolean overload of Config::set.
+   Config *Options = Config::getOmegaConfig();
+   Config PGradConfig("PressureGrad");
+   Err += (Options->get(PGradConfig).isFail() ? 1 : 0);
+   PGradConfig.set("PressureGradType", std::string("FiniteVolume"));
+
+   PressureGrad *FVPGrad =
+       PressureGrad::create("TestFiniteVolume", Mesh, VCoord, Options);
+
+   if (FVPGrad && FVPGrad->getType() == PressureGradType::FiniteVolume) {
+      LOG_INFO("PGradTest: FiniteVolume PressureGradType parse PASS");
+   } else {
+      LOG_ERROR("PGradTest: FiniteVolume PressureGradType parse FAIL");
+      ++Err;
+   }
+
+   // Dispatch check: computePressureGrad must take the FiniteVolume branch
+   // and leave a finite tendency everywhere it touches
+   OceanState *State       = OceanState::getDefault();
+   Eos *EqState            = Eos::getInstance();
+   Array2DReal PseudoThick = State->getPseudoThickness(0);
+   Array2DReal TendFV("TendFiniteVolume", Mesh->NEdgesSize,
+                      VCoord->NVertLayers);
+   deepCopy(TendFV, 0.0_Real);
+
+   FVPGrad->computePressureGrad(TendFV, VCoord->PressureMid,
+                                VCoord->PressureInterface, EqState->SpecVol,
+                                VCoord->GeomZInterface, PseudoThick);
+
+   I4 NBad = 0;
+   parallelReduce(
+       {Mesh->NEdgesAll, VCoord->NVertLayers},
+       KOKKOS_LAMBDA(int IEdge, int K, I4 &LSum) {
+          if (!Kokkos::isfinite(TendFV(IEdge, K)))
+             ++LSum;
+       },
+       Kokkos::Sum<I4>(NBad));
+
+   if (NBad == 0) {
+      LOG_INFO("PGradTest: FiniteVolume dispatch PASS");
+   } else {
+      LOG_ERROR("PGradTest: FiniteVolume dispatch FAIL: {} non-finite values",
+                NBad);
+      ++Err;
+   }
+
+   PGradConfig.set("PressureGradType", std::string("Centered"));
+   PressureGrad::erase("TestFiniteVolume");
+
+   return Err;
+
+} // end testPGradConfig
+
 int main(int argc, char *argv[]) {
    int RetVal = 0;
 
@@ -310,6 +400,9 @@ int main(int argc, char *argv[]) {
 
       } // refinement loop
 
+      // Test parsing and dispatch of the PressureGrad configuration options
+      int ConfigErr = testPGradConfig(DefMesh, VCoord);
+
       // Test for second order convergence
       // resolution (dC) increases in refimenent loop
       if (Rmse(0) < Rmse(NRefinements - 1) / pow(4.0_Real, NRefinements - 1)) {
@@ -317,6 +410,8 @@ int main(int argc, char *argv[]) {
       } else {
          RetVal = 1;
       }
+
+      RetVal += ConfigErr;
 
       // cleanup
       PressureGrad::clear();
