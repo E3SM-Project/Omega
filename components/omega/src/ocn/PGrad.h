@@ -191,6 +191,13 @@ class PressureGrad {
    }
    I4 getQuadraturePoints() const { return FiniteVolumePGrad.QuadraturePoints; }
 
+   // The fixed-pressure height difference at edge-layer interfaces, filled by
+   // the column scan. Exposed so that tests can assert on it directly: it is
+   // zero at every interface for any profile the reconstruction resolves
+   // exactly, and where it is not, a residual growing with depth points at the
+   // recurrence while one flat with depth points at the anchor.
+   const Array2DReal &getDeltaZFixedP() const { return DeltaZFixedP; }
+
    // Compute pressure gradient tendencies and add into Tend array. The
    // FiniteVolume scheme additionally needs the layer-mean conservative
    // temperature and absolute salinity, which it reconstructs in pressure,
@@ -209,6 +216,25 @@ class PressureGrad {
    // Construct a new pressure gradient object
    PressureGrad(const HorzMesh *Mesh, const VertCoord *VCoord, Config *Options);
 
+   // Compute the mean-preserving reconstruction slopes of temperature and
+   // salinity in pressure, once per cell and layer. These are the per-cell
+   // quantities the per-edge work reuses; recomputing them per edge is what
+   // the cost check exists to catch.
+   void computeReconSlopes(const Array2DReal &ConservTemp,
+                           const Array2DReal &AbsSalinity,
+                           const Array2DReal &PressureMid) const;
+
+   // Accumulate the fixed-pressure height difference down each edge's column.
+   // This is a prefix sum with edge-dependent coefficients, so it is not
+   // expressible as an independent per-vertical-chunk operation and cannot
+   // live in the functor; it is the one structural addition Phase 1 makes.
+   void computeColumnScan(const Array2DReal &PressureMid,
+                          const Array2DReal &PressureInterface,
+                          const Array2DReal &GeomZInterface,
+                          const Array2DReal &ConservTemp,
+                          const Array2DReal &AbsSalinity,
+                          const Eos *EqState) const;
+
    // forbid copy and move construction
    PressureGrad(const PressureGrad &) = delete;
    PressureGrad(PressureGrad &&)      = delete;
@@ -219,12 +245,32 @@ class PressureGrad {
    // Mesh-related sizes
    I4 NEdgesAll     = 0;
    I4 NEdgesOwned   = 0;
+   I4 NCellsAll     = 0;
    I4 NVertLayers   = 0;
    I4 NVertLayersP1 = 0;
 
    // Data required for computation (stored copies of VCoord arrays)
    Array1DI4 MinLayerEdgeBot; ///< min vertical layer on each edge
    Array1DI4 MaxLayerEdgeTop; ///< max vertical layer on each edge
+
+   // Additional mesh and coordinate data the FiniteVolume column scan needs
+   Array2DI4 CellsOnEdge;  ///< cells on each edge
+   Array1DReal DcEdge;     ///< distance between cell centers
+   Array2DReal EdgeMask;   ///< land/bathymetry mask on edges
+   Array1DI4 MinLayerCell; ///< shallowest valid layer in each column
+   Array1DI4 MaxLayerCell; ///< deepest valid layer in each column
+
+   // Working arrays for the FiniteVolume scheme. These are allocated only
+   // when that scheme is selected, so a Centered run pays no memory for them.
+   Array2DReal ReconSlopeCt; ///< d(ConservTemp)/dp of the reconstruction
+   Array2DReal ReconSlopeSa; ///< d(AbsSalinity)/dp of the reconstruction
+   Array2DReal DeltaZIncr;   ///< per-layer integral of the matched-pressure
+                             ///< integrand, the increment of the recurrence
+   Array2DReal DeltaZMoment; ///< its first moment about the layer's top
+                             ///< interface, which gives the layer mean
+   Array2DReal
+       DeltaZFixedP; ///< the fixed-pressure height difference at
+                     ///< edge-layer interfaces, (NEdgesSize, NVertLayersP1)
 
    // Temporary: to be moveed to tidal forcing module in future
    Array1DReal TidalPotential; ///< Tidal potential for tidal forcing

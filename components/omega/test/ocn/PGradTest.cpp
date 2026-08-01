@@ -392,11 +392,12 @@ int testPressureLookup() {
 // quadratic in pressure, used to initialize layer means the way the exactness
 // gate requires: as the exact layer averages of a prescribed continuous
 // profile, which under tilt come out different in the two columns.
-Real exactLayerAvg(const Real Coeff0,  ///< [in] constant term
-                   const Real Coeff1,  ///< [in] coefficient of p
-                   const Real Coeff2,  ///< [in] coefficient of p squared
-                   const Real PressLo, ///< [in] top interface pressure
-                   const Real PressHi  ///< [in] bottom interface pressure
+KOKKOS_INLINE_FUNCTION Real exactLayerAvg(
+    const Real Coeff0,  ///< [in] constant term
+    const Real Coeff1,  ///< [in] coefficient of p
+    const Real Coeff2,  ///< [in] coefficient of p squared
+    const Real PressLo, ///< [in] top interface pressure
+    const Real PressHi  ///< [in] bottom interface pressure
 ) {
    const Real PressMid   = 0.5_Real * (PressLo + PressHi);
    const Real DeltaPress = PressHi - PressLo;
@@ -740,6 +741,235 @@ void setupTwoColumnState(HorzMesh *Mesh,    ///< [in] Horizontal mesh
    VCoord->computeGeomZHeight(PseudoThick, SpecVol);
 
 } // end setupTwoColumnState
+
+// Build a two-column state whose vertical profile lies in the scheme's exact
+// set: temperature and salinity vary linearly with pressure, and each column's
+// layer means are the *exact layer averages* of that one continuous profile
+// over that column's own layers.
+//
+// Under the offset between the two columns those averages come out different
+// in the two, and that is the point. A configuration built by copying
+// identical layer means into both columns would not exercise the property at
+// all, because the condition that matters is a property of the reconstructed
+// profiles rather than of the layer means.
+//
+// The two columns share a surface pressure and a bottom pressure and sit on a
+// flat floor; only the distribution of pressure between them differs, which is
+// what an ALE coordinate does. A horizontally uniform surface pressure is
+// required for an exactness gate: where surface pressure varies the state
+// carries a real fixed-pressure height difference at the surface and zero is
+// the wrong expectation.
+//
+// Returns the bottom pressure so tests can scale their tolerances by the
+// hydrostatic terms.
+Real setupExactSetState(HorzMesh *Mesh,    ///< [in] Horizontal mesh
+                        VertCoord *VCoord, ///< [inout] Vertical coordinate
+                        OceanState *State, ///< [inout] Ocean state
+                        Eos *EqState,      ///< [inout] Equation of state
+                        I4 NVertLayers,    ///< [in] Number of layers
+                        Real DC,           ///< [in] Distance between cells
+                        Real Offset        ///< [in] interface offset, in layers
+) {
+
+   const I4 NCellsAll = Mesh->NCellsAll;
+   const I4 NEdgesAll = Mesh->NEdgesAll;
+
+   VCoord->NVertLayers   = NVertLayers;
+   VCoord->NVertLayersP1 = NVertLayers + 1;
+
+   // the prescribed continuous profile, linear in pressure
+   const Real PressBot = 4.0e7_Real;
+   const Real Temp0 = 12.0_Real, Temp1 = -2.0e-7_Real;
+   const Real Salt0 = 34.0_Real, Salt1 = 2.5e-8_Real;
+   const Real Pi = 3.14159265358979323846_Real;
+
+   const Real DeltaP = PressBot / NVertLayers;
+   const Real Bulge  = Offset * DeltaP;
+
+   auto &MinLayerCell = VCoord->MinLayerCell;
+   auto &MaxLayerCell = VCoord->MaxLayerCell;
+   parallelFor(
+       {NCellsAll}, KOKKOS_LAMBDA(int i) {
+          MinLayerCell(i) = 0;
+          MaxLayerCell(i) = NVertLayers - 1;
+       });
+
+   auto &MinLayerEdgeBot = VCoord->MinLayerEdgeBot;
+   auto &MaxLayerEdgeTop = VCoord->MaxLayerEdgeTop;
+   parallelFor(
+       {NEdgesAll}, KOKKOS_LAMBDA(int i) {
+          MinLayerEdgeBot(i) = 0;
+          MaxLayerEdgeTop(i) = NVertLayers - 1;
+       });
+
+   auto &CellsOnEdge = Mesh->CellsOnEdge;
+   auto &DcEdge      = Mesh->DcEdge;
+   parallelFor(
+       {NEdgesAll}, KOKKOS_LAMBDA(int i) {
+          CellsOnEdge(i, 0) = 0;
+          CellsOnEdge(i, 1) = 1;
+          DcEdge(i)         = DC;
+       });
+
+   Array1DReal SurfacePressure("SurfacePressure", Mesh->NCellsSize);
+   Array2DReal PseudoThick = State->getPseudoThickness(0);
+   Array2DReal Temp        = Tracers::getByName(0, "Temperature");
+   Array2DReal Salinity    = Tracers::getByName(0, "Salinity");
+
+   // Column 0 is uniform in pressure; column 1 bulges away from it by up to
+   // Offset layer thicknesses in the interior while sharing both end
+   // pressures. Pseudo-thickness and pressure thickness are proportional, so
+   // setting one sets the other.
+   auto &BottomGeomDepth = VCoord->BottomGeomDepth;
+   parallelFor(
+       {NCellsAll}, KOKKOS_LAMBDA(int i) {
+          SurfacePressure(i) = 0.0_Real;
+          // a flat floor: the anchor's height difference is then exact input
+          // and vanishes identically
+          BottomGeomDepth(i) = 4000.0_Real;
+          for (int k = 0; k < NVertLayers; ++k) {
+             const Real Shape = (i == 1) ? 1.0_Real : 0.0_Real;
+             const Real PTop =
+                 k * DeltaP + Shape * Bulge * Kokkos::sin(Pi * k / NVertLayers);
+             const Real PBot =
+                 (k + 1) * DeltaP +
+                 Shape * Bulge * Kokkos::sin(Pi * (k + 1) / NVertLayers);
+             PseudoThick(i, k) = (PBot - PTop) / (Gravity * RhoSw);
+          }
+       });
+
+   // pressure from the pseudo-thickness the model will actually use
+   VCoord->computePressure(PseudoThick, SurfacePressure);
+
+   // layer means as the exact layer averages of the prescribed profile, taken
+   // over the model's own interface pressures so the two are consistent
+   const auto &PressureInterface = VCoord->PressureInterface;
+   parallelFor(
+       {NCellsAll, NVertLayers}, KOKKOS_LAMBDA(int i, int k) {
+          Temp(i, k) =
+              exactLayerAvg(Temp0, Temp1, 0.0_Real, PressureInterface(i, k),
+                            PressureInterface(i, k + 1));
+          Salinity(i, k) =
+              exactLayerAvg(Salt0, Salt1, 0.0_Real, PressureInterface(i, k),
+                            PressureInterface(i, k + 1));
+       });
+
+   // specific volume and its derivatives, from one equation-of-state pass
+   EqState->computeSpecVolAndDerivs(Temp, Salinity, VCoord->PressureMid);
+
+   VCoord->computeGeomZHeight(PseudoThick, EqState->SpecVol);
+
+   return PressBot;
+
+} // end setupExactSetState
+
+// Assert that the column scan returns a zero fixed-pressure height difference
+// at *every* interface, not merely in the layer mean, for a profile the
+// reconstruction resolves exactly.
+//
+// The shape of a failure is diagnostic and is reported: a residual growing
+// with depth points at the recurrence, while one flat with depth points at the
+// anchor. Here the two columns share a bottom pressure and a flat floor, so
+// the anchor is identically zero by construction and any residual at all is
+// the recurrence's.
+int testColumnScan(HorzMesh *Mesh,    ///< [in] Horizontal mesh
+                   VertCoord *VCoord, ///< [inout] Vertical coordinate
+                   OceanState *State, ///< [inout] Ocean state
+                   Eos *EqState       ///< [inout] Equation of state
+) {
+
+   int Err = 0;
+
+   const I4 NVertLayers = 32;
+   const Real DC        = 4000.0_Real;
+   const Real Offset    = 3.0_Real;
+   const Real Eps       = std::numeric_limits<Real>::epsilon();
+
+   const Real PressBot = setupExactSetState(Mesh, VCoord, State, EqState,
+                                            NVertLayers, DC, Offset);
+
+   // A FiniteVolume instance, created after the state so that its working
+   // arrays are sized for this number of layers
+   Config *Options = Config::getOmegaConfig();
+   Config PGradConfig("PressureGrad");
+   Options->get(PGradConfig);
+   PGradConfig.set("PressureGradType", std::string("FiniteVolume"));
+   PressureGrad *FVPGrad =
+       PressureGrad::create("TestColumnScan", Mesh, VCoord, Options);
+   PGradConfig.set("PressureGradType", std::string("Centered"));
+
+   Array2DReal Tend("TendColumnScan", Mesh->NEdgesSize, NVertLayers);
+   deepCopy(Tend, 0.0_Real);
+
+   Array2DReal PseudoThick = State->getPseudoThickness(0);
+   Array2DReal Temp        = Tracers::getByName(0, "Temperature");
+   Array2DReal Salinity    = Tracers::getByName(0, "Salinity");
+
+   FVPGrad->computePressureGrad(
+       Tend, VCoord->PressureMid, VCoord->PressureInterface, EqState->SpecVol,
+       VCoord->GeomZInterface, PseudoThick, Temp, Salinity, EqState);
+
+   // Scale by the size of the terms that had to cancel: the hydrostatic
+   // contribution of the temperature and salinity structure over the column.
+   const auto &SpecVolDCt = EqState->SpecVolDCt;
+   const auto &SpecVolDSa = EqState->SpecVolDSa;
+   Real CancelScale       = 0.0_Real;
+   parallelReduce(
+       {2, NVertLayers},
+       KOKKOS_LAMBDA(int i, int k, Real &MaxV) {
+          const Real V = (Kokkos::abs(SpecVolDCt(i, k) * Temp(i, k)) +
+                          Kokkos::abs(SpecVolDSa(i, k) * Salinity(i, k))) *
+                         PressBot / Gravity;
+          if (V > MaxV)
+             MaxV = V;
+       },
+       Kokkos::Max<Real>(CancelScale));
+
+   const auto &DeltaZFixedP = FVPGrad->getDeltaZFixedP();
+
+   Real MaxTop = 0.0_Real;
+   Real MaxBot = 0.0_Real;
+   Real MaxAll = 0.0_Real;
+   parallelReduce(
+       {Mesh->NEdgesAll, NVertLayers + 1},
+       KOKKOS_LAMBDA(int IEdge, int K, Real &MaxA, Real &MaxT, Real &MaxB) {
+          const Real V = Kokkos::abs(DeltaZFixedP(IEdge, K));
+          if (V > MaxA)
+             MaxA = V;
+          // the shallower and deeper halves of the column, to show whether a
+          // residual grows with depth
+          if (K <= NVertLayers / 2 && V > MaxT)
+             MaxT = V;
+          if (K > NVertLayers / 2 && V > MaxB)
+             MaxB = V;
+       },
+       Kokkos::Max<Real>(MaxAll), Kokkos::Max<Real>(MaxTop),
+       Kokkos::Max<Real>(MaxBot));
+
+   const Real Scaled = MaxAll / (Eps * CancelScale);
+
+   LOG_INFO("PGradTest: column scan on the exact set: max |DeltaZFixedP| = {} "
+            "m ({} eps of the cancelling terms, which are {} m); upper column "
+            "{} m, lower column {} m",
+            MaxAll, Scaled, CancelScale, MaxTop, MaxBot);
+
+   // Provisional gate. The residual is expected to be a few eps of the
+   // cancelling terms: the integrand is zero pointwise to about one eps and
+   // the recurrence accumulates that over the column.
+   const Real Tol = 100.0_Real;
+   if (Scaled <= Tol) {
+      LOG_INFO("PGradTest: column scan PASS: {} eps", Scaled);
+   } else {
+      LOG_ERROR("PGradTest: column scan FAIL: {} eps exceeds {} eps", Scaled,
+                Tol);
+      ++Err;
+   }
+
+   PressureGrad::erase("TestColumnScan");
+
+   return Err;
+
+} // end testColumnScan
 
 // Assert the identity of design section 3.9 (test section 5.5): with the tidal
 // and self-attraction-and-loading potentials zero, PressureGradCentered is
@@ -1130,6 +1360,10 @@ int main(int argc, char *argv[]) {
       // The matched-pressure integrand must be zero at every quadrature
       // point on a resolved profile, not merely in the integral.
       int IntegrandErr = testMatchedPressIntegrand();
+
+      // The column scan must return a zero fixed-pressure height difference
+      // at every interface on the exact set, not merely in the layer mean.
+      int ScanErr = testColumnScan(DefMesh, VCoord, DefState, DefEos);
 
       int IdentityErr = testCenteredIdentity(DefMesh, VCoord, DefState, DefEos);
 
