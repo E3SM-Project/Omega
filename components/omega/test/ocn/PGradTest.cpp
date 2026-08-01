@@ -396,14 +396,25 @@ KOKKOS_INLINE_FUNCTION Real exactLayerAvg(
     const Real Coeff0,  ///< [in] constant term
     const Real Coeff1,  ///< [in] coefficient of p
     const Real Coeff2,  ///< [in] coefficient of p squared
+    const Real Coeff3,  ///< [in] coefficient of p cubed
     const Real PressLo, ///< [in] top interface pressure
     const Real PressHi  ///< [in] bottom interface pressure
 ) {
-   const Real PressMid   = 0.5_Real * (PressLo + PressHi);
-   const Real DeltaPress = PressHi - PressLo;
+   const Real PressMid = 0.5_Real * (PressLo + PressHi);
+   const Real HalfSq   = 0.25_Real * (PressHi - PressLo) * (PressHi - PressLo);
    return Coeff0 + Coeff1 * PressMid +
-          Coeff2 * (PressMid * PressMid + DeltaPress * DeltaPress / 12.0_Real);
+          Coeff2 * (PressMid * PressMid + HalfSq / 3.0_Real) +
+          Coeff3 * (PressMid * PressMid * PressMid + PressMid * HalfSq);
 }
+
+// A prescribed continuous profile of temperature and salinity in pressure, up
+// to cubic. Linear is the exact set of the Phase 1 reconstruction; quadratic
+// and cubic lie outside it, where the residual should shrink like the square
+// of the layer thickness.
+struct PGradProfile {
+   Real Temp0, Temp1, Temp2, Temp3;
+   Real Salt0, Salt1, Salt2, Salt3;
+};
 
 // Check the matched-pressure integrand on a fabricated column pair, without a
 // mesh. This exercises the reconstruction, the pressure lookup and the
@@ -480,14 +491,14 @@ int testMatchedPressIntegrand() {
                              : Uniform;
          }
          for (int K = 0; K < NLayers; ++K) {
-            PressMid(ICell, K) = 0.5_Real * (PressInterface(ICell, K) +
+            PressMid(ICell, K)    = 0.5_Real * (PressInterface(ICell, K) +
                                              PressInterface(ICell, K + 1));
-            ConservTemp(ICell, K) =
-                exactLayerAvg(Temp0, Temp1, Temp2, PressInterface(ICell, K),
-                              PressInterface(ICell, K + 1));
-            AbsSalinity(ICell, K) =
-                exactLayerAvg(Salt0, Salt1, Salt2, PressInterface(ICell, K),
-                              PressInterface(ICell, K + 1));
+            ConservTemp(ICell, K) = exactLayerAvg(Temp0, Temp1, Temp2, 0.0_Real,
+                                                  PressInterface(ICell, K),
+                                                  PressInterface(ICell, K + 1));
+            AbsSalinity(ICell, K) = exactLayerAvg(Salt0, Salt1, Salt2, 0.0_Real,
+                                                  PressInterface(ICell, K),
+                                                  PressInterface(ICell, K + 1));
          }
          for (int K = 0; K < NLayers; ++K) {
             I4 KLo, KHi;
@@ -744,33 +755,35 @@ void setupTwoColumnState(HorzMesh *Mesh,    ///< [in] Horizontal mesh
 
 } // end setupTwoColumnState
 
-// Build a two-column state whose vertical profile lies in the scheme's exact
-// set: temperature and salinity vary linearly with pressure, and each column's
-// layer means are the *exact layer averages* of that one continuous profile
-// over that column's own layers.
+// Build a two-column state whose vertical profile is a prescribed continuous
+// function of pressure, with each column's layer means set to the *exact layer
+// averages* of that one profile over that column's own layers.
 //
 // Under the offset between the two columns those averages come out different
-// in the two, and that is the point. A configuration built by copying
-// identical layer means into both columns would not exercise the property at
-// all, because the condition that matters is a property of the reconstructed
-// profiles rather than of the layer means.
+// in the two, and that is the point. A configuration built by copying identical
+// layer means into both columns would not exercise the property at all, because
+// the condition that matters is a property of the reconstructed profiles rather
+// than of the layer means.
 //
-// The two columns share a surface pressure and a bottom pressure and sit on a
-// flat floor; only the distribution of pressure between them differs, which is
-// what an ALE coordinate does. A horizontally uniform surface pressure is
-// required for an exactness gate: where surface pressure varies the state
-// carries a real fixed-pressure height difference at the surface and zero is
-// the wrong expectation.
+// The two columns sit on a flat floor and differ only in how pressure is
+// distributed between their interfaces, which is what an ALE coordinate does.
+// SurfPressDiff offsets the second column's surface pressure, and hence its
+// bottom pressure; the exactness gate must be run with it zero, since where
+// surface pressure varies the state carries a real fixed-pressure height
+// difference and zero is the wrong expectation. It is nonzero only for the
+// anchor guard, which needs the two columns' end pressures to differ.
 //
-// Returns the bottom pressure so tests can scale their tolerances by the
-// hydrostatic terms.
-Real setupExactSetState(HorzMesh *Mesh,    ///< [in] Horizontal mesh
-                        VertCoord *VCoord, ///< [inout] Vertical coordinate
-                        OceanState *State, ///< [inout] Ocean state
-                        Eos *EqState,      ///< [inout] Equation of state
-                        I4 NVertLayers,    ///< [in] Number of layers
-                        Real DC,           ///< [in] Distance between cells
-                        Real Offset        ///< [in] interface offset, in layers
+// Returns the pressure at the bottom of the columns, so tests can scale their
+// tolerances by the hydrostatic terms.
+Real setupProfileState(HorzMesh *Mesh,    ///< [in] Horizontal mesh
+                       VertCoord *VCoord, ///< [inout] Vertical coordinate
+                       OceanState *State, ///< [inout] Ocean state
+                       Eos *EqState,      ///< [inout] Equation of state
+                       I4 NVertLayers,    ///< [in] Number of layers
+                       Real DC,           ///< [in] Distance between cells
+                       Real BulgePress,   ///< [in] interface offset, in Pa
+                       PGradProfile Prof, ///< [in] prescribed profile
+                       Real SurfPressDiff ///< [in] surface pressure contrast
 ) {
 
    const I4 NCellsAll = Mesh->NCellsAll;
@@ -779,14 +792,9 @@ Real setupExactSetState(HorzMesh *Mesh,    ///< [in] Horizontal mesh
    VCoord->NVertLayers   = NVertLayers;
    VCoord->NVertLayersP1 = NVertLayers + 1;
 
-   // the prescribed continuous profile, linear in pressure
    const Real PressBot = 4.0e7_Real;
-   const Real Temp0 = 12.0_Real, Temp1 = -2.0e-7_Real;
-   const Real Salt0 = 34.0_Real, Salt1 = 2.5e-8_Real;
-   const Real Pi = 3.14159265358979323846_Real;
-
-   const Real DeltaP = PressBot / NVertLayers;
-   const Real Bulge  = Offset * DeltaP;
+   const Real Pi       = 3.14159265358979323846_Real;
+   const Real DeltaP   = PressBot / NVertLayers;
 
    auto &MinLayerCell = VCoord->MinLayerCell;
    auto &MaxLayerCell = VCoord->MaxLayerCell;
@@ -818,24 +826,26 @@ Real setupExactSetState(HorzMesh *Mesh,    ///< [in] Horizontal mesh
    Array2DReal Temp        = Tracers::getByName(0, "Temperature");
    Array2DReal Salinity    = Tracers::getByName(0, "Salinity");
 
-   // Column 0 is uniform in pressure; column 1 bulges away from it by up to
-   // Offset layer thicknesses in the interior while sharing both end
-   // pressures. Pseudo-thickness and pressure thickness are proportional, so
-   // setting one sets the other.
+   // Column 0 is uniform in pressure; column 1 bulges away from it in the
+   // interior while spanning the same pressure range. Pseudo-thickness and
+   // pressure thickness are proportional, so setting one sets the other. The
+   // bulge stays below PressBot/pi, which keeps column 1's interfaces
+   // monotonic.
    auto &BottomGeomDepth = VCoord->BottomGeomDepth;
    parallelFor(
        {NCellsAll}, KOKKOS_LAMBDA(int i) {
-          SurfacePressure(i) = 0.0_Real;
-          // a flat floor: the anchor's height difference is then exact input
-          // and vanishes identically
+          SurfacePressure(i) = (i == 1) ? SurfPressDiff : 0.0_Real;
+          // a flat floor: at the sea-floor anchor the height difference is
+          // then exact input and vanishes identically
           BottomGeomDepth(i) = 4000.0_Real;
           for (int k = 0; k < NVertLayers; ++k) {
              const Real Shape = (i == 1) ? 1.0_Real : 0.0_Real;
              const Real PTop =
-                 k * DeltaP + Shape * Bulge * Kokkos::sin(Pi * k / NVertLayers);
+                 k * DeltaP +
+                 Shape * BulgePress * Kokkos::sin(Pi * k / NVertLayers);
              const Real PBot =
                  (k + 1) * DeltaP +
-                 Shape * Bulge * Kokkos::sin(Pi * (k + 1) / NVertLayers);
+                 Shape * BulgePress * Kokkos::sin(Pi * (k + 1) / NVertLayers);
              PseudoThick(i, k) = (PBot - PTop) / (Gravity * RhoSw);
           }
        });
@@ -848,12 +858,12 @@ Real setupExactSetState(HorzMesh *Mesh,    ///< [in] Horizontal mesh
    const auto &PressureInterface = VCoord->PressureInterface;
    parallelFor(
        {NCellsAll, NVertLayers}, KOKKOS_LAMBDA(int i, int k) {
-          Temp(i, k) =
-              exactLayerAvg(Temp0, Temp1, 0.0_Real, PressureInterface(i, k),
-                            PressureInterface(i, k + 1));
-          Salinity(i, k) =
-              exactLayerAvg(Salt0, Salt1, 0.0_Real, PressureInterface(i, k),
-                            PressureInterface(i, k + 1));
+          Temp(i, k)     = exactLayerAvg(Prof.Temp0, Prof.Temp1, Prof.Temp2,
+                                         Prof.Temp3, PressureInterface(i, k),
+                                         PressureInterface(i, k + 1));
+          Salinity(i, k) = exactLayerAvg(Prof.Salt0, Prof.Salt1, Prof.Salt2,
+                                         Prof.Salt3, PressureInterface(i, k),
+                                         PressureInterface(i, k + 1));
        });
 
    // specific volume and its derivatives, from one equation-of-state pass
@@ -863,44 +873,227 @@ Real setupExactSetState(HorzMesh *Mesh,    ///< [in] Horizontal mesh
 
    return PressBot;
 
-} // end setupExactSetState
+} // end setupProfileState
 
-// Assert that the column scan returns a zero fixed-pressure height difference
-// at *every* interface, not merely in the layer mean, for a profile the
-// reconstruction resolves exactly.
+// Which of the scheme's three rules the reference assembly below applies.
+// Turning one off is how the guards of design section 5.2 are made to fire.
+struct PGradGuardRules {
+   bool SharedExpansion = true; ///< one EOS expansion per edge layer, shared
+                                ///< by both columns, rather than one per cell
+   bool PressureLookup = true;  ///< each column's state from the layer
+                                ///< containing the pressure, not from layer K
+   bool ShiftedAnchor = true;   ///< the anchor shifted to a common pressure,
+                                ///< rather than the raw height difference
+};
+
+// Assemble the column scan and the tendency on the host for the single edge
+// joining cells 0 and 1, out of the same helper functions the kernel uses, with
+// each of the scheme's rules switchable.
 //
-// The shape of a failure is diagnostic and is reported: a residual growing
-// with depth points at the recurrence, while one flat with depth points at the
-// anchor. Here the two columns share a bottom pressure and a flat floor, so
-// the anchor is identically zero by construction and any residual at all is
-// the recurrence's.
-int testColumnScan(HorzMesh *Mesh,    ///< [in] Horizontal mesh
-                   VertCoord *VCoord, ///< [inout] Vertical coordinate
-                   OceanState *State, ///< [inout] Ocean state
-                   Eos *EqState       ///< [inout] Equation of state
+// With all three rules on this must reproduce the kernel to round-off, and that
+// is checked before any guard is trusted. A guard that cannot fire is worse
+// than no guard, because it looks like protection.
+void referenceScan(const HostArray2DReal &PressInterface, ///< [in]
+                   const HostArray2DReal &PressMid,       ///< [in]
+                   const HostArray2DReal &Temp,           ///< [in]
+                   const HostArray2DReal &Salt,           ///< [in]
+                   const HostArray2DReal &SpecVol,        ///< [in]
+                   const HostArray2DReal &SpecVolDCt,     ///< [in]
+                   const HostArray2DReal &SpecVolDSa,     ///< [in]
+                   const HostArray2DReal &SpecVolDP,      ///< [in]
+                   const HostArray2DReal &GeomZ,          ///< [in]
+                   const I4 NLayers,                      ///< [in]
+                   const Real Dc,                         ///< [in]
+                   const I4 NQuad,                        ///< [in]
+                   const PGradGuardRules &Rules,          ///< [in]
+                   std::vector<Real> &DeltaZ,             ///< [out] NLayers+1
+                   std::vector<Real> &Tend                ///< [out] NLayers
 ) {
 
-   int Err = 0;
+   const I4 KMin = 0;
+   const I4 KMax = NLayers - 1;
 
-   const I4 NVertLayers = 32;
-   const Real DC        = 4000.0_Real;
-   const Real Offset    = 3.0_Real;
-   const Real Eps       = std::numeric_limits<Real>::epsilon();
+   DeltaZ.assign(NLayers + 1, 0.0_Real);
+   Tend.assign(NLayers, 0.0_Real);
 
-   const Real PressBot = setupExactSetState(Mesh, VCoord, State, EqState,
-                                            NVertLayers, DC, Offset);
+   // the per-cell reconstruction slopes
+   std::vector<std::vector<Real>> SlopeCt(2, std::vector<Real>(NLayers));
+   std::vector<std::vector<Real>> SlopeSa(2, std::vector<Real>(NLayers));
+   for (int ICell = 0; ICell < 2; ++ICell) {
+      for (int K = 0; K < NLayers; ++K) {
+         I4 KLo, KHi;
+         linearReconStencil(K, KMin, KMax, KLo, KHi);
+         SlopeCt[ICell][K] =
+             linearReconSlope(Temp(ICell, KLo), Temp(ICell, KHi),
+                              PressMid(ICell, KLo), PressMid(ICell, KHi));
+         SlopeSa[ICell][K] =
+             linearReconSlope(Salt(ICell, KLo), Salt(ICell, KHi),
+                              PressMid(ICell, KLo), PressMid(ICell, KHi));
+      }
+   }
 
-   // A FiniteVolume instance, created after the state so that its working
-   // arrays are sized for this number of layers
+   Real Nodes[MaxPGradQuadPoints];
+   Real Weights[MaxPGradQuadPoints];
+   gaussLegendreRule(NQuad, Nodes, Weights);
+
+   const Real InvGravity = 1.0_Real / Gravity;
+
+   // one expansion per cell, used when the shared-expansion rule is off
+   auto cellEos = [&](int ICell, int K) {
+      PGradEdgeEos Eos;
+      Eos.SpecVol0    = SpecVol(ICell, K);
+      Eos.SpecVolDCt  = SpecVolDCt(ICell, K);
+      Eos.SpecVolDSa  = SpecVolDSa(ICell, K);
+      Eos.SpecVolDP   = SpecVolDP(ICell, K);
+      Eos.ConservTemp = Temp(ICell, K);
+      Eos.AbsSalinity = Salt(ICell, K);
+      Eos.Press       = PressMid(ICell, K);
+      return Eos;
+   };
+
+   auto lookup = [&](int ICell, Real Press, I4 K) {
+      return Rules.PressureLookup ? findLayerForPress(PressInterface, ICell,
+                                                      KMin, KMax, Press, K)
+                                  : K;
+   };
+
+   std::vector<Real> Incr(NLayers, 0.0_Real);
+   std::vector<Real> Moment(NLayers, 0.0_Real);
+
+   for (int K = 0; K < NLayers; ++K) {
+
+      const PGradEdgeEos EdgeEos =
+          buildEdgeEos(SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP, Temp, Salt,
+                       PressMid, 0, 1, K);
+
+      const Real EdgeTop =
+          0.5_Real * (PressInterface(0, K) + PressInterface(1, K));
+      const Real EdgeBot =
+          0.5_Real * (PressInterface(0, K + 1) + PressInterface(1, K + 1));
+      const Real EdgeMid  = 0.5_Real * (EdgeTop + EdgeBot);
+      const Real EdgeHalf = 0.5_Real * (EdgeBot - EdgeTop);
+
+      for (int IQuad = 0; IQuad < NQuad; ++IQuad) {
+         const Real Press  = EdgeMid + EdgeHalf * Nodes[IQuad];
+         const Real Weight = EdgeHalf * Weights[IQuad];
+
+         const I4 KF0 = lookup(0, Press, K);
+         const I4 KF1 = lookup(1, Press, K);
+
+         const Real T0 = linearReconEval(Temp(0, KF0), SlopeCt[0][KF0],
+                                         PressMid(0, KF0), Press);
+         const Real S0 = linearReconEval(Salt(0, KF0), SlopeSa[0][KF0],
+                                         PressMid(0, KF0), Press);
+         const Real T1 = linearReconEval(Temp(1, KF1), SlopeCt[1][KF1],
+                                         PressMid(1, KF1), Press);
+         const Real S1 = linearReconEval(Salt(1, KF1), SlopeSa[1][KF1],
+                                         PressMid(1, KF1), Press);
+
+         Real Diff;
+         if (Rules.SharedExpansion) {
+            Diff = matchedPressSpecVolDiff(EdgeEos, T0, S0, T1, S1);
+         } else {
+            // two expansion points mean the SpecVol0 and SpecVolDP terms no
+            // longer cancel, and the full specific volume must be formed for
+            // each column separately
+            Diff = edgeSpecVol(cellEos(1, KF1), T1, S1, Press) -
+                   edgeSpecVol(cellEos(0, KF0), T0, S0, Press);
+         }
+
+         Incr[K] += Weight * Diff;
+         Moment[K] += Weight * (Press - EdgeTop) * Diff;
+      }
+      Incr[K] *= InvGravity;
+      Moment[K] *= InvGravity;
+   }
+
+   // the anchor, at the sea floor
+   Real Anchor = GeomZ(1, KMax + 1) - GeomZ(0, KMax + 1);
+   if (Rules.ShiftedAnchor) {
+      const Real AnchorPress = 0.5_Real * (PressInterface(0, KMax + 1) +
+                                           PressInterface(1, KMax + 1));
+      const PGradEdgeEos AnchorEos =
+          buildEdgeEos(SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP, Temp, Salt,
+                       PressMid, 0, 1, KMax);
+      for (int ISide = 0; ISide < 2; ++ISide) {
+         const int ICell     = ISide;
+         const Real Sign     = (ISide == 0) ? -1.0_Real : 1.0_Real;
+         const Real ColPress = PressInterface(ICell, KMax + 1);
+         const Real Mid      = 0.5_Real * (AnchorPress + ColPress);
+         const Real Half     = 0.5_Real * (ColPress - AnchorPress);
+         Real Integral       = 0.0_Real;
+         for (int IQuad = 0; IQuad < NQuad; ++IQuad) {
+            const Real Press  = Mid + Half * Nodes[IQuad];
+            const Real Weight = Half * Weights[IQuad];
+            const I4 KF       = lookup(ICell, Press, KMax);
+            const Real T = linearReconEval(Temp(ICell, KF), SlopeCt[ICell][KF],
+                                           PressMid(ICell, KF), Press);
+            const Real S = linearReconEval(Salt(ICell, KF), SlopeSa[ICell][KF],
+                                           PressMid(ICell, KF), Press);
+            Integral += Weight * edgeSpecVol(AnchorEos, T, S, Press);
+         }
+         Anchor += Sign * InvGravity * Integral;
+      }
+   }
+
+   DeltaZ[KMax + 1] = Anchor;
+   for (int K = KMax; K >= KMin; --K)
+      DeltaZ[K] = DeltaZ[K + 1] + Incr[K];
+
+   for (int K = 0; K < NLayers; ++K) {
+      const Real DeltaPress =
+          0.5_Real * ((PressInterface(0, K + 1) - PressInterface(0, K)) +
+                      (PressInterface(1, K + 1) - PressInterface(1, K)));
+      const Real LayerMean = DeltaZ[K + 1] + Moment[K] / DeltaPress;
+      Tend[K]              = -Gravity / Dc * LayerMean;
+   }
+
+} // end referenceScan
+
+// Copy the state the reference assembly needs to the host.
+struct PGradHostState {
+   HostArray2DReal PressInterface, PressMid, Temp, Salt;
+   HostArray2DReal SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP, GeomZ;
+};
+
+PGradHostState copyStateToHost(VertCoord *VCoord, Eos *EqState) {
+   PGradHostState H;
+   H.PressInterface = createHostMirrorCopy(VCoord->PressureInterface);
+   H.PressMid       = createHostMirrorCopy(VCoord->PressureMid);
+   H.Temp       = createHostMirrorCopy(Tracers::getByName(0, "Temperature"));
+   H.Salt       = createHostMirrorCopy(Tracers::getByName(0, "Salinity"));
+   H.SpecVol    = createHostMirrorCopy(EqState->SpecVol);
+   H.SpecVolDCt = createHostMirrorCopy(EqState->SpecVolDCt);
+   H.SpecVolDSa = createHostMirrorCopy(EqState->SpecVolDSa);
+   H.SpecVolDP  = createHostMirrorCopy(EqState->SpecVolDP);
+   H.GeomZ      = createHostMirrorCopy(VCoord->GeomZInterface);
+   return H;
+}
+
+// Run the FiniteVolume scheme on the current state and return the largest
+// tendency magnitude, along with its root-mean-square over the active edges
+// and layers and the largest fixed-pressure height difference the column scan
+// produced.
+//
+// The exactness gate uses the maximum, since it asserts a zero at every edge
+// and layer. The convergence rates use the RMS: a maximum is set by whichever
+// layer happens to be worst, and that layer moves under refinement, which
+// makes the measured rate noisy and non-monotone. RMS is also the norm the
+// design's measured rates were taken in, so the two are comparable.
+Real runFiniteVolume(HorzMesh *Mesh, VertCoord *VCoord, OceanState *State,
+                     Eos *EqState, I4 NVertLayers, Real &MaxDeltaZ,
+                     Real &MaxDeltaZUpper, Real &MaxDeltaZLower,
+                     Real &RmsTend) {
+
    Config *Options = Config::getOmegaConfig();
    Config PGradConfig("PressureGrad");
    Options->get(PGradConfig);
    PGradConfig.set("PressureGradType", std::string("FiniteVolume"));
    PressureGrad *FVPGrad =
-       PressureGrad::create("TestColumnScan", Mesh, VCoord, Options);
+       PressureGrad::create("TestFV", Mesh, VCoord, Options);
    PGradConfig.set("PressureGradType", std::string("Centered"));
 
-   Array2DReal Tend("TendColumnScan", Mesh->NEdgesSize, NVertLayers);
+   Array2DReal Tend("TendFV", Mesh->NEdgesSize, NVertLayers);
    deepCopy(Tend, 0.0_Real);
 
    Array2DReal PseudoThick = State->getPseudoThickness(0);
@@ -911,13 +1104,126 @@ int testColumnScan(HorzMesh *Mesh,    ///< [in] Horizontal mesh
        Tend, VCoord->PressureMid, VCoord->PressureInterface, EqState->SpecVol,
        VCoord->GeomZInterface, PseudoThick, Temp, Salinity, EqState);
 
-   // Scale by the size of the terms that had to cancel: the hydrostatic
-   // contribution of the temperature and salinity structure over the column.
+   const auto &EdgeMask = VCoord->EdgeMask;
+   Real MaxTend         = 0.0_Real;
+   Real SumSq           = 0.0_Real;
+   I4 NActive           = 0;
+   parallelReduce(
+       {Mesh->NEdgesAll, NVertLayers},
+       KOKKOS_LAMBDA(int IEdge, int K, Real &MaxV, Real &LSum, I4 &LCount) {
+          if (EdgeMask(IEdge, K) <= 0.0_Real)
+             return;
+          const Real V = Kokkos::abs(Tend(IEdge, K));
+          if (V > MaxV)
+             MaxV = V;
+          LSum += V * V;
+          ++LCount;
+       },
+       Kokkos::Max<Real>(MaxTend), Kokkos::Sum<Real>(SumSq),
+       Kokkos::Sum<I4>(NActive));
+
+   RmsTend = (NActive > 0) ? std::sqrt(SumSq / NActive) : 0.0_Real;
+
+   const auto &DeltaZFixedP = FVPGrad->getDeltaZFixedP();
+   MaxDeltaZ                = 0.0_Real;
+   MaxDeltaZUpper           = 0.0_Real;
+   MaxDeltaZLower           = 0.0_Real;
+   parallelReduce(
+       {Mesh->NEdgesAll, NVertLayers + 1},
+       KOKKOS_LAMBDA(int IEdge, int K, Real &MaxA, Real &MaxU, Real &MaxL) {
+          const Real V = Kokkos::abs(DeltaZFixedP(IEdge, K));
+          if (V > MaxA)
+             MaxA = V;
+          if (K <= NVertLayers / 2 && V > MaxU)
+             MaxU = V;
+          if (K > NVertLayers / 2 && V > MaxL)
+             MaxL = V;
+       },
+       Kokkos::Max<Real>(MaxDeltaZ), Kokkos::Max<Real>(MaxDeltaZUpper),
+       Kokkos::Max<Real>(MaxDeltaZLower));
+
+   PressureGrad::erase("TestFV");
+
+   return MaxTend;
+
+} // end runFiniteVolume
+
+// Run PressureGradCentered on the current state and return the largest
+// tendency magnitude.
+Real runCentered(HorzMesh *Mesh, VertCoord *VCoord, OceanState *State,
+                 Eos *EqState, I4 NVertLayers) {
+
+   Array2DReal Tend("TendCentered", Mesh->NEdgesSize, NVertLayers);
+   deepCopy(Tend, 0.0_Real);
+
+   Array2DReal PseudoThick = State->getPseudoThickness(0);
+   Array2DReal Temp        = Tracers::getByName(0, "Temperature");
+   Array2DReal Salinity    = Tracers::getByName(0, "Salinity");
+
+   PressureGrad::getDefault()->computePressureGrad(
+       Tend, VCoord->PressureMid, VCoord->PressureInterface, EqState->SpecVol,
+       VCoord->GeomZInterface, PseudoThick, Temp, Salinity, EqState);
+
+   const auto &EdgeMask = VCoord->EdgeMask;
+   Real MaxTend         = 0.0_Real;
+   parallelReduce(
+       {Mesh->NEdgesAll, NVertLayers},
+       KOKKOS_LAMBDA(int IEdge, int K, Real &MaxV) {
+          if (EdgeMask(IEdge, K) <= 0.0_Real)
+             return;
+          const Real V = Kokkos::abs(Tend(IEdge, K));
+          if (V > MaxV)
+             MaxV = V;
+       },
+       Kokkos::Max<Real>(MaxTend));
+
+   return MaxTend;
+
+} // end runCentered
+
+// The gating test of design section 5.2: exactness on the exact set, the
+// convergence of the residual off it, and the guards.
+int testExactnessAndGuards(HorzMesh *Mesh,    ///< [in] Horizontal mesh
+                           VertCoord *VCoord, ///< [inout] Vertical coordinate
+                           OceanState *State, ///< [inout] Ocean state
+                           Eos *EqState       ///< [inout] Equation of state
+) {
+
+   int Err = 0;
+
+   const Real Eps   = std::numeric_limits<Real>::epsilon();
+   const Real DC    = 4000.0_Real;
+   const Real Bulge = 7.5e6_Real;
+   const I4 NLayers = 32;
+   const I4 NQuad   = 2;
+
+   // linear in pressure: the exact set of the Phase 1 reconstruction
+   const PGradProfile Linear = {12.0_Real, -2.0e-7_Real, 0.0_Real, 0.0_Real,
+                                34.0_Real, 2.5e-8_Real,  0.0_Real, 0.0_Real};
+   // quadratic and cubic: outside it
+   const PGradProfile Quadratic = {12.0_Real,     -2.0e-7_Real, 3.0e-15_Real,
+                                   0.0_Real,      34.0_Real,    2.5e-8_Real,
+                                   -4.0e-16_Real, 0.0_Real};
+   const PGradProfile Cubic     = {12.0_Real,     -2.0e-7_Real, 3.0e-15_Real,
+                                   -5.0e-23_Real, 34.0_Real,    2.5e-8_Real,
+                                   -4.0e-16_Real, 8.0e-24_Real};
+
+   //
+   // Group one: the exact set. The tendency must be zero to machine precision
+   // at every edge and layer, for any tilt, thickness or bathymetry.
+   //
+   const Real PressBot = setupProfileState(
+       Mesh, VCoord, State, EqState, NLayers, DC, Bulge, Linear, 0.0_Real);
+
+   // the size of the terms that had to cancel: the hydrostatic contribution of
+   // the temperature and salinity structure over the column
    const auto &SpecVolDCt = EqState->SpecVolDCt;
    const auto &SpecVolDSa = EqState->SpecVolDSa;
+   Array2DReal Temp       = Tracers::getByName(0, "Temperature");
+   Array2DReal Salinity   = Tracers::getByName(0, "Salinity");
    Real CancelScale       = 0.0_Real;
    parallelReduce(
-       {2, NVertLayers},
+       {2, NLayers},
        KOKKOS_LAMBDA(int i, int k, Real &MaxV) {
           const Real V = (Kokkos::abs(SpecVolDCt(i, k) * Temp(i, k)) +
                           Kokkos::abs(SpecVolDSa(i, k) * Salinity(i, k))) *
@@ -927,92 +1233,287 @@ int testColumnScan(HorzMesh *Mesh,    ///< [in] Horizontal mesh
        },
        Kokkos::Max<Real>(CancelScale));
 
-   const auto &DeltaZFixedP = FVPGrad->getDeltaZFixedP();
+   Real MaxDeltaZ, MaxUpper, MaxLower, RmsFV;
+   const Real MaxFV = runFiniteVolume(Mesh, VCoord, State, EqState, NLayers,
+                                      MaxDeltaZ, MaxUpper, MaxLower, RmsFV);
+   const Real MaxCentered = runCentered(Mesh, VCoord, State, EqState, NLayers);
 
-   Real MaxTop = 0.0_Real;
-   Real MaxBot = 0.0_Real;
-   Real MaxAll = 0.0_Real;
-   parallelReduce(
-       {Mesh->NEdgesAll, NVertLayers + 1},
-       KOKKOS_LAMBDA(int IEdge, int K, Real &MaxA, Real &MaxT, Real &MaxB) {
-          const Real V = Kokkos::abs(DeltaZFixedP(IEdge, K));
-          if (V > MaxA)
-             MaxA = V;
-          // the shallower and deeper halves of the column, to show whether a
-          // residual grows with depth
-          if (K <= NVertLayers / 2 && V > MaxT)
-             MaxT = V;
-          if (K > NVertLayers / 2 && V > MaxB)
-             MaxB = V;
-       },
-       Kokkos::Max<Real>(MaxAll), Kokkos::Max<Real>(MaxTop),
-       Kokkos::Max<Real>(MaxBot));
+   // The tendency scale is the height scale divided by the cell spacing and
+   // multiplied by gravity, so that the gate tracks Real's epsilon and the
+   // size of the hydrostatic terms rather than a physical tolerance.
+   const Real HeightScale = CancelScale;
+   const Real TendScale   = Gravity * CancelScale / DC;
 
-   const Real Scaled = MaxAll / (Eps * CancelScale);
+   const Real ScaledDeltaZ = MaxDeltaZ / (Eps * HeightScale);
+   const Real ScaledTend   = MaxFV / (Eps * TendScale);
 
-   LOG_INFO("PGradTest: column scan on the exact set: max |DeltaZFixedP| = {} "
-            "m ({} eps of the cancelling terms, which are {} m); upper column "
-            "{} m, lower column {} m",
-            MaxAll, Scaled, CancelScale, MaxTop, MaxBot);
+   LOG_INFO("PGradTest: exact set: FiniteVolume max |Tend| = {} m/s2 ({} eps), "
+            "Centered max |Tend| = {} m/s2, ratio {}",
+            MaxFV, ScaledTend, MaxCentered, MaxFV / MaxCentered);
+   LOG_INFO("PGradTest: exact set: max |DeltaZFixedP| = {} m ({} eps); upper "
+            "column {} m, lower column {} m -- the residual grows away from "
+            "the sea-floor anchor",
+            MaxDeltaZ, ScaledDeltaZ, MaxUpper, MaxLower);
 
-   // Provisional gate. The residual is expected to be a few eps of the
-   // cancelling terms: the integrand is zero pointwise to about one eps and
-   // the recurrence accumulates that over the column.
-   const Real Tol = 100.0_Real;
-   if (Scaled <= Tol) {
-      LOG_INFO("PGradTest: column scan PASS: {} eps", Scaled);
+   // Gates set from the measured values: 0.027 eps for both, so four eps
+   // leaves well over a hundredfold margin while still catching drift.
+   const Real ExactTol = 4.0_Real;
+   if (ScaledTend <= ExactTol && ScaledDeltaZ <= ExactTol) {
+      LOG_INFO("PGradTest: exactness gate PASS");
    } else {
-      LOG_ERROR("PGradTest: column scan FAIL: {} eps exceeds {} eps", Scaled,
-                Tol);
+      LOG_ERROR("PGradTest: exactness gate FAIL: tendency {} eps, height "
+                "difference {} eps, against {} eps",
+                ScaledTend, ScaledDeltaZ, ExactTol);
       ++Err;
    }
 
-   // The tendency itself on the same state. Reported alongside the centered
-   // scheme's, which is nonzero and tilt-dependent, so that a pass is a
-   // cancellation against a known nonzero reference rather than a comparison
-   // with zero. The gate here is provisional; the full exactness gate and its
-   // guards follow.
-   Array2DReal TendCentered("TendCentered", Mesh->NEdgesSize, NVertLayers);
-   deepCopy(TendCentered, 0.0_Real);
-   PressureGrad *DefPGrad = PressureGrad::getDefault();
-   DefPGrad->computePressureGrad(TendCentered, VCoord->PressureMid,
-                                 VCoord->PressureInterface, EqState->SpecVol,
-                                 VCoord->GeomZInterface, PseudoThick, Temp,
-                                 Salinity, EqState);
-
-   const auto &EdgeMask = VCoord->EdgeMask;
-   Real MaxFV           = 0.0_Real;
-   Real MaxCentered     = 0.0_Real;
-   parallelReduce(
-       {Mesh->NEdgesAll, NVertLayers},
-       KOKKOS_LAMBDA(int IEdge, int K, Real &MaxF, Real &MaxC) {
-          if (EdgeMask(IEdge, K) <= 0.0_Real)
-             return;
-          const Real F = Kokkos::abs(Tend(IEdge, K));
-          const Real C = Kokkos::abs(TendCentered(IEdge, K));
-          if (F > MaxF)
-             MaxF = F;
-          if (C > MaxC)
-             MaxC = C;
-       },
-       Kokkos::Max<Real>(MaxFV), Kokkos::Max<Real>(MaxCentered));
-
-   LOG_INFO("PGradTest: tendency on the exact set: FiniteVolume max |Tend| = "
-            "{} m/s2, Centered max |Tend| = {} m/s2",
-            MaxFV, MaxCentered);
-
-   // the centered scheme must be nonzero here, or the comparison says nothing
-   if (MaxCentered <= 0.0_Real) {
-      LOG_ERROR("PGradTest: exact-set state FAIL: the centered scheme returns "
-                "zero, so the state does not exercise the property");
+   // Guard (a), tilt sensitivity. This is the only guard that can fire on a
+   // configuration where every other check passes: a bug that zeroed the tilt
+   // response would satisfy all of them perfectly.
+   Real PrevCentered  = 0.0_Real;
+   bool CenteredGrows = true;
+   for (int ITilt = 1; ITilt <= 3; ++ITilt) {
+      setupProfileState(Mesh, VCoord, State, EqState, NLayers, DC,
+                        Bulge * ITilt / 3.0_Real, Linear, 0.0_Real);
+      const Real C = runCentered(Mesh, VCoord, State, EqState, NLayers);
+      if (C <= PrevCentered)
+         CenteredGrows = false;
+      PrevCentered = C;
+   }
+   if (CenteredGrows && MaxCentered > 0.0_Real && MaxFV < MaxCentered) {
+      LOG_INFO("PGradTest: guard (a) tilt sensitivity PASS: Centered grows "
+               "with tilt and the two schemes differ");
+   } else {
+      LOG_ERROR("PGradTest: guard (a) tilt sensitivity FAIL");
       ++Err;
    }
 
-   PressureGrad::erase("TestColumnScan");
+   //
+   // The guards below need an assembly whose rules can be switched, so they
+   // run against a host reference built from the same helper functions. It is
+   // only trustworthy if it reproduces the kernel first.
+   //
+   setupProfileState(Mesh, VCoord, State, EqState, NLayers, DC, Bulge, Linear,
+                     0.0_Real);
+   Real KernelDeltaZ, KernelUpper, KernelLower, KernelRms;
+   const Real KernelTend =
+       runFiniteVolume(Mesh, VCoord, State, EqState, NLayers, KernelDeltaZ,
+                       KernelUpper, KernelLower, KernelRms);
+
+   PGradHostState H = copyStateToHost(VCoord, EqState);
+   std::vector<Real> RefDeltaZ, RefTend;
+   PGradGuardRules Rules;
+   referenceScan(H.PressInterface, H.PressMid, H.Temp, H.Salt, H.SpecVol,
+                 H.SpecVolDCt, H.SpecVolDSa, H.SpecVolDP, H.GeomZ, NLayers, DC,
+                 NQuad, Rules, RefDeltaZ, RefTend);
+
+   Real RefMax = 0.0_Real;
+   for (int K = 0; K < NLayers; ++K)
+      RefMax = std::max(RefMax, std::abs(RefTend[K]));
+
+   if (std::abs(RefMax - KernelTend) <= 8.0_Real * Eps * TendScale) {
+      LOG_INFO("PGradTest: guard harness fidelity on the exact set PASS: "
+               "reference {} m/s2 against kernel {} m/s2",
+               RefMax, KernelTend);
+   } else {
+      LOG_ERROR("PGradTest: guard harness fidelity on the exact set FAIL: "
+                "reference {} m/s2 against kernel {} m/s2; the guards below "
+                "say nothing",
+                RefMax, KernelTend);
+      ++Err;
+   }
+
+   // Agreeing at 1e-18 on the exact set says little, since a harness that
+   // computed nothing at all would also agree. The check that has content is
+   // on a curved profile, where both sides are large.
+   setupProfileState(Mesh, VCoord, State, EqState, NLayers, DC, Bulge,
+                     Quadratic, 0.0_Real);
+   Real CurvedDeltaZ, CurvedUpper, CurvedLower, CurvedRms;
+   const Real CurvedKernel =
+       runFiniteVolume(Mesh, VCoord, State, EqState, NLayers, CurvedDeltaZ,
+                       CurvedUpper, CurvedLower, CurvedRms);
+
+   PGradHostState HC = copyStateToHost(VCoord, EqState);
+   std::vector<Real> CurvedRefDeltaZ, CurvedRefTend;
+   Rules = PGradGuardRules();
+   referenceScan(HC.PressInterface, HC.PressMid, HC.Temp, HC.Salt, HC.SpecVol,
+                 HC.SpecVolDCt, HC.SpecVolDSa, HC.SpecVolDP, HC.GeomZ, NLayers,
+                 DC, NQuad, Rules, CurvedRefDeltaZ, CurvedRefTend);
+   Real CurvedRefMax = 0.0_Real;
+   for (int K = 0; K < NLayers; ++K)
+      CurvedRefMax = std::max(CurvedRefMax, std::abs(CurvedRefTend[K]));
+
+   const Real CurvedRelDiff =
+       (CurvedKernel > 0.0_Real)
+           ? std::abs(CurvedRefMax - CurvedKernel) / CurvedKernel
+           : 1.0_Real;
+   LOG_INFO("PGradTest: guard harness fidelity on a curved profile: reference "
+            "{} m/s2 against kernel {} m/s2, relative difference {}",
+            CurvedRefMax, CurvedKernel, CurvedRelDiff);
+   if (CurvedRelDiff <= 1.0e-10_Real) {
+      LOG_INFO("PGradTest: guard harness fidelity on a curved profile PASS");
+   } else {
+      LOG_ERROR("PGradTest: guard harness fidelity on a curved profile FAIL: "
+                "the reference assembly does not reproduce the kernel, so the "
+                "guards below say nothing");
+      ++Err;
+   }
+
+   // back to the exact-set state for the guards
+   setupProfileState(Mesh, VCoord, State, EqState, NLayers, DC, Bulge, Linear,
+                     0.0_Real);
+   H = copyStateToHost(VCoord, EqState);
+
+   // Guard (b), a cell-local expansion point in place of the edge-shared one.
+   // Two expansion points mean the SpecVol0 and SpecVolDP terms no longer
+   // cancel, so this must fire.
+   Rules                 = PGradGuardRules();
+   Rules.SharedExpansion = false;
+   referenceScan(H.PressInterface, H.PressMid, H.Temp, H.Salt, H.SpecVol,
+                 H.SpecVolDCt, H.SpecVolDSa, H.SpecVolDP, H.GeomZ, NLayers, DC,
+                 NQuad, Rules, RefDeltaZ, RefTend);
+   Real GuardB = 0.0_Real;
+   for (int K = 0; K < NLayers; ++K)
+      GuardB = std::max(GuardB, std::abs(RefTend[K]));
+
+   LOG_INFO("PGradTest: guard (b) cell-local expansion point gives {} m/s2, "
+            "against {} m/s2 with the shared point",
+            GuardB, RefMax);
+   if (GuardB > 1.0e4_Real * Eps * TendScale) {
+      LOG_INFO("PGradTest: guard (b) PASS: the edge-shared expansion point is "
+               "load-bearing");
+   } else {
+      LOG_ERROR("PGradTest: guard (b) FAIL: replacing the shared expansion "
+                "point with a cell-local one changed nothing, so the sharing "
+                "is not being exercised");
+      ++Err;
+   }
+
+   // Guard (c), each column's state taken from its own layer K rather than
+   // from the layer containing the pressure. This *cannot* fire on the exact
+   // set: the profile is a single line in pressure, so every layer's
+   // reconstruction is that same line and looking up the wrong layer costs
+   // nothing. The check here records that, because the alternative -- writing
+   // it as a guard that must fire -- would be asserting something false, and
+   // because it is the reason the property tests on the lookup exist at all.
+   Rules                = PGradGuardRules();
+   Rules.PressureLookup = false;
+   referenceScan(H.PressInterface, H.PressMid, H.Temp, H.Salt, H.SpecVol,
+                 H.SpecVolDCt, H.SpecVolDSa, H.SpecVolDP, H.GeomZ, NLayers, DC,
+                 NQuad, Rules, RefDeltaZ, RefTend);
+   Real GuardC = 0.0_Real;
+   for (int K = 0; K < NLayers; ++K)
+      GuardC = std::max(GuardC, std::abs(RefTend[K]));
+
+   LOG_INFO("PGradTest: guard (c) layer-index lookup gives {} m/s2, against {} "
+            "m/s2 with the pressure lookup -- this guard cannot fire on the "
+            "exact set, which is why the lookup is pinned by property tests",
+            GuardC, RefMax);
+   if (GuardC <= ExactTol * Eps * TendScale) {
+      LOG_INFO("PGradTest: guard (c) behaves as documented: no answer-level "
+               "check can distinguish the two lookups here");
+   } else {
+      LOG_INFO("PGradTest: guard (c) unexpectedly fired at {} m/s2; an "
+               "answer-level check on the lookup may now be available",
+               GuardC);
+   }
+
+   // Guard (d), the anchor taken as the raw height difference, dropping the
+   // short integrals that shift it to a common pressure. It fires only where
+   // the two columns' end pressures differ, and it is flat with depth, which
+   // is what distinguishes it from guard (b).
+   setupProfileState(Mesh, VCoord, State, EqState, NLayers, DC, Bulge, Linear,
+                     2.0e4_Real);
+   PGradHostState HD = copyStateToHost(VCoord, EqState);
+
+   std::vector<Real> DZCorrect, TendCorrect, DZBroken, TendBroken;
+   Rules = PGradGuardRules();
+   referenceScan(HD.PressInterface, HD.PressMid, HD.Temp, HD.Salt, HD.SpecVol,
+                 HD.SpecVolDCt, HD.SpecVolDSa, HD.SpecVolDP, HD.GeomZ, NLayers,
+                 DC, NQuad, Rules, DZCorrect, TendCorrect);
+   Rules               = PGradGuardRules();
+   Rules.ShiftedAnchor = false;
+   referenceScan(HD.PressInterface, HD.PressMid, HD.Temp, HD.Salt, HD.SpecVol,
+                 HD.SpecVolDCt, HD.SpecVolDSa, HD.SpecVolDP, HD.GeomZ, NLayers,
+                 DC, NQuad, Rules, DZBroken, TendBroken);
+
+   Real GuardD    = 0.0_Real;
+   Real OffsetMin = std::numeric_limits<Real>::max();
+   Real OffsetMax = 0.0_Real;
+   for (int K = 0; K <= NLayers; ++K) {
+      const Real Offset = std::abs(DZBroken[K] - DZCorrect[K]);
+      OffsetMin         = std::min(OffsetMin, Offset);
+      OffsetMax         = std::max(OffsetMax, Offset);
+   }
+   for (int K = 0; K < NLayers; ++K)
+      GuardD = std::max(GuardD, std::abs(TendBroken[K] - TendCorrect[K]));
+
+   LOG_INFO("PGradTest: guard (d) unshifted anchor changes the tendency by {} "
+            "m/s2; the offset in the height difference runs from {} m to {} m "
+            "over the column",
+            GuardD, OffsetMin, OffsetMax);
+   const bool Fires = GuardD > 1.0e4_Real * Eps * TendScale;
+   const bool Flat  = OffsetMax > 0.0_Real &&
+                     (OffsetMax - OffsetMin) <= 1.0e-6_Real * OffsetMax;
+   if (Fires && Flat) {
+      LOG_INFO("PGradTest: guard (d) PASS: the anchor shift is load-bearing "
+               "and its omission is flat with depth");
+   } else {
+      LOG_ERROR("PGradTest: guard (d) FAIL: fires {}, flat with depth {}",
+                Fires, Flat);
+      ++Err;
+   }
+
+   //
+   // Group two: profiles the reconstruction does not resolve. The residual
+   // must shrink like the square of the layer thickness under vertical
+   // refinement at fixed tilt, matching the design's table. A residual that
+   // does not shrink at that rate means one of the scheme's conditions has
+   // been broken; it is a bug to find, not a tolerance to widen.
+   //
+   const PGradProfile Profiles[2] = {Quadratic, Cubic};
+   const char *ProfileNames[2]    = {"quadratic", "cubic"};
+
+   for (int IProf = 0; IProf < 2; ++IProf) {
+      Real PrevErr   = 0.0_Real;
+      Real WorstRate = 1.0e30_Real;
+      // 15, 30, 60 layers: a refinement factor of two, staying within the
+      // vertical dimension the mesh file provides
+      const I4 RefLayers[3] = {15, 30, 60};
+      for (int IRef = 0; IRef < 3; ++IRef) {
+         const I4 NRef = RefLayers[IRef];
+         setupProfileState(Mesh, VCoord, State, EqState, NRef, DC, Bulge,
+                           Profiles[IProf], 0.0_Real);
+         Real DZ, Up, Low, Rms;
+         const Real MaxE = runFiniteVolume(Mesh, VCoord, State, EqState, NRef,
+                                           DZ, Up, Low, Rms);
+         if (IRef > 0 && Rms > 0.0_Real) {
+            const Real Rate = std::log2(PrevErr / Rms);
+            WorstRate       = std::min(WorstRate, Rate);
+            LOG_INFO("PGradTest: {} profile, {} layers: RMS |Tend| = {} m/s2 "
+                     "(max {}), rate {}",
+                     ProfileNames[IProf], NRef, Rms, MaxE, Rate);
+         } else {
+            LOG_INFO("PGradTest: {} profile, {} layers: RMS |Tend| = {} m/s2 "
+                     "(max {})",
+                     ProfileNames[IProf], NRef, Rms, MaxE);
+         }
+         PrevErr = Rms;
+      }
+      if (WorstRate >= 1.7_Real) {
+         LOG_INFO("PGradTest: {} profile convergence PASS: worst rate {}",
+                  ProfileNames[IProf], WorstRate);
+      } else {
+         LOG_ERROR("PGradTest: {} profile convergence FAIL: worst rate {} is "
+                   "below the second order the design predicts",
+                   ProfileNames[IProf], WorstRate);
+         ++Err;
+      }
+   }
 
    return Err;
 
-} // end testColumnScan
+} // end testExactnessAndGuards
 
 // Assert the identity of design section 3.9 (test section 5.5): with the tidal
 // and self-attraction-and-loading potentials zero, PressureGradCentered is
@@ -1446,9 +1947,9 @@ int main(int argc, char *argv[]) {
       // point on a resolved profile, not merely in the integral.
       int IntegrandErr = testMatchedPressIntegrand();
 
-      // The column scan must return a zero fixed-pressure height difference
-      // at every interface on the exact set, not merely in the layer mean.
-      int ScanErr = testColumnScan(DefMesh, VCoord, DefState, DefEos);
+      // The gating test: exactness on the exact set, the convergence of the
+      // residual off it, and the guards.
+      int ScanErr = testExactnessAndGuards(DefMesh, VCoord, DefState, DefEos);
 
       int IdentityErr = testCenteredIdentity(DefMesh, VCoord, DefState, DefEos);
 
