@@ -105,6 +105,61 @@ KOKKOS_INLINE_FUNCTION Real linearReconEval(
    return Value + linearReconDeviation(Slope, PressMid, Press);
 }
 
+/// The layer of column ICell whose interfaces bracket the pressure Press,
+/// searched from the hint KHint and clamped to the column's valid range
+/// [KMin, KMax].
+///
+/// This is the lookup that makes the scheme a fixed-pressure comparison rather
+/// than a fixed-layer-index one, and it is the single place where that
+/// distinction lives. At a pressure in edge layer K, each column supplies its
+/// own temperature and salinity from whichever of *its own* layers contains
+/// that pressure, which under tilt is generally not layer K -- at a coordinate
+/// tilt of 50 m/km with 64 m layers the two columns' layer K are offset by
+/// nearly three layer thicknesses and do not overlap in pressure at all.
+/// Looking a column's state up by layer index instead would silently
+/// reintroduce the very error the scheme exists to remove, and would still
+/// pass every exactness and accuracy check available, which is why the
+/// property tests on this function are not optional.
+///
+/// Interface pressures increase downward, so the search walks up while Press
+/// lies above the layer's top interface and down while it lies below the
+/// bottom one. Within the column scan the answer advances monotonically with
+/// K, so passing the previous answer as KHint makes this a pair of incremented
+/// cursors rather than a search; the result does not depend on the hint.
+///
+/// Where Press lies outside the column altogether the outermost valid layer is
+/// returned and its reconstruction is extrapolated. This is the rule at the
+/// top and bottom of the column: the edge control volume's pressure range is
+/// in general neither column's own, so near the sea floor a column's deepest
+/// reconstruction must be evaluated slightly below its own floor. Exactness
+/// survives extrapolation, because on the exact set an extrapolated
+/// reconstruction still reproduces the true profile.
+///
+/// Templated on the array type so that the same code is exercised by the
+/// device kernels and by the host-side property tests that pin it.
+template <class ArrayType>
+KOKKOS_INLINE_FUNCTION I4
+findLayerForPress(const ArrayType &PressInterface, ///< [in] interface pressures
+                  const I4 ICell,                  ///< [in] cell to search
+                  const I4 KMin,    ///< [in] shallowest valid layer
+                  const I4 KMax,    ///< [in] deepest valid layer
+                  const Real Press, ///< [in] pressure to locate
+                  const I4 KHint    ///< [in] starting guess
+) {
+   I4 K = KHint;
+   if (K < KMin)
+      K = KMin;
+   if (K > KMax)
+      K = KMax;
+
+   while (K > KMin && Press < PressInterface(ICell, K))
+      --K;
+   while (K < KMax && Press > PressInterface(ICell, K + 1))
+      ++K;
+
+   return K;
+}
+
 } // namespace OMEGA
 
 //===----------------------------------------------------------------------===//

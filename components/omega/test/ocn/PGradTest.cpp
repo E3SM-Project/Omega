@@ -230,6 +230,163 @@ int testReconstruction() {
 
 } // end testReconstruction
 
+// Pin the per-column pressure lookup with direct property tests, on a
+// fabricated pair of columns and without a mesh.
+//
+// These tests are not optional, and they are the only thing standing between a
+// correct implementation and a silently wrong one. No answer-level check
+// anywhere in the test plan can distinguish looking a column's state up by
+// pressure from looking it up by layer index: on a profile linear in pressure
+// every layer's mean-preserving reconstruction is that same line, so looking
+// up the wrong layer costs nothing, and on a curved profile the two rules
+// differ by less than a factor of two. An implementation that indexes by layer
+// therefore passes every exactness and accuracy gate specified.
+//
+// Two columns are built sharing a surface and a bottom pressure, with the
+// second column's interfaces bulging away from the first in the middle of the
+// column so that the two are strongly offset there -- the situation coordinate
+// tilt produces. Four properties are asserted:
+//
+//   - the returned layer's interfaces actually bracket the pressure;
+//   - the returned layer differs from the edge layer index by at least two
+//     somewhere, so the lookup is demonstrably not an index lookup;
+//   - the answer does not depend on the starting hint, so the incremented
+//     cursors used in the column scan cannot disagree with a search;
+//   - a pressure outside the column clamps to the outermost valid layer, which
+//     is the rule where the edge control volume extends past a column's own
+//     floor.
+int testPressureLookup() {
+
+   int Err = 0;
+
+   const I4 NLayers = 32;
+   const I4 KMin    = 0;
+   const I4 KMax    = NLayers - 1;
+
+   // Column 0 is uniform in pressure; column 1 has the same surface and
+   // bottom pressure but bulges away from it in between, by up to three layer
+   // thicknesses. The bulge is small enough that column 1's interfaces stay
+   // monotonic.
+   const Real DeltaP = 1.25e6_Real;
+   const Real Bulge  = 6.0_Real * DeltaP;
+
+   const Real Pi = 3.14159265358979323846_Real;
+
+   HostArray2DReal PressInterface("PressInterface", 2, NLayers + 1);
+   for (int K = 0; K <= NLayers; ++K) {
+      const Real Uniform   = K * DeltaP;
+      PressInterface(0, K) = Uniform;
+      PressInterface(1, K) = Uniform + Bulge * std::sin(Pi * K / NLayers);
+   }
+
+   // check that column 1 stayed monotonic, or the test is not testing what it
+   // means to
+   for (int K = 0; K < NLayers; ++K) {
+      if (PressInterface(1, K + 1) <= PressInterface(1, K)) {
+         LOG_ERROR("PGradTest: pressure lookup setup FAIL: column 1 is not "
+                   "monotonic at layer {}",
+                   K);
+         ++Err;
+      }
+   }
+
+   I4 MaxOffset     = 0;
+   int NBracketFail = 0;
+   int NHintFail    = 0;
+
+   for (int K = 0; K < NLayers; ++K) {
+
+      // the edge layer's mid pressure, as the edge average of the two
+      // columns' interface pressures
+      const Real PressTop =
+          0.5_Real * (PressInterface(0, K) + PressInterface(1, K));
+      const Real PressBot =
+          0.5_Real * (PressInterface(0, K + 1) + PressInterface(1, K + 1));
+      const Real Press = 0.5_Real * (PressTop + PressBot);
+
+      for (int ICell = 0; ICell < 2; ++ICell) {
+
+         const I4 KFound =
+             findLayerForPress(PressInterface, ICell, KMin, KMax, Press, K);
+
+         // the interfaces of the returned layer must bracket the pressure,
+         // unless the search clamped at an end of the column
+         const bool Above =
+             (KFound == KMin) && (Press < PressInterface(ICell, KMin));
+         const bool Below =
+             (KFound == KMax) && (Press > PressInterface(ICell, KMax + 1));
+         const bool Brackets = Press >= PressInterface(ICell, KFound) &&
+                               Press <= PressInterface(ICell, KFound + 1);
+         if (!Brackets && !Above && !Below)
+            ++NBracketFail;
+
+         const I4 Offset = std::abs(KFound - K);
+         if (Offset > MaxOffset)
+            MaxOffset = Offset;
+
+         // the answer must not depend on where the search started
+         for (I4 KHint = KMin; KHint <= KMax; ++KHint) {
+            if (findLayerForPress(PressInterface, ICell, KMin, KMax, Press,
+                                  KHint) != KFound)
+               ++NHintFail;
+         }
+      }
+   }
+
+   if (NBracketFail == 0) {
+      LOG_INFO("PGradTest: pressure lookup bracketing PASS");
+   } else {
+      LOG_ERROR("PGradTest: pressure lookup bracketing FAIL: {} pressures not "
+                "bracketed by the returned layer",
+                NBracketFail);
+      ++Err;
+   }
+
+   // Under tilt the layer containing a pressure is generally not the edge
+   // layer index. If this never differed by much, the test configuration
+   // would not be exercising the distinction the lookup exists for.
+   if (MaxOffset >= 2) {
+      LOG_INFO("PGradTest: pressure lookup is not an index lookup PASS: "
+               "returned layer differs from the edge layer by up to {}",
+               MaxOffset);
+   } else {
+      LOG_ERROR("PGradTest: pressure lookup is not an index lookup FAIL: "
+                "returned layer never differs from the edge layer by more "
+                "than {}",
+                MaxOffset);
+      ++Err;
+   }
+
+   if (NHintFail == 0) {
+      LOG_INFO("PGradTest: pressure lookup hint independence PASS");
+   } else {
+      LOG_ERROR("PGradTest: pressure lookup hint independence FAIL: {} "
+                "disagreements between starting hints",
+                NHintFail);
+      ++Err;
+   }
+
+   // Pressures outside the column clamp to the outermost valid layer, whose
+   // reconstruction is then extrapolated
+   const Real AboveTop = PressInterface(0, KMin) - DeltaP;
+   const Real BelowBot = PressInterface(0, KMax + 1) + DeltaP;
+   const I4 KAbove =
+       findLayerForPress(PressInterface, 0, KMin, KMax, AboveTop, KMax);
+   const I4 KBelow =
+       findLayerForPress(PressInterface, 0, KMin, KMax, BelowBot, KMin);
+   if (KAbove == KMin && KBelow == KMax) {
+      LOG_INFO("PGradTest: pressure lookup out-of-column clamping PASS");
+   } else {
+      LOG_ERROR("PGradTest: pressure lookup out-of-column clamping FAIL: got "
+                "{} above the column and {} below it",
+                KAbove, KBelow);
+      ++Err;
+   }
+
+   return Err;
+
+} // end testPressureLookup
+
 // Build the two-column test state. Every edge joins cells 0 and 1 and is
 // DC apart. Layer interfaces are staggered between the two columns by
 // TiltFactor, which tilts them relative to surfaces of constant pressure;
@@ -761,6 +918,11 @@ int main(int argc, char *argv[]) {
       // failure here localizes immediately.
       int ReconErr = testReconstruction();
 
+      // Pin the per-column pressure lookup. No answer-level check anywhere
+      // can distinguish this from a layer-index lookup, so these property
+      // tests are the only protection against that failure mode.
+      int LookupErr = testPressureLookup();
+
       int IdentityErr = testCenteredIdentity(DefMesh, VCoord, DefState, DefEos);
 
       // Test parsing and dispatch of the PressureGrad configuration options
@@ -774,7 +936,7 @@ int main(int argc, char *argv[]) {
          RetVal = 1;
       }
 
-      RetVal += ReconErr + IdentityErr + ConfigErr;
+      RetVal += ReconErr + LookupErr + IdentityErr + ConfigErr;
 
       // cleanup
       PressureGrad::clear();
