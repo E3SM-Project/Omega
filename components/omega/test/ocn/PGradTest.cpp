@@ -24,6 +24,7 @@
 #include "OceanState.h"
 #include "OmegaKokkos.h"
 #include "PGrad.h"
+#include "PGradRecon.h"
 #include "Pacer.h"
 #include "TimeStepper.h"
 #include "Tracers.h"
@@ -92,6 +93,142 @@ void initPGradTest() {
 
    CHECK_ERROR_ABORT(Err, "PGrad: error during initialization");
 }
+
+// Check the mean-preserving linear reconstruction estimator on a single
+// column, without a mesh.
+//
+// Layer means are sampled from a profile that is exactly linear in pressure,
+// so the recovered slope must match the profile's slope to round-off in every
+// layer, including the two that use a one-sided difference. The layer
+// thicknesses are deliberately non-uniform, which is the case this test exists
+// for: a formula that assumed uniform thickness passes the uniform control
+// below and fails here. Both are run, so a failure says which of the two it
+// is.
+//
+// Also asserted are the two properties the scheme leans on: that the
+// reconstruction reproduces the layer mean at mid-layer pressure, and that its
+// deviation integrates to zero over the layer.
+int testReconstruction() {
+
+   int Err = 0;
+
+   const Real Eps = std::numeric_limits<Real>::epsilon();
+   const Real Tol = 16.0_Real;
+
+   // a profile linear in pressure: Theta(p) = Value0 + Slope0 * p
+   const Real Value0 = 12.5_Real;
+   const Real Slope0 = -1.5e-6_Real;
+
+   // deliberately non-uniform thicknesses in Pa, then a uniform control
+   const std::vector<std::vector<Real>> ThicknessSets = {
+       {1.0e5, 3.0e5, 2.0e5, 7.0e5, 1.5e5, 9.0e5, 4.0e5, 2.5e5},
+       {3.0e5, 3.0e5, 3.0e5, 3.0e5, 3.0e5, 3.0e5, 3.0e5, 3.0e5}};
+   const std::vector<std::string> SetNames = {"non-uniform", "uniform"};
+
+   for (int ISet = 0; ISet < ThicknessSets.size(); ++ISet) {
+
+      const std::vector<Real> &DeltaPress = ThicknessSets[ISet];
+      const I4 NLayers                    = DeltaPress.size();
+      const I4 KMin                       = 0;
+      const I4 KMax                       = NLayers - 1;
+
+      // interface pressures accumulated from the surface, mid-layer pressures
+      // as their exact arithmetic midpoint, and layer means sampled from the
+      // profile at mid-layer pressure -- which is the exact layer average of a
+      // linear profile
+      std::vector<Real> PressInterface(NLayers + 1);
+      std::vector<Real> PressMid(NLayers);
+      std::vector<Real> Value(NLayers);
+      PressInterface[0] = 0.0_Real;
+      for (int K = 0; K < NLayers; ++K) {
+         PressInterface[K + 1] = PressInterface[K] + DeltaPress[K];
+         PressMid[K] = 0.5_Real * (PressInterface[K] + PressInterface[K + 1]);
+         Value[K]    = Value0 + Slope0 * PressMid[K];
+      }
+
+      Real MaxSlopeErr = 0.0_Real;
+      Real MaxMeanErr  = 0.0_Real;
+      Real MaxIntegral = 0.0_Real;
+
+      for (int K = 0; K < NLayers; ++K) {
+
+         I4 KLo, KHi;
+         linearReconStencil(K, KMin, KMax, KLo, KHi);
+         const Real Slope = linearReconSlope(Value[KLo], Value[KHi],
+                                             PressMid[KLo], PressMid[KHi]);
+
+         // round-off in the difference is set by the size of the layer means,
+         // divided by the pressure interval differenced over
+         const Real ValueScale =
+             std::max(std::abs(Value[KLo]), std::abs(Value[KHi]));
+         const Real SlopeBound =
+             Eps * ValueScale / std::abs(PressMid[KHi] - PressMid[KLo]);
+         MaxSlopeErr =
+             std::max(MaxSlopeErr, std::abs(Slope - Slope0) / SlopeBound);
+
+         // the reconstruction reproduces the layer mean at mid-layer pressure
+         const Real AtMid =
+             linearReconEval(Value[K], Slope, PressMid[K], PressMid[K]);
+         MaxMeanErr = std::max(MaxMeanErr,
+                               std::abs(AtMid - Value[K]) / (Eps * ValueScale));
+
+         // the deviation integrates to zero over the layer, by two-point
+         // Gauss quadrature, which is exact for a linear integrand
+         const Real HalfWidth = 0.5_Real * DeltaPress[K];
+         const Real Offset    = HalfWidth / std::sqrt(3.0_Real);
+         const Real DevLo =
+             linearReconDeviation(Slope, PressMid[K], PressMid[K] - Offset);
+         const Real DevHi =
+             linearReconDeviation(Slope, PressMid[K], PressMid[K] + Offset);
+         const Real Integral = HalfWidth * (DevLo + DevHi);
+         const Real DevScale = HalfWidth * std::abs(Slope) * HalfWidth;
+         if (DevScale > 0.0_Real)
+            MaxIntegral =
+                std::max(MaxIntegral, std::abs(Integral) / (Eps * DevScale));
+      }
+
+      LOG_INFO("PGradTest: reconstruction on {} layers: slope error {} eps, "
+               "layer-mean error {} eps, layer integral {} eps",
+               SetNames[ISet], MaxSlopeErr, MaxMeanErr, MaxIntegral);
+
+      if (MaxSlopeErr > Tol) {
+         LOG_ERROR("PGradTest: reconstruction slope FAIL on {} layers: {} eps",
+                   SetNames[ISet], MaxSlopeErr);
+         ++Err;
+      }
+      if (MaxMeanErr > Tol) {
+         LOG_ERROR("PGradTest: reconstruction layer mean FAIL on {} layers: "
+                   "{} eps",
+                   SetNames[ISet], MaxMeanErr);
+         ++Err;
+      }
+      if (MaxIntegral > Tol) {
+         LOG_ERROR("PGradTest: reconstruction layer integral FAIL on {} "
+                   "layers: {} eps",
+                   SetNames[ISet], MaxIntegral);
+         ++Err;
+      }
+   }
+
+   // a column with a single valid layer has nothing to difference against, so
+   // a constant is the only mean-preserving reconstruction available
+   I4 KLo, KHi;
+   linearReconStencil(3, 3, 3, KLo, KHi);
+   const Real SingleSlope =
+       linearReconSlope(Value0, Value0, 1.0e5_Real, 1.0e5_Real);
+   if (KLo == 3 && KHi == 3 && SingleSlope == 0.0_Real) {
+      LOG_INFO("PGradTest: reconstruction single-layer column PASS");
+   } else {
+      LOG_ERROR("PGradTest: reconstruction single-layer column FAIL");
+      ++Err;
+   }
+
+   if (Err == 0)
+      LOG_INFO("PGradTest: reconstruction estimator PASS");
+
+   return Err;
+
+} // end testReconstruction
 
 // Build the two-column test state. Every edge joins cells 0 and 1 and is
 // DC apart. Layer interfaces are staggered between the two columns by
@@ -619,6 +756,11 @@ int main(int argc, char *argv[]) {
       // Test the centered identity of design section 3.9 across a sweep of
       // tilts. This resets the two-column state, so it runs after the
       // refinement loop.
+      // Test the reconstruction estimator on its own. It needs no mesh, and
+      // it is the most likely place for the exactness gate to fail, so a
+      // failure here localizes immediately.
+      int ReconErr = testReconstruction();
+
       int IdentityErr = testCenteredIdentity(DefMesh, VCoord, DefState, DefEos);
 
       // Test parsing and dispatch of the PressureGrad configuration options
@@ -632,7 +774,7 @@ int main(int argc, char *argv[]) {
          RetVal = 1;
       }
 
-      RetVal += IdentityErr + ConfigErr;
+      RetVal += ReconErr + IdentityErr + ConfigErr;
 
       // cleanup
       PressureGrad::clear();
