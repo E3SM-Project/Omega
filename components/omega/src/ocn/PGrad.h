@@ -14,6 +14,8 @@
 #include "HorzMesh.h"
 #include "OceanState.h"
 #include "OmegaKokkos.h"
+#include "PGradFiniteVolume.h"
+#include "PGradRecon.h"
 #include "VertCoord.h"
 #include <memory>
 
@@ -33,9 +35,6 @@ enum class PressureGradVertRecon {
    Linear ///< linear deviations (Phase 1)
    // , PPM  ///< parabolic (PPM-style) deviations (Phase 2)
 };
-
-/// Largest number of quadrature points supported within an edge layer
-inline constexpr I4 MaxPGradQuadPoints = 4;
 
 // Centered pressure gradient functor
 class PressureGradCentered {

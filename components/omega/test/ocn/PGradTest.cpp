@@ -24,6 +24,7 @@
 #include "OceanState.h"
 #include "OmegaKokkos.h"
 #include "PGrad.h"
+#include "PGradFiniteVolume.h"
 #include "PGradRecon.h"
 #include "Pacer.h"
 #include "TimeStepper.h"
@@ -386,6 +387,209 @@ int testPressureLookup() {
    return Err;
 
 } // end testPressureLookup
+
+// The exact layer average over [PressLo, PressHi] of a profile that is
+// quadratic in pressure, used to initialize layer means the way the exactness
+// gate requires: as the exact layer averages of a prescribed continuous
+// profile, which under tilt come out different in the two columns.
+Real exactLayerAvg(const Real Coeff0,  ///< [in] constant term
+                   const Real Coeff1,  ///< [in] coefficient of p
+                   const Real Coeff2,  ///< [in] coefficient of p squared
+                   const Real PressLo, ///< [in] top interface pressure
+                   const Real PressHi  ///< [in] bottom interface pressure
+) {
+   const Real PressMid   = 0.5_Real * (PressLo + PressHi);
+   const Real DeltaPress = PressHi - PressLo;
+   return Coeff0 + Coeff1 * PressMid +
+          Coeff2 * (PressMid * PressMid + DeltaPress * DeltaPress / 12.0_Real);
+}
+
+// Check the matched-pressure integrand on a fabricated column pair, without a
+// mesh. This exercises the reconstruction, the pressure lookup and the
+// edge-shared expansion together, which is the combination the whole scheme
+// rests on.
+//
+// On a profile linear in pressure the integrand must be zero at *every*
+// quadrature point, not merely in the integral. That is the sharpest available
+// form of the check: it localizes a failure to the layer that caused it, and
+// it is what a per-layer-index sharing rule fails. Both columns' layer means
+// are the exact layer averages of one prescribed continuous profile, so under
+// the offset between the two columns those means genuinely differ -- a
+// configuration built by copying identical means into both columns would not
+// exercise the property at all.
+//
+// A quadratic profile runs as a control. The reconstruction does not resolve
+// it, so the integrand is nonzero there, and the gap between the two cases is
+// what makes the linear result meaningful rather than a statement that
+// everything in the test is zero.
+int testMatchedPressIntegrand() {
+
+   int Err = 0;
+
+   const Real Eps = std::numeric_limits<Real>::epsilon();
+   const Real Tol = 16.0_Real;
+
+   const I4 NLayers = 32;
+   const I4 KMin    = 0;
+   const I4 KMax    = NLayers - 1;
+
+   const Real DeltaP = 1.25e6_Real;
+   const Real Bulge  = 6.0_Real * DeltaP;
+   const Real Pi     = 3.14159265358979323846_Real;
+
+   // representative shared edge coefficients; their values cannot affect the
+   // exact-set result, since they multiply a quantity that is identically zero
+   PGradEdgeEos EdgeEos;
+   EdgeEos.SpecVol0    = 9.7e-4_Real;
+   EdgeEos.SpecVolDCt  = -2.5e-7_Real;
+   EdgeEos.SpecVolDSa  = -7.5e-7_Real;
+   EdgeEos.SpecVolDP   = -4.0e-13_Real;
+   EdgeEos.ConservTemp = 8.0_Real;
+   EdgeEos.AbsSalinity = 34.9_Real;
+   EdgeEos.Press       = 2.0e7_Real;
+
+   // the prescribed continuous profile, linear then quadratic in pressure
+   const Real Temp0 = 12.0_Real, Temp1 = -2.0e-7_Real;
+   const Real Salt0 = 34.5_Real, Salt1 = 2.5e-8_Real;
+
+   Real MaxLinear    = 0.0_Real;
+   Real MaxQuadratic = 0.0_Real;
+
+   for (int ICase = 0; ICase < 2; ++ICase) {
+
+      const bool Curved = (ICase == 1);
+      const Real Temp2  = Curved ? 3.0e-15_Real : 0.0_Real;
+      const Real Salt2  = Curved ? -4.0e-16_Real : 0.0_Real;
+
+      // Column 0 is uniform in pressure; column 1 shares its surface and
+      // bottom pressure but is offset from it by up to three layer
+      // thicknesses in between, as coordinate tilt would make it.
+      HostArray2DReal PressInterface("PressInterface", 2, NLayers + 1);
+      HostArray2DReal PressMid("PressMid", 2, NLayers);
+      HostArray2DReal ConservTemp("ConservTemp", 2, NLayers);
+      HostArray2DReal AbsSalinity("AbsSalinity", 2, NLayers);
+      HostArray2DReal SlopeCt("SlopeCt", 2, NLayers);
+      HostArray2DReal SlopeSa("SlopeSa", 2, NLayers);
+
+      for (int ICell = 0; ICell < 2; ++ICell) {
+         for (int K = 0; K <= NLayers; ++K) {
+            const Real Uniform = K * DeltaP;
+            PressInterface(ICell, K) =
+                (ICell == 1) ? Uniform + Bulge * std::sin(Pi * K / NLayers)
+                             : Uniform;
+         }
+         for (int K = 0; K < NLayers; ++K) {
+            PressMid(ICell, K) = 0.5_Real * (PressInterface(ICell, K) +
+                                             PressInterface(ICell, K + 1));
+            ConservTemp(ICell, K) =
+                exactLayerAvg(Temp0, Temp1, Temp2, PressInterface(ICell, K),
+                              PressInterface(ICell, K + 1));
+            AbsSalinity(ICell, K) =
+                exactLayerAvg(Salt0, Salt1, Salt2, PressInterface(ICell, K),
+                              PressInterface(ICell, K + 1));
+         }
+         for (int K = 0; K < NLayers; ++K) {
+            I4 KLo, KHi;
+            linearReconStencil(K, KMin, KMax, KLo, KHi);
+            SlopeCt(ICell, K) = linearReconSlope(
+                ConservTemp(ICell, KLo), ConservTemp(ICell, KHi),
+                PressMid(ICell, KLo), PressMid(ICell, KHi));
+            SlopeSa(ICell, K) = linearReconSlope(
+                AbsSalinity(ICell, KLo), AbsSalinity(ICell, KHi),
+                PressMid(ICell, KLo), PressMid(ICell, KHi));
+         }
+      }
+
+      Real Nodes[MaxPGradQuadPoints];
+      Real Weights[MaxPGradQuadPoints];
+      const I4 NQuad = 2;
+      gaussLegendreRule(NQuad, Nodes, Weights);
+
+      Real MaxScaled = 0.0_Real;
+      Real MaxAbs    = 0.0_Real;
+
+      for (int K = 0; K < NLayers; ++K) {
+
+         // the edge layer spans the average of the two columns' interfaces
+         const Real EdgeTop =
+             0.5_Real * (PressInterface(0, K) + PressInterface(1, K));
+         const Real EdgeBot =
+             0.5_Real * (PressInterface(0, K + 1) + PressInterface(1, K + 1));
+         const Real EdgeMid  = 0.5_Real * (EdgeTop + EdgeBot);
+         const Real EdgeHalf = 0.5_Real * (EdgeBot - EdgeTop);
+
+         for (int IQuad = 0; IQuad < NQuad; ++IQuad) {
+
+            const Real Press = EdgeMid + EdgeHalf * Nodes[IQuad];
+
+            Real TempAt[2];
+            Real SaltAt[2];
+            for (int ICell = 0; ICell < 2; ++ICell) {
+               // each column's own layer containing this pressure, which
+               // under the offset is generally not layer K
+               const I4 KFound = findLayerForPress(PressInterface, ICell, KMin,
+                                                   KMax, Press, K);
+               TempAt[ICell]   = linearReconEval(ConservTemp(ICell, KFound),
+                                                 SlopeCt(ICell, KFound),
+                                                 PressMid(ICell, KFound), Press);
+               SaltAt[ICell]   = linearReconEval(AbsSalinity(ICell, KFound),
+                                                 SlopeSa(ICell, KFound),
+                                                 PressMid(ICell, KFound), Press);
+            }
+
+            const Real SpecVolDiff = matchedPressSpecVolDiff(
+                EdgeEos, TempAt[0], SaltAt[0], TempAt[1], SaltAt[1]);
+
+            // scale by the size of the terms that had to cancel, not by an
+            // absolute constant
+            const Real Scale = std::abs(EdgeEos.SpecVolDCt * TempAt[0]) +
+                               std::abs(EdgeEos.SpecVolDSa * SaltAt[0]);
+
+            MaxAbs = std::max(MaxAbs, std::abs(SpecVolDiff));
+            MaxScaled =
+                std::max(MaxScaled, std::abs(SpecVolDiff) / (Eps * Scale));
+         }
+      }
+
+      LOG_INFO("PGradTest: matched-pressure integrand, {} profile: max "
+               "|dSpecVol| = {} m3/kg = {} eps of the cancelling terms",
+               Curved ? "quadratic" : "linear", MaxAbs, MaxScaled);
+
+      if (Curved) {
+         MaxQuadratic = MaxScaled;
+      } else {
+         MaxLinear = MaxScaled;
+      }
+   }
+
+   if (MaxLinear <= Tol) {
+      LOG_INFO("PGradTest: matched-pressure integrand PASS: {} eps on a "
+               "profile linear in pressure",
+               MaxLinear);
+   } else {
+      LOG_ERROR("PGradTest: matched-pressure integrand FAIL: {} eps on a "
+                "profile linear in pressure exceeds {} eps",
+                MaxLinear, Tol);
+      ++Err;
+   }
+
+   // the linear result means nothing unless the same machinery gives a large
+   // answer on a profile the reconstruction does not resolve
+   if (MaxQuadratic > 1.0e6_Real) {
+      LOG_INFO("PGradTest: matched-pressure integrand control PASS: the "
+               "quadratic profile gives {} eps",
+               MaxQuadratic);
+   } else {
+      LOG_ERROR("PGradTest: matched-pressure integrand control FAIL: the "
+                "quadratic profile gives only {} eps, so the linear result "
+                "may be trivial",
+                MaxQuadratic);
+      ++Err;
+   }
+
+   return Err;
+
+} // end testMatchedPressIntegrand
 
 // Build the two-column test state. Every edge joins cells 0 and 1 and is
 // DC apart. Layer interfaces are staggered between the two columns by
@@ -923,6 +1127,10 @@ int main(int argc, char *argv[]) {
       // tests are the only protection against that failure mode.
       int LookupErr = testPressureLookup();
 
+      // The matched-pressure integrand must be zero at every quadrature
+      // point on a resolved profile, not merely in the integral.
+      int IntegrandErr = testMatchedPressIntegrand();
+
       int IdentityErr = testCenteredIdentity(DefMesh, VCoord, DefState, DefEos);
 
       // Test parsing and dispatch of the PressureGrad configuration options
@@ -936,7 +1144,7 @@ int main(int argc, char *argv[]) {
          RetVal = 1;
       }
 
-      RetVal += ReconErr + LookupErr + IdentityErr + ConfigErr;
+      RetVal += ReconErr + LookupErr + IntegrandErr + IdentityErr + ConfigErr;
 
       // cleanup
       PressureGrad::clear();

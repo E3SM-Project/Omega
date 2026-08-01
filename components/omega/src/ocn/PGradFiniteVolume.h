@@ -42,6 +42,9 @@
 
 namespace OMEGA {
 
+/// Largest number of quadrature points supported within an edge layer
+inline constexpr I4 MaxPGradQuadPoints = 4;
+
 /// The equation-of-state expansion shared by both columns of an edge layer.
 /// One instance multiplies both columns' contributions.
 struct PGradEdgeEos {
@@ -100,6 +103,82 @@ KOKKOS_INLINE_FUNCTION Real edgeSpecVol(
    return Eos.SpecVol0 + Eos.SpecVolDCt * (ConservTemp - Eos.ConservTemp) +
           Eos.SpecVolDSa * (AbsSalinity - Eos.AbsSalinity) +
           Eos.SpecVolDP * (Press - Eos.Press);
+}
+
+/// The matched-pressure difference in specific volume between the two columns
+/// of an edge, evaluated at one pressure with one shared expansion.
+///
+/// This is the central quantity of the scheme. Because both columns use the
+/// same expansion, the SpecVol0 and SpecVolDP terms are identical in the two
+/// and cancel in the difference, leaving a coefficient times the horizontal
+/// contrast in reconstructed temperature and salinity *at matched pressure*.
+/// That contrast is identically zero, pointwise, whenever the two columns'
+/// reconstructions describe the same water -- which is why exactness depends
+/// neither on the values of the coefficients, nor on the quadrature, nor on
+/// the two columns' interfaces lining up.
+///
+/// Compressibility drops out entirely: SpecVolDP does not appear. That is
+/// correct physics rather than an approximation. If temperature and salinity
+/// are horizontally uniform then so is specific volume as a function of
+/// pressure, and a horizontally uniform compressibility exerts no horizontal
+/// pressure gradient.
+KOKKOS_INLINE_FUNCTION Real matchedPressSpecVolDiff(
+    const PGradEdgeEos &Eos, ///< [in] edge-shared expansion
+    const Real ConservTemp0, ///< [in] first column's temperature at p
+    const Real AbsSalinity0, ///< [in] first column's salinity at p
+    const Real ConservTemp1, ///< [in] second column's temperature at p
+    const Real AbsSalinity1  ///< [in] second column's salinity at p
+) {
+   return Eos.SpecVolDCt * (ConservTemp1 - ConservTemp0) +
+          Eos.SpecVolDSa * (AbsSalinity1 - AbsSalinity0);
+}
+
+/// Gauss-Legendre nodes and weights on [-1, 1] for NPoints points, NPoints
+/// running from 1 to MaxPGradQuadPoints.
+///
+/// The number of points is an accuracy setting only. The integrand is zero at
+/// every point for any profile the reconstruction resolves exactly, so no rule
+/// can break the robustness property; the choice trades cost against accuracy
+/// off the exact set with nothing else at stake. Two points is exact for the
+/// Phase 1 integrand within a sub-interval and is the default. More is worth
+/// considering only where the two columns' interfaces are strongly offset,
+/// since the integrand is piecewise linear with breakpoints at the union of
+/// the two columns' interfaces and a fixed rule does not resolve those breaks.
+KOKKOS_INLINE_FUNCTION void
+gaussLegendreRule(const I4 NPoints,                 ///< [in] number of points
+                  Real Nodes[MaxPGradQuadPoints],   ///< [out] nodes on [-1,1]
+                  Real Weights[MaxPGradQuadPoints]) ///< [out] weights
+{
+   switch (NPoints) {
+   case 1:
+      Nodes[0]   = 0.0_Real;
+      Weights[0] = 2.0_Real;
+      break;
+   case 3:
+      Nodes[0]   = -0.77459666924148337704_Real;
+      Nodes[1]   = 0.0_Real;
+      Nodes[2]   = 0.77459666924148337704_Real;
+      Weights[0] = 0.55555555555555555556_Real;
+      Weights[1] = 0.88888888888888888889_Real;
+      Weights[2] = 0.55555555555555555556_Real;
+      break;
+   case 4:
+      Nodes[0]   = -0.86113631159405257522_Real;
+      Nodes[1]   = -0.33998104358485626480_Real;
+      Nodes[2]   = 0.33998104358485626480_Real;
+      Nodes[3]   = 0.86113631159405257522_Real;
+      Weights[0] = 0.34785484513745385737_Real;
+      Weights[1] = 0.65214515486254614263_Real;
+      Weights[2] = 0.65214515486254614263_Real;
+      Weights[3] = 0.34785484513745385737_Real;
+      break;
+   default: // two points, the Phase 1 default
+      Nodes[0]   = -0.57735026918962576451_Real;
+      Nodes[1]   = 0.57735026918962576451_Real;
+      Weights[0] = 1.0_Real;
+      Weights[1] = 1.0_Real;
+      break;
+   }
 }
 
 } // namespace OMEGA
