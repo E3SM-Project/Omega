@@ -1010,6 +1010,22 @@ class Eos {
    Array2DReal SpecVolDSa;         ///< d(SpecVol)/d(AbsSalinity), per (g/kg)
    Array2DReal SpecVolDP;          ///< d(SpecVol)/d(Pressure), per Pa
 
+   /// Number of specific-volume evaluations performed since the counter was
+   /// last reset, counted as one per cell per active layer per call.
+   ///
+   /// This is instrumentation for the cost check of the finite-volume
+   /// pressure gradient design. That design bounds the number of
+   /// equation-of-state evaluations at approximately one per cell per layer
+   /// per step, independent of the reconstruction order, the stencil width
+   /// and the quadrature; nothing else in the test suite would notice an
+   /// evaluation appearing inside a quadrature loop, since it would change
+   /// run time without changing any answer. Maintaining it costs one host
+   /// addition per call.
+   I8 SpecVolEvalCount = 0;
+
+   /// Reset the specific-volume evaluation counter
+   void resetSpecVolEvalCount() { SpecVolEvalCount = 0; }
+
    std::string SpecVolFldName; ///< Field name for specific volume
    std::string
        SpecVolDisplacedFldName; ///< Field name for displaced specific volume

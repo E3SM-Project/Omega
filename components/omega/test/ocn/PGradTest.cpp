@@ -1191,6 +1191,123 @@ Real runCentered(HorzMesh *Mesh, VertCoord *VCoord, OceanState *State,
 
 } // end runCentered
 
+// The cost check of design section 5.6.
+//
+// The design bounds the number of equation-of-state evaluations at about one
+// per cell per layer per step, independent of the reconstruction order, the
+// stencil width and the quadrature. Nothing else in the test suite would
+// notice a violation: an evaluation inside the quadrature loop would change
+// run time without changing any answer, so every accuracy gate would still
+// pass.
+//
+// The check is sharper than the requirement. The pressure gradient performs
+// *no* equation-of-state evaluations at all -- the one per cell per layer that
+// the requirement allows is paid once by AuxiliaryState, before the tendency
+// is computed, and the scheme works from the specific volume and its
+// derivatives that call leaves behind. So the count across a call to
+// computePressureGrad must be exactly zero, at every setting of
+// QuadraturePoints.
+//
+// This is a counter comparison rather than a timing measurement, so it is
+// deterministic and suitable for continuous integration.
+int testEosCost(HorzMesh *Mesh,    ///< [in] Horizontal mesh
+                VertCoord *VCoord, ///< [inout] Vertical coordinate
+                OceanState *State, ///< [inout] Ocean state
+                Eos *EqState       ///< [inout] Equation of state
+) {
+
+   int Err = 0;
+
+   const I4 NLayers          = 32;
+   const Real DC             = 4000.0_Real;
+   const Real Bulge          = 7.5e6_Real;
+   const PGradProfile Linear = {12.0_Real, -2.0e-7_Real, 0.0_Real, 0.0_Real,
+                                34.0_Real, 2.5e-8_Real,  0.0_Real, 0.0_Real};
+
+   setupProfileState(Mesh, VCoord, State, EqState, NLayers, DC, Bulge, Linear,
+                     0.0_Real);
+
+   Array2DReal PseudoThick = State->getPseudoThickness(0);
+   Array2DReal Temp        = Tracers::getByName(0, "Temperature");
+   Array2DReal Salinity    = Tracers::getByName(0, "Salinity");
+
+   Config *Options = Config::getOmegaConfig();
+   Config PGradConfig("PressureGrad");
+   Options->get(PGradConfig);
+
+   // The quadrature is where an equation-of-state call would most naturally
+   // creep in, so it is the setting that matters most here.
+   const I4 QuadSweep[4] = {1, 2, 3, 4};
+   I8 FirstCount         = -1;
+
+   for (int IQuad = 0; IQuad < 4; ++IQuad) {
+
+      PGradConfig.set("PressureGradType", std::string("FiniteVolume"));
+      PGradConfig.set("QuadraturePoints", QuadSweep[IQuad]);
+      PressureGrad *FVPGrad =
+          PressureGrad::create("TestCost", Mesh, VCoord, Options);
+      PGradConfig.set("PressureGradType", std::string("Centered"));
+
+      Array2DReal Tend("TendCost", Mesh->NEdgesSize, NLayers);
+      deepCopy(Tend, 0.0_Real);
+
+      EqState->resetSpecVolEvalCount();
+      FVPGrad->computePressureGrad(Tend, VCoord->PressureMid,
+                                   VCoord->PressureInterface, EqState->SpecVol,
+                                   VCoord->GeomZInterface, PseudoThick, Temp,
+                                   Salinity, EqState);
+      const I8 Count = EqState->SpecVolEvalCount;
+
+      LOG_INFO("PGradTest: cost check: QuadraturePoints {} gives {} "
+               "equation-of-state evaluations in the pressure gradient",
+               QuadSweep[IQuad], Count);
+
+      if (Count != 0) {
+         LOG_ERROR("PGradTest: cost check FAIL: the pressure gradient "
+                   "performed {} equation-of-state evaluations at "
+                   "QuadraturePoints {}; it must perform none",
+                   Count, QuadSweep[IQuad]);
+         ++Err;
+      }
+      if (FirstCount >= 0 && Count != FirstCount) {
+         LOG_ERROR("PGradTest: cost check FAIL: the evaluation count changed "
+                   "with QuadraturePoints, from {} to {}",
+                   FirstCount, Count);
+         ++Err;
+      }
+      FirstCount = Count;
+
+      PressureGrad::erase("TestCost");
+   }
+
+   // restore the configured default
+   PGradConfig.set("QuadraturePoints", 2);
+
+   // The evaluation the requirement does allow is paid once per cell per
+   // layer by the auxiliary state, which is where it belongs. Confirm the
+   // counter sees it, so that a count of zero above cannot come from the
+   // instrumentation being broken.
+   EqState->resetSpecVolEvalCount();
+   EqState->computeSpecVolAndDerivs(Temp, Salinity, VCoord->PressureMid);
+   const I8 OneCall  = EqState->SpecVolEvalCount;
+   const I8 Expected = static_cast<I8>(Mesh->NCellsAll) * VCoord->NVertLayers;
+
+   if (OneCall == Expected) {
+      LOG_INFO("PGradTest: cost check PASS: the pressure gradient performs no "
+               "equation-of-state evaluations, and one call to "
+               "computeSpecVolAndDerivs performs {}, one per cell per layer",
+               OneCall);
+   } else {
+      LOG_ERROR("PGradTest: cost check FAIL: the counter is not working; one "
+                "call gave {} evaluations against {} expected",
+                OneCall, Expected);
+      ++Err;
+   }
+
+   return Err;
+
+} // end testEosCost
+
 // The gating test of design section 5.2: exactness on the exact set, the
 // convergence of the residual off it, and the guards.
 int testExactnessAndGuards(HorzMesh *Mesh,    ///< [in] Horizontal mesh
@@ -1970,9 +2087,6 @@ int main(int argc, char *argv[]) {
 
       } // refinement loop
 
-      // Test the centered identity of design section 3.9 across a sweep of
-      // tilts. This resets the two-column state, so it runs after the
-      // refinement loop.
       // Test the reconstruction estimator on its own. It needs no mesh, and
       // it is the most likely place for the exactness gate to fail, so a
       // failure here localizes immediately.
@@ -1991,6 +2105,12 @@ int main(int argc, char *argv[]) {
       // residual off it, and the guards.
       int ScanErr = testExactnessAndGuards(DefMesh, VCoord, DefState, DefEos);
 
+      // The bounded equation-of-state cost, which no accuracy gate would
+      // notice being violated.
+      int CostErr = testEosCost(DefMesh, VCoord, DefState, DefEos);
+
+      // The centered identity of design section 3.9 across a sweep of tilts.
+      // This resets the two-column state, so it runs after the others.
       int IdentityErr = testCenteredIdentity(DefMesh, VCoord, DefState, DefEos);
 
       // Test parsing and dispatch of the PressureGrad configuration options
@@ -2026,7 +2146,14 @@ int main(int argc, char *argv[]) {
                   Rmse(0));
       }
 
-      RetVal += ReconErr + LookupErr + IntegrandErr + IdentityErr + ConfigErr;
+      RetVal += ReconErr + LookupErr + IntegrandErr + ScanErr + CostErr +
+                IdentityErr + ConfigErr;
+
+      // Flush before teardown. Omega logs at info level but only flushes at
+      // warn and above, so a run that aborts during cleanup loses every
+      // measurement it made -- which is exactly the case that most needs the
+      // record.
+      spdlog::default_logger()->flush();
 
       // cleanup
       PressureGrad::clear();
