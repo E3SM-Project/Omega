@@ -4,15 +4,20 @@
 
 Omega includes a `PressureGrad` class that computes horizontal pressure gradient
 tendencies for the non-Boussinesq momentum equation. The implementation supports a
-centered difference scheme as the default, with a placeholder for future high-order
-methods. The class follows the same factory pattern used by other Omega modules.
+centered difference scheme as the default, with a placeholder for a future
+finite-volume method. The class follows the same factory pattern used by other Omega
+modules.
 
 ## PressureGradType enum
 
 An enumeration of the available pressure gradient schemes is defined in `PGrad.h`:
 
 ```c++
-enum class PressureGradType { Centered, HighOrder1, HighOrder2 };
+enum class PressureGradType {
+   Centered,    ///< existing 2nd-order Montgomery scheme
+   FiniteVolume ///< layer-integrated finite-volume scheme
+   // , <FutureVariant>  ///< e.g. a 6th-order option, added when implemented
+};
 ```
 
 This is used to select which pressure gradient method is applied at runtime.
@@ -130,11 +135,11 @@ KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge, I4 KChunk,
                                 const Array2DReal &SpecVol) const;
 ```
 
-### PressureGradHighOrder
+### PressureGradFiniteVolume
 
-This functor is a placeholder for a future high-order pressure gradient implementation
-suitable for ice shelf cavities and complex bathymetry. Currently it performs no
-computation (a no-op).
+This functor is a placeholder for a future finite-volume pressure gradient
+implementation suitable for ice shelf cavities and complex bathymetry. Currently it
+performs no computation (a no-op).
 
 ## Configuration
 
@@ -147,7 +152,8 @@ PressureGrad:
 
 Valid options for `PressureGradType` are:
 - `'centered'` or `'Centered'`: centered difference approximation (default)
-- `'HighOrder1'`: first high-order method (placeholder, future implementation)
+- `'finiteVolume'` or `'FiniteVolume'`: layer-integrated finite-volume method
+  (placeholder, future implementation)
 
 If an unrecognized value is provided, the implementation falls back to the centered
 scheme and logs an informational message.
@@ -167,7 +173,7 @@ The `PressureGrad` class stores the following key data:
 | `TidalPotential` | `Array1DReal` | Tidal potential (placeholder, currently zero) |
 | `SelfAttractionLoading` | `Array1DReal` | Self-attraction and loading term (placeholder, currently zero) |
 | `CenteredPGrad` | `PressureGradCentered` | Centered pressure gradient functor |
-| `HighOrderPGrad` | `PressureGradHighOrder` | High-order pressure gradient functor |
+| `FiniteVolumePGrad` | `PressureGradFiniteVolume` | Finite-volume pressure gradient functor |
 | `PressureGradChoice` | `PressureGradType` | Selected pressure gradient method |
 
 ## Removal

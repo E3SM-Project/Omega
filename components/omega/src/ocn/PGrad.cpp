@@ -1,7 +1,7 @@
 //===-- ocn/PGrad.cpp - Pressure Gradient Term -----------------*- C++ -*-===//
 //
 // Implements the PGrad manager and two discretizations: Centered and
-// HighOrder.
+// FiniteVolume.
 //
 //===----------------------------------------------------------------------===//
 
@@ -78,7 +78,7 @@ PressureGrad::PressureGrad(
     Config *Options)         ///< [in] Configuration options
     : MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop), CenteredPGrad(Mesh, VCoord),
-      HighOrderPGrad(Mesh, VCoord) {
+      FiniteVolumePGrad(Mesh, VCoord) {
 
    // store mesh sizes
    NEdgesAll     = Mesh->NEdgesAll;
@@ -99,9 +99,10 @@ PressureGrad::PressureGrad(
    if (PGradTypeStr == "centered" || PGradTypeStr == "Centered") {
       PressureGradChoice          = PressureGradType::Centered;
       this->CenteredPGrad.Enabled = true;
-   } else if (PGradTypeStr == "HighOrder1") {
-      PressureGradChoice           = PressureGradType::HighOrder1;
-      this->HighOrderPGrad.Enabled = true;
+   } else if (PGradTypeStr == "finiteVolume" ||
+              PGradTypeStr == "FiniteVolume") {
+      PressureGradChoice              = PressureGradType::FiniteVolume;
+      this->FiniteVolumePGrad.Enabled = true;
    } else {
       LOG_INFO(
           "PGrad: Unknown PressureGradType in config, defaulting to centered");
@@ -168,7 +169,7 @@ void PressureGrad::computePressureGrad(Array2DReal &Tend,
                                        const Array2DReal &PseudoThick) const {
 
    OMEGA_SCOPE(LocCenteredPGrad, CenteredPGrad);
-   OMEGA_SCOPE(LocHighOrderPGrad, HighOrderPGrad);
+   OMEGA_SCOPE(LocFiniteVolumePGrad, FiniteVolumePGrad);
    OMEGA_SCOPE(LocMinLayerEdgeBot, MinLayerEdgeBot);
    OMEGA_SCOPE(LocMaxLayerEdgeTop, MaxLayerEdgeTop);
    OMEGA_SCOPE(LocTidalPotential, TidalPotential);
@@ -195,9 +196,9 @@ void PressureGrad::computePressureGrad(Array2DReal &Tend,
 
    } else {
 
-      // computes high-order geopotential and pressure gradient tendency
+      // computes finite-volume geopotential and pressure gradient tendency
       parallelForOuter(
-          "pgrad-highorder", {NEdgesAll},
+          "pgrad-finitevolume", {NEdgesAll},
           KOKKOS_LAMBDA(I4 IEdge, const TeamMember &Team) {
              const int KMin   = LocMinLayerEdgeBot(IEdge);
              const int KMax   = LocMaxLayerEdgeTop(IEdge);
@@ -205,10 +206,10 @@ void PressureGrad::computePressureGrad(Array2DReal &Tend,
 
              parallelForInner(
                  Team, KRange, INNER_LAMBDA(int KChunk) {
-                    LocHighOrderPGrad(Tend, IEdge, KChunk, PressureMid,
-                                      PressureInterface, GeomZInterface,
-                                      LocTidalPotential,
-                                      LocSelfAttractionLoading, SpecVol);
+                    LocFiniteVolumePGrad(Tend, IEdge, KChunk, PressureMid,
+                                         PressureInterface, GeomZInterface,
+                                         LocTidalPotential,
+                                         LocSelfAttractionLoading, SpecVol);
                  });
           });
    }
@@ -225,8 +226,8 @@ PressureGradCentered::PressureGradCentered(
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
 
 //------------------------------------------------------------------------------
-// Constructor for high order pressure gradient functor
-PressureGradHighOrder::PressureGradHighOrder(
+// Constructor for finite volume pressure gradient functor
+PressureGradFiniteVolume::PressureGradFiniteVolume(
     const HorzMesh *Mesh,   ///< [in] Horizontal mesh
     const VertCoord *VCoord ///< [in] Vertical coordinate
     )

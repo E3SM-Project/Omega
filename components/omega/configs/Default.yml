@@ -39,6 +39,7 @@ Omega:
     TracersToRestore: [Temperature, Salinity]
     PistonVelocity: 1.585e-5
   PressureGrad:
+    # Centered | FiniteVolume
     PressureGradType: Centered
   Tendencies:
     ThicknessFluxTendencyEnable: true

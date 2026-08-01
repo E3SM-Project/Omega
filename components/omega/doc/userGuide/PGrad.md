@@ -48,9 +48,9 @@ PressureGrad:
 - Suitable for global ocean simulations without ice shelf cavities
 - Default and currently the only fully implemented option
 
-**High-Order** (`'HighOrder1'`)
-- Placeholder for a future high-order pressure gradient method based on volume
-  integral formulations
+**Finite Volume** (`'FiniteVolume'` or `'finiteVolume'`)
+- Placeholder for a layer-integrated, finite-volume pressure gradient method that
+  compares the geopotential of neighboring columns at a common pressure
 - Intended for simulations with ice shelf cavities and steep bathymetry where the
   centered scheme may be inaccurate
 - Not yet implemented; selecting this option produces zero pressure gradient tendency

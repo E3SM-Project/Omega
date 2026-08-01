@@ -2,8 +2,8 @@
 #define OMEGA_PGRAD_H
 //===-- ocn/PGrad.h - Pressure Gradient -----------------*- C++ -*-===//
 ///
-/// Implements the PressureGrad class which provides a centered and
-/// high-order pressure gradient option and dispatches computations to
+/// Implements the PressureGrad class which provides a centered and a
+/// finite-volume pressure gradient option and dispatches computations to
 /// functor objects. This follows the patterns used in Eos.h/Eos.cpp.
 //
 //===----------------------------------------------------------------------===//
@@ -19,7 +19,11 @@
 
 namespace OMEGA {
 
-enum class PressureGradType { Centered, HighOrder1, HighOrder2 };
+enum class PressureGradType {
+   Centered,    ///< existing 2nd-order Montgomery scheme
+   FiniteVolume ///< layer-integrated finite-volume scheme
+   // , <FutureVariant>  ///< e.g. a 6th-order option, added when implemented
+};
 
 // Centered pressure gradient functor
 class PressureGradCentered {
@@ -88,14 +92,15 @@ class PressureGradCentered {
    Array1DI4 MaxLayerEdgeTop;
 };
 
-// High-order pressure gradient functor (placeholder)
-class PressureGradHighOrder {
+// Finite-volume pressure gradient functor (placeholder)
+class PressureGradFiniteVolume {
  public:
    bool Enabled;
 
    // constructor declaration
-   PressureGradHighOrder(const HorzMesh *Mesh,   ///< [in] Horizontal mesh
-                         const VertCoord *VCoord ///< [in] Vertical coordinate
+   PressureGradFiniteVolume(
+       const HorzMesh *Mesh,   ///< [in] Horizontal mesh
+       const VertCoord *VCoord ///< [in] Vertical coordinate
    );
 
    KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge, I4 KChunk,
@@ -106,7 +111,7 @@ class PressureGradHighOrder {
                                    const Array1DReal &SelfAttractionLoading,
                                    const Array2DReal &SpecVol) const {
 
-      // Placeholder: for now, no-op (future high-order implementation)
+      // Placeholder: for now, no-op (future finite-volume implementation)
       const I4 KStart = chunkStart(KChunk, MinLayerEdgeBot(IEdge));
       const I4 KLen   = chunkLength(KChunk, KStart, MaxLayerEdgeTop(IEdge));
 
@@ -190,7 +195,7 @@ class PressureGrad {
 
    // Instances of functors
    PressureGradCentered CenteredPGrad;
-   PressureGradHighOrder HighOrderPGrad;
+   PressureGradFiniteVolume FiniteVolumePGrad;
 
    // Choice from config
    PressureGradType PressureGradChoice = PressureGradType::Centered;
