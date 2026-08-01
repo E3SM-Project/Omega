@@ -54,6 +54,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html#coupled-mode">Coupled mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
@@ -254,6 +255,9 @@ outside of this routine, a single-stream write can take place using:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">IOStream</span><span class="o">::</span><span class="n">write</span><span class="p">(</span><span class="n">StreamName</span><span class="p">,</span><span class="w"> </span><span class="n">ModelClock</span><span class="p">);</span>
 </pre></div>
 </div>
+<p>Streams configured with <code class="docutils literal notranslate"><span class="pre">FreqUnits:</span> <span class="pre">OnDemand</span></code> are registered but never fire
+via writeAll; use <code class="docutils literal notranslate"><span class="pre">IOStream::write(StreamName,</span> <span class="pre">ModelClock,</span> <span class="pre">true)</span></code> to force
+them (eg the coupled driver’s coupler-triggered restart writes).</p>
 <p>Reading files (eg for initialization, restart or forcing) does not often
 take place all at once, so no readAll interface is provided. Instead, each
 input stream is read using:</p>

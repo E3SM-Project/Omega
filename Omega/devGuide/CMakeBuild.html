@@ -54,6 +54,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html#coupled-mode">Coupled mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
@@ -348,10 +349,11 @@ script that you can run to build Omega:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>./omega_build.sh
 </pre></div>
 </div>
-<p>Note: Until the Omega build is integrated into the E3SM build, specific
-modifications are required to trigger the Omega build within the E3SM
-build process. Please see <a class="reference internal" href="../userGuide/OmegaBuild.html"><span class="std std-doc">Omega Build User Guide</span></a>
-for details.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">OMEGA_BUILD_MODE</span></code> is <code class="docutils literal notranslate"><span class="pre">E3SM</span></code>, <code class="docutils literal notranslate"><span class="pre">src/CMakeLists.txt</span></code> additionally
+builds an <code class="docutils literal notranslate"><span class="pre">ocn</span></code> library from the sources in <code class="docutils literal notranslate"><span class="pre">src/drivers/coupled/</span></code>
+(the Fortran/C++ bridge and MCT cap), linked against <code class="docutils literal notranslate"><span class="pre">OmegaLib</span></code> and
+<code class="docutils literal notranslate"><span class="pre">csm_share</span></code>. This is the library CIME builds and links into the E3SM
+executable when Omega is used as the ocean component of a coupled case.</p>
 </section>
 </section>
 

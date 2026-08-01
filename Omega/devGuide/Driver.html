@@ -54,6 +54,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html#coupled-mode">Coupled mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
@@ -97,9 +98,15 @@
 <li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Driver</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#ocninit">ocnInit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#ocnrun">ocnRun</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#ocnfinalize">ocnFinalize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#standalone-driver">Standalone driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#coupled-driver">Coupled driver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#init">Init</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run">Run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#finalize">Finalize</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#field-name-index-mapping">Field name/index mapping</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mesh-decomposition-queries">Mesh/decomposition queries</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
@@ -201,59 +208,113 @@
              
   <section id="driver">
 <span id="omega-dev-driver"></span><h1>Driver<a class="headerlink" href="#driver" title="Permalink to this heading"></a></h1>
-<p>The Omega Driver consists of methods to run the Omega ocean model in either
-standalone mode or as a component of E3SM. In both cases, the execution of Omega
-is divided into three phases, carried out by the <code class="docutils literal notranslate"><span class="pre">ocnInit</span></code>, <code class="docutils literal notranslate"><span class="pre">ocnRun</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">ocnFinalize</span></code> methods. An interface layer to translate data types of the parent
-model to and from internal Omega data types will also be needed for running
-Omega as a component. For standalone mode, a <code class="docutils literal notranslate"><span class="pre">main</span></code> function is defined to
-serve as the top-level driver. The driver methods will evolve as more modules
-are developed and as Omega is integrated with E3SM.</p>
-<section id="ocninit">
-<h2>ocnInit<a class="headerlink" href="#ocninit" title="Permalink to this heading"></a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">ocnInit</span></code> method initializes everything needed to run the Omega ocean model,
-and has the following interface:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">ocnInit</span><span class="p">(</span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span><span class="w"> </span><span class="n">Calendar</span><span class="w"> </span><span class="o">&amp;</span><span class="n">OmegaCal</span><span class="p">,</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">StartTime</span><span class="p">,</span><span class="w"> </span><span class="n">Alarm</span><span class="w"> </span><span class="o">&amp;</span><span class="n">EndAlarm</span><span class="p">);</span>
+<p>The Omega Driver runs Omega either as a standalone model or as the ocean
+component of E3SM (currently via the MCT coupler). In both modes execution
+is divided into init, run, and finalize phases, but the coupled driver
+splits init into two phases and calls run once per coupling interval
+instead of once for the whole simulation. All entry points below are
+declared in <code class="docutils literal notranslate"><span class="pre">OceanDriver.h</span></code>.</p>
+<section id="standalone-driver">
+<h2>Standalone driver<a class="headerlink" href="#standalone-driver" title="Permalink to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">ocnInit</span></code> reads <code class="docutils literal notranslate"><span class="pre">omega.yml</span></code>, calls <code class="docutils literal notranslate"><span class="pre">initOmegaModules</span></code> to initialize every
+Omega module (including the default <code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code>, which owns the model
+<code class="docutils literal notranslate"><span class="pre">Clock</span></code> and <code class="docutils literal notranslate"><span class="pre">EndAlarm</span></code>), reads the <code class="docutils literal notranslate"><span class="pre">InitialState</span></code> or <code class="docutils literal notranslate"><span class="pre">RestartRead</span></code> IOStream,
+and updates halo/host arrays for the resulting state:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">ocnInit</span><span class="p">(</span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>It requires an MPI communicator as input, as well as a yaml configuration file
-named <code class="docutils literal notranslate"><span class="pre">omega.yml</span></code> in the directory Omega is launched from. Default configuration
-files are currently kept in the <code class="docutils literal notranslate"><span class="pre">configs</span></code> directory, eventually an automated
-tool will extract default configuration options from module header files and
-build the default config file. The <code class="docutils literal notranslate"><span class="pre">ocnInit</span></code> method will read the configuration
-options into the static <code class="docutils literal notranslate"><span class="pre">ConfigAll</span></code> object. The time management options that
-determine the duration of the simulation are read from the Config object and
-stored in <code class="docutils literal notranslate"><span class="pre">OmegaCal</span></code>, <code class="docutils literal notranslate"><span class="pre">StartTime</span></code>, and <code class="docutils literal notranslate"><span class="pre">EndAlarm</span></code>, which are output by the
-method. The <code class="docutils literal notranslate"><span class="pre">init()</span></code> methods for each Omega module necessary to run the ocean
-model are called. An integer error code is returned.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ocnRun</span></code> advances the model, calling the default <code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code>’s <code class="docutils literal notranslate"><span class="pre">doStep</span></code>
+once per ocean time step, until the <code class="docutils literal notranslate"><span class="pre">EndAlarm</span></code> attached to the model
+<code class="docutils literal notranslate"><span class="pre">Clock</span></code> rings:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">ocnRun</span><span class="p">(</span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CurrTime</span><span class="p">);</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">ocnFinalize</span></code> cleans up all Omega objects; <code class="docutils literal notranslate"><span class="pre">CurrTime</span></code> is passed in case a
+final restart needs to be written:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">ocnFinalize</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CurrTime</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The standalone <code class="docutils literal notranslate"><span class="pre">main</span></code> (<code class="docutils literal notranslate"><span class="pre">src/drivers/standalone/OceanDriver.cpp</span></code>) wraps
+these three calls with <code class="docutils literal notranslate"><span class="pre">MPI_Init</span></code>/<code class="docutils literal notranslate"><span class="pre">Kokkos::initialize</span></code> and their shutdown
+counterparts.</p>
 </section>
-<section id="ocnrun">
-<h2>ocnRun<a class="headerlink" href="#ocnrun" title="Permalink to this heading"></a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">ocnRun</span></code> method advances the model over the interval defined by time
-management options, integrating from the start time until the <code class="docutils literal notranslate"><span class="pre">EndAlarm</span></code> is
-ringing. The interface is:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">ocnRun</span><span class="p">(</span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CurrTime</span><span class="p">,</span><span class="w"> </span><span class="n">Alarm</span><span class="w"> </span><span class="o">&amp;</span><span class="n">EndAlarm</span><span class="p">);</span>
+<section id="coupled-driver">
+<h2>Coupled driver<a class="headerlink" href="#coupled-driver" title="Permalink to this heading"></a></h2>
+<p>The coupled driver (<code class="docutils literal notranslate"><span class="pre">src/drivers/coupled/</span></code>) runs Omega as the <code class="docutils literal notranslate"><span class="pre">ocn</span></code>
+component of an MCT-based E3SM system. <code class="docutils literal notranslate"><span class="pre">ocn_comp_mct.F90</span></code> is the MCT cap,
+exposing <code class="docutils literal notranslate"><span class="pre">ocn_init_mct</span></code>/<code class="docutils literal notranslate"><span class="pre">ocn_run_mct</span></code>/<code class="docutils literal notranslate"><span class="pre">ocn_final_mct</span></code> to the coupler. It
+calls <code class="docutils literal notranslate"><span class="pre">bind(c)</span></code> interfaces declared in <code class="docutils literal notranslate"><span class="pre">omega_f2cxx_interface.F90</span></code> and
+implemented in <code class="docutils literal notranslate"><span class="pre">omega_cxx2f_interface.cpp</span></code>, which call the C++ entry
+points below.</p>
+<section id="init">
+<h3>Init<a class="headerlink" href="#init" title="Permalink to this heading"></a></h3>
+<p>Init is split into two phases because the coupler needs Omega’s
+decomposition (<code class="docutils literal notranslate"><span class="pre">NCellsOwned</span></code>) before it can size and allocate the MCT
+attribute vectors (<code class="docutils literal notranslate"><span class="pre">x2o</span></code>/<code class="docutils literal notranslate"><span class="pre">o2x</span></code>) that <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code> attaches to:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">ocnInit1</span><span class="p">(</span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">OcnId</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ConfigFile</span><span class="p">,</span>
+<span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">LogFile</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">StartType</span><span class="w"> </span><span class="n">StartType</span><span class="p">,</span>
+<span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="n">TimeInitParams</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TimeParams</span><span class="p">,</span>
+<span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="n">CouplingInitParams</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CouplingParams</span><span class="p">);</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">ocnInit2</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">*</span><span class="n">CplToOcnData</span><span class="p">,</span><span class="w"> </span><span class="n">Real</span><span class="w"> </span><span class="o">*</span><span class="n">OcnToCplData</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">TimeStep</span></code> is retrieved from the default <code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code> object initialized
-during <code class="docutils literal notranslate"><span class="pre">ocnInit</span></code> and used with the value of <code class="docutils literal notranslate"><span class="pre">CurrTime</span></code> on input to construct
-a <code class="docutils literal notranslate"><span class="pre">Clock</span></code> object which manages the time loop. The <code class="docutils literal notranslate"><span class="pre">EndAlarm</span></code> is attached to
-the <code class="docutils literal notranslate"><span class="pre">Clock</span></code> to signal the end of the time loop. Eventually, there will be
-periodic alarms also attached to the <code class="docutils literal notranslate"><span class="pre">Clock</span></code> to trigger forcings, writing
-output, restarts, etc. As the time loop advances, the <code class="docutils literal notranslate"><span class="pre">doStep</span></code> method of the
-<code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code> object is called to update the ocean model until the <code class="docutils literal notranslate"><span class="pre">EndAlarm</span></code>
-is triggered. The updated <code class="docutils literal notranslate"><span class="pre">CurrTime</span></code> and status of <code class="docutils literal notranslate"><span class="pre">EndAlarm</span></code> are returned,
-along with an integer error code.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ocnInit1</span></code> initializes every Omega module, using the coupled overload of
+<code class="docutils literal notranslate"><span class="pre">initOmegaModules(Comm,</span> <span class="pre">TimeParams,</span> <span class="pre">CouplingParams)</span></code>, which also calls
+<code class="docutils literal notranslate"><span class="pre">SfcCoupling::init</span></code>. It then reads the <code class="docutils literal notranslate"><span class="pre">InitialState</span></code> or <code class="docutils literal notranslate"><span class="pre">RestartRead</span></code>
+IOStream based on <code class="docutils literal notranslate"><span class="pre">StartType</span></code>:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">StartType</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">StartUp</span><span class="p">,</span><span class="w"> </span><span class="n">Continue</span><span class="p">,</span><span class="w"> </span><span class="n">Branch</span><span class="w"> </span><span class="p">};</span>
+</pre></div>
+</div>
+<p>converted from the coupler’s integer start-type code by
+<code class="docutils literal notranslate"><span class="pre">safeIntToStartType</span></code>. On restart/branch, the simulation time is taken from
+the restart file rather than the coupler (which only knows the case start
+time). On a cold start, <code class="docutils literal notranslate"><span class="pre">ocnInit1</span></code> advances the model <code class="docutils literal notranslate"><span class="pre">Clock</span></code> to the first
+coupling-interval boundary so it is in sync with the coupler’s clock.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ocnInit2</span></code> runs once the coupler has allocated <code class="docutils literal notranslate"><span class="pre">x2o</span></code>/<code class="docutils literal notranslate"><span class="pre">o2x</span></code>: it attaches
+them to <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code> (<code class="docutils literal notranslate"><span class="pre">SfcCoupling::attachData</span></code>), does the initial
+export/import exchange with the coupler, and updates halo/host arrays.</p>
 </section>
-<section id="ocnfinalize">
-<h2>ocnFinalize<a class="headerlink" href="#ocnfinalize" title="Permalink to this heading"></a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">ocnFinalize</span></code> method is needed to clean up all the objects allocated by the
-model. The interface is:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">ocnFinalize</span><span class="p">(</span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CurrTime</span><span class="p">);</span>
+<section id="run">
+<h3>Run<a class="headerlink" href="#run" title="Permalink to this heading"></a></h3>
+<p>The coupled overload of <code class="docutils literal notranslate"><span class="pre">ocnRun</span></code> advances the model one coupling interval,
+rather than to the end of the simulation: it imports coupler fields into
+<code class="docutils literal notranslate"><span class="pre">Forcing</span></code> at the start of the interval, steps until <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code>’s
+<code class="docutils literal notranslate"><span class="pre">CouplingAlarm</span></code> rings (updating <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code>’s export accumulators every
+ocean time step), and exports the accumulated fields back to the coupler.
+<code class="docutils literal notranslate"><span class="pre">WriteRestart</span></code> is set by the coupler (from its own restart alarm) to force
+a restart write at the end of the interval:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">ocnRun</span><span class="p">(</span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">CurrTime</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">WriteRestart</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">CurrTime</span></code> is input in case a restart file needs to be written. An integer
-error code is returned.</p>
+</section>
+<section id="finalize">
+<h3>Finalize<a class="headerlink" href="#finalize" title="Permalink to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">ocnFinalize</span></code> is shared with the standalone driver; it additionally clears
+all <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code> instances.</p>
+</section>
+<section id="field-name-index-mapping">
+<h3>Field name/index mapping<a class="headerlink" href="#field-name-index-mapping" title="Permalink to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">omega_cpl_indices.F90</span></code> builds the import (<code class="docutils literal notranslate"><span class="pre">x2o</span></code>) and export (<code class="docutils literal notranslate"><span class="pre">o2x</span></code>) field
+name and coupler-column-index arrays from a dummy MCT attribute vector,
+before Omega (and its <code class="docutils literal notranslate"><span class="pre">HorzMesh</span></code>) exists. <code class="docutils literal notranslate"><span class="pre">omega_ocn_init1</span></code> passes these
+arrays through to <code class="docutils literal notranslate"><span class="pre">omega_cxx2f_interface.cpp</span></code>’s <code class="docutils literal notranslate"><span class="pre">buildFieldIndexMap</span></code>, which
+builds the <code class="docutils literal notranslate"><span class="pre">std::map&lt;std::string,</span> <span class="pre">int&gt;</span></code> (<code class="docutils literal notranslate"><span class="pre">ImportIdx</span></code>/<code class="docutils literal notranslate"><span class="pre">ExportIdx</span></code>) required
+by <code class="docutils literal notranslate"><span class="pre">CouplingInitParams</span></code>; see <a class="reference internal" href="SfcCoupling.html#omega-dev-sfc-coupling"><span class="std std-ref">Surface Coupling</span></a>
+for how those maps are used.</p>
+</section>
+<section id="mesh-decomposition-queries">
+<h3>Mesh/decomposition queries<a class="headerlink" href="#mesh-decomposition-queries" title="Permalink to this heading"></a></h3>
+<p>Before the coupler-owned buffers exist, the Fortran bridge needs Omega’s
+decomposition to build its MCT <code class="docutils literal notranslate"><span class="pre">gsMap</span></code> and domain. These bridge-only
+queries expose that information and have no dependency on <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code>:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">omega_get_ncells_local</span><span class="p">();</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">omega_get_ncells_global</span><span class="p">();</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">omega_get_index_to_cell_id</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">CellID</span><span class="p">);</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">omega_get_lonlat_cell</span><span class="p">(</span><span class="kt">double</span><span class="w"> </span><span class="o">*</span><span class="n">LonCell</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="o">*</span><span class="n">LatCell</span><span class="p">);</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">omega_get_area_cell</span><span class="p">(</span><span class="kt">double</span><span class="w"> </span><span class="o">*</span><span class="n">AreaCell</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
 </section>
 </section>
 

@@ -54,6 +54,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html#coupled-mode">Coupled mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
@@ -320,6 +321,8 @@ determines the frequency of input/output. Acceptable values include:</p>
 at the time specified in the StartTime entry</p></li>
 <li><p>Never if the stream should not be used but you wish to retain the
 entry in the config file (a warning will be output to log file)</p></li>
+<li><p>OnDemand for streams registered but never written/read automatically;
+only a forced <code class="docutils literal notranslate"><span class="pre">IOStream::write</span></code>/<code class="docutils literal notranslate"><span class="pre">read</span></code> call triggers them</p></li>
 <li><p>Years for a frequency every Freq years (<em>not</em> Freq times per year)</p></li>
 <li><p>Months for a frequency every Freq months (<em>not</em> Freq times per month)</p></li>
 <li><p>Days for a frequency every Freq days (<em>not</em> Freq times per day)</p></li>

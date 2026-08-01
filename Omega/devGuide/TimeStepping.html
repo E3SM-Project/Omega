@@ -54,6 +54,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html#coupled-mode">Coupled mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
@@ -235,6 +236,8 @@ time stepping method as well as some time tracking variables, including
 a Clock, TimeStep, StartTime, StopTime (optional) and an EndAlarm (optional).
 The StopTime and EndAlarm are optional, because in coupled E3SM simulations the
 components do not know the StopTime and therefore no EndAlarm can be created.
+It also stores a StepCount, the number of <code class="docutils literal notranslate"><span class="pre">doStep</span></code> calls made on the
+instance since creation.
 Its <code class="docutils literal notranslate"><span class="pre">doStep</span></code> method defines the interface that every time stepper needs to
 implement. In addition to this method, it provides a number of other methods
 that can divided into two groups. The first group is for general time stepper
@@ -251,7 +254,11 @@ has no implementation. Its signature is</p>
 <p>It is meant to advance <code class="docutils literal notranslate"><span class="pre">State</span></code> by one time step, from <code class="docutils literal notranslate"><span class="pre">Time</span></code> to <code class="docutils literal notranslate"><span class="pre">Time</span> <span class="pre">+</span> <span class="pre">TimeStep</span></code>. Classes implementing concrete time stepping schemes need to provide
 implementations of this method. As part of the time step, this routine advances
 the Clock associated with the time stepper and returns the current simulation
-time. For the default time stepper, this is advances the primary model clock.</p>
+time. For the default time stepper, this is advances the primary model clock.
+Each implementation also increments StepCount, a member variable that
+persists on the instance across calls, so it can be used to identify the
+first <code class="docutils literal notranslate"><span class="pre">doStep</span></code> call even when <code class="docutils literal notranslate"><span class="pre">doStep</span></code> is invoked repeatedly across
+separate calls to <code class="docutils literal notranslate"><span class="pre">ocnRun</span></code>, as is done by the coupled driver.</p>
 </section>
 <section id="time-stepper-management-methods">
 <h3>Time stepper management methods<a class="headerlink" href="#time-stepper-management-methods" title="Permalink to this heading"></a></h3>

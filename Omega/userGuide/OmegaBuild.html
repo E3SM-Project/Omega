@@ -51,10 +51,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#if-you-are-using-polaris">If You Are Using Polaris</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#general-build-overview">General Build Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#standalone-build">Standalone Build</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#e3sm-component-build">E3SM Component Build</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#manual-preparation-for-e3sm-component-build">Manual Preparation for E3SM Component Build</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#e3sm-component-build">E3SM Component Build</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
@@ -63,6 +60,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html#coupled-mode">Coupled mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
@@ -353,48 +351,12 @@ Total<span class="w"> </span>Test<span class="w"> </span><span class="nb">time</
 </section>
 <section id="e3sm-component-build">
 <h2>E3SM Component Build<a class="headerlink" href="#e3sm-component-build" title="Permalink to this heading"></a></h2>
-<p>In the E3SM component build, the compilation is triggered by
-the E3SM build system.</p>
-<section id="manual-preparation-for-e3sm-component-build">
-<h3>Manual Preparation for E3SM Component Build<a class="headerlink" href="#manual-preparation-for-e3sm-component-build" title="Permalink to this heading"></a></h3>
-<p>Although all the build configurations in the E3SM component build
-should ideally be managed through the E3SM build configuration,
-the current Omega build is not yet integrated into the E3SM build.
-Therefore, users need to make specific modifications to enable
-the Omega build within the E3SM build process.</p>
-<p>Step 1: Modify <code class="docutils literal notranslate"><span class="pre">${E3SM_ROOT}/components/CMakeLists.txt</span></code></p>
-<p>Add the lines indicated as “added” in the <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> file.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>include<span class="o">(</span><span class="si">${</span><span class="nv">CMAKE_CURRENT_SOURCE_DIR</span><span class="si">}</span>/cmake/cmake_util.cmake<span class="o">)</span>
-include<span class="o">(</span><span class="si">${</span><span class="nv">CMAKE_CURRENT_SOURCE_DIR</span><span class="si">}</span>/cmake/build_mpas_model.cmake<span class="o">)</span>
-include<span class="o">(</span><span class="si">${</span><span class="nv">CMAKE_CURRENT_SOURCE_DIR</span><span class="si">}</span>/cmake/build_omega.cmake<span class="o">)</span><span class="w"> </span><span class="c1"># &lt;= added</span>
-include<span class="o">(</span><span class="si">${</span><span class="nv">CMAKE_CURRENT_SOURCE_DIR</span><span class="si">}</span>/cmake/build_eamxx.cmake<span class="o">)</span>
-include<span class="o">(</span><span class="si">${</span><span class="nv">CMAKE_CURRENT_SOURCE_DIR</span><span class="si">}</span>/cmake/build_model.cmake<span class="o">)</span>
-...
-set<span class="o">(</span>BUILDCONF<span class="w"> </span><span class="si">${</span><span class="nv">CASEROOT</span><span class="si">}</span>/Buildconf<span class="o">)</span>
-
-build_mpas_models<span class="o">()</span>
-build_omega<span class="o">()</span><span class="w"> </span><span class="c1"># &lt;= added</span>
-</pre></div>
-</div>
-<p>Step 2: Create <code class="docutils literal notranslate"><span class="pre">${E3SM_ROOT}/components/cmake/build_omega.cmake</span></code></p>
-<p>Create the <code class="docutils literal notranslate"><span class="pre">cmake</span></code> file and copy the following content into it.</p>
-<div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">function</span><span class="p">(</span><span class="s">build_omega</span><span class="p">)</span>
-
-<span class="w">  </span><span class="c"># Set CIME source path relative to components</span>
-<span class="w">  </span><span class="nb">set</span><span class="p">(</span><span class="s">CIMESRC_PATH</span><span class="w"> </span><span class="s2">&quot;../cime/src&quot;</span><span class="p">)</span>
-
-<span class="w">  </span><span class="nb">add_subdirectory</span><span class="p">(</span><span class="s2">&quot;omega&quot;</span><span class="p">)</span>
-
-<span class="nb">endfunction</span><span class="p">(</span><span class="s">build_omega</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Step 3: Create an E3SM Case</p>
-<p>At this stage, a user can create any E3SM case as usual without
-requiring any specific configuration for Omega.</p>
-<p>NOTE: In this version, the compiled library file for Omega,
-“libOmegaLib.a”, is not linked to the E3SM executable. You can
-find the Omega library file at <code class="docutils literal notranslate"><span class="pre">${E3SM_BLD_DIRECTORY}/cmake-bld/omega/src</span></code>.</p>
-</section>
+<p>Omega can be built and run as the <code class="docutils literal notranslate"><span class="pre">ocn</span></code> component of a coupled E3SM simulation,
+using a compset where Omega is the ocean component (see
+<code class="docutils literal notranslate"><span class="pre">omega/cime_config/config_compsets.xml</span></code> for the currently supported compsets).
+Creating such a case and running <code class="docutils literal notranslate"><span class="pre">case.build</span></code>  builds Omega
+automatically: CIME’s <code class="docutils literal notranslate"><span class="pre">omega/cime_config/buildlib_cmake</span></code> configures Omega with
+<code class="docutils literal notranslate"><span class="pre">OMEGA_BUILD_MODE=E3SM</span></code> so that the coupler (c.f. standalone) driver is built.</p>
 </section>
 </section>
 
