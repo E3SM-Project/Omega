@@ -700,7 +700,9 @@ void setupTwoColumnState(HorzMesh *Mesh,    ///< [in] Horizontal mesh
    VCoord->computePressure(PseudoThick, SurfacePressure);
    for (int Iteration = 0; Iteration < 15; ++Iteration) {
 
-      // compute specific volume from EOS
+      // compute specific volume from EOS. This fills SpecVol only, not the
+      // derivatives the FiniteVolume scheme needs; a test running that scheme
+      // on this state must fill them itself.
       VCoord->computePressure(PseudoThick, SurfacePressure);
       EqState->computeSpecVol(Temp, Salinity, PressureMid);
 
@@ -965,6 +967,47 @@ int testColumnScan(HorzMesh *Mesh,    ///< [in] Horizontal mesh
       ++Err;
    }
 
+   // The tendency itself on the same state. Reported alongside the centered
+   // scheme's, which is nonzero and tilt-dependent, so that a pass is a
+   // cancellation against a known nonzero reference rather than a comparison
+   // with zero. The gate here is provisional; the full exactness gate and its
+   // guards follow.
+   Array2DReal TendCentered("TendCentered", Mesh->NEdgesSize, NVertLayers);
+   deepCopy(TendCentered, 0.0_Real);
+   PressureGrad *DefPGrad = PressureGrad::getDefault();
+   DefPGrad->computePressureGrad(TendCentered, VCoord->PressureMid,
+                                 VCoord->PressureInterface, EqState->SpecVol,
+                                 VCoord->GeomZInterface, PseudoThick, Temp,
+                                 Salinity, EqState);
+
+   const auto &EdgeMask = VCoord->EdgeMask;
+   Real MaxFV           = 0.0_Real;
+   Real MaxCentered     = 0.0_Real;
+   parallelReduce(
+       {Mesh->NEdgesAll, NVertLayers},
+       KOKKOS_LAMBDA(int IEdge, int K, Real &MaxF, Real &MaxC) {
+          if (EdgeMask(IEdge, K) <= 0.0_Real)
+             return;
+          const Real F = Kokkos::abs(Tend(IEdge, K));
+          const Real C = Kokkos::abs(TendCentered(IEdge, K));
+          if (F > MaxF)
+             MaxF = F;
+          if (C > MaxC)
+             MaxC = C;
+       },
+       Kokkos::Max<Real>(MaxFV), Kokkos::Max<Real>(MaxCentered));
+
+   LOG_INFO("PGradTest: tendency on the exact set: FiniteVolume max |Tend| = "
+            "{} m/s2, Centered max |Tend| = {} m/s2",
+            MaxFV, MaxCentered);
+
+   // the centered scheme must be nonzero here, or the comparison says nothing
+   if (MaxCentered <= 0.0_Real) {
+      LOG_ERROR("PGradTest: exact-set state FAIL: the centered scheme returns "
+                "zero, so the state does not exercise the property");
+      ++Err;
+   }
+
    PressureGrad::erase("TestColumnScan");
 
    return Err;
@@ -1209,7 +1252,18 @@ int testPGradConfig(const HorzMesh *Mesh,   ///< [in] Horizontal mesh
    }
 
    // Dispatch check: computePressureGrad must take the FiniteVolume branch
-   // and leave a finite tendency everywhere it touches
+   // and produce a tendency of the same order as the centered scheme's on the
+   // same state.
+   //
+   // The specific volume derivatives are computed first. In a run they are
+   // filled by AuxiliaryState, which calls computeSpecVolAndDerivs whenever
+   // the FiniteVolume scheme is selected; here the state was built by a
+   // helper that fills SpecVol alone, so without this the scheme would read
+   // the fill value the fields were attached with. That is worth being
+   // explicit about: checking only for finiteness let this go unnoticed in
+   // double precision, where a fill value of 1e37 propagates through the
+   // arithmetic without overflowing, and it surfaced only in a
+   // single-precision build, where it does.
    OceanState *State       = OceanState::getDefault();
    Eos *EqState            = Eos::getInstance();
    Array2DReal PseudoThick = State->getPseudoThickness(0);
@@ -1220,24 +1274,55 @@ int testPGradConfig(const HorzMesh *Mesh,   ///< [in] Horizontal mesh
    Array2DReal ConservTemp = Tracers::getByName(0, "Temperature");
    Array2DReal AbsSalinity = Tracers::getByName(0, "Salinity");
 
+   EqState->computeSpecVolAndDerivs(ConservTemp, AbsSalinity,
+                                    VCoord->PressureMid);
+
    FVPGrad->computePressureGrad(
        TendFV, VCoord->PressureMid, VCoord->PressureInterface, EqState->SpecVol,
        VCoord->GeomZInterface, PseudoThick, ConservTemp, AbsSalinity, EqState);
 
-   I4 NBad = 0;
+   Array2DReal TendCtr("TendCentered", Mesh->NEdgesSize, VCoord->NVertLayers);
+   deepCopy(TendCtr, 0.0_Real);
+   PressureGrad::getDefault()->computePressureGrad(
+       TendCtr, VCoord->PressureMid, VCoord->PressureInterface,
+       EqState->SpecVol, VCoord->GeomZInterface, PseudoThick, ConservTemp,
+       AbsSalinity, EqState);
+
+   I4 NBad     = 0;
+   Real MaxFV  = 0.0_Real;
+   Real MaxCtr = 0.0_Real;
    parallelReduce(
        {Mesh->NEdgesAll, VCoord->NVertLayers},
-       KOKKOS_LAMBDA(int IEdge, int K, I4 &LSum) {
-          if (!Kokkos::isfinite(TendFV(IEdge, K)))
+       KOKKOS_LAMBDA(int IEdge, int K, I4 &LSum, Real &MaxF, Real &MaxC) {
+          const Real F = Kokkos::abs(TendFV(IEdge, K));
+          const Real C = Kokkos::abs(TendCtr(IEdge, K));
+          if (!Kokkos::isfinite(TendFV(IEdge, K))) {
              ++LSum;
+          } else if (F > MaxF) {
+             MaxF = F;
+          }
+          if (C > MaxC)
+             MaxC = C;
        },
-       Kokkos::Sum<I4>(NBad));
+       Kokkos::Sum<I4>(NBad), Kokkos::Max<Real>(MaxFV),
+       Kokkos::Max<Real>(MaxCtr));
 
-   if (NBad == 0) {
+   // The two schemes agree to second order in the cross-edge pressure
+   // difference, so on any ordinary state they come out the same order of
+   // magnitude. Requiring that as well as finiteness is what keeps this check
+   // from passing on garbage: a fill value would be off by thirty orders.
+   const Real Ratio = (MaxCtr > 0.0_Real) ? MaxFV / MaxCtr : 0.0_Real;
+
+   LOG_INFO("PGradTest: FiniteVolume dispatch: max |Tend| = {} m/s2 against "
+            "Centered {} m/s2, ratio {}",
+            MaxFV, MaxCtr, Ratio);
+
+   if (NBad == 0 && Ratio > 1.0e-3_Real && Ratio < 1.0e3_Real) {
       LOG_INFO("PGradTest: FiniteVolume dispatch PASS");
    } else {
-      LOG_ERROR("PGradTest: FiniteVolume dispatch FAIL: {} non-finite values",
-                NBad);
+      LOG_ERROR("PGradTest: FiniteVolume dispatch FAIL: {} non-finite values, "
+                "ratio to the centered scheme {}",
+                NBad, Ratio);
       ++Err;
    }
 

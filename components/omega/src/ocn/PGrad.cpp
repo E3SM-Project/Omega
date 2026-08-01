@@ -163,8 +163,6 @@ PressureGrad::PressureGrad(
 
    // Additional mesh and coordinate data used by the FiniteVolume column scan
    CellsOnEdge  = Mesh->CellsOnEdge;
-   DcEdge       = Mesh->DcEdge;
-   EdgeMask     = VCoord->EdgeMask;
    MinLayerCell = VCoord->MinLayerCell;
    MaxLayerCell = VCoord->MaxLayerCell;
    NCellsAll    = Mesh->NCellsAll;
@@ -527,11 +525,8 @@ void PressureGrad::computePressureGrad(
       computeColumnScan(PressureMid, PressureInterface, GeomZInterface,
                         ConservTemp, AbsSalinity, EqState);
 
-      // The specific volume derivatives come from Eos, which computes them
-      // from the same single equation-of-state evaluation as SpecVol
-      const Array2DReal SpecVolDCt = EqState->SpecVolDCt;
-      const Array2DReal SpecVolDSa = EqState->SpecVolDSa;
-      const Array2DReal SpecVolDP  = EqState->SpecVolDP;
+      OMEGA_SCOPE(LocDeltaZFixedP, DeltaZFixedP);
+      OMEGA_SCOPE(LocDeltaZMoment, DeltaZMoment);
 
       // computes finite-volume geopotential and pressure gradient tendency
       parallelForOuter(
@@ -543,11 +538,10 @@ void PressureGrad::computePressureGrad(
 
              parallelForInner(
                  Team, KRange, INNER_LAMBDA(int KChunk) {
-                    LocFiniteVolumePGrad(
-                        Tend, IEdge, KChunk, PressureMid, PressureInterface,
-                        GeomZInterface, LocTidalPotential,
-                        LocSelfAttractionLoading, SpecVol, ConservTemp,
-                        AbsSalinity, SpecVolDCt, SpecVolDSa, SpecVolDP);
+                    LocFiniteVolumePGrad(Tend, IEdge, KChunk, PressureInterface,
+                                         LocDeltaZFixedP, LocDeltaZMoment,
+                                         LocTidalPotential,
+                                         LocSelfAttractionLoading);
                  });
           });
    }

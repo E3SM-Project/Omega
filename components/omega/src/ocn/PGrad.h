@@ -103,7 +103,7 @@ class PressureGradCentered {
    Array1DI4 MaxLayerEdgeTop;
 };
 
-// Finite-volume pressure gradient functor (placeholder)
+// Finite-volume pressure gradient functor
 class PressureGradFiniteVolume {
  public:
    bool Enabled;
@@ -125,22 +125,59 @@ class PressureGradFiniteVolume {
        const VertCoord *VCoord ///< [in] Vertical coordinate
    );
 
-   KOKKOS_FUNCTION void operator()(
-       const Array2DReal &Tend, I4 IEdge, I4 KChunk,
-       const Array2DReal &PressureMid, const Array2DReal &PressureInterface,
-       const Array2DReal &GeomZInterface, const Array1DReal &TidalPotential,
-       const Array1DReal &SelfAttractionLoading, const Array2DReal &SpecVol,
-       const Array2DReal &ConservTemp, const Array2DReal &AbsSalinity,
-       const Array2DReal &SpecVolDCt, const Array2DReal &SpecVolDSa,
-       const Array2DReal &SpecVolDP) const {
+   // Assemble the pressure gradient tendency for one edge and vertical chunk
+   // and append it into Tend, exactly as the centered functor does.
+   //
+   // The whole horizontal pressure gradient is the geopotential compared at
+   // fixed pressure. All the work of forming that comparison happens in the
+   // column scan, which cannot live here because it is a prefix sum down the
+   // column; what remains per layer is to turn the scan's output into a layer
+   // mean and scale it.
+   //
+   // The inputs are therefore the scan's two arrays rather than the state the
+   // scan consumed: the design's illustrative signature in section 4.1.3 lists
+   // the temperature, salinity and specific volume derivative arrays, but with
+   // both integrals formed in the scan over one set of quadrature points --
+   // which section 3.5.1 requires -- the functor reads neither. Passing them
+   // here would mean evaluating the integrand a second time.
+   KOKKOS_FUNCTION void
+   operator()(const Array2DReal &Tend, I4 IEdge, I4 KChunk,
+              const Array2DReal &PressureInterface,
+              const Array2DReal &DeltaZFixedP, const Array2DReal &DeltaZMoment,
+              const Array1DReal &TidalPotential,
+              const Array1DReal &SelfAttractionLoading) const {
 
-      // Placeholder: for now, no-op (future finite-volume implementation)
       const I4 KStart = chunkStart(KChunk, MinLayerEdgeBot(IEdge));
       const I4 KLen   = chunkLength(KChunk, KStart, MaxLayerEdgeTop(IEdge));
 
+      const I4 ICell0      = CellsOnEdge(IEdge, 0);
+      const I4 ICell1      = CellsOnEdge(IEdge, 1);
+      const Real InvDcEdge = 1.0_Real / DcEdge(IEdge);
+
+      Real GradGeoPot =
+          (TidalPotential(ICell1) - TidalPotential(ICell0)) * InvDcEdge +
+          (SelfAttractionLoading(ICell1) - SelfAttractionLoading(ICell0)) *
+              InvDcEdge;
+
       for (int KVec = 0; KVec < KLen; ++KVec) {
          const I4 K = KStart + KVec;
-         Tend(IEdge, K) += 0.0_Real;
+
+         // the edge control volume's pressure thickness is exactly the edge
+         // average of the two columns' own
+         const Real DeltaPress = 0.5_Real * ((PressureInterface(ICell0, K + 1) -
+                                              PressureInterface(ICell0, K)) +
+                                             (PressureInterface(ICell1, K + 1) -
+                                              PressureInterface(ICell1, K)));
+
+         // The layer mean of the fixed-pressure height difference, from its
+         // value at the layer's bottom interface and the first moment of the
+         // integrand over the layer. Both come from the column scan.
+         Real LayerMean = DeltaZFixedP(IEdge, K + 1);
+         if (DeltaPress > 0.0_Real)
+            LayerMean += DeltaZMoment(IEdge, K) / DeltaPress;
+
+         Tend(IEdge, K) += EdgeMask(IEdge, K) *
+                           (-Gravity * InvDcEdge * LayerMean - GradGeoPot);
       }
    }
 
@@ -255,8 +292,6 @@ class PressureGrad {
 
    // Additional mesh and coordinate data the FiniteVolume column scan needs
    Array2DI4 CellsOnEdge;  ///< cells on each edge
-   Array1DReal DcEdge;     ///< distance between cell centers
-   Array2DReal EdgeMask;   ///< land/bathymetry mask on edges
    Array1DI4 MinLayerCell; ///< shallowest valid layer in each column
    Array1DI4 MaxLayerCell; ///< deepest valid layer in each column
 
