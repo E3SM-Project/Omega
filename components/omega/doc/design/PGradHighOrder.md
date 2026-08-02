@@ -1834,6 +1834,66 @@ phasing, and it should be run **before** Phase 1 implementation is finished, wit
 scheme on the realistic profile as the control. A null result would not invalidate the design, but
 it would change its priority.
 
+#### 5.3.1 What a global resting state already shows, and what it does not
+
+A measurement bearing on A4 exists and is recorded here so the assumption is argued from numbers
+rather than from plausibility. **It does not settle A4**; the end of this subsection says exactly
+what it leaves open.
+
+**What was measured.** The centered scheme's PGF was evaluated **offline** on a realistic global
+initial condition — `EC30to60E2r2` with horizontally uniform $\Theta$ and $S$
+(`ocean.EC30to60E2r2.200908.teos10.uniformTS.nc`, by `measure_hpg_error.py`, both in the Polaris run
+directory `test_20260727/hpg_uniform_ts/`). Uniform $\Theta$, $S$ as functions of pressure make this
+an exact resting state on the real mesh and bathymetry, so **the entire computed PGF is error** —
+§5.2's premise at global scale. Split into depth-mean (barotropic) and deviation (baroclinic), in
+m s⁻²:
+
+| | median | p99 |
+| --- | --- | --- |
+| all active edge-layers, total | $9.30\times10^{-7}$ | $1.13\times10^{-5}$ |
+| all active edge-layers, baroclinic | $9.45\times10^{-8}$ | $1.81\times10^{-6}$ |
+| deepest common layer, total | $2.70\times10^{-6}$ | $1.62\times10^{-5}$ |
+| deepest common layer, baroclinic | $1.81\times10^{-6}$ | $1.40\times10^{-5}$ |
+
+**Three things this establishes.**
+
+1. **The error is concentrated in the bottom layer and is baroclinic there.** The interior error is
+   ~90% barotropic, which a free-surface adjustment removes within hours and which therefore cannot
+   sustain anything; the bottom layer is 67% baroclinic. That matches the bottom-trapped, 97–98%
+   baroclinic character of the KE response that motivated this work.
+2. **It is large enough to matter.** In the bottom layer the truncation error is $1.28\times$
+   (median) and $1.55\times$ (p99) the pressure gradient the model actually carries there — and the
+   carried gradient itself contains the error, so the ratio to the true signal is worse. **This sets
+   the bar for Requirement 2.1**: a useful improvement is a factor of 5–10 at the slopes the global
+   mesh actually has, not the ~2× a modest gain would give.
+3. **Interior coordinate tilt is not the mechanism.** The global IC's interior coordinate is
+   level to 2–18 Pa cross-edge, $2$–$5\times10^{-5}$ of a layer, while the smallest tilt in the
+   Polaris `hydrostatic_consistency` sweep is $1.74\times10^{3}$ Pa — 100 to 1000 times more.
+   Scaling the
+   measured $q = 1$ line (§3.7.3) down to the global tilt gives $\sim1.6\times10^{-10}$ m s⁻², about
+   6000× below the global interior error. **Whatever drives the bottom-layer error, it is not the
+   tilting of interior coordinate surfaces** — which is why §5.2's tilt scan calibrates the scheme
+   without predicting a global improvement.
+
+**And one thing it calibrates.** Comparing like with like — baroclinic bottom-layer error, with the
+Polaris `bathymetry_step` value scaled by $(199/256)^2$ for layer thickness — the two-column
+configuration reproduces the global figure to within 20–35% across the p25–p75 slope range where
+most of the mesh sits ($1.20\times$ at 1.7 m/km, $1.34\times$ at 4.5 m/km). It over-predicts steeply
+sloped edges by 3–10× ($2.9\times$ at 11 m/km, $9.9\times$ at 30 m/km), presumably because an
+isolated two-column step is harsher than a real slope where neighbouring cells share the descent. So
+`bathymetry_step` is a quantitative proxy for the global bottom-layer error over the range that
+dominates the mesh, and its tail should be read with that in mind.
+
+**What this does not settle, and it is the whole of A4.** Every number above is the *error*, not its
+dynamical consequence. That the PGF error exceeds the gradient the model carries is necessary for
+A4 but not sufficient: it does not show this error is what *produces* the observed bottom-layer KE
+rather than merely coexisting with it. The one forward-run observation available — the uniform-T/S
+state gives bottom KE $1.19\times$ that of the fully forced run — is suggestive and no more. A4
+still
+needs the two-run seamount comparison specified above, and **that comparison cannot be run with
+the centered scheme as this section currently specifies**, for reasons recorded in the Polaris-side
+`a4_diagnostic_issues.md` and still outstanding in this discussion.
+
 **Covers:** Requirement 2.3 under dynamics; assumptions A3, A4.
 
 ### 5.4 Test: Overflow (full non-Boussinesq dynamics)
@@ -2160,9 +2220,11 @@ and stepped: `hydrostatic_consistency_linear` is inside the exact set but tilts 
 while `bathymetry_step` has the right geometry but a curved profile whose truncation cannot be told
 apart from the geometry's. Being both, it isolates what a bathymetry step costs the scheme.
 
-(Whether coordinate tilt or a stepped floor dominates the bottom-layer error in a realistic global
-run is assumption A4, which remains undemonstrated — §5.3 is where it would be settled and has not
-been run. Nothing in this section rests on it.)
+(Of the two, the stepped floor is the one that matters globally: §5.3.1 measures the interior
+coordinate of a realistic global IC as 100–1000× less tilted than the smallest tilt in the Polaris
+sweep, putting its contribution some 6000× below the observed global interior error. That rules out
+one mechanism; it does not establish A4, which asks whether PGF error *drives* the bottom-layer
+instability and which remains undemonstrated. Nothing in this section rests on either.)
 
 **What it establishes, and it is the assumption that was most doubted.** A5 (§3.7.6) — evaluating a
 column's deepest reconstruction below its own floor — does **not** break the cancellation. $D_k$
