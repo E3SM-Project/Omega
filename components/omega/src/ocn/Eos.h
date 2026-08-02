@@ -909,6 +909,16 @@ class Teos10BruntVaisalaFreqSq {
    /// TEOS-10 derivative helpers rather than from a second copy of the same
    /// polynomial coefficients. P is relative pressure in dbar and Sp is the
    /// specific volume.
+   ///
+   /// The coefficients are assembled here rather than taken from the
+   /// Eos::SpecVolDCt array because the two are not evaluated at the same
+   /// state: this is called at the interface, with the temperature, salinity
+   /// and pressure averaged from the two adjacent layers, while SpecVolDCt
+   /// holds the derivative at the layer centers. Averaging the layer-center
+   /// derivatives instead would be a different approximation and would change
+   /// answers. The stored derivatives are also filled only when
+   /// computeSpecVolAndDerivs is called, which the Brunt-Vaisala calculation
+   /// cannot assume.
    KOKKOS_FUNCTION Real calcAlpha(Real Sa, Real Ct, Real P, Real Sp) const {
 
       Real DTtPCoeffs[5 * VecLength];
@@ -926,7 +936,9 @@ class Teos10BruntVaisalaFreqSq {
    /// Calculate beta (the haline contraction coefficient) for the squared
    /// Brunt-Vaisala frequency. Beta is minus the salinity derivative of the
    /// specific volume divided by the specific volume. P is relative pressure
-   /// in dbar and Sp is the specific volume.
+   /// in dbar and Sp is the specific volume. As for calcAlpha above, this is
+   /// evaluated at the interface state and so cannot reuse the layer-center
+   /// Eos::SpecVolDSa array.
    KOKKOS_FUNCTION Real calcBeta(Real Sa, Real Ct, Real P, Real Sp) const {
 
       Real DSsPCoeffs[5 * VecLength];
