@@ -95,8 +95,25 @@ everywhere and the temperature derivative is negative in cold, nearly fresh
 water.
 
 The two methods are kept separate rather than always computing the derivatives
-because they roughly double the TEOS-10 arithmetic per cell and layer, and only
-the higher-order pressure gradient needs them.
+because the derivatives roughly double the TEOS-10 arithmetic per cell and
+layer, and not every configuration needs them. A run using the higher-order
+pressure gradient will need them at every time step, and in that case
+`computeSpecVolAndDerivs` takes the place of the `computeSpecVol` call that
+would otherwise be made, so the equation of state is still evaluated only once
+per step. A run using the standard pressure gradient, or one that only needs
+`SpecVol` for `SpecVolDisplaced` or `BruntVaisalaFreqSq`, keeps calling
+`computeSpecVol` and does no extra work. Which method is called is therefore
+decided by the caller, not by the `Eos` class.
+
+There is no displaced counterpart to `computeSpecVolAndDerivs`. The pressure
+gradient needs the derivatives at the in-situ pressure of the layer, whereas
+`computeSpecVolDisp` exists to evaluate the specific volume at the pressure of
+a displaced layer. Nothing about the derivatives prevents an adiabatically
+displaced version: it would take the same `KDisp` argument as
+`computeSpecVolDisp` and evaluate the same coefficients at the displaced
+pressure, with no new polynomial. It is left out here only because no caller
+needs it yet, and it would mean carrying three more model-sized arrays and
+fields.
 
 All four values come from a single pass over the equation of state. For
 `EosType::Teos10Eos` the derivatives are the analytic derivatives of the same
