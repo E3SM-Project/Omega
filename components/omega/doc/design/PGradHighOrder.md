@@ -147,6 +147,12 @@ surface pressure, and coordinate slope. Absolute error at affordable resolution 
 determines whether the scheme is *useful*; it is complemented by the separate verification
 requirement in §2.6, which determines whether it is *correct*.
 
+**"Substantially" is a factor of 5–10, and that figure comes from measurement rather than from
+taste.** On a realistic global resting state the centered scheme's bottom-layer truncation error is
+$1.3$–$1.6\times$ the pressure gradient the model actually carries there, so a modest gain of order
+$2\times$ would leave the error comparable to the signal. §5.3.1 gives the measurement and §6.6 the
+per-variant ratios achieved.
+
 ### 2.2 Requirement: Bounded TEOS-10 cost
 
 The number of TEOS-10 specific-volume evaluations performed by the PGF must be
@@ -2214,6 +2220,16 @@ The ordering is the result, not an artefact of how the sweeps were chosen: the a
 smallest where the profile is unresolved and only the coordinate tilts, and largest where the
 profile is resolved and the sea floor steps. **A single shared gate would be vacuous at one end and
 unreachable at the other**, which is why Polaris sets this per variant.
+
+**Read against Requirement 2.1's bar of 5–10×, three of the four clear it and `hydrostatic_consistency`
+does not, at $2.58\times$ — and that is not a shortfall.** §5.3.1 measures the interior coordinate of
+a realistic global initial condition as 100–1000× less tilted than the smallest tilt in that sweep,
+which puts interior coordinate tilt some 6000× below the observed global interior error. So
+`hydrostatic_consistency` is calibrating the scheme on a mechanism that is not the one the bar was set
+from, and its ratio should not be read as a prediction of global improvement. The variants that *are*
+quantitative proxies for the global bottom-layer error are the stepped-floor ones, and they clear the
+bar by two to four orders of magnitude. §5.3.1's closing paragraph gives the range over which
+`bathymetry_step` tracks the global figure, and where it over-predicts.
 
 **`bathymetry_step_linear` is new**, added because no existing variant is both inside the exact set
 and stepped: `hydrostatic_consistency_linear` is inside the exact set but tilts only the coordinate,
