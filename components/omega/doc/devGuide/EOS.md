@@ -96,14 +96,27 @@ water.
 
 The two methods are kept separate rather than always computing the derivatives
 because the derivatives roughly double the TEOS-10 arithmetic per cell and
-layer, and not every configuration needs them. A run using the higher-order
-pressure gradient will need them at every time step, and in that case
-`computeSpecVolAndDerivs` takes the place of the `computeSpecVol` call that
-would otherwise be made, so the equation of state is still evaluated only once
-per step. A run using the standard pressure gradient, or one that only needs
-`SpecVol` for `SpecVolDisplaced` or `BruntVaisalaFreqSq`, keeps calling
-`computeSpecVol` and does no extra work. Which method is called is therefore
-decided by the caller, not by the `Eos` class.
+layer, and not every call needs them. `AuxiliaryState::computeMomVertAux` is
+the only place that calls `computeSpecVol`; everything else consumes the
+`Eos::SpecVol` array rather than recomputing it, including
+`computeBruntVaisalaFreqSq`, which takes the specific volume as an argument.
+That one call site is reached once per time stepper stage through
+`computeMomAux` and `computeAll` in the tendency calculation, and once more
+from `VertMix::VertMixImplicit`, which refreshes the pressure and specific
+volume before the vertical mixing coefficients are formed.
+
+A run using the higher-order pressure gradient therefore needs the derivatives
+at every time step, and at those call sites `computeSpecVolAndDerivs` takes the
+place of the `computeSpecVol` call that would otherwise be made, leaving one
+evaluation of the equation of state where there was one before. Two things
+still call for the plain `computeSpecVol`. First, `PressureGradType` is a
+runtime option that defaults to `Centered`, so a run may never need the
+derivatives at all. Second, even with the higher-order pressure gradient
+selected, the `VertMix::VertMixImplicit` update feeds only
+`computeGeomZHeight` and `computeBruntVaisalaFreqSq`, neither of which reads
+the derivatives, so computing them there would be work that nothing consumes.
+Which method to call is thus a decision for each call site, not one the `Eos`
+class should make for it.
 
 There is no displaced counterpart to `computeSpecVolAndDerivs`. The pressure
 gradient needs the derivatives at the in-situ pressure of the layer, whereas
