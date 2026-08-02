@@ -842,6 +842,26 @@ the bottom-layer error seen in realistic global configurations. Whether this dow
 seen in realistic global configurations is a plausible diagnosis, not an established one; it is
 carried as A4 in §3.7.6 and tested in §5.3.
 
+**The tilt exponent is a statement about `PressureGradCentered` and must not be used to compare the
+two schemes.** Measured in Omega on the Polaris resting-state variants, `PressureGradFiniteVolume`
+returns a fitted exponent of $1.000$ as well — the *same* value — while its absolute error is one to
+three orders of magnitude smaller: $1.750\times10^{-10}$ against $2.602\times10^{-8}\ \mathrm{m\,
+s^{-2}}$ at a tilt of 0.05 m/km, and $2.022\times10^{-7}$ against $2.069\times10^{-5}$ at 50 m/km,
+both at 4 km spacing and 256 m layers.
+
+That is not a failure of the scheme and it is not a coincidence. On a Polaris-initialized state the
+finite-volume residual is entirely the anchor of [](#anchor) (§5.2), and the anchor is *linear in
+the tilt* because the cross-edge difference it corrects to a common pressure is. So both schemes
+give $q = 1$ for unrelated reasons: the centered scheme because $\alpha$ is effectively piecewise
+constant in pressure within a layer, the finite-volume scheme because its one remaining error term
+inherits the tilt's own linearity.
+
+**Reading $q$ alone would therefore report "no better than centered" for a scheme that is up to
+500 times more accurate.** For comparing the schemes the absolute level is the discriminating
+measurement, and it is what §5.1's accuracy gate uses. The exponent retains its original purpose —
+calibrating the centered baseline, and detecting a scheme that has become *insensitive* to tilt —
+but it no longer separates the two.
+
 #### 3.7.4 What `VertCoord` supplies, and what it does not
 
 `VertCoord` is the source of `PressureInterface`, `PressureMid`, `PseudoThickness` and the
@@ -1516,23 +1536,24 @@ scheme, so it gates nothing but informs whether the work should proceed as prior
 Extend the four existing variants — `temperature_gradient`, `salinity_gradient`,
 `surface_pressure_gradient`, `ztilde_gradient` — to run the centered scheme alongside the new one:
 
-- **Scheme selection.** Add `PressureGrad: { PressureGradType: FiniteVolume, … }` to
-  `forward.yaml` and parametrize each task over three configurations:
+- **Scheme selection.** *(Implemented and run; this bullet records what was built.)* Polaris adds a
+  `PressureGrad` block to `forward.yaml` and parametrizes each task over the **two** configurations
+  Phase 1 offers:
   - `centered` — the legacy `PressureGradCentered` functor, unchanged;
-  - `finite_volume_phase1` — `HorzOrder: 2`, `VerticalReconstruction: linear`;
-  - `finite_volume_phase2` — `HorzOrder: 4`, `VerticalReconstruction: ppm` (added when Phase 2
-    lands).
+  - `finite_volume` — `HorzOrder: 2`, `VerticalReconstruction: linear`.
 
-  (These variant names are provisional; the final spelling follows Polaris' naming conventions and
-  is settled on the Polaris side. What matters here is that the last two are the *same*
-  implementation at two orders, distinct from the legacy functor.)
+  An earlier version of this bullet listed a third, `finite_volume_phase2`, and described the last
+  two as "the *same* implementation at two orders". That framing is retired: the Phase 2 values
+  exist as keys but are **rejected with an error** (§4.1.1), so there is no third configuration to
+  run until Phase 2 lands, and a configuration written for Phase 2 cannot quietly execute as
+  Phase 1.
 
-  `finite_volume_phase1` is not a stand-in for the legacy scheme: it is second order in the
-  horizontal like `centered`, but it is *consistent*, so its absolute error should be markedly
-  lower even though its convergence slope is the same. Both must be run, and the comparison between
-  them is the clearest single measure of what Phase 1 buys. Running only the legacy functor under a
-  "second order" label would measure the convergence of code this design does not change and leave
-  the new code's Phase 1 path unverified.
+  Both schemes run over **one shared initial condition** — the Polaris `init` step is
+  scheme-independent and writes both schemes' reference HPGA from the same state — so the
+  comparison between them is made at an identical state rather than at two states that ought to
+  match. That comparison is the clearest single measure of what Phase 1 buys. Running only the
+  legacy functor would measure the convergence of code this design does not change and leave the
+  new code unverified.
 
   The forward step still runs a single time step with only `PressureGradTendencyEnable: true`,
   reading the PGF acceleration from `NormalVelocityTend`.
@@ -1545,24 +1566,53 @@ Extend the four existing variants — `temperature_gradient`, `salinity_gradient
   a tolerance, **and** the new scheme's RMS error must be below the centered RMS error at that same
   resolution. This gate applies to Phase 1, where it is the primary measure of value.
 
-  **This is also the gate for Requirement 2.3.4.** Set the ratio per variant from the measurements
-  in §6.5 — the advantage is 6.5× at 256 m layers and 2.4× at 64 m on a smooth curved profile, ~400×
-  on a stepped bathymetry — and take it at the coarse end of the sweep. Do **not** add a gate
-  requiring the new scheme's convergence slope to exceed the centered scheme's: the two converge at
-  similar rates on smooth profiles, so such a gate fails where nothing is wrong.
+  **This is also the gate for Requirement 2.3.4.** Set the ratio per variant, at the coarse end of
+  the sweep. **Measured in Omega** across the four variants, centered RMS over finite-volume RMS at
+  4 km: $1.00\times$ (`temperature_gradient`), $1.00\times$ (`salinity_gradient`), $1.80\times$
+  (`ztilde_gradient`), $2.19\times$ (`surface_pressure_gradient`).
+
+  **The gate's default must therefore assert "not worse" rather than "better".** On
+  `temperature_gradient` and `salinity_gradient` the two schemes agree to five significant figures,
+  and that is correct rather than disappointing: those variants hold the coordinate level, so
+  comparing at matched pressure and at matched layer index coincide, and the remaining error is the
+  two-column representation of the tracer gradient, which both schemes share. A gate demanding an
+  improvement would fail on a configuration where there is nothing to improve. Only the variants
+  that tilt something raise it.
+
+  Do **not** add a gate requiring the new scheme's convergence slope to exceed the centered
+  scheme's. The reason is *not* that the two always converge alike — on `ztilde_gradient` they
+  genuinely differ, and that is the headline result of Phase 1 (below). It is that they converge
+  alike on three variants out of four, so such a gate fails where nothing is wrong.
 - **Verification gate (Requirement 2.6):** the measured slope of RMS error vs. resolution,
   `omega_vs_reference_convergence_rate_*`, must fall within a band around the configured order
-  of accuracy — nominally ~2 for `finite_volume_phase1` and ~4 for `finite_volume_phase2`. This band
+  of accuracy — nominally ~2 for `finite_volume` as Phase 1 ships it, and ~4 when Phase 2 lands. This band
   is retuned from its present values rather than loosened; a slope outside it fails the test and is
   treated as an implementation defect to be diagnosed, not as a tolerance to be widened.
 
-  **The `centered` bands are *not* uniform across the four variants and must be set per variant from
-  measurement.** Measured on chrysalis with the bottom layer included, `PressureGradCentered` gives
-  $\approx 1.6$ (`temperature_gradient`), $\approx 1.8$ (`salinity_gradient`), $\approx 2.0$
-  (`surface_pressure_gradient`) and $\approx 1.1$ (`ztilde_gradient`). The last is the first-order
-  resting-state behaviour of §3.7.3 showing up directly, and it is the reason a single "~2 for
-  centered" band would fail three variants out of four. This corrects an earlier statement here that
-  the `centered` band was unchanged from its present values.
+  **The bands are *not* uniform across the four variants, and must be set per variant *and per
+  scheme*, from measurement.** Measured in Omega on chrysalis with the bottom layer included:
+
+  | variant | `centered` | `finite_volume` |
+  | --- | --- | --- |
+  | `temperature_gradient` | 1.631 | 1.632 |
+  | `salinity_gradient` | 1.801 | 1.802 |
+  | `surface_pressure_gradient` | 2.000 | 2.003 |
+  | `ztilde_gradient` | **1.068** | **1.971** |
+
+  A single "~2 for centered" band would fail three variants out of four, which is why the bands are
+  per variant. Only `ztilde_gradient` needs a band of its own *per scheme*.
+
+  **`ztilde_gradient` is the clearest single demonstration that Phase 1 works.** It holds $\Theta$
+  and $S$ horizontally uniform and tilts only the coordinate, so the first-order term of
+  [](#centered-error) is exposed with nothing else mixed in: the centered scheme is first order
+  there (1.068) and the finite-volume scheme **restores second** (1.971). This is the resting-state
+  behaviour of §3.7.3 and its cure, visible in a convergence rate rather than inferred.
+
+  **One consequence for how the advantage is described.** Because the orders genuinely differ on
+  this variant, its advantage *widens* under refinement rather than staying a constant factor:
+  $1.80\times$ at 4 km against $14.8\times$ at 0.5 km. Elsewhere it is the constant factor this
+  section previously assumed throughout — $2.19\times$ at both ends of the sweep on
+  `surface_pressure_gradient`. Both statements are needed; neither generalizes.
 - **Asymptotic range (Phase 2 implementation-time task):** it is not yet established that the
   existing `horiz_resolutions` sweep spans a range where a fourth-order slope is cleanly
   measurable — the sweep may be too coarse to have entered the asymptotic regime at its fine end,
@@ -1573,6 +1623,23 @@ Extend the four existing variants — `temperature_gradient`, `salinity_gradient
 - **Consistency check (retained):** `omega_vs_polaris_rms_threshold` (~1e-10 m/s²) — Omega's
   forward output must still match the Python-computed HPGA, confirming the implementation
   matches the intended discretization.
+
+  **Measured for the new scheme: $4\times10^{-19}$ to $5\times10^{-16}$ m s$^{-2}$**, against
+  $1\times10^{-16}$ to $2\times10^{-15}$ for `centered` on the same states — six orders inside the
+  threshold, and *better* than the legacy scheme's. This is the strongest single piece of evidence
+  that the scheme is implemented as designed, because the Python counterpart was written from this
+  document rather than from the C++, so the two are independent realizations of the same
+  specification.
+
+  **That independence has to be maintained deliberately, and it nearly was not.** Reconciling the
+  two implementations before the comparison was run found two places where they had silently
+  diverged — the Python integrated with a 4-point Gauss rule where Omega defaults to 2
+  (`QuadraturePoints`, §4.1.1), and it anchored the column scan at the sea surface where Omega
+  anchors at the sea floor (§3.7.4). Neither shows up on the exact set, where the integrand is zero
+  at every quadrature point and any rule integrates it to zero; both bite off it, which is exactly
+  where this check operates. Had they not been reconciled first, the disagreement would have
+  appeared as a single scalar per resolution with no indication which of nine discretization
+  choices was responsible.
 - **Assumption A2 is measured directly, not by a contrast sweep.** An earlier version of this
   section called for running `temperature_gradient` and `salinity_gradient` at several amplitudes of
   the horizontal contrast and requiring the error to grow no faster than linearly. **That test
@@ -2064,3 +2131,49 @@ shallower floor.
 
 **Regression status.** `HPGAFiniteVolume` is written alongside the existing `HPGA`, and `HPGA` is
 bit-identical to the previous reference run, so adding the scheme moves nothing already measured.
+
+### 6.6 Confirmation from the Omega run
+
+The eight Polaris `horiz_press_grad` variants were run on chrysalis with both schemes over shared
+initial conditions. **Every §6.5 prediction was reproduced**, several to four or five significant
+figures — the offline Polaris kernel predicted Omega's answers rather than merely resembling them,
+which is what licenses using it to size gates before a run in future.
+
+**Resting-state advantage, by variant.** The true HPGA is identically zero in all four, so both
+schemes' output is pure error and the ratio is a clean statement of what Phase 1 buys. Smallest
+ratio anywhere in each sweep:
+
+| variant | what it tilts | profile | centered / finite-volume |
+| --- | --- | --- | --- |
+| `hydrostatic_consistency` | the coordinate | curved | $2.58\times$ |
+| `hydrostatic_consistency_linear` | the coordinate | in the exact set | $7.71\times$ |
+| `bathymetry_step` | the sea floor | curved | $1170\times$ |
+| `bathymetry_step_linear` | the sea floor | in the exact set | $58828\times$ |
+
+The ordering is the result, not an artefact of how the sweeps were chosen: the advantage is
+smallest where the profile is unresolved and only the coordinate tilts, and largest where the
+profile is resolved and the sea floor steps. **A single shared gate would be vacuous at one end and
+unreachable at the other**, which is why Polaris sets this per variant.
+
+**`bathymetry_step_linear` is new**, added because no existing variant is both inside the exact set
+and stepped: `hydrostatic_consistency_linear` is inside the exact set but tilts only the coordinate,
+while `bathymetry_step` has the right geometry but a curved profile whose truncation cannot be told
+apart from the geometry's. Being both, it isolates what a bathymetry step costs the scheme.
+
+(Whether coordinate tilt or a stepped floor dominates the bottom-layer error in a realistic global
+run is assumption A4, which remains undemonstrated — §5.3 is where it would be settled and has not
+been run. Nothing in this section rests on it.)
+
+**What it establishes, and it is the assumption that was most doubted.** A5 (§3.7.6) — evaluating a
+column's deepest reconstruction below its own floor — does **not** break the cancellation. $D_k$
+stays flat to $1.4\times10^{-15}$ m at every sea-floor gradient in the sweep, including at 100 and
+200 m/km where the two columns reach different `maxLevelCell` and the deepest edge layers extend two
+and three layers below one column's floor. A5 is confirmed as an accuracy question rather than a
+robustness one, on the geometry where it was least obvious.
+
+**What remains there is the anchor**, not the scan: §5.2's construction condition and §3.7.5's
+qualification about the cancellation over a bathymetry step both apply, and the residual on that
+variant is $4.3\times10^{-10}$ m s⁻² against `PressureGradCentered`'s $9.1\times10^{-5}$.
+
+**One reading to avoid** is recorded in §3.7.3: the fitted tilt exponent is $1.000$ for *both*
+schemes, so it cannot be used to compare them. The absolute level is the discriminating measurement.
