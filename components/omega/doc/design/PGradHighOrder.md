@@ -836,7 +836,8 @@ Two questions that would otherwise arise therefore do not.
 
 **The quadrature question.**
 `VertCoord::computeGeomZHeight` accumulates $\Delta z = \rho_0\,\alpha_{i,k}\,\tilde h_{i,k}$ —
-apparently a midpoint rule. For a Phase 1 reconstruction it is the exact layer integral:
+apparently a midpoint rule. For the **linearized** $\hat\alpha$ of §3.3 it is the exact layer
+integral:
 
 $$
 \frac{1}{g}\int_{p^{\text{top}}_{i,k}}^{p^{\text{bot}}_{i,k}} \hat\alpha_{i,k}(p)\,dp
@@ -845,9 +846,23 @@ $$ (z-increment-exact)
 
 because $\int \Theta'\,dp = \int S'\,dp = 0$ by the mean-preserving constraint and
 $\int (p - p^{\text{mid}})\,dp = 0$ because `PressureMid` is the exact arithmetic midpoint of the two
-interface pressures. This remains true and remains useful — it is why no change to `VertCoord` and no
-answer-changing baseline step is required — but the scheme no longer depends on it, since it no
-longer accumulates `VertCoord`'s $z$.
+interface pressures.
+
+**That is a statement about $\hat\alpha$, not about $\alpha$, and the distinction matters.**
+`VertCoord` does not accumulate $\hat\alpha$. It uses the exact TEOS-10 $\alpha$ evaluated at the
+layer-mean state $(\Theta_{i,k}, S_{i,k}, p^{\text{mid}}_{i,k})$, and $\alpha$ is nonlinear in
+pressure, so its layer average is not its value at the midpoint state. `VertCoord`'s increment is
+therefore a second-order-accurate approximation of the true layer integral, not an exact one.
+Measured, the gap accumulates to $1.1\times10^{-3}$ m over a column.
+
+**No change to `VertCoord` and no answer-changing baseline step is required** — but not because
+[](#z-increment-exact) makes its rule exact, which it does not. It is because the scheme does not
+accumulate `VertCoord`'s $z$ at all. It uses it once, as the difference [](#anchor) takes at the sea
+floor, where over a flat floor with matching `maxLevelCell` that difference is $-\Delta_e H$, exact
+prescribed input, and no accumulation enters it. Where the two columns' floors differ the anchor
+does span a partial accumulation over the layers between them, and the gap enters at the level of
+the difference between the two columns' partial sums; §5.1's `bathymetry_step` is where that is
+measured.
 
 **The sharing question.** Whether a cell-based $z$ can carry an edge-dependent $\hat\alpha$ would
 matter to a formulation that differenced two separately accumulated column integrals. It does not
@@ -871,16 +886,18 @@ pressure is built downward from the surface, so the two accumulate round-off fro
 where $\Delta_e Z_{\text{surf}}$ is the small residual of two column-length sums.
 
 **Conditioning is not the deciding argument, though — exactness is.** `VertCoord` accumulates
-$\Delta z = \rho_0\,\alpha_{i,k}\,\tilde h_{i,k}$ over each column's *own* layers. On a profile
-the reconstruction does not resolve, two columns with different layer partitions give sums that
-differ at $O(\tilde h^2)$, so their derived sea-surface heights differ by that much even when the
-two columns hold the same water. Anchored at the surface that discrepancy enters $D_1$ directly and
+$\Delta z = \rho_0\,\alpha_{i,k}\,\tilde h_{i,k}$ over each column's *own* layers, and that
+increment is not the exact layer integral of the true $\alpha$ (previous subsection). The error
+comes from the equation of state's curvature in pressure rather than from anything about the
+profile, so it is present **even on the exact set**, and two columns with different layer partitions
+accumulate different amounts of it. Their derived sea-surface heights therefore differ even when the
+two columns hold identical water. Anchored at the surface that difference enters $D_1$ directly and
 the machine-precision property of §2.3.1 is lost; anchored at the sea floor over a flat floor
-$\Delta_e Z$ is exact input and vanishes identically, and the discrepancy never enters at all —
-because the scheme integrates its own reconstruction rather than accumulating `VertCoord`'s height
-(the first paragraph of this section). The two ends are therefore *not* equivalent, and the earlier
-statement that they agree to round-off held only for profiles inside the exact set, where both
-columns' sums agree term by term.
+$\Delta_e Z$ is exact input and vanishes identically, and none of it enters — because the scheme
+integrates its own reconstruction rather than accumulating `VertCoord`'s height. The two ends are
+therefore *not* equivalent, and the earlier claim that they agree to round-off does not hold, not
+even on the exact set: the two columns' midpoint-rule errors differ there too, because their layer
+partitions do.
 
 One consequence is worth recording for whoever builds the reference implementation. A test harness
 that anchors its geometric column at a *prescribed* sea surface and derives the bathymetry is
@@ -1347,8 +1364,8 @@ on another module.
 
 **Settled at implementation time.** Two items were left open here and are now fixed. The scan
 anchors at the **sea floor** (§3.7.4), which conditioning favours and which exactness requires:
-anchoring at the surface admits the $O(\tilde h^2)$ disagreement between the two columns' derived
-sea-surface heights into $D_1$. And the treatment at the top and bottom of the column, assumption A5
+anchoring at the surface admits into $D_1$ the disagreement between the two columns' derived
+sea-surface heights, which `VertCoord`'s midpoint rule produces even on the exact set. And the treatment at the top and bottom of the column, assumption A5
 of §3.7.6, is to **clamp to the outermost valid layer and extrapolate its reconstruction**.
 
 **Code and cost.** Three new `Eos` derivative fields and one new method (§4.1.2); the
