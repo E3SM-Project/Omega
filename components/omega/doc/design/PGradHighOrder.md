@@ -639,8 +639,17 @@ differs. §3.7.4 records what is and is not established about the choice.
 $10^{-1}$ m for a realistic baroclinic column and zero for a resting one, against the $10^{2}$ m
 height *differences at fixed layer index* that a scheme comparing at fixed index has to form and
 cancel. The increments in [](#d-recurrence) are smaller still, being integrals of a horizontal
-contrast. There is no cancellation of large quantities anywhere in the scheme, which is what §3.7.5
-is about.
+contrast.
+
+**The anchor is the exception, and only at the sea floor.** Where the bathymetry steps,
+$\Delta_e Z$ at the deepest shared interface is of order the step, and the two short integrals of
+[](#anchor) span that step and cancel it. Measured on a two-column state with a stepped floor and a
+profile linear in pressure: at a floor gradient of 1 m/km the anchor forms and cancels $4.0$ m to
+leave $1.9\times10^{-12}$ m; at 25 m/km, $100$ m to leave $2.6\times10^{-8}$; at 200 m/km,
+$205.6$ m to leave $1.7\times10^{-7}$ — nine to twelve decimal digits consumed. Anchored at the
+surface the same states form nothing at all: $\Delta_e Z$ there is zero and, both columns sharing a
+surface pressure, the correction is a zero-width integral. §3.7.4 records what this does to the
+choice of end.
 
 **`VertCoord`'s geometric height is used once**, for $\Delta_e Z_1$ in [](#anchor) — the free-surface
 height difference. It is not accumulated and not re-derived, so Requirement 2.4 is met by the PGF
@@ -880,7 +889,33 @@ $p^{\text{bot}}_{e,k} = \bar q_{k+1}$, and are worth using in the implementation
 Both follow from `PressureMid` being the exact arithmetic midpoint, and both were confirmed
 numerically.
 
-**The scan anchors at the sea floor.** `VertCoord` builds $z$ upward from the bathymetry while
+**The scan anchors at the sea floor, and the two ends fail in complementary ways.** The choice is a
+trade-off rather than a settled preference, and neither end is uniformly better:
+
+| | sea-floor anchor | surface anchor |
+|---|---|---|
+| coordinate tilts, flat floor | exact; $\Delta_e Z = -\Delta_e H$ is exact input | fails; the two columns' derived sea-surface heights differ by $7.1\times10^{-8}$ m, matching the difference of their midpoint-rule truncations to all figures measured |
+| bathymetry steps | forms and cancels quantities of order the step; $1.7\times10^{-7}$ m residual at 200 m/km, nine digits consumed | forms nothing; $\Delta_e Z$ at the surface is zero and the correction is a zero-width integral |
+
+**Requirement 2.3.1 asks for machine precision at any tilt, thickness *and* bathymetry, and neither
+end delivers all three.** The sea floor is chosen because it is exact on the case the requirement was
+written for — a resting ocean on an unstepped floor at arbitrary coordinate tilt — and because its
+stepped-floor residual is comparable to the surface anchor's unconditional one rather than worse.
+That is a judgement, and it should be revisited if stepped bathymetry turns out to be the case that
+matters; §5.1's `bathymetry_step` variants are where it is measured.
+
+The stepped-floor residual is **not** quadrature error: refining from 2 to 16 Gauss points does not
+move it at all, which is conclusive rather than suggestive, since $\hat\alpha$ is linear in pressure
+and every rule integrates it exactly. What remains is the edge-shared first-order equation-of-state
+expansion being integrated across the whole step — some $2\times10^{6}$ Pa at 200 m/km, far outside
+the range the expansion is accurate over. That attribution is a scaling argument rather than a
+measurement. If it is right, the second-order expansion of §3.3 would reduce it, and re-expanding
+about the midpoint of each short integral rather than about the edge-layer state would too; neither
+has been tried.
+
+The argument for the sea floor on a tilted coordinate is unchanged and follows.
+
+**Why the sea floor wins there.** `VertCoord` builds $z$ upward from the bathymetry while
 pressure is built downward from the surface, so the two accumulate round-off from opposite ends, and
 [](#ssh-difference) favours the sea floor on conditioning grounds: $-\Delta_e H$ is exact input
 where $\Delta_e Z_{\text{surf}}$ is the small residual of two column-length sums.
@@ -915,11 +950,19 @@ $10^{-3}$ m consumes roughly five significant digits before the physics appears,
 the time the tendency is formed. That is `PressureGradCentered`'s arithmetic, and it is the reason
 this section exists.
 
-**[](#dz-dp) removes the exposure rather than managing it.** Every quantity in the scan is a
-difference *before* it is an integral: [](#dalpha) is a horizontal contrast, [](#d-recurrence)
-accumulates integrals of that contrast, and $D_k$ is the answer itself. No large quantity is formed
-anywhere, so nothing large has to cancel. The scheme's conditioning is therefore set by the size of
-the baroclinic signal, not by the size of the hydrostatic terms.
+**[](#dz-dp) removes the exposure rather than managing it — in the scan.** Every quantity in the
+scan is a difference *before* it is an integral: [](#dalpha) is a horizontal contrast,
+[](#d-recurrence) accumulates integrals of that contrast, and $D_k$ is the answer itself. No large
+quantity is formed there, so nothing large has to cancel, and the scan's conditioning is set by the
+size of the baroclinic signal rather than by the size of the hydrostatic terms. Measured, $D_k$
+stays flat to $1.4\times10^{-15}$ m at every floor gradient tried, including where one column's
+reconstruction is evaluated three layers below its own floor.
+
+**The anchor is not covered by that argument.** An earlier version of this section claimed no large
+quantity is formed *anywhere*; that is true of [](#d-recurrence) and false of [](#anchor) at the sea
+floor, where a stepped bathymetry makes $\Delta_e Z$ of order the step and the short integrals
+cancel it — nine to twelve digits, per the measurements in §3.5.1. The exposure the scheme removes
+is the column-length one; a step-sized cancellation at a single interface remains.
 
 Three consequences.
 
@@ -1362,11 +1405,19 @@ accumulate `VertCoord`'s geometric height at all, using the sea-surface height o
 All three conditions of §3.7.2 are properties of the PGF's own discretization; none is a dependency
 on another module.
 
-**Settled at implementation time.** Two items were left open here and are now fixed. The scan
-anchors at the **sea floor** (§3.7.4), which conditioning favours and which exactness requires:
-anchoring at the surface admits into $D_1$ the disagreement between the two columns' derived
-sea-surface heights, which `VertCoord`'s midpoint rule produces even on the exact set. And the treatment at the top and bottom of the column, assumption A5
-of §3.7.6, is to **clamp to the outermost valid layer and extrapolate its reconstruction**.
+**Settled at implementation time.** The scan anchors at the **sea floor** (§3.7.4): anchoring at the
+surface admits into $D_1$ the disagreement between the two columns' derived sea-surface heights,
+which `VertCoord`'s midpoint rule produces even on the exact set. The treatment at the top and bottom
+of the column, assumption A5 of §3.7.6, is to **clamp to the outermost valid layer and extrapolate
+its reconstruction**; measured, the scan stays flat to $1.4\times10^{-15}$ m even where a column's
+reconstruction is evaluated three layers below its own floor, so the rule is confirmed on the
+geometry it was most doubted on.
+
+**Reopened by measurement.** The anchor end is a trade-off, not a settled preference: at the sea
+floor a stepped bathymetry makes [](#anchor) form and cancel quantities of order the step, which the
+surface anchor does not (§3.7.4). Neither end gives machine precision at *every* tilt, thickness and
+bathymetry, so Requirement 2.3.1 is met on an unstepped floor rather than unconditionally. This is
+the open question Phase 1 leaves behind.
 
 **Code and cost.** Three new `Eos` derivative fields and one new method (§4.1.2); the
 `PressureGradFiniteVolume` functor; one per-edge array and one column scan (§3.5.1, §4.1.3); no new
