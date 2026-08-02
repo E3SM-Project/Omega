@@ -761,6 +761,15 @@ void testBruntVaisalaFreqSqTeos10() {
 /// The state varies with depth rather than being uniform, so that the check
 /// covers a range of values and exercises the vertical chunking, and the
 /// expected values are obtained layer by layer from GSW-C on the host.
+///
+/// This is a test of the plumbing, not of the polynomial. It runs
+/// Eos::computeSpecVolAndDerivs on the device over the whole mesh and so
+/// covers the dispatch on EosChoice, the chunked vertical loop and its chunk
+/// boundaries, the MinLayerCell/MaxLayerCell masking, the writing of the four
+/// results into the Eos member arrays, and the registration of the derivative
+/// fields in the Eos group. The math itself is covered point by point, over a
+/// much wider range of states, by checkValueGswcSpecVolDerivs below; GSW-C
+/// appears here only as a convenient source of expected values.
 void testEosTeos10Derivs() {
    /// Get mesh and coordinate info
    const auto Mesh     = HorzMesh::getDefault();
@@ -1175,6 +1184,15 @@ Real relDiff(Real X, Real Y) {
 /// oracle. The Omega implementation does not derive from it: the derivatives
 /// are the analytic derivatives of the Roquet et al. 2015 polynomial that the
 /// Teos10Eos functor already carries.
+///
+/// This is the test of the polynomial itself, as opposed to
+/// testEosTeos10Derivs above, which tests the array-level machinery. It calls
+/// the point-wise calcSpecVolAndDerivsAtPoint on the host at every combination
+/// of the salinity, temperature and pressure values in SaTest, CtTest and
+/// PTest, which reach the corners of the oceanographic range -- fresh and
+/// salty, freezing and warm, surface and 10000 dbar -- rather than the single
+/// realistic profile the mesh test uses. A dropped or mis-scaled term shows up
+/// here, and the tolerances are tight enough to say so.
 void checkValueGswcSpecVolDerivs() {
 
    Teos10Eos TestEos(VertCoord::getDefault());
