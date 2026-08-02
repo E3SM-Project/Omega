@@ -1499,10 +1499,11 @@ Requirement 2.6, because exactness does not constrain it (§3.6.1).
    - the rule used where a column's deepest reconstruction is evaluated below its own floor, and how
      much accuracy it costs off the exact set (assumption A5, §3.7.6).
 
-2. Run the assumption-A4 diagnostic of §5.3, which uses the *existing* centered scheme and so can be
-   done immediately and in parallel with step 1. If spurious bottom-layer flow survives a profile
-   that Phase 1 would resolve exactly, the cause is elsewhere in the model and the priority of this
-   work should be reconsidered before it is built.
+2. Calibrate the seamount configuration with the centered scheme, which can be done immediately and
+   in parallel with step 1. This establishes that the case exercises the pressure gradient at all —
+   the coordinate must genuinely tilt, which a clipped p-star would prevent — and sizes the
+   spurious velocity to expect. It is **not** the A4 diagnostic: §5.3 explains why that one cannot
+   be run with `Centered` and has to wait for Phase 1.
 3. Implement and verify Phase 1 against §5.1, §5.2, §5.3, and §5.5.
 4. Take up Phase 2. Re-examine [](#z-increment-exact) before adopting the second-order
    equation-of-state expansion; that, and not the stencil, is the item that could reopen a settled
@@ -1534,8 +1535,9 @@ Which tests gate which phase:
 | §5.5 Reduction to centered | gates | rerun unchanged |
 | §5.6 Cost check | gates | gates; stencil width must not change the EOS count |
 
-The A4 diagnostic within §5.3 is run *before* Phase 1 implementation and uses the existing centered
-scheme, so it gates nothing but informs whether the work should proceed as prioritized (§4.5.3).
+The A4 diagnostic within §5.3 gates nothing — it informs whether the work was prioritized correctly
+rather than whether it is correct. It requires `FiniteVolume` and so can only be run *after* Phase 1,
+not before it as earlier versions of this document assumed; §5.3 gives the reason.
 
 ### 5.1 Test: Two-column HPGA convergence (extend existing)
 
@@ -1830,15 +1832,27 @@ is substantially smaller for the new scheme than for the centered scheme. This i
 counterpart of §5.2 — the same resting state, now run forward in the full solver — and the direct
 test of Requirement 2.3.
 
-**Testing assumption A4 (§3.7.6).** Run the seamount case twice: once with a stratification Phase 1
-resolves exactly ($\Theta$, $S$ linear in pressure) and once with a realistic profile. Spurious
-velocity that survives the first run cannot be PGF truncation error, since the PGF is zero there to
-machine precision, and must come from somewhere else in the model — most likely the layer-mean
-treatment in the tracer and remapping operators (§4.3). This is the cheapest available check on
-whether accelerating this work will actually cure the bottom-layer instability that motivated the
-phasing, and it should be run **before** Phase 1 implementation is finished, with the centered
-scheme on the realistic profile as the control. A null result would not invalidate the design, but
-it would change its priority.
+**Testing assumption A4 (§3.7.6).** Run the seamount case twice: once with a stratification the
+scheme resolves exactly ($\Theta$, $S$ linear in pressure) and once with a realistic profile.
+Spurious velocity that survives the first run cannot be PGF truncation error, since the PGF is zero
+there to machine precision, and must come from somewhere else in the model — most likely the
+layer-mean treatment in the tracer and remapping operators (§4.3).
+
+**The diagnostic must be run with `FiniteVolume`, not with `PressureGradCentered`.** Earlier
+versions of this section, of §4.5.3 step 2 and of the gate table above described it as a
+*pre*-Phase-1 check that could be done immediately with the existing scheme. That was an error, and
+§3.7.3's own table is what contradicts it: a profile linear in pressure is in Phase 1's exact set
+and **not** in the centered scheme's, where it remains $O(\tilde h)$ with a coefficient
+proportional to the coordinate tilt. Run with `Centered`, the linear-in-pressure seamount is not a
+null configuration but merely a slightly cleaner non-null one — and a sigma coordinate over a
+seamount is the largest tilt in the suite, so the contamination is at its worst exactly there. The
+diagnostic would measure the thing it was designed to exclude, and its result would support neither
+"A4 holds" nor "A4 fails".
+
+The consequence for ordering is the opposite of what §4.5.3 assumed: A4 is a **post**-Phase-1 test,
+and it became runnable for the first time when `FiniteVolume` landed. What can be run beforehand is
+a *calibration* of the centered scheme's response to tilt, which is useful but answers a different
+question; §5.3.1 is the measurement that does bear on A4 without needing the seamount at all.
 
 #### 5.3.1 What a global resting state already shows, and what it does not
 
