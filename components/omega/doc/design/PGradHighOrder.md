@@ -588,8 +588,10 @@ horizontal contrast in reconstructed $\Theta$ and $S$ *at matched pressure*, and
 
 #### 3.5.1 The column scan
 
-$\Delta_e z$ is accumulated down each edge's column from the sea surface. Let $\bar q_k$ be the
-edge-layer interface pressures and $D_k \equiv \Delta_e z(\bar q_k)$. Then
+$\Delta_e z$ is accumulated along each edge's column from an anchor at one end. §3.7.4 settles which
+end, and it is the **sea floor**: the recurrence below therefore runs upward, from $k = K+1$ to
+$k = 1$. Let $\bar q_k$ be the edge-layer interface pressures and $D_k \equiv \Delta_e z(\bar q_k)$.
+Then
 
 $$
 D_{k+1} \;=\; D_k \;-\; \frac{1}{g}\int_{\bar q_k}^{\bar q_{k+1}} \Delta_e\hat\alpha(p)\; dp,
@@ -599,17 +601,20 @@ and the layer mean [](#ho-exact) needs is obtained from $D_k$ and a second momen
 integrand over the same interval. Both integrals use the same quadrature points, and at each point
 each column's $\Theta$, $S$ come from the layer of that column containing the point.
 
-**The anchor.** $D_1 = \Delta_e z(\bar q_1)$ at the sea surface, where the two columns are at
-different surface pressures. It is the sea-surface height difference corrected to a common pressure,
+**The anchor.** $D_{K+1} = \Delta_e z(\bar q_{K+1})$ at the deepest interface the two columns share,
+where they are in general at different pressures. It is the height difference there corrected to a
+common pressure,
 
 $$
-D_1 \;=\; \Delta_e Z_1 \;-\; \frac{1}{g}\sum_{i \in CE(e)} -n_{e,i} \int_{p^{\text{surf}}_i}^{\bar q_1} \hat\alpha^{(e)}_i(p)\,dp ,
+D_{K+1} \;=\; \Delta_e Z_{K+1} \;+\; \frac{1}{g}\sum_{i \in CE(e)} -n_{e,i} \int_{\bar q_{K+1}}^{q_{i,K+1}} \hat\alpha^{(e)}_i(p)\,dp ,
 $$ (anchor)
 
-with both short integrals in closed form and taken inside each column's own top layer, and both
-vanishing where the two columns share a surface pressure.
+with both short integrals in closed form, each spanning half the cross-edge pressure difference at
+that interface, and both vanishing where the two columns' interface pressures agree. Anchored at the
+surface instead, the same expression applies at $k = 1$ with the sea-surface height difference and
+the surface pressures.
 
-$D_1$ is **computed, not assumed**: it is whatever the model's geometric heights and surface
+$D_{K+1}$ is **computed, not assumed**: it is whatever the model's geometric heights and interface
 pressures imply, evaluated at a common pressure. Like every other quantity in the scan it is a
 fixed-pressure height difference, and it is zero exactly when the state carries no horizontal
 pressure gradient at the surface — which is what a state at rest means. A state that is only
@@ -617,7 +622,9 @@ approximately at rest carries a real gradient there, and the scheme reports it. 
 therefore not a place where the scheme assumes anything about the state; it is the $k=1$ instance
 of the same comparison [](#d-recurrence) makes at every other interface.
 
-**Which end of the column the anchor sits at is a conditioning choice.**
+**Which end of the column the anchor sits at is not a conditioning choice**, though it was described
+as one here before it was measured; §3.7.4 gives the argument and the trade-off. What follows is the
+conditioning half of it.
 `VertCoord::computeGeomZHeight` sets $Z_{i,\,\text{bot}} = -\text{BottomGeomDepth}_i$ and accumulates
 $\Delta z = \rho_0\,\alpha_{i,k}\,\tilde h_{i,k}$ **upward**: the bathymetry is prescribed and the
 sea-surface height is derived, so
@@ -631,9 +638,10 @@ model's own $z$ — a scheme that returns zero for the state the model actually 
 Requirement 2.3.1 asks for, so using the derived sea-surface height is self-consistent and correct.
 What [](#ssh-difference) does show is that $\Delta_e Z_{\text{surf}}$ is a difference of two
 column-length accumulations yielding a small result, where $-\Delta_e H$ is exact input and vanishes
-identically for a flat floor. The sea-floor anchor is therefore better conditioned in floating point,
-at the cost of a larger common-pressure excursion and a partial cell to handle where `maxLevelCell`
-differs. §3.7.4 records what is and is not established about the choice.
+identically for a flat floor. The sea-floor anchor is therefore better conditioned in floating point
+*where the floor is unstepped*, at the cost of a larger common-pressure excursion, a partial cell to
+handle where `maxLevelCell` differs, and — where the floor does step — a cancellation of order the
+step. §3.7.4 records the trade-off and what is and is not established about it.
 
 **Every quantity in the scan is small.** $D_k$ is the fixed-pressure height difference — of order
 $10^{-1}$ m for a realistic baroclinic column and zero for a resting one, against the $10^{2}$ m
@@ -1580,10 +1588,29 @@ of the §3.7.3 table (horizontal structure in $\Theta$, $S$); assumptions A1, A2
 This is the primary test of the steep-layer robustness property (Requirement 2.3, §3.7). It follows
 the table in §3.7.3 row by row rather than being a single pass/fail.
 
-**Run the machine-precision gate with a horizontally uniform surface pressure.** Both integrals in
-[](#anchor) then vanish identically and the two columns' sea-surface heights are equal by
-construction, so the anchor contributes nothing and the gate tests the scheme rather than the
-initialization. This costs nothing: surface-pressure gradients are exercised separately by §5.1,
+**Run the machine-precision gate on a state whose anchor inputs vanish identically.** The gate is
+meant to test the scan, not the initialization, and the anchor is the one place where the state can
+inject a residual the scheme is powerless to remove. At a sea-floor anchor that means the two
+columns must share both a **floor depth** and a **bottom pressure**, so that $\Delta_e Z$ is zero and
+the two short integrals of [](#anchor) are zero-width. At a surface anchor it means a horizontally
+uniform surface pressure and equal sea-surface heights.
+
+**This is a condition on how the state was built, and it does not come for free.** A state
+constructed by pinning the end *opposite* the anchor carries `VertCoord`'s $O(\tilde h^2)$
+truncation difference (§3.7.4) into the anchor's input, and then no scheme however exact can return
+zero: measured on Polaris-initialized states, whose two columns sit at equal floor depth but reach
+*different bottom pressures* under tilt, the sea-floor anchor is $-7.1\times10^{-8}$ m where the
+surface anchor is zero to round-off. That residual is the anchor and nothing else — every increment
+of [](#d-recurrence) is still zero and $D_k$ is still flat down the column — so it does not
+contradict the pointwise cancellation of [](#dalpha); it says the gate must be run on a state that
+does not carry it.
+
+Omega's own gate satisfies the condition by construction: it prescribes the pressure grid, giving
+both columns the same surface and bottom pressure, and prescribes an equal `BottomGeomDepth` from
+which `VertCoord` derives $z$ upward. Both anchor inputs are then identically zero and the measured
+$3.1\times10^{-18}$ m s$^{-2}$ is a property of the scan alone. A run of the same scheme on a
+Polaris-initialized state would be expected to return the anchor residual above rather than machine
+zero, and that is the correct answer for that state. This costs nothing: surface-pressure gradients are exercised separately by §5.1,
 where the reference solution supplies the expected value.
 
 Where surface pressure *does* vary horizontally, the state carries a real fixed-pressure height
