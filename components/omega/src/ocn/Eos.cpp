@@ -288,7 +288,7 @@ void Eos::computeSpecVolAndDerivs(const Array2DReal &ConservTemp,
 
              parallelForInner(
                  Team, KRange, INNER_LAMBDA(int KChunk) {
-                    LocComputeSpecVolLinear.calcSpecVolDerivs(
+                    LocComputeSpecVolLinear.calcSpecVolAndDerivsInChunk(
                         LocSpecVol, LocSpecVolDCt, LocSpecVolDSa, LocSpecVolDP,
                         ICell, KChunk, ConservTemp, AbsSalinity);
                  });
@@ -303,7 +303,7 @@ void Eos::computeSpecVolAndDerivs(const Array2DReal &ConservTemp,
 
              parallelForInner(
                  Team, KRange, INNER_LAMBDA(int KChunk) {
-                    LocComputeSpecVolTeos10.calcSpecVolDerivs(
+                    LocComputeSpecVolTeos10.calcSpecVolAndDerivsInChunk(
                         LocSpecVol, LocSpecVolDCt, LocSpecVolDSa, LocSpecVolDP,
                         ICell, KChunk, ConservTemp, AbsSalinity, Pressure);
                  });
@@ -318,7 +318,7 @@ void Eos::computeSpecVolAndDerivs(const Array2DReal &ConservTemp,
 
              parallelForInner(
                  Team, KRange, INNER_LAMBDA(int KChunk) {
-                    LocComputeSpecVolConstant.calcSpecVolDerivs(
+                    LocComputeSpecVolConstant.calcSpecVolAndDerivsInChunk(
                         LocSpecVol, LocSpecVolDCt, LocSpecVolDSa, LocSpecVolDP,
                         ICell, KChunk, ConservTemp, AbsSalinity);
                  });

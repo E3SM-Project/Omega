@@ -1195,8 +1195,9 @@ void checkValueGswcSpecVolDerivs() {
             const Real PDb   = PTest[IP];
 
             Real SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP;
-            TestEos.calcSpecVolAndDerivs(CtVal, SaVal, PDb * Db2Pa, SpecVol,
-                                         SpecVolDCt, SpecVolDSa, SpecVolDP);
+            TestEos.calcSpecVolAndDerivsAtPoint(CtVal, SaVal, PDb * Db2Pa,
+                                                SpecVol, SpecVolDCt, SpecVolDSa,
+                                                SpecVolDP);
 
             /// GSW-C takes pressure in dbar and returns the derivatives per
             /// (g/kg), per degC, and per Pa
@@ -1279,7 +1280,8 @@ void checkFiniteDiffSpecVolDerivs() {
    /// Evaluate only the specific volume at a perturbed state
    auto SpecVolAt = [&TestEos](Real CtVal, Real SaVal, Real PPa) {
       Real SpecVol, DCt, DSa, DP;
-      TestEos.calcSpecVolAndDerivs(CtVal, SaVal, PPa, SpecVol, DCt, DSa, DP);
+      TestEos.calcSpecVolAndDerivsAtPoint(CtVal, SaVal, PPa, SpecVol, DCt, DSa,
+                                          DP);
       return SpecVol;
    };
 
@@ -1294,8 +1296,8 @@ void checkFiniteDiffSpecVolDerivs() {
             const Real PPa   = PTest[IP] * Db2Pa;
 
             Real SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP;
-            TestEos.calcSpecVolAndDerivs(CtVal, SaVal, PPa, SpecVol, SpecVolDCt,
-                                         SpecVolDSa, SpecVolDP);
+            TestEos.calcSpecVolAndDerivsAtPoint(
+                CtVal, SaVal, PPa, SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP);
 
             const Real FDCt = (SpecVolAt(CtVal + DCtStep, SaVal, PPa) -
                                SpecVolAt(CtVal - DCtStep, SaVal, PPa)) /
@@ -1364,8 +1366,9 @@ void checkValueGswcAlphaBeta() {
             const Real PDb   = PTest[IP];
 
             Real SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP;
-            TestEos.calcSpecVolAndDerivs(CtVal, SaVal, PDb * Db2Pa, SpecVol,
-                                         SpecVolDCt, SpecVolDSa, SpecVolDP);
+            TestEos.calcSpecVolAndDerivsAtPoint(CtVal, SaVal, PDb * Db2Pa,
+                                                SpecVol, SpecVolDCt, SpecVolDSa,
+                                                SpecVolDP);
 
             const Real Alpha = TestBvf.calcAlpha(SaVal, CtVal, PDb, SpecVol);
             const Real Beta  = TestBvf.calcBeta(SaVal, CtVal, PDb, SpecVol);

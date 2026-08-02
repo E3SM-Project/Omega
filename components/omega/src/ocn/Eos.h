@@ -494,10 +494,18 @@ class Teos10Eos {
    /// a single state. P is the relative pressure (gauge pressure in Pa, i.e.
    /// absolute pressure minus the standard atmosphere). The derivatives are
    /// returned per degC, per (g/kg), and per Pa respectively.
-   KOKKOS_FUNCTION void calcSpecVolAndDerivs(const Real Ct, const Real Sa,
-                                             const Real P, Real &SpecVol,
-                                             Real &SpecVolDCt, Real &SpecVolDSa,
-                                             Real &SpecVolDP) const {
+   ///
+   /// This is the point-wise entry point: it takes scalars and returns scalars,
+   /// with no cell, layer or chunk indexing. It is what the unit tests call to
+   /// check the polynomial against GSW-C and against finite differences at
+   /// chosen states, and it is the form to use anywhere a single state needs to
+   /// be evaluated. The array-level path over the mesh instead uses
+   /// calcSpecVolAndDerivsInChunk below, which loops over a vertical chunk and
+   /// reuses the coefficient arrays across the layers of that chunk.
+   KOKKOS_FUNCTION void
+   calcSpecVolAndDerivsAtPoint(const Real Ct, const Real Sa, const Real P,
+                               Real &SpecVol, Real &SpecVolDCt,
+                               Real &SpecVolDSa, Real &SpecVolDP) const {
 
       Real SpecVolPCoeffs[6 * VecLength];
       Real DTtPCoeffs[5 * VecLength];
@@ -525,13 +533,14 @@ class Teos10Eos {
 
    /// Calculate the TEOS-10 specific volume and its three first derivatives
    /// over a vertical chunk of a cell. Pressure is the relative pressure in
-   /// Pa; the derivatives are per degC, per (g/kg), and per Pa.
-   KOKKOS_FUNCTION void
-   calcSpecVolDerivs(Array2DReal SpecVol, Array2DReal SpecVolDCt,
-                     Array2DReal SpecVolDSa, Array2DReal SpecVolDP, I4 ICell,
-                     I4 KChunk, const Array2DReal &ConservTemp,
-                     const Array2DReal &AbsSalinity,
-                     const Array2DReal &Pressure) const {
+   /// Pa; the derivatives are per degC, per (g/kg), and per Pa. This is the
+   /// chunk-wise counterpart of calcSpecVolAndDerivsAtPoint above and is what
+   /// Eos::computeSpecVolAndDerivs calls from the inner parallel loop.
+   KOKKOS_FUNCTION void calcSpecVolAndDerivsInChunk(
+       Array2DReal SpecVol, Array2DReal SpecVolDCt, Array2DReal SpecVolDSa,
+       Array2DReal SpecVolDP, I4 ICell, I4 KChunk,
+       const Array2DReal &ConservTemp, const Array2DReal &AbsSalinity,
+       const Array2DReal &Pressure) const {
 
       Real SpecVolPCoeffs[6 * VecLength];
       Real DTtPCoeffs[5 * VecLength];
@@ -776,11 +785,10 @@ class LinearEos {
    ///    SpecVol = 1 / (RhoT0S0 + DRhodT * Ct + DRhodS * Sa)
    /// the derivatives are -DRhodT * SpecVol^2 and -DRhodS * SpecVol^2, and
    /// the linear EOS has no pressure dependence at all.
-   KOKKOS_FUNCTION void
-   calcSpecVolDerivs(Array2DReal SpecVol, Array2DReal SpecVolDCt,
-                     Array2DReal SpecVolDSa, Array2DReal SpecVolDP, I4 ICell,
-                     I4 KChunk, const Array2DReal &ConservTemp,
-                     const Array2DReal &AbsSalinity) const {
+   KOKKOS_FUNCTION void calcSpecVolAndDerivsInChunk(
+       Array2DReal SpecVol, Array2DReal SpecVolDCt, Array2DReal SpecVolDSa,
+       Array2DReal SpecVolDP, I4 ICell, I4 KChunk,
+       const Array2DReal &ConservTemp, const Array2DReal &AbsSalinity) const {
 
       const I4 KStart = chunkStart(KChunk, MinLayerCell(ICell));
       const I4 KLen   = chunkLength(KChunk, KStart, MaxLayerCell(ICell));
@@ -830,11 +838,10 @@ class ConstantEos {
    /// Calculate the constant specific volume and its three first derivatives
    /// over a vertical chunk of a cell. The specific volume does not depend on
    /// temperature, salinity or pressure, so all three derivatives vanish.
-   KOKKOS_FUNCTION void
-   calcSpecVolDerivs(Array2DReal SpecVol, Array2DReal SpecVolDCt,
-                     Array2DReal SpecVolDSa, Array2DReal SpecVolDP, I4 ICell,
-                     I4 KChunk, const Array2DReal &ConservTemp,
-                     const Array2DReal &AbsSalinity) const {
+   KOKKOS_FUNCTION void calcSpecVolAndDerivsInChunk(
+       Array2DReal SpecVol, Array2DReal SpecVolDCt, Array2DReal SpecVolDSa,
+       Array2DReal SpecVolDP, I4 ICell, I4 KChunk,
+       const Array2DReal &ConservTemp, const Array2DReal &AbsSalinity) const {
 
       const I4 KStart = chunkStart(KChunk, MinLayerCell(ICell));
       const I4 KLen   = chunkLength(KChunk, KStart, MaxLayerCell(ICell));
