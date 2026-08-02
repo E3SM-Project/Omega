@@ -1014,6 +1014,11 @@ assumptions this design is making that only testing can confirm:
   $8\times10^{-6}$ on the hardest configuration available (a 12 °C contrast across a 4 km edge) and
   $\le 2\times10^{-9}$ on the resting-state variants (§6.3). The first-order expansion is not being
   worked near its limit, and `temperature_gradient` at coarse resolution is the configuration to watch.
+
+  **A2 must be measured on the remainder itself, not inferred from a sweep of the contrast.** The
+  contrast cannot be varied independently of the cell spacing in a two-column configuration, and
+  A2's error is in any case confounded with the horizontal stencil's, which scales the same way and
+  dominates. §5.1 gives the measurements behind both statements.
 - **A3 — The residual outside the exact set is small enough in practice.** The $O(\tilde h^2)$ and
   $O(\tilde h^3)$ entries in §3.7.3 describe how the error *scales*; how large it actually is at the
   vertical resolutions Omega can afford is unknown.
@@ -1568,17 +1573,36 @@ Extend the four existing variants — `temperature_gradient`, `salinity_gradient
 - **Consistency check (retained):** `omega_vs_polaris_rms_threshold` (~1e-10 m/s²) — Omega's
   forward output must still match the Python-computed HPGA, confirming the implementation
   matches the intended discretization.
-- **Horizontal-contrast sweep (new, assumption A2):** the `temperature_gradient` and
-  `salinity_gradient` variants are run at several amplitudes of the horizontal contrast, up to and
-  beyond values typical of ocean fronts. The equation-of-state expansion [](#alpha-taylor) is taken
-  about a state shared across the edge, so its error grows with that contrast, and A2 (§3.7.6) is
-  the assumption that the first-order expansion remains adequate. **Pass:** the error at fixed
-  resolution grows no faster than linearly with the contrast amplitude, and repeating the largest
-  amplitude with the second-order expansion of §3.3 changes the answer by less than the accuracy
-  gate above. If it does not, the second-order expansion becomes the default rather than an option.
+- **Assumption A2 is measured directly, not by a contrast sweep.** An earlier version of this
+  section called for running `temperature_gradient` and `salinity_gradient` at several amplitudes of
+  the horizontal contrast and requiring the error to grow no faster than linearly. **That test
+  cannot work, for three independent reasons**, all established by measurement:
+
+  - **The contrast axis is not independent of the resolution axis.** The two-column initialization
+    interpolates at $x = \pm d_e/2$, so the state depends on the contrast $c$ and the spacing $d_e$
+    only through their product. Verified exactly: contrast 2 at $d_e = 2$ km reproduces contrast 1
+    at $d_e = 4$ km to every printed digit. A contrast sweep is therefore a *coarsening* sweep in
+    disguise, which is why the convergence slope collapses from $1.46$ to $-0.04$ across it.
+  - **A2 and the horizontal stencil's truncation error are confounded by construction.** Both scale
+    with the cross-edge contrast, a comparison against the quasi-analytic reference cannot separate
+    them, and the stencil term dominates by enough that `Centered` and `FiniteVolume` are
+    indistinguishable — identical RMS to four significant figures at every contrast.
+  - **The initialization's shape-preserving limiter is nonlinear in the node values**, so the state
+    itself is not smooth in the contrast: the second difference of layer-mean salinity is
+    $5.75\times10^{-2}$ g kg$^{-1}$ on the shipped profile against $7.1\times10^{-15}$ on a
+    two-node profile where the limiter has no freedom. The nonlinearity saturates with contrast
+    rather than scaling with it.
+
+  **What replaces it is better.** A2 is the claim that the *second-order remainder* of
+  [](#alpha-taylor) across an edge is small, and that remainder can be computed straight from the
+  state without any reference comparison, so it is neither confounded with the stencil nor sensitive
+  to how the state was built. Measured this way it is $8.0\times10^{-6}$ relative on
+  `temperature_gradient` at 4 km — the hardest configuration in the family — with a companion check
+  confirming it vanishes when the two columns coincide. **Pass:** the remainder stays below a stated
+  fraction of $\alpha$ on the hardest configuration available. Should it ever fail, the second-order
+  expansion of §3.3 becomes the default rather than an option.
 - **Cfg keys.** New keys mirror the existing ones (`horiz_press_grad.cfg`): a coarse-resolution
-  absolute tolerance, a `finite_volume_vs_centered` ratio gate, per-scheme expected-rate bands, and
-  the contrast amplitudes for the sweep.
+  absolute tolerance, a `finite_volume_vs_centered` ratio gate, and per-scheme expected-rate bands.
 
 **Covers:** Requirements 2.1, 2.2 (the bounded-EOS path is exercised), 2.4, 2.5, 2.6; the last row
 of the §3.7.3 table (horizontal structure in $\Theta$, $S$); assumptions A1, A2, A3.
@@ -1823,7 +1847,7 @@ Two cheap checks close that:
 | 2.5 Runtime-selectable, backward compatible | §5.1 (three configurations); §5.5 |
 | 2.6 Verified order of accuracy | §5.1 verification gate |
 | A1 Edge accuracy ≠ cell accuracy | §5.1 verification gate (Phase 2) |
-| A2 EOS expansion adequate across an edge | §5.1 contrast sweep; §5.4; the source-4 diagnostic of §3.7.6 |
+| A2 EOS expansion adequate across an edge | §5.1, by direct measurement of the second-order remainder across the edge; §5.4 under dynamics |
 | A3 Residual small enough in practice | §5.1 accuracy gate; §5.3; §5.4 |
 | A4 PGF error causes the instability | §5.3 diagnostic, run before Phase 1 completes |
 | A5 Top- and bottom-of-column treatment | §5.1 `bathymetry_step` and `surface_pressure_gradient` |
