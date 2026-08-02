@@ -865,12 +865,22 @@ $p^{\text{bot}}_{e,k} = \bar q_{k+1}$, and are worth using in the implementation
 Both follow from `PressureMid` being the exact arithmetic midpoint, and both were confirmed
 numerically.
 
-**Which end of the column to anchor at is left to implementation time.** `VertCoord` builds $z$
-upward from the bathymetry while pressure is built downward from the surface, so the two accumulate
-round-off from opposite ends, and [](#ssh-difference) favours the sea floor on conditioning grounds:
-$-\Delta_e H$ is exact input where $\Delta_e Z_{\text{surf}}$ is the small residual of two
-column-length sums. Either is correct; measured in double precision the two directions agree to
-round-off. This is a round-off question, not a consistency one.
+**The scan anchors at the sea floor.** `VertCoord` builds $z$ upward from the bathymetry while
+pressure is built downward from the surface, so the two accumulate round-off from opposite ends, and
+[](#ssh-difference) favours the sea floor on conditioning grounds: $-\Delta_e H$ is exact input
+where $\Delta_e Z_{\text{surf}}$ is the small residual of two column-length sums.
+
+**Conditioning is not the deciding argument, though — exactness is.** `VertCoord` accumulates
+$\Delta z = \rho_0\,\alpha_{i,k}\,\tilde h_{i,k}$ over each column's *own* layers. On a profile
+the reconstruction does not resolve, two columns with different layer partitions give sums that
+differ at $O(\tilde h^2)$, so their derived sea-surface heights differ by that much even when the
+two columns hold the same water. Anchored at the surface that discrepancy enters $D_1$ directly and
+the machine-precision property of §2.3.1 is lost; anchored at the sea floor over a flat floor
+$\Delta_e Z$ is exact input and vanishes identically, and the discrepancy never enters at all —
+because the scheme integrates its own reconstruction rather than accumulating `VertCoord`'s height
+(the first paragraph of this section). The two ends are therefore *not* equivalent, and the earlier
+statement that they agree to round-off held only for profiles inside the exact set, where both
+columns' sums agree term by term.
 
 One consequence is worth recording for whoever builds the reference implementation. A test harness
 that anchors its geometric column at a *prescribed* sea surface and derives the bathymetry is
@@ -901,9 +911,13 @@ Three consequences.
   separately accumulated column integrals. Measured, restructuring the accumulation this way
   recovered about three decimal digits of headroom on a tilted coordinate — the largest increment
   being $\sim 10^{-3}$ of the height difference it replaces (§6.3).
-- **A single-precision build is expected to pass §5.2.**
-  That is a prediction to be measured (§5.2 is run in both precisions), not an assumption, and it
-  should be measured alongside `PressureGradCentered` so the comparison is interpretable.
+- **A single-precision build passes §5.2.** Measured in Omega: the exactness gate returns
+  $3.0\times10^{-9}$ m s$^{-2}$ in single precision against $3.1\times10^{-18}$ in double, which is
+  $0.09\,\epsilon$ of the cancelling terms in one build and $0.05\,\epsilon$ in the other — the
+  same result, scaled by the precision. `PressureGradCentered` on the same state is
+  $3.4\times10^{-5}$ m s$^{-2}$ in single and $3.5\times10^{-5}$ in double, essentially unmoved,
+  because its error is truncation rather than round-off. The scheme forms no large quantities, and
+  the reduced precision costs it nothing beyond $\epsilon$ itself.
 - **The perturbation form is not needed and is not specified.** It would have subtracted a local
   reference profile from $\hat\alpha$ before integrating and added its contribution back
   analytically. It addressed a problem that differencing first removes algebraically. If a
@@ -951,8 +965,12 @@ assumptions this design is making that only testing can confirm:
   the exact set an extrapolated reconstruction still reproduces the true profile, so $\Delta_e\Theta(p)$
   is still zero and exactness survives. What extrapolation costs is accuracy off the exact set, and how
   much is unmeasured: the derivation harness ran with equal layer counts in both columns. §5.1's
-  `bathymetry_step` and `surface_pressure_gradient` variants are where it is measured, and the rule
-  used must be stated explicitly rather than left to fall out of the implementation.
+  `bathymetry_step` and `surface_pressure_gradient` variants are where it is measured.
+
+  **The rule is to clamp to the outermost valid layer of the column and extrapolate that layer's
+  reconstruction.** A pressure above a column's shallowest valid layer uses that layer; a pressure
+  below its deepest valid layer uses that one. This is stated here rather than left to fall out of
+  the implementation, and it is the rule the per-column pressure lookup applies at both ends.
 
 ### 3.8 Scope: the reduction and the vertical coordinate
 
@@ -1152,6 +1170,13 @@ Because `computeSpecVolAndDerivs` fills `SpecVol` as well, it replaces rather th
 a call to `computeSpecVol`; the two are kept separate so that the derivative arithmetic is
 paid only where it is needed.
 
+`Eos` also carries a count of specific-volume evaluations, incremented by one per cell per
+active layer in each of `computeSpecVol`, `computeSpecVolDisp` and `computeSpecVolAndDerivs`,
+together with a method to reset it. This is the instrumentation §5.6 needs: Requirement 2.2 bounds
+a call count, and nothing else in the test suite would notice it being exceeded, since an extra
+evaluation changes run time without changing any answer. Maintaining it costs one host addition
+per call.
+
 The TEOS-10 derivatives are obtained by differentiating the 75-term polynomial analytically.
 The pressure derivative reuses the coefficients `calcPCoeffs` already assembles for
 $\alpha$ itself and so is free; the $\Theta$ and $S_A$ derivatives need their own coefficient
@@ -1163,22 +1188,17 @@ options supply trivial analytic derivatives.
 #### 4.1.3 `PressureGradFiniteVolume` functor
 
 The functor mirrors `PressureGradCentered` (cached mesh/coordinate arrays, `Enabled` flag,
-`chunkStart`/`chunkLength` vertical iteration) but takes the additional reconstruction and
-EOS-derivative inputs. Its `operator()` signature is widened from the placeholder to:
+`chunkStart`/`chunkLength` vertical iteration). Almost all of the work of forming the fixed-pressure
+comparison happens before it runs, in the column scan below, so what it takes is that scan's two
+output arrays rather than the state the scan consumed:
 
 ```c++
 KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge, I4 KChunk,
-                                const Array2DReal &PressureMid,
                                 const Array2DReal &PressureInterface,
-                                const Array2DReal &GeomZInterface,
+                                const Array2DReal &DeltaZFixedP,
+                                const Array2DReal &DeltaZMoment,
                                 const Array1DReal &TidalPotential,
-                                const Array1DReal &SelfAttractionLoading,
-                                const Array2DReal &SpecVol,
-                                const Array2DReal &ConservTemp,  // new
-                                const Array2DReal &AbsSalinity,  // new
-                                const Array2DReal &SpecVolDCt,   // new
-                                const Array2DReal &SpecVolDSa,   // new
-                                const Array2DReal &SpecVolDP)    // new
+                                const Array1DReal &SelfAttractionLoading)
                                 const;
 ```
 
@@ -1197,16 +1217,31 @@ Three aspects of the loop structure differ from the obvious implementation:
   evaluations on a hexagonal mesh.
 - **The column scan of §3.10 step 4 cannot live in this functor.** [](#d-recurrence) is a prefix sum
   down each column with edge-dependent coefficients, so it is not expressible as an independent
-  per-vertical-chunk operation. It is computed in a separate kernel filling one per-edge array,
+  per-vertical-chunk operation. It is computed in a separate kernel filling per-edge arrays,
 
   ```c++
-  Array2DReal DeltaZFixedP;  ///< (NEdgesAll, NVertLayers) — D_k, eq. (d-recurrence)
+  Array2DReal DeltaZFixedP;  ///< (NEdgesSize, NVertLayersP1) — D_k at edge interfaces
+  Array2DReal DeltaZMoment;  ///< (NEdgesSize, NVertLayers) — first moment over the layer
   ```
 
   with a `parallelForOuter` over edges and a `parallelScanInner` down the column, in the same shape as
-  `VertCoord::computeGeomZHeight`. The functor then reads it chunk-wise like any other input. The cost
-  is one edge-sized 2-D array and one column scan per edge per step, and it is the one structural
-  addition Phase 1 makes beyond the per-edge, per-chunk pattern the centered scheme uses.
+  `VertCoord::computeGeomZHeight`. The functor then reads them chunk-wise like any other input.
+
+  $D_k$ is held at interfaces, so its extent is `NVertLayersP1`. The second array holds the first
+  moment $\int (p - \bar q_k)\,\Delta_e\hat\alpha\,dp$ over each layer, which is what the layer
+  mean of [](#ho-exact) needs alongside $D_k$; forming it in the same pass over the same quadrature
+  points is what §3.5.1 requires, and it is why the functor reads neither $\Theta$, $S$ nor the
+  equation-of-state derivatives. Evaluating the integrand a second time in the functor to recover the
+  moment would double the cost of the most expensive part of the scheme.
+
+  The layer mean is then
+  $D_{k+1} + \frac{1}{\Delta p_{e,k}}\int (p - \bar q_k)\,\Delta_e\hat\alpha\,dp$, taken from
+  the layer's *lower* interface because that is the end nearer the anchor.
+
+  The cost is two edge-sized 2-D arrays, two cell-sized arrays for the reconstruction slopes, and one
+  column scan per edge per step. This is the one structural addition Phase 1 makes beyond the
+  per-edge, per-chunk pattern the centered scheme uses. The arrays are allocated only when
+  `FiniteVolume` is selected, so a `Centered` run pays nothing for them.
 - **Each column's $\Theta$, $S$ are looked up by pressure, not by layer index.** At each quadrature
   point of edge layer $k$, [](#dalpha) needs the reconstruction of whichever of *that column's* layers
   contains the point, which under tilt is generally not layer $k$ (§3.7.2, condition 1). Within the
@@ -1310,12 +1345,11 @@ accumulate `VertCoord`'s geometric height at all, using the sea-surface height o
 All three conditions of §3.7.2 are properties of the PGF's own discretization; none is a dependency
 on another module.
 
-**Open at implementation time.** Two items, neither of them blocking. Which end of the column the
-scan anchors at (§3.7.4) — where the sea floor is preferred on conditioning grounds and the
-measurement supporting the alternative may not be discriminating. And the
-treatment at the top and bottom of the column, assumption A5 of §3.7.6, has to be defined explicitly
-rather than inherited — it is the one part of the formulation the reference derivation did not cover,
-since it ran with equal layer counts in both columns.
+**Settled at implementation time.** Two items were left open here and are now fixed. The scan
+anchors at the **sea floor** (§3.7.4), which conditioning favours and which exactness requires:
+anchoring at the surface admits the $O(\tilde h^2)$ disagreement between the two columns' derived
+sea-surface heights into $D_1$. And the treatment at the top and bottom of the column, assumption A5
+of §3.7.6, is to **clamp to the outermost valid layer and extrapolate its reconstruction**.
 
 **Code and cost.** Three new `Eos` derivative fields and one new method (§4.1.2); the
 `PressureGradFiniteVolume` functor; one per-edge array and one column scan (§3.5.1, §4.1.3); no new
@@ -1542,9 +1576,9 @@ Three groups of profiles are run:
   | guard | breaks | expected |
   |---|---|---|
   | (a) **tilt sensitivity** — assert the tendency and `PressureGradCentered`'s differ, and that the latter grows with tilt | nothing; runs on the passing configuration | must **pass**. A bug that zeroed the tilt response would satisfy every other check here perfectly |
-  | (b) **cell-local expansion point** in place of [](#edge-ref) | condition 1 | fires, at $10^{-5}$. Two expansion points mean the $\bar\alpha_0$ and $\bar\alpha_p$ terms no longer cancel in [](#dalpha) (§3.5, consequence 1) |
-  | (c) **each column's $\Theta$, $S$ taken from its own layer $k$** rather than from the layer containing the pressure | condition 2 | **cannot be made to fire** on any configuration currently available — see the warning below |
-  | (d) **anchor taken as $\Delta_e Z_1$ alone**, dropping the short integrals of [](#anchor) | condition 3 | fires, but only where the two columns' surface pressures differ; flat with depth, which distinguishes it from (b) |
+  | (b) **cell-local expansion point** in place of [](#edge-ref) | condition 1 | fires. Measured in Omega at $3.4\times10^{-7}$ m s$^{-2}$ against $3.1\times10^{-18}$ with the shared point. Two expansion points mean the $\bar\alpha_0$ and $\bar\alpha_p$ terms no longer cancel in [](#dalpha) (§3.5, consequence 1) |
+  | (c) **each column's $\Theta$, $S$ taken from its own layer $k$** rather than from the layer containing the pressure | condition 2 | **cannot be made to fire** — confirmed in Omega, which returns $3.4\times10^{-18}$ against $3.1\times10^{-18}$, indistinguishable. See the warning below |
+  | (d) **anchor taken as the raw $\Delta_e Z$ alone**, dropping the short integrals of [](#anchor) | condition 3 | fires, but only where the two columns' end pressures differ; flat with depth, which distinguishes it from (b). Measured in Omega at $4.8\times10^{-3}$ m s$^{-2}$, with the offset in $D_k$ constant to sixteen digits down the column |
 
   Note that *which* shared coefficient set is used — selected by edge layer, by layer index, or
   otherwise — is deliberately **not** a guard: §3.5 consequence 1 says exactness cannot depend on it,
@@ -1567,6 +1601,16 @@ Three groups of profiles are run:
 
   Guards must be checked against a deliberately broken configuration, not only against a passing
   one. A guard that cannot fire is worse than no guard, because it looks like protection.
+
+  Guards (b), (c) and (d) need the scheme's rules switched off one at a time, which the shipped
+  kernel cannot do. They therefore run against an assembly built in the test out of the same helper
+  functions, with each rule selectable. That assembly is only trustworthy once it reproduces the
+  kernel, and the fidelity check that has content is on a **curved** profile where both sides are
+  large: agreeing at $10^{-18}$ on the exact set would also be satisfied by an assembly that
+  computed nothing. Note what this does and does not establish — the guards show the three rules are
+  load-bearing; they do not independently verify the arithmetic, since they share the helper
+  functions with the kernel. That verification comes from §5.5 and from the Omega-versus-Polaris
+  comparison of §5.1.
 
 A separate and much smaller unit test covers the reconstruction estimator on its own (§3.4): given
 layer means sampled from a profile of the reconstruction's own degree on a **deliberately
@@ -1655,11 +1699,16 @@ Requirement 2.2 bounds the number of TEOS-10 evaluations, and nothing above test
 could satisfy every accuracy gate while quietly calling the equation of state inside the column loop.
 Two cheap checks close that:
 
-- **Evaluation count.** With an instrumented `Eos`, confirm the number of specific-volume
-  evaluations per time step is one per cell per layer and is **unchanged** when `HorzOrder`,
-  `VerticalReconstruction` and `QuadraturePoints` are varied. The last is the one that matters most
-  here, since the quadrature loop is where an equation-of-state call would most naturally creep in. This is the property Requirement 2.2 actually states, and it is
-  a counter comparison, not a timing measurement, so it is deterministic and suitable for CI.
+- **Evaluation count.** With an instrumented `Eos` (§4.1.2), confirm the number of specific-volume
+  evaluations the pressure gradient performs is **zero**, at every setting of `QuadraturePoints` —
+  the quadrature loop being where an equation-of-state call would most naturally creep in. Zero is
+  sharper than Requirement 2.2 asks for and is what the design actually delivers: the one evaluation
+  per cell per layer the requirement allows is paid once by `AuxiliaryState`, before the tendency is
+  formed, and the scheme works from the specific volume and derivatives that call leaves behind.
+  Because a count of zero would also be produced by broken instrumentation, confirm alongside it
+  that one call to `computeSpecVolAndDerivs` registers exactly one evaluation per cell per layer.
+  This is a counter comparison, not a timing measurement, so it is deterministic and suitable for CI.
+  Measured in Omega: zero at `QuadraturePoints` 1, 2, 3 and 4.
 - **Wall time.** Record PGF kernel time relative to `PressureGradCentered` on a representative
   configuration, as a performance regression guard. The expected cost is dominated by the per-edge
   column scan (§4.1.3), roughly three times as many column evaluations as a cell-based formulation on
@@ -1726,13 +1775,31 @@ Three limits on what this establishes, all of them live.
 - **Differing `maxLevelCell` is untested.** The harness gave both columns the same layer count, so the
   `bathymetry_step` case — where a bottom partial cell carries the whole signal — is not covered. This
   is assumption A5 of §3.7.6.
-- **Nothing has been run in Omega**, or through the real Polaris task machinery, so the interaction
-  with p-star initialization and partial cells is untested.
+- **The Polaris task machinery is untested against the new scheme.** The Omega implementation is now
+  measured (below), but the `horiz_press_grad` variants still select `Centered`, so the interaction
+  with p-star initialization and partial cells, and the `omega_vs_polaris` comparison for
+  `FiniteVolume`, are outstanding.
 - **The rows above were measured on an assembly of all four pressure terms**, not on the form §3.5
   specifies. Given that those terms cancel to $3\times10^{-15}$ relative, what the exactness and
   $O(\tilde h^2)$ rows measured *was* the geopotential term alone, so they carry over — but by that
   argument rather than by direct measurement. §6.3 records what happened when it was measured
   directly.
+
+#### 6.1.1 Confirmation in Omega
+
+The implementation was measured independently of the harness above, on a two-column state whose layer
+means are the exact layer averages of one prescribed continuous profile, at 4 km spacing with 32
+layers and interfaces offset by up to three layer thicknesses.
+
+| claim | §ref | measurement |
+|---|---|---|
+| exactness on the exact set | §2.3.1, §3.7.3 | $3.1\times10^{-18}$ m s$^{-2}$, against `PressureGradCentered`'s $3.5\times10^{-5}$ on the same state — a ratio of $8.8\times10^{-14}$, and $0.05\,\epsilon$ of the terms that had to cancel |
+| $D_k$ zero at every interface, not only in the layer mean | §3.5.1 | $1.4\times10^{-15}$ m, $0.06\,\epsilon$; larger in the upper column than the lower, i.e. growing away from the sea-floor anchor, which is the signature of an exact anchor plus an accumulating recurrence |
+| the integrand is zero *pointwise* | §3.5, §3.7.2 | $5.8\times10^{-21}$ m$^3$ kg$^{-1}$ at every quadrature point on a profile linear in pressure, against $5.3\times10^{-10}$ on a quadratic one — the Polaris harness measured $5.3\times10^{-21}$ on the same check |
+| $O(\tilde h^2)$ off the exact set | §3.7.3 | rates above 2 on quadratic and cubic profiles over 15, 30 and 60 layers at fixed tilt. The rates *rise* under refinement rather than settling, so the sweep is not yet in the asymptotic regime and the gate is a lower bound |
+| the centered identity | §3.9, §5.5 | $0.49\,\epsilon$ of the hydrostatic scale over eight tilts, reproducing the harness' $0.5\,\epsilon$ through independently written code. The dropped-pressure-term guard is exactly linear in tilt, to six significant figures — §3.7.3's first-order-in-tilt statement falling out of a check written for another purpose |
+| bounded equation-of-state cost | §2.2, §5.6 | zero evaluations in the pressure gradient at every quadrature setting |
+| single precision | §3.7.5 | the exactness gate passes; see §3.7.5 for the numbers |
 
 ### 6.2 Corrections owed to `OmegaV1GoverningEqns.md`
 
