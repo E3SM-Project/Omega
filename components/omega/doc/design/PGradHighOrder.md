@@ -150,7 +150,7 @@ requirement in §2.6, which determines whether it is *correct*.
 **"Substantially" is a factor of 5–10, and that figure comes from measurement rather than from
 taste.** On a realistic global resting state the centered scheme's bottom-layer truncation error is
 $1.3$–$1.6\times$ the pressure gradient the model actually carries there, so a modest gain of order
-$2\times$ would leave the error comparable to the signal. §5.3.1 gives the measurement and §6.6 the
+$2\times$ would leave the error comparable to the signal. §5.3.2 gives the measurement and §6.6 the
 per-variant ratios achieved.
 
 ### 2.2 Requirement: Bounded TEOS-10 cost
@@ -1852,9 +1852,40 @@ diagnostic would measure the thing it was designed to exclude, and its result wo
 The consequence for ordering is the opposite of what §4.5.3 assumed: A4 is a **post**-Phase-1 test,
 and it became runnable for the first time when `FiniteVolume` landed. What can be run beforehand is
 a *calibration* of the centered scheme's response to tilt, which is useful but answers a different
-question; §5.3.1 is the measurement that does bear on A4 without needing the seamount at all.
+question; §5.3.2 is the measurement that does bear on A4 without needing the seamount at all.
 
-#### 5.3.1 What a global resting state already shows, and what it does not
+#### 5.3.1 Measured: the scheme passes on near-level layers and is unstable on sigma
+
+Run on the Polaris seamount with TEOS-10 over six days, with tracer diffusion and hyperviscosity
+off so that the pressure gradient is what remains.
+
+**On z-star, `FiniteVolume` passes §5.3's criterion by a wide margin.** Maximum $|u|$ at day 6 is
+$1.0\times10^{-3}$ m s$^{-1}$ against `PressureGradCentered`'s $4.6\times10^{-2}$ on the realistic
+profile — 44$\times$, and 3$\times10^{4}$ in mean kinetic energy; at one hour, before anything else
+develops, 134$\times$ and 1780$\times$. The centered scheme's error sits in the partial bottom cell,
+matching §5.1's `bathymetry_step`. This is Requirement 2.3 under dynamics.
+
+**On sigma it does not.** `FiniteVolume` develops density inversions — day 1.5 on the realistic
+profile, day 3 on the linear-in-pressure one — and reaches $\sim5\times10^{-1}$ m s$^{-1}$ by day 6,
+where `Centered` on the identical configuration is clean and decaying at $\sim10^{-2}$.
+
+It is **not an accuracy failure**. Before the growth takes hold the new scheme is five times *more*
+accurate than the centered one, and still comparable at day 2. Three things point at a grid-scale
+numerical instability rather than a resolved response: the disturbance sits at a fixed location on
+the flank, the same under both equations of state, so it follows the geometry rather than the
+profile; its grid-scale content rises before any inversion appears; and the temperature anomaly
+reaches a third of the profile's whole range.
+
+**What this does and does not mean.** Sigma layers follow the bathymetry, which is the steepest
+tilt against isobars in the whole suite and is not what Omega runs — p-star, like z-star, keeps
+layers near level. So this does not qualify the Phase 1 result on the configurations Omega uses. It
+does mean the scheme has a limit on steeply tilted layers that the centered scheme does not share,
+that the limit is not understood, and that anything relying on sigma-like layering is untested
+territory. The next diagnostic is a re-run with monotonic horizontal advection; the working
+hypothesis, untested, is that an unlimited horizontal tracer advection admits a mode the more
+accurate pressure gradient no longer damps.
+
+#### 5.3.2 What a global resting state already shows, and what it does not
 
 A measurement bearing on A4 exists and is recorded here so the assumption is argued from numbers
 rather than from plausibility. **It does not settle A4**; the end of this subsection says exactly
@@ -2236,13 +2267,13 @@ profile is resolved and the sea floor steps. **A single shared gate would be vac
 unreachable at the other**, which is why Polaris sets this per variant.
 
 **Read against Requirement 2.1's bar of 5–10×, three of the four clear it and `hydrostatic_consistency`
-does not, at $2.58\times$ — and that is not a shortfall.** §5.3.1 measures the interior coordinate of
+does not, at $2.58\times$ — and that is not a shortfall.** §5.3.2 measures the interior coordinate of
 a realistic global initial condition as 100–1000× less tilted than the smallest tilt in that sweep,
 which puts interior coordinate tilt some 6000× below the observed global interior error. So
 `hydrostatic_consistency` is calibrating the scheme on a mechanism that is not the one the bar was set
 from, and its ratio should not be read as a prediction of global improvement. The variants that *are*
 quantitative proxies for the global bottom-layer error are the stepped-floor ones, and they clear the
-bar by two to four orders of magnitude. §5.3.1's closing paragraph gives the range over which
+bar by two to four orders of magnitude. §5.3.2's closing paragraph gives the range over which
 `bathymetry_step` tracks the global figure, and where it over-predicts.
 
 **`bathymetry_step_linear` is new**, added because no existing variant is both inside the exact set
