@@ -306,19 +306,29 @@ specifies the time index along that dimension that should be read/written:</p>
 </div>
 <p>For arrays or scalars that are not distributed, the non-distributed variable
 interface must be used:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Error</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IO</span><span class="o">::</span><span class="n">readNDVar</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">VariableName</span><span class="p">,</span><span class="w"> </span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">VarID</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Error</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IO</span><span class="o">::</span><span class="n">readNDVar</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">VarType</span><span class="p">,</span><span class="w"> </span><span class="n">VariableName</span><span class="p">,</span><span class="w"> </span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">VarID</span><span class="p">);</span>
 <span class="n">IO</span><span class="o">::</span><span class="n">writeNDVar</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">VarID</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>with arguments similar to the distributed array calls above. Note that
-when defining dimensions for these fields, the dimensions must be
+<p>with arguments similar to the distributed array calls above. The read
+requires a VarType argument giving the data type of the destination array
+(<code class="docutils literal notranslate"><span class="pre">IO::IOTypeI4</span></code>, <code class="docutils literal notranslate"><span class="pre">IOTypeI8</span></code>, <code class="docutils literal notranslate"><span class="pre">IOTypeR4</span></code> or <code class="docutils literal notranslate"><span class="pre">IOTypeR8</span></code>). This need
+not be the type the variable has in the file and the values are converted
+on read. Supplying it is required rather than optional: without it the
+underlying SCORPIO call fills the destination using the type stored in the
+file, so reading a double variable into a single-precision array would
+write eight bytes per element into four-byte slots and run off the end of
+the array. Distributed reads get the same information from the
+decomposition, so <code class="docutils literal notranslate"><span class="pre">readArray</span></code> needs no equivalent argument.</p>
+<p>Note that when defining dimensions for these fields, the dimensions must be
 non-distributed. For scalars, the number of dimensions should be zero.
 Multiple time slices can be also be read/written for non-distributed fields,
 but require two additional arguments. As in the distributed array, the
 Frame (index of the time slice) must be provided. In addition, a vector
 <code class="docutils literal notranslate"><span class="pre">std::vector&lt;int&gt;</span> <span class="pre">DimLengths</span></code> containing the length of the non-time
 dimensions must be provided:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Error</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IO</span><span class="o">::</span><span class="n">readNDVar</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">VariableName</span><span class="p">,</span><span class="w"> </span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">VarID</span><span class="p">,</span><span class="w"> </span><span class="n">Frame</span><span class="p">,</span><span class="w"> </span><span class="n">DimLengths</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Error</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IO</span><span class="o">::</span><span class="n">readNDVar</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">VarType</span><span class="p">,</span><span class="w"> </span><span class="n">VariableName</span><span class="p">,</span><span class="w"> </span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">VarID</span><span class="p">,</span><span class="w"> </span><span class="n">Frame</span><span class="p">,</span>
+<span class="w">                          </span><span class="n">DimLengths</span><span class="p">);</span>
 <span class="n">IO</span><span class="o">::</span><span class="n">writeNDVar</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Array</span><span class="p">,</span><span class="w"> </span><span class="n">FileID</span><span class="p">,</span><span class="w"> </span><span class="n">VarID</span><span class="p">,</span><span class="w"> </span><span class="n">Frame</span><span class="p">,</span><span class="w"> </span><span class="n">DimLengths</span><span class="p">);</span>
 </pre></div>
 </div>
