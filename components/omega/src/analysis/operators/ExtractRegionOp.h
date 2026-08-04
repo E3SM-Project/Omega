@@ -145,9 +145,10 @@ template <typename ArrayT> class ExtractRegionOp : public AnalysisOperator {
          RegionName = RegionName.substr(0, RegionName.size() - 4);
       }
 
-      std::string OutputFieldName = InputNames[0] + "_" + RegionName;
-      OutputNames                 = {OutputFieldName};
-      InstanceName                = OutputFieldName;
+      std::string OutputFieldName =
+          InputNames[0] + "_ExtractRegion(" + RegionName + ")";
+      OutputNames  = {OutputFieldName};
+      InstanceName = OutputFieldName;
 
       // Get dimension info from input
       auto NDims = InputField->getNumDims();
