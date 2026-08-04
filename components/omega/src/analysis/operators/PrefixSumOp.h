@@ -260,7 +260,6 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
 
    } // end compute
 
- private:
    /// Computes cumulative sum for 1D arrays using Kokkos::parallel_scan.
    /// Supports both forward (start to end) and reverse (end to start)
    /// directions over the full extent of the array.
@@ -464,6 +463,7 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
 
    } // end compute2D
 
+ private:
    /// Output data array holding the cumulative sum
    OutputArrayT OutputData;
 
