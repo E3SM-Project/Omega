@@ -8,29 +8,33 @@
 /// Circulation
 ///
 /// MOC is a bundled AnalysisGroup that computes the Meridional Overturning
-/// Circulation (MOC) streamfunction using two methods:
+/// Circulation (MOC) streamfunction using a latitude-binned method. Each named
+/// region produces a streamfunction output field. An optional list of transects
+/// (index-paired with Regions) provides boundary conditions that anchor the
+/// streamfunction to the transport through a southern boundary transect.
 ///
 /// Latitude-binned MOC (for regions):
 /// 1. Converting vertical pseudo-velocity to geometric coordinates
 /// 2. Computing vertical flux (VerticalVelocity × AreaCell)
 /// 3. Optionally applying a regional mask (ExtractRegion)
 /// 4. Accumulating flux into latitude bins
-/// 5. Performing horizontal integration (cumulative sum from south to north)
+/// 5. Performing horizontal integration (cumulative sum from south to north),
+///    optionally seeded with a boundary transect transport (BC)
 /// 6. Converting to Sverdrups (Sv = 1e6 m³/s)
 ///
-/// Transect-based MOC:
-/// 1. Converting PseudoThickness to geometric layer thickness
+/// Transect BC chain (internal, not written to output):
+/// 1. Converting MeanPseudoThickEdge to geometric layer thickness
 /// 2. Computing edge transport (LayerThickness × NormalVelocity × DvEdge)
 /// 3. Accumulating transport across transect edges
 /// 4. Performing vertical integration (cumulative sum from bottom to top)
-/// 5. Converting to Sverdrups (Sv = 1e6 m³/s)
 ///
 /// Configuration options:
 /// - NumBins: Number of latitude bins (default: 180)
 /// - MinLat: Minimum latitude in degrees (default: -90.0)
 /// - MaxLat: Maximum latitude in degrees (default: 90.0)
 /// - Regions: List of region names for regional MOC (optional)
-/// - Transects: List of transect names for transect MOC (optional)
+/// - Transects: List of transect names (index-paired with non-Global Regions;
+///              required when any non-Global region is specified)
 /// - ReductionPeriod: Time-averaging period (e.g., "1month")
 /// - SnapshotPeriod: Instantaneous output period (e.g., "1month")
 ///
@@ -40,8 +44,8 @@
 ///   NumBins: 180
 ///   MinLat: -90.0
 ///   MaxLat: 90.0
-///   Regions: [Global, Atlantic, Pacific]
-///   Transects: [Drake, Atlantic26N]
+///   Regions: [Global, REGION1, REGION2]
+///   Transects: [TRANSECT1, TRANSECT2]
 ///   ReductionPeriod: [1Month]
 ///   SnapshotPeriod: [1Day]
 /// \endcode
@@ -61,15 +65,12 @@
 namespace OMEGA {
 
 /// MOC is a bundled AnalysisGroup that computes the Meridional Overturning
-/// Circulation (MOC) streamfunction using two methods. The latitude-binned
-/// method converts vertical pseudo-velocity to geometric coordinates, computes
-/// vertical flux (velocity × area), accumulates flux into latitude bins, and
-/// integrates horizontally (south to north) to produce the streamfunction.
-/// The transect-based method converts pseudo layer thickness to geometric
-/// coordinates, computes edge transport (LayerThickness × NormalVelocity ×
-/// DvEdge), accumulates transport across transect edges, and integrates
-/// vertically (bottom to top). Both methods convert results to Sverdrups and
-/// support optional temporal averaging.
+/// Circulation (MOC) streamfunction using a latitude-binned method. Converts
+/// vertical pseudo-velocity to geometric coordinates, computes vertical flux
+/// (velocity × area), accumulates flux into latitude bins, and integrates
+/// horizontally (south to north) to produce the streamfunction, optionally
+/// seeded by a transect boundary condition. Converts results to Sverdrups and
+/// supports optional temporal averaging.
 class MOC : public AnalysisGroup {
  public:
    /// Constructs a MOC analysis group. Reads configuration options (number
@@ -101,30 +102,26 @@ class MOC : public AnalysisGroup {
    std::string buildMOCChain(
        const std::string &RegionName, ///< [in] region name (e.g., "Global")
        const std::string
-           &RegionMaskName,      ///< [in] mask field name (empty for global)
-       I4 NumBins,               ///< [in] number of latitude bins
-       Real MinLat,              ///< [in] minimum latitude
-       Real MaxLat,              ///< [in] maximum latitude
-       Analysis *AnalysisManager ///< [in] analysis manager
+           &RegionMaskName, ///< [in] mask field name (empty = global)
+       I4 NumBins,          ///< [in] number of latitude bins
+       Real MinLat,         ///< [in] minimum latitude
+       Real MaxLat,         ///< [in] maximum latitude
+       const std::string &BCFieldName, ///< [in] BC field name (empty = no BC)
+       Analysis *AnalysisManager       ///< [in] analysis manager
    );
 
-   /// Builds the complete operator chain string for a single transect MOC.
-   /// Constructs the chain string encoding all transformation steps:
-   /// 1. PseudoToGeometric: Convert PseudoThickness to geometric layer
-   /// thickness
+   /// Builds an internal transect BC chain. Steps:
+   /// 1. PseudoToGeometric: Convert MeanPseudoThickEdge to geometric layer
+   ///    thickness
    /// 2. BinaryMultiply: Multiply by NormalVelocity (thickness × velocity)
    /// 3. BinaryMultiply: Multiply by DvEdge (transport × edge width)
    /// 4. TransectAccumulator: Accumulate across transect edges
    /// 5. PrefixSum: Vertical integration (bottom to top)
-   /// 6. ScalarMultiply: Convert to Sverdrups
-   ///
-   /// The chain string is later parsed by buildTemporalChains() which
-   /// appends temporal operators and calls parseChainAndBuildOps().
-   ///
-   /// Returns the complete chain string (stem) for temporal operator appending.
-   std::string buildTransectMOCChain(
-       const std::string &TransectName, ///< [in] transect name
-       Analysis *AnalysisManager        ///< [in] analysis manager
+   /// Registers ops immediately via parseChainAndBuildOps.
+   /// Returns the PrefixSum output field name for use as BC.
+   std::string
+   buildTransectBCChain(const std::string &TransectName, ///< [in] transect name
+                        Analysis *AnalysisManager ///< [in] analysis manager
    );
 
    /// Configuration storage for each MOC chain. Vector of Config objects
