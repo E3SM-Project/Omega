@@ -104,8 +104,8 @@ class MOC : public AnalysisGroup {
        const std::string
            &RegionMaskName, ///< [in] mask field name (empty = global)
        I4 NumBins,          ///< [in] number of latitude bins
-       Real MinLat,         ///< [in] minimum latitude
-       Real MaxLat,         ///< [in] maximum latitude
+       Real MinLat,         ///< [in] minimum latitude in degrees
+       Real MaxLat,         ///< [in] maximum latitude in degrees
        const std::string &BCFieldName, ///< [in] BC field name (empty = no BC)
        Analysis *AnalysisManager       ///< [in] analysis manager
    );
@@ -129,6 +129,10 @@ class MOC : public AnalysisGroup {
    /// TransectName). Indexed in the same order as the combined region and
    /// transect chain stems, these configs are passed to buildTemporalChains().
    std::vector<Config> ChainConfigs;
+
+   /// Name of the static latitude bin boundary field (size NumBins+1).
+   /// Created once and added to all MOC output streams.
+   std::string BinBoundaryFieldName;
 
 }; // end class MOC
 
