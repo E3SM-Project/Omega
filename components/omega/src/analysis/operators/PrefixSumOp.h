@@ -25,6 +25,15 @@
 /// field. Currently supports 2D arrays (e.g., latitude bins × depth levels).
 /// The output has the same shape and dimensions as the input.
 ///
+/// An optional boundary condition (BC) field may be provided as a second
+/// upstream input. When present, the BC field is used to seed the accumulator
+/// at index 0 of the scan dimension before processing the first input element.
+/// This is used in regional MOC calculations to anchor the streamfunction to
+/// the transport through a bounding transect at the southern boundary. The BC
+/// field must be 1D with the same size as the non-scan dimension (e.g.,
+/// NVertLevels for a scan over latitude bins). The BC field is expected to be
+/// in the same units as the input field (m³/s, not Sverdrups).
+///
 /// Configuration:
 /// - Dimension: The dimension along which to compute cumulative sum (required)
 ///              0 = first dimension, 1 = second dimension
@@ -35,7 +44,14 @@
 /// - Reverse: If true, scan from end to start; if false, scan from start to
 ///            end (default: false)
 ///
-/// Example usage in operator chain:
+/// Example usage in operator chain (with BC):
+/// \code
+///   BinnedFlux_PrefixSum(BC=TransectMOC_TransectName)
+/// \endcode
+/// where the BC field provides the southern boundary transport for a regional
+/// MOC calculation.
+///
+/// Example usage in operator chain (without BC):
 /// \code
 ///   BinnedTransport_PrefixSum
 /// \endcode
@@ -64,7 +80,8 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
    /// dimensions as the input field, allocates output data array, and
    /// registers the output Field in the Field registry. The output Field name
    /// is constructed as InputName + "_PrefixSum". Reads the dimension and
-   /// direction parameters from the Options config.
+   /// direction parameters from the Options config. If a second upstream name
+   /// is provided it is treated as the boundary condition (BC) field name.
    PrefixSumOp(const std::vector<std::string>
                    &UpstreamNames, ///< [in] input field names
                Config Options      ///< [in] operator config
@@ -73,6 +90,14 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
 
       // Store input field names
       InputNames = UpstreamNames;
+
+      // Optional second upstream: boundary condition field
+      // Fetch the BC view
+      if (InputNames.size() > 1) {
+         BCFieldName  = InputNames[1];
+         auto BCField = Field::get(BCFieldName);
+         BCData       = BCField->template getDataArray<Array1DReal>();
+      }
 
       // Read required dimension parameter from configuration
       Error Err = Options.get("Dimension", ScanDimension);
@@ -97,6 +122,14 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
                      ScanDimension, static_cast<int>(ArrayT::rank));
       }
 
+      if constexpr (ArrayT::rank == 1) {
+         if (ScanDimension != 0) {
+            ABORT_ERROR(
+                "PrefixSumOp: For 1D arrays, Dimension must be 0, got {}",
+                ScanDimension);
+         }
+      }
+
       // Get dimension info
       auto NDims = InputField->getNumDims();
       std::vector<std::string> DimNames;
@@ -104,8 +137,11 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
 
       // Construct output field name and set instance name
       std::string OutputFieldName = InputNames[0] + "_PrefixSum";
-      OutputNames                 = {OutputFieldName};
-      InstanceName                = OutputFieldName;
+      if (InputNames.size() > 1) {
+         OutputFieldName += "(BC=" + BCFieldName + ")";
+      }
+      OutputNames  = {OutputFieldName};
+      InstanceName = OutputFieldName;
 
       // Get input metadata
       std::string InputDescr, InputUnits, InputStdName;
@@ -115,6 +151,10 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
       InputField->getMetadata("StdName", InputStdName);
       InputField->getMetadata("ValidMin", InputValidMin);
       InputField->getMetadata("ValidMax", InputValidMax);
+
+      // Allow callers to override the output field name (e.g., for a short
+      // alias) via the "OutputName" config key.
+      applyOutputNameOverride(Options);
 
       // Create output Field with same dimensions as input
       auto OutputField =
@@ -150,6 +190,15 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
 
       AnalysisOperator::initialize(Env, InMesh, InVCoord, Options);
 
+      // Set Dim0Name for 1D arrays (no MinLayer/MaxLayer needed)
+      if constexpr (ArrayT::rank == 1) {
+         auto Field1 = Field::get(InputNames[0]);
+         std::vector<std::string> DimNames;
+         Field1->getDimNames(DimNames);
+         Dim0Name        = DimNames[0];
+         IsMeshDimension = false;
+      }
+
       // Only need MinLayer/MaxLayer and dimension info for 2D arrays
       if constexpr (ArrayT::rank == 2) {
          auto Field1 = Field::get(InputNames[0]);
@@ -183,8 +232,9 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
    /// Computes the cumulative sum along the specified dimension. For 2D
    /// arrays, uses hierarchical parallelism with parallelForOuter and
    /// parallelScanInner. Supports both forward (start to end) and reverse
-   /// (end to start) directions. Updates output data, timestamp, and computed
-   /// flag.
+   /// (end to start) directions. If a BC field is registered, seeds the
+   /// accumulator at scan index 0 with the BC values before processing input.
+   /// Updates output data, timestamp, and computed flag.
    void compute(const TimeInstant &TimeStamp ///< [in] current timestamp
                 ) override {
 
@@ -194,11 +244,13 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
 
       // Compute cumulative sum based on array rank using constexpr to prevent
       // instantiation of incorrect branches at compile time
-      if constexpr (ArrayT::rank == 2) {
+      if constexpr (ArrayT::rank == 1) {
+         compute1D(InputData);
+      } else if constexpr (ArrayT::rank == 2) {
          compute2D(InputData);
       } else {
          ABORT_ERROR(
-             "PrefixSumOp: Currently only 2D arrays are supported. Rank: {}",
+             "PrefixSumOp: Only 1D and 2D arrays are supported. Rank: {}",
              static_cast<int>(ArrayT::rank));
       }
 
@@ -209,11 +261,43 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
    } // end compute
 
  private:
+   /// Computes cumulative sum for 1D arrays using Kokkos::parallel_scan.
+   /// Supports both forward (start to end) and reverse (end to start)
+   /// directions over the full extent of the array.
+   void compute1D(const ArrayT &InputData) {
+      const I4 N = InputData.extent(0);
+      OMEGA_SCOPE(LocalOutput, OutputData);
+
+      if (ReverseDirection) {
+         Kokkos::parallel_scan(
+             "PrefixSum_1D_Reverse", N,
+             KOKKOS_LAMBDA(int IRev, Real &Accum, bool IsFinal) {
+                const int I = N - 1 - IRev;
+                Accum += static_cast<Real>(InputData(I));
+                if (IsFinal) {
+                   LocalOutput(I) = static_cast<ScalarT>(Accum);
+                }
+             });
+      } else {
+         Kokkos::parallel_scan(
+             "PrefixSum_1D_Forward", N,
+             KOKKOS_LAMBDA(int I, Real &Accum, bool IsFinal) {
+                Accum += static_cast<Real>(InputData(I));
+                if (IsFinal) {
+                   LocalOutput(I) = static_cast<ScalarT>(Accum);
+                }
+             });
+      }
+   } // end compute1D
+
    /// Computes cumulative sum for 2D arrays using hierarchical parallelism.
    /// Uses parallelForOuter for the non-scan dimension and parallelScanInner
    /// for the scan dimension. For vertical scans (dimension 1), bounds the
    /// loop with MinLayer/MaxLayer to handle partial columns. Horizontal scans
    /// (dimension 0) are only allowed for non-distributed dimensions like bins.
+   /// When UseBC is true, the BCData array is added to the accumulator before
+   /// processing the first element along the scan dimension (index 0), seeding
+   /// the running sum with the boundary condition value.
    void compute2D(const ArrayT &InputData) {
 
       // Check if scanning along distributed dimension (not allowed)
@@ -245,44 +329,50 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
       }
       const I4 N1 = InputData.extent(1);
 
-      auto LocalOutput  = OutputData;
-      auto LocalDim     = ScanDimension;
-      auto LocalReverse = ReverseDirection;
+      OMEGA_SCOPE(LocOutput, OutputData);
 
-      if (LocalDim == 0) {
+      if (ScanDimension == 0) {
          // Scan along first dimension (horizontal bins)
          // Outer loop over second dimension (vertical), inner scan over first
-         if (LocalReverse) {
+         OMEGA_SCOPE(LocBC, BCData);
+         if (ReverseDirection) {
             // Reverse: scan from end to start
+            // BC is seeded at the last index (N0-1), i.e. iRev==0 maps to
+            // i=N0-1
             parallelForOuter(
                 "PrefixSum_Dim0_Reverse", LaunchConfig({N1}),
-                KOKKOS_LAMBDA(int j, const TeamMember &Team) {
+                KOKKOS_LAMBDA(int J, const TeamMember &Team) {
                    parallelScanInner(
                        Team, N0,
-                       INNER_LAMBDA(int iRev, Real &Accum, bool IsFinal) {
-                          const int i = N0 - 1 - iRev;
-                          Accum += static_cast<Real>(InputData(i, j));
+                       INNER_LAMBDA(int IRev, Real &Accum, bool IsFinal) {
+                          const int I = N0 - 1 - IRev;
+                          if (IRev == 0 && LocBC.is_allocated())
+                             Accum += static_cast<Real>(LocBC(J));
+                          Accum += static_cast<Real>(InputData(I, J));
                           if (IsFinal) {
-                             LocalOutput(i, j) = static_cast<ScalarT>(Accum);
+                             LocOutput(I, J) = static_cast<ScalarT>(Accum);
                           }
                        });
                 });
          } else {
             // Forward: scan from start to end
+            // BC is seeded at index 0 before the first input element
             parallelForOuter(
                 "PrefixSum_Dim0_Forward", LaunchConfig({N1}),
-                KOKKOS_LAMBDA(int j, const TeamMember &Team) {
+                KOKKOS_LAMBDA(int J, const TeamMember &Team) {
                    parallelScanInner(
                        Team, N0,
-                       INNER_LAMBDA(int i, Real &Accum, bool IsFinal) {
-                          Accum += static_cast<Real>(InputData(i, j));
+                       INNER_LAMBDA(int I, Real &Accum, bool IsFinal) {
+                          if (I == 0 && LocBC.is_allocated())
+                             Accum += static_cast<Real>(LocBC(J));
+                          Accum += static_cast<Real>(InputData(I, J));
                           if (IsFinal) {
-                             LocalOutput(i, j) = static_cast<ScalarT>(Accum);
+                             LocOutput(I, J) = static_cast<ScalarT>(Accum);
                           }
                        });
                 });
          }
-      } else { // LocalDim == 1
+      } else { // ScanDimension == 1
          // Scan along second dimension (vertical)
          // Outer loop over first dimension (bins/etc), inner scan over vertical
 
@@ -292,15 +382,15 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
             OMEGA_SCOPE(LocMinLayer, MinLayer);
             OMEGA_SCOPE(LocMaxLayer, MaxLayer);
 
-            if (LocalReverse) {
+            if (ReverseDirection) {
                // Reverse: scan from end to start
                // Iterate from KMax down to KMin, accumulating as we go
                // Result at K = sum from K to KMax
                parallelForOuter(
                    "PrefixSum_Dim1_Reverse", LaunchConfig({N0}),
-                   KOKKOS_LAMBDA(int i, const TeamMember &Team) {
-                      const I4 KMin   = LocMinLayer(i);
-                      const I4 KMax   = LocMaxLayer(i);
+                   KOKKOS_LAMBDA(int I, const TeamMember &Team) {
+                      const I4 KMin   = LocMinLayer(I);
+                      const I4 KMax   = LocMaxLayer(I);
                       const I4 KRange = vertRange(KMin, KMax);
                       parallelScanInner(
                           Team, KRange,
@@ -308,9 +398,9 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
                              // Iterate from KMax down: KIdx 0→KRange-1 maps to
                              // K KMax→KMin
                              const I4 K = KMax - KIdx;
-                             Accum += static_cast<Real>(InputData(i, K));
+                             Accum += static_cast<Real>(InputData(I, K));
                              if (IsFinal) {
-                                LocalOutput(i, K) = static_cast<ScalarT>(Accum);
+                                LocOutput(I, K) = static_cast<ScalarT>(Accum);
                              }
                           });
                    });
@@ -318,37 +408,37 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
                // Forward: scan from start to end (top to bottom for vertical)
                parallelForOuter(
                    "PrefixSum_Dim1_Forward", LaunchConfig({N0}),
-                   KOKKOS_LAMBDA(int i, const TeamMember &Team) {
-                      const I4 KMin   = LocMinLayer(i);
-                      const I4 KMax   = LocMaxLayer(i);
+                   KOKKOS_LAMBDA(int I, const TeamMember &Team) {
+                      const I4 KMin   = LocMinLayer(I);
+                      const I4 KMax   = LocMaxLayer(I);
                       const I4 KRange = vertRange(KMin, KMax);
                       parallelScanInner(
                           Team, KRange,
                           INNER_LAMBDA(int KIdx, Real &Accum, bool IsFinal) {
                              // Map KIdx to actual layer: 0→KMin, KRange-1→KMax
                              const I4 K = KMin + KIdx;
-                             Accum += static_cast<Real>(InputData(i, K));
+                             Accum += static_cast<Real>(InputData(I, K));
                              if (IsFinal) {
-                                LocalOutput(i, K) = static_cast<ScalarT>(Accum);
+                                LocOutput(I, K) = static_cast<ScalarT>(Accum);
                              }
                           });
                    });
             }
          } else {
             // For non-mesh dimensions (e.g., bins), scan over full extent
-            if (LocalReverse) {
+            if (ReverseDirection) {
                // Reverse: scan from end to start
                parallelForOuter(
                    "PrefixSum_Dim1_Reverse_Full", LaunchConfig({N0}),
-                   KOKKOS_LAMBDA(int i, const TeamMember &Team) {
+                   KOKKOS_LAMBDA(int I, const TeamMember &Team) {
                       parallelScanInner(
                           Team, N1,
                           INNER_LAMBDA(int KIdx, Real &Accum, bool IsFinal) {
                              // Iterate from N1-1 down to 0
                              const I4 K = N1 - 1 - KIdx;
-                             Accum += static_cast<Real>(InputData(i, K));
+                             Accum += static_cast<Real>(InputData(I, K));
                              if (IsFinal) {
-                                LocalOutput(i, K) = static_cast<ScalarT>(Accum);
+                                LocOutput(I, K) = static_cast<ScalarT>(Accum);
                              }
                           });
                    });
@@ -356,15 +446,15 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
                // Forward: scan from start to end
                parallelForOuter(
                    "PrefixSum_Dim1_Forward_Full", LaunchConfig({N0}),
-                   KOKKOS_LAMBDA(int i, const TeamMember &Team) {
+                   KOKKOS_LAMBDA(int I, const TeamMember &Team) {
                       parallelScanInner(
                           Team, N1,
                           INNER_LAMBDA(int KIdx, Real &Accum, bool IsFinal) {
                              // KIdx maps directly to K
                              const I4 K = KIdx;
-                             Accum += static_cast<Real>(InputData(i, K));
+                             Accum += static_cast<Real>(InputData(I, K));
                              if (IsFinal) {
-                                LocalOutput(i, K) = static_cast<ScalarT>(Accum);
+                                LocOutput(I, K) = static_cast<ScalarT>(Accum);
                              }
                           });
                    });
@@ -382,6 +472,12 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
 
    /// Whether to scan in reverse direction (true) or forward (false)
    bool ReverseDirection;
+
+   /// Name of the optional boundary condition field (empty = no BC)
+   std::string BCFieldName = "";
+
+   /// Boundary condition view, fetched in constructor (unallocated = no BC)
+   Array1DReal BCData;
 
    /// Min active layer index for each horizontal point (only for 2D arrays)
    Array1DI4 MinLayer;
