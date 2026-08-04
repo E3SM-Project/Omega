@@ -98,6 +98,22 @@ bool AnalysisOperator::isCacheValid(const TimeInstant &TimeStamp) {
    return IsValid;
 } // end isCacheValid
 
+//------------------------------------------------------------------------------
+// If Options contains a non-empty "OutputName" key, overrides OutputNames[0]
+// and InstanceName with that value. Derived class constructors call this after
+// setting their default OutputNames to support caller-assigned short names.
+void AnalysisOperator::applyOutputNameOverride(Config &Options) {
+   std::string Override;
+   if (OutputNames.empty()) {
+      return;
+   }
+   Error Err = Options.get("OutputName", Override);
+   if (Err.isSuccess() && !Override.empty()) {
+      OutputNames[0] = Override;
+      InstanceName   = Override;
+   }
+} // end applyOutputNameOverride
+
 } // end namespace OMEGA
 
 //===----------------------------------------------------------------------===//
