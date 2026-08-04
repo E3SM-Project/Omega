@@ -229,7 +229,6 @@ template <typename ArrayT> class CoordinateBinningOp : public AnalysisOperator {
 
    } // end compute
 
- private:
    /// Computes bin index for each entity based on coordinate value
    void computeBinning(const ArrayT &CoordData) {
 
@@ -258,6 +257,7 @@ template <typename ArrayT> class CoordinateBinningOp : public AnalysisOperator {
 
    } // end computeBinning
 
+ private:
    /// Output data array holding bin indices for each entity
    OutputArrayT OutputData;
 

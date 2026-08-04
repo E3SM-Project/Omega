@@ -250,7 +250,6 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
 
    } // end compute
 
- private:
    /// Computes binned accumulation for 1D input. Zeroes the local array,
    /// then atomically accumulates owned-entity values into bins, and
    /// performs MPI_Allreduce to obtain global totals.
@@ -356,6 +355,7 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
 
    } // end computeAccum2D
 
+ private:
    /// Output data array holding global binned accumulation
    OutputArrayT OutputData;
 

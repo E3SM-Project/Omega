@@ -219,7 +219,6 @@ class TransectAccumulatorOp : public AnalysisOperator {
 
    } // end compute
 
- private:
    /// Computes transect accumulation for 2D edge-based input using hierarchical
    /// parallelism. Outer loop over owned edges, inner loop over active vertical
    /// layers bounded by MinLayerEdgeBot/MaxLayerEdgeTop.
@@ -278,6 +277,7 @@ class TransectAccumulatorOp : public AnalysisOperator {
 
    } // end computeTransectAccum
 
+ private:
    /// Output data array holding global transect accumulation (1D: NVertLayers)
    OutputArrayT OutputData;
 

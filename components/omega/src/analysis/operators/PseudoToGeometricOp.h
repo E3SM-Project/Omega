@@ -348,7 +348,6 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
 
    } // end compute
 
- private:
    /// Enum for horizontal index space type
    enum class IndexSpace { Cell, Edge, Vertex };
 
@@ -392,6 +391,7 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
       }
    };
 
+ private:
    /// Output data array holding the geometric-coordinate field
    OutputArrayT OutputData;
 

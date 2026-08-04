@@ -183,29 +183,6 @@ template <typename ArrayT> class ExtractRegionOp : public AnalysisOperator {
       // Attach output data array to Field
       OutputField->template attachData<OutputArrayT>(OutputData);
 
-      // Attach the regional mask to the output Field
-      // If input already has a mask, compute intersection
-      if (InputField->hasRegionalMask()) {
-         Array1DI4 InputMask = InputField->getRegionalMask();
-         Array1DI4 IntersectionMask =
-             Array1DI4("IntersectionMask", RegionalMask.extent(0));
-
-         // Compute intersection: both masks must be 1 for result to be 1
-         auto LocalInputMask        = InputMask;
-         auto LocalRegionalMask     = RegionalMask;
-         auto LocalIntersectionMask = IntersectionMask;
-         parallelFor(
-             {static_cast<I4>(RegionalMask.extent(0))}, KOKKOS_LAMBDA(int I) {
-                LocalIntersectionMask(I) =
-                    LocalInputMask(I) * LocalRegionalMask(I);
-             });
-
-         OutputField->setRegionalMask(IntersectionMask);
-      } else {
-         // No existing mask, just attach this one
-         OutputField->setRegionalMask(RegionalMask);
-      }
-
    } // end constructor
 
    /// Initializes the operator after all Fields exist. Determines the index
@@ -260,6 +237,27 @@ template <typename ArrayT> class ExtractRegionOp : public AnalysisOperator {
             ABORT_ERROR("ExtractRegionOp: Unknown index space {}",
                         IndexSpaceName);
          }
+      }
+
+      // Attach the regional mask to the output Field
+      // If input already has a mask, compute intersection
+      auto InputField = Field::get(InputNames[0]);
+      if (InputField->hasRegionalMask()) {
+         Array1DI4 InputMask = InputField->getRegionalMask();
+         Array1DI4 IntersectionMask =
+             Array1DI4("IntersectionMask", RegionalMask.extent(0));
+         OMEGA_SCOPE(LocInputMask, InputMask);
+         OMEGA_SCOPE(LocRegionalMask, RegionalMask);
+         OMEGA_SCOPE(LocIntersectionMask, IntersectionMask);
+         parallelFor(
+             {static_cast<I4>(RegionalMask.extent(0))}, KOKKOS_LAMBDA(int I) {
+                LocIntersectionMask(I) = LocInputMask(I) * LocRegionalMask(I);
+             });
+         auto OutputField = Field::get(OutputNames[0]);
+         OutputField->setRegionalMask(IntersectionMask);
+      } else {
+         auto OutputField = Field::get(OutputNames[0]);
+         OutputField->setRegionalMask(RegionalMask);
       }
 
    } // end initialize
