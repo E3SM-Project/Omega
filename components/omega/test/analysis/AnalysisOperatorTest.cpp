@@ -196,6 +196,7 @@ void reportTest(const std::string &TestName, bool Passed) {
    NumTests++;
    if (Passed) {
       NumPassed++;
+      LOG_DEBUG("PASS: {}", TestName);
    } else {
       NumFailed++;
       LOG_ERROR("FAIL: {}", TestName);
@@ -737,7 +738,7 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
       auto ResultData = ResultField->getDataArray<Array1D_t<Real>>();
       auto ResultHost = createHostMirrorCopy(ResultData);
 
-      for (I4 i = 0; i < std::min(10, Dims[0]); ++i) {
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
          Real ComputedValue = ResultHost(i);
          if (std::abs(ComputedValue - ExpectedMean) >
              static_cast<Real>(Helper::getTolerance())) {
@@ -751,8 +752,8 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
       auto ResultData = ResultField->getDataArray<Array2D_t<Real>>();
       auto ResultHost = createHostMirrorCopy(ResultData);
 
-      for (I4 i = 0; i < std::min(5, Dims[0]); ++i) {
-         for (I4 j = 0; j < std::min(5, Dims[1]); ++j) {
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+         for (I4 j = 0; j < VCoord->NVertLayers; ++j) {
             Real ComputedValue = ResultHost(i, j);
             if (std::abs(ComputedValue - ExpectedMean) >
                 static_cast<Real>(Helper::getTolerance())) {
@@ -769,9 +770,9 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
       auto ResultData = ResultField->getDataArray<Array3D_t<Real>>();
       auto ResultHost = createHostMirrorCopy(ResultData);
 
-      for (I4 i = 0; i < std::min(3, Dims[0]); ++i) {
-         for (I4 j = 0; j < std::min(3, Dims[1]); ++j) {
-            for (I4 k = 0; k < std::min(3, Dims[2]); ++k) {
+      for (I4 i = 0; i < Dims[0]; ++i) {
+         for (I4 j = 0; j < Mesh->NCellsOwned; ++j) {
+            for (I4 k = 0; k < VCoord->NVertLayers; ++k) {
                Real ComputedValue = ResultHost(i, j, k);
                if (std::abs(ComputedValue - ExpectedMean) >
                    static_cast<Real>(Helper::getTolerance())) {
@@ -1266,7 +1267,7 @@ void testBinaryMultiplyOp(const MachEnv *Env, const HorzMesh *Mesh,
 }
 
 //------------------------------------------------------------------------------
-// Template for testing PrefixSumOp with 2D arrays
+// Template for testing PrefixSumOp with 1D and 2D arrays
 template <typename ArrayType>
 void testPrefixSumOpType(const std::string &TypeName, const MachEnv *Env,
                          const HorzMesh *Mesh, const VertCoord *VCoord) {
@@ -1274,76 +1275,166 @@ void testPrefixSumOpType(const std::string &TypeName, const MachEnv *Env,
    using Helper       = TestHelper<ArrayType>;
    using ScalarT      = typename Helper::ScalarT;
    constexpr int Rank = Helper::Rank;
-   // Only test 2D arrays for PrefixSum (most relevant for MOC)
-   if constexpr (Rank != 2) {
-      return;
-   }
 
-   // Use bins (non-distributed dimension) for testing
-   // Create a simple 2D field: NBins x NVertLayers
-   const I4 NBins       = 10; // Small number for testing
    const I4 NVertLayers = VCoord->NVertLayers;
 
-   std::string FieldName = "TestFieldPrefixSum_" + TypeName;
-
-   Dimension::create("TestBins", NBins);
-   // Create field with bins × vertical levels
-   auto TestField =
-       Field::create(FieldName, "Test field for PrefixSum", "units", "",
-                     static_cast<ScalarT>(-1000), static_cast<ScalarT>(1000), 2,
-                     {"TestBins", "NVertLayers"});
-   // Allocate and initialize data: value = (bin_idx + 1) * (level + 1)
-   ArrayType TestData(FieldName + "_data", NBins, NVertLayers);
-   auto TestHost = Kokkos::create_mirror_view(TestData);
-   for (I4 i = 0; i < NBins; ++i) {
-      for (I4 j = 0; j < NVertLayers; ++j) {
-         TestHost(i, j) = static_cast<ScalarT>((i + 1) * (j + 1));
+   if constexpr (Rank == 1) {
+      // --- 1D forward scan ---
+      std::string FwdName = "TestFieldPrefixSum1D_Fwd_" + TypeName;
+      auto FwdField =
+          Field::create(FwdName, "Test 1D field for PrefixSum forward", "units",
+                        "", static_cast<ScalarT>(-1000),
+                        static_cast<ScalarT>(1000), 1, {"NVertLayers"});
+      ArrayType FwdData(FwdName + "_data", NVertLayers);
+      auto FwdHost = Kokkos::create_mirror_view(FwdData);
+      for (I4 k = 0; k < NVertLayers; ++k) {
+         FwdHost(k) = static_cast<ScalarT>(k + 1); // 1, 2, 3, ...
       }
-   }
-   deepCopy(TestData, TestHost);
-   TestField->template attachData<ArrayType>(TestData, false);
-   // Test vertical integration (dimension 1, reverse = true for MOC)
-   auto PrefixOp = AnalysisOpFactory::createOp(
-       "PrefixSum", {FieldName},
-       makeOpConfig(opParam("Dimension", 1), opParam("Reverse", true)));
-   PrefixOp->initialize(Env, Mesh, VCoord, makeOpConfig());
-   TimeInstant TestTime;
-   PrefixOp->compute(TestTime);
-   // Get result
-   auto ResultField = Field::get(FieldName + "_PrefixSum");
-   auto ResultData  = ResultField->getDataArray<ArrayType>();
-   auto ResultHost  = createHostMirrorCopy(ResultData);
-   // Verify reverse cumulative sum
-   bool Passed = true;
+      deepCopy(FwdData, FwdHost);
+      FwdField->template attachData<ArrayType>(FwdData, false);
 
-   for (I4 i = 0; i < NBins; ++i) {
-      for (I4 j = 0; j < NVertLayers; ++j) {
-         // Compute expected: sum from j to NVertLayers-1
-         Real Expected = 0.0;
-         for (I4 k = j; k < NVertLayers; ++k) {
-            Expected += static_cast<Real>((i + 1) * (k + 1));
-         }
+      auto FwdOp = AnalysisOpFactory::createOp(
+          "PrefixSum", {FwdName},
+          makeOpConfig(opParam("Dimension", 0), opParam("Reverse", false)));
+      FwdOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+      TimeInstant TestTime;
+      FwdOp->compute(TestTime);
 
-         Real Computed = static_cast<Real>(ResultHost(i, j));
+      auto FwdResultField = Field::get(FwdName + "_PrefixSum");
+      auto FwdResultData  = FwdResultField->getDataArray<ArrayType>();
+      auto FwdResultHost  = createHostMirrorCopy(FwdResultData);
 
+      bool FwdPassed = true;
+      for (I4 k = 0; k < NVertLayers; ++k) {
+         // Inclusive forward sum: Output[k] = sum(1..k+1) = (k+1)(k+2)/2
+         Real Expected = static_cast<Real>((k + 1) * (k + 2)) / 2.0;
+         Real Computed = static_cast<Real>(FwdResultHost(k));
          if (std::abs(Computed - Expected) >
              static_cast<Real>(Helper::getTolerance())) {
-            Passed = false;
-            LOG_ERROR("  At bin {} level {}: Expected {}, Got {}", i, j,
-                      Expected, Computed);
+            FwdPassed = false;
+            LOG_ERROR("  1D forward at {}: Expected {}, Got {}", k, Expected,
+                      Computed);
             break;
          }
       }
-      if (!Passed)
-         break;
+      reportTest("PrefixSumOp: " + TypeName + " forward", FwdPassed);
+
+      // --- 1D reverse scan ---
+      std::string RevName = "TestFieldPrefixSum1D_Rev_" + TypeName;
+      auto RevField =
+          Field::create(RevName, "Test 1D field for PrefixSum reverse", "units",
+                        "", static_cast<ScalarT>(-1000),
+                        static_cast<ScalarT>(1000), 1, {"NVertLayers"});
+      ArrayType RevData(RevName + "_data", NVertLayers);
+      auto RevHost = Kokkos::create_mirror_view(RevData);
+      for (I4 k = 0; k < NVertLayers; ++k) {
+         RevHost(k) = static_cast<ScalarT>(k + 1); // 1, 2, 3, ...
+      }
+      deepCopy(RevData, RevHost);
+      RevField->template attachData<ArrayType>(RevData, false);
+
+      auto RevOp = AnalysisOpFactory::createOp(
+          "PrefixSum", {RevName},
+          makeOpConfig(opParam("Dimension", 0), opParam("Reverse", true)));
+      RevOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+      RevOp->compute(TestTime);
+
+      auto RevResultField = Field::get(RevName + "_PrefixSum");
+      auto RevResultData  = RevResultField->getDataArray<ArrayType>();
+      auto RevResultHost  = createHostMirrorCopy(RevResultData);
+
+      bool RevPassed = true;
+      for (I4 k = 0; k < NVertLayers; ++k) {
+         // Inclusive reverse sum: Output[k] = sum(k+1..N)
+         Real Expected = 0.0;
+         for (I4 j = k; j < NVertLayers; ++j) {
+            Expected += static_cast<Real>(j + 1);
+         }
+         Real Computed = static_cast<Real>(RevResultHost(k));
+         if (std::abs(Computed - Expected) >
+             static_cast<Real>(Helper::getTolerance())) {
+            RevPassed = false;
+            LOG_ERROR("  1D reverse at {}: Expected {}, Got {}", k, Expected,
+                      Computed);
+            break;
+         }
+      }
+      reportTest("PrefixSumOp: " + TypeName + " reverse", RevPassed);
+
+   } else if constexpr (Rank == 2) {
+      // Use bins (non-distributed dimension) for testing
+      // Create a simple 2D field: NBins x NVertLayers
+      const I4 NBins = 10; // Small number for testing
+
+      std::string FieldName = "TestFieldPrefixSum_" + TypeName;
+
+      if (!Dimension::exists("TestBins")) {
+         Dimension::create("TestBins", NBins);
+      }
+      // Create field with bins × vertical levels
+      auto TestField =
+          Field::create(FieldName, "Test field for PrefixSum", "units", "",
+                        static_cast<ScalarT>(-1000), static_cast<ScalarT>(1000),
+                        2, {"TestBins", "NVertLayers"});
+      // Allocate and initialize data: value = (bin_idx + 1) * (level + 1)
+      ArrayType TestData(FieldName + "_data", NBins, NVertLayers);
+      auto TestHost = Kokkos::create_mirror_view(TestData);
+      for (I4 i = 0; i < NBins; ++i) {
+         for (I4 j = 0; j < NVertLayers; ++j) {
+            TestHost(i, j) = static_cast<ScalarT>((i + 1) * (j + 1));
+         }
+      }
+      deepCopy(TestData, TestHost);
+      TestField->template attachData<ArrayType>(TestData, false);
+      // Test vertical integration (dimension 1, reverse = true for MOC)
+      auto PrefixOp = AnalysisOpFactory::createOp(
+          "PrefixSum", {FieldName},
+          makeOpConfig(opParam("Dimension", 1), opParam("Reverse", true)));
+      PrefixOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+      TimeInstant TestTime;
+      PrefixOp->compute(TestTime);
+      // Get result
+      auto ResultField = Field::get(FieldName + "_PrefixSum");
+      auto ResultData  = ResultField->getDataArray<ArrayType>();
+      auto ResultHost  = createHostMirrorCopy(ResultData);
+      // Verify reverse cumulative sum
+      bool Passed = true;
+
+      for (I4 i = 0; i < NBins; ++i) {
+         for (I4 j = 0; j < NVertLayers; ++j) {
+            // Compute expected: sum from j to NVertLayers-1
+            Real Expected = 0.0;
+            for (I4 k = j; k < NVertLayers; ++k) {
+               Expected += static_cast<Real>((i + 1) * (k + 1));
+            }
+
+            Real Computed = static_cast<Real>(ResultHost(i, j));
+
+            if (std::abs(Computed - Expected) >
+                static_cast<Real>(Helper::getTolerance())) {
+               Passed = false;
+               LOG_ERROR("  At bin {} level {}: Expected {}, Got {}", i, j,
+                         Expected, Computed);
+               break;
+            }
+         }
+         if (!Passed)
+            break;
+      }
+      reportTest("PrefixSumOp: " + TypeName, Passed);
    }
-   reportTest("PrefixSumOp: " + TypeName, Passed);
 }
 
 //------------------------------------------------------------------------------
-// Test PrefixSumOp with 2D array types
+// Test PrefixSumOp with 1D and 2D array types
 void testPrefixSumOp(const MachEnv *Env, const HorzMesh *Mesh,
                      const VertCoord *VCoord) {
+
+   // Test 1D arrays (e.g., output from TransectAccumulatorOp)
+   testPrefixSumOpType<Array1DI4>("1D-I4", Env, Mesh, VCoord);
+   testPrefixSumOpType<Array1DI8>("1D-I8", Env, Mesh, VCoord);
+   testPrefixSumOpType<Array1DR4>("1D-R4", Env, Mesh, VCoord);
+   testPrefixSumOpType<Array1DR8>("1D-R8", Env, Mesh, VCoord);
 
    // Test 2D arrays (most relevant for MOC vertical integration)
    testPrefixSumOpType<Array2DI4>("2D-I4", Env, Mesh, VCoord);
@@ -1353,9 +1444,135 @@ void testPrefixSumOp(const MachEnv *Env, const HorzMesh *Mesh,
 }
 
 //------------------------------------------------------------------------------
+// Template for testing PrefixSumOp with boundary condition (BC)
+template <typename ArrayType>
+void testPrefixSumOpWithBCType(const std::string &TypeName, const MachEnv *Env,
+                               const HorzMesh *Mesh, const VertCoord *VCoord) {
+
+   using Helper       = TestHelper<ArrayType>;
+   using ScalarT      = typename Helper::ScalarT;
+   constexpr int Rank = Helper::Rank;
+
+   // Only test 2D arrays for PrefixSum (most relevant for MOC)
+   if constexpr (Rank != 2) {
+      return;
+   }
+
+   // Only test floating point types (BC feature used with real transport
+   // fields)
+   if constexpr (!std::is_floating_point_v<ScalarT>) {
+      return;
+   }
+
+   // Use bins (non-distributed dimension) for testing horizontal scan with BC
+   const I4 NBins       = 10; // Small number for testing
+   const I4 NVertLayers = VCoord->NVertLayers;
+
+   std::string InputFieldName = "TestFieldPrefixSumBC_" + TypeName;
+   std::string BCFieldName    = "TestBCPrefixSum_" + TypeName;
+
+   // Ensure TestBins dimension exists
+   if (!Dimension::exists("TestBins")) {
+      Dimension::create("TestBins", NBins);
+   }
+
+   // Create BC field (1D: NVertLayers)
+   // BC values represent boundary transport at southern edge (for regional MOC)
+   auto BCField = Field::create(BCFieldName, "Test BC for PrefixSum", "m3/s",
+                                "", static_cast<ScalarT>(-1e30),
+                                static_cast<ScalarT>(1e30), 1, {"NVertLayers"});
+
+   Array1DReal BCData(BCFieldName + "_data", NVertLayers);
+   BCField->template attachData<Array1DReal>(BCData, false);
+
+   auto BCHost = Kokkos::create_mirror_view(BCData);
+   for (I4 k = 0; k < NVertLayers; ++k) {
+      BCHost(k) = 100.0 * (k + 1); // Simple BC values: 100, 200, 300, ...
+   }
+   deepCopy(BCData, BCHost);
+
+   // Create input field (2D: NBins × NVertLayers)
+   auto InputField = Field::create(
+       InputFieldName, "Test field for PrefixSum with BC", "m3/s", "",
+       static_cast<ScalarT>(-1e30), static_cast<ScalarT>(1e30), 2,
+       {"TestBins", "NVertLayers"});
+
+   ArrayType InputData(InputFieldName + "_data", NBins, NVertLayers);
+   auto InputHost = Kokkos::create_mirror_view(InputData);
+   for (I4 i = 0; i < NBins; ++i) {
+      for (I4 k = 0; k < NVertLayers; ++k) {
+         InputHost(i, k) =
+             static_cast<ScalarT>((i + 1) * (k + 1)); // 1,2,3... at bin 0,
+                                                      // 2,4,6... at bin 1, etc.
+      }
+   }
+   deepCopy(InputData, InputHost);
+   InputField->template attachData<ArrayType>(InputData, false);
+
+   // Test horizontal integration with BC (dimension 0, forward scan)
+   // This simulates regional MOC where BC provides southern boundary transport
+   auto PrefixOp = AnalysisOpFactory::createOp(
+       "PrefixSum", {InputFieldName, BCFieldName},
+       makeOpConfig(opParam("Dimension", 0), opParam("Reverse", false)));
+   PrefixOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+
+   TimeInstant TestTime;
+   PrefixOp->compute(TestTime);
+
+   // Get result
+   auto ResultField =
+       Field::get(InputFieldName + "_PrefixSum(BC=" + BCFieldName + ")");
+   auto ResultData = ResultField->getDataArray<ArrayType>();
+   auto ResultHost = createHostMirrorCopy(ResultData);
+
+   // Verify forward cumulative sum with BC seeding
+   bool Passed = true;
+
+   for (I4 i = 0; i < NBins; ++i) {
+      for (I4 k = 0; k < NVertLayers; ++k) {
+         // Compute expected: BC(k) + sum from 0 to i of Input(i,k)
+         // At i=0: BC(k) + Input(0,k)
+         // At i=1: BC(k) + Input(0,k) + Input(1,k)
+         // etc.
+         Real Expected = static_cast<Real>(BCHost(k));
+         for (I4 bin = 0; bin <= i; ++bin) {
+            Expected += static_cast<Real>(InputHost(bin, k));
+         }
+
+         Real Computed = static_cast<Real>(ResultHost(i, k));
+
+         if (std::abs(Computed - Expected) >
+             static_cast<Real>(Helper::getTolerance())) {
+            Passed = false;
+            LOG_ERROR("  At bin {} level {}: Expected {}, Got {}", i, k,
+                      Expected, Computed);
+            break;
+         }
+      }
+      if (!Passed)
+         break;
+   }
+
+   reportTest("PrefixSumOpWithBC: " + TypeName, Passed);
+}
+
+//------------------------------------------------------------------------------
+// Test PrefixSumOp with boundary condition using 2D array types
+void testPrefixSumOpWithBC(const MachEnv *Env, const HorzMesh *Mesh,
+                           const VertCoord *VCoord) {
+
+   // Test 2D floating-point arrays (BC feature used for MOC regional transport)
+   testPrefixSumOpWithBCType<Array2DR4>("2D-R4", Env, Mesh, VCoord);
+   testPrefixSumOpWithBCType<Array2DR8>("2D-R8", Env, Mesh, VCoord);
+}
+
+//------------------------------------------------------------------------------
 // Test CoordinateBinningOp with 1D coordinate arrays
 void testCoordinateBinningOp(const MachEnv *Env, const HorzMesh *Mesh,
                              const VertCoord *VCoord) {
+
+   int MyRank;
+   MPI_Comm_rank(Env->getComm(), &MyRank);
 
    std::string FieldName = "TestCoordBinning";
 
@@ -1374,7 +1591,7 @@ void testCoordinateBinningOp(const MachEnv *Env, const HorzMesh *Mesh,
    auto CellIDH      = Decomp->CellIDH;
 
    // Create latitude-like distribution: map global cell ID to latitude
-   for (I4 i = 0; i < NCells; ++i) {
+   for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
       Real Fraction = static_cast<Real>(CellIDH(i) - 1) /
                       static_cast<Real>(Mesh->NCellsGlobal - 1);
       TestDataHost(i) = -90.0 + Fraction * 180.0; // -90 to +90
@@ -1387,6 +1604,7 @@ void testCoordinateBinningOp(const MachEnv *Env, const HorzMesh *Mesh,
        "CoordinateBinning", {FieldName},
        makeOpConfig(opParam("NumBins", NumBins), opParam("MinBin", -90.0),
                     opParam("MaxBin", 90.0)));
+
    BinningOp->initialize(Env, Mesh, VCoord, makeOpConfig());
 
    TimeInstant TestTime;
@@ -1399,15 +1617,26 @@ void testCoordinateBinningOp(const MachEnv *Env, const HorzMesh *Mesh,
 
    // Verify bin assignments
    bool Passed = true;
-   for (I4 i = 0; i < std::min(10, NCells); ++i) {
+   for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
       Real Coord     = TestDataHost(i);
       I4 ComputedBin = ResultHost(i);
-      Real BinWidth  = 180.0 / static_cast<Real>(NumBins);
-      I4 ExpectedBin = static_cast<I4>((Coord + 90.0) / BinWidth);
+      // Replicate exact operator logic including margins
+      // (operator adds margin = (MaxBin-MinBin)*1e-6 to both ends)
+      Real RawMin    = -90.0;
+      Real RawMax    = 90.0;
+      Real Margin    = (RawMax - RawMin) * 1.0e-6;
+      Real AdjMinBin = RawMin - Margin;
+      Real AdjMaxBin = RawMax + Margin;
+      Real BinWidth  = (AdjMaxBin - AdjMinBin) / static_cast<Real>(NumBins);
 
-      // Handle edge case at max boundary
-      if (ExpectedBin >= NumBins)
+      I4 ExpectedBin = static_cast<I4>((Coord - AdjMinBin) / BinWidth);
+
+      // Clamp to valid range [0, NumBins-1] as the operator does
+      if (ExpectedBin < 0) {
+         ExpectedBin = 0;
+      } else if (ExpectedBin >= NumBins) {
          ExpectedBin = NumBins - 1;
+      }
 
       if (ComputedBin != ExpectedBin) {
          Passed = false;
@@ -1624,7 +1853,7 @@ void testPseudoToGeometricOpType(const std::string &TypeName,
       for (I4 i = 0; i < Mesh->NCellsOwned; i++) {
          // Respect active layer bounds for this cell, clamped to array bounds
          I4 KMin = VCoord->MinLayerCellH(i);
-         I4 KMax = std::min(VCoord->MaxLayerCellH(i), Dims[1] - 1);
+         I4 KMax = VCoord->MaxLayerCellH(i);
          for (I4 k = KMin; k <= KMax; k++) {
             // Compute expected using same precision path as operator
             Real PseudoVal  = static_cast<Real>(InputHost(i, k));
@@ -1652,7 +1881,7 @@ void testPseudoToGeometricOpType(const std::string &TypeName,
             // Respect active layer bounds for this cell, clamped to array
             // bounds
             I4 KMin = VCoord->MinLayerCellH(j);
-            I4 KMax = std::min(VCoord->MaxLayerCellH(j), Dims[2] - 1);
+            I4 KMax = VCoord->MaxLayerCellH(j);
             for (I4 k = KMin; k <= KMax; k++) {
                // Compute expected using same precision path as operator
                Real PseudoVal  = static_cast<Real>(InputHost(i, j, k));
@@ -2186,6 +2415,8 @@ int main(int argc, char *argv[]) {
       testBinaryMultiplyOp(DefEnv, Mesh, VCoord);
 
       testPrefixSumOp(DefEnv, Mesh, VCoord);
+
+      testPrefixSumOpWithBC(DefEnv, Mesh, VCoord);
 
       testCoordinateBinningOp(DefEnv, Mesh, VCoord);
 
