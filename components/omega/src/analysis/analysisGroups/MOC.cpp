@@ -11,6 +11,7 @@
 #include "analysisGroups/MOC.h"
 #include "AnalysisOperator.h"
 #include <iostream>
+#include <set>
 
 namespace OMEGA {
 
@@ -52,11 +53,6 @@ MOC::MOC(const std::string &GroupName, Config &AnalysisGroupOptions,
    if (Err.isFail()) {
       LOG_INFO("MOC: MaxLat not specified, using default: {}", MaxLat);
    }
-
-   // Convert latitude from degrees to radians
-   const Real DegToRad = M_PI / 180.0;
-   Real MinLatRad      = MinLat * DegToRad;
-   Real MaxLatRad      = MaxLat * DegToRad;
 
    // Read optional region list for regional MOC
    std::vector<std::string> RegionList;
@@ -107,10 +103,11 @@ MOC::MOC(const std::string &GroupName, Config &AnalysisGroupOptions,
              buildTransectBCChain(TransectList[TransectIdx++], AnalysisManager);
       }
 
-      // Build the MOC operator chain for this region
+      // Build the MOC operator chain for this region (pass degrees; radians
+      // conversion is done inside buildMOCChain)
       std::string ChainStem =
-          buildMOCChain(RegionName, RegionMaskName, NumBins, MinLatRad,
-                        MaxLatRad, BCFieldName, AnalysisManager);
+          buildMOCChain(RegionName, RegionMaskName, NumBins, MinLat, MaxLat,
+                        BCFieldName, AnalysisManager);
       ChainStems.push_back(ChainStem);
    }
 
@@ -120,6 +117,20 @@ MOC::MOC(const std::string &GroupName, Config &AnalysisGroupOptions,
 
    // Create IOStreams organized by output frequency and associate operators
    createAnalysisGroupStreams(GroupName, AnalysisGroupOptions, AnalysisManager);
+
+   // Add the static bin boundary coordinate field to every output stream so
+   // that the latitude axis values are available in the output file.
+   if (!BinBoundaryFieldName.empty()) {
+      std::set<std::string> StreamNamesUsed;
+      for (const auto &Info : OpChainInfos) {
+         std::string SName = GroupName + "_" + Info.FreqStr +
+                             (Info.IsTimeReduction ? "TimeStats" : "Instants");
+         StreamNamesUsed.insert(SName);
+      }
+      for (const auto &SName : StreamNamesUsed) {
+         IOStream::get(SName)->addField(BinBoundaryFieldName);
+      }
+   }
 
 } // end MOC constructor
 
@@ -221,14 +232,58 @@ std::string MOC::buildMOCChain(const std::string &RegionName,
    if (!BinningBuilt) {
       std::string BinningChainName = "LatCell_CoordinateBinning";
 
+      // Convert latitude bounds to radians for the CoordinateBinningOp
+      // (LatCell is stored in radians in the mesh)
+      const Real DegToRad  = M_PI / 180.0;
+      const Real MinLatRad = MinLat * DegToRad;
+      const Real MaxLatRad = MaxLat * DegToRad;
+
       // Build binning config using makeOpConfig/opParam helpers
-      Config BinningConfig =
-          makeOpConfig(opParam("NumBins", NumBins), // Number of latitude bins
-                       opParam("MinBin", MinLat), // Minimum latitude (radians)
-                       opParam("MaxBin", MaxLat)  // Maximum latitude (radians)
-          );
+      Config BinningConfig = makeOpConfig(
+          opParam("NumBins", NumBins),  // Number of latitude bins
+          opParam("MinBin", MinLatRad), // Minimum latitude (radians)
+          opParam("MaxBin", MaxLatRad)  // Maximum latitude (radians)
+      );
 
       AnalysisManager->parseChainAndBuildOps(BinningChainName, BinningConfig);
+
+      // -----------------------------------------------------------------------
+      // Create the static latitude bin boundary coordinate field.
+      // This is a 1D array of size NumBins+1 holding the southern edge of each
+      // bin (plus the northern edge of the last bin) in degrees. Equivalent to
+      // MPAS's binBoundaryMocStreamfunction. MinLat/MaxLat are in degrees as
+      // read from config (the radians conversion is done separately for ops).
+      // -----------------------------------------------------------------------
+      BinBoundaryFieldName = "MOCLatBinBoundaries";
+
+      const Real BinWidthDeg = (MaxLat - MinLat) / static_cast<Real>(NumBins);
+      const I4 NBounds       = NumBins + 1;
+
+      // Create the dimension for NumBins+1 bin boundaries
+      auto BinBoundDim = Dimension::create("NMocLatBinBoundaries", NBounds);
+
+      std::vector<std::string> BinBoundDimNames = {"NMocLatBinBoundaries"};
+      auto BinBoundField =
+          Field::create(BinBoundaryFieldName,
+                        "Southern latitude boundary of each MOC bin (plus "
+                        "northern edge of last bin)", // Description
+                        "degrees_north",              // Units
+                        "latitude",                   // Standard name
+                        MinLat,                       // ValidMin
+                        MaxLat,                       // ValidMax
+                        1,                            // Rank
+                        BinBoundDimNames              // Dimension names
+          );
+
+      // Allocate and fill the boundary values
+      Array1DReal BinBoundData(BinBoundaryFieldName + "_data", NBounds);
+      auto BinBoundHost = Kokkos::create_mirror_view(BinBoundData);
+      for (I4 I = 0; I <= NumBins; ++I) {
+         BinBoundHost(I) = MinLat + I * BinWidthDeg;
+      }
+      Kokkos::deep_copy(BinBoundData, BinBoundHost);
+      BinBoundField->attachData<Array1DReal>(BinBoundData);
+
       BinningBuilt = true;
    }
 
