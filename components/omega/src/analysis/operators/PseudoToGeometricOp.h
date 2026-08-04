@@ -87,28 +87,6 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
       auto PseudoField = Field::get(InputNames[0]);
       auto PseudoData  = PseudoField->template getDataArray<ArrayT>();
 
-      // Support 1D (horizontal), 2D (horizontal × vertical), and 3D arrays
-      const I4 InputRank = ArrayT::rank;
-
-      // Store dimensions based on rank
-      if (InputRank == 1) {
-         // 1D: horizontal only (cells/edges/vertices), no vertical structure
-         NHorizDim = PseudoData.extent(0);
-         NVertSize = 1; // No vertical dimension
-      } else if (InputRank == 2) {
-         // 2D: NHorizDim × NVertSize
-         NHorizDim = PseudoData.extent(0);
-         NVertSize = PseudoData.extent(1);
-      } else if (InputRank == 3) {
-         // 3D: Dim0 × Dim1 × NVertSize (flatten horizontal grid)
-         NHorizDim = PseudoData.extent(1);
-         NVertSize = PseudoData.extent(2);
-      } else {
-         ABORT_ERROR("PseudoToGeometricOp: Unsupported rank {}. "
-                     "Supports 1D, 2D, and 3D arrays",
-                     InputRank);
-      }
-
       // Get dimension info from pseudo field
       auto NDims = PseudoField->getNumDims();
       std::vector<std::string> DimNames;
@@ -121,23 +99,20 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
 
       // Get input metadata
       std::string PseudoDescr, PseudoUnits, PseudoStdName;
-      ScalarT PseudoValidMin, PseudoValidMax;
       PseudoField->getMetadata("Description", PseudoDescr);
       PseudoField->getMetadata("Units", PseudoUnits);
       PseudoField->getMetadata("StdName", PseudoStdName);
-      PseudoField->getMetadata("ValidMin", PseudoValidMin);
-      PseudoField->getMetadata("ValidMax", PseudoValidMax);
 
       // Create output Field with updated metadata
       auto OutputField =
           Field::create(OutputNames[0],
                         "Geometric conversion of" + PseudoDescr, // Description
                         PseudoUnits,                             // Units
-                        PseudoStdName,  // Standard name
-                        PseudoValidMin, // Min valid
-                        PseudoValidMax, // Max valid
-                        NDims,          // Rank
-                        DimNames        // Dimension names
+                        PseudoStdName, // Standard name
+                        -std::numeric_limits<ScalarT>::max(),
+                        std::numeric_limits<ScalarT>::max(),
+                        NDims,   // Rank
+                        DimNames // Dimension names
           );
 
       // Allocate output data array matching input layout
@@ -165,30 +140,35 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
       // Get array rank for conditional logic
       constexpr I4 InputRank = ArrayT::rank;
 
+      auto PseudoField = Field::get(InputNames[0]);
+      auto PseudoData  = PseudoField->template getDataArray<ArrayT>();
+
       // Determine index space from horizontal dimension
       std::string IndexSpaceName;
       if constexpr (InputRank == 1) {
          // 1D: first (only) dimension
-         auto PseudoField = Field::get(InputNames[0]);
          std::vector<std::string> DimNames;
          PseudoField->getDimNames(DimNames);
          IndexSpaceName = DimNames[0];
+         NVertSize      = 1;
       } else {
          // 2D/3D: horizontal is 2nd to last dimension
-         auto PseudoField = Field::get(InputNames[0]);
          std::vector<std::string> DimNames;
          PseudoField->getDimNames(DimNames);
          IndexSpaceName = DimNames[InputRank - 2];
+         NVertSize      = PseudoData.extent(InputRank - 1);
       }
 
       // Set index space type and connectivity arrays
       if (IndexSpaceName == "NCells") {
+         NHorizDim      = Mesh->NCellsOwned;
          IndexSpaceType = IndexSpace::Cell;
          if constexpr (InputRank > 1) {
             MinLayer = VCoord->MinLayerCell;
             MaxLayer = VCoord->MaxLayerCell;
          }
       } else if (IndexSpaceName == "NEdges") {
+         NHorizDim      = Mesh->NEdgesOwned;
          IndexSpaceType = IndexSpace::Edge;
          CellsOnEdge    = Mesh->CellsOnEdge;
          if constexpr (InputRank > 1) {
@@ -196,6 +176,7 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
             MaxLayer = VCoord->MaxLayerEdgeTop;
          }
       } else if (IndexSpaceName == "NVertices") {
+         NHorizDim      = Mesh->NVerticesOwned;
          IndexSpaceType = IndexSpace::Vertex;
          CellsOnVertex  = Mesh->CellsOnVertex;
          VertexDegree   = Mesh->VertexDegree;
@@ -231,15 +212,7 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
       auto SpecVolField = Field::get("SpecVol");
       auto SpecVolData  = SpecVolField->getDataArray<Array2DReal>();
 
-      // Check horizontal dimension compatibility
-      if (SpecVolData.extent(0) != NHorizDim) {
-         ABORT_ERROR(
-             "PseudoToGeometricOp: SpecVol field horizontal dimension "
-             "({}) does not match pseudo field horizontal dimension ({})",
-             SpecVolData.extent(0), NHorizDim);
-      }
-
-      auto Output = OutputData;
+      OMEGA_SCOPE(LocOutput, OutputData);
 
       // Create functor for horizontal interpolation
       HorizInterpFunctor getSpecVol{SpecVolData, IndexSpaceType, CellsOnEdge,
@@ -250,7 +223,7 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
          parallelFor(
              {NHorizDim}, KOKKOS_LAMBDA(int IHoriz) {
                 Real SpecVolHoriz = getSpecVol(IHoriz, 0);
-                Output(IHoriz) =
+                LocOutput(IHoriz) =
                     static_cast<ScalarT>((RhoSw * SpecVolHoriz) *
                                          static_cast<Real>(PseudoData(IHoriz)));
              });
@@ -304,7 +277,7 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
                           SpecVolAtK = getSpecVol(IHoriz, K);
                        }
 
-                       Output(IHoriz, K) = static_cast<ScalarT>(
+                       LocOutput(IHoriz, K) = static_cast<ScalarT>(
                            (RhoSw * SpecVolAtK) *
                            static_cast<Real>(PseudoData(IHoriz, K)));
                     });
@@ -326,7 +299,7 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
 
          parallelForOuter(
              "PseudoToGeometric3D", LaunchConfig({Dim0, NHorizDim}),
-             KOKKOS_LAMBDA(int i0, int IHoriz, const TeamMember &Team) {
+             KOKKOS_LAMBDA(int I0, int IHoriz, const TeamMember &Team) {
                 const I4 KMin   = LocMinLayer(IHoriz);
                 const I4 KMax   = LocMaxLayer(IHoriz);
                 const I4 KRange = vertRange(KMin, KMax);
@@ -362,9 +335,9 @@ template <typename ArrayT> class PseudoToGeometricOp : public AnalysisOperator {
                           SpecVolAtK = getSpecVol(IHoriz, K);
                        }
 
-                       Output(i0, IHoriz, K) = static_cast<ScalarT>(
+                       LocOutput(I0, IHoriz, K) = static_cast<ScalarT>(
                            (RhoSw * SpecVolAtK) *
-                           static_cast<Real>(PseudoData(i0, IHoriz, K)));
+                           static_cast<Real>(PseudoData(I0, IHoriz, K)));
                     });
              });
       }
