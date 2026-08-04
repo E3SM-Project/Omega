@@ -57,8 +57,8 @@ class TransectAccumulatorOp : public AnalysisOperator {
    /// Constructs a TransectAccumulatorOp operator. Reads configuration
    /// (transect name), retrieves mask and sign fields, creates output Field
    /// for transect accumulation, allocates output and temporary arrays, and
-   /// registers the output Field. The output Field name is constructed as
-   /// TransectName + "_MOC_Transport".
+   /// registers the output Field. The default output Field name is
+   /// "InputField_TransectAccumulator(TransectName)".
    TransectAccumulatorOp(const std::vector<std::string>
                              &UpstreamNames, ///< [in] input field names
                          Config Options      ///< [in] operator config
@@ -139,9 +139,6 @@ class TransectAccumulatorOp : public AnalysisOperator {
       }
 
       // Construct output field name and set instance name.
-      // Use InputNames[0] + operator token to match CurChainStr in
-      // parseChainAndBuildOps, ensuring Field::exists checks and stream
-      // association work correctly.
       std::string OutputFieldName =
           InputNames[0] + "_TransectAccumulator(" + TransectName + ")";
       OutputNames  = {OutputFieldName};
