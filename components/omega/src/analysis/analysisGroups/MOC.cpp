@@ -1,9 +1,10 @@
 //===-- analysis/analysisGroups/MOC.cpp -------------------------*- C++ -*-===//
 //
 // Implementation of MOC constructor and helper methods. Reads configuration
-// for binning parameters, regions, and output specifications. Builds operator
-// chains for each region to compute the MOC streamfunction, stores metadata
-// for stream creation, and invokes base class method to create IOStreams.
+// for binning parameters, regions, transect boundary conditions, and output
+// specifications. Builds operator chains for each region to compute the MOC
+// streamfunction, stores metadata for stream creation, and invokes base class
+// method to create IOStreams.
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,23 +16,19 @@ namespace OMEGA {
 
 //------------------------------------------------------------------------------
 // Constructs a MOC analysis group by reading configuration, building operator
-// chains for each region and transect, and creating IOStreams.
+// chains for each region (with required transect BC for non-Global regions),
+// and creating IOStreams.
 // Latitude-binned MOC streamfunction is computed by:
 //   1. Converting VerticalPseudoVelocity to geometric coords
 //   (PseudoToGeometric)
 //   2. Computing vertical flux (BinaryMultiply with AreaCell)
 //   3. Optionally masking to a region (ExtractRegion)
 //   4. Accumulating into latitude bins (BinnedAccumulator)
-//   5. Integrating horizontally south-to-north (PrefixSum)
-//   6. Converting to Sverdrups (ScalarMultiply ×1e-6)
-// Transect-based MOC streamfunction is computed by:
-//   1. Converting PseudoThickness to geometric layer thickness
-//   (PseudoToGeometric)
-//   2. Computing edge transport (BinaryMultiply with NormalVelocity, then
-//   DvEdge)
-//   3. Accumulating across transect edges (TransectAccumulator)
-//   4. Integrating vertically bottom-to-top (PrefixSum, reverse)
-//   5. Converting to Sverdrups (ScalarMultiply ×1e-6)
+//   5. Integrating horizontally south-to-north (PrefixSum, seeded by transect
+//      BC for non-Global regions)
+//   6. Converting to Sverdrups (ScalarMultiply × 1e-6)
+// The Transects list is index-paired with non-Global entries in Regions.
+// Every non-Global region must have a corresponding transect.
 MOC::MOC(const std::string &GroupName, Config &AnalysisGroupOptions,
          Analysis *AnalysisManager) {
 
@@ -70,47 +67,50 @@ MOC::MOC(const std::string &GroupName, Config &AnalysisGroupOptions,
       LOG_INFO("MOC: Regions not specified, computing Global MOC only");
    }
 
-   // Read optional transect list for transect-based MOC
+   // Read transect list (index-paired with non-Global regions)
+   // Every non-Global region requires a transect for its BC.
    std::vector<std::string> TransectList;
    Err = AnalysisGroupOptions.get("Transects", TransectList);
    if (Err.isFail()) {
-      // Default: no transect MOC
       TransectList = {};
-      LOG_INFO(
-          "MOC: Transects not specified, no transect MOC will be computed");
+   }
+
+   // Count non-Global regions and validate transect pairing
+   size_t NumNonGlobal = 0;
+   for (const auto &R : RegionList) {
+      if (R != "Global")
+         ++NumNonGlobal;
+   }
+   if (NumNonGlobal > 0 && TransectList.size() != NumNonGlobal) {
+      ABORT_ERROR("MOC: {} non-Global region(s) specified but {} transect(s) "
+                  "provided. Each non-Global region requires a transect.",
+                  NumNonGlobal, TransectList.size());
    }
 
    parseTemporalPeriods(AnalysisGroupOptions);
 
    // Build operator chains for each region
    std::vector<std::string> ChainStems;
+   size_t TransectIdx = 0;
    for (const auto &RegionName : RegionList) {
 
-      // Determine mask field name for regional MOC
-      // For global MOC, use empty string (no mask)
+      // Determine mask field name (empty = global, no mask)
       std::string RegionMaskName;
       if (RegionName != "Global") {
          RegionMaskName = "RegionMask" + RegionName;
       }
 
+      // Build internal transect BC chain for non-Global regions
+      std::string BCFieldName;
+      if (RegionName != "Global") {
+         BCFieldName =
+             buildTransectBCChain(TransectList[TransectIdx++], AnalysisManager);
+      }
+
       // Build the MOC operator chain for this region
-      // This creates the chain string and stores config in ChainConfigs vector
       std::string ChainStem =
           buildMOCChain(RegionName, RegionMaskName, NumBins, MinLatRad,
-                        MaxLatRad, AnalysisManager);
-      ChainStems.push_back(ChainStem);
-   }
-
-   // Build operator chains for each transect
-   for (const auto &TransectName : TransectList) {
-
-      // Build the transect MOC operator chain
-      // Mask and sign field names are derived from TransectName by
-      // Analysis::parseChainAndBuildOps when it processes the
-      // TransectAccumulator operator token.
-      // This creates the chain string and stores config in ChainConfigs vector
-      std::string ChainStem =
-          buildTransectMOCChain(TransectName, AnalysisManager);
+                        MaxLatRad, BCFieldName, AnalysisManager);
       ChainStems.push_back(ChainStem);
    }
 
@@ -144,6 +144,7 @@ MOC::MOC(const std::string &GroupName, Config &AnalysisGroupOptions,
 std::string MOC::buildMOCChain(const std::string &RegionName,
                                const std::string &RegionMaskName, I4 NumBins,
                                Real MinLat, Real MaxLat,
+                               const std::string &BCFieldName,
                                Analysis *AnalysisManager) {
 
    // -------------------------------------------------------------------------
@@ -158,7 +159,7 @@ std::string MOC::buildMOCChain(const std::string &RegionName,
    // For Regional MOC:
    // VerticalPseudoVelocity_PseudoToGeometric_BinaryMultiply(AreaCell)_
    // ExtractRegion(RegionMask)_BinnedAccumulator(LatCell_BinIndex)_
-   // PrefixSum_ScalarMultiply(1e-6)
+   // PrefixSum(BC=BCName)_ScalarMultiply(1e-6)
    //
    // This will be parsed by Analysis::parseChainAndBuildOps() which:
    // 1. Splits by underscores to extract field names and operator types
@@ -180,7 +181,12 @@ std::string MOC::buildMOCChain(const std::string &RegionName,
    ChainStr += "_BinnedAccumulator(LatCell_BinIndex)";
 
    // Horizontal integration (south to north across latitude bins)
-   ChainStr += "_PrefixSum";
+   // Non-Global regions seed with transect BC field
+   if (!BCFieldName.empty()) {
+      ChainStr += "_PrefixSum(BC=" + BCFieldName + ")";
+   } else {
+      ChainStr += "_PrefixSum";
+   }
 
    // Convert to Sverdrups
    ChainStr += "_ScalarMultiply(1.0e-6)";
@@ -232,84 +238,63 @@ std::string MOC::buildMOCChain(const std::string &RegionName,
 } // end buildMOCChain
 
 //------------------------------------------------------------------------------
-// Builds the complete operator chain string for computing transect-based MOC
-// streamfunction. The chain consists of:
+// Builds an internal transect BC chain. The chain computes transport through
+// the transect and integrates vertically (bottom to top), producing a 1D field
+// (NVertLevels) in m³/s. This field is used as the BC seed for the paired
+// regional MOC PrefixSum. The chain consists of:
 //   Runtime (each timestep):
 //     1. PseudoThickness_PseudoToGeometric: Convert to geometric layer
 //     thickness
 //     2. LayerThickness_BinaryMultiply(NormalVelocity): thickness × velocity
 //     3. EdgeTransport_BinaryMultiply(DvEdge): transport × edge width
 //     4. TransportField_TransectAccumulator(TransectName): Accumulate across
-//     transect
-//     5. TransectTransport_PrefixSum: Vertical integration (bottom to top)
-//     6. TransectMOC_ScalarMultiply: Convert to Sverdrups (Sv)
+//     transect (output registered as "TransectTransport(TransectName)" via
+//     OutputName)
+//     5. TransectTransport(TransectName)_PrefixSum: Vertical integration
+//     (bottom to top)
 //
-// This method constructs the complete chain string that will later be parsed
-// by buildTemporalChains(), which appends temporal operators and calls
-// parseChainAndBuildOps().
-//
-// Returns the complete chain string (stem) for temporal operator appending
-std::string MOC::buildTransectMOCChain(const std::string &TransectName,
-                                       Analysis *AnalysisManager) {
+// Registers ops immediately via parseChainAndBuildOps. The TransectAccumulator
+// output is overridden to "TransectTransportTransectName" via the OutputName
+// config key, keeping the BC field name short and the PrefixSum output name
+// "TransectTransportTransectName_PrefixSum". Returns that short alias.
+std::string MOC::buildTransectBCChain(const std::string &TransectName,
+                                      Analysis *AnalysisManager) {
 
    // -------------------------------------------------------------------------
    // Build the complete operator chain string
    // -------------------------------------------------------------------------
    // The complete chain encodes all transformation steps:
    //
-   // PseudoThickness_PseudoToGeometric_BinaryMultiply(NormalVelocity)_
-   // BinaryMultiply(DvEdge)_TransectAccumulator(TransectName)_PrefixSum_
-   // ScalarMultiply(1e-6)
+   // MeanPseudoThickEdge_PseudoToGeometric_BinaryMultiply(NormalVelocity)_
+   // BinaryMultiply(DvEdge)_TransectAccumulator(TransectName)_PrefixSum
    //
    // This will be parsed by Analysis::parseChainAndBuildOps() which:
    // 1. Splits by underscores to extract field names and operator types
    // 2. Creates operator instances with appropriate configurations
    // 3. Chains them together in sequence
-
-   // Start with PseudoThickness conversion to geometric layer thickness
-   std::string ChainStr = "PseudoThickness_PseudoToGeometric";
-
-   // Multiply by NormalVelocity (layer thickness × velocity)
+   std::string ChainStr = "MeanPseudoThickEdge_PseudoToGeometric";
    ChainStr += "_BinaryMultiply(NormalVelocity)";
-
-   // Multiply by DvEdge (transport × edge width)
    ChainStr += "_BinaryMultiply(DvEdge)";
-
-   // Accumulate across transect using mask and sign fields
    ChainStr += "_TransectAccumulator(" + TransectName + ")";
-
-   // Vertical integration (bottom to top) - note: dimension 0 for 1D output
    ChainStr += "_PrefixSum";
 
-   // Convert to Sverdrups
-   ChainStr += "_ScalarMultiply(1.0e-6)";
+   // Short alias for the final output of the TransectBC chain.
+   std::string BCAlias = "TransectTransport" + TransectName;
 
-   // -------------------------------------------------------------------------
-   // Store configuration for this chain
-   // -------------------------------------------------------------------------
-   // Each operator in the chain needs configuration. Build a merged config
-   // containing parameters for all operators using makeOpConfig/opParam
-   // helpers.
+   Config BCConfig = makeOpConfig(
+       opParam("TransectName", TransectName),
+       opParam("OutputName",
+               BCAlias),          // override TransectAccumulator output name
+       opParam("Dimension", 0),   // scan along vertical (dim 0 of 1D result)
+       opParam("Reverse", true)); // bottom-to-top integration
 
-   // Build config with all operator parameters
-   Config ChainConfig = makeOpConfig(
-       opParam("TransectName",
-               TransectName), // TransectAccumulator: transect name
-       opParam("Dimension",
-               0), // PrefixSum: integrate along vertical dimension
-                   // (dim 0 of a 1D array from TransectAccumulatorOp)
-       opParam("Reverse", true), // PrefixSum: bottom-to-top integration
-       opParam("IOName",
-               std::string("MOC_streamfunction_transect_") + TransectName));
+   // Register immediately — not added to ChainStems, not written to output
+   AnalysisManager->parseChainAndBuildOps(ChainStr, BCConfig);
 
-   // Append config to vector (indexed in same order as combined
-   // RegionList+TransectList/ChainStems)
-   ChainConfigs.push_back(ChainConfig);
+   // Return the final output field name: BCAlias
+   return BCAlias;
 
-   // Return the complete chain string as the stem for temporal operators
-   return ChainStr;
-
-} // end buildTransectMOCChain
+} // end buildTransectBCChain
 
 } // end namespace OMEGA
 
