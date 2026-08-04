@@ -263,9 +263,32 @@ void Analysis::parseChainAndBuildOps(const std::string &OpChainStr,
             continue;
          }
 
-         // PrefixSum operator
+         // PrefixSum operator - plain or with optional BC argument
+         // Syntax: "PrefixSum" or "PrefixSum(BC=SomeFieldName)"
          if (ChainNode == "PrefixSum") {
             registerAnalysisOp(ChainNode, {Upstream}, OpConfig);
+            continue;
+         }
+         if (ChainNode.substr(0, 10) == "PrefixSum(") {
+            auto LParen = ChainNode.find('(');
+            auto RParen = ChainNode.find(')');
+            if (RParen == std::string::npos || RParen < LParen) {
+               ABORT_ERROR(
+                   "Analysis: Mismatched parentheses in PrefixSum token {}",
+                   ChainNode);
+            }
+            std::string ArgStr =
+                ChainNode.substr(LParen + 1, RParen - LParen - 1);
+            // Expected format: "BC=FieldName"
+            if (ArgStr.substr(0, 3) == "BC=") {
+               std::string BCFieldName = ArgStr.substr(3);
+               registerAnalysisOp("PrefixSum", {Upstream, BCFieldName},
+                                  OpConfig);
+            } else {
+               ABORT_ERROR("Analysis: Unknown argument '{}' in PrefixSum token "
+                           "{}. Expected 'BC=FieldName'.",
+                           ArgStr, ChainNode);
+            }
             continue;
          }
 
