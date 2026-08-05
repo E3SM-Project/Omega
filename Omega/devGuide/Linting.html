@@ -252,16 +252,17 @@ pre-commit<span class="w"> </span>run<span class="w"> </span>include-what-you-us
 <section id="linting-python-code">
 <h2>Linting Python Code<a class="headerlink" href="#linting-python-code" title="Permalink to this heading"></a></h2>
 <p>The tools used to lint python code include
-<a class="reference external" href="https://pycqa.github.io/isort/">isort</a> for sorting imports,
 <a class="reference external" href="https://github.com/ikamensh/flynt">flynt</a> for enforcing string formatting
-with f-strings,
-<a class="reference external" href="https://flake8.pycqa.org/en/latest/">flake8</a> for enforcing the
-<a class="reference external" href="https://peps.python.org/pep-0008/">PEP8</a> style guide for python, and
+with f-strings, <a class="reference external" href="https://docs.astral.sh/ruff/">ruff</a> for sorting imports and
+enforcing the <a class="reference external" href="https://peps.python.org/pep-0008/">PEP8</a> style guide for python
+(<code class="docutils literal notranslate"><span class="pre">ruff-check</span></code>) as well as for formatting the code (<code class="docutils literal notranslate"><span class="pre">ruff-format</span></code>), and
 <a class="reference external" href="https://mypy-lang.org/">mypy</a> for performing variable type checking.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ruff</span></code> is configured in <code class="docutils literal notranslate"><span class="pre">components/omega/ruff.toml</span></code> and <code class="docutils literal notranslate"><span class="pre">mypy</span></code> in
+<code class="docutils literal notranslate"><span class="pre">components/omega/mypy.cfg</span></code>.</p>
 <p>You can run these tools individually if you need to:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>run<span class="w"> </span>isort<span class="w"> </span>--all-files
-pre-commit<span class="w"> </span>run<span class="w"> </span>flynt<span class="w"> </span>--all-files
-pre-commit<span class="w"> </span>run<span class="w"> </span>flake8<span class="w"> </span>--all-files
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>run<span class="w"> </span>flynt<span class="w"> </span>--all-files
+pre-commit<span class="w"> </span>run<span class="w"> </span>ruff-check<span class="w"> </span>--all-files
+pre-commit<span class="w"> </span>run<span class="w"> </span>ruff-format<span class="w"> </span>--all-files
 pre-commit<span class="w"> </span>run<span class="w"> </span>mypy<span class="w"> </span>--all-files
 </pre></div>
 </div>
