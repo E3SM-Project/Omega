@@ -40,7 +40,7 @@ An input mesh file must be provided that contains at a minimum
   - the mesh connectivity contained in the arrays CellsOnCell, EdgesOnCell
     VerticesOnCell, CellsOnEdge, EdgesOnEdge, CellsOnVertex, EdgesOnVertex.
 For spherical meshes, the vector reconstruction stencil arrays
-NCellReconstructEdges and ReconstructStencilCell are also required.
+NEdgesReconOnCell and ReconStencilCell are also required.
 Again, a full description of the mesh is given in the
 [Developer's Guide](#omega-dev-decomp).
 The file name for this input file is extracted from the HorzMeshIn input

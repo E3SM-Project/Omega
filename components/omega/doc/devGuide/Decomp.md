@@ -87,9 +87,9 @@ described in the mesh specification above. In particular, it contains
     at a vertex
   - NEdgesOnCell(NCellsSize): the number of actual edges on each cell
   - NEdgesOnEdge(NEdgesSize): the number of actual edges on each edge
-  - NCellReconstructEdges(NCellsSize): number of edges in the vector
+  - NEdgesReconOnCell(NCellsSize): number of edges in the vector
     reconstruction stencil for each cell (spherical meshes only)
-  - ReconstructStencilCell(NCellsSize,MaxEdges2): edge indices in the
+  - ReconStencilCell(NCellsSize,MaxEdges2): edge indices in the
     vector reconstruction stencil for each cell (spherical meshes only)
   - OnSphere: whether the mesh is spherical, read from the mesh file to
     gate the reconstruction stencil arrays above

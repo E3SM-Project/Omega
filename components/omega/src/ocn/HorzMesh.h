@@ -255,14 +255,14 @@ class HorzMesh {
    HostArray1DReal MeshScalingDel4H; /// Coef to biharmonic mixing terms
 
    // Vector reconstruction
-   Array1DI4 NCellReconstructEdges;      /// Num of edges used in stencil
-   HostArray1DI4 NCellReconstructEdgesH; /// Num of edges used in stencil
+   Array1DI4 NEdgesReconOnCell;      /// Num of edges used in stencil
+   HostArray1DI4 NEdgesReconOnCellH; /// Num of edges used in stencil
 
-   Array2DI4 ReconstructStencilCell;      /// Two edge wide stencil
-   HostArray2DI4 ReconstructStencilCellH; /// Two edge wide stencil
+   Array2DI4 ReconStencilCell;      /// Two edge wide stencil
+   HostArray2DI4 ReconStencilCellH; /// Two edge wide stencil
 
-   Array3DReal ReconstructWeightsCell;      /// Least Squares Weights
-   HostArray3DReal ReconstructWeightsCellH; /// Least Squares Weights
+   Array3DReal ReconWeightsCell;      /// Least Squares Weights
+   HostArray3DReal ReconWeightsCellH; /// Least Squares Weights
 
    // Methods
 

@@ -141,18 +141,18 @@ class Decomp {
    );
 
    /// Redistribute the vector reconstruction stencil arrays
-   /// (NCellReconstructEdges, ReconstructStencilCell) to the final cell
+   /// (NEdgesReconOnCell, ReconStencilCell) to the final cell
    /// decomposition. Unlike rearrangeCellArrays, entries are copied verbatim
-   /// (no compaction of unused/padded slots) because ReconstructStencilCell
-   /// columns are positionally paired with the ReconstructWeightsCell array
+   /// (no compaction of unused/padded slots) because ReconStencilCell
+   /// columns are positionally paired with the ReconWeightsCell array
    /// read separately in HorzMesh. Must be called after rearrangeCellArrays
    /// has established CellID/CellLoc for the final partition.
-   void rearrangeReconstructArrays(
+   void rearrangeReconArrays(
        const MachEnv *InEnv, ///< [in] MachEnv for the new partition
        const std::vector<I4>
-           &NCellReconstructEdgesInit, ///< [in] num stencil edges per cell
+           &NEdgesReconOnCellInit, ///< [in] num stencil edges per cell
        const std::vector<I4>
-           &ReconstructStencilCellInit ///< [in] stencil edge IDs per cell
+           &ReconStencilCellInit ///< [in] stencil edge IDs per cell
    );
 
    /// Redistribute the various XxOnEdge index arrays to the final edge
@@ -276,18 +276,17 @@ class Decomp {
    HostArray2DI4 EdgesOnVertexH; ///< Indx of edges sharing vertex as endpoint
 
    // Vector reconstruction stencil (mesh-dependent, precomputed and stored
-   // in the mesh file - see HorzMesh for the paired ReconstructWeightsCell)
+   // in the mesh file - see HorzMesh for the paired ReconWeightsCell)
 
    bool OnSphere; ///< true if mesh is spherical (temporary local read of
                   ///< the OnSphere attribute - only spherical meshes
                   ///< currently have the reconstruction stencil below)
 
-   Array1DI4 NCellReconstructEdges; ///< Num of edges in reconstruction stencil
-   HostArray1DI4
-       NCellReconstructEdgesH; ///< Num of edges in reconstruction stencil
+   Array1DI4 NEdgesReconOnCell;      ///< Num of edges in reconstruction stencil
+   HostArray1DI4 NEdgesReconOnCellH; ///< Num of edges in reconstruction stencil
 
-   Array2DI4 ReconstructStencilCell;      ///< Local edge indices in the stencil
-   HostArray2DI4 ReconstructStencilCellH; ///< Local edge indices in the stencil
+   Array2DI4 ReconStencilCell;      ///< Local edge indices in the stencil
+   HostArray2DI4 ReconStencilCellH; ///< Local edge indices in the stencil
 
    // Methods
 

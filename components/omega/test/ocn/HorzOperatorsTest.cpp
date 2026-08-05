@@ -380,11 +380,11 @@ int testTangentRecon(Real RTol) {
 // the magnitude of the reconstructed vector against the exact magnitude at
 // cell centers. This currently only supports spherical meshes, so it is a
 // no-op for planar meshes.
-int testVectorReconstruction(Real RTol) {
+int testVectorRecon(Real RTol) {
    int Err = 0;
 
    // Vector reconstruction weights/stencil are only available for spherical
-   // meshes (see VectorReconstructOnCell)
+   // meshes (see VectorReconOnCell)
    if constexpr (Geom != Geometry::Spherical) {
       return Err;
    }
@@ -394,7 +394,7 @@ int testVectorReconstruction(Real RTol) {
    const auto &Mesh = HorzMesh::getDefault();
 
    // Prepare operator input: edge-normal component of the exact vector field
-   // (VectorReconstructOnCell currently only supports a single vertical
+   // (VectorReconOnCell currently only supports a single vertical
    // layer, so we use rank-1 arrays here)
    Array1DReal VecEdge("VecEdge", Mesh->NEdgesSize);
    Err += setVectorEdge(
@@ -414,31 +414,30 @@ int testVectorReconstruction(Real RTol) {
        ExactMagCell, Geom, Mesh, OnCell, ExchangeHalos::No);
 
    // Compute numerical reconstruction at cell centers
-   Array1DReal UReconstructX("UReconstructX", Mesh->NCellsOwned);
-   Array1DReal UReconstructY("UReconstructY", Mesh->NCellsOwned);
-   VectorReconstructOnCell ReconstructCell(Mesh);
+   Array1DReal UReconX("UReconX", Mesh->NCellsOwned);
+   Array1DReal UReconY("UReconY", Mesh->NCellsOwned);
+   VectorReconOnCell ReconCell(Mesh);
    parallelFor(
        {Mesh->NCellsOwned}, KOKKOS_LAMBDA(int ICell) {
-          ReconstructCell(UReconstructX, UReconstructY, ICell, VecEdge);
+          ReconCell(UReconX, UReconY, ICell, VecEdge);
        });
 
    // Magnitude of the numerical reconstruction
    Array1DReal NumMagCell("NumMagCell", Mesh->NCellsOwned);
    parallelFor(
        {Mesh->NCellsOwned}, KOKKOS_LAMBDA(int ICell) {
-          NumMagCell(ICell) =
-              vecMagnitude(UReconstructX(ICell), UReconstructY(ICell));
+          NumMagCell(ICell) = vecMagnitude(UReconX(ICell), UReconY(ICell));
        });
 
    // Compute error measures
    ErrorMeasures ReconErrors;
    Err += computeErrors(ReconErrors, NumMagCell, ExactMagCell, Mesh, OnCell);
    // Check error values
-   Err += checkErrors("OperatorsTest", "VectorReconstruction", ReconErrors,
+   Err += checkErrors("OperatorsTest", "VectorRecon", ReconErrors,
                       Setup.ExpectedVectorReconErrors, RTol);
 
    if (Err == 0) {
-      LOG_INFO("OperatorsTest: VectorReconstruction PASS");
+      LOG_INFO("OperatorsTest: VectorRecon PASS");
    }
 
    return Err;
@@ -1056,7 +1055,7 @@ int operatorsTest(const std::string &MeshFile = DefaultMeshFile) {
    Err += testGradient(RTol);
    Err += testCurl(RTol);
    Err += testTangentRecon(RTol);
-   Err += testVectorReconstruction(RTol);
+   Err += testVectorRecon(RTol);
    Err += testInterpCellToEdge(RTol);
    Err += testsecondderivativeoncellconstructor(RTol);
    Err += testsecondderivativeoncellDeterminePlanerPatchGeometry(RTol);

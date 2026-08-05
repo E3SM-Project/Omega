@@ -116,16 +116,16 @@ void readMesh(
     I4 &VertexDegree,     // number of cells/edges sharing vrtx
     I4 &MaxEdges2,        // twice max number of edges on a cell
     bool &OnSphere,       // true if mesh is spherical
-    std::vector<I4> &CellsOnCellInit,           // cell neighbors for each cell
-    std::vector<I4> &EdgesOnCellInit,           // edge IDs for each cell edge
-    std::vector<I4> &VerticesOnCellInit,        // vertices around each cell
-    std::vector<I4> &CellsOnEdgeInit,           // cell IDs sharing edge
-    std::vector<I4> &EdgesOnEdgeInit,           // all edges neighboring edge
-    std::vector<I4> &VerticesOnEdgeInit,        // vertices on ends of edge
-    std::vector<I4> &CellsOnVertexInit,         // cells meeting at each vrtx
-    std::vector<I4> &EdgesOnVertexInit,         // edges meeting at each vrtx
-    std::vector<I4> &NCellReconstructEdgesInit, // num stencil edges per cell
-    std::vector<I4> &ReconstructStencilCellInit // stencil edge IDs per cell
+    std::vector<I4> &CellsOnCellInit,       // cell neighbors for each cell
+    std::vector<I4> &EdgesOnCellInit,       // edge IDs for each cell edge
+    std::vector<I4> &VerticesOnCellInit,    // vertices around each cell
+    std::vector<I4> &CellsOnEdgeInit,       // cell IDs sharing edge
+    std::vector<I4> &EdgesOnEdgeInit,       // all edges neighboring edge
+    std::vector<I4> &VerticesOnEdgeInit,    // vertices on ends of edge
+    std::vector<I4> &CellsOnVertexInit,     // cells meeting at each vrtx
+    std::vector<I4> &EdgesOnVertexInit,     // edges meeting at each vrtx
+    std::vector<I4> &NEdgesReconOnCellInit, // num stencil edges per cell
+    std::vector<I4> &ReconStencilCellInit   // stencil edge IDs per cell
 ) {
 
    Error Err; // error code for IO calls
@@ -306,8 +306,8 @@ void readMesh(
       } // end loop VertexDegree
    } // end loop NVerticesLocal
 
-   // Offsets for the reconstruction stencil arrays. NCellReconstructEdges is
-   // a scalar per cell; ReconstructStencilCell is MaxEdges2-wide per cell.
+   // Offsets for the reconstruction stencil arrays. NEdgesReconOnCell is
+   // a scalar per cell; ReconStencilCell is MaxEdges2-wide per cell.
    // Both use the same linear cell chunking as the other XxOnCell arrays.
    I4 OnCellSizeScalar = NCellsChunk;
    I4 OnCellSize2      = NCellsChunk * MaxEdges2;
@@ -447,20 +447,19 @@ void readMesh(
    // preprocessing step (least-squares pseudo-inverse). Only spherical
    // meshes currently have these fields, so require them only in that case.
    if (OnSphere) {
-      NCellReconstructEdgesInit.resize(OnCellSizeScalar);
-      ReconstructStencilCellInit.resize(OnCellSize2);
+      NEdgesReconOnCellInit.resize(OnCellSizeScalar);
+      ReconStencilCellInit.resize(OnCellSize2);
 
       VarName = "NCellReconstructEdges";
-      int NCellReconstructEdgesID;
-      Err = IO::readArray(&NCellReconstructEdgesInit[0], OnCellSizeScalar,
-                          VarName, MeshFileID, OnCellDecompScalar,
-                          NCellReconstructEdgesID);
+      int NEdgesReconOnCellID;
+      Err = IO::readArray(&NEdgesReconOnCellInit[0], OnCellSizeScalar, VarName,
+                          MeshFileID, OnCellDecompScalar, NEdgesReconOnCellID);
       CHECK_ERROR_ABORT(Err, "Decomp: error reading NCellReconstructEdges");
 
       VarName = "ReconstructStencilCell";
-      int ReconstructStencilCellID;
-      Err = IO::readArray(&ReconstructStencilCellInit[0], OnCellSize2, VarName,
-                          MeshFileID, OnCellDecomp2, ReconstructStencilCellID);
+      int ReconStencilCellID;
+      Err = IO::readArray(&ReconStencilCellInit[0], OnCellSize2, VarName,
+                          MeshFileID, OnCellDecomp2, ReconStencilCellID);
       CHECK_ERROR_ABORT(Err, "Decomp: error reading ReconstructStencilCell");
    }
 
@@ -574,16 +573,16 @@ Decomp::Decomp(
    std::vector<I4> VerticesOnEdgeInit;
    std::vector<I4> CellsOnVertexInit;
    std::vector<I4> EdgesOnVertexInit;
-   std::vector<I4> NCellReconstructEdgesInit;
-   std::vector<I4> ReconstructStencilCellInit;
+   std::vector<I4> NEdgesReconOnCellInit;
+   std::vector<I4> ReconStencilCellInit;
    HaloWidth = InHaloWidth;
 
    readMesh(FileID, InEnv, NCellsGlobal, NEdgesGlobal, NVerticesGlobal,
             MaxEdges, MaxCellsOnEdge, VertexDegree, MaxEdges2, OnSphere,
             CellsOnCellInit, EdgesOnCellInit, VerticesOnCellInit,
             CellsOnEdgeInit, EdgesOnEdgeInit, VerticesOnEdgeInit,
-            CellsOnVertexInit, EdgesOnVertexInit, NCellReconstructEdgesInit,
-            ReconstructStencilCellInit);
+            CellsOnVertexInit, EdgesOnVertexInit, NEdgesReconOnCellInit,
+            ReconStencilCellInit);
 
    // Close file
    IO::closeFile(FileID);
@@ -639,8 +638,7 @@ Decomp::Decomp(
    if (OnSphere) {
       TimerFlag =
           Pacer::start("Decomp rearrange recon stencil", 2) && TimerFlag;
-      rearrangeReconstructArrays(InEnv, NCellReconstructEdgesInit,
-                                 ReconstructStencilCellInit);
+      rearrangeReconArrays(InEnv, NEdgesReconOnCellInit, ReconStencilCellInit);
       TimerFlag = Pacer::stop("Decomp rearrange recon stencil", 2) && TimerFlag;
    }
 
@@ -730,13 +728,13 @@ Decomp::Decomp(
       }
    }
 
-   // ReconstructStencilCell - translated the same way as EdgesOnCell
-   // NCellReconstructEdgesH is a count, not an ID, and needs no translation.
+   // ReconStencilCell - translated the same way as EdgesOnCell
+   // NEdgeReconOnCellH is a count, not an ID, and needs no translation.
    // Only spherical meshes currently have this array.
    if (OnSphere) {
       for (int Cell = 0; Cell < NCellsSize; ++Cell) {
          for (int Edge = 0; Edge < MaxEdges2; ++Edge) {
-            I4 GlobID = ReconstructStencilCellH(Cell, Edge);
+            I4 GlobID = ReconStencilCellH(Cell, Edge);
             auto it   = GlobToLocEdge.find(GlobID);
             I4 LocalAdd;
             if (it != GlobToLocEdge.end()) {
@@ -745,7 +743,7 @@ Decomp::Decomp(
                LocalAdd = NEdgesAll; // otherwise set to bndy/unknown address
                GlobToLocEdge[GlobID] = NEdgesAll; // add an entry to map
             }
-            ReconstructStencilCellH(Cell, Edge) = LocalAdd;
+            ReconStencilCellH(Cell, Edge) = LocalAdd;
          }
       }
    }
@@ -880,8 +878,8 @@ Decomp::Decomp(
 
    // Only spherical meshes currently have the reconstruction stencil arrays
    if (OnSphere) {
-      NCellReconstructEdges  = createDeviceMirrorCopy(NCellReconstructEdgesH);
-      ReconstructStencilCell = createDeviceMirrorCopy(ReconstructStencilCellH);
+      NEdgesReconOnCell = createDeviceMirrorCopy(NEdgesReconOnCellH);
+      ReconStencilCell  = createDeviceMirrorCopy(ReconStencilCellH);
    }
    TimerFlag = Pacer::stop("Decomp construct device copy", 2) && TimerFlag;
    TimerFlag = Pacer::stop("Decomp construct", 1) && TimerFlag;
@@ -2227,24 +2225,24 @@ void Decomp::rearrangeCellArrays(
 } // end function rearrangeCellArrays
 
 //------------------------------------------------------------------------------
-// Redistribute the vector reconstruction stencil arrays (NCellReconstructEdges
-// and ReconstructStencilCell) to the final cell decomposition. Follows the
+// Redistribute the vector reconstruction stencil arrays (NEdgesReconOnCell
+// and ReconStencilCell) to the final cell decomposition. Follows the
 // same linear-chunk broadcast/search pattern as rearrangeCellArrays, but -
 // unlike EdgesOnCell - entries are copied verbatim without compaction: column
-// J of ReconstructStencilCell must stay aligned with column J of
-// ReconstructWeightsCell, which is read separately (and not reordered) in
-// HorzMesh. On exit, ReconstructStencilCellH still holds global edge IDs
+// J of ReconStencilCell must stay aligned with column J of
+// ReconWeightsCell, which is read separately (and not reordered) in
+// HorzMesh. On exit, ReconStencilCellH still holds global edge IDs
 // (translation to local indices happens later, once GlobToLocEdge exists).
 
-void Decomp::rearrangeReconstructArrays(
+void Decomp::rearrangeReconArrays(
     const MachEnv *InEnv, //< [in] MachEnv for the new partition
     const std::vector<I4>
-        &NCellReconstructEdgesInit, //< [in] num stencil edges per cell
+        &NEdgesReconOnCellInit, //< [in] num stencil edges per cell
     const std::vector<I4>
-        &ReconstructStencilCellInit //< [in] stencil edge IDs per cell
+        &ReconStencilCellInit //< [in] stencil edge IDs per cell
 ) {
 
-   bool TimerFlag = Pacer::start("rearrangeReconstructArrays", 3);
+   bool TimerFlag = Pacer::start("rearrangeReconArrays", 3);
 
    // Extract some MPI information
    MPI_Comm Comm = InEnv->getComm();
@@ -2264,11 +2262,10 @@ void Decomp::rearrangeReconstructArrays(
    // entries to NEdgesGlobal+1 to denote a non-existent/padding entry -
    // the same sentinel used (and already mapped in GlobToLocEdge) for
    // EdgesOnCell.
-   HostArray2DI4 ReconstructStencilCellTmp("ReconstructStencilCell", NCellsSize,
-                                           MaxEdges2);
-   HostArray1DI4 NCellReconstructEdgesTmp("NCellReconstructEdges", NCellsSize);
-   deepCopy(ReconstructStencilCellTmp, NEdgesGlobal + 1);
-   deepCopy(NCellReconstructEdgesTmp, 0);
+   HostArray2DI4 ReconStencilCellTmp("ReconStencilCell", NCellsSize, MaxEdges2);
+   HostArray1DI4 NEdgesReconOnCellTmp("NEdgesReconOnCell", NCellsSize);
+   deepCopy(ReconStencilCellTmp, NEdgesGlobal + 1);
+   deepCopy(NEdgesReconOnCellTmp, 0);
 
    // For each cell this task owns, determine the task and local address
    // of the cell in the initial linear distribution (identical computation
@@ -2296,11 +2293,10 @@ void Decomp::rearrangeReconstructArrays(
       if (MyTask == ITask) { // Fill buffer with local chunk
          for (int Cell = 0; Cell < NCellsChunk; ++Cell) {
             I4 BufAdd0       = Cell * SizePerCell;
-            CellBuf[BufAdd0] = NCellReconstructEdgesInit[Cell];
+            CellBuf[BufAdd0] = NEdgesReconOnCellInit[Cell];
             for (int Edge = 0; Edge < MaxEdges2; ++Edge) {
-               I4 ArrayAdd = Cell * MaxEdges2 + Edge;
-               CellBuf[BufAdd0 + 1 + Edge] =
-                   ReconstructStencilCellInit[ArrayAdd];
+               I4 ArrayAdd                 = Cell * MaxEdges2 + Edge;
+               CellBuf[BufAdd0 + 1 + Edge] = ReconStencilCellInit[ArrayAdd];
             }
          }
       }
@@ -2319,15 +2315,15 @@ void Decomp::rearrangeReconstructArrays(
                // Local cell needs the info so extract from the buffer into
                // the local address. Unlike EdgesOnCell, we copy every slot
                // verbatim in its original column position - no compaction -
-               // so the columns stay aligned with ReconstructWeightsCell.
-               I4 BufAdd0                     = AddInit[Cell] * SizePerCell;
-               NCellReconstructEdgesTmp(Cell) = CellBuf[BufAdd0];
+               // so the columns stay aligned with ReconWeightsCell.
+               I4 BufAdd0                 = AddInit[Cell] * SizePerCell;
+               NEdgesReconOnCellTmp(Cell) = CellBuf[BufAdd0];
                for (int Edge = 0; Edge < MaxEdges2; ++Edge) {
                   I4 NbrEdge = CellBuf[BufAdd0 + 1 + Edge];
                   if (validEdgeID(NbrEdge)) {
-                     ReconstructStencilCellTmp(Cell, Edge) = NbrEdge;
+                     ReconStencilCellTmp(Cell, Edge) = NbrEdge;
                   } else {
-                     ReconstructStencilCellTmp(Cell, Edge) = NEdgesGlobal + 1;
+                     ReconStencilCellTmp(Cell, Edge) = NEdgesGlobal + 1;
                   }
                }
             }
@@ -2338,14 +2334,14 @@ void Decomp::rearrangeReconstructArrays(
 
    // Copy to final location on host - wait to create device copies until
    // the entries are translated to local addresses rather than global IDs
-   ReconstructStencilCellH = ReconstructStencilCellTmp;
-   NCellReconstructEdgesH  = NCellReconstructEdgesTmp;
+   ReconStencilCellH  = ReconStencilCellTmp;
+   NEdgesReconOnCellH = NEdgesReconOnCellTmp;
 
    // All done
-   TimerFlag = Pacer::stop("rearrangeReconstructArrays", 3) && TimerFlag;
+   TimerFlag = Pacer::stop("rearrangeReconArrays", 3) && TimerFlag;
    return;
 
-} // end function rearrangeReconstructArrays
+} // end function rearrangeReconArrays
 
 //------------------------------------------------------------------------------
 // Redistribute the various XxOnEdge index arrays to the final edge

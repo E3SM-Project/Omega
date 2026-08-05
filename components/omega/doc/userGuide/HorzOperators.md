@@ -15,6 +15,6 @@ The following operators are currently implemented:
 - `GradientOnEdge`
 - `CurlOnVertex`
 - `TangentialReconOnEdge`
-- `VectorReconstructOnCell`
+- `VectorReconOnCell`
 
 There are no user-configurable options.

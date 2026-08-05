@@ -131,20 +131,18 @@ int main(int argc, char *argv[]) {
       // only): each owned cell's count is in range, active entries are
       // resolvable local edges, and padding columns carry the NEdgesAll
       // sentinel (confirms no compaction, so columns stay aligned with
-      // ReconstructWeightsCell).
+      // ReconWeightsCell).
       if (DefDecomp->OnSphere) {
-         I4 MaxEdges2 = DefDecomp->MaxEdges2;
-         HostArray1DI4 NCellReconstructEdgesH =
-             DefDecomp->NCellReconstructEdgesH;
-         HostArray2DI4 ReconstructStencilCellH =
-             DefDecomp->ReconstructStencilCellH;
-         I4 LocalReconErrors = 0;
+         I4 MaxEdges2                     = DefDecomp->MaxEdges2;
+         HostArray1DI4 NEdgesReconOnCellH = DefDecomp->NEdgesReconOnCellH;
+         HostArray2DI4 ReconStencilCellH  = DefDecomp->ReconStencilCellH;
+         I4 LocalReconErrors              = 0;
          for (int Cell = 0; Cell < NCellsOwned; ++Cell) {
-            I4 NStencil = NCellReconstructEdgesH(Cell);
+            I4 NStencil = NEdgesReconOnCellH(Cell);
             if (NStencil <= 0 || NStencil > MaxEdges2)
                ++LocalReconErrors;
             for (int J = 0; J < MaxEdges2; ++J) {
-               I4 StencilEdge = ReconstructStencilCellH(Cell, J);
+               I4 StencilEdge = ReconStencilCellH(Cell, J);
                if (J < NStencil) {
                   if (StencilEdge < 0 || StencilEdge >= NEdgesAll)
                      ++LocalReconErrors;
@@ -155,7 +153,7 @@ int main(int argc, char *argv[]) {
          }
          I4 ReconErrors = globalSum(LocalReconErrors, Comm);
          if (ReconErrors != 0)
-            ABORT_ERROR("DecompTest: ReconstructStencilCell consistency "
+            ABORT_ERROR("DecompTest: ReconStencilCell consistency "
                         "test FAIL {}",
                         ReconErrors);
       }

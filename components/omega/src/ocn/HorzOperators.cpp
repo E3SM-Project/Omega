@@ -67,14 +67,13 @@ MasksAndCoefficients::MasksAndCoefficients(
       DvEdge(Mesh->DvEdge), AdvCoefs(AdvCoefs), AdvCoefs3rd(AdvCoefs3rd),
       BoundaryCell(VCoord->BoundaryCell), DerivTwo(DerivTwo) {}
 
-VectorReconstructOnCell::VectorReconstructOnCell(HorzMesh const *Mesh)
-    : OnSphere(Mesh->OnSphere),
-      NCellReconstructEdges(Mesh->NCellReconstructEdges),
-      ReconstructStencilCell(Mesh->ReconstructStencilCell),
-      ReconstructWeightsCell(Mesh->ReconstructWeightsCell),
-      LatCell(Mesh->LatCell), LonCell(Mesh->LonCell) {
+VectorReconOnCell::VectorReconOnCell(HorzMesh const *Mesh)
+    : OnSphere(Mesh->OnSphere), NEdgesReconOnCell(Mesh->NEdgesReconOnCell),
+      ReconStencilCell(Mesh->ReconStencilCell),
+      ReconWeightsCell(Mesh->ReconWeightsCell), LatCell(Mesh->LatCell),
+      LonCell(Mesh->LonCell) {
    if (!Mesh->OnSphere)
-      ABORT_ERROR("VectorReconstructOnCell: reconstruction stencil/weights "
+      ABORT_ERROR("VectorReconOnCell: reconstruction stencil/weights "
                   "are only available for spherical meshes");
 }
 

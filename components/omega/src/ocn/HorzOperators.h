@@ -654,24 +654,24 @@ class MasksAndCoefficients {
 };
 
 // Reconstruct edge normal vector field at cell centers
-class VectorReconstructOnCell {
+class VectorReconOnCell {
  public:
-   VectorReconstructOnCell(HorzMesh const *Mesh);
+   VectorReconOnCell(HorzMesh const *Mesh);
    // Currently only support computing Zonal/Meridional (X/Y) for
    // spherical (planar) meshes on a single vertical layer
-   KOKKOS_FUNCTION void operator()(const Array1DReal &UReconstructX,
-                                   const Array1DReal &UReconstructY, int ICell,
+   KOKKOS_FUNCTION void operator()(const Array1DReal &UReconX,
+                                   const Array1DReal &UReconY, int ICell,
                                    const Array1DReal &VecEdge) const {
 
       Real Ux = 0._Real, Uy = 0._Real, Uz = 0._Real;
 
-      for (int J = 0; J < NCellReconstructEdges(ICell); ++J) {
-         const I4 JEdge   = ReconstructStencilCell(ICell, J);
+      for (int J = 0; J < NEdgesReconOnCell(ICell); ++J) {
+         const I4 JEdge   = ReconStencilCell(ICell, J);
          const Real Field = VecEdge(JEdge);
 
-         Ux += ReconstructWeightsCell(ICell, 0, J) * Field;
-         Uy += ReconstructWeightsCell(ICell, 1, J) * Field;
-         Uz += ReconstructWeightsCell(ICell, 2, J) * Field;
+         Ux += ReconWeightsCell(ICell, 0, J) * Field;
+         Uy += ReconWeightsCell(ICell, 1, J) * Field;
+         Uz += ReconWeightsCell(ICell, 2, J) * Field;
       }
 
       if (OnSphere) {
@@ -681,19 +681,19 @@ class VectorReconstructOnCell {
          const Real SLon = Kokkos::sin(LonCell(ICell));
 
          // cartesian to local geographic
-         UReconstructX(ICell) = -SLon * Ux + CLon * Uy;
-         UReconstructY(ICell) = -(CLon * Ux + SLon * Uy) * SLat + Uz * CLat;
+         UReconX(ICell) = -SLon * Ux + CLon * Uy;
+         UReconY(ICell) = -(CLon * Ux + SLon * Uy) * SLat + Uz * CLat;
       } else {
-         UReconstructX(ICell) = Ux;
-         UReconstructY(ICell) = Uy;
+         UReconX(ICell) = Ux;
+         UReconY(ICell) = Uy;
       }
    }
 
  private:
    bool OnSphere;
-   Array1DI4 NCellReconstructEdges;
-   Array2DI4 ReconstructStencilCell;
-   Array3DReal ReconstructWeightsCell;
+   Array1DI4 NEdgesReconOnCell;
+   Array2DI4 ReconStencilCell;
+   Array3DReal ReconWeightsCell;
    Array1DReal LatCell;
    Array1DReal LonCell;
 };
