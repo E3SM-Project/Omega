@@ -450,17 +450,17 @@ void readMesh(
       NEdgesReconOnCellInit.resize(OnCellSizeScalar);
       ReconStencilCellInit.resize(OnCellSize2);
 
-      VarName = "NCellReconstructEdges";
+      VarName = "NEdgesReconOnCell";
       int NEdgesReconOnCellID;
       Err = IO::readArray(&NEdgesReconOnCellInit[0], OnCellSizeScalar, VarName,
                           MeshFileID, OnCellDecompScalar, NEdgesReconOnCellID);
-      CHECK_ERROR_ABORT(Err, "Decomp: error reading NCellReconstructEdges");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading NEdgesReconOnCell");
 
-      VarName = "ReconstructStencilCell";
+      VarName = "ReconStencilCell";
       int ReconStencilCellID;
       Err = IO::readArray(&ReconStencilCellInit[0], OnCellSize2, VarName,
                           MeshFileID, OnCellDecomp2, ReconStencilCellID);
-      CHECK_ERROR_ABORT(Err, "Decomp: error reading ReconstructStencilCell");
+      CHECK_ERROR_ABORT(Err, "Decomp: error reading ReconStencilCell");
    }
 
    // Initial decompositions are no longer needed so remove them now

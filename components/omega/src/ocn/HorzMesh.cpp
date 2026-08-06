@@ -1037,7 +1037,7 @@ void HorzMesh::defineMeshFields() {
       DimNames[0] = "NCells";
       DimNames[1] = "R3";
       DimNames[2] = "MaxEdges2";
-      FieldName   = "ReconstructWeightsCell";
+      FieldName   = "ReconWeightsCell";
       ReconWeightsCell =
           Array3DReal("ReconWeightsCell", NCellsSize, 3, MaxEdges2);
       auto ReconWeightsCellField = Field::create(
