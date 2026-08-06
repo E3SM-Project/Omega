@@ -67,7 +67,7 @@ described in the mesh specification above. In particular, it contains
   - NCellsHalo(i): the number of owned+halo cells for each halo layer
   - Analogous size variables for Edges and Vertices
   - MaxEdges: the max number of edges on a cell (and array size)
-  - MaxEdges2: the max number of edges on a edge
+  - MaxEdges2: the max number of edges on a edge (2*MaxEdges)
   - VertexDegree: the number of cells/edges at each vertex
   - CellID(NCellsSize): the global index for each local cell
   - CellLoc(NCellsSize,2): the task and local index for every local cell
