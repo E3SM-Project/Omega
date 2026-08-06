@@ -493,7 +493,7 @@ class Teos10Eos {
    /// the polynomial against GSW-C and against finite differences at chosen
    /// states, and it is the form to use anywhere a single state needs to be
    /// evaluated. It is also the single implementation of the derivatives: the
-   /// array-level path over the mesh, calcSpecVolAndDerivsInChunk below, calls
+   /// array-level path over the mesh, calcSpecVolAndDerivsOnCells below, calls
    /// this at each cell and layer.
    KOKKOS_FUNCTION void
    calcSpecVolAndDerivsAtPoint(const Real Ct, const Real Sa, const Real P,
@@ -528,7 +528,7 @@ class Teos10Eos {
    /// Pa; the derivatives are per degC, per (g/kg), and per Pa. This is the
    /// array-level counterpart of calcSpecVolAndDerivsAtPoint above and is what
    /// Eos::computeSpecVolAndDerivs calls for each cell.
-   KOKKOS_FUNCTION void calcSpecVolAndDerivsInChunk(
+   KOKKOS_FUNCTION void calcSpecVolAndDerivsOnCells(
        Array2DReal SpecVol, Array2DReal SpecVolDCt, Array2DReal SpecVolDSa,
        Array2DReal SpecVolDP, const TeamMember &Team, I4 ICell,
        const Array2DReal &ConservTemp, const Array2DReal &AbsSalinity,
@@ -754,7 +754,7 @@ class LinearEos {
    ///    SpecVol = 1 / (RhoT0S0 + DRhodT * Ct + DRhodS * Sa)
    /// the derivatives are -DRhodT * SpecVol^2 and -DRhodS * SpecVol^2, and
    /// the linear EOS has no pressure dependence at all.
-   KOKKOS_FUNCTION void calcSpecVolAndDerivsInChunk(
+   KOKKOS_FUNCTION void calcSpecVolAndDerivsOnCells(
        Array2DReal SpecVol, Array2DReal SpecVolDCt, Array2DReal SpecVolDSa,
        Array2DReal SpecVolDP, const TeamMember &Team, I4 ICell,
        const Array2DReal &ConservTemp, const Array2DReal &AbsSalinity) const {
@@ -806,7 +806,7 @@ class ConstantEos {
    /// Calculate the constant specific volume and its three first derivatives
    /// over the active layers of a cell. The specific volume does not depend on
    /// temperature, salinity or pressure, so all three derivatives vanish.
-   KOKKOS_FUNCTION void calcSpecVolAndDerivsInChunk(
+   KOKKOS_FUNCTION void calcSpecVolAndDerivsOnCells(
        Array2DReal SpecVol, Array2DReal SpecVolDCt, Array2DReal SpecVolDSa,
        Array2DReal SpecVolDP, const TeamMember &Team, I4 ICell,
        const Array2DReal &ConservTemp, const Array2DReal &AbsSalinity) const {
