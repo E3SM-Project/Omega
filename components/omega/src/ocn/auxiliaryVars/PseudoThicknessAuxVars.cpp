@@ -63,6 +63,8 @@ void PseudoThicknessAuxVars::registerFields(const std::string &AuxGroupName,
        DimNames                          // dimension names
    );
 
+   DimNames[0] = "NCells" + DimSuffix;
+
    // Provisional Thickness
    auto ProvPseudoThicknessField = Field::create(
        ProvPseudoThickness.label(),              // field name
