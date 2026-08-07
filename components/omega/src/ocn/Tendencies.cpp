@@ -506,19 +506,39 @@ Tendencies::Tendencies(const std::string &Name_, ///< [in] Name for tendencies
 
 } // end constructor
 
-Tendencies::Tendencies(const std::string &Name_, ///< [in] Name for tendencies
-                       const HorzMesh *Mesh,     ///< [in] Horizontal mesh
-                       VertCoord *VCoord,        ///< [in] Vertical coordinate
-                       VertAdv *VAdv,            ///< [in] Vertical advection
-                       PressureGrad *PGrad,      ///< [in] Pressure gradient
-                       Eos *EqState,             ///< [in] Equation of state
-                       VertMix *VMix,            ///< [in] Vertical mixing
-                       int NTracersIn,           ///< [in] Number of tracers
-                       TimeInterval TimeStepIn,  ///< [in] Time step
-                       Config *Options)          ///< [in] Configuration options
-    : Tendencies(Name_, Mesh, VCoord, VAdv, PGrad, EqState, VMix, NTracersIn,
-                 TimeStepIn, Options, CustomTendencyType{},
-                 CustomTendencyType{}) {}
+// Create a non-default group of tendencies
+Tendencies *Tendencies::create(const std::string &Name,
+                               const HorzMesh *Mesh, ///< [in] Horizontal mesh
+                               VertCoord *VCoord, ///< [in] Vertical coordinate
+                               VertAdv *VAdv,     ///< [in] Vertical advection
+                               PressureGrad *PGrad, ///< [in] Pressure gradient
+                               Eos *EqState,        ///< [in] Equation of state
+                               VertMix *VMix,       ///< [in] Vertical mixing
+                               int NTracersIn,      ///< [in] Number of tracers
+                               TimeInterval TimeStep, ///< [in] Time step
+                               Config *Options, ///< [in] Configuration options
+                               CustomTendencyType CustomThicknessTend,
+                               CustomTendencyType CustomVelocityTend) {
+
+   // Check to see if tendencies of the same name already exist and
+   // if so, exit with an error
+   if (AllTendencies.find(Name) != AllTendencies.end()) {
+      LOG_ERROR("Attempted to create Tendencies with name {} but Tendencies of "
+                "that name already exists",
+                Name);
+      return nullptr;
+   }
+
+   // create new tendencies on the heap and put it in a map of
+   // unique_ptrs, which will manage its lifetime
+   auto *NewTendencies = new Tendencies(
+       Name, Mesh, VCoord, VAdv, PGrad, EqState, VMix, NTracersIn, TimeStep,
+       Options, CustomThicknessTend, CustomVelocityTend);
+
+   AllTendencies.emplace(Name, NewTendencies);
+
+   return get(Name);
+}
 
 //------------------------------------------------------------------------------
 // Compute tendencies for the pseudo-thickness equation

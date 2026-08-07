@@ -119,26 +119,19 @@ class Tendencies {
                                     TimeInstant Time);
 
    // Create a non-default group of tendencies
-   template <class... ArgTypes>
-   static Tendencies *create(const std::string &Name, ArgTypes &&...Args) {
-      // Check to see if tendencies of the same name already exist and
-      // if so, exit with an error
-      if (AllTendencies.find(Name) != AllTendencies.end()) {
-         LOG_ERROR(
-             "Attempted to create Tendencies with name {} but Tendencies of "
-             "that name already exists",
-             Name);
-         return nullptr;
-      }
-
-      // create new tendencies on the heap and put it in a map of
-      // unique_ptrs, which will manage its lifetime
-      auto *NewTendencies =
-          new Tendencies(Name, std::forward<ArgTypes>(Args)...);
-      AllTendencies.emplace(Name, NewTendencies);
-
-      return get(Name);
-   }
+   static Tendencies *
+   create(const std::string &Name, ///< [in] Name for tendencies
+          const HorzMesh *Mesh,    ///< [in] Horizontal mesh
+          VertCoord *VCoord,       ///< [in] Vertical coordinate
+          VertAdv *VAdv,           ///< [in] Vertical advection
+          PressureGrad *PGrad,     ///< [in] Pressure gradient
+          Eos *EqState,            ///< [in] Equation of state
+          VertMix *VMix,           ///< [in] Vertical mixing
+          int NTracersIn,          ///< [in] Number of tracers
+          TimeInterval TimeStep,   ///< [in] Time step
+          Config *Options,         ///< [in] Configuration options
+          CustomTendencyType CustomThicknessTend = CustomTendencyType{},
+          CustomTendencyType CustomVelocityTend  = CustomTendencyType{});
 
    // Destructor
    ~Tendencies();
@@ -181,18 +174,6 @@ class Tendencies {
               Config *Options,         ///< [in] Configuration options
               CustomTendencyType InCustomThicknessTend,
               CustomTendencyType InCustomVelocityTend);
-
-   Tendencies(const std::string &Name, ///< [in] Name for tendencies
-              const HorzMesh *Mesh,    ///< [in] Horizontal mesh
-              VertCoord *VCoord,       ///< [in] Vertical coordinate
-              VertAdv *VAdv,           ///< [in] Vertical advection
-              PressureGrad *PGrad,     ///< [in] Pressure gradient
-              Eos *EqState,            ///< [in] Equation of state
-              VertMix *VMix,           ///< [in] Vertical mixing
-              int NTracersIn,          ///< [in] Number of tracers
-              TimeInterval TimeStep,   ///< [in] Time step
-              Config *Options          ///< [in] Configuration options
-   );
 
    void defineFields();
 
