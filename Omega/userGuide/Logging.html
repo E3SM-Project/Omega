@@ -54,6 +54,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Omega Logging</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#logging-in-standalone-build-mode">Logging in Standalone Build mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#log-file-name">Log file name</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#e3sm-component-build">E3SM Component Build</a></li>
 </ul>
 </li>
@@ -253,6 +254,22 @@ writes the value of the variable <code class="docutils literal notranslate"><spa
 </pre></div>
 </div>
 <p>By default, the logfile will be created in the build directory.</p>
+</section>
+<section id="log-file-name">
+<h2>Log file name<a class="headerlink" href="#log-file-name" title="Permalink to this heading"></a></h2>
+<p>By default Omega writes its log messages to <code class="docutils literal notranslate"><span class="pre">omega.log</span></code> in the directory it is
+run from. A different name or path can be requested at run time with the
+<code class="docutils literal notranslate"><span class="pre">OMEGA_LOG_FILE</span></code> environment variable:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">OMEGA_LOG_FILE</span><span class="o">=</span>mylogs/run1.log
+</pre></div>
+</div>
+<p>When more than one MPI rank writes a log (see <code class="docutils literal notranslate"><span class="pre">OMEGA_LOG_TASKS</span></code>), the rank
+number is inserted into the name, so <code class="docutils literal notranslate"><span class="pre">omega.log</span></code> becomes <code class="docutils literal notranslate"><span class="pre">omega_0.log</span></code>,
+<code class="docutils literal notranslate"><span class="pre">omega_1.log</span></code> and so on. The log file is truncated when Omega starts, so it
+always contains only the messages from the current run.</p>
+<p>The Omega unit tests use this variable to give each test its own log file,
+<code class="docutils literal notranslate"><span class="pre">test/logs/&lt;TEST_NAME&gt;.log</span></code> in the build directory, rather than a single
+shared log for the whole test suite.</p>
 </section>
 <section id="e3sm-component-build">
 <h2>E3SM Component Build<a class="headerlink" href="#e3sm-component-build" title="Permalink to this heading"></a></h2>

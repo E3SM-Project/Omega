@@ -103,6 +103,7 @@
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Developing Omega Logging</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#initializing-omega-logger">Initializing Omega Logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#log-files-in-the-unit-tests">Log files in the unit tests</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#creating-logging-macros">Creating Logging Macros</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#customer-formatter-for-kokkos">Customer formatter for Kokkos</a></li>
 </ul>
@@ -219,8 +220,30 @@ of an Omega application to properly initialize the logging system.</p>
 file, serves as a pivotal component for initializing the Omega logging system.</p>
 <p>The function establishes the default logger configuration, ensuring that
 logging messages are effectively saved to a designated file. The path to
-this file is determined by utilizing the <code class="docutils literal notranslate"><span class="pre">OMEGA_LOG_FILEPATH</span></code> macro, which
-allows users to specify the desired file location for logging purposes.</p>
+this file can be passed as the second argument to <code class="docutils literal notranslate"><span class="pre">OMEGA::initLogging</span></code>. When
+it is omitted, the path comes from the <code class="docutils literal notranslate"><span class="pre">OMEGA_LOG_FILE</span></code> environment variable
+if that is set and non-empty, and from <code class="docutils literal notranslate"><span class="pre">OMEGA::OmegaDefaultLogfile</span></code>
+(<code class="docutils literal notranslate"><span class="pre">omega.log</span></code>) otherwise. The log file is truncated when it is opened, so it
+holds only the messages from the current run.</p>
+</section>
+<section id="log-files-in-the-unit-tests">
+<h2>Log files in the unit tests<a class="headerlink" href="#log-files-in-the-unit-tests" title="Permalink to this heading"></a></h2>
+<p>Every unit test driver calls <code class="docutils literal notranslate"><span class="pre">OMEGA::initLogging(DefEnv)</span></code> without a file name,
+so without any further arrangement all of the tests would write to a single
+<code class="docutils literal notranslate"><span class="pre">omega.log</span></code> in the build’s <code class="docutils literal notranslate"><span class="pre">test</span></code> directory, with nothing to say which test
+wrote which line. To avoid this, <code class="docutils literal notranslate"><span class="pre">test/CMakeLists.txt</span></code> sets <code class="docutils literal notranslate"><span class="pre">OMEGA_LOG_FILE</span></code>
+per test in <code class="docutils literal notranslate"><span class="pre">add_omega_test</span></code>, so that each test writes to
+<code class="docutils literal notranslate"><span class="pre">test/logs/&lt;TEST_NAME&gt;.log</span></code>. Note that the name comes from the CTest test
+name rather than the source file, because several tests are built from the
+same source (for example <code class="docutils literal notranslate"><span class="pre">TEND_PLANE_TEST</span></code> and
+<code class="docutils literal notranslate"><span class="pre">TEND_PLANE_SINGLE_PRECISION_TEST</span></code> both come from <code class="docutils literal notranslate"><span class="pre">TendencyTermsTest.cpp</span></code>).</p>
+<p>A new test added with <code class="docutils literal notranslate"><span class="pre">add_omega_test</span></code> gets its own log file automatically. A
+test driver that hard-codes a log file name would opt out of this, so pass no
+file name to <code class="docutils literal notranslate"><span class="pre">initLogging</span></code> unless the test manages its own log files, as
+<code class="docutils literal notranslate"><span class="pre">LoggingTest</span></code> does.</p>
+<p>The environment variable relies on the MPI launcher passing its environment
+to the ranks it starts, which is true of <code class="docutils literal notranslate"><span class="pre">srun</span></code>. If a launcher does not, the
+tests fall back to writing <code class="docutils literal notranslate"><span class="pre">omega.log</span></code>.</p>
 </section>
 <section id="creating-logging-macros">
 <h2>Creating Logging Macros<a class="headerlink" href="#creating-logging-macros" title="Permalink to this heading"></a></h2>
