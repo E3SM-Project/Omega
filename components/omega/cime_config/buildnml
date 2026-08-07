@@ -163,10 +163,10 @@ def _get_file_name(case, stream):
 
     if ocn_grid == "oQU240":
         mesh_dir = omega_dir / "oQU240"
-        return str(mesh_dir / "ocean.QU.240km.151209.teos10.260720.nc")
+        return str(mesh_dir / "ocean.QU.240km.151209.teos10.260807.nc")
     elif ocn_grid == "EC30to60E2r2":
         mesh_dir = omega_dir / "EC30to60E2r2"
-        return str(mesh_dir / "ocean.EC30to60E2r2.200908.teos10.260720.nc")
+        return str(mesh_dir / "ocean.EC30to60E2r2.200908.teos10.260807.nc")
     else:
         msg = f"Unsupported OCN_GRID: {ocn_grid}"
         raise ValueError(msg)
