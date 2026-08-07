@@ -43,8 +43,11 @@ void Tracers::init() {
    Error Err; // error code
 
    // Retrieve mesh cell/edge/vertex totals from Decomp
-   HorzMesh *DefHorzMesh   = HorzMesh::getDefault();
+   HorzMesh *DefHorzMesh = HorzMesh::getDefault();
+   OMEGA_REQUIRE(DefHorzMesh, "Null default HorzMesh pointer in Tracers::init");
    VertCoord *DefVertCoord = VertCoord::getDefault();
+   OMEGA_REQUIRE(DefVertCoord,
+                 "Null default VertCoord pointer in Tracers::init");
 
    NCellsOwned = DefHorzMesh->NCellsOwned;
    NCellsAll   = DefHorzMesh->NCellsAll;
@@ -52,6 +55,7 @@ void Tracers::init() {
    NVertLayers = DefVertCoord->NVertLayers;
 
    MeshHalo = Halo::getDefault();
+   OMEGA_REQUIRE(MeshHalo, "Null default Halo pointer in Tracers::init");
 
    auto *DefTimeStepper = TimeStepper::getDefault();
    if (!DefTimeStepper) {
@@ -67,6 +71,7 @@ void Tracers::init() {
 
    // load Tracers configs
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in Tracers::init");
    Config TracersConfig("Tracers");
    Err += OmegaConfig->get(TracersConfig);
    CHECK_ERROR_ABORT(Err, "Tracers: Tracers group not found in Config");

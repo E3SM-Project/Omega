@@ -24,11 +24,16 @@ std::map<std::string, std::unique_ptr<PressureGrad>> PressureGrad::AllPGrads;
 void PressureGrad::init() {
 
    // Retrieve default mesh and vertical coordinate
-   HorzMesh *DefMesh    = HorzMesh::getDefault();
+   HorzMesh *DefMesh = HorzMesh::getDefault();
+   OMEGA_REQUIRE(DefMesh,
+                 "Null default HorzMesh pointer in PressureGrad::init");
    VertCoord *DefVCoord = VertCoord::getDefault();
+   OMEGA_REQUIRE(DefVCoord,
+                 "Null default VertCoord pointer in PressureGrad::init");
 
    // Retrieve omega config
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in PressureGrad::init");
 
    // Create the default PressureGrad and set pointer to it
    PressureGrad::DefaultPGrad =
@@ -43,6 +48,16 @@ PressureGrad::create(const std::string &Name, /// [in] Name for PressureGrad
                      const HorzMesh *Mesh,    ///< [in] Horizontal mesh
                      const VertCoord *VCoord, ///< [in] Vertical coordinate
                      Config *Options) {       ///< [in] Configuration options
+
+   OMEGA_REQUIRE(Mesh,
+                 "Null HorzMesh pointer in PressureGrad::create with Name = {}",
+                 Name);
+   OMEGA_REQUIRE(
+       VCoord, "Null VertCoord pointer in PressureGrad::create with Name = {}",
+       Name);
+   OMEGA_REQUIRE(Options,
+                 "Null Config pointer in PressureGrad::create with Name = {}",
+                 Name);
 
    // Check to see if a PressureGrad of the same name already exists and
    // if so, exit with an error

@@ -35,18 +35,32 @@ std::map<std::string, std::unique_ptr<Tendencies>> Tendencies::AllTendencies;
 void Tendencies::init() {
    Error Err; // error code
 
-   HorzMesh *DefHorzMesh       = HorzMesh::getDefault();
-   VertCoord *DefVertCoord     = VertCoord::getDefault();
-   VertAdv *DefVertAdv         = VertAdv::getDefault();
+   HorzMesh *DefHorzMesh = HorzMesh::getDefault();
+   OMEGA_REQUIRE(DefHorzMesh,
+                 "Null default HorzMesh pointer in Tendencies::init");
+   VertCoord *DefVertCoord = VertCoord::getDefault();
+   OMEGA_REQUIRE(DefVertCoord,
+                 "Null default VertCoord pointer in Tendencies::init");
+   VertAdv *DefVertAdv = VertAdv::getDefault();
+   OMEGA_REQUIRE(DefVertAdv,
+                 "Null default VertAdv pointer in Tendencies::init");
    TimeStepper *DefTimeStepper = TimeStepper::getDefault();
-   Eos *DefEos                 = Eos::getInstance();
-   PressureGrad *DefPGrad      = PressureGrad::getDefault();
-   VertMix *DefVertMix         = VertMix::getInstance();
+   OMEGA_REQUIRE(DefTimeStepper,
+                 "Null default TimeStepper pointer in Tendencies::init");
+   Eos *DefEos = Eos::getInstance();
+   OMEGA_REQUIRE(DefEos, "Null default Eos pointer in Tendencies::init");
+   PressureGrad *DefPGrad = PressureGrad::getDefault();
+   OMEGA_REQUIRE(DefPGrad,
+                 "Null default PressureGrad pointer in Tendencies::init");
+   VertMix *DefVertMix = VertMix::getInstance();
+   OMEGA_REQUIRE(DefVertMix,
+                 "Null default VertMix pointer in Tendencies::init");
 
    I4 NTracers = Tracers::getNumTracers();
 
    // Get TendConfig group
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in Tendencies::init");
    Config TendConfig("Tendencies");
    Err += OmegaConfig->get(TendConfig);
    CHECK_ERROR_ABORT(Err, "Tendencies: Tendencies group not found in Config");
@@ -519,6 +533,25 @@ Tendencies *Tendencies::create(const std::string &Name,
                                Config *Options, ///< [in] Configuration options
                                CustomTendencyType CustomThicknessTend,
                                CustomTendencyType CustomVelocityTend) {
+
+   OMEGA_REQUIRE(Mesh,
+                 "Null HorzMesh pointer in Tendencies::create with Name = {}",
+                 Name);
+   OMEGA_REQUIRE(VCoord,
+                 "Null VCoord pointer in Tendencies::create with Name = {}",
+                 Name);
+   OMEGA_REQUIRE(
+       VAdv, "Null VertAdv pointer in Tendencies::create with Name = {}", Name);
+   OMEGA_REQUIRE(
+       PGrad, "Null PressureGrad pointer in Tendencies::create with Name = {}",
+       Name);
+   OMEGA_REQUIRE(EqState,
+                 "Null Eos pointer in Tendencies::create with Name = {}", Name);
+   OMEGA_REQUIRE(
+       VMix, "Null VertMix pointer in Tendencies::create with Name = {}", Name);
+   OMEGA_REQUIRE(Options,
+                 "Null Config pointer in Tendencies::create with Name = {}",
+                 Name);
 
    // Check to see if tendencies of the same name already exist and
    // if so, exit with an error

@@ -35,8 +35,11 @@ std::map<std::string, std::unique_ptr<HorzMesh>> HorzMesh::AllHorzMeshes;
 void HorzMesh::init(const Clock *ModelClock //< [in] Model clock for IO alarms
 ) {
 
+   OMEGA_REQUIRE(ModelClock, "Null ModelClock pointer in HorzMesh::init");
+
    // Retrieve the default decomposition
    Decomp *DefDecomp = Decomp::getDefault();
+   OMEGA_REQUIRE(DefDecomp, "Null default Decomp pointer in HorzMesh::init");
 
    // Create the default mesh and set pointer to it
    HorzMesh::DefaultHorzMesh = create("Default", DefDecomp, ModelClock);
@@ -234,6 +237,13 @@ HorzMesh *HorzMesh::create(const std::string &Name, //< [in] Name for new mesh
                            Decomp *MeshDecomp,      //< [in] Decomp for new mesh
                            const Clock *ModelClock  //< [in] Model clock for IO
 ) {
+   OMEGA_REQUIRE(MeshDecomp,
+                 "Null Decomp pointer in HorzMesh::create with Name = {}",
+                 Name);
+   OMEGA_REQUIRE(ModelClock,
+                 "Null ModelClock pointer in HorzMesh::create with Name = {}",
+                 Name);
+
    // Check to see if a mesh of the same name already exists and
    // if so, exit with an error
    if (AllHorzMeshes.find(Name) != AllHorzMeshes.end())

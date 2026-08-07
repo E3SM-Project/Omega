@@ -9,6 +9,7 @@
 
 #include "VertCoord.h"
 #include "Dimension.h"
+#include "Error.h"
 #include "Field.h"
 #include "GlobalConstants.h"
 #include "IO.h"
@@ -38,10 +39,13 @@ void VertCoord::init(
 ) {
 
    Decomp *DefDecomp = Decomp::getDefault();
+   OMEGA_REQUIRE(DefDecomp, "Null default Decomp pointer in VertCoord::init");
 
    Halo *DefHalo = Halo::getDefault();
+   OMEGA_REQUIRE(DefHalo, "Null default Halo pointer in VertCoord::init");
 
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in VertCoord::init");
 
    VertCoord::DefaultVertCoord = create("Default", DefDecomp, DefHalo,
                                         OmegaConfig, ReadStream, InNVertLayers);
@@ -196,6 +200,14 @@ VertCoord *VertCoord::create(
     const bool ReadStream,   // [in] optional logical to read stream
     const int InNVertLayers  // [in] optional int to set vertical dim
 ) {
+   OMEGA_REQUIRE(
+       Decomp, "Null Decomp pointer in VertCoord::create with Name = {}", Name);
+   OMEGA_REQUIRE(MeshHalo,
+                 "Null Halo pointer in VertCoord::create with Name = {}", Name);
+   OMEGA_REQUIRE(Options,
+                 "Null Config pointer in VertCoord::create with Name = {}",
+                 Name);
+
    // Check to see if a VertCoord of the same name already exists and, if so,
    // exit with an error
    if (AllVertCoords.find(Name) != AllVertCoords.end()) {

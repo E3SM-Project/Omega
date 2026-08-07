@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "VertAdv.h"
+#include "Error.h"
 #include "Field.h"
 #include "Tracers.h"
 
@@ -25,10 +26,13 @@ std::map<std::string, std::unique_ptr<VertAdv>> VertAdv::AllVertAdvs;
 // HorzMesh, VertCoord, and Tracers
 void VertAdv::init() {
 
-   auto Mesh   = HorzMesh::getDefault();
+   auto Mesh = HorzMesh::getDefault();
+   OMEGA_REQUIRE(Mesh, "Null default HorzMesh pointer in VertAdv::init");
    auto VCoord = VertCoord::getDefault();
+   OMEGA_REQUIRE(VCoord, "Null default VertCoord pointer in VertAdv::init");
 
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in VertAdv::init");
 
    VertAdv::DefaultVertAdv = create("Default", Mesh, VCoord, OmegaConfig);
 
@@ -95,6 +99,14 @@ VertAdv *VertAdv::create(const std::string &Name, //< [in] name for new VertAdv
                          const VertCoord *VCoord, //< [in] associated VertCoord
                          Config *Options          //< [in] configuration options
 ) {
+   OMEGA_REQUIRE(
+       Mesh, "Null HorzMesh pointer in VertAdv::create with Name = {}", Name);
+   OMEGA_REQUIRE(VCoord,
+                 "Null VertCoord pointer in VertAdv::create with Name = {}",
+                 Name);
+   OMEGA_REQUIRE(Options,
+                 "Null Config pointer in VertAdv::create with Name = {}", Name);
+
    // Check to see if a VertAdv of the same name already exists and, if so,
    // exit with an error
    if (AllVertAdvs.find(Name) != AllVertAdvs.end()) {

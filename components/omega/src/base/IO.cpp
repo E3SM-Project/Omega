@@ -133,6 +133,7 @@ void init(const MPI_Comm &InComm // [in] MPI communicator to use
 
    Error Err;
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in IO::init");
 
    // Read IO subconfiguration
    Config IOConfig("IO");

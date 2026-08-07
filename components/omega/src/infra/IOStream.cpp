@@ -45,8 +45,11 @@ void IOStream::init(Clock *&ModelClock //< [inout] Omega model clock
 
    Error Err;
 
+   OMEGA_REQUIRE(ModelClock, "Null ModelClock pointer in IOStream::init");
+
    // Retrieve the model configuration and get the streams sub-config
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in IOStream::init");
    Config StreamsCfgAll("IOStreams");
    Err = OmegaConfig->get(StreamsCfgAll);
    CHECK_ERROR_ABORT(
@@ -388,6 +391,10 @@ void IOStream::create(const std::string &StreamName, //< [in] name of stream
 ) {
 
    Error Err; // internal error code
+
+   OMEGA_REQUIRE(ModelClock,
+                 "Null ModelClock pointer in IOStream::create with Name = {}",
+                 StreamName);
 
    // Check whether the stream already exists
    if (AllStreams.find(StreamName) != AllStreams.end())

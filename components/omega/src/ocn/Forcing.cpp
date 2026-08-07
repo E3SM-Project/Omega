@@ -10,6 +10,7 @@
 //===--------------------------------------------------------------===//
 
 #include "Forcing.h"
+#include "Error.h"
 #include "Field.h"
 #include "IOStream.h"
 #include "Logging.h"
@@ -45,6 +46,11 @@ void Forcing::unregisterFields() const { SfcStressForcing.unregisterFields(); }
 // Create and register a non-default forcing instance.
 Forcing *Forcing::create(const std::string &Name, const HorzMesh *Mesh,
                          Halo *MeshHalo) {
+   OMEGA_REQUIRE(
+       Mesh, "Null HorzMesh pointer in Forcing::create with Name = {}", Name);
+   OMEGA_REQUIRE(MeshHalo,
+                 "Null Halo pointer in Forcing::create with Name = {}", Name);
+
    if (AllForcing.find(Name) != AllForcing.end()) {
       LOG_ERROR("Attempted to create new Forcing with name {} but it already "
                 "exists",
@@ -68,7 +74,9 @@ void Forcing::init() {
    FieldGroup::create("Forcing");
 
    const HorzMesh *DefMesh = HorzMesh::getDefault();
-   Halo *DefHalo           = Halo::getDefault();
+   OMEGA_REQUIRE(DefMesh, "Null default HorzMesh pointer in Forcing::init");
+   Halo *DefHalo = Halo::getDefault();
+   OMEGA_REQUIRE(DefHalo, "Null default Halo pointer in Forcing::init");
 
    DefaultForcing = Forcing::create("Default", DefMesh, DefHalo);
 
@@ -79,6 +87,7 @@ void Forcing::init() {
    DefaultForcing->registerFields(DefMesh->MeshName);
 
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in Forcing::init");
    DefaultForcing->readConfigOptions(OmegaConfig);
    // for now, forcing fields are read at start-up only.
    // to be extended to include switch from standalone to coupled.

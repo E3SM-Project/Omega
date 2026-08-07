@@ -22,6 +22,8 @@ void ManufacturedSolution::init() {
 
    // Get ManufacturedSolConfig group
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig,
+                 "Null OmegaConfig pointer in ManufacturedSolution::init");
    Config ManufacturedSolConfig("ManufacturedSolution");
    Err += OmegaConfig->get(ManufacturedSolConfig);
    CHECK_ERROR_ABORT(

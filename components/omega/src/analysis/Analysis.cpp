@@ -64,12 +64,18 @@ void Analysis::init() {
    registerAllBaseAnalysisOperators();
 
    // Retrieve default instances of required components
-   auto DefEnv         = MachEnv::getDefault();
-   auto Mesh           = HorzMesh::getDefault();
-   auto VCoord         = VertCoord::getDefault();
+   auto DefEnv = MachEnv::getDefault();
+   OMEGA_REQUIRE(DefEnv, "Null default MachEnv pointer in Analysis::init");
+   auto Mesh = HorzMesh::getDefault();
+   OMEGA_REQUIRE(Mesh, "Null default HorzMesh pointer in Analysis::init");
+   auto VCoord = VertCoord::getDefault();
+   OMEGA_REQUIRE(VCoord, "Null default VertCoord pointer in Analysis::init");
    auto DefTimeStepper = TimeStepper::getDefault();
+   OMEGA_REQUIRE(DefTimeStepper,
+                 "Null default TimeStepper pointer in Analysis::init");
    Clock *OmegaClock   = DefTimeStepper->getClock();
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in Analysis::init");
 
    // Create the default Analysis instance
    Analysis::DefAnalysis =
@@ -86,6 +92,16 @@ void Analysis::init() {
 Analysis *Analysis::create(const std::string &Name, const MachEnv *Env,
                            const HorzMesh *Mesh, const VertCoord *VCoord,
                            Clock *ModelClock, Config *Options) {
+
+   OMEGA_REQUIRE(Env, "Null MachEnv pointer in Analysis::create with Name = {}",
+                 Name);
+   OMEGA_REQUIRE(
+       Mesh, "Null HorzMesh pointer in Analysis::create with Name = {}", Name);
+   OMEGA_REQUIRE(VCoord,
+                 "Null VertCoord pointer in Analysis::create with Name = {}",
+                 Name);
+   OMEGA_REQUIRE(ModelClock,
+                 "Null Clock pointer in Analysis::create with Name = {}", Name);
 
    // Check for duplicate names
    if (AllAnalysisObjects.find(Name) != AllAnalysisObjects.end()) {

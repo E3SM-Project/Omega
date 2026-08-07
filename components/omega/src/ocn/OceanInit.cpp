@@ -64,10 +64,9 @@ static bool PrintAllRanks = false;
 bool printTimingAllRanks() { return Timing::PrintAllRanks; }
 
 // Read timing configuration and set Pacer options
-static void readTimingConfig() {
+static void readTimingConfig(Config *OmegaConfig) {
    Error Err;
 
-   Config *OmegaConfig = Config::getOmegaConfig();
    Config TimingConfig("Timing");
    Err += OmegaConfig->get(TimingConfig);
    CHECK_ERROR_ABORT(Err, "Timing: Timing group not found in Config");
@@ -104,6 +103,7 @@ int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
    // Init the default machine environment based on input MPI communicator
    MachEnv::init(Comm);
    MachEnv *DefEnv = MachEnv::getDefault();
+   OMEGA_REQUIRE(DefEnv, "Null default MachEnv pointer in ocnInit");
 
    // Initialize Omega logging
    initLogging(DefEnv);
@@ -112,8 +112,9 @@ int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
    Config("Omega");
    Config::readAll("omega.yml");
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in ocnInit");
 
-   readTimingConfig();
+   readTimingConfig(OmegaConfig);
 
    // initialize remaining Omega modules
    Err = initOmegaModules(Comm);
@@ -179,13 +180,15 @@ int ocnInit1(MPI_Comm Comm,                 ///< [in] ocean MPI communicator
    I4 Err = 0; // return error code
 
    MachEnv *DefEnv = MachEnv::getDefault();
+   OMEGA_REQUIRE(DefEnv, "Null default MachEnv pointer in ocnInit1");
 
    // Read config file into Config object
    Config("Omega");
    Config::readAll(ConfigFile);
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in ocnInit1");
 
-   readTimingConfig();
+   readTimingConfig(OmegaConfig);
 
    // initialize remaining Omega modules
    Err = initOmegaModules(Comm, TimeParams, CouplingParams);

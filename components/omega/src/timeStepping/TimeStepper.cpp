@@ -127,6 +127,23 @@ TimeStepper *TimeStepper::create(
     Halo *InMeshHalo                ///< [in] ptr to halos
 ) {
 
+   OMEGA_REQUIRE(
+       InTend, "Null Tendencies pointer in TimeStepper::create with Name = {}",
+       InName);
+   OMEGA_REQUIRE(
+       InAuxState,
+       "Null AuxiliaryState pointer in TimeStepper::create with Name = {}",
+       InName);
+   OMEGA_REQUIRE(InMesh,
+                 "Null HorzMesh pointer in TimeStepper::create with Name = {}",
+                 InName);
+   OMEGA_REQUIRE(InVCoord,
+                 "Null VertCoord pointer in TimeStepper::create with Name = {}",
+                 InName);
+   OMEGA_REQUIRE(InMeshHalo,
+                 "Null Halo pointer in TimeStepper::create with Name = {}",
+                 InName);
+
    // Start by calling the two-phase create function
    TimeStepper *NewTimeStepper =
        create(InName, InType, InTimeStep, InStartTime, InStopTime);
@@ -248,6 +265,7 @@ void TimeStepper::init1() {
 
    // Retrieve TimeStepper options from Config if available
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in TimeStepper::init1");
    Config TimeIntConfig("TimeIntegration");
    Err = OmegaConfig->get(TimeIntConfig);
    CHECK_ERROR_ABORT(Err, "TimeIntegration group not found in Config");
@@ -335,6 +353,7 @@ void TimeStepper::init1(const TimeInitParams &TimeParams) {
 
    // TimeStepper and TimeStep are always read from the Config
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in TimeStepper::init1");
    Config TimeIntConfig("TimeIntegration");
    Err = OmegaConfig->get(TimeIntConfig);
    CHECK_ERROR_ABORT(Err, "TimeIntegration group not found in Config");
@@ -363,12 +382,24 @@ void TimeStepper::init1(const TimeInitParams &TimeParams) {
 // Finish initialization of the default time stepper (phase 2)
 void TimeStepper::init2() {
 
+   OMEGA_REQUIRE(DefaultTimeStepper,
+                 "Null default TimeStepper pointer in TimeStepper::init2");
+
    // Get default pointers
-   HorzMesh *DefMesh        = HorzMesh::getDefault();
-   VertCoord *DefVCoord     = VertCoord::getDefault();
-   Halo *DefHalo            = Halo::getDefault();
-   Tendencies *DefTend      = Tendencies::getDefault();
+   HorzMesh *DefMesh = HorzMesh::getDefault();
+   OMEGA_REQUIRE(DefMesh,
+                 "Null default HorzMesh pointer in TimeStepper::init2");
+   VertCoord *DefVCoord = VertCoord::getDefault();
+   OMEGA_REQUIRE(DefVCoord,
+                 "Null default VertCoord pointer in TimeStepper::init2");
+   Halo *DefHalo = Halo::getDefault();
+   OMEGA_REQUIRE(DefHalo, "Null default Halo pointer in TimeStepper::init2");
+   Tendencies *DefTend = Tendencies::getDefault();
+   OMEGA_REQUIRE(DefTend,
+                 "Null default Tendencies pointer in TimeStepper::init2");
    AuxiliaryState *AuxState = AuxiliaryState::getDefault();
+   OMEGA_REQUIRE(AuxState,
+                 "Null default AuxiliaryState pointer in TimeStepper::init2");
 
    // Attach data pointers
    DefaultTimeStepper->attachData(DefTend, AuxState, DefMesh, DefVCoord,

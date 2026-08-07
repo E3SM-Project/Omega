@@ -1,5 +1,6 @@
 #include "SfcCoupling.h"
 #include "Eos.h"
+#include "Error.h"
 #include "GlobalConstants.h"
 #include "Logging.h"
 #include "OceanState.h"
@@ -21,7 +22,11 @@ int SfcCoupling::init(const CouplingInitParams &CouplingInitParams) {
 
    // Retrieve the default horizontal mesh and timestepper
    HorzMesh *DefHorzMesh = HorzMesh::getDefault();
-   auto *DefTimeStepper  = TimeStepper::getDefault();
+   OMEGA_REQUIRE(DefHorzMesh,
+                 "Null default HorzMesh pointer in SfcCoupling::init");
+   auto *DefTimeStepper = TimeStepper::getDefault();
+   OMEGA_REQUIRE(DefTimeStepper,
+                 "Null default TimeStepper pointer in SfcCoupling::init");
 
    TimeInterval OcnTimeStep = DefTimeStepper->getTimeStep();
    TimeInterval CplTimeStep = CouplingInitParams.CouplingTimeStep;
@@ -91,6 +96,13 @@ SfcCoupling *SfcCoupling::create(
     const int NExportFields, const std::map<std::string, int> &ImportIdxMap,
     const std::map<std::string, int> &ExportIdxMap, TimeStepper *Stepper,
     const TimeInterval &CouplingTimeStep, const CouplingLayout &Layout) {
+
+   OMEGA_REQUIRE(Mesh,
+                 "Null HorzMesh pointer in SfcCoupling::create with Name = {}",
+                 Name);
+   OMEGA_REQUIRE(
+       Stepper,
+       "Null TimeStepper pointer in SfcCoupling::create with Name = {}", Name);
 
    // Check to see if a surface coupling of the same name already exists
    if (AllSfcCoupling.find(Name) != AllSfcCoupling.end()) {

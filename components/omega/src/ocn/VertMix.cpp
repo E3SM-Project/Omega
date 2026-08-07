@@ -13,6 +13,7 @@
 #include "VertMix.h"
 #include "DataTypes.h"
 #include "Eos.h"
+#include "Error.h"
 #include "GlobalConstants.h"
 #include "HorzMesh.h"
 #include "HorzOperators.h"
@@ -100,9 +101,13 @@ void VertMix::destroyInstance() {
 /// missing.
 void VertMix::init() {
 
+   HorzMesh *DefMesh = HorzMesh::getDefault();
+   OMEGA_REQUIRE(DefMesh, "Null default HorzMesh pointer in VertMix::init");
+   VertCoord *DefVCoord = VertCoord::getDefault();
+   OMEGA_REQUIRE(DefVCoord, "Null default VertCoord pointer in VertMix::init");
+
    if (!Instance) {
-      Instance = new VertMix("Default", HorzMesh::getDefault(),
-                             VertCoord::getDefault());
+      Instance = new VertMix("Default", DefMesh, DefVCoord);
    }
 
    Error Err; // error code
@@ -112,6 +117,7 @@ void VertMix::init() {
 
    /// Get VertMixConfig group from Omega config
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in VertMix::init");
    Config VertMixConfig("VertMix");
    Err += OmegaConfig->get(VertMixConfig);
    CHECK_ERROR_ABORT(Err, "VertMix::init: VertMix group not found in Config");

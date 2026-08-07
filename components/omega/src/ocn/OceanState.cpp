@@ -37,9 +37,15 @@ int OceanState::init() {
    // Retrieve the default decomposition and mesh
    Decomp *DefDecomp     = Decomp::getDefault();
    HorzMesh *DefHorzMesh = HorzMesh::getDefault();
-   Halo *DefHalo         = Halo::getDefault();
+   OMEGA_REQUIRE(DefHorzMesh,
+                 "Null default HorzMesh pointer in OceanState::init");
+   Halo *DefHalo = Halo::getDefault();
+   OMEGA_REQUIRE(DefHalo, "Null default Halo pointer in OceanState::init");
 
-   int NVertLayers = VertCoord::getDefault()->NVertLayers;
+   VertCoord *DefVCoord = VertCoord::getDefault();
+   OMEGA_REQUIRE(DefVCoord,
+                 "Null default VertCoord pointer in OceanState::init");
+   int NVertLayers = DefVCoord->NVertLayers;
 
    auto *DefTimeStepper = TimeStepper::getDefault();
    if (!DefTimeStepper) {
@@ -139,6 +145,13 @@ OceanState::create(const std::string &Name, //< [in] Name for new state
                    const int NVertLayers,   //< [in] number of vertical layers
                    const int NTimeLevels    //< [in] number of time levels
 ) {
+
+   OMEGA_REQUIRE(Mesh,
+                 "Null HorzMesh pointer in OceanState::create with Name = {}",
+                 Name);
+   OMEGA_REQUIRE(MeshHalo,
+                 "Null Halo pointer in OceanState::create with Name = {}",
+                 Name);
 
    // Check to see if a state of the same name already exists and
    // if so, exit with an error

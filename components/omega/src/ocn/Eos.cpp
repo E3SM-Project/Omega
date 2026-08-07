@@ -9,6 +9,7 @@
 
 #include "Eos.h"
 #include "DataTypes.h"
+#include "Error.h"
 #include "HorzMesh.h"
 
 namespace OMEGA {
@@ -73,9 +74,13 @@ void Eos::destroyInstance() {
 /// for either a Linear or TEOS-10 equation.
 void Eos::init() {
 
+   HorzMesh *DefMesh = HorzMesh::getDefault();
+   OMEGA_REQUIRE(DefMesh, "Null default HorzMesh pointer in Eos::init");
+   VertCoord *DefVCoord = VertCoord::getDefault();
+   OMEGA_REQUIRE(DefVCoord, "Null default VertCoord pointer in Eos::init");
+
    if (!Instance) {
-      Instance =
-          new Eos("Default", HorzMesh::getDefault(), VertCoord::getDefault());
+      Instance = new Eos("Default", DefMesh, DefVCoord);
    }
 
    Error Err; // error code
@@ -85,6 +90,7 @@ void Eos::init() {
 
    /// Get EosConfig group from Omega config
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in Eos::init");
    Config EosConfig("Eos");
    Err += OmegaConfig->get(EosConfig);
    CHECK_ERROR_ABORT(Err, "Eos::init: Eos group not found in Config");
