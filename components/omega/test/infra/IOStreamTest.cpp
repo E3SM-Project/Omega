@@ -32,6 +32,7 @@
 #include "TimeMgr.h"
 #include "TimeStepper.h"
 #include "Tracers.h"
+#include "VertAdv.h"
 #include "VertCoord.h"
 #include "VertMix.h"
 #include "mpi.h"
@@ -136,6 +137,9 @@ void initIOStreamTest(Clock *&ModelClock // Model clock
 
    // Initialize the vertical coordinate
    VertCoord::init();
+
+   // Initialize VertAdv
+   VertAdv::init();
 
    // Initialize State
    TmpErr = OceanState::init();
@@ -322,6 +326,7 @@ int main(int argc, char **argv) {
    OceanState::clear();
    AuxiliaryState::clear();
    Forcing::clear();
+   VertAdv::clear();
    HorzMesh::clear();
    VertCoord::clear();
    Field::clear();

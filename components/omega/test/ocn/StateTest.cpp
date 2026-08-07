@@ -29,6 +29,7 @@
 #include "Pacer.h"
 #include "Tendencies.h"
 #include "TimeStepper.h"
+#include "VertAdv.h"
 #include "VertCoord.h"
 #include "VertMix.h"
 #include "mpi.h"
@@ -88,6 +89,9 @@ void initStateTest() {
 
    // Initialize the vertical coordinate
    VertCoord::init();
+
+   // Initialize VertAdv
+   VertAdv::init();
 
    // Initialize tracers
    Tracers::init();
@@ -452,6 +456,7 @@ int main(int argc, char *argv[]) {
       VertMix::destroyInstance();
       Tendencies::clear();
       TimeStepper::clear();
+      VertAdv::clear();
       HorzMesh::clear();
       VertCoord::clear();
       Halo::clear();

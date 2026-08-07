@@ -42,6 +42,7 @@
 #include "TimeMgr.h"
 #include "TimeStepper.h"
 #include "Tracers.h"
+#include "VertAdv.h"
 #include "VertCoord.h"
 #include "VertMix.h"
 #include "mpi.h"
@@ -129,6 +130,7 @@ void initFillValueTest() {
 
    HorzMesh::init(ModelClock);
    VertCoord::init();
+   VertAdv::init();
    Tracers::init();
    AuxiliaryState::init();
    PressureGrad::init();
@@ -445,6 +447,7 @@ int main(int argc, char *argv[]) {
       Tracers::clear();
       IOStream::finalize();
       TimeStepper::clear();
+      VertAdv::clear();
       HorzMesh::clear();
       VertCoord::clear();
       Field::clear();

@@ -16,6 +16,7 @@
 #include "IOStream.h"
 #include "Logging.h"
 #include "TimeStepper.h"
+#include "VertAdv.h"
 #include "VertCoord.h"
 #include "VertMix.h"
 
@@ -942,6 +943,9 @@ void initAnalysisTest() {
 
    // Initialize the default vertical coordinate
    VertCoord::init();
+
+   // Initialize VertAdv
+   VertAdv::init();
 
    // Initialize tracers
    Tracers::init();
