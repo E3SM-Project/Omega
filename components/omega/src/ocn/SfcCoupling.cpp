@@ -237,6 +237,8 @@ void SfcCoupling::exportToCoupler() {
    int VelUIdx  = ExportIdxMap.at("So_u");
    int VelVIdx  = ExportIdxMap.at("So_v");
    int SshIdx   = ExportIdxMap.at("So_ssh");
+   int DhdxIdx  = ExportIdxMap.at("So_dhdx");
+   int DhdyIdx  = ExportIdxMap.at("So_dhdy");
 
    // Copy Kokkos view handles
    auto OcnToCplView_        = OcnToCplView;
@@ -244,6 +246,8 @@ void SfcCoupling::exportToCoupler() {
    auto AvgSfcSalinity_      = OcnToCpl.AvgSfcSalinityH;
    auto AvgSfcVelocityZonal_ = OcnToCpl.AvgSfcVelocityZonalH;
    auto AvgSfcVelocityMerid_ = OcnToCpl.AvgSfcVelocityMeridH;
+   auto AvgSfcSshGradZonal_  = OcnToCpl.AvgSfcSshGradZonalH;
+   auto AvgSfcSshGradMerid_  = OcnToCpl.AvgSfcSshGradMeridH;
    auto InstSshCellH_        = OcnToCpl.InstSshCellH;
 
    // Initalize all o2x fields to 0.0 for next coupling interval
@@ -257,6 +261,8 @@ void SfcCoupling::exportToCoupler() {
       OcnToCplView_(SalinIdx, Idx) = AvgSfcSalinity_(Idx);
       OcnToCplView_(VelUIdx, Idx)  = AvgSfcVelocityZonal_(Idx);
       OcnToCplView_(VelVIdx, Idx)  = AvgSfcVelocityMerid_(Idx);
+      OcnToCplView_(DhdxIdx, Idx)  = AvgSfcSshGradZonal_(Idx);
+      OcnToCplView_(DhdyIdx, Idx)  = AvgSfcSshGradMerid_(Idx);
       OcnToCplView_(SshIdx, Idx)   = InstSshCellH_(Idx);
    });
 
@@ -294,10 +300,14 @@ OcnToCplFields::OcnToCplFields(const std::string &Suffix, const HorzMesh *Mesh)
       AvgSfcVelocityZonalH("AvgSfcVelocityZonal" + Suffix, Mesh->NCellsOwned),
       AvgSfcVelocityMeridH("AvgSfcVelocityMeridional" + Suffix,
                            Mesh->NCellsOwned),
+      AvgSfcSshGrad("AvgSfcSshGrad" + Suffix, Mesh->NEdgesSize),
+      AvgSfcSshGradZonalH("AvgSfcSshGradZonal" + Suffix, Mesh->NCellsOwned),
+      AvgSfcSshGradMeridH("AvgSfcSshGradMeridional" + Suffix,
+                          Mesh->NCellsOwned),
       InstSshCellH("InstSshCellH" + Suffix, Mesh->NCellsOwned),
       InSituTempScratch("InSituTempScratch" + Suffix, Mesh->NCellsOwned),
-      VelZonalScratch("VelZonalScratch" + Suffix, Mesh->NCellsOwned),
-      VelMeridScratch("VelMeridScratch" + Suffix, Mesh->NCellsOwned) {
+      ReconZonalScratch("ReconZonalScratch" + Suffix, Mesh->NCellsOwned),
+      ReconMeridScratch("ReconMeridScratch" + Suffix, Mesh->NCellsOwned) {
 
    // Kokkok views created with a label are zero-initialized by default.
    // We reset the fields here anyway to be explicit about the fact that the
@@ -324,14 +334,12 @@ void OcnToCplFields::updateFields(const OceanState *State,
    auto Salinity =
        Kokkos::subview(TracerArray, SalinityIdx, Kokkos::ALL, Kokkos::ALL);
 
+   HorzMesh *DefHorzMesh   = HorzMesh::getDefault();
    VertCoord *DefVertCoord = VertCoord::getDefault();
 
    OMEGA_SCOPE(LocMinLayerCell, DefVertCoord->MinLayerCell);
-   OMEGA_SCOPE(LocMinLayerEdgeBot, DefVertCoord->MinLayerEdgeBot);
-   OMEGA_SCOPE(LocMaxLayerEdgeTop, DefVertCoord->MaxLayerEdgeTop);
    OMEGA_SCOPE(LocAvgSfcSalinity, AvgSfcSalinity);
    OMEGA_SCOPE(LocAvgSfcTemp, AvgSfcTemperature);
-   OMEGA_SCOPE(LocAvgSfcNormalVel, AvgSfcNormalVelocity);
 
    parallelFor(
        {NCellsOwned}, KOKKOS_LAMBDA(int ICell) {
@@ -345,6 +353,14 @@ void OcnToCplFields::updateFields(const OceanState *State,
               LocAvgSfcSalinity(ICell), Salinity(ICell, KSfc), NAccumSteps);
        });
 
+   OMEGA_SCOPE(LocCellsOnEdge, DefHorzMesh->CellsOnEdge);
+   OMEGA_SCOPE(LocDcEdge, DefHorzMesh->DcEdge);
+   OMEGA_SCOPE(LocSshCell, DefVertCoord->SshCell);
+   OMEGA_SCOPE(LocMinLayerEdgeBot, DefVertCoord->MinLayerEdgeBot);
+   OMEGA_SCOPE(LocMaxLayerEdgeTop, DefVertCoord->MaxLayerEdgeTop);
+   OMEGA_SCOPE(LocAvgSfcSshGrad, AvgSfcSshGrad);
+   OMEGA_SCOPE(LocAvgSfcNormalVel, AvgSfcNormalVelocity);
+
    parallelFor(
        {NEdgesAll}, KOKKOS_LAMBDA(int IEdge) {
           const int KMin = LocMinLayerEdgeBot(IEdge);
@@ -355,6 +371,14 @@ void OcnToCplFields::updateFields(const OceanState *State,
              LocAvgSfcNormalVel(IEdge) =
                  updateAverage(LocAvgSfcNormalVel(IEdge),
                                NormalVel(IEdge, KMin), NAccumSteps);
+
+             const int ICell0 = LocCellsOnEdge(IEdge, 0);
+             const int ICell1 = LocCellsOnEdge(IEdge, 1);
+             const Real SshGrad =
+                 (LocSshCell(ICell1) - LocSshCell(ICell0)) / LocDcEdge(IEdge);
+
+             LocAvgSfcSshGrad(IEdge) =
+                 updateAverage(LocAvgSfcSshGrad(IEdge), SshGrad, NAccumSteps);
           }
        });
 }
@@ -394,21 +418,32 @@ void OcnToCplFields::copyToHost() {
    deepCopy(AvgSfcSalinityH, AvgSfcSalinity);
 
    // Retrieve the default horizontal mesh
-   // TODO: Should this just be a mem
+   // TODO: Should this just be a class member
    HorzMesh *DefHorzMesh = HorzMesh::getDefault();
 
-   OMEGA_SCOPE(LocVecEdge, AvgSfcNormalVelocity);
-   OMEGA_SCOPE(LocVelZonal, VelZonalScratch);
-   OMEGA_SCOPE(LocVelMerid, VelMeridScratch);
+   OMEGA_SCOPE(LocNormalVelocity, AvgSfcNormalVelocity);
+   OMEGA_SCOPE(LocSshGradEdge, AvgSfcSshGrad);
+   OMEGA_SCOPE(LocReconZonal, ReconZonalScratch);
+   OMEGA_SCOPE(LocReconMerid, ReconMeridScratch);
 
    VectorReconOnCell ReconCell(DefHorzMesh);
+
    parallelFor(
        {DefHorzMesh->NCellsOwned}, KOKKOS_LAMBDA(int ICell) {
-          ReconCell(LocVelZonal, LocVelMerid, ICell, LocVecEdge);
+          ReconCell(LocReconZonal, LocReconMerid, ICell, LocNormalVelocity);
        });
 
-   deepCopy(AvgSfcVelocityZonalH, VelZonalScratch);
-   deepCopy(AvgSfcVelocityMeridH, VelMeridScratch);
+   deepCopy(AvgSfcVelocityZonalH, ReconZonalScratch);
+   deepCopy(AvgSfcVelocityMeridH, ReconMeridScratch);
+
+   // Reuse the same scratch arrays; VectorReconOnCell overwrites every cell
+   parallelFor(
+       {DefHorzMesh->NCellsOwned}, KOKKOS_LAMBDA(int ICell) {
+          ReconCell(LocReconZonal, LocReconMerid, ICell, LocSshGradEdge);
+       });
+
+   deepCopy(AvgSfcSshGradZonalH, ReconZonalScratch);
+   deepCopy(AvgSfcSshGradMeridH, ReconMeridScratch);
 
    // SSH is an instantaneous field, so we don't bother with a device mirror of
    // our own. Instead, copy from the VertCoord, which owns SSH, host array.
@@ -425,5 +460,6 @@ void OcnToCplFields::resetFields() {
    deepCopy(AvgSfcTemperature, 0.0_Real);
    deepCopy(AvgSfcSalinity, 0.0_Real);
    deepCopy(AvgSfcNormalVelocity, 0.0_Real);
+   deepCopy(AvgSfcSshGrad, 0.0_Real);
 }
 } // namespace OMEGA

@@ -69,6 +69,11 @@ class OcnToCplFields {
    ///< So_v    [m s^-1]
    HostArray1DReal AvgSfcVelocityMeridH;
 
+   ///< So_dhdx [m m-1], zonal sea surface slope
+   HostArray1DReal AvgSfcSshGradZonalH;
+   ///< So_dhdy [m m-1], meridional sea surface slope
+   HostArray1DReal AvgSfcSshGradMeridH;
+
    ///< So_ssh [m]
    /// instantaneous field, so no device mirror is needed
    HostArray1DReal InstSshCellH;
@@ -94,12 +99,13 @@ class OcnToCplFields {
    Array1DReal AvgSfcSalinity;    // [g kg^-1], absolute salinity
 
    Array1DReal AvgSfcNormalVelocity; // [m s^-1], velocity normal to edge
+   Array1DReal AvgSfcSshGrad;        // [m m^-1], ssh gradient normal to edge
 
    // Scratch buffer for the in-situ Kelvin conversion in copyToHost()
    Array1DReal InSituTempScratch; // [K], in-situ approx (potential temp at P=0)
    // Scratch arrays for edge normal vector field reconstructed to cell centers
-   Array1DReal VelZonalScratch;
-   Array1DReal VelMeridScratch;
+   Array1DReal ReconZonalScratch;
+   Array1DReal ReconMeridScratch;
 };
 
 /// A class for interfacing with the coupler
