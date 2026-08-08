@@ -26,7 +26,8 @@ struct TestSetup {
    std::map<std::string, int> ImportIdxMap = {{"Foxx_taux", 3},
                                               {"Foxx_tauy", 8}};
    std::map<std::string, int> ExportIdxMap = {
-       {"So_t", 2}, {"So_s", 4}, {"So_u", 6}, {"So_v", 9}, {"So_ssh", 1}};
+       {"So_t", 2},    {"So_s", 4},    {"So_u", 6},  {"So_v", 9},
+       {"So_dhdx", 5}, {"So_dhdy", 3}, {"So_ssh", 1}};
 };
 
 CouplingInitParams mockCouplingInitParams(
@@ -417,6 +418,9 @@ int testExportToCoupler(const CouplingLayout Layout) {
    // NormalVelocity is accumulated on edges and reconstructed at cell centers
    // during copyToHost(). Recon correctness is tested in HorzOperatorsTest.
    // copyToHost() converts temp to Kelvin (identity CT->PT w/ ConstantEos)
+
+   // TODO: Add end-to-end SSH-gradient accumulation/export coverage if we
+   // decide to continue passing ssh grad (cf. ssh directly) to mpas-si
    int PackErr = 0;
    for (int Cell = 0; Cell < NCells; Cell++) {
       if (OcnToCplData[flatIdx(Layout, Cell, TempIdx, NCells, NExports)] !=
