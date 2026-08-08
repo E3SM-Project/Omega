@@ -413,10 +413,9 @@ int testExportToCoupler(const CouplingLayout Layout) {
 
    DefCoupling->exportToCoupler();
 
-   // Check 1: exportToCoupler properly packs into OcnToCplView. Velocity
-   // is skipped here: its averaging is a hardcoded stub pending real vector
-   // reconstruction (see OcnToCplFields::updateAverages), not yet
-   // meaningful to check.
+   // Check 1: exportToCoupler properly packs into OcnToCplView.
+   // NormalVelocity is accumulated on edges and reconstructed at cell centers
+   // during copyToHost(). Recon correctness is tested in HorzOperatorsTest.
    // copyToHost() converts temp to Kelvin (identity CT->PT w/ ConstantEos)
    int PackErr = 0;
    for (int Cell = 0; Cell < NCells; Cell++) {
