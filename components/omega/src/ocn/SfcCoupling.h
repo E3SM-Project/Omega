@@ -75,7 +75,7 @@ class OcnToCplFields {
 
    // Accumulate one ocean timestep's contribution to the running averages
    void updateFields(const OceanState *State, const Array3DReal &TracerArray,
-                     I4 NAccumSteps, I4 NCellsOwned);
+                     I4 NAccumSteps, I4 NCellsOwned, I4 NEdgesAll);
 
    // Copy device arrays into their host mirrors and do unit conversion.
    void copyToHost();
@@ -92,11 +92,14 @@ class OcnToCplFields {
    // the rest of the code.
    Array1DReal AvgSfcTemperature; // [C], conservative temperature
    Array1DReal AvgSfcSalinity;    // [g kg^-1], absolute salinity
-   Array1DReal AvgSfcVelocityZonal;
-   Array1DReal AvgSfcVelocityMerid;
+
+   Array1DReal AvgSfcNormalVelocity; // [m s^-1], velocity normal to edge
 
    // Scratch buffer for the in-situ Kelvin conversion in copyToHost()
    Array1DReal InSituTempScratch; // [K], in-situ approx (potential temp at P=0)
+   // Scratch arrays for edge normal vector field reconstructed to cell centers
+   Array1DReal VelZonalScratch;
+   Array1DReal VelMeridScratch;
 };
 
 /// A class for interfacing with the coupler
@@ -142,6 +145,7 @@ class SfcCoupling {
    std::string Name;
 
    I4 NCellsOwned; ///< Number of cells owned by this task
+   I4 NEdgesAll;   ///< Total number (owned+halo) of local edges
 
    // The values below will be larger than InportIdx.size() and
    // ExportIdxMap.size() because omega does not ingest all cpl fields (e.g.

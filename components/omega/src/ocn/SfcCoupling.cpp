@@ -2,6 +2,7 @@
 #include "Eos.h"
 #include "Error.h"
 #include "GlobalConstants.h"
+#include "HorzOperators.h"
 #include "Logging.h"
 #include "OceanState.h"
 #include "OmegaKokkos.h"
@@ -71,8 +72,9 @@ SfcCoupling::SfcCoupling(const std::string &Name_, const HorzMesh *Mesh,
       ImportIdxMap(ImportIdxMap), ExportIdxMap(ExportIdxMap),
       CplToOcn(Name_, Mesh), OcnToCpl(Name_, Mesh), Layout(Layout) {
 
-   // Retrieve mesh cell count
+   // Retrieve mesh cell/edge count
    NCellsOwned = Mesh->NCellsOwned;
+   NEdgesAll   = Mesh->NEdgesAll;
 
    NAccumSteps = 0;
 
@@ -275,7 +277,8 @@ void SfcCoupling::applyImportFields(Forcing *Forcing) {
 void SfcCoupling::updateExportFields(const OceanState *State,
                                      const Array3DReal &TracerArray) {
 
-   OcnToCpl.updateFields(State, TracerArray, NAccumSteps, NCellsOwned);
+   OcnToCpl.updateFields(State, TracerArray, NAccumSteps, NCellsOwned,
+                         NEdgesAll);
 
    NAccumSteps++;
 }
@@ -287,31 +290,35 @@ CplToOcnFields::CplToOcnFields(const std::string &Suffix, const HorzMesh *Mesh)
 OcnToCplFields::OcnToCplFields(const std::string &Suffix, const HorzMesh *Mesh)
     : AvgSfcTemperature("AvgSfcTemperature" + Suffix, Mesh->NCellsOwned),
       AvgSfcSalinity("AvgSfcSalinity" + Suffix, Mesh->NCellsOwned),
-      AvgSfcVelocityZonal("AvgSfcVelocityZonal" + Suffix, Mesh->NCellsOwned),
-      AvgSfcVelocityMerid("AvgSfcVelocityMeridional" + Suffix,
-                          Mesh->NCellsOwned),
+      AvgSfcNormalVelocity("AvgSfcNormalVelocity" + Suffix, Mesh->NEdgesSize),
+      AvgSfcVelocityZonalH("AvgSfcVelocityZonal" + Suffix, Mesh->NCellsOwned),
+      AvgSfcVelocityMeridH("AvgSfcVelocityMeridional" + Suffix,
+                           Mesh->NCellsOwned),
       InstSshCellH("InstSshCellH" + Suffix, Mesh->NCellsOwned),
-      InSituTempScratch("InSituTempScratch" + Suffix, Mesh->NCellsOwned) {
+      InSituTempScratch("InSituTempScratch" + Suffix, Mesh->NCellsOwned),
+      VelZonalScratch("VelZonalScratch" + Suffix, Mesh->NCellsOwned),
+      VelMeridScratch("VelMeridScratch" + Suffix, Mesh->NCellsOwned) {
 
    // Kokkok views created with a label are zero-initialized by default.
    // We reset the fields here anyway to be explicit about the fact that the
    // OcnToCpl fields need to begin a coupling interval with all zeros.
    resetFields();
 
-   AvgSfcTemperatureH   = createHostMirrorCopy(AvgSfcTemperature);
-   AvgSfcSalinityH      = createHostMirrorCopy(AvgSfcSalinity);
-   AvgSfcVelocityZonalH = createHostMirrorCopy(AvgSfcVelocityZonal);
-   AvgSfcVelocityMeridH = createHostMirrorCopy(AvgSfcVelocityMerid);
+   AvgSfcTemperatureH = createHostMirrorCopy(AvgSfcTemperature);
+   AvgSfcSalinityH    = createHostMirrorCopy(AvgSfcSalinity);
 }
 
 void OcnToCplFields::updateFields(const OceanState *State,
                                   const Array3DReal &TracerArray,
-                                  const I4 NAccumSteps, const I4 NCellsOwned) {
+                                  const I4 NAccumSteps, const I4 NCellsOwned,
+                                  const I4 NEdgesAll) {
 
    I4 TemperatureIdx, SalinityIdx;
    Tracers::getIndex(TemperatureIdx, "Temperature");
    Tracers::getIndex(SalinityIdx, "Salinity");
 
+   // get normal velocity at current time level
+   auto NormalVel = State->getNormalVelocity(0);
    auto Temperature =
        Kokkos::subview(TracerArray, TemperatureIdx, Kokkos::ALL, Kokkos::ALL);
    auto Salinity =
@@ -320,13 +327,11 @@ void OcnToCplFields::updateFields(const OceanState *State,
    VertCoord *DefVertCoord = VertCoord::getDefault();
 
    OMEGA_SCOPE(LocMinLayerCell, DefVertCoord->MinLayerCell);
+   OMEGA_SCOPE(LocMinLayerEdgeBot, DefVertCoord->MinLayerEdgeBot);
+   OMEGA_SCOPE(LocMaxLayerEdgeTop, DefVertCoord->MaxLayerEdgeTop);
    OMEGA_SCOPE(LocAvgSfcSalinity, AvgSfcSalinity);
    OMEGA_SCOPE(LocAvgSfcTemp, AvgSfcTemperature);
-   OMEGA_SCOPE(LocAvgSfcVelZonal, AvgSfcVelocityZonal);
-   OMEGA_SCOPE(LocAvgSfcVelMerid, AvgSfcVelocityMerid);
-
-   // TODO: Implement vector reconsturction for velocity field.
-   constexpr Real ConstSfcVelocity = 1e-4;
+   OMEGA_SCOPE(LocAvgSfcNormalVel, AvgSfcNormalVelocity);
 
    parallelFor(
        {NCellsOwned}, KOKKOS_LAMBDA(int ICell) {
@@ -338,12 +343,19 @@ void OcnToCplFields::updateFields(const OceanState *State,
 
           LocAvgSfcSalinity(ICell) = updateAverage(
               LocAvgSfcSalinity(ICell), Salinity(ICell, KSfc), NAccumSteps);
+       });
 
-          LocAvgSfcVelZonal(ICell) = updateAverage(
-              LocAvgSfcVelZonal(ICell), ConstSfcVelocity, NAccumSteps);
+   parallelFor(
+       {NEdgesAll}, KOKKOS_LAMBDA(int IEdge) {
+          const int KMin = LocMinLayerEdgeBot(IEdge);
+          const int KMax = LocMaxLayerEdgeTop(IEdge);
 
-          LocAvgSfcVelMerid(ICell) = updateAverage(
-              LocAvgSfcVelMerid(ICell), ConstSfcVelocity, NAccumSteps);
+          // exclude outer halo edges whose layer range is invalid
+          if (KMin <= KMax) {
+             LocAvgSfcNormalVel(IEdge) =
+                 updateAverage(LocAvgSfcNormalVel(IEdge),
+                               NormalVel(IEdge, KMin), NAccumSteps);
+          }
        });
 }
 
@@ -380,8 +392,23 @@ void OcnToCplFields::copyToHost() {
 
    deepCopy(AvgSfcTemperatureH, InSituTempScratch);
    deepCopy(AvgSfcSalinityH, AvgSfcSalinity);
-   deepCopy(AvgSfcVelocityZonalH, AvgSfcVelocityZonal);
-   deepCopy(AvgSfcVelocityMeridH, AvgSfcVelocityMerid);
+
+   // Retrieve the default horizontal mesh
+   // TODO: Should this just be a mem
+   HorzMesh *DefHorzMesh = HorzMesh::getDefault();
+
+   OMEGA_SCOPE(LocVecEdge, AvgSfcNormalVelocity);
+   OMEGA_SCOPE(LocVelZonal, VelZonalScratch);
+   OMEGA_SCOPE(LocVelMerid, VelMeridScratch);
+
+   VectorReconOnCell ReconCell(DefHorzMesh);
+   parallelFor(
+       {DefHorzMesh->NCellsOwned}, KOKKOS_LAMBDA(int ICell) {
+          ReconCell(LocVelZonal, LocVelMerid, ICell, LocVecEdge);
+       });
+
+   deepCopy(AvgSfcVelocityZonalH, VelZonalScratch);
+   deepCopy(AvgSfcVelocityMeridH, VelMeridScratch);
 
    // SSH is an instantaneous field, so we don't bother with a device mirror of
    // our own. Instead, copy from the VertCoord, which owns SSH, host array.
@@ -397,7 +424,6 @@ void OcnToCplFields::copyToHost() {
 void OcnToCplFields::resetFields() {
    deepCopy(AvgSfcTemperature, 0.0_Real);
    deepCopy(AvgSfcSalinity, 0.0_Real);
-   deepCopy(AvgSfcVelocityZonal, 0.0_Real);
-   deepCopy(AvgSfcVelocityMerid, 0.0_Real);
+   deepCopy(AvgSfcNormalVelocity, 0.0_Real);
 }
 } // namespace OMEGA
