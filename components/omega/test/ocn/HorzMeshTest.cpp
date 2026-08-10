@@ -617,8 +617,8 @@ int main(int argc, char *argv[]) {
                         "HorzMeshTest: HorzMesh group not found in Config");
       Config MeshScalingConfig("MeshScaling");
       ConfigErr = HorzMeshConfig.get(MeshScalingConfig);
-      CHECK_ERROR_ABORT(
-          ConfigErr, "HorzMeshTest: MeshScaling group not found in Config");
+      CHECK_ERROR_ABORT(ConfigErr,
+                        "HorzMeshTest: MeshScaling group not found in Config");
 
       // Test scaling based on a configured reference cell width
       const Real RefWidth = 30000.0_Real;
@@ -656,8 +656,7 @@ int main(int argc, char *argv[]) {
       Mesh->computeMeshScaling();
 
       Real MaxMeshDensity;
-      ConfigErr =
-          MeshScalingConfig.get("MaxMeshDensity", MaxMeshDensity);
+      ConfigErr = MeshScalingConfig.get("MaxMeshDensity", MaxMeshDensity);
       CHECK_ERROR_ABORT(
           ConfigErr,
           "HorzMeshTest: unable to retrieve computed MaxMeshDensity");
@@ -683,13 +682,10 @@ int main(int argc, char *argv[]) {
          const int Cell0 = Mesh->CellsOnEdgeH(Edge, 0);
          const int Cell1 = Mesh->CellsOnEdgeH(Edge, 1);
          const Real AvgDensity =
-             0.5_Real *
-             (Mesh->MeshDensityH(Cell0) + Mesh->MeshDensityH(Cell1));
+             0.5_Real * (Mesh->MeshDensityH(Cell0) + Mesh->MeshDensityH(Cell1));
          const Real DensityRatio = AvgDensity / RefMaxMeshDensity;
-         const Real RefDel2 =
-             1.0_Real / std::pow(DensityRatio, 0.25_Real);
-         const Real RefDel4 =
-             1.0_Real / std::pow(DensityRatio, 0.75_Real);
+         const Real RefDel2      = 1.0_Real / std::pow(DensityRatio, 0.25_Real);
+         const Real RefDel4      = 1.0_Real / std::pow(DensityRatio, 0.75_Real);
 
          if (abs(Mesh->MeshScalingDel2H(Edge) - RefDel2) >
                  Tol * std::max(1.0_Real, std::abs(RefDel2)) ||

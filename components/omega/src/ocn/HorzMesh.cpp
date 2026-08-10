@@ -441,8 +441,8 @@ void HorzMesh::computeMeshScaling() {
 
    Config MeshScalingConfig("MeshScaling");
    Err = HorzMeshConfig.get(MeshScalingConfig);
-   CHECK_ERROR_ABORT(
-       Err, "HorzMesh: MeshScaling group not found in configuration");
+   CHECK_ERROR_ABORT(Err,
+                     "HorzMesh: MeshScaling group not found in configuration");
 
    bool ScaleWithMesh;
    bool UseRefWidth;
@@ -453,38 +453,36 @@ void HorzMesh::computeMeshScaling() {
    Err += MeshScalingConfig.get("UseRefWidth", UseRefWidth);
    Err += MeshScalingConfig.get("RefWidth", RefWidth);
    Err += MeshScalingConfig.get("MaxMeshDensity", MaxMeshDensity);
-   CHECK_ERROR_ABORT(
-       Err, "HorzMesh: error reading mesh scaling configuration");
+   CHECK_ERROR_ABORT(Err, "HorzMesh: error reading mesh scaling configuration");
 
    OMEGA_SCOPE(o_MeshScalingDel2, MeshScalingDel2);
    OMEGA_SCOPE(o_MeshScalingDel4, MeshScalingDel4);
 
    if (ScaleWithMesh) {
       if (UseRefWidth) {
-      OMEGA_REQUIRE(RefWidth > 0.0_Real,
-                    "HorzMesh: RefWidth must be positive, got {}", RefWidth);
+         OMEGA_REQUIRE(RefWidth > 0.0_Real,
+                       "HorzMesh: RefWidth must be positive, got {}", RefWidth);
 
-      OMEGA_SCOPE(o_RefWidth, RefWidth);
-      OMEGA_SCOPE(o_AreaCell, AreaCell);
-      OMEGA_SCOPE(o_CellsOnEdge, CellsOnEdge);
+         OMEGA_SCOPE(o_RefWidth, RefWidth);
+         OMEGA_SCOPE(o_AreaCell, AreaCell);
+         OMEGA_SCOPE(o_CellsOnEdge, CellsOnEdge);
 
-      // Mesh scaling is computed using CellWidth derived from AreaCell
-      // and the input reference width, RefWidth (see Eqs. (1) and (2) of
-      // Hoch et al. 2020, JAMES).
-      parallelFor(
-          {NEdgesAll}, KOKKOS_LAMBDA(int Edge) {
-             const int Cell0 = o_CellsOnEdge(Edge, 0);
-             const int Cell1 = o_CellsOnEdge(Edge, 1);
-             const Real CellWidth =
-                 2.0_Real *
-                 Kokkos::sqrt((o_AreaCell(Cell0) + o_AreaCell(Cell1)) /
-                              (2.0_Real * Pi));
-             const Real Del2Scale = CellWidth / o_RefWidth;
+         // Mesh scaling is computed using CellWidth derived from AreaCell
+         // and the input reference width, RefWidth (see Eqs. (1) and (2) of
+         // Hoch et al. 2020, JAMES).
+         parallelFor(
+             {NEdgesAll}, KOKKOS_LAMBDA(int Edge) {
+                const int Cell0 = o_CellsOnEdge(Edge, 0);
+                const int Cell1 = o_CellsOnEdge(Edge, 1);
+                const Real CellWidth =
+                    2.0_Real *
+                    Kokkos::sqrt((o_AreaCell(Cell0) + o_AreaCell(Cell1)) /
+                                 (2.0_Real * Pi));
+                const Real Del2Scale = CellWidth / o_RefWidth;
 
-             o_MeshScalingDel2(Edge) = Del2Scale;
-             o_MeshScalingDel4(Edge) =
-                 Del2Scale * Del2Scale * Del2Scale;
-          });
+                o_MeshScalingDel2(Edge) = Del2Scale;
+                o_MeshScalingDel4(Edge) = Del2Scale * Del2Scale * Del2Scale;
+             });
 
       } else {
          // Mesh scaling is set by MeshDensity. This is both confusing
@@ -517,8 +515,7 @@ void HorzMesh::computeMeshScaling() {
                 const int Cell0 = o_CellsOnEdge(Edge, 0);
                 const int Cell1 = o_CellsOnEdge(Edge, 1);
                 const Real AvgDensity =
-                    0.5_Real *
-                    (o_MeshDensity(Cell0) + o_MeshDensity(Cell1));
+                    0.5_Real * (o_MeshDensity(Cell0) + o_MeshDensity(Cell1));
                 const Real DensityRatio = AvgDensity / o_MaxMeshDensity;
 
                 o_MeshScalingDel2(Edge) =
