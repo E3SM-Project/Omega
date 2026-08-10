@@ -88,7 +88,7 @@ Omega:
   HorzMesh:
     MeshScaling:
       ScaleWithMesh: false
-      UseRefWidth: false
+      UseRefWidth: true
       RefWidth: 30.0e3
       MaxMeshDensity: -1.0
   ManufacturedSolution:
