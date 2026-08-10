@@ -23,8 +23,12 @@ using namespace OMEGA;
 
 struct TestSetup {
 
-   std::map<std::string, int> ImportIdxMap = {{"Foxx_taux", 3},
-                                              {"Foxx_tauy", 8}};
+   std::map<std::string, int> ImportIdxMap = {
+       {"Foxx_taux", 3},  {"Foxx_tauy", 8},  {"Foxx_swnet", 0},
+       {"Foxx_sen", 1},   {"Foxx_lat", 2},   {"Foxx_lwup", 4},
+       {"Faxa_lwdn", 5},  {"Fioi_salt", 6},  {"Fioi_melth", 7},
+       {"Fioi_meltw", 9}, {"Faxa_snow", 10}, {"Faxa_rain", 11},
+       {"Foxx_evap", 12}, {"Foxx_rofl", 13}, {"Foxx_rofi", 14}};
    std::map<std::string, int> ExportIdxMap = {
        {"So_t", 2},    {"So_s", 4},    {"So_u", 6},  {"So_v", 9},
        {"So_dhdx", 5}, {"So_dhdy", 3}, {"So_ssh", 1}};
@@ -40,7 +44,7 @@ CouplingInitParams mockCouplingInitParams(
    TimeInterval CouplingTimeStep_ =
        CouplingTimeStep.value_or(DefTimeStepper->getTimeStep());
 
-   CouplingInitParams CouplingParams{.NImportFields    = 10,
+   CouplingInitParams CouplingParams{.NImportFields    = 15,
                                      .NExportFields    = 10,
                                      .ImportIdxMap     = Setup.ImportIdxMap,
                                      .ExportIdxMap     = Setup.ExportIdxMap,
@@ -151,31 +155,64 @@ int testImportFromCoupler(const CouplingLayout Layout) {
    int NImports = DefCoupling->NImportFields;
    int NExports = DefCoupling->NExportFields;
 
-   int TauxIdx = CouplingParams.ImportIdxMap.at("Foxx_taux");
-   int TauyIdx = CouplingParams.ImportIdxMap.at("Foxx_tauy");
-
    std::vector<Real> CplToOcnData(NCells * NImports, 0.0);
    std::vector<Real> OcnToCplData(NCells * NExports, 0.0);
 
-   HostArray1DReal ExpectedSfcStressZonal =
-       makeCellVarryingArray("ExpectedSfcStressZonal", NCells, Real(TauxIdx));
-   HostArray1DReal ExpectedSfcStressMerid =
-       makeCellVarryingArray("ExpectedSfcStressMerid", NCells, Real(TauyIdx));
+   auto fillImportField = [&](const std::string &Name) {
+      const int FieldIdx = CouplingParams.ImportIdxMap.at(Name);
+      for (int Cell = 0; Cell < NCells; Cell++) {
+         CplToOcnData[flatIdx(Layout, Cell, FieldIdx, NCells, NImports)] =
+             static_cast<Real>(FieldIdx + Cell);
+      }
+   };
 
-   for (int Cell = 0; Cell < NCells; Cell++) {
-      CplToOcnData[flatIdx(Layout, Cell, TauxIdx, NCells, NImports)] =
-          ExpectedSfcStressZonal(Cell);
-      CplToOcnData[flatIdx(Layout, Cell, TauyIdx, NCells, NImports)] =
-          ExpectedSfcStressMerid(Cell);
-   }
+   fillImportField("Foxx_taux");
+   fillImportField("Foxx_tauy");
+   fillImportField("Foxx_swnet");
+   fillImportField("Foxx_sen");
+   fillImportField("Foxx_lat");
+   fillImportField("Foxx_lwup");
+   fillImportField("Faxa_lwdn");
+   fillImportField("Fioi_salt");
+   fillImportField("Fioi_melth");
+   fillImportField("Fioi_meltw");
+   fillImportField("Faxa_snow");
+   fillImportField("Faxa_rain");
+   fillImportField("Foxx_evap");
+   fillImportField("Foxx_rofl");
+   fillImportField("Foxx_rofi");
 
    DefCoupling->attachData(CplToOcnData.data(), OcnToCplData.data());
    DefCoupling->importFromCoupler();
 
-   auto ImportPass = arraysEqual(DefCoupling->CplToOcn.SfcStressZonal,
-                                 ExpectedSfcStressZonal) &&
-                     arraysEqual(DefCoupling->CplToOcn.SfcStressMerid,
-                                 ExpectedSfcStressMerid);
+   auto checkImportField = [&](const HostArray1DReal &Field,
+                               const std::string &Name) {
+      const int FieldIdx = CouplingParams.ImportIdxMap.at(Name);
+      HostArray1DReal Expected =
+          makeCellVarryingArray("Expected" + Name, NCells, Real(FieldIdx));
+      return arraysEqual(Field, Expected);
+   };
+
+   auto ImportPass =
+       checkImportField(DefCoupling->CplToOcn.SfcStressZonal, "Foxx_taux") &&
+       checkImportField(DefCoupling->CplToOcn.SfcStressMerid, "Foxx_tauy") &&
+       checkImportField(DefCoupling->CplToOcn.ShortWaveHeatFlux,
+                        "Foxx_swnet") &&
+       checkImportField(DefCoupling->CplToOcn.SensibleHeatFlux, "Foxx_sen") &&
+       checkImportField(DefCoupling->CplToOcn.LatentHeatFlux, "Foxx_lat") &&
+       checkImportField(DefCoupling->CplToOcn.LongWaveHeatFluxUp,
+                        "Foxx_lwup") &&
+       checkImportField(DefCoupling->CplToOcn.LongWaveHeatFluxDown,
+                        "Faxa_lwdn") &&
+       checkImportField(DefCoupling->CplToOcn.SeaIceSaltFlux, "Fioi_salt") &&
+       checkImportField(DefCoupling->CplToOcn.SeaIceHeatFlux, "Fioi_melth") &&
+       checkImportField(DefCoupling->CplToOcn.SeaIceFreshWaterFlux,
+                        "Fioi_meltw") &&
+       checkImportField(DefCoupling->CplToOcn.SnowFlux, "Faxa_snow") &&
+       checkImportField(DefCoupling->CplToOcn.RainFlux, "Faxa_rain") &&
+       checkImportField(DefCoupling->CplToOcn.EvaporationFlux, "Foxx_evap") &&
+       checkImportField(DefCoupling->CplToOcn.RiverRunoffFlux, "Foxx_rofl") &&
+       checkImportField(DefCoupling->CplToOcn.IceRunoffFlux, "Foxx_rofi");
 
    if (ImportPass) {
       LOG_INFO("SfcCouplingTest: importFromCoupler with {} layout PASS",
@@ -205,31 +242,74 @@ int testApplyImportFields() {
    int NImports = DefCoupling->NImportFields;
    int NExports = DefCoupling->NExportFields;
 
-   int TauxIdx = CouplingParams.ImportIdxMap.at("Foxx_taux");
-   int TauyIdx = CouplingParams.ImportIdxMap.at("Foxx_tauy");
-
    std::vector<Real> CplToOcnData(NCells * NImports, 0.0);
    std::vector<Real> OcnToCplData(NCells * NExports, 0.0);
 
-   int Offset                             = 27;
-   HostArray1DReal ExpectedSfcStressZonal = makeCellVarryingArray(
-       "ExpectedSfcStressZonal", NCells, Real(TauxIdx + Offset));
-   HostArray1DReal ExpectedSfcStressMerid = makeCellVarryingArray(
-       "ExpectedSfcStressMerid", NCells, Real(TauyIdx + Offset));
+   int Offset = 27;
 
-   // Copy the expected values into the CplToOcn fields directly
-   deepCopy(DefCoupling->CplToOcn.SfcStressZonal, ExpectedSfcStressZonal);
-   deepCopy(DefCoupling->CplToOcn.SfcStressMerid, ExpectedSfcStressMerid);
+   auto setImportField = [&](HostArray1DReal &Field, const std::string &Name) {
+      const int FieldIdx       = CouplingParams.ImportIdxMap.at(Name);
+      HostArray1DReal Expected = makeCellVarryingArray(
+          "Expected" + Name, NCells, Real(FieldIdx + Offset));
+      deepCopy(Field, Expected);
+   };
+
+   setImportField(DefCoupling->CplToOcn.SfcStressZonal, "Foxx_taux");
+   setImportField(DefCoupling->CplToOcn.SfcStressMerid, "Foxx_tauy");
+   setImportField(DefCoupling->CplToOcn.ShortWaveHeatFlux, "Foxx_swnet");
+   setImportField(DefCoupling->CplToOcn.SensibleHeatFlux, "Foxx_sen");
+   setImportField(DefCoupling->CplToOcn.LatentHeatFlux, "Foxx_lat");
+   setImportField(DefCoupling->CplToOcn.LongWaveHeatFluxUp, "Foxx_lwup");
+   setImportField(DefCoupling->CplToOcn.LongWaveHeatFluxDown, "Faxa_lwdn");
+   setImportField(DefCoupling->CplToOcn.SeaIceSaltFlux, "Fioi_salt");
+   setImportField(DefCoupling->CplToOcn.SeaIceHeatFlux, "Fioi_melth");
+   setImportField(DefCoupling->CplToOcn.SeaIceFreshWaterFlux, "Fioi_meltw");
+   setImportField(DefCoupling->CplToOcn.SnowFlux, "Faxa_snow");
+   setImportField(DefCoupling->CplToOcn.RainFlux, "Faxa_rain");
+   setImportField(DefCoupling->CplToOcn.EvaporationFlux, "Foxx_evap");
+   setImportField(DefCoupling->CplToOcn.RiverRunoffFlux, "Foxx_rofl");
+   setImportField(DefCoupling->CplToOcn.IceRunoffFlux, "Foxx_rofi");
 
    DefCoupling->applyImportFields(DefForcing);
 
-   auto SfcStressZonalOwned = Kokkos::subview(
-       DefForcing->SfcStressForcing.ZonalStressCell, std::pair(0, NCells));
-   auto SfcStressMeridOwned = Kokkos::subview(
-       DefForcing->SfcStressForcing.MeridStressCell, std::pair(0, NCells));
+   auto checkAppliedField = [&](const Array1DReal &Field,
+                                const std::string &Name) {
+      const int FieldIdx       = CouplingParams.ImportIdxMap.at(Name);
+      HostArray1DReal Expected = makeCellVarryingArray(
+          "Expected" + Name, NCells, Real(FieldIdx + Offset));
+      auto Owned = Kokkos::subview(Field, std::pair(0, NCells));
+      return arraysEqual(Owned, Expected);
+   };
 
-   auto ApplyPass = arraysEqual(SfcStressZonalOwned, ExpectedSfcStressZonal) &&
-                    arraysEqual(SfcStressMeridOwned, ExpectedSfcStressMerid);
+   auto ApplyPass =
+       checkAppliedField(DefForcing->SfcStressForcing.ZonalStressCell,
+                         "Foxx_taux") &&
+       checkAppliedField(DefForcing->SfcStressForcing.MeridStressCell,
+                         "Foxx_tauy") &&
+       checkAppliedField(DefForcing->TracerForcing.ShortWaveHeatFluxCell,
+                         "Foxx_swnet") &&
+       checkAppliedField(DefForcing->TracerForcing.SensibleHeatFluxCell,
+                         "Foxx_sen") &&
+       checkAppliedField(DefForcing->TracerForcing.LatentHeatFluxCell,
+                         "Foxx_lat") &&
+       checkAppliedField(DefForcing->TracerForcing.LongWaveHeatFluxUpCell,
+                         "Foxx_lwup") &&
+       checkAppliedField(DefForcing->TracerForcing.LongWaveHeatFluxDownCell,
+                         "Faxa_lwdn") &&
+       checkAppliedField(DefForcing->TracerForcing.SeaIceSaltFluxCell,
+                         "Fioi_salt") &&
+       checkAppliedField(DefForcing->TracerForcing.SeaIceHeatFluxCell,
+                         "Fioi_melth") &&
+       checkAppliedField(DefForcing->TracerForcing.SeaIceFreshWaterFluxCell,
+                         "Fioi_meltw") &&
+       checkAppliedField(DefForcing->TracerForcing.SnowFluxCell, "Faxa_snow") &&
+       checkAppliedField(DefForcing->TracerForcing.RainFluxCell, "Faxa_rain") &&
+       checkAppliedField(DefForcing->TracerForcing.EvaporationFluxCell,
+                         "Foxx_evap") &&
+       checkAppliedField(DefForcing->TracerForcing.RiverRunoffFluxCell,
+                         "Foxx_rofl") &&
+       checkAppliedField(DefForcing->TracerForcing.IceRunoffFluxCell,
+                         "Foxx_rofi");
 
    if (ApplyPass) {
       LOG_INFO("SfcCouplingTest: applyImportFields PASS");
@@ -499,7 +579,7 @@ int testEraseAndGet() {
    TimeInterval TimeStep = DefStepper->getTimeStep();
 
    // test creation of a non-default, named surface coupling object
-   SfcCoupling::create("AnotherSfcCoupling", DefMesh, 10, 12,
+   SfcCoupling::create("AnotherSfcCoupling", DefMesh, 15, 12,
                        Setup.ImportIdxMap, Setup.ExportIdxMap, DefStepper,
                        TimeStep, CouplingLayout::MCT);
 
