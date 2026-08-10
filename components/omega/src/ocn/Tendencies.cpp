@@ -749,9 +749,22 @@ void Tendencies::computeVelocityTendenciesOnly(
       const auto &PressureInterface = VCoord->PressureInterface;
       const auto &SpecVol           = EqState->SpecVol;
       const auto &GeomZInterface    = VCoord->GeomZInterface;
-      PGrad->computePressureGrad(LocNormalVelocityTend, PressureMid,
-                                 PressureInterface, SpecVol, GeomZInterface,
-                                 PseudoThick);
+
+      // The FiniteVolume scheme reconstructs the layer-mean temperature and
+      // salinity in pressure and uses the specific volume derivatives Eos
+      // holds; the Centered scheme ignores both
+      I4 ConservTempIdx;
+      I4 AbsSalinityIdx;
+      Tracers::getIndex(ConservTempIdx, "Temperature");
+      Tracers::getIndex(AbsSalinityIdx, "Salinity");
+      const Array2DReal ConservTemp = Kokkos::subview(
+          TracerArray, ConservTempIdx, Kokkos::ALL, Kokkos::ALL);
+      const Array2DReal AbsSalinity = Kokkos::subview(
+          TracerArray, AbsSalinityIdx, Kokkos::ALL, Kokkos::ALL);
+
+      PGrad->computePressureGrad(
+          LocNormalVelocityTend, PressureMid, PressureInterface, SpecVol,
+          GeomZInterface, PseudoThick, ConservTemp, AbsSalinity, EqState);
       Pacer::stop("Tend:pressureGradTerm", 2);
    }
 

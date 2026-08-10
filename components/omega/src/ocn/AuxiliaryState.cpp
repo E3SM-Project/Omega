@@ -3,6 +3,7 @@
 #include "Error.h"
 #include "Field.h"
 #include "Logging.h"
+#include "PGrad.h"
 #include "Pacer.h"
 #include "Tendencies.h"
 #include "TimeStepper.h"
@@ -91,9 +92,21 @@ void AuxiliaryState::computeMomVertAux(const OceanState *State,
    const auto &SurfacePressure = VCoord->SurfacePressure;
    VCoord->computePressure(PseudoThickCell, SurfacePressure);
 
-   // compute specific volume
-   const auto &PressureMid = VCoord->PressureMid;
-   EosInstance->computeSpecVol(ConservTemp, AbsSalinity, PressureMid);
+   // compute specific volume. The FiniteVolume pressure gradient also needs
+   // the specific volume derivatives, which computeSpecVolAndDerivs supplies
+   // from the same single equation-of-state evaluation. It fills SpecVol as
+   // well, so it replaces rather than accompanies computeSpecVol; the branch
+   // is here so that a Centered run does not pay for the derivative
+   // arithmetic. The default PressureGrad instance is queried because the
+   // scheme is a model-wide choice and AuxiliaryState holds no PressureGrad.
+   const auto &PressureMid   = VCoord->PressureMid;
+   const PressureGrad *PGrad = PressureGrad::getDefault();
+   if (PGrad && PGrad->getType() == PressureGradType::FiniteVolume) {
+      EosInstance->computeSpecVolAndDerivs(ConservTemp, AbsSalinity,
+                                           PressureMid);
+   } else {
+      EosInstance->computeSpecVol(ConservTemp, AbsSalinity, PressureMid);
+   }
 
    // compute geometric height
    VCoord->computeGeomZHeight(PseudoThickCell, EosInstance->SpecVol);
