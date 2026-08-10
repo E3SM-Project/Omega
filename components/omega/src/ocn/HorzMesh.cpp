@@ -434,20 +434,25 @@ void HorzMesh::computeEdgeSign() {
 void HorzMesh::computeMeshScaling() {
 
    Config *OmegaConfig = Config::getOmegaConfig();
-   Config HmixConfig("Hmix");
-   Error Err = OmegaConfig->get(HmixConfig);
+   Config HorzMeshConfig("HorzMesh");
+   Error Err = OmegaConfig->get(HorzMeshConfig);
    CHECK_ERROR_ABORT(Err,
-                     "HorzMesh: Hmix group not found in input configuration");
+                     "HorzMesh: HorzMesh group not found in configuration");
+
+   Config MeshScalingConfig("MeshScaling");
+   Err = HorzMeshConfig.get(MeshScalingConfig);
+   CHECK_ERROR_ABORT(
+       Err, "HorzMesh: MeshScaling group not found in configuration");
 
    bool ScaleWithMesh;
    bool UseRefWidth;
    Real MaxMeshDensity;
    Real RefWidth;
 
-   Err += HmixConfig.get("HmixScaleWithMesh", ScaleWithMesh);
-   Err += HmixConfig.get("MaxMeshDensity", MaxMeshDensity);
-   Err += HmixConfig.get("HmixUseRefWidth", UseRefWidth);
-   Err += HmixConfig.get("HmixRefWidth", RefWidth);
+   Err += MeshScalingConfig.get("ScaleWithMesh", ScaleWithMesh);
+   Err += MeshScalingConfig.get("UseRefWidth", UseRefWidth);
+   Err += MeshScalingConfig.get("RefWidth", RefWidth);
+   Err += MeshScalingConfig.get("MaxMeshDensity", MaxMeshDensity);
    CHECK_ERROR_ABORT(
        Err, "HorzMesh: error reading mesh scaling configuration");
 
@@ -456,8 +461,7 @@ void HorzMesh::computeMeshScaling() {
 
    if (ScaleWithMesh && UseRefWidth) {
       OMEGA_REQUIRE(RefWidth > 0.0_Real,
-                    "HorzMesh: HmixRefWidth must be positive, got {}",
-                    RefWidth);
+                    "HorzMesh: RefWidth must be positive, got {}", RefWidth);
 
       OMEGA_SCOPE(o_AreaCell, AreaCell);
       OMEGA_SCOPE(o_CellsOnEdge, CellsOnEdge);
@@ -492,7 +496,7 @@ void HorzMesh::computeMeshScaling() {
          Halo *HorzMeshHalo = Halo::get(MeshName);
          MaxMeshDensity =
              globalMaxVal(MaxMeshDensityLocal, HorzMeshHalo->getComm());
-         HmixConfig.set("MaxMeshDensity", MaxMeshDensity);
+         MeshScalingConfig.set("MaxMeshDensity", MaxMeshDensity);
       }
 
       OMEGA_REQUIRE(MaxMeshDensity > 0.0_Real,

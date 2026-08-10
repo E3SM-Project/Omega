@@ -55,24 +55,25 @@ angles, and weights needed for the TRiSK discretization.
 
 ### Horizontal mixing mesh scaling
 
-The `Hmix` configuration controls whether Laplacian and biharmonic mixing
-coefficients vary with horizontal mesh size:
+The `HorzMesh: MeshScaling` configuration controls whether Laplacian and
+biharmonic mixing coefficients vary with horizontal mesh size:
 
 ```yaml
-  Hmix:
-    HmixScaleWithMesh: false
-    MaxMeshDensity: -1.0
-    HmixUseRefWidth: false
-    HmixRefWidth: 30.0e3
+  HorzMesh:
+    MeshScaling:
+      ScaleWithMesh: false
+      UseRefWidth: false
+      RefWidth: 30.0e3
+      MaxMeshDensity: -1.0
 ```
 
-When `HmixScaleWithMesh` is false, both scaling coefficients are one. When it
-is true and `HmixUseRefWidth` is true, Omega computes the effective cell width
-at each edge from the areas of its two adjacent cells. The Laplacian scaling
-is the ratio of this width to `HmixRefWidth`, and the biharmonic scaling is the
+When `ScaleWithMesh` is false, both scaling coefficients are one. When it is
+true and `UseRefWidth` is true, Omega computes the effective cell width at
+each edge from the areas of its two adjacent cells. The Laplacian scaling is
+the ratio of this width to `RefWidth`, and the biharmonic scaling is the
 cube of that ratio.
 
-When `HmixUseRefWidth` is false, Omega uses the legacy MPAS-Ocean scaling based
+When `UseRefWidth` is false, Omega uses the legacy MPAS-Ocean scaling based
 on `MeshDensity`. A negative `MaxMeshDensity` requests that Omega compute its
 global value from the mesh during initialization.
 

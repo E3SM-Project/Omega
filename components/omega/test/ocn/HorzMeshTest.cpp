@@ -598,11 +598,11 @@ int main(int argc, char *argv[]) {
 
       // Test mesh scaling with scaling disabled
       Count = 0;
-      for (int Edge = 0; Edge < LocEdges; ++Edge) {
-         if (Mesh->MeshScalingDel2H(Edge) != 1.0_Real ||
-             Mesh->MeshScalingDel4H(Edge) != 1.0_Real) {
-            ++Count;
-         }
+      for (int Edge = 0; Edge < Mesh->NEdgesAll; Edge++) {
+         if (abs(Mesh->MeshScalingDel2H(Edge) - 1.0) > Tol)
+            Count++;
+         if (abs(Mesh->MeshScalingDel4H(Edge) - 1.0) > Tol)
+            Count++;
       }
 
       if (Count > 0)
@@ -611,20 +611,24 @@ int main(int argc, char *argv[]) {
       // Retrieve mesh scaling configuration so the two MPAS-O scaling modes
       // can be tested independently.
       Config *OmegaConfig = Config::getOmegaConfig();
-      Config HmixConfig("Hmix");
-      Error ConfigErr = OmegaConfig->get(HmixConfig);
+      Config HorzMeshConfig("HorzMesh");
+      Error ConfigErr = OmegaConfig->get(HorzMeshConfig);
       CHECK_ERROR_ABORT(ConfigErr,
-                        "HorzMeshTest: Hmix group not found in Config");
+                        "HorzMeshTest: HorzMesh group not found in Config");
+      Config MeshScalingConfig("MeshScaling");
+      ConfigErr = HorzMeshConfig.get(MeshScalingConfig);
+      CHECK_ERROR_ABORT(
+          ConfigErr, "HorzMeshTest: MeshScaling group not found in Config");
 
       // Test scaling based on a configured reference cell width
       const Real RefWidth = 30000.0_Real;
-      HmixConfig.set("HmixScaleWithMesh", true);
-      HmixConfig.set("HmixUseRefWidth", true);
-      HmixConfig.set("HmixRefWidth", RefWidth);
+      MeshScalingConfig.set("ScaleWithMesh", true);
+      MeshScalingConfig.set("UseRefWidth", true);
+      MeshScalingConfig.set("RefWidth", RefWidth);
       Mesh->computeMeshScaling();
 
       Count = 0;
-      for (int Edge = 0; Edge < LocEdges; ++Edge) {
+      for (int Edge = 0; Edge < Mesh->NEdgesAll; Edge++) {
          const int Cell0 = Mesh->CellsOnEdgeH(Edge, 0);
          const int Cell1 = Mesh->CellsOnEdgeH(Edge, 1);
          const Real CellWidth =
@@ -647,12 +651,13 @@ int main(int argc, char *argv[]) {
 
       // Test legacy scaling based on mesh density. A negative configured
       // maximum requests that the global maximum be computed from the mesh.
-      HmixConfig.set("HmixUseRefWidth", false);
-      HmixConfig.set("MaxMeshDensity", -1.0);
+      MeshScalingConfig.set("UseRefWidth", false);
+      MeshScalingConfig.set("MaxMeshDensity", -1.0);
       Mesh->computeMeshScaling();
 
       Real MaxMeshDensity;
-      ConfigErr = HmixConfig.get("MaxMeshDensity", MaxMeshDensity);
+      ConfigErr =
+          MeshScalingConfig.get("MaxMeshDensity", MaxMeshDensity);
       CHECK_ERROR_ABORT(
           ConfigErr,
           "HorzMeshTest: unable to retrieve computed MaxMeshDensity");
@@ -674,7 +679,7 @@ int main(int argc, char *argv[]) {
       }
 
       Count = 0;
-      for (int Edge = 0; Edge < LocEdges; ++Edge) {
+      for (int Edge = 0; Edge < Mesh->NEdgesAll; Edge++) {
          const int Cell0 = Mesh->CellsOnEdgeH(Edge, 0);
          const int Cell1 = Mesh->CellsOnEdgeH(Edge, 1);
          const Real AvgDensity =
