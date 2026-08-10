@@ -50,6 +50,22 @@ class CplToOcnFields {
    HostArray1DReal SfcStressZonal; ///< Foxx_taux  [N m^-2]
    HostArray1DReal SfcStressMerid; ///< Foxx_tauy  [N m^-2]
 
+   HostArray1DReal SnowFlux;             ///< Faxa_snow [kg m^-2 s^-1]
+   HostArray1DReal RainFlux;             ///< Faxa_rain [kg m^-2 s^-1]
+   HostArray1DReal EvaporationFlux;      ///< Foxx_evap [kg m^-2 s^-1]
+   HostArray1DReal SeaIceFreshWaterFlux; ///< Fioi_meltw [kg m^-2 s^-1]
+   HostArray1DReal IceRunoffFlux;        ///< Foxx_rofi [kg m^-2 s^-1]
+   HostArray1DReal RiverRunoffFlux;      ///< Foxx_rofl [kg m^-2 s^-1]
+
+   HostArray1DReal LatentHeatFlux;       ///< Foxx_lat [W m^-2]
+   HostArray1DReal SensibleHeatFlux;     ///< Foxx_sen [W m^-2]
+   HostArray1DReal LongWaveHeatFluxUp;   ///< Foxx_lwup [W m^-2]
+   HostArray1DReal LongWaveHeatFluxDown; ///< Faxa_lwdn [W m^-2]
+   HostArray1DReal SeaIceHeatFlux;       ///< Fioi_melth [W m^-2]
+   HostArray1DReal ShortWaveHeatFlux;    ///< Foxx_swnet [W m^-2]
+
+   HostArray1DReal SeaIceSaltFlux; ///< Fioi_salt [kg m^-2 s^-1]
+
    CplToOcnFields(const std::string &Suffix, const HorzMesh *Mesh);
 };
 
