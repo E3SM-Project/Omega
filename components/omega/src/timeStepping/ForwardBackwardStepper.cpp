@@ -97,8 +97,14 @@ void ForwardBackwardStepper::doStep(
    Tracers::updateTimeLevels();
    Pacer::stop("ForwardBackward:haloExch", 3);
 
+   // Recompute KPP once on the fully updated state before implicit mixing.
+   CurTracerArray = Tracers::getAll(TracerCurLevel);
+   AuxState->computeAll(State, CurTracerArray, ThickCurLevel, VelCurLevel,
+                        TimeStep);
+   Tend->computeStageVerticalMixing(State, AuxState, CurTracerArray,
+                                    ThickCurLevel, VelCurLevel);
+
    // Apply implicit vertical mixing
-   CurTracerArray = Tracers::getAll(VelCurLevel);
    if (VMix->VelVertMixSetup.Enabled or VMix->TracerVertMixSetup.Enabled) {
       VMix->VertMixImplicit(State, AuxState, CurTracerArray, NTracers,
                             VelCurLevel);

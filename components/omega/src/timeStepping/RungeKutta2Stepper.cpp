@@ -75,8 +75,13 @@ void RungeKutta2Stepper::doStep(OceanState *State,   // model state
    Tracers::updateTimeLevels();
    Pacer::stop("RK2:haloExch", 3);
 
-   // Apply implicit vertical mixing
+   // Recompute KPP once on the fully updated state before implicit mixing.
    CurTracerArray = Tracers::getAll(CurLevel);
+   AuxState->computeAll(State, CurTracerArray, CurLevel, CurLevel, TimeStep);
+   Tend->computeStageVerticalMixing(State, AuxState, CurTracerArray, CurLevel,
+                                    CurLevel);
+
+   // Apply implicit vertical mixing
    if (VMix->VelVertMixSetup.Enabled or VMix->TracerVertMixSetup.Enabled) {
       VMix->VertMixImplicit(State, AuxState, CurTracerArray, NTracers,
                             CurLevel);

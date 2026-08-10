@@ -81,6 +81,24 @@ class Tendencies {
    TracerHyperDiffOnCell TracerHyperDiff;
    SurfaceTracerRestoringOnCell SurfaceTracerRestoring;
 
+   // Surface tracer flux used for KPP non-local tracer tendency [NTracers,
+   // NCellsAll]
+   Array2DReal SurfaceTracerFlux;
+
+   // Diagnostics for temperature forcing pathways used in KPP comparison.
+   // These are raw contributions added to TracerTend before tracer update.
+   Array2DReal TempNonLocalTendDiag;
+   Array1DReal TempNonLocalColumnSumDiag;
+
+   // Enables explicit non-local tracer tendency from KPP
+   bool TracerNonLocalFluxEnabled = false;
+
+   // Enable diagnostics that isolate temperature non-local terms.
+   bool TracerNonLocalDiagnosticsEnable = true;
+
+   // Controls whether KPP is recomputed during tendency stages.
+   bool StageVerticalMixingEnabled = true;
+
    std::string Name;
 
    // Methods to compute tendency groups
@@ -119,6 +137,13 @@ class Tendencies {
                                     const Array3DReal &TracerArray,
                                     int ThickTimeLevel, int VelTimeLevel,
                                     TimeInstant Time);
+
+   void setSurfaceTracerFlux(const Array2DReal &Flux);
+
+   void computeStageVerticalMixing(const OceanState *State,
+                                   const AuxiliaryState *AuxState,
+                                   const Array3DReal &TracerArray,
+                                   int ThickTimeLevel, int VelTimeLevel);
 
    // Create a non-default group of tendencies
    static Tendencies *

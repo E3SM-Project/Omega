@@ -568,6 +568,23 @@ add_omega_test(
     "-n;4"
 )
 
+##########################
+# KPP tests
+##########################
+
+add_omega_test(
+  KPP_PROFILES_TEST
+  testKPPMix.exe
+  ocn/KPPMixTest.cpp
+  "-n;1"
+  test_arg=profiles
+)
+add_omega_ctest(KPP_BLD_TEST testKPPMix.exe "-n;1" bld)
+add_omega_ctest(KPP_VMIX_COEFF_TEST testKPPMix.exe "-n;1" vmix)
+add_omega_ctest(KPP_INTEGRATION_TEST testKPPMix.exe "-n;1" integration)
+add_omega_ctest(KPP_CONFIG_GRADIENT_TEST testKPPMix.exe "-n;1" config-gradient)
+add_omega_ctest(KPP_CONFIG_UNSUPPORTED_TEST testKPPMix.exe "-n;1" config-unsupported)
+
 ##################
 # VAdv test
 ##################

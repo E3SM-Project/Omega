@@ -14,6 +14,8 @@
 #include "Error.h"
 #include "Field.h"
 #include "Forcing.h"
+#include "HorzOperators.h"
+#include "KPPMix.h"
 #include "OceanState.h"
 #include "PGrad.h"
 #include "Pacer.h"
@@ -412,6 +414,21 @@ void Tendencies::readConfig(Config *OmegaConfig ///< [in] Omega config
          ABORT_ERROR("Tendencies: VertMix must be initialized when"
                      "vertical mixing tendencies are enabled");
       }
+      // Optional KPP non-local tracer tendency: no abort if missing
+      Error TracerNonLocalErr = TendConfig.get(
+          "TracerNonLocalFluxTendencyEnable", this->TracerNonLocalFluxEnabled);
+      if (!TracerNonLocalErr.isSuccess()) {
+         TracerNonLocalErr.reset();
+         this->TracerNonLocalFluxEnabled = false;
+      }
+
+      Error TracerDiagErr =
+          TendConfig.get("TracerNonLocalDiagnosticsEnable",
+                         this->TracerNonLocalDiagnosticsEnable);
+      if (!TracerDiagErr.isSuccess()) {
+         TracerDiagErr.reset();
+         this->TracerNonLocalDiagnosticsEnable = true;
+      }
    }
 }
 
@@ -421,10 +438,16 @@ void Tendencies::defineFields() {
    std::string PseudoThicknessTendFieldName = "PseudoThicknessTend";
    std::string NormalVelocityTendFieldName  = "NormalVelocityTend";
    std::string TracerTendFieldName          = "TracerTend";
+   std::string SurfaceTracerFluxFieldName   = "SurfaceTracerFlux";
+   std::string TempNonLocalDiagFieldName    = "TempNonLocalTendDiag";
+   std::string TempNonLocalColSumFieldName  = "TempNonLocalColumnSumDiag";
    if (Name != "Default") {
       PseudoThicknessTendFieldName.append(Name);
       NormalVelocityTendFieldName.append(Name);
       TracerTendFieldName.append(Name);
+      SurfaceTracerFluxFieldName.append(Name);
+      TempNonLocalDiagFieldName.append(Name);
+      TempNonLocalColSumFieldName.append(Name);
    }
 
    int NDims = 2;
@@ -452,6 +475,31 @@ void Tendencies::defineFields() {
                      "m/s^2", "sea_water_velocity_tendency", -9.99E+10,
                      9.99E+10, NDims, DimNamesVelocity);
 
+   NDims = 2;
+   std::vector<std::string> DimNamesSurfaceFlux(NDims);
+   DimNamesSurfaceFlux[0] = "NTracers";
+   DimNamesSurfaceFlux[1] = "NCells";
+   auto SurfaceTracerFluxField =
+       Field::create(SurfaceTracerFluxFieldName, "Surface tracer flux", "1", "",
+                     -9.99E+10, 9.99E+10, NDims, DimNamesSurfaceFlux);
+
+   NDims = 2;
+   std::vector<std::string> DimNamesTempDiag(NDims);
+   DimNamesTempDiag[0] = "NCells";
+   DimNamesTempDiag[1] = "NVertLayers";
+   auto TempNonLocalDiagField =
+       Field::create(TempNonLocalDiagFieldName,
+                     "Temperature non-local KPP tendency diagnostic", "1", "",
+                     -9.99E+10, 9.99E+10, NDims, DimNamesTempDiag);
+
+   NDims = 1;
+   std::vector<std::string> DimNamesCellOnly(NDims);
+   DimNamesCellOnly[0] = "NCells";
+   auto TempNonLocalColSumField =
+       Field::create(TempNonLocalColSumFieldName,
+                     "Temperature non-local tendency column-sum diagnostic",
+                     "1", "", -9.99E+10, 9.99E+10, NDims, DimNamesCellOnly);
+
    std::string TendGroupName = "Tendencies";
    if (Name != "Default") {
       TendGroupName.append(Name);
@@ -461,10 +509,17 @@ void Tendencies::defineFields() {
    TendGroup->addField(PseudoThicknessTendFieldName);
    TendGroup->addField(NormalVelocityTendFieldName);
    TendGroup->addField(TracerTendFieldName);
+   TendGroup->addField(SurfaceTracerFluxFieldName);
+   TendGroup->addField(TempNonLocalDiagFieldName);
+   TendGroup->addField(TempNonLocalColSumFieldName);
 
    PseudoThicknessTendField->attachData<Array2DReal>(PseudoThicknessTend);
    NormalVelocityTendField->attachData<Array2DReal>(NormalVelocityTend);
    TracerTendField->attachData<Array3DReal>(TracerTend);
+   SurfaceTracerFluxField->attachData<Array2DReal>(SurfaceTracerFlux, false);
+   TempNonLocalDiagField->attachData<Array2DReal>(TempNonLocalTendDiag, false);
+   TempNonLocalColSumField->attachData<Array1DReal>(TempNonLocalColumnSumDiag,
+                                                    false);
 
 } // end defineFields
 
@@ -503,6 +558,15 @@ Tendencies::Tendencies(const std::string &Name_, ///< [in] Name for tendencies
        Array2DReal("NormalVelocityTend", Mesh->NEdgesSize, VCoord->NVertLayers);
    TracerTend = Array3DReal("TracerTend", NTracersIn, Mesh->NCellsSize,
                             VCoord->NVertLayers);
+   SurfaceTracerFlux =
+       Array2DReal("SurfaceTracerFlux", NTracersIn, Mesh->NCellsAll);
+   TempNonLocalTendDiag = Array2DReal("TempNonLocalTendDiag", Mesh->NCellsSize,
+                                      VCoord->NVertLayers);
+   TempNonLocalColumnSumDiag =
+       Array1DReal("TempNonLocalColumnSumDiag", Mesh->NCellsSize);
+   deepCopy(SurfaceTracerFlux, 0.0_Real);
+   deepCopy(TempNonLocalTendDiag, 0.0_Real);
+   deepCopy(TempNonLocalColumnSumDiag, 0.0_Real);
 
    Name = Name_;
 
@@ -827,11 +891,20 @@ void Tendencies::computeTracerTendenciesOnly(
    OMEGA_SCOPE(LocTracerDiffusion, TracerDiffusion);
    OMEGA_SCOPE(LocTracerHyperDiff, TracerHyperDiff);
    OMEGA_SCOPE(LocSurfaceTracerRestoring, SurfaceTracerRestoring);
+   OMEGA_SCOPE(LocSurfaceTracerFlux, SurfaceTracerFlux);
    OMEGA_SCOPE(LocSfcTracerForcing, SfcTracerForcing);
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
    OMEGA_SCOPE(MinLayerEdgeBot, VCoord->MinLayerEdgeBot);
    OMEGA_SCOPE(MaxLayerEdgeTop, VCoord->MaxLayerEdgeTop);
+   OMEGA_SCOPE(LocTempNonLocalTendDiag, TempNonLocalTendDiag);
+   OMEGA_SCOPE(LocTempNonLocalColumnSumDiag, TempNonLocalColumnSumDiag);
+   const bool LocTracerNonLocalDiagnosticsEnable =
+       TracerNonLocalDiagnosticsEnable;
+   I4 TempTracerIndex = -1;
+   const bool LocHasTempTracer =
+       (Tracers::getIndex(TempTracerIndex, "Temperature") == 0);
+   const I4 LocTempTracerIndex = TempTracerIndex;
 
    Pacer::start("Tend:computeTracerTendenciesOnly", 1);
 
@@ -844,6 +917,21 @@ void Tendencies::computeTracerTendenciesOnly(
               Team, Range{KMin, KMax},
               INNER_LAMBDA(int K) { LocTracerTend(L, ICell, K) = 0; });
        });
+
+   if (LocTracerNonLocalDiagnosticsEnable) {
+      parallelForOuter(
+          {Mesh->NCellsAll}, KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
+             const int KMin = MinLayerCell(ICell);
+             const int KMax = MaxLayerCell(ICell);
+             parallelForInner(
+                 Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+                    LocTempNonLocalTendDiag(ICell, K) = 0.0_Real;
+                 });
+             Kokkos::single(Kokkos::PerTeam(Team), [&]() {
+                LocTempNonLocalColumnSumDiag(ICell) = 0.0_Real;
+             });
+          });
+   }
 
    // compute tracer horizotal advection
    Array2DReal NormalVelEdge = State->getNormalVelocity(VelTimeLevel);
@@ -924,6 +1012,65 @@ void Tendencies::computeTracerTendenciesOnly(
                                        TracersMonthlySurfClimo, TracerArray);
           });
       Pacer::stop("Tend:surfaceTracerRestoring", 2);
+   }
+
+   // Compute KPP non-local tracer tendency
+   if (TracerNonLocalFluxEnabled) {
+      KPPMix *KPPInstance = KPPMix::getInstance();
+      if (KPPInstance && KPPInstance->Enabled) {
+         Pacer::start("Tend:tracerNonLocalFlux", 2);
+         OMEGA_SCOPE(LocNonLocalFlux, KPPInstance->VertNonLocalFlux);
+         parallelForOuter(
+             {NTracers, Mesh->NCellsAll},
+             KOKKOS_LAMBDA(int L, int ICell, const TeamMember &Team) {
+                const int KMin   = MinLayerCell(ICell);
+                const int KMax   = MaxLayerCell(ICell);
+                const int KRange = vertRangeChunked(KMin, KMax);
+                parallelForInner(
+                    Team, KRange, INNER_LAMBDA(int KChunk) {
+                       const I4 KStart = chunkStart(KChunk, KMin);
+                       const I4 KLen   = chunkLength(KChunk, KStart, KMax);
+                       for (int KVec = 0; KVec < KLen; ++KVec) {
+                          const I4 K = KStart + KVec;
+                          const Real NonLocalTend =
+                              LocSurfaceTracerFlux(L, ICell) *
+                              (LocNonLocalFlux(ICell, K) -
+                               LocNonLocalFlux(ICell, K + 1));
+                          LocTracerTend(L, ICell, K) += NonLocalTend;
+
+                          if (LocTracerNonLocalDiagnosticsEnable &&
+                              LocHasTempTracer && L == LocTempTracerIndex) {
+                             LocTempNonLocalTendDiag(ICell, K) += NonLocalTend;
+                          }
+                       }
+                    });
+             });
+
+         if (LocTracerNonLocalDiagnosticsEnable && LocHasTempTracer) {
+            parallelForOuter(
+                {Mesh->NCellsAll},
+                KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
+                   const int KMin = MinLayerCell(ICell);
+                   const int KMax = MaxLayerCell(ICell);
+                   Real Sum       = 0.0_Real;
+                   parallelReduceInner(
+                       Team, Range{KMin, KMax},
+                       [&](int K, Real &LocalSum) {
+                          const Real NonLocalTend =
+                              LocSurfaceTracerFlux(LocTempTracerIndex, ICell) *
+                              (LocNonLocalFlux(ICell, K) -
+                               LocNonLocalFlux(ICell, K + 1));
+                          LocalSum += NonLocalTend;
+                       },
+                       Sum);
+                   Kokkos::single(Kokkos::PerTeam(Team), [&]() {
+                      LocTempNonLocalColumnSumDiag(ICell) = Sum;
+                   });
+                });
+         }
+
+         Pacer::stop("Tend:tracerNonLocalFlux", 2);
+      }
    }
 
    // compute tracer forcing tendency
@@ -1014,6 +1161,10 @@ void Tendencies::computeVelocityTendencies(
 ) {
    Pacer::start("Tend:computeVelocityTendencies", 1);
 
+   if (StageVerticalMixingEnabled) {
+      computeStageVerticalMixing(State, AuxState, TracerArray, ThickTimeLevel,
+                                 VelTimeLevel);
+   }
    AuxState->computeMomAux(State, TracerArray, ThickTimeLevel, VelTimeLevel,
                            ProjDt);
    computeVelocityTendenciesOnly(State, AuxState, TracerArray, ThickTimeLevel,
@@ -1040,6 +1191,10 @@ void Tendencies::computeTracerTendencies(
 
    Pacer::start("Tend:computeTracerTendencies", 1);
 
+   if (StageVerticalMixingEnabled) {
+      computeStageVerticalMixing(State, AuxState, TracerArray, ThickTimeLevel,
+                                 VelTimeLevel);
+   }
    const auto &MeanPseudoThickEdge =
        AuxState->PseudoThicknessAux.MeanPseudoThickEdge;
    Pacer::start("Tend:computeTracerAuxCell", 2);
@@ -1075,6 +1230,10 @@ void Tendencies::computeAllTendencies(
    AuxState->computeAll(State, TracerArray, ThickTimeLevel, VelTimeLevel,
                         ProjDt);
 
+   if (StageVerticalMixingEnabled) {
+      computeStageVerticalMixing(State, AuxState, TracerArray, ThickTimeLevel,
+                                 VelTimeLevel);
+   }
    computePseudoThicknessTendenciesOnly(State, AuxState, ThickTimeLevel,
                                         VelTimeLevel, Time);
    computeVelocityTendenciesOnly(State, AuxState, TracerArray, ThickTimeLevel,
@@ -1082,6 +1241,225 @@ void Tendencies::computeAllTendencies(
    computeTracerTendenciesOnly(State, AuxState, TracerArray, ThickTimeLevel,
                                VelTimeLevel, Time);
 } // end all tendency compute
+
+//------------------------------------------------------------------------------
+// Set surface tracer flux for use by KPP non-local tracer tendency
+void Tendencies::setSurfaceTracerFlux(const Array2DReal &Flux) {
+   OMEGA_REQUIRE(Flux.extent(0) == SurfaceTracerFlux.extent(0),
+                 "Tendencies::setSurfaceTracerFlux: tracer dimension mismatch");
+   OMEGA_REQUIRE(Flux.extent(1) == SurfaceTracerFlux.extent(1),
+                 "Tendencies::setSurfaceTracerFlux: cell dimension mismatch");
+   Kokkos::deep_copy(SurfaceTracerFlux, Flux);
+}
+
+//------------------------------------------------------------------------------
+// Prepare KPP state for the current stage. Final VertDiff/VertVisc coefficient
+// assembly is owned by VertMix::computeVertMix.
+void Tendencies::computeStageVerticalMixing(const OceanState *State,
+                                            const AuxiliaryState *AuxState,
+                                            const Array3DReal &TracerArray,
+                                            int ThickTimeLevel,
+                                            int VelTimeLevel) {
+   (void)AuxState;
+   KPPMix *KPPInstance = KPPMix::getInstance();
+
+   if (!EqState || !KPPInstance || !KPPInstance->Enabled)
+      return;
+
+   I4 TempIdx = -1;
+   I4 SaltIdx = -1;
+   if (Tracers::getIndex(TempIdx, "Temperature") != 0 ||
+       Tracers::getIndex(SaltIdx, "Salinity") != 0) {
+      LOG_WARN("Tendencies::computeStageVerticalMixing: Temperature/Salinity "
+               "tracers not found, skipping KPP stage update");
+      return;
+   }
+
+   const I4 NCellsAll   = Mesh->NCellsAll;
+   const I4 NVertLayers = VCoord->NVertLayers;
+
+   Array2DReal ConservTemp("KPP-ConservTemp", NCellsAll, NVertLayers);
+   Array2DReal AbsSalinity("KPP-AbsSalinity", NCellsAll, NVertLayers);
+   parallelFor(
+       "KPP-ExtractTS", {NCellsAll, NVertLayers},
+       KOKKOS_LAMBDA(I4 ICell, I4 K) {
+          ConservTemp(ICell, K) = TracerArray(TempIdx, ICell, K);
+          AbsSalinity(ICell, K) = TracerArray(SaltIdx, ICell, K);
+       });
+
+   Array2DReal LayerThickCell = State->getPseudoThickness(ThickTimeLevel);
+   Array2DReal NormalVelEdge  = State->getNormalVelocity(VelTimeLevel);
+
+   Array1DReal SurfacePressure("KPP-SurfacePressure", NCellsAll);
+   deepCopy(SurfacePressure, 1.0e5_Real);
+   const_cast<VertCoord *>(VCoord)->computePressure(LayerThickCell,
+                                                    SurfacePressure);
+
+   OMEGA_SCOPE(PressureMid, VCoord->PressureMid);
+
+   EqState->computeSpecVol(ConservTemp, AbsSalinity, PressureMid);
+   EqState->computeBruntVaisalaFreqSq(ConservTemp, AbsSalinity, PressureMid,
+                                      EqState->SpecVol);
+
+   OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
+   Array2DReal PotentialDensity("KPP-PotentialDensity", NCellsAll, NVertLayers);
+   Array2DReal PotentialDensityPressure("KPP-PotentialDensityPressure",
+                                        NCellsAll, NVertLayers);
+   parallelFor(
+       "KPP-PotentialDensityPressure", {NCellsAll, NVertLayers},
+       KOKKOS_LAMBDA(I4 ICell, I4 K) {
+          const I4 KSurf                     = MinLayerCell(ICell);
+          PotentialDensityPressure(ICell, K) = PressureMid(ICell, KSurf);
+       });
+   EqState->computeSpecVolDisp(ConservTemp, AbsSalinity,
+                               PotentialDensityPressure, 0);
+   OMEGA_SCOPE(SpecVolPotential, EqState->SpecVolDisplaced);
+   parallelFor(
+       "KPP-PotentialDensity", {NCellsAll, NVertLayers},
+       KOKKOS_LAMBDA(I4 ICell, I4 K) {
+          PotentialDensity(ICell, K) =
+              1.0_Real / Kokkos::max(1.0e-12_Real, SpecVolPotential(ICell, K));
+       });
+
+   Array2DReal TangentialVelEdge("KPP-TangentialVelEdge", Mesh->NEdgesSize,
+                                 NVertLayers);
+   {
+      TangentialReconOnEdge TanReconEdge(Mesh);
+      OMEGA_SCOPE(LocTangentialVelEdge, TangentialVelEdge);
+      OMEGA_SCOPE(MinLayerEdgeTop, VCoord->MinLayerEdgeTop);
+      OMEGA_SCOPE(MaxLayerEdgeBot, VCoord->MaxLayerEdgeBot);
+      parallelForOuter(
+          {Mesh->NEdgesAll}, KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+             const int KMin   = MinLayerEdgeTop(IEdge);
+             const int KMax   = MaxLayerEdgeBot(IEdge);
+             const int KRange = vertRangeChunked(KMin, KMax);
+             parallelForInner(
+                 Team, KRange, INNER_LAMBDA(int KChunk) {
+                    TanReconEdge(LocTangentialVelEdge, IEdge, KChunk,
+                                 NormalVelEdge);
+                 });
+          });
+   }
+
+   Array1DReal IceFraction("KPP-IceFraction", NCellsAll);
+
+   OMEGA_SCOPE(LocSurfaceFrictionVelocity,
+               KPPInstance->SurfaceFrictionVelocity);
+   OMEGA_SCOPE(LocSurfaceBuoyancyFlux, KPPInstance->SurfaceBuoyancyFlux);
+
+   const EosType LocEosChoice = EqState->EosChoice;
+   const Real LocLinearDRhodT = EqState->getLinearDRhodT();
+   const Real LocLinearDRhodS = EqState->getLinearDRhodS();
+   const Real HeatFluxToTracerFluxFactor =
+       1._Real / (RhoSw * (LocEosChoice == EosType::Teos10Eos ? Cp0Sw : CpSw));
+
+   const auto *ForcingState = Forcing::getDefault();
+   if (!ForcingState) {
+      LOG_WARN("Tendencies::computeStageVerticalMixing: Forcing has not "
+               "been initialized, skipping KPP stage update");
+      return;
+   }
+
+   const auto &SfcStressForcing = ForcingState->SfcStressForcing;
+   const auto &TracerForcing    = ForcingState->TracerForcing;
+   OMEGA_SCOPE(ZonalStressCell, SfcStressForcing.ZonalStressCell);
+   OMEGA_SCOPE(MeridStressCell, SfcStressForcing.MeridStressCell);
+   OMEGA_SCOPE(LocLatentHeatFlux, TracerForcing.LatentHeatFluxCell);
+   OMEGA_SCOPE(LocSensibleHeatFlux, TracerForcing.SensibleHeatFluxCell);
+   OMEGA_SCOPE(LocLongWaveHeatFluxUp, TracerForcing.LongWaveHeatFluxUpCell);
+   OMEGA_SCOPE(LocLongWaveHeatFluxDown, TracerForcing.LongWaveHeatFluxDownCell);
+   OMEGA_SCOPE(LocSeaIceHeatFlux, TracerForcing.SeaIceHeatFluxCell);
+   OMEGA_SCOPE(LocShortWaveHeatFlux, TracerForcing.ShortWaveHeatFluxCell);
+   OMEGA_SCOPE(LocSnowFlux, TracerForcing.SnowFluxCell);
+   OMEGA_SCOPE(LocRainFlux, TracerForcing.RainFluxCell);
+   OMEGA_SCOPE(LocEvaporationFlux, TracerForcing.EvaporationFluxCell);
+   OMEGA_SCOPE(LocSeaIceFreshWaterFlux, TracerForcing.SeaIceFreshWaterFluxCell);
+   OMEGA_SCOPE(LocIceRunoffFlux, TracerForcing.IceRunoffFluxCell);
+   OMEGA_SCOPE(LocRiverRunoffFlux, TracerForcing.RiverRunoffFluxCell);
+   OMEGA_SCOPE(LocSeaIceSaltFlux, TracerForcing.SeaIceSaltFluxCell);
+   OMEGA_SCOPE(LocSurfaceTracerFlux, SurfaceTracerFlux);
+   OMEGA_SCOPE(LocSpecVol, EqState->SpecVol);
+   Teos10BruntVaisalaFreqSq Teos10Coeff(VCoord);
+   Teos10Eos Teos10EosImpl(VCoord);
+
+   const bool LocUpdateSurfaceTracerFlux = TracerNonLocalFluxEnabled;
+   const bool LocUseTracerForcing        = SfcTracerForcing.Enabled;
+   const I4 TempTracerIndex              = TempIdx;
+   const I4 SaltTracerIndex              = SaltIdx;
+
+   if (LocUpdateSurfaceTracerFlux) {
+      deepCopy(SurfaceTracerFlux, 0.0_Real);
+   }
+   deepCopy(KPPInstance->SurfaceBuoyancyFlux, 0.0_Real);
+
+   parallelFor(
+       "KPP-SurfaceForcing", {NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
+          const Real tau_x   = ZonalStressCell(ICell);
+          const Real tau_y   = MeridStressCell(ICell);
+          const Real tau_mag = Kokkos::sqrt(tau_x * tau_x + tau_y * tau_y);
+          LocSurfaceFrictionVelocity(ICell) =
+              Kokkos::sqrt(Kokkos::max(0.0_Real, tau_mag / RhoSw));
+          LocSurfaceBuoyancyFlux(ICell) = 0.0_Real;
+          if (LocUpdateSurfaceTracerFlux) {
+             LocSurfaceTracerFlux(TempTracerIndex, ICell) = 0.0_Real;
+             LocSurfaceTracerFlux(SaltTracerIndex, ICell) = 0.0_Real;
+          }
+          IceFraction(ICell) = 0.0_Real;
+
+          if (!LocUseTracerForcing) {
+             return;
+          }
+
+          const I4 KSurf              = MinLayerCell(ICell);
+          const Real surface_salinity = AbsSalinity(ICell, KSurf);
+          const Real surface_temp     = ConservTemp(ICell, KSurf);
+          const Real ct_freezing      = Teos10EosImpl.calcCtFreezing(
+              surface_salinity, PressureMid(ICell, KSurf) * Pa2Db, 0.0_Real);
+          const Real heat_flux =
+              LocLatentHeatFlux(ICell) + LocSensibleHeatFlux(ICell) +
+              LocLongWaveHeatFluxUp(ICell) + LocLongWaveHeatFluxDown(ICell) +
+              LocSeaIceHeatFlux(ICell) + LocShortWaveHeatFlux(ICell) +
+              (LocRainFlux(ICell) + LocRiverRunoffFlux(ICell)) * Cp0Sw *
+                  surface_temp +
+              (LocSnowFlux(ICell) + LocIceRunoffFlux(ICell)) *
+                  (Cp0Sw * ct_freezing - LatIce);
+          const Real freshwater_flux =
+              LocSnowFlux(ICell) + LocRainFlux(ICell) +
+              LocSeaIceFreshWaterFlux(ICell) + LocIceRunoffFlux(ICell) +
+              LocRiverRunoffFlux(ICell) + LocEvaporationFlux(ICell);
+          const Real temp_flux = heat_flux * HeatFluxToTracerFluxFactor;
+          const Real salt_flux = LocSeaIceSaltFlux(ICell) / RhoSw -
+                                 freshwater_flux * surface_salinity / RhoSw;
+          const Real spec_vol =
+              Kokkos::max(1.0e-12_Real, LocSpecVol(ICell, KSurf));
+          const Real rho_surface = 1.0_Real / spec_vol;
+          Real alpha             = 0.0_Real;
+          Real beta              = 0.0_Real;
+          if (LocEosChoice == EosType::Teos10Eos) {
+             alpha = Teos10Coeff.calcAlpha(
+                 AbsSalinity(ICell, KSurf), ConservTemp(ICell, KSurf),
+                 PressureMid(ICell, KSurf) * Pa2Db, spec_vol);
+             beta = Teos10Coeff.calcBeta(
+                 AbsSalinity(ICell, KSurf), ConservTemp(ICell, KSurf),
+                 PressureMid(ICell, KSurf) * Pa2Db, spec_vol);
+          } else if (LocEosChoice == EosType::LinearEos) {
+             alpha = -LocLinearDRhodT / rho_surface;
+             beta  = LocLinearDRhodS / rho_surface;
+          }
+          LocSurfaceBuoyancyFlux(ICell) =
+              Gravity * (alpha * temp_flux - beta * salt_flux);
+          if (LocUpdateSurfaceTracerFlux) {
+             LocSurfaceTracerFlux(TempTracerIndex, ICell) = temp_flux;
+             LocSurfaceTracerFlux(SaltTracerIndex, ICell) = salt_flux;
+          }
+       });
+
+   Array1DReal WindSpeed10m;
+   KPPInstance->computeKPPMix(
+       PotentialDensity, NormalVelEdge, TangentialVelEdge,
+       KPPInstance->SurfaceFrictionVelocity, KPPInstance->SurfaceBuoyancyFlux,
+       EqState->BruntVaisalaFreqSq, IceFraction, WindSpeed10m);
+}
 
 } // end namespace OMEGA
 

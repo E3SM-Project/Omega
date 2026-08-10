@@ -85,7 +85,10 @@ void RungeKutta4Stepper::doStep(OceanState *State,   // model state
    Array3DReal NextTracerArray  = Tracers::getAll(NextLevel);
    TimeInstant ForcingStageTime = SimTime;
 
-   VertMix *VMix = VertMix::getInstance();
+   VertMix *VMix                  = VertMix::getInstance();
+   const bool StageKPPEnabledPrev = Tend->StageVerticalMixingEnabled;
+   Tend->StageVerticalMixingEnabled =
+       StageKPPEnabledPrev && Tend->TracerNonLocalFluxEnabled;
 
    for (int Stage = 0; Stage < NStages; ++Stage) {
       const TimeInstant StageTime = SimTime + RKC[Stage] * TimeStep;
@@ -139,8 +142,14 @@ void RungeKutta4Stepper::doStep(OceanState *State,   // model state
    Tracers::updateTimeLevels();
    Pacer::stop("RK4:haloExch", 3);
 
-   // Apply implicit vertical mixing
+   // Recompute KPP once on the fully updated state before implicit mixing.
    CurTracerArray = Tracers::getAll(CurLevel);
+   AuxState->computeAll(State, CurTracerArray, CurLevel, CurLevel, TimeStep);
+   Tend->computeStageVerticalMixing(State, AuxState, CurTracerArray, CurLevel,
+                                    CurLevel);
+   Tend->StageVerticalMixingEnabled = StageKPPEnabledPrev;
+
+   // Apply implicit vertical mixing
    if (VMix->VelVertMixSetup.Enabled or VMix->TracerVertMixSetup.Enabled) {
       VMix->VertMixImplicit(State, AuxState, CurTracerArray, NTracers,
                             CurLevel);
