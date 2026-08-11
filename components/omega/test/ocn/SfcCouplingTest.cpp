@@ -400,7 +400,7 @@ int testUpdateExportFields(const I4 NSteps) {
          TempErr++;
       }
 
-      if (!isApprox(AvgSalinH(Cell), ExpectedSalin(Cell), RTol)) {
+      if (!isApprox(AvgSalinH(Cell), ExpectedSalin(Cell) / Psu2Gpkg, RTol)) {
          SalinErr++;
       }
    }
@@ -491,7 +491,8 @@ int testExportToCoupler(const CouplingLayout Layout) {
    // Check 1: exportToCoupler properly packs into OcnToCplView.
    // NormalVelocity is accumulated on edges and reconstructed at cell centers
    // during copyToHost(). Recon correctness is tested in HorzOperatorsTest.
-   // copyToHost() converts temp to Kelvin (identity CT->PT w/ ConstantEos)
+   // copyToHost() converts conservative temperature to in-situ Kelvin and
+   // absolute salinity to practical salinity.
 
    // TODO: Add end-to-end SSH-gradient accumulation/export coverage if we
    // decide to continue passing ssh grad (cf. ssh directly) to mpas-si
@@ -502,7 +503,7 @@ int testExportToCoupler(const CouplingLayout Layout) {
          PackErr++;
       }
       if (OcnToCplData[flatIdx(Layout, Cell, SalinIdx, NCells, NExports)] !=
-          ExpectedSalin(Cell)) {
+          ExpectedSalin(Cell) / Psu2Gpkg) {
          PackErr++;
       }
       if (OcnToCplData[flatIdx(Layout, Cell, SshIdx, NCells, NExports)] !=
