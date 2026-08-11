@@ -385,6 +385,7 @@ OcnToCplFields::OcnToCplFields(const std::string &Suffix, const HorzMesh *Mesh)
                           Mesh->NCellsOwned),
       InstSshCellH("InstSshCellH" + Suffix, Mesh->NCellsOwned),
       InSituTempScratch("InSituTempScratch" + Suffix, Mesh->NCellsOwned),
+      PracSalinityScratch("PracSalinityScratch" + Suffix, Mesh->NCellsOwned),
       ReconZonalScratch("ReconZonalScratch" + Suffix, Mesh->NCellsOwned),
       ReconMeridScratch("ReconMeridScratch" + Suffix, Mesh->NCellsOwned) {
 
@@ -482,22 +483,30 @@ void OcnToCplFields::copyToHost() {
    OMEGA_SCOPE(LocAvgSfcTemp, AvgSfcTemperature);
    OMEGA_SCOPE(LocAvgSfcSalinity, AvgSfcSalinity);
    OMEGA_SCOPE(LocInSituTemp, InSituTempScratch);
+   OMEGA_SCOPE(LocPracSalinity, PracSalinityScratch);
 
+   // TEOS-10 conversion is applied once per coupling interval to the averaged
+   // conservative temperature and absolute salinity. Therefore this computes
+   // PtFromCt(mean(Sa), mean(Ct)), not mean(PtFromCt(Sa, Ct)); these are not
+   // generally equivalent because the conversion is nonlinear. A true time
+   // average of the converted quantity would require converting each timestep
+   // before accumulating it. The same consideration applies to any future
+   // nonlinear absolute-to-practical salinity conversion.
    parallelFor(
        {(int)AvgSfcTemperature.extent(0)}, KOKKOS_LAMBDA(int Cell) {
-          const Real Ct       = LocAvgSfcTemp(Cell);
-          const Real Sa       = LocAvgSfcSalinity(Cell);
-          const Real Pt       = LocEosChoice == EosType::Teos10Eos
-                                    ? LocTeos10.calcPtFromCt(Sa, Ct)
-                                    : Ct;
-          LocInSituTemp(Cell) = Pt + TkFrz; // C to K temperature conversion
+          const Real Ct         = LocAvgSfcTemp(Cell);
+          const Real Sa         = LocAvgSfcSalinity(Cell);
+          const Real Pt         = LocEosChoice == EosType::Teos10Eos
+                                      ? LocTeos10.calcPtFromCt(Sa, Ct)
+                                      : Ct;
+          LocInSituTemp(Cell)   = Pt + TkFrz; // C to K temperature conversion
+          LocPracSalinity(Cell) = Sa / Psu2Gpkg; // abs to prac sal. conversion
        });
 
    deepCopy(AvgSfcTemperatureH, InSituTempScratch);
-   deepCopy(AvgSfcSalinityH, AvgSfcSalinity);
+   deepCopy(AvgSfcSalinityH, PracSalinityScratch);
 
    // Retrieve the default horizontal mesh
-   // TODO: Should this just be a class member
    HorzMesh *DefHorzMesh = HorzMesh::getDefault();
 
    OMEGA_SCOPE(LocNormalVelocity, AvgSfcNormalVelocity);

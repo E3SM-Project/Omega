@@ -75,8 +75,7 @@ class OcnToCplFields {
    ///< So_t    [K], in-situ approx (potential temp at P=0)
    HostArray1DReal AvgSfcTemperatureH;
 
-   /// TODO: Export practical salinity (unitless) to coupler
-   ///< So_s    [g kg^-1], absolute salinity
+   ///< So_s    [psu], paractical salinity
    HostArray1DReal AvgSfcSalinityH;
 
    ///< So_u    [m s^-1]
@@ -117,8 +116,10 @@ class OcnToCplFields {
    Array1DReal AvgSfcNormalVelocity; // [m s^-1], velocity normal to edge
    Array1DReal AvgSfcSshGrad;        // [m m^-1], ssh gradient normal to edge
 
-   // Scratch buffer for the in-situ Kelvin conversion in copyToHost()
+   // Scratch buffers for the in-situ and Kelvin temperature conversion and
+   // paractical salinity conversio done in copyToHost()
    Array1DReal InSituTempScratch; // [K], in-situ approx (potential temp at P=0)
+   Array1DReal PracSalinityScratch; // [Psu], Parctical salinity
    // Scratch arrays for edge normal vector field reconstructed to cell centers
    Array1DReal ReconZonalScratch;
    Array1DReal ReconMeridScratch;
