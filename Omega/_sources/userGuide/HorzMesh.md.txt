@@ -54,6 +54,7 @@ variables:
 | AngleEdge | Angle the edge normal makes with local eastward direction | radians |
 | MeshDensity | Value of density function used to generate a particular mesh at cell centers | - |
 | WeightsOnEdge | Reconstruction weights associated with each of the edgesOnEdge | - |
+| ReconWeightsCell | Least-squares weights for reconstructing an edge-normal vector field at cell centers; spherical meshes only | - |
 
 In addition, some mesh metadata are read from the file and stored as mesh
 variables. These include ``OnSphere`` (or ``on_a_sphere`` for backcompatibility),

@@ -231,6 +231,8 @@ Note that the two methods will not result in the same partition.</p>
 <li><p>the total number of cells, edges and vertices (NCells, NEdges, NVertices)</p></li>
 <li><p>the mesh connectivity contained in the arrays CellsOnCell, EdgesOnCell
 VerticesOnCell, CellsOnEdge, EdgesOnEdge, CellsOnVertex, EdgesOnVertex.
+For spherical meshes, the vector reconstruction stencil arrays
+NEdgesReconOnCell and ReconStencilCell are also required.
 Again, a full description of the mesh is given in the
 <a class="reference internal" href="../devGuide/Decomp.html#omega-dev-decomp"><span class="std std-ref">Developer’s Guide</span></a>.
 The file name for this input file is extracted from the HorzMeshIn input
