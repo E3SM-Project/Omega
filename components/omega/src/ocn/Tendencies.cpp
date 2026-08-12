@@ -1380,7 +1380,6 @@ void Tendencies::computeStageVerticalMixing(const OceanState *State,
    OMEGA_SCOPE(LocSurfaceTracerFlux, SurfaceTracerFlux);
    OMEGA_SCOPE(LocSpecVol, EqState->SpecVol);
    Teos10BruntVaisalaFreqSq Teos10Coeff(VCoord);
-   Teos10Eos Teos10EosImpl(VCoord);
 
    const bool LocUpdateSurfaceTracerFlux = TracerNonLocalFluxEnabled;
    const bool LocUseTracerForcing        = SfcTracerForcing.Enabled;
@@ -1413,8 +1412,9 @@ void Tendencies::computeStageVerticalMixing(const OceanState *State,
           const I4 KSurf              = MinLayerCell(ICell);
           const Real surface_salinity = AbsSalinity(ICell, KSurf);
           const Real surface_temp     = ConservTemp(ICell, KSurf);
-          const Real ct_freezing      = Teos10EosImpl.calcCtFreezing(
-              surface_salinity, PressureMid(ICell, KSurf) * Pa2Db, 0.0_Real);
+          const Real ct_freezing =
+              Eos::calcCtFreezing(LocEosChoice, surface_salinity,
+                                  PressureMid(ICell, KSurf) * Pa2Db, 0.0_Real);
           const Real heat_flux =
               LocLatentHeatFlux(ICell) + LocSensibleHeatFlux(ICell) +
               LocLongWaveHeatFluxUp(ICell) + LocLongWaveHeatFluxDown(ICell) +

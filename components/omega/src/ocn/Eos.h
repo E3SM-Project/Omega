@@ -1043,6 +1043,12 @@ class Eos {
       return Pt;
    }
 
+   /// Get linear EOS density derivative with respect to temperature.
+   Real getLinearDRhodT() const { return ComputeSpecVolLinear.DRhodT; }
+
+   /// Get linear EOS density derivative with respect to salinity.
+   Real getLinearDRhodS() const { return ComputeSpecVolLinear.DRhodS; }
+
    /// Calculate freezing temperature of seawater.
    /// For TEOS-10, uses the Roquet et al. 75-term polynomial.
    /// For LinearEos, uses a simple linear salinity-dependent approximation.

@@ -679,9 +679,9 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
 
              Real w_turb = 0.0_Real;
              if (u_star > 1.0e-12_Real) {
-                const Real u3   = u_star * u_star * u_star;
-                const Real zeta = sigma_loc * z_depth * VonKar * b0_eff /
-                                  Kokkos::max(u3, 1.0e-20_Real);
+                const Real u3        = u_star * u_star * u_star;
+                const Real zeta      = sigma_loc * z_depth * VonKar * b0_eff /
+                                       Kokkos::max(u3, 1.0e-20_Real);
                 const Real phi_inv_s = KPP::KPPProfileS2(zeta);
                 w_turb = VonKar * u_star * Kokkos::max(phi_inv_s, 0.0_Real);
              } else if (b0_eff < 0.0_Real) {
@@ -993,6 +993,9 @@ void KPPMix::computeMixingCoefficients(
 
           const I4 KMin = MinLayerCell(ICell);
           const I4 KMax = MaxLayerCell(ICell);
+          if (KMin < 0 || KMin >= NVertLayers || KMax < KMin) {
+             return;
+          }
           const I4 KMatch =
               Kokkos::min(KMax + 1, LocIndexBoundaryLayerDepth(ICell) + 1);
 
@@ -1028,7 +1031,7 @@ void KPPMix::computeMixingCoefficients(
                 if (u_star > 0.0_Real) {
                    const Real u3 = u_star * u_star * u_star;
                    zeta          = sigma_loc * h_obl * b0 * LocKappa /
-                          Kokkos::max(u3, 1.0e-20_Real);
+                                   Kokkos::max(u3, 1.0e-20_Real);
 
                    // KPPProfileM2/S2 return phi^{-1}; do not invert again.
                    const Real phi_inv_m = KPP::KPPProfileM2(zeta);
@@ -1104,12 +1107,12 @@ void KPPMix::computeMixingCoefficients(
              } else {
                 // Below OBL: preserve interior values for MatchBoth, otherwise
                 // no KPP contribution.
-                LocVertDiff(ICell, k)               = LocUseInteriorMix
-                                                          ? LocInteriorVertDiff(ICell, k)
-                                                          : 0.0_Real;
-                LocVertVisc(ICell, k)               = LocUseInteriorMix
-                                                          ? LocInteriorVertVisc(ICell, k)
-                                                          : 0.0_Real;
+                LocVertDiff(ICell, k) = LocUseInteriorMix
+                                            ? LocInteriorVertDiff(ICell, k)
+                                            : 0.0_Real;
+                LocVertVisc(ICell, k) = LocUseInteriorMix
+                                            ? LocInteriorVertVisc(ICell, k)
+                                            : 0.0_Real;
                 LocVertNonLocalFlux(ICell, k)       = 0.0;
                 LocTurbulentVelocityScale(ICell, k) = 0.0;
              }

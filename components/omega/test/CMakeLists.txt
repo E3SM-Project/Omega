@@ -13,6 +13,12 @@ function(add_omega_test test_name exe_name source_files mpi_args)
   # Copy extra arguments to a local variable so they can be treated
   # as a list
   set(extra_args ${ARGN})
+  set(test_arg "")
+  foreach(extra_arg ${extra_args})
+    if(extra_arg MATCHES "^test_arg=(.*)")
+      set(test_arg "${CMAKE_MATCH_1}")
+    endif()
+  endforeach()
 
   # Create the executable
   add_executable(${exe_name} ${source_files})
@@ -58,19 +64,19 @@ function(add_omega_test test_name exe_name source_files mpi_args)
     if("${OMEGA_ARCH}" STREQUAL "SYCL")
       add_test(
         NAME ${test_name}
-        COMMAND ${OMEGA_MPI_EXEC} ${mpi_args} ${OMEGA_MPI_ARGS} ./${exe_name}
+        COMMAND ${OMEGA_MPI_EXEC} ${mpi_args} ${OMEGA_MPI_ARGS} ./${exe_name} ${test_arg}
       )
     else()
       add_test(
         NAME ${test_name}
-        COMMAND ${OMEGA_MPI_EXEC} ${OMEGA_MPI_ARGS} ${mpi_args} -- ./${exe_name}
+        COMMAND ${OMEGA_MPI_EXEC} ${OMEGA_MPI_ARGS} ${mpi_args} -- ./${exe_name} ${test_arg}
       )
     endif()
 
   else()
     add_test(
       NAME ${test_name}
-      COMMAND ../omega_env.sh ./${exe_name}
+      COMMAND ../omega_env.sh ./${exe_name} ${test_arg}
     )
   endif()
 
@@ -86,6 +92,31 @@ function(add_omega_test test_name exe_name source_files mpi_args)
     ENVIRONMENT "OMEGA_LOG_FILE=${OMEGA_TEST_LOG_DIR}/${test_name}.log"
   )
 
+endfunction()
+
+function(add_omega_ctest test_name exe_name mpi_args test_arg)
+  if (mpi_args)
+
+    if("${OMEGA_ARCH}" STREQUAL "SYCL")
+      add_test(
+        NAME ${test_name}
+        COMMAND ${OMEGA_MPI_EXEC} ${mpi_args} ${OMEGA_MPI_ARGS} ./${exe_name} ${test_arg}
+      )
+    else()
+      add_test(
+        NAME ${test_name}
+        COMMAND ${OMEGA_MPI_EXEC} ${OMEGA_MPI_ARGS} ${mpi_args} -- ./${exe_name} ${test_arg}
+      )
+    endif()
+
+  else()
+    add_test(
+      NAME ${test_name}
+      COMMAND ../omega_env.sh ./${exe_name} ${test_arg}
+    )
+  endif()
+
+  set_tests_properties(${test_name} PROPERTIES LABELS "${OMEGA_ARCH};Omega-0")
 endfunction()
 
 ##################
