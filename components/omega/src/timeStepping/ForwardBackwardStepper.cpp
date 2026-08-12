@@ -6,7 +6,6 @@
 
 #include "ForwardBackwardStepper.h"
 #include "Pacer.h"
-#include "VertMix.h"
 
 namespace OMEGA {
 
@@ -37,8 +36,6 @@ void ForwardBackwardStepper::doStep(
    const int VelNextLevel    = 1;
    const int ThickNextLevel  = 1;
    const int TracerNextLevel = 1;
-
-   int NTracers = Tracers::getNumTracers();
 
    Array3DReal CurTracerArray  = Tracers::getAll(TracerCurLevel);
    Array3DReal NextTracerArray = Tracers::getAll(TracerNextLevel);
@@ -97,25 +94,8 @@ void ForwardBackwardStepper::doStep(
    Tracers::updateTimeLevels();
    Pacer::stop("ForwardBackward:haloExch", 3);
 
-   // Recompute KPP once on the fully updated state before implicit mixing.
-   CurTracerArray = Tracers::getAll(TracerCurLevel);
-   AuxState->computeAll(State, CurTracerArray, ThickCurLevel, VelCurLevel,
-                        TimeStep);
-   Tend->computeStageVerticalMixing(State, AuxState, CurTracerArray,
-                                    ThickCurLevel, VelCurLevel);
-
-   // Apply implicit vertical mixing
-   if (VMix->VelVertMixSetup.Enabled or VMix->TracerVertMixSetup.Enabled) {
-      VMix->VertMixImplicit(State, AuxState, CurTracerArray, NTracers,
-                            VelCurLevel);
-
-      // Re-exchange halos after vertical mixing
-      Pacer::timingBarrier("ForwardBackward:vMixHaloExchBarrier", 3, Comm);
-      Pacer::start("ForwardBackward:vMixHaloExch", 3);
-      State->exchangeHalo(VelCurLevel);
-      Tracers::exchangeHalo(VelCurLevel);
-      Pacer::stop("ForwardBackward:vMixHaloExch", 3);
-   }
+   applyPostStepVerticalMixing(State, TracerCurLevel, ThickCurLevel,
+                               VelCurLevel, "ForwardBackward");
 
    validateOceanState(State, AuxState, VertCoord::getDefault(), 0);
 

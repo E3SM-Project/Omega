@@ -294,6 +294,16 @@ class TimeStepper {
        int TimeLevel                   ///< [in] time level index
    ) const;
 
+   /// Recompute stage vertical mixing and apply implicit vertical mixing after
+   /// state/tracer time levels are updated.
+   void applyPostStepVerticalMixing(
+       OceanState *State,             ///< [inout] model state
+       int TracerTimeLevel,           ///< [in] tracer time level
+       int ThickTimeLevel,            ///< [in] pseudo-thickness time level
+       int VelTimeLevel,              ///< [in] velocity time level
+       const std::string &TimerPrefix ///< [in] timer name prefix
+   ) const;
+
  protected:
    /// Name of time stepper
    std::string Name;

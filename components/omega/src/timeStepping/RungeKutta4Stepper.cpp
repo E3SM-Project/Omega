@@ -5,8 +5,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "RungeKutta4Stepper.h"
+#include "KPPMix.h"
 #include "Pacer.h"
-#include "VertMix.h"
 
 namespace OMEGA {
 
@@ -79,16 +79,15 @@ void RungeKutta4Stepper::doStep(OceanState *State,   // model state
 
    const int CurLevel  = 0;
    const int NextLevel = 1;
-   int NTracers        = Tracers::getNumTracers();
 
    Array3DReal CurTracerArray   = Tracers::getAll(CurLevel);
    Array3DReal NextTracerArray  = Tracers::getAll(NextLevel);
    TimeInstant ForcingStageTime = SimTime;
 
-   VertMix *VMix                  = VertMix::getInstance();
    const bool StageKPPEnabledPrev = Tend->StageVerticalMixingEnabled;
+   KPPMix *KPPInstance            = KPPMix::getInstance();
    Tend->StageVerticalMixingEnabled =
-       StageKPPEnabledPrev && Tend->TracerNonLocalFluxEnabled;
+       StageKPPEnabledPrev && KPPInstance && KPPInstance->Enabled;
 
    for (int Stage = 0; Stage < NStages; ++Stage) {
       const TimeInstant StageTime = SimTime + RKC[Stage] * TimeStep;
@@ -143,24 +142,8 @@ void RungeKutta4Stepper::doStep(OceanState *State,   // model state
    Pacer::stop("RK4:haloExch", 3);
 
    // Recompute KPP once on the fully updated state before implicit mixing.
-   CurTracerArray = Tracers::getAll(CurLevel);
-   AuxState->computeAll(State, CurTracerArray, CurLevel, CurLevel, TimeStep);
-   Tend->computeStageVerticalMixing(State, AuxState, CurTracerArray, CurLevel,
-                                    CurLevel);
+   applyPostStepVerticalMixing(State, CurLevel, CurLevel, CurLevel, "RK4");
    Tend->StageVerticalMixingEnabled = StageKPPEnabledPrev;
-
-   // Apply implicit vertical mixing
-   if (VMix->VelVertMixSetup.Enabled or VMix->TracerVertMixSetup.Enabled) {
-      VMix->VertMixImplicit(State, AuxState, CurTracerArray, NTracers,
-                            CurLevel);
-
-      // Re-exchange halos after vertical mixing
-      Pacer::timingBarrier("RK4:vMixHaloExchBarrier", 3, Comm);
-      Pacer::start("RK4:vMixHaloExch", 3);
-      State->exchangeHalo(CurLevel);
-      Tracers::exchangeHalo(CurLevel);
-      Pacer::stop("RK4:vMixHaloExch", 3);
-   }
 
    validateOceanState(State, AuxState, VertCoord::getDefault(), CurLevel);
 
