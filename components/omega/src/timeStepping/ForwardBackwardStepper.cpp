@@ -62,8 +62,6 @@ void ForwardBackwardStepper::doStep(
    // u^{n+1} = u^{n} + R_u^{n}
    updateVelocityByTend(State, VelNextLevel, State, VelCurLevel, TimeStep);
 
-   updateVelocityByTend(State, VelNextLevel, State, VelCurLevel, TimeStep);
-
    prescribeVelocity(State, VelNextLevel, State, VelCurLevel,
                      SimTime + TimeStep);
 
@@ -82,13 +80,6 @@ void ForwardBackwardStepper::doStep(
    updateThicknessByTend(State, ThickNextLevel, State, ThickCurLevel, TimeStep);
 
    prescribeThickness(State, ThickNextLevel, State, ThickCurLevel);
-
-   // Exchange halo of h^{n+1} before it is used below
-   Array2DReal NextPseudoThickness = State->getPseudoThickness(ThickNextLevel);
-   Pacer::timingBarrier("ForwardBackward:thickHaloExchBarrier", 3, Comm);
-   Pacer::start("ForwardBackward:thickHaloExch", 3);
-   MeshHalo->exchangeFullArrayHalo(NextPseudoThickness, OnCell);
-   Pacer::stop("ForwardBackward:thickHaloExch", 3);
 
    // R_phi^{n} = RHS_phi(u^{n+1}, h^{n+1}, phi^{n}, t^{n})
    Tend->computeTracerTendencies(State, AuxState, CurTracerArray,
