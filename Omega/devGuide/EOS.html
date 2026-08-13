@@ -102,6 +102,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#eos-type">Eos type</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#initialization">Initialization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#computation-of-eos">Computation of Eos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#first-derivatives-of-specific-volume">First derivatives of specific volume</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#a-note-on-gsw-c">A note on GSW-C</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#helper-functions-for-conversion">Helper functions for conversion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#removal-of-eos">Removal of Eos</a></li>
 </ul>
@@ -261,6 +265,88 @@ volume arrays, do</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Eos</span><span class="p">.</span><span class="n">computeBruntVaisalaFreqSq</span><span class="p">(</span><span class="n">ConservTemp</span><span class="p">,</span><span class="w"> </span><span class="n">AbsSalinity</span><span class="p">,</span><span class="w"> </span><span class="n">Pressure</span><span class="p">,</span><span class="w"> </span><span class="n">SpecVol</span><span class="p">);</span>
 </pre></div>
 </div>
+</section>
+<section id="first-derivatives-of-specific-volume">
+<h2>First derivatives of specific volume<a class="headerlink" href="#first-derivatives-of-specific-volume" title="Permalink to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">Eos</span></code> class can also compute the first derivatives of the specific volume
+with respect to conservative temperature, absolute salinity, and pressure,
+together with the specific volume itself:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Eos</span><span class="p">.</span><span class="n">computeSpecVolAndDerivs</span><span class="p">(</span><span class="n">ConservTemp</span><span class="p">,</span><span class="w"> </span><span class="n">AbsSalinity</span><span class="p">,</span><span class="w"> </span><span class="n">Pressure</span><span class="p">);</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Pressure</span></code> is the relative pressure (gauge pressure in Pa) as elsewhere in
+<code class="docutils literal notranslate"><span class="pre">Eos</span></code>, and the derivatives are returned per <code class="docutils literal notranslate"><span class="pre">degC</span></code>, per <code class="docutils literal notranslate"><span class="pre">(g/kg)</span></code>, and per <code class="docutils literal notranslate"><span class="pre">Pa</span></code>
+respectively. Note the pressure derivative is per Pascal, not per decibar.</p>
+<p>The results are stored in the <code class="docutils literal notranslate"><span class="pre">SpecVolDCt</span></code>, <code class="docutils literal notranslate"><span class="pre">SpecVolDSa</span></code> and <code class="docutils literal notranslate"><span class="pre">SpecVolDP</span></code>
+members alongside <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code>, and all three are registered as fields in the
+<code class="docutils literal notranslate"><span class="pre">Eos</span></code> group so they can be written to a stream. Because <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> is computed
+here as well, <code class="docutils literal notranslate"><span class="pre">computeSpecVolAndDerivs</span></code> replaces a call to <code class="docutils literal notranslate"><span class="pre">computeSpecVol</span></code>
+rather than accompanying one; calling both would evaluate the equation of state
+twice. The valid range of the derivative fields spans the full range of <code class="docutils literal notranslate"><span class="pre">Real</span></code>
+rather than starting at zero, since the salinity derivative is negative
+everywhere and the temperature derivative is negative in cold, nearly fresh
+water.</p>
+<p>The two methods are kept separate rather than always computing the derivatives
+because the derivatives roughly double the TEOS-10 arithmetic per cell and
+layer, and not every call needs them. <code class="docutils literal notranslate"><span class="pre">AuxiliaryState::computeMomVertAux</span></code> is
+the only place that calls <code class="docutils literal notranslate"><span class="pre">computeSpecVol</span></code>; everything else consumes the
+<code class="docutils literal notranslate"><span class="pre">Eos::SpecVol</span></code> array rather than recomputing it, including
+<code class="docutils literal notranslate"><span class="pre">computeBruntVaisalaFreqSq</span></code>, which takes the specific volume as an argument.
+That one call site is reached once per time stepper stage through
+<code class="docutils literal notranslate"><span class="pre">computeMomAux</span></code> and <code class="docutils literal notranslate"><span class="pre">computeAll</span></code> in the tendency calculation, and once more
+from <code class="docutils literal notranslate"><span class="pre">VertMix::VertMixImplicit</span></code>, which refreshes the pressure and specific
+volume before the vertical mixing coefficients are formed.</p>
+<p>A run using the higher-order pressure gradient therefore needs the derivatives
+at every time step, and at those call sites <code class="docutils literal notranslate"><span class="pre">computeSpecVolAndDerivs</span></code> takes the
+place of the <code class="docutils literal notranslate"><span class="pre">computeSpecVol</span></code> call that would otherwise be made, leaving one
+evaluation of the equation of state where there was one before. Two things
+still call for the plain <code class="docutils literal notranslate"><span class="pre">computeSpecVol</span></code>. First, <code class="docutils literal notranslate"><span class="pre">PressureGradType</span></code> is a
+runtime option that defaults to <code class="docutils literal notranslate"><span class="pre">Centered</span></code>, so a run may never need the
+derivatives at all. Second, even with the higher-order pressure gradient
+selected, the <code class="docutils literal notranslate"><span class="pre">VertMix::VertMixImplicit</span></code> update feeds only
+<code class="docutils literal notranslate"><span class="pre">computeGeomZHeight</span></code> and <code class="docutils literal notranslate"><span class="pre">computeBruntVaisalaFreqSq</span></code>, neither of which reads
+the derivatives, so computing them there would be work that nothing consumes.
+Which method to call is thus a decision for each call site, not one the <code class="docutils literal notranslate"><span class="pre">Eos</span></code>
+class should make for it.</p>
+<p>There is no displaced counterpart to <code class="docutils literal notranslate"><span class="pre">computeSpecVolAndDerivs</span></code>. The pressure
+gradient needs the derivatives at the in-situ pressure of the layer, whereas
+<code class="docutils literal notranslate"><span class="pre">computeSpecVolDisp</span></code> exists to evaluate the specific volume at the pressure of
+a displaced layer. Nothing about the derivatives prevents an adiabatically
+displaced version: it would take the same <code class="docutils literal notranslate"><span class="pre">KDisp</span></code> argument as
+<code class="docutils literal notranslate"><span class="pre">computeSpecVolDisp</span></code> and evaluate the same coefficients at the displaced
+pressure, with no new polynomial. It is left out here only because no caller
+needs it yet, and it would mean carrying three more model-sized arrays and
+fields.</p>
+<p>All four values come from a single pass over the equation of state. For
+<code class="docutils literal notranslate"><span class="pre">EosType::Teos10Eos</span></code> the derivatives are the analytic derivatives of the same
+75-term polynomial used for the specific volume, evaluated at the same
+normalized state, so no second call to the equation of state is made. The
+pressure derivative reuses the pressure coefficients already assembled for the
+specific volume; the temperature and salinity derivatives need coefficient sets
+of their own but share the normalization and the square root. For
+<code class="docutils literal notranslate"><span class="pre">EosType::LinearEos</span></code> the derivatives are <code class="docutils literal notranslate"><span class="pre">-DRhoDT</span></code> and <code class="docutils literal notranslate"><span class="pre">-DRhoDS</span></code> times the
+square of the specific volume, with no pressure dependence, and for
+<code class="docutils literal notranslate"><span class="pre">EosType::ConstantEos</span></code> all three vanish.</p>
+<p>The thermal expansion and haline contraction coefficients used by the
+<code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code> calculation are formed from these same derivatives,
+<code class="docutils literal notranslate"><span class="pre">alpha</span> <span class="pre">=</span> <span class="pre">SpecVolDCt</span> <span class="pre">/</span> <span class="pre">SpecVol</span></code> and <code class="docutils literal notranslate"><span class="pre">beta</span> <span class="pre">=</span> <span class="pre">-SpecVolDSa</span> <span class="pre">/</span> <span class="pre">SpecVol</span></code>, so the
+polynomial coefficients exist in only one place.</p>
+<section id="a-note-on-gsw-c">
+<h3>A note on GSW-C<a class="headerlink" href="#a-note-on-gsw-c" title="Permalink to this heading"></a></h3>
+<p>The GSW toolbox may be redistributed only without modification, so the
+derivative routines in GSW-C are not ported or adapted here; they also could
+not be called from a Kokkos device kernel. The implementation instead
+differentiates the published Roquet et al. 2015 polynomial that <code class="docutils literal notranslate"><span class="pre">Teos10Eos</span></code>
+already carries. GSW-C is used unmodified, through its public API, as an
+independent check in the unit test.</p>
+<p>That test compares against <code class="docutils literal notranslate"><span class="pre">gsw_specvol_first_derivatives</span></code> over a range of
+states and finds agreement of order <code class="docutils literal notranslate"><span class="pre">1e-14</span></code> for the temperature and salinity
+derivatives. The pressure derivative agrees only to about <code class="docutils literal notranslate"><span class="pre">2e-12</span></code>, and the
+difference is on the GSW-C side: its <code class="docutils literal notranslate"><span class="pre">v_P</span></code> is evaluated from coefficients that
+have been pre-multiplied by their pressure exponents and rounded, whereas the
+Omega implementation differentiates the full-precision coefficients and matches
+the exact derivative to roughly <code class="docutils literal notranslate"><span class="pre">1e-16</span></code>.</p>
+</section>
 </section>
 <section id="helper-functions-for-conversion">
 <h2>Helper functions for conversion<a class="headerlink" href="#helper-functions-for-conversion" title="Permalink to this heading"></a></h2>
