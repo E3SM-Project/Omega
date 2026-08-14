@@ -558,7 +558,7 @@ contains
       !$omp         freezingEnergy, meltingEnergy, frazilSalinity, newFrazilIceThickness, &
       !$omp         newThicknessWeightedSaltContent, meltedFrazilIceThickness, &
       !$omp         meltedThicknessWeightedSaltContent, newFrazilEnergy, meltedFrazilEnergy, &
-      !$omp         sumNewFrazilEnergy, newFrazilEnergy)
+      !$omp         sumNewFrazilEnergy)
       do iCell=1,nCells
 
         underLandIce = .false.
