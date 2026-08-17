@@ -103,6 +103,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
@@ -401,7 +402,7 @@ The <code class="docutils literal notranslate"><span class="pre">PressureGrad</s
 The class will support multiple named instances to allow for the possibility of a barotropic pressure gradient calculation on a different mesh in the future.
 The user will select a pressure gradient option at runtime in the input yaml file under the pressure gradient section:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="nt">PressureGrad</span><span class="p">:</span>
-<span class="w">       </span><span class="nt">PressureGradType</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;centered&#39;</span>
+<span class="w">       </span><span class="nt">PressureGradType</span><span class="p">:</span><span class="w"> </span><span class="s">'centered'</span>
 </pre></div>
 </div>
 <p>An <code class="docutils literal notranslate"><span class="pre">enum</span> <span class="pre">class</span></code> will be used to specify options for the pressure gradient used for an Omega simulation:</p>
@@ -497,7 +498,7 @@ Note that the functors called by <code class="docutils literal notranslate"><spa
 
 <span class="w">      </span><span class="c1">// computes centered geopotential and pressure gradient tendency</span>
 <span class="w">      </span><span class="n">parallelForOuter</span><span class="p">(</span>
-<span class="w">          </span><span class="s">&quot;pgrad-centered&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="n">NEdgesAll</span><span class="p">},</span>
+<span class="w">          </span><span class="s">"pgrad-centered"</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="n">NEdgesAll</span><span class="p">},</span>
 <span class="w">          </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="n">I4</span><span class="w"> </span><span class="n">IEdge</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">TeamMember</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Team</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KMin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LocMinLayerEdgeBot</span><span class="p">(</span><span class="n">IEdge</span><span class="p">);</span>
 <span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KMax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LocMaxLayerEdgeTop</span><span class="p">(</span><span class="n">IEdge</span><span class="p">);</span>
@@ -517,7 +518,7 @@ Note that the functors called by <code class="docutils literal notranslate"><spa
 
 <span class="w">      </span><span class="c1">// computes high-order geopotential and pressure gradient tendency</span>
 <span class="w">      </span><span class="n">parallelForOuter</span><span class="p">(</span>
-<span class="w">          </span><span class="s">&quot;pgrad-highorder&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="n">NEdgesAll</span><span class="p">},</span>
+<span class="w">          </span><span class="s">"pgrad-highorder"</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="n">NEdgesAll</span><span class="p">},</span>
 <span class="w">          </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="n">I4</span><span class="w"> </span><span class="n">IEdge</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">TeamMember</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Team</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KMin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MinLayerEdgeBot</span><span class="p">(</span><span class="n">IEdge</span><span class="p">);</span>
 <span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KMax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MaxLayerEdgeTop</span><span class="p">(</span><span class="n">IEdge</span><span class="p">);</span>

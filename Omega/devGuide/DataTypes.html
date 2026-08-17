@@ -101,6 +101,7 @@
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
@@ -236,8 +237,8 @@ supports Fortran ordering, we use C ordering for array indices.
 Within Omega, the default location for an Array should be on the device
 with a similar type HostArrayNDTT defined for arrays needed on the host.
 As an example, we can define and allocate a device and host array using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Array3dReal</span><span class="w"> </span><span class="n">Temperature</span><span class="p">(</span><span class="s">&quot;Temperature&quot;</span><span class="p">,</span><span class="n">nTimeLevels</span><span class="p">,</span><span class="w"> </span><span class="n">nCells</span><span class="p">,</span><span class="w"> </span><span class="n">nVertLayers</span><span class="p">);</span>
-<span class="w">   </span><span class="n">HostArray3dReal</span><span class="w"> </span><span class="n">TemperatureHost</span><span class="p">(</span><span class="s">&quot;Temperature&quot;</span><span class="p">,</span><span class="n">nTimeLevels</span><span class="p">,</span><span class="w"> </span><span class="n">nCells</span><span class="p">,</span><span class="w"> </span><span class="n">nVertLayers</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Array3dReal</span><span class="w"> </span><span class="n">Temperature</span><span class="p">(</span><span class="s">"Temperature"</span><span class="p">,</span><span class="n">nTimeLevels</span><span class="p">,</span><span class="w"> </span><span class="n">nCells</span><span class="p">,</span><span class="w"> </span><span class="n">nVertLayers</span><span class="p">);</span>
+<span class="w">   </span><span class="n">HostArray3dReal</span><span class="w"> </span><span class="n">TemperatureHost</span><span class="p">(</span><span class="s">"Temperature"</span><span class="p">,</span><span class="n">nTimeLevels</span><span class="p">,</span><span class="w"> </span><span class="n">nCells</span><span class="p">,</span><span class="w"> </span><span class="n">nVertLayers</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Alternatively, you can use the copy functions to create a host copy

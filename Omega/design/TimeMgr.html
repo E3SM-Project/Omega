@@ -101,6 +101,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
@@ -379,15 +380,15 @@ well as a string name for each.</p>
 <span class="w">   </span><span class="n">CalendarUnknown</span><span class="p">};</span><span class="w">      </span><span class="c1">///&lt; uninitialized or invalid</span>
 
 <span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">CalendarKindName</span><span class="p">[</span><span class="n">CALENDAR_KIND_COUNT</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">     </span><span class="s">&quot;Gregorian&quot;</span><span class="p">,</span>
-<span class="w">     </span><span class="s">&quot;No Leap&quot;</span><span class="p">,</span>
-<span class="w">     </span><span class="s">&quot;Julian&quot;</span><span class="p">,</span>
-<span class="w">     </span><span class="s">&quot;Julian Day&quot;</span><span class="p">,</span>
-<span class="w">     </span><span class="s">&quot;Modified Julian Day&quot;</span><span class="p">,</span>
-<span class="w">     </span><span class="s">&quot;360 Day&quot;</span><span class="p">,</span>
-<span class="w">     </span><span class="s">&quot;Custom&quot;</span><span class="p">,</span>
-<span class="w">     </span><span class="s">&quot;No Calendar&quot;</span><span class="p">,</span>
-<span class="w">     </span><span class="s">&quot;Invalid&quot;</span><span class="w"> </span><span class="p">};</span>
+<span class="w">     </span><span class="s">"Gregorian"</span><span class="p">,</span>
+<span class="w">     </span><span class="s">"No Leap"</span><span class="p">,</span>
+<span class="w">     </span><span class="s">"Julian"</span><span class="p">,</span>
+<span class="w">     </span><span class="s">"Julian Day"</span><span class="p">,</span>
+<span class="w">     </span><span class="s">"Modified Julian Day"</span><span class="p">,</span>
+<span class="w">     </span><span class="s">"360 Day"</span><span class="p">,</span>
+<span class="w">     </span><span class="s">"Custom"</span><span class="p">,</span>
+<span class="w">     </span><span class="s">"No Calendar"</span><span class="p">,</span>
+<span class="w">     </span><span class="s">"Invalid"</span><span class="w"> </span><span class="p">};</span>
 </pre></div>
 </div>
 </section>
@@ -927,7 +928,7 @@ instant is supplied.</p>
 
 <span class="c1">// Other utility methods</span>
 <span class="c1">/// Get time as a string in the format</span>
-<span class="c1">/// &#39;YYYYYY-MM-DD{separator}HH:MM:SS.SSSSSS&#39; where the number</span>
+<span class="c1">/// 'YYYYYY-MM-DD{separator}HH:MM:SS.SSSSSS' where the number</span>
 <span class="c1">/// of digits in year, number of digits after the decimal in</span>
 <span class="c1">/// seconds and the character to use as separator are all input</span>
 <span class="c1">/// by the user.</span>

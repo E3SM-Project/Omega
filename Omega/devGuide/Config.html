@@ -101,6 +101,7 @@
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
@@ -217,7 +218,7 @@ Rather than using templated forms in omega, we alias the function interfaces
 so that the syntax is cleaner.</p>
 <p>Within Omega, the full configuration file is read just after the MachEnv
 initialization using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Config</span><span class="o">::</span><span class="n">readAll</span><span class="p">(</span><span class="s">&quot;omega.yml&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Config</span><span class="o">::</span><span class="n">readAll</span><span class="p">(</span><span class="s">"omega.yml"</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The full Omega configuration is stored in a static variable for later
@@ -232,14 +233,14 @@ this for the example shown in the User Guide:</p>
 
 <span class="n">Config</span><span class="w"> </span><span class="n">HmixConfig</span><span class="p">;</span><span class="w"> </span><span class="c1">// creates an empty config for Hmix</span>
 
-<span class="n">OmegaConfig</span><span class="o">-&gt;</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;Hmix&quot;</span><span class="p">,</span><span class="n">HmixConfig</span><span class="p">);</span><span class="w"> </span><span class="c1">// extracts all Hmix config vars from omega</span>
+<span class="n">OmegaConfig</span><span class="o">-&gt;</span><span class="n">get</span><span class="p">(</span><span class="s">"Hmix"</span><span class="p">,</span><span class="n">HmixConfig</span><span class="p">);</span><span class="w"> </span><span class="c1">// extracts all Hmix config vars from omega</span>
 
 <span class="c1">// Get individual variables</span>
 <span class="n">Error</span><span class="w"> </span><span class="n">Err</span><span class="p">;</span>
-<span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;HmixScaleWithMesh&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">HmixScaleWithMesh</span><span class="p">);</span>
-<span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;MaxMeshDensity&quot;</span><span class="w">   </span><span class="p">,</span><span class="w"> </span><span class="n">MaxMeshDensity</span><span class="p">);</span>
-<span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;HmixUseRefWidth&quot;</span><span class="w">  </span><span class="p">,</span><span class="w"> </span><span class="n">HmixUseRefWidth</span><span class="p">);</span>
-<span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;HmixRefWidth&quot;</span><span class="w">     </span><span class="p">,</span><span class="w"> </span><span class="n">HmixRefWidth</span><span class="p">);</span>
+<span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">"HmixScaleWithMesh"</span><span class="p">,</span><span class="w"> </span><span class="n">HmixScaleWithMesh</span><span class="p">);</span>
+<span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">"MaxMeshDensity"</span><span class="w">   </span><span class="p">,</span><span class="w"> </span><span class="n">MaxMeshDensity</span><span class="p">);</span>
+<span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">"HmixUseRefWidth"</span><span class="w">  </span><span class="p">,</span><span class="w"> </span><span class="n">HmixUseRefWidth</span><span class="p">);</span>
+<span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">"HmixRefWidth"</span><span class="w">     </span><span class="p">,</span><span class="w"> </span><span class="n">HmixRefWidth</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>All Config get/set/add functions support variables of all Omega data
@@ -261,7 +262,7 @@ if it is required. In some cases, it may be sufficient to issue a warning
 and set the value of the variable to an internal default.
 In this latter case, it is a good idea to add the variable and its value to
 the configuration using the add function. For example:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;HmixNewVar&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">HmixConfig</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">"HmixNewVar"</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Then it will be included in any future writing of the configuration in
@@ -270,7 +271,7 @@ the <code class="docutils literal notranslate"><span class="pre">set</span></cod
 function that can remove a variable or subconfiguration from any Config -
 only the name needs to be supplied. Finally, any configuration can be
 written using the write function with a filename supplied as in</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OmegaConfig</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;FileName&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OmegaConfig</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="s">"FileName"</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>In some cases, the variable or group name is not known prior to reading.
@@ -281,7 +282,7 @@ can be retrieved by name for further processing. The streams example might
 then look like:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// extract streams sub-configuration from full Omega config</span>
 <span class="n">Config</span><span class="w"> </span><span class="n">StreamsConfig</span><span class="p">;</span><span class="w"> </span><span class="c1">// creates an empty config for streams</span>
-<span class="n">OmegaConfig</span><span class="o">-&gt;</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;Streams&quot;</span><span class="p">,</span><span class="n">StreamsConfig</span><span class="p">);</span>
+<span class="n">OmegaConfig</span><span class="o">-&gt;</span><span class="n">get</span><span class="p">(</span><span class="s">"Streams"</span><span class="p">,</span><span class="n">StreamsConfig</span><span class="p">);</span>
 
 <span class="c1">// The iterator here is a Config::Iter (we use auto to save space)</span>
 <span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="n">It</span><span class="o">=</span><span class="n">StreamsConfig</span><span class="o">-&gt;</span><span class="n">begin</span><span class="p">();</span><span class="w"> </span><span class="n">It</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">StreamsConfig</span><span class="o">-&gt;</span><span class="n">end</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">It</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>

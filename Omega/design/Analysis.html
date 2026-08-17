@@ -103,6 +103,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
@@ -530,7 +531,7 @@ array type <code class="docutils literal notranslate"><span class="pre">ArrayT</
 </div>
 <p>The factory registers all combinations of scalar type (I4/I8/R4/R8), rank
 (1–5), and memory location (Device/Host/Both) for each operator template:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">AnalysisOpFactory</span><span class="o">::</span><span class="n">registerAllArrayVariants</span><span class="o">&lt;</span><span class="n">SpatialMaxOp</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;SpatialMax&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">AnalysisOpFactory</span><span class="o">::</span><span class="n">registerAllArrayVariants</span><span class="o">&lt;</span><span class="n">SpatialMaxOp</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"SpatialMax"</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>At operator creation time, the factory inspects the primary upstream Field’s
@@ -658,10 +659,10 @@ in Section 3.1.</p></li>
 <span class="w">  </span><span class="nt">Analysis</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">GlobalStats</span><span class="p">:</span><span class="w">              </span><span class="c1"># pre-defined bundled group</span>
 <span class="w">      </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">      </span><span class="nt">Fields</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;NormalVelocity&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;Temperature&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;Salinity&quot;</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="nt">SpatialStats</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;Max&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;Min&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;Mean&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;StdDev&quot;</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="nt">ReductionPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;1Day&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;1Month&quot;</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="nt">SampleFreq</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;1Hour&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">Fields</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"NormalVelocity"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"Temperature"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"Salinity"</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">SpatialStats</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"Max"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"Min"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"Mean"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"StdDev"</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">ReductionPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"1Day"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"1Month"</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">SampleFreq</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"1Hour"</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">global.stats.$Y</span>
 <span class="w">      </span><span class="nt">Stream</span><span class="p">:</span><span class="w">                 </span><span class="c1"># define optional stream parameters</span>
 <span class="w">        </span><span class="nt">FileFreq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
@@ -669,8 +670,8 @@ in Section 3.1.</p></li>
 <span class="w">    </span><span class="nt">MyCustomGroup</span><span class="p">:</span><span class="w">            </span><span class="c1"># future: user-defined composable group</span>
 <span class="w">      </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 <span class="w">      </span><span class="nt">OperatorChains</span><span class="p">:</span><span class="w">         </span><span class="c1"># final DSL syntax to be determined</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;FieldA_Op1_Op2(FieldB)&quot;</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;Op3(FieldC,FieldD)_Op4&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"FieldA_Op1_Op2(FieldB)"</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"Op3(FieldC,FieldD)_Op4"</span>
 <span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">custom.analysis.$Y.$M</span>
 </pre></div>
 </div>
@@ -717,7 +718,7 @@ pointers needed by <code class="docutils literal notranslate"><span class="pre">
 
 <span class="w">   </span><span class="c1">/// Return unique name for this operator instance.</span>
 <span class="w">   </span><span class="c1">/// Derived from the concatenated upstream field names and operator type,</span>
-<span class="w">   </span><span class="c1">/// e.g. &quot;Temperature_SpatialMean_TimeMean1Day&quot;</span>
+<span class="w">   </span><span class="c1">/// e.g. "Temperature_SpatialMean_TimeMean1Day"</span>
 <span class="w">   </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="nf">getName</span><span class="p">();</span>
 
 <span class="w">   </span><span class="c1">/// Return names of fields required by this operator</span>
@@ -757,7 +758,7 @@ pointers needed by <code class="docutils literal notranslate"><span class="pre">
 </div>
 <p>Helper utilities for building operator <code class="docutils literal notranslate"><span class="pre">Config</span></code> objects inline:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Create a Config from key-value pairs</span>
-<span class="c1">// Usage: makeOpConfig(opParam(&quot;Period&quot;, &quot;1day&quot;), opParam(&quot;Layer&quot;, 10))</span>
+<span class="c1">// Usage: makeOpConfig(opParam("Period", "1day"), opParam("Layer", 10))</span>
 <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span>
 <span class="n">OpParam</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">opParam</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">Key</span><span class="p">,</span><span class="w"> </span><span class="n">T</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">Value</span><span class="p">);</span>
 
@@ -783,7 +784,7 @@ constructor.</p>
 <span class="w">   </span><span class="k">using</span><span class="w"> </span><span class="n">ScalarT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">ArrayT</span><span class="o">::</span><span class="n">non_const_value_type</span><span class="p">;</span>
 
 <span class="w">   </span><span class="c1">/// Constructor: sets InputNames, creates output Field and data array.</span>
-<span class="w">   </span><span class="c1">/// InstanceName = UpstreamNames[0] + &quot;_SpatialMax&quot;</span>
+<span class="w">   </span><span class="c1">/// InstanceName = UpstreamNames[0] + "_SpatialMax"</span>
 <span class="w">   </span><span class="n">SpatialMaxOp</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">UpstreamNames</span><span class="p">,</span>
 <span class="w">                </span><span class="n">Config</span><span class="w"> </span><span class="n">Options</span><span class="p">);</span>
 
@@ -829,7 +830,7 @@ Field’s metadata.</p>
 
 <span class="w">   </span><span class="c1">/// Register all scalar type × rank × memory location variants of a</span>
 <span class="w">   </span><span class="c1">/// templated operator class.</span>
-<span class="w">   </span><span class="c1">/// Usage: registerAllArrayVariants&lt;SpatialMaxOp&gt;(&quot;SpatialMax&quot;);</span>
+<span class="w">   </span><span class="c1">/// Usage: registerAllArrayVariants&lt;SpatialMaxOp&gt;("SpatialMax");</span>
 <span class="w">   </span><span class="k">template</span><span class="o">&lt;</span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="o">&gt;</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">OperatorTemplate</span><span class="o">&gt;</span>
 <span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">registerAllArrayVariants</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">BaseName</span><span class="p">);</span>
 
@@ -837,7 +838,7 @@ Field’s metadata.</p>
 <span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">hasOperator</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Type</span><span class="p">);</span>
 
 <span class="w"> </span><span class="k">private</span><span class="o">:</span>
-<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">CreatorFunc</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">registry</span><span class="p">();</span><span class="w"> </span><span class="c1">// Meyer&#39;s singleton</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">CreatorFunc</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">registry</span><span class="p">();</span><span class="w"> </span><span class="c1">// Meyer's singleton</span>
 <span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="nf">getArrayTypeName</span><span class="p">(</span><span class="n">ArrayDataType</span><span class="w"> </span><span class="n">DType</span><span class="p">,</span>
 <span class="w">                                       </span><span class="n">I4</span><span class="w"> </span><span class="n">Rank</span><span class="p">,</span>
 <span class="w">                                       </span><span class="n">ArrayMemLoc</span><span class="w"> </span><span class="n">MemLoc</span><span class="p">);</span>
@@ -898,11 +899,11 @@ reduction periods against the restart interval, and creates the associated
 <span class="w">   </span><span class="c1">/// Metadata about a single operator chain within this group</span>
 <span class="w">   </span><span class="k">struct</span><span class="w"> </span><span class="nc">OpChainInfo</span><span class="w"> </span><span class="p">{</span>
 <span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">ChainStr</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Operator instance name (output field name)</span>
-<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">FreqStr</span><span class="p">;</span><span class="w">  </span><span class="c1">///&lt; Period/frequency string, e.g. &quot;1day&quot;, &quot;6hour&quot;</span>
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">FreqStr</span><span class="p">;</span><span class="w">  </span><span class="c1">///&lt; Period/frequency string, e.g. "1day", "6hour"</span>
 <span class="w">      </span><span class="kt">bool</span><span class="w"> </span><span class="n">IsTimeReduction</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; true = temporal reduction; false = discrete sample</span>
 <span class="w">   </span><span class="p">};</span>
 
-<span class="w">   </span><span class="c1">/// Template for constructing an IOStream config for this group&#39;s output</span>
+<span class="w">   </span><span class="c1">/// Template for constructing an IOStream config for this group's output</span>
 <span class="w">   </span><span class="k">struct</span><span class="w"> </span><span class="nc">StreamParams</span><span class="w"> </span><span class="p">{</span>
 <span class="w">      </span><span class="n">StreamParams</span><span class="p">();</span><span class="w">  </span><span class="c1">// default values for all IOStream options</span>
 <span class="w">      </span><span class="kt">void</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Overrides</span><span class="p">);</span>
@@ -1013,7 +1014,7 @@ alarm system.</p>
 <span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">registerAllBaseAnalysisOperators</span><span class="p">();</span>
 
 <span class="w">   </span><span class="c1">/// Post-hoc dependency resolution: match input field names against</span>
-<span class="w">   </span><span class="c1">/// other nodes&#39; output field names to populate Upstreams vectors.</span>
+<span class="w">   </span><span class="c1">/// other nodes' output field names to populate Upstreams vectors.</span>
 <span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">buildOperatorDependencies</span><span class="p">();</span>
 
 <span class="w">   </span><span class="c1">/// Set ComputeAlarms on terminal nodes and propagate alarms upstream.</span>

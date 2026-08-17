@@ -106,6 +106,7 @@
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
@@ -210,7 +211,7 @@ the necessary packages.</p>
 <span id="omega-dev-install-miniforge3"></span><h2>Installing Miniforge3<a class="headerlink" href="#installing-miniforge3" title="Permalink to this heading"></a></h2>
 <p>If you have not already done so, you will install
 <a class="reference external" href="https://github.com/conda-forge/miniforge#miniforge3">Miniforge3</a>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-L<span class="w"> </span>-O<span class="w"> </span><span class="s2">&quot;https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-</span><span class="k">$(</span>uname<span class="k">)</span><span class="s2">-</span><span class="k">$(</span>uname<span class="w"> </span>-m<span class="k">)</span><span class="s2">.sh&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-L<span class="w"> </span>-O<span class="w"> </span><span class="s2">"https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-</span><span class="k">$(</span>uname<span class="k">)</span><span class="s2">-</span><span class="k">$(</span>uname<span class="w"> </span>-m<span class="k">)</span><span class="s2">.sh"</span>
 bash<span class="w"> </span>Miniforge3-<span class="k">$(</span>uname<span class="k">)</span>-<span class="k">$(</span>uname<span class="w"> </span>-m<span class="k">)</span>.sh
 </pre></div>
 </div>
@@ -228,9 +229,9 @@ the <code class="docutils literal notranslate"><span class="pre">conda</span></c
 something you want.</p>
 <p>If you opt not to allow Miniforge3 to update your <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code>, it may be helpful
 to add an alias like the following to your <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">alias</span><span class="w"> </span><span class="nv">conda_base</span><span class="o">=</span><span class="s1">&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">alias</span><span class="w"> </span><span class="nv">conda_base</span><span class="o">=</span><span class="s1">'</span>
 <span class="s1">source ${HOME}/miniforge3/etc/profile.d/conda.sh</span>
-<span class="s1">conda activate&#39;</span>
+<span class="s1">conda activate'</span>
 </pre></div>
 </div>
 <p>Anytime you need <code class="docutils literal notranslate"><span class="pre">conda</span></code> command, you can first run <code class="docutils literal notranslate"><span class="pre">conda_base</span></code>to get it.</p>

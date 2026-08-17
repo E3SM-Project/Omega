@@ -103,6 +103,7 @@
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
@@ -334,7 +335,7 @@ The associated output streams are written separately through the normal
 templated on the array type of their primary input, the base class provides a
 common, non-templated interface used by the orchestrator. The key public
 methods are:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="nf">getOperatorType</span><span class="p">();</span><span class="w">              </span><span class="c1">// e.g. &quot;SpatialMean&quot;</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="nf">getOperatorType</span><span class="p">();</span><span class="w">              </span><span class="c1">// e.g. "SpatialMean"</span>
 <span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="nf">getName</span><span class="p">();</span><span class="w">                       </span><span class="c1">// unique instance name</span>
 <span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">getInputFieldNames</span><span class="p">();</span>
 <span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">getOutputFieldNames</span><span class="p">();</span>
@@ -387,7 +388,7 @@ flexible and extensible. To make it easy to build a <code class="docutils litera
 an operator is created from user configuration or programmatically by a
 bundled group, <code class="docutils literal notranslate"><span class="pre">AnalysisOperator.h</span></code> provides the <code class="docutils literal notranslate"><span class="pre">opParam</span></code> and <code class="docutils literal notranslate"><span class="pre">makeOpConfig</span></code>
 helpers:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Config</span><span class="w"> </span><span class="n">Opts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">makeOpConfig</span><span class="p">(</span><span class="n">opParam</span><span class="p">(</span><span class="s">&quot;Period&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="s">&quot;1Day&quot;</span><span class="p">)));</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Config</span><span class="w"> </span><span class="n">Opts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">makeOpConfig</span><span class="p">(</span><span class="n">opParam</span><span class="p">(</span><span class="s">"Period"</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="s">"1Day"</span><span class="p">)));</span>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">opParam(Key,</span> <span class="pre">Value)</span></code> builds a key/value pair and <code class="docutils literal notranslate"><span class="pre">makeOpConfig(...)</span></code>
@@ -466,7 +467,7 @@ bridges this gap. It maintains a static registry (a Meyer’s singleton) that
 maps a fully-qualified key to a constructor function. Keys have the form
 <code class="docutils literal notranslate"><span class="pre">&lt;BaseName&gt;_&lt;ArrayType&gt;_&lt;MemLoc&gt;</span></code>, for example <code class="docutils literal notranslate"><span class="pre">SpatialMax_Array2DR8_Device</span></code>.</p>
 <p>All variants of an operator template are registered with a single call:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">AnalysisOpFactory</span><span class="o">::</span><span class="n">registerAllArrayVariants</span><span class="o">&lt;</span><span class="n">SpatialMaxOp</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;SpatialMax&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">AnalysisOpFactory</span><span class="o">::</span><span class="n">registerAllArrayVariants</span><span class="o">&lt;</span><span class="n">SpatialMaxOp</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"SpatialMax"</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>This expands the <code class="docutils literal notranslate"><span class="pre">OMEGA_ANALYSIS_ARRAY_TYPES</span></code> macro over the supported

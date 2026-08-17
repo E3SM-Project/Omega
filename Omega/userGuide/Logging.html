@@ -106,6 +106,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
@@ -208,7 +209,7 @@ logging tool. As of this version, It only supports Standalone build mode.</p>
 <h2>Logging in Standalone Build mode<a class="headerlink" href="#logging-in-standalone-build-mode" title="Permalink to this heading"></a></h2>
 <p>To use Omega’s logging system in Standalone build mode, you need to include
 the Logging.h header file in your code.</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;Logging.h&quot;</span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">"Logging.h"</span>
 </pre></div>
 </div>
 <p>You can then use the following macros to write logs of different severity
@@ -224,7 +225,7 @@ levels:</p>
 <p>The “logmsg” argument in these macros can be any string that follows the syntax
 of C++’s std::format function. For example, the following code writes a
 “Hello, World!” message as a TRACE level log:</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">LOG_TRACE</span><span class="p">(</span><span class="s">&quot;Hello, {}!&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;World&quot;</span><span class="p">);</span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">LOG_TRACE</span><span class="p">(</span><span class="s">"Hello, {}!"</span><span class="p">,</span><span class="w"> </span><span class="s">"World"</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>For more information about the syntax of logmsg, please see the spdlog documentation.</p>
@@ -250,7 +251,7 @@ a C++ basic data type, such as an int, a float, or a string. You can
 also use a limited set of Kokkos variables. For example, the following code
 writes the value of the variable <code class="docutils literal notranslate"><span class="pre">MyInt</span></code> as a TRACE level log:</p>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">MyInt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
-<span class="n">LOG_TRACE</span><span class="p">(</span><span class="s">&quot;The value of MyInt is: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">MyInt</span><span class="p">);</span>
+<span class="n">LOG_TRACE</span><span class="p">(</span><span class="s">"The value of MyInt is: {}"</span><span class="p">,</span><span class="w"> </span><span class="n">MyInt</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>By default, the logfile will be created in the build directory.</p>

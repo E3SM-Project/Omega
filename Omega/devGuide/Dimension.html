@@ -101,6 +101,7 @@
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Dimension</a></li>
@@ -215,7 +216,7 @@ is created using:</p>
 <span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">NCellsGlobal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DefDecomp</span><span class="o">-&gt;</span><span class="n">NCellsGlobal</span><span class="p">;</span><span class="w"> </span><span class="c1">// Global dim length</span>
 <span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">NCellsOwned</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">DefDecomp</span><span class="o">-&gt;</span><span class="n">NCellsOwned</span><span class="p">;</span>
 
-<span class="w">   </span><span class="n">HostArray1DI4</span><span class="w"> </span><span class="n">CellOffset</span><span class="p">(</span><span class="s">&quot;NCellsOffset&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">NCellsSize</span><span class="p">);</span>
+<span class="w">   </span><span class="n">HostArray1DI4</span><span class="w"> </span><span class="n">CellOffset</span><span class="p">(</span><span class="s">"NCellsOffset"</span><span class="p">,</span><span class="w"> </span><span class="n">NCellsSize</span><span class="p">);</span>
 
 <span class="w">   </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NCellsSize</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">N</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NCellsOwned</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
@@ -226,13 +227,13 @@ is created using:</p>
 <span class="w">   </span><span class="p">}</span>
 
 <span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Dimension</span><span class="o">&gt;</span><span class="w"> </span><span class="n">CellDim</span><span class="w"> </span><span class="o">=</span>
-<span class="w">      </span><span class="n">Dimension</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="s">&quot;NCells&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">NCellsGlobal</span><span class="p">,</span><span class="w"> </span><span class="n">NCellsSize</span><span class="p">,</span><span class="w"> </span><span class="n">CellOffset</span><span class="p">);</span>
+<span class="w">      </span><span class="n">Dimension</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="s">"NCells"</span><span class="p">,</span><span class="w"> </span><span class="n">NCellsGlobal</span><span class="p">,</span><span class="w"> </span><span class="n">NCellsSize</span><span class="p">,</span><span class="w"> </span><span class="n">CellOffset</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>For dimensions that are local (eg the vertical dimension or MaxEdgeOnCell),
 only the name and length are needed for creation using:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Dimension</span><span class="o">&gt;</span><span class="w"> </span><span class="n">LocalDim</span><span class="w"> </span><span class="o">=</span>
-<span class="w">      </span><span class="n">Dimension</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="s">&quot;MyDimName&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">LengthOfDim</span><span class="p">);</span>
+<span class="w">      </span><span class="n">Dimension</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="s">"MyDimName"</span><span class="p">,</span><span class="w"> </span><span class="n">LengthOfDim</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The offset array is computed internally for these dimensions and is simply
@@ -244,15 +245,15 @@ class to write dimension metadata and define offsets for parallel IO. It is
 not expected to be used elsewhere in Omega.</p>
 <p>Dimension information is available through retrieval functions. These can be
 retrieved by dimension name as in:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">LengthGlob</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">Dimension</span><span class="o">::</span><span class="n">getDimLengthGlobal</span><span class="p">(</span><span class="s">&quot;MyDimName&quot;</span><span class="p">);</span>
-<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">LengthLoc</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">Dimension</span><span class="o">::</span><span class="n">getDimLengthLocal</span><span class="p">(</span><span class="s">&quot;MyDimName&quot;</span><span class="p">);</span>
-<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">DistrbDim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Dimension</span><span class="o">::</span><span class="n">isDistributedDim</span><span class="p">(</span><span class="s">&quot;MyDimName&quot;</span><span class="p">);</span>
-<span class="w">   </span><span class="n">HostArray1DI4</span><span class="w"> </span><span class="n">MyOffset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Dimension</span><span class="o">::</span><span class="n">getDimOffset</span><span class="p">(</span><span class="s">&quot;MyDimName&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">LengthGlob</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">Dimension</span><span class="o">::</span><span class="n">getDimLengthGlobal</span><span class="p">(</span><span class="s">"MyDimName"</span><span class="p">);</span>
+<span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">LengthLoc</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">Dimension</span><span class="o">::</span><span class="n">getDimLengthLocal</span><span class="p">(</span><span class="s">"MyDimName"</span><span class="p">);</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">DistrbDim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Dimension</span><span class="o">::</span><span class="n">isDistributedDim</span><span class="p">(</span><span class="s">"MyDimName"</span><span class="p">);</span>
+<span class="w">   </span><span class="n">HostArray1DI4</span><span class="w"> </span><span class="n">MyOffset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Dimension</span><span class="o">::</span><span class="n">getDimOffset</span><span class="p">(</span><span class="s">"MyDimName"</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>or it can be retrieved from an instance directly using member retrieval
 functions:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Dimension</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyDim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Dimension</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;MyDimName&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Dimension</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyDim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Dimension</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="s">"MyDimName"</span><span class="p">);</span>
 <span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">LengthGlob</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyDim</span><span class="o">-&gt;</span><span class="n">getLengthGlobal</span><span class="p">();</span>
 <span class="w">   </span><span class="n">I4</span><span class="w"> </span><span class="n">LengthLoc</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">MyDim</span><span class="o">-&gt;</span><span class="n">getLengthLocal</span><span class="p">();</span>
 <span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">DistrbDim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyDim</span><span class="o">-&gt;</span><span class="n">isDistributed</span><span class="p">();</span>
@@ -269,7 +270,7 @@ functions:</p>
 </pre></div>
 </div>
 <p>As in other classes, a Dimension can be removed using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Dimension</span><span class="o">::</span><span class="n">destroy</span><span class="p">(</span><span class="s">&quot;MyDimName&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Dimension</span><span class="o">::</span><span class="n">destroy</span><span class="p">(</span><span class="s">"MyDimName"</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>and all dimensions should be removed during Omega finalization before exiting

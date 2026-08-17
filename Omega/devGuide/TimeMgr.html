@@ -101,6 +101,7 @@
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
@@ -246,7 +247,7 @@ enum defined in the Time Manager header file:</p>
 </pre></div>
 </div>
 <p>During a simulation, only one calendar can be defined and is set with the call:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Calendar</span><span class="o">::</span><span class="n">init</span><span class="p">(</span><span class="s">&quot;CalendarName&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Calendar</span><span class="o">::</span><span class="n">init</span><span class="p">(</span><span class="s">"CalendarName"</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>that must be set early in the model initialization before other time quantities
@@ -301,7 +302,7 @@ integers which represent the number of digits to use for the year and the
 number of digits for the decimal portion of seconds, as well as a <code class="docutils literal notranslate"><span class="pre">std::string</span></code>
 for the seprator between the Y/M/D calendar date and the H/M/S clock time. A
 string formatted as above is returned with the following call:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TI1</span><span class="p">.</span><span class="n">getString</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="s">&quot; &quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TI1</span><span class="p">.</span><span class="n">getString</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="s">" "</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>A range of accessor functions can also get/set the TimeInstant in various
@@ -356,12 +357,12 @@ Fractional seconds are optional.</p>
 <p>The Alarm class is designed to trigger events at specified times. Alarms can be
 set to ring at a single time or to ring periodically. A one-time Alarm is
 initialized with a <code class="docutils literal notranslate"><span class="pre">std::string</span></code> name and a TimeInstant:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Alarm</span><span class="w"> </span><span class="n">SingleAlarm</span><span class="p">(</span><span class="s">&quot;Single Alarm&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">AlarmInstant</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Alarm</span><span class="w"> </span><span class="n">SingleAlarm</span><span class="p">(</span><span class="s">"Single Alarm"</span><span class="p">,</span><span class="w"> </span><span class="n">AlarmInstant</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>A periodic Alarm is initialized with a <code class="docutils literal notranslate"><span class="pre">std::string</span></code> name, a TimeInterval, and a
 TimeInstant representing the start of the first interval:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Alarm</span><span class="w"> </span><span class="n">PeriodicAlarm</span><span class="p">(</span><span class="s">&quot;Periodic Alarm&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">AlarmInterval</span><span class="p">,</span><span class="w"> </span><span class="n">AlarmStart</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Alarm</span><span class="w"> </span><span class="n">PeriodicAlarm</span><span class="p">(</span><span class="s">"Periodic Alarm"</span><span class="p">,</span><span class="w"> </span><span class="n">AlarmInterval</span><span class="p">,</span><span class="w"> </span><span class="n">AlarmStart</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The status of an Alarm can be checked using the <code class="docutils literal notranslate"><span class="pre">isRinging</span></code> method, which
@@ -429,7 +430,7 @@ stored in the Clock as a TimeInstant:</p>
 <h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this heading"></a></h2>
 <p>In order to utilize the Time Manager, the first step is to initialize a
 Calendar object:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Calendar</span><span class="w"> </span><span class="n">CalGreg</span><span class="p">(</span><span class="s">&quot;Gregorian&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">CalendarGregorian</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">Calendar</span><span class="w"> </span><span class="n">CalGreg</span><span class="p">(</span><span class="s">"Gregorian"</span><span class="p">,</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">CalendarGregorian</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>A start time and a time step are needed in order to initialize the Clock. The
@@ -445,7 +446,7 @@ with a 20 minute time step:</p>
 is desired on the first of each month, the following lines will attach a
 monthly Alarm:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeInterval</span><span class="w"> </span><span class="nf">IntervalMonthly</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">TimeUnits</span><span class="o">::</span><span class="n">Months</span><span class="p">);</span>
-<span class="n">OMEGA</span><span class="o">::</span><span class="n">Alarm</span><span class="w"> </span><span class="n">AlarmMonthly</span><span class="p">(</span><span class="s">&quot;Every Month&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">IntervalMontly</span><span class="p">,</span><span class="w"> </span><span class="n">StartTime</span><span class="p">);</span>
+<span class="n">OMEGA</span><span class="o">::</span><span class="n">Alarm</span><span class="w"> </span><span class="n">AlarmMonthly</span><span class="p">(</span><span class="s">"Every Month"</span><span class="p">,</span><span class="w"> </span><span class="n">IntervalMontly</span><span class="p">,</span><span class="w"> </span><span class="n">StartTime</span><span class="p">);</span>
 
 <span class="n">ModelClock</span><span class="p">.</span><span class="n">attachAlarm</span><span class="p">(</span><span class="n">AlarmMonthly</span><span class="p">);</span>
 </pre></div>

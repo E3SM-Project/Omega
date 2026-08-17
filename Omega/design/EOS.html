@@ -103,6 +103,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
@@ -323,7 +324,7 @@
 </div>
 <p>The user will select the EOS type at runtime in the input yaml file under an eos section:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="nt">eos</span><span class="p">:</span>
-<span class="w">       </span><span class="nt">eosType</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;teos10&#39;</span>
+<span class="w">       </span><span class="nt">eosType</span><span class="p">:</span><span class="w"> </span><span class="s">'teos10'</span>
 </pre></div>
 </div>
 <p>An <code class="docutils literal notranslate"><span class="pre">enum</span> <span class="pre">class</span></code> will be used to specify options for the EOS used for an Omega simulation:</p>
@@ -336,8 +337,8 @@
 <p>We assume that the call to the eos is in a timestepping routine where input tracers for this timestep are defined, eg.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">ConservativeTemperature</span><span class="p">;</span>
 <span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">AbsoluteSalinity</span><span class="p">;</span>
-<span class="w">   </span><span class="n">Tracers</span><span class="o">-&gt;</span><span class="n">getByName</span><span class="p">(</span><span class="n">ConservativeTemperature</span><span class="p">,</span><span class="w"> </span><span class="n">VelTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;temperature&quot;</span><span class="p">);</span>
-<span class="w">   </span><span class="n">Tracers</span><span class="o">-&gt;</span><span class="n">getByName</span><span class="p">(</span><span class="n">AbsoluteSalinity</span><span class="p">,</span><span class="w"> </span><span class="n">VelTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;salinity&quot;</span><span class="p">);</span>
+<span class="w">   </span><span class="n">Tracers</span><span class="o">-&gt;</span><span class="n">getByName</span><span class="p">(</span><span class="n">ConservativeTemperature</span><span class="p">,</span><span class="w"> </span><span class="n">VelTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="s">"temperature"</span><span class="p">);</span>
+<span class="w">   </span><span class="n">Tracers</span><span class="o">-&gt;</span><span class="n">getByName</span><span class="p">(</span><span class="n">AbsoluteSalinity</span><span class="p">,</span><span class="w"> </span><span class="n">VelTimeLevel</span><span class="p">,</span><span class="w"> </span><span class="s">"salinity"</span><span class="p">);</span>
 </pre></div>
 </div>
 </section>
@@ -386,13 +387,13 @@ It will return a pointer to the newly created object.</p>
 <span class="w">                         </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Pressure</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="n">OMEGA_SCOPE</span><span class="p">(...)</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">eosChoice</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">EOSType</span><span class="o">::</span><span class="n">Linear</span><span class="p">){</span>
-<span class="w">       </span><span class="n">parallelFor</span><span class="p">(</span><span class="s">&quot;eos-linear&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="n">NCellsAll</span><span class="p">,</span><span class="w"> </span><span class="n">NChunks</span><span class="p">},</span>
+<span class="w">       </span><span class="n">parallelFor</span><span class="p">(</span><span class="s">"eos-linear"</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="n">NCellsAll</span><span class="p">,</span><span class="w"> </span><span class="n">NChunks</span><span class="p">},</span>
 <span class="w">       </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">          </span><span class="n">LocComputeSpecVolLinear</span><span class="p">(...);</span>
 <span class="w">       </span><span class="p">});</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">    </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">eosChoice</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">EOSType</span><span class="o">::</span><span class="n">TEOS10Poly75t</span><span class="p">){</span>
-<span class="w">       </span><span class="n">parallelFor</span><span class="p">(</span><span class="s">&quot;eos-teos10&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="n">NCellsAll</span><span class="p">,</span><span class="w"> </span><span class="n">NChunks</span><span class="p">},</span>
+<span class="w">       </span><span class="n">parallelFor</span><span class="p">(</span><span class="s">"eos-teos10"</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="n">NCellsAll</span><span class="p">,</span><span class="w"> </span><span class="n">NChunks</span><span class="p">},</span>
 <span class="w">       </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">ICell</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">KChunk</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">          </span><span class="n">LocComputeSpecVolTEOS10Poly75t</span><span class="p">(...);</span>
 <span class="w">        </span><span class="p">});</span>

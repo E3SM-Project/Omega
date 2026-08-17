@@ -19,7 +19,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Developing Omega Logging" href="Logging.html" />
+    <link rel="next" title="CIME buildnml and Configuration Validation" href="BuildNml.html" />
     <link rel="prev" title="Broadcast" href="Broadcast.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
@@ -108,6 +108,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#standalone-build-commands">Standalone Build Commands</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
@@ -230,16 +231,16 @@ E3SM, and CMake. The names of these variables start with “OMEGA_”,
 with an underscore (“_”).</p>
 <p>The following is a list of Omega-specific variables available in
 this version:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA_PROJECT_NAME</span><span class="p">:</span> <span class="n">Name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">project</span> <span class="p">(</span><span class="s2">&quot;OmegaOceanModel&quot;</span><span class="p">)</span>
-<span class="n">OMEGA_EXE_NAME</span><span class="p">:</span> <span class="n">Name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">executable</span> <span class="p">(</span><span class="s2">&quot;omega.exe&quot;</span><span class="p">)</span>
-<span class="n">OMEGA_LIB_NAME</span><span class="p">:</span> <span class="n">Name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">library</span> <span class="p">(</span><span class="s2">&quot;OmegaLib&quot;</span><span class="p">)</span>
-<span class="n">OMEGA_BUILD_MODES</span><span class="p">:</span> <span class="n">List</span> <span class="n">of</span> <span class="n">build</span> <span class="n">modes</span> <span class="p">(</span><span class="s2">&quot;E3SM&quot;</span><span class="p">,</span> <span class="s2">&quot;STANDALONE&quot;</span><span class="p">,</span> <span class="s2">&quot;NOT_DEFINED&quot;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA_PROJECT_NAME</span><span class="p">:</span> <span class="n">Name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">project</span> <span class="p">(</span><span class="s2">"OmegaOceanModel"</span><span class="p">)</span>
+<span class="n">OMEGA_EXE_NAME</span><span class="p">:</span> <span class="n">Name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">executable</span> <span class="p">(</span><span class="s2">"omega.exe"</span><span class="p">)</span>
+<span class="n">OMEGA_LIB_NAME</span><span class="p">:</span> <span class="n">Name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">library</span> <span class="p">(</span><span class="s2">"OmegaLib"</span><span class="p">)</span>
+<span class="n">OMEGA_BUILD_MODES</span><span class="p">:</span> <span class="n">List</span> <span class="n">of</span> <span class="n">build</span> <span class="n">modes</span> <span class="p">(</span><span class="s2">"E3SM"</span><span class="p">,</span> <span class="s2">"STANDALONE"</span><span class="p">,</span> <span class="s2">"NOT_DEFINED"</span><span class="p">)</span>
 <span class="n">OMEGA_BUILD_MODE</span><span class="p">:</span> <span class="n">Selected</span> <span class="n">build</span> <span class="n">mode</span>
 <span class="n">OMEGA_BUILD_DIR</span><span class="p">:</span> <span class="n">Omega</span> <span class="n">top</span><span class="o">-</span><span class="n">level</span> <span class="n">build</span> <span class="n">directory</span>
 <span class="n">OMEGA_SOURCE_DIR</span><span class="p">:</span> <span class="n">Directory</span> <span class="n">where</span> <span class="n">the</span> <span class="n">top</span><span class="o">-</span><span class="n">level</span> <span class="n">Omega</span> <span class="n">CMakeLists</span><span class="o">.</span><span class="n">txt</span> <span class="ow">is</span> <span class="n">located</span>
-<span class="n">OMEGA_DEFAULT_BUILD_TYPE</span><span class="p">:</span> <span class="n">Default</span> <span class="n">build</span> <span class="nb">type</span> <span class="p">(</span><span class="s2">&quot;Release&quot;</span><span class="p">)</span>
+<span class="n">OMEGA_DEFAULT_BUILD_TYPE</span><span class="p">:</span> <span class="n">Default</span> <span class="n">build</span> <span class="nb">type</span> <span class="p">(</span><span class="s2">"Release"</span><span class="p">)</span>
 <span class="n">OMEGA_INSTALL_PREFIX</span><span class="p">:</span> <span class="n">User</span><span class="o">-</span><span class="n">defined</span> <span class="n">output</span> <span class="n">directory</span> <span class="k">for</span> <span class="n">the</span> <span class="n">library</span> <span class="ow">and</span> <span class="n">executable</span>
-<span class="n">OMEGA_ARCH</span><span class="p">:</span> <span class="n">User</span><span class="o">-</span><span class="n">defined</span> <span class="n">programming</span> <span class="n">framework</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span><span class="p">,</span> <span class="s2">&quot;CUDA&quot;</span><span class="p">,</span> <span class="s2">&quot;HIP&quot;</span><span class="p">,</span> <span class="s2">&quot;OPENMP&quot;</span><span class="p">,</span> <span class="s2">&quot;SYCL&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+<span class="n">OMEGA_ARCH</span><span class="p">:</span> <span class="n">User</span><span class="o">-</span><span class="n">defined</span> <span class="n">programming</span> <span class="n">framework</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span><span class="p">,</span> <span class="s2">"CUDA"</span><span class="p">,</span> <span class="s2">"HIP"</span><span class="p">,</span> <span class="s2">"OPENMP"</span><span class="p">,</span> <span class="s2">"SYCL"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
 <span class="n">OMEGA_CXX_COMPILER</span><span class="p">:</span> <span class="n">C</span><span class="o">++</span> <span class="n">compiler</span>
 <span class="n">OMEGA_C_COMPILER</span><span class="p">:</span> <span class="n">C</span> <span class="n">compiler</span>
 <span class="n">OMEGA_Fortran_COMPILER</span><span class="p">:</span> <span class="n">Fortran</span> <span class="n">compiler</span>
@@ -255,11 +256,11 @@ this version:</p>
 <span class="n">OMEGA_GKLIB_ROOT</span><span class="p">:</span> <span class="n">GKlib</span> <span class="n">installtion</span> <span class="n">directory</span>
 <span class="n">OMEGA_HIP_COMPILER</span><span class="p">:</span> <span class="n">HIP</span> <span class="n">compiler</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span><span class="p">,</span> <span class="n">hipcc</span><span class="p">)</span>
 <span class="n">OMEGA_HIP_FLAGS</span><span class="p">:</span> <span class="n">HIP</span> <span class="n">compiler</span> <span class="n">flags</span>
-<span class="n">OMEGA_MEMORY_LAYOUT</span><span class="p">:</span> <span class="n">Kokkos</span> <span class="n">memory</span> <span class="n">layout</span> <span class="p">(</span><span class="s2">&quot;LEFT&quot;</span> <span class="ow">or</span> <span class="s2">&quot;RIGHT&quot;</span><span class="p">)</span><span class="o">.</span> <span class="s2">&quot;RIGHT&quot;</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
-<span class="n">OMEGA_TILE_LENGTH</span><span class="p">:</span> <span class="n">a</span> <span class="n">length</span> <span class="n">of</span> <span class="n">one</span> <span class="s2">&quot;side&quot;</span> <span class="n">of</span> <span class="n">a</span> <span class="n">Kokkos</span> <span class="n">tile</span><span class="o">.</span> <span class="mi">64</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
-<span class="n">OMEGA_LOG_LEVEL</span><span class="p">:</span> <span class="n">a</span> <span class="n">default</span> <span class="n">logging</span> <span class="n">level</span><span class="o">.</span> <span class="s2">&quot;OMEGA_LOG_INFO&quot;</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
-<span class="n">OMEGA_LOG_FLUSH</span><span class="p">:</span> <span class="n">turn</span> <span class="n">on</span> <span class="n">the</span> <span class="n">unbuffered</span> <span class="n">logging</span><span class="o">.</span> <span class="s2">&quot;OFF&quot;</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
-<span class="n">OMEGA_VECTOR_LENGTH</span><span class="p">:</span> <span class="n">Vector</span> <span class="n">length</span> <span class="n">used</span> <span class="k">for</span> <span class="n">blocking</span> <span class="n">inner</span> <span class="n">loops</span> <span class="k">for</span> <span class="n">vectorization</span><span class="o">.</span> <span class="s2">&quot;1&quot;</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
+<span class="n">OMEGA_MEMORY_LAYOUT</span><span class="p">:</span> <span class="n">Kokkos</span> <span class="n">memory</span> <span class="n">layout</span> <span class="p">(</span><span class="s2">"LEFT"</span> <span class="ow">or</span> <span class="s2">"RIGHT"</span><span class="p">)</span><span class="o">.</span> <span class="s2">"RIGHT"</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
+<span class="n">OMEGA_TILE_LENGTH</span><span class="p">:</span> <span class="n">a</span> <span class="n">length</span> <span class="n">of</span> <span class="n">one</span> <span class="s2">"side"</span> <span class="n">of</span> <span class="n">a</span> <span class="n">Kokkos</span> <span class="n">tile</span><span class="o">.</span> <span class="mi">64</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
+<span class="n">OMEGA_LOG_LEVEL</span><span class="p">:</span> <span class="n">a</span> <span class="n">default</span> <span class="n">logging</span> <span class="n">level</span><span class="o">.</span> <span class="s2">"OMEGA_LOG_INFO"</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
+<span class="n">OMEGA_LOG_FLUSH</span><span class="p">:</span> <span class="n">turn</span> <span class="n">on</span> <span class="n">the</span> <span class="n">unbuffered</span> <span class="n">logging</span><span class="o">.</span> <span class="s2">"OFF"</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
+<span class="n">OMEGA_VECTOR_LENGTH</span><span class="p">:</span> <span class="n">Vector</span> <span class="n">length</span> <span class="n">used</span> <span class="k">for</span> <span class="n">blocking</span> <span class="n">inner</span> <span class="n">loops</span> <span class="k">for</span> <span class="n">vectorization</span><span class="o">.</span> <span class="s2">"1"</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">default</span> <span class="n">value</span><span class="o">.</span>
 </pre></div>
 </div>
 <p>E3SM-specific variables</p>
@@ -317,9 +318,9 @@ Omega requires:</p>
 <p>Since some systems require tests to be run in a scratch space, it is a good
 idea to build the code somewhere in your scratch space. We will refer to the
 build directory as <code class="docutils literal notranslate"><span class="pre">$BUILD_DIR</span></code>:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>rm<span class="w"> </span>-rf<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BUILD_DIR</span><span class="s2">&quot;</span>
-mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BUILD_DIR</span><span class="s2">&quot;</span>
-<span class="nb">cd</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BUILD_DIR</span><span class="s2">&quot;</span>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>rm<span class="w"> </span>-rf<span class="w"> </span><span class="s2">"</span><span class="nv">$BUILD_DIR</span><span class="s2">"</span>
+mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="nv">$BUILD_DIR</span><span class="s2">"</span>
+<span class="nb">cd</span><span class="w"> </span><span class="s2">"</span><span class="nv">$BUILD_DIR</span><span class="s2">"</span>
 </pre></div>
 </div>
 <p>Set <code class="docutils literal notranslate"><span class="pre">$PARMETIS_ROOT</span></code> to the location for Metis and Parmetis libraries built
@@ -362,7 +363,7 @@ executable when Omega is used as the ocean component of a coupled case.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="Broadcast.html" class="btn btn-neutral float-left" title="Broadcast" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="Logging.html" class="btn btn-neutral float-right" title="Developing Omega Logging" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="BuildNml.html" class="btn btn-neutral float-right" title="CIME buildnml and Configuration Validation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

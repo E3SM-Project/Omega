@@ -101,6 +101,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
@@ -430,7 +431,7 @@ something like the code below (details subject to change during implementation).
 
 <span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OcnInit</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span><span class="w"> </span><span class="n">CurrTime</span><span class="p">,</span><span class="w"> </span><span class="n">RunInterval</span><span class="p">,</span><span class="w"> </span><span class="n">CurrState</span><span class="p">,</span>
 <span class="w">                     </span><span class="n">EndAlarm</span><span class="p">,</span><span class="w"> </span><span class="n">etc</span><span class="p">);</span>
-<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">LOG_ERROR</span><span class="p">(</span><span class="s">&quot;Error initializing OMEGA&quot;</span><span class="p">);</span>
+<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">LOG_ERROR</span><span class="p">(</span><span class="s">"Error initializing OMEGA"</span><span class="p">);</span>
 
 
 <span class="w">   </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">Err</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="p">(</span><span class="n">EndAlarm</span><span class="p">.</span><span class="n">isRinging</span><span class="p">())</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
@@ -440,20 +441,20 @@ something like the code below (details subject to change during implementation).
 <span class="w">      </span><span class="c1">// call run method</span>
 <span class="w">      </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">OcnRun</span><span class="p">(</span><span class="n">CurrTime</span><span class="p">,</span><span class="w"> </span><span class="n">RunInterval</span><span class="p">,</span><span class="w"> </span><span class="n">EndAlarm</span><span class="p">,</span>
 <span class="w">                          </span><span class="n">CurrState</span><span class="p">,</span><span class="w"> </span><span class="n">etc</span><span class="p">);</span>
-<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">LOG_ERROR</span><span class="p">(</span><span class="s">&quot;Error advancing Omega one interval&quot;</span><span class="p">);</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">LOG_ERROR</span><span class="p">(</span><span class="s">"Error advancing Omega one interval"</span><span class="p">);</span>
 
 <span class="w">      </span><span class="c1">// Other tasks if needed (eg IO could occur here or within run</span>
 <span class="w">      </span><span class="c1">// method</span>
 <span class="w">   </span><span class="p">}</span>
 
 <span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">Err2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">OcnFinalize</span><span class="p">(</span><span class="n">CurrTime</span><span class="p">,</span><span class="w"> </span><span class="n">CurrState</span><span class="p">,</span><span class="w"> </span><span class="n">etc</span><span class="p">);</span>
-<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Err2</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">LOG_ERROR</span><span class="p">(</span><span class="s">&quot;Error finalizing Omega&quot;</span><span class="p">);</span>
+<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Err2</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">LOG_ERROR</span><span class="p">(</span><span class="s">"Error finalizing Omega"</span><span class="p">);</span>
 
 <span class="w">   </span><span class="kt">int</span><span class="w"> </span><span class="n">ErrAll</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">Err</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">Err2</span><span class="p">);</span>
 <span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ErrAll</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">){</span>
-<span class="w">      </span><span class="n">LOG_INFO</span><span class="p">(</span><span class="s">&quot;OMEGA successfully completed&quot;</span><span class="p">);</span>
+<span class="w">      </span><span class="n">LOG_INFO</span><span class="p">(</span><span class="s">"OMEGA successfully completed"</span><span class="p">);</span>
 <span class="w">   </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="n">LOG_ERROR</span><span class="p">(</span><span class="s">&quot;OMEGA terminating due to error&quot;</span><span class="p">);</span>
+<span class="w">      </span><span class="n">LOG_ERROR</span><span class="p">(</span><span class="s">"OMEGA terminating due to error"</span><span class="p">);</span>
 <span class="w">   </span><span class="p">}</span>
 
 <span class="w">   </span><span class="p">}</span>

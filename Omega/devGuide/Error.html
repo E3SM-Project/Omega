@@ -101,6 +101,7 @@
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
@@ -209,7 +210,7 @@ can be used after including the <code class="docutils literal notranslate"><span
 facility (typically done as early as possible in Omega initialization).</p>
 <p>The most common use case is to check for critical errors using the
 <code class="docutils literal notranslate"><span class="pre">ABORT_ERROR</span></code> macro. For example:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">condition</span><span class="p">)</span><span class="w"> </span><span class="n">ABORT_ERROR</span><span class="p">(</span><span class="s">&quot;Bad value for variable: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Value</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">condition</span><span class="p">)</span><span class="w"> </span><span class="n">ABORT_ERROR</span><span class="p">(</span><span class="s">"Bad value for variable: {}"</span><span class="p">,</span><span class="w"> </span><span class="n">Value</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The macro takes a string argument for the error message and allows values

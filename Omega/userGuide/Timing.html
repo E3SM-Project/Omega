@@ -104,6 +104,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
@@ -237,7 +238,7 @@ Currently, this is only implemented on systems with NVIDIA GPUs using NVTX.</p>
 <p>This allows, for example, to use the Nsight Compute kernel profiler to obtain
 detailed kernel information for all kernels enclosed in the <code class="docutils literal notranslate"><span class="pre">Tend:computeVelocityTendencies</span></code>
 Omega timer.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">1</span><span class="w"> </span>ncu<span class="w"> </span>--nvtx<span class="w"> </span>--nvtx-include<span class="w"> </span><span class="s2">&quot;Tend:computeVelocityTendencies/&quot;</span><span class="w"> </span>omega.exe
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">1</span><span class="w"> </span>ncu<span class="w"> </span>--nvtx<span class="w"> </span>--nvtx-include<span class="w"> </span><span class="s2">"Tend:computeVelocityTendencies/"</span><span class="w"> </span>omega.exe
 </pre></div>
 </div>
 </section>

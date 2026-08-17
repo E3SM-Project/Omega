@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IO Streams (IOStream) &mdash; Omega develop documentation</title>
+  <title>CIME buildnml and Configuration Validation &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Halo Exchanges (Halo)" href="Halo.html" />
-    <link rel="prev" title="Parallel IO (IO)" href="IO.html" />
+    <link rel="next" title="Developing Omega Logging" href="Logging.html" />
+    <link rel="prev" title="Omega Build with CMake" href="CMakeBuild.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -101,14 +101,19 @@
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
-<li class="toctree-l1"><a class="reference internal" href="BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#omega-buildnml-package"><code class="docutils literal notranslate"><span class="pre">omega_buildnml</span></code> package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#validation-and-ci">Validation and CI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-a-supported-mesh">Adding a supported mesh</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Error.html">Error Handler</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
 <li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
@@ -186,9 +191,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">IO Streams (IOStream)</li>
+      <li class="breadcrumb-item active">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/devGuide/IOStreams.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/devGuide/BuildNml.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -196,116 +201,80 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="io-streams-iostream">
-<span id="omega-dev-iostreams"></span><h1>IO Streams (IOStream)<a class="headerlink" href="#io-streams-iostream" title="Permalink to this heading"></a></h1>
-<p>Most input and output for Omega occurs through IOStreams. Each stream
-defines a file, the contents to be read/written and the time frequency
-for reading and writing. Defining streams via the input configuration
-file is described in the <a class="reference internal" href="../userGuide/IOStreams.html#omega-user-iostreams"><span class="std std-ref">User Guide</span></a>. IOStreams
-are built on top of the parallel IO infrastructure described in the
-<a class="reference internal" href="IO.html#omega-dev-io"><span class="std std-ref">IO Section</span></a> and the Field and Metadata described in the
-<a class="reference internal" href="Field.html#omega-dev-field"><span class="std std-ref">Field Section</span></a>. Here we describe the classes and functions
-used to implement IOStreams. Any module accessing an IOStream instance
-or related functions must include the <code class="docutils literal notranslate"><span class="pre">IOStream.h</span></code> header file.</p>
-<p>All IOStreams are initialized in a two-step process. A call to the
-init routine should take place early in the Omega initialization after
-the ModelClock has been initialized using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">IOStream</span><span class="o">::</span><span class="n">init</span><span class="p">(</span><span class="n">ModelClock</span><span class="p">);</span>
+  <section class="tex2jax_ignore mathjax_ignore" id="cime-buildnml-and-configuration-validation">
+<span id="omega-dev-buildnml"></span><h1>CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation<a class="headerlink" href="#cime-buildnml-and-configuration-validation" title="Permalink to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">components/omega/cime_config/buildnml</span></code> generates a case’s <code class="docutils literal notranslate"><span class="pre">omega.yml</span></code> by
+layering Omega’s defaults, coupled/mesh overrides, runtime overrides derived
+from the case, and <code class="docutils literal notranslate"><span class="pre">user_nl_omega</span></code> (see <a class="reference internal" href="../userGuide/Config.html#omega-user-config"><span class="std std-ref">Model Configuration (Config)</span></a>). This
+page covers the Python package behind <code class="docutils literal notranslate"><span class="pre">buildnml</span></code>, how its configuration is
+validated, and how to add support for a new mesh.</p>
+<section id="omega-buildnml-package">
+<h2><code class="docutils literal notranslate"><span class="pre">omega_buildnml</span></code> package<a class="headerlink" href="#omega-buildnml-package" title="Permalink to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">components/omega/cime_config/omega_buildnml/</span></code> implements the merging and
+validation logic used by <code class="docutils literal notranslate"><span class="pre">buildnml</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">read_write.py</span></code> reads/writes YAML config files and packaged data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">config.py</span></code> merges the configuration layers and resolves mesh input files.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">validate.py</span></code> validates overrides and <code class="docutils literal notranslate"><span class="pre">IOStreams</span></code> against <code class="docutils literal notranslate"><span class="pre">Default.yml</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">data/input_files.yaml</span></code> maps each supported mesh to its input file(s).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">data/config_overrides.yaml</span></code> holds the coupled and mesh-specific overrides.</p></li>
+</ul>
+<p>Validation runs whenever these files are read, so a bad edit fails fast at
+<code class="docutils literal notranslate"><span class="pre">case.setup</span></code> rather than surfacing as a confusing runtime error. Stream
+names are checked dynamically against <code class="docutils literal notranslate"><span class="pre">Default.yml</span></code> rather than a
+hardcoded list: the <code class="docutils literal notranslate"><span class="pre">coupled</span></code> section of <code class="docutils literal notranslate"><span class="pre">config_overrides.yaml</span></code> and a
+case’s <code class="docutils literal notranslate"><span class="pre">user_nl_omega</span></code> are free to define brand-new <code class="docutils literal notranslate"><span class="pre">IOStreams</span></code> entries,
+but a stream referenced in <code class="docutils literal notranslate"><span class="pre">input_files.yaml</span></code> must already exist in
+<code class="docutils literal notranslate"><span class="pre">Default.yml</span></code>, since <code class="docutils literal notranslate"><span class="pre">input_files.yaml</span></code> only supplies a <code class="docutils literal notranslate"><span class="pre">Filename</span></code>
+override for an existing <code class="docutils literal notranslate"><span class="pre">IOStreams</span></code> entry. <code class="docutils literal notranslate"><span class="pre">IOStreams</span></code> is not permitted
+under a mesh entry in <code class="docutils literal notranslate"><span class="pre">config_overrides.yaml</span></code>’s <code class="docutils literal notranslate"><span class="pre">meshes</span></code> section, since
+per-mesh IOStreams overrides aren’t a supported use case; put IOStreams
+that apply to every mesh under <code class="docutils literal notranslate"><span class="pre">coupled</span></code> instead. The required streams
+(<code class="docutils literal notranslate"><span class="pre">HorzMeshIn</span></code>, <code class="docutils literal notranslate"><span class="pre">InitialVertCoord</span></code>, <code class="docutils literal notranslate"><span class="pre">InitialState</span></code>) are always enforced.</p>
+</section>
+<section id="validation-and-ci">
+<h2>Validation and CI<a class="headerlink" href="#validation-and-ci" title="Permalink to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">components/omega/cime_config/validate_config.py</span></code> runs the same validation
+against every mesh and override entry (rather than just the ones needed for
+one case), so it catches problems anywhere in the packaged configuration:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>components/omega/cime_config
+./validate_config.py
 </pre></div>
 </div>
-<p>This routine extracts all the stream definitions from the input configuration
-file and creates all the Streams. This initialization also defines the
-contents of each Stream but does not yet validate those contents against all
-the defined Fields. The contents of all streams should be validated at the
-end of initialization (when all Fields have been defined) using the call:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">AllValidate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IOStream</span><span class="o">::</span><span class="n">validateAll</span><span class="p">();</span>
+<p>The <code class="docutils literal notranslate"><span class="pre">omega-buildnml</span></code> GitHub Actions workflow runs this script, along with
+<code class="docutils literal notranslate"><span class="pre">omega_buildnml</span></code>’s pytest unit tests across supported Python versions, on
+every pull request touching <code class="docutils literal notranslate"><span class="pre">cime_config/</span></code> or <code class="docutils literal notranslate"><span class="pre">Default.yml</span></code>. Run both
+locally before opening a PR that changes either:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>components/omega/cime_config
+./validate_config.py
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>omega_buildnml/tests<span class="w"> </span>-v
 </pre></div>
 </div>
-<p>However, if a stream is needed (eg a read stream) during initialization
-before the validateAll call, a single stream can be validated using</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">Validated</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyStream</span><span class="p">.</span><span class="n">validate</span><span class="p">();</span>
-</pre></div>
-</div>
-<p>and the validation status can be checked with</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">Validate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyStream</span><span class="p">.</span><span class="n">isValidated</span><span class="p">();</span>
-</pre></div>
-</div>
-<p>All streams must be validated before use to make sure the Fields have
-been defined and the relevant data arrays have been attached to Fields and
-are available to access.  At the end of a simulation, IOStreams must be
-finalized using</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">IOStream</span><span class="o">::</span><span class="n">finalize</span><span class="p">(</span><span class="n">ModelClock</span><span class="p">);</span>
-</pre></div>
-</div>
-<p>so that any final writes can take place for the OnShutdown streams and to
-deallocate all defined streams and arrays. If a stream needs to be removed
-before that time, an erase function is provided:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">IOStream</span><span class="o">::</span><span class="n">erase</span><span class="p">(</span><span class="n">StreamName</span><span class="p">);</span>
-</pre></div>
-</div>
-<p>For most output streams, we provide a writeAll interface that should be placed
-at an appropriate time during the time step loop:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">IOStream</span><span class="o">::</span><span class="n">writeAll</span><span class="p">(</span><span class="n">ModelClock</span><span class="p">);</span>
-</pre></div>
-</div>
-<p>This function checks each write stream and writes the file if it is time, based
-on a time manager alarm that is defined during initialization for each stream
-based on the time frequency in the streams configuration. After writing the
-file, the alarm is reset for the next write time. If a file must be written
-outside of this routine, a single-stream write can take place using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">IOStream</span><span class="o">::</span><span class="n">write</span><span class="p">(</span><span class="n">StreamName</span><span class="p">,</span><span class="w"> </span><span class="n">ModelClock</span><span class="p">);</span>
-</pre></div>
-</div>
-<p>Streams configured with <code class="docutils literal notranslate"><span class="pre">FreqUnits:</span> <span class="pre">OnDemand</span></code> are registered but never fire
-via writeAll; use <code class="docutils literal notranslate"><span class="pre">IOStream::write(StreamName,</span> <span class="pre">ModelClock,</span> <span class="pre">true)</span></code> to force
-them (eg the coupled driver’s coupler-triggered restart writes).</p>
-<p>Reading files (eg for initialization, restart or forcing) does not often
-take place all at once, so no readAll interface is provided. Instead, each
-input stream is read using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Error</span><span class="w"> </span><span class="n">Err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IOStream</span><span class="o">::</span><span class="n">read</span><span class="p">(</span><span class="n">StreamName</span><span class="p">,</span><span class="w"> </span><span class="n">ModelClock</span><span class="p">,</span><span class="w"> </span><span class="n">ReqMetadata</span><span class="p">);</span>
-</pre></div>
-</div>
-<p>The returned error code typically means that a field in the stream could
-not be found in the input file - most other errors abort immediately. The
-calling routine is then responsible for deciding what action to take.</p>
-<p>By default every field listed in a stream’s contents must be present in the
-input file or the read returns an error. A field can instead be marked as an
-optional read using</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">FieldPtr</span><span class="o">-&gt;</span><span class="n">setOptionalRead</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
-</pre></div>
-</div>
-<p>When such a field’s variable is missing from the file, the read logs an
-informational message, leaves the field’s attached array at the fill value set
-by <code class="docutils literal notranslate"><span class="pre">attachData</span></code> (see <a class="reference internal" href="../design/FillValues.html#omega-design-fill-values"><span class="std std-ref">Fill Values</span></a>), and continues
-without contributing an error. The owning module is then responsible for
-detecting that fill value after the read and substituting a default value. This
-is how <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> allows <code class="docutils literal notranslate"><span class="pre">SurfacePressure</span></code> to be absent from the
-initial-condition or restart file and default to zero.
-The ReqMetadata argument is a variable of type Metadata (defined in Field but
-essentially a <code class="docutils literal notranslate"><span class="pre">std::map&lt;std::string,</span> <span class="pre">std::any&gt;</span></code> for the name/value pair).
-This variable should include the names of global metadata that are desired
-from the input file. For example, if a time string is needed to verify the
-input file corresponds to a desired time, the required metadata can be
-initialized with</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">Metadata</span><span class="w"> </span><span class="n">ReqMetadata</span><span class="p">;</span>
-<span class="w">   </span><span class="n">ReqMetadata</span><span class="p">[</span><span class="s">"ForcingTime"</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">""</span><span class="p">;</span>
-</pre></div>
-</div>
-<p>The Metadata corresponding to ForcingTime will then be read from the file
-and inserted as the Metadata value. If no metadata is to be read from the
-file, then an empty ReqMetadata variable can be passed.</p>
-<p>As described in the <a class="reference internal" href="../userGuide/IOStreams.html#omega-user-iostreams"><span class="std std-ref">User Guide</span></a>, all streams are
-defined in the input configuration file and most other IOStream functions
-are associated either with that initialization or to support the read/write
-functions above.</p>
+</section>
+<section id="adding-a-supported-mesh">
+<h2>Adding a supported mesh<a class="headerlink" href="#adding-a-supported-mesh" title="Permalink to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Confirm the mesh’s grid alias is already defined for E3SM in
+<code class="docutils literal notranslate"><span class="pre">cime_config/config_grids.xml</span></code> at the repository root; <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> looks
+up input files by the case’s <code class="docutils literal notranslate"><span class="pre">OCN_GRID</span></code> value.</p></li>
+<li><p>Add an entry for the mesh to <code class="docutils literal notranslate"><span class="pre">data/input_files.yaml</span></code>, listing the input
+file(s) that provide its <code class="docutils literal notranslate"><span class="pre">HorzMeshIn</span></code>, <code class="docutils literal notranslate"><span class="pre">InitialVertCoord</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">InitialState</span></code> streams (split across multiple <code class="docutils literal notranslate"><span class="pre">inputs</span></code> entries if the
+initial condition is a separate file from the mesh).</p></li>
+<li><p>If the mesh needs overrides beyond Omega’s defaults and the coupled
+overrides, add a <code class="docutils literal notranslate"><span class="pre">meshes.&lt;mesh</span> <span class="pre">name&gt;</span></code> entry to <code class="docutils literal notranslate"><span class="pre">data/config_overrides.yaml</span></code>.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">./validate_config.py</span></code> to confirm the new entries are complete and
+consistent with <code class="docutils literal notranslate"><span class="pre">Default.yml</span></code>.</p></li>
+</ol>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="IO.html" class="btn btn-neutral float-left" title="Parallel IO (IO)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="Halo.html" class="btn btn-neutral float-right" title="Halo Exchanges (Halo)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="CMakeBuild.html" class="btn btn-neutral float-left" title="Omega Build with CMake" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Logging.html" class="btn btn-neutral float-right" title="Developing Omega Logging" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -101,6 +101,7 @@
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
@@ -267,14 +268,14 @@ Whether barriers added by this function are actually called can be controlled by
 <p>It might be desirable to add a prefix to a group of timers based on their parent timer.
 To enable this Pacer provides the <code class="docutils literal notranslate"><span class="pre">addParentPrefix()</span></code> and <code class="docutils literal notranslate"><span class="pre">removeParentPrefix()</span></code> functions.
 For example, the following call sequence</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;Parent&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="s">"Parent"</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
 <span class="n">Pacer</span><span class="o">::</span><span class="n">addParentPrefix</span><span class="p">();</span>
 
-<span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;Child&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
-<span class="n">Pacer</span><span class="o">::</span><span class="n">stop</span><span class="p">(</span><span class="s">&quot;Child&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="s">"Child"</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="n">Pacer</span><span class="o">::</span><span class="n">stop</span><span class="p">(</span><span class="s">"Child"</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
 
 <span class="n">Pacer</span><span class="o">::</span><span class="n">removeParentPrefix</span><span class="p">();</span>
-<span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;Parent&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="s">"Parent"</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>results in output where the “Child” timer shows up as “Parent:Child” in the output files.
@@ -287,13 +288,13 @@ from many places in the code, such as halo exchange.</p>
 the <code class="docutils literal notranslate"><span class="pre">disableTimers()</span></code> and <code class="docutils literal notranslate"><span class="pre">enableTimers()</span></code> functions. In the following call sequence</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Pacer</span><span class="o">::</span><span class="n">disableTiming</span><span class="p">();</span>
 
-<span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;Timer1&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
-<span class="n">Pacer</span><span class="o">::</span><span class="n">stop</span><span class="p">(</span><span class="s">&quot;Timer1&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="s">"Timer1"</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="n">Pacer</span><span class="o">::</span><span class="n">stop</span><span class="p">(</span><span class="s">"Timer1"</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
 
 <span class="n">Pacer</span><span class="o">::</span><span class="n">enableTiming</span><span class="p">();</span>
 
-<span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;Timer2&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
-<span class="n">Pacer</span><span class="o">::</span><span class="n">stop</span><span class="p">(</span><span class="s">&quot;Timer2&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="n">Pacer</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="s">"Timer2"</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="n">Pacer</span><span class="o">::</span><span class="n">stop</span><span class="p">(</span><span class="s">"Timer2"</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">Timer1</span></code> is not timed while <code class="docutils literal notranslate"><span class="pre">Timer2</span></code> is. This is useful mainly when done conditionally.

@@ -101,6 +101,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
@@ -369,7 +370,7 @@ levels lower than the specified <code class="docutils literal notranslate"><span
 messages with different severity levels. These macros follow the naming
 convention <code class="docutils literal notranslate"><span class="pre">LOG_&lt;severity</span> <span class="pre">level&gt;</span></code>. For instance, the following macro can be
 used to write an informational log message:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">LOG_INFO</span><span class="p">(</span><span class="s">&quot;log message&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">LOG_INFO</span><span class="p">(</span><span class="s">"log message"</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The OMEGA logging system provides the following macros for writing log messages
@@ -398,7 +399,7 @@ demonstrates how an argument of type <code class="docutils literal notranslate">
 message:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Array1DR8</span><span class="w"> </span><span class="n">var</span><span class="p">;</span>
 <span class="p">...</span>
-<span class="n">LOG_INFO</span><span class="p">(</span><span class="s">&quot;log message {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">var</span><span class="p">);</span>
+<span class="n">LOG_INFO</span><span class="p">(</span><span class="s">"log message {}"</span><span class="p">,</span><span class="w"> </span><span class="n">var</span><span class="p">);</span>
 </pre></div>
 </div>
 </section>

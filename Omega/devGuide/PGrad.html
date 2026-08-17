@@ -103,6 +103,7 @@
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
@@ -245,13 +246,13 @@ instance can be retrieved at any time using:</p>
 <h2>Creating additional instances<a class="headerlink" href="#creating-additional-instances" title="Permalink to this heading"></a></h2>
 <p>Additional named instances can be created using:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">*</span><span class="w"> </span><span class="n">MyPGrad</span><span class="w"> </span><span class="o">=</span>
-<span class="w">    </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="s">&quot;MyPGrad&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="n">VCoord</span><span class="p">,</span><span class="w"> </span><span class="n">Options</span><span class="p">);</span>
+<span class="w">    </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="s">"MyPGrad"</span><span class="p">,</span><span class="w"> </span><span class="n">Mesh</span><span class="p">,</span><span class="w"> </span><span class="n">VCoord</span><span class="p">,</span><span class="w"> </span><span class="n">Options</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">Mesh</span></code> is a pointer to a <code class="docutils literal notranslate"><span class="pre">HorzMesh</span></code>, <code class="docutils literal notranslate"><span class="pre">VCoord</span></code> is a pointer to a <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code>,
 and <code class="docutils literal notranslate"><span class="pre">Options</span></code> is a pointer to the <code class="docutils literal notranslate"><span class="pre">Config</span></code>. A named instance can be retrieved later
 using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">*</span><span class="w"> </span><span class="n">MyPGrad</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;MyPGrad&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">*</span><span class="w"> </span><span class="n">MyPGrad</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="s">"MyPGrad"</span><span class="p">);</span>
 </pre></div>
 </div>
 </section>
@@ -336,7 +337,7 @@ computation (a no-op).</p>
 <h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading"></a></h2>
 <p>The pressure gradient type is selected in the input YAML file:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">PressureGrad</span><span class="p">:</span>
-<span class="w">   </span><span class="nt">PressureGradType</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;centered&#39;</span>
+<span class="w">   </span><span class="nt">PressureGradType</span><span class="p">:</span><span class="w"> </span><span class="s">'centered'</span>
 </pre></div>
 </div>
 <p>Valid options for <code class="docutils literal notranslate"><span class="pre">PressureGradType</span></code> are:</p>
@@ -412,7 +413,7 @@ scheme and logs an informational message.</p>
 </pre></div>
 </div>
 <p>To remove a specific named instance:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">::</span><span class="n">erase</span><span class="p">(</span><span class="s">&quot;MyPGrad&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="o">::</span><span class="n">PressureGrad</span><span class="o">::</span><span class="n">erase</span><span class="p">(</span><span class="s">"MyPGrad"</span><span class="p">);</span>
 </pre></div>
 </div>
 </section>

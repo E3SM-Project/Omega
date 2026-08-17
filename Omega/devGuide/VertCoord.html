@@ -101,6 +101,7 @@
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
@@ -237,7 +238,7 @@ For example, <code class="docutils literal notranslate"><span class="pre">init(4
 </pre></div>
 </div>
 <p>This calls the constructor and places the instance in a map that can be used to retrieve the instance by name:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">auto</span> <span class="o">*</span><span class="n">DefVertCoord</span> <span class="o">=</span> <span class="n">VertCoord</span><span class="p">::</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Name&#39;</span><span class="p">);</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">auto</span> <span class="o">*</span><span class="n">DefVertCoord</span> <span class="o">=</span> <span class="n">VertCoord</span><span class="p">::</span><span class="n">get</span><span class="p">(</span><span class="s1">'Name'</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The constructor stores some information from <code class="docutils literal notranslate"><span class="pre">Decomp</span></code>, allocates the primary member variables that are computed by methods of the <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> class during a model timestep.
@@ -366,7 +367,7 @@ class that writes into this array.</p>
 <section id="removal">
 <h2>Removal<a class="headerlink" href="#removal" title="Permalink to this heading"></a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> instances can be removed by name:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertCoord</span><span class="o">.</span><span class="n">erase</span><span class="p">(</span><span class="s2">&quot;Name&quot;</span><span class="p">);</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VertCoord</span><span class="o">.</span><span class="n">erase</span><span class="p">(</span><span class="s2">"Name"</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>or all instances can be destroyed by calling:</p>
@@ -382,7 +383,7 @@ This is done with a <code class="docutils literal notranslate"><span class="pre"
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">parallel_for</span></code> is then called with this policy:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Kokkos</span><span class="o">::</span><span class="n">parallel_for</span><span class="p">(</span><span class="s">&quot;loopName&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Policy</span><span class="p">,</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TeamMember</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Member</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Kokkos</span><span class="o">::</span><span class="n">parallel_for</span><span class="p">(</span><span class="s">"loopName"</span><span class="p">,</span><span class="w"> </span><span class="n">Policy</span><span class="p">,</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TeamMember</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Member</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">       </span><span class="k">const</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">ICell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Member</span><span class="p">.</span><span class="n">league_rank</span><span class="p">();</span>
 <span class="w">     </span><span class="p">...</span>
 <span class="p">}</span>

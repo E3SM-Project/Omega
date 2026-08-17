@@ -101,6 +101,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
@@ -448,7 +449,7 @@ to be associated with Config.</p>
 <h4>4.2.1 File read and master config<a class="headerlink" href="#file-read-and-master-config" title="Permalink to this heading"></a></h4>
 <p>The most common use case should be creating a Config by reading a
 YAML configuration file using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Config</span><span class="w"> </span><span class="n">omegaConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigRead</span><span class="p">(</span><span class="s">&quot;omega.yml&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Config</span><span class="w"> </span><span class="n">omegaConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigRead</span><span class="p">(</span><span class="s">"omega.yml"</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>where the argument is the name for the YAML input file. In OMEGA,
@@ -463,11 +464,11 @@ variables at the top level and we need to first retrieve the sub-config
 associated with the local module/group. In the sample above, if we need
 to retrieve a variable from the hmix group, we first retrieve the hmix
 config and then the variable using:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Config</span><span class="w"> </span><span class="n">hmixConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigGet</span><span class="p">(</span><span class="n">omegaConfig</span><span class="p">,</span><span class="s">&quot;hmix&quot;</span><span class="p">,</span><span class="n">iErr</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Config</span><span class="w"> </span><span class="n">hmixConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigGet</span><span class="p">(</span><span class="n">omegaConfig</span><span class="p">,</span><span class="s">"hmix"</span><span class="p">,</span><span class="n">iErr</span><span class="p">);</span>
 <span class="n">Real</span><span class="w"> </span><span class="n">refWidth</span><span class="p">{</span><span class="mf">0.0</span><span class="p">};</span>
 <span class="kt">bool</span><span class="w"> </span><span class="n">useRefWidth</span><span class="p">{</span><span class="nb">false</span><span class="p">};</span>
-<span class="n">refWidth</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigGet</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hmixRefWidth&quot;</span><span class="p">,</span><span class="w">    </span><span class="n">iErr</span><span class="p">);</span>
-<span class="n">useRefWidth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigGet</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hmixUseRefWidth&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
+<span class="n">refWidth</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigGet</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">"hmixRefWidth"</span><span class="p">,</span><span class="w">    </span><span class="n">iErr</span><span class="p">);</span>
+<span class="n">useRefWidth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigGet</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">"hmixUseRefWidth"</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>where there is a retrieval function for all supported Omega data types:
@@ -480,7 +481,7 @@ return with a non-zero error argument.</p>
 <p>Another interface will allow the setting of a default value if the
 variable is missing from the input config.  This interface simply
 adds the default value as an additional argument, for example:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">refWidth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigGet</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hmixRefWidth&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">defaultVal</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">refWidth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigGet</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">"hmixRefWidth"</span><span class="p">,</span><span class="w"> </span><span class="n">defaultVal</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>In this case, if the variable does not exist, it will not only
@@ -493,9 +494,9 @@ being used because the entry is missing.</p>
 file read interface above, the capability modify a value is also
 required. The syntax is essentially the inverse of the get/retrieval
 above. Similar to that case, the sub-group will need to be retrieved first.</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Config</span><span class="w"> </span><span class="n">hmixConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigGet</span><span class="p">(</span><span class="n">omegaConfig</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hmix&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
-<span class="n">ConfigSet</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hmixRefWidth&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0e3</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
-<span class="n">ConfigSet</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hmixUseRefWidth&quot;</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Config</span><span class="w"> </span><span class="n">hmixConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigGet</span><span class="p">(</span><span class="n">omegaConfig</span><span class="p">,</span><span class="w"> </span><span class="s">"hmix"</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
+<span class="n">ConfigSet</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">"hmixRefWidth"</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0e3</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
+<span class="n">ConfigSet</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">"hmixUseRefWidth"</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>There will be overloaded interfaces for each supported type. For
@@ -510,14 +511,14 @@ the type and only performs the type cast on retrieval).</p>
 exist or add new entries to an existing group. We provide an Add
 interface to distinguish this case from the Set case above.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// For an existing subgroup:</span>
-<span class="n">Config</span><span class="w"> </span><span class="n">hmixConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigGet</span><span class="p">(</span><span class="n">omegaConfig</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hmix&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
-<span class="n">ConfigAdd</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hmixRefWidth&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0e3</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
-<span class="n">ConfigAdd</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hmixUseRefWidth&quot;</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
+<span class="n">Config</span><span class="w"> </span><span class="n">hmixConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigGet</span><span class="p">(</span><span class="n">omegaConfig</span><span class="p">,</span><span class="w"> </span><span class="s">"hmix"</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
+<span class="n">ConfigAdd</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">"hmixRefWidth"</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0e3</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
+<span class="n">ConfigAdd</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">"hmixUseRefWidth"</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
 
 <span class="c1">// To add a new subgroup:</span>
 <span class="n">Config</span><span class="w"> </span><span class="n">hmixConfig</span><span class="p">;</span><span class="w"> </span><span class="c1">// empty Config constructor</span>
-<span class="n">ConfigAdd</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hmixRefWidth&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0e3</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span><span class="w"> </span><span class="c1">// build subgroup</span>
-<span class="n">ConfigAdd</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hmixUseRefWidth&quot;</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
+<span class="n">ConfigAdd</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">"hmixRefWidth"</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0e3</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span><span class="w"> </span><span class="c1">// build subgroup</span>
+<span class="n">ConfigAdd</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="w"> </span><span class="s">"hmixUseRefWidth"</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">,</span><span class="w"> </span><span class="n">iErr</span><span class="p">);</span>
 <span class="n">ConfigAdd</span><span class="p">(</span><span class="n">omegaConfig</span><span class="p">,</span><span class="w"> </span><span class="n">hmixConfig</span><span class="p">);</span><span class="w"> </span><span class="c1">// add new subgroup to parent</span>
 </pre></div>
 </div>
@@ -534,14 +535,14 @@ Get/Set functions will perform the test internally. However, to
 satisfy requirement 2.11, we will add a function to test the
 existence of an entry, given a config or sub-config.
 Using the hmix example again:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ConfigExists</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="s">&quot;hmixRefWidth&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ConfigExists</span><span class="p">(</span><span class="n">hmixConfig</span><span class="p">,</span><span class="s">"hmixRefWidth"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">   </span><span class="c1">// variable exists, do stuff</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 <p>Note that this can also be used to test the existence of a complete
 sub-group as well:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="n">hmixExists</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigExists</span><span class="p">(</span><span class="n">omegaConfig</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hmix&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="n">hmixExists</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigExists</span><span class="p">(</span><span class="n">omegaConfig</span><span class="p">,</span><span class="w"> </span><span class="s">"hmix"</span><span class="p">);</span>
 </pre></div>
 </div>
 </section>
@@ -549,7 +550,7 @@ sub-group as well:</p>
 <h4>4.2.5 File write<a class="headerlink" href="#file-write" title="Permalink to this heading"></a></h4>
 <p>While we may decide to save provenance a different way, a write interface
 is supplied to write a configuration to an output YAML file:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigWrite</span><span class="p">(</span><span class="n">myConfig</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;outputFileName&quot;</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigWrite</span><span class="p">(</span><span class="n">myConfig</span><span class="p">,</span><span class="w"> </span><span class="s">"outputFileName"</span><span class="p">);</span>
 </pre></div>
 </div>
 </section>
