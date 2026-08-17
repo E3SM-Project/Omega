@@ -149,14 +149,11 @@ void TracerHorzAdvOnCell::init() {
        {NCellsAll},
        KOKKOS_LAMBDA(int ICell) { secondDerivativeOnCell(DerivTwo, ICell); });
    // Compute masks and coefficients
-   Kokkos::fence();
    MasksAndCoefficients masksAndCoefficients(
        Mesh, VCoord, DerivTwo, NAdvCellsForEdge, AdvCellsForEdge,
        AdvMaskHighOrder, AdvCoefs, AdvCoefs3rd);
-   Kokkos::fence();
    parallelFor(
        {NEdgesAll}, KOKKOS_LAMBDA(int IEdge) { masksAndCoefficients(IEdge); });
-   Kokkos::fence();
    if (FCT) {
       HProvInv = Array2DReal("FCTProvesionalLayerThickness", Mesh->NEdgesAll,
                              NVertLayers);

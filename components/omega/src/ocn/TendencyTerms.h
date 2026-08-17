@@ -505,7 +505,6 @@ class TracerHorzAdvOnCell {
                 TracerMin(ICell, K) =
                     Kokkos::min(TracerMin(ICell, K), TracerCur(ICell2, K));
              });
-         Team.team_barrier();
       }
    }
 
@@ -543,7 +542,6 @@ class TracerHorzAdvOnCell {
                 HighOrderFlx(IEdge, K) += TracerWgt * TracerCur(ICell, K) *
                                           AdvMaskHighOrder(IEdge, K);
              });
-         Team.team_barrier();
       }
       // Compute 2nd order fluxes where needed.
       // Also compute low order upwind horizontal flux (monotonic)
@@ -597,7 +595,6 @@ class TracerHorzAdvOnCell {
                 FlxIn(ICell, K) += Kokkos::max(
                     0.0_Real, SignedFactor * HighOrderFlx(IEdge, K));
              });
-         Team.team_barrier();
       }
       // Build the factors for the FCT
       // Computed using the bounds that were computed previously,
@@ -666,7 +663,6 @@ class TracerHorzAdvOnCell {
                 // WorkTend on LHS is total horiz advect tendency
                 WorkTend(ICell, K) += SignedFactor * HighOrderFlx(IEdge, K);
              });
-         Team.team_barrier();
       }
       const int KMin = MinLayerCell(ICell);
       const int KMax = MaxLayerCell(ICell);

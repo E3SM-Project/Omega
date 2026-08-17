@@ -886,7 +886,6 @@ void Tendencies::computeTracerTendenciesOnly(
                     Team, ICell, Dt, LocFluxPseudoThickEdge, LocPseudoThickCell,
                     LocNormalVelEdge);
              });
-         Kokkos::fence();
          for (int L = 0; L < NTracers; ++L) {
             parallelForOuter(
                 "Tend:FCTTracerCurFill", {Mesh->NCellsAll},
@@ -894,33 +893,28 @@ void Tendencies::computeTracerTendenciesOnly(
                    LocTracerHorzAdv.FCTTracerCurFill(Team, L, ICell,
                                                      LocTracerArray);
                 });
-            Kokkos::fence();
             parallelForOuter(
                 "Tend:FCTTracerCurFill", {Mesh->NCellsAll},
                 KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
                    LocTracerHorzAdv.FCTTracerMinMax(Team, ICell);
                 });
-            Kokkos::fence();
             parallelForOuter(
                 "Tend:FCTHighAndLowOrderFlux", {Mesh->NEdgesHaloH(1)},
                 KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
                    LocTracerHorzAdv.FCTHighAndLowOrderFlux(
                        Team, IEdge, LocFluxPseudoThickEdge, LocNormalVelEdge);
                 });
-            Kokkos::fence();
             parallelForOuter(
                 "Tend:FCTFluxInOut", {Mesh->NCellsHaloH(0)},
                 KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
                    LocTracerHorzAdv.FCTFluxInOut(Team, ICell, Dt,
                                                  LocPseudoThickCell);
                 });
-            Kokkos::fence();
             parallelForOuter(
                 "Tend:FCTRescaleHighOrderFlux", {Mesh->NEdgesHaloH(0)},
                 KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
                    LocTracerHorzAdv.FCTRescaleHighOrderFlux(Team, IEdge);
                 });
-            Kokkos::fence();
             parallelForOuter(
                 "Tend:FCTAccumulateHighOrderFlux", {Mesh->NCellsOwned},
                 KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
@@ -929,7 +923,6 @@ void Tendencies::computeTracerTendenciesOnly(
                    LocTracerHorzAdv.FCTAccumulateHighOrderFlux(
                        Team, ICell, Dt, Tend, LocPseudoThickCell);
                 });
-            Kokkos::fence();
             if (LocTracerHorzAdv.ComputeBudgets) {
                parallelForOuter(
                    "Tend:FCTComputeBudgetAdvectionEdgeFlux",
