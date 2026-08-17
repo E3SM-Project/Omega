@@ -155,22 +155,21 @@ void TracerHorzAdvOnCell::init() {
    parallelFor(
        {NEdgesAll}, KOKKOS_LAMBDA(int IEdge) { masksAndCoefficients(IEdge); });
    if (FCT) {
-      HProvInv = Array2DReal("FCTProvesionalLayerThickness", Mesh->NEdgesAll,
-                             NVertLayers);
-      HNewInv = Array2DReal("FCTProvesionalNewInverse", NEdgesAll, NVertLayers);
-      HProv   = Array2DReal("FCTProvesionalThickness", NCellsAll, NVertLayers);
-      TracerCur = Array2DReal("TracerCur", NCellsAll + 1, NVertLayers),
-      TracerMax = Array2DReal("FCTTracerMax", NCellsAll, NVertLayers);
-      TracerMin = Array2DReal("FCTTracerMin", NCellsAll, NVertLayers);
-      HighOrderFlx =
-          Array2DReal("FCTHighOrderFlx", std::max(NEdgesAll, NCellsAll) + 1,
-                      NVertLayers + 1);
-      LowOrderFlx =
-          Array2DReal("FCTLowOrderFlx", std::max(NEdgesAll, NCellsAll) + 1,
-                      NVertLayers + 1);
-      WorkTend = Array2DReal("WorkTend", NCellsAll + 1, NVertLayers);
-      FlxIn    = Array2DReal("FlxIn", NCellsAll + 1, NVertLayers);
-      FlxOut   = Array2DReal("FlxOut", NCellsAll + 1, NVertLayers);
+      const int NCellsFCT = NCellsAll + 1;
+      const int NEdgesFCT = NEdgesAll;
+      const int NVertsFCT = NVertLayers + 1;
+      HProvInv =
+          Array2DReal("FCTProvesionalLayerThickness", NEdgesFCT, NVertsFCT);
+      HNewInv   = Array2DReal("FCTProvesionalNewInverse", NEdgesFCT, NVertsFCT);
+      HProv     = Array2DReal("FCTProvesionalThickness", NCellsFCT, NVertsFCT);
+      TracerCur = Array2DReal("TracerCur", NCellsFCT, NVertsFCT),
+      TracerMax = Array2DReal("FCTTracerMax", NCellsFCT, NVertsFCT);
+      TracerMin = Array2DReal("FCTTracerMin", NCellsFCT, NVertsFCT);
+      HighOrderFlx = Array2DReal("FCTHighOrderFlx", NEdgesFCT, NVertsFCT);
+      LowOrderFlx  = Array2DReal("FCTLowOrderFlx", NEdgesFCT, NVertsFCT);
+      WorkTend     = Array2DReal("WorkTend", NCellsFCT, NVertsFCT);
+      FlxIn        = Array2DReal("FlxIn", NCellsFCT, NVertsFCT);
+      FlxOut       = Array2DReal("FlxOut", NCellsFCT, NVertsFCT);
       deepCopy(HProvInv, 0.0);
       deepCopy(HNewInv, 0.0);
       deepCopy(HProv, 0.0);
