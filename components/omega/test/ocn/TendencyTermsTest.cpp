@@ -48,44 +48,23 @@ struct TestSetupPlane {
    Real Lx = 1;
    Real Ly = SqrtThree / 2;
 
-   ErrorMeasures ExpectedDivErrors     = {0.00124886886594453264,
-                                          0.00124886886590977139};
-   ErrorMeasures ExpectedPVErrors      = {0.00807347170900282914,
-                                          0.00794755105765788429};
-   ErrorMeasures ExpectedGradErrors    = {0.00125026071878537952,
-                                          0.00134354611117262161};
-   ErrorMeasures ExpectedLaplaceErrors = {0.00113090174765822192,
-                                          0.00134324628763667899};
-   ErrorMeasures ExpectedTrHAdvErrors  = {0.0029211089892916243,
-                                          0.0024583038518548855};
-#ifdef OMEGA_SINGLE_PRECISION
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsH = {1.9073486e-06,
-                                                    1.9073486e-06};
-#else
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsH = {0.00, 0.00};
-#endif
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsT      = {0.00, 0.00};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsMin    = {4.000000000000000,
-                                                         3.1273853748885485};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsMax    = {3.989322101820906,
-                                                         2.6397002508968472};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsLFlx   = {0.036084391824351,
-                                                         0.093369312248885};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsHFlx   = {0.000000000000000,
-                                                         0.000000000000000};
-   ErrorMeasures ExpectedFCTHighAndLowOrderFlux_High  = {0.0165253009242944,
-                                                         0.012337271857415571};
-   ErrorMeasures ExpectedFCTHighAndLowOrderFlux_Low   = {0.036084391824351,
-                                                         0.092303444396272};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsFlxIn  = {1, 0.7829782033185549};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsFlxOut = {1, 0.7040759846240653};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsFlxInOut            = {1,
-                                                                      1.5053819233225736};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsescaleHighOrderFlux = {
-       1.001623430330361, 0.9996778602155226};
-   ErrorMeasures ExpectedFCTTracerHorAccumulateHighOrderFlux[2] = {
-       {0.01045387513810018, 0.05774265725842573},
-       {0.01045387513810018, 0.05627743044712789}};
+   ErrorMeasures ExpectedDivErrors              = {0.00124886886594453264,
+                                                   0.00124886886590977139};
+   ErrorMeasures ExpectedPVErrors               = {0.00807347170900282914,
+                                                   0.00794755105765788429};
+   ErrorMeasures ExpectedGradErrors             = {0.00125026071878537952,
+                                                   0.00134354611117262161};
+   ErrorMeasures ExpectedLaplaceErrors          = {0.00113090174765822192,
+                                                   0.00134324628763667899};
+   ErrorMeasures ExpectedTrHAdvErrors           = {0.0029211089892916243,
+                                                   0.0024583038518548855};
+   ErrorMeasures ExpectedFCTErrors              = {0.00, 0.00};
+   ErrorMeasures ExpectedFCT_High               = {8.673617379884035e-18,
+                                                   1.1608832971817906e-17};
+   ErrorMeasures ExpectedFCT_Low                = {1.0095554103513882e-15,
+                                                   1.0095554103514163e-15};
+   ErrorMeasures ExpectedFCTToNonFCT            = {1.182357060681534e-15,
+                                                   6.487684357904678e-16};
    ErrorMeasures ExpectedTrDel2Errors           = {0.00334357193650093847,
                                                    0.00290978146207349032};
    ErrorMeasures ExpectedTrDel4Errors           = {0.00508833446725232875,
@@ -94,6 +73,10 @@ struct TestSetupPlane {
    ErrorMeasures ExpectedSfcStressForcingErrors = {0, 0};
    ErrorMeasures ExpectedBottomDragErrors       = {0.033848740052302935,
                                                    0.01000133508329411};
+
+   KOKKOS_FUNCTION Real velEdgeX(Real X, Real Y) const { return 2 / Lx; }
+
+   KOKKOS_FUNCTION Real velEdgeY(Real X, Real Y) const { return 3 / Ly; }
 
    KOKKOS_FUNCTION Real vectorX(Real X, Real Y) const {
       return std::sin(TwoPi * X / Lx) * std::cos(TwoPi * Y / Ly);
@@ -216,49 +199,37 @@ struct TestSetupSphere {
    // TODO: get this from the mesh
    Real Radius = REarth;
 
-   ErrorMeasures ExpectedDivErrors               = {0.013652414501664885,
-                                                    0.0036904315983599676};
-   ErrorMeasures ExpectedPVErrors                = {0.0219217796608757037,
-                                                    0.0122537418367830303};
-   ErrorMeasures ExpectedGradErrors              = {0.0019094381714837498,
-                                                    0.0015218320661105702};
-   ErrorMeasures ExpectedLaplaceErrors           = {0.28193638497826856,
-                                                    0.270546491554748};
-   ErrorMeasures ExpectedTrHAdvErrors            = {0.013259410329645643,
-                                                    0.004094907022292395};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsH = {1.018132e-05, 5.731925e-06};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsT = {0, 0};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsMin      = {3.999579401557967,
-                                                           3.0836281234295635};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsMax      = {3.9868502555946823,
-                                                           2.712542674500614};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsLFlx     = {0.013961840219332,
-                                                           0.010140955894313};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsHFlx     = {0.000000000000000,
-                                                           0.000000000000000};
-   ErrorMeasures ExpectedFCTHighAndLowOrderFlux_High    = {426256.39661430614,
-                                                           6532904825455.0130};
-   ErrorMeasures ExpectedFCTHighAndLowOrderFlux_Low     = {952854.2803370472,
-                                                           52005531508915.62};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsFlxIn    = {0.9999999991127118,
-                                                           0.020062237037249};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsFlxOut   = {1.000000000000000,
-                                                           0.04471474159043722};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsFlxInOut = {1.000000000000000,
-                                                           0.04901906373124676};
-   ErrorMeasures ExpectedFCTTracerHorzAdvErrorsescaleHighOrderFlux = {
-       426255.39661430614, 68192.88195155785};
-   ErrorMeasures ExpectedFCTTracerHorAccumulateHighOrderFlux[2] = {
-       {111602.23404252343, 178627.1237154654},
-       {111606.20044738495, 177587.373552468}};
-   ErrorMeasures ExpectedTrDel2Errors           = {0.04865718541236144,
-                                                   0.005105510870642706};
-   ErrorMeasures ExpectedTrDel4Errors           = {0.0008646345116716073,
-                                                   0.0007118574326665881};
+   ErrorMeasures ExpectedDivErrors     = {0.013652414501664885,
+                                          0.0036904315983599676};
+   ErrorMeasures ExpectedPVErrors      = {0.0219217796608757037,
+                                          0.0122537418367830303};
+   ErrorMeasures ExpectedGradErrors    = {0.0019094381714837498,
+                                          0.0015218320661105702};
+   ErrorMeasures ExpectedLaplaceErrors = {0.28193638497826856,
+                                          0.270546491554748};
+   ErrorMeasures ExpectedTrHAdvErrors  = {0.013259410329645643,
+                                          0.004094907022292395};
+   ErrorMeasures ExpectedFCTErrors     = {0, 0};
+   ErrorMeasures ExpectedFCT_High      = {3.469446951953614e-17,
+                                          6.880761675357888e-17};
+   ErrorMeasures ExpectedFCT_Low       = {952854.2803370472, 52005531508915.62};
+   ErrorMeasures ExpectedFCTToNonFCT  = {111602.23404252343, 178627.1237154654};
+   ErrorMeasures ExpectedTrDel2Errors = {0.04865718541236144,
+                                         0.005105510870642706};
+   ErrorMeasures ExpectedTrDel4Errors = {0.0008646345116716073,
+                                         0.0007118574326665881};
    ErrorMeasures ExpectedSurfTrRestErrors       = {0, 0};
    ErrorMeasures ExpectedSfcStressForcingErrors = {0, 0};
    ErrorMeasures ExpectedBottomDragErrors       = {0.0015333449035655053,
                                                    0.0014897009917655022};
+
+   KOKKOS_FUNCTION Real velEdgeX(Real X, Real Y) const {
+      return 2 * Radius * X;
+   }
+
+   KOKKOS_FUNCTION Real velEdgeY(Real X, Real Y) const {
+      return 3 * Radius * Y;
+   }
 
    KOKKOS_FUNCTION Real vectorX(Real Lon, Real Lat) const {
       return -Radius * std::pow(std::sin(Lon), 2) * std::pow(std::cos(Lat), 3);
@@ -1178,13 +1149,11 @@ int testTracerHorzAdvOnCell(int NVertLayers, int NTracers, Real RTol) {
           TrHorzAdvOnC(L, IEdge, KLayer, TrCell, ThickEdge, NormalVelocity);
        });
 
-   Kokkos::fence();
    parallelFor(
        {NTracers, Mesh->NCellsOwned, NVertLayers},
        KOKKOS_LAMBDA(int L, int ICell, int KLayer) {
           TrHorzAdvOnC(NumTrFluxDiv, L, ICell, KLayer);
        });
-   Kokkos::fence();
 
    ErrorMeasures TrHAdvErrors;
    Err +=
@@ -1223,66 +1192,58 @@ int testFCTTracerHorzAdvOnCell(int NVertLayers, int NTracers, Real RTol) {
 
    I4 Err = 0;
    TestSetup Setup;
-   const auto Mesh   = HorzMesh::getDefault();
-   const auto VCoord = VertCoord::getDefault();
+   const auto Mesh     = HorzMesh::getDefault();
+   const auto VCoord   = VertCoord::getDefault();
+   const int NCellsFCT = Mesh->NCellsAll + 1;
+   const int NEdgesFCT = Mesh->NEdgesAll;
+   const int NVertsFCT = NVertLayers + 1;
 
    // Compute exact result
    Array3DReal ExactTrFluxDiv("ExactTrFluxDiv", NTracers, Mesh->NCellsOwned,
-                              NVertLayers);
+                              NVertsFCT);
 
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.tracerFluxDiv(X, Y); },
        ExactTrFluxDiv, Geom, Mesh, OnCell, ExchangeHalos::No);
 
    // Set input arrays
-   Array2DReal NormalVelocity("NormalVelocity", Mesh->NEdgesSize, NVertLayers);
+   Array2DReal NormalVelocity("NormalVelocity", Mesh->NEdgesSize, NVertsFCT);
 
-   Err += setVectorEdge(
-       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
-          VecField[0] = Setup.vectorX(X, Y);
-          VecField[1] = Setup.vectorY(X, Y);
-       },
-       NormalVelocity, EdgeComponent::Normal, Geom, Mesh);
-
-   Array3DReal TrCell("TrCell", NTracers, Mesh->NCellsAll, NVertLayers);
-   Array3DReal TracerTend("TracerTend", NTracers, Mesh->NCellsAll, NVertLayers);
+   Array3DReal TrCell("TrCell", NTracers, Mesh->NCellsAll, NVertsFCT);
+   Array2DReal Tend("Tend", Mesh->NCellsAll, NVertsFCT);
+   Array3DReal TendNoFCT("TendNoFCT", NTracers, Mesh->NCellsAll, NVertsFCT);
    Array2DReal FluxPseudoThickEdge("FluxPseudoThickEdge", Mesh->NEdgesAll,
-                                   NVertLayers);
-   Array2DReal LayerThickness("LayerThickness", Mesh->NCellsSize, NVertLayers);
-   Array2DReal NormVelEdge("NormVelEdge", Mesh->NEdgesAll, NVertLayers);
-   Array2DReal HProvInvExact("HProvInvExact", Mesh->NCellsSize, NVertLayers);
-   Array2DReal HProvExact("HProvExact", Mesh->NCellsSize, NVertLayers);
-   Array2DReal HNewInvExact("HProvExact", Mesh->NCellsSize, NVertLayers);
-   Array2DReal TracerSubView("TracerSubView", Mesh->NCellsAll, NVertLayers);
-   Array2DReal CellSubView0("CellSubView0", Mesh->NCellsAll, NVertLayers);
-   Array2DReal FluxSubView0("FluxSubView0", Mesh->NEdgesAll, NVertLayers);
-   Array2DReal FluxSubView1("FluxSubView1", Mesh->NEdgesAll, NVertLayers);
-   Array2DReal FluxSubView3("FluxSubView3", Mesh->NEdgesAll, NVertLayers);
-   Array2DReal TracerMaxExact("TracerMaxExact", Mesh->NCellsSize, NVertLayers);
-   Array2DReal TracerMinExact("TracerMinExact", Mesh->NCellsSize, NVertLayers);
+                                   NVertsFCT);
+   Array2DReal LayerThickness("LayerThickness", Mesh->NCellsSize, NVertsFCT);
+   Array2DReal NormVelEdge("NormVelEdge", Mesh->NEdgesAll, NVertsFCT);
+   Array2DReal HProvInvExact("HProvInvExact", Mesh->NCellsSize, NVertsFCT);
+   Array2DReal HProvExact("HProvExact", Mesh->NCellsSize, NVertsFCT);
+   Array2DReal HNewInvExact("HProvExact", Mesh->NCellsSize, NVertsFCT);
+   Array2DReal TracerSubView("TracerSubView", Mesh->NCellsAll, NVertsFCT);
+   Array2DReal CellSubView("CellSubView", Mesh->NCellsAll, NVertsFCT);
+   Array2DReal FluxSubView("FluxSubView", Mesh->NEdgesAll, NVertsFCT);
    Array2DReal ReferenceSolution("ReferenceSolution", Mesh->NEdgesAll,
-                                 NVertLayers);
-   Err += setScalar(
-       KOKKOS_LAMBDA(Real X, Real Y) {
-          const Real Z = -Setup.pseudoThick(X, Y);
-          return Z;
-       },
-       TrCell, Geom, Mesh, OnCell, ExchangeHalos::No);
-
+                                 NVertsFCT);
+   deepCopy(TrCell, 1._Real);
+   deepCopy(Tend, 0._Real);
+   deepCopy(TendNoFCT, 0._Real);
+   deepCopy(Kokkos::subview(TrCell, Kokkos::ALL, Kokkos::ALL, NVertLayers),
+            0._Real);
    deepCopy(FluxPseudoThickEdge, 1._Real);
    deepCopy(LayerThickness, 1._Real);
    deepCopy(HProvExact, 1._Real);
+   deepCopy(Kokkos::subview(HProvExact, Kokkos::ALL, NVertLayers), 0._Real);
    deepCopy(HProvInvExact, 1._Real);
+   deepCopy(Kokkos::subview(HProvInvExact, Kokkos::ALL, NVertLayers), 0._Real);
    deepCopy(HNewInvExact, 1._Real);
+   deepCopy(Kokkos::subview(HNewInvExact, Kokkos::ALL, NVertLayers), 0._Real);
    deepCopy(NormVelEdge, 1._Real);
-   deepCopy(TracerMaxExact, 1._Real);
-   deepCopy(TracerMinExact, 1._Real);
-   deepCopy(ReferenceSolution, 1._Real);
-   deepCopy(CellSubView0, 1._Real);
+   deepCopy(ReferenceSolution, 0._Real);
+   deepCopy(CellSubView, 0._Real);
 
    // Compute numerical result
    Array3DReal NumTrFluxDiv("NumTrFluxDiv", NTracers, Mesh->NCellsOwned,
-                            NVertLayers);
+                            NVertsFCT);
 
    VertAdv::init();
    const auto VAdv = VertAdv::getDefault();
@@ -1294,151 +1255,213 @@ int testFCTTracerHorzAdvOnCell(int NVertLayers, int NTracers, Real RTol) {
    TrHorzAdvOnC.init();
 
    const Real Dt = 1;
-   parallelFor(
-       {Mesh->NCellsAll, NVertLayers},
-       KOKKOS_LAMBDA(const int ICell, const int K) {
-          TrHorzAdvOnC.FCTProvisionaLayerThicknesses(
-              ICell, K, Dt, FluxPseudoThickEdge, LayerThickness, NormVelEdge);
-       });
-   Kokkos::fence();
+   ErrorMeasures FCTErrors;
 
-   const auto HProvInv = TrHorzAdvOnC.GetHProvInv();
-   const auto HProv    = TrHorzAdvOnC.GetHProv();
-   const auto HNewInv  = TrHorzAdvOnC.GetHNewInv();
+   {
+      setVectorEdge(
+          KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+             VecField[0] = Setup.velEdgeX(X, Y);
+             VecField[1] = Setup.velEdgeY(X, Y);
+          },
+          NormalVelocity, EdgeComponent::Normal, Geom, Mesh);
 
-   const Real ATol = 1.0e-10;
-   ErrorMeasures FCTTracerHorzAdvErrors;
-   Err +=
-       computeErrors(FCTTracerHorzAdvErrors, HProv, HProvExact, Mesh, OnCell);
-   Err += checkErrors("TendencyTermsTest", "FCTHProv", FCTTracerHorzAdvErrors,
-                      Setup.ExpectedFCTTracerHorzAdvErrorsH, RTol, ATol);
-   if (Err == 0)
-      LOG_INFO("TendencyTermsTest: FCTHProv PASS");
+      parallelFor(
+          {Mesh->NCellsAll, NVertLayers},
+          KOKKOS_LAMBDA(const int ICell, const int K) {
+             TrHorzAdvOnC.FCTProvisionaLayerThicknesses(
+                 ICell, K, Dt, FluxPseudoThickEdge, LayerThickness,
+                 NormalVelocity);
+          });
+      Kokkos::fence();
 
-   Err += computeErrors(FCTTracerHorzAdvErrors, HProvInv, HProvInvExact, Mesh,
-                        OnCell);
-   Err +=
-       checkErrors("TendencyTermsTest", "FCTHProvInv", FCTTracerHorzAdvErrors,
-                   Setup.ExpectedFCTTracerHorzAdvErrorsH, RTol, ATol);
-   if (Err == 0)
-      LOG_INFO("TendencyTermsTest: FCTHProvInv PASS");
-   Err += computeErrors(FCTTracerHorzAdvErrors, HNewInv, HNewInvExact, Mesh,
-                        OnCell);
-   Err += checkErrors("TendencyTermsTest", "FCTHNewInv", FCTTracerHorzAdvErrors,
-                      Setup.ExpectedFCTTracerHorzAdvErrorsH, RTol, ATol);
-   if (Err == 0)
-      LOG_INFO("TendencyTermsTest: FCTHNewInv PASS");
+      const auto HProvInv = TrHorzAdvOnC.GetHProvInv();
+      const auto HProv    = TrHorzAdvOnC.GetHProv();
+      const auto HNewInv  = TrHorzAdvOnC.GetHNewInv();
 
+      const Real ATol = 1.0e-10;
+      Err += computeErrors(FCTErrors, HProv, HProvExact, Mesh, OnCell);
+      Err += checkErrors("TendencyTermsTest", "FCTHProv", FCTErrors,
+                         Setup.ExpectedFCTErrors, RTol, ATol);
+
+      if (Err == 0)
+         LOG_INFO("TendencyTermsTest: FCTHProv PASS");
+
+      Err += computeErrors(FCTErrors, HProvInv, HProvInvExact, Mesh, OnCell);
+      Err += checkErrors("TendencyTermsTest", "FCTHProvInv", FCTErrors,
+                         Setup.ExpectedFCTErrors, RTol, ATol);
+      if (Err == 0)
+         LOG_INFO("TendencyTermsTest: FCTHProvInv PASS");
+      Err += computeErrors(FCTErrors, HNewInv, HNewInvExact, Mesh, OnCell);
+      Err += checkErrors("TendencyTermsTest", "FCTHNewInv", FCTErrors,
+                         Setup.ExpectedFCTErrors, RTol, ATol);
+      if (Err == 0)
+         LOG_INFO("TendencyTermsTest: FCTHNewInv PASS");
+   }
    for (int L = 0; L < NTracers; ++L) {
+      parallelFor(
+          {Mesh->NCellsAll, NVertLayers},
+          KOKKOS_LAMBDA(const int ICell, const int K) {
+             TrCell(L, ICell, K) = L + ICell + K;
+          });
       parallelFor(
           {Mesh->NCellsAll, NVertLayers},
           KOKKOS_LAMBDA(const int ICell, const int K) {
              TrHorzAdvOnC.FCTTracerCurFill(L, ICell, K, TrCell);
           });
-      Kokkos::fence();
       const Array2DReal TracerCur = TrHorzAdvOnC.GetTracerCur();
       const Array2DReal Tracers =
           Kokkos::subview(TrCell, L, Kokkos::ALL, Kokkos::ALL);
       deepCopy(TracerSubView, Tracers);
-      Err += computeErrors(FCTTracerHorzAdvErrors, TracerCur, TracerSubView,
-                           Mesh, OnCell);
-      Err += checkErrors("TendencyTermsTest", "FCTTracerCurFill",
-                         FCTTracerHorzAdvErrors,
-                         Setup.ExpectedFCTTracerHorzAdvErrorsT, RTol);
+      Err += computeErrors(FCTErrors, TracerCur, TracerSubView, Mesh, OnCell);
+      Err += checkErrors("TendencyTermsTest", "FCTTracerCurFill", FCTErrors,
+                         Setup.ExpectedFCTErrors, RTol);
       if (Err == 0)
          LOG_INFO("TendencyTermsTest: FCTTracerCurFill_" + std::to_string(L) +
                   " PASS");
    }
-
-   const Array1DI4 MinLayerCell = VCoord->MinLayerCell;
-   const Array1DI4 MaxLayerCell = VCoord->MaxLayerCell;
-   const int L                  = 0;
-   parallelFor(
-       {Mesh->NCellsAll, NVertLayers},
-       KOKKOS_LAMBDA(const int ICell, const int K) {
-          TrHorzAdvOnC.FCTTracerCurFill(L, ICell, K, TrCell);
-       });
-   Kokkos::fence();
-   parallelForOuter(
-       {Mesh->NCellsHaloH(0)},
-       KOKKOS_LAMBDA(const int ICell, const TeamMember &Team) {
-          TrHorzAdvOnC.FCTTracerMinMax(Team, ICell);
-       });
-   Kokkos::fence();
-   const auto TracerMin = TrHorzAdvOnC.GetTracerMin();
-   const auto TracerMax = TrHorzAdvOnC.GetTracerMax();
-
-   Err += computeErrors(FCTTracerHorzAdvErrors, TracerMin, TracerMinExact, Mesh,
-                        OnCell);
-
-   Err +=
-       checkErrors("TendencyTermsTest", "FCTTracerMin", FCTTracerHorzAdvErrors,
-                   Setup.ExpectedFCTTracerHorzAdvErrorsMin, RTol);
-   if (Err == 0)
-      LOG_INFO("TendencyTermsTest: FCTTracerMin PASS");
-   Err += computeErrors(FCTTracerHorzAdvErrors, TracerMax, TracerMaxExact, Mesh,
-                        OnCell);
-   Err +=
-       checkErrors("TendencyTermsTest", "FCTTracerMax", FCTTracerHorzAdvErrors,
-                   Setup.ExpectedFCTTracerHorzAdvErrorsMax, RTol);
-   if (Err == 0)
-      LOG_INFO("TendencyTermsTest: FCTTracerMax PASS");
-
    {
+      setVectorEdge(
+          KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+             VecField[0] = Setup.velEdgeX(X, Y);
+             VecField[1] = Setup.velEdgeY(X, Y);
+          },
+          NormalVelocity, EdgeComponent::Normal, Geom, Mesh);
+      deepCopy(TrCell, 1._Real);
+      deepCopy(Kokkos::subview(TrCell, Kokkos::ALL, Kokkos::ALL, NVertLayers),
+               0._Real);
+      const int L = 0;
+      parallelFor(
+          {Mesh->NCellsAll, NVertLayers},
+          KOKKOS_LAMBDA(const int ICell, const int K) {
+             TrHorzAdvOnC.FCTTracerCurFill(L, ICell, K, TrCell);
+          });
+      parallelFor(
+          {Mesh->NCellsAll, NVertLayers},
+          KOKKOS_LAMBDA(const int ICell, const int K) {
+             TrHorzAdvOnC.FCTProvisionaLayerThicknesses(
+                 ICell, K, Dt, FluxPseudoThickEdge, LayerThickness,
+                 NormalVelocity);
+          });
       parallelForOuter(
           {Mesh->NEdgesHaloH(1)},
           KOKKOS_LAMBDA(const int IEdge, const TeamMember &Team) {
              TrHorzAdvOnC.FCTHighAndLowOrderFlux(
-                 Team, IEdge, FluxPseudoThickEdge, NormVelEdge);
+                 Team, IEdge, FluxPseudoThickEdge, NormalVelocity);
           });
       Kokkos::fence();
-      Array2DReal HighOrderFlx = TrHorzAdvOnC.GetHighOrderFlx();
-      Err += computeErrors(FCTTracerHorzAdvErrors, HighOrderFlx, FluxSubView3,
-                           Mesh, OnEdge);
-      Err += checkErrors("TendencyTermsTest", "FCTHighAndLowOrderFlux_High",
-                         FCTTracerHorzAdvErrors,
-                         Setup.ExpectedFCTHighAndLowOrderFlux_High, RTol);
-      if (Err == 0)
-         LOG_INFO("TendencyTermsTest: FCTHighAndLowOrderFlux_High PASS");
+
       Array2DReal LowOrderFlx = TrHorzAdvOnC.GetLowOrderFlx();
-      Err += computeErrors(FCTTracerHorzAdvErrors, LowOrderFlx, FluxSubView3,
-                           Mesh, OnEdge);
+
+      parallelFor(
+          {Mesh->NEdgesHaloH(1), NVertLayers},
+          KOKKOS_LAMBDA(const int IEdge, const int K) {
+             const double DvEdgeFromMeshFile = 0.012028130608117;
+             FluxSubView(IEdge, K) =
+                 DvEdgeFromMeshFile * NormalVelocity(IEdge, K);
+          });
+
+      Err += computeErrors(FCTErrors, LowOrderFlx, FluxSubView, Mesh, OnEdge);
       Err += checkErrors("TendencyTermsTest", "FCTHighAndLowOrderFlux_Low",
-                         FCTTracerHorzAdvErrors,
-                         Setup.ExpectedFCTHighAndLowOrderFlux_Low, RTol);
+                         FCTErrors, Setup.ExpectedFCT_Low, RTol);
       if (Err == 0)
          LOG_INFO("TendencyTermsTest: FCTHighAndLowOrderFlux_Low PASS");
+   }
+   {
+      setVectorEdge(
+          KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+             VecField[0] = Setup.vectorX(X, Y);
+             VecField[1] = Setup.vectorY(X, Y);
+          },
+          NormalVelocity, EdgeComponent::Normal, Geom, Mesh);
+
+      deepCopy(TrCell, 1._Real);
+      deepCopy(Kokkos::subview(TrCell, Kokkos::ALL, Kokkos::ALL, NVertLayers),
+               0._Real);
+      const int L = 0;
+      parallelFor(
+          {Mesh->NCellsAll, NVertLayers},
+          KOKKOS_LAMBDA(const int ICell, const int K) {
+             TrHorzAdvOnC.FCTTracerCurFill(L, ICell, K, TrCell);
+          });
+      parallelFor(
+          {Mesh->NCellsAll, NVertLayers},
+          KOKKOS_LAMBDA(const int ICell, const int K) {
+             TrHorzAdvOnC.FCTProvisionaLayerThicknesses(
+                 ICell, K, Dt, FluxPseudoThickEdge, LayerThickness,
+                 NormalVelocity);
+          });
+      parallelForOuter(
+          {Mesh->NEdgesHaloH(1)},
+          KOKKOS_LAMBDA(const int IEdge, const TeamMember &Team) {
+             TrHorzAdvOnC.FCTHighAndLowOrderFlux(
+                 Team, IEdge, FluxPseudoThickEdge, NormalVelocity);
+          });
+      Kokkos::fence();
+
+      parallelFor(
+          {Mesh->NEdgesHaloH(1), NVertLayers},
+          KOKKOS_LAMBDA(const int IEdge, const int K) {
+             FluxSubView(IEdge, K) = 0;
+          });
+
+      Array2DReal HighOrderFlx = TrHorzAdvOnC.GetHighOrderFlx();
+      Err += computeErrors(FCTErrors, HighOrderFlx, FluxSubView, Mesh, OnEdge);
+      Err += checkErrors("TendencyTermsTest", "FCTHighAndLowOrderFlux_High",
+                         FCTErrors, Setup.ExpectedFCT_High, RTol);
+      if (Err == 0)
+         LOG_INFO("TendencyTermsTest: FCTHighAndLowOrderFlux_High PASS");
+
       Kokkos::fence();
    }
    {
+      setVectorEdge(
+          KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+             VecField[0] = Setup.velEdgeX(X, Y);
+             VecField[1] = Setup.velEdgeY(X, Y);
+          },
+          NormalVelocity, EdgeComponent::Normal, Geom, Mesh);
+
+      deepCopy(TrCell, 1._Real);
+      deepCopy(Kokkos::subview(TrCell, Kokkos::ALL, Kokkos::ALL, NVertLayers),
+               0._Real);
+      const int L = 0;
+      parallelFor(
+          {Mesh->NCellsAll, NVertLayers},
+          KOKKOS_LAMBDA(const int ICell, const int K) {
+             TrHorzAdvOnC.FCTTracerCurFill(L, ICell, K, TrCell);
+          });
+      parallelFor(
+          {Mesh->NCellsAll, NVertLayers},
+          KOKKOS_LAMBDA(const int ICell, const int K) {
+             TrHorzAdvOnC.FCTProvisionaLayerThicknesses(
+                 ICell, K, Dt, FluxPseudoThickEdge, LayerThickness,
+                 NormalVelocity);
+          });
+      parallelForOuter(
+          {Mesh->NEdgesHaloH(1)},
+          KOKKOS_LAMBDA(const int IEdge, const TeamMember &Team) {
+             TrHorzAdvOnC.FCTHighAndLowOrderFlux(
+                 Team, IEdge, FluxPseudoThickEdge, NormalVelocity);
+          });
       parallelForOuter(
           {Mesh->NCellsHaloH(0)},
           KOKKOS_LAMBDA(const int ICell, const TeamMember &Team) {
              TrHorzAdvOnC.FCTFluxInOut(Team, ICell, Dt, LayerThickness);
           });
+
       Kokkos::fence();
       Array2DReal FlxIn = TrHorzAdvOnC.GetFlxIn();
-      Err += computeErrors(FCTTracerHorzAdvErrors, FlxIn, CellSubView0, Mesh,
-                           OnCell);
-      Err +=
-          checkErrors("TendencyTermsTest", "FCTFluxIn", FCTTracerHorzAdvErrors,
-                      Setup.ExpectedFCTTracerHorzAdvErrorsFlxIn, RTol);
+      Err += computeErrors(FCTErrors, FlxIn, CellSubView, Mesh, OnCell);
+      Err += checkErrors("TendencyTermsTest", "FCTFluxIn", FCTErrors,
+                         Setup.ExpectedFCTErrors, RTol);
       if (Err == 0)
          LOG_INFO("TendencyTermsTest: FCTFluxIn PASS");
       Array2DReal FlxOut = TrHorzAdvOnC.GetFlxOut();
-      Err += computeErrors(FCTTracerHorzAdvErrors, FlxOut, CellSubView0, Mesh,
-                           OnCell);
-      Err +=
-          checkErrors("TendencyTermsTest", "FCTFluxOut", FCTTracerHorzAdvErrors,
-                      Setup.ExpectedFCTTracerHorzAdvErrorsFlxOut, RTol);
+      Err += computeErrors(FCTErrors, FlxOut, CellSubView, Mesh, OnCell);
+      Err += checkErrors("TendencyTermsTest", "FCTFluxOut", FCTErrors,
+                         Setup.ExpectedFCTErrors, RTol);
       if (Err == 0)
          LOG_INFO("TendencyTermsTest: FCTFluxOut PASS");
-      Err += computeErrors(FCTTracerHorzAdvErrors, FlxOut, FlxIn, Mesh, OnCell);
-      Err += checkErrors("TendencyTermsTest", "FCTFluxInOut",
-                         FCTTracerHorzAdvErrors,
-                         Setup.ExpectedFCTTracerHorzAdvErrorsFlxInOut, RTol);
-      if (Err == 0)
-         LOG_INFO("TendencyTermsTest: FCTFluxInOut PASS");
       Kokkos::fence();
    }
    {
@@ -1449,43 +1472,88 @@ int testFCTTracerHorzAdvOnCell(int NVertLayers, int NTracers, Real RTol) {
           });
       Kokkos::fence();
       const Array2DReal HighOrderFlx = TrHorzAdvOnC.GetHighOrderFlx();
-      Err += computeErrors(FCTTracerHorzAdvErrors, HighOrderFlx,
-                           ReferenceSolution, Mesh, OnEdge);
-      Err += checkErrors(
-          "TendencyTermsTest", "FCTRescaleHighOrderFlux",
-          FCTTracerHorzAdvErrors,
-          Setup.ExpectedFCTTracerHorzAdvErrorsescaleHighOrderFlux, RTol);
+      Err += computeErrors(FCTErrors, HighOrderFlx, ReferenceSolution, Mesh,
+                           OnEdge);
+      Err += checkErrors("TendencyTermsTest", "FCTRescaleHighOrderFlux",
+                         FCTErrors, Setup.ExpectedFCTErrors, RTol);
       if (Err == 0)
          LOG_INFO("TendencyTermsTest: FCTRescaleHighOrderFlux PASS");
       Kokkos::fence();
    }
-   for (int L = 0; L < NTracers; ++L) {
+   {
+      setVectorEdge(
+          KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+             VecField[0] = Setup.vectorX(X, Y);
+             VecField[1] = Setup.vectorY(X, Y);
+          },
+          NormalVelocity, EdgeComponent::Normal, Geom, Mesh);
+
+      deepCopy(TrCell, 1._Real);
+      deepCopy(Kokkos::subview(TrCell, Kokkos::ALL, Kokkos::ALL, NVertLayers),
+               0._Real);
+      const int L = 0;
       parallelFor(
           {Mesh->NCellsAll, NVertLayers},
           KOKKOS_LAMBDA(const int ICell, const int K) {
              TrHorzAdvOnC.FCTTracerCurFill(L, ICell, K, TrCell);
           });
-      Kokkos::fence();
+      parallelFor(
+          {Mesh->NCellsAll, NVertLayers},
+          KOKKOS_LAMBDA(const int ICell, const int K) {
+             TrHorzAdvOnC.FCTProvisionaLayerThicknesses(
+                 ICell, K, Dt, FluxPseudoThickEdge, LayerThickness,
+                 NormalVelocity);
+          });
+      parallelForOuter(
+          {Mesh->NEdgesHaloH(1)},
+          KOKKOS_LAMBDA(const int IEdge, const TeamMember &Team) {
+             TrHorzAdvOnC.FCTHighAndLowOrderFlux(
+                 Team, IEdge, FluxPseudoThickEdge, NormalVelocity);
+          });
+      parallelForOuter(
+          {Mesh->NCellsHaloH(0)},
+          KOKKOS_LAMBDA(const int ICell, const TeamMember &Team) {
+             TrHorzAdvOnC.FCTFluxInOut(Team, ICell, Dt, LayerThickness);
+          });
       parallelForOuter(
           {Mesh->NCellsOwned},
           KOKKOS_LAMBDA(const int ICell, const TeamMember &Team) {
-             const Array2DReal Tend =
-                 Kokkos::subview(TracerTend, L, Kokkos::ALL, Kokkos::ALL);
              TrHorzAdvOnC.FCTAccumulateHighOrderFlux(Team, ICell, Dt, Tend,
                                                      LayerThickness);
           });
       Kokkos::fence();
-      const Array2DReal TracerCur = TrHorzAdvOnC.GetTracerCur();
-      const Array2DReal TendCur =
-          Kokkos::subview(TracerTend, L, Kokkos::ALL, Kokkos::ALL);
-      deepCopy(TracerSubView, TendCur);
-      Err += computeErrors(FCTTracerHorzAdvErrors, TracerCur, TracerSubView,
-                           Mesh, OnCell);
+
+      const auto &MinLayerEdgeBot = VCoord->MinLayerEdgeBot;
+      const auto &MaxLayerEdgeTop = VCoord->MaxLayerEdgeTop;
+      const auto &MinLayerCell    = VCoord->MinLayerCell;
+      const auto &MaxLayerCell    = VCoord->MaxLayerCell;
+      parallelForOuter(
+          "Tend:TracerHorzAdv.init", {Mesh->NEdgesAll},
+          KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+             const int KMin = MinLayerEdgeBot(IEdge);
+             const int KMax = MaxLayerEdgeTop(IEdge);
+             parallelForInner(
+                 Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+                    TrHorzAdvOnC(L, IEdge, K, TrCell, FluxPseudoThickEdge,
+                                 NormalVelocity);
+                 });
+          });
+      parallelForOuter(
+          "Tend:TracerHorzAdv.exec", {Mesh->NCellsAll},
+          KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
+             const int KMin = MinLayerCell(ICell);
+             const int KMax = MaxLayerCell(ICell);
+             parallelForInner(
+                 Team, Range{KMin, KMax},
+                 INNER_LAMBDA(int K) { TrHorzAdvOnC(TendNoFCT, L, ICell, K); });
+          });
+      deepCopy(TracerSubView,
+               Kokkos::subview(TendNoFCT, L, Kokkos::ALL, Kokkos::ALL));
+
+      Err += computeErrors(FCTErrors, Tend, TracerSubView, Mesh, OnCell);
       Err += checkErrors("TendencyTermsTest",
                          "FCTAccumulateHighOrderFlux_" + std::to_string(L),
-                         FCTTracerHorzAdvErrors,
-                         Setup.ExpectedFCTTracerHorAccumulateHighOrderFlux[L],
-                         RTol);
+                         FCTErrors, Setup.ExpectedFCTToNonFCT, RTol);
       if (Err == 0)
          LOG_INFO("TendencyTermsTest: FCTAccumulateHighOrderFlux_" +
                   std::to_string(L) + " PASS");
