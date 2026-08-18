@@ -17,19 +17,31 @@ KPP computes:
 - Ocean boundary layer depth (`BoundaryLayerDepth`)
 - Vertical viscosity (`VertVisc`)
 - Vertical diffusivity (`VertDiff`)
-- Optional non-local tracer flux profile (`VertNonLocalFlux`)
+- Non-local tracer flux profile (`VertNonLocalFlux`)
 
 It uses a bulk Richardson depth search followed by profile-based coefficient
-construction.
+construction. The non-local flux is a standard part of the KPP formulation and
+is included by default.
 
 ## How KPP Is Used in Time Stepping
 
-In the current RK4 workflow, stage-level KPP recomputation is gated off during
-RK4 sub-stages and KPP is recomputed once after all four stages, on the fully
-updated state, before implicit vertical mixing is applied.
+KPP is connected to all three OMEGA time steppers: Forward-Backward (the
+default, split-explicit-style stepper), RungeKutta2, and RungeKutta4. For
+whichever stepper is active, KPP recomputes boundary-layer depth and
+coefficients at each internal stage of that stepper, and then once more on
+the fully updated state after time levels are advanced, immediately before
+implicit vertical mixing is applied:
 
-This means KPP diagnostics in output correspond to the post-stage state for
-each RK4 step.
+- **Forward-Backward** (default): KPP recomputes when velocity tendencies
+  are evaluated and again when tracer tendencies are evaluated, then once
+  more on the updated state.
+- **RungeKutta2**: KPP recomputes at the initial stage and at the midpoint
+  stage, then once more on the updated state.
+- **RungeKutta4**: KPP recomputes at each of the four RK4 stages, then once
+  more on the updated state.
+
+In all cases, the final recompute on the fully updated state is what
+determines the KPP diagnostics written to output for that step.
 
 ## Configuration
 
@@ -41,7 +53,6 @@ KPP settings are under `VertMix: KPP` in `omega.yml`.
 VertMix:
   KPP:
     Enable: true
-    UseNonLocalFlux: true
     CriticalBulkRichardsonNumber: 0.25
     MatchTechnique: SimpleShapes
     InterpType2: LMD94
@@ -57,7 +68,6 @@ VertMix:
 | Key | Meaning | Typical default |
 |---|---|---|
 | `Enable` | Enable KPP mixing | `true` |
-| `UseNonLocalFlux` | Enable non-local tracer flux profile | `true` |
 | `CriticalBulkRichardsonNumber` | OBL depth criterion threshold | `0.25` |
 | `MatchTechnique` | KPP profile matching mode | `SimpleShapes` |
 | `InterpType2` | Interpolation type used near OBL matching/base logic | `LMD94` |
@@ -102,6 +112,10 @@ To diagnose KPP, include KPP fields in output stream contents. Common fields:
 
 ## Practical Notes
 
-- Keep `UseNonLocalFlux` enabled when you want tracer non-local transport.
+- Non-local tracer transport is included by default and should be left
+  enabled; it is required for physically correct KPP boundary layer tracer
+  fluxes. An expert-only override exists for debugging and is documented in
+  the [Developer KPP document](../devGuide/KPPMix.md) -- it is not intended
+  for general use.
 - Use `DebugDiagnostics` sparingly for troubleshooting targeted cases.
 - When studying sea-ice regions, review minimum-OBL and ice-threshold options.

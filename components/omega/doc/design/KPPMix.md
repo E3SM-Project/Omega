@@ -10,48 +10,38 @@
 
 ## 1 Overview
 
-This document describes the OMEGA implementation of K Profile Parameterization
-(KPP) ocean boundary layer mixing. KPP computes boundary-layer depth, vertical
-viscosity, vertical diffusivity, and an optional non-local tracer flux shape
-used by tracer tendencies.
+This document describes the OMEGA implementation of the K Profile Parameterization
+(KPP) ocean boundary layer mixing. KPP computes a boundary-layer depth, vertical
+viscosity, vertical diffusivity, and a non-local tracer flux shape implemented outside
+the implicit vertical mixing routine.
 
 The implementation is in `KPPMix` and is integrated with the OMEGA tendency and
-RK4 stepping workflow. Relative to broad vertical mixing documentation, this
-page focuses specifically on KPP theory, algorithm choices, and verification.
-
-Related pages:
-- User usage/configuration: [KPP in the User Guide](../userGuide/KPPMix.md)
-- Developer implementation details: [KPP in the Developer Guide](../devGuide/KPPMix.md)
-- Broader vertical mixing context: [Vertical Mixing Coefficients](./VerticalMixingCoeff.md)
+RK2, RK4, and Forward-backward stepping routines. Relative to broad vertical mixing documentation, this
+page focuses specifically on KPP theory, algorithmic choices, and testing.
 
 ## 2 Requirements
 
 ### 2.1 Requirement: Boundary-layer depth from bulk Richardson criterion
 
-The OBL depth must be diagnosed from a bulk Richardson criterion so that
-mixing depth responds to evolving stratification, shear, and surface forcing.
+Following [Large et al (1994)](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/94RG01872), the OBL depth must be diagnosed from a bulk Richardson criterion so that
+mixing depth responds to evolving stratification, shear, and surface forcing. It also
+must include a unresolved turbulent shear contribution.
 
 ### 2.2 Requirement: Coefficients must be computable in parallel over columns
 
 The KPP implementation must operate over many columns in parallel using OMEGA
-array/kernels, rather than serial single-column calls, to match accelerator
-performance goals.
+array/kernels, rather than serial single-column calls.
 
 ### 2.3 Requirement: Compatible with additive vertical-mixing framework
 
 KPP viscosity/diffusivity fields must be compatible with existing OMEGA vertical
-mixing infrastructure so they can be merged with other configured contributions.
+mixing infrastructure so that other chosen vertical mixing sources can be merged
+with KPP.
 
-### 2.4 Desired: Optional non-local flux and profile matching controls
+### 2.4 Desired: Non-local flux and profile matching controls
 
-KPP should support optional non-local tracer flux profiles and configurable
-matching/interpolation choices to support scientific tuning studies.
-
-### 2.5 Desired: Stable RK4 interaction
-
-For RK4, KPP should be computed in a way that avoids repeated stage re-evaluation
-when configuration requires a single post-stage update on the fully updated
-state.
+KPP will support a non-local tracer flux from LMD94 and include configurable
+viscosity/diffusivity matching at the base of the boundary layer.
 
 ## 3 Algorithmic Formulation
 
@@ -72,16 +62,20 @@ $$
 Ri_b(h) = Ri_{crit}.
 $$
 
-Here, $\Delta b$ is buoyancy jump relative to the near-surface reference,
-$|\Delta \mathbf{U}|^2$ is shear contribution, and $V_t^2$ is unresolved shear.
-The code supports interpolation/matching choices near the crossing and applies
-configured constraints such as minimum OBL under sea ice and a maximum by water
+Here, $\Delta b$ is buoyancy jump relative to a surface layer average,
+$|\Delta \mathbf{U}|^2$ is shear contribution again computed relative to the
+surface layer average, and $V_t^2$ is unresolved shear.
+
+When the bulk Richardson number falls between model layers, quadratic interpolation
+is utilized to find the depth.  In addition the boundary layer depth is constrained
+to fall between a configurable minimum OBL under sea ice and a maximum set by the water
 column depth.
 
-### 3.2 Stage 2: KPP coefficients and optional non-local flux
+### 3.2 Stage 2: KPP coefficients and non-local flux
 
-Given diagnosed $h$, KPP computes interface coefficients using shape functions
-in normalized depth $\sigma = -z/h$:
+Given a diagnosed $h$, KPP computes interface viscosity and diffusivity coefficients
+using shape functions in normalized depth $\sigma = -d/h$, where $d$ is the depth relative
+to the sea surface height, not the physical depth:
 
 $$
 K_m(\sigma) = h\, w_m(\sigma)\, M_1(\sigma),
@@ -92,11 +86,24 @@ K_s(\sigma) = h\, w_s(\sigma)\, S_1(\sigma),
 $$
 
 where $w_m$ and $w_s$ are turbulent velocity scales from Monin-Obukhov style
-stability functions. Optional non-local tracer flux shape $G(\sigma)$ is
-computed when enabled.
+stability functions, see Appendix B of [Large et al, 1994](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/94RG01872). Where $M_1$ and $S_1$ are shape functions.
+The generic form of the shape function is given by
 
-Below OBL, coefficients revert to configured background values, with optional
-enhanced diffusion handling near the OBL base.
+$$
+X(\sigma) = c_1 \sigma^3 + c_2 \sigma^2 + c_3 \sigma + c_4
+$$
+
+The coefficients are determined by various conditions, e.g., zero viscosity and diffusivity at the
+surface, assuming a linear reduction of the turbulent flux with distance from the surface in the
+surface layer.  As in MPAS-Ocean, we include two options to determine the final coefficients.  The original
+version of KPP matches predicted viscosities and diffusivities to those predicted by other schemes
+(e.g., shear instability driven mixing) and a second option where viscosities and diffusivities are
+instead additive.  In the latter case, the shape function greatly simplifies to $X(\sigma) = \sigma(1-\sigma)^2.
+
+For either shape function, enhanced diffusivity can be included near the boundary layer base.  This can
+smooth boundary layer deepening.
+
+
 
 ## 4 Design
 
@@ -151,12 +158,16 @@ Internal stages:
 - `computeOBLDepth(...)`
 - `computeMixingCoefficients(...)`
 
-### 4.3 RK4 coupling behavior
+### 4.3 Time stepper coupling behavior
 
-In OMEGA RK4 stepping, stage-level KPP recomputation can be gated off and KPP
-is recomputed once after all RK4 stages on the fully updated state before
-implicit vertical mixing is applied. This behavior is part of the current
-coupling design and is described in detail for developers and users in:
+KPP is coupled to all three OMEGA time steppers -- Forward-Backward (default,
+split-explicit-style), RungeKutta2, and RungeKutta4. For each stepper, KPP
+recomputes boundary-layer depth and coefficients at every internal stage of
+that stepper, and once more on the fully updated state after time levels are
+advanced, immediately before implicit vertical mixing is applied. The final,
+post-step recompute is what determines the KPP diagnostics for that step
+across all three steppers. Full call-flow detail per stepper is described for
+developers and users in:
 
 - [Developer KPP workflow](../devGuide/KPPMix.md)
 - [User runtime notes](../userGuide/KPPMix.md)
@@ -173,21 +184,26 @@ Use targeted tests and diagnostics to verify:
 
 Tests cover requirements: 2.1, 2.2, 2.3, 2.4.
 
-### 5.2 Coupled/regression checks
+### 5.2 Polaris testing
 
-Run regression cases and compare key diagnostics over time:
+The single column test case can be run across a wide range of surface forcing
+(heat, evaporative, and momentum fluxes) and the following diagnostics will be
+plotted over time
 
 - `BoundaryLayerDepth`
 - `BulkRichardsonNumber`
 - `VertDiff`, `VertVisc`
-- `VertNonLocalFlux` (when enabled)
+- `VertNonLocalFlux`
 
-For full OMEGA testing workflow, see the developer testing guide:
-[Testing Code](../devGuide/Testing.md).
+For simple cases, such as free convection, boundary layer depth can be compared against
+a semi-analytic solution (e.g., Appendix F, ([Van Roekel et al, 2018](https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2018MS001336)).
+
+The global test case, forced by annual averaged ERA-5 net surface heat, freshwater, and
+momentum fluxes provides a qualitative assessment of KPP behavior.
 
 ### 5.3 Configuration sensitivity checks
 
-Perform short experiments varying:
+Short single column and global test cases can be run varying critical parameters such as
 
 - `CriticalBulkRichardsonNumber`
 - `MatchTechnique`

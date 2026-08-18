@@ -2,18 +2,13 @@
 
 # KPP Boundary Layer Mixing
 
-This page maps OMEGA KPP implementation details to runtime behavior and code
+This guide maps Omega KPP implementation details to runtime behavior and code
 locations. It complements the design page by focusing on concrete APIs,
 call flow, and developer test strategy.
 
-Related pages:
-- Design and theory: [Design KPP document](../design/KPPMix.md)
-- User configuration and workflow: [User KPP guide](../userGuide/KPPMix.md)
-- Broader vertical mixing: [Developer Vertical Mixing Coefficients](./VerticalMixingCoeff.md)
-
 ## Implementation Overview
 
-OMEGA KPP is implemented in `KPPMix` as a singleton with two major compute
+Omega KPP is implemented in `KPPMix` as a singleton with two major compute
 phases:
 
 1. OBL depth diagnosis (`computeOBLDepth`)
@@ -45,20 +40,47 @@ Then it calls:
 KPPInstance->computeKPPMix(...)
 ```
 
-### RK4 interaction
+### Time stepper interaction
 
-Current RK4 behavior is:
+KPP is hooked into all three OMEGA time steppers
+(`src/timeStepping/RungeKutta4Stepper.cpp`,
+`src/timeStepping/RungeKutta2Stepper.cpp`,
+`src/timeStepping/ForwardBackwardStepper.cpp`) through two mechanisms:
 
-1. Disable stage KPP recompute while stepping RK sub-stages by setting
-   `StageVerticalMixingEnabled = false`.
-2. After RK4 stage accumulation and time-level update, recompute auxiliary
-   state and call `computeStageVerticalMixing(...)` once on the fully updated
+1. **Stage recompute**: `Tendencies::StageVerticalMixingEnabled` (default
+   `true`) gates a call to `computeStageVerticalMixing(...)` inside
+   `computeAllTendencies`, `computeVelocityTendencies`, and
+   `computeTracerTendencies`. Whichever of these tendency functions a stepper
+   calls during its stages will trigger a KPP recompute on that stage's
    state.
-3. Restore previous stage-mixing flag.
-4. Apply implicit vertical mixing.
+2. **Post-step recompute**: `TimeStepper::applyPostStepVerticalMixing(...)`
+   (in `src/timeStepping/TimeStepper.cpp`) is called by every stepper's
+   `doStep()` immediately after `State->updateTimeLevels()`. It recomputes
+   auxiliary state and calls `computeStageVerticalMixing(...)` once more on
+   the fully updated state, then applies implicit vertical mixing via
+   `VertMix::VertMixImplicit(...)` if enabled.
 
-This behavior is implemented in the RK4 stepper and is important for
-consistency with current coupling expectations.
+Per-stepper call flow:
+
+- **RungeKutta4Stepper**: calls `computeAllTendencies(...)` once per stage
+  (base stage plus 3 provisional stages), so KPP recomputes 4 times during
+  stepping, followed by `applyPostStepVerticalMixing(..., "RK4")`.
+- **RungeKutta2Stepper**: calls `computeAllTendencies(...)` twice (initial
+  stage, midpoint stage), so KPP recomputes twice during stepping, followed
+  by `applyPostStepVerticalMixing(..., "RK2")`.
+- **ForwardBackwardStepper**: calls `computeVelocityTendencies(...)` and
+  `computeTracerTendencies(...)` separately, each triggering a KPP recompute,
+  followed by `applyPostStepVerticalMixing(..., "ForwardBackward")`.
+
+In every stepper, the post-step recompute uses the fully updated state and is
+what determines the KPP diagnostics written to output for that step.
+
+Note: `RungeKutta4Stepper::doStep` still saves/restores
+`StageVerticalMixingEnabled` around its stage loop and ANDs it with
+`KPPMix::Enabled`. This is currently a no-op with respect to gating stage
+recompute, since `computeStageVerticalMixing` already early-returns when KPP
+is disabled; do not assume stage recompute is suppressed during RK4
+sub-stages when reading that code.
 
 ## Configuration Mapping
 
@@ -73,7 +95,10 @@ Important keys and class members:
 - `InterpType2` -> `InterpType2Str`
 - `UseEnhancedDiffusion` -> `UseEnhancedDiffusion`
 - `UseLangmuirCirculation` -> `UseLangmuirCirculation`
-- `UseNonLocalFlux` -> `UseNonLocalFlux`
+- `UseNonLocalFlux` -> `UseNonLocalFlux` (expert/debugging override only --
+  non-local flux is on by default and required for physically correct
+  tracer transport; this key is intentionally omitted from the User Guide so
+  it is not disabled by non-experts)
 - `IceFractionThresholdForLangmuir` -> `IceFractionThresholdForLangmuir`
 - `IceFractionThresholdForMinimumOBL` -> `IceFractionThresholdForMinimumOBL`
 - `MinimumOBLUnderSeaIce` -> `MinimumOBLUnderSeaIce`
@@ -117,8 +142,10 @@ behavior in experiments.
 1. Verify KPP initialization with explicit and default YAML keys.
 2. Verify stage call path executes with KPP enabled and is skipped when
    disabled.
-3. Verify RK4 sequencing: no stage recompute during sub-stages, one recompute
-   before implicit vertical mixing.
+3. Verify per-stepper sequencing: stage recompute at each stage of the active
+   stepper (4 for RK4, 2 for RK2, 2 for Forward-Backward), plus one final
+   recompute on the updated state before implicit vertical mixing, for all
+   three steppers.
 
 ### Diagnostics-based checks
 
