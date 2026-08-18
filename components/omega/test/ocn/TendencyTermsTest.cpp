@@ -59,12 +59,12 @@ struct TestSetupPlane {
    ErrorMeasures ExpectedTrHAdvErrors           = {0.0029211089892916243,
                                                    0.0024583038518548855};
    ErrorMeasures ExpectedFCTErrors              = {0.00, 0.00};
-   ErrorMeasures ExpectedFCT_High               = {8.673617379884035e-18,
-                                                   1.1608832971817906e-17};
+   ErrorMeasures ExpectedFCT_High               = {6.938893903907228e-18,
+                                                   5.762546266224026e-18};
    ErrorMeasures ExpectedFCT_Low                = {1.0095554103513882e-15,
                                                    1.0095554103514163e-15};
-   ErrorMeasures ExpectedFCTToNonFCT            = {1.182357060681534e-15,
-                                                   6.487684357904678e-16};
+   ErrorMeasures ExpectedFCTToNonFCT            = {1.2480435640527313e-15,
+                                                   6.665476716753009e-16};
    ErrorMeasures ExpectedTrDel2Errors           = {0.00334357193650093847,
                                                    0.00290978146207349032};
    ErrorMeasures ExpectedTrDel4Errors           = {0.00508833446725232875,
