@@ -374,7 +374,9 @@ void testTurbulentVelocityScale() {
    checkResult("turbulent velocity scale", NumErrors);
 }
 
-void setCoefficientTestGeometry() {
+// Builds a uniform column whose free surface sits at Ssh. All KPP results must
+// be invariant to Ssh since depths are measured below the free surface.
+void setCoefficientTestGeometry(Real Ssh = 0.0_Real) {
    const HorzMesh *Mesh = HorzMesh::getDefault();
    VertCoord *VCoord    = VertCoord::getDefault();
    KPPMix *KPPInstance  = KPPMix::getInstance();
@@ -382,6 +384,7 @@ void setCoefficientTestGeometry() {
 
    OMEGA_SCOPE(GeomZInterface, VCoord->GeomZInterface);
    OMEGA_SCOPE(GeomZMid, VCoord->GeomZMid);
+   OMEGA_SCOPE(SshCell, VCoord->SshCell);
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
    OMEGA_SCOPE(BoundaryLayerDepth, KPPInstance->BoundaryLayerDepth);
@@ -391,12 +394,13 @@ void setCoefficientTestGeometry() {
        "KPPMixTest-SetGeometry", {Mesh->NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
           MinLayerCell(ICell)            = 0;
           MaxLayerCell(ICell)            = NVertLayers - 1;
+          SshCell(ICell)                 = Ssh;
           BoundaryLayerDepth(ICell)      = TestOBLDepth;
           IndexBoundaryLayerDepth(ICell) = TestOBLIndex;
           for (I4 K = 0; K <= NVertLayers; ++K) {
-             GeomZInterface(ICell, K) = -LayerThickness * K;
+             GeomZInterface(ICell, K) = Ssh - LayerThickness * K;
              if (K < NVertLayers) {
-                GeomZMid(ICell, K) = -LayerThickness * (K + 0.5_Real);
+                GeomZMid(ICell, K) = Ssh - LayerThickness * (K + 0.5_Real);
              }
           }
        });
@@ -594,9 +598,9 @@ void testMatchBothInteriorCoefficients() {
    constexpr Real SmoothAtSigma = 0.5_Real;
    const Real TurbVel           = VonKar * 0.02_Real;
    const Real ExpectedDiffMid   = TestOBLDepth * TurbVel * SimpleShape +
-                                  SmoothAtSigma * ExpectedInteriorDiff;
-   const Real ExpectedViscMid   = TestOBLDepth * TurbVel * SimpleShape +
-                                  SmoothAtSigma * ExpectedInteriorVisc;
+                                SmoothAtSigma * ExpectedInteriorDiff;
+   const Real ExpectedViscMid = TestOBLDepth * TurbVel * SimpleShape +
+                                SmoothAtSigma * ExpectedInteriorVisc;
    const Real ExpectedNonLocal =
        nonLocalNormalization() * KPP::KPPProfileGMatchBoth(Sigma);
 
@@ -1030,7 +1034,7 @@ void testBoundaryLayerDepth() {
           }
           const Real ZCenter = LayerThickness * (K + 0.5_Real);
           const Real Vt2     = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                               TestN * WindTurbulentScale / 0.25_Real;
+                           TestN * WindTurbulentScale / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1062,8 +1066,8 @@ void testBoundaryLayerDepth() {
        Slope * Slope - 4.0_Real * Quadratic * (RiAbove - 0.25_Real);
    const Real ExpectedBLD =
        ZAbove + (-Slope + Kokkos::sqrt(Discriminant)) / (2.0_Real * Quadratic);
-   const Real ExpectedVt2    = 1.7_Real * UnresolvedShearConstant * 25.0_Real *
-                               TestN * WindTurbulentScale / 0.25_Real;
+   const Real ExpectedVt2 = 1.7_Real * UnresolvedShearConstant * 25.0_Real *
+                            TestN * WindTurbulentScale / 0.25_Real;
    const Real ExpectedDeltaB = 0.4_Real * ExpectedVt2 / (RiScaling * 25.0_Real);
 
    int NumErrors = 0;
@@ -1089,7 +1093,7 @@ void testBoundaryLayerDepth() {
                                          : 0.3_Real;
           const Real ZCenter  = LayerThickness * (K + 0.5_Real);
           const Real Vt2      = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                                TestN * WindTurbulentScale / 0.25_Real;
+                           TestN * WindTurbulentScale / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1165,7 +1169,7 @@ void testBoundaryLayerDepth() {
           }
           const Real ZCenter = LayerThickness * (K + 0.5_Real);
           const Real Vt2     = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                               TestN * WindTurbulentScale / 0.25_Real;
+                           TestN * WindTurbulentScale / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1223,7 +1227,7 @@ void testBoundaryLayerDepth() {
           const Real ZCenter  = LayerThickness * (K + 0.5_Real);
           const Real TargetRi = K == 0 ? 0.0_Real : 1.0_Real;
           const Real Vt2      = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                                TestN * WindTurbulentScale / 0.25_Real;
+                           TestN * WindTurbulentScale / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1266,6 +1270,7 @@ void testBoundaryLayerNonuniformThickness() {
 
    OMEGA_SCOPE(GeomZInterface, VCoord->GeomZInterface);
    OMEGA_SCOPE(GeomZMid, VCoord->GeomZMid);
+   OMEGA_SCOPE(SshCell, VCoord->SshCell);
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
 
@@ -1302,6 +1307,7 @@ void testBoundaryLayerNonuniformThickness() {
        KOKKOS_LAMBDA(I4 ICell) {
           MinLayerCell(ICell) = 0;
           MaxLayerCell(ICell) = NVertLayers - 1;
+          SshCell(ICell)      = 0.0_Real;
 
           for (I4 K = 0; K <= NVertLayers; ++K) {
              Real Depth = 25.0_Real + 25.0_Real * (K - 4);
@@ -1347,9 +1353,9 @@ void testBoundaryLayerNonuniformThickness() {
               0.10_Real * Vt2Layer2 * RhoSw / (RiScaling * Gravity * 6.5_Real);
           const Real DeltaRho3 = 0.40_Real * (Shear3 + Vt2Layer3) * RhoSw /
                                  (RiScaling * Gravity * 17.5_Real);
-          Density(ICell, 0)    = RhoSw;
-          Density(ICell, 1)    = RhoSw + DeltaRho1;
-          Density(ICell, 2)    = RhoSw + DeltaRho2;
+          Density(ICell, 0) = RhoSw;
+          Density(ICell, 1) = RhoSw + DeltaRho1;
+          Density(ICell, 2) = RhoSw + DeltaRho2;
 
           // At k=3, the 2.5 m surface layer contains the unequal 1 m and
           // 2 m layers. Construct rho(3) relative to that weighted mean.
@@ -1409,6 +1415,121 @@ void testBoundaryLayerNonuniformThickness() {
    }
 
    checkResult("boundary-layer nonuniform thickness", NumErrors);
+   setCoefficientTestGeometry();
+   VCoord->minMaxLayerEdge(Halo::getDefault());
+}
+
+// KPP depths are measured below the free surface, so rigidly translating the
+// whole column by the sea surface height must leave every KPP output unchanged.
+void testSshOffsetInvariance() {
+   const HorzMesh *Mesh = HorzMesh::getDefault();
+   VertCoord *VCoord    = VertCoord::getDefault();
+   KPPMix *KPPInstance  = KPPMix::getInstance();
+   const I4 NVertLayers = VCoord->NVertLayers;
+
+   Array2DReal Density("KPPMixTest-SshDensity", Mesh->NCellsSize, NVertLayers);
+   Array2DReal NormalVelocity("KPPMixTest-SshNormalVelocity", Mesh->NEdgesSize,
+                              NVertLayers);
+   Array2DReal TangentialVelocity("KPPMixTest-SshTangentialVelocity",
+                                  Mesh->NEdgesSize, NVertLayers);
+   Array1DReal UStar("KPPMixTest-SshUStar", Mesh->NCellsSize);
+   Array1DReal B0("KPPMixTest-SshB0", Mesh->NCellsSize);
+   Array2DReal BVF("KPPMixTest-SshBVF", Mesh->NCellsSize, NVertLayers + 1);
+   Array1DReal IceFraction("KPPMixTest-SshIce", Mesh->NCellsSize);
+   Array1DReal Wind;
+
+   deepCopy(NormalVelocity, 0.0_Real);
+   deepCopy(TangentialVelocity, 0.0_Real);
+   deepCopy(UStar, 0.02_Real);
+   deepCopy(B0, -1.0e-7_Real);
+   deepCopy(BVF, 1.0_Real);
+   deepCopy(IceFraction, 0.0_Real);
+
+   constexpr Real RiScaling = 1.0_Real - 0.5_Real * KPP::SURFACE_LAYER_EXTENT;
+   constexpr Real TestN     = 1.0_Real;
+   const Real UnresolvedShearConstant =
+       Kokkos::sqrt(0.2_Real / (KPP::C_MO_S * KPP::SURFACE_LAYER_EXTENT)) /
+       (VonKar * VonKar);
+   const Real WindTurbulentScale = VonKar * 0.02_Real;
+   parallelFor(
+       "KPPMixTest-SetSshDensity", {Mesh->NCellsAll, NVertLayers},
+       KOKKOS_LAMBDA(I4 ICell, I4 K) {
+          Real TargetRi = 0.0_Real;
+          if (K == 1) {
+             TargetRi = 0.1_Real;
+          } else if (K >= 2) {
+             TargetRi = 0.4_Real;
+          }
+          const Real ZCenter = LayerThickness * (K + 0.5_Real);
+          const Real Vt2     = 1.7_Real * UnresolvedShearConstant * ZCenter *
+                           TestN * WindTurbulentScale / 0.25_Real;
+          const Real DeltaRho =
+              TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
+          Density(ICell, K) = RhoSw + DeltaRho;
+       });
+
+   KPPInstance->CriticalRichardson     = 0.25_Real;
+   KPPInstance->StopOBLSearchMult      = 1.0_Real;
+   KPPInstance->SurfaceLayerExtent     = KPP::SURFACE_LAYER_EXTENT;
+   KPPInstance->UseLangmuirCirculation = false;
+   KPPInstance->UseBLDSmoothing        = false;
+   KPPInstance->UseNonLocalFlux        = true;
+   KPPInstance->UseEnhancedDiffusion   = true;
+   KPPInstance->MatchTechniqueStr      = "SimpleShapes";
+
+   auto runWithSsh = [&](Real Ssh) {
+      setCoefficientTestGeometry(Ssh);
+      VCoord->minMaxLayerEdge(Halo::getDefault());
+      KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                   UStar, B0, BVF, IceFraction, Wind);
+      KPPInstance->computeMixingCoefficients(Density, UStar, B0);
+   };
+
+   runWithSsh(0.0_Real);
+   const auto BLDRef = createHostMirrorCopy(KPPInstance->BoundaryLayerDepth);
+   const auto BLDIndexRef =
+       createHostMirrorCopy(KPPInstance->IndexBoundaryLayerDepth);
+   const auto DiffRef     = createHostMirrorCopy(KPPInstance->VertDiff);
+   const auto ViscRef     = createHostMirrorCopy(KPPInstance->VertVisc);
+   const auto NonLocalRef = createHostMirrorCopy(KPPInstance->VertNonLocalFlux);
+
+   // Large enough that an uncorrected geoid-referenced depth shifts the OBL
+   // search across the analytic crossing.
+   constexpr Real TestSsh = 0.75_Real;
+   runWithSsh(TestSsh);
+   const auto BLDShift = createHostMirrorCopy(KPPInstance->BoundaryLayerDepth);
+   const auto BLDIndexShift =
+       createHostMirrorCopy(KPPInstance->IndexBoundaryLayerDepth);
+   const auto DiffShift = createHostMirrorCopy(KPPInstance->VertDiff);
+   const auto ViscShift = createHostMirrorCopy(KPPInstance->VertVisc);
+   const auto NonLocalShift =
+       createHostMirrorCopy(KPPInstance->VertNonLocalFlux);
+
+   int NumErrors = 0;
+   for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
+      // Guard against a degenerate all-zero comparison.
+      if (!(BLDRef(ICell) > 0.0_Real)) {
+         ++NumErrors;
+         continue;
+      }
+      if (!isApprox(BLDShift(ICell), BLDRef(ICell), BLDRTol, ATol) ||
+          BLDIndexShift(ICell) != BLDIndexRef(ICell)) {
+         ++NumErrors;
+         continue;
+      }
+      for (I4 K = 0; K <= NVertLayers; ++K) {
+         if (!isApprox(DiffShift(ICell, K), DiffRef(ICell, K), BLDRTol, ATol) ||
+             !isApprox(ViscShift(ICell, K), ViscRef(ICell, K), BLDRTol, ATol) ||
+             !isApprox(NonLocalShift(ICell, K), NonLocalRef(ICell, K), BLDRTol,
+                       ATol)) {
+            ++NumErrors;
+            break;
+         }
+      }
+   }
+
+   checkResult("sea surface height offset invariance", NumErrors);
+   KPPInstance->UseBLDSmoothing = true;
    setCoefficientTestGeometry();
    VCoord->minMaxLayerEdge(Halo::getDefault());
 }
@@ -1530,11 +1651,11 @@ void testBoundaryLayerLangmuir() {
           const Real ZDepth  = LayerThickness * (K + 1.0_Real);
           const Real ZCenter = LayerThickness * (K + 0.5_Real);
           const Real Zeta    = KPP::SURFACE_LAYER_EXTENT * ZDepth * VonKar *
-                               TestB0 / (TestUStar * TestUStar * TestUStar);
-          const Real PhiInv  = Kokkos::sqrt(1.0_Real - 16.0_Real * Zeta);
-          const Real WTurb   = VonKar * TestUStar * PhiInv;
-          const Real Vt2     = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                               TestN * WTurb / 0.25_Real;
+                            TestB0 / (TestUStar * TestUStar * TestUStar);
+          const Real PhiInv = Kokkos::sqrt(1.0_Real - 16.0_Real * Zeta);
+          const Real WTurb  = VonKar * TestUStar * PhiInv;
+          const Real Vt2    = 1.7_Real * UnresolvedShearConstant * ZCenter *
+                           TestN * WTurb / 0.25_Real;
           const Real TargetRi =
               K == 0 ? 0.0_Real : (K == 1 ? 0.1_Real : 0.26_Real);
           const Real DeltaRho =
@@ -1591,15 +1712,15 @@ void testBoundaryLayerLangmuir() {
    const Real Enhancement  = Kokkos::sqrt(3.0_Real);
    const Real DisabledZeta = KPP::SURFACE_LAYER_EXTENT * ZDepth * VonKar *
                              TestB0 / (TestUStar * TestUStar * TestUStar);
-   const Real EnabledZeta  = DisabledZeta * Enhancement;
+   const Real EnabledZeta = DisabledZeta * Enhancement;
    const Real DisabledWTurb =
        VonKar * TestUStar * Kokkos::sqrt(1.0_Real - 16.0_Real * DisabledZeta);
    const Real EnabledWTurb =
        VonKar * TestUStar * Kokkos::sqrt(1.0_Real - 16.0_Real * EnabledZeta);
    const Real ExpectedDisabledVt2 = 1.7_Real * UnresolvedShearConstant *
                                     ZCenter * TestN * DisabledWTurb / 0.25_Real;
-   const Real ExpectedEnabledVt2  = 1.7_Real * UnresolvedShearConstant *
-                                    ZCenter * TestN * EnabledWTurb / 0.25_Real;
+   const Real ExpectedEnabledVt2 = 1.7_Real * UnresolvedShearConstant *
+                                   ZCenter * TestN * EnabledWTurb / 0.25_Real;
    const Real ExpectedEnabledRi =
        0.26_Real * ExpectedDisabledVt2 / ExpectedEnabledVt2;
 
@@ -1690,7 +1811,7 @@ void testBoundaryLayerSmoothing() {
           }
           const Real ZCenter = LayerThickness * (K + 0.5_Real);
           const Real Vt2     = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                               TestN * WTurb / 0.25_Real;
+                           TestN * WTurb / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1958,6 +2079,7 @@ int main(int argc, char *argv[]) {
    if (TestGroup == "bld" || TestGroup == "all") {
       testBoundaryLayerDepth();
       testBoundaryLayerNonuniformThickness();
+      testSshOffsetInvariance();
       testBoundaryLayerEdgeFallbacks();
       testBoundaryLayerLangmuir();
       testBoundaryLayerSmoothing();

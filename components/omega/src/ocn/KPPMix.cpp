@@ -249,6 +249,7 @@ void KPPMix::logDiagnostics(const Array2DReal &PotentialDensity,
    const auto MinLayerCellH = createHostMirrorCopy(VCoord->MinLayerCell);
    const auto MaxLayerCellH = createHostMirrorCopy(VCoord->MaxLayerCell);
    const auto ZInterfaceH   = createHostMirrorCopy(VCoord->GeomZInterface);
+   const auto SshCellH      = createHostMirrorCopy(VCoord->SshCell);
    const auto DensityH      = createHostMirrorCopy(PotentialDensity);
    const auto UStarH        = createHostMirrorCopy(SurfaceFrictionVelocity);
    const auto B0H           = createHostMirrorCopy(SurfaceBuoyancyFlux);
@@ -357,7 +358,7 @@ void KPPMix::logDiagnostics(const Array2DReal &PotentialDensity,
    for (int K = KMin; K <= KTop; ++K) {
       const int kCell    = Kokkos::min(K, NVertLayers - 1);
       const int kInt     = Kokkos::min(K + 1, NVertLayers);
-      const Real z_depth = Kokkos::abs(ZInterfaceH(ICell, kInt));
+      const Real z_depth = SshCellH(ICell) - ZInterfaceH(ICell, kInt);
 
       const Real rho_k     = DensityH(ICell, kCell);
       const Real delta_rho = rho_k - rho_surf;
@@ -440,6 +441,7 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
    OMEGA_SCOPE(MaxLayerEdgeTop, VCoord->MaxLayerEdgeTop);
    OMEGA_SCOPE(ZInterface, VCoord->GeomZInterface);
    OMEGA_SCOPE(ZMid, VCoord->GeomZMid);
+   OMEGA_SCOPE(LocSshCell, VCoord->SshCell);
    OMEGA_SCOPE(NEdgesOnCell, Mesh->NEdgesOnCell);
    OMEGA_SCOPE(EdgesOnCell, Mesh->EdgesOnCell);
    OMEGA_SCOPE(CellsOnCell, Mesh->CellsOnCell);
@@ -486,7 +488,11 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
 
           const Real iceFrac = LocIceFraction(ICell);
 
-          Real obl_depth     = Kokkos::abs(ZInterface(ICell, KIntDeep));
+          // KPP depths are measured below the free surface, so geometric
+          // heights must be offset by the sea surface height.
+          const Real Ssh = LocSshCell(ICell);
+
+          Real obl_depth     = Ssh - ZInterface(ICell, KIntDeep);
           I4 k_cross         = -1;
           const Real ri_crit = LocCriticalRichardson;
           const Real ri_stop_crit =
@@ -596,8 +602,8 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
              }
              const I4 kCell      = Kokkos::min(k, NVertLayers - 1);
              const I4 kInt       = Kokkos::min(k + 1, NVertLayers);
-             const Real z_depth  = Kokkos::abs(ZInterface(ICell, kInt));
-             const Real z_center = Kokkos::abs(ZMid(ICell, kCell));
+             const Real z_depth  = Ssh - ZInterface(ICell, kInt);
+             const Real z_center = Ssh - ZMid(ICell, kCell);
              if (z_depth < 1.0e-12)
                 continue;
 
@@ -605,7 +611,7 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
 
              // Advance cell surface average for density
              while (k_surface_avg < k &&
-                    Kokkos::abs(ZInterface(ICell, k_surface_avg + 1)) <
+                    (Ssh - ZInterface(ICell, k_surface_avg + 1)) <
                         surf_layer_depth) {
                 ++k_surface_avg;
                 const I4 ksa = Kokkos::min(k_surface_avg, NVertLayers - 1);
@@ -625,7 +631,7 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
                 const I4 IEdge = EdgesOnCell(ICell, J);
                 const I4 KEMax = MaxLayerEdgeTop(IEdge);
                 while (k_surf_e[J] < k &&
-                       Kokkos::abs(ZInterface(ICell, k_surf_e[J] + 1)) <
+                       (Ssh - ZInterface(ICell, k_surf_e[J] + 1)) <
                            surf_layer_depth) {
                    ++k_surf_e[J];
                    const I4 ke = Kokkos::min(
@@ -679,9 +685,9 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
 
              Real w_turb = 0.0_Real;
              if (u_star > 1.0e-12_Real) {
-                const Real u3        = u_star * u_star * u_star;
-                const Real zeta      = sigma_loc * z_depth * VonKar * b0_eff /
-                                       Kokkos::max(u3, 1.0e-20_Real);
+                const Real u3   = u_star * u_star * u_star;
+                const Real zeta = sigma_loc * z_depth * VonKar * b0_eff /
+                                  Kokkos::max(u3, 1.0e-20_Real);
                 const Real phi_inv_s = KPP::KPPProfileS2(zeta);
                 w_turb = VonKar * u_star * Kokkos::max(phi_inv_s, 0.0_Real);
              } else if (b0_eff < 0.0_Real) {
@@ -719,8 +725,8 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
                 const I4 kBelow     = Kokkos::min(k_cross, NVertLayers - 1);
                 const I4 kAboveRi   = Kokkos::min(kAbove + 1, NVertLayers);
                 const I4 kBelowRi   = Kokkos::min(kBelow + 1, NVertLayers);
-                const Real z_above  = Kokkos::abs(ZMid(ICell, kAbove));
-                const Real z_below  = Kokkos::abs(ZMid(ICell, kBelow));
+                const Real z_above  = Ssh - ZMid(ICell, kAbove);
+                const Real z_below  = Ssh - ZMid(ICell, kBelow);
                 const Real ri_above = LocBulkRichardson(ICell, kAboveRi);
                 const Real ri_below = LocBulkRichardson(ICell, kBelowRi);
 
@@ -733,7 +739,7 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
                    if (k_cross > KMin + 1) {
                       const I4 kPrev     = Kokkos::max(KMin, kAbove - 1);
                       const I4 kPrevRi   = Kokkos::min(kPrev + 1, NVertLayers);
-                      const Real z_prev  = Kokkos::abs(ZMid(ICell, kPrev));
+                      const Real z_prev  = Ssh - ZMid(ICell, kPrev);
                       const Real ri_prev = LocBulkRichardson(ICell, kPrevRi);
                       const Real dz_prev = z_above - z_prev;
                       if (Kokkos::abs(dz_prev) > 1.0e-12_Real) {
@@ -794,16 +800,16 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
              } else {
                 // Match center-based OBL convention when crossing occurs in
                 // the top interval.
-                obl_depth = Kokkos::abs(ZMid(ICell, KMin));
+                obl_depth = Ssh - ZMid(ICell, KMin);
              }
           } else {
-             obl_depth = Kokkos::abs(ZInterface(ICell, KIntDeep));
+             obl_depth = Ssh - ZInterface(ICell, KIntDeep);
           }
 
           const Real top_layer_thickness =
               Kokkos::abs(ZInterface(ICell, KIntTop) - ZInterface(ICell, KMin));
           const Real min_obl_depth = 0.5_Real * top_layer_thickness;
-          const Real max_obl_depth = Kokkos::abs(ZMid(ICell, KMax));
+          const Real max_obl_depth = Ssh - ZMid(ICell, KMax);
           obl_depth                = Kokkos::fmax(obl_depth, min_obl_depth);
           if (iceFrac > LocIceFracThresholdForMinOBL) {
              obl_depth = Kokkos::fmax(obl_depth, LocMinimumOBLUnderSeaIce);
@@ -812,8 +818,8 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
 
           I4 k_final = KMax;
           for (I4 k = KMin; k < KMax; ++k) {
-             const Real z_above = Kokkos::abs(ZInterface(ICell, k));
-             const Real z_below = Kokkos::abs(ZInterface(ICell, k + 1));
+             const Real z_above = Ssh - ZInterface(ICell, k);
+             const Real z_below = Ssh - ZInterface(ICell, k + 1);
              if (obl_depth >= z_above && obl_depth <= z_below) {
                 k_final = k;
                 break;
@@ -886,11 +892,13 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
                 return;
              }
 
+             const Real Ssh = LocSshCell(ICell);
+
              const I4 KIntTop = Kokkos::min(KMin + 1, NVertLayers);
              const Real top_layer_thickness = Kokkos::abs(
                  ZInterface(ICell, KIntTop) - ZInterface(ICell, KMin));
              const Real min_obl_depth = 0.5_Real * top_layer_thickness;
-             const Real max_obl_depth = Kokkos::abs(ZMid(ICell, KMax));
+             const Real max_obl_depth = Ssh - ZMid(ICell, KMax);
 
              Real obl_depth = LocBoundaryLayerDepthSmooth(ICell);
              obl_depth      = Kokkos::fmax(obl_depth, min_obl_depth);
@@ -898,8 +906,8 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
 
              I4 k_final = KMax;
              for (I4 k = KMin; k < KMax; ++k) {
-                const Real z_above = Kokkos::abs(ZInterface(ICell, k));
-                const Real z_below = Kokkos::abs(ZInterface(ICell, k + 1));
+                const Real z_above = Ssh - ZInterface(ICell, k);
+                const Real z_below = Ssh - ZInterface(ICell, k + 1);
                 if (obl_depth >= z_above && obl_depth <= z_below) {
                    k_final = k;
                    break;
@@ -942,6 +950,7 @@ void KPPMix::computeMixingCoefficients(
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
    OMEGA_SCOPE(ZInterface, VCoord->GeomZInterface);
    OMEGA_SCOPE(ZMid, VCoord->GeomZMid);
+   OMEGA_SCOPE(LocSshCell, VCoord->SshCell);
    OMEGA_SCOPE(LocInteriorVertDiff, InteriorVertDiff);
    OMEGA_SCOPE(LocInteriorVertVisc, InteriorVertVisc);
 
@@ -999,6 +1008,10 @@ void KPPMix::computeMixingCoefficients(
           const I4 KMatch =
               Kokkos::min(KMax + 1, LocIndexBoundaryLayerDepth(ICell) + 1);
 
+          // KPP depths are measured below the free surface, so geometric
+          // heights must be offset by the sea surface height.
+          const Real Ssh = LocSshCell(ICell);
+
           // =============================================================
           // Compute turbulent velocity scales
           // =============================================================
@@ -1010,9 +1023,9 @@ void KPPMix::computeMixingCoefficients(
           // =============================================================
           for (I4 k = KMin; k <= KMax + 1; ++k) {
              const I4 k_iface   = Kokkos::min(Kokkos::max(k, 0), NVertLayers);
-             const Real z_depth = Kokkos::abs(ZInterface(ICell, k_iface));
+             const Real z_depth = Ssh - ZInterface(ICell, k_iface);
 
-             // Check if within OBL using geometric depth.
+             // Check if within OBL using depth below the free surface.
              if (z_depth <= h_obl && h_obl > 0.0_Real) {
                 // Normalized depth in Omega sign convention: sigma in [-1,0].
                 Real sigma = -z_depth / h_obl;
@@ -1031,7 +1044,7 @@ void KPPMix::computeMixingCoefficients(
                 if (u_star > 0.0_Real) {
                    const Real u3 = u_star * u_star * u_star;
                    zeta          = sigma_loc * h_obl * b0 * LocKappa /
-                                   Kokkos::max(u3, 1.0e-20_Real);
+                          Kokkos::max(u3, 1.0e-20_Real);
 
                    // KPPProfileM2/S2 return phi^{-1}; do not invert again.
                    const Real phi_inv_m = KPP::KPPProfileM2(zeta);
@@ -1107,12 +1120,12 @@ void KPPMix::computeMixingCoefficients(
              } else {
                 // Below OBL: preserve interior values for MatchBoth, otherwise
                 // no KPP contribution.
-                LocVertDiff(ICell, k) = LocUseInteriorMix
-                                            ? LocInteriorVertDiff(ICell, k)
-                                            : 0.0_Real;
-                LocVertVisc(ICell, k) = LocUseInteriorMix
-                                            ? LocInteriorVertVisc(ICell, k)
-                                            : 0.0_Real;
+                LocVertDiff(ICell, k)               = LocUseInteriorMix
+                                                          ? LocInteriorVertDiff(ICell, k)
+                                                          : 0.0_Real;
+                LocVertVisc(ICell, k)               = LocUseInteriorMix
+                                                          ? LocInteriorVertVisc(ICell, k)
+                                                          : 0.0_Real;
                 LocVertNonLocalFlux(ICell, k)       = 0.0;
                 LocTurbulentVelocityScale(ICell, k) = 0.0;
              }
@@ -1123,7 +1136,7 @@ void KPPMix::computeMixingCoefficients(
           if (LocUseEnhancedDiffusion && h_obl > 0.0_Real) {
              const I4 k_obl = Kokkos::max(
                  KMin, Kokkos::min(LocIndexBoundaryLayerDepth(ICell), KMax));
-             const Real z_mid_obl = Kokkos::abs(ZMid(ICell, k_obl));
+             const Real z_mid_obl = Ssh - ZMid(ICell, k_obl);
 
              const bool target_outside_obl = h_obl >= z_mid_obl;
              const I4 k_ktup =
@@ -1132,15 +1145,15 @@ void KPPMix::computeMixingCoefficients(
                                      ? Kokkos::min(k_obl + 1, KMax + 1)
                                      : Kokkos::max(KMin + 1, k_obl);
 
-             const Real z_ktup = Kokkos::abs(ZMid(ICell, k_ktup));
-             const Real z_next =
-                 (k_ktup < KMax) ? Kokkos::abs(ZMid(ICell, k_ktup + 1))
-                                 : Kokkos::abs(ZInterface(ICell, k_ktup + 1));
-             const Real delta = Kokkos::fmax(
+             const Real z_ktup = Ssh - ZMid(ICell, k_ktup);
+             const Real z_next = (k_ktup < KMax)
+                                     ? (Ssh - ZMid(ICell, k_ktup + 1))
+                                     : (Ssh - ZInterface(ICell, k_ktup + 1));
+             const Real delta  = Kokkos::fmax(
                  0.0_Real,
                  Kokkos::fmin(1.0_Real,
-                              (h_obl - z_ktup) /
-                                  Kokkos::max(z_next - z_ktup, 1.0e-12_Real)));
+                               (h_obl - z_ktup) /
+                                   Kokkos::max(z_next - z_ktup, 1.0e-12_Real)));
              const Real one_minus_delta = 1.0_Real - delta;
 
              Real sigma_ktup = -z_ktup / h_obl;

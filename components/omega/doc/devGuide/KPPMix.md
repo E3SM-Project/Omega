@@ -17,6 +17,15 @@ phases:
 Main class/API surface is in `src/ocn/KPPMix.h` and implementation is in
 `src/ocn/KPPMix.cpp`.
 
+### Depth convention
+
+All KPP depths are measured downward from the free surface, not from the geoid.
+`VertCoord::GeomZInterface` and `GeomZMid` are geometric heights relative to
+`z = 0`, with `GeomZInterface(ICell, MinLayerCell)` equal to
+`VertCoord::SshCell`. KPP therefore forms depths as
+`SshCell(ICell) - GeomZ...(ICell, K)`. Layer thicknesses are differences of
+geometric heights and are unaffected by the sea surface height.
+
 ## Runtime Call Flow
 
 ### Tendency coupling
