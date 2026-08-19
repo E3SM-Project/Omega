@@ -3482,6 +3482,7 @@ int main(int argc, char *argv[]) {
    // if it made it here, all tests successful
    LOG_INFO("----- TimeMgr Unit Tests Successful -----");
 
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
    return 0;
 

@@ -87,6 +87,7 @@ int main(int argc, char **argv) {
    // If we made it here, the tests were successful
    LOG_INFO("----- TimeIntervalParseExtendedFormatsTest Successful -----");
 
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
    return 0;
 }

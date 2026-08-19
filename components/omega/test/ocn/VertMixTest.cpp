@@ -1085,6 +1085,7 @@ int main(int argc, char *argv[]) {
 
    LOG_INFO("------ Vertical Mixing Unit Tests Successful ------");
    Kokkos::finalize();
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
 
    // if we made it here, it is successful

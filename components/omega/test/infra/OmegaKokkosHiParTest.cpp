@@ -893,6 +893,7 @@ int main(int argc, char **argv) {
 
    CHECK_ERROR_ABORT(Err, "Kokkos Wrappers Unit Tests FAIL");
 
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
 
    return 0;

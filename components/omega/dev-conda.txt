@@ -23,6 +23,10 @@ ruff
 flynt
 mypy
 
+# omega_buildnml testing
+pytest
+pyyaml
+
 # documentation
 sphinx
 sphinx_rtd_theme

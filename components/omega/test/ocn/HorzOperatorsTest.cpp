@@ -1085,6 +1085,7 @@ int main(int argc, char *argv[]) {
    Kokkos::finalize();
    if (RetVal == 0)
       LOG_INFO("------ Horz Operators unit tests successful ------");
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
 
    if (RetVal >= 256)

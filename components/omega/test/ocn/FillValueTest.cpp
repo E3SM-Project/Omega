@@ -459,6 +459,7 @@ int main(int argc, char *argv[]) {
    Pacer::finalize();
    Kokkos::finalize();
    int RetVal = ErrAll.isFail() ? 1 : 0;
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
 
    return RetVal;

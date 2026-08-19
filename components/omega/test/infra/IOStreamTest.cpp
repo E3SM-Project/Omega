@@ -335,10 +335,12 @@ int main(int argc, char **argv) {
    Decomp::clear();
    Pacer::finalize();
    Kokkos::finalize();
-   MPI_Finalize();
 
    CHECK_ERROR_ABORT(Err, "IOStream Unit Tests: FAIL");
    LOG_INFO("------ IOStream Unit Tests successful ------");
+
+   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Finalize();
 
    // End of testing
    return 0;

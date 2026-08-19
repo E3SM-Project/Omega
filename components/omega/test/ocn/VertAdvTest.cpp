@@ -448,9 +448,11 @@ int main(int argc, char *argv[]) {
    }
    Pacer::finalize();
    Kokkos::finalize();
-   MPI_Finalize();
 
    CHECK_ERROR_ABORT(ErrAll, "VertAdv unit tests FAIL");
+
+   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Finalize();
 
    return 0;
 }

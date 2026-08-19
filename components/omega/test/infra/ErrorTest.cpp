@@ -165,6 +165,7 @@ int main(int argc, char **argv) {
 
    // If code reaches here, the critical error test has failed so return a
    // success code
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
    return 0;
 }

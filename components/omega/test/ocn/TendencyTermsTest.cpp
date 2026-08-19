@@ -1902,6 +1902,7 @@ int main(int argc, char *argv[]) {
 
    Pacer::finalize();
    Kokkos::finalize();
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
 
    return RetErr;
