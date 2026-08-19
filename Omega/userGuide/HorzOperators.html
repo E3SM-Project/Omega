@@ -55,6 +55,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Driver.html#coupled-mode">Coupled mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MpasMesh.html">MPAS Mesh Specification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
@@ -64,7 +65,10 @@
 <li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Horizontal Operators</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Horizontal Operators</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#interpolate-cells-to-edges">Interpolate cells to edges</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
@@ -201,7 +205,11 @@
 <p>The horizontal discretization in Omega is a staggered numerical scheme known as
 TRiSK. It defines discrete versions of basic differential operators (divergence,
 gradient, and curl) as well as other operators that are needed by the scheme,
-such as reconstruction of tangential velocity from its normal components. Omega
+such as reconstruction of tangential velocity from its normal components. These
+operators act on quantities located at the cells, edges, and vertices of an
+MPAS mesh, and rely on the connectivity, geometric measures, and ordering
+conventions defined in the
+<a class="reference internal" href="MpasMesh.html#mpas-mesh-specification"><span class="std std-ref">MPAS mesh specification</span></a>. Omega
 provides reference implementations of these operators, each in a separate C++
 class. The class name describes the operator and the mesh element associated
 with its result.</p>
@@ -211,9 +219,29 @@ with its result.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">GradientOnEdge</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">CurlOnVertex</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">TangentialReconOnEdge</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">InterpCellToEdge</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">VectorReconOnCell</span></code></p></li>
 </ul>
-<p>There are no user-configurable options.</p>
+<p>There are no user-configurable options; the method for <code class="docutils literal notranslate"><span class="pre">InterpCellToEdge</span></code> is located in <a class="reference internal" href="Forcing.html#omega-user-forcing-sfc-stress"><span class="std std-ref">Surface Stress Forcing</span></a>.</p>
+<section id="interpolate-cells-to-edges">
+<span id="omega-user-horz-operators-interp"></span><h2>Interpolate cells to edges<a class="headerlink" href="#interpolate-cells-to-edges" title="Permalink to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">InterpCellToEdge</span></code> contains two methods shown in <a class="reference internal" href="#fig-interp"><span class="std std-numref">Fig. 9</span></a>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">InterpolateAnisotropic</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">InterpolateIsotropic</span></code></p></li>
+</ul>
+<figure class="align-center" id="fig-interp">
+<a class="reference internal image-reference" href="../_images/interpCellToEdge.png"><img alt="../_images/interpCellToEdge.png" src="../_images/interpCellToEdge.png" style="width: 60%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 9 </span><span class="caption-text">For a scalar quantity at the edge location shown in red, either average the two neighboring <code class="docutils literal notranslate"><span class="pre">cellsOnEdge</span></code> shown in green (left, anisotropic) or take the average of the four <code class="docutils literal notranslate"><span class="pre">cellsOnVertex</span></code> of each of the two <code class="docutils literal notranslate"><span class="pre">verticesOnEdge</span></code>, weighted by <code class="docutils literal notranslate"><span class="pre">kiteAreasOnVertex</span></code>.</span><a class="headerlink" href="#fig-interp" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>The <code class="docutils literal notranslate"><span class="pre">cellsOnEdge</span></code>, <code class="docutils literal notranslate"><span class="pre">cellsOnVertex</span></code>, <code class="docutils literal notranslate"><span class="pre">verticesOnEdge</span></code>, and <code class="docutils literal notranslate"><span class="pre">kiteAreasOnVertex</span></code>
+fields, along with their required ordering, are defined in the
+<a class="reference internal" href="MpasMesh.html#mpas-mesh-specification"><span class="std std-ref">MPAS mesh specification</span></a>; see in particular
+<a class="reference internal" href="MpasMesh.html#connectivity-ordering-requirements"><span class="std std-ref">Connectivity and ordering requirements</span></a>.</p>
+<p>The isotropic interpolation has been shown to be less accurate than the anisotropic method, with higher error about pentagons, and should be used only when spatial smoothing is desired, e.g., in the context of wind stress coupling where both <code class="docutils literal notranslate"><span class="pre">SfcStressZonal</span></code> and <code class="docutils literal notranslate"><span class="pre">SfcStressMeridional</span></code> are interpolated from cells to edges, see <a class="reference internal" href="Forcing.html#omega-user-forcing-sfc-stress"><span class="std std-ref">Surface Stress Forcing</span></a>.</p>
+</section>
 </section>
 
 

@@ -16,6 +16,8 @@
       <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
       <script src="../_static/doctools.js"></script>
       <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -55,6 +57,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Driver.html#coupled-mode">Coupled mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MpasMesh.html">MPAS Mesh Specification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
 <li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
@@ -65,7 +68,10 @@
 <li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
 <li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Auxiliary Variables</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Auxiliary Variables</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#kinetic-energy-on-cells">Kinetic energy on cells</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
@@ -265,6 +271,11 @@ For example, the value of thickness used in advective flux can be centered or up
 </tr>
 </tbody>
 </table>
+<section id="kinetic-energy-on-cells">
+<h2>Kinetic energy on cells<a class="headerlink" href="#kinetic-energy-on-cells" title="Permalink to this heading"></a></h2>
+<p>In <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999109006780">Ringler et al. (2010)</a>, the cell-centered kinetic energy (<span class="math notranslate nohighlight">\(K_i\)</span>) is a geometry-weighted combination of the squared edge-normal velocities surrounding cell (<span class="math notranslate nohighlight">\(i\)</span>), constructed so that its discrete gradient enters the vector-invariant momentum equation as part of the Bernoulli-gradient term, (<span class="math notranslate nohighlight">\(-\nabla(K_i+\Phi_i)\)</span>). Although only one velocity component is stored at each C-grid edge, the differently oriented edges collectively represent the two-dimensional velocity magnitude; for uniform flow on an isotropic cell, the construction recovers (<span class="math notranslate nohighlight">\(K_i=\tfrac12|\mathbf{u}|^2\)</span>). Importantly, this definition is chosen for algebraic compatibility with the edge-based kinetic-energy norm and the discrete continuity equation, enabling the nondissipative momentum terms to conserve total energy to within time-discretization error rather than providing an arbitrary pointwise reconstruction of the velocity magnitude.</p>
+<p>It should be noted that this is the irrotational kinetic energy and is not the total kinetic energy. In principle, this implies that that <span class="math notranslate nohighlight">\(K_i\)</span> could be an underestimate of the total kinetic energy. Even for a regular hexagon in an irrotational constant flow, this formulation underestimates the total kinetic energy by 13-16% depeneding on the flow orientation. However, it has been shown with MPAS-Ocean at standard resolution (Icos30) that <span class="math notranslate nohighlight">\(K_i\)</span> <em>exceeds</em> <span class="math notranslate nohighlight">\(K = 0.5 (u_{cell}^2 + v_{cell}^2)\)</span>, likely due to velocity noise at the grid scale that is filtered in the course of reconstructing velocities at cell-centers. This offers a justification for employing <span class="math notranslate nohighlight">\(K_i\)</span> in other terms of the momentum equation such as bottom drag.</p>
+</section>
 </section>
 
 
