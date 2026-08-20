@@ -894,7 +894,7 @@ void Tendencies::computeTracerTendenciesOnly(
                                                      LocTracerArray);
                 });
             parallelForOuter(
-                "Tend:FCTTracerCurFill", {Mesh->NCellsAll},
+                "Tend:FCTTracerMinMax", {Mesh->NCellsAll},
                 KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
                    LocTracerHorzAdv.FCTTracerMinMax(Team, ICell);
                 });

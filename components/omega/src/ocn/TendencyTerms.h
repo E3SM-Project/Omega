@@ -513,9 +513,8 @@ class TracerHorzAdvOnCell {
                           const Array2DReal &FluxPseudoThickEdge,
                           const Array2DReal &NormVelEdge) const {
 
-      const Real Coef3rdOrder = 0.25;
-      const I4 ICell1         = CellsOnEdge(IEdge, 0);
-      const I4 ICell2         = CellsOnEdge(IEdge, 1);
+      const I4 ICell1 = CellsOnEdge(IEdge, 0);
+      const I4 ICell2 = CellsOnEdge(IEdge, 1);
 
       const I4 KMin = MinLayerEdgeBot(IEdge);
       const I4 KMax = MaxLayerEdgeTop(IEdge);
