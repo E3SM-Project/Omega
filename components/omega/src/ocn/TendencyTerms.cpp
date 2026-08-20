@@ -134,6 +134,8 @@ void TracerHorzAdvOnCell::init() {
    const auto MaxEdges2    = Mesh->MaxEdges2;
    const auto NEdgesAll    = Mesh->NEdgesAll;
    const auto NCellsAll    = Mesh->NCellsAll;
+   const auto NCellsSize    = Mesh->NCellsSize;
+   const auto NEdgesSize    = Mesh->NEdgesSize;
    // Allocate Kokkos arrays in member data
 
    if (ForceLowOrder) {
