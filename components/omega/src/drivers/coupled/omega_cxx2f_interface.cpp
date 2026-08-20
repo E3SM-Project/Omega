@@ -67,7 +67,9 @@ void omega_ocn_init1(
    MPI_Comm Comm = MPI_Comm_f2c(FComm);
 
    // initialize Kokkos
-   Kokkos::initialize();
+   if (!Kokkos::is_initialized() && !Kokkos::is_finalized()) {
+       Kokkos::initialize();
+   }
 
    // initialize Pacer timing in coupled mode
    Pacer::initialize(Comm, Pacer::PACER_INTEGRATED);
