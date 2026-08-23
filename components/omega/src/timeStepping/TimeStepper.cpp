@@ -27,6 +27,7 @@ PrescribeStateType TimeStepper::DefaultPrescribeVelocityMode =
 
 //------------------------------------------------------------------------------
 // utility functions
+//------------------------------------------------------------------------------
 // convert string into TimeStepperType enum
 TimeStepperType getTimeStepperFromStr(const std::string &InString) {
 
@@ -48,6 +49,79 @@ TimeStepperType getTimeStepperFromStr(const std::string &InString) {
    return TimeStepperChoice;
 }
 
+//------------------------------------------------------------------------------
+// convert string into StartType enum
+TimeStepperStartType
+getTimeStepperStartTypeFromStr(const std::string &InString) {
+
+   // Convert input string to lowercase for easier and more robust comparison
+   std::string StartStr = InString;
+   std::transform(StartStr.begin(), StartStr.end(), StartStr.begin(),
+                  [](unsigned char c) { return std::tolower(c); });
+
+   TimeStepperStartType StartChoice;
+   if (StartStr == "startup" or StartStr == "init" or StartStr == "initial") {
+      StartChoice = TimeStepperStartType::StartUp;
+   } else if (StartStr == "continue" or StartStr == "restart") {
+      StartChoice = TimeStepperStartType::Continue;
+   } else if (StartStr == "branch") {
+      StartChoice = TimeStepperStartType::Branch;
+   } else {
+      StartChoice = TimeStepperStartType::Invalid;
+      ABORT_ERROR("Invalid StartType {}", InString);
+   }
+
+   return StartChoice;
+}
+
+//------------------------------------------------------------------------------
+// convert E3SM start type into StartType enum
+TimeStepperStartType getTimeStepperStartTypeFromE3SM(const int E3SMOption) {
+
+   // Translate the integer start option from the E3SM coupler to the
+   // internal enum
+
+   TimeStepperStartType StartChoice;
+   switch (E3SMOption) {
+   case 0:
+      StartChoice = TimeStepperStartType::StartUp;
+   case 1:
+      StartChoice = TimeStepperStartType::Continue;
+   case 2:
+      StartChoice = TimeStepperStartType::Branch;
+   default:
+      StartChoice = TimeStepperStartType::Invalid;
+      ABORT_ERROR("Invalid E3SM start type value: {}", E3SMOption);
+   }
+   return StartChoice;
+}
+
+//------------------------------------------------------------------------------
+// convert string into StopType enum
+TimeStepperStopType getTimeStepperStopTypeFromStr(const std::string &InString) {
+
+   // Convert input string to lowercase for easier and more robust comparison
+   std::string StopStr = InString;
+   std::transform(StopStr.begin(), StopStr.end(), StopStr.begin(),
+                  [](unsigned char c) { return std::tolower(c); });
+
+   TimeStepperStopType StopChoice;
+   if (StopStr == "attime") {
+      StopChoice = TimeStepperStopType::AtTime;
+   } else if (StopStr == "afterduration") {
+      StopChoice = TimeStepperStopType::AfterDuration;
+   } else if (StopStr == "onsignal") {
+      StopChoice = TimeStepperStopType::OnSignal;
+   } else {
+      StopChoice = TimeStepperStopType::Invalid;
+      ABORT_ERROR("Invalid StopType {}", InString);
+   }
+
+   return StopChoice;
+}
+
+//------------------------------------------------------------------------------
+// Convert string into PrescribeStateType enum
 PrescribeStateType
 getPrescribeThicknessTypeFromStr(const std::string &InString) {
 
@@ -85,46 +159,103 @@ getPrescribeVelocityTypeFromStr(const std::string &InString) {
 //------------------------------------------------------------------------------
 // Constructors and creation methods.
 
-/// Constructor creates a new instance and fills in the time
-/// related data. attachData function is used to add the data pointers
+// Constructor creates a new instance and fills in most of the time related
+// data. The attachData function is used to add the data pointers once they
+// are known. While an initial StopTime and EndAlarm are created here, they
+// must be reset later if the initial time for the segment is updated (eg during
+// the restart read).
 TimeStepper::TimeStepper(
-    const std::string &InName,      ///< [in] name of time stepper
-    TimeStepperType InType,         ///< [in] type (time stepping method)
-    I4 InNTimeLevels,               ///< [in] num time levels for method
-    const TimeInterval &InTimeStep, ///< [in] time step
-    const TimeInstant &InStartTime, ///< [in] start time for time stepping
-    ///< [in] stop time for time stepping, missing in coupled mode
-    std::optional<TimeInstant> InStopTime)
+    const std::string &InName,              // [in] name of time stepper
+    TimeStepperType InType,                 // [in] type (time stepping method)
+    I4 InNTimeLevels,                       // [in] num time levels for method
+    const TimeInterval &InTimeStep,         // [in] time step
+    const TimeStepperStartType InStartType, // [in] option for starting
+    const TimeInstant &InStartTime,         // [in] start time for full sim
+    const TimeStepperStopType InStopType,   // [in] option for stopping
+    std::optional<TimeInstant> InStopTime,  // [in] stop time if opt AtTime
+    std::optional<TimeInterval> InDuration
+    // [in] duration of simulation segment if StopType is AfterDuration
+    )
     : Name(InName), Type(InType), NTimeLevels(InNTimeLevels),
-      TimeStep(InTimeStep), StartTime(InStartTime), StopTime(InStopTime) {
-   // Most variables initialized via initializer list
+      TimeStep(InTimeStep), StartType(InStartType), StartTime(InStartTime),
+      StopType(InStopType) {
+   // Many variables initialized via initializer list
 
    // Set up clock associated with this time stepper
    StepClock = std::make_unique<Clock>(Clock(InStartTime, InTimeStep));
 
-   if (InStopTime.has_value()) {
-      // Create an EndAlarm associated with the StopTime
-      std::string AlarmName = "EndAlarm";
-      if (InName != "Default")
-         AlarmName += InName;
-      EndAlarm = std::make_unique<Alarm>(Alarm(AlarmName, *InStopTime));
-      StepClock->attachAlarm(EndAlarm.get());
+   // Create an initial stop time and end alarm and attach the alarm to the
+   // StepClock. For the duration case, these are only valid for the first run
+   // segment and must be reset later after the current time is updated on
+   // restart.
+
+   // Create alarm name based on TimeStepper instance name
+   std::string AlarmName = "EndAlarm";
+   if (InName != "Default")
+      AlarmName += InName;
+
+   switch (StopType) {
+   case TimeStepperStopType::AtTime:
+      if (InStopTime.has_value()) { // StopTime must be provided
+         StopTime = InStopTime.value();
+         EndAlarm = std::make_unique<Alarm>(Alarm(AlarmName, StopTime));
+         StepClock->attachAlarm(EndAlarm.get());
+         Duration = StopTime - StartTime;
+      } else {
+         ABORT_ERROR("While creating TimeStepper {}, the StopType AtTime"
+                     " was requested but a StopTime was not provided",
+                     Name);
+      }
+      break;
+   case TimeStepperStopType::AfterDuration:
+      // This initialization of the end alarm is only valid for a simulation
+      // starting from scratch or branching with a time reset.
+      // If the simulation is being continued from a restart file, then
+      // these must be reset later using the resetEndAlarm function.
+      if (InDuration.has_value()) { // Duration must be provided
+         TimeInstant CurrentTime = StepClock->getCurrentTime();
+         Duration                = InDuration.value();
+         StopTime                = CurrentTime + Duration;
+         EndAlarm = std::make_unique<Alarm>(Alarm(AlarmName, StopTime));
+         StepClock->attachAlarm(EndAlarm.get());
+      } else {
+         ABORT_ERROR("While creating TimeStepper {}, the StopType"
+                     " AfterDuration was requested but a Duration was not"
+                     " provided",
+                     Name);
+      }
+      break;
+   case TimeStepperStopType::OnSignal:
+      // Simulation will stop on an external signal so no StopTime
+      // or Duration are needed. Set to a nearly infinite value
+      Duration = TimeInterval(1.e16, TimeUnits::Seconds);
+      StopTime = StartTime + Duration;
+      EndAlarm = std::make_unique<Alarm>(Alarm(AlarmName, StopTime));
+      break;
+   default:
+      ABORT_ERROR("Invalid StopType encountered creating TimeStepper {}", Name);
    }
 }
 
 //------------------------------------------------------------------------------
 // Create a time stepper when all components are known
+// Note that if StopType is AfterDuration, the StopTime and EndAlarm
+// are computed based on the clock's current time and must be reset if
+// the current time is reset (eg by reading a restart) using resetEndAlarm
 TimeStepper *TimeStepper::create(
-    const std::string &InName,      ///< [in] name of time stepper
-    TimeStepperType InType,         ///< [in] type (time stepping method)
-    const TimeInterval &InTimeStep, ///< [in] time step
-    const TimeInstant &InStartTime, ///< [in] start time for time stepping
-    const TimeInstant &InStopTime,  ///< [in] stop  time for time stepping
-    Tendencies *InTend,             ///< [in] ptr to tendencies
-    AuxiliaryState *InAuxState,     ///< [in] ptr to aux state variables
-    HorzMesh *InMesh,               ///< [in] ptr to mesh information
-    VertCoord *InVCoord,            ///< [in] ptr to vertical coordinate
-    Halo *InMeshHalo                ///< [in] ptr to halos
+    const std::string &InName,              // [in] name of time stepper
+    TimeStepperType InType,                 // [in] type (time stepping method)
+    Tendencies *InTend,                     // [in] ptr to tendencies
+    AuxiliaryState *InAuxState,             // [in] ptr to aux state variables
+    HorzMesh *InMesh,                       // [in] ptr to mesh information
+    VertCoord *InVCoord,                    // [in] ptr to vertical coordinate
+    Halo *InMeshHalo,                       // [in] ptr to halos
+    const TimeInterval &InTimeStep,         // [in] time step
+    const TimeStepperStartType InStartType, // [in] option to start sim
+    const TimeInstant &InStartTime,         // [in] full simulation start time
+    const TimeStepperStopType InStopType,   // [in] option to stop
+    std::optional<TimeInstant> InStopTime,  // [in] stop time if option AtTime
+    std::optional<TimeInterval> InDuration  // [in] duration if opt AfterDur
 ) {
 
    OMEGA_REQUIRE(
@@ -146,7 +277,8 @@ TimeStepper *TimeStepper::create(
 
    // Start by calling the two-phase create function
    TimeStepper *NewTimeStepper =
-       create(InName, InType, InTimeStep, InStartTime, InStopTime);
+       create(InName, InType, InTimeStep, InStartType, InStartTime, InStopType,
+              InStopTime, InDuration);
 
    NewTimeStepper->PrescribeThicknessMode = DefaultPrescribeThicknessMode;
    NewTimeStepper->PrescribeVelocityMode  = DefaultPrescribeVelocityMode;
@@ -161,20 +293,25 @@ TimeStepper *TimeStepper::create(
 // Create a time stepper when time information is needed before state
 // and tendencies are defined. It creates an instance and only fills
 // the time information. Data pointers are attached later.
+// Note that if StopType is AfterDuration, the StopTime and EndAlarm
+// are computed based on the clock's current time and must be reset if
+// the current time is reset (eg by reading a restart) using resetEndAlarm
 TimeStepper *TimeStepper::create(
-    const std::string &InName,      // [in] name of time stepper
-    TimeStepperType InType,         // [in] type (time stepping method)
-    const TimeInterval &InTimeStep, // [in] time step
-    const TimeInstant &InStartTime, // [in] start time for time stepping
-    ///< [in] stop time for time stepping, missing in coupled mode
-    std::optional<TimeInstant> InStopTime) {
+    const std::string &InName,              // [in] name of time stepper
+    TimeStepperType InType,                 // [in] type (time stepping method)
+    const TimeInterval &InTimeStep,         // [in] time step
+    const TimeStepperStartType InStartType, // [in] option for starting
+    const TimeInstant &InStartTime,         // [in] start time for full sim
+    const TimeStepperStopType InStopType,   // [in] option for stopping
+    std::optional<TimeInstant> InStopTime,  // [in] stop time option is AtTime
+    std::optional<TimeInterval> InDuration  // [in] duration opt AfterDuration
+) {
 
    // Check for duplicates
    if (AllTimeSteppers.find(InName) != AllTimeSteppers.end()) {
-      LOG_ERROR("Attempted to create a new TimeStepper with name {} but it "
-                "already exists",
-                InName);
-      return nullptr;
+      ABORT_ERROR("Attempted to create a new TimeStepper with name {} but it "
+                  "already exists",
+                  InName);
    }
 
    TimeStepper *NewTimeStepper;
@@ -182,16 +319,19 @@ TimeStepper *TimeStepper::create(
    // Call specific constructor with time info
    switch (InType) {
    case TimeStepperType::ForwardBackward:
-      NewTimeStepper = new ForwardBackwardStepper(InName, InTimeStep,
-                                                  InStartTime, InStopTime);
+      NewTimeStepper = new ForwardBackwardStepper(
+          InName, InTimeStep, InStartType, InStartTime, InStopType, InStopTime,
+          InDuration);
       break;
    case TimeStepperType::RungeKutta4:
       NewTimeStepper =
-          new RungeKutta4Stepper(InName, InTimeStep, InStartTime, InStopTime);
+          new RungeKutta4Stepper(InName, InTimeStep, InStartType, InStartTime,
+                                 InStopType, InStopTime, InDuration);
       break;
    case TimeStepperType::RungeKutta2:
       NewTimeStepper =
-          new RungeKutta2Stepper(InName, InTimeStep, InStartTime, InStopTime);
+          new RungeKutta2Stepper(InName, InTimeStep, InStartType, InStartTime,
+                                 InStopType, InStopTime, InDuration);
       break;
    case TimeStepperType::Invalid:
       ABORT_ERROR("Invalid time stepping method");
@@ -276,49 +416,20 @@ void TimeStepper::init1() {
    CHECK_ERROR_ABORT(Err, "CalendarType not found in TimeIntegration Config");
    Calendar::init(CalendarStr);
 
+   // Initialize start option
+   std::string StartTypeStr;
+   Err = TimeIntConfig.get("StartType", StartTypeStr);
+   CHECK_ERROR_ABORT(Err, "StartType not found in TimeIntegration Config");
+   TimeStepperStartType InStartType =
+       getTimeStepperStartTypeFromStr(StartTypeStr);
+
    // Initialize start time
    std::string StartTimeStr;
    Err = TimeIntConfig.get("StartTime", StartTimeStr);
    CHECK_ERROR_ABORT(Err, "StartTime not found in TimeIntConfig");
    TimeInstant StartTime(StartTimeStr);
 
-   // Either the StopTime or RunDuration will be used to set the StopTime
-   std::string StopTimeStr;
-   std::string DurationStr;
-   Err += TimeIntConfig.get("StopTime", StopTimeStr);
-   Error Err1 = TimeIntConfig.get("RunDuration", DurationStr);
-
-   // Check for empty or none strings for either choice
-   bool ValidStopTime = false;
-   bool ValidDuration = false;
-   if (Err.isSuccess()) { // stop time was read from config
-      ValidStopTime = true;
-      if (StopTimeStr == "" or StopTimeStr == " " or StopTimeStr == "none" or
-          StopTimeStr == "None")
-         ValidStopTime = false;
-   }
-   if (Err1.isSuccess()) { // duration was read from config
-      ValidDuration = true;
-      if (DurationStr == "" or DurationStr == " " or DurationStr == "none" or
-          DurationStr == "None")
-         ValidDuration = false;
-   }
-   if (!ValidStopTime and !ValidDuration) {
-      ABORT_ERROR("Either StopTime or RunDuration must be supplied in"
-                  "TimeIntegration Config");
-   }
-
-   // Set stop time if a valid value is present. If both are present and
-   // valid, we use the RunDuration, so compute stop time based on that first
-   TimeInstant StopTime;
-   if (ValidDuration) { // valid RunDuration supplied
-      TimeInterval Duration(DurationStr);
-      StopTime = StartTime + Duration;
-   } else { // only valid StopTime supplied
-      TimeInstant StopTime2(StopTimeStr);
-      StopTime = StopTime2;
-   }
-
+   // Extract Prescribe options from config
    Config StateConfig("State");
    Error StateErr = OmegaConfig->get(StateConfig);
    if (StateErr.isSuccess()) {
@@ -336,12 +447,12 @@ void TimeStepper::init1() {
       }
    }
 
-   TimeInitParams TimeParams{StartTime, StopTime};
-
-   init1(TimeParams);
+   init1(InStartType, StartTime);
 }
 
-void TimeStepper::init1(const TimeInitParams &TimeParams) {
+//------------------------------------------------------------------------------
+void TimeStepper::init1(const TimeStepperStartType InStartType,
+                        const TimeInstant &StartTime) {
 
    // Calendar must be initialized before this is called — the no-arg init1()
    // does this internally. In coupled mode, the caller (ocnInit) is responsible
@@ -370,12 +481,48 @@ void TimeStepper::init1(const TimeInitParams &TimeParams) {
    CHECK_ERROR_ABORT(Err, "TimeStep not found in TimeIntegration Config");
    TimeInterval TimeStep(TimeStepStr);
 
+   // Initialize the option for stopping the simulation
+   std::string StopTypeStr;
+   Err += TimeIntConfig.get("StopType", StopTypeStr);
+   CHECK_ERROR_ABORT(Err, "StopType not found in TimeIntegrationConfig");
+   TimeStepperStopType InStopType = getTimeStepperStopTypeFromStr(StopTypeStr);
+
+   // Depending on the stop option, extract the StopTime, Duration variables
+   // from the StopCriterion config string
+   std::string StopCriterionStr;
+   std::optional<TimeInstant> InStopTime  = std::nullopt;
+   std::optional<TimeInterval> InDuration = std::nullopt;
+   switch (InStopType) {
+   case TimeStepperStopType::AtTime: {
+      // The StopCriterion string contains the StopTime string
+      Err += TimeIntConfig.get("StopCriterion", StopCriterionStr);
+      CHECK_ERROR_ABORT(Err, "StopCriterion not found in TimeIntConfig");
+      TimeInstant StopTimeTmp(StopCriterionStr); // extract StopTime
+      InStopTime = StopTimeTmp;
+      break;
+   }
+   case TimeStepperStopType::AfterDuration: {
+      // The StopCriterion string contains the Duration string
+      Err += TimeIntConfig.get("StopCriterion", StopCriterionStr);
+      CHECK_ERROR_ABORT(Err, "StopCriterion not found in TimeIntConfig");
+      TimeInterval DurationTmp(StopCriterionStr); // extract Duration
+      InDuration = DurationTmp;
+      break;
+   }
+   case TimeStepperStopType::OnSignal:
+      // Neither StopTime or Duration needed
+      break;
+   default:
+      ABORT_ERROR("Unknown StopType {} while initializing TimeStepper",
+                  StopTypeStr);
+   }
+
    // Now that all the inputs are defined, create the default time stepper
    // Use the partial creation function for only the time info. Data
    // pointers will be attached in phase 2 initialization
    TimeStepper::DefaultTimeStepper =
-       create("Default", TimeStepperChoice, TimeStep, TimeParams.StartTime,
-              TimeParams.StopTime);
+       create("Default", TimeStepperChoice, TimeStep, InStartType, StartTime,
+              InStopType, InStopTime, InDuration);
 }
 
 //------------------------------------------------------------------------------
@@ -414,10 +561,6 @@ void TimeStepper::changeTimeStep(const TimeInterval &TimeStepIn) {
 }
 
 //------------------------------------------------------------------------------
-// Get number of doStep calls made on this instance
-I8 TimeStepper::getStepCount() const { return StepCount; }
-
-//------------------------------------------------------------------------------
 // Retrieval functions
 
 // Get the default time stepper
@@ -449,29 +592,65 @@ std::string TimeStepper::getName() const { return Name; }
 // Get time stepper type
 TimeStepperType TimeStepper::getType() const { return Type; }
 
+// Get number of doStep calls made on this instance
+I8 TimeStepper::getStepCount() const { return StepCount; }
+
 // Get number of time level
 int TimeStepper::getNTimeLevels() const { return NTimeLevels; }
 
 // Get time step
 TimeInterval TimeStepper::getTimeStep() const { return TimeStep; }
 
+// Get start option from instance
+TimeStepperStartType TimeStepper::getStartType() const { return StartType; }
+
 // Get start time
 TimeInstant TimeStepper::getStartTime() const { return StartTime; }
 
+// Get stop option from instance
+TimeStepperStopType TimeStepper::getStopType() const { return StopType; }
+
 // Get stop time from instance
-std::optional<TimeInstant> TimeStepper::getStopTime() const { return StopTime; }
+TimeInstant TimeStepper::getStopTime() const { return StopTime; }
 
 // Get clock (ptr) from instance
 Clock *TimeStepper::getClock() { return StepClock.get(); }
-
-// Check if time stepper has an end alarm (i.e. if stop time is defined)
-bool TimeStepper::hasEndAlarm() const { return EndAlarm != nullptr; }
 
 // Get end alarm (ptr) from instance
 Alarm *TimeStepper::getEndAlarm() { return EndAlarm.get(); }
 
 //------------------------------------------------------------------------------
 // Update functions
+//------------------------------------------------------------------------------
+// If the current segment start time is reset (eg by reading a restart), the
+// relevant stop times and alarms must be reset.  It is assumed that the
+// ModelClock CurrentTime has been reset already and uses this updated time
+// as the initial time for the duration. This only modifies StopTime and
+// EndAlarm if StopType is AfterDuration.
+void TimeStepper::resetEndAlarm() {
+
+   // The end alarm is only reset from the StopType AfterDuration based on
+   // the new current time in the step clock
+   switch (StopType) {
+   case TimeStepperStopType::AtTime:
+      // Stop time is fixed, so no reset
+      break;
+   case TimeStepperStopType::AfterDuration: {
+      // We assume the CurrentTime has been updated and compute a new
+      // stop time and alarm based on that CurrentTime and Duration
+      TimeInstant CurrentTime = StepClock->getCurrentTime();
+      StopTime                = CurrentTime + Duration;
+      EndAlarm->reset(StopTime);
+      break;
+   }
+   case TimeStepperStopType::OnSignal:
+      // Simulation will stop on an external signal so no StopTime
+      // or Duration or EndAlarm are needed.
+      break;
+   default:
+      ABORT_ERROR("Invalid StopType encountered creating TimeStepper {}", Name);
+   }
+}
 
 //------------------------------------------------------------------------------
 // Updates pseudo-thickness using tendency terms

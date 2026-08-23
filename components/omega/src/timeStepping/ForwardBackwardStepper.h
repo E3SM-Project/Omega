@@ -15,11 +15,14 @@ class ForwardBackwardStepper : public TimeStepper {
    /// Constructor creates an instance of a forward-backward stepper and
    /// fills with some time information. Data pointers are added later.
    ForwardBackwardStepper(
-       const std::string &InName,      ///< [in] name of time stepper
-       const TimeInterval &InTimeStep, ///< [in] time step
-       const TimeInstant &InStartTime, ///< [in] start time for time stepping
-       ///< [in] stop time for time stepping, missing in coupled mode
-       std::optional<TimeInstant> InStopTime = std::nullopt);
+       const std::string &InName,              ///< [in] name of time stepper
+       const TimeInterval &InTimeStep,         ///< [in] time step
+       const TimeStepperStartType InStartType, ///< [in] option for starting sim
+       const TimeInstant &InStartTime,         ///< [in] start time for full sim
+       const TimeStepperStopType InStopType,   ///< [in] option for stopping
+       std::optional<TimeInstant> InStopTime,  ///< [in] stop time if AtTime
+       std::optional<TimeInterval> InDuration  ///< [in] duration if AfterDur
+   );
 
    /// Advance the state by one step of the forward-backward scheme
    void doStep(OceanState *State,   ///< [inout] model state

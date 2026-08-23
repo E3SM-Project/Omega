@@ -28,9 +28,6 @@ int ocnRun(TimeInstant &CurrTime ///< [inout] current sim time
    TimeStepper *DefTimeStepper = TimeStepper::getDefault();
    Forcing *DefForcing         = Forcing::getDefault();
 
-   // EndAlarm must be set before calling ocnRun
-   OMEGA_REQUIRE(DefTimeStepper->hasEndAlarm(), "ocnRun: no EndAlarm");
-
    // get simulation time and other time info
    Clock *OmegaClock     = DefTimeStepper->getClock();
    Alarm *EndAlarm       = DefTimeStepper->getEndAlarm();
