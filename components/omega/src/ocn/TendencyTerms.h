@@ -469,8 +469,8 @@ class TracerHorzAdvOnCell {
       // thickness flux
       HProvInv(ICell, K) = 1.0_Real / HProv(ICell, K);
       HNewInv(ICell, K) =
-          1.0_Real / (HProv(ICell, K) - Dt * VerticalPseudoVelocity(ICell, K) +
-                      Dt * VerticalPseudoVelocity(ICell, K + 1));
+          1.0_Real / (HProv(ICell, K) - Dt * TotalVerticalPseudoVelocity(ICell, K) +
+                      Dt * TotalVerticalPseudoVelocity(ICell, K + 1));
    }
 
    KOKKOS_FUNCTION void FCTTracerCurFill(const TeamMember &Team, const I4 L,
@@ -763,7 +763,7 @@ class TracerHorzAdvOnCell {
    Array2DReal EdgeSignOnCell;
    Array1DReal DvEdge;
    Array1DReal AreaCell;
-   Array2DReal VerticalPseudoVelocity;
+   Array2DReal TotalVerticalPseudoVelocity;
    Array2DReal HProvInv;
    Array2DReal HNewInv;
    Array2DReal HProv;
