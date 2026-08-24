@@ -13,6 +13,8 @@
 #include "TimeStepper.h"
 #include <mpi.h>
 
+bool iOwnKokkos = false;
+
 // helper C++ functions
 namespace {
 
@@ -69,6 +71,7 @@ void omega_ocn_init1(
    // initialize Kokkos
    if (!Kokkos::is_initialized() && !Kokkos::is_finalized()) {
        Kokkos::initialize();
+       iOwnKokkos = true;
    }
 
    // initialize Pacer timing in coupled mode
@@ -155,7 +158,9 @@ void omega_ocn_finalize() {
    // no Pacer::print or Pacer::finalize in coupled mode; cpl will handle it
 
    // finalize Kokkos
-   Kokkos::finalize();
+   if (!Kokkos::is_finalized() && iOwnKokkos) {
+       Kokkos::finalize();
+   }
 }
 
 int omega_get_layout_mct() {
