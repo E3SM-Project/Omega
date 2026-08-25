@@ -79,12 +79,14 @@ class HorzMesh {
    std::string MeshFileName; ///< name (and full path) of input mesh file
 
    // Global attributes
-   bool OnSphere;     ///< true if mesh is spherical
-   bool OnPlane;      ///< true if mesh is on a Cartesian plane
-   bool IsPeriodic;   ///< true if planar mesh is periodic
-   Real SphereRadius; ///< radius (m) of sphere that mesh covers
-   Real XPeriod;      ///< length (m) of periodicity in x direction
-   Real YPeriod;      ///< length (m) of periodicity in y direction
+   bool OnSphere;       ///< true if mesh is spherical
+   bool HasVectorRecon; ///< true if the mesh file supplied the vector
+                        ///< reconstruction stencil and weights below
+   bool OnPlane;        ///< true if mesh is on a Cartesian plane
+   bool IsPeriodic;     ///< true if planar mesh is periodic
+   Real SphereRadius;   ///< radius (m) of sphere that mesh covers
+   Real XPeriod;        ///< length (m) of periodicity in x direction
+   Real YPeriod;        ///< length (m) of periodicity in y direction
 
    // Sizes and global IDs
    // Note that all sizes are actual counts (1-based) so that loop extents
