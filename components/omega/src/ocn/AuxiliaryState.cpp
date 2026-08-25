@@ -2,6 +2,7 @@
 #include "Config.h"
 #include "Error.h"
 #include "Field.h"
+#include "IOStream.h"
 #include "Logging.h"
 #include "Pacer.h"
 #include "Tendencies.h"
@@ -329,9 +330,21 @@ void AuxiliaryState::computeAll(const OceanState *State,
 // Compute the diagnostic zonal and meridional velocity components at cell
 // centers. These are not used by the Omega equations, so this is kept out
 // of computeAll (which runs once per time stepper stage) and is instead
-// called once per time step.
+// called once per time step, and only if some IO stream asks for them.
 void AuxiliaryState::computeVelocityRecon(const OceanState *State,
-                                          int VelTimeLevel) const {
+                                          int VelTimeLevel) {
+
+   if (!VelocityReconResolved) {
+      VelocityReconRequested =
+          IOStream::isFieldRequested(
+              VelocityReconAux.VelocityZonalCell.label()) ||
+          IOStream::isFieldRequested(
+              VelocityReconAux.VelocityMeridionalCell.label());
+      VelocityReconResolved = true;
+   }
+
+   if (!VelocityReconRequested)
+      return;
 
    if (!Mesh->HasVectorRecon)
       ABORT_ERROR("AuxiliaryState: {} and {} were requested but mesh {} has "
