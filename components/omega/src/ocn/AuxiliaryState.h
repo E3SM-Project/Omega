@@ -94,6 +94,11 @@ class AuxiliaryState {
    // resolved on the first call and cached.
    void computeVelocityRecon(const OceanState *State, int VelTimeLevel);
 
+   // Force the reconstructed velocity components to be computed every time
+   // step even if no IO stream asks for them. Used by surface coupling,
+   // which needs them regardless of what is being written.
+   void requireVelocityRecon();
+
    /// Compute all auxiliary variables based on an ocean state at a given time
    /// level
    void computeAll(const OceanState *State, const Array3DReal &TracerArray,

@@ -327,6 +327,13 @@ void AuxiliaryState::computeAll(const OceanState *State,
    computeAll(State, TracerArray, TimeLevel, TimeLevel, ProjDt);
 }
 
+// Force the reconstructed velocity components to be computed every time
+// step, whatever the IO streams ask for.
+void AuxiliaryState::requireVelocityRecon() {
+   VelocityReconRequested = true;
+   VelocityReconResolved  = true;
+}
+
 // Compute the diagnostic zonal and meridional velocity components at cell
 // centers. These are not used by the Omega equations, so this is kept out
 // of computeAll (which runs once per time stepper stage) and is instead
