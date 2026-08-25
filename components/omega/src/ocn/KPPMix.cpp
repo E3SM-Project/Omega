@@ -584,40 +584,43 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
           // Bulk Richardson search, Large et al. (1994) Eq. (21):
           //   Ri_b(d) = (B_r - B(d)) d / (|V_r - V(d)|^2 + Vt^2(d))
           // where the reference values B_r, V_r are averaged over the top
-          // epsilon*d of the column. Because the reference average depends on
-          // the trial depth d, it is rebuilt from the surface on every k.
+          // epsilon*d of the column. Since epsilon*d grows monotonically with
+          // the trial depth, the averaging window only ever extends downward,
+          // so the running sums are carried across trial depths rather than
+          // rebuilt from the surface at each one.
           // The OBL base is the first d at which Ri_b reaches RiCritical.
           // -------------------------------------------------------------------
 
-          for (I4 K = KMin; K <= KMax; ++K) {
-             // Fresh cell surface-layer density average for this trial depth
-             I4 KSurfaceAvg      = KMin;
-             const Real ThickTop = Kokkos::abs(ZInterface(ICell, KMin + 1) -
-                                               ZInterface(ICell, KMin));
-             Real SumThickness   = Kokkos::max(ThickTop, 1.0e-12_Real);
-             Real SumRho = LocPotentialDensity(ICell, KMin) * SumThickness;
+          // Cell surface-layer density average
+          I4 KSurfaceAvg      = KMin;
+          const Real ThickTop = Kokkos::abs(ZInterface(ICell, KMin + 1) -
+                                            ZInterface(ICell, KMin));
+          Real SumThickness   = Kokkos::max(ThickTop, 1.0e-12_Real);
+          Real SumRho         = LocPotentialDensity(ICell, KMin) * SumThickness;
 
-             // Fresh per-edge surface-layer velocity averages
-             I4 KSurfE[MaxEdgesBound]      = {};
-             Real SumThickE[MaxEdgesBound] = {};
-             Real SumUnE[MaxEdgesBound]    = {};
-             Real SumVtE[MaxEdgesBound]    = {};
+          // Per-edge surface-layer velocity averages
+          I4 KSurfE[MaxEdgesBound]      = {};
+          Real SumThickE[MaxEdgesBound] = {};
+          Real SumUnE[MaxEdgesBound]    = {};
+          Real SumVtE[MaxEdgesBound]    = {};
 
-             for (I4 J = 0; J < NEdgesEff; ++J) {
-                if (!EdgeValid[J]) {
-                   continue;
-                }
-                const I4 IEdge    = EdgesOnCell(ICell, J);
-                const I4 KEMin    = MinLayerEdgeBot(IEdge);
-                KSurfE[J]         = KEMin;
-                const I4 KIntE0   = Kokkos::min(KEMin + 1, NVertLayers);
-                const Real Thick0 = Kokkos::abs(ZInterface(ICell, KIntE0) -
-                                                ZInterface(ICell, KEMin));
-                SumThickE[J]      = Kokkos::max(Thick0, 1.0e-12_Real);
-                const I4 KE0      = Kokkos::min(KEMin, NVertLayers - 1);
-                SumUnE[J] = LocNormalVelocity(IEdge, KE0) * SumThickE[J];
-                SumVtE[J] = LocTangentialVelocity(IEdge, KE0) * SumThickE[J];
+          for (I4 J = 0; J < NEdgesEff; ++J) {
+             if (!EdgeValid[J]) {
+                continue;
              }
+             const I4 IEdge    = EdgesOnCell(ICell, J);
+             const I4 KEMin    = MinLayerEdgeBot(IEdge);
+             KSurfE[J]         = KEMin;
+             const I4 KIntE0   = Kokkos::min(KEMin + 1, NVertLayers);
+             const Real Thick0 = Kokkos::abs(ZInterface(ICell, KIntE0) -
+                                             ZInterface(ICell, KEMin));
+             SumThickE[J]      = Kokkos::max(Thick0, 1.0e-12_Real);
+             const I4 KE0      = Kokkos::min(KEMin, NVertLayers - 1);
+             SumUnE[J]         = LocNormalVelocity(IEdge, KE0) * SumThickE[J];
+             SumVtE[J] = LocTangentialVelocity(IEdge, KE0) * SumThickE[J];
+          }
+
+          for (I4 K = KMin; K <= KMax; ++K) {
              const I4 KCell     = Kokkos::min(K, NVertLayers - 1);
              const I4 KInt      = Kokkos::min(K + 1, NVertLayers);
              const Real ZDepth  = Ssh - ZInterface(ICell, KInt);
