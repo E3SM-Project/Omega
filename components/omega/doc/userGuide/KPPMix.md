@@ -2,8 +2,9 @@
 
 # KPP Boundary Layer Mixing
 
-This page explains how to enable, configure, and use OMEGA K Profile
-Parameterization (KPP) boundary layer mixing in runs.
+This page explains how to enable, configure, and use Omega K-Profile
+Parameterization (KPP) boundary layer mixing in runs.  The implementation follows
+directly from the MPAS-Ocean implementation.
 
 Related pages:
 - KPP design/theory: [Design KPP document](../design/KPPMix.md)

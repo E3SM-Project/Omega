@@ -8,6 +8,15 @@ call flow, and developer test strategy.
 
 ## Implementation Overview
 
+The Omega implementation of KPP follows directly from the MPAS-Ocean implementation.
+Notably, by default it does not match diffusivity and viscosity from interior mixing
+(below the ocean surface boundary layer) sources at the base of the boundary
+layer. Instead these separate sources are added directly to the KPP diagnosed
+diffusivity and viscosity.  Matching can be enabled via the `MatchTechnique` parameter to
+`MatchBoth` in the Omega yaml file.  Boundary layer depth is computed as the depth
+where the bulk Richardson number exceeds a critical value.  It is then smoothed horizontally.
+KPP diffusivity, viscosity, and non local fluxes are computed based on this boundary layer.
+
 Omega KPP is implemented in `KPPMix` as a singleton with two major compute
 phases:
 
