@@ -7,13 +7,14 @@
 // defined in the corresponding header file.
 //
 //===----------------------------------------------------------------------===//
+#include <iomanip>
+#include <iostream>
 
-#include "TendencyTerms.h"
-#include "AuxiliaryState.h"
 #include "DataTypes.h"
+#include "Error.h"
 #include "HorzMesh.h"
 #include "HorzOperators.h"
-#include "OceanState.h"
+#include "TendencyTerms.h"
 #include "Tracers.h"
 
 namespace OMEGA {
@@ -72,23 +73,37 @@ BottomDragOnEdge::BottomDragOnEdge(const HorzMesh *Mesh,
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
 
 TracerHorzAdvOnCell::TracerHorzAdvOnCell(const HorzMesh *Mesh,
-                                         const VertCoord *VCoord)
+                                         const VertCoord *VCoord,
+                                         const VertAdv *VAdv)
     : HorzontalMesh(Mesh), VerticalCoord(VCoord),
+      NVertLayers(VCoord->NVertLayers),
       NAdvCellsForEdge("NumberOfCellsContribToAdvectionAtEdge",
                        Mesh->NEdgesAll),
       AdvCellsForEdge("IndexOfCellsContributingToAdvection", Mesh->NEdgesAll,
                       Mesh->MaxEdges2 + 2),
       AdvMaskHighOrder("MaskForHighOrderAdvectionTerms", Mesh->NEdgesAll,
                        VCoord->NVertLayers),
+      CellsOnCell(Mesh->CellsOnCell),
       AdvCoefs("CommonAdvectionCoefficients", Mesh->MaxEdges2 + 2,
                Mesh->NEdgesAll),
       AdvCoefs3rd("CommonAdvectionCoeffsForHighOrder", Mesh->MaxEdges2 + 2,
                   Mesh->NEdgesAll),
       HighOrderFlxHorz("HigherOrderHorizontalFlux", Tracers::getNumTracers(),
                        Mesh->NEdgesAll, VCoord->NVertLayers),
-      NEdgesOnCell(Mesh->NEdgesOnCell), EdgesOnCell(Mesh->EdgesOnCell),
-      CellsOnEdge(Mesh->CellsOnEdge), EdgeSignOnCell(Mesh->EdgeSignOnCell),
-      DvEdge(Mesh->DvEdge), AreaCell(Mesh->AreaCell) {}
+      TracerCur(), NEdgesOnCell(Mesh->NEdgesOnCell),
+      EdgesOnCell(Mesh->EdgesOnCell), CellsOnEdge(Mesh->CellsOnEdge),
+      MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
+      MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop),
+      EdgeSignOnCell(Mesh->EdgeSignOnCell), DvEdge(Mesh->DvEdge),
+      AreaCell(Mesh->AreaCell),
+      TotalVerticalPseudoVelocity(VAdv->TotalVerticalPseudoVelocity),
+      HProvInv(), HNewInv(), HProv(), TracerMax(), TracerMin(), HighOrderFlx(),
+      LowOrderFlx(), MinLayerCell(VCoord->MinLayerCell),
+      MaxLayerCell(VCoord->MaxLayerCell), WorkTend(), FlxIn(), FlxOut(),
+      ActiveTracerHorizontalAdvectionEdgeFlux(),
+      ActiveTracerHorizontalAdvectionTendency() {
+   deepCopy(HighOrderFlxHorz, 0);
+}
 
 TracerDiffOnCell::TracerDiffOnCell(const HorzMesh *Mesh,
                                    const VertCoord *VCoord)
@@ -119,6 +134,8 @@ void TracerHorzAdvOnCell::init() {
    const auto MaxEdges2    = Mesh->MaxEdges2;
    const auto NEdgesAll    = Mesh->NEdgesAll;
    const auto NCellsAll    = Mesh->NCellsAll;
+   const auto NCellsSize   = Mesh->NCellsSize;
+   const auto NEdgesSize   = Mesh->NEdgesSize;
    // Allocate Kokkos arrays in member data
 
    if (ForceLowOrder) {
@@ -134,14 +151,82 @@ void TracerHorzAdvOnCell::init() {
        {NCellsAll},
        KOKKOS_LAMBDA(int ICell) { secondDerivativeOnCell(DerivTwo, ICell); });
    // Compute masks and coefficients
-   Kokkos::fence();
    MasksAndCoefficients masksAndCoefficients(
        Mesh, VCoord, DerivTwo, NAdvCellsForEdge, AdvCellsForEdge,
        AdvMaskHighOrder, AdvCoefs, AdvCoefs3rd);
-   Kokkos::fence();
    parallelFor(
        {NEdgesAll}, KOKKOS_LAMBDA(int IEdge) { masksAndCoefficients(IEdge); });
-   Kokkos::fence();
+   if (FCT) {
+      const int NVertsFCT = NVertLayers + 1;
+      HProvInv            = HNewInv =
+          Array2DReal("FCTProvesionalNewInverse", NEdgesSize, NVertsFCT);
+      HProv     = Array2DReal("FCTProvesionalThickness", NCellsSize, NVertsFCT);
+      TracerCur = Array2DReal("TracerCur", NCellsSize, NVertsFCT),
+      TracerMax = Array2DReal("FCTTracerMax", NCellsSize, NVertsFCT);
+      TracerMin = Array2DReal("FCTTracerMin", NCellsSize, NVertsFCT);
+      HighOrderFlx = Array2DReal("FCTHighOrderFlx", NEdgesSize, NVertsFCT);
+      LowOrderFlx  = Array2DReal("FCTLowOrderFlx", NEdgesSize, NVertsFCT);
+      WorkTend     = Array2DReal("WorkTend", NCellsSize, NVertsFCT);
+      FlxIn        = Array2DReal("FlxIn", NCellsSize, NVertsFCT);
+      FlxOut       = Array2DReal("FlxOut", NCellsSize, NVertsFCT);
+      deepCopy(HProvInv, 0.0);
+      deepCopy(HNewInv, 0.0);
+      deepCopy(HProv, 0.0);
+      deepCopy(TracerCur, 0.0);
+      deepCopy(TracerMax, 0.0);
+      deepCopy(TracerMin, 0.0);
+      deepCopy(HighOrderFlx, 0.0);
+      deepCopy(LowOrderFlx, 0.0);
+      deepCopy(WorkTend, 0.0);
+      deepCopy(FlxIn, 0.0);
+      deepCopy(FlxOut, 0.0);
+      if (ComputeBudgets) {
+         const int NTracers = Tracers::getNumTracers();
+         const int NEdges   = Mesh->NEdgesHaloH(1);
+         ActiveTracerHorizontalAdvectionEdgeFlux =
+             Array3DReal("FCTActiveTracerHorizontalAdvectionEdgeFlux", NTracers,
+                         NEdges, NVertLayers);
+         ActiveTracerHorizontalAdvectionTendency =
+             Array3DReal("FCTActiveTracerHorizontalAdvectionTendency", NTracers,
+                         NCellsAll, NVertLayers);
+         deepCopy(ActiveTracerHorizontalAdvectionEdgeFlux, 0.0);
+         deepCopy(ActiveTracerHorizontalAdvectionTendency, 0.0);
+         const int NDims             = 1;
+         const std::string GroupName = "AuxiliaryState";
+         std::vector<std::string> FluxDimNames(NDims, "NEdges");
+         auto BudgetAdvectionEdgeFlux = Field::create(
+             ActiveTracerHorizontalAdvectionEdgeFlux.label(),    // field name
+             "Tracer FCT Horizontal Advection Edge Flux Budget", // long name or
+                                                                 // description
+             "",                                                 // units
+             "",                             // CF standard Name
+             0,                              // min valid value
+             std::numeric_limits<I4>::max(), // max valid value
+             NDims,                          // number of dimensions
+             FluxDimNames                    // dimension names
+         );
+         BudgetAdvectionEdgeFlux->attachData<Array3DReal>(
+             ActiveTracerHorizontalAdvectionEdgeFlux);
+         FieldGroup::addFieldToGroup(
+             ActiveTracerHorizontalAdvectionEdgeFlux.label(), GroupName);
+         std::vector<std::string> TendDimNames(NDims, "NCells");
+         auto BudgetAdvectionCellTend = Field::create(
+             ActiveTracerHorizontalAdvectionTendency.label(), // field name
+             "Tracer FCT Horizontal Advection Cell Flux "
+             "Tendency",                     // long name or description
+             "",                             // units
+             "",                             // CF standard Name
+             0,                              // min valid value
+             std::numeric_limits<I4>::max(), // max valid value
+             NDims,                          // number of dimensions
+             TendDimNames                    // dimension names
+         );
+         BudgetAdvectionCellTend->attachData<Array3DReal>(
+             ActiveTracerHorizontalAdvectionTendency);
+         FieldGroup::addFieldToGroup(
+             ActiveTracerHorizontalAdvectionTendency.label(), GroupName);
+      }
+   }
 }
 } // end namespace OMEGA
 

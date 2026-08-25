@@ -38,7 +38,6 @@ implemented:
 - `SfcStressForcingOnEdge`
 - `BottomDragOnEdge`
 - `TracerHorzAdvOnCell`
-- `TracerHighOrderHorzAdvOnCell`
 - `TracerDiffOnCell`
 - `TracerHyperDiffOnCell`
 - `SurfaceTracerRestoringOnCell`
