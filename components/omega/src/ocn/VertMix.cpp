@@ -334,7 +334,7 @@ void VertMix::computeVertMix(const Array2DReal &NormalVelocity,
    if (LocKPPEnabled) {
       const I4 NVertLayers = VCoord->NVertLayers;
       I4 KPPMergeMode      = 0; // 0=additive profile, 1=matched coefficients
-      if (KPPInstance->MatchTechniqueStr == "MatchBoth") {
+      if (KPPInstance->MatchTechnique == KPPMatchType::MatchBoth) {
          KPPMergeMode = 1;
       }
 

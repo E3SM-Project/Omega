@@ -107,6 +107,10 @@ class HorzMesh {
    I4 MaxEdges2;      ///< Max number of edges around a cell x2
    I4 NEdgesGlobal;   ///< Total number of edges in global non-decomposed mesh
 
+   /// Compile-time upper bound on MaxEdges, for sizing on-stack (per-thread)
+   /// arrays in device kernels. Meshes with more edges per cell are rejected.
+   static constexpr I4 MaxEdgesBound = 10;
+
    Array1DI4 NVerticesHalo;      ///< num cells owned+halo for halo layer
    HostArray1DI4 NVerticesHaloH; ///< num cells owned+halo for halo layer
    I4 NVerticesOwned;            ///< Number of vertices owned by this task

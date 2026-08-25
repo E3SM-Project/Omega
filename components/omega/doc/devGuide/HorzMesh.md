@@ -47,6 +47,15 @@ OMEGA::parallelFor({HMesh->NCellsOwned,HMesh->MaxEdges},
 }
 ```
 
+`MaxEdges` is read from the mesh file and is therefore only known at run time.
+Kernels that need a fixed-size per-thread array indexed by edge should size it
+with the compile-time bound instead:
+```
+OMEGA::Real Weights[OMEGA::HorzMesh::MaxEdgesBound];
+```
+`MaxEdgesBound` is a single shared upper bound on `MaxEdges`; meshes exceeding
+it are rejected. Do not introduce a local copy of this limit.
+
 For member variables that are host arrays, variable names are appended with an
 `H`.  Array variable names not ending in `H` are device arrays.
 

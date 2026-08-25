@@ -26,6 +26,64 @@ All KPP depths are measured downward from the free surface, not from the geoid.
 `SshCell(ICell) - GeomZ...(ICell, K)`. Layer thicknesses are differences of
 geometric heights and are unaffected by the sea surface height.
 
+## Notation for Readers New to KPP
+
+KPP splits the water column at the ocean boundary layer (OBL) depth `h`, also
+called the boundary layer depth (BLD). Inside the OBL, diffusivity and
+viscosity are prescribed as a depth profile scaled by `h` and a turbulent
+velocity scale; below it, only interior mixing applies.
+
+| Symbol | Code name | Units | Meaning |
+| --- | --- | --- | --- |
+| `h` | `HOBL`, `BoundaryLayerDepth` | m | OBL depth below the free surface |
+| `d` | `ZDepth`, `ZCenter` | m | depth below the free surface |
+| `sigma` | `Sigma` | - | normalized depth in `[-1,0]`, Omega sign convention: 0 at the surface, -1 at the OBL base |
+| `sigma_mu` | `SigmaMu` | - | `-Sigma`, in `[0,1]`; the CVMix/Large et al. convention |
+| `u*` | `UStar` | m/s | surface friction velocity from wind stress |
+| `B_0` | `BuoyFlux` | m^2/s^3 | surface buoyancy flux; **negative is destabilizing** (convection) |
+| `L` | `LMoninObukhov` | m | Monin-Obukhov length, `u*^3 / (kappa B_0)` |
+| `zeta` | `Zeta` | - | stability coordinate `d/L`; negative is unstable |
+| `kappa` | `VonKar` | - | von Karman constant |
+| `epsilon` | `SurfaceLayerExtent` | - | surface layer as a fraction of `h` |
+| `w_m`, `w_s` | `WMTurb`, `WSTurb` | m/s | turbulent velocity scales for momentum and scalars |
+| `Vt^2` | `Vt2`, `UnresolvedShear` | m^2/s^2 | unresolved turbulent shear, Large et al. (1994) Eq. 23 |
+| `Ri_b` | `RiBulk`, `BulkRichardsonNumber` | - | bulk Richardson number, Eq. 21 |
+| `G(sigma)` | `kppShape*` | - | non-dimensional profile shapes |
+| `gamma` | `VertNonLocalFlux` | - | non-local (counter-gradient) tracer flux coefficient |
+
+The OBL depth is the shallowest `d` at which `Ri_b(d)` reaches the critical
+value; the search is done per cell in `computeOBLDepth`, and the crossing depth
+is refined by a quadratic fit through the three nearest cell-center `Ri_b`
+values.
+
+### Shape and stability functions
+
+The non-dimensional functions live in `src/ocn/KPPConstants.h` in namespace
+`OMEGA::KPP`. All shape functions take `Sigma` in `[-1,0]` and convert to
+`SigmaMu` internally, so callers never flip signs:
+
+- `kppShapeMomentum`, `kppShapeScalar` -- gradient shapes for viscosity and
+  diffusivity (`SimpleShapes`)
+- `kppShapeMatched` -- gradient shape that additionally reaches a prescribed
+  value at the OBL base, used by `MatchBoth`
+- the non-local flux has no shape function of its own; it reuses whichever
+  scalar shape is in effect, scaled by `C_s` instead of `h*w_s`
+- `kppPhiInvMomentum`, `kppPhiInvScalar` -- **inverse** Monin-Obukhov stability
+  functions `phi^-1(zeta)`; they already return the reciprocal, so do not
+  invert them again at the call site
+
+### Constants and defaults
+
+`src/ocn/KPPConstants.h` is the single authoritative source for KPP default
+values. The runtime-configurable members of `KPPMix` (`CriticalRichardson`,
+`StopOBLSearchMult`, `SurfaceLayerExtent`, the two ice-fraction thresholds and
+`MinimumOBLUnderSeaIce`) are initialized from those constants rather than from
+inline literals, so a default is changed in exactly one place.
+
+Per-thread edge scratch arrays in `computeOBLDepth` are sized from
+`HorzMesh::MaxEdgesBound`, the shared compile-time bound on edges per cell;
+KPP does not define its own maximum.
+
 ## Runtime Call Flow
 
 ### Tendency coupling
@@ -100,14 +158,10 @@ Important keys and class members:
 - `CriticalBulkRichardsonNumber` -> `CriticalRichardson`
 - `StopOBLSearch` -> `StopOBLSearchMult`
 - `SurfaceLayerExtent` -> `SurfaceLayerExtent`
-- `MatchTechnique` -> `MatchTechniqueStr`
+- `MatchTechnique` -> `MatchTechnique` (a `KPPMatchType` enum, not a string)
 - `InterpType2` -> `InterpType2Str`
 - `UseEnhancedDiffusion` -> `UseEnhancedDiffusion`
 - `UseLangmuirCirculation` -> `UseLangmuirCirculation`
-- `UseNonLocalFlux` -> `UseNonLocalFlux` (expert/debugging override only --
-  non-local flux is on by default and required for physically correct
-  tracer transport; this key is intentionally omitted from the User Guide so
-  it is not disabled by non-experts)
 - `IceFractionThresholdForLangmuir` -> `IceFractionThresholdForLangmuir`
 - `IceFractionThresholdForMinimumOBL` -> `IceFractionThresholdForMinimumOBL`
 - `MinimumOBLUnderSeaIce` -> `MinimumOBLUnderSeaIce`
@@ -137,10 +191,14 @@ behavior in experiments.
 
 ## Developer Notes
 
-- `MatchGradient` is currently treated as deprecated/unused and remapped to
-  `SimpleShapes` at init.
-- Unsupported `MatchTechnique` values are guarded and fall back to
-  `SimpleShapes` with a log message.
+- `MatchTechnique` accepts only `SimpleShapes` and `MatchBoth`. Any other value
+  aborts at init rather than falling back, so a typo cannot silently change the
+  scheme being run.
+- `MatchBoth` matches the interior coefficient *value* at the OBL base. The
+  shape derivative there is zero, so the gradient is not yet matched despite the
+  name.
+- `MatchBoth` needs interior coefficients to be passed in; without them
+  `ShapeAtBase` is zero and it degenerates exactly to `SimpleShapes`.
 - When `DebugDiagnostics` is enabled in debug builds, targeted diagnostic
   logging is available; behavior is compile/build-mode aware.
 

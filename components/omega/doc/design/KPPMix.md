@@ -103,6 +103,16 @@ instead additive.  In the latter case, the shape function greatly simplifies to 
 For either shape function, enhanced diffusivity can be included near the boundary layer base.  This can
 smooth boundary layer deepening.
 
+The non-local tracer flux uses the same scalar shape function, scaled by the constant
+$C_s$ from Eq. (20) of Large et al. (1994) rather than by $h\, w_s$:
+
+$$
+\gamma_s(\sigma) = C_s\, S_1(\sigma).
+$$
+
+Because a single $S_1$ drives both, $K_s$ and $\gamma_s$ cannot become inconsistent
+with each other when the matching option changes.
+
 
 
 ## 4 Design
@@ -114,9 +124,8 @@ smooth boundary layer deepening.
 KPP is configured from the `VertMix: KPP` YAML group. Key parameters include:
 
 - `Enable`
-- `UseNonLocalFlux`
 - `CriticalBulkRichardsonNumber`
-- `MatchTechnique`
+- `MatchTechnique` (`SimpleShapes` or `MatchBoth`)
 - `InterpType2`
 - `UseEnhancedDiffusion`
 - `IceFractionThresholdForLangmuir`

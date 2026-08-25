@@ -58,7 +58,10 @@ void initKPPMixTest(const std::string &TestGroup) {
 
    Config("Omega");
    Config::readAll("omega.yml");
-   if (TestGroup == "config-gradient" || TestGroup == "config-unsupported") {
+   // These groups inject a rejected MatchTechnique; KPPMix::init must abort,
+   // so the ctest entries for them are registered as expected failures.
+   if (TestGroup == "config-gradient" || TestGroup == "config-unsupported" ||
+       TestGroup == "config-parabolic") {
       Config VertMixConfig("VertMix");
       Config KPPConfig("KPP");
       Error Err;
@@ -66,7 +69,9 @@ void initKPPMixTest(const std::string &TestGroup) {
       Err += VertMixConfig.get(KPPConfig);
       CHECK_ERROR_ABORT(Err, "KPPMixTest: unable to access KPP configuration");
       const std::string MatchTechnique =
-          TestGroup == "config-gradient" ? "MatchGradient" : "NotAKPPMode";
+          TestGroup == "config-gradient"    ? "MatchGradient"
+          : TestGroup == "config-parabolic" ? "ParabolicNonLocal"
+                                            : "NotAKPPMode";
       KPPConfig.set("MatchTechnique", MatchTechnique);
    }
    IO::init(DefComm);
@@ -128,16 +133,16 @@ void testStabilityFunctions() {
              Zeta = -0.1_Real;
              break;
           case 4:
-             Zeta = KPP::ZETA_M;
+             Zeta = KPP::ZetaM;
              break;
           case 5:
-             Zeta = KPP::ZETA_M - 1.0e-4_Real;
+             Zeta = KPP::ZetaM - 1.0e-4_Real;
              break;
           case 6:
-             Zeta = KPP::ZETA_S;
+             Zeta = KPP::ZetaS;
              break;
           case 7:
-             Zeta = KPP::ZETA_S - 1.0e-4_Real;
+             Zeta = KPP::ZetaS - 1.0e-4_Real;
              break;
           default:
              Zeta = -10.0_Real;
@@ -147,25 +152,25 @@ void testStabilityFunctions() {
           Real ExpectedM;
           if (Zeta >= 0.0_Real) {
              ExpectedM = 1.0_Real / (1.0_Real + 5.0_Real * Zeta);
-          } else if (Zeta >= KPP::ZETA_M) {
+          } else if (Zeta >= KPP::ZetaM) {
              ExpectedM = Kokkos::pow(1.0_Real - 16.0_Real * Zeta, 0.25_Real);
           } else {
-             ExpectedM = Kokkos::pow(KPP::A_MO_M - KPP::C_MO_M * Zeta,
-                                     1.0_Real / 3.0_Real);
+             ExpectedM =
+                 Kokkos::pow(KPP::AMoM - KPP::CMoM * Zeta, 1.0_Real / 3.0_Real);
           }
 
           Real ExpectedS;
           if (Zeta >= 0.0_Real) {
              ExpectedS = 1.0_Real / (1.0_Real + 5.0_Real * Zeta);
-          } else if (Zeta >= KPP::ZETA_S) {
+          } else if (Zeta >= KPP::ZetaS) {
              ExpectedS = Kokkos::sqrt(1.0_Real - 16.0_Real * Zeta);
           } else {
-             ExpectedS = Kokkos::pow(KPP::A_MO_S - KPP::C_MO_S * Zeta,
-                                     1.0_Real / 3.0_Real);
+             ExpectedS =
+                 Kokkos::pow(KPP::AMoS - KPP::CMoS * Zeta, 1.0_Real / 3.0_Real);
           }
 
-          const Real ActualM = KPP::KPPProfileM2(Zeta);
-          const Real ActualS = KPP::KPPProfileS2(Zeta);
+          const Real ActualM = KPP::kppPhiInvMomentum(Zeta);
+          const Real ActualS = KPP::kppPhiInvScalar(Zeta);
           if (!isApprox(ActualM, ExpectedM, RTol, ATol) || ActualM <= 0.0_Real)
              ++ErrorCount;
           if (!isApprox(ActualS, ExpectedS, RTol, ATol) || ActualS <= 0.0_Real)
@@ -179,14 +184,14 @@ void testStabilityFunctions() {
    parallelReduce(
        "KPPMixTest-StabilityContinuity", {2},
        KOKKOS_LAMBDA(int ITest, int &ErrorCount) {
-          const Real Transition = ITest == 0 ? KPP::ZETA_M : KPP::ZETA_S;
+          const Real Transition = ITest == 0 ? KPP::ZetaM : KPP::ZetaS;
           const Real Epsilon    = 1.0e-6_Real;
-          const Real Above      = ITest == 0
-                                      ? KPP::KPPProfileM2(Transition + Epsilon)
-                                      : KPP::KPPProfileS2(Transition + Epsilon);
-          const Real Below      = ITest == 0
-                                      ? KPP::KPPProfileM2(Transition - Epsilon)
-                                      : KPP::KPPProfileS2(Transition - Epsilon);
+          const Real Above = ITest == 0
+                                 ? KPP::kppPhiInvMomentum(Transition + Epsilon)
+                                 : KPP::kppPhiInvScalar(Transition + Epsilon);
+          const Real Below = ITest == 0
+                                 ? KPP::kppPhiInvMomentum(Transition - Epsilon)
+                                 : KPP::kppPhiInvScalar(Transition - Epsilon);
           if (!isApprox(Above, Below, 2.0e-5_Real, 2.0e-5_Real))
              ++ErrorCount;
        },
@@ -228,36 +233,26 @@ void testShapeFunctions() {
 
           const Real SigmaClamped =
               Kokkos::fmax(-1.0_Real, Kokkos::fmin(0.0_Real, Sigma));
-          const Real SigmaMu           = -SigmaClamped;
-          const Real OneMinus          = 1.0_Real - SigmaMu;
-          const Real ExpectedSimple    = SigmaMu * OneMinus * OneMinus;
-          const Real ExpectedParabolic = OneMinus * OneMinus;
-          const Real ExpectedMatchBoth =
-              OneMinus * OneMinus * (1.0_Real + 2.0_Real * SigmaMu);
+          const Real SigmaMu         = -SigmaClamped;
+          const Real OneMinus        = 1.0_Real - SigmaMu;
+          const Real ExpectedSimple  = SigmaMu * OneMinus * OneMinus;
           constexpr Real ShapeAtBase = 0.125_Real;
           const Real Smooth =
               SigmaMu * SigmaMu * (3.0_Real - 2.0_Real * SigmaMu);
 
-          if (!isApprox(KPP::KPPProfileG(Sigma), ExpectedSimple, RTol, ATol))
+          if (!isApprox(KPP::kppShapeMomentum(Sigma), ExpectedSimple, RTol,
+                        ATol))
              ++ErrorCount;
-          if (!isApprox(KPP::KPPProfileM1(Sigma), ExpectedSimple, RTol, ATol))
+          if (!isApprox(KPP::kppShapeScalar(Sigma), ExpectedSimple, RTol, ATol))
              ++ErrorCount;
-          if (!isApprox(KPP::KPPProfileS1(Sigma), ExpectedSimple, RTol, ATol))
-             ++ErrorCount;
-          if (!isApprox(KPP::KPPProfileGParabolicNonLocal(Sigma),
-                        ExpectedParabolic, RTol, ATol))
-             ++ErrorCount;
-          if (!isApprox(KPP::KPPProfileGMatchBoth(Sigma), ExpectedMatchBoth,
-                        RTol, ATol))
-             ++ErrorCount;
-          if (!isApprox(KPP::KPPProfileMatched(Sigma, ShapeAtBase),
+          if (!isApprox(KPP::kppShapeMatched(Sigma, ShapeAtBase),
                         ExpectedSimple + ShapeAtBase * Smooth, RTol, ATol))
              ++ErrorCount;
-          if (!isApprox(KPP::KPPProfileMatched(Sigma, 0.0_Real), ExpectedSimple,
+          if (!isApprox(KPP::kppShapeMatched(Sigma, 0.0_Real), ExpectedSimple,
                         RTol, ATol))
              ++ErrorCount;
-          if (!isApprox(KPP::KPPHu(Sigma), KPP::HUON * (1.0_Real + Sigma), RTol,
-                        ATol))
+          if (!isApprox(KPP::kppSurfaceMomentumScale(Sigma),
+                        KPP::HuOn * (1.0_Real + Sigma), RTol, ATol))
              ++ErrorCount;
        },
        NumErrors);
@@ -278,7 +273,7 @@ void testLangmuirFunctions() {
           const Real UStar          = ITest < 2 ? 0.0_Real : 0.01_Real;
           const Real WindClamped    = Kokkos::fmax(0.0_Real, Wind);
           const Real ExpectedStokes = 0.016_Real * WindClamped;
-          const Real UStarClamped   = Kokkos::fmax(KPP::MIN_USTAR, UStar);
+          const Real UStarClamped   = Kokkos::fmax(KPP::MinUStar, UStar);
           const Real StokesClamped  = Kokkos::fmax(1.0e-8_Real, ExpectedStokes);
           const Real ExpectedLa = Kokkos::sqrt(UStarClamped / StokesClamped);
           const Real LaInv      = 1.0_Real / Kokkos::fmax(0.5_Real, ExpectedLa);
@@ -287,10 +282,10 @@ void testLangmuirFunctions() {
               Kokkos::fmax(1.0_Real,
                            Kokkos::sqrt(1.0_Real + 0.5_Real * LaInv * LaInv)));
 
-          const Real Stokes = KPP::EstokesSLModel(Wind, 50.0_Real);
-          const Real La     = KPP::ComputeLangmuirNumber(UStar, Stokes);
+          const Real Stokes = KPP::estimateStokesDriftSL(Wind, 50.0_Real);
+          const Real La     = KPP::computeLangmuirNumber(UStar, Stokes);
           const Real Enhancement =
-              KPP::ComputeEnhancementFactor(Wind, UStar, 50.0_Real);
+              KPP::computeLangmuirEnhancement(Wind, UStar, 50.0_Real);
           if (!isApprox(Stokes, ExpectedStokes, RTol, ATol))
              ++ErrorCount;
           if (!isApprox(La, ExpectedLa, RTol, ATol))
@@ -310,15 +305,15 @@ void testOBLUtilities() {
    parallelReduce(
        "KPPMixTest-OBLUtilities", {4},
        KOKKOS_LAMBDA(int ITest, int &ErrorCount) {
-          const Real IceFraction =
-              ITest == 0   ? 0.0_Real
-              : ITest == 1 ? KPP::ICE_SUPPRESSION_THRESHOLD
-              : ITest == 2 ? KPP::ICE_SUPPRESSION_THRESHOLD + 0.01_Real
-                           : 0.0_Real;
-          const I4 LandIceMask = ITest == 3 ? 1 : 0;
+          const Real IceFraction = ITest == 0   ? 0.0_Real
+                                   : ITest == 1 ? KPP::IceSuppressThresh
+                                   : ITest == 2
+                                       ? KPP::IceSuppressThresh + 0.01_Real
+                                       : 0.0_Real;
+          const I4 LandIceMask   = ITest == 3 ? 1 : 0;
           const bool ExpectedSuppression =
-              LandIceMask != 0 || IceFraction > KPP::ICE_SUPPRESSION_THRESHOLD;
-          if (KPP::ShouldSuppressOBL(IceFraction, LandIceMask) !=
+              LandIceMask != 0 || IceFraction > KPP::IceSuppressThresh;
+          if (KPP::shouldSuppressOBL(IceFraction, LandIceMask) !=
               ExpectedSuppression)
              ++ErrorCount;
 
@@ -327,11 +322,10 @@ void testOBLUtilities() {
                                   : ITest == 2 ? 1.0_Real
                                                : 200.0_Real;
           Real ExpectedDepth    = Kokkos::fmax(InputDepth, 2.0_Real);
-          if (IceFraction > KPP::ICE_SUPPRESSION_THRESHOLD)
-             ExpectedDepth =
-                 Kokkos::fmax(ExpectedDepth, KPP::MIN_OBL_UNDER_ICE);
+          if (IceFraction > KPP::IceSuppressThresh)
+             ExpectedDepth = Kokkos::fmax(ExpectedDepth, KPP::MinOBLUnderIce);
           ExpectedDepth = Kokkos::fmin(ExpectedDepth, 95.0_Real);
-          if (!isApprox(KPP::ConstrainOBLDepth(InputDepth, 4.0_Real, 100.0_Real,
+          if (!isApprox(KPP::constrainOBLDepth(InputDepth, 4.0_Real, 100.0_Real,
                                                IceFraction),
                         ExpectedDepth, RTol, ATol))
              ++ErrorCount;
@@ -362,10 +356,10 @@ void testTurbulentVelocityScale() {
           const Real HClamped     = Kokkos::fmax(0.0_Real, H);
           const Real Momentum     = UStarClamped * UStarClamped * UStarClamped;
           const Real Buoyancy =
-              0.35_Real * Kokkos::fmax(0.0_Real, -B0) * HClamped;
+              KPP::ConvectiveVelFac * Kokkos::fmax(0.0_Real, -B0) * HClamped;
           const Real Expected =
               Kokkos::pow(Momentum + Buoyancy, 1.0_Real / 3.0_Real);
-          const Real Actual = KPP::ComputeTurbulentVelocityScale(UStar, B0, H);
+          const Real Actual = KPP::computeTurbVelocityScale(UStar, B0, H);
           if (!isApprox(Actual, Expected, RTol, ATol) || Actual < 0.0_Real)
              ++ErrorCount;
        },
@@ -408,7 +402,7 @@ void setCoefficientTestGeometry(Real Ssh = 0.0_Real) {
 
 Real nonLocalNormalization() {
    return 10.0_Real * VonKar *
-          Kokkos::pow(KPP::C_MO_S * VonKar * KPP::SURFACE_LAYER_EXTENT,
+          Kokkos::pow(KPP::CMoS * VonKar * KPP::SurfaceLayerExtent,
                       1.0_Real / 3.0_Real);
 }
 
@@ -427,8 +421,7 @@ void testWindOnlyCoefficients() {
    deepCopy(B0, 0.0_Real);
 
    KPPInstance->UseEnhancedDiffusion = false;
-   KPPInstance->UseNonLocalFlux      = true;
-   KPPInstance->MatchTechniqueStr    = "SimpleShapes";
+   KPPInstance->MatchTechnique       = KPPMatchType::SimpleShapes;
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
 
    const auto VertDiffH = createHostMirrorCopy(KPPInstance->VertDiff);
@@ -450,7 +443,7 @@ void testWindOnlyCoefficients() {
           !isApprox(NonLocalH(ICell, 2), ExpectedNonLocal, RTol, ATol)) {
          ++NumErrors;
       }
-      if (!isApprox(KPP::KPPProfileM1(Sigma), Shape, RTol, ATol) ||
+      if (!isApprox(KPP::kppShapeMomentum(Sigma), Shape, RTol, ATol) ||
           VertDiffH(ICell, 0) != 0.0_Real || VertViscH(ICell, 0) != 0.0_Real ||
           VertDiffH(ICell, 4) != 0.0_Real || VertViscH(ICell, 4) != 0.0_Real ||
           VertDiffH(ICell, 5) != 0.0_Real || NonLocalH(ICell, 5) != 0.0_Real) {
@@ -475,19 +468,18 @@ void testConvectionOnlyCoefficients() {
    deepCopy(B0, -1.0e-7_Real);
 
    KPPInstance->UseEnhancedDiffusion = false;
-   KPPInstance->UseNonLocalFlux      = true;
-   KPPInstance->MatchTechniqueStr    = "SimpleShapes";
+   KPPInstance->MatchTechnique       = KPPMatchType::SimpleShapes;
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
 
    const auto VertDiffH = createHostMirrorCopy(KPPInstance->VertDiff);
    const auto VertViscH = createHostMirrorCopy(KPPInstance->VertVisc);
    const auto TurbVelH =
        createHostMirrorCopy(KPPInstance->TurbulentVelocityScale);
-   const Real SigmaLoc = KPP::SURFACE_LAYER_EXTENT;
-   const Real WM = VonKar * Kokkos::pow(KPP::C_MO_M * SigmaLoc * TestOBLDepth *
+   const Real SigmaLoc = KPP::SurfaceLayerExtent;
+   const Real WM = VonKar * Kokkos::pow(KPP::CMoM * SigmaLoc * TestOBLDepth *
                                             VonKar * 1.0e-7_Real,
                                         1.0_Real / 3.0_Real);
-   const Real WS = VonKar * Kokkos::pow(KPP::C_MO_S * SigmaLoc * TestOBLDepth *
+   const Real WS = VonKar * Kokkos::pow(KPP::CMoS * SigmaLoc * TestOBLDepth *
                                             VonKar * 1.0e-7_Real,
                                         1.0_Real / 3.0_Real);
    constexpr Real Shape    = 0.125_Real;
@@ -521,43 +513,37 @@ void testNonLocalProfileModes() {
    deepCopy(B0, 0.0_Real);
 
    KPPInstance->UseEnhancedDiffusion = false;
-   KPPInstance->UseNonLocalFlux      = true;
    const Real Normalization          = nonLocalNormalization();
    int NumErrors                     = 0;
 
-   KPPInstance->MatchTechniqueStr = "ParabolicNonLocal";
+   // The non-local flux follows the scalar diffusivity shape, so at sigma=-0.5
+   // it is 0.125 * C_s and it vanishes at the surface and at the OBL base.
+   KPPInstance->MatchTechnique = KPPMatchType::SimpleShapes;
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
    auto NonLocalH = createHostMirrorCopy(KPPInstance->VertNonLocalFlux);
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(NonLocalH(ICell, 0), Normalization, RTol, ATol) ||
-          !isApprox(NonLocalH(ICell, 2), 0.25_Real * Normalization, RTol,
+      if (NonLocalH(ICell, 0) != 0.0_Real ||
+          !isApprox(NonLocalH(ICell, 2), 0.125_Real * Normalization, RTol,
                     ATol) ||
           NonLocalH(ICell, 4) != 0.0_Real) {
          ++NumErrors;
       }
    }
 
-   KPPInstance->MatchTechniqueStr = "MatchBoth";
+   // Without interior coefficients there is nothing to match, so MatchBoth
+   // must reduce exactly to SimpleShapes.
+   const auto SimpleShapesH    = NonLocalH;
+   KPPInstance->MatchTechnique = KPPMatchType::MatchBoth;
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
    NonLocalH = createHostMirrorCopy(KPPInstance->VertNonLocalFlux);
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(NonLocalH(ICell, 0), Normalization, RTol, ATol) ||
-          !isApprox(NonLocalH(ICell, 2), 0.5_Real * Normalization, RTol,
-                    ATol) ||
-          NonLocalH(ICell, 4) != 0.0_Real) {
-         ++NumErrors;
+      for (I4 K = 0; K <= VCoord->NVertLayers; ++K) {
+         if (NonLocalH(ICell, K) != SimpleShapesH(ICell, K)) {
+            ++NumErrors;
+         }
       }
    }
 
-   KPPInstance->UseNonLocalFlux   = false;
-   KPPInstance->MatchTechniqueStr = "SimpleShapes";
-   KPPInstance->computeMixingCoefficients(Density, UStar, B0);
-   NonLocalH = createHostMirrorCopy(KPPInstance->VertNonLocalFlux);
-   for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (NonLocalH(ICell, 0) != 0.0_Real || NonLocalH(ICell, 2) != 0.0_Real) {
-         ++NumErrors;
-      }
-   }
    checkResult("non-local profile modes", NumErrors);
 }
 
@@ -585,8 +571,7 @@ void testMatchBothInteriorCoefficients() {
    deepCopy(InteriorVisc, ExpectedInteriorVisc);
 
    KPPInstance->UseEnhancedDiffusion = false;
-   KPPInstance->UseNonLocalFlux      = true;
-   KPPInstance->MatchTechniqueStr    = "MatchBoth";
+   KPPInstance->MatchTechnique       = KPPMatchType::MatchBoth;
    KPPInstance->computeMixingCoefficients(Density, UStar, B0, InteriorDiff,
                                           InteriorVisc);
 
@@ -598,11 +583,12 @@ void testMatchBothInteriorCoefficients() {
    constexpr Real SmoothAtSigma = 0.5_Real;
    const Real TurbVel           = VonKar * 0.02_Real;
    const Real ExpectedDiffMid   = TestOBLDepth * TurbVel * SimpleShape +
-                                SmoothAtSigma * ExpectedInteriorDiff;
-   const Real ExpectedViscMid = TestOBLDepth * TurbVel * SimpleShape +
-                                SmoothAtSigma * ExpectedInteriorVisc;
+                                  SmoothAtSigma * ExpectedInteriorDiff;
+   const Real ExpectedViscMid   = TestOBLDepth * TurbVel * SimpleShape +
+                                  SmoothAtSigma * ExpectedInteriorVisc;
+   const Real MatchDiffShape = ExpectedInteriorDiff / (TestOBLDepth * TurbVel);
    const Real ExpectedNonLocal =
-       nonLocalNormalization() * KPP::KPPProfileGMatchBoth(Sigma);
+       nonLocalNormalization() * KPP::kppShapeMatched(Sigma, MatchDiffShape);
 
    int NumErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
@@ -635,8 +621,7 @@ void testEnhancedDiffusion() {
    deepCopy(UStar, 0.02_Real);
    deepCopy(B0, 0.0_Real);
 
-   KPPInstance->UseNonLocalFlux      = true;
-   KPPInstance->MatchTechniqueStr    = "SimpleShapes";
+   KPPInstance->MatchTechnique       = KPPMatchType::SimpleShapes;
    KPPInstance->UseEnhancedDiffusion = false;
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
    auto VertDiffH = createHostMirrorCopy(KPPInstance->VertDiff);
@@ -655,7 +640,7 @@ void testEnhancedDiffusion() {
    constexpr Real OutsideDelta = 0.5_Real;
    const Real OutsideSigma     = -35.0_Real / TestOBLDepth;
    const Real OutsideProfile =
-       TestOBLDepth * VonKar * 0.02_Real * KPP::KPPProfileS1(OutsideSigma);
+       TestOBLDepth * VonKar * 0.02_Real * KPP::kppShapeScalar(OutsideSigma);
    const Real ExpectedOutside = OutsideDelta * (1.0_Real - OutsideDelta) *
                                 (1.0_Real - OutsideDelta) * OutsideProfile;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
@@ -679,14 +664,14 @@ void testEnhancedDiffusion() {
    const Real KtupSigma               = -25.0_Real / InsideOBLDepth;
    const Real TargetSigma             = -30.0_Real / InsideOBLDepth;
    const Real KtupProfile =
-       InsideOBLDepth * VonKar * 0.02_Real * KPP::KPPProfileS1(KtupSigma);
+       InsideOBLDepth * VonKar * 0.02_Real * KPP::kppShapeScalar(KtupSigma);
    const Real TargetProfile =
-       InsideOBLDepth * VonKar * 0.02_Real * KPP::KPPProfileS1(TargetSigma);
+       InsideOBLDepth * VonKar * 0.02_Real * KPP::kppShapeScalar(TargetSigma);
    const Real ExpectedInside =
        InsideDelta * (OneMinusInsideDelta * OneMinusInsideDelta * KtupProfile +
                       InsideDelta * InsideDelta * TargetProfile);
    const Real ExpectedInsideNonLocal = nonLocalNormalization() *
-                                       KPP::KPPProfileG(TargetSigma) *
+                                       KPP::kppShapeScalar(TargetSigma) *
                                        ExpectedInside / TargetProfile;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
       if (!isApprox(VertDiffH(ICell, 3), ExpectedInside, RTol, ATol) ||
@@ -708,7 +693,7 @@ void testEnhancedDiffusion() {
    deepCopy(B0, 0.0_Real);
    deepCopy(KPPInstance->BoundaryLayerDepth, TestOBLDepth);
    deepCopy(KPPInstance->IndexBoundaryLayerDepth, TestOBLIndex);
-   KPPInstance->MatchTechniqueStr = "MatchBoth";
+   KPPInstance->MatchTechnique = KPPMatchType::MatchBoth;
    KPPInstance->computeMixingCoefficients(Density, UStar, B0, InteriorDiff,
                                           InteriorVisc);
    VertDiffH                    = createHostMirrorCopy(KPPInstance->VertDiff);
@@ -720,10 +705,10 @@ void testEnhancedDiffusion() {
        InteriorViscValue / (TestOBLDepth * VonKar * 0.02_Real);
    const Real DiffKtup =
        TestOBLDepth * VonKar * 0.02_Real *
-       KPP::KPPProfileMatched(InteriorKtupSigma, DiffMatchShape);
+       KPP::kppShapeMatched(InteriorKtupSigma, DiffMatchShape);
    const Real ViscKtup =
        TestOBLDepth * VonKar * 0.02_Real *
-       KPP::KPPProfileMatched(InteriorKtupSigma, ViscMatchShape);
+       KPP::kppShapeMatched(InteriorKtupSigma, ViscMatchShape);
    const Real ExpectedInteriorEnhancedDiff =
        0.625_Real * InteriorDiffValue + 0.125_Real * DiffKtup;
    const Real ExpectedInteriorEnhancedVisc =
@@ -739,7 +724,7 @@ void testEnhancedDiffusion() {
 
    deepCopy(UStar, 0.0_Real);
    deepCopy(B0, 0.0_Real);
-   KPPInstance->MatchTechniqueStr = "SimpleShapes";
+   KPPInstance->MatchTechnique = KPPMatchType::SimpleShapes;
    deepCopy(KPPInstance->BoundaryLayerDepth, InsideOBLDepth);
    deepCopy(KPPInstance->IndexBoundaryLayerDepth, TestOBLIndex);
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
@@ -770,8 +755,7 @@ void testStableAndZeroForcing() {
    deepCopy(B0, 1.0e-7_Real);
 
    KPPInstance->UseEnhancedDiffusion = false;
-   KPPInstance->UseNonLocalFlux      = true;
-   KPPInstance->MatchTechniqueStr    = "SimpleShapes";
+   KPPInstance->MatchTechnique       = KPPMatchType::SimpleShapes;
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
    auto VertDiffH = createHostMirrorCopy(KPPInstance->VertDiff);
    auto NonLocalH = createHostMirrorCopy(KPPInstance->VertNonLocalFlux);
@@ -785,7 +769,6 @@ void testStableAndZeroForcing() {
 
    deepCopy(UStar, 0.0_Real);
    deepCopy(B0, 0.0_Real);
-   KPPInstance->UseNonLocalFlux = false;
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
    VertDiffH            = createHostMirrorCopy(KPPInstance->VertDiff);
    const auto VertViscH = createHostMirrorCopy(KPPInstance->VertVisc);
@@ -825,14 +808,13 @@ void testCoefficientVerticalDomainEdges() {
        });
 
    KPPInstance->UseEnhancedDiffusion = false;
-   KPPInstance->UseNonLocalFlux      = true;
-   KPPInstance->MatchTechniqueStr    = "SimpleShapes";
+   KPPInstance->MatchTechnique       = KPPMatchType::SimpleShapes;
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
    auto VertDiffH = createHostMirrorCopy(KPPInstance->VertDiff);
    auto VertViscH = createHostMirrorCopy(KPPInstance->VertVisc);
    auto NonLocalH = createHostMirrorCopy(KPPInstance->VertNonLocalFlux);
    const Real ExpectedPartial =
-       40.0_Real * VonKar * 0.02_Real * KPP::KPPProfileS1(-0.5_Real);
+       40.0_Real * VonKar * 0.02_Real * KPP::kppShapeScalar(-0.5_Real);
    int NumErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
       if (VertDiffH(ICell, 0) != 0.0_Real || VertDiffH(ICell, 1) != 0.0_Real ||
@@ -857,7 +839,7 @@ void testCoefficientVerticalDomainEdges() {
    VertViscH = createHostMirrorCopy(KPPInstance->VertVisc);
    NonLocalH = createHostMirrorCopy(KPPInstance->VertNonLocalFlux);
    const Real ExpectedOneLayer =
-       25.0_Real * VonKar * 0.02_Real * KPP::KPPProfileS1(-0.8_Real);
+       25.0_Real * VonKar * 0.02_Real * KPP::kppShapeScalar(-0.8_Real);
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
       if (!isApprox(VertDiffH(ICell, 2), ExpectedOneLayer, RTol, ATol) ||
           !isApprox(VertViscH(ICell, 2), ExpectedOneLayer, RTol, ATol) ||
@@ -900,8 +882,7 @@ void testCoefficientInvalidWetBounds() {
        });
 
    KPPInstance->UseEnhancedDiffusion = false;
-   KPPInstance->UseNonLocalFlux      = true;
-   KPPInstance->MatchTechniqueStr    = "SimpleShapes";
+   KPPInstance->MatchTechnique       = KPPMatchType::SimpleShapes;
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
 
    const auto VertDiffH = createHostMirrorCopy(KPPInstance->VertDiff);
@@ -925,13 +906,6 @@ void testCoefficientInvalidWetBounds() {
    checkResult("coefficient invalid wet bounds", NumErrors);
 }
 
-void testConfigurationNormalization() {
-   KPPMix *KPPInstance = KPPMix::getInstance();
-   const int NumErrors =
-       KPPInstance->MatchTechniqueStr == "SimpleShapes" ? 0 : 1;
-   checkResult("configuration match normalization", NumErrors);
-}
-
 void testConfiguredValues() {
    Config VertMixConfig("VertMix");
    Config KPPConfig("KPP");
@@ -940,7 +914,6 @@ void testConfiguredValues() {
    Err += VertMixConfig.get(KPPConfig);
 
    bool ExpectedEnabled       = false;
-   bool ExpectedNonLocal      = false;
    bool ExpectedSmoothing     = false;
    bool ExpectedEnhanced      = false;
    bool ExpectedDebug         = true;
@@ -951,7 +924,6 @@ void testConfiguredValues() {
    std::string ExpectedMatch;
    std::string ExpectedInterp;
    Err += KPPConfig.get("Enable", ExpectedEnabled);
-   Err += KPPConfig.get("UseNonLocalFlux", ExpectedNonLocal);
    Err += KPPConfig.get("UseBLDSmoothing", ExpectedSmoothing);
    Err += KPPConfig.get("UseEnhancedDiffusion", ExpectedEnhanced);
    Err += KPPConfig.get("DebugDiagnostics", ExpectedDebug);
@@ -964,14 +936,17 @@ void testConfiguredValues() {
    Err += KPPConfig.get("InterpType2", ExpectedInterp);
    CHECK_ERROR_ABORT(Err, "KPPMixTest: unable to read configured KPP values");
 
+   const KPPMatchType ExpectedMatchType = ExpectedMatch == "MatchBoth"
+                                              ? KPPMatchType::MatchBoth
+                                              : KPPMatchType::SimpleShapes;
+
    const KPPMix *KPPInstance = KPPMix::getInstance();
    int NumErrors             = 0;
    if (KPPInstance->Enabled != ExpectedEnabled ||
-       KPPInstance->UseNonLocalFlux != ExpectedNonLocal ||
        KPPInstance->UseBLDSmoothing != ExpectedSmoothing ||
        KPPInstance->UseEnhancedDiffusion != ExpectedEnhanced ||
        KPPInstance->DebugDiagnostics != ExpectedDebug ||
-       KPPInstance->MatchTechniqueStr != ExpectedMatch ||
+       KPPInstance->MatchTechnique != ExpectedMatchType ||
        KPPInstance->InterpType2Str != ExpectedInterp ||
        !isApprox(KPPInstance->CriticalRichardson, ExpectedCriticalRi, RTol,
                  ATol) ||
@@ -1017,10 +992,10 @@ void testBoundaryLayerDepth() {
    deepCopy(BVF, 1.0_Real);
    deepCopy(IceFraction, 0.0_Real);
 
-   constexpr Real RiScaling = 1.0_Real - 0.5_Real * KPP::SURFACE_LAYER_EXTENT;
+   constexpr Real RiScaling = 1.0_Real - 0.5_Real * KPP::SurfaceLayerExtent;
    constexpr Real TestN     = 1.0_Real;
    const Real UnresolvedShearConstant =
-       Kokkos::sqrt(0.2_Real / (KPP::C_MO_S * KPP::SURFACE_LAYER_EXTENT)) /
+       Kokkos::sqrt(0.2_Real / (KPP::CMoS * KPP::SurfaceLayerExtent)) /
        (VonKar * VonKar);
    const Real WindTurbulentScale = VonKar * 0.02_Real;
    parallelFor(
@@ -1034,7 +1009,7 @@ void testBoundaryLayerDepth() {
           }
           const Real ZCenter = LayerThickness * (K + 0.5_Real);
           const Real Vt2     = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                           TestN * WindTurbulentScale / 0.25_Real;
+                               TestN * WindTurbulentScale / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1042,7 +1017,7 @@ void testBoundaryLayerDepth() {
 
    KPPInstance->CriticalRichardson     = 0.25_Real;
    KPPInstance->StopOBLSearchMult      = 1.0_Real;
-   KPPInstance->SurfaceLayerExtent     = KPP::SURFACE_LAYER_EXTENT;
+   KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
    KPPInstance->UseBLDSmoothing        = false;
    KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
@@ -1066,8 +1041,8 @@ void testBoundaryLayerDepth() {
        Slope * Slope - 4.0_Real * Quadratic * (RiAbove - 0.25_Real);
    const Real ExpectedBLD =
        ZAbove + (-Slope + Kokkos::sqrt(Discriminant)) / (2.0_Real * Quadratic);
-   const Real ExpectedVt2 = 1.7_Real * UnresolvedShearConstant * 25.0_Real *
-                            TestN * WindTurbulentScale / 0.25_Real;
+   const Real ExpectedVt2    = 1.7_Real * UnresolvedShearConstant * 25.0_Real *
+                               TestN * WindTurbulentScale / 0.25_Real;
    const Real ExpectedDeltaB = 0.4_Real * ExpectedVt2 / (RiScaling * 25.0_Real);
 
    int NumErrors = 0;
@@ -1093,7 +1068,7 @@ void testBoundaryLayerDepth() {
                                          : 0.3_Real;
           const Real ZCenter  = LayerThickness * (K + 0.5_Real);
           const Real Vt2      = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                           TestN * WindTurbulentScale / 0.25_Real;
+                                TestN * WindTurbulentScale / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1169,7 +1144,7 @@ void testBoundaryLayerDepth() {
           }
           const Real ZCenter = LayerThickness * (K + 0.5_Real);
           const Real Vt2     = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                           TestN * WindTurbulentScale / 0.25_Real;
+                               TestN * WindTurbulentScale / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1227,7 +1202,7 @@ void testBoundaryLayerDepth() {
           const Real ZCenter  = LayerThickness * (K + 0.5_Real);
           const Real TargetRi = K == 0 ? 0.0_Real : 1.0_Real;
           const Real Vt2      = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                           TestN * WindTurbulentScale / 0.25_Real;
+                                TestN * WindTurbulentScale / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1274,11 +1249,11 @@ void testBoundaryLayerNonuniformThickness() {
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
 
-   constexpr Real RiScaling = 1.0_Real - 0.5_Real * KPP::SURFACE_LAYER_EXTENT;
+   constexpr Real RiScaling = 1.0_Real - 0.5_Real * KPP::SurfaceLayerExtent;
    constexpr Real TestN     = 1.0_Real;
    constexpr Real TestUStar = 0.02_Real;
    const Real UnresolvedShearConstant =
-       Kokkos::sqrt(0.2_Real / (KPP::C_MO_S * KPP::SURFACE_LAYER_EXTENT)) /
+       Kokkos::sqrt(0.2_Real / (KPP::CMoS * KPP::SurfaceLayerExtent)) /
        (VonKar * VonKar);
    const Real WindTurbulentScale = VonKar * TestUStar;
 
@@ -1353,9 +1328,9 @@ void testBoundaryLayerNonuniformThickness() {
               0.10_Real * Vt2Layer2 * RhoSw / (RiScaling * Gravity * 6.5_Real);
           const Real DeltaRho3 = 0.40_Real * (Shear3 + Vt2Layer3) * RhoSw /
                                  (RiScaling * Gravity * 17.5_Real);
-          Density(ICell, 0) = RhoSw;
-          Density(ICell, 1) = RhoSw + DeltaRho1;
-          Density(ICell, 2) = RhoSw + DeltaRho2;
+          Density(ICell, 0)    = RhoSw;
+          Density(ICell, 1)    = RhoSw + DeltaRho1;
+          Density(ICell, 2)    = RhoSw + DeltaRho2;
 
           // At k=3, the 2.5 m surface layer contains the unequal 1 m and
           // 2 m layers. Construct rho(3) relative to that weighted mean.
@@ -1367,7 +1342,7 @@ void testBoundaryLayerNonuniformThickness() {
 
    KPPInstance->CriticalRichardson     = 0.25_Real;
    KPPInstance->StopOBLSearchMult      = 1.0_Real;
-   KPPInstance->SurfaceLayerExtent     = KPP::SURFACE_LAYER_EXTENT;
+   KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
    KPPInstance->UseBLDSmoothing        = false;
    KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
@@ -1445,10 +1420,10 @@ void testSshOffsetInvariance() {
    deepCopy(BVF, 1.0_Real);
    deepCopy(IceFraction, 0.0_Real);
 
-   constexpr Real RiScaling = 1.0_Real - 0.5_Real * KPP::SURFACE_LAYER_EXTENT;
+   constexpr Real RiScaling = 1.0_Real - 0.5_Real * KPP::SurfaceLayerExtent;
    constexpr Real TestN     = 1.0_Real;
    const Real UnresolvedShearConstant =
-       Kokkos::sqrt(0.2_Real / (KPP::C_MO_S * KPP::SURFACE_LAYER_EXTENT)) /
+       Kokkos::sqrt(0.2_Real / (KPP::CMoS * KPP::SurfaceLayerExtent)) /
        (VonKar * VonKar);
    const Real WindTurbulentScale = VonKar * 0.02_Real;
    parallelFor(
@@ -1462,7 +1437,7 @@ void testSshOffsetInvariance() {
           }
           const Real ZCenter = LayerThickness * (K + 0.5_Real);
           const Real Vt2     = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                           TestN * WindTurbulentScale / 0.25_Real;
+                               TestN * WindTurbulentScale / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1470,12 +1445,11 @@ void testSshOffsetInvariance() {
 
    KPPInstance->CriticalRichardson     = 0.25_Real;
    KPPInstance->StopOBLSearchMult      = 1.0_Real;
-   KPPInstance->SurfaceLayerExtent     = KPP::SURFACE_LAYER_EXTENT;
+   KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
    KPPInstance->UseBLDSmoothing        = false;
-   KPPInstance->UseNonLocalFlux        = true;
    KPPInstance->UseEnhancedDiffusion   = true;
-   KPPInstance->MatchTechniqueStr      = "SimpleShapes";
+   KPPInstance->MatchTechnique         = KPPMatchType::SimpleShapes;
 
    auto runWithSsh = [&](Real Ssh) {
       setCoefficientTestGeometry(Ssh);
@@ -1572,7 +1546,7 @@ void testBoundaryLayerEdgeFallbacks() {
 
    KPPInstance->CriticalRichardson     = 0.25_Real;
    KPPInstance->StopOBLSearchMult      = 1.0_Real;
-   KPPInstance->SurfaceLayerExtent     = KPP::SURFACE_LAYER_EXTENT;
+   KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
    KPPInstance->UseBLDSmoothing        = false;
 
@@ -1633,9 +1607,9 @@ void testBoundaryLayerLangmuir() {
    constexpr Real TestUStar = 0.02_Real;
    constexpr Real TestB0    = -1.0e-7_Real;
    constexpr Real TestN     = 1.0_Real;
-   constexpr Real RiScaling = 1.0_Real - 0.5_Real * KPP::SURFACE_LAYER_EXTENT;
+   constexpr Real RiScaling = 1.0_Real - 0.5_Real * KPP::SurfaceLayerExtent;
    const Real UnresolvedShearConstant =
-       Kokkos::sqrt(0.2_Real / (KPP::C_MO_S * KPP::SURFACE_LAYER_EXTENT)) /
+       Kokkos::sqrt(0.2_Real / (KPP::CMoS * KPP::SurfaceLayerExtent)) /
        (VonKar * VonKar);
 
    deepCopy(NormalVelocity, 0.0_Real);
@@ -1650,12 +1624,12 @@ void testBoundaryLayerLangmuir() {
        KOKKOS_LAMBDA(I4 ICell, I4 K) {
           const Real ZDepth  = LayerThickness * (K + 1.0_Real);
           const Real ZCenter = LayerThickness * (K + 0.5_Real);
-          const Real Zeta    = KPP::SURFACE_LAYER_EXTENT * ZDepth * VonKar *
-                            TestB0 / (TestUStar * TestUStar * TestUStar);
+          const Real Zeta = KPP::SurfaceLayerExtent * ZDepth * VonKar * TestB0 /
+                            (TestUStar * TestUStar * TestUStar);
           const Real PhiInv = Kokkos::sqrt(1.0_Real - 16.0_Real * Zeta);
           const Real WTurb  = VonKar * TestUStar * PhiInv;
           const Real Vt2    = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                           TestN * WTurb / 0.25_Real;
+                              TestN * WTurb / 0.25_Real;
           const Real TargetRi =
               K == 0 ? 0.0_Real : (K == 1 ? 0.1_Real : 0.26_Real);
           const Real DeltaRho =
@@ -1665,7 +1639,7 @@ void testBoundaryLayerLangmuir() {
 
    KPPInstance->CriticalRichardson     = 0.25_Real;
    KPPInstance->StopOBLSearchMult      = 1.0_Real;
-   KPPInstance->SurfaceLayerExtent     = KPP::SURFACE_LAYER_EXTENT;
+   KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseBLDSmoothing        = false;
    KPPInstance->UseLangmuirCirculation = false;
    KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
@@ -1710,17 +1684,17 @@ void testBoundaryLayerLangmuir() {
    constexpr Real ZDepth   = 30.0_Real;
    constexpr Real ZCenter  = 25.0_Real;
    const Real Enhancement  = Kokkos::sqrt(3.0_Real);
-   const Real DisabledZeta = KPP::SURFACE_LAYER_EXTENT * ZDepth * VonKar *
+   const Real DisabledZeta = KPP::SurfaceLayerExtent * ZDepth * VonKar *
                              TestB0 / (TestUStar * TestUStar * TestUStar);
-   const Real EnabledZeta = DisabledZeta * Enhancement;
+   const Real EnabledZeta  = DisabledZeta * Enhancement;
    const Real DisabledWTurb =
        VonKar * TestUStar * Kokkos::sqrt(1.0_Real - 16.0_Real * DisabledZeta);
    const Real EnabledWTurb =
        VonKar * TestUStar * Kokkos::sqrt(1.0_Real - 16.0_Real * EnabledZeta);
    const Real ExpectedDisabledVt2 = 1.7_Real * UnresolvedShearConstant *
                                     ZCenter * TestN * DisabledWTurb / 0.25_Real;
-   const Real ExpectedEnabledVt2 = 1.7_Real * UnresolvedShearConstant *
-                                   ZCenter * TestN * EnabledWTurb / 0.25_Real;
+   const Real ExpectedEnabledVt2  = 1.7_Real * UnresolvedShearConstant *
+                                    ZCenter * TestN * EnabledWTurb / 0.25_Real;
    const Real ExpectedEnabledRi =
        0.26_Real * ExpectedDisabledVt2 / ExpectedEnabledVt2;
 
@@ -1786,9 +1760,9 @@ void testBoundaryLayerSmoothing() {
 
    constexpr Real TestUStar = 0.02_Real;
    constexpr Real TestN     = 1.0_Real;
-   constexpr Real RiScaling = 1.0_Real - 0.5_Real * KPP::SURFACE_LAYER_EXTENT;
+   constexpr Real RiScaling = 1.0_Real - 0.5_Real * KPP::SurfaceLayerExtent;
    const Real UnresolvedShearConstant =
-       Kokkos::sqrt(0.2_Real / (KPP::C_MO_S * KPP::SURFACE_LAYER_EXTENT)) /
+       Kokkos::sqrt(0.2_Real / (KPP::CMoS * KPP::SurfaceLayerExtent)) /
        (VonKar * VonKar);
    const Real WTurb = VonKar * TestUStar;
 
@@ -1811,7 +1785,7 @@ void testBoundaryLayerSmoothing() {
           }
           const Real ZCenter = LayerThickness * (K + 0.5_Real);
           const Real Vt2     = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                           TestN * WTurb / 0.25_Real;
+                               TestN * WTurb / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1819,7 +1793,7 @@ void testBoundaryLayerSmoothing() {
 
    KPPInstance->CriticalRichardson     = 0.25_Real;
    KPPInstance->StopOBLSearchMult      = 1.0_Real;
-   KPPInstance->SurfaceLayerExtent     = KPP::SURFACE_LAYER_EXTENT;
+   KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
    KPPInstance->UseBLDSmoothing        = false;
    KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
@@ -1926,8 +1900,7 @@ void testEnabledFullCall() {
    KPPInstance->UseLangmuirCirculation = false;
    KPPInstance->UseBLDSmoothing        = false;
    KPPInstance->UseEnhancedDiffusion   = false;
-   KPPInstance->UseNonLocalFlux        = true;
-   KPPInstance->MatchTechniqueStr      = "SimpleShapes";
+   KPPInstance->MatchTechnique         = KPPMatchType::SimpleShapes;
    KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
                                 UStar, B0, BVF, IceFraction, Wind);
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
@@ -2099,12 +2072,14 @@ int main(int argc, char *argv[]) {
       testEnabledFullCall();
       testDisabledFullCall();
    }
-   if (TestGroup == "config-gradient" || TestGroup == "config-unsupported") {
-      testConfigurationNormalization();
+   if (TestGroup == "config-gradient" || TestGroup == "config-unsupported" ||
+       TestGroup == "config-parabolic") {
+      ABORT_ERROR("KPPMixTest: KPPMix::init should have rejected the injected "
+                  "MatchTechnique for group '{}'",
+                  TestGroup);
    }
    if (TestGroup != "profiles" && TestGroup != "bld" && TestGroup != "vmix" &&
-       TestGroup != "integration" && TestGroup != "config-gradient" &&
-       TestGroup != "config-unsupported" && TestGroup != "all") {
+       TestGroup != "integration" && TestGroup != "all") {
       ABORT_ERROR("KPPMixTest: unknown test group '{}'", TestGroup);
    }
 

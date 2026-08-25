@@ -613,8 +613,16 @@ add_omega_test(
 add_omega_ctest(KPP_BLD_TEST testKPPMix.exe "-n;1" bld)
 add_omega_ctest(KPP_VMIX_COEFF_TEST testKPPMix.exe "-n;1" vmix)
 add_omega_ctest(KPP_INTEGRATION_TEST testKPPMix.exe "-n;1" integration)
+# Each injects a rejected MatchTechnique and must abort in KPPMix::init.
 add_omega_ctest(KPP_CONFIG_GRADIENT_TEST testKPPMix.exe "-n;1" config-gradient)
 add_omega_ctest(KPP_CONFIG_UNSUPPORTED_TEST testKPPMix.exe "-n;1" config-unsupported)
+add_omega_ctest(KPP_CONFIG_PARABOLIC_TEST testKPPMix.exe "-n;1" config-parabolic)
+set_tests_properties(
+  KPP_CONFIG_GRADIENT_TEST
+  KPP_CONFIG_UNSUPPORTED_TEST
+  KPP_CONFIG_PARABOLIC_TEST
+  PROPERTIES WILL_FAIL TRUE
+)
 
 ##################
 # VAdv test

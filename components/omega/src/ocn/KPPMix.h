@@ -26,6 +26,14 @@
 
 namespace OMEGA {
 
+/// @brief How the KPP profile is matched to interior mixing at the OBL base.
+/// Also selects the shape used for the non-local flux, which follows the
+/// scalar diffusivity profile.
+enum class KPPMatchType : I4 {
+   SimpleShapes = 0, ///< Unmatched Large et al. (1994) cubic shapes
+   MatchBoth    = 1  ///< Match the interior coefficient at the OBL base
+};
+
 /// @brief KPP Boundary Layer Mixing Scheme
 ///
 /// Implements the K-Profile Parameterization following Large et al. (1994)
@@ -53,8 +61,8 @@ class KPPMix {
    /// Output arrays are computed in-place.
    void computeKPPMix(
        const Array2DReal
-           &PotentialDensity, ///< Density (kg/m³) [NCells×NLevels]
-       const Array2DReal &NormalVelocity,     ///< Normal vel on edges (m/s)
+           &PotentialDensity,             ///< Density (kg/m³) [NCells×NLevels]
+       const Array2DReal &NormalVelocity, ///< Normal vel on edges (m/s)
        const Array2DReal &TangentialVelocity, ///< Tangential vel on edges (m/s)
        const Array1DReal &SurfaceFrictionVelocity, ///< u* (m/s)
        const Array1DReal &SurfaceBuoyancyFlux,     ///< B_0 (m²/s³)
@@ -128,28 +136,30 @@ class KPPMix {
 
    bool Enabled = true; ///< Enable/disable KPP mixing
 
-   Real CriticalRichardson = 0.3; ///< Ri_crit for OBL criterion
-   Real StopOBLSearchMult  = 1.0; ///< Safety multiplier for search
-   Real SurfaceLayerExtent = 0.1; ///< Surface layer fraction of OBL
+   // Defaults below may be overridden from the Config file; where a value also
+   // appears in KPPConstants.h, that is the authoritative default.
+   Real CriticalRichardson = 0.25;                    ///< Ri_crit for OBL base
+   Real StopOBLSearchMult  = KPP::StopOBLSearchMult;  ///< Search safety mult
+   Real SurfaceLayerExtent = KPP::SurfaceLayerExtent; ///< Frac of OBL depth
 
    bool UseLangmuirCirculation = true;  ///< Apply wave enhancement
-   bool UseNonLocalFlux        = true;  ///< Apply non-local tracer flux
    bool DebugDiagnostics       = false; ///< Print per-step KPP diagnostics
 
    // Ice/Langmuir controls (kept configurable to match reference semantics)
-   Real IceFractionThresholdForLangmuir = 0.05; ///< Disable Langmuir above this
-   Real IceFractionThresholdForMinimumOBL = 0.15; ///< Apply min OBL above this
-   Real MinimumOBLUnderSeaIce = 5.0; ///< Min OBL depth under sea ice (m)
+   /// Disable Langmuir above this ice fraction
+   Real IceFractionThresholdForLangmuir = KPP::IceFracThresh;
+   /// Apply minimum OBL depth above this ice fraction
+   Real IceFractionThresholdForMinimumOBL = KPP::IceSuppressThresh;
+   /// Min OBL depth under sea ice (m)
+   Real MinimumOBLUnderSeaIce = KPP::MinOBLUnderIce;
 
    Real BackgroundVisc = 1.0e-4; ///< Background viscosity below OBL (m²/s)
    Real BackgroundDiff = 1.0e-5; ///< Background diffusivity below OBL (m²/s)
 
    // KPP matching/profile controls (CVMix-style semantics)
-   std::string MatchTechniqueStr =
-       "SimpleShapes"; ///< SimpleShapes, MatchGradient, MatchBoth,
-                       ///< ParabolicNonLocal
-   std::string InterpType2Str = "LMD94"; ///< Linear, Quadratic, Cubic, LMD94
-   bool UseEnhancedDiffusion  = true;    ///< Apply enhanced mixing at OBL base
+   KPPMatchType MatchTechnique = KPPMatchType::SimpleShapes;
+   std::string InterpType2Str  = "LMD94"; ///< Linear, Quadratic, Cubic, LMD94
+   bool UseEnhancedDiffusion   = true;    ///< Apply enhanced mixing at OBL base
    bool UseBLDSmoothing = true; ///< Apply MPAS-style BLD horizontal smoothing
 
    // Field names for I/O
@@ -170,8 +180,8 @@ class KPPMix {
 
  private:
    /// @brief Private constructor for singleton pattern
-   KPPMix(const std::string &Name_in, const HorzMesh *Mesh_in,
-          const VertCoord *VCoord_in);
+   KPPMix(const std::string &InName, const HorzMesh *InMesh,
+          const VertCoord *InVCoord);
 
    /// @brief Private destructor
    ~KPPMix();

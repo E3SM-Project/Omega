@@ -266,8 +266,8 @@ class SecondDerivativeOnCell {
  private:
    // MaxMaxEdges is used to dimention arrays that include ICell and the
    // neighbor cells, so it is technically one more than MaxEdges.
-   static const I4 MaxMaxEdges = 10;
-   static constexpr R8 Pii     = 3.141592653589793_Real;
+   static constexpr I4 MaxMaxEdges = HorzMesh::MaxEdgesBound;
+   static constexpr R8 Pii         = 3.141592653589793_Real;
 
    const bool OnSphere;
    const I4 NCellsAll;
@@ -372,8 +372,8 @@ class SecondDerivativeOnCell {
          // angles from cell center to neighbor centers (thetav)
          const Real Thetav = sphere_angle(XC[0], YC[0], ZC[0], XC[Ip1], YC[Ip1],
                                           ZC[Ip1], XC[Ip2], YC[Ip2], ZC[Ip2]);
-         Real Dl_sphere    = sphereRadius * arc_length(XC[0], YC[0], ZC[0],
-                                                       XC[Ip1], YC[Ip1], ZC[Ip1]);
+         Real Dl_sphere = sphereRadius * arc_length(XC[0], YC[0], ZC[0],
+                                                    XC[Ip1], YC[Ip1], ZC[Ip1]);
 
          Dl_sphere /= length_scale;
          // Thetat = 0.  this defines the x direction,
