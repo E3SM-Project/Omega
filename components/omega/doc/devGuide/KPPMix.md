@@ -84,10 +84,10 @@ The non-dimensional functions live in `src/ocn/KPPConstants.h` in namespace
 ### Constants and defaults
 
 `src/ocn/KPPConstants.h` is the single authoritative source for KPP default
-values. The runtime-configurable members of `KPPMix` (`CriticalRichardson`,
-`StopOBLSearchMult`, `SurfaceLayerExtent`, the two ice-fraction thresholds and
-`MinimumOBLUnderSeaIce`) are initialized from those constants rather than from
-inline literals, so a default is changed in exactly one place.
+values. The runtime-configurable members of `KPPMix` (`SurfaceLayerExtent`, the
+two ice-fraction thresholds and `MinimumOBLUnderSeaIce`) are initialized from
+those constants rather than from inline literals, so a default is changed in
+exactly one place.
 
 Per-thread edge scratch arrays in `computeOBLDepth` are sized from
 `HorzMesh::MaxEdgesBound`, the shared compile-time bound on edges per cell;
@@ -165,7 +165,6 @@ Important keys and class members:
 
 - `Enable` -> `Enabled`
 - `CriticalBulkRichardsonNumber` -> `CriticalRichardson`
-- `StopOBLSearch` -> `StopOBLSearchMult`
 - `SurfaceLayerExtent` -> `SurfaceLayerExtent`
 - `MatchTechnique` -> `MatchTechnique` (a `KPPMatchType` enum, not a string)
 - `InterpType2` -> `InterpType2Str`

@@ -57,10 +57,6 @@ constexpr Real MinUStar = 1.0e-4;
 // OBL Depth Computation Parameters
 // ==========================================================================
 
-/// Safety multiplier for OBL search (prevents searching too deep)
-/// Default: 1.0 (search to 1.0 * Ri_crit threshold)
-constexpr Real StopOBLSearchMult = 1.0;
-
 /// Minimum OBL depth under sea ice (m), applied above IceSuppressThresh
 constexpr Real MinOBLUnderIce = 5.0;
 

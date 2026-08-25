@@ -107,7 +107,6 @@ Omega:
       UseBLDSmoothing: true
       UseLangmuirCirculation: true
       CriticalBulkRichardsonNumber: 0.25
-      StopOBLSearch: 1.0
       SurfaceLayerExtent: 0.1
       # SimpleShapes or MatchBoth
       MatchTechnique: SimpleShapes

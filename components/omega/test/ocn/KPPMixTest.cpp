@@ -956,7 +956,6 @@ void testConfiguredValues() {
                  ExpectedMinimumOBLIce, RTol, ATol) ||
        !isApprox(KPPInstance->MinimumOBLUnderSeaIce, ExpectedMinimumOBL, RTol,
                  ATol) ||
-       !isApprox(KPPInstance->StopOBLSearchMult, 1.0_Real, RTol, ATol) ||
        !isApprox(KPPInstance->SurfaceLayerExtent, 0.1_Real, RTol, ATol) ||
        !KPPInstance->UseLangmuirCirculation ||
        !isApprox(KPPInstance->BackgroundVisc, 1.0e-4_Real, RTol, ATol) ||
@@ -1016,7 +1015,6 @@ void testBoundaryLayerDepth() {
        });
 
    KPPInstance->CriticalRichardson     = 0.25_Real;
-   KPPInstance->StopOBLSearchMult      = 1.0_Real;
    KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
    KPPInstance->UseBLDSmoothing        = false;
@@ -1341,7 +1339,6 @@ void testBoundaryLayerNonuniformThickness() {
    VCoord->minMaxLayerEdge(Halo::getDefault());
 
    KPPInstance->CriticalRichardson     = 0.25_Real;
-   KPPInstance->StopOBLSearchMult      = 1.0_Real;
    KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
    KPPInstance->UseBLDSmoothing        = false;
@@ -1444,7 +1441,6 @@ void testSshOffsetInvariance() {
        });
 
    KPPInstance->CriticalRichardson     = 0.25_Real;
-   KPPInstance->StopOBLSearchMult      = 1.0_Real;
    KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
    KPPInstance->UseBLDSmoothing        = false;
@@ -1545,7 +1541,6 @@ void testBoundaryLayerEdgeFallbacks() {
        });
 
    KPPInstance->CriticalRichardson     = 0.25_Real;
-   KPPInstance->StopOBLSearchMult      = 1.0_Real;
    KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
    KPPInstance->UseBLDSmoothing        = false;
@@ -1638,7 +1633,6 @@ void testBoundaryLayerLangmuir() {
        });
 
    KPPInstance->CriticalRichardson     = 0.25_Real;
-   KPPInstance->StopOBLSearchMult      = 1.0_Real;
    KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseBLDSmoothing        = false;
    KPPInstance->UseLangmuirCirculation = false;
@@ -1792,7 +1786,6 @@ void testBoundaryLayerSmoothing() {
        });
 
    KPPInstance->CriticalRichardson     = 0.25_Real;
-   KPPInstance->StopOBLSearchMult      = 1.0_Real;
    KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
    KPPInstance->UseBLDSmoothing        = false;

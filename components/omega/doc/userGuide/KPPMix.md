@@ -55,7 +55,6 @@ VertMix:
   KPP:
     Enable: true
     CriticalBulkRichardsonNumber: 0.25
-    StopOBLSearch: 1.0
     SurfaceLayerExtent: 0.1
     MatchTechnique: SimpleShapes
     InterpType2: LMD94
@@ -76,7 +75,6 @@ VertMix:
 |---|---|---|
 | `Enable` | Enable KPP mixing | `true` |
 | `CriticalBulkRichardsonNumber` | OBL depth criterion threshold | `0.25` |
-| `StopOBLSearch` | Multiple of the critical Richardson number at which the OBL search stops descending | `1.0` |
 | `SurfaceLayerExtent` | Surface layer thickness as a fraction of the OBL depth ($\epsilon$ in Large et al. 1994) | `0.1` |
 | `MatchTechnique` | How the K profile meets interior mixing at the OBL base: `SimpleShapes` or `MatchBoth` | `SimpleShapes` |
 | `InterpType2` | Interpolation type used near OBL matching/base logic | `LMD94` |

@@ -139,7 +139,6 @@ class KPPMix {
    // Defaults below may be overridden from the Config file; where a value also
    // appears in KPPConstants.h, that is the authoritative default.
    Real CriticalRichardson = 0.25;                    ///< Ri_crit for OBL base
-   Real StopOBLSearchMult  = KPP::StopOBLSearchMult;  ///< Search safety mult
    Real SurfaceLayerExtent = KPP::SurfaceLayerExtent; ///< Frac of OBL depth
 
    bool UseLangmuirCirculation = true;  ///< Apply wave enhancement

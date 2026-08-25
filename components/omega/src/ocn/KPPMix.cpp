@@ -156,7 +156,6 @@ void KPPMix::init() {
 
    Err += KPPConfig.get("CriticalBulkRichardsonNumber",
                         DefKPPMix->CriticalRichardson);
-   Err += KPPConfig.get("StopOBLSearch", DefKPPMix->StopOBLSearchMult);
    Err += KPPConfig.get("SurfaceLayerExtent", DefKPPMix->SurfaceLayerExtent);
 
    // KPP matching/profile semantics.
@@ -479,7 +478,6 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
    const bool LocUseBLDSmoothing           = UseBLDSmoothing;
    const Real LocIceFracThresholdForMinOBL = IceFractionThresholdForMinimumOBL;
    const Real LocMinimumOBLUnderSeaIce     = MinimumOBLUnderSeaIce;
-   const Real LocStopOBLSearchMult         = StopOBLSearchMult;
 
    deepCopy(BulkRichardsonNumber, 0.0_Real);
    deepCopy(BulkRichardsonShear, 0.0_Real);
@@ -512,8 +510,6 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
           Real OBLDepth         = Ssh - ZInterface(ICell, KIntDeep);
           I4 KCross             = -1;
           const Real RiCritical = LocCriticalRichardson;
-          const Real RiStopCrit =
-              Kokkos::max(1.0e-6_Real, LocStopOBLSearchMult) * RiCritical;
           // Ri is evaluated at cell centers while the reference average spans
           // the top epsilon*d; this factor corrects for that offset.
           const Real RiScaling   = 1.0_Real - 0.5_Real * LocSurfaceLayerExtent;
@@ -590,7 +586,7 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
           // where the reference values B_r, V_r are averaged over the top
           // epsilon*d of the column. Because the reference average depends on
           // the trial depth d, it is rebuilt from the surface on every k.
-          // The OBL base is the first d at which Ri_b reaches RiStopCrit.
+          // The OBL base is the first d at which Ri_b reaches RiCritical.
           // -------------------------------------------------------------------
 
           for (I4 K = KMin; K <= KMax; ++K) {
@@ -739,7 +735,7 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
                                  Kokkos::max(VelScaleSq, 1.0e-12_Real);
              LocBulkRichardson(ICell, KInt) = RiBulk;
 
-             if (KCross < 0 && RiBulk > RiStopCrit) {
+             if (KCross < 0 && RiBulk > RiCritical) {
                 KCross = K;
              }
           }
@@ -777,10 +773,10 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
                    // In local coordinate T = z - ZAbove:
                    // Ri(T) = QuadA T^2 + SlopeAbove T + RiAbove, with QuadA
                    // fixed by requiring Ri(H) = RiBelow. The OBL base is the
-                   // root of Ri(T) = RiStopCrit.
+                   // root of Ri(T) = RiCritical.
                    const Real QuadA =
                        (RiBelow - RiAbove - SlopeAbove * H) / (H * H);
-                   const Real QuadC = RiAbove - RiStopCrit;
+                   const Real QuadC = RiAbove - RiCritical;
 
                    Real TCross = H;
                    if (Kokkos::abs(QuadA) < 1.0e-14_Real) {
@@ -790,7 +786,7 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
                          const Real Frac = Kokkos::fmax(
                              0.0_Real,
                              Kokkos::fmin(1.0_Real,
-                                          (RiStopCrit - RiAbove) / DRi));
+                                          (RiCritical - RiAbove) / DRi));
                          TCross = Frac * H;
                       }
                    } else {
