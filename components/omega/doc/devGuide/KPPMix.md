@@ -65,6 +65,16 @@ value; the search is done per cell in `computeOBLDepth`, and the crossing depth
 is refined by a quadratic fit through the three nearest cell-center `Ri_b`
 values.
 
+Two properties of that search are worth knowing before editing it. The
+surface-layer reference averages span the top `epsilon*d`, which grows
+monotonically with the trial depth, so the running sums are carried across trial
+depths in a two-pointer scan rather than rebuilt from the surface at each one;
+resetting them inside the loop would make the search `O(K^2)`. The loop also
+stops at the crossing, since only the crossing level and the two above it feed
+the refinement. `DebugDiagnostics` suppresses that early exit so the `Ri_b`
+diagnostic profiles are filled over the whole column; it has no effect on
+`BoundaryLayerDepth` or on any mixing coefficient.
+
 ### Shape and stability functions
 
 The non-dimensional functions live in `src/ocn/KPPConstants.h` in namespace

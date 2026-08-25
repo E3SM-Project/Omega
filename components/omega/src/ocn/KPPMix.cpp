@@ -476,6 +476,7 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
    OMEGA_SCOPE(LocUnresolvedShear, UnresolvedShear);
    OMEGA_SCOPE(LocBuoyancyJump, BuoyancyJump);
    const bool LocUseBLDSmoothing           = UseBLDSmoothing;
+   const bool LocFullRiProfile             = DebugDiagnostics;
    const Real LocIceFracThresholdForMinOBL = IceFractionThresholdForMinimumOBL;
    const Real LocMinimumOBLUnderSeaIce     = MinimumOBLUnderSeaIce;
 
@@ -588,7 +589,9 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
           // the trial depth, the averaging window only ever extends downward,
           // so the running sums are carried across trial depths rather than
           // rebuilt from the surface at each one.
-          // The OBL base is the first d at which Ri_b reaches RiCritical.
+          // The OBL base is the first d at which Ri_b reaches RiCritical, and
+          // the search stops there unless the full profile is wanted for the
+          // Ri diagnostics.
           // -------------------------------------------------------------------
 
           // Cell surface-layer density average
@@ -740,6 +743,9 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
 
              if (KCross < 0 && RiBulk > RiCritical) {
                 KCross = K;
+                // Levels below the crossing only feed the Ri diagnostics
+                if (!LocFullRiProfile)
+                   break;
              }
           }
 

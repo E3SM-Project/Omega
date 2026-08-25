@@ -86,7 +86,7 @@ VertMix:
 | `MinimumOBLUnderSeaIce` | Minimum OBL depth under sea ice (m) | `5.0` |
 | `BackgroundViscosity` | Background viscosity below the OBL (m^2/s) | `1.0e-4` |
 | `BackgroundDiffusivity` | Background diffusivity below the OBL (m^2/s) | `1.0e-5` |
-| `DebugDiagnostics` | Enable additional KPP diagnostics/logging in debug workflows | `false` |
+| `DebugDiagnostics` | Enable additional KPP diagnostics/logging in debug workflows, and extend the Ri diagnostic profiles below the boundary layer base | `false` |
 
 Note that KPP reads its own `BackgroundViscosity` and `BackgroundDiffusivity`
 from the `VertMix: KPP` group; these are separate from the `VertMix: Background`
@@ -106,6 +106,13 @@ To diagnose KPP, include KPP fields in output stream contents. Common fields:
 - `PotentialDensity`
 - `SurfaceFrictionVelocity`
 - `SurfaceBuoyancyFlux`
+
+The boundary layer search stops at the first level where the bulk Richardson
+number reaches its critical value, so `BulkRichardsonNumber`,
+`BulkRichardsonShear`, `UnresolvedShear` and `BuoyancyJump` are zero below the
+boundary layer base. Set `DebugDiagnostics: true` to compute and output the
+full water column profile of these four fields; it does not change
+`BoundaryLayerDepth` or any mixing coefficient.
 
 ## Typical Workflow
 
