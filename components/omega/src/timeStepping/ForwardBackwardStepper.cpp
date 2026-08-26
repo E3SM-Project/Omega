@@ -73,8 +73,8 @@ void ForwardBackwardStepper::doStep(
    Pacer::stop("ForwardBackward:velHaloExch", 3);
 
    // R_h^{n} = RHS_h(u^{n+1}, h^{n}, t^{n})
-   Tend->computePseudoThicknessTendencies(State, AuxState, ThickCurLevel,
-                                          VelNextLevel, SimTime);
+   Tend->computePseudoThicknessTendencies(State, AuxState, CurTracerArray,
+                                          ThickCurLevel, VelNextLevel, SimTime);
 
    // h^{n+1} = h^{n} + R_h^{n}
    updateThicknessByTend(State, ThickNextLevel, State, ThickCurLevel, TimeStep);

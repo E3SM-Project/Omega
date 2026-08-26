@@ -14,6 +14,7 @@
 #include "auxiliaryVars/PseudoThicknessAuxVars.h"
 #include "auxiliaryVars/SurfTracerRestAuxVars.h"
 #include "auxiliaryVars/TracerAuxVars.h"
+#include "auxiliaryVars/TransportAuxVars.h"
 #include "auxiliaryVars/VelocityDel2AuxVars.h"
 #include "auxiliaryVars/VorticityAuxVars.h"
 
@@ -42,6 +43,7 @@ class AuxiliaryState {
    VorticityAuxVars VorticityAux;
    VelocityDel2AuxVars VelocityDel2Aux;
    SurfTracerRestAuxVars SurfTracerRestAux;
+   TransportAuxVars TransportAux;
 
    ~AuxiliaryState();
 
@@ -74,15 +76,30 @@ class AuxiliaryState {
    /// Exchange halo
    I4 exchangeHalo();
 
+   // Compute all auxiliary variables needed for pseudo-thickness equation
+   void computePseudoThicknessAux(const OceanState *State,
+                                  const Array3DReal &TracerArray,
+                                  int ThickTimeLevel, int VelTimeLevel) const;
+
    // Compute auxiliary variables for vertical dynamics
    void computeMomVertAux(const OceanState *State,
                           const Array3DReal &TracerArray, int ThickTimeLevel,
                           int VelTimeLevel) const;
 
+   // Compute transport velocity for pseudo-thickness and tracers
+   void computeTransportVelocity(const OceanState *State,
+                                 const Array3DReal &TracerArray,
+                                 int ThickTimeLevel, int VelTimeLevel) const;
+
    // Compute all auxiliary variables needed for momentum equation
    void computeMomAux(const OceanState *State, const Array3DReal &TracerArray,
                       int ThickTimeLevel, int VelTimeLevel,
                       const TimeInterval ProjDt) const;
+
+   // Compute all auxiliary variables needed for tracer equation
+   void computeTracerAux(const OceanState *State,
+                         const Array3DReal &TracerArray, int ThickTimeLevel,
+                         int VelTimeLevel) const;
 
    /// Compute all auxiliary variables based on an ocean state at a given time
    /// level

@@ -84,7 +84,7 @@ int testSfcStressForcingVars(Real RTol) {
    Array1DReal ExactNormalStressEdge("ExactNormalStressEdge",
                                      Mesh->NEdgesOwned);
    Err += setVectorEdge(
-       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+       KOKKOS_LAMBDA(Real(&VecField)[2], int IEdge, Real X, Real Y) {
           VecField[0] = Setup.sfcStressX(X, Y);
           VecField[1] = Setup.sfcStressY(X, Y);
        },
@@ -96,11 +96,15 @@ int testSfcStressForcingVars(Real RTol) {
 
    // Set inputs
    Err += setScalar(
-       KOKKOS_LAMBDA(Real X, Real Y) { return Setup.sfcStressX(X, Y); },
+       KOKKOS_LAMBDA(int ICell, Real X, Real Y) {
+          return Setup.sfcStressX(X, Y);
+       },
        SfcStressForcing.ZonalStressCell, Geom, Mesh, OnCell);
 
    Err += setScalar(
-       KOKKOS_LAMBDA(Real X, Real Y) { return Setup.sfcStressY(X, Y); },
+       KOKKOS_LAMBDA(int ICell, Real X, Real Y) {
+          return Setup.sfcStressY(X, Y);
+       },
        SfcStressForcing.MeridStressCell, Geom, Mesh, OnCell);
 
    // Compute numerical result

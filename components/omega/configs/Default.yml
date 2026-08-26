@@ -98,6 +98,12 @@ Omega:
       RiCrit: 0.7
       Exponent: 3.0
       RiSmoothLoops: 2
+  Submeso:
+    Enable: false
+    Tau: 172800.0
+    Ce: 0.08
+    LfMin: 1.0e3
+    DsMax: 100.0e3
   IOStreams:
     HorzMeshIn:
       UsePointerFile: false

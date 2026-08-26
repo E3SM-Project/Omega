@@ -4,6 +4,7 @@
 #include "Field.h"
 #include "Logging.h"
 #include "Pacer.h"
+#include "SubmesoEddies.h"
 #include "Tendencies.h"
 #include "TimeStepper.h"
 
@@ -30,7 +31,7 @@ AuxiliaryState::AuxiliaryState(const std::string &Name, const HorzMesh *Mesh,
       VelocityDel2Aux(stripDefault(Name), Mesh, VCoord),
       SurfTracerRestAux(stripDefault(Name), Mesh, NTracers),
       TracerAux(stripDefault(Name), Mesh, VCoord, NTracers),
-      TimeStep(TimeStep) {
+      TransportAux(stripDefault(Name), Mesh, VCoord), TimeStep(TimeStep) {
 
    GroupName = "AuxiliaryState";
    if (Name != "Default") {
@@ -46,6 +47,7 @@ AuxiliaryState::AuxiliaryState(const std::string &Name, const HorzMesh *Mesh,
    VelocityDel2Aux.registerFields(GroupName, AuxMeshName);
    SurfTracerRestAux.registerFields(GroupName, AuxMeshName);
    TracerAux.registerFields(GroupName, AuxMeshName);
+   TransportAux.registerFields(GroupName, AuxMeshName);
 }
 
 // Destructor. Unregisters the fields with IOStreams and destroys this auxiliary
@@ -57,6 +59,7 @@ AuxiliaryState::~AuxiliaryState() {
    VelocityDel2Aux.unregisterFields();
    SurfTracerRestAux.unregisterFields();
    TracerAux.unregisterFields();
+   TransportAux.unregisterFields();
 
    FieldGroup::destroy(GroupName);
 }
@@ -98,10 +101,102 @@ void AuxiliaryState::computeMomVertAux(const OceanState *State,
    // compute geometric height
    VCoord->computeGeomZHeight(PseudoThickCell, EosInstance->SpecVol);
 
+   // compute Brunt-Vaisala freqency squared
+   EosInstance->computeBruntVaisalaFreqSq(ConservTemp, AbsSalinity, PressureMid,
+                                          EosInstance->SpecVol);
+
    // compute target thickness
    VCoord->computeTargetThickness();
 
    Pacer::stop("AuxState:computeMomVertAux", 2);
+}
+
+// Compute transport velocity for pseudo-thickness and tracers
+void AuxiliaryState::computeTransportVelocity(const OceanState *State,
+                                              const Array3DReal &TracerArray,
+                                              int ThickTimeLevel,
+                                              int VelTimeLevel) const {
+   Pacer::start("AuxState:computeTransportVelocity", 2);
+
+   Array2DReal NormalVel = State->getNormalVelocity(VelTimeLevel);
+
+   const auto &NormalTransportVelocity = TransportAux.NormalTransportVelocity;
+
+   deepCopy(NormalTransportVelocity, NormalVel);
+
+   auto *SubEddies = SubmesoEddies::getInstance();
+
+   if (SubEddies && SubEddies->Enable) {
+
+      Eos *EosInstance = Eos::getInstance();
+
+      const auto &MeanPseudoThickEdge = PseudoThicknessAux.MeanPseudoThickEdge;
+      const auto &SpecVol             = EosInstance->SpecVol;
+      const auto &BVFreqSq            = EosInstance->BruntVaisalaFreqSq;
+      const auto &GeomZMid            = VCoord->GeomZMid;
+      const auto &MinLayerEdgeBot     = VCoord->MinLayerEdgeBot;
+      const auto &MaxLayerEdgeTop     = VCoord->MaxLayerEdgeTop;
+
+      SubEddies->computeDenMixLayerDepth(SpecVol);
+      SubEddies->computeBuoyGrad(SpecVol, MeanPseudoThickEdge, GeomZMid,
+                                 BVFreqSq);
+      SubEddies->computeEddyVelocity(BVFreqSq, MeanPseudoThickEdge);
+
+      const auto &EddyVelocity = SubEddies->EddyVelocity;
+
+      parallelForOuter(
+          {Mesh->NEdgesAll}, KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+             const int MinLyrEdgeBot = MinLayerEdgeBot(IEdge);
+             const int MaxLyrEdgeTop = MaxLayerEdgeTop(IEdge);
+
+             parallelForInner(
+                 Team, Range{MinLyrEdgeBot, MaxLyrEdgeTop},
+                 INNER_LAMBDA(int K) {
+                    NormalTransportVelocity(IEdge, K) += EddyVelocity(IEdge, K);
+                 });
+          });
+   }
+
+   Pacer::stop("AuxState:computeTransportVelocity", 2);
+}
+
+// Compute the auxiliary variables needed for pseudo-thickness equation
+void AuxiliaryState::computePseudoThicknessAux(const OceanState *State,
+                                               const Array3DReal &TracerArray,
+                                               int ThickTimeLevel,
+                                               int VelTimeLevel) const {
+
+   Array2DReal PseudoThick   = State->getPseudoThickness(ThickTimeLevel);
+   Array2DReal NormalVelEdge = State->getNormalVelocity(VelTimeLevel);
+   OMEGA_SCOPE(LocPseudoThicknessAux, PseudoThicknessAux);
+   OMEGA_SCOPE(MinLayerEdgeBot, VCoord->MinLayerEdgeBot);
+   OMEGA_SCOPE(MaxLayerEdgeTop, VCoord->MaxLayerEdgeTop);
+
+   Pacer::start("Tend:computePseudoThickAux", 2);
+
+   parallelForOuter(
+       "computePseudoThickAux", {Mesh->NEdgesAll},
+       KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+          const int KMin   = MinLayerEdgeBot(IEdge);
+          const int KMax   = MaxLayerEdgeTop(IEdge);
+          const int KRange = vertRangeChunked(KMin, KMax);
+
+          parallelForInner(
+              Team, KRange, INNER_LAMBDA(int KChunk) {
+                 LocPseudoThicknessAux.computeVarsOnEdge(
+                     IEdge, KChunk, PseudoThick, NormalVelEdge);
+              });
+       });
+
+   auto *SubEddies = SubmesoEddies::getInstance();
+
+   if (SubEddies && SubEddies->Enable) {
+      computeMomVertAux(State, TracerArray, ThickTimeLevel, VelTimeLevel);
+   }
+
+   computeTransportVelocity(State, TracerArray, ThickTimeLevel, VelTimeLevel);
+
+   Pacer::stop("Tend:computePseudoThickAux", 2);
 }
 
 // Compute the auxiliary variables needed for momentum equation
@@ -196,6 +291,8 @@ void AuxiliaryState::computeMomAux(const OceanState *State,
               });
        });
 
+   computeTransportVelocity(State, TracerArray, ThickTimeLevel, VelTimeLevel);
+
    parallelForOuter(
        "edgeAuxState2", {Mesh->NEdgesAll},
        KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
@@ -246,13 +343,55 @@ void AuxiliaryState::computeMomAux(const OceanState *State,
 
    Pacer::start("AuxState:computeVerticalPseudoVelocity", 2);
 
-   const auto &FluxPseudoThickEdge = PseudoThicknessAux.FluxPseudoThickEdge;
-   VAdv->computeVerticalPseudoVelocity(NormalVelEdge, FluxPseudoThickEdge,
-                                       PseudoThickCell, ProjDtSeconds);
+   const auto &FluxPseudoThickEdge     = PseudoThicknessAux.FluxPseudoThickEdge;
+   const auto &NormalTransportVelocity = TransportAux.NormalTransportVelocity;
+   VAdv->computeVerticalPseudoVelocity(NormalTransportVelocity,
+                                       FluxPseudoThickEdge, PseudoThickCell,
+                                       ProjDtSeconds);
 
    Pacer::stop("AuxState:computeVerticalPseudoVelocity", 2);
 
    Pacer::stop("AuxState:computeMomAux", 1);
+}
+
+// Compute the auxiliary variables needed for tracer equation
+void AuxiliaryState::computeTracerAux(const OceanState *State,
+                                      const Array3DReal &TracerArray,
+                                      int ThickTimeLevel,
+                                      int VelTimeLevel) const {
+
+   OMEGA_SCOPE(LocTracerAux, TracerAux);
+   OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
+   OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
+
+   const auto &MeanPseudoThickEdge = PseudoThicknessAux.MeanPseudoThickEdge;
+
+   const int NTracers = Tracers::getNumTracers();
+
+   Pacer::start("Tend:computeTracerAuxCell", 2);
+
+   auto *SubEddies = SubmesoEddies::getInstance();
+
+   if (SubEddies && SubEddies->Enable) {
+      computeMomVertAux(State, TracerArray, ThickTimeLevel, VelTimeLevel);
+   }
+
+   computeTransportVelocity(State, TracerArray, ThickTimeLevel, VelTimeLevel);
+
+   parallelForOuter(
+       "computeTracerAuxCell", {NTracers, Mesh->NCellsAll},
+       KOKKOS_LAMBDA(int LTracer, int ICell, const TeamMember &Team) {
+          const int KMin   = MinLayerCell(ICell);
+          const int KMax   = MaxLayerCell(ICell);
+          const int KRange = vertRangeChunked(KMin, KMax);
+
+          parallelForInner(
+              Team, KRange, INNER_LAMBDA(int KChunk) {
+                 LocTracerAux.computeVarsOnCells(
+                     LTracer, ICell, KChunk, MeanPseudoThickEdge, TracerArray);
+              });
+       });
+   Pacer::stop("Tend:computeTracerAuxCell", 2);
 }
 
 // Compute the auxiliary variables

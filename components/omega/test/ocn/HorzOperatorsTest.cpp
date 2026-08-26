@@ -199,7 +199,7 @@ int testDivergence(Real RTol) {
    // Prepare operator input
    Array2DReal VecEdge("VecEdge", Mesh->NEdgesSize, NVertLayers);
    Err += setVectorEdge(
-       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+       KOKKOS_LAMBDA(Real(&VecField)[2], int IEdge, Real X, Real Y) {
           VecField[0] = Setup.exactVecX(X, Y);
           VecField[1] = Setup.exactVecY(X, Y);
        },
@@ -208,7 +208,9 @@ int testDivergence(Real RTol) {
    // Compute exact result
    Array2DReal ExactDivCell("ExactDivCell", Mesh->NCellsOwned, NVertLayers);
    Err += setScalar(
-       KOKKOS_LAMBDA(Real X, Real Y) { return Setup.exactDivVec(X, Y); },
+       KOKKOS_LAMBDA(int ICell, Real X, Real Y) {
+          return Setup.exactDivVec(X, Y);
+       },
        ExactDivCell, Geom, Mesh, OnCell, ExchangeHalos::No);
 
    // Compute numerical result
@@ -243,7 +245,7 @@ int testGradient(Real RTol) {
    // Prepare operator input
    Array2DReal ScalarCell("ScalarCell", Mesh->NCellsSize, NVertLayers);
    Err += setScalar(
-       KOKKOS_LAMBDA(Real Coord1, Real Coord2) {
+       KOKKOS_LAMBDA(int ICell, Real Coord1, Real Coord2) {
           return Setup.exactScalar(Coord1, Coord2);
        },
        ScalarCell, Geom, Mesh, OnCell);
@@ -251,7 +253,7 @@ int testGradient(Real RTol) {
    // Compute exact result
    Array2DReal ExactGradEdge("ExactGradEdge", Mesh->NEdgesOwned, NVertLayers);
    Err += setVectorEdge(
-       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+       KOKKOS_LAMBDA(Real(&VecField)[2], int IEdge, Real X, Real Y) {
           VecField[0] = Setup.exactGradScalarX(X, Y);
           VecField[1] = Setup.exactGradScalarY(X, Y);
        },
@@ -288,7 +290,7 @@ int testCurl(Real RTol) {
    // Prepare operator input
    Array2DReal VecEdge("VecEdge", Mesh->NEdgesSize, NVertLayers);
    Err += setVectorEdge(
-       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+       KOKKOS_LAMBDA(Real(&VecField)[2], int IEdge, Real X, Real Y) {
           VecField[0] = Setup.exactVecX(X, Y);
           VecField[1] = Setup.exactVecY(X, Y);
        },
@@ -298,7 +300,9 @@ int testCurl(Real RTol) {
    Array2DReal ExactCurlVertex("ExactCurlVertex", Mesh->NVerticesOwned,
                                NVertLayers);
    Err += setScalar(
-       KOKKOS_LAMBDA(Real X, Real Y) { return Setup.exactCurlVec(X, Y); },
+       KOKKOS_LAMBDA(int IVertex, Real X, Real Y) {
+          return Setup.exactCurlVec(X, Y);
+       },
        ExactCurlVertex, Geom, Mesh, OnVertex, ExchangeHalos::No);
 
    // Compute numerical result
@@ -335,7 +339,7 @@ int testTangentRecon(Real RTol) {
    // Prepare operator input
    Array2DReal VecEdge("VecEdge", Mesh->NEdgesSize, NVertLayers);
    Err += setVectorEdge(
-       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+       KOKKOS_LAMBDA(Real(&VecField)[2], int IEdge, Real X, Real Y) {
           VecField[0] = Setup.exactVecX(X, Y);
           VecField[1] = Setup.exactVecY(X, Y);
        },
@@ -345,7 +349,7 @@ int testTangentRecon(Real RTol) {
    Array2DReal ExactReconEdge("ExactReconEdge", Mesh->NEdgesOwned, NVertLayers);
 
    Err += setVectorEdge(
-       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+       KOKKOS_LAMBDA(Real(&VecField)[2], int IEdge, Real X, Real Y) {
           VecField[0] = Setup.exactVecX(X, Y);
           VecField[1] = Setup.exactVecY(X, Y);
        },
@@ -398,7 +402,7 @@ int testVectorRecon(Real RTol) {
    // layer, so we use rank-1 arrays here)
    Array1DReal VecEdge("VecEdge", Mesh->NEdgesSize);
    Err += setVectorEdge(
-       KOKKOS_LAMBDA(Real(&VecField)[2], Real Lon, Real Lat) {
+       KOKKOS_LAMBDA(Real(&VecField)[2], int IEdge, Real Lon, Real Lat) {
           VecField[0] = Setup.exactVecX(Lon, Lat);
           VecField[1] = Setup.exactVecY(Lon, Lat);
        },
@@ -407,7 +411,7 @@ int testVectorRecon(Real RTol) {
    // Compute exact magnitude of the vector field at cell centers
    Array1DReal ExactMagCell("ExactMagCell", Mesh->NCellsOwned);
    Err += setScalar(
-       KOKKOS_LAMBDA(Real Lon, Real Lat) {
+       KOKKOS_LAMBDA(int ICell, Real Lon, Real Lat) {
           return vecMagnitude(Setup.exactVecX(Lon, Lat),
                               Setup.exactVecY(Lon, Lat));
        },
@@ -451,7 +455,7 @@ int testInterpCellToEdge(Real RTol) {
    // Prepare operator input
    Array1DReal ScalarCell("ScalarCell", Mesh->NCellsSize);
    Err += setScalar(
-       KOKKOS_LAMBDA(Real Coord1, Real Coord2) {
+       KOKKOS_LAMBDA(int ICell, Real Coord1, Real Coord2) {
           return Setup.exactScalar(Coord1, Coord2);
        },
        ScalarCell, Geom, Mesh, OnCell);
@@ -459,7 +463,7 @@ int testInterpCellToEdge(Real RTol) {
    // Compute exact result
    Array1DReal ExactScalarEdge("ExactScalarEdge", Mesh->NEdgesOwned);
    Err += setScalar(
-       KOKKOS_LAMBDA(Real Coord1, Real Coord2) {
+       KOKKOS_LAMBDA(int IEdge, Real Coord1, Real Coord2) {
           return Setup.exactScalar(Coord1, Coord2);
        },
        ExactScalarEdge, Geom, Mesh, OnEdge, ExchangeHalos::No);

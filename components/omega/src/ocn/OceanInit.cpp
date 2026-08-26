@@ -27,6 +27,7 @@
 #include "PGrad.h"
 #include "Pacer.h"
 #include "SfcCoupling.h"
+#include "SubmesoEddies.h"
 #include "Tendencies.h"
 #include "TimeMgr.h"
 #include "TimeStepper.h"
@@ -292,6 +293,7 @@ static int initOmegaModulesImpl(MPI_Comm Comm) {
    Eos::init();
    PressureGrad::init();
    VertMix::init();
+   SubmesoEddies::init();
    Tendencies::init();
 
    // Validate SurfaceTracerRestoring configuration
