@@ -26,23 +26,23 @@ is included by default.
 
 ## How KPP Is Used in Time Stepping
 
-KPP is connected to all three OMEGA time steppers: Forward-Backward (the
-default, split-explicit-style stepper), RungeKutta2, and RungeKutta4. For
-whichever stepper is active, KPP recomputes boundary-layer depth and
-coefficients at each internal stage of that stepper, and then once more on
-the fully updated state after time levels are advanced, immediately before
-implicit vertical mixing is applied:
+KPP is connected to all three Omega time steppers: Forward-Backward, RungeKutta2, and RungeKutta4. For
+whichever stepper is active, KPP is computed **once per time step**, at the
+start of the step (in contrast to MPAS-Ocean), before any tendency is evaluated.
+Boundary-layer depth, viscosity, diffusivity, and the non-local flux profile
+are then held fixed for the rest of the step and are used by:
 
-- **Forward-Backward** (default): KPP recomputes when velocity tendencies
-  are evaluated and again when tracer tendencies are evaluated, then once
-  more on the updated state.
-- **RungeKutta2**: KPP recomputes at the initial stage and at the midpoint
-  stage, then once more on the updated state.
-- **RungeKutta4**: KPP recomputes at each of the four RK4 stages, then once
-  more on the updated state.
+- the non-local tracer tendency at every internal stage of the stepper, and
+- the implicit vertical mixing solve applied after the time levels are
+  advanced.
 
-In all cases, the final recompute on the fully updated state is what
-determines the KPP diagnostics written to output for that step.
+Because both use the same KPP fields, the non-local flux and the diffusivity
+it is paired with are always consistent with one another.
+
+The KPP diagnostics written to output for a step therefore describe the ocean
+state at the **beginning** of that step, not the updated state at the end of
+it. This is the same convention used by the MPAS-Ocean split-explicit
+stepper.
 
 ## Configuration
 

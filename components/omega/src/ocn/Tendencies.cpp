@@ -1161,10 +1161,6 @@ void Tendencies::computeVelocityTendencies(
 ) {
    Pacer::start("Tend:computeVelocityTendencies", 1);
 
-   if (StageVerticalMixingEnabled) {
-      computeStageVerticalMixing(State, AuxState, TracerArray, ThickTimeLevel,
-                                 VelTimeLevel);
-   }
    AuxState->computeMomAux(State, TracerArray, ThickTimeLevel, VelTimeLevel,
                            ProjDt);
    computeVelocityTendenciesOnly(State, AuxState, TracerArray, ThickTimeLevel,
@@ -1191,10 +1187,6 @@ void Tendencies::computeTracerTendencies(
 
    Pacer::start("Tend:computeTracerTendencies", 1);
 
-   if (StageVerticalMixingEnabled) {
-      computeStageVerticalMixing(State, AuxState, TracerArray, ThickTimeLevel,
-                                 VelTimeLevel);
-   }
    const auto &MeanPseudoThickEdge =
        AuxState->PseudoThicknessAux.MeanPseudoThickEdge;
    Pacer::start("Tend:computeTracerAuxCell", 2);
@@ -1230,10 +1222,6 @@ void Tendencies::computeAllTendencies(
    AuxState->computeAll(State, TracerArray, ThickTimeLevel, VelTimeLevel,
                         ProjDt);
 
-   if (StageVerticalMixingEnabled) {
-      computeStageVerticalMixing(State, AuxState, TracerArray, ThickTimeLevel,
-                                 VelTimeLevel);
-   }
    computePseudoThicknessTendenciesOnly(State, AuxState, ThickTimeLevel,
                                         VelTimeLevel, Time);
    computeVelocityTendenciesOnly(State, AuxState, TracerArray, ThickTimeLevel,
@@ -1253,25 +1241,25 @@ void Tendencies::setSurfaceTracerFlux(const Array2DReal &Flux) {
 }
 
 //------------------------------------------------------------------------------
-// Prepare KPP state for the current stage. Final VertDiff/VertVisc coefficient
-// assembly is owned by VertMix::computeVertMix.
-void Tendencies::computeStageVerticalMixing(const OceanState *State,
-                                            const AuxiliaryState *AuxState,
-                                            const Array3DReal &TracerArray,
-                                            int ThickTimeLevel,
-                                            int VelTimeLevel) {
-   (void)AuxState;
+// Prepare KPP state for the current time step. Final VertDiff/VertVisc
+// coefficient assembly is owned by VertMix::computeVertMix.
+void Tendencies::computeKPPFields(const OceanState *State,
+                                  const Array3DReal &TracerArray,
+                                  int ThickTimeLevel, int VelTimeLevel) {
    KPPMix *KPPInstance = KPPMix::getInstance();
 
    if (!EqState || !KPPInstance || !KPPInstance->Enabled)
       return;
 
+   Pacer::start("Tend:computeKPPFields", 1);
+
    I4 TempIdx = -1;
    I4 SaltIdx = -1;
    if (Tracers::getIndex(TempIdx, "Temperature") != 0 ||
        Tracers::getIndex(SaltIdx, "Salinity") != 0) {
-      LOG_WARN("Tendencies::computeStageVerticalMixing: Temperature/Salinity "
-               "tracers not found, skipping KPP stage update");
+      LOG_WARN("Tendencies::computeKPPFields: Temperature/Salinity "
+               "tracers not found, skipping KPP update");
+      Pacer::stop("Tend:computeKPPFields", 1);
       return;
    }
 
@@ -1355,8 +1343,9 @@ void Tendencies::computeStageVerticalMixing(const OceanState *State,
 
    const auto *ForcingState = Forcing::getDefault();
    if (!ForcingState) {
-      LOG_WARN("Tendencies::computeStageVerticalMixing: Forcing has not "
-               "been initialized, skipping KPP stage update");
+      LOG_WARN("Tendencies::computeKPPFields: Forcing has not "
+               "been initialized, skipping KPP update");
+      Pacer::stop("Tend:computeKPPFields", 1);
       return;
    }
 
@@ -1459,6 +1448,8 @@ void Tendencies::computeStageVerticalMixing(const OceanState *State,
        PotentialDensity, NormalVelEdge, TangentialVelEdge,
        KPPInstance->SurfaceFrictionVelocity, KPPInstance->SurfaceBuoyancyFlux,
        EqState->BruntVaisalaFreqSq, IceFraction, WindSpeed10m);
+
+   Pacer::stop("Tend:computeKPPFields", 1);
 }
 
 } // end namespace OMEGA

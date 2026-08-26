@@ -8,14 +8,14 @@ call flow, and developer test strategy.
 
 ## Implementation Overview
 
-The Omega implementation of KPP follows directly from the MPAS-Ocean implementation.
+The Omega implementation of KPP mostly follows directly from the MPAS-Ocean implementation.
 Notably, by default it does not match diffusivity and viscosity from interior mixing
 (below the ocean surface boundary layer) sources at the base of the boundary
 layer. Instead these separate sources are added directly to the KPP diagnosed
 diffusivity and viscosity.  Matching can be enabled via the `MatchTechnique` parameter to
 `MatchBoth` in the Omega yaml file.  Boundary layer depth is computed as the depth
 where the bulk Richardson number exceeds a critical value.  It is then smoothed horizontally.
-KPP diffusivity, viscosity, and non local fluxes are computed based on this boundary layer.
+KPP diffusivity, viscosity, and non local fluxes are computed based on this boundary layer.  Unlike MPAS-Ocean, the boundary layer depth, vertical vicosity and vertical diffusivity are calculated at the beginning of a time step to ensure consistency of the nonlocal and local parts of the KPP scheme.
 
 Omega KPP is implemented in `KPPMix` as a singleton with two major compute
 phases:
@@ -35,12 +35,11 @@ All KPP depths are measured downward from the free surface, not from the geoid.
 `SshCell(ICell) - GeomZ...(ICell, K)`. Layer thicknesses are differences of
 geometric heights and are unaffected by the sea surface height.
 
-## Notation for Readers New to KPP
+## KPP Notation
 
-KPP splits the water column at the ocean boundary layer (OBL) depth `h`, also
-called the boundary layer depth (BLD). Inside the OBL, diffusivity and
-viscosity are prescribed as a depth profile scaled by `h` and a turbulent
-velocity scale; below it, only interior mixing applies.
+KPP splits the water column at the ocean boundary layer (OBL) depth `h`. Inside the OBL, diffusivity and viscosity are prescribed via a cubic shape function
+scaled by `h` and a turbulent velocity scale; below it, only interior mixing
+ applies (e.g., shear instability driven mixing).
 
 | Symbol | Code name | Units | Meaning |
 | --- | --- | --- | --- |
@@ -109,10 +108,9 @@ KPP does not define its own maximum.
 
 KPP coupling into tendencies occurs through:
 
-- `Tendencies::computeAllTendencies(...)`
-- `Tendencies::computeStageVerticalMixing(...)`
+- `Tendencies::computeKPPFields(...)`
 
-`computeStageVerticalMixing(...)` assembles required inputs:
+`computeKPPFields(...)` assembles required inputs:
 
 - potential density from EOS specific volume
 - Brunt-Vaisala frequency squared
@@ -128,45 +126,45 @@ KPPInstance->computeKPPMix(...)
 
 ### Time stepper interaction
 
-KPP is hooked into all three OMEGA time steppers
+KPP is evaluated exactly once per time step by every Omega time stepper
 (`src/timeStepping/RungeKutta4Stepper.cpp`,
 `src/timeStepping/RungeKutta2Stepper.cpp`,
-`src/timeStepping/ForwardBackwardStepper.cpp`) through two mechanisms:
+`src/timeStepping/ForwardBackwardStepper.cpp`) through two hooks in
+`src/timeStepping/TimeStepper.cpp`:
 
-1. **Stage recompute**: `Tendencies::StageVerticalMixingEnabled` (default
-   `true`) gates a call to `computeStageVerticalMixing(...)` inside
-   `computeAllTendencies`, `computeVelocityTendencies`, and
-   `computeTracerTendencies`. Whichever of these tendency functions a stepper
-   calls during its stages will trigger a KPP recompute on that stage's
-   state.
-2. **Post-step recompute**: `TimeStepper::applyPostStepVerticalMixing(...)`
-   (in `src/timeStepping/TimeStepper.cpp`) is called by every stepper's
-   `doStep()` immediately after `State->updateTimeLevels()`. It recomputes
-   auxiliary state and calls `computeStageVerticalMixing(...)` once more on
-   the fully updated state, then applies implicit vertical mixing via
-   `VertMix::VertMixImplicit(...)` if enabled.
+1. **Start-of-step compute**: `TimeStepper::updateKPPFields(...)` fetches the
+   current tracer array and calls `Tendencies::computeKPPFields(...)`. Each
+   stepper calls it once at the top of `doStep()`, after `prescribeState` /
+   `prescribeVelocity` and before the first tendency evaluation:
 
-Per-stepper call flow:
+   - **RungeKutta4Stepper**: in the `Stage == 0` branch, before the first
+     `computeAllTendencies(...)`.
+   - **RungeKutta2Stepper**: after the initial `prescribeState(...)`.
+   - **ForwardBackwardStepper**: after `prescribeVelocity(...)`.
 
-- **RungeKutta4Stepper**: calls `computeAllTendencies(...)` once per stage
-  (base stage plus 3 provisional stages), so KPP recomputes 4 times during
-  stepping, followed by `applyPostStepVerticalMixing(..., "RK4")`.
-- **RungeKutta2Stepper**: calls `computeAllTendencies(...)` twice (initial
-  stage, midpoint stage), so KPP recomputes twice during stepping, followed
-  by `applyPostStepVerticalMixing(..., "RK2")`.
-- **ForwardBackwardStepper**: calls `computeVelocityTendencies(...)` and
-  `computeTracerTendencies(...)` separately, each triggering a KPP recompute,
-  followed by `applyPostStepVerticalMixing(..., "ForwardBackward")`.
+2. **End-of-step application**:
+   `TimeStepper::applyImplicitVerticalMixing(...)` is called by every
+   stepper's `doStep()` immediately after `State->updateTimeLevels()`. It
+   recomputes auxiliary state and calls `VertMix::VertMixImplicit(...)` if
+   enabled. It does **not** recompute KPP; the fields from the start of the
+   step are reused.
 
-In every stepper, the post-step recompute uses the fully updated state and is
-what determines the KPP diagnostics written to output for that step.
+The KPP fields are consumed in two places within the step:
 
-Note: `RungeKutta4Stepper::doStep` still saves/restores
-`StageVerticalMixingEnabled` around its stage loop and ANDs it with
-`KPPMix::Enabled`. This is currently a no-op with respect to gating stage
-recompute, since `computeStageVerticalMixing` already early-returns when KPP
-is disabled; do not assume stage recompute is suppressed during RK4
-sub-stages when reading that code.
+- `Tendencies::computeTracerTendenciesOnly(...)` adds the non-local tracer
+  tendency from `KPPMix::VertNonLocalFlux` at every stage.
+- `VertMix::computeVertMix(...)`, called from `VertMixImplicit(...)`, merges
+  `KPPMix::VertDiff` / `VertVisc` into the final coefficients using
+  `KPPMix::IndexBoundaryLayerDepth`.
+
+Both therefore see the same boundary-layer depth and the same shape function,
+so the non-local flux and the diffusivity it is paired with cannot become
+inconsistent. KPP diagnostics written for a step describe the state at the
+beginning of that step.
+
+Note that `VertMix::VertMixImplicit(...)` recomputes Brunt-Vaisala frequency
+itself before calling `computeVertMix(...)`, so shear and convective mixing
+still use end-of-step stratification; only the KPP contribution is lagged.
 
 ## Configuration Mapping
 
@@ -217,6 +215,7 @@ behavior in experiments.
   name.
 - `MatchBoth` needs interior coefficients to be passed in; without them
   `ShapeAtBase` is zero and it degenerates exactly to `SimpleShapes`.
+- `Interptype2` accepts `LMD94`, `Linear`, `Quadratic`, and `Cubic`, but only `LMD94` is recommended strongly recommended.  For `MatchBoth` other options can result in negative diffusivities and viscosities.
 - When `DebugDiagnostics` is enabled in debug builds, targeted diagnostic
   logging is available; behavior is compile/build-mode aware.
 
@@ -225,12 +224,12 @@ behavior in experiments.
 ### Code-level checks
 
 1. Verify KPP initialization with explicit and default YAML keys.
-2. Verify stage call path executes with KPP enabled and is skipped when
-   disabled.
-3. Verify per-stepper sequencing: stage recompute at each stage of the active
-   stepper (4 for RK4, 2 for RK2, 2 for Forward-Backward), plus one final
-   recompute on the updated state before implicit vertical mixing, for all
-   three steppers.
+2. Verify the `computeKPPFields` path executes with KPP enabled and
+   early-returns when disabled.
+3. Verify per-stepper sequencing: exactly one KPP evaluation per step for all
+   three steppers, occurring before the first tendency evaluation and reused
+   by the end-of-step implicit vertical mixing. The `Tend:computeKPPFields`
+   Pacer region can be used to confirm the call count.
 
 ### Diagnostics-based checks
 

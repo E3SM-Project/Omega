@@ -824,17 +824,23 @@ void TimeStepper::finalizeTracersUpdate(const Array3DReal &NextTracers,
 }
 
 //------------------------------------------------------------------------------
-// Recompute stage vertical mixing and apply implicit vertical mixing after
-// state/tracer time levels are updated.
-void TimeStepper::applyPostStepVerticalMixing(
+// Compute KPP fields once per time step, before any tendency evaluation.
+void TimeStepper::updateKPPFields(OceanState *State, int TracerTimeLevel,
+                                  int ThickTimeLevel, int VelTimeLevel) const {
+
+   Array3DReal CurTracerArray = Tracers::getAll(TracerTimeLevel);
+   Tend->computeKPPFields(State, CurTracerArray, ThickTimeLevel, VelTimeLevel);
+}
+
+//------------------------------------------------------------------------------
+// Apply implicit vertical mixing after state/tracer time levels are updated.
+void TimeStepper::applyImplicitVerticalMixing(
     OceanState *State, int TracerTimeLevel, int ThickTimeLevel,
     int VelTimeLevel, const std::string &TimerPrefix) const {
 
    Array3DReal CurTracerArray = Tracers::getAll(TracerTimeLevel);
    AuxState->computeAll(State, CurTracerArray, ThickTimeLevel, VelTimeLevel,
                         TimeStep);
-   Tend->computeStageVerticalMixing(State, AuxState, CurTracerArray,
-                                    ThickTimeLevel, VelTimeLevel);
 
    VertMix *VMix = VertMix::getInstance();
    if (!VMix)

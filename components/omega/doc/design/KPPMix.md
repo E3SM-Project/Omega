@@ -10,12 +10,14 @@
 
 ## 1 Overview
 
-This document describes the OMEGA implementation of the K Profile Parameterization
+This document describes the Omega implementation of the K Profile Parameterization
 (KPP) ocean boundary layer mixing. KPP computes a boundary-layer depth, vertical
 viscosity, vertical diffusivity, and a non-local tracer flux shape implemented outside
-the implicit vertical mixing routine.
+the implicit vertical mixing routine.  The implementation follows that in MPAS-Ocean and
+uses direct ports of the functions defined in the [CVMix](https://github.com/CVMix/CVMix-src)
+version of KPP.
 
-The implementation is in `KPPMix` and is integrated with the OMEGA tendency and
+The implementation is in `KPPMix` and is integrated with the Omega tendency and
 RK2, RK4, and Forward-backward stepping routines. Relative to broad vertical mixing documentation, this
 page focuses specifically on KPP theory, algorithmic choices, and testing.
 
@@ -23,18 +25,19 @@ page focuses specifically on KPP theory, algorithmic choices, and testing.
 
 ### 2.1 Requirement: Boundary-layer depth from bulk Richardson criterion
 
-Following [Large et al (1994)](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/94RG01872), the OBL depth must be diagnosed from a bulk Richardson criterion so that
+Following [Large et al (1994)](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/94RG01872),
+the OBL depth must be diagnosed from a bulk Richardson criterion so that
 mixing depth responds to evolving stratification, shear, and surface forcing. It also
 must include a unresolved turbulent shear contribution.
 
 ### 2.2 Requirement: Coefficients must be computable in parallel over columns
 
-The KPP implementation must operate over many columns in parallel using OMEGA
+The KPP implementation must operate over many columns in parallel using Omega
 array/kernels, rather than serial single-column calls.
 
 ### 2.3 Requirement: Compatible with additive vertical-mixing framework
 
-KPP viscosity/diffusivity fields must be compatible with existing OMEGA vertical
+KPP viscosity/diffusivity fields must be compatible with existing Omega vertical
 mixing infrastructure so that other chosen vertical mixing sources can be merged
 with KPP.
 
@@ -71,11 +74,16 @@ is utilized to find the depth.  In addition the boundary layer depth is constrai
 to fall between a configurable minimum OBL under sea ice and a maximum set by the water
 column depth.
 
+The boundary layer depth search is a growing inner loop.  The outer loop iterates over all model layers.
+The current model layer is set as a boundary layer depth candidate and $Ri_b$ is calculated for all
+model layers shallower than the current depth.  If any layer in the inner loop has an $Ri_b*StopOBL$ that
+exceeds $Ri_{crit}$ the loop terminates.
+
 ### 3.2 Stage 2: KPP coefficients and non-local flux
 
-Given a diagnosed $h$, KPP computes interface viscosity and diffusivity coefficients
-using shape functions in normalized depth $\sigma = -d/h$, where $d$ is the depth relative
-to the sea surface height, not the physical depth:
+Given a diagnosed $h$, KPP computes viscosity and diffusivity coefficients at the top of every
+Omega cell except the surface and the bottom using shape functions
+in normalized depth $\sigma = -d/h$, where $d$ is the depth relative to the sea surface height, not the physical depth:
 
 $$
 K_m(\sigma) = h\, w_m(\sigma)\, M_1(\sigma),
@@ -86,7 +94,7 @@ K_s(\sigma) = h\, w_s(\sigma)\, S_1(\sigma),
 $$
 
 where $w_m$ and $w_s$ are turbulent velocity scales from Monin-Obukhov style
-stability functions, see Appendix B of [Large et al, 1994](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/94RG01872). Where $M_1$ and $S_1$ are shape functions.
+stability functions, see Appendix B of [Large et al, 1994](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/94RG01872). $M_1$ and $S_1$ are shape functions.
 The generic form of the shape function is given by
 
 $$
@@ -100,8 +108,7 @@ version of KPP matches predicted viscosities and diffusivities to those predicte
 (e.g., shear instability driven mixing) and a second option where viscosities and diffusivities are
 instead additive.  In the latter case, the shape function greatly simplifies to $X(\sigma) = \sigma(1-\sigma)^2.
 
-For either shape function, enhanced diffusivity can be included near the boundary layer base.  This can
-smooth boundary layer deepening.
+For either shape function, enhanced diffusivity can be included near the boundary layer base.  This can smooth boundary layer deepening in time.
 
 The non-local tracer flux uses the same scalar shape function, scaled by the constant
 $C_s$ from Eq. (20) of Large et al. (1994) rather than by $h\, w_s$:
@@ -110,8 +117,7 @@ $$
 \gamma_s(\sigma) = C_s\, S_1(\sigma).
 $$
 
-Because a single $S_1$ drives both, $K_s$ and $\gamma_s$ cannot become inconsistent
-with each other when the matching option changes.
+Because a single shape function ($S_1$) drives both the diffusivity and nonlocal flux, $K_s$ and $\gamma_s$ cannot become inconsistent with each other when the matching option changes.
 
 
 
@@ -126,7 +132,7 @@ KPP is configured from the `VertMix: KPP` YAML group. Key parameters include:
 - `Enable`
 - `CriticalBulkRichardsonNumber`
 - `MatchTechnique` (`SimpleShapes` or `MatchBoth`)
-- `InterpType2`
+- `InterpType2` (`LMD94`, `Linear`, `Quadratic`, `Cubic`)
 - `UseEnhancedDiffusion`
 - `IceFractionThresholdForLangmuir`
 - `IceFractionThresholdForMinimumOBL`
@@ -169,14 +175,27 @@ Internal stages:
 
 ### 4.3 Time stepper coupling behavior
 
-KPP is coupled to all three OMEGA time steppers -- Forward-Backward (default,
-split-explicit-style), RungeKutta2, and RungeKutta4. For each stepper, KPP
-recomputes boundary-layer depth and coefficients at every internal stage of
-that stepper, and once more on the fully updated state after time levels are
-advanced, immediately before implicit vertical mixing is applied. The final,
-post-step recompute is what determines the KPP diagnostics for that step
-across all three steppers. Full call-flow detail per stepper is described for
-developers and users in:
+KPP is coupled to all three Omega time steppers -- Forward-Backward,
+RungeKutta2, and RungeKutta4. For every stepper, KPP is evaluated exactly
+once per time step, at the start of the step on the state at time $n$, before
+any tendency is evaluated. The resulting boundary-layer depth, viscosity,
+diffusivity, and non-local flux profile are then held fixed for the remainder
+of the step.
+
+This design differs from MPAS-Ocean, where the boundary layer depth, diffusivity, and viscosity are computed at the end of the time step and the non local flux is applied on the following timestep.  The primary advantage of this new approach is:
+
+1. **Consistency.** The non-local flux $\gamma_s$ applied in the tracer
+   tendency at each stage and the diffusivity $K_s$ used by the end-of-step
+   implicit vertical mixing solve are derived from the same OBL depth and the
+   same shape function $S_1(\sigma)$. Recomputing KPP at each stage would
+   pair a stage-dependent $\gamma_s$ with a different $K_s$, breaking the
+   correspondence described in section 3.2.
+
+Because KPP is evaluated before the step advances, the KPP diagnostics
+written for a step describe the state at the beginning of that step. The
+coefficients are lagged relative to the state during the implicit solve at the end of the
+step. Full call-flow detail per stepper is described for developers and
+users in:
 
 - [Developer KPP workflow](../devGuide/KPPMix.md)
 - [User runtime notes](../userGuide/KPPMix.md)

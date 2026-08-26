@@ -51,6 +51,8 @@ void ForwardBackwardStepper::doStep(
 
    prescribeVelocity(State, VelCurLevel, State, VelCurLevel, SimTime);
 
+   updateKPPFields(State, TracerCurLevel, ThickCurLevel, VelCurLevel);
+
    // R_u^{n} = RHS_u(u^{n}, h^{n}, t^{n})
    Tend->computeVelocityTendencies(State, AuxState, CurTracerArray,
                                    ThickCurLevel, VelCurLevel, TracerCurLevel,
@@ -94,7 +96,7 @@ void ForwardBackwardStepper::doStep(
    Tracers::updateTimeLevels();
    Pacer::stop("ForwardBackward:haloExch", 3);
 
-   applyPostStepVerticalMixing(State, TracerCurLevel, ThickCurLevel,
+   applyImplicitVerticalMixing(State, TracerCurLevel, ThickCurLevel,
                                VelCurLevel, "ForwardBackward");
 
    validateOceanState(State, AuxState, VertCoord::getDefault(), 0);
