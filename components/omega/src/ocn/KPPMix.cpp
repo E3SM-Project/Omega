@@ -846,21 +846,12 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
               Kokkos::abs(ZInterface(ICell, KIntTop) - ZInterface(ICell, KMin));
           const Real MinOBLDepth = 0.5_Real * TopLayerThickness;
           const Real MaxOBLDepth = Ssh - ZMid(ICell, KMax);
-          OBLDepth               = Kokkos::fmax(OBLDepth, MinOBLDepth);
-          if (IceFrac > LocIceFracThresholdForMinOBL) {
-             OBLDepth = Kokkos::fmax(OBLDepth, LocMinimumOBLUnderSeaIce);
-          }
-          OBLDepth = Kokkos::fmin(OBLDepth, MaxOBLDepth);
+          OBLDepth               = KPP::kppClampOBLDepth(
+              OBLDepth, MinOBLDepth, MaxOBLDepth,
+              IceFrac > LocIceFracThresholdForMinOBL, LocMinimumOBLUnderSeaIce);
 
-          I4 KFinal = KMax;
-          for (I4 K = KMin; K < KMax; ++K) {
-             const Real ZAbove = Ssh - ZInterface(ICell, K);
-             const Real ZBelow = Ssh - ZInterface(ICell, K + 1);
-             if (OBLDepth >= ZAbove && OBLDepth <= ZBelow) {
-                KFinal = K;
-                break;
-             }
-          }
+          const I4 KFinal =
+              KPP::kppOBLIndex(ZInterface, ICell, KMin, KMax, Ssh, OBLDepth);
 
           LocBoundaryLayerDepth(ICell)      = OBLDepth;
           LocIndexBoundaryLayerDepth(ICell) = KFinal;
@@ -938,19 +929,14 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
              const Real MinOBLDepth = 0.5_Real * TopLayerThickness;
              const Real MaxOBLDepth = Ssh - ZMid(ICell, KMax);
 
-             Real OBLDepth = LocBoundaryLayerDepthSmooth(ICell);
-             OBLDepth      = Kokkos::fmax(OBLDepth, MinOBLDepth);
-             OBLDepth      = Kokkos::fmin(OBLDepth, MaxOBLDepth);
+             // The sea-ice minimum is deliberately not reapplied here; it was
+             // already enforced before smoothing.
+             const Real OBLDepth = KPP::kppClampOBLDepth(
+                 LocBoundaryLayerDepthSmooth(ICell), MinOBLDepth, MaxOBLDepth,
+                 false, 0.0_Real);
 
-             I4 KFinal = KMax;
-             for (I4 K = KMin; K < KMax; ++K) {
-                const Real ZAbove = Ssh - ZInterface(ICell, K);
-                const Real ZBelow = Ssh - ZInterface(ICell, K + 1);
-                if (OBLDepth >= ZAbove && OBLDepth <= ZBelow) {
-                   KFinal = K;
-                   break;
-                }
-             }
+             const I4 KFinal =
+                 KPP::kppOBLIndex(ZInterface, ICell, KMin, KMax, Ssh, OBLDepth);
 
              LocBoundaryLayerDepth(ICell)      = OBLDepth;
              LocIndexBoundaryLayerDepth(ICell) = KFinal;
@@ -995,18 +981,13 @@ void KPPMix::computeMixingCoefficients(
    // Capture member variables for use in lambda
    const Real LocSurfaceLayerExtent = SurfaceLayerExtent;
    const KPPMatchType LocMatch      = MatchTechnique;
-   // Non-local flux normalization constant from Large et al. (1994) eq. 20:
-   // C_s = C* * kappa * (c_s * kappa * epsilon)^(1/3)
-   // where C* = 10, c_s = CMoS = 98.9545, kappa = VonKar, epsilon =
-   // SurfaceLayerExtent
-   const Real LocNonLocalCs =
-       10.0_Real * VonKar *
-       Kokkos::pow(KPP::CMoS * VonKar * LocSurfaceLayerExtent,
-                   1.0_Real / 3.0_Real);
+   const Real LocNonLocalCs = KPP::kppNonLocalCs(VonKar, LocSurfaceLayerExtent);
    bool LocUseEnhancedDiffusion = UseEnhancedDiffusion;
    const Real LocKappa          = VonKar;
    const bool LocUseInteriorMix =
        InteriorVertDiff.data() != nullptr && InteriorVertVisc.data() != nullptr;
+   const bool LocUseMatchedShapes =
+       LocUseInteriorMix && LocMatch == KPPMatchType::MatchBoth;
 
    // =======================================================================
    // Initialize with zero KPP contribution, or precomputed interior mixing for
@@ -1071,77 +1052,60 @@ void KPPMix::computeMixingCoefficients(
                 const Real SigmaLoc   = Kokkos::fmin(
                     LocSurfaceLayerExtent, Kokkos::fmax(0.0_Real, SigmaCoord));
 
-                Real Zeta   = 0.0_Real;
                 Real WMTurb = 0.0_Real;
                 Real WSTurb = 0.0_Real;
-
-                if (UStar > 0.0_Real) {
-                   const Real U3 = UStar * UStar * UStar;
-                   Zeta          = SigmaLoc * HOBL * BuoyFlux * LocKappa /
-                                   Kokkos::max(U3, 1.0e-20_Real);
-
-                   // These return phi^{-1}; do not invert again.
-                   const Real PhiInvM = KPP::kppPhiInvMomentum(Zeta);
-                   const Real PhiInvS = KPP::kppPhiInvScalar(Zeta);
-
-                   WMTurb = LocKappa * UStar * Kokkos::max(PhiInvM, 0.0_Real);
-                   WSTurb = LocKappa * UStar * Kokkos::max(PhiInvS, 0.0_Real);
-                } else if (BuoyFlux < 0.0_Real) {
-                   // Free-convection edge case (u*=0, unstable forcing).
-                   const Real CM  = KPP::CMoM;
-                   const Real CS  = KPP::CMoS;
-                   const Real WM3 = -CM * SigmaLoc * HOBL * LocKappa * BuoyFlux;
-                   const Real WS3 = -CS * SigmaLoc * HOBL * LocKappa * BuoyFlux;
-                   WMTurb = LocKappa * Kokkos::pow(Kokkos::max(0.0_Real, WM3),
-                                                   1.0_Real / 3.0_Real);
-                   WSTurb = LocKappa * Kokkos::pow(Kokkos::max(0.0_Real, WS3),
-                                                   1.0_Real / 3.0_Real);
-                }
+                KPP::kppTurbScales(UStar, BuoyFlux, HOBL, SigmaLoc, LocKappa,
+                                   WMTurb, WSTurb);
 
                 // For MatchBoth, the shape value the KPP profile must reach at
                 // the OBL base so that it joins the interior coefficient there.
                 const Real MatchViscShape =
-                    (LocUseInteriorMix && LocMatch == KPPMatchType::MatchBoth &&
-                     HOBL > 0.0_Real && WMTurb > 0.0_Real)
-                        ? LocInteriorVertVisc(ICell, KMatch) /
-                              Kokkos::max(HOBL * WMTurb, 1.0e-20_Real)
+                    LocUseMatchedShapes
+                        ? KPP::kppMatchShape(LocInteriorVertVisc(ICell, KMatch),
+                                             HOBL, WMTurb)
                         : 0.0_Real;
                 const Real MatchDiffShape =
-                    (LocUseInteriorMix && LocMatch == KPPMatchType::MatchBoth &&
-                     HOBL > 0.0_Real && WSTurb > 0.0_Real)
-                        ? LocInteriorVertDiff(ICell, KMatch) /
-                              Kokkos::max(HOBL * WSTurb, 1.0e-20_Real)
+                    LocUseMatchedShapes
+                        ? KPP::kppMatchShape(LocInteriorVertDiff(ICell, KMatch),
+                                             HOBL, WSTurb)
                         : 0.0_Real;
 
                 // ========================================================
                 // Momentum mixing contribution.
                 // ========================================================
-                Real ShapeM =
-                    (LocUseInteriorMix && LocMatch == KPPMatchType::MatchBoth)
-                        ? KPP::kppShapeMatched(Sigma, MatchViscShape)
-                        : KPP::kppShapeMomentum(Sigma);
+                Real ShapeM = LocUseMatchedShapes
+                                  ? KPP::kppShapeMatched(Sigma, MatchViscShape)
+                                  : KPP::kppShapeMomentum(Sigma);
                 LocVertVisc(ICell, K) = HOBL * WMTurb * ShapeM;
 
                 // ========================================================
                 // Tracer mixing contribution.
                 // ========================================================
-                Real ShapeS =
-                    (LocUseInteriorMix && LocMatch == KPPMatchType::MatchBoth)
-                        ? KPP::kppShapeMatched(Sigma, MatchDiffShape)
-                        : KPP::kppShapeScalar(Sigma);
+                Real ShapeS = LocUseMatchedShapes
+                                  ? KPP::kppShapeMatched(Sigma, MatchDiffShape)
+                                  : KPP::kppShapeScalar(Sigma);
                 LocVertDiff(ICell, K)               = HOBL * WSTurb * ShapeS;
                 LocTurbulentVelocityScale(ICell, K) = WSTurb;
 
                 // ========================================================
-                // Non-local flux: C_s * G(sigma), reusing the scalar
-                // diffusivity shape so gamma and K share one profile.
+                // Non-local flux: C_s * G(sigma).
                 // C_s = C* * kappa * (c_s * kappa * epsilon)^(1/3)
                 // per Large et al. (1994) eq. 20 (~6.33 with default constants)
                 // ========================================================
+                // The non-local shape is always the unmatched scalar shape,
+                // independent of MatchTechnique, so that gamma vanishes at the
+                // OBL base. The matched shape is non-zero there by
+                // construction, which would leave a non-local flux at the base
+                // that jumps to zero just below it. CVMix likewise keeps
+                // matching (a diffusivity choice) separate from the non-local
+                // shape.
+                const Real NonLocalShape = KPP::kppShapeScalar(Sigma);
+
                 // Match CVMix behavior: apply non-local term only when
                 // surface buoyancy forcing is unstable/neutral.
                 if (BuoyFlux <= 0.0_Real) {
-                   LocVertNonLocalFlux(ICell, K) = LocNonLocalCs * ShapeS;
+                   LocVertNonLocalFlux(ICell, K) =
+                       LocNonLocalCs * NonLocalShape;
                 } else {
                    LocVertNonLocalFlux(ICell, K) = 0.0;
                 }
@@ -1198,46 +1162,28 @@ void KPPMix::computeMixingCoefficients(
 
              Real WMKtup = 0.0_Real;
              Real WSKtup = 0.0_Real;
-             if (UStar > 0.0_Real) {
-                const Real U3   = UStar * UStar * UStar;
-                const Real Zeta = SigmaLoc * HOBL * BuoyFlux * LocKappa /
-                                  Kokkos::max(U3, 1.0e-20_Real);
-                WMKtup = LocKappa * UStar *
-                         Kokkos::max(KPP::kppPhiInvMomentum(Zeta), 0.0_Real);
-                WSKtup = LocKappa * UStar *
-                         Kokkos::max(KPP::kppPhiInvScalar(Zeta), 0.0_Real);
-             } else if (BuoyFlux < 0.0_Real) {
-                const Real WM3 =
-                    -KPP::CMoM * SigmaLoc * HOBL * LocKappa * BuoyFlux;
-                const Real WS3 =
-                    -KPP::CMoS * SigmaLoc * HOBL * LocKappa * BuoyFlux;
-                WMKtup = LocKappa * Kokkos::pow(Kokkos::max(0.0_Real, WM3),
-                                                1.0_Real / 3.0_Real);
-                WSKtup = LocKappa * Kokkos::pow(Kokkos::max(0.0_Real, WS3),
-                                                1.0_Real / 3.0_Real);
-             }
+             KPP::kppTurbScales(UStar, BuoyFlux, HOBL, SigmaLoc, LocKappa,
+                                WMKtup, WSKtup);
 
              const Real MatchViscShape =
-                 (LocUseInteriorMix && LocMatch == KPPMatchType::MatchBoth &&
-                  HOBL > 0.0_Real && WMKtup > 0.0_Real)
-                     ? LocInteriorVertVisc(ICell, KMatch) /
-                           Kokkos::max(HOBL * WMKtup, 1.0e-20_Real)
+                 LocUseMatchedShapes
+                     ? KPP::kppMatchShape(LocInteriorVertVisc(ICell, KMatch),
+                                          HOBL, WMKtup)
                      : 0.0_Real;
              const Real MatchDiffShape =
-                 (LocUseInteriorMix && LocMatch == KPPMatchType::MatchBoth &&
-                  HOBL > 0.0_Real && WSKtup > 0.0_Real)
-                     ? LocInteriorVertDiff(ICell, KMatch) /
-                           Kokkos::max(HOBL * WSKtup, 1.0e-20_Real)
+                 LocUseMatchedShapes
+                     ? KPP::kppMatchShape(LocInteriorVertDiff(ICell, KMatch),
+                                          HOBL, WSKtup)
                      : 0.0_Real;
 
              const Real ViscKtup =
                  HOBL * WMKtup *
-                 ((LocUseInteriorMix && LocMatch == KPPMatchType::MatchBoth)
+                 (LocUseMatchedShapes
                       ? KPP::kppShapeMatched(SigmaKtup, MatchViscShape)
                       : KPP::kppShapeMomentum(SigmaKtup));
              const Real DiffKtup =
                  HOBL * WSKtup *
-                 ((LocUseInteriorMix && LocMatch == KPPMatchType::MatchBoth)
+                 (LocUseMatchedShapes
                       ? KPP::kppShapeMatched(SigmaKtup, MatchDiffShape)
                       : KPP::kppShapeScalar(SigmaKtup));
 

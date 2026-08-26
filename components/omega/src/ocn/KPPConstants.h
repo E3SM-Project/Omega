@@ -144,7 +144,8 @@ Real kppPhiInvMomentum(Real Zeta) {
 
 /// @brief Scalar gradient shape function, multiplied by h and the turbulent
 /// velocity scale to give the KPP diffusivity: Kx = h * w_s * G(sigma).
-/// The non-local flux reuses this same shape, scaled by C_s instead of h*w_s.
+/// The non-local flux always uses this shape, scaled by C_s instead of h*w_s,
+/// even under MatchBoth, so that gamma vanishes at the OBL base.
 /// REFERENCES: Large et al. (1994) Eq. (11), Eq. (12)-(13), Large et al. (1997)
 ///
 /// @param Sigma Normalized vertical position (-z/h)
@@ -331,6 +332,121 @@ Real computeTurbVelocityScale(Real UStar, Real BuoyFlux, Real HOBL) {
 
    return Kokkos::pow(Kokkos::fmax(0.0_Real, WMom + WBuoy),
                       1.0_Real / 3.0_Real);
+}
+
+/// @brief Momentum and scalar turbulent velocity scales at a point in the OBL
+///
+/// CVMix-style scales: w = kappa * u* * phi^{-1}(zeta) in general, with
+/// explicit free-convection limits when u* vanishes. Both scales are returned
+/// together because they share the stability coordinate zeta.
+/// REFERENCES: Large et al. (1994) Eq. (13), Appendix B
+///
+/// @param UStar Friction velocity (m/s)
+/// @param BuoyFlux Surface buoyancy flux (m^2/s^3), negative when convective
+/// @param HOBL Boundary layer depth (m)
+/// @param SigmaLoc Normalized depth [0,1], capped at SurfaceLayerExtent
+/// @param Kappa von Karman constant
+/// @param WMTurb [out] Momentum turbulent velocity scale w_m (m/s)
+/// @param WSTurb [out] Scalar turbulent velocity scale w_s (m/s)
+KOKKOS_INLINE_FUNCTION
+void kppTurbScales(Real UStar, Real BuoyFlux, Real HOBL, Real SigmaLoc,
+                   Real Kappa, Real &WMTurb, Real &WSTurb) {
+   WMTurb = 0.0_Real;
+   WSTurb = 0.0_Real;
+
+   if (UStar > 0.0_Real) {
+      const Real U3 = UStar * UStar * UStar;
+      const Real Zeta =
+          SigmaLoc * HOBL * BuoyFlux * Kappa / Kokkos::max(U3, 1.0e-20_Real);
+
+      // These return phi^{-1}; do not invert again.
+      WMTurb = Kappa * UStar * Kokkos::max(kppPhiInvMomentum(Zeta), 0.0_Real);
+      WSTurb = Kappa * UStar * Kokkos::max(kppPhiInvScalar(Zeta), 0.0_Real);
+   } else if (BuoyFlux < 0.0_Real) {
+      // Free-convection edge case (u*=0, unstable forcing).
+      const Real WM3 = -CMoM * SigmaLoc * HOBL * Kappa * BuoyFlux;
+      const Real WS3 = -CMoS * SigmaLoc * HOBL * Kappa * BuoyFlux;
+      WMTurb =
+          Kappa * Kokkos::pow(Kokkos::max(0.0_Real, WM3), 1.0_Real / 3.0_Real);
+      WSTurb =
+          Kappa * Kokkos::pow(Kokkos::max(0.0_Real, WS3), 1.0_Real / 3.0_Real);
+   }
+}
+
+/// @brief Shape value the KPP profile must reach at the OBL base so that it
+/// joins the pre-existing interior coefficient there (MatchBoth only).
+///
+/// Callers must skip this when no interior mixing is supplied, since
+/// InteriorCoeff is then read from an unallocated array.
+///
+/// @param InteriorCoeff Interior diffusivity or viscosity at the OBL base
+/// @param HOBL Boundary layer depth (m)
+/// @param W Turbulent velocity scale matching InteriorCoeff (m/s)
+/// @return Shape value at the OBL base (dimensionless)
+KOKKOS_INLINE_FUNCTION
+Real kppMatchShape(Real InteriorCoeff, Real HOBL, Real W) {
+   if (HOBL <= 0.0_Real || W <= 0.0_Real) {
+      return 0.0_Real;
+   }
+
+   return InteriorCoeff / Kokkos::max(HOBL * W, 1.0e-20_Real);
+}
+
+/// @brief Non-local flux normalization constant
+/// C_s = C* * kappa * (c_s * kappa * epsilon)^(1/3), with C* = 10.
+/// Evaluates to roughly 6.33 with the default constants.
+/// REFERENCES: Large et al. (1994) Eq. (20)
+///
+/// @param Kappa von Karman constant
+/// @param SurfLayerExtent Surface layer extent epsilon (dimensionless)
+/// @return C_s (dimensionless)
+KOKKOS_INLINE_FUNCTION
+Real kppNonLocalCs(Real Kappa, Real SurfLayerExtent) {
+   return 10.0_Real * Kappa *
+          Kokkos::pow(CMoS * Kappa * SurfLayerExtent, 1.0_Real / 3.0_Real);
+}
+
+/// @brief Clamp a trial OBL depth to the range supported by the column
+///
+/// @param OBLDepth Trial OBL depth (m)
+/// @param MinOBLDepth Lower bound, typically half the top layer thickness (m)
+/// @param MaxOBLDepth Upper bound, typically the deepest cell center (m)
+/// @param ApplyIceMinimum Whether the sea-ice minimum depth applies
+/// @param MinOBLUnderIce Minimum OBL depth under sea ice (m)
+/// @return Clamped OBL depth (m)
+KOKKOS_INLINE_FUNCTION
+Real kppClampOBLDepth(Real OBLDepth, Real MinOBLDepth, Real MaxOBLDepth,
+                      bool ApplyIceMinimum, Real MinOBLUnderIce) {
+   OBLDepth = Kokkos::fmax(OBLDepth, MinOBLDepth);
+
+   if (ApplyIceMinimum) {
+      OBLDepth = Kokkos::fmax(OBLDepth, MinOBLUnderIce);
+   }
+
+   return Kokkos::fmin(OBLDepth, MaxOBLDepth);
+}
+
+/// @brief Index of the cell layer containing a given OBL depth
+///
+/// @param ZInterface Geometric height of layer interfaces (m)
+/// @param ICell Cell index
+/// @param KMin Index of the top active layer
+/// @param KMax Index of the bottom active layer
+/// @param Ssh Sea surface height (m), since depths are measured below it
+/// @param OBLDepth OBL depth (m)
+/// @return Layer index bracketing OBLDepth, or KMax if none does
+KOKKOS_INLINE_FUNCTION
+I4 kppOBLIndex(const Array2DReal &ZInterface, I4 ICell, I4 KMin, I4 KMax,
+               Real Ssh, Real OBLDepth) {
+   for (I4 K = KMin; K < KMax; ++K) {
+      const Real ZAbove = Ssh - ZInterface(ICell, K);
+      const Real ZBelow = Ssh - ZInterface(ICell, K + 1);
+      if (OBLDepth >= ZAbove && OBLDepth <= ZBelow) {
+         return K;
+      }
+   }
+
+   return KMax;
 }
 
 } // namespace OMEGA::KPP

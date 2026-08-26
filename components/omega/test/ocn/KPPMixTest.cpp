@@ -368,6 +368,189 @@ void testTurbulentVelocityScale() {
    checkResult("turbulent velocity scale", NumErrors);
 }
 
+void testTurbScales() {
+   int NumErrors = 0;
+
+   parallelReduce(
+       "KPPMixTest-TurbScales", {5},
+       KOKKOS_LAMBDA(int ITest, int &ErrorCount) {
+          // 0: wind only, 1: wind + unstable, 2: wind + stable,
+          // 3: free convection (u*=0, B0<0), 4: calm and stable (both zero)
+          const Real UStar = (ITest == 3 || ITest == 4) ? 0.0_Real : 0.02_Real;
+          const Real B0    = ITest == 0   ? 0.0_Real
+                             : ITest == 1 ? -1.0e-7_Real
+                             : ITest == 2 ? 1.0e-7_Real
+                             : ITest == 3 ? -1.0e-7_Real
+                                          : 1.0e-7_Real;
+          const Real HOBL  = 50.0_Real;
+          const Real SigmaLoc = KPP::SurfaceLayerExtent;
+
+          Real WM = -1.0_Real;
+          Real WS = -1.0_Real;
+          KPP::kppTurbScales(UStar, B0, HOBL, SigmaLoc, VonKar, WM, WS);
+
+          Real ExpectedWM = 0.0_Real;
+          Real ExpectedWS = 0.0_Real;
+          if (UStar > 0.0_Real) {
+             const Real U3 = UStar * UStar * UStar;
+             const Real Zeta =
+                 SigmaLoc * HOBL * B0 * VonKar / Kokkos::max(U3, 1.0e-20_Real);
+             ExpectedWM = VonKar * UStar *
+                          Kokkos::max(KPP::kppPhiInvMomentum(Zeta), 0.0_Real);
+             ExpectedWS = VonKar * UStar *
+                          Kokkos::max(KPP::kppPhiInvScalar(Zeta), 0.0_Real);
+          } else if (B0 < 0.0_Real) {
+             const Real WM3 = -KPP::CMoM * SigmaLoc * HOBL * VonKar * B0;
+             const Real WS3 = -KPP::CMoS * SigmaLoc * HOBL * VonKar * B0;
+             ExpectedWM     = VonKar * Kokkos::pow(WM3, 1.0_Real / 3.0_Real);
+             ExpectedWS     = VonKar * Kokkos::pow(WS3, 1.0_Real / 3.0_Real);
+          }
+
+          if (!isApprox(WM, ExpectedWM, RTol, ATol) ||
+              !isApprox(WS, ExpectedWS, RTol, ATol))
+             ++ErrorCount;
+
+          // Scales must never go negative, and scalars mix at least as
+          // efficiently as momentum under unstable forcing.
+          if (WM < 0.0_Real || WS < 0.0_Real)
+             ++ErrorCount;
+          if (B0 < 0.0_Real && WS < WM)
+             ++ErrorCount;
+
+          // Calm and stable is fully quiescent.
+          if (ITest == 4 && (WM != 0.0_Real || WS != 0.0_Real))
+             ++ErrorCount;
+       },
+       NumErrors);
+
+   checkResult("turbulent scales", NumErrors);
+}
+
+void testMatchShape() {
+   int NumErrors = 0;
+
+   parallelReduce(
+       "KPPMixTest-MatchShape", {4},
+       KOKKOS_LAMBDA(int ITest, int &ErrorCount) {
+          const Real Interior = 1.0e-4_Real;
+          const Real HOBL     = ITest == 1 ? 0.0_Real : 50.0_Real;
+          const Real W        = ITest == 2 ? 0.0_Real : 0.01_Real;
+
+          const Real Shape = KPP::kppMatchShape(Interior, HOBL, W);
+
+          // Degenerate HOBL or velocity scale switches matching off.
+          if (ITest == 1 || ITest == 2) {
+             if (Shape != 0.0_Real)
+                ++ErrorCount;
+             return;
+          }
+
+          if (!isApprox(Shape, Interior / (HOBL * W), RTol, ATol))
+             ++ErrorCount;
+
+          // The matched shape must reproduce the interior coefficient when
+          // multiplied back by h*w, which is the whole point of matching.
+          if (!isApprox(HOBL * W * Shape, Interior, RTol, ATol))
+             ++ErrorCount;
+       },
+       NumErrors);
+
+   checkResult("match shape", NumErrors);
+}
+
+void testNonLocalCs() {
+   int NumErrors = 0;
+
+   parallelReduce(
+       "KPPMixTest-NonLocalCs", {1},
+       KOKKOS_LAMBDA(int ITest, int &ErrorCount) {
+          const Real Cs = KPP::kppNonLocalCs(VonKar, KPP::SurfaceLayerExtent);
+          const Real Expected =
+              10.0_Real * VonKar *
+              Kokkos::pow(KPP::CMoS * VonKar * KPP::SurfaceLayerExtent,
+                          1.0_Real / 3.0_Real);
+          if (!isApprox(Cs, Expected, RTol, ATol))
+             ++ErrorCount;
+
+          // Large et al. (1994) quote C_s ~ 6.33 for the default constants.
+          if (Kokkos::abs(Cs - 6.33_Real) > 0.05_Real)
+             ++ErrorCount;
+       },
+       NumErrors);
+
+   checkResult("non-local flux constant", NumErrors);
+}
+
+void testClampOBLDepth() {
+   int NumErrors = 0;
+
+   parallelReduce(
+       "KPPMixTest-ClampOBLDepth", {5},
+       KOKKOS_LAMBDA(int ITest, int &ErrorCount) {
+          const Real MinDepth = 2.0_Real;
+          const Real MaxDepth = 95.0_Real;
+          const Real Input    = ITest == 0   ? 40.0_Real
+                                : ITest == 1 ? 1.0_Real
+                                : ITest == 2 ? 200.0_Real
+                                : ITest == 3 ? 1.0_Real
+                                             : 1.0_Real;
+          const bool ApplyIce = (ITest == 3);
+
+          const Real Actual = KPP::kppClampOBLDepth(
+              Input, MinDepth, MaxDepth, ApplyIce, KPP::MinOBLUnderIce);
+
+          Real Expected = Kokkos::fmax(Input, MinDepth);
+          if (ApplyIce)
+             Expected = Kokkos::fmax(Expected, KPP::MinOBLUnderIce);
+          Expected = Kokkos::fmin(Expected, MaxDepth);
+
+          if (!isApprox(Actual, Expected, RTol, ATol))
+             ++ErrorCount;
+
+          // Result must always land inside the supported range.
+          if (Actual < MinDepth || Actual > MaxDepth)
+             ++ErrorCount;
+       },
+       NumErrors);
+
+   checkResult("OBL depth clamping", NumErrors);
+}
+
+void testOBLIndex() {
+   int NumErrors = 0;
+
+   // Single column of five 10 m layers, interfaces at 0,-10,...,-50 m.
+   constexpr I4 NLayers = 5;
+   Array2DReal ZInterface("KPPMixTest-OBLIndexZ", 1, NLayers + 1);
+   parallelFor(
+       "KPPMixTest-OBLIndexInit", {NLayers + 1},
+       KOKKOS_LAMBDA(I4 K) { ZInterface(0, K) = -10.0_Real * K; });
+
+   parallelReduce(
+       "KPPMixTest-OBLIndex", {5},
+       KOKKOS_LAMBDA(int ITest, int &ErrorCount) {
+          // Cases 0-3 bracket a layer; case 4 is deeper than the column.
+          const Real Depth  = ITest == 0   ? 5.0_Real
+                              : ITest == 1 ? 25.0_Real
+                              : ITest == 2 ? 20.0_Real
+                              : ITest == 3 ? 0.0_Real
+                                           : 100.0_Real;
+          const I4 Expected = ITest == 0   ? 0
+                              : ITest == 1 ? 2
+                              : ITest == 2 ? 1
+                              : ITest == 3 ? 0
+                                           : NLayers - 1;
+
+          const I4 Actual =
+              KPP::kppOBLIndex(ZInterface, 0, 0, NLayers - 1, 0.0_Real, Depth);
+          if (Actual != Expected)
+             ++ErrorCount;
+       },
+       NumErrors);
+
+   checkResult("OBL index lookup", NumErrors);
+}
+
 // Builds a uniform column whose free surface sits at Ssh. All KPP results must
 // be invariant to Ssh since depths are measured below the free surface.
 void setCoefficientTestGeometry(Real Ssh = 0.0_Real) {
@@ -587,8 +770,10 @@ void testMatchBothInteriorCoefficients() {
    const Real ExpectedViscMid   = TestOBLDepth * TurbVel * SimpleShape +
                                   SmoothAtSigma * ExpectedInteriorVisc;
    const Real MatchDiffShape = ExpectedInteriorDiff / (TestOBLDepth * TurbVel);
+   // The non-local shape is independent of MatchTechnique, so gamma still
+   // follows the unmatched scalar shape and vanishes at the OBL base.
    const Real ExpectedNonLocal =
-       nonLocalNormalization() * KPP::kppShapeMatched(Sigma, MatchDiffShape);
+       nonLocalNormalization() * KPP::kppShapeScalar(Sigma);
 
    int NumErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
@@ -1638,10 +1823,10 @@ void testBoundaryLayerLangmuir() {
    KPPInstance->UseLangmuirCirculation = false;
    KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
                                 UStar, B0, BVF, IceFraction, Wind);
-   Array1DReal DisabledBLD("KPPMixTest-LangmuirDisabledBLD", Mesh->NCellsAll);
-   Array2DReal DisabledRi("KPPMixTest-LangmuirDisabledRi", Mesh->NCellsAll,
+   Array1DReal DisabledBLD("KPPMixTest-LangmuirDisabledBLD", Mesh->NCellsSize);
+   Array2DReal DisabledRi("KPPMixTest-LangmuirDisabledRi", Mesh->NCellsSize,
                           NVertLayers + 1);
-   Array2DReal DisabledVt2("KPPMixTest-LangmuirDisabledVt2", Mesh->NCellsAll,
+   Array2DReal DisabledVt2("KPPMixTest-LangmuirDisabledVt2", Mesh->NCellsSize,
                            NVertLayers + 1);
    deepCopy(DisabledBLD, KPPInstance->BoundaryLayerDepth);
    deepCopy(DisabledRi, KPPInstance->BulkRichardsonNumber);
@@ -1654,10 +1839,10 @@ void testBoundaryLayerLangmuir() {
    KPPInstance->IceFractionThresholdForLangmuir = 0.05_Real;
    KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
                                 UStar, B0, BVF, IceFraction, Wind);
-   Array1DReal EnabledBLD("KPPMixTest-LangmuirEnabledBLD", Mesh->NCellsAll);
-   Array2DReal EnabledRi("KPPMixTest-LangmuirEnabledRi", Mesh->NCellsAll,
+   Array1DReal EnabledBLD("KPPMixTest-LangmuirEnabledBLD", Mesh->NCellsSize);
+   Array2DReal EnabledRi("KPPMixTest-LangmuirEnabledRi", Mesh->NCellsSize,
                          NVertLayers + 1);
-   Array2DReal EnabledVt2("KPPMixTest-LangmuirEnabledVt2", Mesh->NCellsAll,
+   Array2DReal EnabledVt2("KPPMixTest-LangmuirEnabledVt2", Mesh->NCellsSize,
                           NVertLayers + 1);
    deepCopy(EnabledBLD, KPPInstance->BoundaryLayerDepth);
    deepCopy(EnabledRi, KPPInstance->BulkRichardsonNumber);
@@ -1791,7 +1976,7 @@ void testBoundaryLayerSmoothing() {
    KPPInstance->UseBLDSmoothing        = false;
    KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
                                 UStar, B0, BVF, IceFraction, Wind);
-   Array1DReal UnsmoothedBLD("KPPMixTest-UnsmoothedBLD", Mesh->NCellsAll);
+   Array1DReal UnsmoothedBLD("KPPMixTest-UnsmoothedBLD", Mesh->NCellsSize);
    deepCopy(UnsmoothedBLD, KPPInstance->BoundaryLayerDepth);
    const auto UnsmoothedBLDH = createHostMirrorCopy(UnsmoothedBLD);
 
@@ -1865,7 +2050,7 @@ void testEnabledFullCall() {
    setCoefficientTestGeometry();
    VCoord->minMaxLayerEdge(Halo::getDefault());
 
-   Array2DReal Density("KPPMixTest-FullCallDensity", Mesh->NCellsAll,
+   Array2DReal Density("KPPMixTest-FullCallDensity", Mesh->NCellsSize,
                        NVertLayers);
    Array2DReal NormalVelocity("KPPMixTest-FullCallNormalVelocity",
                               Mesh->NEdgesSize, NVertLayers);
@@ -1898,17 +2083,17 @@ void testEnabledFullCall() {
                                 UStar, B0, BVF, IceFraction, Wind);
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
 
-   Array1DReal ExpectedBLD("KPPMixTest-ExpectedBLD", Mesh->NCellsAll);
-   Array1DI4 ExpectedBLDIndex("KPPMixTest-ExpectedBLDIndex", Mesh->NCellsAll);
-   Array2DReal ExpectedBulkRi("KPPMixTest-ExpectedBulkRi", Mesh->NCellsAll,
+   Array1DReal ExpectedBLD("KPPMixTest-ExpectedBLD", Mesh->NCellsSize);
+   Array1DI4 ExpectedBLDIndex("KPPMixTest-ExpectedBLDIndex", Mesh->NCellsSize);
+   Array2DReal ExpectedBulkRi("KPPMixTest-ExpectedBulkRi", Mesh->NCellsSize,
                               NVertLayers + 1);
-   Array2DReal ExpectedVertDiff("KPPMixTest-ExpectedVertDiff", Mesh->NCellsAll,
+   Array2DReal ExpectedVertDiff("KPPMixTest-ExpectedVertDiff", Mesh->NCellsSize,
                                 NVertLayers + 1);
-   Array2DReal ExpectedVertVisc("KPPMixTest-ExpectedVertVisc", Mesh->NCellsAll,
+   Array2DReal ExpectedVertVisc("KPPMixTest-ExpectedVertVisc", Mesh->NCellsSize,
                                 NVertLayers + 1);
-   Array2DReal ExpectedNonLocal("KPPMixTest-ExpectedNonLocal", Mesh->NCellsAll,
+   Array2DReal ExpectedNonLocal("KPPMixTest-ExpectedNonLocal", Mesh->NCellsSize,
                                 NVertLayers + 1);
-   Array2DReal ExpectedTurbVel("KPPMixTest-ExpectedTurbVel", Mesh->NCellsAll,
+   Array2DReal ExpectedTurbVel("KPPMixTest-ExpectedTurbVel", Mesh->NCellsSize,
                                NVertLayers + 1);
    deepCopy(ExpectedBLD, KPPInstance->BoundaryLayerDepth);
    deepCopy(ExpectedBLDIndex, KPPInstance->IndexBoundaryLayerDepth);
@@ -2041,6 +2226,11 @@ int main(int argc, char *argv[]) {
       testLangmuirFunctions();
       testOBLUtilities();
       testTurbulentVelocityScale();
+      testTurbScales();
+      testMatchShape();
+      testNonLocalCs();
+      testClampOBLDepth();
+      testOBLIndex();
    }
    if (TestGroup == "bld" || TestGroup == "all") {
       testBoundaryLayerDepth();

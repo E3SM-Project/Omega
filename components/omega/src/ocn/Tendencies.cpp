@@ -1264,10 +1264,11 @@ void Tendencies::computeKPPFields(const OceanState *State,
    }
 
    const I4 NCellsAll   = Mesh->NCellsAll;
+   const I4 NCellsSize  = Mesh->NCellsSize;
    const I4 NVertLayers = VCoord->NVertLayers;
 
-   Array2DReal ConservTemp("KPP-ConservTemp", NCellsAll, NVertLayers);
-   Array2DReal AbsSalinity("KPP-AbsSalinity", NCellsAll, NVertLayers);
+   Array2DReal ConservTemp("KPP-ConservTemp", NCellsSize, NVertLayers);
+   Array2DReal AbsSalinity("KPP-AbsSalinity", NCellsSize, NVertLayers);
    parallelFor(
        "KPP-ExtractTS", {NCellsAll, NVertLayers},
        KOKKOS_LAMBDA(I4 ICell, I4 K) {
@@ -1278,7 +1279,7 @@ void Tendencies::computeKPPFields(const OceanState *State,
    Array2DReal LayerThickCell = State->getPseudoThickness(ThickTimeLevel);
    Array2DReal NormalVelEdge  = State->getNormalVelocity(VelTimeLevel);
 
-   Array1DReal SurfacePressure("KPP-SurfacePressure", NCellsAll);
+   Array1DReal SurfacePressure("KPP-SurfacePressure", NCellsSize);
    deepCopy(SurfacePressure, 1.0e5_Real);
    const_cast<VertCoord *>(VCoord)->computePressure(LayerThickCell,
                                                     SurfacePressure);
@@ -1290,9 +1291,10 @@ void Tendencies::computeKPPFields(const OceanState *State,
                                       EqState->SpecVol);
 
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
-   Array2DReal PotentialDensity("KPP-PotentialDensity", NCellsAll, NVertLayers);
+   Array2DReal PotentialDensity("KPP-PotentialDensity", NCellsSize,
+                                NVertLayers);
    Array2DReal PotentialDensityPressure("KPP-PotentialDensityPressure",
-                                        NCellsAll, NVertLayers);
+                                        NCellsSize, NVertLayers);
    parallelFor(
        "KPP-PotentialDensityPressure", {NCellsAll, NVertLayers},
        KOKKOS_LAMBDA(I4 ICell, I4 K) {
@@ -1329,7 +1331,7 @@ void Tendencies::computeKPPFields(const OceanState *State,
           });
    }
 
-   Array1DReal IceFraction("KPP-IceFraction", NCellsAll);
+   Array1DReal IceFraction("KPP-IceFraction", NCellsSize);
 
    OMEGA_SCOPE(LocSurfaceFrictionVelocity,
                KPPInstance->SurfaceFrictionVelocity);
@@ -1338,8 +1340,6 @@ void Tendencies::computeKPPFields(const OceanState *State,
    const EosType LocEosChoice = EqState->EosChoice;
    const Real LocLinearDRhodT = EqState->getLinearDRhodT();
    const Real LocLinearDRhodS = EqState->getLinearDRhodS();
-   const Real HeatFluxToTracerFluxFactor =
-       1._Real / (RhoSw * (LocEosChoice == EosType::Teos10Eos ? Cp0Sw : CpSw));
 
    const auto *ForcingState = Forcing::getDefault();
    if (!ForcingState) {
@@ -1416,7 +1416,7 @@ void Tendencies::computeKPPFields(const OceanState *State,
               LocSnowFlux(ICell) + LocRainFlux(ICell) +
               LocSeaIceFreshWaterFlux(ICell) + LocIceRunoffFlux(ICell) +
               LocRiverRunoffFlux(ICell) + LocEvaporationFlux(ICell);
-          const Real temp_flux = heat_flux * HeatFluxToTracerFluxFactor;
+          const Real temp_flux = heat_flux * HFluxFac;
           const Real salt_flux = LocSeaIceSaltFlux(ICell) / RhoSw -
                                  freshwater_flux * surface_salinity / RhoSw;
           const Real spec_vol =

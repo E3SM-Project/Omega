@@ -234,7 +234,7 @@ void VertMix::computeVertMix(const Array2DReal &NormalVelocity,
    const Real LocConvDiff       = LocComputeVertMixConv.ConvDiff;
    const Real LocConvTriggerBVF = LocComputeVertMixConv.ConvTriggerBVF;
    Array1DI4 KPPBoundaryLayerIndex("VertMix-KPPBoundaryLayerIndex",
-                                   Mesh->NCellsAll);
+                                   Mesh->NCellsSize);
    deepCopy(KPPBoundaryLayerIndex, -1);
    KPPMix *KPPInstance      = KPPMix::getInstance();
    const bool LocKPPEnabled = (KPPInstance && KPPInstance->Enabled);

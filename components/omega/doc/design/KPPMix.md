@@ -110,14 +110,20 @@ instead additive.  In the latter case, the shape function greatly simplifies to 
 
 For either shape function, enhanced diffusivity can be included near the boundary layer base.  This can smooth boundary layer deepening in time.
 
-The non-local tracer flux uses the same scalar shape function, scaled by the constant
+The non-local tracer flux uses the scalar shape function, scaled by the constant
 $C_s$ from Eq. (20) of Large et al. (1994) rather than by $h\, w_s$:
 
 $$
 \gamma_s(\sigma) = C_s\, S_1(\sigma).
 $$
 
-Because a single shape function ($S_1$) drives both the diffusivity and nonlocal flux, $K_s$ and $\gamma_s$ cannot become inconsistent with each other when the matching option changes.
+Here $S_1$ is always the unmatched scalar shape $\sigma(1-\sigma)^2$, regardless
+of the `MatchTechnique` setting. Matching is a property of the diffusivity
+profile only: the matched shape is non-zero at $\sigma = -1$ by construction, so
+reusing it for $\gamma_s$ would leave a finite non-local flux at the boundary
+layer base that drops discontinuously to zero immediately below it. CVMix draws
+the same distinction, exposing the non-local shape as a separate choice from the
+matching option.
 
 
 
