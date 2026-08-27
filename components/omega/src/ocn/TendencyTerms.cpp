@@ -86,6 +86,21 @@ SfcTracerForcingOnCell::SfcTracerForcingOnCell(const HorzMesh *Mesh,
       MinLayerCell(VCoord->MinLayerCell), MaxLayerCell(VCoord->MaxLayerCell),
       EosChoice(EosInst->EosChoice) {}
 
+PotentialDensityOnCell::PotentialDensityOnCell(const HorzMesh *Mesh,
+                                               const VertCoord *VCoord)
+    : MinLayerCell(VCoord->MinLayerCell) {}
+
+KPPSurfaceForcingOnCell::KPPSurfaceForcingOnCell(const HorzMesh *Mesh,
+                                                 const VertCoord *VCoord,
+                                                 I4 TempTracerIndex,
+                                                 I4 SaltTracerIndex,
+                                                 const Eos *EosInst)
+    : TempIndex(TempTracerIndex), SaltIndex(SaltTracerIndex),
+      LinearDRhodT(EosInst->getLinearDRhodT()),
+      LinearDRhodS(EosInst->getLinearDRhodS()),
+      MinLayerCell(VCoord->MinLayerCell), EosChoice(EosInst->EosChoice),
+      Teos10Coeff(VCoord) {}
+
 TracerHorzAdvOnCell::TracerHorzAdvOnCell(const HorzMesh *Mesh,
                                          const VertCoord *VCoord)
     : HorzontalMesh(Mesh), VerticalCoord(VCoord),

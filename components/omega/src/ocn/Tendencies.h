@@ -80,6 +80,8 @@ class Tendencies {
    TracerDiffOnCell TracerDiffusion;
    TracerHyperDiffOnCell TracerHyperDiff;
    SurfaceTracerRestoringOnCell SurfaceTracerRestoring;
+   PotentialDensityOnCell PotentialDensityCalc;
+   KPPSurfaceForcingOnCell KPPSurfaceForcing;
 
    // Surface tracer flux used for KPP non-local tracer tendency [NTracers,
    // NCellsAll]
@@ -89,6 +91,15 @@ class Tendencies {
    // These are raw contributions added to TracerTend before tracer update.
    Array2DReal TempNonLocalTendDiag;
    Array1DReal TempNonLocalColumnSumDiag;
+
+   // Scratch used by computeKPPFields, allocated once rather than per step
+   Array2DReal KPPConservTemp;
+   Array2DReal KPPAbsSalinity;
+   Array1DReal KPPSurfacePressure;
+   Array2DReal KPPPotentialDensity;
+   Array2DReal KPPRefPressure;
+   Array2DReal KPPTangentialVelEdge;
+   Array1DReal KPPIceFraction;
 
    // Enables explicit non-local tracer tendency from KPP
    bool TracerNonLocalFluxEnabled = false;
