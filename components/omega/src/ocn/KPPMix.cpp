@@ -942,8 +942,6 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
              LocIndexBoundaryLayerDepth(ICell) = KFinal;
           });
    }
-
-   LOG_INFO("KPPMix::computeOBLDepth: OBL depth computed");
 }
 
 /// Stage 2: Compute KPP mixing contribution or matched coefficients
@@ -1216,9 +1214,6 @@ void KPPMix::computeMixingCoefficients(
              }
           }
        });
-
-   LOG_INFO("KPPMix::computeMixingCoefficients: Phase 2 mixing coefficients "
-            "computed");
 }
 
 /// Register fields with I/O system
