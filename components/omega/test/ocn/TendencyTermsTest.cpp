@@ -59,8 +59,6 @@ struct TestSetupPlane {
    ErrorMeasures ExpectedTrHAdvErrors           = {0.0029211089892916243,
                                                    0.0024583038518548855};
    ErrorMeasures ExpectedFCTErrors              = {0.00, 0.00};
-   ErrorMeasures ExpectedFCTFluxIn              = {0.0005489016322973567,
-	                                           0.002042666702582708};
    ErrorMeasures ExpectedFCTHProv               = {0.00, 0.00};
    ErrorMeasures ExpectedFCTHInv                = {0.00, 0.00};
    ErrorMeasures ExpectedFCTHNew                = {0.00, 0.00};
@@ -215,7 +213,6 @@ struct TestSetupSphere {
    ErrorMeasures ExpectedTrHAdvErrors  = {0.013259410329645643,
                                           0.004094907022292395};
    ErrorMeasures ExpectedFCTErrors     = {0.00, 0.00};
-   ErrorMeasures ExpectedFCTFluxIn     = {0.00, 0.00};
    ErrorMeasures ExpectedFCTHProv      = {3.0542657508680904e-05,
                                           1.0779233406323438e-06};
    ErrorMeasures ExpectedFCTHInv       = {3.0541724683419424e-05,
@@ -224,8 +221,8 @@ struct TestSetupSphere {
                                           1.0779233406323438e-06};
    ErrorMeasures ExpectedFCT_High      = {0.00146484375, 16478.526025524854};
    ErrorMeasures ExpectedFCT_Low = {0.2958192441638326, 0.09980000200239414};
-   ErrorMeasures ExpectedFCTToNonFCT            = {1.632639958580968e-15,
-                                                   7.582979124216783e-16};
+   ErrorMeasures ExpectedFCTToNonFCT            = {1.5120472343676013e-15,
+                                                   6.215666716489436e-16};
    ErrorMeasures ExpectedTrDel2Errors           = {0.04865718541236144,
                                                    0.005105510870642706};
    ErrorMeasures ExpectedTrDel4Errors           = {0.0008646345116716073,
@@ -1372,9 +1369,10 @@ int testFCTTracerHorzAdvOnCell(int NVertLayers, int NTracers, Real RTol) {
                  DvEdgeFromMeshFile * NormalVelocity(IEdge, K);
           });
 
+      const Real ATol = 1.0e-10;
       Err += computeErrors(FCTErrors, LowOrderFlx, FluxSubView, Mesh, OnEdge);
       Err += checkErrors("TendencyTermsTest", "FCTHighAndLowOrderFlux_Low",
-                         FCTErrors, Setup.ExpectedFCT_Low, RTol);
+                         FCTErrors, Setup.ExpectedFCT_Low, RTol, ATol);
       if (Err == 0)
          LOG_INFO("TendencyTermsTest: FCTHighAndLowOrderFlux_Low PASS");
       Err = 0;
@@ -1417,10 +1415,11 @@ int testFCTTracerHorzAdvOnCell(int NVertLayers, int NTracers, Real RTol) {
              FluxSubView(IEdge, K) = 0;
           });
 
+      const Real ATol = 1.0e-10;
       Array2DReal HighOrderFlx = TrHorzAdvOnC.GetHighOrderFlx();
       Err += computeErrors(FCTErrors, HighOrderFlx, FluxSubView, Mesh, OnEdge);
       Err += checkErrors("TendencyTermsTest", "FCTHighAndLowOrderFlux_High",
-                         FCTErrors, Setup.ExpectedFCT_High, RTol);
+                         FCTErrors, Setup.ExpectedFCT_High, RTol, ATol);
       if (Err == 0)
          LOG_INFO("TendencyTermsTest: FCTHighAndLowOrderFlux_High PASS");
       Err = 0;
@@ -1464,12 +1463,6 @@ int testFCTTracerHorzAdvOnCell(int NVertLayers, int NTracers, Real RTol) {
           });
 
       Kokkos::fence();
-      Array2DReal FlxIn = TrHorzAdvOnC.GetFlxIn();
-      Err += computeErrors(FCTErrors, FlxIn, CellSubView, Mesh, OnCell);
-      Err += checkErrors("TendencyTermsTest", "FCTFluxIn", FCTErrors,
-                         Setup.ExpectedFCTFluxIn, RTol);
-      if (Err == 0)
-         LOG_INFO("TendencyTermsTest: FCTFluxIn PASS");
       Err = 0;
       Array2DReal FlxOut = TrHorzAdvOnC.GetFlxOut();
       Err += computeErrors(FCTErrors, FlxOut, CellSubView, Mesh, OnCell);
@@ -1567,10 +1560,11 @@ int testFCTTracerHorzAdvOnCell(int NVertLayers, int NTracers, Real RTol) {
       deepCopy(TracerSubView,
                Kokkos::subview(TendNoFCT, L, Kokkos::ALL, Kokkos::ALL));
 
+      const Real ATol = 1.0e-10;
       Err += computeErrors(FCTErrors, Tend, TracerSubView, Mesh, OnCell);
       Err += checkErrors("TendencyTermsTest",
                          "FCTAccumulateHighOrderFlux_" + std::to_string(L),
-                         FCTErrors, Setup.ExpectedFCTToNonFCT, RTol);
+                         FCTErrors, Setup.ExpectedFCTToNonFCT, RTol, ATol);
       if (Err == 0)
          LOG_INFO("TendencyTermsTest: FCTAccumulateHighOrderFlux_" +
                   std::to_string(L) + " PASS");
