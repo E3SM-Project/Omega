@@ -158,8 +158,8 @@ void TracerHorzAdvOnCell::init() {
        {NEdgesAll}, KOKKOS_LAMBDA(int IEdge) { masksAndCoefficients(IEdge); });
    if (FCT) {
       const int NVertsFCT = NVertLayers + 1;
-      HProvInv            = HNewInv =
-          Array2DReal("FCTProvesionalNewInverse", NEdgesSize, NVertsFCT);
+      HProvInv  = Array2DReal("FCTProvesionalLayerThickness", NCellsSize, NVertsFCT);
+      HNewInv   = Array2DReal("FCTProvesionalNewInverse", NCellsSize, NVertsFCT);
       HProv     = Array2DReal("FCTProvesionalThickness", NCellsSize, NVertsFCT);
       TracerCur = Array2DReal("TracerCur", NCellsSize, NVertsFCT),
       TracerMax = Array2DReal("FCTTracerMax", NCellsSize, NVertsFCT);
