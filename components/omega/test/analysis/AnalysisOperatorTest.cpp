@@ -2120,6 +2120,254 @@ void testExtractRegionOpType(const std::string &TypeName, const MachEnv *Env,
 }
 
 //------------------------------------------------------------------------------
+// Test HorzMeanOp: area-weighted per-layer horizontal mean of a 2D field.
+// Sub-test 1 (unmasked): verifies the weighted mean matches a host-computed
+// reference using AreaCell weights and CellMask, that cells with an exactly-
+// zero input value are excluded from both numerator and denominator (emulating
+// an upstream ExtractRegion that zeroes out-of-region cells), and that a
+// fully-zeroed level yields a guarded zero result (zero-denominator guard).
+// Sub-test 2 (masked): attaches a 1D regional mask to the input Field and
+// verifies that per-level means match a host reference computed with the same
+// mask — confirming that zero-valued cells inside the region are included and
+// non-zero cells outside the region are excluded.
+// Sub-test 3 (interface): supplies an interface-dimensioned input
+// (NVertLayersP1) and verifies the operator auto-detects the staggering and
+// uses the extended active range [MinLayer, MaxLayer+1].
+void testHorzMeanOp(const MachEnv *Env, const HorzMesh *Mesh,
+                    const VertCoord *VCoord) {
+
+   using Helper = TestHelper<Array2DR8>;
+
+   auto Dims                  = Helper::getDims(Mesh, VCoord);
+   std::string InputFieldName = "TestHorzMeanInput";
+   const I4 NVert             = VCoord->NVertLayers;
+
+   // Global cell IDs (1-based) so the input values and the excluded region
+   // block are identical physical cells regardless of MPI decomposition.
+   auto Decomp        = Decomp::getDefault();
+   auto CellIDH       = Decomp->CellIDH;
+   const I4 NCellsGlb = Mesh->NCellsGlobal;
+
+   // Build a known input keyed on global cell ID. Force one vertical level
+   // (ZeroLevel) to be exactly zero at every cell to exercise the
+   // zero-denominator guard, and zero out a globally-defined block of cells at
+   // another level (RegionLevel) to exercise presence-based exclusion. Both
+   // choices are decomposition-independent for MPI correctness.
+   const I4 ZeroLevel   = 0;
+   const I4 RegionLevel = (NVert > 1) ? 1 : 0;
+   const I4 BlockGID    = NCellsGlb / 2; // exclude global IDs >= BlockGID
+
+   Helper::createField(
+       InputFieldName, Dims,
+       [ZeroLevel, RegionLevel, BlockGID, CellIDH](I4 i, I4 k) {
+          I4 GID = CellIDH(i) - 1; // 0-based global id
+          if (k == ZeroLevel)
+             return 0.0; // whole level zero -> guarded result
+          if (k == RegionLevel && GID >= BlockGID)
+             return 0.0; // excluded block (emulates out-of-region zeroing)
+          return static_cast<double>((GID + 1) * (k + 1));
+       });
+
+   // -------------------------------------------------------------------------
+   // Sub-test 1: no regional mask attached — legacy Value != 0 behaviour
+   // -------------------------------------------------------------------------
+   auto Op = AnalysisOpFactory::createOp("HorzMean", {InputFieldName},
+                                         makeOpConfig());
+   Op->initialize(Env, Mesh, VCoord, makeOpConfig());
+   TimeInstant TestTime;
+   Op->compute(TestTime);
+
+   auto OutputNames = Op->getOutputFieldNames();
+   OMEGA_ASSERT(OutputNames.size() == 1, "HorzMeanOp should have 1 output");
+   auto ResultField = Field::get(OutputNames[0]);
+   auto ResultData  = ResultField->getDataArray<Array1DReal>();
+   auto ResultHost  = createHostMirrorCopy(ResultData);
+
+   // Host references from the same weights/mask the operator uses
+   auto InputField = Field::get(InputFieldName);
+   auto InputHost = createHostMirrorCopy(InputField->getDataArray<Array2DR8>());
+   auto AreaHost  = createHostMirrorCopy(Mesh->AreaCell);
+   auto MinLayerH = VCoord->MinLayerCellH;
+   auto MaxLayerH = VCoord->MaxLayerCellH;
+
+   bool Passed    = true;
+   const Real Tol = 1.0e-8;
+   for (I4 k = 0; k < NVert; ++k) {
+      // Accumulate this rank's owned contribution, then reduce globally with
+      // the same semantics as the operator so the reference is MPI-correct.
+      // The input is on mid-layers, so the active range is [MinLayer,
+      // MaxLayer].
+      Real LocalNum = 0.0, LocalDen = 0.0;
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+         const bool Active = (k >= MinLayerH(i) && k <= MaxLayerH(i));
+         Real Value        = InputHost(i, k);
+         if (Active && Value != 0.0) {
+            LocalNum += AreaHost(i) * Value;
+            LocalDen += AreaHost(i);
+         }
+      }
+      Real GlobalNum = globalSum(LocalNum, Env->getComm());
+      Real GlobalDen = globalSum(LocalDen, Env->getComm());
+
+      Real Expected = (GlobalDen != 0.0) ? (GlobalNum / GlobalDen) : 0.0;
+      Real Computed = ResultHost(k);
+      Real Err      = std::abs(Computed - Expected);
+      if (Err > Tol * (1.0 + std::abs(Expected))) {
+         Passed = false;
+         LOG_ERROR("  HorzMean (unmasked) mismatch at level {}: "
+                   "Expected {}, Got {}",
+                   k, Expected, Computed);
+         break;
+      }
+   }
+
+   // Explicitly confirm the fully-zeroed level yielded the guarded zero.
+   if (Passed && std::abs(ResultHost(ZeroLevel)) > Tol) {
+      Passed = false;
+      LOG_ERROR("  HorzMean zero-denominator guard failed at level {}: Got {}",
+                ZeroLevel, ResultHost(ZeroLevel));
+   }
+
+   reportTest("HorzMeanOp", Passed);
+
+   Field::destroy(OutputNames[0]);
+
+   // -------------------------------------------------------------------------
+   // Sub-test 2: 1D regional mask attached to input Field.
+   //
+   // Use a mask that selects global IDs [0, BlockGID) and excludes the rest —
+   // the same geographic split used for RegionLevel above, but now expressed
+   // as an explicit 1D mask rather than zeroed values. With the mask in place:
+   //   - zero-valued cells INSIDE the region are INCLUDED in the mean,
+   //   - non-zero cells OUTSIDE the region are EXCLUDED from the mean.
+   // This is the opposite of the legacy Value != 0 path, confirming the mask
+   // takes full control when attached.
+   // -------------------------------------------------------------------------
+   Array1DI4 RegMaskData("HorzMeanTestRegMask", Mesh->NCellsSize);
+   auto RegMaskHost = Kokkos::create_mirror_view(RegMaskData);
+   for (I4 i = 0; i < Mesh->NCellsSize; ++i) {
+      I4 GID         = CellIDH(i) - 1; // 0-based global id
+      RegMaskHost(i) = (GID < BlockGID) ? 1 : 0;
+   }
+   Kokkos::deep_copy(RegMaskData, RegMaskHost);
+   InputField->setRegionalMask(RegMaskData);
+
+   // Re-create the operator — initialize() must detect the newly attached mask.
+   auto Op2 = AnalysisOpFactory::createOp("HorzMean", {InputFieldName},
+                                          makeOpConfig());
+   Op2->initialize(Env, Mesh, VCoord, makeOpConfig());
+   Op2->compute(TestTime);
+
+   auto OutputNames2 = Op2->getOutputFieldNames();
+   OMEGA_ASSERT(OutputNames2.size() == 1, "HorzMeanOp should have 1 output");
+   auto ResultField2 = Field::get(OutputNames2[0]);
+   auto ResultHost2 =
+       createHostMirrorCopy(ResultField2->getDataArray<Array1DReal>());
+
+   bool Passed2 = true;
+   for (I4 k = 0; k < NVert; ++k) {
+      // Host reference: include cell i iff VertCoord mask is active AND the
+      // regional mask selects it. No Value != 0 requirement — genuinely zero
+      // in-region values participate in the mean.
+      Real LocalNum = 0.0, LocalDen = 0.0;
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+         const bool Active = (k >= MinLayerH(i) && k <= MaxLayerH(i));
+         if (!Active)
+            continue;
+         if (RegMaskHost(i) == 0)
+            continue;
+         LocalNum += AreaHost(i) * InputHost(i, k);
+         LocalDen += AreaHost(i);
+      }
+      Real GlobalNum = globalSum(LocalNum, Env->getComm());
+      Real GlobalDen = globalSum(LocalDen, Env->getComm());
+
+      Real Expected = (GlobalDen != 0.0) ? (GlobalNum / GlobalDen) : 0.0;
+      Real Computed = ResultHost2(k);
+      Real Err      = std::abs(Computed - Expected);
+      if (Err > Tol * (1.0 + std::abs(Expected))) {
+         Passed2 = false;
+         LOG_ERROR("  HorzMean (masked) mismatch at level {}: "
+                   "Expected {}, Got {}",
+                   k, Expected, Computed);
+         break;
+      }
+   }
+
+   reportTest("HorzMeanOp (masked)", Passed2);
+
+   Field::destroy(OutputNames2[0]);
+
+   // -------------------------------------------------------------------------
+   // Sub-test 3: interface-dimensioned input (NVertLayersP1).
+   //
+   // Build an input field on interfaces to confirm the operator auto-detects
+   // the staggering and uses the extended active range [MinLayer, MaxLayer+1].
+   // No regional mask is attached, so the legacy Value != 0 presence applies.
+   // -------------------------------------------------------------------------
+   const I4 NVertP1               = VCoord->NVertLayersP1;
+   std::string InterfaceFieldName = "TestHorzMeanInterfaceInput";
+   auto InterfaceField            = Field::create(
+       InterfaceFieldName, "Interface input for HorzMean", "m", "",
+       -std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max(), 2,
+       {"NCells", "NVertLayersP1"});
+   Array2DR8 InterfaceData(InterfaceFieldName + "_data", Mesh->NCellsSize,
+                           NVertP1);
+   auto InterfaceDataH = Kokkos::create_mirror_view(InterfaceData);
+   for (I4 i = 0; i < Mesh->NCellsSize; ++i) {
+      I4 GID = CellIDH(i) - 1; // 0-based global id
+      for (I4 k = 0; k < NVertP1; ++k)
+         InterfaceDataH(i, k) = static_cast<double>((GID + 1) * (k + 1));
+   }
+   Kokkos::deep_copy(InterfaceData, InterfaceDataH);
+   InterfaceField->attachData<Array2DR8>(InterfaceData, false);
+
+   auto Op3 = AnalysisOpFactory::createOp("HorzMean", {InterfaceFieldName},
+                                          makeOpConfig());
+   Op3->initialize(Env, Mesh, VCoord, makeOpConfig());
+   Op3->compute(TestTime);
+
+   auto OutputNames3 = Op3->getOutputFieldNames();
+   OMEGA_ASSERT(OutputNames3.size() == 1, "HorzMeanOp should have 1 output");
+   auto ResultHost3 = createHostMirrorCopy(
+       Field::get(OutputNames3[0])->getDataArray<Array1DReal>());
+
+   bool Passed3 = true;
+   for (I4 k = 0; k < NVertP1; ++k) {
+      // Interface input: active range is [MinLayer, MaxLayer+1].
+      Real LocalNum = 0.0, LocalDen = 0.0;
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+         const bool Active = (k >= MinLayerH(i) && k <= MaxLayerH(i) + 1);
+         Real Value        = InterfaceDataH(i, k);
+         if (Active && Value != 0.0) {
+            LocalNum += AreaHost(i) * Value;
+            LocalDen += AreaHost(i);
+         }
+      }
+      Real GlobalNum = globalSum(LocalNum, Env->getComm());
+      Real GlobalDen = globalSum(LocalDen, Env->getComm());
+
+      Real Expected = (GlobalDen != 0.0) ? (GlobalNum / GlobalDen) : 0.0;
+      Real Computed = ResultHost3(k);
+      Real Err      = std::abs(Computed - Expected);
+      if (Err > Tol * (1.0 + std::abs(Expected))) {
+         Passed3 = false;
+         LOG_ERROR("  HorzMean (interface) mismatch at level {}: "
+                   "Expected {}, Got {}",
+                   k, Expected, Computed);
+         break;
+      }
+   }
+
+   reportTest("HorzMeanOp (interface)", Passed3);
+
+   Field::destroy(InterfaceFieldName);
+   Field::destroy(OutputNames3[0]);
+
+   Field::destroy(InputFieldName);
+}
+
+//------------------------------------------------------------------------------
 // Test ExtractRegionOp with all supported array types
 void testExtractRegionOp(const MachEnv *Env, const HorzMesh *Mesh,
                          const VertCoord *VCoord) {
@@ -2425,6 +2673,8 @@ int main(int argc, char *argv[]) {
       testPseudoToGeometricOp(DefEnv, Mesh, VCoord);
 
       testExtractRegionOp(DefEnv, Mesh, VCoord);
+
+      testHorzMeanOp(DefEnv, Mesh, VCoord);
 
       testTransectAccumulatorOp(DefEnv, Mesh, VCoord);
 
