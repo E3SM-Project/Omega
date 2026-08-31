@@ -37,6 +37,7 @@ void Analysis::registerAllBaseAnalysisOperators() {
        "BinaryMultiply");
    AnalysisOpFactory::registerAllArrayVariants<ExtractRegionOp>(
        "ExtractRegion");
+   AnalysisOpFactory::register2DRealVariants<HorzMeanOp>("HorzMean");
    AnalysisOpFactory::registerAllArrayVariants<PrefixSumOp>("PrefixSum");
    AnalysisOpFactory::registerAllArrayVariants<PseudoToGeometricOp>(
        "PseudoToGeometric");
