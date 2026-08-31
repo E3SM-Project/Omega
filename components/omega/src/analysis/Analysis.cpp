@@ -225,13 +225,13 @@ void Analysis::parseChainAndBuildOps(const std::string &OpChainStr,
       if (!Field::exists(CurChainStr)) {
 
          // Spatial operators (SpatialMean, SpatialMax, etc.)
-         if (ChainNode.find("Spatial") != std::string::npos) {
+         if (ChainNode.substr(0, 7) == "Spatial") {
             registerAnalysisOp(ChainNode, {Upstream}, OpConfig);
             continue;
          }
 
          // Temporal operators (TimeMean, etc.) with period embedded in name
-         if (ChainNode.find("Time") != std::string::npos) {
+         if (ChainNode.substr(0, 4) == "Time") {
             // Extract operator type and period string (e.g., "TimeMean1day")
             std::size_t Pos = ChainNode.find_first_of("0123456789");
             if (Pos == std::string::npos) {
@@ -245,6 +245,14 @@ void Analysis::parseChainAndBuildOps(const std::string &OpChainStr,
             Config TimeOpConfig = OpConfig;
             TimeOpConfig.add("Period", FreqStr);
             registerAnalysisOp(TimeOp, {Upstream}, TimeOpConfig);
+            continue;
+         }
+
+         // Horizontal operators
+         // Each takes a single upstream field and preserves the vertical
+         // dimension, producing a 1D output named Upstream + "_<HorzOpName>".
+         if (ChainNode.substr(0, 4) == "Horz") {
+            registerAnalysisOp(ChainNode, {Upstream}, OpConfig);
             continue;
          }
 
