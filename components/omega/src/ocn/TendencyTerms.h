@@ -651,10 +651,9 @@ class KPPSurfaceForcingOnCell {
       const Real SaTop  = AbsSalinity(ICell, KTop);
       const Real CtTop  = ConservTemp(ICell, KTop);
       const Real PTopDb = PressureMid(ICell, KTop) * Pa2Db;
-      const Real CtFrz =
-          Eos::calcCtFreezing(EosChoice, SaTop, PTopDb, 0.0_Real);
 
-      // Mirrors the enthalpy treatment in SfcTracerForcingOnCell
+      // KPP needs the direct surface heat flux, not the full hT tendency, so
+      // the mass-flux enthalpy carried by SfcTracerForcingOnCell is excluded
       const Real HeatFlux = sfcDirectHeatFlux(
           ICell, LatentHeatFlux, SensibleHeatFlux, LongWaveHeatFluxUp,
           LongWaveHeatFluxDown, SeaIceHeatFlux, ShortWaveHeatFlux);
@@ -664,7 +663,7 @@ class KPPSurfaceForcingOnCell {
 
       const Real TempFlux = HeatFlux * HFluxFac;
       const Real SaltFlux =
-          SeaIceSaltFlux(ICell) / RhoSw - FreshWaterFlux * SaTop / RhoSw;
+          SeaIceSaltFlux(ICell) * SFluxFac - FreshWaterFlux * SaTop / RhoSw;
 
       const Real SpVol  = Kokkos::max(1.0e-12_Real, SpecVol(ICell, KTop));
       const Real RhoTop = 1.0_Real / SpVol;

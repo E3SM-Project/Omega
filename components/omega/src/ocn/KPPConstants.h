@@ -57,6 +57,10 @@ constexpr Real MinUStar = 1.0e-4;
 // OBL Depth Computation Parameters
 // ==========================================================================
 
+/// Critical bulk Richardson number defining the OBL base
+/// REFERENCES: Large et al. (1994) Eq. (21)
+constexpr Real CriticalRi = 0.25;
+
 /// Minimum OBL depth under sea ice (m), applied above IceSuppressThresh
 constexpr Real MinOBLUnderIce = 5.0;
 
