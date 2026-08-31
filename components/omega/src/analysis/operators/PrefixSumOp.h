@@ -345,7 +345,8 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
                        Team, N0,
                        INNER_LAMBDA(int IRev, Real &Accum, bool IsFinal) {
                           const int I = N0 - 1 - IRev;
-                          if (IRev == 0 && LocBC.is_allocated())
+                          if (IRev == 0 && LocBC.is_allocated() &&
+                              J < LocBC.extent(0))
                              Accum += static_cast<Real>(LocBC(J));
                           Accum += static_cast<Real>(InputData(I, J));
                           if (IsFinal) {
@@ -362,7 +363,8 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
                    parallelScanInner(
                        Team, N0,
                        INNER_LAMBDA(int I, Real &Accum, bool IsFinal) {
-                          if (I == 0 && LocBC.is_allocated())
+                          if (I == 0 && LocBC.is_allocated() &&
+                              J < LocBC.extent(0))
                              Accum += static_cast<Real>(LocBC(J));
                           Accum += static_cast<Real>(InputData(I, J));
                           if (IsFinal) {
