@@ -134,6 +134,22 @@ class MOC : public AnalysisGroup {
    /// Created once and added to all MOC output streams.
    std::string BinBoundaryFieldName;
 
+   /// Names of the per-region area-weighted representative interface depth
+   /// coordinate fields (size NVertLayersP1). One entry per region; each is
+   /// added to the MOC output streams. Regional entries use the region's mask
+   /// via the upstream ExtractRegion.
+   std::vector<std::string> DepthFieldNames;
+
+   /// Builds the per-region depth coordinate chain (GeomZInterface averaged
+   /// horizontally, area-weighted, optionally masked to the region) and returns
+   /// the resulting output field name.
+   std::string buildDepthCoordChain(
+       const std::string &RegionName, ///< [in] region name (e.g., "Global")
+       const std::string
+           &RegionMaskName,      ///< [in] mask field name (empty = global)
+       Analysis *AnalysisManager ///< [in] analysis manager
+   );
+
 }; // end class MOC
 
 } // end namespace OMEGA

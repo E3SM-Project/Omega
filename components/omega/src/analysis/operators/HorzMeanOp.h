@@ -69,7 +69,6 @@ template <typename ArrayT> class HorzMeanOp : public AnalysisOperator {
       InputNames = UpstreamNames;
 
       // Read optional weight field name (default: AreaCell)
-      WeightFieldName;
       Err = Options.get("WeightField", WeightFieldName);
       if (Err.isFail()) {
          WeightFieldName = "AreaCell";

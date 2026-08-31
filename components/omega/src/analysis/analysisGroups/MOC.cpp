@@ -109,11 +109,32 @@ MOC::MOC(const std::string &GroupName, Config &AnalysisGroupOptions,
           buildMOCChain(RegionName, RegionMaskName, NumBins, MinLat, MaxLat,
                         BCFieldName, AnalysisManager);
       ChainStems.push_back(ChainStem);
+
+      // Build the per-region depth coordinate chain (area-weighted horizontal
+      // mean of GeomZInterface, masked to the region for non-Global regions).
+      std::string DepthFieldName =
+          buildDepthCoordChain(RegionName, RegionMaskName, AnalysisManager);
+      DepthFieldNames.push_back(DepthFieldName);
    }
 
    // Build temporal chains with MOC-specific operator configurations
    buildTemporalChains(ChainStems, AnalysisGroupOptions, AnalysisManager,
                        ChainConfigs);
+
+   // Register each per-region depth coordinate into OpChainInfos.
+   // The depth field is always output as an instantaneous output
+   for (const auto &DepthFieldName : DepthFieldNames) {
+      if (DepthFieldName.empty())
+         continue;
+      for (const auto &SnapshotPeriod : SnapshotPeriodList) {
+         OpChainInfos.push_back(
+             OpChainInfo{DepthFieldName, SnapshotPeriod, false});
+      }
+      for (const auto &ReductionPeriod : ReductionPeriodList) {
+         OpChainInfos.push_back(
+             OpChainInfo{DepthFieldName, ReductionPeriod, true});
+      }
+   }
 
    // Create IOStreams organized by output frequency and associate operators
    createAnalysisGroupStreams(GroupName, AnalysisGroupOptions, AnalysisManager);
@@ -129,6 +150,16 @@ MOC::MOC(const std::string &GroupName, Config &AnalysisGroupOptions,
       }
       for (const auto &SName : StreamNamesUsed) {
          IOStream::get(SName)->addField(BinBoundaryFieldName);
+      }
+
+      // Add each region's depth coordinate field to every output stream so the
+      // vertical (depth) axis values are available in the output file.
+      for (const auto &SName : StreamNamesUsed) {
+         for (const auto &DepthFieldName : DepthFieldNames) {
+            if (!DepthFieldName.empty()) {
+               IOStream::get(SName)->addField(DepthFieldName);
+            }
+         }
       }
    }
 
@@ -275,14 +306,16 @@ std::string MOC::buildMOCChain(const std::string &RegionName,
                         BinBoundDimNames              // Dimension names
           );
 
-      // Allocate and fill the boundary values
+      // Allocate and attach the boundary array
       Array1DReal BinBoundData(BinBoundaryFieldName + "_data", NBounds);
+      BinBoundField->attachData<Array1DReal>(BinBoundData);
+
+      // Compute and populate the real bin boundary values
       auto BinBoundHost = Kokkos::create_mirror_view(BinBoundData);
       for (I4 I = 0; I <= NumBins; ++I) {
          BinBoundHost(I) = MinLat + I * BinWidthDeg;
       }
       Kokkos::deep_copy(BinBoundData, BinBoundHost);
-      BinBoundField->attachData<Array1DReal>(BinBoundData);
 
       BinningBuilt = true;
    }
@@ -350,6 +383,65 @@ std::string MOC::buildTransectBCChain(const std::string &TransectName,
    return BCAlias;
 
 } // end buildTransectBCChain
+
+//------------------------------------------------------------------------------
+// Builds the per-region depth coordinate chain. Computes an area-weighted
+// horizontal mean of the geometric interface height (GeomZInterface) to produce
+// a representative interface depth for the region. For non-Global regions an
+// ExtractRegion step masks GeomZInterface to the region first, so the HorzMean
+// denominator (and hence the reported depth) reflects only cells in the region.
+//
+// The chain strings are:
+//   Global:   GeomZInterface_HorzMean
+//   Regional: GeomZInterface_<RegionMaskName>_HorzMean
+//
+// Returns the deterministic output field name so it can be added to the MOC
+// output streams as the depth axis coordinate.
+std::string MOC::buildDepthCoordChain(const std::string &RegionName,
+                                      const std::string &RegionMaskName,
+                                      Analysis *AnalysisManager) {
+
+   // Base geometric interface height field from VertCoord
+   const std::string GeomZFieldName = "GeomZInterface";
+
+   // Build the chain string, inserting an ExtractRegion step for non-Global
+   // regions. The chain parser reconstructs the running prefix at each node,
+   // so the HorzMean output name is the full upstream prefix + "_HorzMean".
+   std::string ChainStr = GeomZFieldName;
+   if (!RegionMaskName.empty()) {
+      ChainStr += "_ExtractRegion(" + RegionMaskName + ")";
+   }
+   ChainStr += "_HorzMean";
+
+   // The HorzMean output field name is the upstream prefix + "_HorzMean".
+   // ExtractRegion names its output as Input_MaskName, so the resulting depth
+   // field name is deterministic and can be returned for stream attachment.
+   std::string DepthFieldName = GeomZFieldName;
+   if (!RegionMaskName.empty()) {
+      DepthFieldName += "_" + RegionMaskName;
+   }
+   DepthFieldName += "_HorzMean";
+
+   // Empty config
+   Config Cfg;
+
+   // Register the chain immediately (parseChainAndBuildOps handles duplicate
+   // intermediate fields shared with other chains).
+   AnalysisManager->parseChainAndBuildOps(ChainStr, Cfg);
+
+   // Attach descriptive depth metadata for output (once per unique field).
+   if (Field::exists(DepthFieldName)) {
+      auto DepthField = Field::get(DepthFieldName);
+      DepthField->updateMetadata(
+          "long_name",
+          std::string("Area-weighted representative interface depth (") +
+              RegionName + ")");
+      DepthField->updateMetadata("units", std::string("m"));
+   }
+
+   return DepthFieldName;
+
+} // end buildDepthCoordChain
 
 } // end namespace OMEGA
 
