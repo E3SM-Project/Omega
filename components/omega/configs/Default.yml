@@ -214,7 +214,7 @@ Omega:
                                 # Temporal reduction periods (time-averaged stats)
       SnapshotPeriod: [6Hours]
                                 # Instantaneous snapshot output intervals
-      Filename: global.stats.$Y
+      Filename: global.stats.$Y.nc
       Stream:
         FileFreq: 1
         FileFreqUnits: years
@@ -232,7 +232,7 @@ Omega:
                                 # NOTE: Transect masks not yet implemented
       ReductionPeriod: [1Month]       # Temporal reduction periods
       SnapshotPeriod: []  # Instantaneous output periods
-      Filename: moc.$Y
+      Filename: moc.$Y.nc
       Stream:
         FileFreq: 1
         FileFreqUnits: months
