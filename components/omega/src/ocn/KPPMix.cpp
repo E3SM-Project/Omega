@@ -378,7 +378,8 @@ void KPPMix::logDiagnostics(const Array2DReal &PotentialDensity,
       const Real DeltaB   = Gravity * DeltaRho / RhoSw;
       const Real WTurb =
           computeTurbVelocityScale(UStarEff, BuoyFluxEff, ZDepth);
-      const Real RiBulk = DeltaB * ZDepth / (WTurb * WTurb + 1.0e-12_Real);
+      const Real RiBulk =
+          DeltaB * ZDepth / (WTurb * WTurb + KPP::NumericalTolerance);
 
       Real Sigma = 0.0_Real;
       if (K <= KOBL) {
@@ -570,8 +571,8 @@ KPPOBLDepthSearch::KPPOBLDepthSearch(const HorzMesh *Mesh,
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop),
       ZInterface(VCoord->GeomZInterface), ZMid(VCoord->GeomZMid),
       SshCell(VCoord->SshCell), NEdgesOnCell(Mesh->NEdgesOnCell),
-      EdgesOnCell(Mesh->EdgesOnCell), AreaCell(Mesh->AreaCell),
-      DcEdge(Mesh->DcEdge), DvEdge(Mesh->DvEdge) {}
+      EdgesOnCell(Mesh->EdgesOnCell), CellsOnCell(Mesh->CellsOnCell),
+      AreaCell(Mesh->AreaCell), DcEdge(Mesh->DcEdge), DvEdge(Mesh->DvEdge) {}
 
 /// Constructor for KPPBLDSmooth
 KPPBLDSmooth::KPPBLDSmooth(const HorzMesh *Mesh, const VertCoord *VCoord)

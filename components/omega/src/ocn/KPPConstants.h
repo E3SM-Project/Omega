@@ -53,6 +53,23 @@ constexpr Real HuOn = 0.03;
 /// the Monin-Obukhov length finite in near-calm conditions.
 constexpr Real MinUStar = 1.0e-4;
 
+// ===========================================================================
+// Numerical Safeguards
+// ===========================================================================
+
+/// Generic tolerance for zero checks and degenerate geometric intervals
+constexpr Real NumericalTolerance = 1.0e-12_Real;
+
+/// Effectively nonzero denominator used where no physical floor is intended
+constexpr Real Tiny = 1.0e-20_Real;
+
+/// Minimum unresolved turbulent shear squared (m^2/s^2) in the bulk Ri
+/// denominator
+constexpr Real MinUnresolvedShearSq = 1.0e-10_Real;
+
+/// Minimum Stokes drift (m/s) used to keep the Langmuir number finite
+constexpr Real MinStokesDrift = 1.0e-8_Real;
+
 // ==========================================================================
 // OBL Depth Computation Parameters
 // ==========================================================================
@@ -240,7 +257,7 @@ Real estimateStokesDriftSL(Real Wind10m, Real HBL) {
 KOKKOS_INLINE_FUNCTION
 Real computeLangmuirNumber(Real UStar, Real UStokes) {
    UStar   = Kokkos::fmax(MinUStar, UStar);
-   UStokes = Kokkos::fmax(1.0e-8, UStokes);
+   UStokes = Kokkos::fmax(MinStokesDrift, UStokes);
 
    return Kokkos::sqrt(UStar / UStokes);
 }
@@ -361,7 +378,7 @@ void kppTurbScales(Real UStar, Real BuoyFlux, Real HOBL, Real SigmaLoc,
    if (UStar > 0.0_Real) {
       const Real U3 = UStar * UStar * UStar;
       const Real Zeta =
-          SigmaLoc * HOBL * BuoyFlux * Kappa / Kokkos::max(U3, 1.0e-20_Real);
+          SigmaLoc * HOBL * BuoyFlux * Kappa / Kokkos::max(U3, Tiny);
 
       // These return phi^{-1}; do not invert again.
       WMTurb = Kappa * UStar * Kokkos::max(kppPhiInvMomentum(Zeta), 0.0_Real);
@@ -393,7 +410,7 @@ Real kppMatchShape(Real InteriorCoeff, Real HOBL, Real W) {
       return 0.0_Real;
    }
 
-   return InteriorCoeff / Kokkos::max(HOBL * W, 1.0e-20_Real);
+   return InteriorCoeff / Kokkos::max(HOBL * W, Tiny);
 }
 
 /// @brief Non-local flux normalization constant
