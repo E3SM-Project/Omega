@@ -252,6 +252,12 @@ tendency terms are currently implemented:</p>
 <tr class="row-odd"><td><p>BottomDragOnEdge</p></td>
 <td><p>bottom drag, defined on edges</p></td>
 </tr>
+<tr class="row-even"><td><p>SfcThicknessForcingOnCell</p></td>
+<td><p>surface pseudo-thickness forcing from coupled freshwater and salt fluxes, defined on cells</p></td>
+</tr>
+<tr class="row-odd"><td><p>SfcTracerForcingOnCell</p></td>
+<td><p>surface tracer forcing from coupled heat and salt fluxes, with direct heat always and mass-flux enthalpy terms gated by thickness forcing, defined on cells</p></td>
+</tr>
 <tr class="row-even"><td><p>SurfaceTracerRestoringOnCell</p></td>
 <td><p>surface tracer restoring, defined on cells</p></td>
 </tr>
@@ -363,6 +369,14 @@ the currently available tendency terms:</p>
 <td><p>BottomDragTendency:BottomDragCoeff</p></td>
 <td><p>bottom drag coefficient</p></td>
 </tr>
+<tr class="row-even"><td><p>SfcThicknessForcingOnCell</p></td>
+<td><p>SfcThicknessForcingTendencyEnable</p></td>
+<td><p>enable/disable term</p></td>
+</tr>
+<tr class="row-odd"><td><p>SfcTracerForcingOnCell</p></td>
+<td><p>SfcTracerForcingTendencyEnable</p></td>
+<td><p>enable/disable term</p></td>
+</tr>
 <tr class="row-even"><td><p>SurfaceTracerRestoringOnCell</p></td>
 <td><p>SurfaceTracerRestoringEnable</p></td>
 <td><p>enable/disable term</p></td>
@@ -451,8 +465,9 @@ is about order 1.7 as shown in  <a class="reference internal" href="#tracer-high
 </section>
 <section id="see-also">
 <h2>See Also<a class="headerlink" href="#see-also" title="Permalink to this heading"></a></h2>
-<p>Additional information on forcing (currently wind forcing and surface tracer
-restoring) is detailed in <a class="reference internal" href="Forcing.html#omega-user-forcing"><span class="std std-ref">Forcing</span></a>.</p>
+<p>Additional information on forcing, including surface stress forcing,
+surface thickness and tracer flux forcing, and surface tracer restoring, is detailed in
+<a class="reference internal" href="Forcing.html#omega-user-forcing"><span class="std std-ref">Forcing</span></a>.</p>
 </section>
 </section>
 

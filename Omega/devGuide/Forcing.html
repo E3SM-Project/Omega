@@ -16,6 +16,8 @@
       <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
       <script src="../_static/doctools.js"></script>
       <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -135,13 +137,20 @@
 <li class="toctree-l3"><a class="reference internal" href="#surface-stress-forcing-config-coupling">Surface stress forcing config coupling</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#surface-thickness-and-tracer-flux-forcing-design">Surface thickness and tracer flux forcing design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#surface-thickness-and-tracer-flux-forcing-data-flow">Surface thickness and tracer flux forcing data flow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#surface-thickness-and-tracer-flux-forcing-key-classes-components">Surface thickness and tracer flux forcing key classes/components</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#surface-thickness-and-tracer-flux-forcing-config-coupling">Surface thickness and tracer flux forcing config coupling</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#notes">Notes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#surface-tracer-restoring-design">Surface tracer restoring design</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#surface-tracer-restoring-data-flow">Surface tracer restoring data flow</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#surface-tracer-restoring-key-classes-components">Surface tracer restoring key classes/components</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#surface-tracer-restoring-config-coupling">Surface tracer restoring config coupling</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#notes">Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="SfcCoupling.html">Surface Coupling</a></li>
@@ -218,7 +227,8 @@
 pathways in Omega, currently this includes:</p>
 <ul class="simple">
 <li><p>Surface stress forcing (e.g. wind stress)</p></li>
-<li><p>Surface tracer restoring</p></li>
+<li><p>Surface thickness and tracer flux forcing (actively coupled or data-forced)</p></li>
+<li><p>Surface tracer restoring (soon to be ported as a field originating from the coupler)</p></li>
 </ul>
 <section id="surface-stress-forcing-design">
 <h2>Surface stress forcing design<a class="headerlink" href="#surface-stress-forcing-design" title="Permalink to this heading"></a></h2>
@@ -273,6 +283,105 @@ thickness in the surface layer</p></li>
 </li>
 </ul>
 </section>
+</section>
+<section id="surface-thickness-and-tracer-flux-forcing-design">
+<h2>Surface thickness and tracer flux forcing design<a class="headerlink" href="#surface-thickness-and-tracer-flux-forcing-design" title="Permalink to this heading"></a></h2>
+<section id="surface-thickness-and-tracer-flux-forcing-data-flow">
+<h3>Surface thickness and tracer flux forcing data flow<a class="headerlink" href="#surface-thickness-and-tracer-flux-forcing-data-flow" title="Permalink to this heading"></a></h3>
+<p><strong>Thickness equation pathway:</strong></p>
+<ol class="arabic simple">
+<li><p>External fields provide freshwater and salt flux components:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SnowFlux</span></code>, <code class="docutils literal notranslate"><span class="pre">RainFlux</span></code>, <code class="docutils literal notranslate"><span class="pre">EvaporationFlux</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SeaIceFreshWaterFlux</span></code>, <code class="docutils literal notranslate"><span class="pre">IceRunoffFlux</span></code>, <code class="docutils literal notranslate"><span class="pre">RiverRunoffFlux</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SeaIceSaltFlux</span></code></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Forcing</span></code> stores the flux fields in <code class="docutils literal notranslate"><span class="pre">TracerForcingVars</span></code></p></li>
+<li><p>The tendency term <code class="docutils literal notranslate"><span class="pre">SfcThicknessForcingOnCell</span></code> sums the freshwater and salt mass fluxes and applies them to
+the surface layer pseudo-thickness.</p></li>
+</ol>
+<p><strong>Tracer equation pathway:</strong></p>
+<ol class="arabic simple">
+<li><p>External fields provide heat and salt flux components:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">LatentHeatFluxEvap</span></code>, <code class="docutils literal notranslate"><span class="pre">SensibleHeatFlux</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LongWaveHeatFluxUp</span></code>, <code class="docutils literal notranslate"><span class="pre">LongWaveHeatFluxDown</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SeaIceHeatFlux</span></code>, <code class="docutils literal notranslate"><span class="pre">ShortWaveHeatFlux</span></code></p></li>
+<li><p>mass fluxes which add energy changes (<code class="docutils literal notranslate"><span class="pre">SnowFlux</span></code>, <code class="docutils literal notranslate"><span class="pre">RainFlux</span></code>, <code class="docutils literal notranslate"><span class="pre">IceRunoffFlux</span></code>, <code class="docutils literal notranslate"><span class="pre">RiverRunoffFlux</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SeaIceSaltFlux</span></code></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Forcing</span></code> stores the flux fields in <code class="docutils literal notranslate"><span class="pre">TracerForcingVars</span></code></p></li>
+<li><p>The tendency term <code class="docutils literal notranslate"><span class="pre">SfcTracerForcingOnCell</span></code> converts the summed external heat fluxes to a conservative-temperature tendency,
+and applies the external sea-ice salt flux to the top layer salt content thus impacting salinity.</p></li>
+</ol>
+</section>
+<section id="surface-thickness-and-tracer-flux-forcing-key-classes-components">
+<h3>Surface thickness and tracer flux forcing key classes/components<a class="headerlink" href="#surface-thickness-and-tracer-flux-forcing-key-classes-components" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TracerForcingVars</span></code></p>
+<ul>
+<li><p>Stores 13 coupled flux cell-centered fields: 6 freshwater fluxes, 6 heat
+fluxes, and 1 salt flux component</p></li>
+<li><p>Fields initialized to zero and registered in <code class="docutils literal notranslate"><span class="pre">Forcing</span></code> field group</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SfcThicknessForcingOnCell</span></code> tendency term</p>
+<ul>
+<li><p>Computes the layer mass contribution (converted to pseudo-thickness): <span class="math notranslate nohighlight">\(\sum (\text{SnowFlux} + \text{RainFlux} + \text{EvaporationFlux} + \text{SeaIceFreshWaterFlux} + \text{IceRunoffFlux} + \text{RiverRunoffFlux} + \text{SeaIceSaltFlux}) / \rho_{sw}\)</span></p></li>
+<li><p>Applied only at surface layer (top active layer) using <code class="docutils literal notranslate"><span class="pre">MinLayerCell</span></code></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SfcTracerForcingOnCell</span></code> tendency term</p>
+<ul>
+<li><p>For temperature: adds the direct heat fluxes
+Q_{\text{sensible}} + Q_{\text{lw,up}} + Q_{\text{lw,down}} + Q_{\text{sw}}<span class="math notranslate nohighlight">\(,
+the enthalpy flux from sea-ice interactions (conduction, phase-change and enthalpy of mass flux)  Q_{\text{ice}}, the enthalpy of added freshwater mass \)</span>(\text{RainFlux} + \text{RiverRunoffFlux}) c^0_{p,sw} max(C_T(0,0,0),C_T^{\text{top}})<span class="math notranslate nohighlight">\( (freshwater \)</span>T &gt;= 0<span class="math notranslate nohighlight">\(), the evaporation terms (\)</span>Q_{\text{latentEvap}} + EvapFlux c^0_{p,sw} C_T^{\text{top}})
+, the enthalpy change for frozen mass <span class="math notranslate nohighlight">\((\text{SnowFlux} + \text{IceRunoffFlux}) PotEnthalpyIce\)</span>, where PotEnthalpyIce is the potential enthalpy of solid ice (which includes phase change and enthalpy of the melted mass). To first order, <span class="math notranslate nohighlight">\(PotEnthalpyIce\)</span> is approximated by <span class="math notranslate nohighlight">\(-LatIce\)</span>, the engineering handbook value, neglecting 0.1%.
+These potential enthalpy terms are then scaled by <span class="math notranslate nohighlight">\(H_{\text{FluxFac}}\)</span> to provide the layer tracer tendency.</p></li>
+<li><p>For salinity: applies the mass salt flux with the appropriate unit conversion: <span class="math notranslate nohighlight">\(\text{SeaIceSaltFlux} \times S_{\text{FluxFac}}\)</span></p></li>
+<li><p>Applied only at surface layer using <code class="docutils literal notranslate"><span class="pre">MinLayerCell</span></code></p></li>
+<li><p>Uses tracer index validation to apply to specific tracers only</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Forcing</span></code></p>
+<ul>
+<li><p>Manages <code class="docutils literal notranslate"><span class="pre">TracerForcingVars</span></code> instance</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Tendencies</span></code></p>
+<ul>
+<li><p>Calls <code class="docutils literal notranslate"><span class="pre">SfcThicknessForcingOnCell</span></code> in <code class="docutils literal notranslate"><span class="pre">computePseudoThicknessTendenciesOnly</span></code></p></li>
+<li><p>Calls <code class="docutils literal notranslate"><span class="pre">SfcTracerForcingOnCell</span></code> in <code class="docutils literal notranslate"><span class="pre">computeTracerTendenciesOnly</span></code> after surface tracer restoring</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="surface-thickness-and-tracer-flux-forcing-config-coupling">
+<h3>Surface thickness and tracer flux forcing config coupling<a class="headerlink" href="#surface-thickness-and-tracer-flux-forcing-config-coupling" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Omega.Tendencies.SfcThicknessForcingTendencyEnable</span></code></p>
+<ul>
+<li><p>gates execution of coupled flux thickness kernel</p></li>
+<li><p>controls freshwater and salt flux forcing on sea surface height</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Omega.Tendencies.SfcTracerForcingTendencyEnable</span></code></p>
+<ul>
+<li><p>gates execution of coupled flux tracer kernel</p></li>
+<li><p>controls direct heat flux forcing on temperature and salt flux forcing on salinity</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<section id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>Currently all forcing is applied to the surface layer only. In the future, vertical spreading of river runoff contributions will be needed.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SeaIceFreshWaterFlux</span></code> is the pure freshwater mass from sea ice. The full mass flux from sea ice is <code class="docutils literal notranslate"><span class="pre">SeaIceFreshWaterFlux</span> <span class="pre">+</span> <span class="pre">SeaIceSaltFlux</span></code></p></li>
+</ul>
 </section>
 <section id="surface-tracer-restoring-design">
 <h2>Surface tracer restoring design<a class="headerlink" href="#surface-tracer-restoring-design" title="Permalink to this heading"></a></h2>
@@ -331,8 +440,8 @@ thickness in the surface layer</p></li>
 </ul>
 </section>
 </section>
-<section id="notes">
-<h2>Notes<a class="headerlink" href="#notes" title="Permalink to this heading"></a></h2>
+<section id="id1">
+<h2>Notes<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h2>
 <ul class="simple">
 <li><p>If a tracer is not listed in <code class="docutils literal notranslate"><span class="pre">TracersToRestore</span></code>, no restoring tendency is applied to that tracer.</p></li>
 <li><p>If restoring is enabled but no tracer IDs are available at tendency compute-time, Omega aborts with an error.</p></li>
