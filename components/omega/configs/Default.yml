@@ -8,9 +8,10 @@ Omega:
     CalendarType: No Leap
     TimeStepper: Forward-Backward
     TimeStep: 0000_00:10:00
+    StartType: StartUp
     StartTime: 0001-01-01_00:00:00
-    StopTime: 0001-01-01_02:00:00
-    RunDuration: none
+    StopType: AtTime
+    StopCriterion: 0001-01-01_02:00:00
   Decomp:
     HaloWidth: 3
     DecompMethod: MetisKWay
@@ -121,9 +122,8 @@ Omega:
       UseStartEnd: false
       Contents:
         - InitVertCoord
-    # InitialState should only be used when starting from scratch.
-    # For restart runs, the frequency units should be changed from
-    # "OnStartup" to "never" so that the initial state file is not read.
+    # InitialState is only read if the StartType is StartUp so this should
+    # reflect that case with FreqUnits "OnStartup"
     InitialState:
       UsePointerFile: false
       Filename: OmegaMesh.nc
@@ -149,9 +149,8 @@ Omega:
       Contents:
         - Forcing
     # Restarts are used to initialize for all job submissions after the very
-    # first startup job. We use UseStartEnd with a start time just after the
-    # simulation start time so that omega does not attempt to use a restart
-    # for the first startup job.
+    # first startup job. This is only read of the StartType requires a restart
+    # so the options here reflect only that case and are ignored otherwise
     RestartRead:
       UsePointerFile: true
       PointerFilename: ocn.pointer
@@ -159,9 +158,7 @@ Omega:
       Precision: double
       Freq: 1
       FreqUnits: OnStartup
-      UseStartEnd: true
-      StartTime: 0001-01-01_00:00:01
-      EndTime: 99999-12-31_00:00:00
+      UseStartEnd: false
       Contents:
         - Restart
     RestartWrite:

@@ -48,7 +48,7 @@ void omega_ocn_init1(
     const int OcnID,               // [in] mct comp id for ocn mode
     const char *YamlConfigFile,    // [in] yaml file name for ocean model
     const char *OcnLogFile,        // [in] log file name for ocean model
-    const int StartType,           // [in] 0=startup, 1=continue, 2=branch
+    const int InStartType,         // [in] 0=startup, 1=continue, 2=branch
     const char *CalendarName,      // [in] CIME calendar name
     const int RunStartYMD,         // [in] run start date in YYYYMMDD
     const int RunStartTOD,         // [in] run start time in seconds of day
@@ -97,14 +97,14 @@ void omega_ocn_init1(
 
    Pacer::start("Init1", 0);
 
-   OMEGA::StartType StartTypeEnum = OMEGA::safeIntToStartType(StartType);
-   OMEGA::TimeInitParams TimeParams{StartTime, std::nullopt};
+   OMEGA::TimeStepperStartType StartTypeEnum =
+       OMEGA::getTimeStepperStartTypeFromE3SM(InStartType);
    OMEGA::CouplingInitParams CouplingParams{
        NCouplerImports, NCouplerExports,  ImportIdxMap,
        ExportIdxMap,    CouplingInterval, OMEGA::CouplingLayout::MCT};
 
    OMEGA::ocnInit1(Comm, OcnID, YamlConfigFile, OcnLogFile, StartTypeEnum,
-                   TimeParams, CouplingParams);
+                   StartTime, CouplingParams);
 
    Pacer::stop("Init1", 0);
 

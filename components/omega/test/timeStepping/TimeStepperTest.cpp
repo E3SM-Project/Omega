@@ -145,6 +145,7 @@ int initTimeStepperTest(const std::string &mesh) {
    // Default init
 
    initLogging(DefEnv);
+   LOG_INFO("------ Time Stepper Unit Test ------");
 
    // Open config file
    Config("Omega");
@@ -332,15 +333,18 @@ int testTimeStepper(const std::string &Name, TimeStepperType Type,
    // Set time information
    const TimeInstant TimeStart(0, 0, 0, 0, 0, 0);
 
-   const Real TimeEnd = 1;
+   TimeStepperStartType StartType = TimeStepperStartType::StartUp;
+   TimeStepperStopType StopType   = TimeStepperStopType::AtTime;
+   const Real TimeEnd             = 1;
    TimeInstant TimeEndTI(0, 0, 0, 0, 0, 1);
 
    const Real BaseTimeStepSeconds = 0.2;
    TimeInterval TimeStepTI(BaseTimeStepSeconds, TimeUnits::Seconds);
 
    auto *TestTimeStepper = TimeStepper::create(
-       "TestTimeStepper", Type, TimeStepTI, TimeStart, TimeEndTI,
-       TestTendencies, TestAuxState, DefMesh, DefVCoord, DefHalo);
+       "TestTimeStepper", Type, TestTendencies, TestAuxState, DefMesh,
+       DefVCoord, DefHalo, TimeStepTI, StartType, TimeStart, StopType,
+       TimeEndTI);
 
    if (!TestTimeStepper) {
       Err++;
@@ -403,28 +407,16 @@ int testOptionalStopTime(const std::string &Name, TimeStepperType Type) {
    TimeInterval TimeStep(0.2, TimeUnits::Seconds);
 
    // 2-phase create without StopTime — used by the coupled driver
-   auto *Stepper =
-       TimeStepper::create("CoupledTestStepper", Type, TimeStep, TimeStart);
+   TimeStepperStartType StartType = TimeStepperStartType::StartUp;
+   TimeStepperStopType StopType   = TimeStepperStopType::OnSignal;
+   auto *Stepper = TimeStepper::create("CoupledTestStepper", Type, TimeStep,
+                                       StartType, TimeStart, StopType);
 
    if (!Stepper) {
       Err++;
       LOG_ERROR("TimeStepperTest: error creating test stepper StopTime {}",
                 Name);
       return Err;
-   }
-
-   if (Stepper->hasEndAlarm()) {
-      Err++;
-      LOG_ERROR("TimeStepperTest: {}: hasEndAlarm() should be false without "
-                "StopTime",
-                Name);
-   }
-
-   if (Stepper->getStopTime().has_value()) {
-      Err++;
-      LOG_ERROR("TimeStepperTest: {}: getStopTime() should return nullopt "
-                "without StopTime",
-                Name);
    }
 
    if (Stepper->getStepCount() != 0) {
@@ -497,7 +489,7 @@ int timeStepperTest(const std::string &MeshFile = "OmegaMesh.nc") {
                                TimeStepperType::ForwardBackward);
 
    if (Err == 0) {
-      LOG_INFO("TimeStepperTest: Successful completion");
+      LOG_INFO("------ Time Stepper Unit Test Successful ------");
    }
 
    finalizeTimeStepperTest();
@@ -513,8 +505,6 @@ int main(int argc, char *argv[]) {
    Kokkos::initialize(argc, argv);
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
-
-   LOG_INFO("----- Time Stepper Unit Test -----");
 
    RetVal += timeStepperTest("OmegaSphereMesh.nc");
 

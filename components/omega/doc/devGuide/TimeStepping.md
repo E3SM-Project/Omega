@@ -75,11 +75,8 @@ the configuration file. For coupled simulations the StartTime is provided by
 the coupler, overriding the value defined in the configuration file.
 In this case, the first phase of time stepper initialization would look like:
 ```c++
-// coupled simulations have a start time but no stop time
-TimeInitParams TimeParams{StartTime, std::nullopt};
-
-// initialize TimeStepper with coupler provided start time
-TimeStepper::init1(TimeParams);
+// initialize TimeStepper with coupler provided start type and start time
+TimeStepper::init1(StartType, StartTime);
 ```
 
 #### Creation of non-default time steppers
@@ -88,12 +85,22 @@ A non-default time stepper can be created from a string `Name`, time stepper
 type `Type`, `TimeStep`, `StartTime`, `EndTime`, tendencies `Tend`,
 auxiliary state `AuxState`, horizontal mesh `Mesh`, and halo layer `MyHalo`
 ```c++
-TimeStepper*  NewTimeStepper = TimeStepper::create(Name, Type, TimeStep,
-          StartTime, EndTime, Tend, AuxState, Mesh, MyHalo);
+TimeStepper*  NewTimeStepper = TimeStepper::create(Name, Type,
+        Tend, AuxState, Mesh, MyHalo, TimeStep, StartType, StartTime,
+        StopType, EndTime, Duration);
 ```
-For convenience, this returns a pointer to the newly created time stepper.
-Given its name, a pointer to a named time stepper can be obtained at any time
-by calling the static `get` method:
+where the EndTime and Duration are optional arguments depending on StopType.
+
+The TimeStepper constructors are filled initially with a StopTime based on
+the simulation CurrentTime. In many cases (including the default time stepper),
+the constructor is called before the CurrentTime is reset on restart. For the
+StartType Continue option, the StopTime and EndAlarm must be reset by calling
+the ``MyStepper->resetEndAlarm()`` function once the current simulation time
+has been updated from the restart metadata.
+
+For convenience, the create routine returns a pointer to the newly created
+time stepper. Given its name, a pointer to a named time stepper can be obtained
+at any time by calling the static `get` method:
 ```c++
 TimeStepper* NewTimeStepper = TimeStepper::get(Name);
 ```
@@ -114,11 +121,17 @@ TimeStepperType Type = Stepper->getType();
 int NTimeLevels = Stepper->getNTimeLevels();
 std::string Name = Stepper->getName();
 TimeInterval TimeStep = Stepper->getTimeStep();
+TimeStepperStartType StartType = Stepper->getStartType();
 TimeInstant StartTime = Stepper->getStartTime();
+TimeStepperStopType StopType = Stepper->getStopType();
 TimeInstant StopTime = Stepper->getStopTime();
+TimeInterval Duration = Stepper->getDuration();
 Clock *ModelClock = Stepper->getClock();
 Alarm *EndAlarm = Stepper->getEndAlarm();
 ```
+Note that StopTime, Duration and EndAlarm are set to appropriate values
+no matter what the StopType is (though for the OnSignal option, they are
+set far into the future).
 
 #### Removal of time steppers
 To erase a specific named time stepper use `erase`
