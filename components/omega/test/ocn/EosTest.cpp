@@ -1533,13 +1533,10 @@ void eosTest(const std::string &MeshFile = "OmegaMesh.nc") {
    testEosTeos10();
    testEosTeos10Displaced();
    testBruntVaisalaFreqSqTeos10();
-<<<<<<< HEAD
+   testCalcCtFreezing();
    testEosTeos10Derivs();
    testEosLinearDerivs();
    testEosConstantDerivs();
-=======
->>>>>>> c6a46e4ed3 (fixed GPU isssues on Frontier)
-   testCalcCtFreezing();
 
    finalizeEosTest();
 

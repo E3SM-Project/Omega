@@ -28,6 +28,40 @@ namespace OMEGA {
 // Used by the thickness, tracer, and KPP surface forcing functors so the same
 // flux definitions are not restated in each.
 //------------------------------------------------------------------------------
+/// Surface heat flux needed by the KPP buoyancy forcing: direct fluxes plus
+/// the phase-change terms, but without the enthalpy carried by mass fluxes.
+///
+/// @param SaTop Absolute salinity of the top layer
+/// @param PTopDb Pressure at the top layer (decibar)
+KOKKOS_INLINE_FUNCTION Real sfcHeatFluxWithoutMassEnthalpy(
+    I4 ICell, Real SaTop, Real PTopDb, EosType EosChoice,
+    const Array1DReal &LongWaveHeatFluxUp,
+    const Array1DReal &LongWaveHeatFluxDown,
+    const Array1DReal &ShortWaveHeatFlux, const Array1DReal &SensibleHeatFlux,
+    const Array1DReal &SeaIceHeatFlux, const Array1DReal &SeaIceFreshWaterFlux,
+    const Array1DReal &SeaIceSaltFlux, const Array1DReal &LatentHeatFluxEvap,
+    const Array1DReal &SnowFlux, const Array1DReal &IceRunoffFlux) {
+
+   // Enthalpy of liq water is counted in SeaIceHeatFlux(ICell)
+   // Here we estimate it to remove it
+   // We approximate: melt*q_icepack(Smelt) + cong*q_icepack(SSS)
+   // by (melt+cong)*q_teos10(SaSeaIce) where SaSeaIce either SaTop or Smelt
+   // Melting ice adds water at its own bulk salinity; freezing takes
+   // water at the local surface salinity
+   const Real SaSeaIce =
+       SeaIceFreshWaterFlux(ICell) > 0.0_Real
+           ? SeaIceSaltFlux(ICell) / SeaIceFreshWaterFlux(ICell) * Salt2PPt
+           : SaTop;
+   const Real SeaIceLiqEnthalpyEstimate =
+       SeaIceFreshWaterFlux(ICell) * Cp0Sw *
+       Eos::calcCtFreezing(EosChoice, SaSeaIce, PTopDb, 0.0_Real);
+
+   return LongWaveHeatFluxUp(ICell) + LongWaveHeatFluxDown(ICell) +
+          ShortWaveHeatFlux(ICell) + SensibleHeatFlux(ICell) +
+          SeaIceHeatFlux(ICell) - SeaIceLiqEnthalpyEstimate +
+          LatentHeatFluxEvap(ICell) +
+          (SnowFlux(ICell) + IceRunoffFlux(ICell)) * -LatIce;
+}
 
 /// Net surface freshwater mass flux (kg/m^2/s)
 KOKKOS_INLINE_FUNCTION Real sfcFreshWaterFlux(
@@ -37,33 +71,6 @@ KOKKOS_INLINE_FUNCTION Real sfcFreshWaterFlux(
    return SnowFlux(ICell) + RainFlux(ICell) + EvaporationFlux(ICell) +
           SeaIceFreshWaterFlux(ICell) + IceRunoffFlux(ICell) +
           RiverRunoffFlux(ICell);
-}
-
-/// Direct surface heat flux (radiative and turbulent), excluding any enthalpy
-/// carried by surface mass fluxes
-KOKKOS_INLINE_FUNCTION Real sfcDirectHeatFlux(
-    I4 ICell, const Array1DReal &LatentHeatFlux,
-    const Array1DReal &SensibleHeatFlux, const Array1DReal &LongWaveHeatFluxUp,
-    const Array1DReal &LongWaveHeatFluxDown, const Array1DReal &SeaIceHeatFlux,
-    const Array1DReal &ShortWaveHeatFlux) {
-   return LatentHeatFlux(ICell) + SensibleHeatFlux(ICell) +
-          LongWaveHeatFluxUp(ICell) + LongWaveHeatFluxDown(ICell) +
-          SeaIceHeatFlux(ICell) + ShortWaveHeatFlux(ICell);
-}
-
-/// Enthalpy carried into the ocean by surface mass fluxes.
-/// Liquid mass fluxes (rain, rivers) enter at the local SST. Solid mass fluxes
-/// (snow, frozen runoff) are melted locally by the ocean, so they enter at the
-/// freezing point less a constant latent heat of fusion.
-///
-/// @param CtTop Conservative temperature of the top layer
-/// @param CtFrz Freezing conservative temperature at the top layer
-KOKKOS_INLINE_FUNCTION Real sfcMassFluxEnthalpy(
-    I4 ICell, Real CtTop, Real CtFrz, const Array1DReal &SnowFlux,
-    const Array1DReal &RainFlux, const Array1DReal &IceRunoffFlux,
-    const Array1DReal &RiverRunoffFlux) {
-   return (RainFlux(ICell) + RiverRunoffFlux(ICell)) * Cp0Sw * CtTop +
-          (SnowFlux(ICell) + IceRunoffFlux(ICell)) * (Cp0Sw * CtFrz - LatIce);
 }
 
 /// Divergence of pseudo-thickness flux at cell centers, for updating
@@ -488,17 +495,18 @@ class SfcTracerForcingOnCell {
                           I4 TempTracerIndex, I4 SaltTracerIndex,
                           const Eos *EosInst);
 
-   KOKKOS_FUNCTION void operator()(
-       const Array3DReal &Tend, I4 ICell, const Array3DReal &TracerCell,
-       const Array2DReal &PressureMid, const Array1DReal &LatentHeatFluxEvap,
-       const Array1DReal &SensibleHeatFlux,
-       const Array1DReal &LongWaveHeatFluxUp,
-       const Array1DReal &LongWaveHeatFluxDown,
-       const Array1DReal &SeaIceHeatFlux, const Array1DReal &ShortWaveHeatFlux,
-       const Array1DReal &SnowFlux, const Array1DReal &RainFlux,
-       const Array1DReal &IceRunoffFlux, const Array1DReal &RiverRunoffFlux,
-       const Array1DReal &EvaporationFlux,
-       const Array1DReal &SeaIceSaltFlux) const {
+   KOKKOS_FUNCTION void
+   operator()(const Array3DReal &Tend, I4 ICell, const Array3DReal &TracerCell,
+              const Array1DReal &LatentHeatFluxEvap,
+              const Array1DReal &SensibleHeatFlux,
+              const Array1DReal &LongWaveHeatFluxUp,
+              const Array1DReal &LongWaveHeatFluxDown,
+              const Array1DReal &SeaIceHeatFlux,
+              const Array1DReal &ShortWaveHeatFlux, const Array1DReal &SnowFlux,
+              const Array1DReal &RainFlux, const Array1DReal &IceRunoffFlux,
+              const Array1DReal &RiverRunoffFlux,
+              const Array1DReal &EvaporationFlux,
+              const Array1DReal &SeaIceSaltFlux) const {
 
       const I4 KTop = MinLayerCell(ICell);
       if (KTop > MaxLayerCell(ICell)) {
@@ -506,12 +514,6 @@ class SfcTracerForcingOnCell {
       }
 
       if (TempIndex >= 0) {
-         const Real PTopDb = PressureMid(ICell, KTop) * Pa2Db;
-         const Real SaTop  = SaltIndex >= 0
-                                 ? TracerCell(SaltIndex, ICell, KTop)
-                                 : 0.0_Real; // not sure we want zero here?
-         const Real CtFrz =
-             Eos::calcCtFreezing(EosChoice, SaTop, PTopDb, 0.0_Real);
          const Real CtTop = TracerCell(TempIndex, ICell, KTop);
 
          // CT tendencies are due to direct heat fluxes + pot enthalpy fluxes
@@ -534,15 +536,8 @@ class SfcTracerForcingOnCell {
              (EosChoice == EosType::Teos10Eos) ? Ct0Fw : 0.0_Real;
          const Real PotEnthalpyFwIn  = Cp0Sw * Kokkos::max(CtLim, CtTop);
          const Real PotEnthalpyFwOut = Cp0Sw * CtTop;
-         
-	 const Real DirectHeatFlux =  LongWaveHeatFluxUp(ICell) + LongWaveHeatFluxDown(ICell) +
-             ShortWaveHeatFlux(ICell) + SensibleHeatFlux(ICell);
-         const Real MassFluxEnthalpy = 
-             (RainFlux(ICell) + RiverRunoffFlux(ICell)) * PotEnthalpyFwIn +
-             LatentHeatFluxEvap(ICell) +
-             EvaporationFlux(ICell) * PotEnthalpyFwOut +
-             (SnowFlux(ICell) + IceRunoffFlux(ICell)) * PotEnthalpyIce;
-	 const Real HeatFlux = 
+
+         const Real HeatFlux =
              LongWaveHeatFluxUp(ICell) + LongWaveHeatFluxDown(ICell) +
              ShortWaveHeatFlux(ICell) + SensibleHeatFlux(ICell) +
              SeaIceHeatFlux(ICell) + // includes enthalpy of meltwater already
@@ -619,7 +614,8 @@ class KPPSurfaceForcingOnCell {
        I4 ICell, const Array2DReal &ConservTemp, const Array2DReal &AbsSalinity,
        const Array2DReal &PressureMid, const Array2DReal &SpecVol,
        const Array1DReal &ZonalStress, const Array1DReal &MeridStress,
-       const Array1DReal &LatentHeatFlux, const Array1DReal &SensibleHeatFlux,
+       const Array1DReal &LatentHeatFluxEvap,
+       const Array1DReal &SensibleHeatFlux,
        const Array1DReal &LongWaveHeatFluxUp,
        const Array1DReal &LongWaveHeatFluxDown,
        const Array1DReal &SeaIceHeatFlux, const Array1DReal &ShortWaveHeatFlux,
@@ -652,11 +648,13 @@ class KPPSurfaceForcingOnCell {
       const Real CtTop  = ConservTemp(ICell, KTop);
       const Real PTopDb = PressureMid(ICell, KTop) * Pa2Db;
 
-      // KPP needs the direct surface heat flux, not the full hT tendency, so
-      // the mass-flux enthalpy carried by SfcTracerForcingOnCell is excluded
-      const Real HeatFlux = sfcDirectHeatFlux(
-          ICell, LatentHeatFlux, SensibleHeatFlux, LongWaveHeatFluxUp,
-          LongWaveHeatFluxDown, SeaIceHeatFlux, ShortWaveHeatFlux);
+      // KPP needs the surface heat flux without the mass-flux enthalpy that
+      // SfcTracerForcingOnCell carries in the hT tendency
+      const Real HeatFlux = sfcHeatFluxWithoutMassEnthalpy(
+          ICell, SaTop, PTopDb, EosChoice, LongWaveHeatFluxUp,
+          LongWaveHeatFluxDown, ShortWaveHeatFlux, SensibleHeatFlux,
+          SeaIceHeatFlux, SeaIceFreshWaterFlux, SeaIceSaltFlux,
+          LatentHeatFluxEvap, SnowFlux, IceRunoffFlux);
       const Real FreshWaterFlux = sfcFreshWaterFlux(
           ICell, SnowFlux, RainFlux, EvaporationFlux, SeaIceFreshWaterFlux,
           IceRunoffFlux, RiverRunoffFlux);

@@ -1120,7 +1120,7 @@ void Tendencies::computeTracerTendenciesOnly(
 
       parallelFor(
           {Mesh->NCellsAll}, KOKKOS_LAMBDA(int ICell) {
-             LocSfcTracerForcing(LocTracerTend, ICell, TracerArray, PressureMid,
+             LocSfcTracerForcing(LocTracerTend, ICell, TracerArray,
                                  LatentHeatFluxEvap, SensibleHeatFlux,
                                  LongWaveHeatFluxUp, LongWaveHeatFluxDown,
                                  SeaIceHeatFlux, ShortWaveHeatFlux, SnowFlux,
@@ -1370,7 +1370,7 @@ void Tendencies::computeKPPFields(const OceanState *State,
    OMEGA_SCOPE(LocSpecVol, EqState->SpecVol);
    OMEGA_SCOPE(ZonalStress, SfcStress.ZonalStressCell);
    OMEGA_SCOPE(MeridStress, SfcStress.MeridStressCell);
-   OMEGA_SCOPE(LatentHeatFlux, TracerForcing.LatentHeatFluxCell);
+   OMEGA_SCOPE(LatentHeatFluxEvap, TracerForcing.LatentHeatFluxEvapCell);
    OMEGA_SCOPE(SensibleHeatFlux, TracerForcing.SensibleHeatFluxCell);
    OMEGA_SCOPE(LongWaveHeatFluxUp, TracerForcing.LongWaveHeatFluxUpCell);
    OMEGA_SCOPE(LongWaveHeatFluxDown, TracerForcing.LongWaveHeatFluxDownCell);
@@ -1389,7 +1389,7 @@ void Tendencies::computeKPPFields(const OceanState *State,
           LocKPPSurfaceForcing(
               LocFrictionVelocity, LocBuoyancyFlux, LocSurfaceTracerFlux,
               IceFraction, ICell, ConservTemp, AbsSalinity, PressureMid,
-              LocSpecVol, ZonalStress, MeridStress, LatentHeatFlux,
+              LocSpecVol, ZonalStress, MeridStress, LatentHeatFluxEvap,
               SensibleHeatFlux, LongWaveHeatFluxUp, LongWaveHeatFluxDown,
               SeaIceHeatFlux, ShortWaveHeatFlux, SnowFlux, RainFlux,
               EvaporationFlux, SeaIceFreshWaterFlux, IceRunoffFlux,
