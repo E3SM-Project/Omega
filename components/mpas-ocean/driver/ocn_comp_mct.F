@@ -3166,6 +3166,7 @@ contains
    integer, dimension(:), pointer :: landIceMask
 
    real (kind=RKIND), dimension(:), pointer :: seaIceEnergy, accumulatedFrazilIceMass, frazilSurfacePressure, &
+                                               accumulatedFrazilIceEnergy, &
                                                avgTotalFreshWaterTemperatureFlux, &
                                                avgCO2_gas_flux, DMSFlux, surfaceUpwardCO2Flux, &
                                                avgOceanSurfaceDIC, &
@@ -3286,6 +3287,7 @@ contains
         call mpas_pool_get_array(forcingPool, 'seaIceEnergy', seaIceEnergy)
         call mpas_pool_get_array(forcingPool, 'frazilSurfacePressure', frazilSurfacePressure)
         call mpas_pool_get_array(statePool, 'accumulatedFrazilIceMass', accumulatedFrazilIceMass, 1)
+        call mpas_pool_get_array(statePool, 'accumulatedFrazilIceEnergy', accumulatedFrazilIceEnergy, 1)
      end if
 
      ! Cryo fields
@@ -3405,8 +3407,10 @@ contains
 
              o2x_o(index_o2x_Fioo_q, n)  = seaIceEnergy(i) / ocn_cpl_dt
              o2x_o(index_o2x_Fioo_frazil, n) = accumulatedFrazilIceMass(i) / ocn_cpl_dt
-             o2x_o(index_o2x_Fioo_frazils, n) = 4.0_RKIND
-             o2x_o(index_o2x_Fioo_frazilh, n) = 0.0_RKIND
+             o2x_o(index_o2x_Fioo_frazils, n) = accumulatedFrazilIceMass(i)/ 1000.0_RKIND * &
+                config_frazil_sea_ice_reference_salinity / ocn_cpl_dt
+             !defined positive to be consistent with Fioo_q when frazil is formed
+             o2x_o(index_o2x_Fioo_frazilh, n) = accumulatedFrazilIceEnergy(i)/ ocn_cpl_dt 
 
           else
 
@@ -3424,6 +3428,7 @@ contains
           ! Reset SeaIce Energy and Accumulated Frazil Ice
           seaIceEnergy(i) = 0.0_RKIND
           accumulatedFrazilIceMass(i) = 0.0_RKIND
+          accumulatedFrazilIceEnergy(i) = 0.0_RKIND
           frazilSurfacePressure(i) = 0.0_RKIND
        end if
 
