@@ -347,6 +347,17 @@ class IOStream {
    static bool validateAll();
 
    //---------------------------------------------------------------------------
+   /// Determines whether a Field is in the contents of any defined stream,
+   /// so that a caller can skip computing a diagnostic that nothing will
+   /// read or write. Because validate replaces a group name in a stream's
+   /// contents by the names of the group's member Fields, this is only
+   /// meaningful after the streams have been validated. If any stream has
+   /// not been validated, the answer is conservatively true so that an
+   /// optional computation is done rather than skipped.
+   static bool isFieldRequested(const std::string &FieldName ///< [in] Field
+   );
+
+   //---------------------------------------------------------------------------
    /// Reads a stream if it is time.
    static Error read(const std::string &StreamName, ///< [in] Name of stream
                      const Clock *ModelClock, ///< [in] Model clock w time info

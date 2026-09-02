@@ -37,7 +37,19 @@ and the validation status can be checked with
 ```
 All streams must be validated before use to make sure the Fields have
 been defined and the relevant data arrays have been attached to Fields and
-are available to access.  At the end of a simulation, IOStreams must be
+are available to access.
+
+Once the streams have been validated, code that computes an optional
+diagnostic can ask whether anything will actually read or write it:
+```c++
+   bool Requested = IOStream::isFieldRequested(FieldName);
+```
+This returns true if the Field is in the contents of any defined stream.
+Because validation is what replaces a group name in a stream's contents by
+the names of the group's member Fields, the answer is only meaningful after
+validation; if any stream is still unvalidated the answer is
+conservatively true, so an optional computation is done rather than
+skipped.  At the end of a simulation, IOStreams must be
 finalized using
 ```c++
    IOStream::finalize(ModelClock);

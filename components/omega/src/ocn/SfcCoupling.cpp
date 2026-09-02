@@ -1,4 +1,5 @@
 #include "SfcCoupling.h"
+#include "AuxiliaryState.h"
 #include "Eos.h"
 #include "Error.h"
 #include "GlobalConstants.h"
@@ -27,6 +28,22 @@ int SfcCoupling::init(const CouplingInitParams &CouplingInitParams) {
    auto *DefTimeStepper = TimeStepper::getDefault();
    OMEGA_REQUIRE(DefTimeStepper,
                  "Null default TimeStepper pointer in SfcCoupling::init");
+
+   // The surface velocity exported to the coupler is reconstructed at cell
+   // centers from the edge-normal velocity, so a coupled run needs a mesh
+   // that supplies the reconstruction stencil and weights. Fail here
+   // rather than at the first time step.
+   if (!DefHorzMesh->HasVectorRecon)
+      ABORT_ERROR("SfcCoupling: mesh {} has no vector reconstruction data, "
+                  "which is needed for the surface velocity export; the mesh "
+                  "file must supply NEdgesReconOnCell, ReconStencilCell and "
+                  "ReconWeightsCell",
+                  DefHorzMesh->MeshName);
+
+   AuxiliaryState *DefAuxState = AuxiliaryState::getDefault();
+   OMEGA_REQUIRE(DefAuxState,
+                 "Null default AuxiliaryState pointer in SfcCoupling::init");
+   DefAuxState->requireVelocityRecon();
 
    TimeInterval OcnTimeStep = DefTimeStepper->getTimeStep();
    TimeInterval CplTimeStep = CouplingInitParams.CouplingTimeStep;
@@ -317,7 +334,8 @@ void OcnToCplFields::updateFields(const OceanState *State,
    auto Salinity =
        Kokkos::subview(TracerArray, SalinityIdx, Kokkos::ALL, Kokkos::ALL);
 
-   VertCoord *DefVertCoord = VertCoord::getDefault();
+   VertCoord *DefVertCoord     = VertCoord::getDefault();
+   AuxiliaryState *DefAuxState = AuxiliaryState::getDefault();
 
    OMEGA_SCOPE(LocMinLayerCell, DefVertCoord->MinLayerCell);
    OMEGA_SCOPE(LocAvgSfcSalinity, AvgSfcSalinity);
@@ -325,8 +343,12 @@ void OcnToCplFields::updateFields(const OceanState *State,
    OMEGA_SCOPE(LocAvgSfcVelZonal, AvgSfcVelocityZonal);
    OMEGA_SCOPE(LocAvgSfcVelMerid, AvgSfcVelocityMerid);
 
-   // TODO: Implement vector reconsturction for velocity field.
-   constexpr Real ConstSfcVelocity = 1e-4;
+   // The reconstruction is computed once per time step in ocnRun, before
+   // this is called (see AuxiliaryState::computeVelocityRecon).
+   OMEGA_SCOPE(LocVelocityZonal,
+               DefAuxState->VelocityReconAux.VelocityZonalCell);
+   OMEGA_SCOPE(LocVelocityMerid,
+               DefAuxState->VelocityReconAux.VelocityMeridionalCell);
 
    parallelFor(
        {NCellsOwned}, KOKKOS_LAMBDA(int ICell) {
@@ -339,11 +361,13 @@ void OcnToCplFields::updateFields(const OceanState *State,
           LocAvgSfcSalinity(ICell) = updateAverage(
               LocAvgSfcSalinity(ICell), Salinity(ICell, KSfc), NAccumSteps);
 
-          LocAvgSfcVelZonal(ICell) = updateAverage(
-              LocAvgSfcVelZonal(ICell), ConstSfcVelocity, NAccumSteps);
+          LocAvgSfcVelZonal(ICell) =
+              updateAverage(LocAvgSfcVelZonal(ICell),
+                            LocVelocityZonal(ICell, KSfc), NAccumSteps);
 
-          LocAvgSfcVelMerid(ICell) = updateAverage(
-              LocAvgSfcVelMerid(ICell), ConstSfcVelocity, NAccumSteps);
+          LocAvgSfcVelMerid(ICell) =
+              updateAverage(LocAvgSfcVelMerid(ICell),
+                            LocVelocityMerid(ICell, KSfc), NAccumSteps);
        });
 }
 

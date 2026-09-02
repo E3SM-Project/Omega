@@ -1,4 +1,5 @@
 #include "SfcCoupling.h"
+#include "AuxiliaryState.h"
 #include "Config.h"
 #include "DataTypes.h"
 #include "Decomp.h"
@@ -16,6 +17,7 @@
 #include "OmegaKokkos.h"
 #include "Pacer.h"
 #include "TimeStepper.h"
+#include "VertAdv.h"
 #include "VertCoord.h"
 #include "mpi.h"
 
@@ -133,6 +135,11 @@ int initSfcCouplingTest(const std::string &MeshFile) {
 
    Forcing::init();
    Tracers::init();
+
+   // Needed by SfcCoupling, which exports the surface velocity
+   // reconstructed at cell centers by the auxiliary state
+   VertAdv::init();
+   AuxiliaryState::init();
 
    return Err;
 }
@@ -285,6 +292,10 @@ int testUpdateExportFields(const I4 NSteps) {
       }
       Tracers::copyToDevice(0);
 
+      // Mirror the run sequence: the reconstruction is refreshed each step
+      // before the export fields sample it
+      AuxiliaryState::getDefault()->computeVelocityRecon(DefState, 0);
+
       DefCoupling->updateExportFields(DefState, Tracers::getAll(0));
 
       ModelClock->advance();
@@ -379,6 +390,8 @@ int testExportToCoupler(const CouplingLayout Layout) {
    int TempIdx  = CouplingParams.ExportIdxMap.at("So_t");
    int SalinIdx = CouplingParams.ExportIdxMap.at("So_s");
    int SshIdx   = CouplingParams.ExportIdxMap.at("So_ssh");
+   int VelUIdx  = CouplingParams.ExportIdxMap.at("So_u");
+   int VelVIdx  = CouplingParams.ExportIdxMap.at("So_v");
 
    DefCoupling->attachData(CplToOcnData.data(), OcnToCplData.data());
 
@@ -405,6 +418,25 @@ int testExportToCoupler(const CouplingLayout Layout) {
    }
    Tracers::copyToDevice(0);
 
+   // Give the edge-normal velocity a nonzero, cell-to-cell varying value
+   // and reconstruct it at cell centers, so the exported surface velocity
+   // is a real reconstruction. Halo edges are set here too, since the
+   // reconstruction stencil for an owned cell reaches beyond that cell.
+   AuxiliaryState *DefAuxState = AuxiliaryState::getDefault();
+   HostArray2DReal NormalVelH  = DefState->getNormalVelocityH(0);
+   for (int Edge = 0; Edge < NormalVelH.extent_int(0); Edge++) {
+      for (int K = 0; K < NormalVelH.extent_int(1); K++) {
+         NormalVelH(Edge, K) = 0.01_Real * static_cast<Real>((Edge % 7) + 1);
+      }
+   }
+   DefState->copyToDevice(0);
+   DefAuxState->computeVelocityRecon(DefState, 0);
+
+   auto VelocityZonalH =
+       createHostMirrorCopy(DefAuxState->VelocityReconAux.VelocityZonalCell);
+   auto VelocityMeridH = createHostMirrorCopy(
+       DefAuxState->VelocityReconAux.VelocityMeridionalCell);
+
    DefCoupling->updateExportFields(DefState, Tracers::getAll(0));
 
    auto SshCellOwned =
@@ -413,13 +445,22 @@ int testExportToCoupler(const CouplingLayout Layout) {
 
    DefCoupling->exportToCoupler();
 
-   // Check 1: exportToCoupler properly packs into OcnToCplView. Velocity
-   // is skipped here: its averaging is a hardcoded stub pending real vector
-   // reconstruction (see OcnToCplFields::updateAverages), not yet
-   // meaningful to check.
+   // Check 1: exportToCoupler properly packs into OcnToCplView. At
+   // NAccumSteps == 0 the running average is exactly the single sampled
+   // value, so the exported velocity should match the reconstruction in
+   // the surface layer exactly.
    // copyToHost() converts temp to Kelvin (identity CT->PT w/ ConstantEos)
    int PackErr = 0;
    for (int Cell = 0; Cell < NCells; Cell++) {
+      int KSfc = DefVertCoord->MinLayerCellH(Cell);
+      if (OcnToCplData[flatIdx(Layout, Cell, VelUIdx, NCells, NExports)] !=
+          VelocityZonalH(Cell, KSfc)) {
+         PackErr++;
+      }
+      if (OcnToCplData[flatIdx(Layout, Cell, VelVIdx, NCells, NExports)] !=
+          VelocityMeridH(Cell, KSfc)) {
+         PackErr++;
+      }
       if (OcnToCplData[flatIdx(Layout, Cell, TempIdx, NCells, NExports)] !=
           ExpectedTemp(Cell) + TkFrz) {
          PackErr++;
@@ -524,6 +565,8 @@ int testEraseAndGet() {
 
 void finalizeSfcCouplingTest() {
 
+   AuxiliaryState::clear();
+   VertAdv::clear();
    Tracers::clear();
    Forcing::clear();
    OceanState::clear();

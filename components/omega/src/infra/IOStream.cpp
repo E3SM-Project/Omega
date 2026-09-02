@@ -275,6 +275,27 @@ bool IOStream::validateAll() {
 } // End validateAll
 
 //------------------------------------------------------------------------------
+// Determines whether a Field is in the contents of any defined stream.
+bool IOStream::isFieldRequested(const std::string &FieldName) {
+
+   for (auto Iter = AllStreams.begin(); Iter != AllStreams.end(); Iter++) {
+      std::shared_ptr ThisStream = Iter->second;
+
+      // An unvalidated stream may still hold group names rather than the
+      // names of the group's member Fields, so we cannot tell whether it
+      // contains this Field. Assume that it might.
+      if (!ThisStream->Validated)
+         return true;
+
+      if (ThisStream->Contents.find(FieldName) != ThisStream->Contents.end())
+         return true;
+   }
+
+   return false;
+
+} // End isFieldRequested
+
+//------------------------------------------------------------------------------
 // Reads a single stream if it is time.
 Error IOStream::read(
     const std::string &StreamName, // [in] Name of stream

@@ -378,8 +378,9 @@ int testTangentRecon(Real RTol) {
 // Reconstructs the Cartesian vector field at cell centers from edge-normal
 // values using the least-squares weights/stencil in the mesh and compares
 // the magnitude of the reconstructed vector against the exact magnitude at
-// cell centers. This currently only supports spherical meshes, so it is a
-// no-op for planar meshes.
+// cell centers. Both the single-layer and the multi-layer form of the
+// operator are exercised. This currently only supports spherical meshes,
+// so it is a no-op for planar meshes.
 int testVectorRecon(Real RTol) {
    int Err = 0;
 
@@ -391,11 +392,10 @@ int testVectorRecon(Real RTol) {
 
    TestSetup Setup;
 
-   const auto &Mesh = HorzMesh::getDefault();
+   const auto &Mesh      = HorzMesh::getDefault();
+   const int NVertLayers = 16;
 
    // Prepare operator input: edge-normal component of the exact vector field
-   // (VectorReconOnCell currently only supports a single vertical
-   // layer, so we use rank-1 arrays here)
    Array1DReal VecEdge("VecEdge", Mesh->NEdgesSize);
    Err += setVectorEdge(
        KOKKOS_LAMBDA(Real(&VecField)[2], Real Lon, Real Lat) {
@@ -413,7 +413,7 @@ int testVectorRecon(Real RTol) {
        },
        ExactMagCell, Geom, Mesh, OnCell, ExchangeHalos::No);
 
-   // Compute numerical reconstruction at cell centers
+   // Compute numerical reconstruction at cell centers, single layer
    Array1DReal UReconX("UReconX", Mesh->NCellsOwned);
    Array1DReal UReconY("UReconY", Mesh->NCellsOwned);
    VectorReconOnCell ReconCell(Mesh);
@@ -435,6 +435,53 @@ int testVectorRecon(Real RTol) {
    // Check error values
    Err += checkErrors("OperatorsTest", "VectorRecon", ReconErrors,
                       Setup.ExpectedVectorReconErrors, RTol);
+
+   // Repeat with the multi-layer form of the operator. Each layer holds the
+   // exact field scaled by a layer-dependent factor, so a reconstruction
+   // that mixed layers or reused a single layer would show up as an error.
+   // Since the error measures are normalized by the exact field, a per-layer
+   // constant factor leaves them unchanged and the same expected errors
+   // apply as in the single-layer case above.
+   Array2DReal VecEdgeMulti("VecEdgeMulti", Mesh->NEdgesSize, NVertLayers);
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real Lon, Real Lat) {
+          VecField[0] = Setup.exactVecX(Lon, Lat);
+          VecField[1] = Setup.exactVecY(Lon, Lat);
+       },
+       VecEdgeMulti, EdgeComponent::Normal, Geom, Mesh);
+
+   parallelFor(
+       {Mesh->NEdgesSize, NVertLayers}, KOKKOS_LAMBDA(int IEdge, int K) {
+          VecEdgeMulti(IEdge, K) *= (1._Real + K);
+       });
+
+   Array2DReal ExactMagCellMulti("ExactMagCellMulti", Mesh->NCellsOwned,
+                                 NVertLayers);
+   parallelFor(
+       {Mesh->NCellsOwned, NVertLayers}, KOKKOS_LAMBDA(int ICell, int K) {
+          ExactMagCellMulti(ICell, K) = (1._Real + K) * ExactMagCell(ICell);
+       });
+
+   Array2DReal UReconXMulti("UReconXMulti", Mesh->NCellsOwned, NVertLayers);
+   Array2DReal UReconYMulti("UReconYMulti", Mesh->NCellsOwned, NVertLayers);
+   parallelFor(
+       {Mesh->NCellsOwned, NVertLayers}, KOKKOS_LAMBDA(int ICell, int K) {
+          ReconCell(UReconXMulti, UReconYMulti, ICell, K, VecEdgeMulti);
+       });
+
+   Array2DReal NumMagCellMulti("NumMagCellMulti", Mesh->NCellsOwned,
+                               NVertLayers);
+   parallelFor(
+       {Mesh->NCellsOwned, NVertLayers}, KOKKOS_LAMBDA(int ICell, int K) {
+          NumMagCellMulti(ICell, K) =
+              vecMagnitude(UReconXMulti(ICell, K), UReconYMulti(ICell, K));
+       });
+
+   ErrorMeasures ReconErrorsMulti;
+   Err += computeErrors(ReconErrorsMulti, NumMagCellMulti, ExactMagCellMulti,
+                        Mesh, OnCell);
+   Err += checkErrors("OperatorsTest", "VectorReconMultiLayer",
+                      ReconErrorsMulti, Setup.ExpectedVectorReconErrors, RTol);
 
    if (Err == 0) {
       LOG_INFO("OperatorsTest: VectorRecon PASS");

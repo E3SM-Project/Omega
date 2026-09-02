@@ -39,6 +39,17 @@ Currently, the following operators are implemented:
 - `TangentialReconOnEdge`
 - `VectorReconOnCell`
 
+`VectorReconOnCell` differs from the others in that it depends on
+least-squares stencil and weight arrays (`NEdgesReconOnCell`,
+`ReconStencilCell` and `ReconWeightsCell`) that are precomputed as a mesh
+preprocessing step rather than by Omega. Constructing the operator on a
+mesh whose file did not supply them (`HorzMesh::HasVectorRecon` is false)
+is an error. It works on both spherical and planar meshes: on a sphere it
+returns the local geographic (zonal and meridional) components, and on a
+plane the Cartesian x and y components. It provides a single-layer form
+and a form that takes a vertical index, for reconstructing one layer of
+a multi-layer field.
+
 Some tendency terms in the Omega PDE solver could in principle be constructed
 using these operators as building blocks. However, very often tendency terms
 require evaluation of slightly modified operators. Moreover, there is a
