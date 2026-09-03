@@ -512,6 +512,11 @@ function(omega_read_e3sm_macros)
   # USE_SYCL must come from here too.
   set(USE_SYCL "${USE_SYCL}" PARENT_SCOPE)
 
+  if(USE_SYCL)
+    set(SYCL_FLAGS "${SYCL_FLAGS}" PARENT_SCOPE)
+    set(OMEGA_SYCL_EXE_LINKER_FLAGS "${OMEGA_SYCL_EXE_LINKER_FLAGS}" PARENT_SCOPE)
+  endif()
+
 endfunction()
 
 # set build-control-variables for e3sm build
@@ -550,10 +555,38 @@ macro(setup_e3sm_build)
     endif()
   endif()
 
+  # NOTE:The following is intended as a temporary fix.
+  #
+  # The machine's SYCL settings reach Omega only through omega_read_e3sm_macros above.
+  # Apply only the part Kokkos does not already provide.
+  #
+  # Kokkos puts -fsycl, -fsycl-targets=spir64_gen and the matching
+  # -Xsycl-target-backend "-device ..." on every target that links it, through
+  # KOKKOS_COMPILE_OPTIONS -- which covers Omega's own sources. Putting the machine's
+  # copies into CMAKE_CXX_FLAGS instead reaches this whole subtree and breaks two
+  # unrelated things in it:
+  #   - configure-time try_compile probes inherit -fsycl-targets=spir64_gen with no
+  #     device, and ocloc fails with "Error: Device name missing."
+  #   - scorpio appends -std=c++14 to CMAKE_CXX_FLAGS (src/clib/CMakeLists.txt:363), so
+  #     its sources compile as "-fsycl -std=c++14" and fail the SYCL headers' C++17
+  #     static assert.
+  # What survives the filter is what Omega actually needs: on Aurora, -mlong-double-64,
+  # without which Omega's user-defined literals do not compile for spir64_gen.
+  if("${OMEGA_ARCH}" STREQUAL "SYCL")
+    if(SYCL_FLAGS)
+      string(REGEX REPLACE "(^| )-fsycl[^ ]*" " " OMEGA_MACHINE_SYCL_FLAGS " ${SYCL_FLAGS}")
+      string(STRIP "${OMEGA_MACHINE_SYCL_FLAGS}" OMEGA_MACHINE_SYCL_FLAGS)
+      if(OMEGA_MACHINE_SYCL_FLAGS)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OMEGA_MACHINE_SYCL_FLAGS}")
+      endif()
+    endif()
+  endif()
+
   set(OMEGA_BUILD_MODE "E3SM")
 
   message(STATUS "OMEGA_CXX_COMPILER = ${OMEGA_CXX_COMPILER}")
   message(STATUS "OMEGA_ARCH = ${OMEGA_ARCH}")
+  message(STATUS "OMEGA_CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
   message(STATUS "OMEGA_KOKKOS_OPTIONS = ${KOKKOS_OPTIONS}")
 
 endmacro()
