@@ -28,7 +28,8 @@ struct TestSetup {
        {"Foxx_sen", 1},   {"Foxx_lat", 2},   {"Foxx_lwup", 4},
        {"Faxa_lwdn", 5},  {"Fioi_salt", 6},  {"Fioi_melth", 7},
        {"Fioi_meltw", 9}, {"Faxa_snow", 10}, {"Faxa_rain", 11},
-       {"Foxx_evap", 12}, {"Foxx_rofl", 13}, {"Foxx_rofi", 14}};
+       {"Foxx_evap", 12}, {"Foxx_rofl", 13}, {"Foxx_rofi", 14},
+       {"Si_bpress", 15}, {"Sa_pslv", 16}};
    std::map<std::string, int> ExportIdxMap = {
        {"So_t", 2},    {"So_s", 4},    {"So_u", 6},  {"So_v", 9},
        {"So_dhdx", 5}, {"So_dhdy", 3}, {"So_ssh", 1}};
@@ -44,7 +45,7 @@ CouplingInitParams mockCouplingInitParams(
    TimeInterval CouplingTimeStep_ =
        CouplingTimeStep.value_or(DefTimeStepper->getTimeStep());
 
-   CouplingInitParams CouplingParams{.NImportFields    = 15,
+   CouplingInitParams CouplingParams{.NImportFields    = 17,
                                      .NExportFields    = 10,
                                      .ImportIdxMap     = Setup.ImportIdxMap,
                                      .ExportIdxMap     = Setup.ExportIdxMap,
@@ -117,7 +118,7 @@ int initSfcCouplingTest(const std::string &MeshFile) {
    Field::init(ModelClock);
    IOStream::init(ModelClock);
 
-   // TODO: Need to initialize halo? SfcCoupling has no lateral exchanges
+   // Initialize the halo used by the pressure import fields.
    int HaloErr = Halo::init();
    if (HaloErr != 0) {
       Err++;
@@ -181,6 +182,8 @@ int testImportFromCoupler(const CouplingLayout Layout) {
    fillImportField("Foxx_evap");
    fillImportField("Foxx_rofl");
    fillImportField("Foxx_rofi");
+   fillImportField("Si_bpress");
+   fillImportField("Sa_pslv");
 
    DefCoupling->attachData(CplToOcnData.data(), OcnToCplData.data());
    DefCoupling->importFromCoupler();
@@ -213,7 +216,10 @@ int testImportFromCoupler(const CouplingLayout Layout) {
        checkImportField(DefCoupling->CplToOcn.RainFluxH, "Faxa_rain") &&
        checkImportField(DefCoupling->CplToOcn.EvaporationFluxH, "Foxx_evap") &&
        checkImportField(DefCoupling->CplToOcn.RiverRunoffFluxH, "Foxx_rofl") &&
-       checkImportField(DefCoupling->CplToOcn.IceRunoffFluxH, "Foxx_rofi");
+       checkImportField(DefCoupling->CplToOcn.IceRunoffFluxH, "Foxx_rofi") &&
+       checkImportField(DefCoupling->CplToOcn.SeaIceBasalPressureH,
+                        "Si_bpress") &&
+       checkImportField(DefCoupling->CplToOcn.SeaLevelPressureH, "Sa_pslv");
 
    if (ImportPass) {
       LOG_INFO("SfcCouplingTest: importFromCoupler with {} layout PASS",

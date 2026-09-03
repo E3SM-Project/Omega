@@ -5,7 +5,7 @@ module omega_cpl_indices
    implicit none
    private
 
-   integer, parameter, public :: num_omega_imports = 15
+   integer, parameter, public :: num_omega_imports = 17
    integer, parameter, public :: num_omega_exports = 10
    integer, public :: num_coupler_imports, num_coupler_exports
 
@@ -56,6 +56,12 @@ contains
       import_field_names(13) = "Foxx_evap"
       import_field_names(14) = "Foxx_rofl"
       import_field_names(15) = "Foxx_rofi"
+      ! These fields are temporary imported. Long term plan is for seaice model
+      ! to import So_ssh directly (cf. So_dhdx / So_dhdy) and let it compute
+      ! the gradient directly. Pressure adjusment of the SSH, needed by seaice
+      ! model, will happen there aswell.
+      import_field_names(16) = "Si_bpress"
+      import_field_names(17) = "Sa_pslv"
 
       ! get mct_avect_index value for each import field name
       call get_indices_from_names( &
