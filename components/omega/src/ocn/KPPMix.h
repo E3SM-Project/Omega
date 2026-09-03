@@ -105,8 +105,11 @@ class KPPOSBLDepthSearch {
       // include any enthalpy from mass fluxes.
       const Real BuoyFlux = SurfaceBuoyancyFlux(ICell);
 
-      const I4 KMin     = MinLayerCell(ICell);
-      const I4 KMax     = MaxLayerCell(ICell);
+      const I4 KMin = MinLayerCell(ICell);
+      const I4 KMax = MaxLayerCell(ICell);
+      if (KMin < 0 || KMin >= NVertLayers || KMax < KMin) {
+         return;
+      }
       const I4 KIntTop  = Kokkos::min(KMin + 1, NVertLayers);
       const I4 KIntDeep = Kokkos::min(KMax + 1, NVertLayers);
 
@@ -591,13 +594,13 @@ class KPPOSBLCommit {
 
       // The sea-ice minimum is deliberately not reapplied here; it was
       // already enforced before smoothing.
-      const Real OBLDepth = KPP::kppClampOSBLDepth(
+      const Real OBLDepthValue = KPP::kppClampOSBLDepth(
           OSBLDepthSmooth(ICell), MinOBLDepth, MaxOBLDepth, false, 0.0_Real);
 
       const I4 KFinal =
-          KPP::kppOSBLIndex(ZInterface, ICell, KMin, KMax, Ssh, OSBLDepth);
+          KPP::kppOSBLIndex(ZInterface, ICell, KMin, KMax, Ssh, OBLDepthValue);
 
-      OSBLDepth(ICell)      = OSBLDepth;
+      OSBLDepth(ICell)      = OBLDepthValue;
       OSBLDepthIndex(ICell) = KFinal;
    }
 
@@ -829,10 +832,10 @@ class KPPMixingCoeffs {
          VertDiff(ICell, KTarget) = NewDiff;
 
          // Keep the non-local term consistent with the rescaled diffusivity
-         if (!TargetOutsideOBL && DiffProfile != 0.0_Real) {
+         if (!TargetOutsideOSBL && DiffProfile != 0.0_Real) {
             VertNonLocalFlux(ICell, KTarget) =
                 VertNonLocalFlux(ICell, KTarget) * NewDiff / DiffProfile;
-         } else if (!TargetOutsideOBL) {
+         } else if (!TargetOutsideOSBL) {
             VertNonLocalFlux(ICell, KTarget) = 0.0_Real;
          }
       }
@@ -980,7 +983,7 @@ class KPPMix {
    std::string VertDiffFldName;
    std::string VertViscFldName;
    std::string OSBLDepthFldName;
-   std::string OBLDepthIndexFldName;
+   std::string OSBLDepthIndexFldName;
    std::string NonLocalFluxFldName;
    std::string BulkRichardsonFldName;
    std::string BulkRichardsonShearFldName;

@@ -346,7 +346,7 @@ void KPPMix::logDiagnostics(const Array2DReal &PotentialDensity,
    const Real BuoyFluxEff = BuoyFlux * LangmuirFactor;
 
    const int KOblIface = Kokkos::min(
-       NVertLayers, Kokkos::max(KMin, static_cast<int>(OBLIndexH(ICell)) + 1));
+       NVertLayers, Kokkos::max(KMin, static_cast<int>(OSBLIndexH(ICell)) + 1));
 
    const int KTop   = Kokkos::min(KMax, KMin + 3);
    const int KOSBL  = OSBLIndexH(ICell);
@@ -366,14 +366,14 @@ void KPPMix::logDiagnostics(const Array2DReal &PotentialDensity,
           DeltaB * ZDepth / (WTurb * WTurb + KPP::NumericalTolerance);
 
       Real Sigma = 0.0_Real;
-      if (K <= KOBL) {
+      if (K <= KOSBL) {
          Sigma = -1.0_Real * static_cast<Real>(K - KMin) /
-                 static_cast<Real>(KOBL - KMin + 1);
+                 static_cast<Real>(KOSBL - KMin + 1);
          Sigma = Kokkos::fmax(-1.0_Real, Kokkos::fmin(0.0_Real, Sigma));
       }
 
       // Monin-Obukhov coordinate zeta = d/L at this depth
-      const Real ZLocal = -Sigma * HOBL;
+      const Real ZLocal = -Sigma * HOSBL;
       Real Zeta         = 0.0_Real;
       const Real Denom  = VonKar * BuoyFlux;
       if (Kokkos::abs(Denom) > 1.0e-16_Real) {
@@ -399,6 +399,8 @@ void KPPMix::computeOSBLDepth(const Array2DReal &PotentialDensity,
                               const Array2DReal &BruntVaisalaFreqSq,
                               const Array1DReal &IceFraction,
                               const Array1DReal &WindSpeed10m) {
+
+   const I4 NVertLayers = VCoord->NVertLayers;
 
    // =======================================================================
    // Compute Langmuir enhancement factors if wind speed is available
@@ -442,11 +444,23 @@ void KPPMix::computeOSBLDepth(const Array2DReal &PotentialDensity,
    OMEGA_SCOPE(LocBulkRichardsonShear, BulkRichardsonShear);
    OMEGA_SCOPE(LocUnresolvedShear, UnresolvedShear);
    OMEGA_SCOPE(LocBuoyancyJump, BuoyancyJump);
+   OMEGA_SCOPE(LocMinLayerCell, VCoord->MinLayerCell);
+   OMEGA_SCOPE(LocMaxLayerCell, VCoord->MaxLayerCell);
 
-   deepCopy(BulkRichardsonNumber, 0.0_Real);
-   deepCopy(BulkRichardsonShear, 0.0_Real);
-   deepCopy(UnresolvedShear, 0.0_Real);
-   deepCopy(BuoyancyJump, 0.0_Real);
+   parallelFor(
+       "KPP-OSBLDiagnostics-Init", {Mesh->NCellsAll, NVertLayers + 1},
+       KOKKOS_LAMBDA(I4 ICell, I4 K) {
+          const I4 KMin = LocMinLayerCell(ICell);
+          const I4 KMax = LocMaxLayerCell(ICell);
+          const bool IsValidCell =
+              KMin >= 0 && KMin < NVertLayers && KMax >= KMin;
+          if (IsValidCell && K >= KMin && K <= KMax + 1) {
+             LocBulkRichardson(ICell, K)      = 0.0_Real;
+             LocBulkRichardsonShear(ICell, K) = 0.0_Real;
+             LocUnresolvedShear(ICell, K)     = 0.0_Real;
+             LocBuoyancyJump(ICell, K)        = 0.0_Real;
+          }
+       });
 
    parallelFor(
        "KPP-OSBLDepth", {Mesh->NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
@@ -505,6 +519,8 @@ void KPPMix::computeMixingCoefficients(
    OMEGA_SCOPE(LocSurfBuoyFlux, SurfaceBuoyancyFlux);
    OMEGA_SCOPE(LocInteriorVertDiff, InteriorVertDiff);
    OMEGA_SCOPE(LocInteriorVertVisc, InteriorVertVisc);
+   OMEGA_SCOPE(LocMinLayerCell, VCoord->MinLayerCell);
+   OMEGA_SCOPE(LocMaxLayerCell, VCoord->MaxLayerCell);
 
    // =======================================================================
    // Initialize with zero KPP contribution, or precomputed interior mixing for
@@ -516,9 +532,15 @@ void KPPMix::computeMixingCoefficients(
    parallelFor(
        "KPP-Coeffs-Init", {Mesh->NCellsAll, NVertLayers + 1},
        KOKKOS_LAMBDA(I4 ICell, I4 K) {
-          CoeffsInit(LocVertDiff, LocVertVisc, LocVertNonLocalFlux,
-                     LocTurbulentVelocityScale, ICell, K, LocInteriorVertDiff,
-                     LocInteriorVertVisc);
+          const I4 KMin = LocMinLayerCell(ICell);
+          const I4 KMax = LocMaxLayerCell(ICell);
+          const bool IsValidCell =
+              KMin >= 0 && KMin < NVertLayers && KMax >= KMin;
+          if (IsValidCell && K >= KMin && K <= KMax + 1) {
+             CoeffsInit(LocVertDiff, LocVertVisc, LocVertNonLocalFlux,
+                        LocTurbulentVelocityScale, ICell, K,
+                        LocInteriorVertDiff, LocInteriorVertVisc);
+          }
        });
 
    // =======================================================================
@@ -685,16 +707,14 @@ void KPPMix::defineFields() {
    KPPGroup->addField(SurfFricVelFldName);
    KPPGroup->addField(SurfBuoyFluxFldName);
 
-   OSBLDepthField->attachData<Array1DReal>(OSBLDepth, false);
-   OSBLDepthIndexField->attachData<Array1DI4>(OSBLDepthIndex, false);
-   NonLocalFluxField->attachData<Array2DReal>(VertNonLocalFlux, false);
-   BulkRichardsonField->attachData<Array2DReal>(BulkRichardsonNumber, false);
-   BulkRichardsonShearField->attachData<Array2DReal>(BulkRichardsonShear,
-                                                     false);
-   UnresolvedShearField->attachData<Array2DReal>(UnresolvedShear, false);
-   BuoyancyJumpField->attachData<Array2DReal>(BuoyancyJump, false);
-   TurbulentVelScaleField->attachData<Array2DReal>(TurbulentVelocityScale,
-                                                   false);
+   OSBLDepthField->attachData<Array1DReal>(OSBLDepth);
+   OSBLDepthIndexField->attachData<Array1DI4>(OSBLDepthIndex);
+   NonLocalFluxField->attachData<Array2DReal>(VertNonLocalFlux);
+   BulkRichardsonField->attachData<Array2DReal>(BulkRichardsonNumber);
+   BulkRichardsonShearField->attachData<Array2DReal>(BulkRichardsonShear);
+   UnresolvedShearField->attachData<Array2DReal>(UnresolvedShear);
+   BuoyancyJumpField->attachData<Array2DReal>(BuoyancyJump);
+   TurbulentVelScaleField->attachData<Array2DReal>(TurbulentVelocityScale);
    PotentialDensityField->attachData<Array2DReal>(PotentialDensity, false);
 
    // Surface forcing fields on cells

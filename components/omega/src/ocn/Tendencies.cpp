@@ -13,6 +13,7 @@
 #include "Eos.h"
 #include "Error.h"
 #include "Field.h"
+#include "FillValues.h"
 #include "Forcing.h"
 #include "HorzOperators.h"
 #include "KPPMix.h"
@@ -438,14 +439,12 @@ void Tendencies::defineFields() {
    std::string PseudoThicknessTendFieldName = "PseudoThicknessTend";
    std::string NormalVelocityTendFieldName  = "NormalVelocityTend";
    std::string TracerTendFieldName          = "TracerTend";
-   std::string SurfaceTracerFluxFieldName   = "SurfaceTracerFlux";
    std::string TempNonLocalDiagFieldName    = "TempNonLocalTendDiag";
    std::string TempNonLocalColSumFieldName  = "TempNonLocalColumnSumDiag";
    if (Name != "Default") {
       PseudoThicknessTendFieldName.append(Name);
       NormalVelocityTendFieldName.append(Name);
       TracerTendFieldName.append(Name);
-      SurfaceTracerFluxFieldName.append(Name);
       TempNonLocalDiagFieldName.append(Name);
       TempNonLocalColSumFieldName.append(Name);
    }
@@ -476,14 +475,6 @@ void Tendencies::defineFields() {
                      9.99E+10, NDims, DimNamesVelocity);
 
    NDims = 2;
-   std::vector<std::string> DimNamesSurfaceFlux(NDims);
-   DimNamesSurfaceFlux[0] = "NTracers";
-   DimNamesSurfaceFlux[1] = "NCells";
-   auto SurfaceTracerFluxField =
-       Field::create(SurfaceTracerFluxFieldName, "Surface tracer flux", "1", "",
-                     -9.99E+10, 9.99E+10, NDims, DimNamesSurfaceFlux);
-
-   NDims = 2;
    std::vector<std::string> DimNamesTempDiag(NDims);
    DimNamesTempDiag[0] = "NCells";
    DimNamesTempDiag[1] = "NVertLayers";
@@ -509,14 +500,12 @@ void Tendencies::defineFields() {
    TendGroup->addField(PseudoThicknessTendFieldName);
    TendGroup->addField(NormalVelocityTendFieldName);
    TendGroup->addField(TracerTendFieldName);
-   TendGroup->addField(SurfaceTracerFluxFieldName);
    TendGroup->addField(TempNonLocalDiagFieldName);
    TendGroup->addField(TempNonLocalColSumFieldName);
 
    PseudoThicknessTendField->attachData<Array2DReal>(PseudoThicknessTend);
    NormalVelocityTendField->attachData<Array2DReal>(NormalVelocityTend);
    TracerTendField->attachData<Array3DReal>(TracerTend);
-   SurfaceTracerFluxField->attachData<Array2DReal>(SurfaceTracerFlux, false);
    TempNonLocalDiagField->attachData<Array2DReal>(TempNonLocalTendDiag, false);
    TempNonLocalColSumField->attachData<Array1DReal>(TempNonLocalColumnSumDiag,
                                                     false);
@@ -561,13 +550,10 @@ Tendencies::Tendencies(const std::string &Name_, ///< [in] Name for tendencies
        Array2DReal("NormalVelocityTend", Mesh->NEdgesSize, VCoord->NVertLayers);
    TracerTend = Array3DReal("TracerTend", NTracersIn, Mesh->NCellsSize,
                             VCoord->NVertLayers);
-   SurfaceTracerFlux =
-       Array2DReal("SurfaceTracerFlux", NTracersIn, Mesh->NCellsAll);
    TempNonLocalTendDiag = Array2DReal("TempNonLocalTendDiag", Mesh->NCellsSize,
                                       VCoord->NVertLayers);
    TempNonLocalColumnSumDiag =
        Array1DReal("TempNonLocalColumnSumDiag", Mesh->NCellsSize);
-   deepCopy(SurfaceTracerFlux, 0.0_Real);
    deepCopy(TempNonLocalTendDiag, 0.0_Real);
    deepCopy(TempNonLocalColumnSumDiag, 0.0_Real);
 
@@ -909,7 +895,6 @@ void Tendencies::computeTracerTendenciesOnly(
    OMEGA_SCOPE(LocTracerDiffusion, TracerDiffusion);
    OMEGA_SCOPE(LocTracerHyperDiff, TracerHyperDiff);
    OMEGA_SCOPE(LocSurfaceTracerRestoring, SurfaceTracerRestoring);
-   OMEGA_SCOPE(LocSurfaceTracerFlux, SurfaceTracerFlux);
    OMEGA_SCOPE(LocSfcTracerForcing, SfcTracerForcing);
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
@@ -1036,6 +1021,11 @@ void Tendencies::computeTracerTendenciesOnly(
    if (TracerNonLocalFluxEnabled) {
       KPPMix *KPPInstance = KPPMix::getInstance();
       if (KPPInstance && KPPInstance->Enabled) {
+         const auto *ForcingState = Forcing::getDefault();
+         OMEGA_REQUIRE(ForcingState,
+                       "KPP non-local tracer tendency requires Forcing");
+         const auto &SurfaceTracerFlux =
+             ForcingState->TracerForcing.SurfaceTracerFluxCell;
          Pacer::start("Tend:tracerNonLocalFlux", 2);
          OMEGA_SCOPE(LocNonLocalFlux, KPPInstance->VertNonLocalFlux);
          parallelForOuter(
@@ -1051,7 +1041,7 @@ void Tendencies::computeTracerTendenciesOnly(
                        for (int KVec = 0; KVec < KLen; ++KVec) {
                           const I4 K = KStart + KVec;
                           const Real NonLocalTend =
-                              LocSurfaceTracerFlux(L, ICell) *
+                              SurfaceTracerFlux(L, ICell) *
                               (LocNonLocalFlux(ICell, K) -
                                LocNonLocalFlux(ICell, K + 1));
                           LocTracerTend(L, ICell, K) += NonLocalTend;
@@ -1075,7 +1065,7 @@ void Tendencies::computeTracerTendenciesOnly(
                        Team, Range{KMin, KMax},
                        [&](int K, Real &LocalSum) {
                           const Real NonLocalTend =
-                              LocSurfaceTracerFlux(LocTempTracerIndex, ICell) *
+                              SurfaceTracerFlux(LocTempTracerIndex, ICell) *
                               (LocNonLocalFlux(ICell, K) -
                                LocNonLocalFlux(ICell, K + 1));
                           LocalSum += NonLocalTend;
@@ -1249,16 +1239,6 @@ void Tendencies::computeAllTendencies(
 } // end all tendency compute
 
 //------------------------------------------------------------------------------
-// Set surface tracer flux for use by KPP non-local tracer tendency
-void Tendencies::setSurfaceTracerFlux(const Array2DReal &Flux) {
-   OMEGA_REQUIRE(Flux.extent(0) == SurfaceTracerFlux.extent(0),
-                 "Tendencies::setSurfaceTracerFlux: tracer dimension mismatch");
-   OMEGA_REQUIRE(Flux.extent(1) == SurfaceTracerFlux.extent(1),
-                 "Tendencies::setSurfaceTracerFlux: cell dimension mismatch");
-   Kokkos::deep_copy(SurfaceTracerFlux, Flux);
-}
-
-//------------------------------------------------------------------------------
 // Prepare KPP state for the current time step. Final VertDiff/VertVisc
 // coefficient assembly is owned by VertMix::computeVertMix.
 void Tendencies::computeKPPFields(const OceanState *State,
@@ -1354,18 +1334,12 @@ void Tendencies::computeKPPFields(const OceanState *State,
    const auto &SfcStress     = ForcingState->SfcStressForcing;
    const auto &TracerForcing = ForcingState->TracerForcing;
 
-   KPPSurfaceForcing.UpdateSurfaceTracerFlux = TracerNonLocalFluxEnabled;
-   KPPSurfaceForcing.UseTracerForcing        = SfcTracerForcing.Enabled;
-
-   if (TracerNonLocalFluxEnabled) {
-      deepCopy(SurfaceTracerFlux, 0.0_Real);
-   }
-   deepCopy(KPPInstance->SurfaceBuoyancyFlux, 0.0_Real);
+   KPPSurfaceForcing.UseTracerForcing = SfcTracerForcing.Enabled;
 
    OMEGA_SCOPE(LocKPPSurfaceForcing, KPPSurfaceForcing);
    OMEGA_SCOPE(LocFrictionVelocity, KPPInstance->SurfaceFrictionVelocity);
    OMEGA_SCOPE(LocBuoyancyFlux, KPPInstance->SurfaceBuoyancyFlux);
-   OMEGA_SCOPE(LocSurfaceTracerFlux, SurfaceTracerFlux);
+   OMEGA_SCOPE(LocSurfaceTracerFlux, TracerForcing.SurfaceTracerFluxCell);
    OMEGA_SCOPE(IceFraction, KPPIceFraction);
    OMEGA_SCOPE(LocSpecVol, EqState->SpecVol);
    OMEGA_SCOPE(ZonalStress, SfcStress.ZonalStressCell);
@@ -1395,6 +1369,27 @@ void Tendencies::computeKPPFields(const OceanState *State,
               EvaporationFlux, SeaIceFreshWaterFlux, IceRunoffFlux,
               RiverRunoffFlux, SeaIceSaltFlux);
        });
+
+   if (TracerNonLocalFluxEnabled) {
+      OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
+      OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
+      I4 MissingFluxCount = 0;
+      parallelReduce(
+          "KPP-ValidateSurfaceTracerFlux", {NTracers, NCellsAll},
+          KOKKOS_LAMBDA(I4 L, I4 ICell, I4 & Count) {
+             const I4 KMin = MinLayerCell(ICell);
+             const I4 KMax = MaxLayerCell(ICell);
+             if (KMin >= 0 && KMax >= KMin &&
+                 LocSurfaceTracerFlux(L, ICell) == FillValueReal) {
+                ++Count;
+             }
+          },
+          MissingFluxCount);
+      OMEGA_REQUIRE(MissingFluxCount == 0,
+                    "KPP non-local mixing requires a surface tracer flux for "
+                    "every active tracer and cell; {} entries are missing",
+                    MissingFluxCount);
+   }
 
    Array1DReal WindSpeed10m;
    KPPInstance->computeKPPMix(

@@ -70,6 +70,11 @@ the surface layer pseudo-thickness.
   - Stores 13 coupled flux cell-centered fields: 6 freshwater fluxes, 6 heat
     fluxes, and 1 salt flux component
   - Fields initialized to zero and registered in `Forcing` field group
+  - Stores `SurfaceTracerFlux[NTracers, NCells]`, the unified forcing input
+    for KPP non-local tracer mixing. External forcing supplies every
+    non-temperature/salinity tracer flux explicitly; an explicit zero is a
+    valid flux. KPP derives temperature and salinity from the heat and mass
+    flux components and overwrites those two entries before using the field.
 - `SfcThicknessForcingOnCell` tendency term
   - Computes the layer mass contribution (converted to pseudo-thickness): $\sum (\text{SnowFlux} + \text{RainFlux} + \text{EvaporationFlux} + \text{SeaIceFreshWaterFlux} + \text{IceRunoffFlux} + \text{RiverRunoffFlux} + \text{SeaIceSaltFlux}) / \rho_{sw}$
   - Applied only at surface layer (top active layer) using `MinLayerCell`
@@ -101,6 +106,16 @@ the surface layer pseudo-thickness.
 
 - Currently all forcing is applied to the surface layer only. In the future, vertical spreading of river runoff contributions will be needed.
 - `SeaIceFreshWaterFlux` is the pure freshwater mass from sea ice. The full mass flux from sea ice is `SeaIceFreshWaterFlux + SeaIceSaltFlux`
+- When `TracerNonLocalFluxTendencyEnable` is true, every active
+  `SurfaceTracerFlux` entry must be supplied for the current forcing step.
+  KPP validates this after inserting its temperature and salinity fluxes and
+  aborts if an active entry retains its fill value. This prevents a missing
+  carbon or passive-tracer flux from becoming a non-local tendency.
+- Coupled callers update the full field with `Forcing::setSurfaceTracerFlux`.
+  They supply every non-temperature/salinity entry; KPP overwrites the two
+  reserved temperature and salinity entries. Partial non-temperature/salinity
+  updates are not supported, so omitted values cannot persist from a previous
+  forcing step.
 
 ## Surface tracer restoring design
 

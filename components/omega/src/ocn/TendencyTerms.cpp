@@ -98,8 +98,8 @@ KPPSurfaceForcingOnCell::KPPSurfaceForcingOnCell(const HorzMesh *Mesh,
     : TempIndex(TempTracerIndex), SaltIndex(SaltTracerIndex),
       LinearDRhodT(EosInst->getLinearDRhodT()),
       LinearDRhodS(EosInst->getLinearDRhodS()),
-      MinLayerCell(VCoord->MinLayerCell), EosChoice(EosInst->EosChoice),
-      Teos10Coeff(VCoord) {}
+      NVertLayers(VCoord->NVertLayers), MinLayerCell(VCoord->MinLayerCell),
+      EosChoice(EosInst->EosChoice), Teos10Coeff(VCoord) {}
 
 TracerHorzAdvOnCell::TracerHorzAdvOnCell(const HorzMesh *Mesh,
                                          const VertCoord *VCoord)

@@ -24,7 +24,9 @@ TracerForcingVars::TracerForcingVars(const std::string &Suffix,
                                Mesh->NCellsSize),
       SeaIceHeatFluxCell("SeaIceHeatFlux" + Suffix, Mesh->NCellsSize),
       ShortWaveHeatFluxCell("ShortWaveHeatFlux" + Suffix, Mesh->NCellsSize),
-      SeaIceSaltFluxCell("SeaIceSaltFlux" + Suffix, Mesh->NCellsSize) {
+      SeaIceSaltFluxCell("SeaIceSaltFlux" + Suffix, Mesh->NCellsSize),
+      SurfaceTracerFluxCell("SurfaceTracerFlux" + Suffix,
+                            Tracers::getNumTracers(), Mesh->NCellsSize) {
    deepCopy(SnowFluxCell, 0.0_Real);
    deepCopy(RainFluxCell, 0.0_Real);
    deepCopy(EvaporationFluxCell, 0.0_Real);
@@ -108,6 +110,17 @@ void TracerForcingVars::registerFields(const std::string &MeshName) const {
                      "kg m^-2 s^-1", "", std::numeric_limits<Real>::lowest(),
                      std::numeric_limits<Real>::max(), NDims, DimNames);
 
+   const int NTracerDims = 2;
+   std::vector<std::string> TracerFluxDims(NTracerDims);
+   TracerFluxDims[0]           = "NTracers";
+   TracerFluxDims[1]           = "NCells" + DimSuffix;
+   auto SurfaceTracerFluxField = Field::create(
+       SurfaceTracerFluxCell.label(),
+       "surface tracer flux for KPP non-local mixing", "1", "",
+       std::numeric_limits<Real>::lowest(), std::numeric_limits<Real>::max(),
+       NTracerDims, TracerFluxDims);
+   SurfaceTracerFluxField->setOptionalRead(true);
+
    FieldGroup::addFieldToGroup(SnowFluxCell.label(), "Forcing");
    FieldGroup::addFieldToGroup(RainFluxCell.label(), "Forcing");
    FieldGroup::addFieldToGroup(EvaporationFluxCell.label(), "Forcing");
@@ -121,6 +134,7 @@ void TracerForcingVars::registerFields(const std::string &MeshName) const {
    FieldGroup::addFieldToGroup(SeaIceHeatFluxCell.label(), "Forcing");
    FieldGroup::addFieldToGroup(ShortWaveHeatFluxCell.label(), "Forcing");
    FieldGroup::addFieldToGroup(SeaIceSaltFluxCell.label(), "Forcing");
+   FieldGroup::addFieldToGroup(SurfaceTracerFluxCell.label(), "Forcing");
 
    SnowFluxField->attachData<Array1DReal>(SnowFluxCell);
    RainFluxField->attachData<Array1DReal>(RainFluxCell);
@@ -135,6 +149,7 @@ void TracerForcingVars::registerFields(const std::string &MeshName) const {
    SeaIceHeatFluxField->attachData<Array1DReal>(SeaIceHeatFluxCell);
    ShortWaveHeatFluxField->attachData<Array1DReal>(ShortWaveHeatFluxCell);
    SeaIceSaltFluxField->attachData<Array1DReal>(SeaIceSaltFluxCell);
+   SurfaceTracerFluxField->attachData<Array2DReal>(SurfaceTracerFluxCell);
 }
 
 void TracerForcingVars::unregisterFields() const {
@@ -151,5 +166,6 @@ void TracerForcingVars::unregisterFields() const {
    Field::destroy(SeaIceHeatFluxCell.label());
    Field::destroy(ShortWaveHeatFluxCell.label());
    Field::destroy(SeaIceSaltFluxCell.label());
+   Field::destroy(SurfaceTracerFluxCell.label());
 }
 } // namespace OMEGA

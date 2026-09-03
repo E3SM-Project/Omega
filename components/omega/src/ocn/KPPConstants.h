@@ -35,7 +35,9 @@ constexpr Real ZetaS = -1.0_Real;
 
 // The four constants below are fixed by requiring the strongly-unstable
 // branch to match the weakly-unstable branch in value at the transition zeta.
-
+// These constants should be treated as fixed, they are fits to previous
+// field data for the surface layer under varying forcing conditions
+//
 /// a_m = (1-16*ZetaM)^{-0.25} * (1 - 4*ZetaM)
 constexpr Real AMoM = 1.2573615702_Real;
 /// c_m = (1-16*ZetaM)^{-0.25} * 12

@@ -107,6 +107,10 @@ surface layer.  As in MPAS-Ocean, we include two options to determine the final 
 version of KPP matches predicted viscosities and diffusivities to those predicted by other schemes
 (e.g., shear instability driven mixing) and a second option where viscosities and diffusivities are
 instead additive.  In the latter case, the shape function greatly simplifies to $X(\sigma) = \sigma(1-\sigma)^2.
+When diffusivities and viscosities are matched at the OSBL base, only KPP is active in the OSBL.  When
+diffusivities and viscosities are not matched, we assume that convective diffusivities are not applied
+in the OSBL.  KPP and convective mixing target the same physical processes in the OSBL, so including
+both is double counting.
 
 For either shape function, enhanced diffusivity can be included near the boundary layer base.  This can smooth boundary layer deepening in time.
 

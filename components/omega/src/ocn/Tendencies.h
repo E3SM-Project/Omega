@@ -83,10 +83,6 @@ class Tendencies {
    PotentialDensityOnCell PotentialDensityCalc;
    KPPSurfaceForcingOnCell KPPSurfaceForcing;
 
-   // Surface tracer flux used for KPP non-local tracer tendency [NTracers,
-   // NCellsAll]
-   Array2DReal SurfaceTracerFlux;
-
    // Diagnostics for temperature forcing pathways used in KPP comparison.
    // These are raw contributions added to TracerTend before tracer update.
    Array2DReal TempNonLocalTendDiag;
@@ -145,8 +141,6 @@ class Tendencies {
                                     const Array3DReal &TracerArray,
                                     int ThickTimeLevel, int VelTimeLevel,
                                     TimeInstant Time);
-
-   void setSurfaceTracerFlux(const Array2DReal &Flux);
 
    // Computes KPP boundary layer depth, coefficients and non-local flux.
    // Called once per time step by the active time stepper.
