@@ -194,25 +194,25 @@ int testImportFromCoupler(const CouplingLayout Layout) {
    };
 
    auto ImportPass =
-       checkImportField(DefCoupling->CplToOcn.SfcStressZonal, "Foxx_taux") &&
-       checkImportField(DefCoupling->CplToOcn.SfcStressMerid, "Foxx_tauy") &&
-       checkImportField(DefCoupling->CplToOcn.ShortWaveHeatFlux,
+       checkImportField(DefCoupling->CplToOcn.SfcStressZonalH, "Foxx_taux") &&
+       checkImportField(DefCoupling->CplToOcn.SfcStressMeridH, "Foxx_tauy") &&
+       checkImportField(DefCoupling->CplToOcn.ShortWaveHeatFluxH,
                         "Foxx_swnet") &&
-       checkImportField(DefCoupling->CplToOcn.SensibleHeatFlux, "Foxx_sen") &&
-       checkImportField(DefCoupling->CplToOcn.LatentHeatFlux, "Foxx_lat") &&
-       checkImportField(DefCoupling->CplToOcn.LongWaveHeatFluxUp,
+       checkImportField(DefCoupling->CplToOcn.SensibleHeatFluxH, "Foxx_sen") &&
+       checkImportField(DefCoupling->CplToOcn.LatentHeatFluxH, "Foxx_lat") &&
+       checkImportField(DefCoupling->CplToOcn.LongWaveHeatFluxUpH,
                         "Foxx_lwup") &&
-       checkImportField(DefCoupling->CplToOcn.LongWaveHeatFluxDown,
+       checkImportField(DefCoupling->CplToOcn.LongWaveHeatFluxDownH,
                         "Faxa_lwdn") &&
-       checkImportField(DefCoupling->CplToOcn.SeaIceSaltFlux, "Fioi_salt") &&
-       checkImportField(DefCoupling->CplToOcn.SeaIceHeatFlux, "Fioi_melth") &&
-       checkImportField(DefCoupling->CplToOcn.SeaIceFreshWaterFlux,
+       checkImportField(DefCoupling->CplToOcn.SeaIceSaltFluxH, "Fioi_salt") &&
+       checkImportField(DefCoupling->CplToOcn.SeaIceHeatFluxH, "Fioi_melth") &&
+       checkImportField(DefCoupling->CplToOcn.SeaIceFreshWaterFluxH,
                         "Fioi_meltw") &&
-       checkImportField(DefCoupling->CplToOcn.SnowFlux, "Faxa_snow") &&
-       checkImportField(DefCoupling->CplToOcn.RainFlux, "Faxa_rain") &&
-       checkImportField(DefCoupling->CplToOcn.EvaporationFlux, "Foxx_evap") &&
-       checkImportField(DefCoupling->CplToOcn.RiverRunoffFlux, "Foxx_rofl") &&
-       checkImportField(DefCoupling->CplToOcn.IceRunoffFlux, "Foxx_rofi");
+       checkImportField(DefCoupling->CplToOcn.SnowFluxH, "Faxa_snow") &&
+       checkImportField(DefCoupling->CplToOcn.RainFluxH, "Faxa_rain") &&
+       checkImportField(DefCoupling->CplToOcn.EvaporationFluxH, "Foxx_evap") &&
+       checkImportField(DefCoupling->CplToOcn.RiverRunoffFluxH, "Foxx_rofl") &&
+       checkImportField(DefCoupling->CplToOcn.IceRunoffFluxH, "Foxx_rofi");
 
    if (ImportPass) {
       LOG_INFO("SfcCouplingTest: importFromCoupler with {} layout PASS",
@@ -254,21 +254,21 @@ int testApplyImportFields() {
       deepCopy(Field, Expected);
    };
 
-   setImportField(DefCoupling->CplToOcn.SfcStressZonal, "Foxx_taux");
-   setImportField(DefCoupling->CplToOcn.SfcStressMerid, "Foxx_tauy");
-   setImportField(DefCoupling->CplToOcn.ShortWaveHeatFlux, "Foxx_swnet");
-   setImportField(DefCoupling->CplToOcn.SensibleHeatFlux, "Foxx_sen");
-   setImportField(DefCoupling->CplToOcn.LatentHeatFlux, "Foxx_lat");
-   setImportField(DefCoupling->CplToOcn.LongWaveHeatFluxUp, "Foxx_lwup");
-   setImportField(DefCoupling->CplToOcn.LongWaveHeatFluxDown, "Faxa_lwdn");
-   setImportField(DefCoupling->CplToOcn.SeaIceSaltFlux, "Fioi_salt");
-   setImportField(DefCoupling->CplToOcn.SeaIceHeatFlux, "Fioi_melth");
-   setImportField(DefCoupling->CplToOcn.SeaIceFreshWaterFlux, "Fioi_meltw");
-   setImportField(DefCoupling->CplToOcn.SnowFlux, "Faxa_snow");
-   setImportField(DefCoupling->CplToOcn.RainFlux, "Faxa_rain");
-   setImportField(DefCoupling->CplToOcn.EvaporationFlux, "Foxx_evap");
-   setImportField(DefCoupling->CplToOcn.RiverRunoffFlux, "Foxx_rofl");
-   setImportField(DefCoupling->CplToOcn.IceRunoffFlux, "Foxx_rofi");
+   setImportField(DefCoupling->CplToOcn.SfcStressZonalH, "Foxx_taux");
+   setImportField(DefCoupling->CplToOcn.SfcStressMeridH, "Foxx_tauy");
+   setImportField(DefCoupling->CplToOcn.ShortWaveHeatFluxH, "Foxx_swnet");
+   setImportField(DefCoupling->CplToOcn.SensibleHeatFluxH, "Foxx_sen");
+   setImportField(DefCoupling->CplToOcn.LatentHeatFluxH, "Foxx_lat");
+   setImportField(DefCoupling->CplToOcn.LongWaveHeatFluxUpH, "Foxx_lwup");
+   setImportField(DefCoupling->CplToOcn.LongWaveHeatFluxDownH, "Faxa_lwdn");
+   setImportField(DefCoupling->CplToOcn.SeaIceSaltFluxH, "Fioi_salt");
+   setImportField(DefCoupling->CplToOcn.SeaIceHeatFluxH, "Fioi_melth");
+   setImportField(DefCoupling->CplToOcn.SeaIceFreshWaterFluxH, "Fioi_meltw");
+   setImportField(DefCoupling->CplToOcn.SnowFluxH, "Faxa_snow");
+   setImportField(DefCoupling->CplToOcn.RainFluxH, "Faxa_rain");
+   setImportField(DefCoupling->CplToOcn.EvaporationFluxH, "Foxx_evap");
+   setImportField(DefCoupling->CplToOcn.RiverRunoffFluxH, "Foxx_rofl");
+   setImportField(DefCoupling->CplToOcn.IceRunoffFluxH, "Foxx_rofi");
 
    DefCoupling->applyImportFields(DefForcing);
 

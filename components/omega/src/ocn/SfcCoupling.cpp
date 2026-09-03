@@ -220,21 +220,21 @@ void SfcCoupling::importFromCoupler() {
 
    // Copy Kokkos view handles
    auto CplToOcnView_         = CplToOcnView;
-   auto SfcStressZonal_       = CplToOcn.SfcStressZonal;
-   auto SfcStressMerid_       = CplToOcn.SfcStressMerid;
-   auto SnowFlux_             = CplToOcn.SnowFlux;
-   auto RainFlux_             = CplToOcn.RainFlux;
-   auto EvaporationFlux_      = CplToOcn.EvaporationFlux;
-   auto SeaIceFreshWaterFlux_ = CplToOcn.SeaIceFreshWaterFlux;
-   auto IceRunoffFlux_        = CplToOcn.IceRunoffFlux;
-   auto RiverRunoffFlux_      = CplToOcn.RiverRunoffFlux;
-   auto LatentHeatFlux_       = CplToOcn.LatentHeatFlux;
-   auto SensibleHeatFlux_     = CplToOcn.SensibleHeatFlux;
-   auto LongWaveHeatFluxUp_   = CplToOcn.LongWaveHeatFluxUp;
-   auto LongWaveHeatFluxDown_ = CplToOcn.LongWaveHeatFluxDown;
-   auto SeaIceHeatFlux_       = CplToOcn.SeaIceHeatFlux;
-   auto ShortWaveHeatFlux_    = CplToOcn.ShortWaveHeatFlux;
-   auto SeaIceSaltFlux_       = CplToOcn.SeaIceSaltFlux;
+   auto SfcStressZonal_       = CplToOcn.SfcStressZonalH;
+   auto SfcStressMerid_       = CplToOcn.SfcStressMeridH;
+   auto SnowFlux_             = CplToOcn.SnowFluxH;
+   auto RainFlux_             = CplToOcn.RainFluxH;
+   auto EvaporationFlux_      = CplToOcn.EvaporationFluxH;
+   auto SeaIceFreshWaterFlux_ = CplToOcn.SeaIceFreshWaterFluxH;
+   auto IceRunoffFlux_        = CplToOcn.IceRunoffFluxH;
+   auto RiverRunoffFlux_      = CplToOcn.RiverRunoffFluxH;
+   auto LatentHeatFlux_       = CplToOcn.LatentHeatFluxH;
+   auto SensibleHeatFlux_     = CplToOcn.SensibleHeatFluxH;
+   auto LongWaveHeatFluxUp_   = CplToOcn.LongWaveHeatFluxUpH;
+   auto LongWaveHeatFluxDown_ = CplToOcn.LongWaveHeatFluxDownH;
+   auto SeaIceHeatFlux_       = CplToOcn.SeaIceHeatFluxH;
+   auto ShortWaveHeatFlux_    = CplToOcn.ShortWaveHeatFluxH;
+   auto SeaIceSaltFlux_       = CplToOcn.SeaIceSaltFluxH;
 
    /// TODO: Shouldn't be making direct calls to Kokkos here.
    ///       How often is threading used? Becuase this will be a serial loop
@@ -314,36 +314,36 @@ void SfcCoupling::applyImportFields(Forcing *Forcing) {
    // Copy is only done over the owned cells, since thats all the SfcCoupling
    // data is defined over. Forcing will be responsible for halo exchanges.
    deepCopy(ownedSubView(Forcing->SfcStressForcing.ZonalStressCell),
-            CplToOcn.SfcStressZonal);
+            CplToOcn.SfcStressZonalH);
    deepCopy(ownedSubView(Forcing->SfcStressForcing.MeridStressCell),
-            CplToOcn.SfcStressMerid);
+            CplToOcn.SfcStressMeridH);
 
    deepCopy(ownedSubView(Forcing->TracerForcing.SnowFluxCell),
-            CplToOcn.SnowFlux);
+            CplToOcn.SnowFluxH);
    deepCopy(ownedSubView(Forcing->TracerForcing.RainFluxCell),
-            CplToOcn.RainFlux);
+            CplToOcn.RainFluxH);
    deepCopy(ownedSubView(Forcing->TracerForcing.EvaporationFluxCell),
-            CplToOcn.EvaporationFlux);
+            CplToOcn.EvaporationFluxH);
    deepCopy(ownedSubView(Forcing->TracerForcing.SeaIceFreshWaterFluxCell),
-            CplToOcn.SeaIceFreshWaterFlux);
+            CplToOcn.SeaIceFreshWaterFluxH);
    deepCopy(ownedSubView(Forcing->TracerForcing.IceRunoffFluxCell),
-            CplToOcn.IceRunoffFlux);
+            CplToOcn.IceRunoffFluxH);
    deepCopy(ownedSubView(Forcing->TracerForcing.RiverRunoffFluxCell),
-            CplToOcn.RiverRunoffFlux);
+            CplToOcn.RiverRunoffFluxH);
    deepCopy(ownedSubView(Forcing->TracerForcing.LatentHeatFluxCell),
-            CplToOcn.LatentHeatFlux);
+            CplToOcn.LatentHeatFluxH);
    deepCopy(ownedSubView(Forcing->TracerForcing.SensibleHeatFluxCell),
-            CplToOcn.SensibleHeatFlux);
+            CplToOcn.SensibleHeatFluxH);
    deepCopy(ownedSubView(Forcing->TracerForcing.LongWaveHeatFluxUpCell),
-            CplToOcn.LongWaveHeatFluxUp);
+            CplToOcn.LongWaveHeatFluxUpH);
    deepCopy(ownedSubView(Forcing->TracerForcing.LongWaveHeatFluxDownCell),
-            CplToOcn.LongWaveHeatFluxDown);
+            CplToOcn.LongWaveHeatFluxDownH);
    deepCopy(ownedSubView(Forcing->TracerForcing.SeaIceHeatFluxCell),
-            CplToOcn.SeaIceHeatFlux);
+            CplToOcn.SeaIceHeatFluxH);
    deepCopy(ownedSubView(Forcing->TracerForcing.ShortWaveHeatFluxCell),
-            CplToOcn.ShortWaveHeatFlux);
+            CplToOcn.ShortWaveHeatFluxH);
    deepCopy(ownedSubView(Forcing->TracerForcing.SeaIceSaltFluxCell),
-            CplToOcn.SeaIceSaltFlux);
+            CplToOcn.SeaIceSaltFluxH);
 };
 
 void SfcCoupling::updateExportFields(const OceanState *State,
@@ -356,21 +356,21 @@ void SfcCoupling::updateExportFields(const OceanState *State,
 }
 
 CplToOcnFields::CplToOcnFields(const std::string &Suffix, const HorzMesh *Mesh)
-    : SfcStressZonal("SfcStressZonal" + Suffix, Mesh->NCellsOwned),
-      SfcStressMerid("SfcStressMeridional" + Suffix, Mesh->NCellsOwned),
-      SnowFlux("SnowFlux" + Suffix, Mesh->NCellsOwned),
-      RainFlux("RainFlux" + Suffix, Mesh->NCellsOwned),
-      EvaporationFlux("EvaporationFlux" + Suffix, Mesh->NCellsOwned),
-      SeaIceFreshWaterFlux("SeaIceFreshWaterFlux" + Suffix, Mesh->NCellsOwned),
-      IceRunoffFlux("IceRunoffFlux" + Suffix, Mesh->NCellsOwned),
-      RiverRunoffFlux("RiverRunoffFlux" + Suffix, Mesh->NCellsOwned),
-      LatentHeatFlux("LatentHeatFlux" + Suffix, Mesh->NCellsOwned),
-      SensibleHeatFlux("SensibleHeatFlux" + Suffix, Mesh->NCellsOwned),
-      LongWaveHeatFluxUp("LongWaveHeatFluxUp" + Suffix, Mesh->NCellsOwned),
-      LongWaveHeatFluxDown("LongWaveHeatFluxDown" + Suffix, Mesh->NCellsOwned),
-      SeaIceHeatFlux("SeaIceHeatFlux" + Suffix, Mesh->NCellsOwned),
-      ShortWaveHeatFlux("ShortWaveHeatFlux" + Suffix, Mesh->NCellsOwned),
-      SeaIceSaltFlux("SeaIceSaltFlux" + Suffix, Mesh->NCellsOwned) {}
+    : SfcStressZonalH("SfcStressZonal" + Suffix, Mesh->NCellsOwned),
+      SfcStressMeridH("SfcStressMeridional" + Suffix, Mesh->NCellsOwned),
+      SnowFluxH("SnowFlux" + Suffix, Mesh->NCellsOwned),
+      RainFluxH("RainFlux" + Suffix, Mesh->NCellsOwned),
+      EvaporationFluxH("EvaporationFlux" + Suffix, Mesh->NCellsOwned),
+      SeaIceFreshWaterFluxH("SeaIceFreshWaterFlux" + Suffix, Mesh->NCellsOwned),
+      IceRunoffFluxH("IceRunoffFlux" + Suffix, Mesh->NCellsOwned),
+      RiverRunoffFluxH("RiverRunoffFlux" + Suffix, Mesh->NCellsOwned),
+      LatentHeatFluxH("LatentHeatFlux" + Suffix, Mesh->NCellsOwned),
+      SensibleHeatFluxH("SensibleHeatFlux" + Suffix, Mesh->NCellsOwned),
+      LongWaveHeatFluxUpH("LongWaveHeatFluxUp" + Suffix, Mesh->NCellsOwned),
+      LongWaveHeatFluxDownH("LongWaveHeatFluxDown" + Suffix, Mesh->NCellsOwned),
+      SeaIceHeatFluxH("SeaIceHeatFlux" + Suffix, Mesh->NCellsOwned),
+      ShortWaveHeatFluxH("ShortWaveHeatFlux" + Suffix, Mesh->NCellsOwned),
+      SeaIceSaltFluxH("SeaIceSaltFlux" + Suffix, Mesh->NCellsOwned) {}
 
 OcnToCplFields::OcnToCplFields(const std::string &Suffix, const HorzMesh *Mesh)
     : AvgSfcTemperature("AvgSfcTemperature" + Suffix, Mesh->NCellsOwned),
