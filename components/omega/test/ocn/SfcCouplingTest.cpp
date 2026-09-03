@@ -199,7 +199,8 @@ int testImportFromCoupler(const CouplingLayout Layout) {
        checkImportField(DefCoupling->CplToOcn.ShortWaveHeatFluxH,
                         "Foxx_swnet") &&
        checkImportField(DefCoupling->CplToOcn.SensibleHeatFluxH, "Foxx_sen") &&
-       checkImportField(DefCoupling->CplToOcn.LatentHeatFluxH, "Foxx_lat") &&
+       checkImportField(DefCoupling->CplToOcn.LatentHeatFluxEvapH,
+                        "Foxx_lat") &&
        checkImportField(DefCoupling->CplToOcn.LongWaveHeatFluxUpH,
                         "Foxx_lwup") &&
        checkImportField(DefCoupling->CplToOcn.LongWaveHeatFluxDownH,
@@ -258,7 +259,7 @@ int testApplyImportFields() {
    setImportField(DefCoupling->CplToOcn.SfcStressMeridH, "Foxx_tauy");
    setImportField(DefCoupling->CplToOcn.ShortWaveHeatFluxH, "Foxx_swnet");
    setImportField(DefCoupling->CplToOcn.SensibleHeatFluxH, "Foxx_sen");
-   setImportField(DefCoupling->CplToOcn.LatentHeatFluxH, "Foxx_lat");
+   setImportField(DefCoupling->CplToOcn.LatentHeatFluxEvapH, "Foxx_lat");
    setImportField(DefCoupling->CplToOcn.LongWaveHeatFluxUpH, "Foxx_lwup");
    setImportField(DefCoupling->CplToOcn.LongWaveHeatFluxDownH, "Faxa_lwdn");
    setImportField(DefCoupling->CplToOcn.SeaIceSaltFluxH, "Fioi_salt");
@@ -290,7 +291,7 @@ int testApplyImportFields() {
                          "Foxx_swnet") &&
        checkAppliedField(DefForcing->TracerForcing.SensibleHeatFluxCell,
                          "Foxx_sen") &&
-       checkAppliedField(DefForcing->TracerForcing.LatentHeatFluxCell,
+       checkAppliedField(DefForcing->TracerForcing.LatentHeatFluxEvapCell,
                          "Foxx_lat") &&
        checkAppliedField(DefForcing->TracerForcing.LongWaveHeatFluxUpCell,
                          "Foxx_lwup") &&

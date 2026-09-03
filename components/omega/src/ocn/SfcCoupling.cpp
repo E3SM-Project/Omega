@@ -228,7 +228,7 @@ void SfcCoupling::importFromCoupler() {
    auto SeaIceFreshWaterFlux_ = CplToOcn.SeaIceFreshWaterFluxH;
    auto IceRunoffFlux_        = CplToOcn.IceRunoffFluxH;
    auto RiverRunoffFlux_      = CplToOcn.RiverRunoffFluxH;
-   auto LatentHeatFlux_       = CplToOcn.LatentHeatFluxH;
+   auto LatentHeatFluxEvap_   = CplToOcn.LatentHeatFluxEvapH;
    auto SensibleHeatFlux_     = CplToOcn.SensibleHeatFluxH;
    auto LongWaveHeatFluxUp_   = CplToOcn.LongWaveHeatFluxUpH;
    auto LongWaveHeatFluxDown_ = CplToOcn.LongWaveHeatFluxDownH;
@@ -250,7 +250,7 @@ void SfcCoupling::importFromCoupler() {
       SeaIceFreshWaterFlux_(Idx) = CplToOcnView_(MeltwIdx, Idx);
       IceRunoffFlux_(Idx)        = CplToOcnView_(RofiIdx, Idx);
       RiverRunoffFlux_(Idx)      = CplToOcnView_(RoflIdx, Idx);
-      LatentHeatFlux_(Idx)       = CplToOcnView_(LatIdx, Idx);
+      LatentHeatFluxEvap_(Idx)   = CplToOcnView_(LatIdx, Idx);
       SensibleHeatFlux_(Idx)     = CplToOcnView_(SenIdx, Idx);
       LongWaveHeatFluxUp_(Idx)   = CplToOcnView_(LwupIdx, Idx);
       LongWaveHeatFluxDown_(Idx) = CplToOcnView_(LwdnIdx, Idx);
@@ -330,8 +330,8 @@ void SfcCoupling::applyImportFields(Forcing *Forcing) {
             CplToOcn.IceRunoffFluxH);
    deepCopy(ownedSubView(Forcing->TracerForcing.RiverRunoffFluxCell),
             CplToOcn.RiverRunoffFluxH);
-   deepCopy(ownedSubView(Forcing->TracerForcing.LatentHeatFluxCell),
-            CplToOcn.LatentHeatFluxH);
+   deepCopy(ownedSubView(Forcing->TracerForcing.LatentHeatFluxEvapCell),
+            CplToOcn.LatentHeatFluxEvapH);
    deepCopy(ownedSubView(Forcing->TracerForcing.SensibleHeatFluxCell),
             CplToOcn.SensibleHeatFluxH);
    deepCopy(ownedSubView(Forcing->TracerForcing.LongWaveHeatFluxUpCell),
@@ -364,7 +364,7 @@ CplToOcnFields::CplToOcnFields(const std::string &Suffix, const HorzMesh *Mesh)
       SeaIceFreshWaterFluxH("SeaIceFreshWaterFlux" + Suffix, Mesh->NCellsOwned),
       IceRunoffFluxH("IceRunoffFlux" + Suffix, Mesh->NCellsOwned),
       RiverRunoffFluxH("RiverRunoffFlux" + Suffix, Mesh->NCellsOwned),
-      LatentHeatFluxH("LatentHeatFlux" + Suffix, Mesh->NCellsOwned),
+      LatentHeatFluxEvapH("LatentHeatFluxEvap" + Suffix, Mesh->NCellsOwned),
       SensibleHeatFluxH("SensibleHeatFlux" + Suffix, Mesh->NCellsOwned),
       LongWaveHeatFluxUpH("LongWaveHeatFluxUp" + Suffix, Mesh->NCellsOwned),
       LongWaveHeatFluxDownH("LongWaveHeatFluxDown" + Suffix, Mesh->NCellsOwned),
