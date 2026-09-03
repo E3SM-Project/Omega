@@ -27,14 +27,14 @@
 
 namespace OMEGA {
 
-/// @brief enum sets which matching criterion is used at the BLD base.
+/// @brief enum sets which matching criterion is used at the OSBL base.
 /// SimpleShapes does no matching, MatchBoth matches KPP diagnosed
 /// diffusivity to the interior mixing coefficient.
 /// Also selects the shape used for the non-local flux, which follows the
 /// scalar diffusivity profile.
 enum class KPPMatchType : I4 {
    SimpleShapes = 0, ///< Unmatched Large et al. (1994) cubic shapes
-   MatchBoth    = 1  ///< Match the interior coefficient at the OBL base
+   MatchBoth    = 1  ///< Match the interior coefficient at the OSBL base
 };
 
 /// @brief Langmuir circulation enhancement factor applied to buoyancy forcing
@@ -63,45 +63,42 @@ class KPPLangmuirFactor {
    }
 };
 
-/// @brief Stage 1 kernel: Compute OBL depth from the bulk Richardson number
+/// @brief Stage 1 kernel: Compute OSBL depth from the bulk Richardson number
 /// criterion
 ///
-/// The OBL depth is determined by searching for the depth at which the bulk
+/// The OSBL depth is determined by searching for the depth at which the bulk
 /// Richardson number exceeds the critical value.  In KPP the bulk Richardson
 /// Number is augmented by a turbulent velocity which is designed to
 /// guarantee the entrainment heat flux is -0.2 times the surface buoyancy flux.
 ///
 /// Velocities live on edges (C-grid), so the shear entering Ri is a
 /// kite-area weighted average over the edges of each cell.
-class KPPOBLDepthSearch {
+class KPPOSBLDepthSearch {
  public:
-   ///< Ri_crit for determining OBL base
+   ///< Ri_crit for determining OSBL base
    Real CriticalRichardson = KPP::CriticalRi;
-   Real SurfaceLayerExtent = KPP::SurfaceLayerExtent; ///< Frac of OBL depth
-   /// Apply minimum OBL depth above this ice fraction
-   Real IceFracThresholdForMinimumOBL = KPP::IceSuppressThresh;
-   /// Min OBL depth under sea ice (m)
-   Real MinimumOBLUnderSeaIce = KPP::MinOBLUnderIce;
+   Real SurfaceLayerExtent = KPP::SurfaceLayerExtent; ///< Frac of OSBL depth
+   /// Apply minimum OSBL depth above this ice fraction
+   Real IceFracThresholdForMinimumOSBL = KPP::IceSuppressThresh;
+   /// Min OSBL depth under sea ice (m)
+   Real MinimumOSBLUnderSeaIce = KPP::MinOSBLUnderIce;
    /// Continue the search below the crossing to fill the Ri diagnostics
    bool FullRiProfile = false;
 
-   /// Constructor for KPPOBLDepthSearch
-   KPPOBLDepthSearch(const HorzMesh *Mesh, const VertCoord *VCoord);
+   /// Constructor for KPPOSBLDepthSearch
+   KPPOSBLDepthSearch(const HorzMesh *Mesh, const VertCoord *VCoord);
 
-   KOKKOS_FUNCTION void operator()(const Array1DReal &BoundaryLayerDepth,
-                                   const Array1DI4 &IndexBoundaryLayerDepth,
-                                   const Array2DReal &BulkRichardsonNumber,
-                                   const Array2DReal &BulkRichardsonShear,
-                                   const Array2DReal &UnresolvedShear,
-                                   const Array2DReal &BuoyancyJump, I4 ICell,
-                                   const Array2DReal &PotentialDensity,
-                                   const Array2DReal &NormalVelocity,
-                                   const Array2DReal &TangentialVelocity,
-                                   const Array1DReal &SurfaceFrictionVelocity,
-                                   const Array1DReal &SurfaceBuoyancyFlux,
-                                   const Array2DReal &BruntVaisalaFreqSq,
-                                   const Array1DReal &IceFraction,
-                                   const Array1DReal &LangmuirFactor) const {
+   KOKKOS_FUNCTION void operator()(
+       const Array1DReal &OSBLDepth, const Array1DI4 &OSBLDepthIndex,
+       const Array2DReal &BulkRichardsonNumber,
+       const Array2DReal &BulkRichardsonShear,
+       const Array2DReal &UnresolvedShear, const Array2DReal &BuoyancyJump,
+       I4 ICell, const Array2DReal &PotentialDensity,
+       const Array2DReal &NormalVelocity, const Array2DReal &TangentialVelocity,
+       const Array1DReal &SurfaceFrictionVelocity,
+       const Array1DReal &SurfaceBuoyancyFlux,
+       const Array2DReal &BruntVaisalaFreqSq, const Array1DReal &IceFraction,
+       const Array1DReal &LangmuirFactor) const {
 
       const Real UStar = SurfaceFrictionVelocity(ICell);
       // The buoyancy flux defined here is the direct flux only, it does not
@@ -134,8 +131,8 @@ class KPPOBLDepthSearch {
       // collects the constant prefactor.
       const Real CSUnres = 24.0_Real * Kokkos::sqrt(17.0_Real);
       const Real VtCoef =
-          Kokkos::sqrt(0.2_Real / Kokkos::max(KPP::NumericalTolerance,
-                                              CSUnres * SurfaceLayerExtent)) /
+          Kokkos::sqrt(0.2_Real / Kokkos::fmax(KPP::NumericalTolerance,
+                                               CSUnres * SurfaceLayerExtent)) /
           (VonKar * VonKar);
 
       // ----------------------------------------------------------------
@@ -143,11 +140,11 @@ class KPPOBLDepthSearch {
       // the cell area.
       // ----------------------------------------------------------------
       const I4 NEdges                 = NEdgesOnCell(ICell);
-      const I4 NEdgesEff              = Kokkos::min(NEdges, MaxEdgesBound);
+      const I4 NEdgesEff              = Kokkos::min(NEdges, I4(MaxEdgesBound));
       bool EdgeValid[MaxEdgesBound]   = {};
       Real EdgeWeights[MaxEdgesBound] = {};
       const Real InvAreaCell =
-          1.0_Real / Kokkos::max(AreaCell(ICell), KPP::Tiny);
+          1.0_Real / Kokkos::fmax(AreaCell(ICell), KPP::Tiny);
       for (I4 J = 0; J < NEdgesEff; ++J) {
          const I4 IEdge = EdgesOnCell(ICell, J);
          const I4 KEMin = MinLayerEdgeBot(IEdge);
@@ -193,12 +190,12 @@ class KPPOBLDepthSearch {
       // Bulk Richardson search, Large et al. (1994) Eq. (21):
       //   Ri_b(d) = (B_r - B(d)) d / (|V_r - V(d)|^2 + Vt^2(d))
       // where the reference values B_r, V_r are averaged over the top
-      // epsilon*d (d is the candidate OBL depth) of the column. Since
+      // epsilon*d (d is the candidate OSBL depth) of the column. Since
       // epsilon*d grows monotonically with
       // the trial depth, the averaging window only ever extends downward,
       // so the running sums are carried across trial depths rather than
       // rebuilt from the surface at each one.
-      // The OBL base is the first d at which Ri_b reaches RiCritical, and
+      // The OSBL base is the first d at which Ri_b reaches RiCritical, and
       // the search stops there unless the full profile is wanted for the
       // Ri diagnostics.
       // ----------------------------------------------------------------
@@ -207,7 +204,7 @@ class KPPOBLDepthSearch {
       I4 KSurfaceAvg = KMin;
       const Real ThickTop =
           Kokkos::abs(ZInterface(ICell, KMin + 1) - ZInterface(ICell, KMin));
-      Real SumThickness = Kokkos::max(ThickTop, KPP::NumericalTolerance);
+      Real SumThickness = Kokkos::fmax(ThickTop, KPP::NumericalTolerance);
       Real SumRho       = PotentialDensity(ICell, KMin) * SumThickness;
 
       // Per-edge surface-layer velocity averages
@@ -232,7 +229,7 @@ class KPPOBLDepthSearch {
          const Real ZEdgeBot =
              0.5_Real * (ZInterface(ICell, KIntE0) + ZInterface(JCell, KIntE0));
          const Real Thick0 = Kokkos::abs(ZEdgeBot - ZEdgeTop);
-         SumThickE[J]      = Kokkos::max(Thick0, KPP::NumericalTolerance);
+         SumThickE[J]      = Kokkos::fmax(Thick0, KPP::NumericalTolerance);
          const I4 KE0      = Kokkos::min(KEMin, NVertLayers - 1);
          SumUnE[J]         = NormalVelocity(IEdge, KE0) * SumThickE[J];
          SumVtE[J]         = TangentialVelocity(IEdge, KE0) * SumThickE[J];
@@ -255,7 +252,7 @@ class KPPOBLDepthSearch {
             const I4 KSA      = Kokkos::min(KSurfaceAvg, NVertLayers - 1);
             const Real DZ     = Kokkos::abs(ZInterface(ICell, KSurfaceAvg + 1) -
                                             ZInterface(ICell, KSurfaceAvg));
-            const Real ThickK = Kokkos::max(DZ, KPP::NumericalTolerance);
+            const Real ThickK = Kokkos::fmax(DZ, KPP::NumericalTolerance);
             SumThickness += ThickK;
             SumRho += PotentialDensity(ICell, KSA) * ThickK;
          }
@@ -282,7 +279,7 @@ class KPPOBLDepthSearch {
                    0.5_Real * (ZInterface(ICell, KSurfE[J] + 1) +
                                ZInterface(JCell, KSurfE[J] + 1));
                const Real DZ     = Kokkos::abs(ZEdgeBot - ZEdgeTop);
-               const Real ThickK = Kokkos::max(DZ, KPP::NumericalTolerance);
+               const Real ThickK = Kokkos::fmax(DZ, KPP::NumericalTolerance);
                SumThickE[J] += ThickK;
                SumUnE[J] += NormalVelocity(IEdge, KE) * ThickK;
                SumVtE[J] += TangentialVelocity(IEdge, KE) * ThickK;
@@ -291,7 +288,7 @@ class KPPOBLDepthSearch {
 
          // Compute the average density in the surface layer
          const Real InvSumThickness =
-             1.0_Real / Kokkos::max(SumThickness, KPP::NumericalTolerance);
+             1.0_Real / Kokkos::fmax(SumThickness, KPP::NumericalTolerance);
          const Real RhoAvgSurf = SumRho * InvSumThickness;
 
          // Buoyancy jump B_r - B(d), positive for stable stratification
@@ -315,7 +312,7 @@ class KPPOBLDepthSearch {
                const I4 KE    = Kokkos::min(Kokkos::max(K, KEMin), KEMax);
                const Real InvThickE =
                    1.0_Real /
-                   Kokkos::max(SumThickE[J], KPP::NumericalTolerance);
+                   Kokkos::fmax(SumThickE[J], KPP::NumericalTolerance);
                const Real UnAvg = SumUnE[J] * InvThickE;
                const Real VtAvg = SumVtE[J] * InvThickE;
                const Real UnK   = NormalVelocity(IEdge, KE);
@@ -335,7 +332,7 @@ class KPPOBLDepthSearch {
          if (UStar > KPP::NumericalTolerance) {
             const Real U3   = UStar * UStar * UStar;
             const Real Zeta = SigmaLoc * ZDepth * VonKar * BuoyFluxEff /
-                              Kokkos::max(U3, KPP::Tiny);
+                              Kokkos::fmax(U3, KPP::Tiny);
             const Real PhiInvS = KPP::kppPhiInvScalar(Zeta);
             WTurb = VonKar * UStar * Kokkos::max(PhiInvS, 0.0_Real);
          } else if (BuoyFluxEff < 0.0_Real) {
@@ -352,16 +349,16 @@ class KPPOBLDepthSearch {
              Kokkos::max(0.0_Real, BruntVaisalaFreqSq(ICell, KInt)));
          const Real Cv =
              (NCntr < 0.002_Real) ? (2.1_Real - 200.0_Real * NCntr) : 1.7_Real;
-         const Real Vt2 =
-             Kokkos::max(KPP::MinUnresolvedShearSq,
-                         Cv * VtCoef * ZCenter * NCntr * WTurb /
-                             Kokkos::max(RiCritical, KPP::NumericalTolerance));
+         const Real Vt2 = Kokkos::fmax(
+             KPP::MinUnresolvedShearSq,
+             Cv * VtCoef * ZCenter * NCntr * WTurb /
+                 Kokkos::fmax(RiCritical, KPP::NumericalTolerance));
          UnresolvedShear(ICell, KInt) = Vt2;
 
          const Real VelScaleSq = DeltaVSq + Vt2;
 
          const Real RiBulk = RiScaling * DeltaB * ZCenter /
-                             Kokkos::max(VelScaleSq, KPP::NumericalTolerance);
+                             Kokkos::fmax(VelScaleSq, KPP::NumericalTolerance);
          BulkRichardsonNumber(ICell, KInt) = RiBulk;
 
          if (KCross < 0 && RiBulk > RiCritical) {
@@ -390,7 +387,7 @@ class KPPOBLDepthSearch {
 
             const Real H = ZBelow - ZAbove;
             if (H > KPP::NumericalTolerance) {
-               // CVMix-style QUAD interpolation for OBL crossing:
+               // CVMix-style QUAD interpolation for OSBL crossing:
                // - first interior crossing uses zero slope at top point
                // - deeper crossings use upstream slope.
                // Quadratic interpolation is recommended by Danabosglu et al
@@ -410,7 +407,7 @@ class KPPOBLDepthSearch {
 
                // In local coordinate T = z - ZAbove:
                // Ri(T) = QuadA T^2 + SlopeAbove T + RiAbove, with QuadA
-               // fixed by requiring Ri(H) = RiBelow. The OBL base is the
+               // fixed by requiring Ri(H) = RiBelow. The OSBL base is the
                // root of Ri(T) = RiCritical.
                const Real QuadA =
                    (RiBelow - RiAbove - SlopeAbove * H) / (H * H);
@@ -462,7 +459,7 @@ class KPPOBLDepthSearch {
                OBLDepth = ZBelow;
             }
          } else {
-            // Match center-based OBL convention when crossing occurs in
+            // Match center-based OSBL convention when crossing occurs in
             // the top interval.
             OBLDepth = Ssh - ZMid(ICell, KMin);
          }
@@ -474,16 +471,16 @@ class KPPOBLDepthSearch {
           Kokkos::abs(ZInterface(ICell, KIntTop) - ZInterface(ICell, KMin));
       const Real MinOBLDepth = 0.5_Real * TopLayerThickness;
       const Real MaxOBLDepth = Ssh - ZMid(ICell, KMax);
-      // Impose chosen limits on the depth of the OBL
-      OBLDepth = KPP::kppClampOBLDepth(OBLDepth, MinOBLDepth, MaxOBLDepth,
-                                       IceFrac > IceFracThresholdForMinimumOBL,
-                                       MinimumOBLUnderSeaIce);
+      // Impose chosen limits on the depth of the OSBL
+      OBLDepth = KPP::kppClampOSBLDepth(
+          OBLDepth, MinOBLDepth, MaxOBLDepth,
+          IceFrac > IceFracThresholdForMinimumOSBL, MinimumOSBLUnderSeaIce);
 
       const I4 KFinal =
-          KPP::kppOBLIndex(ZInterface, ICell, KMin, KMax, Ssh, OBLDepth);
+          KPP::kppOSBLIndex(ZInterface, ICell, KMin, KMax, Ssh, OBLDepth);
 
-      BoundaryLayerDepth(ICell)      = OBLDepth;
-      IndexBoundaryLayerDepth(ICell) = KFinal;
+      OSBLDepth(ICell)      = OBLDepth;
+      OSBLDepthIndex(ICell) = KFinal;
    }
 
  private:
@@ -506,22 +503,21 @@ class KPPOBLDepthSearch {
    Array1DReal DvEdge;
 };
 
-/// @brief Area-weighted smoothing of the boundary layer depth over each cell
+/// @brief Area-weighted smoothing of the OSBL depth over each cell
 /// and its neighbors. This is a laplacian smoothing operation. This suppresses
 /// the grid-scale noise that the discrete Ri crossing search and no time
-/// history in the OBL depth calculation can introduce.
-class KPPBLDSmooth {
+/// history in the OSBL depth calculation can introduce.
+class KPPOSBLSmooth {
  public:
-   /// Constructor for KPPBLDSmooth
-   KPPBLDSmooth(const HorzMesh *Mesh, const VertCoord *VCoord);
+   /// Constructor for KPPOSBLSmooth
+   KPPOSBLSmooth(const HorzMesh *Mesh, const VertCoord *VCoord);
 
-   KOKKOS_FUNCTION void
-   operator()(const Array1DReal &BoundaryLayerDepthSmooth, I4 ICell,
-              const Array1DReal &BoundaryLayerDepth) const {
+   KOKKOS_FUNCTION void operator()(const Array1DReal &OSBLDepthSmooth, I4 ICell,
+                                   const Array1DReal &OSBLDepth) const {
 
       const I4 KMin = MinLayerCell(ICell);
       if (KMin < 0 || KMin >= NVertLayers) {
-         BoundaryLayerDepthSmooth(ICell) = BoundaryLayerDepth(ICell);
+         OSBLDepthSmooth(ICell) = OSBLDepth(ICell);
          return;
       }
 
@@ -542,22 +538,21 @@ class KPPBLDSmooth {
          }
 
          const Real NbrArea = AreaCell(INeighbor);
-         BLDSum += 2.0_Real * NbrArea * BoundaryLayerDepth(INeighbor);
+         BLDSum += 2.0_Real * NbrArea * OSBLDepth(INeighbor);
          AreaSum += 2.0_Real * NbrArea;
          ++EdgeCount;
       }
 
       if (EdgeCount > 0) {
          const Real SelfArea = AreaCell(ICell);
-         BLDSum += BoundaryLayerDepth(ICell) * static_cast<Real>(EdgeCount) *
-                   SelfArea;
+         BLDSum += OSBLDepth(ICell) * static_cast<Real>(EdgeCount) * SelfArea;
          AreaSum += static_cast<Real>(EdgeCount) * SelfArea;
       }
 
       if (AreaSum > 0.0_Real) {
-         BoundaryLayerDepthSmooth(ICell) = BLDSum / AreaSum;
+         OSBLDepthSmooth(ICell) = BLDSum / AreaSum;
       } else {
-         BoundaryLayerDepthSmooth(ICell) = BoundaryLayerDepth(ICell);
+         OSBLDepthSmooth(ICell) = OSBLDepth(ICell);
       }
    }
 
@@ -570,16 +565,15 @@ class KPPBLDSmooth {
    Array1DReal AreaCell;
 };
 
-/// @brief Re-clamp and re-index the boundary layer depth after smoothing
-class KPPBLDCommit {
+/// @brief Re-clamp and re-index the OSBL depth after smoothing
+class KPPOSBLCommit {
  public:
-   /// Constructor for KPPBLDCommit
-   KPPBLDCommit(const HorzMesh *Mesh, const VertCoord *VCoord);
+   /// Constructor for KPPOSBLCommit
+   KPPOSBLCommit(const HorzMesh *Mesh, const VertCoord *VCoord);
 
-   KOKKOS_FUNCTION void
-   operator()(const Array1DReal &BoundaryLayerDepth,
-              const Array1DI4 &IndexBoundaryLayerDepth, I4 ICell,
-              const Array1DReal &BoundaryLayerDepthSmooth) const {
+   KOKKOS_FUNCTION void operator()(const Array1DReal &OSBLDepth,
+                                   const Array1DI4 &OSBLDepthIndex, I4 ICell,
+                                   const Array1DReal &OSBLDepthSmooth) const {
 
       const I4 KMin = MinLayerCell(ICell);
       const I4 KMax = MaxLayerCell(ICell);
@@ -597,15 +591,14 @@ class KPPBLDCommit {
 
       // The sea-ice minimum is deliberately not reapplied here; it was
       // already enforced before smoothing.
-      const Real OBLDepth =
-          KPP::kppClampOBLDepth(BoundaryLayerDepthSmooth(ICell), MinOBLDepth,
-                                MaxOBLDepth, false, 0.0_Real);
+      const Real OBLDepth = KPP::kppClampOSBLDepth(
+          OSBLDepthSmooth(ICell), MinOBLDepth, MaxOBLDepth, false, 0.0_Real);
 
       const I4 KFinal =
-          KPP::kppOBLIndex(ZInterface, ICell, KMin, KMax, Ssh, OBLDepth);
+          KPP::kppOSBLIndex(ZInterface, ICell, KMin, KMax, Ssh, OSBLDepth);
 
-      BoundaryLayerDepth(ICell)      = OBLDepth;
-      IndexBoundaryLayerDepth(ICell) = KFinal;
+      OSBLDepth(ICell)      = OSBLDepth;
+      OSBLDepthIndex(ICell) = KFinal;
    }
 
  private:
@@ -641,13 +634,13 @@ class KPPCoeffsInit {
 };
 
 /// @brief Stage 2 kernel: KPP profile-based diffusivity, viscosity and
-/// non-local flux, with optional enhanced mixing at the OBL base.
+/// non-local flux, with optional enhanced mixing at the OSBL base.
 class KPPMixingCoeffs {
  public:
-   Real SurfaceLayerExtent   = KPP::SurfaceLayerExtent; ///< Frac of OBL depth
-   bool UseEnhancedDiffusion = true;  ///< Apply enhanced mixing at OBL base
+   Real SurfaceLayerExtent   = KPP::SurfaceLayerExtent; ///< Frac of OSBL depth
+   bool UseEnhancedDiffusion = true;  ///< Apply enhanced mixing at OSBL base
    bool UseInteriorMix       = false; ///< Interior coefficients were supplied
-   bool UseMatchedShapes     = false; ///< Match interior value at the OBL base
+   bool UseMatchedShapes     = false; ///< Match interior value at the OSBL base
 
    /// Constructor for KPPMixingCoeffs
    KPPMixingCoeffs(const HorzMesh *Mesh, const VertCoord *VCoord);
@@ -656,23 +649,21 @@ class KPPMixingCoeffs {
                                    const Array2DReal &VertVisc,
                                    const Array2DReal &VertNonLocalFlux,
                                    const Array2DReal &TurbulentVelocityScale,
-                                   I4 ICell,
-                                   const Array1DReal &BoundaryLayerDepth,
-                                   const Array1DI4 &IndexBoundaryLayerDepth,
+                                   I4 ICell, const Array1DReal &OSBLDepth,
+                                   const Array1DI4 &OSBLDepthIndex,
                                    const Array1DReal &SurfaceFrictionVelocity,
                                    const Array1DReal &SurfaceBuoyancyFlux,
                                    const Array2DReal &InteriorVertDiff,
                                    const Array2DReal &InteriorVertVisc) const {
 
-      const Real HOBL = BoundaryLayerDepth(ICell);
+      const Real H = OSBLDepth(ICell);
 
       const I4 KMin = MinLayerCell(ICell);
       const I4 KMax = MaxLayerCell(ICell);
       if (KMin < 0 || KMin >= NVertLayers || KMax < KMin) {
          return;
       }
-      const I4 KMatch =
-          Kokkos::min(KMax + 1, IndexBoundaryLayerDepth(ICell) + 1);
+      const I4 KMatch = Kokkos::min(KMax + 1, OSBLDepthIndex(ICell) + 1);
 
       // KPP depths are measured below the free surface, so geometric
       // heights must be offset by the sea surface height.
@@ -686,10 +677,10 @@ class KPPMixingCoeffs {
          const I4 KIface   = Kokkos::min(Kokkos::max(K, 0), NVertLayers);
          const Real ZDepth = Ssh - ZInterface(ICell, KIface);
 
-         // Check if within OBL using depth below the free surface.
-         if (ZDepth <= HOBL && HOBL > 0.0_Real) {
+         // Check if within OSBL using depth below the free surface.
+         if (ZDepth <= H && H > 0.0_Real) {
             // Normalized depth in Omega sign convention: sigma in [-1,0].
-            Real Sigma = -ZDepth / HOBL;
+            Real Sigma = -ZDepth / H;
             Sigma      = Kokkos::fmax(-1.0_Real, Kokkos::fmin(0.0_Real, Sigma));
 
             // CVMix-style turbulent scales: w = kappa*u*/phi in general,
@@ -702,19 +693,19 @@ class KPPMixingCoeffs {
 
             Real WMTurb = 0.0_Real;
             Real WSTurb = 0.0_Real;
-            KPP::kppTurbScales(UStar, BuoyFlux, HOBL, SigmaLoc, VonKar, WMTurb,
+            KPP::kppTurbScales(UStar, BuoyFlux, H, SigmaLoc, VonKar, WMTurb,
                                WSTurb);
 
             // For MatchBoth, the shape value the KPP profile must reach at
-            // the OBL base so that it joins the interior coefficient there.
+            // the OSBL base so that it joins the interior coefficient there.
             const Real MatchViscShape =
                 UseMatchedShapes
-                    ? KPP::kppMatchShape(InteriorVertVisc(ICell, KMatch), HOBL,
+                    ? KPP::kppMatchShape(InteriorVertVisc(ICell, KMatch), H,
                                          WMTurb)
                     : 0.0_Real;
             const Real MatchDiffShape =
                 UseMatchedShapes
-                    ? KPP::kppMatchShape(InteriorVertDiff(ICell, KMatch), HOBL,
+                    ? KPP::kppMatchShape(InteriorVertDiff(ICell, KMatch), H,
                                          WSTurb)
                     : 0.0_Real;
 
@@ -722,13 +713,13 @@ class KPPMixingCoeffs {
             const Real ShapeM =
                 UseMatchedShapes ? KPP::kppShapeMatched(Sigma, MatchViscShape)
                                  : KPP::kppShapeMomentum(Sigma);
-            VertVisc(ICell, K) = HOBL * WMTurb * ShapeM;
+            VertVisc(ICell, K) = H * WMTurb * ShapeM;
 
             // Tracer mixing contribution.
             const Real ShapeS =
                 UseMatchedShapes ? KPP::kppShapeMatched(Sigma, MatchDiffShape)
                                  : KPP::kppShapeScalar(Sigma);
-            VertDiff(ICell, K)               = HOBL * WSTurb * ShapeS;
+            VertDiff(ICell, K)               = H * WSTurb * ShapeS;
             TurbulentVelocityScale(ICell, K) = WSTurb;
 
             // Non-local flux: C_s * G(sigma).
@@ -736,7 +727,7 @@ class KPPMixingCoeffs {
             // per Large et al. (1994) eq. 20 (~6.33 with default constants).
             // The non-local shape is always the unmatched scalar shape,
             // independent of MatchTechnique, so that gamma vanishes at the
-            // OBL base. The matched shape is non-zero there by construction,
+            // OSBL base. The matched shape is non-zero there by construction,
             // which would leave a non-local flux at the base that jumps to
             // zero just below it. CVMix likewise keeps matching (a
             // diffusivity choice) separate from the non-local shape.
@@ -751,7 +742,7 @@ class KPPMixingCoeffs {
             }
 
          } else {
-            // Below OBL: preserve interior values for MatchBoth, otherwise
+            // Below OSBL: preserve interior values for MatchBoth, otherwise
             // no KPP contribution.
             VertDiff(ICell, K) =
                 UseInteriorMix ? InteriorVertDiff(ICell, K) : 0.0_Real;
@@ -762,21 +753,22 @@ class KPPMixingCoeffs {
          }
       }
 
-      // Optional enhanced diffusion/viscosity treatment at OBL base.
-      // Match CVMix Appendix D weighting at the interface nearest HOBL:
-      // the OBL base rarely lands on an interface, so the coefficient at
+      // Optional enhanced diffusion/viscosity treatment at OSBL base.
+      // Match Large et al (1994) Appendix D weighting at the interface nearest
+      // H: the OSBL base rarely lands on an interface, so the coefficient at
       // the neighboring interface KTarget is replaced by a quadratic blend
       // of the KPP value extrapolated from KKtup and the value already
-      // there, weighted by where HOBL falls between the two cell centers.
-      if (UseEnhancedDiffusion && HOBL > 0.0_Real) {
-         const I4 KOBL = Kokkos::max(
-             KMin, Kokkos::min(IndexBoundaryLayerDepth(ICell), KMax));
+      // there, weighted by where H falls between the two cell centers.
+      if (UseEnhancedDiffusion && H > 0.0_Real) {
+         const I4 KOBL =
+             Kokkos::max(KMin, Kokkos::min(OSBLDepthIndex(ICell), KMax));
          const Real ZMidOBL = Ssh - ZMid(ICell, KOBL);
 
-         const bool TargetOutsideOBL = HOBL >= ZMidOBL;
-         const I4 KKtup = TargetOutsideOBL ? KOBL : Kokkos::max(KMin, KOBL - 1);
-         const I4 KTarget = TargetOutsideOBL ? Kokkos::min(KOBL + 1, KMax + 1)
-                                             : Kokkos::max(KMin + 1, KOBL);
+         const bool TargetOutsideOSBL = H >= ZMidOBL;
+         const I4 KKtup =
+             TargetOutsideOSBL ? KOBL : Kokkos::max(KMin, KOBL - 1);
+         const I4 KTarget = TargetOutsideOSBL ? Kokkos::min(KOBL + 1, KMax + 1)
+                                              : Kokkos::max(KMin + 1, KOBL);
 
          const Real ZKtup = Ssh - ZMid(ICell, KKtup);
          const Real ZNext = (KKtup < KMax)
@@ -784,12 +776,12 @@ class KPPMixingCoeffs {
                                 : (Ssh - ZInterface(ICell, KKtup + 1));
          const Real Delta = Kokkos::fmax(
              0.0_Real,
-             Kokkos::fmin(1.0_Real, (HOBL - ZKtup) /
-                                        Kokkos::max(ZNext - ZKtup,
-                                                    KPP::NumericalTolerance)));
+             Kokkos::fmin(1.0_Real,
+                          (H - ZKtup) / Kokkos::fmax(ZNext - ZKtup,
+                                                     KPP::NumericalTolerance)));
          const Real OneMinusDelta = 1.0_Real - Delta;
 
-         Real SigmaKtup = -ZKtup / HOBL;
+         Real SigmaKtup = -ZKtup / H;
          SigmaKtup = Kokkos::fmax(-1.0_Real, Kokkos::fmin(0.0_Real, SigmaKtup));
          const Real SigmaCoord = -SigmaKtup;
          const Real SigmaLoc   = Kokkos::fmin(SurfaceLayerExtent,
@@ -797,26 +789,24 @@ class KPPMixingCoeffs {
 
          Real WMKtup = 0.0_Real;
          Real WSKtup = 0.0_Real;
-         KPP::kppTurbScales(UStar, BuoyFlux, HOBL, SigmaLoc, VonKar, WMKtup,
+         KPP::kppTurbScales(UStar, BuoyFlux, H, SigmaLoc, VonKar, WMKtup,
                             WSKtup);
 
          const Real MatchViscShape =
-             UseMatchedShapes
-                 ? KPP::kppMatchShape(InteriorVertVisc(ICell, KMatch), HOBL,
-                                      WMKtup)
-                 : 0.0_Real;
+             UseMatchedShapes ? KPP::kppMatchShape(
+                                    InteriorVertVisc(ICell, KMatch), H, WMKtup)
+                              : 0.0_Real;
          const Real MatchDiffShape =
-             UseMatchedShapes
-                 ? KPP::kppMatchShape(InteriorVertDiff(ICell, KMatch), HOBL,
-                                      WSKtup)
-                 : 0.0_Real;
+             UseMatchedShapes ? KPP::kppMatchShape(
+                                    InteriorVertDiff(ICell, KMatch), H, WSKtup)
+                              : 0.0_Real;
 
          const Real ViscKtup =
-             HOBL * WMKtup *
+             H * WMKtup *
              (UseMatchedShapes ? KPP::kppShapeMatched(SigmaKtup, MatchViscShape)
                                : KPP::kppShapeMomentum(SigmaKtup));
          const Real DiffKtup =
-             HOBL * WSKtup *
+             H * WSKtup *
              (UseMatchedShapes ? KPP::kppShapeMatched(SigmaKtup, MatchDiffShape)
                                : KPP::kppShapeScalar(SigmaKtup));
 
@@ -860,12 +850,12 @@ class KPPMixingCoeffs {
 /// @brief KPP Boundary Layer Mixing Scheme
 ///
 /// Implements the K-Profile Parameterization following Large et al. (1994)
-/// with optional Langmuir circulation enhancement. Computes vertical
-/// diffusivity, viscosity, and non-local flux coefficients for the OBL.
+/// with optional Langmuir turbulence enhancement. Computes vertical
+/// diffusivity, viscosity, and non-local flux coefficients for the OSBL.
 ///
 /// Two-stage computation:
-/// 1. Stage 1: Compute OBL depth from bulk Richardson criterion
-/// 2. Stage 2: Compute mixing coefficients within and below OBL
+/// 1. Stage 1: Compute OSBL depth from bulk Richardson criterion and smooth
+/// 2. Stage 2: Compute viscosity and diffusivity coefficients
 ///
 class KPPMix {
 
@@ -909,18 +899,18 @@ class KPPMix {
 
    /// @brief Boundary layer depth (m)
    /// Size: [nCells]
-   Array1DReal BoundaryLayerDepth;
+   Array1DReal OSBLDepth;
 
-   /// @brief OBL depth as layer index
+   /// @brief OSBL depth as layer index
    /// Size: [nCells]
-   Array1DI4 IndexBoundaryLayerDepth;
+   Array1DI4 OSBLDepthIndex;
 
    /// @brief Non-local flux coefficient profile G(σ) (dimensionless)
    /// Size: [nCells][nLevels+1]
    /// Applied to surface tracer fluxes to compute vertical transport
    Array2DReal VertNonLocalFlux;
 
-   /// @brief Bulk Richardson number profile used in OBL search (dimensionless)
+   /// @brief Bulk Richardson number profile used in OSBL search (dimensionless)
    /// Size: [nCells][nLevels+1]
    Array2DReal BulkRichardsonNumber;
 
@@ -934,14 +924,15 @@ class KPPMix {
 
    /// @brief Buoyancy jump (density anomaly converted to buoyancy) (m/s²)
    /// Size: [nCells][nLevels+1]
-   /// Captures delta_b = g * delta_rho / rho_sw at each layer during OBL search
+   /// Captures delta_b = g * delta_rho / rho_sw at each layer during OSBL
+   /// search
    Array2DReal BuoyancyJump;
 
    /// @brief Turbulent velocity scale profile (m/s), tracer branch
    /// Size: [nCells][nLevels+1]
    Array2DReal TurbulentVelocityScale;
 
-   /// @brief Potential density used by KPP OBL search (kg/m^3)
+   /// @brief Potential density used by KPP OSBL search (kg/m^3)
    /// Size: [nCells][nLevels]
    Array2DReal PotentialDensity;
 
@@ -961,8 +952,8 @@ class KPPMix {
 
    // Defaults below may be overridden from the Config file; where a value also
    // appears in KPPConstants.h, that is the authoritative default.
-   Real CriticalRichardson = KPP::CriticalRi;         ///< Ri_crit for OBL base
-   Real SurfaceLayerExtent = KPP::SurfaceLayerExtent; ///< Frac of OBL depth
+   Real CriticalRichardson = KPP::CriticalRi;         ///< Ri_crit for OSBL base
+   Real SurfaceLayerExtent = KPP::SurfaceLayerExtent; ///< Frac of OSBL depth
 
    bool UseLangmuirCirculation = true;  ///< Apply wave enhancement
    bool DebugDiagnostics       = false; ///< Print per-step KPP diagnostics
@@ -970,25 +961,25 @@ class KPPMix {
    // Ice/Langmuir controls (kept configurable to match reference semantics)
    /// Disable Langmuir above this ice fraction
    Real IceFractionThresholdForLangmuir = KPP::IceFracThresh;
-   /// Apply minimum OBL depth above this ice fraction
-   Real IceFractionThresholdForMinimumOBL = KPP::IceSuppressThresh;
-   /// Min OBL depth under sea ice (m)
-   Real MinimumOBLUnderSeaIce = KPP::MinOBLUnderIce;
+   /// Apply minimum OSBL depth above this ice fraction
+   Real IceFractionThresholdForMinimumOSBL = KPP::IceSuppressThresh;
+   /// Min OSBL depth under sea ice (m)
+   Real MinimumOSBLUnderSeaIce = KPP::MinOSBLUnderIce;
 
-   Real BackgroundVisc = 1.0e-4; ///< Background viscosity below OBL (m²/s)
-   Real BackgroundDiff = 1.0e-5; ///< Background diffusivity below OBL (m²/s)
+   Real BackgroundVisc = 1.0e-4; ///< Background viscosity below OSBL (m²/s)
+   Real BackgroundDiff = 1.0e-5; ///< Background diffusivity below OSBL (m²/s)
 
    // KPP matching/profile controls (CVMix-style semantics)
    KPPMatchType MatchTechnique = KPPMatchType::SimpleShapes;
    std::string InterpType2Str  = "LMD94"; ///< Linear, Quadratic, Cubic, LMD94
-   bool UseEnhancedDiffusion   = true;    ///< Apply enhanced mixing at OBL base
-   bool UseBLDSmoothing = true; ///< Apply MPAS-style BLD horizontal smoothing
+   bool UseEnhancedDiffusion   = true; ///< Apply enhanced mixing at OSBL base
+   bool UseOSBLSmoothing = true; ///< Apply MPAS-style OSBL horizontal smoothing
 
    // Field names for I/O
    std::string BuoyancyJumpFldName;
    std::string VertDiffFldName;
    std::string VertViscFldName;
-   std::string OBLDepthFldName;
+   std::string OSBLDepthFldName;
    std::string OBLDepthIndexFldName;
    std::string NonLocalFluxFldName;
    std::string BulkRichardsonFldName;
@@ -1016,15 +1007,15 @@ class KPPMix {
    const VertCoord *VCoord;
 
  public:
-   /// @brief Stage 1: Compute OBL depth using edge-based velocity shear
-   void computeOBLDepth(const Array2DReal &PotentialDensity,
-                        const Array2DReal &NormalVelocity,
-                        const Array2DReal &TangentialVelocity,
-                        const Array1DReal &SurfaceFrictionVelocity,
-                        const Array1DReal &SurfaceBuoyancyFlux,
-                        const Array2DReal &BruntVaisalaFreqSq,
-                        const Array1DReal &IceFraction,
-                        const Array1DReal &WindSpeed10m);
+   /// @brief Stage 1: Compute OSBL depth using edge-based velocity shear
+   void computeOSBLDepth(const Array2DReal &PotentialDensity,
+                         const Array2DReal &NormalVelocity,
+                         const Array2DReal &TangentialVelocity,
+                         const Array1DReal &SurfaceFrictionVelocity,
+                         const Array1DReal &SurfaceBuoyancyFlux,
+                         const Array2DReal &BruntVaisalaFreqSq,
+                         const Array1DReal &IceFraction,
+                         const Array1DReal &WindSpeed10m);
 
    /// @brief Stage 2: Compute KPP mixing contribution or matched coefficients
    void computeMixingCoefficients(

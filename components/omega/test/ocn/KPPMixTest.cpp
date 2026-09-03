@@ -313,7 +313,7 @@ void testOBLUtilities() {
           const I4 LandIceMask   = ITest == 3 ? 1 : 0;
           const bool ExpectedSuppression =
               LandIceMask != 0 || IceFraction > KPP::IceSuppressThresh;
-          if (KPP::shouldSuppressOBL(IceFraction, LandIceMask) !=
+          if (KPP::shouldSuppressOSBL(IceFraction, LandIceMask) !=
               ExpectedSuppression)
              ++ErrorCount;
 
@@ -323,7 +323,7 @@ void testOBLUtilities() {
                                                : 200.0_Real;
           Real ExpectedDepth    = Kokkos::fmax(InputDepth, 2.0_Real);
           if (IceFraction > KPP::IceSuppressThresh)
-             ExpectedDepth = Kokkos::fmax(ExpectedDepth, KPP::MinOBLUnderIce);
+             ExpectedDepth = Kokkos::fmax(ExpectedDepth, KPP::MinOSBLUnderIce);
           ExpectedDepth = Kokkos::fmin(ExpectedDepth, 95.0_Real);
           if (!isApprox(KPP::constrainOBLDepth(InputDepth, 4.0_Real, 100.0_Real,
                                                IceFraction),
@@ -332,7 +332,7 @@ void testOBLUtilities() {
        },
        NumErrors);
 
-   checkResult("OBL utilities", NumErrors);
+   checkResult("OSBL utilities", NumErrors);
 }
 
 void testTurbulentVelocityScale() {
@@ -496,12 +496,12 @@ void testClampOBLDepth() {
                                              : 1.0_Real;
           const bool ApplyIce = (ITest == 3);
 
-          const Real Actual = KPP::kppClampOBLDepth(
-              Input, MinDepth, MaxDepth, ApplyIce, KPP::MinOBLUnderIce);
+          const Real Actual = KPP::kppClampOSBLDepth(
+              Input, MinDepth, MaxDepth, ApplyIce, KPP::MinOSBLUnderIce);
 
           Real Expected = Kokkos::fmax(Input, MinDepth);
           if (ApplyIce)
-             Expected = Kokkos::fmax(Expected, KPP::MinOBLUnderIce);
+             Expected = Kokkos::fmax(Expected, KPP::MinOSBLUnderIce);
           Expected = Kokkos::fmin(Expected, MaxDepth);
 
           if (!isApprox(Actual, Expected, RTol, ATol))
@@ -513,7 +513,7 @@ void testClampOBLDepth() {
        },
        NumErrors);
 
-   checkResult("OBL depth clamping", NumErrors);
+   checkResult("OSBL depth clamping", NumErrors);
 }
 
 void testOBLIndex() {
@@ -542,13 +542,13 @@ void testOBLIndex() {
                                            : NLayers - 1;
 
           const I4 Actual =
-              KPP::kppOBLIndex(ZInterface, 0, 0, NLayers - 1, 0.0_Real, Depth);
+              KPP::kppOSBLIndex(ZInterface, 0, 0, NLayers - 1, 0.0_Real, Depth);
           if (Actual != Expected)
              ++ErrorCount;
        },
        NumErrors);
 
-   checkResult("OBL index lookup", NumErrors);
+   checkResult("OSBL index lookup", NumErrors);
 }
 
 // Builds a uniform column whose free surface sits at Ssh. All KPP results must
@@ -564,16 +564,16 @@ void setCoefficientTestGeometry(Real Ssh = 0.0_Real) {
    OMEGA_SCOPE(SshCell, VCoord->SshCell);
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
-   OMEGA_SCOPE(BoundaryLayerDepth, KPPInstance->BoundaryLayerDepth);
-   OMEGA_SCOPE(IndexBoundaryLayerDepth, KPPInstance->IndexBoundaryLayerDepth);
+   OMEGA_SCOPE(OSBLDepth, KPPInstance->OSBLDepth);
+   OMEGA_SCOPE(OSBLDepthIndex, KPPInstance->OSBLDepthIndex);
 
    parallelFor(
        "KPPMixTest-SetGeometry", {Mesh->NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
-          MinLayerCell(ICell)            = 0;
-          MaxLayerCell(ICell)            = NVertLayers - 1;
-          SshCell(ICell)                 = Ssh;
-          BoundaryLayerDepth(ICell)      = TestOBLDepth;
-          IndexBoundaryLayerDepth(ICell) = TestOBLIndex;
+          MinLayerCell(ICell)   = 0;
+          MaxLayerCell(ICell)   = NVertLayers - 1;
+          SshCell(ICell)        = Ssh;
+          OSBLDepth(ICell)      = TestOBLDepth;
+          OSBLDepthIndex(ICell) = TestOBLIndex;
           for (I4 K = 0; K <= NVertLayers; ++K) {
              GeomZInterface(ICell, K) = Ssh - LayerThickness * K;
              if (K < NVertLayers) {
@@ -837,8 +837,8 @@ void testEnhancedDiffusion() {
    }
 
    constexpr Real InsideOBLDepth = 32.0_Real;
-   deepCopy(KPPInstance->BoundaryLayerDepth, InsideOBLDepth);
-   deepCopy(KPPInstance->IndexBoundaryLayerDepth, TestOBLIndex);
+   deepCopy(KPPInstance->OSBLDepth, InsideOBLDepth);
+   deepCopy(KPPInstance->OSBLDepthIndex, TestOBLIndex);
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
    VertDiffH = createHostMirrorCopy(KPPInstance->VertDiff);
    VertViscH = createHostMirrorCopy(KPPInstance->VertVisc);
@@ -876,8 +876,8 @@ void testEnhancedDiffusion() {
    deepCopy(InteriorVisc, InteriorViscValue);
    deepCopy(UStar, 0.02_Real);
    deepCopy(B0, 0.0_Real);
-   deepCopy(KPPInstance->BoundaryLayerDepth, TestOBLDepth);
-   deepCopy(KPPInstance->IndexBoundaryLayerDepth, TestOBLIndex);
+   deepCopy(KPPInstance->OSBLDepth, TestOBLDepth);
+   deepCopy(KPPInstance->OSBLDepthIndex, TestOBLIndex);
    KPPInstance->MatchTechnique = KPPMatchType::MatchBoth;
    KPPInstance->computeMixingCoefficients(Density, UStar, B0, InteriorDiff,
                                           InteriorVisc);
@@ -910,8 +910,8 @@ void testEnhancedDiffusion() {
    deepCopy(UStar, 0.0_Real);
    deepCopy(B0, 0.0_Real);
    KPPInstance->MatchTechnique = KPPMatchType::SimpleShapes;
-   deepCopy(KPPInstance->BoundaryLayerDepth, InsideOBLDepth);
-   deepCopy(KPPInstance->IndexBoundaryLayerDepth, TestOBLIndex);
+   deepCopy(KPPInstance->OSBLDepth, InsideOBLDepth);
+   deepCopy(KPPInstance->OSBLDepthIndex, TestOBLIndex);
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
    VertDiffH = createHostMirrorCopy(KPPInstance->VertDiff);
    VertViscH = createHostMirrorCopy(KPPInstance->VertVisc);
@@ -981,15 +981,15 @@ void testCoefficientVerticalDomainEdges() {
 
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
-   OMEGA_SCOPE(BoundaryLayerDepth, KPPInstance->BoundaryLayerDepth);
-   OMEGA_SCOPE(IndexBoundaryLayerDepth, KPPInstance->IndexBoundaryLayerDepth);
+   OMEGA_SCOPE(OSBLDepth, KPPInstance->OSBLDepth);
+   OMEGA_SCOPE(OSBLDepthIndex, KPPInstance->OSBLDepthIndex);
    parallelFor(
        "KPPMixTest-SetPartialColumn", {Mesh->NCellsAll},
        KOKKOS_LAMBDA(I4 ICell) {
-          MinLayerCell(ICell)            = 2;
-          MaxLayerCell(ICell)            = 4;
-          BoundaryLayerDepth(ICell)      = 40.0_Real;
-          IndexBoundaryLayerDepth(ICell) = 3;
+          MinLayerCell(ICell)   = 2;
+          MaxLayerCell(ICell)   = 4;
+          OSBLDepth(ICell)      = 40.0_Real;
+          OSBLDepthIndex(ICell) = 3;
        });
 
    KPPInstance->UseEnhancedDiffusion = false;
@@ -1014,10 +1014,10 @@ void testCoefficientVerticalDomainEdges() {
    parallelFor(
        "KPPMixTest-SetOneLayerColumn", {Mesh->NCellsAll},
        KOKKOS_LAMBDA(I4 ICell) {
-          MinLayerCell(ICell)            = 2;
-          MaxLayerCell(ICell)            = 2;
-          BoundaryLayerDepth(ICell)      = 25.0_Real;
-          IndexBoundaryLayerDepth(ICell) = 2;
+          MinLayerCell(ICell)   = 2;
+          MaxLayerCell(ICell)   = 2;
+          OSBLDepth(ICell)      = 25.0_Real;
+          OSBLDepthIndex(ICell) = 2;
        });
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
    VertDiffH = createHostMirrorCopy(KPPInstance->VertDiff);
@@ -1109,14 +1109,14 @@ void testConfiguredValues() {
    std::string ExpectedMatch;
    std::string ExpectedInterp;
    Err += KPPConfig.get("Enable", ExpectedEnabled);
-   Err += KPPConfig.get("UseBLDSmoothing", ExpectedSmoothing);
+   Err += KPPConfig.get("UseOSBLSmoothing", ExpectedSmoothing);
    Err += KPPConfig.get("UseEnhancedDiffusion", ExpectedEnhanced);
    Err += KPPConfig.get("DebugDiagnostics", ExpectedDebug);
    Err += KPPConfig.get("CriticalBulkRichardsonNumber", ExpectedCriticalRi);
    Err += KPPConfig.get("IceFractionThresholdForLangmuir", ExpectedLangmuirIce);
-   Err += KPPConfig.get("IceFractionThresholdForMinimumOBL",
+   Err += KPPConfig.get("IceFractionThresholdForMinimumOSBL",
                         ExpectedMinimumOBLIce);
-   Err += KPPConfig.get("MinimumOBLUnderSeaIce", ExpectedMinimumOBL);
+   Err += KPPConfig.get("MinimumOSBLUnderSeaIce", ExpectedMinimumOBL);
    Err += KPPConfig.get("MatchTechnique", ExpectedMatch);
    Err += KPPConfig.get("InterpType2", ExpectedInterp);
    CHECK_ERROR_ABORT(Err, "KPPMixTest: unable to read configured KPP values");
@@ -1128,7 +1128,7 @@ void testConfiguredValues() {
    const KPPMix *KPPInstance = KPPMix::getInstance();
    int NumErrors             = 0;
    if (KPPInstance->Enabled != ExpectedEnabled ||
-       KPPInstance->UseBLDSmoothing != ExpectedSmoothing ||
+       KPPInstance->UseOSBLSmoothing != ExpectedSmoothing ||
        KPPInstance->UseEnhancedDiffusion != ExpectedEnhanced ||
        KPPInstance->DebugDiagnostics != ExpectedDebug ||
        KPPInstance->MatchTechnique != ExpectedMatchType ||
@@ -1137,9 +1137,9 @@ void testConfiguredValues() {
                  ATol) ||
        !isApprox(KPPInstance->IceFractionThresholdForLangmuir,
                  ExpectedLangmuirIce, RTol, ATol) ||
-       !isApprox(KPPInstance->IceFractionThresholdForMinimumOBL,
+       !isApprox(KPPInstance->IceFractionThresholdForMinimumOSBL,
                  ExpectedMinimumOBLIce, RTol, ATol) ||
-       !isApprox(KPPInstance->MinimumOBLUnderSeaIce, ExpectedMinimumOBL, RTol,
+       !isApprox(KPPInstance->MinimumOSBLUnderSeaIce, ExpectedMinimumOBL, RTol,
                  ATol) ||
        !isApprox(KPPInstance->SurfaceLayerExtent, 0.1_Real, RTol, ATol) ||
        !KPPInstance->UseLangmuirCirculation ||
@@ -1150,7 +1150,7 @@ void testConfiguredValues() {
    checkResult("configured values and optional defaults", NumErrors);
 }
 
-void testBoundaryLayerDepth() {
+void testOSBLDepth() {
    const HorzMesh *Mesh = HorzMesh::getDefault();
    VertCoord *VCoord    = VertCoord::getDefault();
    KPPMix *KPPInstance  = KPPMix::getInstance();
@@ -1202,12 +1202,12 @@ void testBoundaryLayerDepth() {
    KPPInstance->CriticalRichardson     = 0.25_Real;
    KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
-   KPPInstance->UseBLDSmoothing        = false;
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
+   KPPInstance->UseOSBLSmoothing       = false;
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
 
-   auto BLDH      = createHostMirrorCopy(KPPInstance->BoundaryLayerDepth);
-   auto BLDIndexH = createHostMirrorCopy(KPPInstance->IndexBoundaryLayerDepth);
+   auto BLDH      = createHostMirrorCopy(KPPInstance->OSBLDepth);
+   auto BLDIndexH = createHostMirrorCopy(KPPInstance->OSBLDepthIndex);
    auto BulkRiH   = createHostMirrorCopy(KPPInstance->BulkRichardsonNumber);
    const auto BulkShearH =
        createHostMirrorCopy(KPPInstance->BulkRichardsonShear);
@@ -1256,10 +1256,10 @@ void testBoundaryLayerDepth() {
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
        });
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
-   BLDH      = createHostMirrorCopy(KPPInstance->BoundaryLayerDepth);
-   BLDIndexH = createHostMirrorCopy(KPPInstance->IndexBoundaryLayerDepth);
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
+   BLDH      = createHostMirrorCopy(KPPInstance->OSBLDepth);
+   BLDIndexH = createHostMirrorCopy(KPPInstance->OSBLDepthIndex);
    BulkRiH   = createHostMirrorCopy(KPPInstance->BulkRichardsonNumber);
    NumErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
@@ -1296,10 +1296,10 @@ void testBoundaryLayerDepth() {
           TangentialVelocity(IEdge, K) = Value;
        });
    VCoord->minMaxLayerEdge(Halo::getDefault());
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
-   BLDH      = createHostMirrorCopy(KPPInstance->BoundaryLayerDepth);
-   BLDIndexH = createHostMirrorCopy(KPPInstance->IndexBoundaryLayerDepth);
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
+   BLDH      = createHostMirrorCopy(KPPInstance->OSBLDepth);
+   BLDIndexH = createHostMirrorCopy(KPPInstance->OSBLDepthIndex);
    BulkRiH   = createHostMirrorCopy(KPPInstance->BulkRichardsonNumber);
    NumErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
@@ -1339,9 +1339,9 @@ void testBoundaryLayerDepth() {
           NormalVelocity(IEdge, K)     = 0.1_Real * K;
           TangentialVelocity(IEdge, K) = 0.2_Real * K;
        });
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
-   BLDH = createHostMirrorCopy(KPPInstance->BoundaryLayerDepth);
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
+   BLDH = createHostMirrorCopy(KPPInstance->OSBLDepth);
    const auto ShearedBulkRiH =
        createHostMirrorCopy(KPPInstance->BulkRichardsonNumber);
    const auto ResolvedShearH =
@@ -1364,10 +1364,10 @@ void testBoundaryLayerDepth() {
    deepCopy(TangentialVelocity, 0.0_Real);
 
    deepCopy(Density, RhoSw);
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
-   BLDH      = createHostMirrorCopy(KPPInstance->BoundaryLayerDepth);
-   BLDIndexH = createHostMirrorCopy(KPPInstance->IndexBoundaryLayerDepth);
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
+   BLDH      = createHostMirrorCopy(KPPInstance->OSBLDepth);
+   BLDIndexH = createHostMirrorCopy(KPPInstance->OSBLDepthIndex);
    NumErrors = 0;
    const Real DeepestMidpoint =
        LayerThickness * (static_cast<Real>(NVertLayers) - 0.5_Real);
@@ -1391,12 +1391,12 @@ void testBoundaryLayerDepth() {
           Density(ICell, K) = RhoSw + DeltaRho;
        });
    deepCopy(IceFraction, 0.5_Real);
-   KPPInstance->IceFractionThresholdForMinimumOBL = 0.15_Real;
-   KPPInstance->MinimumOBLUnderSeaIce             = 25.0_Real;
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
-   BLDH      = createHostMirrorCopy(KPPInstance->BoundaryLayerDepth);
-   BLDIndexH = createHostMirrorCopy(KPPInstance->IndexBoundaryLayerDepth);
+   KPPInstance->IceFractionThresholdForMinimumOSBL = 0.15_Real;
+   KPPInstance->MinimumOSBLUnderSeaIce             = 25.0_Real;
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
+   BLDH      = createHostMirrorCopy(KPPInstance->OSBLDepth);
+   BLDIndexH = createHostMirrorCopy(KPPInstance->OSBLDepthIndex);
    NumErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
       if (!isApprox(BLDH(ICell), 25.0_Real, RTol, ATol) ||
@@ -1526,13 +1526,12 @@ void testBoundaryLayerNonuniformThickness() {
    KPPInstance->CriticalRichardson     = 0.25_Real;
    KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
-   KPPInstance->UseBLDSmoothing        = false;
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
+   KPPInstance->UseOSBLSmoothing       = false;
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
 
-   const auto BLDH = createHostMirrorCopy(KPPInstance->BoundaryLayerDepth);
-   const auto BLDIndexH =
-       createHostMirrorCopy(KPPInstance->IndexBoundaryLayerDepth);
+   const auto BLDH      = createHostMirrorCopy(KPPInstance->OSBLDepth);
+   const auto BLDIndexH = createHostMirrorCopy(KPPInstance->OSBLDepthIndex);
    const auto BulkRiH = createHostMirrorCopy(KPPInstance->BulkRichardsonNumber);
    const auto BulkShearH =
        createHostMirrorCopy(KPPInstance->BulkRichardsonShear);
@@ -1660,9 +1659,9 @@ void testBoundaryLayerHorizontalThicknessVariation() {
    KPPInstance->CriticalRichardson     = 0.25_Real;
    KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
-   KPPInstance->UseBLDSmoothing        = false;
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
+   KPPInstance->UseOSBLSmoothing       = false;
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
 
    const auto BulkShearH =
        createHostMirrorCopy(KPPInstance->BulkRichardsonShear);
@@ -1766,22 +1765,21 @@ void testSshOffsetInvariance() {
    KPPInstance->CriticalRichardson     = 0.25_Real;
    KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
-   KPPInstance->UseBLDSmoothing        = false;
+   KPPInstance->UseOSBLSmoothing       = false;
    KPPInstance->UseEnhancedDiffusion   = true;
    KPPInstance->MatchTechnique         = KPPMatchType::SimpleShapes;
 
    auto runWithSsh = [&](Real Ssh) {
       setCoefficientTestGeometry(Ssh);
       VCoord->minMaxLayerEdge(Halo::getDefault());
-      KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                   UStar, B0, BVF, IceFraction, Wind);
+      KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                    UStar, B0, BVF, IceFraction, Wind);
       KPPInstance->computeMixingCoefficients(Density, UStar, B0);
    };
 
    runWithSsh(0.0_Real);
-   const auto BLDRef = createHostMirrorCopy(KPPInstance->BoundaryLayerDepth);
-   const auto BLDIndexRef =
-       createHostMirrorCopy(KPPInstance->IndexBoundaryLayerDepth);
+   const auto BLDRef      = createHostMirrorCopy(KPPInstance->OSBLDepth);
+   const auto BLDIndexRef = createHostMirrorCopy(KPPInstance->OSBLDepthIndex);
    const auto DiffRef     = createHostMirrorCopy(KPPInstance->VertDiff);
    const auto ViscRef     = createHostMirrorCopy(KPPInstance->VertVisc);
    const auto NonLocalRef = createHostMirrorCopy(KPPInstance->VertNonLocalFlux);
@@ -1790,11 +1788,10 @@ void testSshOffsetInvariance() {
    // search across the analytic crossing.
    constexpr Real TestSsh = 0.75_Real;
    runWithSsh(TestSsh);
-   const auto BLDShift = createHostMirrorCopy(KPPInstance->BoundaryLayerDepth);
-   const auto BLDIndexShift =
-       createHostMirrorCopy(KPPInstance->IndexBoundaryLayerDepth);
-   const auto DiffShift = createHostMirrorCopy(KPPInstance->VertDiff);
-   const auto ViscShift = createHostMirrorCopy(KPPInstance->VertVisc);
+   const auto BLDShift      = createHostMirrorCopy(KPPInstance->OSBLDepth);
+   const auto BLDIndexShift = createHostMirrorCopy(KPPInstance->OSBLDepthIndex);
+   const auto DiffShift     = createHostMirrorCopy(KPPInstance->VertDiff);
+   const auto ViscShift     = createHostMirrorCopy(KPPInstance->VertVisc);
    const auto NonLocalShift =
        createHostMirrorCopy(KPPInstance->VertNonLocalFlux);
 
@@ -1822,7 +1819,7 @@ void testSshOffsetInvariance() {
    }
 
    checkResult("sea surface height offset invariance", NumErrors);
-   KPPInstance->UseBLDSmoothing = true;
+   KPPInstance->UseOSBLSmoothing = true;
    setCoefficientTestGeometry();
    VCoord->minMaxLayerEdge(Halo::getDefault());
 }
@@ -1866,13 +1863,13 @@ void testBoundaryLayerEdgeFallbacks() {
    KPPInstance->CriticalRichardson     = 0.25_Real;
    KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
-   KPPInstance->UseBLDSmoothing        = false;
+   KPPInstance->UseOSBLSmoothing       = false;
 
    // Zero geometric weights force the equal weighting fallback over all
    // vertically valid edges.
    deepCopy(Mesh->DcEdge, 0.0_Real);
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
    auto BulkShearH = createHostMirrorCopy(KPPInstance->BulkRichardsonShear);
    int NumErrors   = 0;
    constexpr Real ExpectedEqualWeightShear =
@@ -1889,8 +1886,8 @@ void testBoundaryLayerEdgeFallbacks() {
    OMEGA_SCOPE(MaxLayerEdgeTop, VCoord->MaxLayerEdgeTop);
    deepCopy(MinLayerEdgeBot, -1);
    deepCopy(MaxLayerEdgeTop, -1);
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
    BulkShearH = createHostMirrorCopy(KPPInstance->BulkRichardsonShear);
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
       if (!isApprox(BulkShearH(ICell, 3), 0.0_Real, RTol, ATol)) {
@@ -1957,16 +1954,16 @@ void testBoundaryLayerLangmuir() {
 
    KPPInstance->CriticalRichardson     = 0.25_Real;
    KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
-   KPPInstance->UseBLDSmoothing        = false;
+   KPPInstance->UseOSBLSmoothing       = false;
    KPPInstance->UseLangmuirCirculation = false;
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
    Array1DReal DisabledBLD("KPPMixTest-LangmuirDisabledBLD", Mesh->NCellsSize);
    Array2DReal DisabledRi("KPPMixTest-LangmuirDisabledRi", Mesh->NCellsSize,
                           NVertLayers + 1);
    Array2DReal DisabledVt2("KPPMixTest-LangmuirDisabledVt2", Mesh->NCellsSize,
                            NVertLayers + 1);
-   deepCopy(DisabledBLD, KPPInstance->BoundaryLayerDepth);
+   deepCopy(DisabledBLD, KPPInstance->OSBLDepth);
    deepCopy(DisabledRi, KPPInstance->BulkRichardsonNumber);
    deepCopy(DisabledVt2, KPPInstance->UnresolvedShear);
    const auto DisabledBLDH = createHostMirrorCopy(DisabledBLD);
@@ -1975,14 +1972,14 @@ void testBoundaryLayerLangmuir() {
 
    KPPInstance->UseLangmuirCirculation          = true;
    KPPInstance->IceFractionThresholdForLangmuir = 0.05_Real;
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
    Array1DReal EnabledBLD("KPPMixTest-LangmuirEnabledBLD", Mesh->NCellsSize);
    Array2DReal EnabledRi("KPPMixTest-LangmuirEnabledRi", Mesh->NCellsSize,
                          NVertLayers + 1);
    Array2DReal EnabledVt2("KPPMixTest-LangmuirEnabledVt2", Mesh->NCellsSize,
                           NVertLayers + 1);
-   deepCopy(EnabledBLD, KPPInstance->BoundaryLayerDepth);
+   deepCopy(EnabledBLD, KPPInstance->OSBLDepth);
    deepCopy(EnabledRi, KPPInstance->BulkRichardsonNumber);
    deepCopy(EnabledVt2, KPPInstance->UnresolvedShear);
    const auto EnabledBLDH = createHostMirrorCopy(EnabledBLD);
@@ -1990,11 +1987,10 @@ void testBoundaryLayerLangmuir() {
    const auto EnabledVt2H = createHostMirrorCopy(EnabledVt2);
 
    deepCopy(IceFraction, 0.1_Real);
-   KPPInstance->IceFractionThresholdForMinimumOBL = 2.0_Real;
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
-   const auto SuppressedBLDH =
-       createHostMirrorCopy(KPPInstance->BoundaryLayerDepth);
+   KPPInstance->IceFractionThresholdForMinimumOSBL = 2.0_Real;
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
+   const auto SuppressedBLDH = createHostMirrorCopy(KPPInstance->OSBLDepth);
    const auto SuppressedRiH =
        createHostMirrorCopy(KPPInstance->BulkRichardsonNumber);
 
@@ -2111,20 +2107,19 @@ void testBoundaryLayerSmoothing() {
    KPPInstance->CriticalRichardson     = 0.25_Real;
    KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
    KPPInstance->UseLangmuirCirculation = false;
-   KPPInstance->UseBLDSmoothing        = false;
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
+   KPPInstance->UseOSBLSmoothing       = false;
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
    Array1DReal UnsmoothedBLD("KPPMixTest-UnsmoothedBLD", Mesh->NCellsSize);
-   deepCopy(UnsmoothedBLD, KPPInstance->BoundaryLayerDepth);
+   deepCopy(UnsmoothedBLD, KPPInstance->OSBLDepth);
    const auto UnsmoothedBLDH = createHostMirrorCopy(UnsmoothedBLD);
 
-   KPPInstance->UseBLDSmoothing = true;
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
-   const auto SmoothedBLDH =
-       createHostMirrorCopy(KPPInstance->BoundaryLayerDepth);
+   KPPInstance->UseOSBLSmoothing = true;
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
+   const auto SmoothedBLDH = createHostMirrorCopy(KPPInstance->OSBLDepth);
    const auto SmoothedIndexH =
-       createHostMirrorCopy(KPPInstance->IndexBoundaryLayerDepth);
+       createHostMirrorCopy(KPPInstance->OSBLDepthIndex);
 
    int NumErrors       = 0;
    int NumChanged      = 0;
@@ -2176,7 +2171,7 @@ void testBoundaryLayerSmoothing() {
    if (NumChanged == 0) {
       ++NumErrors;
    }
-   KPPInstance->UseBLDSmoothing = false;
+   KPPInstance->UseOSBLSmoothing = false;
    checkResult("boundary-layer horizontal smoothing", NumErrors);
 }
 
@@ -2214,11 +2209,11 @@ void testEnabledFullCall() {
 
    KPPInstance->Enabled                = true;
    KPPInstance->UseLangmuirCirculation = false;
-   KPPInstance->UseBLDSmoothing        = false;
+   KPPInstance->UseOSBLSmoothing       = false;
    KPPInstance->UseEnhancedDiffusion   = false;
    KPPInstance->MatchTechnique         = KPPMatchType::SimpleShapes;
-   KPPInstance->computeOBLDepth(Density, NormalVelocity, TangentialVelocity,
-                                UStar, B0, BVF, IceFraction, Wind);
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);
 
    Array1DReal ExpectedBLD("KPPMixTest-ExpectedBLD", Mesh->NCellsSize);
@@ -2233,16 +2228,16 @@ void testEnabledFullCall() {
                                 NVertLayers + 1);
    Array2DReal ExpectedTurbVel("KPPMixTest-ExpectedTurbVel", Mesh->NCellsSize,
                                NVertLayers + 1);
-   deepCopy(ExpectedBLD, KPPInstance->BoundaryLayerDepth);
-   deepCopy(ExpectedBLDIndex, KPPInstance->IndexBoundaryLayerDepth);
+   deepCopy(ExpectedBLD, KPPInstance->OSBLDepth);
+   deepCopy(ExpectedBLDIndex, KPPInstance->OSBLDepthIndex);
    deepCopy(ExpectedBulkRi, KPPInstance->BulkRichardsonNumber);
    deepCopy(ExpectedVertDiff, KPPInstance->VertDiff);
    deepCopy(ExpectedVertVisc, KPPInstance->VertVisc);
    deepCopy(ExpectedNonLocal, KPPInstance->VertNonLocalFlux);
    deepCopy(ExpectedTurbVel, KPPInstance->TurbulentVelocityScale);
 
-   deepCopy(KPPInstance->BoundaryLayerDepth, -1.0_Real);
-   deepCopy(KPPInstance->IndexBoundaryLayerDepth, -1);
+   deepCopy(KPPInstance->OSBLDepth, -1.0_Real);
+   deepCopy(KPPInstance->OSBLDepthIndex, -1);
    deepCopy(KPPInstance->BulkRichardsonNumber, -1.0_Real);
    deepCopy(KPPInstance->VertDiff, -1.0_Real);
    deepCopy(KPPInstance->VertVisc, -1.0_Real);
@@ -2260,10 +2255,9 @@ void testEnabledFullCall() {
    const auto ExpectedVertViscH = createHostMirrorCopy(ExpectedVertVisc);
    const auto ExpectedNonLocalH = createHostMirrorCopy(ExpectedNonLocal);
    const auto ExpectedTurbVelH  = createHostMirrorCopy(ExpectedTurbVel);
-   const auto ActualBLDH =
-       createHostMirrorCopy(KPPInstance->BoundaryLayerDepth);
+   const auto ActualBLDH        = createHostMirrorCopy(KPPInstance->OSBLDepth);
    const auto ActualBLDIndexH =
-       createHostMirrorCopy(KPPInstance->IndexBoundaryLayerDepth);
+       createHostMirrorCopy(KPPInstance->OSBLDepthIndex);
    const auto ActualBulkRiH =
        createHostMirrorCopy(KPPInstance->BulkRichardsonNumber);
    const auto ActualVertDiffH = createHostMirrorCopy(KPPInstance->VertDiff);
@@ -2329,13 +2323,13 @@ void testDisabledFullCall() {
    deepCopy(BVF, 0.0_Real);
    deepCopy(IceFraction, 0.0_Real);
    deepCopy(KPPInstance->VertDiff, -7.0_Real);
-   deepCopy(KPPInstance->BoundaryLayerDepth, -9.0_Real);
+   deepCopy(KPPInstance->OSBLDepth, -9.0_Real);
 
    KPPInstance->Enabled = false;
    KPPInstance->computeKPPMix(Density, NormalVelocity, TangentialVelocity,
                               UStar, B0, BVF, IceFraction);
    const auto VertDiffH = createHostMirrorCopy(KPPInstance->VertDiff);
-   const auto BLDH      = createHostMirrorCopy(KPPInstance->BoundaryLayerDepth);
+   const auto BLDH      = createHostMirrorCopy(KPPInstance->OSBLDepth);
    int NumErrors        = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
       if (VertDiffH(ICell, 2) != -7.0_Real || BLDH(ICell) != -9.0_Real) {
@@ -2370,8 +2364,8 @@ int main(int argc, char *argv[]) {
       testClampOBLDepth();
       testOBLIndex();
    }
-   if (TestGroup == "bld" || TestGroup == "all") {
-      testBoundaryLayerDepth();
+   if (TestGroup == "osbl" || TestGroup == "all") {
+      testOSBLDepth();
       testBoundaryLayerNonuniformThickness();
       testBoundaryLayerHorizontalThicknessVariation();
       testSshOffsetInvariance();
@@ -2400,7 +2394,7 @@ int main(int argc, char *argv[]) {
                   "MatchTechnique for group '{}'",
                   TestGroup);
    }
-   if (TestGroup != "profiles" && TestGroup != "bld" && TestGroup != "vmix" &&
+   if (TestGroup != "profiles" && TestGroup != "osbl" && TestGroup != "vmix" &&
        TestGroup != "integration" && TestGroup != "all") {
       ABORT_ERROR("KPPMixTest: unknown test group '{}'", TestGroup);
    }

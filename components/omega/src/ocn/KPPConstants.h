@@ -71,27 +71,30 @@ constexpr Real MinUnresolvedShearSq = 1.0e-10_Real;
 constexpr Real MinStokesDrift = 1.0e-8_Real;
 
 // ==========================================================================
-// OBL Depth Computation Parameters
+// Ocean Surface Boundary Layer (OSBL) Parameters
 // ==========================================================================
 
-/// Critical bulk Richardson number defining the OBL base
+/// The OSBL is the near-surface ocean layer where KPP represents turbulent
+/// mixing driven by surface momentum and buoyancy forcing.
+///
+/// Critical bulk Richardson number defining the OSBL base
 /// REFERENCES: Large et al. (1994) Eq. (21)
 constexpr Real CriticalRi = 0.25;
 
-/// Minimum OBL depth under sea ice (m), applied above IceSuppressThresh
-constexpr Real MinOBLUnderIce = 5.0;
+/// Minimum OSBL depth under sea ice (m), applied above IceSuppressThresh
+constexpr Real MinOSBLUnderIce = 5.0;
 
 /// Ice fraction above which Langmuir enhancement is disabled
 constexpr Real IceFracThresh = 0.05;
 
-/// Ice fraction above which the minimum OBL depth is enforced
+/// Ice fraction above which the minimum OSBL depth is enforced
 constexpr Real IceSuppressThresh = 0.15;
 
 // ==========================================================================
 // Surface Layer Parameters
 // ==========================================================================
 
-/// Surface layer extent as a fraction of the trial OBL depth (epsilon in
+/// Surface layer extent as a fraction of the trial OSBL depth (epsilon in
 /// Large et al. 1994). Reference values entering the bulk Richardson number
 /// are averaged over the top SurfaceLayerExtent * d of the column.
 constexpr Real SurfaceLayerExtent = 0.1;
@@ -103,11 +106,11 @@ constexpr Real ConvectiveVelFac = 0.35;
 // ==========================================================================
 // KPP Shape and Stability Functions
 //
-// Vertical position inside the OBL is expressed two ways:
+// Vertical position inside the OSBL is expressed two ways:
 //   Sigma    in [-1,0], the Omega convention: 0 at the surface, -1 at the
-//            OBL base (it follows the sign of the z coordinate).
+//            OSBL base (it follows the sign of the z coordinate).
 //   SigmaMu  in [ 0,1], the CVMix/Large et al. convention: SigmaMu = -Sigma,
-//            so 0 at the surface and 1 at the OBL base.
+//            so 0 at the surface and 1 at the OSBL base.
 // The shape functions below take Sigma and convert internally, so callers
 // never need to flip signs.
 // ==========================================================================
@@ -129,8 +132,8 @@ Real kppShapeMomentum(Real Sigma) {
 /// @brief Matched KPP gradient shape function.
 ///
 /// Uses the SimpleShapes gradient shape plus a smooth correction that is
-/// zero at the surface and equals ShapeAtBase at the OBL base. This lets
-/// MatchBoth profiles meet pre-existing interior mixing at the BLD base while
+/// zero at the surface and equals ShapeAtBase at the OSBL base. This lets
+/// MatchBoth profiles meet pre-existing interior mixing at the OSBL base while
 /// preserving SimpleShapes behavior when ShapeAtBase is zero.
 KOKKOS_INLINE_FUNCTION
 Real kppShapeMatched(Real Sigma, Real ShapeAtBase) {
@@ -166,7 +169,7 @@ Real kppPhiInvMomentum(Real Zeta) {
 /// @brief Scalar gradient shape function, multiplied by h and the turbulent
 /// velocity scale to give the KPP diffusivity: Kx = h * w_s * G(sigma).
 /// The non-local flux always uses this shape, scaled by C_s instead of h*w_s,
-/// even under MatchBoth, so that gamma vanishes at the OBL base.
+/// even under MatchBoth, so that gamma vanishes at the OSBL base.
 /// REFERENCES: Large et al. (1994) Eq. (11), Eq. (12)-(13), Large et al. (1997)
 ///
 /// @param Sigma Normalized vertical position (-z/h)
@@ -210,7 +213,7 @@ Real kppPhiInvScalar(Real Zeta) {
 /// @return Normalized shape value
 KOKKOS_INLINE_FUNCTION
 Real kppSurfaceMomentumScale(Real Sigma) {
-   // Linear decay from HuOn at the surface to zero at the OBL base
+   // Linear decay from HuOn at the surface to zero at the OSBL base
    return HuOn * (1.0 + Sigma);
 }
 
@@ -287,42 +290,42 @@ Real computeLangmuirEnhancement(Real Wind10m, Real UStar, Real HBL) {
 }
 
 // ==========================================================================
-// Utility Functions for OBL Depth Computation
+// Utility Functions for OSBL Depth Computation
 // ==========================================================================
 
 /// @brief Check if a point should be suppressed (e.g., under ice)
-/// Sets OBL to minimum if ice coverage or land ice present
+/// Sets OSBL to minimum if ice coverage or land ice present
 ///
 /// @param IceFrac Sea ice coverage (0-1)
 /// @param LandIceMask Land ice mask (0=ocean, non-zero=ice)
 /// @return True if suppression applies
 KOKKOS_INLINE_FUNCTION
-bool shouldSuppressOBL(Real IceFrac, I4 LandIceMask) {
+bool shouldSuppressOSBL(Real IceFrac, I4 LandIceMask) {
    return (LandIceMask != 0) || (IceFrac > IceSuppressThresh);
 }
 
-/// @brief Apply OBL depth constraints based on column properties
+/// @brief Apply OSBL depth constraints based on column properties
 ///
-/// @param HOBL Current OBL depth (m)
+/// @param HOSBL Current OSBL depth (m)
 /// @param LayerThickness Surface layer thickness (m)
 /// @param WaterDepth Total water depth (m)
 /// @param IceFrac Sea ice coverage (0-1)
-/// @return Constrained OBL depth (m)
+/// @return Constrained OSBL depth (m)
 KOKKOS_INLINE_FUNCTION
-Real constrainOBLDepth(Real HOBL, Real LayerThickness, Real WaterDepth,
-                       Real IceFrac) {
+Real constrainOSBLDepth(Real HOSBL, Real LayerThickness, Real WaterDepth,
+                        Real IceFrac) {
    // Lower bound: at least half the surface layer thickness
-   HOBL = Kokkos::fmax(HOBL, LayerThickness * 0.5);
+   HOSBL = Kokkos::fmax(HOSBL, LayerThickness * 0.5);
 
    // Enforce minimum under ice
    if (IceFrac > IceSuppressThresh) {
-      HOBL = Kokkos::fmax(HOBL, MinOBLUnderIce);
+      HOSBL = Kokkos::fmax(HOSBL, MinOSBLUnderIce);
    }
 
    // Upper bound: cannot exceed water depth
-   HOBL = Kokkos::fmin(HOBL, WaterDepth * 0.95);
+   HOSBL = Kokkos::fmin(HOSBL, WaterDepth * 0.95);
 
-   return HOBL;
+   return HOSBL;
 }
 
 // ==========================================================================
@@ -355,7 +358,7 @@ Real computeTurbVelocityScale(Real UStar, Real BuoyFlux, Real HOBL) {
                       1.0_Real / 3.0_Real);
 }
 
-/// @brief Momentum and scalar turbulent velocity scales at a point in the OBL
+/// @brief Momentum and scalar turbulent velocity scales at a point in the OSBL
 ///
 /// CVMix-style scales: w = kappa * u* * phi^{-1}(zeta) in general, with
 /// explicit free-convection limits when u* vanishes. Both scales are returned
@@ -378,7 +381,7 @@ void kppTurbScales(Real UStar, Real BuoyFlux, Real HOBL, Real SigmaLoc,
    if (UStar > 0.0_Real) {
       const Real U3 = UStar * UStar * UStar;
       const Real Zeta =
-          SigmaLoc * HOBL * BuoyFlux * Kappa / Kokkos::max(U3, Tiny);
+          SigmaLoc * HOBL * BuoyFlux * Kappa / Kokkos::max(U3, Real(Tiny));
 
       // These return phi^{-1}; do not invert again.
       WMTurb = Kappa * UStar * Kokkos::max(kppPhiInvMomentum(Zeta), 0.0_Real);
@@ -394,23 +397,23 @@ void kppTurbScales(Real UStar, Real BuoyFlux, Real HOBL, Real SigmaLoc,
    }
 }
 
-/// @brief Shape value the KPP profile must reach at the OBL base so that it
+/// @brief Shape value the KPP profile must reach at the OSBL base so that it
 /// joins the pre-existing interior coefficient there (MatchBoth only).
 ///
 /// Callers must skip this when no interior mixing is supplied, since
 /// InteriorCoeff is then read from an unallocated array.
 ///
-/// @param InteriorCoeff Interior diffusivity or viscosity at the OBL base
+/// @param InteriorCoeff Interior diffusivity or viscosity at the OSBL base
 /// @param HOBL Boundary layer depth (m)
 /// @param W Turbulent velocity scale matching InteriorCoeff (m/s)
-/// @return Shape value at the OBL base (dimensionless)
+/// @return Shape value at the OSBL base (dimensionless)
 KOKKOS_INLINE_FUNCTION
 Real kppMatchShape(Real InteriorCoeff, Real HOBL, Real W) {
    if (HOBL <= 0.0_Real || W <= 0.0_Real) {
       return 0.0_Real;
    }
 
-   return InteriorCoeff / Kokkos::max(HOBL * W, Tiny);
+   return InteriorCoeff / Kokkos::max(HOBL * W, Real(Tiny));
 }
 
 /// @brief Non-local flux normalization constant
@@ -427,42 +430,42 @@ Real kppNonLocalCs(Real Kappa, Real SurfLayerExtent) {
           Kokkos::pow(CMoS * Kappa * SurfLayerExtent, 1.0_Real / 3.0_Real);
 }
 
-/// @brief Clamp a trial OBL depth to the range supported by the column
+/// @brief Clamp a trial OSBL depth to the range supported by the column
 ///
-/// @param OBLDepth Trial OBL depth (m)
-/// @param MinOBLDepth Lower bound, typically half the top layer thickness (m)
-/// @param MaxOBLDepth Upper bound, typically the deepest cell center (m)
+/// @param OSBLDepth Trial OSBL depth (m)
+/// @param MinOSBLDepth Lower bound, typically half the top layer thickness (m)
+/// @param MaxOSBLDepth Upper bound, typically the deepest cell center (m)
 /// @param ApplyIceMinimum Whether the sea-ice minimum depth applies
-/// @param MinOBLUnderIce Minimum OBL depth under sea ice (m)
-/// @return Clamped OBL depth (m)
+/// @param MinOSBLUnderIce Minimum OSBL depth under sea ice (m)
+/// @return Clamped OSBL depth (m)
 KOKKOS_INLINE_FUNCTION
-Real kppClampOBLDepth(Real OBLDepth, Real MinOBLDepth, Real MaxOBLDepth,
-                      bool ApplyIceMinimum, Real MinOBLUnderIce) {
-   OBLDepth = Kokkos::fmax(OBLDepth, MinOBLDepth);
+Real kppClampOSBLDepth(Real OSBLDepth, Real MinOSBLDepth, Real MaxOSBLDepth,
+                       bool ApplyIceMinimum, Real MinOSBLUnderIce) {
+   OSBLDepth = Kokkos::fmax(OSBLDepth, MinOSBLDepth);
 
    if (ApplyIceMinimum) {
-      OBLDepth = Kokkos::fmax(OBLDepth, MinOBLUnderIce);
+      OSBLDepth = Kokkos::fmax(OSBLDepth, MinOSBLUnderIce);
    }
 
-   return Kokkos::fmin(OBLDepth, MaxOBLDepth);
+   return Kokkos::fmin(OSBLDepth, MaxOSBLDepth);
 }
 
-/// @brief Index of the cell layer containing a given OBL depth
+/// @brief Index of the cell layer containing a given OSBL depth
 ///
 /// @param ZInterface Geometric height of layer interfaces (m)
 /// @param ICell Cell index
 /// @param KMin Index of the top active layer
 /// @param KMax Index of the bottom active layer
 /// @param Ssh Sea surface height (m), since depths are measured below it
-/// @param OBLDepth OBL depth (m)
-/// @return Layer index bracketing OBLDepth, or KMax if none does
+/// @param OSBLDepth OSBL depth (m)
+/// @return Layer index bracketing OSBLDepth, or KMax if none does
 KOKKOS_INLINE_FUNCTION
-I4 kppOBLIndex(const Array2DReal &ZInterface, I4 ICell, I4 KMin, I4 KMax,
-               Real Ssh, Real OBLDepth) {
+I4 kppOSBLIndex(const Array2DReal &ZInterface, I4 ICell, I4 KMin, I4 KMax,
+                Real Ssh, Real OSBLDepth) {
    for (I4 K = KMin; K < KMax; ++K) {
       const Real ZAbove = Ssh - ZInterface(ICell, K);
       const Real ZBelow = Ssh - ZInterface(ICell, K + 1);
-      if (OBLDepth >= ZAbove && OBLDepth <= ZBelow) {
+      if (OSBLDepth >= ZAbove && OSBLDepth <= ZBelow) {
          return K;
       }
    }

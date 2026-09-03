@@ -104,7 +104,7 @@ Omega:
       RiSmoothLoops: 2
     KPP:
       Enable: true
-      UseBLDSmoothing: true
+      UseOSBLSmoothing: true
       UseLangmuirCirculation: true
       CriticalBulkRichardsonNumber: 0.25
       SurfaceLayerExtent: 0.1
@@ -113,8 +113,8 @@ Omega:
       InterpType2: LMD94
       UseEnhancedDiffusion: true
       IceFractionThresholdForLangmuir: 0.05
-      IceFractionThresholdForMinimumOBL: 0.15
-      MinimumOBLUnderSeaIce: 5.0
+      IceFractionThresholdForMinimumOSBL: 0.15
+      MinimumOSBLUnderSeaIce: 5.0
       BackgroundViscosity: 1.0e-4
       BackgroundDiffusivity: 1.0e-5
       DebugDiagnostics: false

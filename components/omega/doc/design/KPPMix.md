@@ -141,8 +141,8 @@ KPP is configured from the `VertMix: KPP` YAML group. Key parameters include:
 - `InterpType2` (`LMD94`, `Linear`, `Quadratic`, `Cubic`)
 - `UseEnhancedDiffusion`
 - `IceFractionThresholdForLangmuir`
-- `IceFractionThresholdForMinimumOBL`
-- `MinimumOBLUnderSeaIce`
+- `IceFractionThresholdForMinimumOSBL`
+- `MinimumOSBLUnderSeaIce`
 - `BackgroundViscosity`
 - `BackgroundDiffusivity`
 - `DebugDiagnostics`
@@ -154,7 +154,7 @@ Defaults and usage examples are documented in the user guide page:
 
 `KPPMix` is a singleton that owns persistent output fields, including:
 
-- `BoundaryLayerDepth`, `IndexBoundaryLayerDepth`
+- `OSBLDepth`, `OSBLDepthIndex`
 - `VertDiff`, `VertVisc`
 - `VertNonLocalFlux`
 - diagnostics such as `BulkRichardsonNumber`, `BulkRichardsonShear`,
@@ -176,7 +176,7 @@ void computeKPPMix(const Array2DReal &PotentialDensity,
 ```
 
 Internal stages:
-- `computeOBLDepth(...)`
+- `computeOSBLDepth(...)`
 - `computeMixingCoefficients(...)`
 
 ### 4.3 Time stepper coupling behavior
@@ -224,7 +224,7 @@ The single column test case can be run across a wide range of surface forcing
 (heat, evaporative, and momentum fluxes) and the following diagnostics will be
 plotted over time
 
-- `BoundaryLayerDepth`
+- `OSBLDepth`
 - `BulkRichardsonNumber`
 - `VertDiff`, `VertVisc`
 - `VertNonLocalFlux`

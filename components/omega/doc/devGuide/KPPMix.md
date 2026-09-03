@@ -20,7 +20,7 @@ KPP diffusivity, viscosity, and non local fluxes are computed based on this boun
 Omega KPP is implemented in `KPPMix` as a singleton with two major compute
 phases:
 
-1. OBL depth diagnosis (`computeOBLDepth`)
+1. OSBL depth diagnosis (`computeOSBLDepth`)
 2. Coefficient/profile construction (`computeMixingCoefficients`)
 
 Main class/API surface is in `src/ocn/KPPMix.h` and implementation is in
@@ -37,13 +37,13 @@ geometric heights and are unaffected by the sea surface height.
 
 ## KPP Notation
 
-KPP splits the water column at the ocean boundary layer (OBL) depth `h`. Inside the OBL, diffusivity and viscosity are prescribed via a cubic shape function
+KPP splits the water column at the ocean surface boundary layer (OSBL) depth `h`. Inside the OSBL, diffusivity and viscosity are prescribed via a cubic shape function
 scaled by `h` and a turbulent velocity scale; below it, only interior mixing
  applies (e.g., shear instability driven mixing).
 
 | Symbol | Code name | Units | Meaning |
 | --- | --- | --- | --- |
-| `h` | `HOBL`, `BoundaryLayerDepth` | m | OBL depth below the free surface |
+| `h` | `HOSBL`, `OSBLDepth` | m | OSBL depth below the free surface |
 | `d` | `ZDepth`, `ZCenter` | m | depth below the free surface |
 | `sigma` | `Sigma` | - | normalized depth in `[-1,0]`, Omega sign convention: 0 at the surface, -1 at the OBL base |
 | `sigma_mu` | `SigmaMu` | - | `-Sigma`, in `[0,1]`; the CVMix/Large et al. convention |
@@ -59,8 +59,8 @@ scaled by `h` and a turbulent velocity scale; below it, only interior mixing
 | `G(sigma)` | `kppShape*` | - | non-dimensional profile shapes |
 | `gamma` | `VertNonLocalFlux` | - | non-local (counter-gradient) tracer flux coefficient |
 
-The OBL depth is the shallowest `d` at which `Ri_b(d)` reaches the critical
-value; the search is done per cell in `computeOBLDepth`, and the crossing depth
+The OSBL depth is the shallowest `d` at which `Ri_b(d)` reaches the critical
+value; the search is done per cell in `computeOSBLDepth`, and the crossing depth
 is refined by a quadratic fit through the three nearest cell-center `Ri_b`
 values.
 
@@ -72,7 +72,7 @@ resetting them inside the loop would make the search `O(K^2)`. The loop also
 stops at the crossing, since only the crossing level and the two above it feed
 the refinement. `DebugDiagnostics` suppresses that early exit so the `Ri_b`
 diagnostic profiles are filled over the whole column; it has no effect on
-`BoundaryLayerDepth` or on any mixing coefficient.
+`OSBLDepth` or on any mixing coefficient.
 
 ### Shape and stability functions
 
@@ -94,11 +94,11 @@ The non-dimensional functions live in `src/ocn/KPPConstants.h` in namespace
 
 `src/ocn/KPPConstants.h` is the single authoritative source for KPP default
 values. The runtime-configurable members of `KPPMix` (`SurfaceLayerExtent`, the
-two ice-fraction thresholds and `MinimumOBLUnderSeaIce`) are initialized from
+two ice-fraction thresholds and `MinimumOSBLUnderSeaIce`) are initialized from
 those constants rather than from inline literals, so a default is changed in
 exactly one place.
 
-Per-thread edge scratch arrays in `computeOBLDepth` are sized from
+Per-thread edge scratch arrays in `computeOSBLDepth` are sized from
 `HorzMesh::MaxEdgesBound`, the shared compile-time bound on edges per cell;
 KPP does not define its own maximum.
 
@@ -155,7 +155,7 @@ The KPP fields are consumed in two places within the step:
   tendency from `KPPMix::VertNonLocalFlux` at every stage.
 - `VertMix::computeVertMix(...)`, called from `VertMixImplicit(...)`, merges
   `KPPMix::VertDiff` / `VertVisc` into the final coefficients using
-  `KPPMix::IndexBoundaryLayerDepth`.
+  `KPPMix::OSBLDepthIndex`.
 
 Both therefore see the same boundary-layer depth and the same shape function,
 so the non-local flux and the diffusivity it is paired with cannot become
@@ -179,8 +179,8 @@ Important keys and class members:
 - `UseEnhancedDiffusion` -> `UseEnhancedDiffusion`
 - `UseLangmuirCirculation` -> `UseLangmuirCirculation`
 - `IceFractionThresholdForLangmuir` -> `IceFractionThresholdForLangmuir`
-- `IceFractionThresholdForMinimumOBL` -> `IceFractionThresholdForMinimumOBL`
-- `MinimumOBLUnderSeaIce` -> `MinimumOBLUnderSeaIce`
+- `IceFractionThresholdForMinimumOSBL` -> `IceFractionThresholdForMinimumOSBL`
+- `MinimumOSBLUnderSeaIce` -> `MinimumOSBLUnderSeaIce`
 - `BackgroundViscosity` -> `BackgroundVisc`
 - `BackgroundDiffusivity` -> `BackgroundDiff`
 - `DebugDiagnostics` -> `DebugDiagnostics`
@@ -191,7 +191,7 @@ See [User KPP guide](../userGuide/KPPMix.md) for defaults and runnable examples.
 
 `KPPMix::defineFields()` registers KPP outputs for I/O. Frequently used outputs:
 
-- `BoundaryLayerDepth`
+- `OSBLDepth`
 - `VertNonLocalFlux`
 - `BulkRichardsonNumber`
 - `BulkRichardsonShear`
@@ -202,7 +202,7 @@ See [User KPP guide](../userGuide/KPPMix.md) for defaults and runnable examples.
 - `SurfaceFrictionVelocity`
 - `SurfaceBuoyancyFlux`
 
-These can be enabled in output stream contents to diagnose OBL and profile
+These can be enabled in output stream contents to diagnose OSBL and profile
 behavior in experiments.
 
 ## Developer Notes
@@ -233,8 +233,8 @@ behavior in experiments.
 
 ### Diagnostics-based checks
 
-1. Output `BoundaryLayerDepth`, `BulkRichardsonNumber`, and `VertDiff`.
-2. Confirm OBL depth and coefficient evolution under changing forcing.
+1. Output `OSBLDepth`, `BulkRichardsonNumber`, and `VertDiff`.
+2. Confirm OSBL depth and coefficient evolution under changing forcing.
 3. Validate optional outputs (`VertNonLocalFlux`) only when enabled.
 
 ### Regression checks

@@ -48,7 +48,7 @@ const char *matchTypeName(KPPMatchType Type) {
    }
 }
 
-} // anonymous namespace
+} // namespace
 
 /// Constructor for KPPMix
 KPPMix::KPPMix(const std::string &InName, const HorzMesh *InMesh,
@@ -56,11 +56,10 @@ KPPMix::KPPMix(const std::string &InName, const HorzMesh *InMesh,
     : Name(InName), Mesh(InMesh), VCoord(InVCoord) {
 
    // Allocate output arrays
-   VertDiff = Array2DReal("VertDiff", Mesh->NCellsSize, VCoord->NVertLayersP1);
-   VertVisc = Array2DReal("VertVisc", Mesh->NCellsSize, VCoord->NVertLayersP1);
-   BoundaryLayerDepth = Array1DReal("BoundaryLayerDepth", Mesh->NCellsSize);
-   IndexBoundaryLayerDepth =
-       Array1DI4("IndexBoundaryLayerDepth", Mesh->NCellsSize);
+   VertDiff  = Array2DReal("VertDiff", Mesh->NCellsSize, VCoord->NVertLayersP1);
+   VertVisc  = Array2DReal("VertVisc", Mesh->NCellsSize, VCoord->NVertLayersP1);
+   OSBLDepth = Array1DReal("OSBLDepth", Mesh->NCellsSize);
+   OSBLDepthIndex = Array1DI4("OSBLDepthIndex", Mesh->NCellsSize);
    VertNonLocalFlux =
        Array2DReal("VertNonLocalFlux", Mesh->NCellsSize, VCoord->NVertLayersP1);
    BulkRichardsonNumber = Array2DReal("BulkRichardsonNumber", Mesh->NCellsSize,
@@ -82,8 +81,8 @@ KPPMix::KPPMix(const std::string &InName, const HorzMesh *InMesh,
    // Set field names
    VertDiffFldName            = "VertDiff";
    VertViscFldName            = "VertVisc";
-   OBLDepthFldName            = "BoundaryLayerDepth";
-   OBLDepthIndexFldName       = "BoundaryLayerDepthIndex";
+   OSBLDepthFldName           = "OSBLDepth";
+   OSBLDepthIndexFldName      = "OSBLDepthIndex";
    NonLocalFluxFldName        = "VertNonLocalFlux";
    BulkRichardsonFldName      = "BulkRichardsonNumber";
    BulkRichardsonShearFldName = "BulkRichardsonShear";
@@ -97,8 +96,8 @@ KPPMix::KPPMix(const std::string &InName, const HorzMesh *InMesh,
    if (Name != "Default") {
       VertDiffFldName.append(Name);
       VertViscFldName.append(Name);
-      OBLDepthFldName.append(Name);
-      OBLDepthIndexFldName.append(Name);
+      OSBLDepthFldName.append(Name);
+      OSBLDepthIndexFldName.append(Name);
       NonLocalFluxFldName.append(Name);
       BulkRichardsonFldName.append(Name);
       BulkRichardsonShearFldName.append(Name);
@@ -174,7 +173,7 @@ void KPPMix::init() {
       EnhancedErr.reset();
    }
    Error BLDSmoothErr =
-       KPPConfig.get("UseBLDSmoothing", DefKPPMix->UseBLDSmoothing);
+       KPPConfig.get("UseOSBLSmoothing", DefKPPMix->UseOSBLSmoothing);
    if (!BLDSmoothErr.isSuccess()) {
       BLDSmoothErr.reset();
    }
@@ -190,10 +189,10 @@ void KPPMix::init() {
                         DefKPPMix->UseLangmuirCirculation);
    Err += KPPConfig.get("IceFractionThresholdForLangmuir",
                         DefKPPMix->IceFractionThresholdForLangmuir);
-   Err += KPPConfig.get("IceFractionThresholdForMinimumOBL",
-                        DefKPPMix->IceFractionThresholdForMinimumOBL);
-   Err +=
-       KPPConfig.get("MinimumOBLUnderSeaIce", DefKPPMix->MinimumOBLUnderSeaIce);
+   Err += KPPConfig.get("IceFractionThresholdForMinimumOSBL",
+                        DefKPPMix->IceFractionThresholdForMinimumOSBL);
+   Err += KPPConfig.get("MinimumOSBLUnderSeaIce",
+                        DefKPPMix->MinimumOSBLUnderSeaIce);
    Error DebugErr =
        KPPConfig.get("DebugDiagnostics", DefKPPMix->DebugDiagnostics);
    if (!DebugErr.isSuccess()) {
@@ -232,11 +231,11 @@ void KPPMix::computeKPPMix(const Array2DReal &PotentialDensity,
    deepCopy(this->PotentialDensity, PotentialDensity);
 
    // =======================================================================
-   // Stage 1: Compute OBL Depth
+   // Stage 1: Compute OSBL depth
    // =======================================================================
-   computeOBLDepth(PotentialDensity, NormalVelocity, TangentialVelocity,
-                   SurfaceFrictionVelocity, SurfaceBuoyancyFlux,
-                   BruntVaisalaFreqSq, IceFraction, WindSpeed10m);
+   computeOSBLDepth(PotentialDensity, NormalVelocity, TangentialVelocity,
+                    SurfaceFrictionVelocity, SurfaceBuoyancyFlux,
+                    BruntVaisalaFreqSq, IceFraction, WindSpeed10m);
 
    // =======================================================================
    // Stage 2: Compute Mixing Coefficients
@@ -267,8 +266,8 @@ void KPPMix::logDiagnostics(const Array2DReal &PotentialDensity,
    const auto DensityH      = createHostMirrorCopy(PotentialDensity);
    const auto UStarH        = createHostMirrorCopy(SurfaceFrictionVelocity);
    const auto B0H           = createHostMirrorCopy(SurfaceBuoyancyFlux);
-   const auto OBLDepthH     = createHostMirrorCopy(BoundaryLayerDepth);
-   const auto OBLIndexH     = createHostMirrorCopy(IndexBoundaryLayerDepth);
+   const auto OSBLDepthH    = createHostMirrorCopy(OSBLDepth);
+   const auto OSBLIndexH    = createHostMirrorCopy(OSBLDepthIndex);
    const auto VertDiffH     = createHostMirrorCopy(VertDiff);
    const auto VertViscH     = createHostMirrorCopy(VertVisc);
 
@@ -320,12 +319,6 @@ void KPPMix::logDiagnostics(const Array2DReal &PotentialDensity,
          }
       }
    }
-   LOG_WARN("KPP debug domain post-coeff: max|b0|={} at cell={} max|u*|={} "
-            "at cell={} maxKPPDiff={} at cell={},k={} maxKPPVisc={} at "
-            "cell={},k={}",
-            MaxAbsB0, MaxAbsB0Cell, MaxAbsUStar, MaxAbsUStarCell, MaxVertDiff,
-            MaxVertDiffCell, MaxVertDiffK, MaxVertVisc, MaxVertViscCell,
-            MaxVertViscK);
 
    const int ICell       = 0;
    const int KMin        = MinLayerCellH(ICell);
@@ -352,21 +345,12 @@ void KPPMix::logDiagnostics(const Array2DReal &PotentialDensity,
            : 1.0_Real;
    const Real BuoyFluxEff = BuoyFlux * LangmuirFactor;
 
-   LOG_WARN("KPP debug: cell={} h_obl={} m k_obl={} u*={} b0={} b0_eff={} "
-            "langmuir={}",
-            ICell, OBLDepthH(ICell), OBLIndexH(ICell), UStar, BuoyFlux,
-            BuoyFluxEff, LangmuirFactor);
-
    const int KOblIface = Kokkos::min(
        NVertLayers, Kokkos::max(KMin, static_cast<int>(OBLIndexH(ICell)) + 1));
-   LOG_WARN("KPP debug coeff target: cell={} k_obl={} iface={} diff={} "
-            "visc={}",
-            ICell, OBLIndexH(ICell), KOblIface, VertDiffH(ICell, KOblIface),
-            VertViscH(ICell, KOblIface));
 
-   const int KTop  = Kokkos::min(KMax, KMin + 3);
-   const int KOBL  = OBLIndexH(ICell);
-   const Real HOBL = OBLDepthH(ICell);
+   const int KTop   = Kokkos::min(KMax, KMin + 3);
+   const int KOSBL  = OSBLIndexH(ICell);
+   const Real HOSBL = OSBLDepthH(ICell);
 
    for (int K = KMin; K <= KTop; ++K) {
       const int KCell   = Kokkos::min(K, NVertLayers - 1);
@@ -401,24 +385,20 @@ void KPPMix::logDiagnostics(const Array2DReal &PotentialDensity,
 
       const Real PhiInvM = KPP::kppPhiInvMomentum(Zeta);
       const Real PhiInvS = KPP::kppPhiInvScalar(Zeta);
-
-      LOG_WARN(
-          "KPP debug top: cell={} k={} z={} ri_b={} zeta={} phi_m={} phi_s={}",
-          ICell, K, ZDepth, RiBulk, Zeta, PhiInvM, PhiInvS);
    }
 }
 
-/// Stage 1: Compute OBL depth using bulk Richardson search with edge-based
+/// Stage 1: Compute OSBL depth using bulk Richardson search with edge-based
 /// velocity shear following the MPAS CVMix reference implementation
 /// (mpas_ocn_vmix_cvmix.F)
-void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
-                             const Array2DReal &NormalVelocity,
-                             const Array2DReal &TangentialVelocity,
-                             const Array1DReal &SurfaceFrictionVelocity,
-                             const Array1DReal &SurfaceBuoyancyFlux,
-                             const Array2DReal &BruntVaisalaFreqSq,
-                             const Array1DReal &IceFraction,
-                             const Array1DReal &WindSpeed10m) {
+void KPPMix::computeOSBLDepth(const Array2DReal &PotentialDensity,
+                              const Array2DReal &NormalVelocity,
+                              const Array2DReal &TangentialVelocity,
+                              const Array1DReal &SurfaceFrictionVelocity,
+                              const Array1DReal &SurfaceBuoyancyFlux,
+                              const Array2DReal &BruntVaisalaFreqSq,
+                              const Array1DReal &IceFraction,
+                              const Array1DReal &WindSpeed10m) {
 
    // =======================================================================
    // Compute Langmuir enhancement factors if wind speed is available
@@ -442,22 +422,22 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
        });
 
    // =======================================================================
-   // Stage 1: Compute OBL depth using edge-based velocity shear
+   // Stage 1: Compute OSBL depth using edge-based velocity shear
    // =======================================================================
-   KPPOBLDepthSearch OBLDepthCalc(Mesh, VCoord);
-   OBLDepthCalc.CriticalRichardson = CriticalRichardson;
-   OBLDepthCalc.SurfaceLayerExtent = SurfaceLayerExtent;
-   OBLDepthCalc.IceFracThresholdForMinimumOBL =
-       IceFractionThresholdForMinimumOBL;
-   OBLDepthCalc.MinimumOBLUnderSeaIce = MinimumOBLUnderSeaIce;
-   OBLDepthCalc.FullRiProfile         = DebugDiagnostics;
+   KPPOSBLDepthSearch OSBLDepthCalc(Mesh, VCoord);
+   OSBLDepthCalc.CriticalRichardson = CriticalRichardson;
+   OSBLDepthCalc.SurfaceLayerExtent = SurfaceLayerExtent;
+   OSBLDepthCalc.IceFracThresholdForMinimumOSBL =
+       IceFractionThresholdForMinimumOSBL;
+   OSBLDepthCalc.MinimumOSBLUnderSeaIce = MinimumOSBLUnderSeaIce;
+   OSBLDepthCalc.FullRiProfile          = DebugDiagnostics;
 
    OMEGA_SCOPE(LocPotentialDensity, PotentialDensity);
    OMEGA_SCOPE(LocNormalVelocity, NormalVelocity);
    OMEGA_SCOPE(LocTangentialVelocity, TangentialVelocity);
    OMEGA_SCOPE(LocBruntVaisalaFreqSq, BruntVaisalaFreqSq);
-   OMEGA_SCOPE(LocBoundaryLayerDepth, BoundaryLayerDepth);
-   OMEGA_SCOPE(LocIndexBoundaryLayerDepth, IndexBoundaryLayerDepth);
+   OMEGA_SCOPE(LocOSBLDepth, OSBLDepth);
+   OMEGA_SCOPE(LocOSBLDepthIndex, OSBLDepthIndex);
    OMEGA_SCOPE(LocBulkRichardson, BulkRichardsonNumber);
    OMEGA_SCOPE(LocBulkRichardsonShear, BulkRichardsonShear);
    OMEGA_SCOPE(LocUnresolvedShear, UnresolvedShear);
@@ -469,34 +449,32 @@ void KPPMix::computeOBLDepth(const Array2DReal &PotentialDensity,
    deepCopy(BuoyancyJump, 0.0_Real);
 
    parallelFor(
-       "KPP-OBLDepth", {Mesh->NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
-          OBLDepthCalc(
-              LocBoundaryLayerDepth, LocIndexBoundaryLayerDepth,
-              LocBulkRichardson, LocBulkRichardsonShear, LocUnresolvedShear,
-              LocBuoyancyJump, ICell, LocPotentialDensity, LocNormalVelocity,
-              LocTangentialVelocity, LocSurfFricVel, LocSurfBuoyFlux,
-              LocBruntVaisalaFreqSq, LocIceFraction, LocLangmuirFactor);
+       "KPP-OSBLDepth", {Mesh->NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
+          OSBLDepthCalc(LocOSBLDepth, LocOSBLDepthIndex, LocBulkRichardson,
+                        LocBulkRichardsonShear, LocUnresolvedShear,
+                        LocBuoyancyJump, ICell, LocPotentialDensity,
+                        LocNormalVelocity, LocTangentialVelocity,
+                        LocSurfFricVel, LocSurfBuoyFlux, LocBruntVaisalaFreqSq,
+                        LocIceFraction, LocLangmuirFactor);
        });
 
-   if (UseBLDSmoothing) {
-      Array1DReal BoundaryLayerDepthSmooth("BoundaryLayerDepthSmooth",
-                                           Mesh->NCellsSize);
-      OMEGA_SCOPE(LocBoundaryLayerDepthSmooth, BoundaryLayerDepthSmooth);
+   if (UseOSBLSmoothing) {
+      Array1DReal OSBLDepthSmooth("OSBLDepthSmooth", Mesh->NCellsSize);
+      OMEGA_SCOPE(LocOSBLDepthSmooth, OSBLDepthSmooth);
 
-      KPPBLDSmooth BLDSmoothCalc(Mesh, VCoord);
-      KPPBLDCommit BLDCommitCalc(Mesh, VCoord);
+      KPPOSBLSmooth BLDSmoothCalc(Mesh, VCoord);
+      KPPOSBLCommit BLDCommitCalc(Mesh, VCoord);
 
       parallelFor(
-          "KPP-OBLDepth-Smooth", {Mesh->NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
-             BLDSmoothCalc(LocBoundaryLayerDepthSmooth, ICell,
-                           LocBoundaryLayerDepth);
+          "KPP-OSBLDepth-Smooth", {Mesh->NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
+             BLDSmoothCalc(LocOSBLDepthSmooth, ICell, LocOSBLDepth);
           });
 
       parallelFor(
-          "KPP-OBLDepth-CommitSmooth", {Mesh->NCellsAll},
+          "KPP-OSBLDepth-CommitSmooth", {Mesh->NCellsAll},
           KOKKOS_LAMBDA(I4 ICell) {
-             BLDCommitCalc(LocBoundaryLayerDepth, LocIndexBoundaryLayerDepth,
-                           ICell, LocBoundaryLayerDepthSmooth);
+             BLDCommitCalc(LocOSBLDepth, LocOSBLDepthIndex, ICell,
+                           LocOSBLDepthSmooth);
           });
    }
 }
@@ -517,8 +495,8 @@ void KPPMix::computeMixingCoefficients(
    const bool LocUseMatchedShapes =
        LocUseInteriorMix && MatchTechnique == KPPMatchType::MatchBoth;
 
-   OMEGA_SCOPE(LocBoundaryLayerDepth, BoundaryLayerDepth);
-   OMEGA_SCOPE(LocIndexBoundaryLayerDepth, IndexBoundaryLayerDepth);
+   OMEGA_SCOPE(LocOSBLDepth, OSBLDepth);
+   OMEGA_SCOPE(LocOSBLDepthIndex, OSBLDepthIndex);
    OMEGA_SCOPE(LocVertDiff, VertDiff);
    OMEGA_SCOPE(LocVertVisc, VertVisc);
    OMEGA_SCOPE(LocVertNonLocalFlux, VertNonLocalFlux);
@@ -555,16 +533,15 @@ void KPPMix::computeMixingCoefficients(
    parallelFor(
        "KPP-MixingCoeffs", {Mesh->NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
           MixingCoeffsCalc(LocVertDiff, LocVertVisc, LocVertNonLocalFlux,
-                           LocTurbulentVelocityScale, ICell,
-                           LocBoundaryLayerDepth, LocIndexBoundaryLayerDepth,
-                           LocSurfFricVel, LocSurfBuoyFlux, LocInteriorVertDiff,
-                           LocInteriorVertVisc);
+                           LocTurbulentVelocityScale, ICell, LocOSBLDepth,
+                           LocOSBLDepthIndex, LocSurfFricVel, LocSurfBuoyFlux,
+                           LocInteriorVertDiff, LocInteriorVertVisc);
        });
 }
 
-/// Constructor for KPPOBLDepthSearch
-KPPOBLDepthSearch::KPPOBLDepthSearch(const HorzMesh *Mesh,
-                                     const VertCoord *VCoord)
+/// Constructor for KPPOSBLDepthSearch
+KPPOSBLDepthSearch::KPPOSBLDepthSearch(const HorzMesh *Mesh,
+                                       const VertCoord *VCoord)
     : NVertLayers(VCoord->NVertLayers), MinLayerCell(VCoord->MinLayerCell),
       MaxLayerCell(VCoord->MaxLayerCell),
       MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
@@ -574,14 +551,14 @@ KPPOBLDepthSearch::KPPOBLDepthSearch(const HorzMesh *Mesh,
       EdgesOnCell(Mesh->EdgesOnCell), CellsOnCell(Mesh->CellsOnCell),
       AreaCell(Mesh->AreaCell), DcEdge(Mesh->DcEdge), DvEdge(Mesh->DvEdge) {}
 
-/// Constructor for KPPBLDSmooth
-KPPBLDSmooth::KPPBLDSmooth(const HorzMesh *Mesh, const VertCoord *VCoord)
+/// Constructor for KPPOSBLSmooth
+KPPOSBLSmooth::KPPOSBLSmooth(const HorzMesh *Mesh, const VertCoord *VCoord)
     : NVertLayers(VCoord->NVertLayers), NCellsAll(Mesh->NCellsAll),
       MinLayerCell(VCoord->MinLayerCell), NEdgesOnCell(Mesh->NEdgesOnCell),
       CellsOnCell(Mesh->CellsOnCell), AreaCell(Mesh->AreaCell) {}
 
-/// Constructor for KPPBLDCommit
-KPPBLDCommit::KPPBLDCommit(const HorzMesh *Mesh, const VertCoord *VCoord)
+/// Constructor for KPPOSBLCommit
+KPPOSBLCommit::KPPOSBLCommit(const HorzMesh *Mesh, const VertCoord *VCoord)
     : NVertLayers(VCoord->NVertLayers), MinLayerCell(VCoord->MinLayerCell),
       MaxLayerCell(VCoord->MaxLayerCell), ZInterface(VCoord->GeomZInterface),
       ZMid(VCoord->GeomZMid), SshCell(VCoord->SshCell) {}
@@ -594,27 +571,27 @@ KPPMixingCoeffs::KPPMixingCoeffs(const HorzMesh *Mesh, const VertCoord *VCoord)
 
 /// Register fields with I/O system
 void KPPMix::defineFields() {
-   // BoundaryLayerDepth on cells
+   // OSBLDepth on cells
    std::vector<std::string> CellDims(1);
    CellDims[0] = "NCells";
-   auto OBLDepthField =
-       Field::create(OBLDepthFldName,                  // field name
-                     "ocean boundary layer depth",     // long name
-                     "m",                              // units
-                     "",                               // CF standard name
-                     0.0,                              // min valid value
-                     std::numeric_limits<Real>::max(), // max valid value
-                     1,                                // number of dims
+   auto OSBLDepthField =
+       Field::create(OSBLDepthFldName,                     // field name
+                     "ocean surface boundary layer depth", // long name
+                     "m",                                  // units
+                     "",                                   // CF standard name
+                     0.0,                                  // min valid value
+                     std::numeric_limits<Real>::max(),     // max valid value
+                     1,                                    // number of dims
                      CellDims);
 
-   auto OBLDepthIndexField =
-       Field::create(OBLDepthIndexFldName,               // field name
-                     "ocean boundary layer depth index", // long name
-                     "",                                 // units
-                     "",                                 // CF standard name
-                     -1,                                 // min valid value
-                     std::numeric_limits<I4>::max(),     // max valid value
-                     1,                                  // number of dims
+   auto OSBLDepthIndexField =
+       Field::create(OSBLDepthIndexFldName,                      // field name
+                     "ocean surface boundary layer depth index", // long name
+                     "",                                         // units
+                     "",                             // CF standard name
+                     -1,                             // min valid value
+                     std::numeric_limits<I4>::max(), // max valid value
+                     1,                              // number of dims
                      CellDims);
 
    // KPP non-local tracer flux profile on cell-layer interfaces
@@ -696,8 +673,8 @@ void KPPMix::defineFields() {
 
    // Group KPP-specific outputs for convenient stream selection.
    auto KPPGroup = FieldGroup::create("KPPMix");
-   KPPGroup->addField(OBLDepthFldName);
-   KPPGroup->addField(OBLDepthIndexFldName);
+   KPPGroup->addField(OSBLDepthFldName);
+   KPPGroup->addField(OSBLDepthIndexFldName);
    KPPGroup->addField(NonLocalFluxFldName);
    KPPGroup->addField(BulkRichardsonFldName);
    KPPGroup->addField(BulkRichardsonShearFldName);
@@ -708,8 +685,8 @@ void KPPMix::defineFields() {
    KPPGroup->addField(SurfFricVelFldName);
    KPPGroup->addField(SurfBuoyFluxFldName);
 
-   OBLDepthField->attachData<Array1DReal>(BoundaryLayerDepth, false);
-   OBLDepthIndexField->attachData<Array1DI4>(IndexBoundaryLayerDepth, false);
+   OSBLDepthField->attachData<Array1DReal>(OSBLDepth, false);
+   OSBLDepthIndexField->attachData<Array1DI4>(OSBLDepthIndex, false);
    NonLocalFluxField->attachData<Array2DReal>(VertNonLocalFlux, false);
    BulkRichardsonField->attachData<Array2DReal>(BulkRichardsonNumber, false);
    BulkRichardsonShearField->attachData<Array2DReal>(BulkRichardsonShear,
@@ -743,8 +720,8 @@ void KPPMix::defineFields() {
                      CellDims);
    SurfBuoyFluxField->attachData<Array1DReal>(SurfaceBuoyancyFlux, false);
 
-   OBLDepthField->addMetadata("_FillValue", FillValueReal);
-   OBLDepthIndexField->addMetadata("_FillValue", FillValueI4);
+   OSBLDepthField->addMetadata("_FillValue", FillValueReal);
+   OSBLDepthIndexField->addMetadata("_FillValue", FillValueI4);
    NonLocalFluxField->addMetadata("_FillValue", FillValueReal);
    BulkRichardsonField->addMetadata("_FillValue", FillValueReal);
    BulkRichardsonShearField->addMetadata("_FillValue", FillValueReal);
@@ -757,7 +734,7 @@ void KPPMix::defineFields() {
 
    LOG_INFO("KPPMix::defineFields: registered {}, {}, {}, {}, {}, {}, {}, {}, "
             "{}, {}, {}",
-            OBLDepthFldName, OBLDepthIndexFldName, NonLocalFluxFldName,
+            OSBLDepthFldName, OSBLDepthIndexFldName, NonLocalFluxFldName,
             BulkRichardsonFldName, BulkRichardsonShearFldName,
             UnresolvedShearFldName, BuoyancyJumpFldName,
             TurbulentVelScaleFldName, PotentialDensityFldName,

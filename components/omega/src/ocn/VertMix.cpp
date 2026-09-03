@@ -239,7 +239,7 @@ void VertMix::computeVertMix(const Array2DReal &NormalVelocity,
    KPPMix *KPPInstance      = KPPMix::getInstance();
    const bool LocKPPEnabled = (KPPInstance && KPPInstance->Enabled);
    if (LocKPPEnabled) {
-      deepCopy(KPPBoundaryLayerIndex, KPPInstance->IndexBoundaryLayerDepth);
+      deepCopy(KPPBoundaryLayerIndex, KPPInstance->OSBLDepthIndex);
    }
    OMEGA_SCOPE(LocKPPBoundaryLayerIndex, KPPBoundaryLayerIndex);
 

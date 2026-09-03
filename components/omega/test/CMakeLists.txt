@@ -610,7 +610,7 @@ add_omega_test(
   "-n;1"
   test_arg=profiles
 )
-add_omega_ctest(KPP_BLD_TEST testKPPMix.exe "-n;1" bld)
+add_omega_ctest(KPP_OSBL_TEST testKPPMix.exe "-n;1" osbl)
 add_omega_ctest(KPP_VMIX_COEFF_TEST testKPPMix.exe "-n;1" vmix)
 add_omega_ctest(KPP_INTEGRATION_TEST testKPPMix.exe "-n;1" integration)
 # Each injects a rejected MatchTechnique and must abort in KPPMix::init.

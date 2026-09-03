@@ -15,7 +15,7 @@ Related pages:
 
 KPP computes:
 
-- Ocean boundary layer depth (`BoundaryLayerDepth`)
+- Ocean surface boundary layer depth (`OSBLDepth`)
 - Vertical viscosity (`VertVisc`)
 - Vertical diffusivity (`VertDiff`)
 - Non-local tracer flux profile (`VertNonLocalFlux`)
@@ -59,11 +59,11 @@ VertMix:
     MatchTechnique: SimpleShapes
     InterpType2: LMD94
     UseEnhancedDiffusion: true
-    UseBLDSmoothing: true
+    UseOSBLSmoothing: true
     UseLangmuirCirculation: true
     IceFractionThresholdForLangmuir: 0.05
-    IceFractionThresholdForMinimumOBL: 0.15
-    MinimumOBLUnderSeaIce: 5.0
+    IceFractionThresholdForMinimumOSBL: 0.15
+    MinimumOSBLUnderSeaIce: 5.0
     BackgroundViscosity: 1.0e-4
     BackgroundDiffusivity: 1.0e-5
     DebugDiagnostics: false
@@ -79,11 +79,11 @@ VertMix:
 | `MatchTechnique` | How the K profile meets interior mixing at the OBL base: `SimpleShapes` or `MatchBoth` | `SimpleShapes` |
 | `InterpType2` | Interpolation type used near OBL matching/base logic | `LMD94` |
 | `UseEnhancedDiffusion` | Enable enhanced diffusion treatment near OBL base | `true` |
-| `UseBLDSmoothing` | Apply horizontal smoothing to the boundary layer depth | `true` |
+| `UseOSBLSmoothing` | Apply horizontal smoothing to the OSBL depth | `true` |
 | `UseLangmuirCirculation` | Apply Langmuir enhancement to the turbulent velocity scale | `true` |
 | `IceFractionThresholdForLangmuir` | Above this ice fraction, disable Langmuir enhancement | `0.05` |
-| `IceFractionThresholdForMinimumOBL` | Above this ice fraction, enforce minimum OBL depth | `0.15` |
-| `MinimumOBLUnderSeaIce` | Minimum OBL depth under sea ice (m) | `5.0` |
+| `IceFractionThresholdForMinimumOSBL` | Above this ice fraction, enforce minimum OSBL depth | `0.15` |
+| `MinimumOSBLUnderSeaIce` | Minimum OSBL depth under sea ice (m) | `5.0` |
 | `BackgroundViscosity` | Background viscosity below the OBL (m^2/s) | `1.0e-4` |
 | `BackgroundDiffusivity` | Background diffusivity below the OBL (m^2/s) | `1.0e-5` |
 | `DebugDiagnostics` | Enable additional KPP diagnostics/logging in debug workflows, and extend the Ri diagnostic profiles below the boundary layer base | `false` |
@@ -96,7 +96,7 @@ values used by the other vertical mixing schemes.
 
 To diagnose KPP, include KPP fields in output stream contents. Common fields:
 
-- `BoundaryLayerDepth`
+- `OSBLDepth`
 - `VertNonLocalFlux`
 - `BulkRichardsonNumber`
 - `BulkRichardsonShear`
@@ -112,13 +112,13 @@ number reaches its critical value, so `BulkRichardsonNumber`,
 `BulkRichardsonShear`, `UnresolvedShear` and `BuoyancyJump` are zero below the
 boundary layer base. Set `DebugDiagnostics: true` to compute and output the
 full water column profile of these four fields; it does not change
-`BoundaryLayerDepth` or any mixing coefficient.
+`OSBLDepth` or any mixing coefficient.
 
 ## Typical Workflow
 
 1. Enable KPP and set baseline options in `omega.yml`.
 2. Run a short case.
-3. Inspect `BoundaryLayerDepth` and coefficient fields.
+3. Inspect `OSBLDepth` and coefficient fields.
 4. If needed, tune `CriticalBulkRichardsonNumber`, `MatchTechnique`, and
    `InterpType2`.
 5. Re-run and compare diagnostics.
