@@ -66,6 +66,13 @@ class CplToOcnFields {
 
    HostArray1DReal SeaIceSaltFluxH; ///< Fioi_salt [kg m^-2 s^-1]
 
+   HostArray1DReal SeaIceBasalPressureH; ///< Si_bpress [Pa]
+   HostArray1DReal SeaLevelPressureH;    ///< Sa_pslv [Pa]
+
+   // Device array for ice/atm state fields not passed to Forcing.
+   Array1DReal SeaIceBasalPressure; ///< Si_bpress [Pa]
+   Array1DReal SeaLevelPressure;    ///< Sa_pslv [Pa]
+
    CplToOcnFields(const std::string &Suffix, const HorzMesh *Mesh);
 };
 

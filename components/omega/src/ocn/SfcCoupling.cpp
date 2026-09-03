@@ -2,6 +2,7 @@
 #include "Eos.h"
 #include "Error.h"
 #include "GlobalConstants.h"
+#include "Halo.h"
 #include "HorzOperators.h"
 #include "Logging.h"
 #include "OceanState.h"
@@ -202,21 +203,23 @@ void SfcCoupling::importFromCoupler() {
    }
 
    // Get import field indices
-   int TauxIdx  = ImportIdxMap.at("Foxx_taux");
-   int TauyIdx  = ImportIdxMap.at("Foxx_tauy");
-   int SwnetIdx = ImportIdxMap.at("Foxx_swnet");
-   int SenIdx   = ImportIdxMap.at("Foxx_sen");
-   int LatIdx   = ImportIdxMap.at("Foxx_lat");
-   int LwupIdx  = ImportIdxMap.at("Foxx_lwup");
-   int LwdnIdx  = ImportIdxMap.at("Faxa_lwdn");
-   int SaltIdx  = ImportIdxMap.at("Fioi_salt");
-   int MelthIdx = ImportIdxMap.at("Fioi_melth");
-   int MeltwIdx = ImportIdxMap.at("Fioi_meltw");
-   int SnowIdx  = ImportIdxMap.at("Faxa_snow");
-   int RainIdx  = ImportIdxMap.at("Faxa_rain");
-   int EvapIdx  = ImportIdxMap.at("Foxx_evap");
-   int RoflIdx  = ImportIdxMap.at("Foxx_rofl");
-   int RofiIdx  = ImportIdxMap.at("Foxx_rofi");
+   int TauxIdx   = ImportIdxMap.at("Foxx_taux");
+   int TauyIdx   = ImportIdxMap.at("Foxx_tauy");
+   int SwnetIdx  = ImportIdxMap.at("Foxx_swnet");
+   int SenIdx    = ImportIdxMap.at("Foxx_sen");
+   int LatIdx    = ImportIdxMap.at("Foxx_lat");
+   int LwupIdx   = ImportIdxMap.at("Foxx_lwup");
+   int LwdnIdx   = ImportIdxMap.at("Faxa_lwdn");
+   int SaltIdx   = ImportIdxMap.at("Fioi_salt");
+   int MelthIdx  = ImportIdxMap.at("Fioi_melth");
+   int MeltwIdx  = ImportIdxMap.at("Fioi_meltw");
+   int SnowIdx   = ImportIdxMap.at("Faxa_snow");
+   int RainIdx   = ImportIdxMap.at("Faxa_rain");
+   int EvapIdx   = ImportIdxMap.at("Foxx_evap");
+   int RoflIdx   = ImportIdxMap.at("Foxx_rofl");
+   int RofiIdx   = ImportIdxMap.at("Foxx_rofi");
+   int BPressIdx = ImportIdxMap.at("Si_bpress");
+   int PslvIdx   = ImportIdxMap.at("Sa_pslv");
 
    // Copy Kokkos view handles
    auto CplToOcnView_         = CplToOcnView;
@@ -235,6 +238,8 @@ void SfcCoupling::importFromCoupler() {
    auto SeaIceHeatFlux_       = CplToOcn.SeaIceHeatFluxH;
    auto ShortWaveHeatFlux_    = CplToOcn.ShortWaveHeatFluxH;
    auto SeaIceSaltFlux_       = CplToOcn.SeaIceSaltFluxH;
+   auto SeaIceBasalPressure_  = CplToOcn.SeaIceBasalPressureH;
+   auto SeaLevelPressure_     = CplToOcn.SeaLevelPressureH;
 
    /// TODO: Shouldn't be making direct calls to Kokkos here.
    ///       How often is threading used? Becuase this will be a serial loop
@@ -257,6 +262,8 @@ void SfcCoupling::importFromCoupler() {
       SeaIceHeatFlux_(Idx)       = CplToOcnView_(MelthIdx, Idx);
       ShortWaveHeatFlux_(Idx)    = CplToOcnView_(SwnetIdx, Idx);
       SeaIceSaltFlux_(Idx)       = CplToOcnView_(SaltIdx, Idx);
+      SeaIceBasalPressure_(Idx)  = CplToOcnView_(BPressIdx, Idx);
+      SeaLevelPressure_(Idx)     = CplToOcnView_(PslvIdx, Idx);
    });
 }
 
@@ -344,6 +351,26 @@ void SfcCoupling::applyImportFields(Forcing *Forcing) {
             CplToOcn.ShortWaveHeatFluxH);
    deepCopy(ownedSubView(Forcing->TracerForcing.SeaIceSaltFluxCell),
             CplToOcn.SeaIceSaltFluxH);
+
+   deepCopy(ownedSubView(CplToOcn.SeaIceBasalPressure),
+            CplToOcn.SeaIceBasalPressureH);
+   deepCopy(ownedSubView(CplToOcn.SeaLevelPressure),
+            CplToOcn.SeaLevelPressureH);
+
+   // While Forcing is responsible for exchanging the halos of the flux device
+   // arrays, we own the pressure fields that come from coupler. Therefore
+   // we are responsible for exchanging their halos.
+   Halo *MeshHalo = Halo::getDefault();
+
+   I4 HaloErr = 0;
+   HaloErr +=
+       MeshHalo->exchangeFullArrayHalo(CplToOcn.SeaIceBasalPressure, OnCell);
+   HaloErr +=
+       MeshHalo->exchangeFullArrayHalo(CplToOcn.SeaLevelPressure, OnCell);
+
+   if (HaloErr != 0) {
+      ABORT_ERROR("Error updating pressure halos after coupler import");
+   }
 };
 
 void SfcCoupling::updateExportFields(const OceanState *State,
@@ -370,7 +397,12 @@ CplToOcnFields::CplToOcnFields(const std::string &Suffix, const HorzMesh *Mesh)
       LongWaveHeatFluxDownH("LongWaveHeatFluxDown" + Suffix, Mesh->NCellsOwned),
       SeaIceHeatFluxH("SeaIceHeatFlux" + Suffix, Mesh->NCellsOwned),
       ShortWaveHeatFluxH("ShortWaveHeatFlux" + Suffix, Mesh->NCellsOwned),
-      SeaIceSaltFluxH("SeaIceSaltFlux" + Suffix, Mesh->NCellsOwned) {}
+      SeaIceSaltFluxH("SeaIceSaltFlux" + Suffix, Mesh->NCellsOwned),
+      SeaIceBasalPressureH("SeaIceBasalPressure" + Suffix, Mesh->NCellsOwned),
+      SeaLevelPressureH("SeaLevelPressure" + Suffix, Mesh->NCellsOwned),
+      // Use NCellsSize so halo cells are available for edge-gradient calc.
+      SeaIceBasalPressure("SeaIceBasalPressure" + Suffix, Mesh->NCellsSize),
+      SeaLevelPressure("SeaLevelPressure" + Suffix, Mesh->NCellsSize) {}
 
 OcnToCplFields::OcnToCplFields(const std::string &Suffix, const HorzMesh *Mesh)
     : AvgSfcTemperature("AvgSfcTemperature" + Suffix, Mesh->NCellsOwned),
