@@ -57,7 +57,7 @@ class CplToOcnFields {
    HostArray1DReal IceRunoffFluxH;        ///< Foxx_rofi [kg m^-2 s^-1]
    HostArray1DReal RiverRunoffFluxH;      ///< Foxx_rofl [kg m^-2 s^-1]
 
-   HostArray1DReal LatentHeatFluxH;       ///< Foxx_lat [W m^-2]
+   HostArray1DReal LatentHeatFluxEvapH;   ///< Foxx_lat [W m^-2]
    HostArray1DReal SensibleHeatFluxH;     ///< Foxx_sen [W m^-2]
    HostArray1DReal LongWaveHeatFluxUpH;   ///< Foxx_lwup [W m^-2]
    HostArray1DReal LongWaveHeatFluxDownH; ///< Faxa_lwdn [W m^-2]
