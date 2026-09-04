@@ -372,8 +372,8 @@ class SecondDerivativeOnCell {
          // angles from cell center to neighbor centers (thetav)
          const Real Thetav = sphere_angle(XC[0], YC[0], ZC[0], XC[Ip1], YC[Ip1],
                                           ZC[Ip1], XC[Ip2], YC[Ip2], ZC[Ip2]);
-         Real Dl_sphere = sphereRadius * arc_length(XC[0], YC[0], ZC[0],
-                                                    XC[Ip1], YC[Ip1], ZC[Ip1]);
+         Real Dl_sphere    = sphereRadius * arc_length(XC[0], YC[0], ZC[0],
+                                                       XC[Ip1], YC[Ip1], ZC[Ip1]);
 
          Dl_sphere /= length_scale;
          // Thetat = 0.  this defines the x direction,

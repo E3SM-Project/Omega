@@ -1143,7 +1143,7 @@ void testConfiguredValues() {
        !isApprox(KPPInstance->MinimumOSBLUnderSeaIce, ExpectedMinimumOSBL, RTol,
                  ATol) ||
        !isApprox(KPPInstance->SurfaceLayerExtent, 0.1_Real, RTol, ATol) ||
-       !KPPInstance->UseLangmuirCirculation ||
+       !KPPInstance->UseLangmuirTurbulence ||
        !isApprox(KPPInstance->BackgroundVisc, 1.0e-4_Real, RTol, ATol) ||
        !isApprox(KPPInstance->BackgroundDiff, 1.0e-5_Real, RTol, ATol)) {
       ++NumErrors;
@@ -1200,10 +1200,10 @@ void testOSBLDepth() {
           Density(ICell, K) = RhoSw + DeltaRho;
        });
 
-   KPPInstance->CriticalRichardson     = 0.25_Real;
-   KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
-   KPPInstance->UseLangmuirCirculation = false;
-   KPPInstance->UseOSBLSmoothing       = false;
+   KPPInstance->CriticalRichardson    = 0.25_Real;
+   KPPInstance->SurfaceLayerExtent    = KPP::SurfaceLayerExtent;
+   KPPInstance->UseLangmuirTurbulence = false;
+   KPPInstance->UseOSBLSmoothing      = false;
    KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
                                  UStar, B0, BVF, IceFraction, Wind);
 
@@ -1528,10 +1528,10 @@ void testBoundaryLayerNonuniformThickness() {
        });
    VCoord->minMaxLayerEdge(Halo::getDefault());
 
-   KPPInstance->CriticalRichardson     = 0.25_Real;
-   KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
-   KPPInstance->UseLangmuirCirculation = false;
-   KPPInstance->UseOSBLSmoothing       = false;
+   KPPInstance->CriticalRichardson    = 0.25_Real;
+   KPPInstance->SurfaceLayerExtent    = KPP::SurfaceLayerExtent;
+   KPPInstance->UseLangmuirTurbulence = false;
+   KPPInstance->UseOSBLSmoothing      = false;
    KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
                                  UStar, B0, BVF, IceFraction, Wind);
 
@@ -1661,10 +1661,10 @@ void testBoundaryLayerHorizontalThicknessVariation() {
        });
    VCoord->minMaxLayerEdge(Halo::getDefault());
 
-   KPPInstance->CriticalRichardson     = 0.25_Real;
-   KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
-   KPPInstance->UseLangmuirCirculation = false;
-   KPPInstance->UseOSBLSmoothing       = false;
+   KPPInstance->CriticalRichardson    = 0.25_Real;
+   KPPInstance->SurfaceLayerExtent    = KPP::SurfaceLayerExtent;
+   KPPInstance->UseLangmuirTurbulence = false;
+   KPPInstance->UseOSBLSmoothing      = false;
    KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
                                  UStar, B0, BVF, IceFraction, Wind);
 
@@ -1772,12 +1772,12 @@ void testSshOffsetInvariance() {
           Density(ICell, K) = RhoSw + DeltaRho;
        });
 
-   KPPInstance->CriticalRichardson     = 0.25_Real;
-   KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
-   KPPInstance->UseLangmuirCirculation = false;
-   KPPInstance->UseOSBLSmoothing       = false;
-   KPPInstance->UseEnhancedDiffusion   = true;
-   KPPInstance->MatchTechnique         = KPPMatchType::SimpleShapes;
+   KPPInstance->CriticalRichardson    = 0.25_Real;
+   KPPInstance->SurfaceLayerExtent    = KPP::SurfaceLayerExtent;
+   KPPInstance->UseLangmuirTurbulence = false;
+   KPPInstance->UseOSBLSmoothing      = false;
+   KPPInstance->UseEnhancedDiffusion  = true;
+   KPPInstance->MatchTechnique        = KPPMatchType::SimpleShapes;
 
    auto runWithSsh = [&](Real Ssh) {
       setCoefficientTestGeometry(Ssh);
@@ -1870,10 +1870,10 @@ void testBoundaryLayerEdgeFallbacks() {
           TangentialVelocity(IEdge, K) = 0.2_Real * K;
        });
 
-   KPPInstance->CriticalRichardson     = 0.25_Real;
-   KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
-   KPPInstance->UseLangmuirCirculation = false;
-   KPPInstance->UseOSBLSmoothing       = false;
+   KPPInstance->CriticalRichardson    = 0.25_Real;
+   KPPInstance->SurfaceLayerExtent    = KPP::SurfaceLayerExtent;
+   KPPInstance->UseLangmuirTurbulence = false;
+   KPPInstance->UseOSBLSmoothing      = false;
 
    // Zero geometric weights force the equal weighting fallback over all
    // vertically valid edges.
@@ -1962,10 +1962,10 @@ void testBoundaryLayerLangmuir() {
           Density(ICell, K) = RhoSw + DeltaRho;
        });
 
-   KPPInstance->CriticalRichardson     = 0.25_Real;
-   KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
-   KPPInstance->UseOSBLSmoothing       = false;
-   KPPInstance->UseLangmuirCirculation = false;
+   KPPInstance->CriticalRichardson    = 0.25_Real;
+   KPPInstance->SurfaceLayerExtent    = KPP::SurfaceLayerExtent;
+   KPPInstance->UseOSBLSmoothing      = false;
+   KPPInstance->UseLangmuirTurbulence = false;
    KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
                                  UStar, B0, BVF, IceFraction, Wind);
    Array1DReal DisabledBLD("KPPMixTest-LangmuirDisabledBLD", Mesh->NCellsSize);
@@ -1980,7 +1980,7 @@ void testBoundaryLayerLangmuir() {
    const auto DisabledRiH  = createHostMirrorCopy(DisabledRi);
    const auto DisabledVt2H = createHostMirrorCopy(DisabledVt2);
 
-   KPPInstance->UseLangmuirCirculation          = true;
+   KPPInstance->UseLangmuirTurbulence           = true;
    KPPInstance->IceFractionThresholdForLangmuir = 0.05_Real;
    KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
                                  UStar, B0, BVF, IceFraction, Wind);
@@ -2055,7 +2055,7 @@ void testBoundaryLayerLangmuir() {
           SuppressedRiH(0, 3), SuppressedBLDH(0), ExpectedEnabledRi,
           ExpectedEnabledVt2);
    }
-   KPPInstance->UseLangmuirCirculation = false;
+   KPPInstance->UseLangmuirTurbulence = false;
    checkResult("boundary-layer Langmuir enhancement and ice suppression",
                RiErrors + Vt2Errors + DepthErrors + SuppressionErrors);
 }
@@ -2114,10 +2114,10 @@ void testBoundaryLayerSmoothing() {
           Density(ICell, K) = RhoSw + DeltaRho;
        });
 
-   KPPInstance->CriticalRichardson     = 0.25_Real;
-   KPPInstance->SurfaceLayerExtent     = KPP::SurfaceLayerExtent;
-   KPPInstance->UseLangmuirCirculation = false;
-   KPPInstance->UseOSBLSmoothing       = false;
+   KPPInstance->CriticalRichardson    = 0.25_Real;
+   KPPInstance->SurfaceLayerExtent    = KPP::SurfaceLayerExtent;
+   KPPInstance->UseLangmuirTurbulence = false;
+   KPPInstance->UseOSBLSmoothing      = false;
    KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
                                  UStar, B0, BVF, IceFraction, Wind);
    Array1DReal UnsmoothedBLD("KPPMixTest-UnsmoothedBLD", Mesh->NCellsSize);
@@ -2217,11 +2217,11 @@ void testEnabledFullCall() {
    deepCopy(BVF, 1.0e-4_Real);
    deepCopy(IceFraction, 0.0_Real);
 
-   KPPInstance->Enabled                = true;
-   KPPInstance->UseLangmuirCirculation = false;
-   KPPInstance->UseOSBLSmoothing       = false;
-   KPPInstance->UseEnhancedDiffusion   = false;
-   KPPInstance->MatchTechnique         = KPPMatchType::SimpleShapes;
+   KPPInstance->Enabled               = true;
+   KPPInstance->UseLangmuirTurbulence = false;
+   KPPInstance->UseOSBLSmoothing      = false;
+   KPPInstance->UseEnhancedDiffusion  = false;
+   KPPInstance->MatchTechnique        = KPPMatchType::SimpleShapes;
    KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
                                  UStar, B0, BVF, IceFraction, Wind);
    KPPInstance->computeMixingCoefficients(Density, UStar, B0);

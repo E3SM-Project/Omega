@@ -60,7 +60,7 @@ VertMix:
     InterpType2: LMD94
     UseEnhancedDiffusion: true
     UseOSBLSmoothing: true
-    UseLangmuirCirculation: true
+    UseLangmuirTurbulence: true
     IceFractionThresholdForLangmuir: 0.05
     IceFractionThresholdForMinimumOSBL: 0.15
     MinimumOSBLUnderSeaIce: 5.0
@@ -80,7 +80,7 @@ VertMix:
 | `InterpType2` | Interpolation type used near OBL matching/base logic | `LMD94` |
 | `UseEnhancedDiffusion` | Enable enhanced diffusion treatment near OBL base | `true` |
 | `UseOSBLSmoothing` | Apply horizontal smoothing to the OSBL depth | `true` |
-| `UseLangmuirCirculation` | Apply Langmuir enhancement to the turbulent velocity scale | `true` |
+| `UseLangmuirTurbulence` | Apply Langmuir enhancement to the turbulent velocity scale | `true` |
 | `IceFractionThresholdForLangmuir` | Above this ice fraction, disable Langmuir enhancement | `0.05` |
 | `IceFractionThresholdForMinimumOSBL` | Above this ice fraction, enforce minimum OSBL depth | `0.15` |
 | `MinimumOSBLUnderSeaIce` | Minimum OSBL depth under sea ice (m) | `5.0` |

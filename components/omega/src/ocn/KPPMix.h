@@ -7,7 +7,7 @@
 ///
 /// This header defines the KPPMix class for computing ocean boundary layer
 /// mixing coefficients using the K-Profile Parameterization scheme.
-/// Follows Large et al. (1994) formulation with optional Langmuir circulation
+/// Follows Large et al. (1994) formulation with optional Langmuir turbulence
 /// enhancement.
 //
 //===----------------------------------------------------------------------===//
@@ -37,10 +37,10 @@ enum class KPPMatchType : I4 {
    MatchBoth    = 1  ///< Match the interior coefficient at the OSBL base
 };
 
-/// @brief Langmuir circulation enhancement factor applied to buoyancy forcing
+/// @brief Langmuir turbulence enhancement factor applied to buoyancy forcing
 class KPPLangmuirFactor {
  public:
-   bool UseLangmuirCirculation = true; ///< Apply wave enhancement
+   bool UseLangmuirTurbulence = true; ///< Apply wave enhancement
    /// Disable Langmuir above this ice fraction for theory wave model
    /// This should be disabled for active wave configurations
    Real IceFracThresholdForLangmuir = KPP::IceFracThresh;
@@ -51,7 +51,7 @@ class KPPLangmuirFactor {
                                    const Array1DReal &WindSpeed10m) const {
 
       const Real IceFrac = IceFraction(ICell);
-      if (UseLangmuirCirculation && IceFrac < IceFracThresholdForLangmuir) {
+      if (UseLangmuirTurbulence && IceFrac < IceFracThresholdForLangmuir) {
          const Real UStar = SurfaceFrictionVelocity(ICell);
          const Real Wind10m =
              (WindSpeed10m.extent(0) > 0) ? WindSpeed10m(ICell) : 0.0_Real;
@@ -958,8 +958,8 @@ class KPPMix {
    Real CriticalRichardson = KPP::CriticalRi;         ///< Ri_crit for OSBL base
    Real SurfaceLayerExtent = KPP::SurfaceLayerExtent; ///< Frac of OSBL depth
 
-   bool UseLangmuirCirculation = true;  ///< Apply wave enhancement
-   bool DebugDiagnostics       = false; ///< Print per-step KPP diagnostics
+   bool UseLangmuirTurbulence = true;  ///< Apply wave enhancement
+   bool DebugDiagnostics      = false; ///< Print per-step KPP diagnostics
 
    // Ice/Langmuir controls (kept configurable to match reference semantics)
    /// Disable Langmuir above this ice fraction

@@ -185,8 +185,8 @@ void KPPMix::init() {
    }
 
    // Wave and flux options
-   Err += KPPConfig.get("UseLangmuirCirculation",
-                        DefKPPMix->UseLangmuirCirculation);
+   Err +=
+       KPPConfig.get("UseLangmuirTurbulence", DefKPPMix->UseLangmuirTurbulence);
    Err += KPPConfig.get("IceFractionThresholdForLangmuir",
                         DefKPPMix->IceFractionThresholdForLangmuir);
    Err += KPPConfig.get("IceFractionThresholdForMinimumOSBL",
@@ -340,7 +340,7 @@ void KPPMix::logDiagnostics(const Array2DReal &PotentialDensity,
       Wind10m             = Wind10mH(ICell);
    }
    const Real LangmuirFactor =
-       UseLangmuirCirculation
+       UseLangmuirTurbulence
            ? computeLangmuirEnhancement(Wind10m, UStarEff, 50.0)
            : 1.0_Real;
    const Real BuoyFluxEff = BuoyFlux * LangmuirFactor;
@@ -408,7 +408,7 @@ void KPPMix::computeOSBLDepth(const Array2DReal &PotentialDensity,
    Array1DReal LangmuirFactor("LangmuirFactor", Mesh->NCellsSize);
 
    KPPLangmuirFactor LangmuirCalc;
-   LangmuirCalc.UseLangmuirCirculation      = UseLangmuirCirculation;
+   LangmuirCalc.UseLangmuirTurbulence       = UseLangmuirTurbulence;
    LangmuirCalc.IceFracThresholdForLangmuir = IceFractionThresholdForLangmuir;
 
    OMEGA_SCOPE(LocLangmuirFactor, LangmuirFactor);

@@ -105,7 +105,7 @@ Omega:
     KPP:
       Enable: true
       UseOSBLSmoothing: true
-      UseLangmuirCirculation: true
+      UseLangmuirTurbulence: true
       CriticalBulkRichardsonNumber: 0.25
       SurfaceLayerExtent: 0.1
       # SimpleShapes or MatchBoth

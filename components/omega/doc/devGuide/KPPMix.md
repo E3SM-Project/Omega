@@ -177,7 +177,7 @@ Important keys and class members:
 - `MatchTechnique` -> `MatchTechnique` (a `KPPMatchType` enum, not a string)
 - `InterpType2` -> `InterpType2Str`
 - `UseEnhancedDiffusion` -> `UseEnhancedDiffusion`
-- `UseLangmuirCirculation` -> `UseLangmuirCirculation`
+- `UseLangmuirTurbulence` -> `UseLangmuirTurbulence`
 - `IceFractionThresholdForLangmuir` -> `IceFractionThresholdForLangmuir`
 - `IceFractionThresholdForMinimumOSBL` -> `IceFractionThresholdForMinimumOSBL`
 - `MinimumOSBLUnderSeaIce` -> `MinimumOSBLUnderSeaIce`
