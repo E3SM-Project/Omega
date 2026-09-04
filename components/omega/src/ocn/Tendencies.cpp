@@ -1334,7 +1334,11 @@ void Tendencies::computeKPPFields(const OceanState *State,
    const auto &SfcStress     = ForcingState->SfcStressForcing;
    const auto &TracerForcing = ForcingState->TracerForcing;
 
-   KPPSurfaceForcing.UseTracerForcing = SfcTracerForcing.Enabled;
+   // Non-local mixing consumes the same tracer/salt fluxes as the direct
+   // surface tracer forcing tendency, so KPP must fill them even when that
+   // tendency itself is disabled.
+   KPPSurfaceForcing.UseTracerForcing =
+       SfcTracerForcing.Enabled || TracerNonLocalFluxEnabled;
 
    OMEGA_SCOPE(LocKPPSurfaceForcing, KPPSurfaceForcing);
    OMEGA_SCOPE(LocFrictionVelocity, KPPInstance->SurfaceFrictionVelocity);

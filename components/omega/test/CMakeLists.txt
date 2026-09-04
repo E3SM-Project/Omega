@@ -116,7 +116,14 @@ function(add_omega_ctest test_name exe_name mpi_args test_arg)
     )
   endif()
 
-  set_tests_properties(${test_name} PROPERTIES LABELS "${OMEGA_ARCH};Omega-0")
+  # Without this, tests sharing an executable (e.g. testKPPMix.exe) all write
+  # to the same default log, so each one's log is overwritten by the next.
+  set_tests_properties(
+    ${test_name}
+    PROPERTIES
+    LABELS "${OMEGA_ARCH};Omega-0"
+    ENVIRONMENT "OMEGA_LOG_FILE=${OMEGA_TEST_LOG_DIR}/${test_name}.log"
+  )
 endfunction()
 
 ##################

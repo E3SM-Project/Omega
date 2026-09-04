@@ -740,14 +740,11 @@ void KPPMix::defineFields() {
                      CellDims);
    SurfBuoyFluxField->attachData<Array1DReal>(SurfaceBuoyancyFlux, false);
 
-   OSBLDepthField->addMetadata("_FillValue", FillValueReal);
-   OSBLDepthIndexField->addMetadata("_FillValue", FillValueI4);
-   NonLocalFluxField->addMetadata("_FillValue", FillValueReal);
-   BulkRichardsonField->addMetadata("_FillValue", FillValueReal);
-   BulkRichardsonShearField->addMetadata("_FillValue", FillValueReal);
-   UnresolvedShearField->addMetadata("_FillValue", FillValueReal);
-   BuoyancyJumpField->addMetadata("_FillValue", FillValueReal);
-   TurbulentVelScaleField->addMetadata("_FillValue", FillValueReal);
+   // OSBLDepth, OSBLDepthIndex, NonLocalFlux, BulkRichardson,
+   // BulkRichardsonShear, UnresolvedShear, BuoyancyJump, and
+   // TurbulentVelScale attached with FillOnAttach=true above, which already
+   // records _FillValue metadata; only fields attached with
+   // FillOnAttach=false need it set explicitly here.
    PotentialDensityField->addMetadata("_FillValue", FillValueReal);
    SurfFricVelField->addMetadata("_FillValue", FillValueReal);
    SurfBuoyFluxField->addMetadata("_FillValue", FillValueReal);

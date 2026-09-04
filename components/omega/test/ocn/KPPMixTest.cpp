@@ -1677,8 +1677,13 @@ void testBoundaryLayerHorizontalThicknessVariation() {
       Real WeightedShear = 0.0_Real;
       Real WeightSum     = 0.0_Real;
       for (I4 J = 0; J < Mesh->NEdgesOnCellH(ICell); ++J) {
+         const I4 JCell = Mesh->CellsOnCellH(ICell, J);
+         // CellsOnCell uses NCellsAll as a sentinel for missing/boundary
+         // neighbors; KPP excludes these edges, so the reference must too.
+         if (JCell >= Mesh->NCellsAll) {
+            continue;
+         }
          const I4 IEdge        = Mesh->EdgesOnCellH(ICell, J);
-         const I4 JCell        = Mesh->CellsOnCellH(ICell, J);
          const Real OffsetCell = 0.25_Real * (ICell % 3);
          const Real OffsetNbr  = 0.25_Real * (JCell % 3);
          const Real Thick1     = 2.0_Real + 0.5_Real * (OffsetCell + OffsetNbr);
