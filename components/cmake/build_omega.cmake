@@ -1,8 +1,12 @@
 function(build_omega)
 
-  # Set CIME source path relative to components
-  set(CIMESRC_PATH "../cime/src")
+  if (COMP_NAMES MATCHES ".*omega.*")
 
-  add_subdirectory("omega")
+     # Set CIME source path relative to components
+     set(CIMESRC_PATH "../cime/src")
+
+     add_subdirectory("omega")
+
+  endif()
 
 endfunction(build_omega)

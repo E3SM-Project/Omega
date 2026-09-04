@@ -5,8 +5,8 @@ module omega_cpl_indices
    implicit none
    private
 
-   integer, parameter, public :: num_omega_imports = 2
-   integer, parameter, public :: num_omega_exports = 5
+   integer, parameter, public :: num_omega_imports = 17
+   integer, parameter, public :: num_omega_exports = 10
    integer, public :: num_coupler_imports, num_coupler_exports
 
    ! Names of import/export fields as defined by seq_flds_mod
@@ -43,6 +43,25 @@ contains
       ! Import (x2o) Coupler field names
       import_field_names(1) = "Foxx_taux"
       import_field_names(2) = "Foxx_tauy"
+      import_field_names(3) = "Foxx_swnet"
+      import_field_names(4) = "Foxx_sen"
+      import_field_names(5) = "Foxx_lat"
+      import_field_names(6) = "Foxx_lwup"
+      import_field_names(7) = "Faxa_lwdn"
+      import_field_names(8) = "Fioi_salt"
+      import_field_names(9) = "Fioi_melth"
+      import_field_names(10) = "Fioi_meltw"
+      import_field_names(11) = "Faxa_snow"
+      import_field_names(12) = "Faxa_rain"
+      import_field_names(13) = "Foxx_evap"
+      import_field_names(14) = "Foxx_rofl"
+      import_field_names(15) = "Foxx_rofi"
+      ! These fields are temporary imported. Long term plan is for seaice model
+      ! to import So_ssh directly (cf. So_dhdx / So_dhdy) and let it compute
+      ! the gradient directly. Pressure adjusment of the SSH, needed by seaice
+      ! model, will happen there aswell.
+      import_field_names(16) = "Si_bpress"
+      import_field_names(17) = "Sa_pslv"
 
       ! get mct_avect_index value for each import field name
       call get_indices_from_names( &
@@ -58,6 +77,11 @@ contains
       export_field_names(3) = "So_u"
       export_field_names(4) = "So_v"
       export_field_names(5) = "So_ssh"
+      export_field_names(6) = "So_dhdx"
+      export_field_names(7) = "So_dhdy"
+      export_field_names(8) = "Faoo_h2otemp"
+      export_field_names(9) = "Fioo_q"
+      export_field_names(10) = "Fioo_frazil"
 
       ! get mct_avect_index value for each export field name
       call get_indices_from_names( &

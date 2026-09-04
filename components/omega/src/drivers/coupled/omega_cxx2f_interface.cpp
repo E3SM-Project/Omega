@@ -13,6 +13,10 @@
 #include "TimeStepper.h"
 #include <mpi.h>
 
+// Track whether Omega initialized Kokkos and is therefore responsible for
+// finalizing it. Needed in coupled mode when multiple components use Kokkos.
+bool OmegaOwnsKokkos = false;
+
 // helper C++ functions
 namespace {
 
@@ -67,7 +71,13 @@ void omega_ocn_init1(
    MPI_Comm Comm = MPI_Comm_f2c(FComm);
 
    // initialize Kokkos
-   Kokkos::initialize();
+   if (Kokkos::is_finalized()) {
+      ABORT_ERROR("Kokkos was finalized before Omega initialization")
+   }
+   if (!Kokkos::is_initialized()) {
+      Kokkos::initialize();
+      OmegaOwnsKokkos = true;
+   }
 
    // initialize Pacer timing in coupled mode
    Pacer::initialize(Comm, Pacer::PACER_INTEGRATED);
@@ -141,6 +151,13 @@ void omega_ocn_finalize() {
    OMEGA::Clock *ModelClock       = DefStepper->getClock();
    OMEGA::TimeInstant CurrTime    = ModelClock->getCurrentTime();
 
+   // Make sure Kokkos has not been finalized by another component.
+   // Perform this check before calling ocnFinalize so that Kokkos-backed
+   // objects can be safely destroyed.
+   if (Kokkos::is_finalized()) {
+      ABORT_ERROR("Kokkos was finalized before Omega finalization")
+   }
+
    Pacer::start("Finalize", 0);
    ErrFinalize = OMEGA::ocnFinalize(CurrTime);
    if (ErrFinalize != 0) {
@@ -153,7 +170,9 @@ void omega_ocn_finalize() {
    // no Pacer::print or Pacer::finalize in coupled mode; cpl will handle it
 
    // finalize Kokkos
-   Kokkos::finalize();
+   if (OmegaOwnsKokkos) {
+      Kokkos::finalize();
+   }
 }
 
 int omega_get_layout_mct() {

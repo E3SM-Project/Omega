@@ -12,6 +12,7 @@
 
 #include "DataTypes.h"
 #include "Forcing.h"
+#include "GlobalConstants.h"
 #include "HorzMesh.h"
 #include "OceanState.h"
 #include "TimeMgr.h"
@@ -26,6 +27,12 @@ KOKKOS_INLINE_FUNCTION Real updateAverage(const Real OldAvg,
                                           const Real NewValue,
                                           const I4 NAccumSteps) {
    return OldAvg + (NewValue - OldAvg) / (NAccumSteps + 1);
+}
+
+KOKKOS_INLINE_FUNCTION Real pressureAdjustedSsh(const Real Ssh,
+                                                const Real SeaIcePressure,
+                                                const Real SeaLevelPressure) {
+   return Ssh + (SeaIcePressure + SeaLevelPressure) / (Gravity * RhoSw);
 }
 
 enum class CouplingLayout { MCT, MOAB };
@@ -47,8 +54,31 @@ class CplToOcnFields {
    // x2o fields only need to be stored on the host.
    // The SfcCoupling::applyImportFields() method will handle copying the
    // data to the device.
-   HostArray1DReal SfcStressZonal; ///< Foxx_taux  [N m^-2]
-   HostArray1DReal SfcStressMerid; ///< Foxx_tauy  [N m^-2]
+   HostArray1DReal SfcStressZonalH; ///< Foxx_taux  [N m^-2]
+   HostArray1DReal SfcStressMeridH; ///< Foxx_tauy  [N m^-2]
+
+   HostArray1DReal SnowFluxH;             ///< Faxa_snow [kg m^-2 s^-1]
+   HostArray1DReal RainFluxH;             ///< Faxa_rain [kg m^-2 s^-1]
+   HostArray1DReal EvaporationFluxH;      ///< Foxx_evap [kg m^-2 s^-1]
+   HostArray1DReal SeaIceFreshWaterFluxH; ///< Fioi_meltw [kg m^-2 s^-1]
+   HostArray1DReal IceRunoffFluxH;        ///< Foxx_rofi [kg m^-2 s^-1]
+   HostArray1DReal RiverRunoffFluxH;      ///< Foxx_rofl [kg m^-2 s^-1]
+
+   HostArray1DReal LatentHeatFluxEvapH;   ///< Foxx_lat [W m^-2]
+   HostArray1DReal SensibleHeatFluxH;     ///< Foxx_sen [W m^-2]
+   HostArray1DReal LongWaveHeatFluxUpH;   ///< Foxx_lwup [W m^-2]
+   HostArray1DReal LongWaveHeatFluxDownH; ///< Faxa_lwdn [W m^-2]
+   HostArray1DReal SeaIceHeatFluxH;       ///< Fioi_melth [W m^-2]
+   HostArray1DReal ShortWaveHeatFluxH;    ///< Foxx_swnet [W m^-2]
+
+   HostArray1DReal SeaIceSaltFluxH; ///< Fioi_salt [kg m^-2 s^-1]
+
+   HostArray1DReal SeaIceBasalPressureH; ///< Si_bpress [Pa]
+   HostArray1DReal SeaLevelPressureH;    ///< Sa_pslv [Pa]
+
+   // Device array for ice/atm state fields not passed to Forcing.
+   Array1DReal SeaIceBasalPressure; ///< Si_bpress [Pa]
+   Array1DReal SeaLevelPressure;    ///< Sa_pslv [Pa]
 
    CplToOcnFields(const std::string &Suffix, const HorzMesh *Mesh);
 };
@@ -59,8 +89,7 @@ class OcnToCplFields {
    ///< So_t    [K], in-situ approx (potential temp at P=0)
    HostArray1DReal AvgSfcTemperatureH;
 
-   /// TODO: Export practical salinity (unitless) to coupler
-   ///< So_s    [g kg^-1], absolute salinity
+   ///< So_s    [psu], paractical salinity
    HostArray1DReal AvgSfcSalinityH;
 
    ///< So_u    [m s^-1]
@@ -69,13 +98,20 @@ class OcnToCplFields {
    ///< So_v    [m s^-1]
    HostArray1DReal AvgSfcVelocityMeridH;
 
+   ///< So_dhdx [m m-1], zonal sea surface slope
+   HostArray1DReal AvgSfcSshGradZonalH;
+   ///< So_dhdy [m m-1], meridional sea surface slope
+   HostArray1DReal AvgSfcSshGradMeridH;
+
    ///< So_ssh [m]
    /// instantaneous field, so no device mirror is needed
    HostArray1DReal InstSshCellH;
 
    // Accumulate one ocean timestep's contribution to the running averages
    void updateFields(const OceanState *State, const Array3DReal &TracerArray,
-                     I4 NAccumSteps, I4 NCellsOwned);
+                     I4 NAccumSteps, I4 NCellsOwned, I4 NEdgesAll,
+                     const Array1DReal &SeaIceBasalPressure,
+                     const Array1DReal &SeaLevelPressure);
 
    // Copy device arrays into their host mirrors and do unit conversion.
    void copyToHost();
@@ -92,11 +128,17 @@ class OcnToCplFields {
    // the rest of the code.
    Array1DReal AvgSfcTemperature; // [C], conservative temperature
    Array1DReal AvgSfcSalinity;    // [g kg^-1], absolute salinity
-   Array1DReal AvgSfcVelocityZonal;
-   Array1DReal AvgSfcVelocityMerid;
 
-   // Scratch buffer for the in-situ Kelvin conversion in copyToHost()
+   Array1DReal AvgSfcNormalVelocity; // [m s^-1], velocity normal to edge
+   Array1DReal AvgSfcSshGrad;        // [m m^-1], ssh gradient normal to edge
+
+   // Scratch buffers for the in-situ and Kelvin temperature conversion and
+   // paractical salinity conversio done in copyToHost()
    Array1DReal InSituTempScratch; // [K], in-situ approx (potential temp at P=0)
+   Array1DReal PracSalinityScratch; // [Psu], Parctical salinity
+   // Scratch arrays for edge normal vector field reconstructed to cell centers
+   Array1DReal ReconZonalScratch;
+   Array1DReal ReconMeridScratch;
 };
 
 /// A class for interfacing with the coupler
@@ -142,6 +184,7 @@ class SfcCoupling {
    std::string Name;
 
    I4 NCellsOwned; ///< Number of cells owned by this task
+   I4 NEdgesAll;   ///< Total number (owned+halo) of local edges
 
    // The values below will be larger than InportIdx.size() and
    // ExportIdxMap.size() because omega does not ingest all cpl fields (e.g.

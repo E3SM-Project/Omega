@@ -2,6 +2,8 @@
 #include "Eos.h"
 #include "Error.h"
 #include "GlobalConstants.h"
+#include "Halo.h"
+#include "HorzOperators.h"
 #include "Logging.h"
 #include "OceanState.h"
 #include "OmegaKokkos.h"
@@ -71,8 +73,9 @@ SfcCoupling::SfcCoupling(const std::string &Name_, const HorzMesh *Mesh,
       ImportIdxMap(ImportIdxMap), ExportIdxMap(ExportIdxMap),
       CplToOcn(Name_, Mesh), OcnToCpl(Name_, Mesh), Layout(Layout) {
 
-   // Retrieve mesh cell count
+   // Retrieve mesh cell/edge count
    NCellsOwned = Mesh->NCellsOwned;
+   NEdgesAll   = Mesh->NEdgesAll;
 
    NAccumSteps = 0;
 
@@ -199,14 +202,44 @@ void SfcCoupling::importFromCoupler() {
           "method must be called before importing data from the coupler.");
    }
 
-   // Get import field indices for surface stress components
-   int TauxIdx = ImportIdxMap.at("Foxx_taux");
-   int TauyIdx = ImportIdxMap.at("Foxx_tauy");
+   // Get import field indices
+   int TauxIdx   = ImportIdxMap.at("Foxx_taux");
+   int TauyIdx   = ImportIdxMap.at("Foxx_tauy");
+   int SwnetIdx  = ImportIdxMap.at("Foxx_swnet");
+   int SenIdx    = ImportIdxMap.at("Foxx_sen");
+   int LatIdx    = ImportIdxMap.at("Foxx_lat");
+   int LwupIdx   = ImportIdxMap.at("Foxx_lwup");
+   int LwdnIdx   = ImportIdxMap.at("Faxa_lwdn");
+   int SaltIdx   = ImportIdxMap.at("Fioi_salt");
+   int MelthIdx  = ImportIdxMap.at("Fioi_melth");
+   int MeltwIdx  = ImportIdxMap.at("Fioi_meltw");
+   int SnowIdx   = ImportIdxMap.at("Faxa_snow");
+   int RainIdx   = ImportIdxMap.at("Faxa_rain");
+   int EvapIdx   = ImportIdxMap.at("Foxx_evap");
+   int RoflIdx   = ImportIdxMap.at("Foxx_rofl");
+   int RofiIdx   = ImportIdxMap.at("Foxx_rofi");
+   int BPressIdx = ImportIdxMap.at("Si_bpress");
+   int PslvIdx   = ImportIdxMap.at("Sa_pslv");
 
    // Copy Kokkos view handles
-   auto CplToOcnView_   = CplToOcnView;
-   auto SfcStressZonal_ = CplToOcn.SfcStressZonal;
-   auto SfcStressMerid_ = CplToOcn.SfcStressMerid;
+   auto CplToOcnView_         = CplToOcnView;
+   auto SfcStressZonal_       = CplToOcn.SfcStressZonalH;
+   auto SfcStressMerid_       = CplToOcn.SfcStressMeridH;
+   auto SnowFlux_             = CplToOcn.SnowFluxH;
+   auto RainFlux_             = CplToOcn.RainFluxH;
+   auto EvaporationFlux_      = CplToOcn.EvaporationFluxH;
+   auto SeaIceFreshWaterFlux_ = CplToOcn.SeaIceFreshWaterFluxH;
+   auto IceRunoffFlux_        = CplToOcn.IceRunoffFluxH;
+   auto RiverRunoffFlux_      = CplToOcn.RiverRunoffFluxH;
+   auto LatentHeatFluxEvap_   = CplToOcn.LatentHeatFluxEvapH;
+   auto SensibleHeatFlux_     = CplToOcn.SensibleHeatFluxH;
+   auto LongWaveHeatFluxUp_   = CplToOcn.LongWaveHeatFluxUpH;
+   auto LongWaveHeatFluxDown_ = CplToOcn.LongWaveHeatFluxDownH;
+   auto SeaIceHeatFlux_       = CplToOcn.SeaIceHeatFluxH;
+   auto ShortWaveHeatFlux_    = CplToOcn.ShortWaveHeatFluxH;
+   auto SeaIceSaltFlux_       = CplToOcn.SeaIceSaltFluxH;
+   auto SeaIceBasalPressure_  = CplToOcn.SeaIceBasalPressureH;
+   auto SeaLevelPressure_     = CplToOcn.SeaLevelPressureH;
 
    /// TODO: Shouldn't be making direct calls to Kokkos here.
    ///       How often is threading used? Becuase this will be a serial loop
@@ -214,8 +247,23 @@ void SfcCoupling::importFromCoupler() {
    auto Policy = Kokkos::RangePolicy<HostExecSpace, Kokkos::IndexType<int>>(
        0, NCellsOwned);
    Kokkos::parallel_for("importFromCoupler", Policy, [=](int Idx) {
-      SfcStressZonal_(Idx) = CplToOcnView_(TauxIdx, Idx);
-      SfcStressMerid_(Idx) = CplToOcnView_(TauyIdx, Idx);
+      SfcStressZonal_(Idx)       = CplToOcnView_(TauxIdx, Idx);
+      SfcStressMerid_(Idx)       = CplToOcnView_(TauyIdx, Idx);
+      SnowFlux_(Idx)             = CplToOcnView_(SnowIdx, Idx);
+      RainFlux_(Idx)             = CplToOcnView_(RainIdx, Idx);
+      EvaporationFlux_(Idx)      = CplToOcnView_(EvapIdx, Idx);
+      SeaIceFreshWaterFlux_(Idx) = CplToOcnView_(MeltwIdx, Idx);
+      IceRunoffFlux_(Idx)        = CplToOcnView_(RofiIdx, Idx);
+      RiverRunoffFlux_(Idx)      = CplToOcnView_(RoflIdx, Idx);
+      LatentHeatFluxEvap_(Idx)   = CplToOcnView_(LatIdx, Idx);
+      SensibleHeatFlux_(Idx)     = CplToOcnView_(SenIdx, Idx);
+      LongWaveHeatFluxUp_(Idx)   = CplToOcnView_(LwupIdx, Idx);
+      LongWaveHeatFluxDown_(Idx) = CplToOcnView_(LwdnIdx, Idx);
+      SeaIceHeatFlux_(Idx)       = CplToOcnView_(MelthIdx, Idx);
+      ShortWaveHeatFlux_(Idx)    = CplToOcnView_(SwnetIdx, Idx);
+      SeaIceSaltFlux_(Idx)       = CplToOcnView_(SaltIdx, Idx);
+      SeaIceBasalPressure_(Idx)  = CplToOcnView_(BPressIdx, Idx);
+      SeaLevelPressure_(Idx)     = CplToOcnView_(PslvIdx, Idx);
    });
 }
 
@@ -235,6 +283,8 @@ void SfcCoupling::exportToCoupler() {
    int VelUIdx  = ExportIdxMap.at("So_u");
    int VelVIdx  = ExportIdxMap.at("So_v");
    int SshIdx   = ExportIdxMap.at("So_ssh");
+   int DhdxIdx  = ExportIdxMap.at("So_dhdx");
+   int DhdyIdx  = ExportIdxMap.at("So_dhdy");
 
    // Copy Kokkos view handles
    auto OcnToCplView_        = OcnToCplView;
@@ -242,6 +292,8 @@ void SfcCoupling::exportToCoupler() {
    auto AvgSfcSalinity_      = OcnToCpl.AvgSfcSalinityH;
    auto AvgSfcVelocityZonal_ = OcnToCpl.AvgSfcVelocityZonalH;
    auto AvgSfcVelocityMerid_ = OcnToCpl.AvgSfcVelocityMeridH;
+   auto AvgSfcSshGradZonal_  = OcnToCpl.AvgSfcSshGradZonalH;
+   auto AvgSfcSshGradMerid_  = OcnToCpl.AvgSfcSshGradMeridH;
    auto InstSshCellH_        = OcnToCpl.InstSshCellH;
 
    // Initalize all o2x fields to 0.0 for next coupling interval
@@ -255,6 +307,8 @@ void SfcCoupling::exportToCoupler() {
       OcnToCplView_(SalinIdx, Idx) = AvgSfcSalinity_(Idx);
       OcnToCplView_(VelUIdx, Idx)  = AvgSfcVelocityZonal_(Idx);
       OcnToCplView_(VelVIdx, Idx)  = AvgSfcVelocityMerid_(Idx);
+      OcnToCplView_(DhdxIdx, Idx)  = AvgSfcSshGradZonal_(Idx);
+      OcnToCplView_(DhdyIdx, Idx)  = AvgSfcSshGradMerid_(Idx);
       OcnToCplView_(SshIdx, Idx)   = InstSshCellH_(Idx);
    });
 
@@ -267,66 +321,140 @@ void SfcCoupling::applyImportFields(Forcing *Forcing) {
    // Copy is only done over the owned cells, since thats all the SfcCoupling
    // data is defined over. Forcing will be responsible for halo exchanges.
    deepCopy(ownedSubView(Forcing->SfcStressForcing.ZonalStressCell),
-            CplToOcn.SfcStressZonal);
+            CplToOcn.SfcStressZonalH);
    deepCopy(ownedSubView(Forcing->SfcStressForcing.MeridStressCell),
-            CplToOcn.SfcStressMerid);
+            CplToOcn.SfcStressMeridH);
+
+   deepCopy(ownedSubView(Forcing->TracerForcing.SnowFluxCell),
+            CplToOcn.SnowFluxH);
+   deepCopy(ownedSubView(Forcing->TracerForcing.RainFluxCell),
+            CplToOcn.RainFluxH);
+   deepCopy(ownedSubView(Forcing->TracerForcing.EvaporationFluxCell),
+            CplToOcn.EvaporationFluxH);
+   deepCopy(ownedSubView(Forcing->TracerForcing.SeaIceFreshWaterFluxCell),
+            CplToOcn.SeaIceFreshWaterFluxH);
+   deepCopy(ownedSubView(Forcing->TracerForcing.IceRunoffFluxCell),
+            CplToOcn.IceRunoffFluxH);
+   deepCopy(ownedSubView(Forcing->TracerForcing.RiverRunoffFluxCell),
+            CplToOcn.RiverRunoffFluxH);
+   deepCopy(ownedSubView(Forcing->TracerForcing.LatentHeatFluxEvapCell),
+            CplToOcn.LatentHeatFluxEvapH);
+   deepCopy(ownedSubView(Forcing->TracerForcing.SensibleHeatFluxCell),
+            CplToOcn.SensibleHeatFluxH);
+   deepCopy(ownedSubView(Forcing->TracerForcing.LongWaveHeatFluxUpCell),
+            CplToOcn.LongWaveHeatFluxUpH);
+   deepCopy(ownedSubView(Forcing->TracerForcing.LongWaveHeatFluxDownCell),
+            CplToOcn.LongWaveHeatFluxDownH);
+   deepCopy(ownedSubView(Forcing->TracerForcing.SeaIceHeatFluxCell),
+            CplToOcn.SeaIceHeatFluxH);
+   deepCopy(ownedSubView(Forcing->TracerForcing.ShortWaveHeatFluxCell),
+            CplToOcn.ShortWaveHeatFluxH);
+   deepCopy(ownedSubView(Forcing->TracerForcing.SeaIceSaltFluxCell),
+            CplToOcn.SeaIceSaltFluxH);
+
+   deepCopy(ownedSubView(CplToOcn.SeaIceBasalPressure),
+            CplToOcn.SeaIceBasalPressureH);
+   deepCopy(ownedSubView(CplToOcn.SeaLevelPressure),
+            CplToOcn.SeaLevelPressureH);
+
+   // While Forcing is responsible for exchanging the halos of the flux device
+   // arrays, we own the pressure fields that come from coupler. Therefore
+   // we are responsible for exchanging their halos.
+   Halo *MeshHalo = Halo::getDefault();
+
+   I4 HaloErr = 0;
+   HaloErr +=
+       MeshHalo->exchangeFullArrayHalo(CplToOcn.SeaIceBasalPressure, OnCell);
+   HaloErr +=
+       MeshHalo->exchangeFullArrayHalo(CplToOcn.SeaLevelPressure, OnCell);
+
+   if (HaloErr != 0) {
+      ABORT_ERROR("Error updating pressure halos after coupler import");
+   }
 };
 
 void SfcCoupling::updateExportFields(const OceanState *State,
                                      const Array3DReal &TracerArray) {
 
-   OcnToCpl.updateFields(State, TracerArray, NAccumSteps, NCellsOwned);
+   OcnToCpl.updateFields(State, TracerArray, NAccumSteps, NCellsOwned,
+                         NEdgesAll, CplToOcn.SeaIceBasalPressure,
+                         CplToOcn.SeaLevelPressure);
 
    NAccumSteps++;
 }
 
 CplToOcnFields::CplToOcnFields(const std::string &Suffix, const HorzMesh *Mesh)
-    : SfcStressZonal("SfcStressZonal" + Suffix, Mesh->NCellsOwned),
-      SfcStressMerid("SfcStressMeridional" + Suffix, Mesh->NCellsOwned) {}
+    : SfcStressZonalH("SfcStressZonal" + Suffix, Mesh->NCellsOwned),
+      SfcStressMeridH("SfcStressMeridional" + Suffix, Mesh->NCellsOwned),
+      SnowFluxH("SnowFlux" + Suffix, Mesh->NCellsOwned),
+      RainFluxH("RainFlux" + Suffix, Mesh->NCellsOwned),
+      EvaporationFluxH("EvaporationFlux" + Suffix, Mesh->NCellsOwned),
+      SeaIceFreshWaterFluxH("SeaIceFreshWaterFlux" + Suffix, Mesh->NCellsOwned),
+      IceRunoffFluxH("IceRunoffFlux" + Suffix, Mesh->NCellsOwned),
+      RiverRunoffFluxH("RiverRunoffFlux" + Suffix, Mesh->NCellsOwned),
+      LatentHeatFluxEvapH("LatentHeatFluxEvap" + Suffix, Mesh->NCellsOwned),
+      SensibleHeatFluxH("SensibleHeatFlux" + Suffix, Mesh->NCellsOwned),
+      LongWaveHeatFluxUpH("LongWaveHeatFluxUp" + Suffix, Mesh->NCellsOwned),
+      LongWaveHeatFluxDownH("LongWaveHeatFluxDown" + Suffix, Mesh->NCellsOwned),
+      SeaIceHeatFluxH("SeaIceHeatFlux" + Suffix, Mesh->NCellsOwned),
+      ShortWaveHeatFluxH("ShortWaveHeatFlux" + Suffix, Mesh->NCellsOwned),
+      SeaIceSaltFluxH("SeaIceSaltFlux" + Suffix, Mesh->NCellsOwned),
+      SeaIceBasalPressureH("SeaIceBasalPressure" + Suffix, Mesh->NCellsOwned),
+      SeaLevelPressureH("SeaLevelPressure" + Suffix, Mesh->NCellsOwned),
+      // Use NCellsSize so halo cells are available for edge-gradient calc.
+      SeaIceBasalPressure("SeaIceBasalPressure" + Suffix, Mesh->NCellsSize),
+      SeaLevelPressure("SeaLevelPressure" + Suffix, Mesh->NCellsSize) {}
 
 OcnToCplFields::OcnToCplFields(const std::string &Suffix, const HorzMesh *Mesh)
     : AvgSfcTemperature("AvgSfcTemperature" + Suffix, Mesh->NCellsOwned),
       AvgSfcSalinity("AvgSfcSalinity" + Suffix, Mesh->NCellsOwned),
-      AvgSfcVelocityZonal("AvgSfcVelocityZonal" + Suffix, Mesh->NCellsOwned),
-      AvgSfcVelocityMerid("AvgSfcVelocityMeridional" + Suffix,
+      AvgSfcNormalVelocity("AvgSfcNormalVelocity" + Suffix, Mesh->NEdgesSize),
+      AvgSfcVelocityZonalH("AvgSfcVelocityZonal" + Suffix, Mesh->NCellsOwned),
+      AvgSfcVelocityMeridH("AvgSfcVelocityMeridional" + Suffix,
+                           Mesh->NCellsOwned),
+      AvgSfcSshGrad("AvgSfcSshGrad" + Suffix, Mesh->NEdgesSize),
+      AvgSfcSshGradZonalH("AvgSfcSshGradZonal" + Suffix, Mesh->NCellsOwned),
+      AvgSfcSshGradMeridH("AvgSfcSshGradMeridional" + Suffix,
                           Mesh->NCellsOwned),
       InstSshCellH("InstSshCellH" + Suffix, Mesh->NCellsOwned),
-      InSituTempScratch("InSituTempScratch" + Suffix, Mesh->NCellsOwned) {
+      InSituTempScratch("InSituTempScratch" + Suffix, Mesh->NCellsOwned),
+      PracSalinityScratch("PracSalinityScratch" + Suffix, Mesh->NCellsOwned),
+      ReconZonalScratch("ReconZonalScratch" + Suffix, Mesh->NCellsOwned),
+      ReconMeridScratch("ReconMeridScratch" + Suffix, Mesh->NCellsOwned) {
 
    // Kokkok views created with a label are zero-initialized by default.
    // We reset the fields here anyway to be explicit about the fact that the
    // OcnToCpl fields need to begin a coupling interval with all zeros.
    resetFields();
 
-   AvgSfcTemperatureH   = createHostMirrorCopy(AvgSfcTemperature);
-   AvgSfcSalinityH      = createHostMirrorCopy(AvgSfcSalinity);
-   AvgSfcVelocityZonalH = createHostMirrorCopy(AvgSfcVelocityZonal);
-   AvgSfcVelocityMeridH = createHostMirrorCopy(AvgSfcVelocityMerid);
+   AvgSfcTemperatureH = createHostMirrorCopy(AvgSfcTemperature);
+   AvgSfcSalinityH    = createHostMirrorCopy(AvgSfcSalinity);
 }
 
 void OcnToCplFields::updateFields(const OceanState *State,
                                   const Array3DReal &TracerArray,
-                                  const I4 NAccumSteps, const I4 NCellsOwned) {
+                                  const I4 NAccumSteps, const I4 NCellsOwned,
+                                  const I4 NEdgesAll,
+                                  const Array1DReal &SeaIceBasalPressure,
+                                  const Array1DReal &SeaLevelPressure) {
 
    I4 TemperatureIdx, SalinityIdx;
    Tracers::getIndex(TemperatureIdx, "Temperature");
    Tracers::getIndex(SalinityIdx, "Salinity");
 
+   // get normal velocity at current time level
+   auto NormalVel = State->getNormalVelocity(0);
    auto Temperature =
        Kokkos::subview(TracerArray, TemperatureIdx, Kokkos::ALL, Kokkos::ALL);
    auto Salinity =
        Kokkos::subview(TracerArray, SalinityIdx, Kokkos::ALL, Kokkos::ALL);
 
+   HorzMesh *DefHorzMesh   = HorzMesh::getDefault();
    VertCoord *DefVertCoord = VertCoord::getDefault();
 
    OMEGA_SCOPE(LocMinLayerCell, DefVertCoord->MinLayerCell);
    OMEGA_SCOPE(LocAvgSfcSalinity, AvgSfcSalinity);
    OMEGA_SCOPE(LocAvgSfcTemp, AvgSfcTemperature);
-   OMEGA_SCOPE(LocAvgSfcVelZonal, AvgSfcVelocityZonal);
-   OMEGA_SCOPE(LocAvgSfcVelMerid, AvgSfcVelocityMerid);
-
-   // TODO: Implement vector reconsturction for velocity field.
-   constexpr Real ConstSfcVelocity = 1e-4;
 
    parallelFor(
        {NCellsOwned}, KOKKOS_LAMBDA(int ICell) {
@@ -338,12 +466,44 @@ void OcnToCplFields::updateFields(const OceanState *State,
 
           LocAvgSfcSalinity(ICell) = updateAverage(
               LocAvgSfcSalinity(ICell), Salinity(ICell, KSfc), NAccumSteps);
+       });
 
-          LocAvgSfcVelZonal(ICell) = updateAverage(
-              LocAvgSfcVelZonal(ICell), ConstSfcVelocity, NAccumSteps);
+   OMEGA_SCOPE(LocCellsOnEdge, DefHorzMesh->CellsOnEdge);
+   OMEGA_SCOPE(LocDcEdge, DefHorzMesh->DcEdge);
+   OMEGA_SCOPE(LocSshCell, DefVertCoord->SshCell);
+   OMEGA_SCOPE(LocSeaIcePressure, SeaIceBasalPressure);
+   OMEGA_SCOPE(LocSeaLevelPressure, SeaLevelPressure);
+   OMEGA_SCOPE(LocMinLayerEdgeBot, DefVertCoord->MinLayerEdgeBot);
+   OMEGA_SCOPE(LocMaxLayerEdgeTop, DefVertCoord->MaxLayerEdgeTop);
+   OMEGA_SCOPE(LocAvgSfcSshGrad, AvgSfcSshGrad);
+   OMEGA_SCOPE(LocAvgSfcNormalVel, AvgSfcNormalVelocity);
 
-          LocAvgSfcVelMerid(ICell) = updateAverage(
-              LocAvgSfcVelMerid(ICell), ConstSfcVelocity, NAccumSteps);
+   parallelFor(
+       {NEdgesAll}, KOKKOS_LAMBDA(int IEdge) {
+          const int KMin = LocMinLayerEdgeBot(IEdge);
+          const int KMax = LocMaxLayerEdgeTop(IEdge);
+
+          // exclude outer halo edges whose layer range is invalid
+          if (KMin <= KMax) {
+             LocAvgSfcNormalVel(IEdge) =
+                 updateAverage(LocAvgSfcNormalVel(IEdge),
+                               NormalVel(IEdge, KMin), NAccumSteps);
+
+             const int ICell0 = LocCellsOnEdge(IEdge, 0);
+             const int ICell1 = LocCellsOnEdge(IEdge, 1);
+
+             const Real SshCell0 = pressureAdjustedSsh(
+                 LocSshCell(ICell0), LocSeaIcePressure(ICell0),
+                 LocSeaLevelPressure(ICell0));
+             const Real SshCell1 = pressureAdjustedSsh(
+                 LocSshCell(ICell1), LocSeaIcePressure(ICell1),
+                 LocSeaLevelPressure(ICell1));
+
+             const Real SshGrad = (SshCell1 - SshCell0) / LocDcEdge(IEdge);
+
+             LocAvgSfcSshGrad(IEdge) =
+                 updateAverage(LocAvgSfcSshGrad(IEdge), SshGrad, NAccumSteps);
+          }
        });
 }
 
@@ -367,21 +527,55 @@ void OcnToCplFields::copyToHost() {
    OMEGA_SCOPE(LocAvgSfcTemp, AvgSfcTemperature);
    OMEGA_SCOPE(LocAvgSfcSalinity, AvgSfcSalinity);
    OMEGA_SCOPE(LocInSituTemp, InSituTempScratch);
+   OMEGA_SCOPE(LocPracSalinity, PracSalinityScratch);
 
+   // TEOS-10 conversion is applied once per coupling interval to the averaged
+   // conservative temperature and absolute salinity. Therefore this computes
+   // PtFromCt(mean(Sa), mean(Ct)), not mean(PtFromCt(Sa, Ct)); these are not
+   // generally equivalent because the conversion is nonlinear. A true time
+   // average of the converted quantity would require converting each timestep
+   // before accumulating it. The same consideration applies to any future
+   // nonlinear absolute-to-practical salinity conversion.
    parallelFor(
        {(int)AvgSfcTemperature.extent(0)}, KOKKOS_LAMBDA(int Cell) {
-          const Real Ct       = LocAvgSfcTemp(Cell);
-          const Real Sa       = LocAvgSfcSalinity(Cell);
-          const Real Pt       = LocEosChoice == EosType::Teos10Eos
-                                    ? LocTeos10.calcPtFromCt(Sa, Ct)
-                                    : Ct;
-          LocInSituTemp(Cell) = Pt + TkFrz; // C to K temperature conversion
+          const Real Ct         = LocAvgSfcTemp(Cell);
+          const Real Sa         = LocAvgSfcSalinity(Cell);
+          const Real Pt         = LocEosChoice == EosType::Teos10Eos
+                                      ? LocTeos10.calcPtFromCt(Sa, Ct)
+                                      : Ct;
+          LocInSituTemp(Cell)   = Pt + TkFrz; // C to K temperature conversion
+          LocPracSalinity(Cell) = Sa / Psu2Gpkg; // abs to prac sal. conversion
        });
 
    deepCopy(AvgSfcTemperatureH, InSituTempScratch);
-   deepCopy(AvgSfcSalinityH, AvgSfcSalinity);
-   deepCopy(AvgSfcVelocityZonalH, AvgSfcVelocityZonal);
-   deepCopy(AvgSfcVelocityMeridH, AvgSfcVelocityMerid);
+   deepCopy(AvgSfcSalinityH, PracSalinityScratch);
+
+   // Retrieve the default horizontal mesh
+   HorzMesh *DefHorzMesh = HorzMesh::getDefault();
+
+   OMEGA_SCOPE(LocNormalVelocity, AvgSfcNormalVelocity);
+   OMEGA_SCOPE(LocSshGradEdge, AvgSfcSshGrad);
+   OMEGA_SCOPE(LocReconZonal, ReconZonalScratch);
+   OMEGA_SCOPE(LocReconMerid, ReconMeridScratch);
+
+   VectorReconOnCell ReconCell(DefHorzMesh);
+
+   parallelFor(
+       {DefHorzMesh->NCellsOwned}, KOKKOS_LAMBDA(int ICell) {
+          ReconCell(LocReconZonal, LocReconMerid, ICell, LocNormalVelocity);
+       });
+
+   deepCopy(AvgSfcVelocityZonalH, ReconZonalScratch);
+   deepCopy(AvgSfcVelocityMeridH, ReconMeridScratch);
+
+   // Reuse the same scratch arrays; VectorReconOnCell overwrites every cell
+   parallelFor(
+       {DefHorzMesh->NCellsOwned}, KOKKOS_LAMBDA(int ICell) {
+          ReconCell(LocReconZonal, LocReconMerid, ICell, LocSshGradEdge);
+       });
+
+   deepCopy(AvgSfcSshGradZonalH, ReconZonalScratch);
+   deepCopy(AvgSfcSshGradMeridH, ReconMeridScratch);
 
    // SSH is an instantaneous field, so we don't bother with a device mirror of
    // our own. Instead, copy from the VertCoord, which owns SSH, host array.
@@ -397,7 +591,7 @@ void OcnToCplFields::copyToHost() {
 void OcnToCplFields::resetFields() {
    deepCopy(AvgSfcTemperature, 0.0_Real);
    deepCopy(AvgSfcSalinity, 0.0_Real);
-   deepCopy(AvgSfcVelocityZonal, 0.0_Real);
-   deepCopy(AvgSfcVelocityMerid, 0.0_Real);
+   deepCopy(AvgSfcNormalVelocity, 0.0_Real);
+   deepCopy(AvgSfcSshGrad, 0.0_Real);
 }
 } // namespace OMEGA
