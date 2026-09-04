@@ -148,6 +148,7 @@ design/TridiagonalSolver
 design/VertAdv
 design/VertCoord
 design/VerticalMixingCoeff
+design/SplitTimeStepping
 
 design/Template
 ```
