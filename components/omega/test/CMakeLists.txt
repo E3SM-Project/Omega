@@ -480,6 +480,17 @@ add_omega_test(
     "-n;1;"
 )
 
+##########################
+# Build configuration test
+##########################
+
+add_omega_test(
+    BUILD_CONFIG_TEST
+    testBuildConfig.exe
+    infra/BuildConfigTest.cpp
+    "-n;1"
+)
+
 ##################
 # Driver test
 ##################
