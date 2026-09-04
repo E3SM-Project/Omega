@@ -57,9 +57,10 @@ template <class T> constexpr ArrayDataType checkArrayType() {
 
 // determine ArrayMemLoc from Kokkos array type
 template <class T> constexpr ArrayMemLoc findArrayMemLoc() {
-   if (std::is_same_v<MemSpace, HostMemSpace>) {
+   if constexpr (std::is_same_v<MemSpace, HostMemSpace>) {
       return ArrayMemLoc::Both;
-   } else if (T::is_hostspace) {
+   } else if constexpr (std::is_same_v<typename T::memory_space,
+                                       HostMemSpace>) {
       return ArrayMemLoc::Host;
    } else {
       return ArrayMemLoc::Device;
