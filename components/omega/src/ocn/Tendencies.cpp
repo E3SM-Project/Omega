@@ -416,6 +416,22 @@ void Tendencies::readConfig(Config *OmegaConfig ///< [in] Omega config
 }
 
 //------------------------------------------------------------------------------
+// Configure the velocity tendency for a mode-split time stepper
+void Tendencies::setModeSplit(CoriolisTendMode Mode, ///< [in] Coriolis mode
+                              Real SplitFactorIn ///< [in] split-explicit factor
+) {
+
+   if (SplitFactorIn != 0._Real && this->SSHGrad.Enabled) {
+      ABORT_ERROR("Tendencies: SSHTendencyEnable must be false for a "
+                  "mode-split time stepper, which uses the barotropic "
+                  "pressure anomaly gradient instead");
+   }
+
+   this->CoriolisMode = Mode;
+   this->SplitFactor  = SplitFactorIn;
+}
+
+//------------------------------------------------------------------------------
 // Define fields associated with tendencies
 void Tendencies::defineFields() {
    std::string PseudoThicknessTendFieldName = "PseudoThicknessTend";
@@ -485,9 +501,9 @@ Tendencies::Tendencies(const std::string &Name_, ///< [in] Name for tendencies
     : Mesh(Mesh), VCoord(VCoord), VAdv(VAdv),
       PseudoThicknessFluxDiv(Mesh, VCoord), PotentialVortHAdv(Mesh, VCoord),
       KEGrad(Mesh, VCoord), SSHGrad(Mesh, VCoord),
-      VelocityDiffusion(Mesh, VCoord), VelocityHyperDiff(Mesh, VCoord),
-      SfcStressForcing(Mesh, VCoord), ExplicitBottomDrag(Mesh, VCoord),
-      SfcThicknessForcing(Mesh, VCoord),
+      CoriolisAcceleration(Mesh, VCoord), VelocityDiffusion(Mesh, VCoord),
+      VelocityHyperDiff(Mesh, VCoord), SfcStressForcing(Mesh, VCoord),
+      ExplicitBottomDrag(Mesh, VCoord), SfcThicknessForcing(Mesh, VCoord),
       SfcTracerForcing(Mesh, VCoord, Tracers::IndxTemp, Tracers::IndxSalt,
                        EqState),
       TracerDiffusion(Mesh, VCoord), TracerHyperDiff(Mesh, VCoord),
@@ -567,6 +583,70 @@ Tendencies *Tendencies::create(const std::string &Name,
 }
 
 //------------------------------------------------------------------------------
+// Accumulate f times tangential velocity reconstruction for edge-centered 2D
+// fields
+void Tendencies::computeCoriolisAccelerationOnEdge(
+    const Array2DReal &Tend,          ///< [inout] velocity tendency
+    const Array2DReal &NormalVelEdge, ///< [in] normal velocity on edges
+    const Array1DReal &FEdge          ///< [in] Coriolis parameter on edges
+) const {
+
+   computeCoriolisAccelerationOnEdge(Tend, Tend, NormalVelEdge, FEdge);
+}
+
+//------------------------------------------------------------------------------
+// Write a base tendency plus f times tangential velocity reconstruction into a
+// separate output array, for iterative Coriolis solves
+void Tendencies::computeCoriolisAccelerationOnEdge(
+    const Array2DReal &Tend,          ///< [out] base plus Coriolis tendency
+    const Array2DReal &BaseTend,      ///< [in] tendency without Coriolis
+    const Array2DReal &NormalVelEdge, ///< [in] normal velocity on edges
+    const Array1DReal &FEdge          ///< [in] Coriolis parameter on edges
+) const {
+
+   // Coriolis acceleration should be turned off if the PV tendency is disabled,
+   // in which case the output is just the base tendency.
+   if (!PotentialVortHAdv.Enabled) {
+      deepCopy(Tend, BaseTend);
+      return;
+   }
+
+   OMEGA_SCOPE(LocCoriolisAcceleration, CoriolisAcceleration);
+
+   Pacer::start("Tend:coriolisAccelerationOnEdge2DBase", 2);
+   parallelForOuter(
+       LaunchConfig({Mesh->NEdgesAll}, TeamScratch<Real>(VCoord->NVertLayers)),
+       KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+          LocCoriolisAcceleration(Team, Tend, BaseTend, IEdge, NormalVelEdge,
+                                  FEdge);
+       });
+   Pacer::stop("Tend:coriolisAccelerationOnEdge2DBase", 2);
+}
+
+//------------------------------------------------------------------------------
+// Accumulate f times tangential velocity reconstruction for edge-centered 1D
+// fields
+void Tendencies::computeCoriolisAccelerationOnEdge(
+    const Array1DReal &Tend,          ///< [inout] barotropic velocity tendency
+    const Array1DReal &NormalVelEdge, ///< [in] normal velocity on edges
+    const Array1DReal &FEdge          ///< [in] Coriolis parameter on edges
+) const {
+
+   // Shares PVTendencyEnable with the 2D overload above
+   if (!PotentialVortHAdv.Enabled)
+      return;
+
+   OMEGA_SCOPE(LocCoriolisAcceleration, CoriolisAcceleration);
+
+   Pacer::start("Tend:coriolisAccelerationOnEdge1D", 2);
+   parallelFor(
+       {Mesh->NEdgesAll}, KOKKOS_LAMBDA(int IEdge) {
+          LocCoriolisAcceleration(Tend, IEdge, NormalVelEdge, FEdge);
+       });
+   Pacer::stop("Tend:coriolisAccelerationOnEdge1D", 2);
+}
+
+//------------------------------------------------------------------------------
 // Compute tendencies for the pseudo-thickness equation
 void Tendencies::computePseudoThicknessTendenciesOnly(
     const OceanState *State,        ///< [in] State variables
@@ -576,13 +656,13 @@ void Tendencies::computePseudoThicknessTendenciesOnly(
     TimeInstant Time                ///< [in] Time
 ) {
 
+   Array2DReal NormalVelEdge = State->getNormalVelocity(VelTimeLevel);
+
    OMEGA_SCOPE(LocPseudoThicknessTend, PseudoThicknessTend);
    OMEGA_SCOPE(LocThicknessFluxDiv, PseudoThicknessFluxDiv);
    OMEGA_SCOPE(LocSfcThicknessForcing, SfcThicknessForcing);
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
-
-   Array2DReal NormalVelEdge = State->getNormalVelocity(VelTimeLevel);
 
    Pacer::start("Tend:computePseudoThicknessTendenciesOnly", 1);
 
@@ -599,6 +679,8 @@ void Tendencies::computePseudoThicknessTendenciesOnly(
    // Compute pseudo-thickness flux divergence
    const Array2DReal &ThickFluxEdge =
        AuxState->PseudoThicknessAux.FluxPseudoThickEdge;
+   const auto &NormalTransportVelocity =
+       AuxState->TransportAux.NormalTransportVelocity;
 
    if (LocThicknessFluxDiv.Enabled) {
       Pacer::start("Tend:thicknessFluxDiv", 2);
@@ -607,7 +689,7 @@ void Tendencies::computePseudoThicknessTendenciesOnly(
                        TeamScratch<Real>(VCoord->NVertLayers)),
           KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
              LocThicknessFluxDiv(Team, LocPseudoThicknessTend, ICell,
-                                 ThickFluxEdge, NormalVelEdge);
+                                 ThickFluxEdge, NormalTransportVelocity);
           });
       Pacer::stop("Tend:thicknessFluxDiv", 2);
    }
@@ -687,7 +769,10 @@ void Tendencies::computeVelocityTendenciesOnly(
    // keep their FillValueReal from attachData().
    VCoord->zeroEdgeField(NormalVelocityTend, Mesh->NEdgesAll);
 
-   // Compute potential vorticity horizontal advection
+   // Compute vorticity horizontal advection.
+   // With CoriolisTendMode::Separate only the relative vorticity is advected
+   // here; the time stepper adds the linear Coriolis acceleration itself so it
+   // can be iterated.
    const Array2DReal &FluxPseudoThickEdge =
        AuxState->PseudoThicknessAux.FluxPseudoThickEdge;
    const Array2DReal &NormRVortEdge = AuxState->VorticityAux.NormRelVortEdge;
@@ -695,14 +780,25 @@ void Tendencies::computeVelocityTendenciesOnly(
    Array2DReal NormVelEdge          = State->getNormalVelocity(VelTimeLevel);
    if (LocPotentialVortHAdv.Enabled) {
       Pacer::start("Tend:PotentialVortHAdv", 2);
-      parallelForOuter(
-          LaunchConfig({Mesh->NEdgesAll},
-                       TeamScratch<Real>(VCoord->NVertLayers)),
-          KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
-             LocPotentialVortHAdv(Team, LocNormalVelocityTend, IEdge,
-                                  NormRVortEdge, NormFEdge, FluxPseudoThickEdge,
-                                  NormVelEdge);
-          });
+      if (CoriolisMode == CoriolisTendMode::Separate) {
+         parallelForOuter(
+             LaunchConfig({Mesh->NEdgesAll},
+                          TeamScratch<Real>(VCoord->NVertLayers)),
+             KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+                LocPotentialVortHAdv(Team, LocNormalVelocityTend, IEdge,
+                                     NormRVortEdge, FluxPseudoThickEdge,
+                                     NormVelEdge);
+             });
+      } else {
+         parallelForOuter(
+             LaunchConfig({Mesh->NEdgesAll},
+                          TeamScratch<Real>(VCoord->NVertLayers)),
+             KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+                LocPotentialVortHAdv(Team, LocNormalVelocityTend, IEdge,
+                                     NormRVortEdge, NormFEdge,
+                                     FluxPseudoThickEdge, NormVelEdge);
+             });
+      }
       Pacer::stop("Tend:PotentialVortHAdv", 2);
    }
 
@@ -717,9 +813,17 @@ void Tendencies::computeVelocityTendenciesOnly(
       Pacer::stop("Tend:KEGrad", 2);
    }
 
-   // Compute sea surface height gradient
+   // Compute the barotropic pressure gradient for the mode-split time steppers
    const Array1DReal &SSHCell = LocSshCell;
-   if (LocSSHGrad.Enabled) {
+   if (SplitFactor != 0._Real) {
+      Pacer::start("Tend:barotropicPressureGradTerm", 2);
+      const Array1DReal &BtrPressAnomaly =
+          State->getBarotropicPressureAnomaly(VelTimeLevel);
+      const Array1DReal &DepthMeanSpecVol = EqState->DepthMeanSpecificVolume;
+      PGrad->computeBarotropicPressureGrad(LocNormalVelocityTend,
+                                           BtrPressAnomaly, DepthMeanSpecVol);
+      Pacer::stop("Tend:barotropicPressureGradTerm", 2);
+   } else if (LocSSHGrad.Enabled) {
       Pacer::start("Tend:SSHGrad", 2);
       parallelForOuter(
           {Mesh->NEdgesAll}, KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
@@ -822,6 +926,8 @@ void Tendencies::computeTracerTendenciesOnly(
     int VelTimeLevel,               ///< [in] Time level
     TimeInstant Time                ///< [in] Time
 ) {
+   Array2DReal NormalVelEdge = State->getNormalVelocity(VelTimeLevel);
+
    OMEGA_SCOPE(LocTracerTend, TracerTend);
    OMEGA_SCOPE(LocTracerHorzAdv, TracerHorzAdv);
    OMEGA_SCOPE(LocTracerDiffusion, TracerDiffusion);
@@ -846,9 +952,11 @@ void Tendencies::computeTracerTendenciesOnly(
        });
 
    // compute tracer horizotal advection
-   Array2DReal NormalVelEdge = State->getNormalVelocity(VelTimeLevel);
+   const auto &NormalTransportVelocity =
+       AuxState->TransportAux.NormalTransportVelocity;
    const Array2DReal &FluxPseudoThickEdge =
        AuxState->PseudoThicknessAux.FluxPseudoThickEdge;
+
    if (LocTracerHorzAdv.Enabled) {
       Pacer::start("Tend:tracerHorzAdv", 2);
       parallelForOuter(
@@ -856,7 +964,7 @@ void Tendencies::computeTracerTendenciesOnly(
                        TeamScratch<Real>(VCoord->NVertLayers)),
           KOKKOS_LAMBDA(int L, int IEdge, const TeamMember &Team) {
              LocTracerHorzAdv(Team, L, IEdge, TracerArray, FluxPseudoThickEdge,
-                              NormalVelEdge);
+                              NormalTransportVelocity);
           });
       parallelForOuter(
           LaunchConfig({NTracers, Mesh->NCellsAll},
@@ -971,29 +1079,17 @@ void Tendencies::computeTracerTendenciesOnly(
 void Tendencies::computePseudoThicknessTendencies(
     const OceanState *State,        ///< [in] State variables
     const AuxiliaryState *AuxState, ///< [in] Auxilary state variables
+    const Array3DReal &TracerArray, ///< [in] Tracer array
     int ThickTimeLevel,             ///< [in] Time level
     int VelTimeLevel,               ///< [in] Time level
-    TimeInstant Time                ///< [in] Time
+    TimeInstant Time,               ///< [in] Time
+    TimeInterval ProjDt ///< [in] Time interval for projection over the current
+                        ///< time stepper stage
 ) {
-   // only need PseudoThicknessAux on edge
-   Array2DReal PseudoThick = State->getPseudoThickness(ThickTimeLevel);
-   Array2DReal NormVel     = State->getNormalVelocity(VelTimeLevel);
-   OMEGA_SCOPE(PseudoThicknessAux, AuxState->PseudoThicknessAux);
-   OMEGA_SCOPE(PseudoThickCell, PseudoThick);
-   OMEGA_SCOPE(NormalVelEdge, NormVel);
-   OMEGA_SCOPE(MinLayerEdgeBot, VCoord->MinLayerEdgeBot);
-   OMEGA_SCOPE(MaxLayerEdgeTop, VCoord->MaxLayerEdgeTop);
-
    Pacer::start("Tend:computePseudoThicknessTendencies", 1);
 
-   Pacer::start("Tend:computePseudoThickAux", 2);
-   parallelForOuter(
-       "computePseudoThickAux", {Mesh->NEdgesAll},
-       KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
-          PseudoThicknessAux.computeVarsOnEdge(Team, IEdge, PseudoThickCell,
-                                               NormalVelEdge);
-       });
-   Pacer::stop("Tend:computePseudoThickAux", 2);
+   AuxState->computePseudoThicknessAux(State, TracerArray, ThickTimeLevel,
+                                       VelTimeLevel, ProjDt);
 
    computePseudoThicknessTendenciesOnly(State, AuxState, ThickTimeLevel,
                                         VelTimeLevel, Time);
@@ -1028,30 +1124,15 @@ void Tendencies::computeTracerTendencies(
     const Array3DReal &TracerArray, ///< [in] Tracer array
     int ThickTimeLevel,             ///< [in] Time level
     int VelTimeLevel,               ///< [in] Time level
-    TimeInstant Time                ///< [in] Time
+    TimeInstant Time,               ///< [in] Time
+    TimeInterval ProjDt ///< [in] Time interval for projection over the current
+                        ///< time stepper stage
 ) {
-   Array2DReal PseudoThickCell = State->getPseudoThickness(ThickTimeLevel);
-   Array2DReal NormalVelEdge   = State->getNormalVelocity(VelTimeLevel);
-   OMEGA_SCOPE(TracerAux, AuxState->TracerAux);
-   OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
-   OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
-   OMEGA_SCOPE(MinLayerEdgeBot, VCoord->MinLayerEdgeBot);
-   OMEGA_SCOPE(MaxLayerEdgeTop, VCoord->MaxLayerEdgeTop);
 
    Pacer::start("Tend:computeTracerTendencies", 1);
 
-   const auto &MeanPseudoThickEdge =
-       AuxState->PseudoThicknessAux.MeanPseudoThickEdge;
-   Pacer::start("Tend:computeTracerAuxCell", 2);
-   parallelForOuter(
-       "computeTracerAuxCell",
-       LaunchConfig({NTracers, Mesh->NCellsAll},
-                    TeamScratch<Real>(VCoord->NVertLayers)),
-       KOKKOS_LAMBDA(int LTracer, int ICell, const TeamMember &Team) {
-          TracerAux.computeVarsOnCells(Team, LTracer, ICell,
-                                       MeanPseudoThickEdge, TracerArray);
-       });
-   Pacer::stop("Tend:computeTracerAuxCell", 2);
+   AuxState->computeTracerAux(State, TracerArray, ThickTimeLevel, VelTimeLevel,
+                              ProjDt);
 
    computeTracerTendenciesOnly(State, AuxState, TracerArray, ThickTimeLevel,
                                VelTimeLevel, Time);

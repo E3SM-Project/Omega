@@ -711,7 +711,7 @@ void VertMix::VertMixImplicit(OceanState *State, AuxiliaryState *AuxState,
    }
 
    // Update Pressure, SpecVol
-   AuxState->computeMomVertAux(State, TracerArray, TimeLevel, TimeLevel);
+   AuxState->computeMomVertAux(State, TracerArray, TimeLevel);
 
    // Compute Brunt-Vaisala frequency squared
    EqState->computeBruntVaisalaFreqSq(

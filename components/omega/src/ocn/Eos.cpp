@@ -54,6 +54,8 @@ Eos::Eos(const std::string &Name, ///< [in] Name for eos object
    SpecVolDSa =
        Array2DReal("SpecVolDSa", Mesh->NCellsSize, VCoord->NVertLayers);
    SpecVolDP = Array2DReal("SpecVolDP", Mesh->NCellsSize, VCoord->NVertLayers);
+   DepthMeanSpecificVolume =
+       Array1DReal("DepthMeanSpecificVolume", Mesh->NCellsSize);
 
    defineFields();
 }
@@ -173,6 +175,35 @@ void Eos::computeSpecVol(const Array2DReal &ConservTemp,
                                        AbsSalinity);
           });
    }
+}
+
+/// Compute depth-mean specific volume for all cells
+void Eos::computeDepthMeanSpecificVolume(
+    const Array2DReal &PseudoThickness // [in] pseudo thickness
+) {
+   OMEGA_SCOPE(LocDepthMeanSpecificVolume, DepthMeanSpecificVolume);
+   OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
+   OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
+   OMEGA_SCOPE(GeomZInterface, VCoord->GeomZInterface);
+   OMEGA_SCOPE(PressureInterface, VCoord->PressureInterface);
+
+   parallelFor(
+       "computeDepthMeanSpecificVolume", {Mesh->NCellsAll},
+       KOKKOS_LAMBDA(I4 ICell) {
+          const int KMin = MinLayerCell(ICell);
+          const int KMax = MaxLayerCell(ICell);
+
+          const Real DepthIntegSpecVol =
+              (GeomZInterface(ICell, KMin) - GeomZInterface(ICell, KMax + 1)) /
+              RhoSw;
+
+          const Real ColumnThickness = (PressureInterface(ICell, KMax + 1) -
+                                        PressureInterface(ICell, KMin)) /
+                                       (Gravity * RhoSw);
+
+          LocDepthMeanSpecificVolume(ICell) =
+              DepthIntegSpecVol / ColumnThickness;
+       });
 }
 
 /// Compute displaced specific volume (for vertical displacement)
@@ -340,6 +371,7 @@ void Eos::defineFields() {
    SpecVolDCtFldName         = "SpecVolDCt";
    SpecVolDSaFldName         = "SpecVolDSa";
    SpecVolDPFldName          = "SpecVolDP";
+   DepthMeanSpecVolFldName   = "DepthMeanSpecificVolume";
    if (Name != "Default") {
       SpecVolFldName.append(Name);
       SpecVolDisplacedFldName.append(Name);
@@ -347,6 +379,7 @@ void Eos::defineFields() {
       SpecVolDCtFldName.append(Name);
       SpecVolDSaFldName.append(Name);
       SpecVolDPFldName.append(Name);
+      DepthMeanSpecVolFldName.append(Name);
    }
 
    /// Create fields for state variables
@@ -433,6 +466,20 @@ void Eos::defineFields() {
                      DimNames                          // Dimension names
        );
 
+   NDims = 1;
+   DimNames.resize(NDims);
+   DimNames[0] = "NCells";
+   auto DepthMeanSpecificVolumeField =
+       Field::create(DepthMeanSpecVolFldName,          // Field name
+                     "Depth-mean specific volume",     // Long Name
+                     "m3 kg-1",                        // Units
+                     "",                               // CF-ish Name
+                     0.0,                              // Min valid value
+                     std::numeric_limits<Real>::max(), // Max valid value
+                     NDims,                            // Number of dimensions
+                     DimNames                          // Dimension names
+       );
+
    // Create a field group for the eos-specific state fields
    EosGroupName = "Eos";
    if (Name != "Default") {
@@ -447,6 +494,7 @@ void Eos::defineFields() {
    EosGroup->addField(SpecVolDCtFldName);
    EosGroup->addField(SpecVolDSaFldName);
    EosGroup->addField(SpecVolDPFldName);
+   EosGroup->addField(DepthMeanSpecVolFldName);
 
    // Attach Kokkos views to the fields
    SpecVolDisplacedField->attachData<Array2DReal>(SpecVolDisplaced);
@@ -455,6 +503,8 @@ void Eos::defineFields() {
    SpecVolDCtField->attachData<Array2DReal>(SpecVolDCt);
    SpecVolDSaField->attachData<Array2DReal>(SpecVolDSa);
    SpecVolDPField->attachData<Array2DReal>(SpecVolDP);
+   DepthMeanSpecificVolumeField->attachData<Array1DReal>(
+       DepthMeanSpecificVolume);
 
 } // end defineIOFields
 

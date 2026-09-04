@@ -982,6 +982,7 @@ class Eos {
    Array2DReal SpecVolDCt;         ///< d(SpecVol)/d(ConservTemp), per degC
    Array2DReal SpecVolDSa;         ///< d(SpecVol)/d(AbsSalinity), per (g/kg)
    Array2DReal SpecVolDP;          ///< d(SpecVol)/d(Pressure), per Pa
+   Array1DReal DepthMeanSpecificVolume; ///< Depth-mean specific volume
 
    std::string SpecVolFldName; ///< Field name for specific volume
    std::string
@@ -991,13 +992,20 @@ class Eos {
    std::string SpecVolDCtFldName; ///< Field name for temperature derivative
    std::string SpecVolDSaFldName; ///< Field name for salinity derivative
    std::string SpecVolDPFldName;  ///< Field name for pressure derivative
-   std::string EosGroupName;      ///< EOS group name (for config)
-   std::string Name;              ///< Name of this EOS instance
+   std::string DepthMeanSpecVolFldName; ///< Field name for depth-mean
+                                        ///< specific volume
+   std::string EosGroupName;            ///< EOS group name (for config)
+   std::string Name;                    ///< Name of this EOS instance
 
    /// Compute specific volume for all cells/layers
    void computeSpecVol(const Array2DReal &ConservTemp,
                        const Array2DReal &AbsSalinity,
                        const Array2DReal &Pressure);
+
+   /// Compute depth-integrated specific volume for all cells
+   void computeDepthMeanSpecificVolume(
+       const Array2DReal &PseudoThickness ///< [in] pseudo thickness
+   );
 
    /// Compute displaced specific volume (for vertical displacement)
    void computeSpecVolDisp(const Array2DReal &ConservTemp,

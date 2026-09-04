@@ -41,7 +41,8 @@ class OceanState {
               HorzMesh *Mesh,          ///< [in] Horizontal mesh
               Halo *MeshHalo_,         ///< [in] Halo for Mesh
               const int NVertLayers_,  ///< [in] Number of vertical layers
-              const int NTimeLevels_   ///< [in] Number of time levels
+              const int NTimeLevels_,  ///< [in] Number of time levels
+              const bool UseModeSplit_ ///< [in] carry split velocity fields
    );
 
    // Forbid copy and move construction
@@ -50,6 +51,9 @@ class OceanState {
 
    /// Get the current time level index associated with a time level
    I4 getTimeIndex(const I4 TimeLevel) const;
+
+   /// Whether the mode-split velocity/pressure arrays are allocated
+   bool UseModeSplit = false;
 
  public:
    // Variables
@@ -89,10 +93,31 @@ class OceanState {
    std::vector<Array2DReal> NormalVelocity; ///< Device NormalVelocity array
    std::vector<HostArray2DReal> NormalVelocityH; ///< Host NormalVelocity array
 
+   std::vector<Array2DReal>
+       NormalBaroclinicVelocity; ///< Device baroclinic velocity array
+   std::vector<HostArray2DReal>
+       NormalBaroclinicVelocityH; ///< Host baroclinic velocity array
+
+   std::vector<Array1DReal>
+       NormalBarotropicVelocity; ///< Device barotropic velocity array
+   std::vector<HostArray1DReal>
+       NormalBarotropicVelocityH; ///< Host barotropic velocity array
+
+   std::vector<Array1DReal>
+       BarotropicPressureAnomaly; ///< Device barotropic pressure anomaly array
+   std::vector<HostArray1DReal>
+       BarotropicPressureAnomalyH; ///< Host barotropic pressure anomaly array
+
    // Field names
    // These are appended with the State name for non-Default state instances
    std::string PseudoThicknessFldName; ///< Field name for PseudoThickness
    std::string NormalVelocityFldName;  ///< Field name for NormalVelocity
+   std::string NormalBaroclinicVelocityFldName;  ///< Field name for
+                                                 ///< NormalBaroclinicVelocity
+   std::string NormalBarotropicVelocityFldName;  ///< Field name for
+                                                 ///< NormalBarotropicVelocity
+   std::string BarotropicPressureAnomalyFldName; ///< Field name for
+                                                 ///< BarotropicPressureAnomaly
    std::string StateGroupName;
 
    // Methods
@@ -107,8 +132,10 @@ class OceanState {
           HorzMesh *Mesh,          ///< [in] Horizontal mesh
           Halo *MeshHalo,          ///< [in] Halo for Mesh
           const int NVertLayers,   ///< [in] Number of vertical layers
-          const int NTimeLevels    ///< [in] Number of time levels
-   );
+          const int NTimeLevels,   ///< [in] Number of time levels
+          ///< [in] carry the mode-split velocity split and barotropic
+          ///< pressure; only the mode-split time steppers need them
+          const bool UseModeSplit = false);
 
    /// Get pseudo-thickness device array at given time level
    Array2DReal getPseudoThickness(const I4 TimeLevel) const;
@@ -125,6 +152,29 @@ class OceanState {
    /// Apply layer masks to NormalVelocity, PseudoThickness, Temperature, and
    /// Salinity after reading an IC or restart file
    void applyLayerMasks(const I4 TimeLevel);
+
+   /// True when this state carries the mode-split velocity split and
+   /// barotropic pressure; false leaves those arrays unallocated
+   bool isModeSplit() const { return UseModeSplit; }
+
+   /// Get normal baroclinic velocity device array at given time level
+   /// Requires a mode-split state
+   Array2DReal getNormalBaroclinicVelocity(const I4 TimeLevel) const;
+
+   /// Get normal baroclinic velocity host array at given time level
+   HostArray2DReal getNormalBaroclinicVelocityH(const I4 TimeLevel) const;
+
+   /// Get normal barotropic velocity device array at given time level
+   Array1DReal getNormalBarotropicVelocity(const I4 TimeLevel) const;
+
+   /// Get normal barotropic velocity host array at given time level
+   HostArray1DReal getNormalBarotropicVelocityH(const I4 TimeLevel) const;
+
+   /// Get barotropic pressure anomaly device array at given time level
+   Array1DReal getBarotropicPressureAnomaly(const I4 TimeLevel) const;
+
+   /// Get barotropic pressure anomaly host array at given time level
+   HostArray1DReal getBarotropicPressureAnomalyH(const I4 TimeLevel) const;
 
    /// Exchange halo
    void exchangeHalo(const I4 TimeLevel);

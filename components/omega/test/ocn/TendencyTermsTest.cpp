@@ -65,6 +65,10 @@ struct TestSetupPlane {
    ErrorMeasures ExpectedSfcStressForcingErrors = {0, 0};
    ErrorMeasures ExpectedBottomDragErrors       = {0.033848740052302935,
                                                    0.01000133508329411};
+   ErrorMeasures ExpectedCoriolis2DErrors       = {0.01322503349256595,
+                                                   0.011816356596905431};
+   ErrorMeasures ExpectedCoriolis1DErrors       = {0.012883757868753419,
+                                                   0.011805932389752003};
 
    KOKKOS_FUNCTION Real vectorX(Real X, Real Y) const {
       return std::sin(TwoPi * X / Lx) * std::cos(TwoPi * Y / Ly);
@@ -205,6 +209,10 @@ struct TestSetupSphere {
    ErrorMeasures ExpectedSfcStressForcingErrors = {0, 0};
    ErrorMeasures ExpectedBottomDragErrors       = {0.0015333449035655053,
                                                    0.0014897009917655022};
+   ErrorMeasures ExpectedCoriolis2DErrors       = {0.017830942909137566,
+                                                   0.00958613271059214};
+   ErrorMeasures ExpectedCoriolis1DErrors       = {0.01756710962800044,
+                                                   0.011526527317437694};
 
    KOKKOS_FUNCTION Real vectorX(Real Lon, Real Lat) const {
       return -Radius * std::pow(std::sin(Lon), 2) * std::pow(std::cos(Lat), 3);
@@ -522,6 +530,104 @@ int testPotVortHAdv(int NVertLayers, Real RTol) {
 
    return Err;
 } // end testPotVortHAdv
+
+int testCoriolisAccelerationOnEdge(int NVertLayers, Real RTol) {
+
+   int Err = 0;
+   TestSetup Setup;
+
+   const auto Mesh   = HorzMesh::getDefault();
+   const auto VCoord = VertCoord::getDefault();
+
+   // Set input arrays
+
+   Array2DReal NormalVelEdge("NormalVelEdge", Mesh->NEdgesSize, NVertLayers);
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+          VecField[0] = Setup.vectorX(X, Y);
+          VecField[1] = Setup.vectorY(X, Y);
+       },
+       NormalVelEdge, EdgeComponent::Normal, Geom, Mesh);
+
+   Array1DReal NormalBarotropicVelEdge("NormalBarotropicVelEdge",
+                                       Mesh->NEdgesSize);
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+          VecField[0] = Setup.vectorY(X, Y);
+          VecField[1] = Setup.vectorX(X, Y);
+       },
+       NormalBarotropicVelEdge, EdgeComponent::Normal, Geom, Mesh);
+
+   Array1DReal FEdge("FEdge", Mesh->NEdgesSize);
+   Err += setScalar(
+       KOKKOS_LAMBDA(Real X, Real Y) { return Setup.planetaryVort(X, Y); },
+       FEdge, Geom, Mesh, OnEdge);
+
+   // Compute exact results
+
+   Array2DReal ExactCoriolis2D("ExactCoriolis2D", Mesh->NEdgesOwned,
+                               NVertLayers);
+   Array1DReal ExactCoriolis1D("ExactCoriolis1D", Mesh->NEdgesOwned);
+
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+          const Real PVort = Setup.planetaryVort(X, Y);
+          VecField[0]      = PVort * Setup.vectorX(X, Y);
+          VecField[1]      = PVort * Setup.vectorY(X, Y);
+       },
+       ExactCoriolis2D, EdgeComponent::Tangential, Geom, Mesh,
+       ExchangeHalos::No);
+
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+          const Real PVort = Setup.planetaryVort(X, Y);
+          VecField[0]      = PVort * Setup.vectorY(X, Y);
+          VecField[1]      = PVort * Setup.vectorX(X, Y);
+       },
+       ExactCoriolis1D, EdgeComponent::Tangential, Geom, Mesh,
+       ExchangeHalos::No);
+
+   // Compute numerical results
+
+   Array2DReal NumCoriolis2D("NumCoriolis2D", Mesh->NEdgesOwned, NVertLayers);
+   Array1DReal NumCoriolis1D("NumCoriolis1D", Mesh->NEdgesOwned);
+
+   CoriolisAccelerationOnEdge CoriolisAccelOnE(Mesh, VCoord);
+
+   parallelForOuter(
+       LaunchConfig({Mesh->NEdgesOwned},
+                    TeamScratch<Real>(VCoord->NVertLayers)),
+       KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+          CoriolisAccelOnE(Team, NumCoriolis2D, NumCoriolis2D, IEdge,
+                           NormalVelEdge, FEdge);
+       });
+
+   parallelFor(
+       {Mesh->NEdgesOwned}, KOKKOS_LAMBDA(int IEdge) {
+          CoriolisAccelOnE(NumCoriolis1D, IEdge, NormalBarotropicVelEdge,
+                           FEdge);
+       });
+
+   // Compute errors and check error values
+
+   ErrorMeasures Coriolis2DErrors;
+   Err += computeErrors(Coriolis2DErrors, NumCoriolis2D, ExactCoriolis2D, Mesh,
+                        OnEdge);
+   Err += checkErrors("TendencyTermsTest", "CoriolisAcceleration2D",
+                      Coriolis2DErrors, Setup.ExpectedCoriolis2DErrors, RTol);
+
+   ErrorMeasures Coriolis1DErrors;
+   Err += computeErrors(Coriolis1DErrors, NumCoriolis1D, ExactCoriolis1D, Mesh,
+                        OnEdge);
+   Err += checkErrors("TendencyTermsTest", "CoriolisAcceleration1D",
+                      Coriolis1DErrors, Setup.ExpectedCoriolis1DErrors, RTol);
+
+   if (Err == 0) {
+      LOG_INFO("TendencyTermsTest: CoriolisAccelerationOnEdge PASS");
+   }
+
+   return Err;
+} // end testCoriolisAccelerationOnEdge
 
 int testKEGrad(int NVertLayers, Real RTol) {
 
@@ -1445,6 +1551,8 @@ int tendencyTermsTest(const std::string &MeshFile = DefaultMeshFile) {
    Err += testThickFluxDiv(NVertLayers, RTol);
 
    Err += testPotVortHAdv(NVertLayers, RTol);
+
+   Err += testCoriolisAccelerationOnEdge(NVertLayers, RTol);
 
    Err += testKEGrad(NVertLayers, RTol);
 

@@ -48,6 +48,10 @@ using namespace OMEGA;
 // Only one vertical layer is needed
 constexpr int NVertLayers = 1;
 
+// Baroclinic time step at the coarsest refinement level
+constexpr Real BaseTimeStepSeconds = 0.2;
+constexpr int BtrSubcyclesPerStep  = 10;
+
 // Custom tendency for normal velocity
 // du/dt = -coeff * u
 struct DecayVelocityTendency {
@@ -79,6 +83,7 @@ int initState() {
 
    auto *Mesh              = HorzMesh::getDefault();
    auto *State             = OceanState::get("TestState");
+   auto *VCoord            = VertCoord::getDefault();
    Array3DReal TracerArray = Tracers::getAll(0);
 
    Array2DReal PseudoThickCell = State->getPseudoThickness(0);
@@ -88,6 +93,10 @@ int initState() {
    deepCopy(PseudoThickCell, 1);
    deepCopy(NormalVelEdge, 1);
    deepCopy(TracerArray, 1);
+
+   // Split-explicit time steppers need to have valid values for these
+   deepCopy(VCoord->SurfacePressure, 0._Real);
+   deepCopy(VCoord->BottomGeomDepth, 500._Real);
 
    return Err;
 }
@@ -150,6 +159,18 @@ int initTimeStepperTest(const std::string &mesh) {
    Config("Omega");
    Config::readAll("omega.yml");
 
+   // Override BtrTimeStep in the in-memory config so the split-explicit
+   // stepper runs BtrSubcyclesPerStep barotropic subcycles per baroclinic
+   // step, This is test-only.
+   Config *TestOmegaConfig = Config::getOmegaConfig();
+   Config TimeIntTestConfig("TimeIntegration");
+   TestOmegaConfig->get(TimeIntTestConfig);
+   Config ModeSplitShareTestConfig("ModeSplitShare");
+   TimeIntTestConfig.get(ModeSplitShareTestConfig);
+   ModeSplitShareTestConfig.set(
+       "BtrTimeStep",
+       std::to_string(BaseTimeStepSeconds / BtrSubcyclesPerStep));
+
    // Note that the default time stepper is not used in subsequent tests
    // but is initialized here because the number of time levels is needed
    // to initialize the Tracers and a model clock is needed for stream IO.
@@ -209,10 +230,12 @@ int initTimeStepperTest(const std::string &mesh) {
    auto *DefPGrad = PressureGrad::getDefault();
    auto *DefVMix  = VertMix::getInstance();
 
-   int NTracers          = Tracers::getNumTracers();
-   const int NTimeLevels = 2;
-   auto *TestOceanState  = OceanState::create("TestState", DefMesh, DefHalo,
-                                              NVertLayers, NTimeLevels);
+   int NTracers            = Tracers::getNumTracers();
+   const int NTimeLevels   = 2;
+   const bool UseModeSplit = true;
+   auto *TestOceanState    = OceanState::create(
+       "TestState", DefMesh, DefHalo, NVertLayers, NTimeLevels, UseModeSplit);
+
    if (!TestOceanState) {
       Err++;
       LOG_ERROR("TimeStepperTest: error creating test state");
@@ -335,7 +358,6 @@ int testTimeStepper(const std::string &Name, TimeStepperType Type,
    const Real TimeEnd = 1;
    TimeInstant TimeEndTI(0, 0, 0, 0, 0, 1);
 
-   const Real BaseTimeStepSeconds = 0.2;
    TimeInterval TimeStepTI(BaseTimeStepSeconds, TimeUnits::Seconds);
 
    auto *TestTimeStepper = TimeStepper::create(
@@ -364,6 +386,9 @@ int testTimeStepper(const std::string &Name, TimeStepperType Type,
           TimeInterval(TimeStepSeconds, TimeUnits::Seconds));
 
       Err += initState();
+
+      TestTimeStepper->initializeStateFromInput(OceanState::get("TestState"),
+                                                false);
 
       timeLoop(TimeStart, TimeEnd);
 
@@ -439,6 +464,7 @@ int testOptionalStopTime(const std::string &Name, TimeStepperType Type) {
                        DefHalo);
    auto *State = OceanState::get("TestState");
    initState();
+   Stepper->initializeStateFromInput(State, false);
    TimeInstant CurTime = TimeStart;
    Stepper->doStep(State, CurTime);
 
@@ -491,10 +517,22 @@ int timeStepperTest(const std::string &MeshFile = "OmegaMesh.nc") {
    Err += testTimeStepper("RungeKutta2", TimeStepperType::RungeKutta2,
                           ExpectedOrder, ATol);
 
+   ExpectedOrder = 1;
+   ATol          = 0.15;
+   Err += testTimeStepper("SE-RK2", TimeStepperType::SplitExplicitRK2,
+                          ExpectedOrder, ATol);
+
+   ExpectedOrder = 2;
+   ATol          = 0.1;
+   Err += testTimeStepper("UnsplitRK2", TimeStepperType::UnsplitRK2,
+                          ExpectedOrder, ATol);
+
    // Verify stepper operates correctly without StopTime/EndAlarm
 
    Err += testOptionalStopTime("ForwardBackward",
                                TimeStepperType::ForwardBackward);
+   Err += testOptionalStopTime("SE-RK2", TimeStepperType::SplitExplicitRK2);
+   Err += testOptionalStopTime("UnsplitRK2", TimeStepperType::UnsplitRK2);
 
    if (Err == 0) {
       LOG_INFO("TimeStepperTest: Successful completion");

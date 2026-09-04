@@ -177,6 +177,9 @@ int main(int argc, char *argv[]) {
       /// Check results
       Err = 0;
       for (int ICell = 0; ICell < NCellsAll; ICell++) {
+         Real ExpectedTotal = (DefVertCoord->MaxLayerCellH(ICell) -
+                               DefVertCoord->MinLayerCellH(ICell) + 1) /
+                              (Gravity * Rho0);
          for (int K = DefVertCoord->MinLayerCellH(ICell);
               K < DefVertCoord->MaxLayerCellH(ICell) + 1; K++) {
             // Interface pressure at layer K should be K+1
@@ -267,6 +270,9 @@ int main(int argc, char *argv[]) {
       auto GeomZInterfH = createHostMirrorCopy(DefVertCoord->GeomZInterface);
       auto GeomZMidH    = createHostMirrorCopy(DefVertCoord->GeomZMid);
       auto SshCellH     = createHostMirrorCopy(DefVertCoord->SshCell);
+      OMEGA_SCOPE(MinLayerCell, DefVertCoord->MinLayerCell);
+      OMEGA_SCOPE(MaxLayerCell, DefVertCoord->MaxLayerCell);
+      DefVertCoord->computeGeomZHeight(PseudoThickness, SpecVol);
 
       /// Check results
       Err = 0;

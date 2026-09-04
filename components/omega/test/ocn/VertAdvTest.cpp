@@ -51,23 +51,23 @@ Real tendTest(const int NLayers, VertAdv *VAdv) {
    Real Delta = Length / NLayers;
 
    VAdv->NVertLayers = NLayers;
-   VAdv->TotalVerticalPseudoVelocity =
-       Array2DReal("TotalVerticalPseudoVelocity", 1, NLayers + 1);
+   VAdv->TotalVerticalTransportPseudoVelocity =
+       Array2DReal("TotalVerticalTransportPseudoVelocity", 1, NLayers + 1);
    VAdv->VertFlux = Array3DReal("VertFlux", 1, 1, NLayers + 1);
    Array1DReal XLayer("XLayer", NLayers);
-   OMEGA_SCOPE(LocTotVertVel, VAdv->TotalVerticalPseudoVelocity);
+   OMEGA_SCOPE(LocTotVertTransVel, VAdv->TotalVerticalTransportPseudoVelocity);
    Array2DReal PseudoThick("PseudoThickness", 1, NLayers);
    Array3DReal TracerArray("TracerArray", 1, 1, NLayers);
    Array3DReal Tend("TracerArray", 1, 1, NLayers);
    TimeInterval ZeroTimeStep;
 
    // Set uniform velocity throughout domain
-   deepCopy(VAdv->TotalVerticalPseudoVelocity, 1._Real);
+   deepCopy(VAdv->TotalVerticalTransportPseudoVelocity, 1._Real);
    // Set velocities at top and bottom interfaces to 0.
    parallelFor(
        {1}, KOKKOS_LAMBDA(const int &) {
-          LocTotVertVel(0, 0)       = 0._Real;
-          LocTotVertVel(0, NLayers) = 0._Real;
+          LocTotVertTransVel(0, 0)       = 0._Real;
+          LocTotVertTransVel(0, NLayers) = 0._Real;
        });
    // Set X values, PseudoThickness, and Tracer values throughout domain
    parallelFor(
@@ -222,12 +222,12 @@ int main(int argc, char *argv[]) {
           });
 
       Real ProjDt = 1._Real;
-      // Compute vertical pseudo-velocity
-      DefVertAdv->computeVerticalPseudoVelocity(
+      // Compute vertical transport pseudo-velocity
+      DefVertAdv->computeVerticalTransportPseudoVelocity(
           NormalVelEdge, FluxPseudoThickEdge, PseudoThickCell, ProjDt);
 
-      HostArray2DReal VertVelH =
-          createHostMirrorCopy(DefVertAdv->VerticalPseudoVelocity);
+      HostArray2DReal VertTransVelH =
+          createHostMirrorCopy(DefVertAdv->VerticalTransportPseudoVelocity);
 
       Real Tol = 1e-10;
 
@@ -242,7 +242,7 @@ int main(int argc, char *argv[]) {
 
       for (int K = 1; K < NVertLayersP1; ++K) {
          Real Expected = (NVertLayers - K) * Perim0 * InvAreaCell0;
-         Real Diff     = std::abs(VertVelH(ICell0, K) - Expected);
+         Real Diff     = std::abs(VertTransVelH(ICell0, K) - Expected);
          if (Diff > Tol) {
             ++Err;
          }

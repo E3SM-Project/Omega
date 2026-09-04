@@ -124,6 +124,46 @@ class PressureGradHighOrder {
    Array1DI4 MaxLayerEdgeTop;
 };
 
+// Barotropic pressure anomaly gradient functor, for mode-split integration.
+class BarotropicPressureGradOnEdge {
+ public:
+   // constructor declaration
+   BarotropicPressureGradOnEdge(
+       const HorzMesh *Mesh,   ///< [in] Horizontal mesh
+       const VertCoord *VCoord ///< [in] Vertical coordinate
+   );
+
+   KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge, I4 KChunk,
+                                   const Array1DReal &BtrPressAnomaly,
+                                   const Array1DReal &DepthMeanSpecVol) const {
+
+      // Computing the depth-mean specific volume times the barotropic pressure
+      // anomaly gradient on edges and adding it to every active vertical layer
+      const I4 KStart = chunkStart(KChunk, MinLayerEdgeBot(IEdge));
+      const I4 KLen   = chunkLength(KChunk, KStart, MaxLayerEdgeTop(IEdge));
+      const I4 ICell0 = CellsOnEdge(IEdge, 0);
+      const I4 ICell1 = CellsOnEdge(IEdge, 1);
+      const Real InvDcEdge = 1._Real / DcEdge(IEdge);
+      const Real MeanSpecVol =
+          0.5_Real * (DepthMeanSpecVol(ICell0) + DepthMeanSpecVol(ICell1));
+      const Real BtrPressGradTend =
+          MeanSpecVol * (BtrPressAnomaly(ICell1) - BtrPressAnomaly(ICell0)) *
+          InvDcEdge;
+
+      for (int KVec = 0; KVec < KLen; ++KVec) {
+         const I4 K = KStart + KVec;
+         Tend(IEdge, K) += EdgeMask(IEdge, K) * BtrPressGradTend;
+      }
+   }
+
+ private:
+   Array2DI4 CellsOnEdge;
+   Array1DReal DcEdge;
+   Array2DReal EdgeMask;
+   Array1DI4 MinLayerEdgeBot;
+   Array1DI4 MaxLayerEdgeTop;
+};
+
 // Pressure gradient manager class
 class PressureGrad {
  public:
@@ -162,6 +202,12 @@ class PressureGrad {
                             const Array2DReal &GeomZInterface,
                             const Array2DReal &PseudoThick) const;
 
+   // Compute the barotropic pressure anomaly gradient and add into Tend array
+   void
+   computeBarotropicPressureGrad(Array2DReal &Tend,
+                                 const Array1DReal &BtrPressAnomaly,
+                                 const Array1DReal &DepthMeanSpecVol) const;
+
  private:
    // Construct a new pressure gradient object
    PressureGrad(const HorzMesh *Mesh, const VertCoord *VCoord, Config *Options);
@@ -191,6 +237,7 @@ class PressureGrad {
    // Instances of functors
    PressureGradCentered CenteredPGrad;
    PressureGradHighOrder HighOrderPGrad;
+   BarotropicPressureGradOnEdge BarotropicPGrad;
 
    // Choice from config
    PressureGradType PressureGradChoice = PressureGradType::Centered;

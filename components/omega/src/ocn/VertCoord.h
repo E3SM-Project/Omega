@@ -100,6 +100,7 @@ class VertCoord {
    Array2DReal GeopotentialMid;
    Array2DReal PseudoThicknessTarget;
    Array1DReal SshCell;
+   Array1DReal TotalPseudoThickness;
 
    HostArray2DReal PressureInterfaceH;
    HostArray2DReal PressureMidH;
@@ -108,6 +109,7 @@ class VertCoord {
    HostArray2DReal GeopotentialMidH;
    HostArray2DReal PseudoThicknessTargetH;
    HostArray1DReal SshCellH;
+   HostArray1DReal TotalPseudoThicknessH;
 
    // Vertical loop bounds
    Array1DI4 MinLayerCell;
@@ -197,9 +199,11 @@ class VertCoord {
    std::string GeomZMidFldName; ///< Field name for midpoint geometric height
    std::string GeopotFldName;   ///< Field name for geopotential
    std::string
-       PseudoThicknessTargetFldName;   ///< Field name for target thickness
-   std::string SshFldName;             ///< Field name for sea surface height
-   std::string SurfacePressureFldName; ///< Field name for SurfacePressure
+       PseudoThicknessTargetFldName;    ///< Field name for target thickness
+   std::string SshFldName;              ///< Field name for sea surface height
+   std::string SurfacePressureFldName;  ///< Field name for SurfacePressure
+   std::string TotalPseudoThickFldName; ///< Field name for total pseudo
+                                        ///< thickness
 
    // methods
 
@@ -284,6 +288,11 @@ class VertCoord {
    void computePressure(
        const Array2DReal &PseudoThickness, ///< [in] pseudo-thickness
        const Array1DReal &SurfacePressure  ///< [in] relative surface pressure
+   );
+
+   /// Sum pseudo thickness vertically within each cell column
+   void computeTotalPseudoThickness(
+       const Array2DReal &PseudoThickness ///< [in] pseudo thickness
    );
 
    /// Sum the mass thickness times specific volume from the bottom layer up,

@@ -150,10 +150,14 @@ VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
    SurfacePressure = Array1DReal("SurfacePressure", NCellsSize);
    PressureInterface =
        Array2DReal("PressureInterface", NCellsSize, NVertLayersP1);
-   PressureMid     = Array2DReal("PressureMid", NCellsSize, NVertLayers);
-   GeomZInterface  = Array2DReal("GeomZInterface", NCellsSize, NVertLayersP1);
-   GeomZMid        = Array2DReal("GeomZMid", NCellsSize, NVertLayers);
-   SshCell         = Array1DReal("SshCell", NCellsSize);
+   PressureMid    = Array2DReal("PressureMid", NCellsSize, NVertLayers);
+   GeomZInterface = Array2DReal("GeomZInterface", NCellsSize, NVertLayersP1);
+   GeomZMid       = Array2DReal("GeomZMid", NCellsSize, NVertLayers);
+   SshCell        = Array1DReal("SshCell", NCellsSize);
+   TotalPseudoThickness = Array1DReal("TotalPseudoThickness", NCellsSize);
+   deepCopy(SshCell, 0._Real);
+   deepCopy(TotalPseudoThickness, 0._Real);
+
    GeopotentialMid = Array2DReal("GeopotentialMid", NCellsSize, NVertLayers);
    PseudoThicknessTarget =
        Array2DReal("PseudoThicknessTarget", NCellsSize, NVertLayers);
@@ -170,6 +174,7 @@ VertCoord::VertCoord(const std::string &Name_, //< [in] Name for new VertCoord
    GeomZMidH              = createHostMirrorCopy(GeomZMid);
    GeopotentialMidH       = createHostMirrorCopy(GeopotentialMid);
    PseudoThicknessTargetH = createHostMirrorCopy(PseudoThicknessTarget);
+   TotalPseudoThicknessH  = createHostMirrorCopy(TotalPseudoThickness);
 
    // SurfacePressure is read from the initial-state/restart stream later, in
    // OceanInit; its host mirror is refreshed then by initSurfacePressure().
@@ -244,6 +249,7 @@ void VertCoord::defineFields() {
    GeopotFldName                = "GeopotentialMid";
    PseudoThicknessTargetFldName = "PseudoThicknessTarget";
    SurfacePressureFldName       = "SurfacePressure";
+   TotalPseudoThickFldName      = "TotalPseudoThickness";
 
    if (Name != "Default") {
       MinLayerCellFldName.append(Name);
@@ -259,6 +265,7 @@ void VertCoord::defineFields() {
       PseudoThicknessTargetFldName.append(Name);
       SshFldName.append(Name);
       SurfacePressureFldName.append(Name);
+      TotalPseudoThickFldName.append(Name);
    }
 
    // Create fields for VertCoord variables
@@ -327,6 +334,17 @@ void VertCoord::defineFields() {
    // SurfacePressure is optional in the initial-state/restart file; when it is
    // absent the read is skipped and it defaults to zero in initSurfacePressure.
    SurfacePressureField->setOptionalRead(true);
+
+   auto TotalPseudoThicknessField =
+       Field::create(TotalPseudoThickFldName,                      // field name
+                     "Total pseudo thickness in each cell column", // long name
+                     "m",                                          // units
+                     "",       // CF standard Name
+                     0.0,      // min valid value
+                     9.99E+10, // max valid value
+                     NDims,    // number of dimensions
+                     DimNames  // dimension names
+       );
 
    NDims = 2;
    DimNames.resize(NDims);
@@ -467,6 +485,7 @@ void VertCoord::defineFields() {
    VCoordGroup->addField(GeopotFldName);
    VCoordGroup->addField(PseudoThicknessTargetFldName);
    VCoordGroup->addField(SshFldName);
+   VCoordGroup->addField(TotalPseudoThickFldName);
 
    // Associate Field with data
    PressureInterfaceField->attachData<Array2DReal>(PressureInterface);
@@ -476,6 +495,7 @@ void VertCoord::defineFields() {
    GeopotentialMidField->attachData<Array2DReal>(GeopotentialMid);
    PseudoThicknessTargetField->attachData<Array2DReal>(PseudoThicknessTarget);
    SshField->attachData<Array1DReal>(SshCell);
+   TotalPseudoThicknessField->attachData<Array1DReal>(TotalPseudoThickness);
 
    // Add SurfacePressure to the State and Restart groups so it is written to
    // the history/restart files and read from the initial-state and restart
@@ -520,6 +540,7 @@ VertCoord::~VertCoord() {
       Field::destroy(GeopotFldName);
       Field::destroy(PseudoThicknessTargetFldName);
       Field::destroy(SshFldName);
+      Field::destroy(TotalPseudoThickFldName);
       FieldGroup::destroy(GroupName);
    }
 
@@ -1084,6 +1105,37 @@ void VertCoord::computePressure(
 } // end computePressure
 
 //------------------------------------------------------------------------------
+// Compute total pseudo thickness in each cell column.
+void VertCoord::computeTotalPseudoThickness(
+    const Array2DReal &PseudoThickness // [in] pseudo thickness
+) {
+
+   OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
+   OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+   OMEGA_SCOPE(LocTotalPseudoThickness, TotalPseudoThickness);
+
+   parallelForOuter(
+       "computeTotalPseudoThickness", {NCellsAll},
+       KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
+          const I4 KMin = LocMinLayerCell(ICell);
+          const I4 KMax = LocMaxLayerCell(ICell);
+
+          Real ColumnThickness = 0._Real;
+          parallelReduceInner(
+              Team, Range{KMin, KMax},
+              INNER_LAMBDA(const int K, Real &Accum) {
+                 Accum += PseudoThickness(ICell, K);
+              },
+              ColumnThickness);
+
+          Kokkos::single(
+              PerTeam(Team), INNER_LAMBDA() {
+                 LocTotalPseudoThickness(ICell) = ColumnThickness;
+              });
+       });
+} // end computeTotalPseudoThickness
+
+//------------------------------------------------------------------------------
 // Compute geometric height z at layer interfaces and midpoints given the
 // PseudoThickness, SpecVol, and BottomGeomDepth. Hierarchical parallelism is
 // used with a parallel_for loop over cells and a parallel_scan performing a
@@ -1128,8 +1180,7 @@ void VertCoord::computeGeomZHeight(
 } // end computeGeomZHeight
 
 //------------------------------------------------------------------------------
-// Compute geopotential given GeomZMid, TidalPotential, and
-// SelfAttractionLoading.
+// Compute geopotential given Zmid, TidalPotential, and SelfAttractionLoading.
 // Nested parallel_fors loop over all cells and all active layers in a column to
 // compute the geopotential at the midpoint of each layer. The tidal potential
 // and SAL are configurable, default-off features. When off these arrays will
@@ -1224,6 +1275,7 @@ void VertCoord::copyToHost() {
    deepCopy(GeomZInterfaceH, GeomZInterface);
    deepCopy(GeomZMidH, GeomZMid);
    deepCopy(SshCellH, SshCell);
+   deepCopy(TotalPseudoThicknessH, TotalPseudoThickness);
    deepCopy(GeopotentialMidH, GeopotentialMid);
    deepCopy(PseudoThicknessTargetH, PseudoThicknessTarget);
    deepCopy(RefPseudoThicknessH, RefPseudoThickness);
@@ -1238,6 +1290,7 @@ void VertCoord::copyToDevice() {
    deepCopy(GeomZInterface, GeomZInterfaceH);
    deepCopy(GeomZMid, GeomZMidH);
    deepCopy(SshCell, SshCellH);
+   deepCopy(TotalPseudoThickness, TotalPseudoThicknessH);
    deepCopy(GeopotentialMid, GeopotentialMidH);
    deepCopy(PseudoThicknessTarget, PseudoThicknessTargetH);
    deepCopy(RefPseudoThickness, RefPseudoThicknessH);

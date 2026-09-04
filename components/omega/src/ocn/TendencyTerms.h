@@ -128,12 +128,112 @@ class PotentialVortHAdvOnEdge {
           });
    }
 
+   /// Relative vorticity horizontal advection without Coriolis. Used for the
+   /// split-explicit baroclinic velocity forcing term.
+   KOKKOS_FUNCTION void operator()(const TeamMember &Team,
+                                   const Array2DReal &Tend, I4 IEdge,
+                                   const Array2DReal &NormRVortEdge,
+                                   const Array2DReal &FluxPseudoThickEdge,
+                                   const Array2DReal &NormVelEdge) const {
+
+      ScratchArray1DReal VortTmp(teamScratch(Team), NVertLayers);
+
+      const int KMin = MinLayerEdgeBot(IEdge);
+      const int KMax = MaxLayerEdgeTop(IEdge);
+
+      parallelForInner(
+          Team, NVertLayers, INNER_LAMBDA(int K) { VortTmp(K) = 0; });
+
+      for (int J = 0; J < NEdgesOnEdge(IEdge); ++J) {
+         I4 JEdge = EdgesOnEdge(IEdge, J);
+         parallelForInner(
+             Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+                const Real NormVort =
+                    (NormRVortEdge(IEdge, K) + NormRVortEdge(JEdge, K)) *
+                    0.5_Real;
+
+                VortTmp(K) += WeightsOnEdge(IEdge, J) *
+                              FluxPseudoThickEdge(JEdge, K) *
+                              NormVelEdge(JEdge, K) * NormVort;
+             });
+      }
+
+      parallelForInner(
+          Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+             Tend(IEdge, K) += EdgeMask(IEdge, K) * VortTmp(K);
+          });
+   }
+
  private:
    Array1DI4 NEdgesOnEdge;
    Array2DI4 EdgesOnEdge;
    Array2DReal WeightsOnEdge;
    I4 NVertLayers;
    Array2DReal EdgeMask;
+   Array1DI4 MinLayerEdgeBot;
+   Array1DI4 MaxLayerEdgeTop;
+};
+
+/// Coriolis acceleration on edges, f times tangential velocity reconstruction
+class CoriolisAccelerationOnEdge {
+ public:
+   /// constructor declaration
+   CoriolisAccelerationOnEdge(const HorzMesh *Mesh, const VertCoord *VCoord);
+
+   /// The functor takes thread team, edge index, base tendency, velocity on
+   /// edges, and Coriolis parameter on edges as inputs, updates the tendency
+   /// array with base tendency plus Coriolis acceleration
+   KOKKOS_FUNCTION void operator()(const TeamMember &Team,
+                                   const Array2DReal &Tend,
+                                   const Array2DReal &BaseTend, I4 IEdge,
+                                   const Array2DReal &NormalVelEdge,
+                                   const Array1DReal &FEdge) const {
+
+      ScratchArray1DReal AccelTmp(teamScratch(Team), NVertLayers);
+
+      const int KMin = MinLayerEdgeBot(IEdge);
+      const int KMax = MaxLayerEdgeTop(IEdge);
+
+      parallelForInner(
+          Team, NVertLayers, INNER_LAMBDA(int K) { AccelTmp(K) = 0; });
+
+      for (int J = 0; J < NEdgesOnEdge(IEdge); ++J) {
+         const I4 JEdge = EdgesOnEdge(IEdge, J);
+         parallelForInner(
+             Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+                AccelTmp(K) += WeightsOnEdge(IEdge, J) *
+                               NormalVelEdge(JEdge, K) * FEdge(JEdge);
+             });
+      }
+
+      parallelForInner(
+          Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+             Tend(IEdge, K) = BaseTend(IEdge, K) + AccelTmp(K);
+          });
+   }
+
+   /// The functor takes edge index, barotropic velocity on edges, and Coriolis
+   /// parameter on edges as inputs, updates the barotropic tendency array
+   KOKKOS_FUNCTION void operator()(const Array1DReal &Tend, I4 IEdge,
+                                   const Array1DReal &NormalVelEdge,
+                                   const Array1DReal &FEdge) const {
+
+      Real AccelTmp = 0._Real;
+
+      for (int J = 0; J < NEdgesOnEdge(IEdge); ++J) {
+         const I4 JEdge = EdgesOnEdge(IEdge, J);
+         AccelTmp +=
+             WeightsOnEdge(IEdge, J) * NormalVelEdge(JEdge) * FEdge(JEdge);
+      }
+
+      Tend(IEdge) += AccelTmp;
+   }
+
+ private:
+   Array1DI4 NEdgesOnEdge;
+   Array2DI4 EdgesOnEdge;
+   Array2DReal WeightsOnEdge;
+   I4 NVertLayers;
    Array1DI4 MinLayerEdgeBot;
    Array1DI4 MaxLayerEdgeTop;
 };
