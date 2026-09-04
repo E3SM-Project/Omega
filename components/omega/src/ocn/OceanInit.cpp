@@ -174,7 +174,8 @@ int ocnInit1(MPI_Comm Comm,                 ///< [in] ocean MPI communicator
              const std::string &LogFile,    ///< [in] path to log file
              const StartType StartType,     ///< [in] simulation start type
              const TimeInitParams &TimeParams, ///< [in] simulation start time
-             const CouplingInitParams &CouplingParams ///< [in] coupler info
+             const CouplingInitParams &CouplingParams, ///< [in] coupler info
+             const IO::IOInitParams &IOParams ///< [in] driver-owned IO params
 ) {
 
    I4 Err = 0; // return error code
@@ -191,7 +192,7 @@ int ocnInit1(MPI_Comm Comm,                 ///< [in] ocean MPI communicator
    readTimingConfig(OmegaConfig);
 
    // initialize remaining Omega modules
-   Err = initOmegaModules(Comm, TimeParams, CouplingParams);
+   Err = initOmegaModules(Comm, TimeParams, CouplingParams, IOParams);
    if (Err != 0)
       ABORT_ERROR("ocnInit: Error initializing Omega modules");
 
@@ -262,7 +263,7 @@ int ocnInit2(const Real *CplToOcnData, Real *OcnToCplData) {
 // Call init routines for remaining Omega modules
 // Internal helper — all module init after TimeStepper::init1 is called.
 // Called by both initOmegaModules overloads.
-static int initOmegaModulesImpl(MPI_Comm Comm) {
+static int initOmegaModulesImpl() {
 
    // error and return codes
    int Err = 0;
@@ -274,7 +275,6 @@ static int initOmegaModulesImpl(MPI_Comm Comm) {
    // of each file, only creates streams from Config
    IOStream::init(ModelClock);
 
-   IO::init(Comm);
    Field::init(ModelClock);
    Decomp::init();
 
@@ -320,16 +320,19 @@ int initOmegaModules(MPI_Comm Comm) {
    // calendar, model clock and start/stop times and alarms with all options
    // read from the config file
    TimeStepper::init1();
-   return initOmegaModulesImpl(Comm);
+   IO::init(Comm);
+   return initOmegaModulesImpl();
 }
 
 int initOmegaModules(MPI_Comm Comm, const TimeInitParams &TParams,
-                     const CouplingInitParams &CParams) {
+                     const CouplingInitParams &CParams,
+                     const IO::IOInitParams &IOParams) {
    int Err = 0;
    // Initialize time stepper (phase 1) using coupler provided time parameters
    // Calendar should have already been initalized
    TimeStepper::init1(TParams);
-   Err = initOmegaModulesImpl(Comm);
+   IO::init(Comm, IOParams);
+   Err = initOmegaModulesImpl();
    SfcCoupling::init(CParams);
 
    return Err;

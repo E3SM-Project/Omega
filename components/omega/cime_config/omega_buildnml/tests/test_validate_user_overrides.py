@@ -13,6 +13,13 @@ def defaults():
             "StartTime": "0001-01-01_00:00:00",
         },
         "Tendencies": {"SurfaceTracerRestoringEnable": False},
+        "IO": {
+            "IOTasks": 1,
+            "IOStride": 1,
+            "IOBaseTask": 0,
+            "IORearranger": "box",
+            "IODefaultFormat": "pnetcdf",
+        },
         "IOStreams": {
             "InitialState": {"Filename": "ocean.nc"},
             "History": {"Freq": 1, "FreqUnits": "months"},
@@ -81,6 +88,29 @@ def test_custom_iostreams_are_allowed(defaults):
 
 def test_overriding_an_existing_stream_is_allowed(defaults):
     user_overrides = {"IOStreams": {"History": {"Freq": 5}}}
+
+    validated = validate_user_overrides(user_overrides, defaults)
+
+    assert validated == user_overrides
+
+
+@pytest.mark.parametrize("option", ["IOBaseTask", "IORearranger"])
+def test_driver_owned_io_options_are_rejected(option, defaults):
+    """
+    The base IO task and rearranger are owned by the driver (CIME/shr_pio),
+    so a user may not override them in ``user_nl_omega``.
+    """
+    user_overrides = {
+        "IO": {option: 4 if option == "IOBaseTask" else "subset"}
+    }
+
+    with pytest.raises(ValueError, match="cannot be overridden"):
+        validate_user_overrides(user_overrides, defaults)
+
+
+def test_component_configurable_io_options_are_allowed(defaults):
+    """``IOTasks`` and ``IOStride`` remain component-configurable."""
+    user_overrides = {"IO": {"IOTasks": 8, "IOStride": 2}}
 
     validated = validate_user_overrides(user_overrides, defaults)
 

@@ -3,6 +3,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "DataTypes.h"
+#include "IO.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OceanDriver.h"
@@ -60,7 +61,9 @@ void omega_ocn_init1(
     const char *ImportFieldNames,  // [in] array of import field names
     const char *ExportFieldNames,  // [in] array of export field names
     const int *ImportFieldIndices, // [in] array of import field indices
-    const int *ExportFieldIndices  // [in] array of export field indices
+    const int *ExportFieldIndices, // [in] array of export field indices
+    const int IOBaseTask,          // [in] driver-owned base (root) IO task
+    const int IORearranger         // [in] driver-owned PIO rearranger (int)
 ) {
 
    // Create the C MPI_Comm from the Fortran one
@@ -103,8 +106,14 @@ void omega_ocn_init1(
        NCouplerImports, NCouplerExports,  ImportIdxMap,
        ExportIdxMap,    CouplingInterval, OMEGA::CouplingLayout::MCT};
 
+   // The base IO task and rearranger are owned by the driver/coupler (via
+   // CIME/shr_pio). The rearranger int uses the same PIO_REARR_* values as
+   // Omega's IO::Rearranger enum (box = 1, subset = 2).
+   OMEGA::IO::IOInitParams IOParams{
+       IOBaseTask, static_cast<OMEGA::IO::Rearranger>(IORearranger)};
+
    OMEGA::ocnInit1(Comm, OcnID, YamlConfigFile, OcnLogFile, StartTypeEnum,
-                   TimeParams, CouplingParams);
+                   TimeParams, CouplingParams, IOParams);
 
    Pacer::stop("Init1", 0);
 

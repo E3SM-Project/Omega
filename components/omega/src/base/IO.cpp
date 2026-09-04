@@ -52,6 +52,24 @@ RearrFromString(const std::string &Rearr // [in] choice of IO rearranger
 } // End RearrFromString
 
 //------------------------------------------------------------------------------
+// Converts the PIO rearranger enum back to the name used in the config file.
+// Only used for log messages. RearrMap is searched rather than adding a second
+// table so the two cannot drift apart. "default" is skipped because it aliases
+// "box" and the recognisable name is wanted here. Falls back to the numeric
+// value for anything not in the map.
+static std::string RearrToString(const Rearranger Rearr // [in] rearranger enum
+) {
+
+   for (const auto &Entry : RearrMap) {
+      if (Entry.second == Rearr && Entry.first != "default")
+         return Entry.first;
+   }
+
+   return std::to_string(static_cast<int>(Rearr));
+
+} // End RearrToString
+
+//------------------------------------------------------------------------------
 // Converts string choice for File Format to an enum
 FileFmt
 FileFmtFromString(const std::string &Format // [in] choice of IO file format
@@ -125,11 +143,54 @@ IfExists IfExistsFromString(
 // Methods
 //------------------------------------------------------------------------------
 // Initializes the IO system based on configuration inputs and
-// default MPI communicator
+// default MPI communicator. The base task and rearranger are read from the
+// Omega configuration and forwarded to the driver-owned overload below.
 void init(const MPI_Comm &InComm // [in] MPI communicator to use
 ) {
 
-   // Retrieve parallel IO parameters from the Omega configuration
+   // Retrieve the driver-owned parallel IO parameters from the Omega
+   // configuration. These are read here for standalone runs and unit tests
+   // where there is no coupler to supply them.
+
+   Error Err;
+   Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in IO::init");
+
+   // Read IO subconfiguration
+   Config IOConfig("IO");
+   Err = OmegaConfig->get(IOConfig);
+   CHECK_ERROR_ABORT(Err, "IO: IO group not found in input Config");
+
+   // Read parallel IO settings - default to single-task if config
+   // values do not exist
+   int IOBaseTask           = 0;
+   std::string InRearranger = "box";
+
+   Err = IOConfig.get("IOBaseTask", IOBaseTask);
+   CHECK_ERROR_WARN(Err, "IO: IOBaseTask not found in Config - using {}",
+                    IOBaseTask);
+
+   Err = IOConfig.get("IORearranger", InRearranger);
+   CHECK_ERROR_WARN(Err, "IO: Rearranger not found in Config - using {}",
+                    InRearranger);
+
+   IOInitParams IOParams{IOBaseTask, RearrFromString(InRearranger)};
+   init(InComm, IOParams);
+
+   return;
+
+} // end init
+
+//------------------------------------------------------------------------------
+// Initializes the IO system using driver-owned IO parameters for the base
+// task and rearranger. The number of IO tasks and the IO stride are still
+// read from the Omega configuration.
+void init(const MPI_Comm &InComm,      // [in] MPI communicator to use
+          const IOInitParams &IOParams // [in] driver-owned IO parameters
+) {
+
+   // Retrieve the remaining parallel IO parameters from the Omega
+   // configuration
 
    Error Err;
    Config *OmegaConfig = Config::getOmegaConfig();
@@ -147,12 +208,10 @@ void init(const MPI_Comm &InComm // [in] MPI communicator to use
                     InFileFmt);
    DefaultFileFmt = FileFmtFromString(InFileFmt);
 
-   // Read parallel IO settings - default to single-task if config
-   // values do not exist
-   int NumIOTasks           = 1;
-   int IOStride             = 1;
-   int IOBaseTask           = 0;
-   std::string InRearranger = "box";
+   // Read component-configurable parallel IO settings - default to
+   // single-task if config values do not exist
+   int NumIOTasks = 1;
+   int IOStride   = 1;
 
    Err = IOConfig.get("IOTasks", NumIOTasks);
    CHECK_ERROR_WARN(Err, "IO: NumIOTasks not found in Config - using {}",
@@ -162,21 +221,25 @@ void init(const MPI_Comm &InComm // [in] MPI communicator to use
    CHECK_ERROR_WARN(Err, "IO: IOStride not found in Config - using {}",
                     IOStride);
 
-   Err = IOConfig.get("IOBaseTask", IOBaseTask);
-   CHECK_ERROR_WARN(Err, "IO: IOBaseTask not found in Config - using {}",
-                    IOBaseTask);
-
-   Err = IOConfig.get("IORearranger", InRearranger);
-   CHECK_ERROR_WARN(Err, "IO: Rearranger not found in Config - using {}",
-                    InRearranger);
-   Rearranger Rearrange = RearrFromString(InRearranger);
-
-   // Call PIO routine to initialize
-   DefaultRearr = Rearrange;
-   int PIOErr   = PIOc_Init_Intracomm(InComm, NumIOTasks, IOStride, IOBaseTask,
-                                      Rearrange, &SysID);
+   // Base task and rearranger are supplied by the caller (driver-owned in a
+   // coupled run) rather than read from the component config.
+   DefaultRearr = IOParams.IORearranger;
+   int PIOErr =
+       PIOc_Init_Intracomm(InComm, NumIOTasks, IOStride, IOParams.IOBaseTask,
+                           IOParams.IORearranger, &SysID);
    if (PIOErr != 0)
       ABORT_ERROR("IO::init: Error initializing SCORPIO");
+
+   // Report the settings SCORPIO was actually initialized with. IOBaseTask and
+   // IORearranger are the interesting ones: in a coupled run they come from the
+   // driver (shr_pio_getioroot/shr_pio_getrearranger) rather than from Omega's
+   // config, and without this message there is no way to observe which values
+   // were used, since they are passed straight into PIOc_Init_Intracomm.
+   LOG_INFO(
+       "IO::init: IOTasks={} IOStride={} IOBaseTask={} IORearranger={} ({})",
+       NumIOTasks, IOStride, IOParams.IOBaseTask,
+       RearrToString(IOParams.IORearranger),
+       static_cast<int>(IOParams.IORearranger));
 
    return;
 
