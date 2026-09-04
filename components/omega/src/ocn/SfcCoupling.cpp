@@ -377,7 +377,8 @@ void SfcCoupling::updateExportFields(const OceanState *State,
                                      const Array3DReal &TracerArray) {
 
    OcnToCpl.updateFields(State, TracerArray, NAccumSteps, NCellsOwned,
-                         NEdgesAll);
+                         NEdgesAll, CplToOcn.SeaIceBasalPressure,
+                         CplToOcn.SeaLevelPressure);
 
    NAccumSteps++;
 }
@@ -433,7 +434,9 @@ OcnToCplFields::OcnToCplFields(const std::string &Suffix, const HorzMesh *Mesh)
 void OcnToCplFields::updateFields(const OceanState *State,
                                   const Array3DReal &TracerArray,
                                   const I4 NAccumSteps, const I4 NCellsOwned,
-                                  const I4 NEdgesAll) {
+                                  const I4 NEdgesAll,
+                                  const Array1DReal &SeaIceBasalPressure,
+                                  const Array1DReal &SeaLevelPressure) {
 
    I4 TemperatureIdx, SalinityIdx;
    Tracers::getIndex(TemperatureIdx, "Temperature");
@@ -468,6 +471,8 @@ void OcnToCplFields::updateFields(const OceanState *State,
    OMEGA_SCOPE(LocCellsOnEdge, DefHorzMesh->CellsOnEdge);
    OMEGA_SCOPE(LocDcEdge, DefHorzMesh->DcEdge);
    OMEGA_SCOPE(LocSshCell, DefVertCoord->SshCell);
+   OMEGA_SCOPE(LocSeaIcePressure, SeaIceBasalPressure);
+   OMEGA_SCOPE(LocSeaLevelPressure, SeaLevelPressure);
    OMEGA_SCOPE(LocMinLayerEdgeBot, DefVertCoord->MinLayerEdgeBot);
    OMEGA_SCOPE(LocMaxLayerEdgeTop, DefVertCoord->MaxLayerEdgeTop);
    OMEGA_SCOPE(LocAvgSfcSshGrad, AvgSfcSshGrad);
@@ -486,8 +491,15 @@ void OcnToCplFields::updateFields(const OceanState *State,
 
              const int ICell0 = LocCellsOnEdge(IEdge, 0);
              const int ICell1 = LocCellsOnEdge(IEdge, 1);
-             const Real SshGrad =
-                 (LocSshCell(ICell1) - LocSshCell(ICell0)) / LocDcEdge(IEdge);
+
+             const Real SshCell0 = pressureAdjustedSsh(
+                 LocSshCell(ICell0), LocSeaIcePressure(ICell0),
+                 LocSeaLevelPressure(ICell0));
+             const Real SshCell1 = pressureAdjustedSsh(
+                 LocSshCell(ICell1), LocSeaIcePressure(ICell1),
+                 LocSeaLevelPressure(ICell1));
+
+             const Real SshGrad = (SshCell1 - SshCell0) / LocDcEdge(IEdge);
 
              LocAvgSfcSshGrad(IEdge) =
                  updateAverage(LocAvgSfcSshGrad(IEdge), SshGrad, NAccumSteps);
