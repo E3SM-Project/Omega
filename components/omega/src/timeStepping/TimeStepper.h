@@ -294,6 +294,27 @@ class TimeStepper {
        int TimeLevel                   ///< [in] time level index
    ) const;
 
+   /// Compute KPP boundary layer depth, mixing coefficients and non-local
+   /// flux once for the current time step. Must be called before the first
+   /// tendency evaluation of the step so that every stage and the end-of-step
+   /// implicit mixing share the same KPP fields.
+   void
+   updateKPPFields(OceanState *State,   ///< [in] model state
+                   int TracerTimeLevel, ///< [in] tracer time level
+                   int ThickTimeLevel,  ///< [in] pseudo-thickness time level
+                   int VelTimeLevel     ///< [in] velocity time level
+   ) const;
+
+   /// Apply implicit vertical mixing after state/tracer time levels are
+   /// updated, using the KPP fields computed at the start of the step.
+   void applyImplicitVerticalMixing(
+       OceanState *State,             ///< [inout] model state
+       int TracerTimeLevel,           ///< [in] tracer time level
+       int ThickTimeLevel,            ///< [in] pseudo-thickness time level
+       int VelTimeLevel,              ///< [in] velocity time level
+       const std::string &TimerPrefix ///< [in] timer name prefix
+   ) const;
+
  protected:
    /// Name of time stepper
    std::string Name;

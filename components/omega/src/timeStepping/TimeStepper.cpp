@@ -9,8 +9,10 @@
 #include "Error.h"
 #include "ForwardBackwardStepper.h"
 #include "Logging.h"
+#include "Pacer.h"
 #include "RungeKutta2Stepper.h"
 #include "RungeKutta4Stepper.h"
+#include "VertMix.h"
 
 namespace OMEGA {
 //------------------------------------------------------------------------------
@@ -819,6 +821,44 @@ void TimeStepper::finalizeTracersUpdate(const Array3DReal &NextTracers,
                  NextTracers(L, ICell, K) /= NextThick(ICell, K);
               });
        });
+}
+
+//------------------------------------------------------------------------------
+// Compute KPP fields once per time step, before any tendency evaluation.
+void TimeStepper::updateKPPFields(OceanState *State, int TracerTimeLevel,
+                                  int ThickTimeLevel, int VelTimeLevel) const {
+
+   Array3DReal CurTracerArray = Tracers::getAll(TracerTimeLevel);
+   Tend->computeKPPFields(State, CurTracerArray, ThickTimeLevel, VelTimeLevel);
+}
+
+//------------------------------------------------------------------------------
+// Apply implicit vertical mixing after state/tracer time levels are updated.
+void TimeStepper::applyImplicitVerticalMixing(
+    OceanState *State, int TracerTimeLevel, int ThickTimeLevel,
+    int VelTimeLevel, const std::string &TimerPrefix) const {
+
+   Array3DReal CurTracerArray = Tracers::getAll(TracerTimeLevel);
+   AuxState->computeAll(State, CurTracerArray, ThickTimeLevel, VelTimeLevel,
+                        TimeStep);
+
+   VertMix *VMix = VertMix::getInstance();
+   if (!VMix)
+      return;
+
+   if (VMix->VelVertMixSetup.Enabled or VMix->TracerVertMixSetup.Enabled) {
+      const int NTracers = Tracers::getNumTracers();
+      VMix->VertMixImplicit(State, AuxState, CurTracerArray, NTracers,
+                            VelTimeLevel);
+
+      // Re-exchange halos after vertical mixing
+      const MPI_Comm Comm = MeshHalo->getComm();
+      Pacer::timingBarrier(TimerPrefix + ":vMixHaloExchBarrier", 3, Comm);
+      Pacer::start(TimerPrefix + ":vMixHaloExch", 3);
+      State->exchangeHalo(VelTimeLevel);
+      Tracers::exchangeHalo(VelTimeLevel);
+      Pacer::stop(TimerPrefix + ":vMixHaloExch", 3);
+   }
 }
 
 } // namespace OMEGA

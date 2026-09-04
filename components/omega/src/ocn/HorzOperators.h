@@ -266,8 +266,8 @@ class SecondDerivativeOnCell {
  private:
    // MaxMaxEdges is used to dimention arrays that include ICell and the
    // neighbor cells, so it is technically one more than MaxEdges.
-   static const I4 MaxMaxEdges = 10;
-   static constexpr R8 Pii     = 3.141592653589793_Real;
+   static constexpr I4 MaxMaxEdges = HorzMesh::MaxEdgesBound;
+   static constexpr R8 Pii         = 3.141592653589793_Real;
 
    const bool OnSphere;
    const I4 NCellsAll;

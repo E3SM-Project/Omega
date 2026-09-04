@@ -13,6 +13,12 @@ function(add_omega_test test_name exe_name source_files mpi_args)
   # Copy extra arguments to a local variable so they can be treated
   # as a list
   set(extra_args ${ARGN})
+  set(test_arg "")
+  foreach(extra_arg ${extra_args})
+    if(extra_arg MATCHES "^test_arg=(.*)")
+      set(test_arg "${CMAKE_MATCH_1}")
+    endif()
+  endforeach()
 
   # Create the executable
   add_executable(${exe_name} ${source_files})
@@ -58,19 +64,19 @@ function(add_omega_test test_name exe_name source_files mpi_args)
     if("${OMEGA_ARCH}" STREQUAL "SYCL")
       add_test(
         NAME ${test_name}
-        COMMAND ${OMEGA_MPI_EXEC} ${mpi_args} ${OMEGA_MPI_ARGS} ./${exe_name}
+        COMMAND ${OMEGA_MPI_EXEC} ${mpi_args} ${OMEGA_MPI_ARGS} ./${exe_name} ${test_arg}
       )
     else()
       add_test(
         NAME ${test_name}
-        COMMAND ${OMEGA_MPI_EXEC} ${OMEGA_MPI_ARGS} ${mpi_args} -- ./${exe_name}
+        COMMAND ${OMEGA_MPI_EXEC} ${OMEGA_MPI_ARGS} ${mpi_args} -- ./${exe_name} ${test_arg}
       )
     endif()
 
   else()
     add_test(
       NAME ${test_name}
-      COMMAND ../omega_env.sh ./${exe_name}
+      COMMAND ../omega_env.sh ./${exe_name} ${test_arg}
     )
   endif()
 
@@ -86,6 +92,38 @@ function(add_omega_test test_name exe_name source_files mpi_args)
     ENVIRONMENT "OMEGA_LOG_FILE=${OMEGA_TEST_LOG_DIR}/${test_name}.log"
   )
 
+endfunction()
+
+function(add_omega_ctest test_name exe_name mpi_args test_arg)
+  if (mpi_args)
+
+    if("${OMEGA_ARCH}" STREQUAL "SYCL")
+      add_test(
+        NAME ${test_name}
+        COMMAND ${OMEGA_MPI_EXEC} ${mpi_args} ${OMEGA_MPI_ARGS} ./${exe_name} ${test_arg}
+      )
+    else()
+      add_test(
+        NAME ${test_name}
+        COMMAND ${OMEGA_MPI_EXEC} ${OMEGA_MPI_ARGS} ${mpi_args} -- ./${exe_name} ${test_arg}
+      )
+    endif()
+
+  else()
+    add_test(
+      NAME ${test_name}
+      COMMAND ../omega_env.sh ./${exe_name} ${test_arg}
+    )
+  endif()
+
+  # Without this, tests sharing an executable (e.g. testKPPMix.exe) all write
+  # to the same default log, so each one's log is overwritten by the next.
+  set_tests_properties(
+    ${test_name}
+    PROPERTIES
+    LABELS "${OMEGA_ARCH};Omega-0"
+    ENVIRONMENT "OMEGA_LOG_FILE=${OMEGA_TEST_LOG_DIR}/${test_name}.log"
+  )
 endfunction()
 
 ##################
@@ -566,6 +604,31 @@ add_omega_test(
     testVertMix.exe
     ocn/VertMixTest.cpp
     "-n;4"
+)
+
+##########################
+# KPP tests
+##########################
+
+add_omega_test(
+  KPP_PROFILES_TEST
+  testKPPMix.exe
+  ocn/KPPMixTest.cpp
+  "-n;1"
+  test_arg=profiles
+)
+add_omega_ctest(KPP_OSBL_TEST testKPPMix.exe "-n;1" osbl)
+add_omega_ctest(KPP_VMIX_COEFF_TEST testKPPMix.exe "-n;1" vmix)
+add_omega_ctest(KPP_INTEGRATION_TEST testKPPMix.exe "-n;1" integration)
+# Each injects a rejected MatchTechnique and must abort in KPPMix::init.
+add_omega_ctest(KPP_CONFIG_GRADIENT_TEST testKPPMix.exe "-n;1" config-gradient)
+add_omega_ctest(KPP_CONFIG_UNSUPPORTED_TEST testKPPMix.exe "-n;1" config-unsupported)
+add_omega_ctest(KPP_CONFIG_PARABOLIC_TEST testKPPMix.exe "-n;1" config-parabolic)
+set_tests_properties(
+  KPP_CONFIG_GRADIENT_TEST
+  KPP_CONFIG_UNSUPPORTED_TEST
+  KPP_CONFIG_PARABOLIC_TEST
+  PROPERTIES WILL_FAIL TRUE
 )
 
 ##################

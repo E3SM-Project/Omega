@@ -6,7 +6,6 @@
 
 #include "RungeKutta4Stepper.h"
 #include "Pacer.h"
-#include "VertMix.h"
 
 namespace OMEGA {
 
@@ -79,13 +78,10 @@ void RungeKutta4Stepper::doStep(OceanState *State,   // model state
 
    const int CurLevel  = 0;
    const int NextLevel = 1;
-   int NTracers        = Tracers::getNumTracers();
 
    Array3DReal CurTracerArray   = Tracers::getAll(CurLevel);
    Array3DReal NextTracerArray  = Tracers::getAll(NextLevel);
    TimeInstant ForcingStageTime = SimTime;
-
-   VertMix *VMix = VertMix::getInstance();
 
    for (int Stage = 0; Stage < NStages; ++Stage) {
       const TimeInstant StageTime = SimTime + RKC[Stage] * TimeStep;
@@ -95,6 +91,7 @@ void RungeKutta4Stepper::doStep(OceanState *State,   // model state
       if (Stage == 0) {
          weightTracers(NextTracerArray, CurTracerArray, State, CurLevel);
          prescribeState(State, CurLevel, State, CurLevel, ForcingStageTime);
+         updateKPPFields(State, CurLevel, CurLevel, CurLevel);
          Tend->computeAllTendencies(State, AuxState, CurTracerArray, CurLevel,
                                     CurLevel, CurLevel, StageTime,
                                     RKProj[Stage] * TimeStep);
@@ -139,19 +136,7 @@ void RungeKutta4Stepper::doStep(OceanState *State,   // model state
    Tracers::updateTimeLevels();
    Pacer::stop("RK4:haloExch", 3);
 
-   // Apply implicit vertical mixing
-   CurTracerArray = Tracers::getAll(CurLevel);
-   if (VMix->VelVertMixSetup.Enabled or VMix->TracerVertMixSetup.Enabled) {
-      VMix->VertMixImplicit(State, AuxState, CurTracerArray, NTracers,
-                            CurLevel);
-
-      // Re-exchange halos after vertical mixing
-      Pacer::timingBarrier("RK4:vMixHaloExchBarrier", 3, Comm);
-      Pacer::start("RK4:vMixHaloExch", 3);
-      State->exchangeHalo(CurLevel);
-      Tracers::exchangeHalo(CurLevel);
-      Pacer::stop("RK4:vMixHaloExch", 3);
-   }
+   applyImplicitVerticalMixing(State, CurLevel, CurLevel, CurLevel, "RK4");
 
    validateOceanState(State, AuxState, VertCoord::getDefault(), CurLevel);
 

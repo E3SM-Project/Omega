@@ -80,6 +80,28 @@ class Tendencies {
    TracerDiffOnCell TracerDiffusion;
    TracerHyperDiffOnCell TracerHyperDiff;
    SurfaceTracerRestoringOnCell SurfaceTracerRestoring;
+   PotentialDensityOnCell PotentialDensityCalc;
+   KPPSurfaceForcingOnCell KPPSurfaceForcing;
+
+   // Diagnostics for temperature forcing pathways used in KPP comparison.
+   // These are raw contributions added to TracerTend before tracer update.
+   Array2DReal TempNonLocalTendDiag;
+   Array1DReal TempNonLocalColumnSumDiag;
+
+   // Scratch used by computeKPPFields, allocated once rather than per step
+   Array2DReal KPPConservTemp;
+   Array2DReal KPPAbsSalinity;
+   Array1DReal KPPSurfacePressure;
+   Array2DReal KPPPotentialDensity;
+   Array2DReal KPPRefPressure;
+   Array2DReal KPPTangentialVelEdge;
+   Array1DReal KPPIceFraction;
+
+   // Enables explicit non-local tracer tendency from KPP
+   bool TracerNonLocalFluxEnabled = false;
+
+   // Enable diagnostics that isolate temperature non-local terms.
+   bool TracerNonLocalDiagnosticsEnable = true;
 
    std::string Name;
 
@@ -119,6 +141,12 @@ class Tendencies {
                                     const Array3DReal &TracerArray,
                                     int ThickTimeLevel, int VelTimeLevel,
                                     TimeInstant Time);
+
+   // Computes KPP boundary layer depth, coefficients and non-local flux.
+   // Called once per time step by the active time stepper.
+   void computeKPPFields(const OceanState *State,
+                         const Array3DReal &TracerArray, int ThickTimeLevel,
+                         int VelTimeLevel);
 
    // Create a non-default group of tendencies
    static Tendencies *

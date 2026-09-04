@@ -17,6 +17,7 @@
 #include "GlobalConstants.h"
 #include "HorzMesh.h"
 #include "HorzOperators.h"
+#include "KPPMix.h"
 #include "TimeStepper.h"
 #include "TriDiagSolvers.h"
 
@@ -230,6 +231,17 @@ void VertMix::computeVertMix(const Array2DReal &NormalVelocity,
    OMEGA_SCOPE(LocBackVisc, BackVisc);
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
+   const Real LocConvDiff       = LocComputeVertMixConv.ConvDiff;
+   const Real LocConvTriggerBVF = LocComputeVertMixConv.ConvTriggerBVF;
+   Array1DI4 KPPBoundaryLayerIndex("VertMix-KPPBoundaryLayerIndex",
+                                   Mesh->NCellsSize);
+   deepCopy(KPPBoundaryLayerIndex, -1);
+   KPPMix *KPPInstance      = KPPMix::getInstance();
+   const bool LocKPPEnabled = (KPPInstance && KPPInstance->Enabled);
+   if (LocKPPEnabled) {
+      deepCopy(KPPBoundaryLayerIndex, KPPInstance->OSBLDepthIndex);
+   }
+   OMEGA_SCOPE(LocKPPBoundaryLayerIndex, KPPBoundaryLayerIndex);
 
    /// First, initialize VertDiff and VertVisc to background values
    parallelForOuter(
@@ -317,7 +329,34 @@ void VertMix::computeVertMix(const Array2DReal &NormalVelocity,
                  });
           });
    }
-   /// Third, compute convective mixing if enabled
+
+   /// Third, apply KPP mixing if enabled
+   if (LocKPPEnabled) {
+      const I4 NVertLayers = VCoord->NVertLayers;
+      I4 KPPMergeMode      = 0; // 0=additive profile, 1=matched coefficients
+      if (KPPInstance->MatchTechnique == KPPMatchType::MatchBoth) {
+         KPPMergeMode = 1;
+      }
+
+      OMEGA_SCOPE(LocKPPVertDiff, KPPInstance->VertDiff);
+      OMEGA_SCOPE(LocKPPVertVisc, KPPInstance->VertVisc);
+
+      parallelFor(
+          "VertMix-KPP", {Mesh->NCellsAll, NVertLayers + 1},
+          KOKKOS_LAMBDA(I4 ICell, I4 K) {
+             if (K <= LocKPPBoundaryLayerIndex(ICell) + 1) {
+                if (KPPMergeMode == 1) {
+                   LocVertDiff(ICell, K) = LocKPPVertDiff(ICell, K);
+                   LocVertVisc(ICell, K) = LocKPPVertVisc(ICell, K);
+                } else {
+                   LocVertDiff(ICell, K) += LocKPPVertDiff(ICell, K);
+                   LocVertVisc(ICell, K) += LocKPPVertVisc(ICell, K);
+                }
+             }
+          });
+   }
+
+   /// Fourth, compute convective mixing if enabled
    if (LocComputeVertMixConv.Enabled) {
       parallelForOuter(
           "VertMix-Conv", {Mesh->NCellsAll},
@@ -328,8 +367,19 @@ void VertMix::computeVertMix(const Array2DReal &NormalVelocity,
 
              parallelForInner(
                  Team, KRange, INNER_LAMBDA(int KChunk) {
-                    LocComputeVertMixConv(LocVertDiff, LocVertVisc, ICell,
-                                          KChunk, BruntVaisalaFreqSq);
+                    const I4 KStart = chunkStart(KChunk, KMin);
+                    const I4 KLen   = chunkLength(KChunk, KStart, KMax);
+                    for (int KVec = 0; KVec < KLen; ++KVec) {
+                       const I4 K = KStart + KVec;
+                       const bool ApplyConv =
+                           (!LocKPPEnabled) ||
+                           (K > LocKPPBoundaryLayerIndex(ICell) + 1);
+                       if (ApplyConv &&
+                           BruntVaisalaFreqSq(ICell, K) < LocConvTriggerBVF) {
+                          LocVertDiff(ICell, K) += LocConvDiff;
+                          LocVertVisc(ICell, K) += LocConvDiff;
+                       }
+                    }
                  });
           });
    }
