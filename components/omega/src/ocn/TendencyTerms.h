@@ -445,17 +445,19 @@ class SfcTracerForcingOnCell {
                           I4 TempTracerIndex, I4 SaltTracerIndex,
                           const Eos *EosInst);
 
-   KOKKOS_FUNCTION void operator()(
-       const Array3DReal &Tend, I4 ICell, const Array3DReal &TracerCell,
-       const Array2DReal &PressureMid, const Array1DReal &LatentHeatFluxEvap,
-       const Array1DReal &SensibleHeatFlux,
-       const Array1DReal &LongWaveHeatFluxUp,
-       const Array1DReal &LongWaveHeatFluxDown,
-       const Array1DReal &SeaIceHeatFlux, const Array1DReal &ShortWaveHeatFlux,
-       const Array1DReal &SnowFlux, const Array1DReal &RainFlux,
-       const Array1DReal &IceRunoffFlux, const Array1DReal &RiverRunoffFlux,
-       const Array1DReal &EvaporationFlux,
-       const Array1DReal &SeaIceSaltFlux) const {
+   KOKKOS_FUNCTION void
+   operator()(const Array3DReal &Tend, const Array1DReal &ExtraEnergy, I4 ICell,
+              const Array3DReal &TracerCell, const Array2DReal &PressureMid,
+              const Array1DReal &LatentHeatFluxEvap,
+              const Array1DReal &SensibleHeatFlux,
+              const Array1DReal &LongWaveHeatFluxUp,
+              const Array1DReal &LongWaveHeatFluxDown,
+              const Array1DReal &SeaIceHeatFlux,
+              const Array1DReal &ShortWaveHeatFlux, const Array1DReal &SnowFlux,
+              const Array1DReal &RainFlux, const Array1DReal &IceRunoffFlux,
+              const Array1DReal &RiverRunoffFlux,
+              const Array1DReal &EvaporationFlux,
+              const Array1DReal &SeaIceSaltFlux) const {
 
       const I4 KTop = MinLayerCell(ICell);
       if (KTop > MaxLayerCell(ICell)) {
@@ -496,6 +498,17 @@ class SfcTracerForcingOnCell {
              (SnowFlux(ICell) + IceRunoffFlux(ICell)) * PotEnthalpyIce;
 
          Tend(TempIndex, ICell, KTop) += HeatFlux * HFluxFac;
+         // Accounting for extra energy/enthalpy (to be taken from atm)
+         // - All direct heat fluxes are accounted for (via coupler)
+         // - SeaIceHeatFlux comes entirely from the sea ice
+         // - Phase Change for evaporation and frozen should be taken out of
+         // ocean Extra terms are the enthalpy of liq water wrt. mass fluxes
+         // Formulation allows for non-zero term if PotEnthalpyIce is updated
+         ExtraEnergy(ICell) =
+             (RainFlux(ICell) + RiverRunoffFlux(ICell)) * PotEnthalpyFwIn +
+             EvaporationFlux(ICell) * PotEnthalpyFwOut +
+             (SnowFlux(ICell) + IceRunoffFlux(ICell)) *
+                 (PotEnthalpyIce + LatIce);
       }
 
       if (SaltIndex >= 0) {
