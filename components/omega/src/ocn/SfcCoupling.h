@@ -12,6 +12,7 @@
 
 #include "DataTypes.h"
 #include "Forcing.h"
+#include "GlobalConstants.h"
 #include "HorzMesh.h"
 #include "OceanState.h"
 #include "TimeMgr.h"
@@ -26,6 +27,12 @@ KOKKOS_INLINE_FUNCTION Real updateAverage(const Real OldAvg,
                                           const Real NewValue,
                                           const I4 NAccumSteps) {
    return OldAvg + (NewValue - OldAvg) / (NAccumSteps + 1);
+}
+
+KOKKOS_INLINE_FUNCTION Real pressureAdjustedSsh(const Real Ssh,
+                                                const Real SeaIcePressure,
+                                                const Real SeaLevelPressure) {
+   return Ssh + (SeaIcePressure + SeaLevelPressure) / (Gravity * RhoSw);
 }
 
 enum class CouplingLayout { MCT, MOAB };
@@ -102,7 +109,9 @@ class OcnToCplFields {
 
    // Accumulate one ocean timestep's contribution to the running averages
    void updateFields(const OceanState *State, const Array3DReal &TracerArray,
-                     I4 NAccumSteps, I4 NCellsOwned, I4 NEdgesAll);
+                     I4 NAccumSteps, I4 NCellsOwned, I4 NEdgesAll,
+                     const Array1DReal &SeaIceBasalPressure,
+                     const Array1DReal &SeaLevelPressure);
 
    // Copy device arrays into their host mirrors and do unit conversion.
    void copyToHost();
