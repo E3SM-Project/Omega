@@ -119,9 +119,13 @@ class Analysis {
    /// all operators in the chain that do not yet exist as Fields. For
    /// example, "Temperature_SpatialMean_TimeMean1day" parses into three
    /// operators. If intermediate operators already exist (shared by other
-   /// chains), they are reused rather than duplicated.
+   /// chains), they are reused rather than duplicated. Optionally accepts
+   /// a Config object containing parameters for operators in the chain.
    void parseChainAndBuildOps(
-       const std::string &OpChainStr ///< [in] underscore-delimited chain string
+       const std::string
+           &OpChainStr, ///< [in] underscore-delimited chain string
+       const Config &OpConfig =
+           Config() ///< [in] optional operator configuration
    );
 
    /// Instantiates a single operator via the factory and appends it as
@@ -150,6 +154,26 @@ class Analysis {
    /// operators.
    bool OpNodeExists(const std::string &FullOpName ///< [in] full op name
    );
+
+   /// Post-hoc dependency resolution: iterates over all operator nodes and
+   /// matches input field names against other nodes' output field names to
+   /// populate the Upstreams vectors. This forms the edges of the
+   /// dependency graph. In future versions, this will be replaced by
+   /// signature-based deduplication during graph construction.
+   void buildOperatorDependencies();
+
+   /// Sets ComputeAlarms on terminal nodes by borrowing alarm pointers from
+   /// associated IOStream instances. For temporal reduction operators, also
+   /// creates accumulation alarms and adds them to ComputeAlarms. Then
+   /// calls propagateAlarmsUpstream() to propagate alarms to upstream
+   /// dependencies.
+   void setComputeAlarms();
+
+   /// Calls initialize() on all operators after the dependency graph is
+   /// complete and all Fields exist. This allows operators to store
+   /// pointers to mesh, environment, and other resources needed during
+   /// compute().
+   void initializeAllOps();
 
    /// Retrieves the default Analysis instance. The preference is to pass
    /// the Analysis pointer as an argument, but retrieval is necessary for
@@ -202,26 +226,6 @@ class Analysis {
    /// Each operator template is registered with all supported array type
    /// variants (scalar types, ranks, memory locations). Defined in Ops.cpp.
    static void registerAllBaseAnalysisOperators();
-
-   /// Post-hoc dependency resolution: iterates over all operator nodes and
-   /// matches input field names against other nodes' output field names to
-   /// populate the Upstreams vectors. This forms the edges of the
-   /// dependency graph. In future versions, this will be replaced by
-   /// signature-based deduplication during graph construction.
-   void buildOperatorDependencies();
-
-   /// Sets ComputeAlarms on terminal nodes by borrowing alarm pointers from
-   /// associated IOStream instances. For temporal reduction operators, also
-   /// creates accumulation alarms and adds them to ComputeAlarms. Then
-   /// calls propagateAlarmsUpstream() to propagate alarms to upstream
-   /// dependencies.
-   void setComputeAlarms();
-
-   /// Calls initialize() on all operators after the dependency graph is
-   /// complete and all Fields exist. This allows operators to store
-   /// pointers to mesh, environment, and other resources needed during
-   /// compute().
-   void initializeAllOps();
 
    /// Iteratively propagates alarm pointers from downstream operators to
    /// upstream operators. An upstream operator must be computed whenever

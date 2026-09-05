@@ -81,6 +81,12 @@ class AnalysisGroup {
                             ///< instantaneous output
    };
 
+   /// Sets the IOName metadata on an output Field so IOStream writes it under
+   /// a legible name rather than the full operator-chain string.
+   /// No-op if the field does not exist.
+   static void setOutputIOName(const std::string &InternalFieldName,
+                               const std::string &IOName);
+
    /// Template for constructing IOStream configurations for this group's
    /// output. Provides default values for all IOStream creation parameters.
    /// Derived classes can override defaults using group-specific config options
@@ -100,8 +106,8 @@ class AnalysisGroup {
                 {"Precision", "double"},
                 {"Freq", ""},
                 {"FreqUnits", ""},
-                {"FileFreq", ""},
-                {"FileFreqUnits", ""},
+                {"FileFreq", "9999"},
+                {"FileFreqUnits", "Years"},
                 {"UseStartEnd", "false"},
                 {"StartTime", ""},
                 {"EndTime", ""},
@@ -155,11 +161,18 @@ class AnalysisGroup {
    /// operator chains by appending time operators to the provided stems,
    /// calls parseChainAndBuildOps for each chain, and populates OpChainInfos
    /// with metadata for stream creation.
+   ///
+   /// If ChainConfigs is provided and non-empty, it must have the same size
+   /// as ChainStems, with each Config containing operator-specific parameters
+   /// for the corresponding chain. If ChainConfigs is empty, chains are built
+   /// without additional configuration (default behavior).
    void buildTemporalChains(
        const std::vector<std::string>
            &ChainStems,              ///< [in] operator chain stems
        Config &AnalysisGroupOptions, ///< [in] group configuration
-       Analysis *AnalysisManager     ///< [in] analysis manager
+       Analysis *AnalysisManager,    ///< [in] analysis manager
+       const std::vector<Config> &ChainConfigs = {}
+       ///< [in] optional per-chain configs
    );
 
    /// Reads ReductionPeriod and SnapshotPeriod from config and validates

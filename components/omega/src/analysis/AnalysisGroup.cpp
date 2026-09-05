@@ -17,6 +17,19 @@ namespace OMEGA {
 std::string AnalysisGroup::getName() { return GroupName; } // end getName
 
 //------------------------------------------------------------------------------
+// Sets the IOName metadata on an output Field so that IOStream will write
+// it under a legible name rather than the full operator-chain string.
+// This metadata is purely cosmetic and only affects the netCDF variable name
+// in output files - the field lookup system continues to use the internal
+// operator-chain name. If the field does not exist, this is a no-op.
+void AnalysisGroup::setOutputIOName(const std::string &InternalFieldName,
+                                    const std::string &IOName) {
+   if (Field::exists(InternalFieldName)) {
+      Field::get(InternalFieldName)->addMetadata("IOName", IOName);
+   }
+}
+
+//------------------------------------------------------------------------------
 void AnalysisGroup::parseTemporalPeriods(Config &AnalysisGroupOptions) {
    Error Err1;
    Error Err2;
@@ -38,13 +51,27 @@ void AnalysisGroup::parseTemporalPeriods(Config &AnalysisGroupOptions) {
 //------------------------------------------------------------------------------
 void AnalysisGroup::buildTemporalChains(
     const std::vector<std::string> &ChainStems, Config &AnalysisGroupOptions,
-    Analysis *AnalysisManager) {
+    Analysis *AnalysisManager, const std::vector<Config> &ChainConfigs) {
+
+   // Validate ChainConfigs size if provided
+   if (!ChainConfigs.empty() && ChainConfigs.size() != ChainStems.size()) {
+      ABORT_ERROR("AnalysisGroup::buildTemporalChains: ChainConfigs size ({}) "
+                  "does not match ChainStems size ({})",
+                  ChainConfigs.size(), ChainStems.size());
+   }
 
    // Parse temporal periods from config
    parseTemporalPeriods(AnalysisGroupOptions);
 
    // Build temporal reduction chains for each stem
-   for (const auto &StemStr : ChainStems) {
+   for (size_t i = 0; i < ChainStems.size(); ++i) {
+      const auto &StemStr = ChainStems[i];
+
+      // Get config for this chain (empty Config if not provided)
+      Config ChainConfig;
+      if (!ChainConfigs.empty()) {
+         ChainConfig = ChainConfigs[i];
+      }
 
       // Create temporal reduction chains: Stem -> TimeMean<Period>
       for (const auto &ReductionPeriod : ReductionPeriodList) {
@@ -54,15 +81,27 @@ void AnalysisGroup::buildTemporalChains(
          // Store metadata for stream creation
          OpChainInfos.push_back(OpChainInfo{ChainStr, ReductionPeriod, true});
 
-         // Parse chain and instantiate operators
-         AnalysisManager->parseChainAndBuildOps(ChainStr);
+         // Parse chain and instantiate operators (empty Config is fine)
+         AnalysisManager->parseChainAndBuildOps(ChainStr, ChainConfig);
+
+         // Apply IOName if specified in config
+         std::string IOName;
+         if (ChainConfig.get("IOName", IOName).isSuccess()) {
+            setOutputIOName(ChainStr, IOName + "_TimeMean" + ReductionPeriod);
+         }
       }
 
       // Create instantaneous snapshot chains (if requested)
       if (!SnapshotPeriodList.empty()) {
          // Parse stem chain if not already built (operators may exist from
          // reduction chains above, parseChainAndBuildOps handles duplicates)
-         AnalysisManager->parseChainAndBuildOps(StemStr);
+         AnalysisManager->parseChainAndBuildOps(StemStr, ChainConfig);
+
+         // Apply IOName if specified in config
+         std::string IOName;
+         if (ChainConfig.get("IOName", IOName).isSuccess()) {
+            setOutputIOName(StemStr, IOName);
+         }
 
          // Store metadata for each snapshot frequency
          for (const auto &SnapshotPeriod : SnapshotPeriodList) {

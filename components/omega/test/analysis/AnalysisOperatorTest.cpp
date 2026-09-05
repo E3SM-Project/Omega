@@ -1,9 +1,8 @@
-//===-- Test 5.1: Multi-type operator correctness tests --------*- C++ -*-===//
+//===-- Test 5.1: Multi-type operator correctness tests ---------*- C++ -*-===//
 //
-// Comprehensive unit tests for Analysis operators across all supported
-// array types (ranks 1D/2D/3D and scalar types I4/I8/R4/R8)
+// Comprehensive unit tests for Analysis operators across supported array types
 //
-//===-----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 #include "Analysis.h"
 #include "AnalysisOpFactory.h"
@@ -87,18 +86,32 @@ template <typename ArrayType> struct TestHelper {
                std::function<ScalarT(I4)> ValueFunc) {
 
       auto DimNames = getDimNames();
+
+      // Set ValidMin/ValidMax based on scalar type to avoid bad_any_cast
+      ScalarT ValidMin, ValidMax;
+      if constexpr (std::is_integral_v<ScalarT>) {
+         ValidMin = std::numeric_limits<ScalarT>::lowest();
+         ValidMax = std::numeric_limits<ScalarT>::max();
+      } else if constexpr (std::is_same_v<ScalarT, float>) {
+         ValidMin = -1.0e30f;
+         ValidMax = 1.0e30f;
+      } else {
+         ValidMin = -1.0e30;
+         ValidMax = 1.0e30;
+      }
+
       auto TestField =
           Field::create(FieldName, "Test field for multi-type validation", "m",
-                        "", -1.0e30, 1.0e30, 1, DimNames);
+                        "", ValidMin, ValidMax, 1, DimNames);
 
       ArrayType TestData(FieldName + "_data", Dims[0]);
-      TestField->attachData<ArrayType>(TestData);
+      TestField->template attachData<ArrayType>(TestData, false);
 
       auto TestDataHost = Kokkos::create_mirror_view(TestData);
       for (I4 i = 0; i < Dims[0]; ++i) {
          TestDataHost(i) = ValueFunc(i);
       }
-      Kokkos::deep_copy(TestData, TestDataHost);
+      deepCopy(TestData, TestDataHost);
    }
 
    // Create test field for 2D arrays
@@ -108,12 +121,26 @@ template <typename ArrayType> struct TestHelper {
                std::function<ScalarT(I4, I4)> ValueFunc) {
 
       auto DimNames = getDimNames();
+
+      // Set ValidMin/ValidMax based on scalar type to avoid bad_any_cast
+      ScalarT ValidMin, ValidMax;
+      if constexpr (std::is_integral_v<ScalarT>) {
+         ValidMin = std::numeric_limits<ScalarT>::lowest();
+         ValidMax = std::numeric_limits<ScalarT>::max();
+      } else if constexpr (std::is_same_v<ScalarT, float>) {
+         ValidMin = -1.0e30f;
+         ValidMax = 1.0e30f;
+      } else {
+         ValidMin = -1.0e30;
+         ValidMax = 1.0e30;
+      }
+
       auto TestField =
           Field::create(FieldName, "Test field for multi-type validation", "m",
-                        "", -1.0e30, 1.0e30, 2, DimNames);
+                        "", ValidMin, ValidMax, 2, DimNames);
 
       ArrayType TestData(FieldName + "_data", Dims[0], Dims[1]);
-      TestField->attachData<ArrayType>(TestData);
+      TestField->template attachData<ArrayType>(TestData, false);
 
       auto TestDataHost = Kokkos::create_mirror_view(TestData);
       for (I4 i = 0; i < Dims[0]; ++i) {
@@ -121,7 +148,7 @@ template <typename ArrayType> struct TestHelper {
             TestDataHost(i, j) = ValueFunc(i, j);
          }
       }
-      Kokkos::deep_copy(TestData, TestDataHost);
+      deepCopy(TestData, TestDataHost);
    }
 
    // Create test field for 3D arrays
@@ -131,12 +158,26 @@ template <typename ArrayType> struct TestHelper {
                std::function<ScalarT(I4, I4, I4)> ValueFunc) {
 
       auto DimNames = getDimNames();
+
+      // Set ValidMin/ValidMax based on scalar type to avoid bad_any_cast
+      ScalarT ValidMin, ValidMax;
+      if constexpr (std::is_integral_v<ScalarT>) {
+         ValidMin = std::numeric_limits<ScalarT>::lowest();
+         ValidMax = std::numeric_limits<ScalarT>::max();
+      } else if constexpr (std::is_same_v<ScalarT, float>) {
+         ValidMin = -1.0e30f;
+         ValidMax = 1.0e30f;
+      } else {
+         ValidMin = -1.0e30;
+         ValidMax = 1.0e30;
+      }
+
       auto TestField =
           Field::create(FieldName, "Test field for multi-type validation", "m",
-                        "", -1.0e30, 1.0e30, 3, DimNames);
+                        "", ValidMin, ValidMax, 3, DimNames);
 
       ArrayType TestData(FieldName + "_data", Dims[0], Dims[1], Dims[2]);
-      TestField->attachData<ArrayType>(TestData);
+      TestField->template attachData<ArrayType>(TestData, false);
 
       auto TestDataHost = Kokkos::create_mirror_view(TestData);
       for (I4 i = 0; i < Dims[0]; ++i) {
@@ -146,7 +187,7 @@ template <typename ArrayType> struct TestHelper {
             }
          }
       }
-      Kokkos::deep_copy(TestData, TestDataHost);
+      deepCopy(TestData, TestDataHost);
    }
 };
 
@@ -156,6 +197,7 @@ void reportTest(const std::string &TestName, bool Passed) {
    NumTests++;
    if (Passed) {
       NumPassed++;
+      LOG_DEBUG("PASS: {}", TestName);
    } else {
       NumFailed++;
       LOG_ERROR("FAIL: {}", TestName);
@@ -232,10 +274,9 @@ void testSpatialMaxOpType(const std::string &TypeName, const MachEnv *Env,
    }
 
    // Create and compute operator
-   Config EmptyConfig;
    auto MaxOp =
-       AnalysisOpFactory::createOp("SpatialMax", {FieldName}, EmptyConfig);
-   MaxOp->initialize(Env, Mesh, VCoord, EmptyConfig);
+       AnalysisOpFactory::createOp("SpatialMax", {FieldName}, makeOpConfig());
+   MaxOp->initialize(Env, Mesh, VCoord, makeOpConfig());
 
    TimeInstant TestTime;
    MaxOp->compute(TestTime);
@@ -246,8 +287,7 @@ void testSpatialMaxOpType(const std::string &TypeName, const MachEnv *Env,
    auto ResultField = Field::get(FieldName + "_SpatialMax");
    auto ResultData =
        ResultField->getDataArray<typename Array1D<ScalarT>::type>();
-   auto ResultHost = Kokkos::create_mirror_view(ResultData);
-   Kokkos::deep_copy(ResultHost, ResultData);
+   auto ResultHost = createHostMirrorCopy(ResultData);
 
    Real ComputedMax     = static_cast<Real>(ResultHost(0));
    Real ExpectedMaxReal = static_cast<Real>(ExpectedMax);
@@ -310,10 +350,9 @@ void testSpatialMinOpType(const std::string &TypeName, const MachEnv *Env,
    ScalarT ExpectedMin = static_cast<ScalarT>(100);
 
    // Create and compute operator
-   Config EmptyConfig;
    auto MinOp =
-       AnalysisOpFactory::createOp("SpatialMin", {FieldName}, EmptyConfig);
-   MinOp->initialize(Env, Mesh, VCoord, EmptyConfig);
+       AnalysisOpFactory::createOp("SpatialMin", {FieldName}, makeOpConfig());
+   MinOp->initialize(Env, Mesh, VCoord, makeOpConfig());
 
    TimeInstant TestTime;
    MinOp->compute(TestTime);
@@ -324,8 +363,7 @@ void testSpatialMinOpType(const std::string &TypeName, const MachEnv *Env,
    auto ResultField = Field::get(FieldName + "_SpatialMin");
    auto ResultData =
        ResultField->getDataArray<typename Array1D<ScalarT>::type>();
-   auto ResultHost = Kokkos::create_mirror_view(ResultData);
-   Kokkos::deep_copy(ResultHost, ResultData);
+   auto ResultHost = createHostMirrorCopy(ResultData);
 
    Real ComputedMin     = static_cast<Real>(ResultHost(0));
    Real ExpectedMinReal = static_cast<Real>(ExpectedMin);
@@ -422,10 +460,9 @@ void testSpatialMeanOpType(const std::string &TypeName, const MachEnv *Env,
                        static_cast<Real>(TotalElements);
 
    // Create and compute operator
-   Config EmptyConfig;
    auto MeanOp =
-       AnalysisOpFactory::createOp("SpatialMean", {FieldName}, EmptyConfig);
-   MeanOp->initialize(Env, Mesh, VCoord, EmptyConfig);
+       AnalysisOpFactory::createOp("SpatialMean", {FieldName}, makeOpConfig());
+   MeanOp->initialize(Env, Mesh, VCoord, makeOpConfig());
 
    TimeInstant TestTime;
    MeanOp->compute(TestTime);
@@ -434,8 +471,7 @@ void testSpatialMeanOpType(const std::string &TypeName, const MachEnv *Env,
    // regardless of input type).
    auto ResultField = Field::get(FieldName + "_SpatialMean");
    auto ResultData  = ResultField->getDataArray<Array1DReal>();
-   auto ResultHost  = Kokkos::create_mirror_view(ResultData);
-   Kokkos::deep_copy(ResultHost, ResultData);
+   auto ResultHost  = createHostMirrorCopy(ResultData);
 
    Real ComputedMean = ResultHost(0);
 
@@ -540,26 +576,24 @@ void testSpatialStdDevOpType(const std::string &TypeName, const MachEnv *Env,
 
    // SpatialStdDevOp requires a pre-existing _SpatialMean field for the input.
    // Create and compute a SpatialMeanOp first so that field is registered.
-   Config EmptyConfig;
    auto MeanOp =
-       AnalysisOpFactory::createOp("SpatialMean", {FieldName}, EmptyConfig);
-   MeanOp->initialize(Env, Mesh, VCoord, EmptyConfig);
+       AnalysisOpFactory::createOp("SpatialMean", {FieldName}, makeOpConfig());
+   MeanOp->initialize(Env, Mesh, VCoord, makeOpConfig());
 
    TimeInstant TestTime;
    MeanOp->compute(TestTime);
 
    // Now create and compute the StdDev operator
-   auto StdDevOp =
-       AnalysisOpFactory::createOp("SpatialStdDev", {FieldName}, EmptyConfig);
-   StdDevOp->initialize(Env, Mesh, VCoord, EmptyConfig);
+   auto StdDevOp = AnalysisOpFactory::createOp("SpatialStdDev", {FieldName},
+                                               makeOpConfig());
+   StdDevOp->initialize(Env, Mesh, VCoord, makeOpConfig());
    StdDevOp->compute(TestTime);
 
    // Get result. The operator attaches output as Array1DReal (always Real type
    // regardless of input type).
    auto ResultField = Field::get(FieldName + "_SpatialStdDev");
    auto ResultData  = ResultField->getDataArray<Array1DReal>();
-   auto ResultHost  = Kokkos::create_mirror_view(ResultData);
-   Kokkos::deep_copy(ResultHost, ResultData);
+   auto ResultHost  = createHostMirrorCopy(ResultData);
 
    Real ComputedStdDev = ResultHost(0);
 
@@ -644,8 +678,7 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
       ValuesAtEachStep.push_back(CurrentValue);
 
       // Update the field data on device
-      auto TestDataHost = Kokkos::create_mirror_view(TestData);
-      Kokkos::deep_copy(TestDataHost, TestData);
+      auto TestDataHost = createHostMirrorCopy(TestData);
 
       if constexpr (Rank == 1) {
          for (I4 i = 0; i < Dims[0]; ++i) {
@@ -667,7 +700,7 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
          }
       }
 
-      Kokkos::deep_copy(TestData, TestDataHost);
+      deepCopy(TestData, TestDataHost);
 
       // Advance clock to next timestep
       ModelClock->advance();
@@ -704,10 +737,9 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
    bool Passed = true;
    if constexpr (Rank == 1) {
       auto ResultData = ResultField->getDataArray<Array1D_t<Real>>();
-      auto ResultHost = Kokkos::create_mirror_view(ResultData);
-      Kokkos::deep_copy(ResultHost, ResultData);
+      auto ResultHost = createHostMirrorCopy(ResultData);
 
-      for (I4 i = 0; i < std::min(10, Dims[0]); ++i) {
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
          Real ComputedValue = ResultHost(i);
          if (std::abs(ComputedValue - ExpectedMean) >
              static_cast<Real>(Helper::getTolerance())) {
@@ -719,11 +751,10 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
       }
    } else if constexpr (Rank == 2) {
       auto ResultData = ResultField->getDataArray<Array2D_t<Real>>();
-      auto ResultHost = Kokkos::create_mirror_view(ResultData);
-      Kokkos::deep_copy(ResultHost, ResultData);
+      auto ResultHost = createHostMirrorCopy(ResultData);
 
-      for (I4 i = 0; i < std::min(5, Dims[0]); ++i) {
-         for (I4 j = 0; j < std::min(5, Dims[1]); ++j) {
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+         for (I4 j = 0; j < VCoord->NVertLayers; ++j) {
             Real ComputedValue = ResultHost(i, j);
             if (std::abs(ComputedValue - ExpectedMean) >
                 static_cast<Real>(Helper::getTolerance())) {
@@ -738,12 +769,11 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
       }
    } else if constexpr (Rank == 3) {
       auto ResultData = ResultField->getDataArray<Array3D_t<Real>>();
-      auto ResultHost = Kokkos::create_mirror_view(ResultData);
-      Kokkos::deep_copy(ResultHost, ResultData);
+      auto ResultHost = createHostMirrorCopy(ResultData);
 
-      for (I4 i = 0; i < std::min(3, Dims[0]); ++i) {
-         for (I4 j = 0; j < std::min(3, Dims[1]); ++j) {
-            for (I4 k = 0; k < std::min(3, Dims[2]); ++k) {
+      for (I4 i = 0; i < Dims[0]; ++i) {
+         for (I4 j = 0; j < Mesh->NCellsOwned; ++j) {
+            for (I4 k = 0; k < VCoord->NVertLayers; ++k) {
                Real ComputedValue = ResultHost(i, j, k);
                if (std::abs(ComputedValue - ExpectedMean) >
                    static_cast<Real>(Helper::getTolerance())) {
@@ -893,6 +923,1600 @@ void testTimeMeanOp(const MachEnv *Env, const HorzMesh *Mesh,
    testTimeMeanOpType<Array3DR8>("3D-R8", Env, Mesh, VCoord, ModelClock);
 }
 
+//------------------------------------------------------------------------------
+// Template for testing ScalarMultiplyOp with any array type
+template <typename ArrayType>
+void testScalarMultiplyOpType(const std::string &TypeName, const MachEnv *Env,
+                              const HorzMesh *Mesh, const VertCoord *VCoord) {
+
+   using Helper       = TestHelper<ArrayType>;
+   using ScalarT      = typename Helper::ScalarT;
+   constexpr int Rank = Helper::Rank;
+
+   std::vector<I4> Dims  = Helper::getDims(Mesh, VCoord);
+   std::string FieldName = "TestFieldScalarMult_" + TypeName;
+
+   // Create test field with known values
+   ScalarT BaseValue = static_cast<ScalarT>(10);
+   if constexpr (Rank == 1) {
+      Helper::createField(FieldName, Dims,
+                          [BaseValue](I4 i) -> ScalarT { return BaseValue; });
+   } else if constexpr (Rank == 2) {
+      Helper::createField(FieldName, Dims, [BaseValue](I4 i, I4 j) -> ScalarT {
+         return BaseValue;
+      });
+   } else if constexpr (Rank == 3) {
+      Helper::createField(
+          FieldName, Dims,
+          [BaseValue](I4 i, I4 j, I4 k) -> ScalarT { return BaseValue; });
+   }
+   // Test scalar multiplication
+   std::string ScalarStr = "2.5";
+   Real Scalar           = 2.5;
+   ScalarT ExpectedValue =
+       static_cast<ScalarT>(static_cast<Real>(BaseValue) * Scalar);
+   // Create and compute operator
+   Config OpConfig;
+   OpConfig.add("Scalar", Scalar);
+
+   auto MultOp =
+       AnalysisOpFactory::createOp("ScalarMultiply", {FieldName}, OpConfig);
+   MultOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+
+   TimeInstant TestTime;
+   MultOp->compute(TestTime);
+
+   // Get result
+   auto ResultField =
+       Field::get(FieldName + "_ScalarMultiply(" + ScalarStr + ")");
+   auto ResultData = ResultField->getDataArray<ArrayType>();
+   auto ResultHost = createHostMirrorCopy(ResultData);
+
+   // Verify all owned cells
+   bool Passed = true;
+   if constexpr (Rank == 1) {
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+         if (std::abs(static_cast<Real>(ResultHost(i)) -
+                      static_cast<Real>(ExpectedValue)) >
+             static_cast<Real>(Helper::getTolerance())) {
+            Passed = false;
+            break;
+         }
+      }
+   } else if constexpr (Rank == 2) {
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+         for (I4 j = VCoord->MinLayerCellH(i); j <= VCoord->MaxLayerCellH(i);
+              ++j) {
+            if (std::abs(static_cast<Real>(ResultHost(i, j)) -
+                         static_cast<Real>(ExpectedValue)) >
+                static_cast<Real>(Helper::getTolerance())) {
+               Passed = false;
+               break;
+            }
+         }
+         if (!Passed)
+            break;
+      }
+   } else if constexpr (Rank == 3) {
+      for (I4 i = 0; i < Dims[0]; ++i) {
+         for (I4 j = 0; j < Mesh->NCellsOwned; ++j) {
+            for (I4 k = VCoord->MinLayerCellH(j); k <= VCoord->MaxLayerCellH(j);
+                 ++k) {
+               if (std::abs(static_cast<Real>(ResultHost(i, j, k)) -
+                            static_cast<Real>(ExpectedValue)) >
+                   static_cast<Real>(Helper::getTolerance())) {
+                  Passed = false;
+                  break;
+               }
+            }
+            if (!Passed)
+               break;
+         }
+         if (!Passed)
+            break;
+      }
+   }
+
+   reportTest("ScalarMultiplyOp: " + TypeName, Passed);
+
+   if (!Passed) {
+      LOG_ERROR("  Expected: {}, Scalar: {}", static_cast<Real>(ExpectedValue),
+                Scalar);
+   }
+}
+
+//------------------------------------------------------------------------------
+// Test ScalarMultiplyOp with all array types
+void testScalarMultiplyOp(const MachEnv *Env, const HorzMesh *Mesh,
+                          const VertCoord *VCoord) {
+
+   // 1D arrays
+   testScalarMultiplyOpType<Array1DI4>("1D-I4", Env, Mesh, VCoord);
+   testScalarMultiplyOpType<Array1DI8>("1D-I8", Env, Mesh, VCoord);
+   testScalarMultiplyOpType<Array1DR4>("1D-R4", Env, Mesh, VCoord);
+   testScalarMultiplyOpType<Array1DR8>("1D-R8", Env, Mesh, VCoord);
+
+   // 2D arrays
+   testScalarMultiplyOpType<Array2DI4>("2D-I4", Env, Mesh, VCoord);
+   testScalarMultiplyOpType<Array2DI8>("2D-I8", Env, Mesh, VCoord);
+   testScalarMultiplyOpType<Array2DR4>("2D-R4", Env, Mesh, VCoord);
+   testScalarMultiplyOpType<Array2DR8>("2D-R8", Env, Mesh, VCoord);
+
+   // 3D arrays
+   testScalarMultiplyOpType<Array3DI4>("3D-I4", Env, Mesh, VCoord);
+   testScalarMultiplyOpType<Array3DI8>("3D-I8", Env, Mesh, VCoord);
+   testScalarMultiplyOpType<Array3DR4>("3D-R4", Env, Mesh, VCoord);
+   testScalarMultiplyOpType<Array3DR8>("3D-R8", Env, Mesh, VCoord);
+}
+
+//------------------------------------------------------------------------------
+// Template for testing BinaryMultiplyOp with same-rank arrays
+template <typename ArrayType>
+void testBinaryMultiplyOpSameRank(const std::string &TypeName,
+                                  const MachEnv *Env, const HorzMesh *Mesh,
+                                  const VertCoord *VCoord) {
+
+   using Helper       = TestHelper<ArrayType>;
+   using ScalarT      = typename Helper::ScalarT;
+   constexpr int Rank = Helper::Rank;
+
+   std::vector<I4> Dims   = Helper::getDims(Mesh, VCoord);
+   std::string Field1Name = "TestField1BinaryMult_" + TypeName;
+   std::string Field2Name = "TestField2BinaryMult_" + TypeName;
+
+   // Create two test fields with known values
+   ScalarT Value1 = static_cast<ScalarT>(3);
+   ScalarT Value2 = static_cast<ScalarT>(4);
+
+   if constexpr (Rank == 1) {
+      Helper::createField(Field1Name, Dims,
+                          [Value1](I4 i) -> ScalarT { return Value1; });
+      Helper::createField(Field2Name, Dims,
+                          [Value2](I4 i) -> ScalarT { return Value2; });
+   } else if constexpr (Rank == 2) {
+      Helper::createField(Field1Name, Dims,
+                          [Value1](I4 i, I4 j) -> ScalarT { return Value1; });
+      Helper::createField(Field2Name, Dims,
+                          [Value2](I4 i, I4 j) -> ScalarT { return Value2; });
+   } else if constexpr (Rank == 3) {
+      Helper::createField(
+          Field1Name, Dims,
+          [Value1](I4 i, I4 j, I4 k) -> ScalarT { return Value1; });
+      Helper::createField(
+          Field2Name, Dims,
+          [Value2](I4 i, I4 j, I4 k) -> ScalarT { return Value2; });
+   }
+
+   ScalarT ExpectedValue = static_cast<ScalarT>(static_cast<Real>(Value1) *
+                                                static_cast<Real>(Value2));
+
+   // Create and compute operator
+   auto MultOp = AnalysisOpFactory::createOp(
+       "BinaryMultiply", {Field1Name, Field2Name}, makeOpConfig());
+   MultOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+   TimeInstant TestTime;
+   MultOp->compute(TestTime);
+
+   // Get result
+   auto ResultField =
+       Field::get(Field1Name + "_BinaryMultiply(" + Field2Name + ")");
+   auto ResultData = ResultField->getDataArray<ArrayType>();
+   auto ResultHost = createHostMirrorCopy(ResultData);
+
+   // Verify all owned cells
+   bool Passed = true;
+   if constexpr (Rank == 1) {
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+         if (std::abs(static_cast<Real>(ResultHost(i)) -
+                      static_cast<Real>(ExpectedValue)) >
+             static_cast<Real>(Helper::getTolerance())) {
+            Passed = false;
+            break;
+         }
+      }
+   } else if constexpr (Rank == 2) {
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+         for (I4 j = VCoord->MinLayerCellH(i); j <= VCoord->MaxLayerCellH(i);
+              ++j) {
+            if (std::abs(static_cast<Real>(ResultHost(i, j)) -
+                         static_cast<Real>(ExpectedValue)) >
+                static_cast<Real>(Helper::getTolerance())) {
+               Passed = false;
+               break;
+            }
+         }
+         if (!Passed)
+            break;
+      }
+   } else if constexpr (Rank == 3) {
+      for (I4 i = 0; i < Dims[0]; ++i) {
+         for (I4 j = 0; j < Mesh->NCellsOwned; ++j) {
+            for (I4 k = VCoord->MinLayerCellH(j); k <= VCoord->MaxLayerCellH(j);
+                 ++k) {
+               if (std::abs(static_cast<Real>(ResultHost(i, j, k)) -
+                            static_cast<Real>(ExpectedValue)) >
+                   static_cast<Real>(Helper::getTolerance())) {
+                  Passed = false;
+                  break;
+               }
+            }
+            if (!Passed)
+               break;
+         }
+         if (!Passed)
+            break;
+      }
+   }
+
+   reportTest("BinaryMultiplyOp (same-rank): " + TypeName, Passed);
+
+   if (!Passed) {
+      LOG_ERROR("  Expected: {}, Value1: {}, Value2: {}",
+                static_cast<Real>(ExpectedValue), static_cast<Real>(Value1),
+                static_cast<Real>(Value2));
+   }
+}
+
+//------------------------------------------------------------------------------
+// Test BinaryMultiplyOp with vertical expansion (2D x 1D)
+template <typename Array2DType>
+void testBinaryMultiplyOpVerticalExpansion(const std::string &TypeName,
+                                           const MachEnv *Env,
+                                           const HorzMesh *Mesh,
+                                           const VertCoord *VCoord) {
+
+   using Helper2D       = TestHelper<Array2DType>;
+   using ScalarT        = typename Helper2D::ScalarT;
+   constexpr int Rank2D = Helper2D::Rank;
+
+   // Only test 2D arrays for vertical expansion
+   if constexpr (Rank2D != 2) {
+      return;
+   }
+
+   std::vector<I4> Dims2D = Helper2D::getDims(Mesh, VCoord);
+   std::vector<I4> Dims1D = {Dims2D[0]}; // Just horizontal dimension
+
+   std::string Field2DName = "TestField2DVertExp_" + TypeName;
+   std::string Field1DName = "TestField1DVertExp_" + TypeName;
+
+   // Create 2D field with known values
+   ScalarT Value2D = static_cast<ScalarT>(5);
+   Helper2D::createField(Field2DName, Dims2D,
+                         [Value2D](I4 i, I4 j) -> ScalarT { return Value2D; });
+
+   // Create 1D field (horizontal only)
+   ScalarT Value1D = static_cast<ScalarT>(2);
+   using Helper1D  = TestHelper<Array1DR8>; // Use same scalar type base
+   Helper1D::createField(Field1DName, Dims1D,
+                         [Value1D](I4 i) -> ScalarT { return Value1D; });
+
+   ScalarT ExpectedValue = static_cast<ScalarT>(static_cast<Real>(Value2D) *
+                                                static_cast<Real>(Value1D));
+
+   // Create and compute operator (2D x 1D = 2D with vertical expansion)
+   auto MultOp = AnalysisOpFactory::createOp(
+       "BinaryMultiply", {Field2DName, Field1DName}, makeOpConfig());
+   MultOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+
+   TimeInstant TestTime;
+   MultOp->compute(TestTime);
+
+   // Get result
+   auto ResultField =
+       Field::get(Field2DName + "_BinaryMultiply(" + Field1DName + ")");
+   auto ResultData = ResultField->getDataArray<Array2DType>();
+   auto ResultHost = createHostMirrorCopy(ResultData);
+
+   // Verify: all active vertical layers should have same value (1D value
+   // replicated)
+   bool Passed = true;
+   for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+      for (I4 j = VCoord->MinLayerCellH(i); j <= VCoord->MaxLayerCellH(i);
+           ++j) {
+         if (std::abs(static_cast<Real>(ResultHost(i, j)) -
+                      static_cast<Real>(ExpectedValue)) >
+             static_cast<Real>(Helper2D::getTolerance())) {
+            Passed = false;
+            LOG_ERROR("  At ({}, {}): Expected {}, Got {}", i, j,
+                      static_cast<Real>(ExpectedValue),
+                      static_cast<Real>(ResultHost(i, j)));
+            break;
+         }
+      }
+      if (!Passed)
+         break;
+   }
+
+   reportTest("BinaryMultiplyOp (vertical expansion): " + TypeName, Passed);
+
+   if (!Passed) {
+      LOG_ERROR("  Expected: {}, Value2D: {}, Value1D: {}",
+                static_cast<Real>(ExpectedValue), static_cast<Real>(Value2D),
+                static_cast<Real>(Value1D));
+   }
+}
+
+//------------------------------------------------------------------------------
+// Test BinaryMultiplyOp with all array types
+void testBinaryMultiplyOp(const MachEnv *Env, const HorzMesh *Mesh,
+                          const VertCoord *VCoord) {
+
+   // Test same-rank multiplication for 1D arrays
+   testBinaryMultiplyOpSameRank<Array1DI4>("1D-I4", Env, Mesh, VCoord);
+   testBinaryMultiplyOpSameRank<Array1DI8>("1D-I8", Env, Mesh, VCoord);
+   testBinaryMultiplyOpSameRank<Array1DR4>("1D-R4", Env, Mesh, VCoord);
+   testBinaryMultiplyOpSameRank<Array1DR8>("1D-R8", Env, Mesh, VCoord);
+
+   // Test same-rank multiplication for 2D arrays
+   testBinaryMultiplyOpSameRank<Array2DI4>("2D-I4", Env, Mesh, VCoord);
+   testBinaryMultiplyOpSameRank<Array2DI8>("2D-I8", Env, Mesh, VCoord);
+   testBinaryMultiplyOpSameRank<Array2DR4>("2D-R4", Env, Mesh, VCoord);
+   testBinaryMultiplyOpSameRank<Array2DR8>("2D-R8", Env, Mesh, VCoord);
+
+   // Test same-rank multiplication for 3D arrays
+   testBinaryMultiplyOpSameRank<Array3DI4>("3D-I4", Env, Mesh, VCoord);
+   testBinaryMultiplyOpSameRank<Array3DI8>("3D-I8", Env, Mesh, VCoord);
+   testBinaryMultiplyOpSameRank<Array3DR4>("3D-R4", Env, Mesh, VCoord);
+   testBinaryMultiplyOpSameRank<Array3DR8>("3D-R8", Env, Mesh, VCoord);
+
+   // Test vertical expansion for 2D × 1D
+   testBinaryMultiplyOpVerticalExpansion<Array2DI4>("2D-I4", Env, Mesh, VCoord);
+   testBinaryMultiplyOpVerticalExpansion<Array2DI8>("2D-I8", Env, Mesh, VCoord);
+   testBinaryMultiplyOpVerticalExpansion<Array2DR4>("2D-R4", Env, Mesh, VCoord);
+   testBinaryMultiplyOpVerticalExpansion<Array2DR8>("2D-R8", Env, Mesh, VCoord);
+}
+
+//------------------------------------------------------------------------------
+// Template for testing PrefixSumOp with 1D and 2D arrays
+template <typename ArrayType>
+void testPrefixSumOpType(const std::string &TypeName, const MachEnv *Env,
+                         const HorzMesh *Mesh, const VertCoord *VCoord) {
+
+   using Helper       = TestHelper<ArrayType>;
+   using ScalarT      = typename Helper::ScalarT;
+   constexpr int Rank = Helper::Rank;
+
+   const I4 NVertLayers = VCoord->NVertLayers;
+
+   if constexpr (Rank == 1) {
+      // --- 1D forward scan ---
+      std::string FwdName = "TestFieldPrefixSum1D_Fwd_" + TypeName;
+      auto FwdField =
+          Field::create(FwdName, "Test 1D field for PrefixSum forward", "units",
+                        "", static_cast<ScalarT>(-1000),
+                        static_cast<ScalarT>(1000), 1, {"NVertLayers"});
+      ArrayType FwdData(FwdName + "_data", NVertLayers);
+      auto FwdHost = Kokkos::create_mirror_view(FwdData);
+      for (I4 k = 0; k < NVertLayers; ++k) {
+         FwdHost(k) = static_cast<ScalarT>(k + 1); // 1, 2, 3, ...
+      }
+      deepCopy(FwdData, FwdHost);
+      FwdField->template attachData<ArrayType>(FwdData, false);
+
+      auto FwdOp = AnalysisOpFactory::createOp(
+          "PrefixSum", {FwdName},
+          makeOpConfig(opParam("Dimension", 0), opParam("Reverse", false)));
+      FwdOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+      TimeInstant TestTime;
+      FwdOp->compute(TestTime);
+
+      auto FwdResultField = Field::get(FwdName + "_PrefixSum");
+      auto FwdResultData  = FwdResultField->getDataArray<ArrayType>();
+      auto FwdResultHost  = createHostMirrorCopy(FwdResultData);
+
+      bool FwdPassed = true;
+      for (I4 k = 0; k < NVertLayers; ++k) {
+         // Inclusive forward sum: Output[k] = sum(1..k+1) = (k+1)(k+2)/2
+         Real Expected = static_cast<Real>((k + 1) * (k + 2)) / 2.0;
+         Real Computed = static_cast<Real>(FwdResultHost(k));
+         if (std::abs(Computed - Expected) >
+             static_cast<Real>(Helper::getTolerance())) {
+            FwdPassed = false;
+            LOG_ERROR("  1D forward at {}: Expected {}, Got {}", k, Expected,
+                      Computed);
+            break;
+         }
+      }
+      reportTest("PrefixSumOp: " + TypeName + " forward", FwdPassed);
+
+      // --- 1D reverse scan ---
+      std::string RevName = "TestFieldPrefixSum1D_Rev_" + TypeName;
+      auto RevField =
+          Field::create(RevName, "Test 1D field for PrefixSum reverse", "units",
+                        "", static_cast<ScalarT>(-1000),
+                        static_cast<ScalarT>(1000), 1, {"NVertLayers"});
+      ArrayType RevData(RevName + "_data", NVertLayers);
+      auto RevHost = Kokkos::create_mirror_view(RevData);
+      for (I4 k = 0; k < NVertLayers; ++k) {
+         RevHost(k) = static_cast<ScalarT>(k + 1); // 1, 2, 3, ...
+      }
+      deepCopy(RevData, RevHost);
+      RevField->template attachData<ArrayType>(RevData, false);
+
+      auto RevOp = AnalysisOpFactory::createOp(
+          "PrefixSum", {RevName},
+          makeOpConfig(opParam("Dimension", 0), opParam("Reverse", true)));
+      RevOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+      RevOp->compute(TestTime);
+
+      auto RevResultField = Field::get(RevName + "_PrefixSum");
+      auto RevResultData  = RevResultField->getDataArray<ArrayType>();
+      auto RevResultHost  = createHostMirrorCopy(RevResultData);
+
+      bool RevPassed = true;
+      for (I4 k = 0; k < NVertLayers; ++k) {
+         // Inclusive reverse sum: Output[k] = sum(k+1..N)
+         Real Expected = 0.0;
+         for (I4 j = k; j < NVertLayers; ++j) {
+            Expected += static_cast<Real>(j + 1);
+         }
+         Real Computed = static_cast<Real>(RevResultHost(k));
+         if (std::abs(Computed - Expected) >
+             static_cast<Real>(Helper::getTolerance())) {
+            RevPassed = false;
+            LOG_ERROR("  1D reverse at {}: Expected {}, Got {}", k, Expected,
+                      Computed);
+            break;
+         }
+      }
+      reportTest("PrefixSumOp: " + TypeName + " reverse", RevPassed);
+
+   } else if constexpr (Rank == 2) {
+      // Use bins (non-distributed dimension) for testing
+      // Create a simple 2D field: NBins x NVertLayers
+      const I4 NBins = 10; // Small number for testing
+
+      std::string FieldName = "TestFieldPrefixSum_" + TypeName;
+
+      if (!Dimension::exists("TestBins")) {
+         Dimension::create("TestBins", NBins);
+      }
+      // Create field with bins × vertical levels
+      auto TestField =
+          Field::create(FieldName, "Test field for PrefixSum", "units", "",
+                        static_cast<ScalarT>(-1000), static_cast<ScalarT>(1000),
+                        2, {"TestBins", "NVertLayers"});
+      // Allocate and initialize data: value = (bin_idx + 1) * (level + 1)
+      ArrayType TestData(FieldName + "_data", NBins, NVertLayers);
+      auto TestHost = Kokkos::create_mirror_view(TestData);
+      for (I4 i = 0; i < NBins; ++i) {
+         for (I4 j = 0; j < NVertLayers; ++j) {
+            TestHost(i, j) = static_cast<ScalarT>((i + 1) * (j + 1));
+         }
+      }
+      deepCopy(TestData, TestHost);
+      TestField->template attachData<ArrayType>(TestData, false);
+      // Test vertical integration (dimension 1, reverse = true for MOC)
+      auto PrefixOp = AnalysisOpFactory::createOp(
+          "PrefixSum", {FieldName},
+          makeOpConfig(opParam("Dimension", 1), opParam("Reverse", true)));
+      PrefixOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+      TimeInstant TestTime;
+      PrefixOp->compute(TestTime);
+      // Get result
+      auto ResultField = Field::get(FieldName + "_PrefixSum");
+      auto ResultData  = ResultField->getDataArray<ArrayType>();
+      auto ResultHost  = createHostMirrorCopy(ResultData);
+      // Verify reverse cumulative sum
+      bool Passed = true;
+
+      for (I4 i = 0; i < NBins; ++i) {
+         for (I4 j = 0; j < NVertLayers; ++j) {
+            // Compute expected: sum from j to NVertLayers-1
+            Real Expected = 0.0;
+            for (I4 k = j; k < NVertLayers; ++k) {
+               Expected += static_cast<Real>((i + 1) * (k + 1));
+            }
+
+            Real Computed = static_cast<Real>(ResultHost(i, j));
+
+            if (std::abs(Computed - Expected) >
+                static_cast<Real>(Helper::getTolerance())) {
+               Passed = false;
+               LOG_ERROR("  At bin {} level {}: Expected {}, Got {}", i, j,
+                         Expected, Computed);
+               break;
+            }
+         }
+         if (!Passed)
+            break;
+      }
+      reportTest("PrefixSumOp: " + TypeName, Passed);
+   }
+}
+
+//------------------------------------------------------------------------------
+// Test PrefixSumOp with 1D and 2D array types
+void testPrefixSumOp(const MachEnv *Env, const HorzMesh *Mesh,
+                     const VertCoord *VCoord) {
+
+   // Test 1D arrays (e.g., output from TransectAccumulatorOp)
+   testPrefixSumOpType<Array1DI4>("1D-I4", Env, Mesh, VCoord);
+   testPrefixSumOpType<Array1DI8>("1D-I8", Env, Mesh, VCoord);
+   testPrefixSumOpType<Array1DR4>("1D-R4", Env, Mesh, VCoord);
+   testPrefixSumOpType<Array1DR8>("1D-R8", Env, Mesh, VCoord);
+
+   // Test 2D arrays (most relevant for MOC vertical integration)
+   testPrefixSumOpType<Array2DI4>("2D-I4", Env, Mesh, VCoord);
+   testPrefixSumOpType<Array2DI8>("2D-I8", Env, Mesh, VCoord);
+   testPrefixSumOpType<Array2DR4>("2D-R4", Env, Mesh, VCoord);
+   testPrefixSumOpType<Array2DR8>("2D-R8", Env, Mesh, VCoord);
+}
+
+//------------------------------------------------------------------------------
+// Template for testing PrefixSumOp with boundary condition (BC)
+template <typename ArrayType>
+void testPrefixSumOpWithBCType(const std::string &TypeName, const MachEnv *Env,
+                               const HorzMesh *Mesh, const VertCoord *VCoord) {
+
+   using Helper       = TestHelper<ArrayType>;
+   using ScalarT      = typename Helper::ScalarT;
+   constexpr int Rank = Helper::Rank;
+
+   // Only test 2D arrays for PrefixSum (most relevant for MOC)
+   if constexpr (Rank != 2) {
+      return;
+   }
+
+   // Only test floating point types (BC feature used with real transport
+   // fields)
+   if constexpr (!std::is_floating_point_v<ScalarT>) {
+      return;
+   }
+
+   // Use bins (non-distributed dimension) for testing horizontal scan with BC
+   const I4 NBins       = 10; // Small number for testing
+   const I4 NVertLayers = VCoord->NVertLayers;
+
+   std::string InputFieldName = "TestFieldPrefixSumBC_" + TypeName;
+   std::string BCFieldName    = "TestBCPrefixSum_" + TypeName;
+
+   // Ensure TestBins dimension exists
+   if (!Dimension::exists("TestBins")) {
+      Dimension::create("TestBins", NBins);
+   }
+
+   // Create BC field (1D: NVertLayers)
+   // BC values represent boundary transport at southern edge (for regional MOC)
+   auto BCField = Field::create(BCFieldName, "Test BC for PrefixSum", "m3/s",
+                                "", static_cast<ScalarT>(-1e30),
+                                static_cast<ScalarT>(1e30), 1, {"NVertLayers"});
+
+   Array1DReal BCData(BCFieldName + "_data", NVertLayers);
+   BCField->template attachData<Array1DReal>(BCData, false);
+
+   auto BCHost = Kokkos::create_mirror_view(BCData);
+   for (I4 k = 0; k < NVertLayers; ++k) {
+      BCHost(k) = 100.0 * (k + 1); // Simple BC values: 100, 200, 300, ...
+   }
+   deepCopy(BCData, BCHost);
+
+   // Create input field (2D: NBins × NVertLayers)
+   auto InputField = Field::create(
+       InputFieldName, "Test field for PrefixSum with BC", "m3/s", "",
+       static_cast<ScalarT>(-1e30), static_cast<ScalarT>(1e30), 2,
+       {"TestBins", "NVertLayers"});
+
+   ArrayType InputData(InputFieldName + "_data", NBins, NVertLayers);
+   auto InputHost = Kokkos::create_mirror_view(InputData);
+   for (I4 i = 0; i < NBins; ++i) {
+      for (I4 k = 0; k < NVertLayers; ++k) {
+         InputHost(i, k) =
+             static_cast<ScalarT>((i + 1) * (k + 1)); // 1,2,3... at bin 0,
+                                                      // 2,4,6... at bin 1, etc.
+      }
+   }
+   deepCopy(InputData, InputHost);
+   InputField->template attachData<ArrayType>(InputData, false);
+
+   // Test horizontal integration with BC (dimension 0, forward scan)
+   // This simulates regional MOC where BC provides southern boundary transport
+   auto PrefixOp = AnalysisOpFactory::createOp(
+       "PrefixSum", {InputFieldName, BCFieldName},
+       makeOpConfig(opParam("Dimension", 0), opParam("Reverse", false)));
+   PrefixOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+
+   TimeInstant TestTime;
+   PrefixOp->compute(TestTime);
+
+   // Get result
+   auto ResultField =
+       Field::get(InputFieldName + "_PrefixSum(BC=" + BCFieldName + ")");
+   auto ResultData = ResultField->getDataArray<ArrayType>();
+   auto ResultHost = createHostMirrorCopy(ResultData);
+
+   // Verify forward cumulative sum with BC seeding
+   bool Passed = true;
+
+   for (I4 i = 0; i < NBins; ++i) {
+      for (I4 k = 0; k < NVertLayers; ++k) {
+         // Compute expected: BC(k) + sum from 0 to i of Input(i,k)
+         // At i=0: BC(k) + Input(0,k)
+         // At i=1: BC(k) + Input(0,k) + Input(1,k)
+         // etc.
+         Real Expected = static_cast<Real>(BCHost(k));
+         for (I4 bin = 0; bin <= i; ++bin) {
+            Expected += static_cast<Real>(InputHost(bin, k));
+         }
+
+         Real Computed = static_cast<Real>(ResultHost(i, k));
+
+         if (std::abs(Computed - Expected) >
+             static_cast<Real>(Helper::getTolerance())) {
+            Passed = false;
+            LOG_ERROR("  At bin {} level {}: Expected {}, Got {}", i, k,
+                      Expected, Computed);
+            break;
+         }
+      }
+      if (!Passed)
+         break;
+   }
+
+   reportTest("PrefixSumOpWithBC: " + TypeName, Passed);
+}
+
+//------------------------------------------------------------------------------
+// Test PrefixSumOp with boundary condition using 2D array types
+void testPrefixSumOpWithBC(const MachEnv *Env, const HorzMesh *Mesh,
+                           const VertCoord *VCoord) {
+
+   // Test 2D floating-point arrays (BC feature used for MOC regional transport)
+   testPrefixSumOpWithBCType<Array2DR4>("2D-R4", Env, Mesh, VCoord);
+   testPrefixSumOpWithBCType<Array2DR8>("2D-R8", Env, Mesh, VCoord);
+}
+
+//------------------------------------------------------------------------------
+// Test CoordinateBinningOp with 1D coordinate arrays
+void testCoordinateBinningOp(const MachEnv *Env, const HorzMesh *Mesh,
+                             const VertCoord *VCoord) {
+
+   int MyRank;
+   MPI_Comm_rank(Env->getComm(), &MyRank);
+
+   std::string FieldName = "TestCoordBinning";
+
+   // Create a simple 1D coordinate field with values from -90 to 90 (like
+   // latitude)
+   I4 NCells = Mesh->NCellsSize;
+   auto TestField =
+       Field::create(FieldName, "Test coordinate field for binning", "degrees",
+                     "", -180.0, 180.0, 1, {"NCells"});
+
+   Array1DR8 TestData(FieldName + "_data", NCells);
+   TestField->attachData<Array1DR8>(TestData, false);
+
+   auto TestDataHost = Kokkos::create_mirror_view(TestData);
+   auto Decomp       = Decomp::getDefault();
+   auto CellIDH      = Decomp->CellIDH;
+
+   // Create latitude-like distribution: map global cell ID to latitude
+   for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+      Real Fraction = static_cast<Real>(CellIDH(i) - 1) /
+                      static_cast<Real>(Mesh->NCellsGlobal - 1);
+      TestDataHost(i) = -90.0 + Fraction * 180.0; // -90 to +90
+   }
+   deepCopy(TestData, TestDataHost);
+
+   // Create CoordinateBinning operator
+   I4 NumBins     = 18; // 10-degree bins
+   auto BinningOp = AnalysisOpFactory::createOp(
+       "CoordinateBinning", {FieldName},
+       makeOpConfig(opParam("NumBins", NumBins), opParam("MinBin", -90.0),
+                    opParam("MaxBin", 90.0)));
+
+   BinningOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+
+   TimeInstant TestTime;
+   BinningOp->compute(TestTime);
+
+   // Get result (bin indices)
+   auto ResultField = Field::get(FieldName + "_BinIndex");
+   auto ResultData  = ResultField->getDataArray<Array1DI4>();
+   auto ResultHost  = createHostMirrorCopy(ResultData);
+
+   // Verify bin assignments
+   bool Passed = true;
+   for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+      Real Coord     = TestDataHost(i);
+      I4 ComputedBin = ResultHost(i);
+      // Replicate exact operator logic including margins
+      // (operator adds margin = (MaxBin-MinBin)*1e-6 to both ends)
+      Real RawMin    = -90.0;
+      Real RawMax    = 90.0;
+      Real Margin    = (RawMax - RawMin) * 1.0e-6;
+      Real AdjMinBin = RawMin - Margin;
+      Real AdjMaxBin = RawMax + Margin;
+      Real BinWidth  = (AdjMaxBin - AdjMinBin) / static_cast<Real>(NumBins);
+
+      I4 ExpectedBin = static_cast<I4>((Coord - AdjMinBin) / BinWidth);
+
+      // Clamp to valid range [0, NumBins-1] as the operator does
+      if (ExpectedBin < 0) {
+         ExpectedBin = 0;
+      } else if (ExpectedBin >= NumBins) {
+         ExpectedBin = NumBins - 1;
+      }
+
+      if (ComputedBin != ExpectedBin) {
+         Passed = false;
+         LOG_ERROR("  At index {}: Coord={}, Expected bin {}, Got bin {}", i,
+                   Coord, ExpectedBin, ComputedBin);
+         break;
+      }
+   }
+
+   reportTest("CoordinateBinningOp", Passed);
+}
+
+//------------------------------------------------------------------------------
+// Test BinnedAccumulatorOp with 2D field and bin indices
+void testBinnedAccumulatorOp(const MachEnv *Env, const HorzMesh *Mesh,
+                             const VertCoord *VCoord) {
+
+   // Create bin index field (assign cells to bins based on pattern)
+   I4 NCells  = Mesh->NCellsSize;
+   I4 NumBins = 5;
+
+   std::string BinIndexFieldName = "TestBinIndices";
+   auto BinField = Field::create(BinIndexFieldName, "Test bin indices", "1", "",
+                                 0, NumBins, 1, {"NCells"});
+
+   Array1DI4 BinData(BinIndexFieldName + "_data", NCells);
+   BinField->attachData<Array1DI4>(BinData, false);
+
+   auto BinDataHost = Kokkos::create_mirror_view(BinData);
+   for (I4 i = 0; i < NCells; ++i) {
+      BinDataHost(i) = i % NumBins; // Distribute cells across bins
+   }
+   deepCopy(BinData, BinDataHost);
+
+   // Create value field to accumulate (2D: NCells × NVertLayers)
+   std::string ValueFieldName = "TestAccumValues";
+   I4 NVertLayers             = VCoord->NVertLayers;
+
+   auto ValueField =
+       Field::create(ValueFieldName, "Test values for accumulation", "m3/s", "",
+                     -1e30, 1e30, 2, {"NCells", "NVertLayers"});
+
+   Array2DR8 ValueData(ValueFieldName + "_data", NCells, NVertLayers);
+   ValueField->attachData<Array2DR8>(ValueData, false);
+
+   auto ValueDataHost = Kokkos::create_mirror_view(ValueData);
+   for (I4 i = 0; i < NCells; ++i) {
+      for (I4 j = 0; j < NVertLayers; ++j) {
+         ValueDataHost(i, j) = 1.0; // Uniform value for easy verification
+      }
+   }
+   deepCopy(ValueData, ValueDataHost);
+
+   // Create BinnedAccumulator operator
+   auto AccumOp = AnalysisOpFactory::createOp(
+       "BinnedAccumulator", {ValueFieldName, BinIndexFieldName},
+       makeOpConfig(opParam("NumBins", NumBins)));
+   AccumOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+
+   TimeInstant TestTime;
+   AccumOp->compute(TestTime);
+
+   // Get result (should be NumBins × NVertLayers)
+   auto ResultField = Field::get(ValueFieldName + "_BinnedAccumulator(" +
+                                 BinIndexFieldName + ")");
+   auto ResultData  = ResultField->getDataArray<Array2DR8>();
+   auto ResultHost  = createHostMirrorCopy(ResultData);
+
+   // Calculate expected sums per bin per layer, respecting MinLayer/MaxLayer
+   // (only cells where layer K is active contribute to that layer's bin sum)
+   // Local counts per bin per layer
+   std::vector<std::vector<I8>> LocalCounts(NumBins,
+                                            std::vector<I8>(NVertLayers, 0));
+   for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+      I4 BinIdx = BinDataHost(i);
+      I4 KMin   = VCoord->MinLayerCellH(i);
+      I4 KMax   = VCoord->MaxLayerCellH(i);
+      for (I4 k = KMin; k <= KMax; ++k) {
+         LocalCounts[BinIdx][k]++;
+      }
+   }
+
+   // Global sum across MPI ranks
+   std::vector<std::vector<I8>> GlobalCounts(NumBins,
+                                             std::vector<I8>(NVertLayers, 0));
+   for (I4 bin = 0; bin < NumBins; ++bin) {
+      for (I4 k = 0; k < NVertLayers; ++k) {
+         GlobalCounts[bin][k] = globalSum(LocalCounts[bin][k], Env->getComm());
+      }
+   }
+
+   // Verify: each bin/layer sum should equal count * 1.0 (uniform value field)
+   bool Passed = true;
+   for (I4 bin = 0; bin < NumBins; ++bin) {
+      for (I4 k = 0; k < NVertLayers; ++k) {
+         Real Expected = static_cast<Real>(GlobalCounts[bin][k]) * 1.0;
+         Real Computed = ResultHost(bin, k);
+
+         if (std::abs(Computed - Expected) > 1.0e-8) {
+            Passed = false;
+            LOG_ERROR("  Bin {}, Layer {}: Expected {}, Got {}", bin, k,
+                      Expected, Computed);
+            break;
+         }
+      }
+      if (!Passed)
+         break;
+   }
+
+   reportTest("BinnedAccumulatorOp", Passed);
+}
+
+//------------------------------------------------------------------------------
+// Template for testing PseudoToGeometricOp with any array type
+template <typename ArrayType>
+void testPseudoToGeometricOpType(const std::string &TypeName,
+                                 const MachEnv *Env, const HorzMesh *Mesh,
+                                 const VertCoord *VCoord) {
+
+   using Helper       = TestHelper<ArrayType>;
+   using ScalarT      = typename Helper::ScalarT;
+   constexpr int Rank = Helper::Rank;
+
+   // Only test Real types (R4, R8) since SpecVol multiplication requires reals
+   if constexpr (!std::is_floating_point_v<ScalarT>) {
+      return;
+   }
+
+   std::vector<I4> Dims  = Helper::getDims(Mesh, VCoord);
+   std::string FieldName = "TestFieldPseudoToGeom_" + TypeName;
+
+   // Create and populate SpecVol Field with test data
+   auto SpecVolField = Field::get("SpecVol");
+   if (!SpecVolField) {
+      // Create SpecVol field if it doesn't exist
+      SpecVolField = Field::create("SpecVol", "Test specific volume", "m^3/kg",
+                                   "", 0.0, 10.0, 2, {"NCells", "NVertLayers"});
+
+      Array2DReal SpecVolDataNew("SpecVol_data", Mesh->NCellsSize,
+                                 VCoord->NVertLayers);
+      SpecVolField->attachData<Array2DReal>(SpecVolDataNew, false);
+   }
+
+   auto SpecVolData = SpecVolField->getDataArray<Array2DReal>();
+   auto SpecVolHost = Kokkos::create_mirror_view(SpecVolData);
+
+   // Fill with test values: SpecVol(i,k) = 1.0 + 0.01*i + 0.001*k
+   for (I4 i = 0; i < Mesh->NCellsSize; ++i) {
+      for (I4 k = 0; k < VCoord->NVertLayers; ++k) {
+         SpecVolHost(i, k) = 1.0 + 0.01 * i + 0.001 * k;
+      }
+   }
+   deepCopy(SpecVolData, SpecVolHost);
+
+   // Create pseudo-coordinate test field with known values
+   if constexpr (Rank == 1) {
+      Helper::createField(FieldName, Dims, [](I4 i) -> ScalarT {
+         return static_cast<ScalarT>(i + 1); // Simple linear values
+      });
+   } else if constexpr (Rank == 2) {
+      Helper::createField(FieldName, Dims, [](I4 i, I4 k) -> ScalarT {
+         return static_cast<ScalarT>((i + 1) * (k + 1)); // Product of indices
+      });
+   } else if constexpr (Rank == 3) {
+      Helper::createField(FieldName, Dims, [](I4 i, I4 j, I4 k) -> ScalarT {
+         return static_cast<ScalarT>((i + 1) * (j + 1) * (k + 1));
+      });
+   }
+
+   // Create and compute operator
+   auto PseudoToGeomOp = AnalysisOpFactory::createOp(
+       "PseudoToGeometric", {FieldName}, makeOpConfig());
+   PseudoToGeomOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+
+   TimeInstant TestTime;
+   PseudoToGeomOp->compute(TestTime);
+
+   // Get result
+   auto ResultField = Field::get(FieldName + "_PseudoToGeometric");
+   auto ResultData  = ResultField->getDataArray<ArrayType>();
+   auto ResultHost  = createHostMirrorCopy(ResultData);
+
+   // Get input field for verification
+   auto InputField = Field::get(FieldName);
+   auto InputData  = InputField->getDataArray<ArrayType>();
+   auto InputHost  = createHostMirrorCopy(InputData);
+
+   // Verify all elements
+   bool Passed     = true;
+   Real Tolerance  = static_cast<Real>(Helper::getTolerance());
+   int NumVerified = 0;
+
+   if constexpr (Rank == 1) {
+      // 1D: check all horizontal points
+      for (I4 i = 0; i < Mesh->NCellsOwned; i++) {
+         // Compute expected using same precision path as operator
+         Real PseudoVal  = static_cast<Real>(InputHost(i));
+         Real SpecVolVal = SpecVolHost(i, 0);
+         ScalarT Expected =
+             static_cast<ScalarT>(RhoSw * SpecVolVal * PseudoVal);
+         ScalarT Computed = ResultHost(i);
+
+         if (std::abs(static_cast<Real>(Computed) -
+                      static_cast<Real>(Expected)) /
+                 static_cast<Real>(Expected) >
+             Tolerance) {
+            Passed = false;
+            break;
+         }
+         NumVerified++;
+      }
+   } else if constexpr (Rank == 2) {
+      // 2D: check all (i,k) points in active layers
+      for (I4 i = 0; i < Mesh->NCellsOwned; i++) {
+         // Respect active layer bounds for this cell, clamped to array bounds
+         I4 KMin = VCoord->MinLayerCellH(i);
+         I4 KMax = VCoord->MaxLayerCellH(i);
+         for (I4 k = KMin; k <= KMax; k++) {
+            // Compute expected using same precision path as operator
+            Real PseudoVal  = static_cast<Real>(InputHost(i, k));
+            Real SpecVolVal = SpecVolHost(i, k);
+            ScalarT Expected =
+                static_cast<ScalarT>(RhoSw * SpecVolVal * PseudoVal);
+            ScalarT Computed = ResultHost(i, k);
+
+            if (std::abs(static_cast<Real>(Computed) -
+                         static_cast<Real>(Expected)) /
+                    static_cast<Real>(Expected) >
+                Tolerance) {
+               Passed = false;
+               break;
+            }
+            NumVerified++;
+         }
+         if (!Passed)
+            break;
+      }
+   } else if constexpr (Rank == 3) {
+      // 3D: check all (i,j,k) points in active layers
+      for (I4 i = 0; i < Dims[0]; i++) {
+         for (I4 j = 0; j < Mesh->NCellsOwned; j++) {
+            // Respect active layer bounds for this cell, clamped to array
+            // bounds
+            I4 KMin = VCoord->MinLayerCellH(j);
+            I4 KMax = VCoord->MaxLayerCellH(j);
+            for (I4 k = KMin; k <= KMax; k++) {
+               // Compute expected using same precision path as operator
+               Real PseudoVal  = static_cast<Real>(InputHost(i, j, k));
+               Real SpecVolVal = SpecVolHost(j, k);
+               ScalarT Expected =
+                   static_cast<ScalarT>(RhoSw * SpecVolVal * PseudoVal);
+               ScalarT Computed = ResultHost(i, j, k);
+
+               if (std::abs(static_cast<Real>(Computed) -
+                            static_cast<Real>(Expected)) /
+                       static_cast<Real>(Expected) >
+                   Tolerance) {
+                  Passed = false;
+                  break;
+               }
+               NumVerified++;
+            }
+            if (!Passed)
+               break;
+         }
+         if (!Passed)
+            break;
+      }
+   }
+
+   reportTest("PseudoToGeometricOp: " + TypeName, Passed);
+
+   if (!Passed) {
+      LOG_ERROR("PseudoToGeometricOp {} test failed after verifying {} points",
+                TypeName, NumVerified);
+   }
+}
+
+//------------------------------------------------------------------------------
+// Test PseudoToGeometricOp with all supported array types
+void testPseudoToGeometricOp(const MachEnv *Env, const HorzMesh *Mesh,
+                             const VertCoord *VCoord) {
+
+   // Test 1D arrays
+   testPseudoToGeometricOpType<Array1DR4>("Array1DR4", Env, Mesh, VCoord);
+   testPseudoToGeometricOpType<Array1DR8>("Array1DR8", Env, Mesh, VCoord);
+
+   // Test 2D arrays
+   testPseudoToGeometricOpType<Array2DR4>("Array2DR4", Env, Mesh, VCoord);
+   testPseudoToGeometricOpType<Array2DR8>("Array2DR8", Env, Mesh, VCoord);
+
+   // Test 3D arrays
+   testPseudoToGeometricOpType<Array3DR4>("Array3DR4", Env, Mesh, VCoord);
+   testPseudoToGeometricOpType<Array3DR8>("Array3DR8", Env, Mesh, VCoord);
+}
+
+//------------------------------------------------------------------------------
+// Test ExtractRegionOp for a specific array type
+template <typename ArrayType>
+void testExtractRegionOpType(const std::string &TypeName, const MachEnv *Env,
+                             const HorzMesh *Mesh, const VertCoord *VCoord) {
+
+   using Helper       = TestHelper<ArrayType>;
+   using ScalarT      = typename Helper::ScalarT;
+   constexpr int Rank = Helper::Rank;
+
+   // Get dimensions and create test input field
+   auto Dims     = Helper::getDims(Mesh, VCoord);
+   auto DimNames = Helper::getDimNames();
+
+   std::string InputFieldName = "TestExtractRegionInput_" + TypeName;
+   std::string MaskFieldName  = "TestExtractRegionMask";
+
+   // Create input field with known values
+   Helper::createField(InputFieldName, Dims, [](auto... indices) {
+      // Sum of indices + 1 to ensure non-zero values
+      return static_cast<ScalarT>((indices + ...) + 1);
+   });
+
+   // Create mask field (1D horizontal, I4)
+   // Mask = 1 for first half of cells, 0 for second half
+   auto MaskField = Field::create(MaskFieldName, "Test regional mask", "1", "",
+                                  0, 1, 1, {"NCells"});
+
+   Array1DI4 MaskData(MaskFieldName + "_data", Mesh->NCellsSize);
+   MaskField->attachData<Array1DI4>(MaskData, false);
+
+   auto MaskDataHost = Kokkos::create_mirror_view(MaskData);
+   I4 MidPoint       = Mesh->NCellsOwned / 2;
+   for (I4 i = 0; i < Mesh->NCellsSize; ++i) {
+      MaskDataHost(i) = (i < MidPoint) ? 1 : 0;
+   }
+   deepCopy(MaskData, MaskDataHost);
+
+   // Create ExtractRegionOp
+   auto Op = AnalysisOpFactory::createOp(
+       "ExtractRegion", {InputFieldName},
+       makeOpConfig(opParam("MaskName", MaskFieldName)));
+
+   Op->initialize(Env, Mesh, VCoord, makeOpConfig());
+
+   // Compute
+   TimeInstant TestTime;
+   Op->compute(TestTime);
+
+   // Get result
+   auto OutputNames = Op->getOutputFieldNames();
+   OMEGA_ASSERT(OutputNames.size() == 1,
+                "ExtractRegionOp should have 1 output");
+
+   auto ResultField = Field::get(OutputNames[0]);
+   auto ResultData  = ResultField->getDataArray<ArrayType>();
+   auto ResultHost  = createHostMirrorCopy(ResultData);
+
+   // Get input for verification
+   auto InputField = Field::get(InputFieldName);
+   auto InputData  = InputField->getDataArray<ArrayType>();
+   auto InputHost  = createHostMirrorCopy(InputData);
+
+   // Verify: where mask=1, result should equal input; where mask=0, result
+   // should equal fill value
+   bool Passed               = true;
+   ScalarT Tol               = Helper::getTolerance();
+   int NumVerified           = 0;
+   constexpr ScalarT FillVal = FillValue<ScalarT>;
+
+   if constexpr (Rank == 1) {
+      // 1D: check all horizontal points
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+         I4 MaskVal       = MaskDataHost(i);
+         ScalarT Computed = ResultHost(i);
+         ScalarT Expected;
+
+         if (MaskVal == 0) {
+            // Where mask is 0, expect fill value (not computed)
+            Expected = FillVal;
+         } else {
+            // Where mask is 1, expect input value
+            Expected = InputHost(i);
+         }
+
+         Real RelErr = std::abs(static_cast<Real>(Computed - Expected)) /
+                       std::abs(static_cast<Real>(Expected));
+         if (RelErr > Tol) {
+            Passed = false;
+            LOG_ERROR("  1D mismatch at cell {}: Mask={}, Expected {}, Got {}, "
+                      "RelErr={}",
+                      i, MaskVal, static_cast<Real>(Expected),
+                      static_cast<Real>(Computed), RelErr);
+            break;
+         }
+         NumVerified++;
+      }
+   } else if constexpr (Rank == 2) {
+      // 2D: check all (i,k) points in active layers
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+         I4 KMin    = VCoord->MinLayerCellH(i);
+         I4 KMax    = VCoord->MaxLayerCellH(i);
+         I4 MaskVal = MaskDataHost(i);
+         for (I4 k = KMin; k <= KMax; ++k) {
+            ScalarT Computed = ResultHost(i, k);
+            ScalarT Expected;
+
+            if (MaskVal == 0) {
+               // Where mask is 0, expect fill value (not computed)
+               Expected = FillVal;
+            } else {
+               // Where mask is 1, expect input value
+               Expected = InputHost(i, k);
+            }
+
+            Real RelErr = std::abs(static_cast<Real>(Computed - Expected)) /
+                          std::abs(static_cast<Real>(Expected));
+            if (RelErr > Tol) {
+               Passed = false;
+               LOG_ERROR("  2D mismatch at cell {}, layer {}: Mask={}, "
+                         "Expected {}, Got {}, RelErr={}",
+                         i, k, MaskVal, static_cast<Real>(Expected),
+                         static_cast<Real>(Computed), RelErr);
+               break;
+            }
+            NumVerified++;
+         }
+         if (!Passed)
+            break;
+      }
+   } else if constexpr (Rank == 3) {
+      // 3D: check all (i,j,k) points in active layers
+      for (I4 i = 0; i < Dims[0]; ++i) {
+         for (I4 j = 0; j < Mesh->NCellsOwned; ++j) {
+            I4 KMin    = VCoord->MinLayerCellH(j);
+            I4 KMax    = VCoord->MaxLayerCellH(j);
+            I4 MaskVal = MaskDataHost(j);
+            for (I4 k = KMin; k <= KMax; ++k) {
+               ScalarT Computed = ResultHost(i, j, k);
+               ScalarT Expected;
+
+               if (MaskVal == 0) {
+                  // Where mask is 0, expect fill value (not computed)
+                  Expected = FillVal;
+               } else {
+                  // Where mask is 1, expect input value
+                  Expected = InputHost(i, j, k);
+               }
+
+               Real RelErr = std::abs(static_cast<Real>(Computed - Expected)) /
+                             std::abs(static_cast<Real>(Expected));
+               if (RelErr > Tol) {
+                  Passed = false;
+                  LOG_ERROR("  3D mismatch at i={}, cell {}, layer {}: "
+                            "Mask={}, Expected {}, Got {}, RelErr={}",
+                            i, j, k, MaskVal, static_cast<Real>(Expected),
+                            static_cast<Real>(Computed), RelErr);
+                  break;
+               }
+               NumVerified++;
+            }
+            if (!Passed)
+               break;
+         }
+         if (!Passed)
+            break;
+      }
+   }
+
+   // Verify output field has mask attached
+   if (Passed && !ResultField->hasRegionalMask()) {
+      Passed = false;
+      LOG_ERROR(
+          "  ExtractRegionOp output field missing regional mask attachment");
+   }
+
+   reportTest("ExtractRegionOp: " + TypeName, Passed);
+
+   if (!Passed) {
+      LOG_ERROR("ExtractRegionOp {} test failed after verifying {} points",
+                TypeName, NumVerified);
+   }
+
+   Field::destroy(MaskFieldName);
+}
+
+//------------------------------------------------------------------------------
+// Test HorzMeanOp: area-weighted per-layer horizontal mean of a 2D field.
+// Sub-test 1 (unmasked): verifies the weighted mean matches a host-computed
+// reference using AreaCell weights and CellMask, that cells with an exactly-
+// zero input value are excluded from both numerator and denominator (emulating
+// an upstream ExtractRegion that zeroes out-of-region cells), and that a
+// fully-zeroed level yields a guarded zero result (zero-denominator guard).
+// Sub-test 2 (masked): attaches a 1D regional mask to the input Field and
+// verifies that per-level means match a host reference computed with the same
+// mask — confirming that zero-valued cells inside the region are included and
+// non-zero cells outside the region are excluded.
+// Sub-test 3 (interface): supplies an interface-dimensioned input
+// (NVertLayersP1) and verifies the operator auto-detects the staggering and
+// uses the extended active range [MinLayer, MaxLayer+1].
+void testHorzMeanOp(const MachEnv *Env, const HorzMesh *Mesh,
+                    const VertCoord *VCoord) {
+
+   using Helper = TestHelper<Array2DR8>;
+
+   auto Dims                  = Helper::getDims(Mesh, VCoord);
+   std::string InputFieldName = "TestHorzMeanInput";
+   const I4 NVert             = VCoord->NVertLayers;
+
+   // Global cell IDs (1-based) so the input values and the excluded region
+   // block are identical physical cells regardless of MPI decomposition.
+   auto Decomp        = Decomp::getDefault();
+   auto CellIDH       = Decomp->CellIDH;
+   const I4 NCellsGlb = Mesh->NCellsGlobal;
+
+   // Build a known input keyed on global cell ID. Force one vertical level
+   // (ZeroLevel) to be exactly zero at every cell to exercise the
+   // zero-denominator guard, and zero out a globally-defined block of cells at
+   // another level (RegionLevel) to exercise presence-based exclusion. Both
+   // choices are decomposition-independent for MPI correctness.
+   const I4 ZeroLevel   = 0;
+   const I4 RegionLevel = (NVert > 1) ? 1 : 0;
+   const I4 BlockGID    = NCellsGlb / 2; // exclude global IDs >= BlockGID
+
+   Helper::createField(
+       InputFieldName, Dims,
+       [ZeroLevel, RegionLevel, BlockGID, CellIDH](I4 i, I4 k) {
+          I4 GID = CellIDH(i) - 1; // 0-based global id
+          if (k == ZeroLevel)
+             return 0.0; // whole level zero -> guarded result
+          if (k == RegionLevel && GID >= BlockGID)
+             return 0.0; // excluded block (emulates out-of-region zeroing)
+          return static_cast<double>((GID + 1) * (k + 1));
+       });
+
+   // -------------------------------------------------------------------------
+   // Sub-test 1: no regional mask attached — legacy Value != 0 behaviour
+   // -------------------------------------------------------------------------
+   auto Op = AnalysisOpFactory::createOp("HorzMean", {InputFieldName},
+                                         makeOpConfig());
+   Op->initialize(Env, Mesh, VCoord, makeOpConfig());
+   TimeInstant TestTime;
+   Op->compute(TestTime);
+
+   auto OutputNames = Op->getOutputFieldNames();
+   OMEGA_ASSERT(OutputNames.size() == 1, "HorzMeanOp should have 1 output");
+   auto ResultField = Field::get(OutputNames[0]);
+   auto ResultData  = ResultField->getDataArray<Array1DReal>();
+   auto ResultHost  = createHostMirrorCopy(ResultData);
+
+   // Host references from the same weights/mask the operator uses
+   auto InputField = Field::get(InputFieldName);
+   auto InputHost = createHostMirrorCopy(InputField->getDataArray<Array2DR8>());
+   auto AreaHost  = createHostMirrorCopy(Mesh->AreaCell);
+   auto MinLayerH = VCoord->MinLayerCellH;
+   auto MaxLayerH = VCoord->MaxLayerCellH;
+
+   bool Passed    = true;
+   const Real Tol = 1.0e-8;
+   for (I4 k = 0; k < NVert; ++k) {
+      // Accumulate this rank's owned contribution, then reduce globally with
+      // the same semantics as the operator so the reference is MPI-correct.
+      // The input is on mid-layers, so the active range is [MinLayer,
+      // MaxLayer].
+      Real LocalNum = 0.0, LocalDen = 0.0;
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+         const bool Active = (k >= MinLayerH(i) && k <= MaxLayerH(i));
+         Real Value        = InputHost(i, k);
+         if (Active && Value != 0.0) {
+            LocalNum += AreaHost(i) * Value;
+            LocalDen += AreaHost(i);
+         }
+      }
+      Real GlobalNum = globalSum(LocalNum, Env->getComm());
+      Real GlobalDen = globalSum(LocalDen, Env->getComm());
+
+      Real Expected = (GlobalDen != 0.0) ? (GlobalNum / GlobalDen) : 0.0;
+      Real Computed = ResultHost(k);
+      Real Err      = std::abs(Computed - Expected);
+      if (Err > Tol * (1.0 + std::abs(Expected))) {
+         Passed = false;
+         LOG_ERROR("  HorzMean (unmasked) mismatch at level {}: "
+                   "Expected {}, Got {}",
+                   k, Expected, Computed);
+         break;
+      }
+   }
+
+   // Explicitly confirm the fully-zeroed level yielded the guarded zero.
+   if (Passed && std::abs(ResultHost(ZeroLevel)) > Tol) {
+      Passed = false;
+      LOG_ERROR("  HorzMean zero-denominator guard failed at level {}: Got {}",
+                ZeroLevel, ResultHost(ZeroLevel));
+   }
+
+   reportTest("HorzMeanOp", Passed);
+
+   Field::destroy(OutputNames[0]);
+
+   // -------------------------------------------------------------------------
+   // Sub-test 2: 1D regional mask attached to input Field.
+   //
+   // Use a mask that selects global IDs [0, BlockGID) and excludes the rest —
+   // the same geographic split used for RegionLevel above, but now expressed
+   // as an explicit 1D mask rather than zeroed values. With the mask in place:
+   //   - zero-valued cells INSIDE the region are INCLUDED in the mean,
+   //   - non-zero cells OUTSIDE the region are EXCLUDED from the mean.
+   // This is the opposite of the legacy Value != 0 path, confirming the mask
+   // takes full control when attached.
+   // -------------------------------------------------------------------------
+   Array1DI4 RegMaskData("HorzMeanTestRegMask", Mesh->NCellsSize);
+   auto RegMaskHost = Kokkos::create_mirror_view(RegMaskData);
+   for (I4 i = 0; i < Mesh->NCellsSize; ++i) {
+      I4 GID         = CellIDH(i) - 1; // 0-based global id
+      RegMaskHost(i) = (GID < BlockGID) ? 1 : 0;
+   }
+   Kokkos::deep_copy(RegMaskData, RegMaskHost);
+   InputField->setRegionalMask(RegMaskData);
+
+   // Re-create the operator — initialize() must detect the newly attached mask.
+   auto Op2 = AnalysisOpFactory::createOp("HorzMean", {InputFieldName},
+                                          makeOpConfig());
+   Op2->initialize(Env, Mesh, VCoord, makeOpConfig());
+   Op2->compute(TestTime);
+
+   auto OutputNames2 = Op2->getOutputFieldNames();
+   OMEGA_ASSERT(OutputNames2.size() == 1, "HorzMeanOp should have 1 output");
+   auto ResultField2 = Field::get(OutputNames2[0]);
+   auto ResultHost2 =
+       createHostMirrorCopy(ResultField2->getDataArray<Array1DReal>());
+
+   bool Passed2 = true;
+   for (I4 k = 0; k < NVert; ++k) {
+      // Host reference: include cell i iff VertCoord mask is active AND the
+      // regional mask selects it. No Value != 0 requirement — genuinely zero
+      // in-region values participate in the mean.
+      Real LocalNum = 0.0, LocalDen = 0.0;
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+         const bool Active = (k >= MinLayerH(i) && k <= MaxLayerH(i));
+         if (!Active)
+            continue;
+         if (RegMaskHost(i) == 0)
+            continue;
+         LocalNum += AreaHost(i) * InputHost(i, k);
+         LocalDen += AreaHost(i);
+      }
+      Real GlobalNum = globalSum(LocalNum, Env->getComm());
+      Real GlobalDen = globalSum(LocalDen, Env->getComm());
+
+      Real Expected = (GlobalDen != 0.0) ? (GlobalNum / GlobalDen) : 0.0;
+      Real Computed = ResultHost2(k);
+      Real Err      = std::abs(Computed - Expected);
+      if (Err > Tol * (1.0 + std::abs(Expected))) {
+         Passed2 = false;
+         LOG_ERROR("  HorzMean (masked) mismatch at level {}: "
+                   "Expected {}, Got {}",
+                   k, Expected, Computed);
+         break;
+      }
+   }
+
+   reportTest("HorzMeanOp (masked)", Passed2);
+
+   Field::destroy(OutputNames2[0]);
+
+   // -------------------------------------------------------------------------
+   // Sub-test 3: interface-dimensioned input (NVertLayersP1).
+   //
+   // Build an input field on interfaces to confirm the operator auto-detects
+   // the staggering and uses the extended active range [MinLayer, MaxLayer+1].
+   // No regional mask is attached, so the legacy Value != 0 presence applies.
+   // -------------------------------------------------------------------------
+   const I4 NVertP1               = VCoord->NVertLayersP1;
+   std::string InterfaceFieldName = "TestHorzMeanInterfaceInput";
+   auto InterfaceField            = Field::create(
+       InterfaceFieldName, "Interface input for HorzMean", "m", "",
+       -std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max(), 2,
+       {"NCells", "NVertLayersP1"});
+   Array2DR8 InterfaceData(InterfaceFieldName + "_data", Mesh->NCellsSize,
+                           NVertP1);
+   auto InterfaceDataH = Kokkos::create_mirror_view(InterfaceData);
+   for (I4 i = 0; i < Mesh->NCellsSize; ++i) {
+      I4 GID = CellIDH(i) - 1; // 0-based global id
+      for (I4 k = 0; k < NVertP1; ++k)
+         InterfaceDataH(i, k) = static_cast<double>((GID + 1) * (k + 1));
+   }
+   Kokkos::deep_copy(InterfaceData, InterfaceDataH);
+   InterfaceField->attachData<Array2DR8>(InterfaceData, false);
+
+   auto Op3 = AnalysisOpFactory::createOp("HorzMean", {InterfaceFieldName},
+                                          makeOpConfig());
+   Op3->initialize(Env, Mesh, VCoord, makeOpConfig());
+   Op3->compute(TestTime);
+
+   auto OutputNames3 = Op3->getOutputFieldNames();
+   OMEGA_ASSERT(OutputNames3.size() == 1, "HorzMeanOp should have 1 output");
+   auto ResultHost3 = createHostMirrorCopy(
+       Field::get(OutputNames3[0])->getDataArray<Array1DReal>());
+
+   bool Passed3 = true;
+   for (I4 k = 0; k < NVertP1; ++k) {
+      // Interface input: active range is [MinLayer, MaxLayer+1].
+      Real LocalNum = 0.0, LocalDen = 0.0;
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+         const bool Active = (k >= MinLayerH(i) && k <= MaxLayerH(i) + 1);
+         Real Value        = InterfaceDataH(i, k);
+         if (Active && Value != 0.0) {
+            LocalNum += AreaHost(i) * Value;
+            LocalDen += AreaHost(i);
+         }
+      }
+      Real GlobalNum = globalSum(LocalNum, Env->getComm());
+      Real GlobalDen = globalSum(LocalDen, Env->getComm());
+
+      Real Expected = (GlobalDen != 0.0) ? (GlobalNum / GlobalDen) : 0.0;
+      Real Computed = ResultHost3(k);
+      Real Err      = std::abs(Computed - Expected);
+      if (Err > Tol * (1.0 + std::abs(Expected))) {
+         Passed3 = false;
+         LOG_ERROR("  HorzMean (interface) mismatch at level {}: "
+                   "Expected {}, Got {}",
+                   k, Expected, Computed);
+         break;
+      }
+   }
+
+   reportTest("HorzMeanOp (interface)", Passed3);
+
+   Field::destroy(InterfaceFieldName);
+   Field::destroy(OutputNames3[0]);
+
+   Field::destroy(InputFieldName);
+}
+
+//------------------------------------------------------------------------------
+// Test ExtractRegionOp with all supported array types
+void testExtractRegionOp(const MachEnv *Env, const HorzMesh *Mesh,
+                         const VertCoord *VCoord) {
+
+   // Test 1D arrays (all scalar types)
+   testExtractRegionOpType<Array1DI4>("Array1DI4", Env, Mesh, VCoord);
+   testExtractRegionOpType<Array1DI8>("Array1DI8", Env, Mesh, VCoord);
+   testExtractRegionOpType<Array1DR4>("Array1DR4", Env, Mesh, VCoord);
+   testExtractRegionOpType<Array1DR8>("Array1DR8", Env, Mesh, VCoord);
+
+   // Test 2D arrays (all scalar types)
+   testExtractRegionOpType<Array2DI4>("Array2DI4", Env, Mesh, VCoord);
+   testExtractRegionOpType<Array2DI8>("Array2DI8", Env, Mesh, VCoord);
+   testExtractRegionOpType<Array2DR4>("Array2DR4", Env, Mesh, VCoord);
+   testExtractRegionOpType<Array2DR8>("Array2DR8", Env, Mesh, VCoord);
+
+   // Test 3D arrays (all scalar types)
+   testExtractRegionOpType<Array3DI4>("Array3DI4", Env, Mesh, VCoord);
+   testExtractRegionOpType<Array3DI8>("Array3DI8", Env, Mesh, VCoord);
+   testExtractRegionOpType<Array3DR4>("Array3DR4", Env, Mesh, VCoord);
+   testExtractRegionOpType<Array3DR8>("Array3DR8", Env, Mesh, VCoord);
+}
+
+//------------------------------------------------------------------------------
+// Test TransectAccumulatorOp with edge-based transport
+// Tests the accumulation of edge transport across a synthetic transect.
+// Uses non-contiguous edge pattern (every 5th edge) to thoroughly test
+// MPI reduction; real transects would be spatially contiguous.
+void testTransectAccumulatorOp(const MachEnv *Env, const HorzMesh *Mesh,
+                               const VertCoord *VCoord) {
+
+   I4 NEdges      = Mesh->NEdgesSize;
+   I4 NVertLayers = VCoord->NVertLayers;
+
+   // Create transport field (NEdges × NVertLayers)
+   // Value at each point = layer index + 1 (so layer 0→1.0, layer 1→2.0, etc.)
+   std::string TransportFieldName = "TestTransectTransport";
+   auto TransportField =
+       Field::create(TransportFieldName, "Test transport for transect", "m3/s",
+                     "", -1e30, 1e30, 2, {"NEdges", "NVertLayers"});
+
+   Array2DR8 TransportData(TransportFieldName + "_data", NEdges, NVertLayers);
+   TransportField->attachData<Array2DR8>(TransportData, false);
+
+   auto TransportDataHost = Kokkos::create_mirror_view(TransportData);
+   for (I4 i = 0; i < NEdges; ++i) {
+      for (I4 k = 0; k < NVertLayers; ++k) {
+         TransportDataHost(i, k) =
+             static_cast<Real>(k + 1); // Layer-dependent value
+      }
+   }
+   deepCopy(TransportData, TransportDataHost);
+
+   // Create transect mask field (which edges are on transect)
+   // Every 5th edge is on transect (mask=1.0), others are off (mask=0.0)
+   std::string MaskFieldName = "TestTransectMask";
+   auto MaskField = Field::create(MaskFieldName, "Test transect mask", "1", "",
+                                  0, 1, 1, {"NEdges"});
+
+   Array1DI4 MaskData(MaskFieldName + "_data", NEdges);
+   MaskField->attachData<Array1DI4>(MaskData, false);
+
+   auto MaskDataHost = Kokkos::create_mirror_view(MaskData);
+   for (I4 i = 0; i < NEdges; ++i) {
+      MaskDataHost(i) = ((i % 5) == 0) ? 1 : 0;
+   }
+   deepCopy(MaskData, MaskDataHost);
+
+   // Create transect sign field (direction of transport)
+   // Alternating +1.0 and -1.0 for edges on transect
+   std::string SignFieldName = "TestTransectSign";
+   auto SignField = Field::create(SignFieldName, "Test transect sign", "1", "",
+                                  -1, 1, 1, {"NEdges"});
+
+   Array1DI4 SignData(SignFieldName + "_data", NEdges);
+   SignField->attachData<Array1DI4>(SignData, false);
+
+   auto SignDataHost = Kokkos::create_mirror_view(SignData);
+   for (I4 i = 0; i < NEdges; ++i) {
+      if ((i % 5) == 0) {
+         // Edges on transect: alternate sign based on edge index
+         SignDataHost(i) = ((i / 5) % 2 == 0) ? 1 : -1;
+      } else {
+         SignDataHost(i) = 0; // Doesn't matter, mask is 0
+      }
+   }
+   deepCopy(SignData, SignDataHost);
+
+   // Calculate expected result per layer
+   // For each layer k: sum over owned edges of transport(i,k) × mask(i) ×
+   // sign(i)
+   std::vector<Real> LocalSumPerLayer(NVertLayers, 0.0);
+
+   for (I4 i = 0; i < Mesh->NEdgesOwned; ++i) {
+      if (MaskDataHost(i) != 0) { // Edge is on transect
+         I4 KMin = VCoord->MinLayerEdgeBotH(i);
+         I4 KMax = VCoord->MaxLayerEdgeTopH(i);
+         for (I4 k = KMin; k <= KMax; ++k) {
+            LocalSumPerLayer[k] +=
+                TransportDataHost(i, k) * static_cast<Real>(SignDataHost(i));
+         }
+      }
+   }
+
+   // Global sum across MPI ranks
+   std::vector<Real> ExpectedPerLayer(NVertLayers);
+   for (I4 k = 0; k < NVertLayers; ++k) {
+      ExpectedPerLayer[k] = globalSum(LocalSumPerLayer[k], Env->getComm());
+   }
+
+   // Create TransectAccumulator operator
+   auto TransectOp = AnalysisOpFactory::createOp(
+       "TransectAccumulator",
+       {TransportFieldName, MaskFieldName, SignFieldName},
+       makeOpConfig(opParam("TransectName", "TestTransect")));
+   TransectOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+
+   TimeInstant TestTime;
+   TransectOp->compute(TestTime);
+
+   // Get result (should be 1D: NVertLayers)
+   // Use operator's OutputNames to get the correct field name
+   auto OutputNames = TransectOp->getOutputFieldNames();
+   if (OutputNames.empty()) {
+      LOG_ERROR("TransectAccumulatorOp has no output names!");
+      reportTest("TransectAccumulatorOp", false);
+      return;
+   }
+   auto ResultField = Field::get(OutputNames[0]);
+   auto ResultData  = ResultField->getDataArray<Array1DR8>();
+   auto ResultHost  = createHostMirrorCopy(ResultData);
+
+   // Verify results for all layers
+   bool Passed = true;
+   for (I4 k = 0; k < NVertLayers; ++k) {
+      Real Computed = ResultHost(k);
+      Real Expected = ExpectedPerLayer[k];
+
+      if (std::abs(Computed - Expected) > 1.0e-8) {
+         Passed = false;
+         LOG_ERROR("  Layer {}: Expected {}, Got {}", k, Expected, Computed);
+         break;
+      }
+   }
+
+   reportTest("TransectAccumulatorOp", Passed);
+}
+
 //===----------------------------------------------------------------------===//
 // Initialization and finalization functions
 //===----------------------------------------------------------------------===//
@@ -1037,6 +2661,26 @@ int main(int argc, char *argv[]) {
       testSpatialStdDevOp(DefEnv, Mesh, VCoord);
 
       testTimeMeanOp(DefEnv, Mesh, VCoord, ModelClock);
+
+      testScalarMultiplyOp(DefEnv, Mesh, VCoord);
+
+      testBinaryMultiplyOp(DefEnv, Mesh, VCoord);
+
+      testPrefixSumOp(DefEnv, Mesh, VCoord);
+
+      testPrefixSumOpWithBC(DefEnv, Mesh, VCoord);
+
+      testCoordinateBinningOp(DefEnv, Mesh, VCoord);
+
+      testBinnedAccumulatorOp(DefEnv, Mesh, VCoord);
+
+      testPseudoToGeometricOp(DefEnv, Mesh, VCoord);
+
+      testExtractRegionOp(DefEnv, Mesh, VCoord);
+
+      testHorzMeanOp(DefEnv, Mesh, VCoord);
+
+      testTransectAccumulatorOp(DefEnv, Mesh, VCoord);
 
       if (NumFailed > 0) {
          Err = 1;

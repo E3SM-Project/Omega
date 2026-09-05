@@ -156,6 +156,14 @@ class AnalysisOperator {
    virtual void compute(const TimeInstant &TimeStamp ///< [in] current timestamp
                         ) = 0;
 
+   /// Checks Options for an "OutputName" key; if present and non-empty,
+   /// overrides OutputNames[0] and InstanceName with that value. Derived
+   /// class constructors call this after setting their default OutputNames
+   /// to allow callers to assign a shorter registry name to the output Field.
+   /// No-op if "OutputName" is absent or OutputNames is empty.
+   void applyOutputNameOverride(Config &Options ///< [in] operator config
+   );
+
  protected:
    const HorzMesh *Mesh;    ///< Horizontal mesh for spatial operations
    const VertCoord *VCoord; ///< Vertical coordinate for vertical ops
