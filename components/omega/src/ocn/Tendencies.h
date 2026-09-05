@@ -80,6 +80,7 @@ class Tendencies {
    TracerDiffOnCell TracerDiffusion;
    TracerHyperDiffOnCell TracerHyperDiff;
    SurfaceTracerRestoringOnCell SurfaceTracerRestoring;
+   FrazilOnCell FrazilTerm;
 
    std::string Name;
 

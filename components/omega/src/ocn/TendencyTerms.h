@@ -12,6 +12,7 @@
 
 #include "AuxiliaryState.h"
 #include "Eos.h"
+#include "Frazil.h"
 #include "GlobalConstants.h"
 #include "HorzMesh.h"
 #include "MachEnv.h"
@@ -802,6 +803,27 @@ class SurfaceTracerRestoringOnCell {
           PistonVelocity *
           (TracersMonthlySurfClimoCell(L, ICell) - TracerCell(L, ICell, KMin));
    }
+};
+
+/// Frazil tendency hook-up term
+class FrazilOnCell {
+ public:
+   bool Enabled = false;
+
+   FrazilOnCell(const HorzMesh *Mesh, const VertCoord *VCoord);
+
+   void operator()(const Array2DReal &PseudoThicknessTend,
+                   const Array3DReal &TracerTend,
+                   const Array3DReal &TracerArray,
+                   const Array2DReal &PressureMid,
+                   const Array2DReal &PseudoThickness) const;
+
+ private:
+   I4 NCellsAll;
+   I4 TempTracerIndex;
+   I4 SaltTracerIndex;
+   Array1DI4 MinLayerCell;
+   Array1DI4 MaxLayerCell;
 };
 
 } // namespace OMEGA

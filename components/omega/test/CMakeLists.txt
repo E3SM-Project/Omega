@@ -527,6 +527,13 @@ add_omega_test(
     "-n;2"
 )
 
+add_omega_test(
+  FRAZIL_TEST
+  testFrazil.exe
+  ocn/FrazilTest.cpp
+  "-n;2"
+)
+
 ################
 # VertCoord test
 ################
