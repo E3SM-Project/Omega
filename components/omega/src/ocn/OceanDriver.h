@@ -20,12 +20,6 @@
 
 namespace OMEGA {
 
-/// enumeration for the different "start_type"s supported by the coupler
-enum class StartType { StartUp, Continue, Branch };
-
-/// Convienvence converter of an int to a StartType enum, with error checking
-StartType safeIntToStartType(int val);
-
 /// Should timing info be printed from all ranks
 bool printTimingAllRanks();
 
@@ -40,8 +34,8 @@ int ocnInit1(
     const int OcnId,                         ///< [in] mct comp id for ocean
     const std::string &ConfigFile,           ///< [in] path to yaml config file
     const std::string &LogFile,              ///< [in] path to log file
-    const StartType StartType,               ///< [in] simulation start type
-    const TimeInitParams &TimeParams,        ///< [in] time parameters
+    const TimeStepperStartType StartType,    ///< [in] simulation start type
+    const TimeInstant &StartTime,            ///< [in] simulation start time
     const CouplingInitParams &CouplingParams ///< [in] coupling parameters
 );
 
@@ -64,8 +58,12 @@ int ocnFinalize(const TimeInstant &CurrTime);
 int initOmegaModules(MPI_Comm Comm);
 
 /// Initialize Omega modules with coupler-provided time parameters
-int initOmegaModules(MPI_Comm Comm, const TimeInitParams &TParams,
-                     const CouplingInitParams &CParams);
+int initOmegaModules(
+    MPI_Comm Comm,                    ///< [in] MPI communicator for ocn
+    TimeStepperStartType StartType,   ///< [in] option for starting this leg
+    const TimeInstant &StartTime,     ///< [in] start time for full simulation
+    const CouplingInitParams &CParams ///< [in] struct with coupling params
+);
 
 /// Update Halo/Host arrays with new state, auxiliary state, and tracer fields
 int initUpdateHaloAndHostArrays();

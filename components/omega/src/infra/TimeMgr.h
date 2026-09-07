@@ -773,8 +773,12 @@ class Alarm {
    ~Alarm(void);
 
    /// Check whether an alarm is ringing
-   /// \return true if alarm is ringing, false otherwise
+   /// Return true if alarm is ringing, false otherwise
    bool isRinging(void);
+
+   /// Check whether an alarm is a recurring alarm
+   /// Return true if periodic, false otherwise
+   bool isPeriodic(void);
 
    /// Checks whether the alarm should ring based on the current
    /// (or supplied) time instant

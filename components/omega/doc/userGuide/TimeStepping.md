@@ -9,9 +9,10 @@ of the Omega configuration file:
     CalendarType: No Leap
     TimeStepper: Forward-Backward
     TimeStep: 0000_00:10:00
+    StartType: StartUp
     StartTime: 0001-01-01_00:00:00
-    StopTime: 0001-01-01_02:00:00
-    RunDuration: none
+    StopType: AtTime
+    StopCriterion: 0001-01-01_02:00:00
 ```
 This configuration refers to the default time stepping used for the model
 dynamics (momentum and continuity equations). Additional time steppers can
@@ -43,19 +44,29 @@ in any of the following forms:
 Days, hours and minutes are optional but must be in order if included.
 Fractional seconds are optional.
 
-The StartTime refers to the starting time for the simulation. It is in the
+The StartOption can be one of three choices. The StartUp option is for starting
+a solution from scratch from an initial state file. The Continue option is for
+continuing a simulation from a restart file. The Branch option will branch
+from an existing simulation by reading from the restart file, but it will
+reset the clock to the StartTime.
+
+The StartTime refers to the starting time for the full simulation (not the
+current leg of an ongoing simulation). It is in the
 format ``yyyy-mm-day_hh:mm:ss`` for year, month, day, hour, minute, second.
 This refers to the initial start time; for a longer simulation, the current
 time will be modified by the restart file to update to the present time for
 the current segment of the simulation.
 
-The simulation will be stopped either at a fixed StopTime if provided or
-by the RunDuration. For shorter simulations, the StopTime can be used to
-specify a specific time to stop. For longer simulations with multiple
-segments that are restarted, the RunDuration should used and should be set
-to fit within the queue time. The format for StopTime is the same as StartTime.
-The format for RunDuration is the same as the TimeStep.
+A StopType determines (with the StopCriterion below) how the simulation will
+be stopped. There are three options. The AtTime option will stop the simulation
+at a specific time and the StopCriterion holds that specific time as described
+below. The AfterDuration option runs the simulation for a fixed time interval
+and the StopCriterion is used to define that interval. A final option called
+OnSignal is primarily for coupled simulation where the simulation will stop
+and a signal from the coupler.
 
-Only one of the StopTime or RunDuration should be specified with the other
-set to either an empty string or "none". If both are specified, the
-RunDuration is used instead of the StopTime.
+For the AtTime stop type, the StopCriterion must be a time instant in the
+format ``yyyy-mm-dd_hh:mm:ss``. If the StopType is AfterDuration, the
+StopCriterion is a time interval in the format described above for the time
+step (but typically ``dddd_hh:mm:ss``). For the OnSignal option the
+StopCriterion is ignored.

@@ -3915,6 +3915,15 @@ bool Alarm::isRinging(void) { return Ringing; }
 // end Alarm::isRinging
 
 //------------------------------------------------------------------------------
+// Alarm::isPeriodic - Check whether an alarm is a recurring alarm
+// This function checks to see if an alarm is a recurring alarm by simply
+// returning the periodic flag
+
+bool Alarm::isPeriodic(void) { return Periodic; }
+
+// end Alarm::isPeriodic
+
+//------------------------------------------------------------------------------
 // Alarm::updateStatus - Changes the alarm status based on current time
 // Checks whether the alarm should ring based on the current (or supplied)
 // time instant. If the instant is equal to, or later than the ring time,
@@ -3932,7 +3941,7 @@ void Alarm::updateStatus(const TimeInstant CurrentTime // [in] current time
 
 //------------------------------------------------------------------------------
 // Alarm::reset - Stops a ringing alarm and resets to a new alarm time
-// Stops a ringing alarm and sets next a new ring time. If the alarm
+// Stops a ringing alarm and sets a new ring time. If the alarm
 // is a periodic/interval alarm, the next ring time is set to be the
 // next interval boundary after the input time.  If the alarm is a
 // single instance, the input time is used as the next alarm time.
@@ -3943,17 +3952,20 @@ void Alarm::reset(const TimeInstant InTime // [in] new alarm time
    // stop the ringing alarm
    Ringing = false;
 
-   // if this is an interval alarm, find the next alarm time after
-   // the input time
+   // if this is an interval alarm, reset the alarm so it rings at the next
+   // interval after the input time
    if (Periodic) {
 
-      // first check that the input time is valid
+      // if the new time is before the ring time, move the alarm backward
+      // until the new time is within a ring interval
       if (InTime < RingTime) {
-         ABORT_ERROR("TimeMgr: Alarm::reset error - input time is less than the"
-                     " current ring time");
+         while (InTime < RingTimePrev) {
+            RingTime -= RingInterval;
+            RingTimePrev -= RingInterval;
+         }
+         // if the new time is after the ring time, move alarm forward until
+         // the next interval is greater than input time
       } else {
-         // now move forward in time until the next interval is greater
-         // than the input time
          while (RingTime <= InTime) {
             RingTimePrev = RingTime;
             RingTime += RingInterval;
@@ -4075,6 +4087,8 @@ Clock::~Clock(void) { // Nothing to be done
 // Clock::setCurrentTime - Sets the current time
 // Sets the current time to an input value. Also must reset previous time and
 // next time to be consistent. Check that new time does not precede start time.
+// Updates all one-time alarms and resets all periodic alarms based on the new
+// time.
 
 void Clock::setCurrentTime(
     const TimeInstant InCurrTime // new value for current time
@@ -4093,9 +4107,13 @@ void Clock::setCurrentTime(
       NextTime = CurrTime + TimeStep;
    }
 
-   // Update status of all attached alarms based on new time
+   // Reset periodic alarms and update the status of one-time alarms
    for (I4 N = 0; N < NumAlarms; ++N) {
-      Alarms[N]->updateStatus(CurrTime);
+      if (Alarms[N]->isPeriodic()) {
+         Alarms[N]->reset(CurrTime);
+      } else {
+         Alarms[N]->updateStatus(CurrTime);
+      }
    }
 
 } // end Clock::setCurrentTime
