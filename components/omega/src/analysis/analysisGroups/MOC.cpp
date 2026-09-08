@@ -121,6 +121,29 @@ MOC::MOC(const std::string &GroupName, Config &AnalysisGroupOptions,
    buildTemporalChains(ChainStems, AnalysisGroupOptions, AnalysisManager,
                        ChainConfigs);
 
+   // Stamp Sverdrup units and a readable long_name on every streamfunction
+   // output field. Both the CF-compliant "units" and the legacy capitalized
+   // "Units" are set.
+   for (size_t i = 0; i < ChainStems.size(); ++i) {
+      const auto &StemStr    = ChainStems[i];
+      const auto &RegionName = RegionList[i];
+      const std::string LongName =
+          RegionName + " Meridional Overturning Streamfunction";
+
+      std::vector<std::string> SFFieldNames = {StemStr};
+      for (const auto &ReductionPeriod : ReductionPeriodList) {
+         SFFieldNames.push_back(StemStr + "_TimeMean" + ReductionPeriod);
+      }
+      for (const auto &SFName : SFFieldNames) {
+         if (Field::exists(SFName)) {
+            auto SFField = Field::get(SFName);
+            SFField->updateMetadata("units", std::string("Sv"));
+            SFField->updateMetadata("Units", std::string("Sv"));
+            SFField->updateMetadata("long_name", LongName);
+         }
+      }
+   }
+
    // Register each per-region depth coordinate into OpChainInfos.
    // The depth field is always output as an instantaneous output
    for (const auto &DepthFieldName : DepthFieldNames) {
@@ -304,7 +327,7 @@ std::string MOC::buildMOCChain(const std::string &RegionName,
                         MaxLat,                       // ValidMax
                         1,                            // Rank
                         BinBoundDimNames,             // Dimension names
-                        false // Not time dependent: bin boundaries are static
+                        false                         // Not time dependent
           );
 
       // Allocate and attach the boundary array
