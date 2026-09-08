@@ -52,11 +52,22 @@ class Tendencies{
    VelocityHyperDiffOnEdge VelocityHyperDiff;
    SfcStressForcingOnEdge SfcStressForcing;
    BottomDragOnEdge ExplicitBottomDrag;
+   TracerHorzAdvOnCell TracerHorzAdv;
    TracerDiffOnCell TracerDiffusion;
    TracerHyperDiffOnCell TracerHyperDiff;
-   TracerHorzAdvOnCell TracerHorzAdv;
-   TracerHighOrderHorzAdvOnCell TracerHighOrderHorzAdv;
+   SurfaceTracerRestoringOnCell SurfaceTracerRestoring;
+
  private:
+   const HorzMesh *Mesh; ///< Pointer to horizontal mesh
+   VertCoord *VCoord;    ///< Pointer to vertical coordinate
+   VertAdv *VAdv;        ///< Pointer to vertical advection
+   CustomTendencyType CustomThicknessTend;
+   CustomTendencyType CustomVelocityTend;
+   Eos *EqState;          ///< Pointer to equation of state
+   PressureGrad *PGrad;   ///< Pointer to pressure gradient
+   VertMix *VMix;         ///< Pointer to vertical mixing
+   I4 NTracers;           ///< Number of tracers
+   TimeInterval TimeStep; ///< Time step
    static Tendencies *DefaultTendencies;
    static std::map<std::string, std::unique_ptr<Tendencies>> AllTendencies;
 };
@@ -106,7 +117,7 @@ void Tendencies::computeAllTendencies(const OceanState *State, const AuxilarySta
 ```
 The layer thickness tendencies will be computed with a method:
 ```c++
-void Tendencies::computeThicknessTendencies(const OceanState *State, const AuxilaryState *AuxState, int TimeLevel, int VelTimeLevel, TimeInstant Time);
+void Tendencies::computePseudoThicknessTendencies(const OceanState *State, const AuxilaryState *AuxState, int TimeLevel, int VelTimeLevel, TimeInstant Time);
 ```
 The normal velocity tendencies will be computed with a method:
 ```c++
