@@ -114,13 +114,12 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
    NEdgesReconOnCell = MeshDecomp->NEdgesReconOnCell;
    ReconStencilCell  = MeshDecomp->ReconStencilCell;
 
-   // OnSphere is needed early (before the mesh field definitions below)
-   // to decide whether to define the ReconWeightsCell field, so we
-   // use the value Decomp already read from the mesh file. It is
-   // redetermined below (with the rest of the sphere/plane attributes)
-   // once the full mesh stream is read, which is redundant but harmless
-   // since both come from the same file.
-   OnSphere = MeshDecomp->OnSphere;
+   // Whether the mesh file supplied the vector reconstruction arrays is
+   // needed early (before the mesh field definitions below) to decide
+   // whether to define the ReconWeightsCell field, so we take the answer
+   // from Decomp, which already attempted to read its half of those
+   // arrays from the same file.
+   HasVectorRecon = MeshDecomp->HasVectorRecon;
 
    // Create Omega Dimensions associated with this mesh
    createDimensions(MeshDecomp);
@@ -477,7 +476,7 @@ void HorzMesh::completeReadArrays() {
    // the mesh dimension in the middle (as in Tracers' [Tracer, Cell,
    // Vert]), so exchange each R3 component as a 2D (Cell, MaxEdges2)
    // slice instead of the full 3D array.
-   if (OnSphere) {
+   if (HasVectorRecon) {
       for (int IComp = 0; IComp < 3; ++IComp) {
          auto ReconWeightsCellSlice =
              Kokkos::subview(ReconWeightsCell, Kokkos::ALL, IComp, Kokkos::ALL);
@@ -512,7 +511,7 @@ void HorzMesh::completeReadArrays() {
    FCellH             = createHostMirrorCopy(FCell);
    FEdgeH             = createHostMirrorCopy(FEdge);
    FVertexH           = createHostMirrorCopy(FVertex);
-   if (OnSphere) {
+   if (HasVectorRecon) {
       ReconWeightsCellH = createHostMirrorCopy(ReconWeightsCell);
    }
 
@@ -1037,7 +1036,7 @@ void HorzMesh::defineMeshFields() {
    MeshGroupIn->addField(FieldName);
    Field::attachFieldData<Array1DReal>(FieldName, FCell);
 
-   if (OnSphere) {
+   if (HasVectorRecon) {
       // Vector Reconstruction
       // NEdgesReconOnCell/ReconStencilCell come from Decomp (see
       // constructor), not read here. ReconWeightsCell is pure data and

@@ -127,12 +127,12 @@ int main(int argc, char *argv[]) {
          ABORT_ERROR("DecompTest: Sum vertex ID test FAIL {} {}", SumVertices,
                      RefSumVertices);
 
-      // Test the vector-reconstruction stencil arrays (spherical meshes
-      // only): each owned cell's count is in range, active entries are
-      // resolvable local edges, and padding columns carry the NEdgesAll
-      // sentinel (confirms no compaction, so columns stay aligned with
-      // ReconWeightsCell).
-      if (DefDecomp->OnSphere) {
+      // Test the vector-reconstruction stencil arrays, for meshes that
+      // supply them: each owned cell's count is in range, active entries
+      // are resolvable local edges, and padding columns carry the
+      // NEdgesAll sentinel (confirms no compaction, so columns stay
+      // aligned with ReconWeightsCell).
+      if (DefDecomp->HasVectorRecon) {
          I4 MaxEdges2                     = DefDecomp->MaxEdges2;
          HostArray1DI4 NEdgesReconOnCellH = DefDecomp->NEdgesReconOnCellH;
          HostArray2DI4 ReconStencilCellH  = DefDecomp->ReconStencilCellH;

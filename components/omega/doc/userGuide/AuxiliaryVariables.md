@@ -31,9 +31,41 @@ The following auxiliary variables are currently available:
 | Del2TracersCell | laplacian of tracers on cells
 | SurfTracerRestoringDiffsCell | surface tracer restoring differences on cells
 | TracersMonthlySurfClimoCell | monthly climatology values to restore to for surface tracer on cells
+| VelocityZonalCell | zonal velocity reconstructed at cell centers
+| VelocityMeridionalCell | meridional velocity reconstructed at cell centers
 
 ## Kinetic energy on cells
 
 In [Ringler et al. (2010)](https://www.sciencedirect.com/science/article/pii/S0021999109006780), the cell-centered kinetic energy ($K_i$) is a geometry-weighted combination of the squared edge-normal velocities surrounding cell ($i$), constructed so that its discrete gradient enters the vector-invariant momentum equation as part of the Bernoulli-gradient term, ($-\nabla(K_i+\Phi_i)$). Although only one velocity component is stored at each C-grid edge, the differently oriented edges collectively represent the two-dimensional velocity magnitude; for uniform flow on an isotropic cell, the construction recovers ($K_i=\tfrac12|\mathbf{u}|^2$). Importantly, this definition is chosen for algebraic compatibility with the edge-based kinetic-energy norm and the discrete continuity equation, enabling the nondissipative momentum terms to conserve total energy to within time-discretization error rather than providing an arbitrary pointwise reconstruction of the velocity magnitude.
 
 It should be noted that this is the irrotational kinetic energy and is not the total kinetic energy. In principle, this implies that that $K_i$ could be an underestimate of the total kinetic energy. Even for a regular hexagon in an irrotational constant flow, this formulation underestimates the total kinetic energy by 13-16\% depeneding on the flow orientation. However, it has been shown with MPAS-Ocean at standard resolution (Icos30) that $K_i$ *exceeds* $K = 0.5 (u_{cell}^2 + v_{cell}^2)$, likely due to velocity noise at the grid scale that is filtered in the course of reconstructing velocities at cell-centers. This offers a justification for employing $K_i$ in other terms of the momentum equation such as bottom drag.
+
+## Reconstructed velocity components on cells
+
+Omega carries only the edge-normal component of the velocity, so the zonal
+and meridional components at cell centers are reconstructed from it using
+least-squares weights. These two variables differ from the others above in
+three ways.
+
+They are diagnostic: nothing in the Omega equations reads them, so they are
+computed once per model time step rather than once per time stepper stage.
+They are also only computed when they are needed, that is when some IO
+stream asks for one of them or when Omega is running coupled, since the
+surface velocity exported to the coupler is taken from them. They are not
+in the contents of any stream by default, so add them to a stream to have
+them written:
+```yaml
+      Contents:
+        - VelocityZonalCell
+        - VelocityMeridionalCell
+```
+
+They depend on the mesh file. The reconstruction stencil and weights
+(`NEdgesReconOnCell`, `ReconStencilCell` and `ReconWeightsCell`) are
+precomputed as a mesh preprocessing step rather than by Omega, so a mesh
+file that has not been through that step cannot supply them. Requesting
+these variables on such a mesh, or running coupled with one, is an error.
+
+On a planar mesh the reconstructed vector already lies in the plane of the
+mesh, so the two variables hold the Cartesian x and y components instead of
+zonal and meridional ones.
