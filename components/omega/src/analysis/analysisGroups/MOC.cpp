@@ -461,6 +461,7 @@ std::string MOC::buildDepthCoordChain(const std::string &RegionName,
           std::string("Area-weighted representative interface depth (") +
               RegionName + ")");
       DepthField->updateMetadata("units", std::string("m"));
+      DepthField->updateMetadata("Units", std::string("m"));
    }
 
    return DepthFieldName;
