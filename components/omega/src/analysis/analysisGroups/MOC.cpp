@@ -303,7 +303,8 @@ std::string MOC::buildMOCChain(const std::string &RegionName,
                         MinLat,                       // ValidMin
                         MaxLat,                       // ValidMax
                         1,                            // Rank
-                        BinBoundDimNames              // Dimension names
+                        BinBoundDimNames,             // Dimension names
+                        false // Not time dependent: bin boundaries are static
           );
 
       // Allocate and attach the boundary array
