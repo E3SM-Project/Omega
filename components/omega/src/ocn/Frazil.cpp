@@ -472,11 +472,6 @@ void Frazil::computeFrazil(const Array2DReal &CT, const Array2DReal &SA,
                   "computeFrazil");
    }
 
-   const EosType LocEosChoice = DefEos->EosChoice;
-   if (LocEosChoice != EosType::Teos10Eos) {
-      ABORT_ERROR("Frazil::computeFrazil: CtFreezing not implemented for "
-                  "non-TEOS-10 EOS");
-   }
 
    switch (frazilChoice) {
    case FrazilType::FixedPropertyFrazil:
