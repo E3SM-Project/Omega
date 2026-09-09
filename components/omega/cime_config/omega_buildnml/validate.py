@@ -47,6 +47,11 @@ BLOCKED_OPTIONS = frozenset(
         "TimeIntegration.RunDuration",
         # calendar must agree with the CIME ``CALENDAR`` setting
         "TimeIntegration.CalendarType",
+        # base IO task and rearranger are owned by the driver (CIME/shr_pio)
+        # so they stay consistent with the rest of the case. IOTasks and
+        # IOStride remain component-configurable.
+        "IO.IOBaseTask",
+        "IO.IORearranger",
     }
 )
 

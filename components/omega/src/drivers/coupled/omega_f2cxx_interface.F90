@@ -27,7 +27,9 @@ module omega_f2cxx_mod
          import_field_names, &
          export_field_names, &
          import_field_indices, &
-         export_field_indices) bind(c)
+         export_field_indices, &
+         io_base_task, &
+         io_rearranger) bind(c)
 
          use, intrinsic :: iso_c_binding, only: c_int, c_char, c_ptr
 
@@ -43,7 +45,9 @@ module omega_f2cxx_mod
             n_coupler_imports, &
             n_coupler_exports, &
             n_omega_imports, &
-            n_omega_exports
+            n_omega_exports, &
+            io_base_task, &
+            io_rearranger
 
          character(kind=c_char), target, intent(in) :: &
             yaml_config_name, ocn_log_name, calendar_name

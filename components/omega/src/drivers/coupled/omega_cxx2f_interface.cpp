@@ -3,6 +3,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "DataTypes.h"
+#include "IO.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OceanDriver.h"
@@ -60,7 +61,9 @@ void omega_ocn_init1(
     const char *ImportFieldNames,  // [in] array of import field names
     const char *ExportFieldNames,  // [in] array of export field names
     const int *ImportFieldIndices, // [in] array of import field indices
-    const int *ExportFieldIndices  // [in] array of export field indices
+    const int *ExportFieldIndices, // [in] array of export field indices
+    const int IOBaseTask,          // [in] driver-owned base (root) IO task
+    const int IORearranger         // [in] driver-owned PIO rearranger (int)
 ) {
 
    // Create the C MPI_Comm from the Fortran one
@@ -103,8 +106,14 @@ void omega_ocn_init1(
        NCouplerImports, NCouplerExports,  ImportIdxMap,
        ExportIdxMap,    CouplingInterval, OMEGA::CouplingLayout::MCT};
 
+   // The base IO task and rearranger are owned by the driver/coupler (via
+   // CIME/shr_pio). The rearranger int uses the same PIO_REARR_* values as
+   // Omega's IO::Rearranger enum (box = 1, subset = 2).
+   OMEGA::IO::IOInitParams IOParams{
+       IOBaseTask, static_cast<OMEGA::IO::Rearranger>(IORearranger)};
+
    OMEGA::ocnInit1(Comm, OcnID, YamlConfigFile, OcnLogFile, StartTypeEnum,
-                   TimeParams, CouplingParams);
+                   TimeParams, CouplingParams, IOParams);
 
    Pacer::stop("Init1", 0);
 
@@ -118,7 +127,7 @@ void omega_ocn_init2(const double *cpl_to_ocn_data, double *ocn_to_cpl_data) {
    Pacer::stop("Init2", 0);
 }
 
-int omega_ocn_run(bool WriteRestart) {
+void omega_ocn_run(bool WriteRestart) {
 
    int ErrRun;
 
@@ -128,12 +137,12 @@ int omega_ocn_run(bool WriteRestart) {
 
    Pacer::start("Run", 0);
    ErrRun = OMEGA::ocnRun(CurrTime, WriteRestart);
+   if (ErrRun != 0)
+      LOG_ERROR("Error advancing Omega run interval");
    Pacer::stop("Run", 0);
-
-   return ErrRun;
 }
 
-int omega_ocn_finalize() {
+void omega_ocn_finalize() {
 
    int ErrFinalize;
 
@@ -142,7 +151,7 @@ int omega_ocn_finalize() {
    OMEGA::TimeInstant CurrTime    = ModelClock->getCurrentTime();
 
    Pacer::start("Finalize", 0);
-   OMEGA::ocnFinalize(CurrTime);
+   ErrFinalize = OMEGA::ocnFinalize(CurrTime);
    if (ErrFinalize != 0) {
       LOG_ERROR("Error finalizing OMEGA");
    } else {
@@ -154,8 +163,6 @@ int omega_ocn_finalize() {
 
    // finalize Kokkos
    Kokkos::finalize();
-
-   return ErrFinalize;
 }
 
 int omega_get_layout_mct() {

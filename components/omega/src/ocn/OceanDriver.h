@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Config.h"
+#include "IO.h"
 #include "SfcCoupling.h"
 #include "TimeMgr.h"
 #include "TimeStepper.h"
@@ -36,13 +37,14 @@ int ocnInit(MPI_Comm Comm);
 /// Coupled init phase 1: everything up through mesh/decomp/state, before the
 /// coupler-owned MCT buffers exist for attachData
 int ocnInit1(
-    MPI_Comm Comm,                           ///< [in] ocean MPI communicator
-    const int OcnId,                         ///< [in] mct comp id for ocean
-    const std::string &ConfigFile,           ///< [in] path to yaml config file
-    const std::string &LogFile,              ///< [in] path to log file
-    const StartType StartType,               ///< [in] simulation start type
-    const TimeInitParams &TimeParams,        ///< [in] time parameters
-    const CouplingInitParams &CouplingParams ///< [in] coupling parameters
+    MPI_Comm Comm,                            ///< [in] ocean MPI communicator
+    const int OcnId,                          ///< [in] mct comp id for ocean
+    const std::string &ConfigFile,            ///< [in] path to yaml config file
+    const std::string &LogFile,               ///< [in] path to log file
+    const StartType StartType,                ///< [in] simulation start type
+    const TimeInitParams &TimeParams,         ///< [in] time parameters
+    const CouplingInitParams &CouplingParams, ///< [in] coupling parameters
+    const IO::IOInitParams &IOParams          ///< [in] driver-owned IO params
 );
 
 /// Coupled init phase 2: runs once the coupler has allocated its MCT buffers;
@@ -63,9 +65,10 @@ int ocnFinalize(const TimeInstant &CurrTime);
 /// Initialize Omega modules needed to run ocean model
 int initOmegaModules(MPI_Comm Comm);
 
-/// Initialize Omega modules with coupler-provided time parameters
+/// Initialize Omega modules with coupler-provided time and IO parameters
 int initOmegaModules(MPI_Comm Comm, const TimeInitParams &TParams,
-                     const CouplingInitParams &CParams);
+                     const CouplingInitParams &CParams,
+                     const IO::IOInitParams &IOParams);
 
 /// Update Halo/Host arrays with new state, auxiliary state, and tracer fields
 int initUpdateHaloAndHostArrays();
