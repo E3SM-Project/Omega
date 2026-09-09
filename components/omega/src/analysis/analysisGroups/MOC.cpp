@@ -313,11 +313,12 @@ std::string MOC::buildMOCChain(const std::string &RegionName,
       // Match the margin CoordinateBinningOp applies before binning (see
       // CoordinateBinningOp.h: MinBin/MaxBin widened by (MaxBin-MinBin)*1.0e-6)
       // so the written boundaries are the edges the operator actually bins on.
-      const Real Margin      = (MaxLat - MinLat) * 1.0e-6;
-      const Real AdjMinLat   = MinLat - Margin;
-      const Real AdjMaxLat   = MaxLat + Margin;
-      const Real BinWidthDeg = (AdjMaxLat - AdjMinLat) / static_cast<Real>(NumBins);
-      const I4 NBounds       = NumBins + 1;
+      const Real Margin    = (MaxLat - MinLat) * 1.0e-6;
+      const Real AdjMinLat = MinLat - Margin;
+      const Real AdjMaxLat = MaxLat + Margin;
+      const Real BinWidthDeg =
+          (AdjMaxLat - AdjMinLat) / static_cast<Real>(NumBins);
+      const I4 NBounds = NumBins + 1;
 
       // Create the dimension for NumBins+1 bin boundaries
       auto BinBoundDim = Dimension::create("NMocLatBinBoundaries", NBounds);
