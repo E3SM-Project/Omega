@@ -32,6 +32,9 @@ Omega:
     FluxThicknessType: Center
     HorzTracerFluxOrder: 2
     VerticalTracerFluxLimiterEnable: true
+    HorzTracerFluxLimiterEnable: false
+    HorzTracerFluxLimiterBudgetsEnable: false
+    HorzTracerFluxLimiterMonotonicityCheckEnable: false
     VerticalTracerFluxOrder: 3
   SfcStress:
     InterpType: Isotropic
