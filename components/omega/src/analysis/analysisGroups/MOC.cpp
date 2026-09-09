@@ -310,7 +310,13 @@ std::string MOC::buildMOCChain(const std::string &RegionName,
       // -----------------------------------------------------------------------
       BinBoundaryFieldName = "MOCLatBinBoundaries";
 
-      const Real BinWidthDeg = (MaxLat - MinLat) / static_cast<Real>(NumBins);
+      // Match the margin CoordinateBinningOp applies before binning (see
+      // CoordinateBinningOp.h: MinBin/MaxBin widened by (MaxBin-MinBin)*1.0e-6)
+      // so the written boundaries are the edges the operator actually bins on.
+      const Real Margin      = (MaxLat - MinLat) * 1.0e-6;
+      const Real AdjMinLat   = MinLat - Margin;
+      const Real AdjMaxLat   = MaxLat + Margin;
+      const Real BinWidthDeg = (AdjMaxLat - AdjMinLat) / static_cast<Real>(NumBins);
       const I4 NBounds       = NumBins + 1;
 
       // Create the dimension for NumBins+1 bin boundaries
@@ -337,7 +343,7 @@ std::string MOC::buildMOCChain(const std::string &RegionName,
       // Compute and populate the real bin boundary values
       auto BinBoundHost = Kokkos::create_mirror_view(BinBoundData);
       for (I4 I = 0; I <= NumBins; ++I) {
-         BinBoundHost(I) = MinLat + I * BinWidthDeg;
+         BinBoundHost(I) = AdjMinLat + I * BinWidthDeg;
       }
       Kokkos::deep_copy(BinBoundData, BinBoundHost);
 
