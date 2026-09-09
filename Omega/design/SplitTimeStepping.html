@@ -1,0 +1,1799 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Split Time Stepping &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Template" href="Template.html" />
+    <link rel="prev" title="Vertical Mixing Coefficients" href="VerticalMixingCoeff.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html#coupled-mode">Coupled mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MpasMesh.html">MPAS Mesh Specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Forcing.html">Forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/SfcCoupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Analysis.html">Analysis</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Testing.html">Testing Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/ParallelLoops.html">Parallel loops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/PGrad.html">Pressure Gradient (PGrad)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Forcing.html">Forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/SfcCoupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Analysis.html">Analysis</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OmegaV1GoverningEqns.html">Omega V1: Governing Equations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Analysis.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Coupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FillValues.html">Fill Values</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="StateValidation.html">Ocean State Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SubmesoscaleEddies.html">Submesoscale Eddy Parameterization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Split Time Stepping</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1. Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2. Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-a-split-time-stepping-method-in-the-pseudo-height-coordinate">2.1 Requirement: A split time-stepping method in the pseudo-height coordinate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-stable-time-integration-for-long-term-high-resolution-simulations">2.2 Requirement: Stable time integration for long-term high-resolution simulations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-modularization-of-baroclinic-and-barotropic-time-stepping-methods">2.3 Requirement: Modularization of baroclinic and barotropic time-stepping methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3. Algorithmic Formulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#barotropic-external-and-baroclinic-internal-mode-splitting">3.1 Barotropic (external) and baroclinic (internal) mode splitting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#split-explicit-time-stepping-algorithm">3.2 Split-explicit time stepping algorithm</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#initialization">3.2.1 Initialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stage-1-baroclinic-velocity-advance-with-long-time-step">3.2.2 Stage 1: Baroclinic velocity advance with long time step</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stage-2-barotropic-velocity-advance-explicitly-subcycled">3.2.3 Stage 2: Barotropic velocity advance, explicitly subcycled</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#barotropic-baroclinic-coupling-and-barotropic-pressure-consistency">3.2.4 Barotropic-baroclinic coupling and barotropic pressure consistency</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stage-3-update-tracers-and-diagnostics">3.2.5 Stage 3: Update tracers and diagnostics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#reset-variables">3.2.6 Reset variables</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#unsplit-time-stepping-algorithm">3.3 Unsplit time stepping algorithm</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id2">3.3.1 Initialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stage-1-velocity-advance">3.3.2 Stage 1: Velocity advance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">3.3.3 Stage 2: Barotropic velocity advance, explicitly subcycled</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">3.3.4 Stage 3: Update tracers and diagnostics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">3.3.5 Reset variables</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4. Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id6">4.2.1 Initialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stage-1-baroclinic-velocity">4.2.2 Stage 1: baroclinic velocity</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stage-2-barotropic-subcycling">4.2.3 Stage 2: barotropic subcycling</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stage-3-thickness-and-tracers">4.2.4 Stage 3: thickness and tracers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#time-level-management">4.2.5 Time-level management</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5. Verification and testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#unit-testing">5.1 Unit testing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#polaris-tests">5.2 Polaris tests</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Split Time Stepping</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/SplitTimeStepping.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="split-time-stepping">
+<span id="id1"></span><h1>Split Time Stepping<a class="headerlink" href="#split-time-stepping" title="Permalink to this heading"></a></h1>
+<!--- use table of contents if desired for longer documents  -->
+<p><strong>Table of Contents</strong></p>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="#overview">Overview</a></p></li>
+<li><p><a class="reference internal" href="#requirements">Requirements</a></p></li>
+<li><p><a class="reference internal" href="#algorithmic-formulation">Algorithmic Formulation</a></p></li>
+<li><p><a class="reference internal" href="#design">Design</a></p></li>
+<li><p><a class="reference internal" href="#verification-and-testing">Verification and Testing</a></p></li>
+</ol>
+<section id="overview">
+<h2>1. Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>To enhance computational efficiency by allowing longer time steps, ocean models require split barotropic-baroclinic time-stepping methods. The implementation described here is based on the approach of <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999104005236">Higdon (2005)</a> and the MPAS-Ocean <code class="docutils literal notranslate"><span class="pre">split_explicit</span></code> scheme, with modifications for Omega’s non-Boussinesq pseudo-height <span class="math notranslate nohighlight">\(\tilde{z}\)</span> vertical coordinate. The pseudo-height coordinate and pseudo thickness <span class="math notranslate nohighlight">\(\tilde h\)</span> are defined by Eqs. <a class="reference internal" href="OmegaV1GoverningEqns.html#equation-pseudo-height">(7)</a> and <a class="reference internal" href="OmegaV1GoverningEqns.html#equation-def-pseudo-thickness">(21)</a>, respectively, in the <a class="reference internal" href="OmegaV1GoverningEqns.html#omega-design-governing-eqns-omega1"><span class="std std-ref">Omega V1 governing equations</span></a> design document.</p>
+<p>Omega currently implements two closely related steppers: <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code>, which explicitly subcycles the barotropic mode, and <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code>, which uses the same outer predictor-corrector framework without a barotropic split. The only implemented barotropic algorithm is <code class="docutils literal notranslate"><span class="pre">Predictor-Corrector</span></code>; implicit barotropic stepping and an Adams–Bashforth split-explicit method are future extensions.</p>
+<p>The split-explicit method involves the following sequence:</p>
+<ul class="simple">
+<li><p>Decompose the velocity into barotropic and baroclinic components.</p></li>
+<li><p>Advance the baroclinic velocity with the long baroclinic time step and form the depth-averaged forcing <span class="math notranslate nohighlight">\(\overline{G}\)</span> Eq. <a class="reference internal" href="#equation-split-stage1-gbar">(40)</a> that drives the barotropic momentum equation, Eq. <a class="reference internal" href="#equation-split-barotropic-momentum">(25)</a>.</p></li>
+<li><p>Subcycle the barotropic velocity with short explicit barotropic time steps.</p></li>
+<li><p>Construct a corrected transport velocity, update pseudo thickness and tracers, and reconstruct the full velocity.</p></li>
+</ul>
+</section>
+<section id="requirements">
+<h2>2. Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-a-split-time-stepping-method-in-the-pseudo-height-coordinate">
+<h3>2.1 Requirement: A split time-stepping method in the pseudo-height coordinate<a class="headerlink" href="#requirement-a-split-time-stepping-method-in-the-pseudo-height-coordinate" title="Permalink to this heading"></a></h3>
+<p>The algorithm is based on Section 2.3 of <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999104005236">Higdon (2005)</a>, with modifications to accommodate the <span class="math notranslate nohighlight">\(\tilde{z}\)</span>-coordinate variables in the non-Boussinesq framework. It accepts the outer time step, requested barotropic time step, barotropic algorithm, number of outer predictor-corrector iterations, number of baroclinic Coriolis iterations, and an option to recompute the velocity split. The <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code> variant advances the full velocity <span class="math notranslate nohighlight">\({\bf u}_{e,k}\)</span> instead of the baroclinic velocity <span class="math notranslate nohighlight">\({\bf u}'_{e,k}\)</span>, so the barotropic subcycle is redundant and is bypassed. Its stable time step is then set by the surface-gravity-wave CFL condition rather than by the internal-wave CFL condition, so <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code> is intended for verification and for idealized configurations rather than for production simulations.</p>
+</section>
+<section id="requirement-stable-time-integration-for-long-term-high-resolution-simulations">
+<h3>2.2 Requirement: Stable time integration for long-term high-resolution simulations<a class="headerlink" href="#requirement-stable-time-integration-for-long-term-high-resolution-simulations" title="Permalink to this heading"></a></h3>
+<p>Stability constrains the maximum allowable timestep, which in turn affects computational cost. The implemented split-explicit time stepping methods must allow for reasonably long timesteps while preventing numerical instabilities, such as those arising from internal gravity waves and barotropic modes, which are particularly important in global-scale and high-resolution ocean modeling. At a minimum, the time-stepping approach used in Omega V2 should accommodate the same timestep sizes as MPAS-Ocean for both the baroclinic and barotropic subsystems since Omega V2 is non-Boussinesq but hydrostatic.</p>
+</section>
+<section id="requirement-modularization-of-baroclinic-and-barotropic-time-stepping-methods">
+<h3>2.3 Requirement: Modularization of baroclinic and barotropic time-stepping methods<a class="headerlink" href="#requirement-modularization-of-baroclinic-and-barotropic-time-stepping-methods" title="Permalink to this heading"></a></h3>
+<p>Modularity ensures ease of testing and future-proofing of the Omega V2 codebase. Implementing a modular design enables mix-and-match time-stepping schemes of the baroclinic and barotropic subsystems, straightforward integration of alternative time-stepping schemes, and easier maintenance by separating the baroclinic and barotropic time-stepping codes, thereby enhancing flexibility.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3. Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<section id="barotropic-external-and-baroclinic-internal-mode-splitting">
+<h3>3.1 Barotropic (external) and baroclinic (internal) mode splitting<a class="headerlink" href="#barotropic-external-and-baroclinic-internal-mode-splitting" title="Permalink to this heading"></a></h3>
+<p>The split-explicit method separates ocean velocity into depth-integrated barotropic and depth-dependent baroclinic components. This separation allows the computationally expensive slow baroclinic modes to be advanced with a long time step, while the computationally inexpensive fast barotropic mode, which carries the surface gravity waves that impose the most restrictive CFL limit, is subcycled with short time steps. The benefit of the split is computational efficiency rather than accuracy. Mode splitting introduces a splitting error, since the two subsystems are coupled only once per baroclinic step. That error is controlled by the outer predictor-corrector iteration, by averaging the barotropic transport over the subcycles, and by the transport-velocity correction of Section 3.2.4, which restores consistency between the time-averaged barotropic transport and the layered thickness flux.</p>
+<p>The layered discrete governing equations for Omega V2 are described in the <a class="reference internal" href="OmegaV1GoverningEqns.html#omega-design-governing-eqns-omega1"><span class="std std-ref">Omega V1 governing equations</span></a> design document. The mass, tracer, and velocity equations used as the starting point for the mode split are summarized below.</p>
+<p><strong>Mass:</strong></p>
+<div class="math notranslate nohighlight" id="equation-split-discrete-mass">
+<span class="eqno">(1)<a class="headerlink" href="#equation-split-discrete-mass" title="Permalink to this equation"></a></span>\[
+\frac{\partial \tilde{h}_{i,k}}{\partial t}
++ \nabla \cdot \left( [\tilde{h}_{k}]_e {\bf u}_{e,k} \right)
++ \left[ \tilde{W}_{tr} \right]^{\text{top}}_{k}
+- \left[ \tilde{W}_{tr} \right]^{\text{top}}_{k+1}
+= 0 .
+\]</div>
+<p><strong>Tracer:</strong></p>
+<div class="math notranslate nohighlight" id="equation-split-discrete-tracer">
+<span class="eqno">(2)<a class="headerlink" href="#equation-split-discrete-tracer" title="Permalink to this equation"></a></span>\[
+\frac{\partial \tilde{h}_{i,k}\varphi_{i,k}}{\partial t}
++ \nabla \cdot \left( [\tilde{h}_{i,k}\varphi_{i,k}]_e {\bf u}_{e,k} \right)
++ \left\{
+\left[\varphi \tilde{W}_{tr}\right]^{\text{top}}_{k}
+-
+\left[\varphi \tilde{W}_{tr}\right]^{\text{top}}_{k+1}
+\right\}
+= [D_h^\varphi]_{i,k} - [D_v^\varphi]_{i,k},
+\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight" id="equation-split-tracer-horizontal-diffusion">
+<span class="eqno">(3)<a class="headerlink" href="#equation-split-tracer-horizontal-diffusion" title="Permalink to this equation"></a></span>\[
+[D_h^\varphi]_{i,k}
+= \kappa_{2,e}\nabla^2\varphi_{i,k}
+- \kappa_{4,e}\nabla^4\varphi_{i,k},
+\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight" id="equation-split-tracer-vertical-diffusion">
+<span class="eqno">(4)<a class="headerlink" href="#equation-split-tracer-vertical-diffusion" title="Permalink to this equation"></a></span>\[
+[D_v^\varphi]_{i,k}
+= [\tilde{\kappa}_{v}]_{i,k}
+\left[\frac{\partial h\varphi}{\partial \tilde{z}}\right]_{i,k}
+-
+[\tilde{\kappa}_{v}]_{i,k+1}
+\left[\frac{\partial h\varphi}{\partial \tilde{z}}\right]_{i,k+1} .
+\]</div>
+<p><strong>Velocity:</strong></p>
+<div class="math notranslate nohighlight" id="equation-split-discrete-velocity">
+<span class="eqno">(5)<a class="headerlink" href="#equation-split-discrete-velocity" title="Permalink to this equation"></a></span>\[
+\frac{\partial {\bf u}_{e,k}}{\partial t}
++ \left[ {\bf k} \cdot \nabla \times {\bf u}_{e,k} + f_v \right]_e {\bf u}^{\perp}_{e,k}
++ [\nabla K]_e
++ \frac{1}{[\tilde{h}_{i,k}]_e}
+\left[\tilde{W}_{tr}\frac{\partial U}{\partial \tilde{z}}\right]_{e,k}
+= - [(\alpha \nabla p + \nabla \Phi)]_{e,k}
++ [D_h^{\bf u}]_{e,k}
+- [D_v^{\bf u}]_{e,k},
+\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight" id="equation-split-velocity-horizontal-diffusion">
+<span class="eqno">(6)<a class="headerlink" href="#equation-split-velocity-horizontal-diffusion" title="Permalink to this equation"></a></span>\[
+[D_h^{\bf u}]_{e,k}
+= \nu_{2,e}\nabla^2 {\bf u}_{e,k}
+- \nu_{4,e}\nabla^4 {\bf u}_{e,k},
+\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight" id="equation-split-velocity-vertical-diffusion">
+<span class="eqno">(7)<a class="headerlink" href="#equation-split-velocity-vertical-diffusion" title="Permalink to this equation"></a></span>\[
+[D_v^{\bf u}]_{e,k}
+= \frac{1}{[\tilde{h}_{i,k}]_e}
+\left\{
+[\tilde{\nu}_{v}]^{\text{top}}_{e,k}
+\left[\frac{\partial {\bf u}}{\partial \tilde{z}}\right]_{e,k}
+-
+[\tilde{\nu}_{v}]^{\text{top}}_{e,k+1}
+\left[\frac{\partial {\bf u}}{\partial \tilde{z}}\right]_{e,k+1}
+\right\} .
+\]</div>
+<p>Define the barotropic velocity, baroclinic velocity, barotropic pressure, and barotropic pressure anomaly as follows.</p>
+<p><strong>Barotropic velocity:</strong></p>
+<div class="math notranslate nohighlight" id="equation-split-barotropic-velocity">
+<span class="eqno">(8)<a class="headerlink" href="#equation-split-barotropic-velocity" title="Permalink to this equation"></a></span>\[
+\overline{{\bf u}}
+\equiv
+\frac{1}{\tilde{H}}
+\sum_{k=0}^{K_{\max}} \tilde{h}_{k}{\bf u}_{k}.
+\]</div>
+<p><strong>Baroclinic velocity:</strong></p>
+<div class="math notranslate nohighlight" id="equation-split-baroclinic-velocity">
+<span class="eqno">(9)<a class="headerlink" href="#equation-split-baroclinic-velocity" title="Permalink to this equation"></a></span>\[
+{\bf u}'_k \equiv {\bf u}_k - \overline{{\bf u}}.
+\]</div>
+<p><strong>Barotropic pressure:</strong></p>
+<div class="math notranslate nohighlight" id="equation-split-barotropic-pressure">
+<span class="eqno">(10)<a class="headerlink" href="#equation-split-barotropic-pressure" title="Permalink to this equation"></a></span>\[
+B \equiv p^{\text{floor}} - p^{\text{surf}}.
+\]</div>
+<p><strong>Barotropic pressure anomaly:</strong></p>
+<div class="math notranslate nohighlight" id="equation-split-barotropic-pressure-anomaly">
+<span class="eqno">(11)<a class="headerlink" href="#equation-split-barotropic-pressure-anomaly" title="Permalink to this equation"></a></span>\[
+B' \equiv B - \rho_0 g b,
+\]</div>
+<p>so that</p>
+<div class="math notranslate nohighlight" id="equation-split-barotropic-pressure-reconstruction">
+<span class="eqno">(12)<a class="headerlink" href="#equation-split-barotropic-pressure-reconstruction" title="Permalink to this equation"></a></span>\[
+B = B' + \rho_0 g b,
+\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight" id="equation-split-floor-pressure-reconstruction">
+<span class="eqno">(13)<a class="headerlink" href="#equation-split-floor-pressure-reconstruction" title="Permalink to this equation"></a></span>\[
+p^{\text{floor}}
+= p^{\text{surf}} + B' + \rho_0 g b,
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(b \equiv -z^{\text{floor}}\)</span> is the geometric bottom depth.</p>
+<p>Define the column-integrated pseudo thickness and geometric thickness as follows.</p>
+<p><strong>Column-integrated pseudo thickness</strong>, or mass-equivalent column depth:</p>
+<div class="math notranslate nohighlight" id="equation-split-column-pseudo-thickness">
+<span class="eqno">(14)<a class="headerlink" href="#equation-split-column-pseudo-thickness" title="Permalink to this equation"></a></span>\[
+\tilde{H}
+\equiv
+\sum_{k=0}^{K_{\max}} \tilde{h}_{k}
+=
+\frac{1}{\rho_0 g}\sum_{k=0}^{K_{\max}}
+\left(p_{k+1}^{\text{top}} - p_k^{\text{top}}\right)
+=
+\frac{1}{\rho_0 g}\left(p^{\text{floor}}-p^{\text{surf}}\right)
+=
+\frac{B}{\rho_0 g}
+=
+\frac{1}{\rho_0 g}\left(B' + \rho_0 g b\right).
+\]</div>
+<p><strong>Column-integrated geometric thickness</strong>, or geometric column depth:</p>
+<div class="math notranslate nohighlight" id="equation-split-column-geometric-thickness">
+<span class="eqno">(15)<a class="headerlink" href="#equation-split-column-geometric-thickness" title="Permalink to this equation"></a></span>\[
+H
+=
+\sum_{k=0}^{K_{\max}} h_k
+=
+\sum_{k=0}^{K_{\max}} \frac{\rho_0}{\rho_k}\tilde{h}_k
+=
+\rho_0 \sum_{k=0}^{K_{\max}} \alpha_k \tilde{h}_k
+=
+\rho_0 S,
+\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight" id="equation-split-column-specific-volume">
+<span class="eqno">(16)<a class="headerlink" href="#equation-split-column-specific-volume" title="Permalink to this equation"></a></span>\[
+S = \sum_{k=0}^{K_{\max}} \alpha_k \tilde{h}_k
+\]</div>
+<p>is the column-integrated specific volume.</p>
+<p>Sea-surface height can be diagnosed by</p>
+<div class="math notranslate nohighlight" id="equation-split-diagnostic-ssh">
+<span class="eqno">(17)<a class="headerlink" href="#equation-split-diagnostic-ssh" title="Permalink to this equation"></a></span>\[
+\eta = \rho_0 S - b.
+\]</div>
+<p>The sea-surface height is decomposed into two components:</p>
+<div class="math notranslate nohighlight" id="equation-split-ssh-decomposition">
+<span class="eqno">(18)<a class="headerlink" href="#equation-split-ssh-decomposition" title="Permalink to this equation"></a></span>\[
+\eta = \eta^{\text{mass}} + \eta^{\text{steric}},
+\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight" id="equation-split-mass-and-steric-ssh">
+<span class="eqno">(19)<a class="headerlink" href="#equation-split-mass-and-steric-ssh" title="Permalink to this equation"></a></span>\[
+\eta^{\text{mass}} = \frac{B'}{\rho_0 g},
+\qquad
+\eta^{\text{steric}} = \rho_0 S - \frac{B}{\rho_0 g}.
+\]</div>
+<p>This expression is equivalent to Eq. (10.60) in <a class="reference external" href="https://mom-ocean.github.io/assets/pdfs/MOM5_manual.pdf">Griffies (2012)</a> and <a class="reference external" href="https://epic.awi.de/id/eprint/39698/1/NEMO_book_v6039.pdf">Madec et al. (2015)</a>, but formulated using <span class="math notranslate nohighlight">\(S\)</span> and <span class="math notranslate nohighlight">\(B\)</span>. The term <span class="math notranslate nohighlight">\(\eta^{\text{steric}}\)</span> represents the change in sea-surface height resulting from the non-Boussinesq steric effect, while <span class="math notranslate nohighlight">\(\eta^{\text{mass}}\)</span> is the mass-related component of sea-surface height that is advanced in time in the barotropic system as the fast process.</p>
+<p>Under the Boussinesq approximation, the steric height <span class="math notranslate nohighlight">\(\eta^{\text{steric}}\)</span> reduces to zero:</p>
+<div class="math notranslate nohighlight" id="equation-split-boussinesq-steric-limit">
+<span class="eqno">(20)<a class="headerlink" href="#equation-split-boussinesq-steric-limit" title="Permalink to this equation"></a></span>\[
+\eta^{\text{steric}} = H - \tilde{H};
+\qquad
+\rho \rightarrow \rho_0;
+\qquad
+H - H = 0.
+\]</div>
+<p>A common expression for steric height, following <a class="reference external" href="https://mom-ocean.github.io/assets/pdfs/MOM5_manual.pdf">Griffies (2012)</a> and <a class="reference external" href="https://epic.awi.de/id/eprint/39698/1/NEMO_book_v6039.pdf">Madec et al. (2015)</a>, is</p>
+<div class="math notranslate nohighlight" id="equation-split-steric-height-griffies-madec">
+<span class="eqno">(21)<a class="headerlink" href="#equation-split-steric-height-griffies-madec" title="Permalink to this equation"></a></span>\[
+\eta^{\text{steric}}
+= -\int_{-H}^{\eta}
+\left(\frac{\rho - \rho_0}{\rho_0}\right) dz .
+\]</div>
+<p>The derivation below demonstrates that this definition of <span class="math notranslate nohighlight">\(\eta^{\text{steric}}\)</span> is identical to the definition employed in the split system of Omega:</p>
+<div class="math notranslate nohighlight" id="equation-split-steric-height-derivation">
+<span class="eqno">(22)<a class="headerlink" href="#equation-split-steric-height-derivation" title="Permalink to this equation"></a></span>\[\begin{split}
+\begin{aligned}
+\eta^{\text{steric}}
+&amp;= -\int_{-H}^{\eta}
+\left(\frac{\rho - \rho_0}{\rho_0}\right) dz \\
+&amp;= \int_{-H}^{\eta}
+\left(1 - \frac{\rho}{\rho_0}\right) dz \\
+&amp;= \int_{-H}^{\eta} dz
+- \int_{-H}^{\eta}\frac{\rho}{\rho_0} dz \\
+&amp;= \int_{-H}^{\eta} dz
+- \int_{-H}^{\eta} d\tilde{z} \\
+&amp;= H - \tilde{H} \\
+&amp;= \rho_0 S - \frac{B}{\rho_0 g} .
+\end{aligned}
+\end{split}\]</div>
+<p>The fourth line uses the definition of the pseudo-height coordinate, <span class="math notranslate nohighlight">\(\rho\,dz=\rho_0\,d\tilde{z}\)</span>, given in the <a class="reference internal" href="OmegaV1GoverningEqns.html#omega-design-governing-eqns-omega1"><span class="std std-ref">Omega V1 governing equations</span></a> design document, and the fifth line uses Eqs. <a class="reference internal" href="#equation-split-column-pseudo-thickness">(14)</a> and <a class="reference internal" href="#equation-split-column-geometric-thickness">(15)</a>.</p>
+<p>The barotropic system is obtained from the layered equations of Section 3.1 by summing the mass equation over the column and by taking the pseudo-thickness-weighted vertical average of the momentum equation. Summing Eq. <a class="reference internal" href="#equation-split-discrete-mass">(1)</a> over <span class="math notranslate nohighlight">\(k\)</span> cancels the vertical transport terms between adjacent interfaces, leaving only the surface value, which is the freshwater flux <span class="math notranslate nohighlight">\(Q\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-split-column-integrated-mass">
+<span class="eqno">(23)<a class="headerlink" href="#equation-split-column-integrated-mass" title="Permalink to this equation"></a></span>\[
+\frac{\partial \tilde{H}_i}{\partial t}
++ \left[\nabla \cdot \sum_{k=0}^{K_{\max}}
+  \left([\tilde{h}_{k}]_e {\bf u}_{e,k}\right)\right]_i
+= -Q_i .
+\]</div>
+<p>To advance the column mass in the non-Boussinesq system, the barotropic prognostic variable is taken to be the pressure anomaly <span class="math notranslate nohighlight">\(B'\)</span> rather than <span class="math notranslate nohighlight">\(\tilde{H}\)</span> itself. Replacing the column transport by <span class="math notranslate nohighlight">\([\tilde{H}_i]_e\overline{{\bf u}}_e\)</span> using Eq. <a class="reference internal" href="#equation-split-barotropic-velocity">(8)</a>, and <span class="math notranslate nohighlight">\(\tilde{H}\)</span> by <span class="math notranslate nohighlight">\((B'+\rho_0 g b)/(\rho_0 g)\)</span> using Eq. <a class="reference internal" href="#equation-split-column-pseudo-thickness">(14)</a>, converts this into an equation for the barotropic pressure anomaly. The time-independent term <span class="math notranslate nohighlight">\(\rho_0 g b\)</span> drops out of the time derivative, and multiplying through by <span class="math notranslate nohighlight">\(\rho_0 g\)</span> gives the barotropic continuity equation below.</p>
+<p>Averaging Eq. <a class="reference internal" href="#equation-split-discrete-velocity">(5)</a> over the column in the same pseudo-thickness-weighted sense separates the pressure-gradient term into a depth-mean part, <span class="math notranslate nohighlight">\(-[\overline{\alpha}_i]_e[\nabla B_i']_e\)</span>, which is the fast surface-pressure-gradient term retained explicitly in the barotropic system, and a remainder. The planetary Coriolis term is also retained explicitly, because rotation modifies the surface gravity waves on the barotropic time scale. All remaining depth-averaged terms are collected into a single forcing <span class="math notranslate nohighlight">\(\overline{G}_e\)</span> that is diagnosed once per outer iteration and held fixed through the barotropic subcycle. Subtracting the same <span class="math notranslate nohighlight">\(\overline{G}_e\)</span> from the layered momentum equation gives the baroclinic momentum equation, so that the sum of the two subsystems recovers Eq. <a class="reference internal" href="#equation-split-discrete-velocity">(5)</a>.</p>
+<p>The barotropic continuity and momentum equations are written as follows.</p>
+<p><strong>Barotropic continuity equation:</strong></p>
+<div class="math notranslate nohighlight" id="equation-split-barotropic-continuity">
+<span class="eqno">(24)<a class="headerlink" href="#equation-split-barotropic-continuity" title="Permalink to this equation"></a></span>\[
+\frac{\partial B_i'}{\partial t}
++ \left[
+\nabla \cdot \left( [(B_i' + \rho_0 g b_i)]_e \overline{{\bf u}}_e \right)
+\right]_i
+= -\rho_0 g Q_i .
+\]</div>
+<p><strong>Barotropic momentum equation:</strong></p>
+<div class="math notranslate nohighlight" id="equation-split-barotropic-momentum">
+<span class="eqno">(25)<a class="headerlink" href="#equation-split-barotropic-momentum" title="Permalink to this equation"></a></span>\[
+\frac{\partial \overline{{\bf u}}_e}{\partial t}
++ f_e \overline{{\bf u}}^{\perp}_e
+= -[\overline{\alpha}_i]_e [\nabla B_i']_e
++ \overline{G}_e .
+\]</div>
+<p><strong>Baroclinic momentum equation:</strong></p>
+<div class="math notranslate nohighlight" id="equation-split-baroclinic-momentum">
+<span class="eqno">(26)<a class="headerlink" href="#equation-split-baroclinic-momentum" title="Permalink to this equation"></a></span>\[
+\frac{\partial {\bf u}'_{e,k}}{\partial t}
+= -[f_v]_e {\bf u}_{e,k}^{\prime\perp}
++ \Gamma_{e,k}
++ [\overline{\alpha}_i]_e [\nabla B_i']_e
+- \overline{G}_e,
+\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight" id="equation-split-gamma-definition">
+<span class="eqno">(27)<a class="headerlink" href="#equation-split-gamma-definition" title="Permalink to this equation"></a></span>\[
+\Gamma_{e,k}
+\equiv
+-[\nabla K]_e
+-(\alpha \nabla p + \nabla \Phi)_{e,k}
+-
+[ {\bf k} \cdot \nabla \times {\bf u}_{e,k}]_e {\bf u}^{\perp}_{e,k}
+-
+\frac{1}{[\tilde{h}_{i,k}]_e}
+\left[\tilde{W}_{tr}\frac{\partial U}{\partial \tilde{z}}\right]_{e,k}
++ [D_h^{\bf u}]_{e,k}
++ [F_s^{\bf u}]_{e,k}
++ [F_b^{\bf u}]_{e,k}.
+\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(\overline{G}_e\)</span> includes all remaining terms in the barotropic equation.</p>
+<p>Each term of <span class="math notranslate nohighlight">\(\Gamma\)</span> is applied only when its own tendency switch is enabled,
+and each is evaluated from the <em>full</em> normal velocity of the working state
+rather than from the baroclinic velocity alone. <span class="math notranslate nohighlight">\([F_s^{\bf u}]\)</span> and
+<span class="math notranslate nohighlight">\([F_b^{\bf u}]\)</span> are the surface stress forcing and the explicit bottom drag,
+which the implementation includes in the baroclinic tendency alongside the
+terms of Eq. <a class="reference internal" href="#equation-split-discrete-velocity">(5)</a>. A user-registered custom velocity
+tendency, when present, is also added here. <span class="math notranslate nohighlight">\(Q\)</span> is the surface freshwater flux.</p>
+<p>The vertical mixing term <span class="math notranslate nohighlight">\([D_v^{\bf u}]\)</span> does not appear in <span class="math notranslate nohighlight">\(\Gamma\)</span>. Vertical
+mixing of momentum and tracers is applied implicitly once per slow step, after
+the outer iterations and the time-level rotation have completed; see
+Section 3.2.6. Consequently <span class="math notranslate nohighlight">\(\Gamma\)</span> contains only the terms integrated
+explicitly by the outer scheme.</p>
+</section>
+<section id="split-explicit-time-stepping-algorithm">
+<h3>3.2 Split-explicit time stepping algorithm<a class="headerlink" href="#split-explicit-time-stepping-algorithm" title="Permalink to this heading"></a></h3>
+<p>The mode-splitting algorithm follows the MPAS-Ocean split-explicit framework. It advances baroclinic velocity over the slow time step, explicitly subcycles the barotropic system, and uses the time-averaged barotropic transport to correct the velocity used for pseudo-thickness and tracer transport. The implementation calls this option <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> uses two outer iterations by default. The first evaluates momentum at the time-<span class="math notranslate nohighlight">\(n\)</span> state and constructs a midpoint state. The second evaluates momentum at that midpoint and retains a full-step conservative pseudo-thickness and tracer update. Each outer iteration passes the full slow time step <span class="math notranslate nohighlight">\(\Delta t\)</span> to all three stages; it does not use <span class="math notranslate nohighlight">\(\Delta t/\text{NTimeStepIteration}\)</span>. The midpoint is produced by the one-half coefficients in the baroclinic, pseudo-thickness, and tracer updates. Setting <code class="docutils literal notranslate"><span class="pre">NTimeStepIteration</span></code> to one is permitted but leaves only the predictor and reduces the outer method to forward Euler.</p>
+<p>An <code class="docutils literal notranslate"><span class="pre">SE-AB2</span></code> method is not implemented. It can be added later using the same barotropic-stepper interface and additional previous-tendency storage.</p>
+<section id="initialization">
+<h4>3.2.1 Initialization<a class="headerlink" href="#initialization" title="Permalink to this heading"></a></h4>
+<p>The default outer-iteration count is</p>
+<div class="math notranslate nohighlight" id="equation-split-ntimestepiter-rk2">
+<span class="eqno">(28)<a class="headerlink" href="#equation-split-ntimestepiter-rk2" title="Permalink to this equation"></a></span>\[
+\text{NTimeStepIteration} = 2.
+\]</div>
+<p>Compute <code class="docutils literal notranslate"><span class="pre">NBtrSubcycle</span></code> as</p>
+<div class="math notranslate nohighlight" id="equation-split-nbtrsubcycle">
+<span class="eqno">(29)<a class="headerlink" href="#equation-split-nbtrsubcycle" title="Permalink to this equation"></a></span>\[
+\text{NBtrSubcycles}
+=
+\max\left(1,
+\left\lceil
+\frac{\text{TimeStep}}{\text{BtrTimeStep}}
+\right\rceil\right).
+\]</div>
+<p><code class="docutils literal notranslate"><span class="pre">BtrTimeStep</span></code> is therefore an upper bound requested by the user. The effective
+barotropic step is</p>
+<div class="math notranslate nohighlight" id="equation-split-effective-btr-timestep">
+<span class="eqno">(30)<a class="headerlink" href="#equation-split-effective-btr-timestep" title="Permalink to this equation"></a></span>\[
+\Delta t_{\mathrm{bt}}
+= \frac{\Delta t}{\text{NBtrSubcycles}}.
+\]</div>
+<p>Compute the barotropic velocity:</p>
+<div class="math notranslate nohighlight" id="equation-split-initial-barotropic-velocity">
+<span class="eqno">(31)<a class="headerlink" href="#equation-split-initial-barotropic-velocity" title="Permalink to this equation"></a></span>\[
+\overline{{\bf u}}_e
+\equiv
+\frac{1}{[\tilde{H}_i]_e}
+\sum_{k=0}^{K_{\max}}
+[\tilde{h}_{i,k}]_e {\bf u}_{e,k}.
+\]</div>
+<p>On startup from initial conditions, the barotropic velocity of
+Eq. <a class="reference internal" href="#equation-split-initial-barotropic-velocity">(31)</a> is formed with the edge pseudo
+thickness <span class="math notranslate nohighlight">\([\tilde{h}_{i,k}]_e\)</span> taken as the arithmetic mean of the two
+neighboring cell values, and the result is masked with the edge mask of the top
+active layer so that dry edges carry no barotropic velocity. For a restart,
+<code class="docutils literal notranslate"><span class="pre">NormalBarotropicVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">BarotropicPressureAnomaly</span></code> are preserved, while
+<code class="docutils literal notranslate"><span class="pre">NormalBaroclinicVelocity</span></code> is made consistent with the full and barotropic
+velocities read from the restart file through
+<span class="math notranslate nohighlight">\({\bf u}'={\bf u}-\overline{\bf u}\)</span>.</p>
+<p>Compute the baroclinic velocity:</p>
+<div class="math notranslate nohighlight" id="equation-split-initial-baroclinic-velocity">
+<span class="eqno">(32)<a class="headerlink" href="#equation-split-initial-baroclinic-velocity" title="Permalink to this equation"></a></span>\[
+{\bf u}'_{e,k} = {\bf u}_{e,k} - \overline{{\bf u}}_e.
+\]</div>
+<p>Before initializing the pressure split, the equation of state and the momentum
+vertical auxiliary fields are computed from the time-level-0 state and tracers
+through <code class="docutils literal notranslate"><span class="pre">AuxiliaryState::computeMomVertAux</span></code>. That call computes, in order, the
+interface and midpoint pressures together with the column-integrated pseudo
+thickness <span class="math notranslate nohighlight">\(\tilde H\)</span>, the specific volume, the depth-integrated and depth-mean
+specific volume, the column-integrated geometric thickness <span class="math notranslate nohighlight">\(H=\rho_0 S\)</span>, the
+geometric height, and the target thickness.</p>
+<p>Compute the barotropic pressure:</p>
+<div class="math notranslate nohighlight" id="equation-split-initial-barotropic-pressure">
+<span class="eqno">(33)<a class="headerlink" href="#equation-split-initial-barotropic-pressure" title="Permalink to this equation"></a></span>\[
+B_i = p_{i,K_{\max}+1} - p_{i}^{\text {surf}}.
+\]</div>
+<p>Here <span class="math notranslate nohighlight">\(p_{i,0}\)</span> is the surface pressure and <span class="math notranslate nohighlight">\(p_{i,K_{\max}+1}\)</span> is the pressure at
+the interface below the bottom-most active layer. <span class="math notranslate nohighlight">\(B\)</span> is stored once as a
+diagnostic in the split-explicit scratch space and is not used again during time
+stepping; the prognostic quantity is the anomaly <span class="math notranslate nohighlight">\(B'\)</span>.</p>
+<p>Compute the barotropic pressure anomaly:</p>
+<div class="math notranslate nohighlight" id="equation-split-initial-barotropic-pressure-anomaly">
+<span class="eqno">(34)<a class="headerlink" href="#equation-split-initial-barotropic-pressure-anomaly" title="Permalink to this equation"></a></span>\[
+B_i' = B_i - \rho_0 g b_i.
+\]</div>
+<p>Time level 1 is then initialized from time level 0 for normal velocity,
+baroclinic velocity, barotropic velocity, pseudo thickness, and barotropic
+pressure anomaly; tracers are copied at the start of <code class="docutils literal notranslate"><span class="pre">doStep</span></code>. If
+<code class="docutils literal notranslate"><span class="pre">ReinitSplitVelocity</span></code> is true, the velocity split is recomputed from
+<code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> at the beginning of each slow step, including a new depth mean
+for <code class="docutils literal notranslate"><span class="pre">NormalBarotropicVelocity</span></code>. When it is false, the existing barotropic
+velocity is retained and only baroclinic velocity is reconstructed from the
+other two velocity fields.</p>
+<p>Throughout Section 3.2 an asterisk marks a <em>provisional</em>, or working, value: the
+most recent estimate of a field produced by the outer predictor-corrector
+iteration and stored at time level 1. It is distinct from the time-<span class="math notranslate nohighlight">\(n\)</span> value at
+time level 0, which is held fixed for the whole slow step, and from the final
+<span class="math notranslate nohighlight">\(n+1\)</span> value. All tendencies and auxiliary variables are evaluated from these
+starred quantities. At the start of a slow step the working state is a copy of
+the time-<span class="math notranslate nohighlight">\(n\)</span> state,</p>
+<div class="math notranslate nohighlight" id="equation-split-initial-provisional-variables">
+<span class="eqno">(35)<a class="headerlink" href="#equation-split-initial-provisional-variables" title="Permalink to this equation"></a></span>\[
+{\bf u}^{*}_{e,k} = {\bf u}^n_{e,k},
+\qquad
+\tilde{W}^{*}_{i,k} = \tilde{W}^{n}_{i,k},
+\qquad
+\tilde{h}^{*}_{i,k} = \tilde{h}^{n}_{i,k},
+\qquad
+\varphi^{*}_{i,k} = \varphi^{n}_{i,k},
+\qquad
+p^{*}_{i,k} = p^{n}_{i,k},
+\qquad
+\tilde{z}^{*}_{i,k} = \tilde{z}^{n}_{i,k},
+\quad \text{etc.}
+\]</div>
+</section>
+<section id="stage-1-baroclinic-velocity-advance-with-long-time-step">
+<h4>3.2.2 Stage 1: Baroclinic velocity advance with long time step<a class="headerlink" href="#stage-1-baroclinic-velocity-advance-with-long-time-step" title="Permalink to this heading"></a></h4>
+<p>This stage advances the baroclinic velocity <span class="math notranslate nohighlight">\(u'\)</span> with the long time step and computes the barotropic forcing term <span class="math notranslate nohighlight">\(\overline{G}\)</span>.</p>
+<p>Compute the baroclinic forcing plus the barotropic pressure-gradient contribution:</p>
+<div class="math notranslate nohighlight" id="equation-split-stage1-baroclinic-forcing">
+<span class="eqno">(36)<a class="headerlink" href="#equation-split-stage1-baroclinic-forcing" title="Permalink to this equation"></a></span>\[
+\Gamma^*_{e,k} + [\overline{\alpha}^{*}_{i}]_e [\nabla B_i^{\prime *}]_e .
+\]</div>
+<p>Both terms are evaluated from the working state: the pseudo thickness, full
+normal velocity, barotropic velocity, and barotropic pressure anomaly are all
+taken at the working time level, and the momentum auxiliary variables are
+recomputed from that state first. The barotropic pressure-anomaly gradient term
+is gated on <code class="docutils literal notranslate"><span class="pre">SplitFactor</span></code>, because it exists solely to cancel the barotropic part of the
+full pressure gradient and must be present whenever the mode split is active.
+The horizontal-advection term uses the relative vorticity alone, with the
+planetary contribution removed, so that the Coriolis acceleration can be
+iterated separately below.</p>
+<p>Compute the column-integrated pseudo thickness:</p>
+<div class="math notranslate nohighlight" id="equation-split-stage1-column-pseudo-thickness">
+<span class="eqno">(37)<a class="headerlink" href="#equation-split-stage1-column-pseudo-thickness" title="Permalink to this equation"></a></span>\[
+\tilde{H}^{*}_i
+= \sum_{k=0}^{K} \tilde{h}^{*}_{i,k}.
+\]</div>
+<p>The non-Coriolis tendency is saved in <code class="docutils literal notranslate"><span class="pre">BaseVelocityTend</span></code>. Compute the Coriolis
+term using a fixed-point treatment. For
+<span class="math notranslate nohighlight">\(j = 0, \ldots, \text{NBclCoriolisIteration}-1\)</span>, with default value 2, restore
+the saved tendency after the first iteration, add the Coriolis acceleration
+computed from the latest working baroclinic velocity, recompute <span class="math notranslate nohighlight">\(\overline G\)</span>,
+and update the baroclinic velocity from the fixed time-<span class="math notranslate nohighlight">\(n\)</span> state:</p>
+<div class="math notranslate nohighlight" id="equation-split-stage1-baroclinic-coriolis">
+<span class="eqno">(38)<a class="headerlink" href="#equation-split-stage1-baroclinic-coriolis" title="Permalink to this equation"></a></span>\[
+{\bf u}_{e,k}^{\prime\perp *}
+=
+\sum_{e'\in ECP(e)} \tilde{E}_{e,e'} f_{e'} {\bf u}_{e',k}^{\prime *}.
+\]</div>
+<p>The Coriolis kernel shares its enable switch with the potential-vorticity
+horizontal-advection term: when that tendency is disabled, the Coriolis
+acceleration is skipped as well, in both the baroclinic and barotropic systems.</p>
+<p>Before each update, form the provisional full-step baroclinic velocity</p>
+<div class="math notranslate nohighlight" id="equation-split-stage1-provisional-baroclinic-velocity">
+<span class="eqno">(39)<a class="headerlink" href="#equation-split-stage1-provisional-baroclinic-velocity" title="Permalink to this equation"></a></span>\[
+{\bf u}_{e,k}^{\prime\mathrm{prov}}
+= {\bf u}_{e,k}^{\prime n}
++ \Delta t\,{\cal R}_{e,k}^{*},
+\]</div>
+<p>where <span class="math notranslate nohighlight">\({\cal R}^{*}\)</span> is the current velocity tendency including the Coriolis
+term. The implemented barotropic forcing is the pseudo-thickness-weighted
+column mean of this provisional velocity divided by <span class="math notranslate nohighlight">\(\Delta t\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-split-stage1-gbar">
+<span class="eqno">(40)<a class="headerlink" href="#equation-split-stage1-gbar" title="Permalink to this equation"></a></span>\[
+\overline G_e^{*}
+= \frac{1}{\Delta t}
+  \frac{\displaystyle\sum_k [\tilde h_k^*]_e
+        {\bf u}_{e,k}^{\prime\mathrm{prov}}}
+       {\displaystyle\sum_k [\tilde h_k^*]_e}.
+\]</div>
+<p>Here <span class="math notranslate nohighlight">\([\tilde h_k^*]_e\)</span> is the arithmetic mean of the two neighboring cell
+pseudo thicknesses at the working time level, and <span class="math notranslate nohighlight">\({\bf u}^{\prime n}\)</span> is the
+baroclinic velocity at time level 0, held fixed through the Coriolis iteration.
+The result is stored in <code class="docutils literal notranslate"><span class="pre">BarotropicForcing</span></code> and is the <span class="math notranslate nohighlight">\(\overline G\)</span> used
+unchanged by every barotropic subcycle step in Stage 2.</p>
+<p>The forcing is subtracted from every active layer of <span class="math notranslate nohighlight">\({\cal R}^{*}\)</span>, ensuring
+that the tendency passed to the baroclinic update has its depth-mean component
+removed. The working baroclinic velocity is then advanced to the midpoint:</p>
+<div class="math notranslate nohighlight" id="equation-split-stage1-baroclinic-advance">
+<span class="eqno">(41)<a class="headerlink" href="#equation-split-stage1-baroclinic-advance" title="Permalink to this equation"></a></span>\[
+{\bf u}_{e,k}^{\prime n+1/2}
+=
+{\bf u}_{e,k}^{\prime n}
++ \frac{\Delta t}{2}
+\left(
+-[f_v]_e {\bf u}_{e,k}^{\prime\perp *}
++ \Gamma^*_{e,k}
++ [\overline{\alpha}^{*}_{i}]_e [\nabla B_i^{\prime *}]_e
+- \overline G_e^{*}
+\right).
+\]</div>
+<p>For <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code>, set</p>
+<div class="math notranslate nohighlight" id="equation-split-stage1-gbar-unsplit">
+<span class="eqno">(42)<a class="headerlink" href="#equation-split-stage1-gbar-unsplit" title="Permalink to this equation"></a></span>\[
+\overline{G}^{*}_e = 0
+\]</div>
+<p>and use one Coriolis iteration. After Stage 1, the implementation exchanges
+only the working baroclinic-velocity halo.</p>
+</section>
+<section id="stage-2-barotropic-velocity-advance-explicitly-subcycled">
+<h4>3.2.3 Stage 2: Barotropic velocity advance, explicitly subcycled<a class="headerlink" href="#stage-2-barotropic-velocity-advance-explicitly-subcycled" title="Permalink to this heading"></a></h4>
+<p>This stage advances <span class="math notranslate nohighlight">\(B'\)</span> and <span class="math notranslate nohighlight">\(\overline{\bf {u}}\)</span> as a coupled system through <span class="math notranslate nohighlight">\(2M\)</span>
+predictor-corrector subcycle steps, where <span class="math notranslate nohighlight">\(M=\text{NBtrSubcycles}\)</span> and
+<span class="math notranslate nohighlight">\(\Delta t_{\mathrm{bt}}=\Delta t/M\)</span>. As in the MPAS-Ocean algorithm, the
+subcycle steps span an extended <span class="math notranslate nohighlight">\(2\Delta t\)</span> barotropic averaging window. For
+<code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code>, this stage is skipped, <span class="math notranslate nohighlight">\(\overline u=0\)</span>, and <span class="math notranslate nohighlight">\(u=u'\)</span>.</p>
+<p>The discrete barotropic continuity equation is</p>
+<div class="math notranslate nohighlight" id="equation-split-stage2-discrete-continuity">
+<span class="eqno">(43)<a class="headerlink" href="#equation-split-stage2-discrete-continuity" title="Permalink to this equation"></a></span>\[
+B_i^{\prime n+1}
+= B_i^{\prime n}
+- \Delta t
+\left[
+\nabla \cdot \left( [(B_i^{\prime n}+\rho_0 g b_i)]_e \overline{{\bf u}}_e^n \right)
+\right]_i
+- \Delta t\,\rho_0 g Q_i^n.
+\]</div>
+<p>The discrete barotropic momentum update is</p>
+<div class="math notranslate nohighlight" id="equation-split-stage2-discrete-momentum">
+<span class="eqno">(44)<a class="headerlink" href="#equation-split-stage2-discrete-momentum" title="Permalink to this equation"></a></span>\[
+\overline{{\bf u}}^{n+1}_e
+= \overline{{\bf u}}^{n}_e
++ \Delta t
+\left(
+- f_e \overline{{\bf u}}^{\perp n}_e
+- [\overline{\alpha}_i^{*}\nabla B_i^{\prime n}]_e
++ \overline{G}^{*}_e
+\right).
+\]</div>
+<p>Throughout this section a hat marks a quantity that lives inside the barotropic
+subcycle and is updated on every subcycle step, as distinct from the unhatted
+outer-iteration quantities carried by Stages 1 and 3.</p>
+<p>At the start of an outer iteration, initialize the subcycle variables and
+accumulators:</p>
+<div class="math notranslate nohighlight" id="equation-split-stage2-initialization">
+<span class="eqno">(45)<a class="headerlink" href="#equation-split-stage2-initialization" title="Permalink to this equation"></a></span>\[
+\hat{\overline{{\bf u}}}^{n}_e = \overline{{\bf u}}^{n}_e,
+\qquad
+\hat{B}^{\prime n}_i = B_i^{\prime n},
+\qquad
+\overline{{\bf u}}_e^{\mathrm{sum}}=\overline{{\bf u}}_e^n,
+\qquad F_e^{\mathrm{sum}}=0.
+\]</div>
+<p>The barotropic mass flux is not formed directly from
+<span class="math notranslate nohighlight">\((B'+\rho_0gb){\overline {\bf{u}}}\)</span>. Instead, the implementation uses the most recent
+baroclinic edge pseudo thickness and a pressure-anomaly correction relative to
+the provisional outer-iteration state <span class="math notranslate nohighlight">\(B'^{*}\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-split-stage2-effective-pressure">
+<span class="eqno">(46)<a class="headerlink" href="#equation-split-stage2-effective-pressure" title="Permalink to this equation"></a></span>\[
+{\cal P}_e({\cal B}')
+= \rho_0g\sum_k[\tilde h_k^*]_e
+  + [{\cal B}'-B'^{*}]_e.
+\]</div>
+<p><span class="math notranslate nohighlight">\({\cal P}_e\)</span> is written as a function of <span class="math notranslate nohighlight">\({\cal B}'\)</span> because it is evaluated
+more than once per subcycle step with different arguments. <span class="math notranslate nohighlight">\({\cal B}'\)</span> is a placeholder
+for whichever barotropic pressure anomaly is passed in; it is not a stored field
+of its own. The <span class="math notranslate nohighlight">\(B'\)</span> predictor, the <span class="math notranslate nohighlight">\(B'\)</span> corrector, and the transport
+accumulation each form a barotropic mass flux, so each evaluates <span class="math notranslate nohighlight">\({\cal P}_e\)</span>,
+passing a different combination of the three subcycle work arrays, <code class="docutils literal notranslate"><span class="pre">Cur</span></code>, <code class="docutils literal notranslate"><span class="pre">Pre</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">Cor</span></code>, which hold the anomaly at the start of the step, the predictor
+output, and the corrector output; the combinations are written out in the
+equations below.</p>
+<p>Only the bracketed difference in Eq. <a class="reference internal" href="#equation-split-stage2-effective-pressure">(46)</a>
+depends on <span class="math notranslate nohighlight">\({\cal B}'\)</span>. The column sum <span class="math notranslate nohighlight">\(\sum_k[\tilde h_k^*]_e\)</span> is identical in
+all three evaluations: it is the flux pseudo thickness on edges produced by the
+pseudo-thickness auxiliary state, so it already carries the configured centered
+or upwind edge reconstruction, summed over the column. It is diagnosed once from
+the provisional state before the subcycle loop begins and is held fixed for all
+<span class="math notranslate nohighlight">\(2M\)</span> subcycles. The barotropic fluxes formed with <span class="math notranslate nohighlight">\({\cal P}_e\)</span> do not update the
+pseudo thickness, so the column sum does not change as the subcycles proceed.</p>
+<p>The reference <span class="math notranslate nohighlight">\(B'^{*}\)</span> is the provisional barotropic pressure anomaly at the
+working time level on entry to Stage 2, in the same sense the asterisk carries
+elsewhere in Section 3.2: <span class="math notranslate nohighlight">\(B'^n\)</span> on the first outer iteration and the
+<span class="math notranslate nohighlight">\(\rho_0 g(\tilde H^{*}-b)\)</span> of Eq. <a class="reference internal" href="#equation-split-reset-barotropic-pressure-anomaly">(71)</a>
+left by the previous outer iteration afterward. It is likewise held fixed and is
+only overwritten by the final corrected anomaly after the last pass, so
+<span class="math notranslate nohighlight">\({\cal P}_e\)</span> measures the departure of the subcycled anomaly from the baroclinic
+column mass. This is what enforces the <a class="reference external" href="https://adcroft.github.io/assets/pdf/hallberg_adcroft_OM_2009.pdf">Hallberg and Adcroft (2009)</a> consistency
+described in Section 3.2.4. Note that <span class="math notranslate nohighlight">\(B'^{*}\)</span> is unhatted and so is an
+outer-iteration quantity, whereas the hatted <span class="math notranslate nohighlight">\(\hat B^{\prime *}\)</span> appearing in the
+predictor-corrector equations below is the subcycle predictor output.</p>
+<p>The edge value of the anomaly correction uses the same centered or upwind choice
+selected for pseudo-thickness fluxes. With the upwind choice the upwind
+direction is undefined where the normal velocity is exactly zero, and the
+implementation then takes the larger of the two neighboring cell values.</p>
+<p>The depth-mean specific volume <span class="math notranslate nohighlight">\([\overline{\alpha}_i]_e\)</span> is
+<code class="docutils literal notranslate"><span class="pre">Eos::DepthMeanSpecificVolume</span></code> averaged to the edge. It is computed from the
+working state during Stage 1 and is not updated during subcycling.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Predictor-Corrector</span></code> is the only barotropic time stepper currently implemented, so
+the subcycle steps below are specific to it. Section 4.2.3 gives the interface an
+alternative barotropic stepper would implement.</p>
+<p>For each predictor-corrector subcycle step <span class="math notranslate nohighlight">\(m=0,\ldots,2M-1\)</span>, apply the updates
+below. Both velocity updates are multiplied by the edge mask of the top active
+layer, and edges with no active layers are set to zero.</p>
+<p><strong><span class="math notranslate nohighlight">\(\overline{\bf {u}}\)</span> predictor:</strong></p>
+<div class="math notranslate nohighlight" id="equation-split-stage2-u-predictor">
+<span class="eqno">(47)<a class="headerlink" href="#equation-split-stage2-u-predictor" title="Permalink to this equation"></a></span>\[
+[\hat{\overline{{\bf u}}}^{*}_e]^{n+(m+1)/M}
+=
+[\hat{\overline{{\bf u}}}_e]^{n+m/M}
++
+\frac{\Delta t}{M}
+\left(
+-f_e[\hat{\overline{{\bf u}}}_e^{\perp}]^{n+m/M}
+-[\overline{\alpha}_i]^{*}_e[\nabla \hat{B}_i']^{n+m/M}_e
++ \overline{G}_e
+\right).
+\]</div>
+<p><strong><span class="math notranslate nohighlight">\(B'\)</span> predictor:</strong></p>
+<div class="math notranslate nohighlight" id="equation-split-stage2-b-predictor-flux">
+<span class="eqno">(48)<a class="headerlink" href="#equation-split-stage2-b-predictor-flux" title="Permalink to this equation"></a></span>\[
+[F^{*}_e]^{m+1}
+=
+{\cal P}_e\left([\hat{B}_i']^{n+m/M}\right)
+\left(
+(1-\gamma_1)[\hat{\overline{{\bf u}}}_e]^{n+m/M}
++
+\gamma_1[\hat{\overline{{\bf u}}}^{*}_e]^{n+(m+1)/M}
+\right),
+\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight" id="equation-split-stage2-b-predictor">
+<span class="eqno">(49)<a class="headerlink" href="#equation-split-stage2-b-predictor" title="Permalink to this equation"></a></span>\[
+[\hat{B}_i^{\prime *}]^{n+(m+1)/M}
+=
+[\hat{B}_i']^{n+m/M}
++
+\frac{\Delta t}{M}
+[-\nabla \cdot [F^{*}_e]^{m+1}]_i.
+\]</div>
+<p><strong><span class="math notranslate nohighlight">\(\overline{\bf {u}}\)</span> corrector:</strong></p>
+<div class="math notranslate nohighlight" id="equation-split-stage2-u-corrector">
+<span class="eqno">(50)<a class="headerlink" href="#equation-split-stage2-u-corrector" title="Permalink to this equation"></a></span>\[
+[\hat{\overline{{\bf u}}}_e]^{n+(m+1)/M}
+=
+[\hat{\overline{{\bf u}}}_e]^{n+m/M}
++
+\frac{\Delta t}{M}
+\left(
+-f_e[\hat{\overline{{\bf u}}}_e^{\perp *}]^{n+(m+1)/M}
+-
+[\overline{\alpha}_i]^{*}_e
+\nabla
+\left(
+(1-\gamma_2)[\hat{B}_i']^{n+m/M}
++
+\gamma_2[\hat{B}_i^{\prime *}]^{n+(m+1)/M}
+\right)_e
++
+\overline{G}_e
+\right).
+\]</div>
+<p><strong><span class="math notranslate nohighlight">\(B'\)</span> corrector:</strong></p>
+<div class="math notranslate nohighlight" id="equation-split-stage2-b-corrector-flux">
+<span class="eqno">(51)<a class="headerlink" href="#equation-split-stage2-b-corrector-flux" title="Permalink to this equation"></a></span>\[
+[F_e]^{m+1}
+=
+{\cal P}_e\left(
+(1-\gamma_2)[\hat{B}_i']^{n+m/M}
++
+\gamma_2[\hat{B}_i^{\prime *}]^{n+(m+1)/M}
+\right)
+\left(
+(1-\gamma_3)[\hat{\overline{{\bf u}}}_e]^{n+m/M}
++
+\gamma_3[\hat{\overline{{\bf u}}}^{*}_e]^{n+(m+1)/M}
+\right),
+\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight" id="equation-split-stage2-b-corrector">
+<span class="eqno">(52)<a class="headerlink" href="#equation-split-stage2-b-corrector" title="Permalink to this equation"></a></span>\[
+[\hat{B}_i^{\prime \mathrm{cor}}]^{n+(m+1)/M}
+=
+[\hat{B}_i']^{n+m/M}
++
+\frac{\Delta t}{M}
+[-\nabla \cdot [F_e]^{m+1}]_i.
+\]</div>
+<p>On <em>hatted</em> subcycle quantities the asterisk denotes a different work array
+depending on where it appears, so the mapping to the code is worth stating
+explicitly. Starred hatted pressures are always the predictor output <code class="docutils literal notranslate"><span class="pre">Pre</span></code>.
+Starred hatted velocities are the predictor output <code class="docutils literal notranslate"><span class="pre">Pre</span></code> in the <span class="math notranslate nohighlight">\(\overline {\bf{u}}\)</span>
+predictor, in the <span class="math notranslate nohighlight">\(B'\)</span> predictor flux, and in the Coriolis term of the
+<span class="math notranslate nohighlight">\(\overline {\bf {u}}\)</span> corrector; they are the corrector output <code class="docutils literal notranslate"><span class="pre">Cor</span></code> in the <span class="math notranslate nohighlight">\(B'\)</span>
+corrector flux and in the transport accumulation. On unhatted quantities such as
+<span class="math notranslate nohighlight">\(B'^{*}\)</span>, <span class="math notranslate nohighlight">\(\tilde h^{*}\)</span>, and <span class="math notranslate nohighlight">\(\overline{\alpha}^{*}\)</span>, the asterisk keeps its
+Section 3.2 meaning of a provisional outer-iteration value, which is frozen for
+the whole of Stage 2. The coefficients are</p>
+<div class="math notranslate nohighlight" id="equation-split-stage2-gamma-values">
+<span class="eqno">(53)<a class="headerlink" href="#equation-split-stage2-gamma-values" title="Permalink to this equation"></a></span>\[
+\gamma_1=0.5333,\qquad \gamma_2=0.5333,\qquad \gamma_3=1.
+\]</div>
+<p>Accumulate the barotropic velocity and flux during subcycling:</p>
+<div class="math notranslate nohighlight" id="equation-split-stage2-barotropic-velocity-accumulate">
+<span class="eqno">(54)<a class="headerlink" href="#equation-split-stage2-barotropic-velocity-accumulate" title="Permalink to this equation"></a></span>\[
+\overline{{\bf u}}_e^{\mathrm{sum}}
+=
+\sum_{m=0}^{2M}
+[\hat{\overline{{\bf u}}}_e]^{n+m/M},
+\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight" id="equation-split-stage2-barotropic-flux-accumulate">
+<span class="eqno">(55)<a class="headerlink" href="#equation-split-stage2-barotropic-flux-accumulate" title="Permalink to this equation"></a></span>\[
+F_e^{\mathrm{sum}}
+=
+\sum_{m=0}^{2M-1}
+[F_e]^{(m+1)/M}.
+\]</div>
+<p>Compute the time average after subcycling:</p>
+<div class="math notranslate nohighlight" id="equation-split-stage2-barotropic-velocity-average">
+<span class="eqno">(56)<a class="headerlink" href="#equation-split-stage2-barotropic-velocity-average" title="Permalink to this equation"></a></span>\[
+\overline{ {\bar {\bf u}}}_e^{\text{bt}}
+=
+\frac{1}{2M+1}
+\overline{{\bf u}}_e^{\mathrm{sum}}
+\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight" id="equation-split-stage2-barotropic-flux-average">
+<span class="eqno">(57)<a class="headerlink" href="#equation-split-stage2-barotropic-flux-average" title="Permalink to this equation"></a></span>\[
+\overline{F}_e^{\text{bt}}
+=
+\frac{1}{2M}F_e^{\mathrm{sum}}
+\]</div>
+<p>The flux accumulated for transport uses the corrected velocity and evaluates
+<span class="math notranslate nohighlight">\({\cal P}_e\)</span> with <span class="math notranslate nohighlight">\((1-\gamma_2)\hat B^{\prime n+m/M}
++\gamma_2\hat B^{\prime\mathrm{cor}}\)</span>, which differs from the pressure used in
+the <span class="math notranslate nohighlight">\(B'\)</span> corrector flux above, where the second term is the predictor anomaly.
+Both accumulations run over owned edges only.</p>
+</section>
+<section id="barotropic-baroclinic-coupling-and-barotropic-pressure-consistency">
+<h4>3.2.4 Barotropic-baroclinic coupling and barotropic pressure consistency<a class="headerlink" href="#barotropic-baroclinic-coupling-and-barotropic-pressure-consistency" title="Permalink to this heading"></a></h4>
+<p>For the mode-split consistency of the barotropic pressure anomaly between <span class="math notranslate nohighlight">\(B'\)</span> from the barotropic mode and <span class="math notranslate nohighlight">\(\rho_0 g(\tilde{H}-b)\)</span> from the baroclinic mode, Omega follows the scheme from <a class="reference external" href="https://adcroft.github.io/assets/pdf/hallberg_adcroft_OM_2009.pdf">Hallberg and Adcroft (2009)</a>, as implemented in MPAS-Ocean.</p>
+<p>The barotropic update of <span class="math notranslate nohighlight">\(B'\)</span> is given by</p>
+<div class="math notranslate nohighlight" id="equation-split-btr-update-consistency">
+<span class="eqno">(58)<a class="headerlink" href="#equation-split-btr-update-consistency" title="Permalink to this equation"></a></span>\[
+\frac{B_i^{\prime n+1}-B_i^{\prime n}}{\Delta t}
++
+\left[
+\nabla \cdot
+\overline{\left([(B_i' + \rho_0 g b_i)]_e \overline{{\bf u}}_e\right)}^{\text{bt}}
+\right]_i
+= -\rho_0 g Q_i .
+\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(\overline{\varphi}^{\text{bt}}\)</span> denotes a time-averaged quantity from the barotropic subcycles, and <span class="math notranslate nohighlight">\(n\)</span> indicates the baroclinic time step.</p>
+<p>The velocity correction <span class="math notranslate nohighlight">\({\bf u}^{\text{co}}\)</span> is written as</p>
+<div class="math notranslate nohighlight" id="equation-split-velocity-correction">
+<span class="eqno">(59)<a class="headerlink" href="#equation-split-velocity-correction" title="Permalink to this equation"></a></span>\[
+{\bf u}_{e,k}^{\text{co}}
+=
+\left\{
+\frac{\overline{F}_e^{\text{bt}}}{\rho_0g}
+-
+\sum_{k=0}^{K}
+[\tilde{h}_i^{*}]_{e,k}
+\left(
+\overline{{\bar {\bf u}}}_e^{\text{bt}}
++{\bf u}_{e,k}^{\prime n+0.5}
+\right)
+\right\}
+\bigg/
+[\tilde{H}_i^{*}]_e ,
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(\overline{F}_e^{\text{bt}}\)</span> is the time-averaged pressure transport
+from Stage 2. The same correction is added uniformly to every active layer on
+an edge. Here <span class="math notranslate nohighlight">\([\tilde h_i^*]_{e,k}\)</span> is the arithmetic mean of the two
+neighboring cell pseudo thicknesses at the working time level, not the flux
+pseudo thickness used by <span class="math notranslate nohighlight">\({\cal P}_e\)</span> in Stage 2.</p>
+<p>The same kernel that forms <span class="math notranslate nohighlight">\({\bf u}^{\text{co}}\)</span> also writes the uncorrected sum
+<span class="math notranslate nohighlight">\(\overline{{\bar{\bf u}}}^{\text{bt}}_e + {\bf u}^{\prime n+0.5}_{e,k}\)</span> into the
+working <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code>, which is what the Stage-3 auxiliary variables and
+tendencies see. On the final outer iteration this value is replaced later by the
+<span class="math notranslate nohighlight">\(n+1\)</span> reconstruction of Eq. <a class="reference internal" href="#equation-split-final-full-velocity">(74)</a>.</p>
+<p>The transport velocity <span class="math notranslate nohighlight">\(u^{\text{tr}}\)</span> is defined as</p>
+<div class="math notranslate nohighlight" id="equation-split-transport-velocity">
+<span class="eqno">(60)<a class="headerlink" href="#equation-split-transport-velocity" title="Permalink to this equation"></a></span>\[
+{\bf u}^{\text{tr}}_{e,k}
+=
+\overline{{\bar {\bf u}}}_e^{\text{bt}}
++{\bf u}_{e,k}^{\prime n+0.5}
++{\bf u}_{e,k}^{\text{co}}.
+\]</div>
+<p>The transport velocity is used to compute vertical transport velocity and horizontal transport for both pseudo thickness and tracers.</p>
+<p>For the unsplit algorithm, the above processes are skipped except that</p>
+<div class="math notranslate nohighlight" id="equation-split-unsplit-transport-velocity">
+<span class="eqno">(61)<a class="headerlink" href="#equation-split-unsplit-transport-velocity" title="Permalink to this equation"></a></span>\[
+{\bf u}_{e,k}^{\text{tr}}
+= {\bf u}_{e,k}^{\prime n+0.5},
+\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight" id="equation-split-unsplit-midpoint-relation">
+<span class="eqno">(62)<a class="headerlink" href="#equation-split-unsplit-midpoint-relation" title="Permalink to this equation"></a></span>\[
+{\bf u}_{e,k}^{\prime n+0.5} = {\bf u}_{e,k}^{n+0.5}.
+\]</div>
+</section>
+<section id="stage-3-update-tracers-and-diagnostics">
+<h4>3.2.5 Stage 3: Update tracers and diagnostics<a class="headerlink" href="#stage-3-update-tracers-and-diagnostics" title="Permalink to this heading"></a></h4>
+<p>Compute the pseudo-thickness and tracer auxiliary variables from
+<span class="math notranslate nohighlight">\({\bf u}_{e,k}^{\text{tr}}\)</span> through
+<code class="docutils literal notranslate"><span class="pre">AuxiliaryState::computePseudoThicknessTracerAux</span></code>, which also refreshes the
+vertical momentum auxiliary variables, and therefore the pressure, specific
+volume, column thicknesses, geometric height, and target thickness, from the
+working pseudo thickness and tracers.</p>
+<p>Compute <span class="math notranslate nohighlight">\(\tilde{W}_{i,k}^{*}\)</span> using <span class="math notranslate nohighlight">\({\bf u}_{e,k}^{\text{tr}}\)</span>.</p>
+<p>Compute pseudo thickness tendencies using <span class="math notranslate nohighlight">\({\bf u}_{e,k}^{\text{tr}}\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-split-stage3-pseudo-thickness-update">
+<span class="eqno">(63)<a class="headerlink" href="#equation-split-stage3-pseudo-thickness-update" title="Permalink to this equation"></a></span>\[
+{\cal T}_{\tilde h}
+=
+-
+\nabla \cdot
+\left([\tilde{h}_{k}^{*}]_e {\bf u}_{e,k}^{\text{tr}}\right)
+-
+\left(
+[\tilde{W}_{tr}]^{\text{top}}_{k}
+-
+[\tilde{W}_{tr}]^{\text{top}}_{k+1}
+\right).
+\]</div>
+<p>Compute tracer tendencies using <span class="math notranslate nohighlight">\({\bf u}_{e,k}^{\text{tr}}\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-split-stage3-tracer-update">
+<span class="eqno">(64)<a class="headerlink" href="#equation-split-stage3-tracer-update" title="Permalink to this equation"></a></span>\[
+{\cal T}_{\varphi}
+=
+-
+\nabla \cdot
+\left([
+\tilde{h}_{i,k}^{*}]_e
+[\varphi_{i,k}^{*}]_e
+{\bf u}_{e,k}^{\text{tr}}
+\right)
+-
+\left(
+[\varphi^{*}\tilde{W}_{tr}]^{\text{top}}_{i,k}
+-
+[\varphi^{*}\tilde{W}_{tr}]^{\text{top}}_{i,k+1}
+\right).
+\]</div>
+<p>On a non-final outer iteration, pseudo thickness is advanced to the midpoint
+with <span class="math notranslate nohighlight">\(\Delta t/2\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-split-reset-provisional-thickness">
+<span class="eqno">(65)<a class="headerlink" href="#equation-split-reset-provisional-thickness" title="Permalink to this equation"></a></span>\[
+\tilde h^{*}
+=
+\tilde h^n+\frac{\Delta t}{2}{\cal T}_{\tilde h}.
+\]</div>
+<p>This is the same midpoint state as the MPAS-Ocean form
+<span class="math notranslate nohighlight">\(\tilde h^{*}=\tfrac{1}{2}(\tilde h^{n}+\tilde h^{n+1})\)</span>, because
+<span class="math notranslate nohighlight">\(\tilde h^{n+1}=\tilde h^{n}+\Delta t\,{\cal T}_{\tilde h}\)</span>. Writing it as a
+half-step tendency update lets the same kernel that performs the full-step update
+on the final iteration be reused on the intermediate iterations, and avoids
+storing <span class="math notranslate nohighlight">\(\tilde h^{n+1}\)</span> and averaging it in an extra loop.</p>
+<p>For each tracer, the implementation first forms the conservative
+provisional end concentration:</p>
+<div class="math notranslate nohighlight" id="equation-split-stage3-provisional-tracer">
+<span class="eqno">(66)<a class="headerlink" href="#equation-split-stage3-provisional-tracer" title="Permalink to this equation"></a></span>\[
+\varphi^{\mathrm{end}}
+=\frac{\tilde h^n\varphi^n+\Delta t\,{\cal T}_\varphi}
+       {\tilde h^n+\Delta t\,{\cal T}_{\tilde h}},
+\]</div>
+<p>and stores <span class="math notranslate nohighlight">\(\varphi^*=(\varphi^n+\varphi^{\mathrm{end}})/2\)</span>. On the final
+outer iteration, it retains the full-step conservative updates shown above.</p>
+</section>
+<section id="reset-variables">
+<h4>3.2.6 Reset variables<a class="headerlink" href="#reset-variables" title="Permalink to this heading"></a></h4>
+<p>The reconstruction of the full velocity and the reset of <span class="math notranslate nohighlight">\(\tilde H\)</span> and <span class="math notranslate nohighlight">\(B'\)</span> are
+performed by a single routine at the end of Stage 3 on every outer iteration.
+Only the velocity reconstruction differs between an intermediate iteration and
+the final one; the column pseudo thickness and the barotropic pressure anomaly
+are recomputed the same way in both cases. For unsplit stepping the routine
+reconstructs the velocity and returns without touching <span class="math notranslate nohighlight">\(B'\)</span>.</p>
+<p>If iterating, reset the provisional variables as follows:</p>
+<div class="math notranslate nohighlight" id="equation-split-reset-baroclinic-velocity">
+<span class="eqno">(67)<a class="headerlink" href="#equation-split-reset-baroclinic-velocity" title="Permalink to this equation"></a></span>\[
+{\bf u}^{\prime *} = {\bf u}^{\prime n+0.5} \quad \text{from Stage 1},
+\]</div>
+<div class="math notranslate nohighlight" id="equation-split-reset-barotropic-velocity">
+<span class="eqno">(68)<a class="headerlink" href="#equation-split-reset-barotropic-velocity" title="Permalink to this equation"></a></span>\[
+\overline{{\bf u}}^{*} = \overline{{\bar {\bf u}}}^{\text{bt}} \quad \text{from Stage 2},
+\]</div>
+<div class="math notranslate nohighlight" id="equation-split-reset-full-velocity">
+<span class="eqno">(69)<a class="headerlink" href="#equation-split-reset-full-velocity" title="Permalink to this equation"></a></span>\[
+{\bf u}^{*} = \overline{{\bf u}}^{*} + u^{\prime *},
+\]</div>
+<p>with pseudo thickness and tracer concentration reset by
+Eqs. <a class="reference internal" href="#equation-split-reset-provisional-thickness">(65)</a> and
+<a class="reference internal" href="#equation-split-stage3-provisional-tracer">(66)</a> of Section 3.2.5. The column totals then
+follow:</p>
+<div class="math notranslate nohighlight" id="equation-split-reset-column-pseudo-thickness">
+<span class="eqno">(70)<a class="headerlink" href="#equation-split-reset-column-pseudo-thickness" title="Permalink to this equation"></a></span>\[
+\tilde{H}^{*} = \sum_{k=0}^{K} \tilde{h}_k^{*},
+\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight" id="equation-split-reset-barotropic-pressure-anomaly">
+<span class="eqno">(71)<a class="headerlink" href="#equation-split-reset-barotropic-pressure-anomaly" title="Permalink to this equation"></a></span>\[
+B^{\prime *} = \rho_0 g\left(\tilde{H}^{*}-b\right).
+\]</div>
+<p>The full working velocity is the sum of the working split velocities. The state
+and tracer halos are exchanged before the next outer iteration.</p>
+<p>After the final iteration, Stage 1 still stores the working baroclinic velocity
+at the midpoint:</p>
+<div class="math notranslate nohighlight" id="equation-split-final-baroclinic-velocity">
+<span class="eqno">(72)<a class="headerlink" href="#equation-split-final-baroclinic-velocity" title="Permalink to this equation"></a></span>\[
+{\bf u}^{\prime *}={\bf u}^{\prime n+1/2}.
+\]</div>
+<div class="math notranslate nohighlight" id="equation-split-final-barotropic-velocity">
+<span class="eqno">(73)<a class="headerlink" href="#equation-split-final-barotropic-velocity" title="Permalink to this equation"></a></span>\[
+\overline{{\bf u}}^{n+1} = \overline{{\bar {\bf u}}}^{\text{bt}} \quad \text{from Stage 2},
+\]</div>
+<div class="math notranslate nohighlight" id="equation-split-final-full-velocity">
+<span class="eqno">(74)<a class="headerlink" href="#equation-split-final-full-velocity" title="Permalink to this equation"></a></span>\[
+{\bf u}^{n+1}
+= \overline{{\bf u}}^{n+1}
+  +2{\bf u}^{\prime n+1/2}-{\bf u}^{\prime n},
+\]</div>
+<div class="math notranslate nohighlight" id="equation-split-final-thickness-tracer">
+<span class="eqno">(75)<a class="headerlink" href="#equation-split-final-thickness-tracer" title="Permalink to this equation"></a></span>\[
+\tilde{h}^{n+1}_{i,k}
+\quad\text{and}\quad
+\varphi^{n+1}_{i,k}
+\quad \text{are the full-step values retained from Stage 3},
+\]</div>
+<div class="math notranslate nohighlight" id="equation-split-final-column-pseudo-thickness">
+<span class="eqno">(76)<a class="headerlink" href="#equation-split-final-column-pseudo-thickness" title="Permalink to this equation"></a></span>\[
+\tilde{H}^{n+1} = \sum_{k=0}^{K} \tilde{h}_k^{n+1},
+\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight" id="equation-split-final-barotropic-pressure-anomaly">
+<span class="eqno">(77)<a class="headerlink" href="#equation-split-final-barotropic-pressure-anomaly" title="Permalink to this equation"></a></span>\[
+B^{\prime n+1} = \rho_0 g\left(\tilde{H}^{n+1}-b\right).
+\]</div>
+<p>The state and tracer time levels are rotated once, making the completed
+working state the new time level 0. Kinetic energy, velocity divergence, and the
+other kinetic auxiliary variables are then recomputed from the rotated <span class="math notranslate nohighlight">\(n+1\)</span>
+velocity so that history output and state validation see diagnostics consistent
+with the reconstructed velocity. Implicit vertical mixing is applied next if
+either velocity or tracer vertical mixing is enabled, followed by a state and
+tracer halo exchange. Finally the state is validated and the clock and
+persistent step count advance.</p>
+</section>
+</section>
+<section id="unsplit-time-stepping-algorithm">
+<h3>3.3 Unsplit time stepping algorithm<a class="headerlink" href="#unsplit-time-stepping-algorithm" title="Permalink to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code> uses the same <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2Stepper</span></code> implementation with
+<code class="docutils literal notranslate"><span class="pre">SplitFactor=0</span></code>. The stored baroclinic velocity is set equal to full velocity,
+barotropic velocity is zero, barotropic forcing is zero, and Stage 2 is
+skipped. Barotropic configuration keys are ignored.</p>
+<section id="id2">
+<h4>3.3.1 Initialization<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h4>
+<p>Compute the pressure <span class="math notranslate nohighlight">\(p\)</span> and the other vertical momentum auxiliary variables.</p>
+<p>Set the velocity split trivially, at both time levels and for both a startup and
+a restart:</p>
+<div class="math notranslate nohighlight" id="equation-unsplit-velocity-split">
+<span class="eqno">(78)<a class="headerlink" href="#equation-unsplit-velocity-split" title="Permalink to this equation"></a></span>\[
+\overline{{\bf u}}_e = 0,
+\qquad
+{\bf u}'_{e,k} = {\bf u}_{e,k}.
+\]</div>
+<p>Barotropic pressure and pressure anomaly are not initialized, since <span class="math notranslate nohighlight">\(B'\)</span> is
+never referenced when <code class="docutils literal notranslate"><span class="pre">SplitFactor</span></code> is zero.</p>
+<p>Prepare variables before the first iteration:</p>
+<div class="math notranslate nohighlight" id="equation-unsplit-initial-provisional-variables">
+<span class="eqno">(79)<a class="headerlink" href="#equation-unsplit-initial-provisional-variables" title="Permalink to this equation"></a></span>\[
+{\bf u}^{*}_{e,k} = {\bf u}^n_{e,k},
+\qquad
+\tilde{W}^{*}_{i,k} = \tilde{W}^{n}_{i,k},
+\qquad
+\tilde{h}^{*}_{i,k} = \tilde{h}^{n}_{i,k},
+\qquad
+\varphi^{*}_{i,k} = \varphi^{n}_{i,k},
+\qquad
+p^{*}_{i,k} = p^{n}_{i,k},
+\qquad
+\tilde{z}^{*}_{i,k} = \tilde{z}^{n}_{i,k},
+\quad \text{etc.}
+\]</div>
+</section>
+<section id="stage-1-velocity-advance">
+<h4>3.3.2 Stage 1: Velocity advance<a class="headerlink" href="#stage-1-velocity-advance" title="Permalink to this heading"></a></h4>
+<p>This stage advances the full velocity <span class="math notranslate nohighlight">\(u\)</span>.</p>
+<p>Compute <span class="math notranslate nohighlight">\(\Gamma_{e,k}^{*}\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-unsplit-gamma-definition">
+<span class="eqno">(80)<a class="headerlink" href="#equation-unsplit-gamma-definition" title="Permalink to this equation"></a></span>\[
+\Gamma_{e,k}^{*}
+=
+-[{\bf k}\cdot\nabla\times {\bf u}_{e,k}]_e {\bf u}_{e,k}^{\perp}
+-[\nabla K]_e
+-
+\frac{1}{[\tilde{h}_{i,k}]_e}
+\left[\tilde{W}_{tr}\frac{\partial U}{\partial \tilde{z}}\right]_{e,k}
+-(\alpha\nabla p+\nabla\Phi)_{e,k}
++[D_h^{\bf u}]_{e,k}
++[F_s^{\bf u}]_{e,k}
++[F_b^{\bf u}]_{e,k}.
+\]</div>
+<p>As in Section 3.1, the vertical mixing term is absent because it is applied
+implicitly after the outer iterations, and the barotropic pressure-anomaly
+gradient term of Eq. <a class="reference internal" href="#equation-split-stage1-baroclinic-forcing">(36)</a> is absent because
+<code class="docutils literal notranslate"><span class="pre">SplitFactor</span></code> is zero.</p>
+<p>Compute the column-integrated pseudo thickness:</p>
+<div class="math notranslate nohighlight" id="equation-unsplit-column-pseudo-thickness">
+<span class="eqno">(81)<a class="headerlink" href="#equation-unsplit-column-pseudo-thickness" title="Permalink to this equation"></a></span>\[
+\tilde{H}_i^{*}
+= \sum_{k=0}^{K} \tilde{h}^{*}_{i,k}.
+\]</div>
+<p>The unsplit configuration forces <code class="docutils literal notranslate"><span class="pre">NBclCoriolisIteration=1</span></code>. Compute the
+Coriolis term from the current working full velocity:</p>
+<div class="math notranslate nohighlight" id="equation-unsplit-coriolis">
+<span class="eqno">(82)<a class="headerlink" href="#equation-unsplit-coriolis" title="Permalink to this equation"></a></span>\[
+{\bf u}_{e,k}^{\perp *}
+=
+\sum_{e'\in ECP(e)} \tilde{E}_{e,e'} f_{e'} {\bf u}_{e',k}^{*}.
+\]</div>
+<p>Set</p>
+<div class="math notranslate nohighlight" id="equation-unsplit-gbar">
+<span class="eqno">(83)<a class="headerlink" href="#equation-unsplit-gbar" title="Permalink to this equation"></a></span>\[
+\overline{G}_e^{*} = 0,
+\]</div>
+<p>so the barotropic forcing is neither computed nor subtracted from the tendency.
+The shared update routine then advances the working velocity directly to the
+midpoint with the half coefficient:</p>
+<div class="math notranslate nohighlight" id="equation-unsplit-velocity-advance">
+<span class="eqno">(84)<a class="headerlink" href="#equation-unsplit-velocity-advance" title="Permalink to this equation"></a></span>\[
+{\bf u}_{e,k}^{n+0.5}
+=
+{\bf u}_{e,k}^{n}
++
+\frac{\Delta t}{2}
+\left(
+-[f_v]_e {\bf u}_{e,k}^{\perp *}
++
+\Gamma_{e,k}^{*}
+\right).
+\]</div>
+<p>The full-step velocity <span class="math notranslate nohighlight">\({\bf u}^{n+1}\)</span> is not formed here; it is recovered from
+the midpoint at the end of the final outer iteration by
+Eq. <a class="reference internal" href="#equation-unsplit-final-velocity">(87)</a>.</p>
+</section>
+<section id="id3">
+<h4>3.3.3 Stage 2: Barotropic velocity advance, explicitly subcycled<a class="headerlink" href="#id3" title="Permalink to this heading"></a></h4>
+<p>For the unsplit time stepper, <span class="math notranslate nohighlight">\(\overline{{\bf u}}=0\)</span>. This stage is skipped.</p>
+</section>
+<section id="id4">
+<h4>3.3.4 Stage 3: Update tracers and diagnostics<a class="headerlink" href="#id4" title="Permalink to this heading"></a></h4>
+<p>Compute <span class="math notranslate nohighlight">\({\bf u}_{e,k}^{\text{tr}}\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-unsplit-transport-velocity">
+<span class="eqno">(85)<a class="headerlink" href="#equation-unsplit-transport-velocity" title="Permalink to this equation"></a></span>\[
+{\bf u}_{e,k}^{\text{tr}}
+= {\bf u}_{e,k}^{n+0.5}.
+\]</div>
+<p>There is no barotropic mode to reconcile, so the velocity correction
+<span class="math notranslate nohighlight">\({\bf u}^{\text{co}}\)</span> of Eq. <a class="reference internal" href="#equation-split-velocity-correction">(59)</a> is identically
+zero and the transport velocity is simply the midpoint velocity from Stage 1.</p>
+<p>From this point Stage 3 is identical to the split case, because it depends on
+the mode split only through <span class="math notranslate nohighlight">\({\bf u}^{\text{tr}}\)</span>. The same routine computes
+the pseudo-thickness and tracer auxiliary variables, diagnoses
+<span class="math notranslate nohighlight">\(\tilde{W}_{tr}\)</span>, and advances pseudo thickness and tracers, applying the
+half-step midpoint construction on a non-final outer iteration and retaining
+the full-step conservative update on the final one. Section 3.2.5 gives the
+equations.</p>
+</section>
+<section id="id5">
+<h4>3.3.5 Reset variables<a class="headerlink" href="#id5" title="Permalink to this heading"></a></h4>
+<p>Only the velocity handling differs from the split case, since the mode split
+enters Section 3.2.6 solely through the velocity. If iterating, the working full
+velocity is simply the Stage 1 midpoint,</p>
+<div class="math notranslate nohighlight" id="equation-unsplit-reset-velocity">
+<span class="eqno">(86)<a class="headerlink" href="#equation-unsplit-reset-velocity" title="Permalink to this equation"></a></span>\[
+{\bf u}^{*} = {\bf u}^{n+0.5} \quad \text{from Stage 1},
+\]</div>
+<p>and after the final iteration the physical full-step velocity is reconstructed
+from it with no barotropic contribution:</p>
+<div class="math notranslate nohighlight" id="equation-unsplit-final-velocity">
+<span class="eqno">(87)<a class="headerlink" href="#equation-unsplit-final-velocity" title="Permalink to this equation"></a></span>\[
+{\bf u}^{n+1}=2{\bf u}^{n+1/2}-{\bf u}^{n}.
+\]</div>
+<p>Everything else follows Section 3.2.6 unchanged: the pseudo-thickness and tracer
+resets, the column totals <span class="math notranslate nohighlight">\(\tilde H^{*}\)</span> and <span class="math notranslate nohighlight">\(\tilde H^{n+1}\)</span>, the working-state
+and tracer halo exchange between outer iterations, and the closing sequence of
+time-level rotation, kinetic diagnostics, implicit vertical mixing, state
+validation, and clock advancement. Because <code class="docutils literal notranslate"><span class="pre">SplitFactor</span></code> is zero, the routine
+skips the <span class="math notranslate nohighlight">\(B'\)</span> reset of
+Eq. <a class="reference internal" href="#equation-split-reset-barotropic-pressure-anomaly">(71)</a>.</p>
+</section>
+</section>
+</section>
+<section id="design">
+<h2>4. Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>The split-explicit time stepping implementation consists of a baroclinic stepper with a barotropic subcycle stage.  The same
+stepper also supports an unsplit mode by setting the split forcing factor to zero and skipping the barotropic subcycling stage.</p>
+<p>The implementation is spread across the following files.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Contents</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">timeStepping/SplitExplicitTypes.h</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SplitExplicitConfig</span></code> and <code class="docutils literal notranslate"><span class="pre">SplitExplicitScratch</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">timeStepping/SplitExplicitInit.{h,cpp}</span></code></p></td>
+<td><p>Config reading, scratch allocation, velocity split and recombination, barotropic pressure initialization</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">timeStepping/SplitExplicitRK2Stepper.{h,cpp}</span></code></p></td>
+<td><p>Outer iteration, Stage 1, Stage 3, transport velocity, time-level management</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">timeStepping/SplitExplicitBarotropicPCStepper.{h,cpp}</span></code></p></td>
+<td><p>Stage 2 predictor-corrector barotropic subcycle</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">timeStepping/TimeStepper.{h,cpp}</span></code></p></td>
+<td><p>New stepper types and the <code class="docutils literal notranslate"><span class="pre">initializeStateFromInput</span></code> hook</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ocn/OceanState.{h,cpp}</span></code></p></td>
+<td><p>The three new split prognostic fields</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ocn/Tendencies.{h,cpp}</span></code></p></td>
+<td><p>Baroclinic velocity tendency and standalone Coriolis acceleration</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ocn/TendencyTerms.h</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">CoriolisAccelerationOnEdge</span></code> and the split-specific operator overloads</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ocn/AuxiliaryState.{h,cpp}</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">computePseudoThicknessTracerAux</span></code> and transport-velocity overloads</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ocn/Eos.{h,cpp}</span></code></p></td>
+<td><p>Depth-integrated and depth-mean specific volume</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ocn/VertCoord.{h,cpp}</span></code></p></td>
+<td><p>Column-integrated pseudo and geometric thickness</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ocn/OceanInit.cpp</span></code></p></td>
+<td><p>Calls <code class="docutils literal notranslate"><span class="pre">initializeStateFromInput</span></code> after input is read</p></td>
+</tr>
+</tbody>
+</table>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<p>The slow <code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code> and <code class="docutils literal notranslate"><span class="pre">TimeStep</span></code> options are read from <code class="docutils literal notranslate"><span class="pre">TimeIntegration</span></code>.
+Split-specific options are read from its optional <code class="docutils literal notranslate"><span class="pre">ModeSplitShare</span></code> subgroup.
+Missing keys retain the defaults in <code class="docutils literal notranslate"><span class="pre">SplitExplicitConfig</span></code>.</p>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code>: <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> selects mode-split stepping and
+<code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code> selects its unsplit counterpart. These are the only recognized
+split-stepper names.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NTimeStepIteration</span></code>: Number of outer predictor-corrector iterations. The
+default is 2 and values must be positive. Every iteration uses the full
+<code class="docutils literal notranslate"><span class="pre">TimeStep</span></code>; one iteration reduces the outer scheme to forward Euler.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NBclCoriolisIteration</span></code>: Number of centered Coriolis iterations used in the
+baroclinic velocity update.  The default is 2 for split-explicit stepping and
+1 for unsplit stepping.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BtrTimeStep</span></code>: Requested maximum barotropic subcycle time step. It must be
+positive and is ignored by <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BtrTimeStepper</span></code>: Barotropic subcycle algorithm.  The initial implementation
+supports <code class="docutils literal notranslate"><span class="pre">Predictor-Corrector</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SplitFactor</span></code>: Internal factor multiplying the barotropic pressure-anomaly
+contribution to the baroclinic velocity tendency.  It is 1 for
+<code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> and 0 for unsplit stepping.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ReinitSplitVelocity</span></code>: If true, recompute barotropic and baroclinic velocity
+from <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> at the beginning of every slow step. The default is
+false.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NBtrSubcycles</span></code>: Internal count computed as
+<code class="docutils literal notranslate"><span class="pre">max(1,</span> <span class="pre">ceil(TimeStep</span> <span class="pre">/</span> <span class="pre">BtrTimeStep))</span></code> when the stepper is constructed, and
+only for <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code>. <code class="docutils literal notranslate"><span class="pre">TimeStepper::changeTimeStep</span></code> does not currently
+recompute this count, so a stepper whose time step is changed after
+construction keeps its original subcycle count and shrinks
+<span class="math notranslate nohighlight">\(\Delta t_{\mathrm{bt}}\)</span> proportionally.</p></li>
+</ul>
+<p>If <code class="docutils literal notranslate"><span class="pre">ModeSplitShare</span></code> or <code class="docutils literal notranslate"><span class="pre">BtrTimeStep</span></code> is omitted from a user configuration, the
+requested barotropic step defaults to the slow <code class="docutils literal notranslate"><span class="pre">TimeStep</span></code>, giving one nominal
+subcycle and two predictor-corrector subcycle steps. <code class="docutils literal notranslate"><span class="pre">configs/Default.yml</span></code> supplies the
+whole subgroup, so the fallback applies only when a run configuration replaces
+rather than extends the defaults.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">ModeSplitShare</span></code> settings shipped in <code class="docutils literal notranslate"><span class="pre">configs/Default.yml</span></code>, together with a
+<code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> selection, are:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">TimeIntegration</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">TimeStepper</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SplitExplicitRK2</span>
+<span class="w">  </span><span class="nt">TimeStep</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0000_00:10:00</span>
+<span class="w">  </span><span class="nt">ModeSplitShare</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">BtrTimeStepper</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Predictor-Corrector</span>
+<span class="w">    </span><span class="nt">BtrTimeStep</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0000_00:00:20</span>
+<span class="w">    </span><span class="nt">NTimeStepIteration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">NBclCoriolisIteration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">ReinitSplitVelocity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>The types below are grouped into those the split-explicit time stepper introduces
+and those that already exist in Omega. For the latter, only the additions this
+time stepper requires are listed; no existing member is removed or renamed, and the
+other time steppers are unaffected.</p>
+<p><strong>New types</strong></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">SplitExplicitConfig</span></code>: Holds split-explicit configuration, including
+barotropic stepper selection, subcycle count, time-step iteration count,
+Coriolis iteration count, and <code class="docutils literal notranslate"><span class="pre">SplitFactor</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SplitExplicitScratch</span></code>: Holds temporary arrays for barotropic subcycling and
+baroclinic updates:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">NormalBarotropicVelocitySubcycle{Cur,Pre,Cor}</span></code> and
+<code class="docutils literal notranslate"><span class="pre">BarotropicPressureAnomalySubcycle{Cur,Pre,Cor}</span></code>, the three subcycle work arrays
+per field described in Section 3.2.3.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BarotropicPressure</span></code>, the diagnostic <span class="math notranslate nohighlight">\(B\)</span> formed at initialization.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BarotropicForcing</span></code>, the <span class="math notranslate nohighlight">\(\overline G\)</span> produced by Stage 1 and consumed by
+Stage 2.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BarotropicFlux</span></code>, the time-averaged pressure transport
+<span class="math notranslate nohighlight">\(\overline F^{\mathrm{bt}}\)</span> produced by Stage 2.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BaroclinicPseudoThicknessEdge</span></code>, the column sum of flux pseudo thickness on
+edges used by <span class="math notranslate nohighlight">\({\cal P}_e\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BaseVelocityTend</span></code>, the saved non-Coriolis baroclinic velocity tendency.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NormalTransportVelocity</span></code>, the corrected transport velocity
+<span class="math notranslate nohighlight">\({\bf u}^{\mathrm{tr}}\)</span> used by Stage 3.</p></li>
+</ul>
+<p>All arrays are sized over the full halo extent and zeroed at allocation. The
+scratch struct is a <code class="docutils literal notranslate"><span class="pre">mutable</span></code> member of the stepper, since <code class="docutils literal notranslate"><span class="pre">doStep</span></code> is
+<code class="docutils literal notranslate"><span class="pre">const</span></code>.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SplitExplicitInit</span></code>: Provides initialization utilities for reading
+split-explicit options, allocating scratch arrays, splitting full normal
+velocity into barotropic and baroclinic parts, combining the split velocity,
+and initializing barotropic pressure and pressure anomaly.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2Stepper</span></code>: Implements the RK2 time step, including the
+baroclinic velocity stage, optional barotropic subcycle stage, thickness and
+tracer stage, halo exchanges, and time-level rotation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SplitExplicitBarotropicPCStepper</span></code>: Implements the predictor-corrector
+barotropic stage interface.  This class owns the details of the barotropic
+algorithm so that <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2Stepper</span></code> can call a generic stage-2
+function.</p></li>
+</ul>
+<p><strong>Additions to existing classes</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code>: Gains the <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> and <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code> enumerators, the
+matching strings in <code class="docutils literal notranslate"><span class="pre">getTimeStepperFromStr</span></code>, the construction cases in
+<code class="docutils literal notranslate"><span class="pre">TimeStepper::create</span></code>, and a virtual <code class="docutils literal notranslate"><span class="pre">initializeStateFromInput</span></code> whose base
+implementation is an empty no-op so that the other steppers are unaffected.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">OceanState</span></code>: Stores the additional split-explicit prognostic fields:
+<code class="docutils literal notranslate"><span class="pre">NormalBaroclinicVelocity</span></code> (edges, layered), <code class="docutils literal notranslate"><span class="pre">NormalBarotropicVelocity</span></code>
+(edges, single level), and <code class="docutils literal notranslate"><span class="pre">BarotropicPressureAnomaly</span></code> (cells, single level).
+All three are added to the <code class="docutils literal notranslate"><span class="pre">Restart</span></code> field group but not to the <code class="docutils literal notranslate"><span class="pre">State</span></code> group,
+so they are written to and read from restart files without appearing in default
+history output.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Tendencies</span></code>: Exposes <code class="docutils literal notranslate"><span class="pre">computeCoriolisAccelerationOnEdge</span></code> in layered and
+single-layer forms, so that the Coriolis term can be applied on
+its own inside the Stage-1 iteration and by the barotropic subcycle. Both
+forms return without acting when the potential-vorticity tendency is disabled.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TendencyTerms</span></code>: Adds a <code class="docutils literal notranslate"><span class="pre">CoriolisAccelerationOnEdge</span></code> operator with layered and
+single-layer call operators; an overload of <code class="docutils literal notranslate"><span class="pre">PotentialVortHAdvOnEdge</span></code> that
+advects with relative vorticity only, leaving the planetary part to the
+Coriolis operator.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AuxiliaryState</span></code>: Adds <code class="docutils literal notranslate"><span class="pre">computePseudoThicknessTracerAux</span></code>, which computes just
+the pseudo-thickness and tracer auxiliary variables needed by Stage 3, in
+time-level and explicit-velocity-array forms.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Eos</span></code>: Stores <code class="docutils literal notranslate"><span class="pre">DepthIntegSpecificVolume</span></code>, the column integral of specific
+volume weighted by pseudo thickness, and <code class="docutils literal notranslate"><span class="pre">DepthMeanSpecificVolume</span></code>, that
+integral divided by the column-integrated pseudo thickness. Both are computed
+by <code class="docutils literal notranslate"><span class="pre">computeDepthIntegratedSpecificVolume</span></code> and are registered as <code class="docutils literal notranslate"><span class="pre">Eos</span></code> fields.
+<code class="docutils literal notranslate"><span class="pre">DepthMeanSpecificVolume</span></code> is the <span class="math notranslate nohighlight">\(\overline{\alpha}\)</span> used by both the
+barotropic momentum equation and the barotropic pressure-anomaly contribution
+to the baroclinic velocity tendency.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VertCoord</span></code>: Stores <code class="docutils literal notranslate"><span class="pre">TotalPseudoThickness</span></code>, the column sum <span class="math notranslate nohighlight">\(\tilde H\)</span>, and
+<code class="docutils literal notranslate"><span class="pre">TotalGeometricThickness</span></code>, the column geometric depth <span class="math notranslate nohighlight">\(H=\rho_0 S\)</span> of
+Eq. <a class="reference internal" href="#equation-split-column-geometric-thickness">(15)</a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">OceanInit</span></code>: <code class="docutils literal notranslate"><span class="pre">initStateForTimeStepper</span></code> calls
+<code class="docutils literal notranslate"><span class="pre">TimeStepper::initializeStateFromInput</span></code> after the initial-state or restart
+read and after <code class="docutils literal notranslate"><span class="pre">initUpdateHaloAndHostArrays</span></code>, then exchanges the state halo and
+copies to the host.</p></li>
+</ul>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<p>The implemented <code class="docutils literal notranslate"><span class="pre">doStep</span></code> control flow is shown below. Pacer timer
+instrumentation, and the communicator used only by its timing barriers, are
+omitted for readability.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">SplitExplicitRK2Stepper::doStep</span><span class="p">(</span><span class="n">OceanState</span><span class="w"> </span><span class="o">*</span><span class="n">State</span><span class="p">,</span>
+<span class="w">                                     </span><span class="n">TimeInstant</span><span class="w"> </span><span class="o">&amp;</span><span class="n">SimTime</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">CurLevel</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">   </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NextLevel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+
+<span class="w">   </span><span class="n">Array3DReal</span><span class="w"> </span><span class="n">CurTracerArray</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">Tracers</span><span class="o">::</span><span class="n">getAll</span><span class="p">(</span><span class="n">CurLevel</span><span class="p">);</span>
+<span class="w">   </span><span class="n">Array3DReal</span><span class="w"> </span><span class="n">NextTracerArray</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Tracers</span><span class="o">::</span><span class="n">getAll</span><span class="p">(</span><span class="n">NextLevel</span><span class="p">);</span>
+
+<span class="w">   </span><span class="c1">// Initialize NextLevel from CurLevel, optionally recomputing the split</span>
+<span class="w">   </span><span class="n">initializeNextState</span><span class="p">(</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">CurLevel</span><span class="p">,</span><span class="w"> </span><span class="n">NextLevel</span><span class="p">,</span><span class="w"> </span><span class="n">SEConfig</span><span class="p">.</span><span class="n">SplitFactor</span><span class="p">,</span>
+<span class="w">                       </span><span class="n">SEConfig</span><span class="p">.</span><span class="n">ReinitSplitVelocity</span><span class="p">);</span>
+<span class="w">   </span><span class="n">deepCopy</span><span class="p">(</span><span class="n">NextTracerArray</span><span class="p">,</span><span class="w"> </span><span class="n">CurTracerArray</span><span class="p">);</span>
+
+<span class="w">   </span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="n">StageTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SimTime</span><span class="p">;</span>
+<span class="w">   </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">I4</span><span class="w"> </span><span class="n">TimeStepIteration</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">        </span><span class="n">TimeStepIteration</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">SEConfig</span><span class="p">.</span><span class="n">NTimeStepIteration</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">TimeStepIteration</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">FinalIteration</span><span class="w"> </span><span class="o">=</span>
+<span class="w">          </span><span class="n">TimeStepIteration</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">SEConfig</span><span class="p">.</span><span class="n">NTimeStepIteration</span><span class="p">;</span>
+
+<span class="w">      </span><span class="c1">// The first iteration evaluates the momentum right-hand side at the n</span>
+<span class="w">      </span><span class="c1">// state copied into NextLevel; every later iteration sees the midpoint</span>
+<span class="w">      </span><span class="c1">// state left by its predecessor, so time-dependent terms are sampled at</span>
+<span class="w">      </span><span class="c1">// n+1/2 to keep the predictor-corrector second order.</span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">TimeInstant</span><span class="w"> </span><span class="n">VelStageTime</span><span class="w"> </span><span class="o">=</span>
+<span class="w">          </span><span class="n">TimeStepIteration</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">StageTime</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">StageTime</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TimeStep</span><span class="p">;</span>
+
+<span class="w">      </span><span class="c1">// Stage 1: Baroclinic velocity advance, with long time step</span>
+<span class="w">      </span><span class="n">doBaroclinicVelocityUpdate</span><span class="p">(</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">NextTracerArray</span><span class="p">,</span><span class="w"> </span><span class="n">CurLevel</span><span class="p">,</span><span class="w"> </span><span class="n">NextLevel</span><span class="p">,</span>
+<span class="w">                                 </span><span class="n">VelStageTime</span><span class="p">,</span><span class="w"> </span><span class="n">TimeStep</span><span class="p">);</span>
+
+<span class="w">      </span><span class="n">MeshHalo</span><span class="o">-&gt;</span><span class="n">exchangeFullArrayHalo</span><span class="p">(</span>
+<span class="w">          </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">getNormalBaroclinicVelocity</span><span class="p">(</span><span class="n">NextLevel</span><span class="p">),</span><span class="w"> </span><span class="n">OnEdge</span><span class="p">);</span>
+
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">SEConfig</span><span class="p">.</span><span class="n">SplitFactor</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mf">0.</span><span class="n">_Real</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="c1">// Stage 2: Barotropic velocity advance, explicitly subcycled</span>
+<span class="w">         </span><span class="n">doBarotropicVelocityUpdate</span><span class="p">(</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">CurLevel</span><span class="p">,</span><span class="w"> </span><span class="n">NextLevel</span><span class="p">,</span>
+<span class="w">                                    </span><span class="n">StageTime</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TimeStep</span><span class="p">,</span><span class="w"> </span><span class="n">TimeStep</span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span>
+
+<span class="w">      </span><span class="c1">// Physical total velocity and the corrected transport velocity</span>
+<span class="w">      </span><span class="n">computeTransportVelocity</span><span class="p">(</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">NextLevel</span><span class="p">);</span>
+
+<span class="w">      </span><span class="c1">// Stage 3: Update thickness, tracers, other diagnostics</span>
+<span class="w">      </span><span class="n">doThicknessTracerUpdate</span><span class="p">(</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">CurTracerArray</span><span class="p">,</span><span class="w"> </span><span class="n">NextTracerArray</span><span class="p">,</span><span class="w"> </span><span class="n">CurLevel</span><span class="p">,</span>
+<span class="w">                              </span><span class="n">NextLevel</span><span class="p">,</span><span class="w"> </span><span class="n">StageTime</span><span class="p">,</span><span class="w"> </span><span class="n">TimeStep</span><span class="p">,</span><span class="w"> </span><span class="n">FinalIteration</span><span class="p">);</span>
+
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">FinalIteration</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">exchangeHalo</span><span class="p">(</span><span class="n">NextLevel</span><span class="p">);</span>
+<span class="w">         </span><span class="n">MeshHalo</span><span class="o">-&gt;</span><span class="n">exchangeFullArrayHalo</span><span class="p">(</span><span class="n">NextTracerArray</span><span class="p">,</span><span class="w"> </span><span class="n">OnCell</span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">   </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">updateTimeLevels</span><span class="p">();</span>
+<span class="w">   </span><span class="n">Tracers</span><span class="o">::</span><span class="n">updateTimeLevels</span><span class="p">();</span>
+
+<span class="w">   </span><span class="c1">// Refresh the kinetic auxiliary variables from the completed n+1 velocity,</span>
+<span class="w">   </span><span class="c1">// an inline parallelForOuter over KineticAux::computeVarsOnCell</span>
+
+<span class="w">   </span><span class="c1">// Apply implicit vertical mixing, then re-exchange the affected halos</span>
+<span class="w">   </span><span class="n">VertMix</span><span class="w"> </span><span class="o">*</span><span class="n">VMix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">VertMix</span><span class="o">::</span><span class="n">getInstance</span><span class="p">();</span>
+<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">VMix</span><span class="o">-&gt;</span><span class="n">VelVertMixSetup</span><span class="p">.</span><span class="n">Enabled</span><span class="w"> </span><span class="k">or</span><span class="w"> </span><span class="n">VMix</span><span class="o">-&gt;</span><span class="n">TracerVertMixSetup</span><span class="p">.</span><span class="n">Enabled</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">VMix</span><span class="o">-&gt;</span><span class="n">VertMixImplicit</span><span class="p">(</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">AuxState</span><span class="p">,</span><span class="w"> </span><span class="n">Tracers</span><span class="o">::</span><span class="n">getAll</span><span class="p">(</span><span class="n">CurLevel</span><span class="p">),</span>
+<span class="w">                            </span><span class="n">Tracers</span><span class="o">::</span><span class="n">getNumTracers</span><span class="p">(),</span><span class="w"> </span><span class="n">CurLevel</span><span class="p">);</span>
+<span class="w">      </span><span class="n">State</span><span class="o">-&gt;</span><span class="n">exchangeHalo</span><span class="p">(</span><span class="n">CurLevel</span><span class="p">);</span>
+<span class="w">      </span><span class="n">Tracers</span><span class="o">::</span><span class="n">exchangeHalo</span><span class="p">(</span><span class="n">CurLevel</span><span class="p">);</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">   </span><span class="n">validateOceanState</span><span class="p">(</span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">AuxState</span><span class="p">,</span><span class="w"> </span><span class="n">VertCoord</span><span class="o">::</span><span class="n">getDefault</span><span class="p">(),</span><span class="w"> </span><span class="n">CurLevel</span><span class="p">);</span>
+
+<span class="w">   </span><span class="n">StepClock</span><span class="o">-&gt;</span><span class="n">advance</span><span class="p">();</span>
+<span class="w">   </span><span class="n">SimTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">StepClock</span><span class="o">-&gt;</span><span class="n">getCurrentTime</span><span class="p">();</span>
+<span class="w">   </span><span class="o">++</span><span class="n">StepCount</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The stepper also implements <code class="docutils literal notranslate"><span class="pre">finalizeInit</span></code>, which validates the tendency, mesh,
+vertical coordinate, and halo pointers, allocates the scratch arrays, and binds
+the barotropic stage callback for the configured <code class="docutils literal notranslate"><span class="pre">BtrTimeStepper</span></code>.</p>
+<section id="id6">
+<h4>4.2.1 Initialization<a class="headerlink" href="#id6" title="Permalink to this heading"></a></h4>
+<p>After the initial condition or restart state has been read, <code class="docutils literal notranslate"><span class="pre">OceanInit</span></code>
+initializes the split-explicit state through
+<code class="docutils literal notranslate"><span class="pre">TimeStepper::initializeStateFromInput</span></code>.  For <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2Stepper</span></code>, this
+initialization performs the following operations:</p>
+<ol class="arabic simple">
+<li><p>Compute momentum vertical auxiliary variables needed for pressure.</p></li>
+<li><p>For a non-restart <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> run, compute barotropic pressure and
+pressure anomaly from pressure-interface, surface-pressure, and bottom-depth
+fields, then initialize all three barotropic subcycle pressure work arrays.</p></li>
+<li><p>Initialize velocity split fields. For a non-restart run with
+<code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code>, full normal velocity is split into barotropic and
+baroclinic components. For a restart run, barotropic velocity is preserved
+and baroclinic velocity is reconstructed as full minus barotropic velocity.
+For unsplit stepping, barotropic velocity is set to zero and baroclinic
+velocity is set equal to full normal velocity.</p></li>
+<li><p>Initialize time level 1 from time level 0 so that the first time step starts
+from a consistent pair of time levels.</p></li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">OceanInit</span></code> then exchanges the time-level-0 state halo and copies it to the
+host, so that the newly split velocity fields are consistent across ranks and on
+the host before any output or time stepping.</p>
+<p>At the beginning of every full time step, time level 1 is refreshed from time
+level 0 for the state fields advanced by the split-explicit scheme, and tracer
+time level 1 is copied from tracer time level 0.  The state at time level 0 is
+kept fixed during the internal time-step iterations.  Time level 1 is updated
+repeatedly and provides the most recent state for tendency computations.</p>
+<p>This refresh is also where <code class="docutils literal notranslate"><span class="pre">ReinitSplitVelocity</span></code> acts. When it is true and the
+mode split is active, the velocity split is recomputed from the time-level-0
+<code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code>, including a new depth mean for <code class="docutils literal notranslate"><span class="pre">NormalBarotropicVelocity</span></code>.
+When it is false, the stored barotropic velocity is kept and only the baroclinic
+velocity is rebuilt as <span class="math notranslate nohighlight">\({\bf u}-\overline{\bf u}\)</span>, which preserves the barotropic
+state carried forward from the previous step.</p>
+</section>
+<section id="stage-1-baroclinic-velocity">
+<h4>4.2.2 Stage 1: baroclinic velocity<a class="headerlink" href="#stage-1-baroclinic-velocity" title="Permalink to this heading"></a></h4>
+<p>Stage 1 computes the baroclinic velocity tendency at the current iteration
+state and advances <code class="docutils literal notranslate"><span class="pre">NormalBaroclinicVelocity</span></code> by half of the full slow time
+step. The first outer iteration samples at <span class="math notranslate nohighlight">\(t^n\)</span> and every later iteration
+samples time-dependent forcing at <span class="math notranslate nohighlight">\(t^{n+1/2}\)</span>. The non-Coriolis tendency is
+saved in <code class="docutils literal notranslate"><span class="pre">SplitExplicitScratch</span></code> before the
+centered Coriolis iteration begins.</p>
+<p>The centered Coriolis treatment repeats <code class="docutils literal notranslate"><span class="pre">NBclCoriolisIteration</span></code> times.  Each
+iteration restores the saved non-Coriolis tendency, adds the Coriolis
+acceleration computed from the updated baroclinic velocity, and updates
+<code class="docutils literal notranslate"><span class="pre">NormalBaroclinicVelocity</span></code> again from the fixed time-level-0 base state.  After
+stage 1, only the updated baroclinic velocity halo is exchanged.</p>
+</section>
+<section id="stage-2-barotropic-subcycling">
+<h4>4.2.3 Stage 2: barotropic subcycling<a class="headerlink" href="#stage-2-barotropic-subcycling" title="Permalink to this heading"></a></h4>
+<p>Stage 2 advances the barotropic velocity and barotropic pressure anomaly using
+the configured barotropic stepper.  The RK2 stepper delegates this work through
+a generic barotropic-stage callback so that additional barotropic algorithms can
+be added without complicating the RK2 stage logic.</p>
+<p>For <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code>, the barotropic stage is active and currently uses the
+predictor-corrector barotropic stepper.  For unsplit stepping, <code class="docutils literal notranslate"><span class="pre">SplitFactor</span></code> is
+zero and stage 2 is skipped. The predictor-corrector implementation owns three
+work arrays (<code class="docutils literal notranslate"><span class="pre">Cur</span></code>, <code class="docutils literal notranslate"><span class="pre">Pre</span></code>, and <code class="docutils literal notranslate"><span class="pre">Cor</span></code>) for both barotropic velocity and pressure
+anomaly. It exchanges the <code class="docutils literal notranslate"><span class="pre">Cur</span></code> work arrays once per subcycle step, evaluates the
+remaining kernels over progressively smaller halo ranges so that no further halo
+exchange is needed within a subcycle step, accumulates the corrected velocity and
+the pressure transport, and exchanges the resulting time-averaged fields after
+the last subcycle step.</p>
+<p>The callback signature takes only the state, the two time levels, the stage
+time, and the stage time step; the barotropic stepper reaches everything else it
+needs, including the scratch arrays, the configuration, the mesh, the halo, the
+vertical coordinate, and the equation of state, through the arguments the RK2
+stepper binds into the lambda. Adding an implicit or Adams–Bashforth barotropic
+algorithm therefore means adding an enumerator, a class implementing the same
+<code class="docutils literal notranslate"><span class="pre">doBarotropicVelocityUpdate</span></code> entry point, and a branch in
+<code class="docutils literal notranslate"><span class="pre">initBarotropicStepper</span></code>, with no change to the RK2 stage logic.</p>
+</section>
+<section id="stage-3-thickness-and-tracers">
+<h4>4.2.4 Stage 3: thickness and tracers<a class="headerlink" href="#stage-3-thickness-and-tracers" title="Permalink to this heading"></a></h4>
+<p>Before Stage 3, <code class="docutils literal notranslate"><span class="pre">computeTransportVelocity</span></code> reconstructs the full normal
+velocity from the split fields and adds a depth-uniform correction to a
+separate <code class="docutils literal notranslate"><span class="pre">NormalTransportVelocity</span></code> scratch field. Stage 3 computes
+pseudo-thickness and tracer auxiliary variables with this corrected transport,
+diagnoses vertical pseudo velocity, and advances pseudo thickness and tracers.
+These Stage-3 tendencies are sampled at <span class="math notranslate nohighlight">\(t^{n+1/2}\)</span> on every outer iteration.</p>
+<p>During intermediate time-step iterations, full normal velocity is reconstructed
+as the sum of barotropic and baroclinic velocity at time level 1.  On the final
+iteration, full normal velocity is reconstructed at time level <span class="math notranslate nohighlight">\(n+1\)</span> using</p>
+<div class="math notranslate nohighlight">
+\[
+{\bf u}^{n+1} = {\overline {\bar {\bf u}}}^{\mathrm{bt}}
+        + 2 {\bf u}'^{n+1/2}
+        - {\bf u}'^{n}.
+\]</div>
+<p>This final reconstruction follows the MPAS-Ocean split-explicit update: the
+baroclinic velocity stored at time level 1 is the midpoint value, but the full
+normal velocity must be available at the final time level for output,
+diagnostics, restart, and the next time step.</p>
+</section>
+<section id="time-level-management">
+<h4>4.2.5 Time-level management<a class="headerlink" href="#time-level-management" title="Permalink to this heading"></a></h4>
+<p>The internal time-step iterations do not rotate Ocean state or tracer time
+levels.  Instead, time level 0 remains the base state for RK2 updates and time
+level 1 is updated in place.  Halo exchanges are performed on time level 1
+between internal iterations.  After the final iteration, <code class="docutils literal notranslate"><span class="pre">updateTimeLevels</span></code> is
+called once for the Ocean state and tracers, making the completed time-level-1
+state the new time-level-0 state. <code class="docutils literal notranslate"><span class="pre">NormalBaroclinicVelocity</span></code>,
+<code class="docutils literal notranslate"><span class="pre">NormalBarotropicVelocity</span></code>, and <code class="docutils literal notranslate"><span class="pre">BarotropicPressureAnomaly</span></code> participate in
+<code class="docutils literal notranslate"><span class="pre">OceanState::exchangeHalo</span></code> and in restart I/O, but are registered only in the
+<code class="docutils literal notranslate"><span class="pre">Restart</span></code> field group. The physical <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code>
+remain in the normal state/history group.</p>
+<p>Because the three split fields are in the restart group, a restart carries the
+barotropic velocity and pressure anomaly forward exactly, and Section 4.2.1
+rebuilds only the baroclinic velocity from them. The alternative, recomputing
+the split from <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> alone, would discard the barotropic pressure
+anomaly and break restart reproducibility.</p>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5. Verification and testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="unit-testing">
+<h3>5.1 Unit testing<a class="headerlink" href="#unit-testing" title="Permalink to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">TimeStepperTest</span></code> exercises both new time-stepper types with a velocity-decay tendency. It initializes each stepper through
+<code class="docutils literal notranslate"><span class="pre">initializeStateFromInput</span></code>, performs time-step refinement, and checks the
+observed convergence rate. The current expected rates in the implementation
+are first order for <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> (tolerance 0.15) and second order for
+<code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code> (tolerance 0.1). This records the behavior of the current code and
+does not claim second-order convergence for the complete split algorithm.</p>
+<p>The same test creates <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> and <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code> without a stop time,
+verifies that no end alarm is present, calls <code class="docutils literal notranslate"><span class="pre">doStep</span></code> twice, and checks that the
+persistent step count increments across calls. Test setup overrides
+<code class="docutils literal notranslate"><span class="pre">BtrTimeStep</span></code> in the in-memory configuration so that the coarsest refinement
+level runs ten barotropic subcycles per baroclinic step, exercising the subcycle
+loop rather than the degenerate single-subcycle case. Because
+<code class="docutils literal notranslate"><span class="pre">changeTimeStep</span></code> does not recompute <code class="docutils literal notranslate"><span class="pre">NBtrSubcycles</span></code>, the finer refinement level
+runs the same ten subcycles at half the barotropic step.</p>
+<p>The supporting operators added for the split scheme have their own unit tests:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TendencyTermsTest</span></code> adds <code class="docutils literal notranslate"><span class="pre">testCoriolisAccelerationOnEdge</span></code>, which checks both
+the layered and single-layer forms of <code class="docutils literal notranslate"><span class="pre">CoriolisAccelerationOnEdge</span></code> against an
+independently computed tangential reconstruction.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">EosTest</span></code> adds <code class="docutils literal notranslate"><span class="pre">testDepthIntegratedSpecificVolume</span></code>, which checks the column
+integral against a constant specific volume and thickness.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VertCoordTest</span></code> checks <code class="docutils literal notranslate"><span class="pre">TotalPseudoThickness</span></code> after <code class="docutils literal notranslate"><span class="pre">computePressure</span></code> and
+<code class="docutils literal notranslate"><span class="pre">TotalGeometricThickness</span></code> after <code class="docutils literal notranslate"><span class="pre">computeTotalGeometricThickness</span></code> against
+analytic column values.</p></li>
+</ul>
+<p>Additional focused unit tests should cover velocity split and recombination,
+barotropic-pressure initialization, ceiling-based subcycle selection,
+centered and upwind anomaly interpolation, the transport-velocity correction,
+restart preservation of the three split prognostic fields, and rejection of halo
+widths smaller than three.</p>
+</section>
+<section id="polaris-tests">
+<h3>5.2 Polaris tests<a class="headerlink" href="#polaris-tests" title="Permalink to this heading"></a></h3>
+<p>The following end-to-end verification cases are available in Polaris:</p>
+<ul class="simple">
+<li><p>Overflow</p></li>
+<li><p>Baroclinic channel</p></li>
+<li><p>Realistic global ocean</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="VerticalMixingCoeff.html" class="btn btn-neutral float-left" title="Vertical Mixing Coefficients" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Template.html" class="btn btn-neutral float-right" title="Template" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
