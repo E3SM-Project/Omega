@@ -377,6 +377,7 @@ IOStream::IOStream() {
    PtrFilename        = " ";
    UseStartEnd        = false;
    Validated          = false;
+   FirstWrite         = true;
 }
 
 //------------------------------------------------------------------------------
@@ -2526,6 +2527,28 @@ void IOStream::writeStream(
    TimeInstant SimTime    = ModelClock->getCurrentTime();
    std::string SimTimeStr = SimTime.getString(4, 0, "_");
 
+   // On the first write, initialize the previous-write time to the model
+   // start time so the first averaging interval spans [StartTime, SimTime].
+   if (FirstWrite)
+      PrevWriteTime = StartTime;
+
+   // Determine whether CF-compliant time bounds (time_bnds) should be written.
+   // We only write time bounds when a field in this stream was time-averaged,
+   // i.e. carries a cell_methods attribute whose value names a "time:"
+   // reduction (eg "time: mean").
+   bool WriteTimeBnds = false;
+   for (auto IFld = Contents.begin(); IFld != Contents.end(); ++IFld) {
+      std::shared_ptr<Field> ThisField = Field::get(*IFld);
+      if (ThisField->hasMetadata("cell_methods")) {
+         std::string CellMethods;
+         ThisField->getMetadata("cell_methods", CellMethods);
+         if (CellMethods.find("time:") != std::string::npos) {
+            WriteTimeBnds = true;
+            break;
+         }
+      }
+   }
+
    // Determine the time to use for the filename. The default is to
    // use the current time.
    TimeInstant FileTime = ModelClock->getCurrentTime();
@@ -2656,12 +2679,19 @@ void IOStream::writeStream(
    writeFieldMeta("FileField", OutFileID, IO::GlobalID);
    Field::destroy("FileField");
 
+   // Register a length-2 bounds dimension used by CF-compliant time bounds
+   // (time_bnds) before defining all dims, so it is assigned an ID below.
+   // Dimension::create returns the existing dimension if already defined.
+   if (WriteTimeBnds)
+      Dimension::create("D2", 2);
+
    // Assign dimension IDs for all defined dimensions that have not been read
    // from the file.
    defineAllDims(OutFileID, AllDimIDs);
 
    // Define each field and write field metadata
    std::map<std::string, int> FieldIDs;
+   int TimeBndsID = -1; // ID for the CF time_bnds variable, if written
    I4 NDims;
    std::vector<std::string> DimNames;
    std::vector<int> FieldDims;
@@ -2713,6 +2743,28 @@ void IOStream::writeStream(
       }
    }
 
+   // Define the CF-compliant time bounds variable (time_bnds) and attach the
+   // bounds attribute to the time variable. defineVar is called on every write
+   // (the file is re-entered in define mode each time) so TimeBndsID is valid
+   // for every frame; the metadata is only written for a new file (Frame<1).
+   // Only done when a field in this stream carries cell_methods
+   // (WriteTimeBnds).
+   if (WriteTimeBnds) {
+      int BndsDims[2] = {AllDimIDs["time"], AllDimIDs["D2"]};
+      TimeBndsID = defineVar(OutFileID, "time_bnds", IO::IOTypeR8, 2, BndsDims);
+
+      if (Frame < 1) { // only write metadata for a new file
+         // Reuse the same units as the time variable (seconds since start).
+         std::string UnitString =
+             "seconds since " + StartTime.getString(4, 0, " ");
+         IO::writeMeta("units", UnitString, OutFileID, TimeBndsID);
+
+         // Point the time variable at its bounds via the CF bounds attribute.
+         IO::writeMeta("bounds", std::string("time_bnds"), OutFileID,
+                       FieldIDs["time"]);
+      }
+   }
+
    // We need to exit define mode before writing data
    IO::endDefinePhase(OutFileID);
    DefineMode = false;
@@ -2729,6 +2781,17 @@ void IOStream::writeStream(
       this->writeFieldData(ThisField, OutFileID, FieldID, AllDimIDs);
    }
 
+   // Write the CF-compliant time bounds for this frame. The averaging interval
+   // is [PrevWriteTime, SimTime], expressed in seconds since the start time to
+   // match the units of the time variable.
+   if (WriteTimeBnds) {
+      R8 LowerBnd;
+      (PrevWriteTime - StartTime).get(LowerBnd, TimeUnits::Seconds);
+      R8 Bnds[2]                  = {LowerBnd, ElapsedTimeR8};
+      std::vector<int> BndLengths = {2};
+      IO::writeNDVar(Bnds, OutFileID, TimeBndsID, Frame, &BndLengths);
+   }
+
    // Close output file
    IO::closeFile(OutFileID);
 
@@ -2741,6 +2804,11 @@ void IOStream::writeStream(
    }
 
    LOG_INFO("Successfully wrote stream {} to file {}", Name, OutFileName);
+
+   // Update the previous-write time so the next averaging interval for any
+   // time bounds (time_bnds) begins where this write ended.
+   PrevWriteTime = SimTime;
+   FirstWrite    = false;
 
    // End of routine - return
    return;
