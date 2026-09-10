@@ -95,6 +95,9 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
                         DimNames                            // Dimension names
           );
 
+      // Stamp CF-compliant cell_methods for time-mean output.
+      OutputField->addMetadata("cell_methods", std::string("time: mean"));
+
       // Store array size for parallel iteration
       ArraySize = static_cast<I4>(InputData.size());
 

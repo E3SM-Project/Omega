@@ -31,12 +31,28 @@ namespace OMEGA {
 // Analysis.cpp.
 void Analysis::registerAllBaseAnalysisOperators() {
 
+   AnalysisOpFactory::registerAllArrayVariants<BinnedAccumulatorOp>(
+       "BinnedAccumulator");
+   AnalysisOpFactory::registerAllArrayVariants<BinaryMultiplyOp>(
+       "BinaryMultiply");
+   AnalysisOpFactory::registerAllArrayVariants<ExtractRegionOp>(
+       "ExtractRegion");
+   AnalysisOpFactory::register2DRealVariants<HorzMeanOp>("HorzMean");
+   AnalysisOpFactory::registerAllArrayVariants<PrefixSumOp>("PrefixSum");
+   AnalysisOpFactory::registerAllArrayVariants<PseudoToGeometricOp>(
+       "PseudoToGeometric");
+   AnalysisOpFactory::registerAllArrayVariants<ScalarMultiplyOp>(
+       "ScalarMultiply");
+   AnalysisOpFactory::register1DVariants<CoordinateBinningOp>(
+       "CoordinateBinning");
    AnalysisOpFactory::registerAllArrayVariants<SpatialMaxOp>("SpatialMax");
    AnalysisOpFactory::registerAllArrayVariants<SpatialMinOp>("SpatialMin");
    AnalysisOpFactory::registerAllArrayVariants<SpatialMeanOp>("SpatialMean");
    AnalysisOpFactory::registerAllArrayVariants<SpatialStdDevOp>(
        "SpatialStdDev");
    AnalysisOpFactory::registerAllArrayVariants<TimeMeanOp>("TimeMean");
+   AnalysisOpFactory::register2DRealVariants<TransectAccumulatorOp>(
+       "TransectAccumulator");
 
 } // end registerAllBaseAnalysisOperators
 

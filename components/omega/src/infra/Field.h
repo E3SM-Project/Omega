@@ -89,6 +89,14 @@ class Field {
    /// various types and cast to the appropriate type when needed.
    std::shared_ptr<void> DataArray;
 
+   /// Optional 1D regional mask (horizontal dimension) for analysis
+   /// Empty if no regional restriction applies
+   Array1DI4 RegionalMask;
+
+   /// Flag to track whether setRegionalMask() was called
+   /// Used to detect lifetime bugs (mask set but pointer deallocated)
+   bool HasRegionalMaskSet = false;
+
    /// Fills every element of InDataArray with the standard fill value for the
    /// array's element type, then records that value in the field metadata.
    /// Called automatically by attachData() so inactive entries are initialized
@@ -240,6 +248,21 @@ class Field {
    /// isOptionalRead). Fields are required (not optional) by default.
    void setOptionalRead(bool OptRead ///< [in] optional-read flag value
    );
+
+   //---------------------------------------------------------------------------
+   // Regional mask functions
+   //---------------------------------------------------------------------------
+   /// Set regional mask for this field. Mask is 1D integer array over
+   /// horizontal dimension (0 = excluded, 1 = included)
+   void setRegionalMask(const Array1DI4 &Mask);
+
+   /// Get regional mask for this field. Returns 1D integer regional mask array
+   /// (check hasRegionalMask() first)
+   Array1DI4 getRegionalMask() const;
+
+   /// Check if field has a regional mask. Returns true if regional mask is set,
+   /// false otherwise
+   bool hasRegionalMask() const;
 
    //---------------------------------------------------------------------------
    // Metadata functions

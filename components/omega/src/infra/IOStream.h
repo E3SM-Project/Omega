@@ -131,6 +131,16 @@ class IOStream {
    bool Multiframe;      ///< flag for multiple frames/time slices in file
    int Frame;            ///< current frame/slice for multi-frame stream
 
+   /// Previous write time on this stream, used as the lower bound of the
+   /// averaging interval when writing CF-compliant time bounds (time_bnds)
+   /// for time-mean fields. Initialized to the model start time and updated
+   /// at the end of each write.
+   TimeInstant PrevWriteTime;
+
+   /// Flag indicating the first write on this stream, used to initialize
+   /// PrevWriteTime to the model start time.
+   bool FirstWrite;
+
    /// A pointer file is used if we wish OMEGA to read the name of the file
    /// from another file. This is useful for writing the name of a restart
    /// file to be picked up by the next job submitted so that the input
