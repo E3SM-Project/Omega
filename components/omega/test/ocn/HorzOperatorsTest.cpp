@@ -80,8 +80,7 @@ struct TestSetupPlane {
 
 struct TestSetupSphere1 {
    // radius of spherical mesh
-   // TODO: get this from the mesh
-   Real Radius = REarth;
+   Real Radius = HorzMesh::getDefault()->SphereRadius;
 
    ErrorMeasures ExpectedDivErrors         = {0.013652414501664885,
                                               0.0036904315983599676};
@@ -132,8 +131,7 @@ struct TestSetupSphere1 {
 
 struct TestSetupSphere2 {
    // radius of spherical mesh
-   // TODO: get this from the mesh
-   Real Radius = REarth;
+   Real Radius = HorzMesh::getDefault()->SphereRadius;
 
    ErrorMeasures ExpectedDivErrors         = {1.37734693033362766e-10,
                                               0.000484370621558727582};
