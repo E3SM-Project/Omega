@@ -14,6 +14,7 @@
 #include "TimeMgr.h"
 #include "TimeStepper.h"
 #include "Tracers.h"
+#include "VertCoord.h"
 
 namespace OMEGA {
 
@@ -92,6 +93,7 @@ int ocnRun(TimeInstant &CurrTime, ///< [inout] current sim time
    OceanState *DefOceanState   = OceanState::getDefault();
    TimeStepper *DefTimeStepper = TimeStepper::getDefault();
    Forcing *DefForcing         = Forcing::getDefault();
+   VertCoord *DefVertCoord     = VertCoord::getDefault();
    SfcCoupling *DefSfcCoupling = SfcCoupling::getDefault();
 
    // get simulation time and other time info
@@ -104,13 +106,8 @@ int ocnRun(TimeInstant &CurrTime, ///< [inout] current sim time
    CouplingAlarm->reset(SimTime);
 
    DefSfcCoupling->importFromCoupler();
-   DefSfcCoupling->applyImportFields(DefForcing);
+   DefSfcCoupling->applyImportFields(DefForcing, DefVertCoord);
 
-   // TODO: move somewhere more apropriate
-   I4 HaloErr = DefForcing->exchangeHalo();
-   if (HaloErr != 0) {
-      ABORT_ERROR("Error updating forcing halos after coupler import");
-   }
    DefForcing->computeAll();
 
    // time loop, integrate until CouplingAlarm or error encountered

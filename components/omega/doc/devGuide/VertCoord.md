@@ -93,9 +93,16 @@ exchanges the halo and copies the device array to the host mirror:
 ```c++
 VertCoord::getDefault()->initSurfacePressure(Halo::getDefault());
 ```
-Eventually `SurfacePressure` will be updated each timestep via the coupler as a weighted sum of
-atmosphere, sea-ice, and land-ice pressure; that forcing update will live in a separate forcing
-class that writes into this array.
+When `SurfacePressure` is updated at runtime (e.g., each coupling interval from atmosphere and
+sea-ice pressure via `SfcCoupling`), `updateSurfacePressure()` is called to exchange the halo of
+the device array:
+```c++
+VertCoord::getDefault()->updateSurfacePressure(Halo::getDefault());
+```
+The host mirror `SurfacePressureH` is not refreshed there; like the other host mirrors it is
+updated by `copyToHost()`. Note the asymmetry with `copyToDevice()`, which deliberately does not
+copy `SurfacePressureH` back: the device array is the authoritative copy and is the only one
+written by the stream read and by `SfcCoupling`.
 
 ### Removal
 

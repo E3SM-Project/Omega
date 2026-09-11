@@ -267,26 +267,26 @@ int ocnInit1(MPI_Comm Comm,                 ///< [in] ocean MPI communicator
       }
    }
 
+   Err = initUpdateHaloAndHostArrays();
+
+   // Finish any time-stepper specific state initialization
+   initStateForTimeStepper(CoupledReadRestart);
+
    return Err;
 } // end ocnInit1
 
 // Coupled init phase 2: attach the coupler's MCT buffers and exchange the
 // initial coupled state; split from ocnInit1 since these buffers don't exist
 // until the coupler has sized/allocated them using Omega's decomposition
-int ocnInit2(const Real *CplToOcnData, Real *OcnToCplData) {
+void ocnInit2(const Real *CplToOcnData, Real *OcnToCplData) {
+
    SfcCoupling *DefCoupling = SfcCoupling::getDefault();
    DefCoupling->attachData(CplToOcnData, OcnToCplData);
 
    DefCoupling->exportToCoupler();
    DefCoupling->importFromCoupler();
-   DefCoupling->applyImportFields(Forcing::getDefault());
-
-   int Err = initUpdateHaloAndHostArrays();
-
-   // Finish any time-stepper specific state initialization
-   initStateForTimeStepper(CoupledReadRestart);
-
-   return Err;
+   DefCoupling->applyImportFields(Forcing::getDefault(),
+                                  VertCoord::getDefault());
 } // end ocnInit2
 
 // Call init routines for remaining Omega modules

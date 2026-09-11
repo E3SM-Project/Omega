@@ -152,6 +152,16 @@ int main(int argc, char *argv[]) {
                          "VertCoordTest: SurfacePressureH size FAIL");
       }
 
+      // Verify updateSurfacePressure exchanges halo and updates host mirror
+      deepCopy(DefVertCoord->SurfacePressure, 50.0_Real);
+      DefVertCoord->updateSurfacePressure(DefHalo);
+      if (DefVertCoord->SurfacePressureH(0) == 50.0_Real) {
+         LOG_INFO("VertCoordTest: updateSurfacePressure PASS");
+      } else {
+         ErrAll += Error(ErrorCode::Fail,
+                         "VertCoordTest: updateSurfacePressure FAIL");
+      }
+
       // Tests for computePressure
 
       Array2DReal PseudoThickness("PseudoThickness", NCellsSize, NVertLayers);

@@ -238,8 +238,7 @@ void SfcCoupling::importFromCoupler() {
    auto SeaIceHeatFlux_       = CplToOcn.SeaIceHeatFluxH;
    auto ShortWaveHeatFlux_    = CplToOcn.ShortWaveHeatFluxH;
    auto SeaIceSaltFlux_       = CplToOcn.SeaIceSaltFluxH;
-   auto SeaIceBasalPressure_  = CplToOcn.SeaIceBasalPressureH;
-   auto SeaLevelPressure_     = CplToOcn.SeaLevelPressureH;
+   auto SurfacePressure_      = CplToOcn.SurfacePressureH;
 
    /// TODO: Shouldn't be making direct calls to Kokkos here.
    ///       How often is threading used? Becuase this will be a serial loop
@@ -262,8 +261,12 @@ void SfcCoupling::importFromCoupler() {
       SeaIceHeatFlux_(Idx)       = CplToOcnView_(MelthIdx, Idx);
       ShortWaveHeatFlux_(Idx)    = CplToOcnView_(SwnetIdx, Idx);
       SeaIceSaltFlux_(Idx)       = CplToOcnView_(SaltIdx, Idx);
-      SeaIceBasalPressure_(Idx)  = CplToOcnView_(BPressIdx, Idx);
-      SeaLevelPressure_(Idx)     = CplToOcnView_(PslvIdx, Idx);
+
+      // Compute the relative surface pressure (Pa); as the sum of the sea ice
+      // basal pressure and the (absolute) sea level pressure minus the
+      // reference atmospheric pressure
+      SurfacePressure_(Idx) =
+          CplToOcnView_(BPressIdx, Idx) + CplToOcnView_(PslvIdx, Idx) - AtmRefP;
    });
 }
 
@@ -315,11 +318,12 @@ void SfcCoupling::exportToCoupler() {
    OcnToCpl.resetFields(); // Reset fields to 0 for the next coupling interval
    NAccumSteps = 0;        // Reset step counter for the next coupling interval
 }
-void SfcCoupling::applyImportFields(Forcing *Forcing) {
+void SfcCoupling::applyImportFields(Forcing *Forcing, VertCoord *VertCoord) {
 
-   // Copy the SfcCoupling host arrays into the Forcing device arrays.
+   // Copy the SfcCoupling host arrays into the Forcing/VertCoord device arrays
    // Copy is only done over the owned cells, since thats all the SfcCoupling
-   // data is defined over. Forcing will be responsible for halo exchanges.
+   // data is defined over. The halos are exchanged below, once all the owned
+   // cells have been filled.
    deepCopy(ownedSubView(Forcing->SfcStressForcing.ZonalStressCell),
             CplToOcn.SfcStressZonalH);
    deepCopy(ownedSubView(Forcing->SfcStressForcing.MeridStressCell),
@@ -352,24 +356,19 @@ void SfcCoupling::applyImportFields(Forcing *Forcing) {
    deepCopy(ownedSubView(Forcing->TracerForcing.SeaIceSaltFluxCell),
             CplToOcn.SeaIceSaltFluxH);
 
-   deepCopy(ownedSubView(CplToOcn.SeaIceBasalPressure),
-            CplToOcn.SeaIceBasalPressureH);
-   deepCopy(ownedSubView(CplToOcn.SeaLevelPressure),
-            CplToOcn.SeaLevelPressureH);
+   deepCopy(ownedSubView(VertCoord->SurfacePressure),
+            CplToOcn.SurfacePressureH);
 
-   // While Forcing is responsible for exchanging the halos of the flux device
-   // arrays, we own the pressure fields that come from coupler. Therefore
-   // we are responsible for exchanging their halos.
+   // Neither Forcing nor VertCoord re-exchange these arrays during the time
+   // step loop, so their halos are exchanged here, immediately after the
+   // owned cells have been filled from the coupler.
    Halo *MeshHalo = Halo::getDefault();
 
-   I4 HaloErr = 0;
-   HaloErr +=
-       MeshHalo->exchangeFullArrayHalo(CplToOcn.SeaIceBasalPressure, OnCell);
-   HaloErr +=
-       MeshHalo->exchangeFullArrayHalo(CplToOcn.SeaLevelPressure, OnCell);
+   VertCoord->updateSurfacePressure(MeshHalo);
 
+   I4 HaloErr = Forcing->exchangeHalo();
    if (HaloErr != 0) {
-      ABORT_ERROR("Error updating pressure halos after coupler import");
+      ABORT_ERROR("Error updating forcing halos after coupler import");
    }
 };
 
@@ -377,8 +376,7 @@ void SfcCoupling::updateExportFields(const OceanState *State,
                                      const Array3DReal &TracerArray) {
 
    OcnToCpl.updateFields(State, TracerArray, NAccumSteps, NCellsOwned,
-                         NEdgesAll, CplToOcn.SeaIceBasalPressure,
-                         CplToOcn.SeaLevelPressure);
+                         NEdgesAll);
 
    NAccumSteps++;
 }
@@ -399,11 +397,7 @@ CplToOcnFields::CplToOcnFields(const std::string &Suffix, const HorzMesh *Mesh)
       SeaIceHeatFluxH("SeaIceHeatFlux" + Suffix, Mesh->NCellsOwned),
       ShortWaveHeatFluxH("ShortWaveHeatFlux" + Suffix, Mesh->NCellsOwned),
       SeaIceSaltFluxH("SeaIceSaltFlux" + Suffix, Mesh->NCellsOwned),
-      SeaIceBasalPressureH("SeaIceBasalPressure" + Suffix, Mesh->NCellsOwned),
-      SeaLevelPressureH("SeaLevelPressure" + Suffix, Mesh->NCellsOwned),
-      // Use NCellsSize so halo cells are available for edge-gradient calc.
-      SeaIceBasalPressure("SeaIceBasalPressure" + Suffix, Mesh->NCellsSize),
-      SeaLevelPressure("SeaLevelPressure" + Suffix, Mesh->NCellsSize) {}
+      SurfacePressureH("SurfacePressure" + Suffix, Mesh->NCellsOwned) {}
 
 OcnToCplFields::OcnToCplFields(const std::string &Suffix, const HorzMesh *Mesh)
     : AvgSfcTemperature("AvgSfcTemperature" + Suffix, Mesh->NCellsOwned),
@@ -434,9 +428,7 @@ OcnToCplFields::OcnToCplFields(const std::string &Suffix, const HorzMesh *Mesh)
 void OcnToCplFields::updateFields(const OceanState *State,
                                   const Array3DReal &TracerArray,
                                   const I4 NAccumSteps, const I4 NCellsOwned,
-                                  const I4 NEdgesAll,
-                                  const Array1DReal &SeaIceBasalPressure,
-                                  const Array1DReal &SeaLevelPressure) {
+                                  const I4 NEdgesAll) {
 
    I4 TemperatureIdx, SalinityIdx;
    Tracers::getIndex(TemperatureIdx, "Temperature");
@@ -471,8 +463,7 @@ void OcnToCplFields::updateFields(const OceanState *State,
    OMEGA_SCOPE(LocCellsOnEdge, DefHorzMesh->CellsOnEdge);
    OMEGA_SCOPE(LocDcEdge, DefHorzMesh->DcEdge);
    OMEGA_SCOPE(LocSshCell, DefVertCoord->SshCell);
-   OMEGA_SCOPE(LocSeaIcePressure, SeaIceBasalPressure);
-   OMEGA_SCOPE(LocSeaLevelPressure, SeaLevelPressure);
+   OMEGA_SCOPE(LocSurfacePressure, DefVertCoord->SurfacePressure);
    OMEGA_SCOPE(LocMinLayerEdgeBot, DefVertCoord->MinLayerEdgeBot);
    OMEGA_SCOPE(LocMaxLayerEdgeTop, DefVertCoord->MaxLayerEdgeTop);
    OMEGA_SCOPE(LocAvgSfcSshGrad, AvgSfcSshGrad);
@@ -493,11 +484,9 @@ void OcnToCplFields::updateFields(const OceanState *State,
              const int ICell1 = LocCellsOnEdge(IEdge, 1);
 
              const Real SshCell0 = pressureAdjustedSsh(
-                 LocSshCell(ICell0), LocSeaIcePressure(ICell0),
-                 LocSeaLevelPressure(ICell0));
+                 LocSshCell(ICell0), LocSurfacePressure(ICell0));
              const Real SshCell1 = pressureAdjustedSsh(
-                 LocSshCell(ICell1), LocSeaIcePressure(ICell1),
-                 LocSeaLevelPressure(ICell1));
+                 LocSshCell(ICell1), LocSurfacePressure(ICell1));
 
              const Real SshGrad = (SshCell1 - SshCell0) / LocDcEdge(IEdge);
 

@@ -196,6 +196,17 @@ int testImportFromCoupler(const CouplingLayout Layout) {
       return arraysEqual(Field, Expected);
    };
 
+   auto checkSurfacePressure = [&]() {
+      const int BPressIdx = CouplingParams.ImportIdxMap.at("Si_bpress");
+      const int PslvIdx   = CouplingParams.ImportIdxMap.at("Sa_pslv");
+      HostArray1DReal Expected("ExpectedSurfacePressure", NCells);
+      for (int Cell = 0; Cell < NCells; Cell++) {
+         Expected(Cell) =
+             Real(BPressIdx + Cell) + Real(PslvIdx + Cell) - AtmRefP;
+      }
+      return arraysEqual(DefCoupling->CplToOcn.SurfacePressureH, Expected);
+   };
+
    auto ImportPass =
        checkImportField(DefCoupling->CplToOcn.SfcStressZonalH, "Foxx_taux") &&
        checkImportField(DefCoupling->CplToOcn.SfcStressMeridH, "Foxx_tauy") &&
@@ -217,9 +228,7 @@ int testImportFromCoupler(const CouplingLayout Layout) {
        checkImportField(DefCoupling->CplToOcn.EvaporationFluxH, "Foxx_evap") &&
        checkImportField(DefCoupling->CplToOcn.RiverRunoffFluxH, "Foxx_rofl") &&
        checkImportField(DefCoupling->CplToOcn.IceRunoffFluxH, "Foxx_rofi") &&
-       checkImportField(DefCoupling->CplToOcn.SeaIceBasalPressureH,
-                        "Si_bpress") &&
-       checkImportField(DefCoupling->CplToOcn.SeaLevelPressureH, "Sa_pslv");
+       checkSurfacePressure();
 
    if (ImportPass) {
       LOG_INFO("SfcCouplingTest: importFromCoupler with {} layout PASS",
@@ -277,7 +286,11 @@ int testApplyImportFields() {
    setImportField(DefCoupling->CplToOcn.RiverRunoffFluxH, "Foxx_rofl");
    setImportField(DefCoupling->CplToOcn.IceRunoffFluxH, "Foxx_rofi");
 
-   DefCoupling->applyImportFields(DefForcing);
+   HostArray1DReal ExpectedSfcPress =
+       makeCellVarryingArray("ExpectedSurfacePressure", NCells, 100.0_Real);
+   deepCopy(DefCoupling->CplToOcn.SurfacePressureH, ExpectedSfcPress);
+
+   DefCoupling->applyImportFields(DefForcing, VertCoord::getDefault());
 
    auto checkAppliedField = [&](const Array1DReal &Field,
                                 const std::string &Name) {
@@ -287,6 +300,11 @@ int testApplyImportFields() {
       auto Owned = Kokkos::subview(Field, std::pair(0, NCells));
       return arraysEqual(Owned, Expected);
    };
+
+   VertCoord *DefVertCoord = VertCoord::getDefault();
+   auto OwnedSfcPress =
+       Kokkos::subview(DefVertCoord->SurfacePressure, std::pair(0, NCells));
+   bool SfcPressPass = arraysEqual(OwnedSfcPress, ExpectedSfcPress);
 
    auto ApplyPass =
        checkAppliedField(DefForcing->SfcStressForcing.ZonalStressCell,
@@ -316,7 +334,8 @@ int testApplyImportFields() {
        checkAppliedField(DefForcing->TracerForcing.RiverRunoffFluxCell,
                          "Foxx_rofl") &&
        checkAppliedField(DefForcing->TracerForcing.IceRunoffFluxCell,
-                         "Foxx_rofi");
+                         "Foxx_rofi") &&
+       SfcPressPass;
 
    if (ApplyPass) {
       LOG_INFO("SfcCouplingTest: applyImportFields PASS");

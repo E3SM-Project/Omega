@@ -30,9 +30,8 @@ KOKKOS_INLINE_FUNCTION Real updateAverage(const Real OldAvg,
 }
 
 KOKKOS_INLINE_FUNCTION Real pressureAdjustedSsh(const Real Ssh,
-                                                const Real SeaIcePressure,
-                                                const Real SeaLevelPressure) {
-   return Ssh + (SeaIcePressure + SeaLevelPressure) / (Gravity * RhoSw);
+                                                const Real SurfacePressure) {
+   return Ssh + SurfacePressure / (Gravity * RhoSw);
 }
 
 enum class CouplingLayout { MCT, MOAB };
@@ -73,12 +72,7 @@ class CplToOcnFields {
 
    HostArray1DReal SeaIceSaltFluxH; ///< Fioi_salt [kg m^-2 s^-1]
 
-   HostArray1DReal SeaIceBasalPressureH; ///< Si_bpress [Pa]
-   HostArray1DReal SeaLevelPressureH;    ///< Sa_pslv [Pa]
-
-   // Device array for ice/atm state fields not passed to Forcing.
-   Array1DReal SeaIceBasalPressure; ///< Si_bpress [Pa]
-   Array1DReal SeaLevelPressure;    ///< Sa_pslv [Pa]
+   HostArray1DReal SurfacePressureH; ///< Relative surface pressure [Pa]
 
    CplToOcnFields(const std::string &Suffix, const HorzMesh *Mesh);
 };
@@ -109,9 +103,7 @@ class OcnToCplFields {
 
    // Accumulate one ocean timestep's contribution to the running averages
    void updateFields(const OceanState *State, const Array3DReal &TracerArray,
-                     I4 NAccumSteps, I4 NCellsOwned, I4 NEdgesAll,
-                     const Array1DReal &SeaIceBasalPressure,
-                     const Array1DReal &SeaLevelPressure);
+                     I4 NAccumSteps, I4 NCellsOwned, I4 NEdgesAll);
 
    // Copy device arrays into their host mirrors and do unit conversion.
    void copyToHost();
@@ -252,8 +244,8 @@ class SfcCoupling {
    /// Export data from OcnToCpl object into the unmanaged view of o2x pointer
    void exportToCoupler();
 
-   /// Apply the imported data to the Forcing object
-   void applyImportFields(Forcing *Forcing);
+   /// Apply the imported data to the Forcing and VertCoord objects
+   void applyImportFields(Forcing *Forcing, VertCoord *VertCoord);
 
    /// Update the export fields
    void updateExportFields(const OceanState *State,
