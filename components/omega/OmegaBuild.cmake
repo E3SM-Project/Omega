@@ -18,8 +18,6 @@ set(E3SM_CIME_ROOT                "${E3SM_ROOT}/cime")
 set(E3SM_CIMECONFIG_ROOT          "${E3SM_ROOT}/cime_config")
 set(E3SM_EXTERNALS_ROOT           "${E3SM_ROOT}/externals")
 
-set(CASEROOT                      "${OMEGA_BUILD_DIR}/e3smcase")
-
 ###########################
 # Macros                  #
 ###########################
@@ -163,6 +161,10 @@ endmacro()
 # Collect machine and compiler info from CIME
 # and detect OMEGA_ARCH and compilers
 macro(init_standalone_build)
+
+  # A standalone build has no E3SM case to read machine settings from, so it
+  # creates a throwaway one (see read_cime_config) and points CASEROOT at it.
+  set(CASEROOT "${OMEGA_BUILD_DIR}/e3smcase")
 
   # get cime configuration
   read_cime_config()
@@ -342,30 +344,9 @@ macro(init_standalone_build)
   set(CMAKE_C_COMPILER ${OMEGA_C_COMPILER})
   set(CMAKE_Fortran_COMPILER ${OMEGA_Fortran_COMPILER})
 
-# TODO: do we want to use these variables?
-#  # Set compiler and linker flags
-#  if (CXXFLAGS)
-#    separate_arguments(_CXXFLAGS NATIVE_COMMAND ${CXXFLAGS})
-#    list(APPEND OMEGA_CXX_FLAGS ${_CXXFLAGS})
-#  endif()
-#
-#  if (LDFLAGS)
-#    separate_arguments(_LDFLAGS NATIVE_COMMAND ${LDFLAGS})
-#    list(APPEND OMEGA_LINK_OPTIONS ${_LDFLAGS})
-#  endif()
-#
-#  if (SLIBS)
-#    separate_arguments(_SLIBS NATIVE_COMMAND ${SLIBS})
-#    list(APPEND OMEGA_LINK_OPTIONS ${_SLIBS})
-#  endif()
-
   if(OMEGA_CXX_FLAGS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OMEGA_CXX_FLAGS}")
   endif()
-
-#  if(OMEGA_EXE_LINKER_FLAGS)
-#    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OMEGA_EXE_LINKER_FLAGS}")
-#  endif()
 
   # set CXX compiler *before* calling CMake project()
   if("${OMEGA_ARCH}" STREQUAL "CUDA")
@@ -520,6 +501,24 @@ macro(setup_standalone_build)
 
 endmacro()
 
+# Recover per-machine settings from the case's Macros.cmake that E3SM does not
+# make visible to Omega.
+function(omega_read_e3sm_macros)
+
+  include("${CASEROOT}/Macros.cmake")
+
+  set(KOKKOS_OPTIONS "${KOKKOS_OPTIONS}" PARENT_SCOPE)
+
+  # USE_SYCL must come from here too.
+  set(USE_SYCL "${USE_SYCL}" PARENT_SCOPE)
+
+  if(USE_SYCL)
+    set(SYCL_FLAGS "${SYCL_FLAGS}" PARENT_SCOPE)
+    set(OMEGA_SYCL_EXE_LINKER_FLAGS "${OMEGA_SYCL_EXE_LINKER_FLAGS}" PARENT_SCOPE)
+  endif()
+
+endfunction()
+
 # set build-control-variables for e3sm build
 macro(setup_e3sm_build)
 
@@ -527,11 +526,68 @@ macro(setup_e3sm_build)
 
   set(OMEGA_CXX_COMPILER ${CMAKE_CXX_COMPILER})
 
-  #TODO: set OMEGA_ARCH according to E3SM variables
-  set(OMEGA_ARCH "")
+  # Recover the per-machine settings that E3SM does not propagate into this
+  # scope (KOKKOS_OPTIONS, USE_SYCL). This must run BEFORE the arch detection
+  # below, which reads USE_SYCL. CASEROOT here is the real case root CIME passed
+  # in with -DCASEROOT=.
+  if(CASEROOT AND EXISTS "${CASEROOT}/Macros.cmake")
+    omega_read_e3sm_macros()
+  endif()
+
+  # Detect OMEGA_ARCH from the E3SM/CIME build variables when not provided.
+  # USE_CUDA/USE_HIP/USE_SYCL are set by the GPU machine cmake_macros
+  if(NOT DEFINED OMEGA_ARCH OR "${OMEGA_ARCH}" STREQUAL "")
+    if(USE_CUDA)
+      set(OMEGA_ARCH "CUDA")
+
+    elseif(USE_HIP)
+      set(OMEGA_ARCH "HIP")
+
+    elseif(USE_SYCL)
+      set(OMEGA_ARCH "SYCL")
+
+    elseif(compile_threaded)
+      set(OMEGA_ARCH "OPENMP")
+
+    else()
+      set(OMEGA_ARCH "SERIAL")
+
+    endif()
+  endif()
+
+  # NOTE:The following is intended as a temporary fix.
+  #
+  # The machine's SYCL settings reach Omega only through omega_read_e3sm_macros above.
+  # Apply only the part Kokkos does not already provide.
+  #
+  # Kokkos puts -fsycl, -fsycl-targets=spir64_gen and the matching
+  # -Xsycl-target-backend "-device ..." on every target that links it, through
+  # KOKKOS_COMPILE_OPTIONS -- which covers Omega's own sources. Putting the machine's
+  # copies into CMAKE_CXX_FLAGS instead reaches this whole subtree and breaks two
+  # unrelated things in it:
+  #   - configure-time try_compile probes inherit -fsycl-targets=spir64_gen with no
+  #     device, and ocloc fails with "Error: Device name missing."
+  #   - scorpio appends -std=c++14 to CMAKE_CXX_FLAGS (src/clib/CMakeLists.txt:363), so
+  #     its sources compile as "-fsycl -std=c++14" and fail the SYCL headers' C++17
+  #     static assert.
+  # What survives the filter is what Omega actually needs: on Aurora, -mlong-double-64,
+  # without which Omega's user-defined literals do not compile for spir64_gen.
+  if("${OMEGA_ARCH}" STREQUAL "SYCL")
+    if(SYCL_FLAGS)
+      string(REGEX REPLACE "(^| )-fsycl[^ ]*" " " OMEGA_MACHINE_SYCL_FLAGS " ${SYCL_FLAGS}")
+      string(STRIP "${OMEGA_MACHINE_SYCL_FLAGS}" OMEGA_MACHINE_SYCL_FLAGS)
+      if(OMEGA_MACHINE_SYCL_FLAGS)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OMEGA_MACHINE_SYCL_FLAGS}")
+      endif()
+    endif()
+  endif()
+
   set(OMEGA_BUILD_MODE "E3SM")
 
   message(STATUS "OMEGA_CXX_COMPILER = ${OMEGA_CXX_COMPILER}")
+  message(STATUS "OMEGA_ARCH = ${OMEGA_ARCH}")
+  message(STATUS "OMEGA_CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
+  message(STATUS "OMEGA_KOKKOS_OPTIONS = ${KOKKOS_OPTIONS}")
 
 endmacro()
 
@@ -637,33 +693,97 @@ macro(update_variables)
   option(OMEGA_CUDA_MALLOC_ASYNC "Enable CUDA async support (default OFF)." OFF)
 
   set(OMEGA_TARGET_DEVICE FALSE)
-
-  if("${OMEGA_ARCH}" STREQUAL "CUDA")
-    option(Kokkos_ENABLE_CUDA "" ON)
-    option(Kokkos_ENABLE_CUDA_LAMBDA "" ON)
+  if("${OMEGA_ARCH}" STREQUAL "CUDA" OR
+     "${OMEGA_ARCH}" STREQUAL "HIP"  OR
+     "${OMEGA_ARCH}" STREQUAL "SYCL")
     set(OMEGA_TARGET_DEVICE TRUE)
-    option(Kokkos_ENABLE_IMPL_CUDA_MALLOC_ASYNC "" OFF)
-    set(Kokkos_ENABLE_IMPL_CUDA_MALLOC_ASYNC ${OMEGA_CUDA_MALLOC_ASYNC} CACHE BOOL "" FORCE)
+  endif()
 
-  elseif("${OMEGA_ARCH}" STREQUAL "HIP")
-    option(Kokkos_ENABLE_HIP "" ON)
-    set(OMEGA_TARGET_DEVICE TRUE)
+  # In a coupled build that also includes EAMxx, EAMxx has already created the
+  # Kokkos::kokkos target with the correct per-machine architecture, backend
+  # and (for CUDA) compiler launcher. Omega then reuses that target as-is and
+  # must not re-set any Kokkos_* options.
+  if(NOT TARGET Kokkos::kokkos)
 
-  elseif("${OMEGA_ARCH}" STREQUAL "SYCL")
-    option(Kokkos_ENABLE_SYCL "" ON)
-    set(OMEGA_TARGET_DEVICE TRUE)
+    # In E3SM mode, reuse the per-machine Kokkos settings that the CIME machine
+    # configuration already provides through KOKKOS_OPTIONS (set by
+    # cime_config/machines/cmake_macros/<machine>.cmake and consumed unchanged
+    # by EAMxx/EKAT).
+    set(_OMEGA_KOKKOS_ARCH_SET FALSE)
+    if("${OMEGA_BUILD_MODE}" STREQUAL "E3SM" AND KOKKOS_OPTIONS)
+      string(REPLACE " " ";" _OmegaKokkosOpts "${KOKKOS_OPTIONS}")
+      foreach(_OmegaKopt ${_OmegaKokkosOpts})
+        string(REGEX MATCH
+               "(Kokkos_(ARCH|ENABLE)_[A-Za-z0-9_]+)=([A-Za-z0-9_]+)"
+               _OmegaKmatch "${_OmegaKopt}")
+        if(CMAKE_MATCH_1)
+          set(_OmegaKvar  "${CMAKE_MATCH_1}")
+          set(_OmegaKkind "${CMAKE_MATCH_2}")
+          set(_OmegaKval  "${CMAKE_MATCH_3}")
+          option(${_OmegaKvar} "" ${_OmegaKval})
+          if("${_OmegaKkind}" STREQUAL "ARCH")
+            if(_OmegaKval) # value form: On/ON/TRUE -> true, OFF -> false
+              set(_OMEGA_KOKKOS_ARCH_SET TRUE)
+            endif()
+          endif()
+        endif()
+      endforeach()
 
+      # Kokkos treats a variable literally named KOKKOS_OPTIONS as a DEPRECATED
+      # option list and hard-errors on it (kokkos_functions.cmake
+      # kokkos_deprecated_list, reached from kokkos_setup_build_environment).
+      unset(KOKKOS_OPTIONS)
+    endif()
 
-  elseif("${OMEGA_ARCH}" STREQUAL "OPENMP")
-    option(Kokkos_ENABLE_OPENMP "" ON)
+    # Enable the Kokkos backend that matches OMEGA_ARCH. option() is a no-op
+    # when the backend was already enabled by the KOKKOS_OPTIONS above.
+    if("${OMEGA_ARCH}" STREQUAL "CUDA")
+      option(Kokkos_ENABLE_CUDA "" ON)
+      option(Kokkos_ENABLE_CUDA_LAMBDA "" ON)
+      option(Kokkos_ENABLE_IMPL_CUDA_MALLOC_ASYNC "" OFF)
+      set(Kokkos_ENABLE_IMPL_CUDA_MALLOC_ASYNC ${OMEGA_CUDA_MALLOC_ASYNC}
+          CACHE BOOL "" FORCE)
 
-  elseif("${OMEGA_ARCH}" STREQUAL "THREADS")
-    option(Kokkos_ENABLE_THREADS "" ON)
+    elseif("${OMEGA_ARCH}" STREQUAL "HIP")
+      option(Kokkos_ENABLE_HIP "" ON)
 
-  else()
-    set(OMEGA_ARCH "SERIAL")
-    option(Kokkos_ENABLE_SERIAL "" ON)
+    elseif("${OMEGA_ARCH}" STREQUAL "SYCL")
+      option(Kokkos_ENABLE_SYCL "" ON)
 
+    elseif("${OMEGA_ARCH}" STREQUAL "OPENMP")
+      option(Kokkos_ENABLE_OPENMP "" ON)
+
+    elseif("${OMEGA_ARCH}" STREQUAL "THREADS")
+      option(Kokkos_ENABLE_THREADS "" ON)
+
+    else()
+      set(OMEGA_ARCH "SERIAL")
+      option(Kokkos_ENABLE_SERIAL "" ON)
+
+    endif()
+
+    # Fail loudly if Omega must build its own Kokkos for a GPU but no Kokkos
+    # architecture was selected (e.g. a machine whose cmake_macros do not carry
+    # the arch in KOKKOS_OPTIONS).
+    if("${OMEGA_BUILD_MODE}" STREQUAL "E3SM" AND OMEGA_TARGET_DEVICE AND
+       NOT _OMEGA_KOKKOS_ARCH_SET)
+      message(FATAL_ERROR
+        "OMEGA_ARCH=${OMEGA_ARCH} requests a GPU build but no Kokkos_ARCH_* "
+        "was provided. Omega is building its own Kokkos here because the "
+        "Kokkos::kokkos target does not already exist (no EAMxx in this case). "
+        "On machine '${MACH}' the GPU architecture is expected in KOKKOS_OPTIONS "
+        "(cime_config/machines/cmake_macros/); add the appropriate Kokkos_ARCH_* "
+        "there, or include EAMxx so Omega reuses its Kokkos.")
+    endif()
+
+  endif()
+
+  # Belt and braces: drop KOKKOS_OPTIONS in E3SM mode even on the branch where
+  # Omega reused an existing Kokkos::kokkos (EAMxx present) and so never entered
+  # the parse above. Kokkos hard-errors on this deprecated variable name, and
+  # build_eamxx()'s own unset is function-local and does not reach this scope.
+  if("${OMEGA_BUILD_MODE}" STREQUAL "E3SM")
+    unset(KOKKOS_OPTIONS)
   endif()
 
   add_definitions(-DOMEGA_ENABLE_${OMEGA_ARCH})
