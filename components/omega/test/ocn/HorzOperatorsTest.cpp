@@ -751,8 +751,9 @@ int testsecondderivativeoncellDetermineSphericalPatchGeometry(Real RTol) {
                          {20, 21, 25, 29, 28, 24}, {23, 24, 28, 32, 31, 27},
                          {26, 27, 31, 35, 34, 30}, {28, 29, 33, 37, 36, 32}};
    const int CtoC     = 1039230;
-   const double R     = OMEGA::REarth;
-   const R8 Pii       = 3.141592653589793_Real;
+   // synthetic patch on its own sphere, independent of the test mesh
+   const double R = OMEGA::REarth;
+   const R8 Pii   = 3.141592653589793_Real;
 
    // Project coordinates to sphere.
 
@@ -899,11 +900,13 @@ int testsecondderivativeoncellDetermineSphericalPatchGeometry(Real RTol) {
            const Array2DI4 VerticiesOnEdge, const Array1DReal XCell,
            const Array1DReal YCell, const Array1DReal ZCell,
            const Array1DReal XVertex, const Array1DReal YVertex,
-           const Array1DReal ZVertex, const Array1DI4 CellList, Array1DReal XP,
-           Array1DReal YP, Array1DReal Angle2D, Real &ThetaAbs) {
+           const Array1DReal ZVertex, const Array1DI4 CellList,
+           const Real SphereRadius, Array1DReal XP, Array1DReal YP,
+           Array1DReal Angle2D, Real &ThetaAbs) {
          SecondDerivativeOnCell::DetermineSphericalPatchGeometry(
              NEdges, EdgesOnCell, VerticiesOnEdge, XCell, YCell, ZCell, XVertex,
-             YVertex, ZVertex, CellList, XP, YP, Angle2D, ThetaAbs);
+             YVertex, ZVertex, CellList, SphereRadius, XP, YP, Angle2D,
+             ThetaAbs);
       }
    };
    {
@@ -925,7 +928,7 @@ int testsecondderivativeoncellDetermineSphericalPatchGeometry(Real RTol) {
              Real ThetaAbs = {};
              SecondDerivativeOnCellTest::Test(
                  NEdges, edgesOnCell, VerticesOnEdge, XCell, YCell, ZCell,
-                 XVertex, YVertex, ZVertex, CellList, XP, YP, Angle2D,
+                 XVertex, YVertex, ZVertex, CellList, R, XP, YP, Angle2D,
                  ThetaAbs);
           });
       auto XPH      = createHostMirrorCopy(XP);
