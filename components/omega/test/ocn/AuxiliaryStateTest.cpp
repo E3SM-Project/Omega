@@ -26,7 +26,8 @@
 using namespace OMEGA;
 
 struct TestSetup {
-   Real Radius = REarth;
+   // radius of spherical mesh
+   Real Radius = HorzMesh::getDefault()->SphereRadius;
 
    KOKKOS_FUNCTION Real pseudoThickness(Real Lon, Real Lat) const {
       return (2 + std::cos(Lon) * std::pow(std::cos(Lat), 4));

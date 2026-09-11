@@ -186,12 +186,18 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
       } else {
          ABORT_ERROR("Mesh is on sphere but sphere radius either missing or 0");
       }
-      // This tolerance should be tightened once we have appropriate test
-      // mesh files that were generated with the same Earth radius
-      if (std::abs((REarth - SphereRadius) / REarth) > 1.e-4)
-         ABORT_ERROR("Input mesh has inaccurate earth radius: "
-                     "REarth = {}  input SphereRadius = {}",
-                     REarth, SphereRadius);
+      // The mesh must have been generated on the same sphere as the Earth
+      // radius from the Physical Constants Dictionary. Compare in double
+      // precision (before the cast to Real) so that the tolerance does not
+      // depend on the build precision; the tolerance leaves room for a mesh
+      // file that stores the radius with fewer significant digits.
+      constexpr R8 RadiusRelTol = 1.e-8;
+      if (std::abs((pcd::mean_radius - TmpRadius) / pcd::mean_radius) >
+          RadiusRelTol)
+         ABORT_ERROR("Input mesh sphere radius {} does not match the Earth "
+                     "radius {} from the Physical Constants Dictionary "
+                     "(relative tolerance {})",
+                     TmpRadius, pcd::mean_radius, RadiusRelTol);
       IsPeriodic = false;
       XPeriod    = 0.0;
       YPeriod    = 0.0;

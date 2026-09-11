@@ -188,31 +188,30 @@ struct TestSetupPlane {
 
 struct TestSetupSphere {
    // radius of spherical mesh
-   // TODO: get this from the mesh
-   Real Radius = REarth;
+   Real Radius = HorzMesh::getDefault()->SphereRadius;
 
-   ErrorMeasures ExpectedDivErrors              = {0.013652414501664885,
-                                                   0.0036904315983599676};
-   ErrorMeasures ExpectedPVErrors               = {0.0219217796608757037,
-                                                   0.0122537418367830303};
-   ErrorMeasures ExpectedGradErrors             = {0.0019094381714837498,
-                                                   0.0015218320661105702};
-   ErrorMeasures ExpectedLaplaceErrors          = {0.28193638497826856,
-                                                   0.270546491554748};
-   ErrorMeasures ExpectedTrHAdvErrors           = {0.013259410329645643,
-                                                   0.004094907022292395};
-   ErrorMeasures ExpectedTrDel2Errors           = {0.04865718541236144,
-                                                   0.005105510870642706};
-   ErrorMeasures ExpectedTrDel4Errors           = {0.0008646345116716073,
-                                                   0.0007118574326665881};
+   ErrorMeasures ExpectedDivErrors              = {0.013659556526126423,
+                                                   0.0036698023569596279};
+   ErrorMeasures ExpectedPVErrors               = {0.021937128290005589,
+                                                   0.012253081309866708};
+   ErrorMeasures ExpectedGradErrors             = {0.0018790366180557886,
+                                                   0.0014984647360648147};
+   ErrorMeasures ExpectedLaplaceErrors          = {0.2819223346929331,
+                                                   0.27053032782204006};
+   ErrorMeasures ExpectedTrHAdvErrors           = {0.013259084476801913,
+                                                   0.004075236217689366};
+   ErrorMeasures ExpectedTrDel2Errors           = {0.015620987792697782,
+                                                   0.0032365878896264888};
+   ErrorMeasures ExpectedTrDel4Errors           = {0.00081985237645818541,
+                                                   0.00064699727012728107};
    ErrorMeasures ExpectedSurfTrRestErrors       = {0, 0};
    ErrorMeasures ExpectedSfcStressForcingErrors = {0, 0};
-   ErrorMeasures ExpectedBottomDragErrors       = {0.0015333449035655053,
-                                                   0.0014897009917655022};
-   ErrorMeasures ExpectedCoriolis2DErrors       = {0.017830942909137566,
-                                                   0.00958613271059214};
-   ErrorMeasures ExpectedCoriolis1DErrors       = {0.01756710962800044,
-                                                   0.011526527317437694};
+   ErrorMeasures ExpectedBottomDragErrors       = {0.0015343843060931499,
+                                                   0.0014861805971789941};
+   ErrorMeasures ExpectedCoriolis2DErrors       = {0.017808748900211516,
+                                                   0.0095867629560083354};
+   ErrorMeasures ExpectedCoriolis1DErrors       = {0.017532349880532885,
+                                                   0.011526365807152578};
 
    KOKKOS_FUNCTION Real vectorX(Real Lon, Real Lat) const {
       return -Radius * std::pow(std::sin(Lon), 2) * std::pow(std::cos(Lat), 3);
@@ -286,17 +285,29 @@ struct TestSetupSphere {
       return Radius * std::pow(std::sin(Lon), 2) * std::pow(std::cos(Lat), 2);
    }
 
+   // scalarB is differentiated by the tracer diffusion test, so it must be
+   // smooth on the sphere: cos(Lon)*cos(Lat)*sin(Lat) = x*z/R^2 vanishes at
+   // the poles, whereas cos(Lon)*sin(Lat) has no limit there and makes the
+   // exact diffusion at a polar cell depend on the arbitrary longitude of
+   // that cell's center.
    KOKKOS_FUNCTION Real scalarB(Real Lon, Real Lat) const {
-      return 2. + std::cos(Lon) * std::sin(Lat);
+      return 2. + std::cos(Lon) * std::cos(Lat) * std::sin(Lat);
    }
 
+   // div(scalarB grad(scalarA)) on the sphere
    KOKKOS_FUNCTION Real tracerDiff(Real Lon, Real Lat, Real EddyDiff2) const {
-      return EddyDiff2 *
-             (4 * std::pow(std::cos(Lon), 2) -
-              2 * (1. + 3 * std::cos(2 * Lat)) * std::pow(std::sin(Lon), 2) +
-              2 * std::pow(std::cos(Lon), 3) * std::sin(Lat) -
-              8 * std::cos(Lon) * std::pow(std::cos(Lat), 2) *
-                  std::pow(std::sin(Lon), 2) * std::sin(Lat)) /
+      const Real CosLon = std::cos(Lon);
+      const Real SinLon = std::sin(Lon);
+      const Real CosLat = std::cos(Lat);
+      const Real SinLat = std::sin(Lat);
+      return 2 * EddyDiff2 *
+             (2 * std::cos(2 * Lon) +
+              CosLat * SinLat * CosLon *
+                  (CosLon * CosLon - 2 * SinLon * SinLon) -
+              SinLon * SinLon *
+                  (2 * (CosLat * CosLat - 2 * SinLat * SinLat) +
+                   CosLon * CosLat * SinLat *
+                       (2 * CosLat * CosLat - 3 * SinLat * SinLat))) /
              Radius;
    }
 

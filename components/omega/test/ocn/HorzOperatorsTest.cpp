@@ -80,23 +80,22 @@ struct TestSetupPlane {
 
 struct TestSetupSphere1 {
    // radius of spherical mesh
-   // TODO: get this from the mesh
-   Real Radius = REarth;
+   Real Radius = HorzMesh::getDefault()->SphereRadius;
 
-   ErrorMeasures ExpectedDivErrors         = {0.013652414501664885,
-                                              0.0036904315983599676};
-   ErrorMeasures ExpectedGradErrors        = {0.0019094381714837498,
-                                              0.0015218320661105687};
-   ErrorMeasures ExpectedCurlErrors        = {0.02713957370128636,
-                                              0.025202095212756463};
-   ErrorMeasures ExpectedReconErrors       = {0.0206375134079833517,
-                                              0.00692590524910695858};
-   ErrorMeasures ExpectedVectorReconErrors = {0.003308078126087204,
-                                              0.0029425911574823007};
-   ErrorMeasures ExpectedAnisoInterpErrors = {0.0024015775047603197,
-                                              0.0018490649516209202};
-   ErrorMeasures ExpectedIsoInterpErrors   = {0.007438367234983312,
-                                              0.0029921955942401697};
+   ErrorMeasures ExpectedDivErrors         = {0.013659556526126423,
+                                              0.0036698023569596279};
+   ErrorMeasures ExpectedGradErrors        = {0.0018790366180557886,
+                                              0.0014984647360648147};
+   ErrorMeasures ExpectedCurlErrors        = {0.027146182264483853,
+                                              0.025202560969432571};
+   ErrorMeasures ExpectedReconErrors       = {0.020633072221392729,
+                                              0.0069262670519179576};
+   ErrorMeasures ExpectedVectorReconErrors = {0.0033076912646329529,
+                                              0.0029392950172411601};
+   ErrorMeasures ExpectedAnisoInterpErrors = {0.0024007805796189899,
+                                              0.0018491570972366891};
+   ErrorMeasures ExpectedIsoInterpErrors   = {0.0074341565605974018,
+                                              0.0029922776661517052};
 
    KOKKOS_FUNCTION Real exactScalar(Real Lon, Real Lat) const {
       return Radius * std::cos(Lon) * std::pow(std::cos(Lat), 4);
@@ -132,8 +131,7 @@ struct TestSetupSphere1 {
 
 struct TestSetupSphere2 {
    // radius of spherical mesh
-   // TODO: get this from the mesh
-   Real Radius = REarth;
+   Real Radius = HorzMesh::getDefault()->SphereRadius;
 
    ErrorMeasures ExpectedDivErrors         = {1.37734693033362766e-10,
                                               0.000484370621558727582};
@@ -751,8 +749,9 @@ int testsecondderivativeoncellDetermineSphericalPatchGeometry(Real RTol) {
                          {20, 21, 25, 29, 28, 24}, {23, 24, 28, 32, 31, 27},
                          {26, 27, 31, 35, 34, 30}, {28, 29, 33, 37, 36, 32}};
    const int CtoC     = 1039230;
-   const double R     = OMEGA::REarth;
-   const R8 Pii       = 3.141592653589793_Real;
+   // synthetic patch on its own sphere, independent of the test mesh
+   const double R = OMEGA::REarth;
+   const R8 Pii   = 3.141592653589793_Real;
 
    // Project coordinates to sphere.
 
@@ -899,11 +898,13 @@ int testsecondderivativeoncellDetermineSphericalPatchGeometry(Real RTol) {
            const Array2DI4 VerticiesOnEdge, const Array1DReal XCell,
            const Array1DReal YCell, const Array1DReal ZCell,
            const Array1DReal XVertex, const Array1DReal YVertex,
-           const Array1DReal ZVertex, const Array1DI4 CellList, Array1DReal XP,
-           Array1DReal YP, Array1DReal Angle2D, Real &ThetaAbs) {
+           const Array1DReal ZVertex, const Array1DI4 CellList,
+           const Real SphereRadius, Array1DReal XP, Array1DReal YP,
+           Array1DReal Angle2D, Real &ThetaAbs) {
          SecondDerivativeOnCell::DetermineSphericalPatchGeometry(
              NEdges, EdgesOnCell, VerticiesOnEdge, XCell, YCell, ZCell, XVertex,
-             YVertex, ZVertex, CellList, XP, YP, Angle2D, ThetaAbs);
+             YVertex, ZVertex, CellList, SphereRadius, XP, YP, Angle2D,
+             ThetaAbs);
       }
    };
    {
@@ -925,7 +926,7 @@ int testsecondderivativeoncellDetermineSphericalPatchGeometry(Real RTol) {
              Real ThetaAbs = {};
              SecondDerivativeOnCellTest::Test(
                  NEdges, edgesOnCell, VerticesOnEdge, XCell, YCell, ZCell,
-                 XVertex, YVertex, ZVertex, CellList, XP, YP, Angle2D,
+                 XVertex, YVertex, ZVertex, CellList, R, XP, YP, Angle2D,
                  ThetaAbs);
           });
       auto XPH      = createHostMirrorCopy(XP);
