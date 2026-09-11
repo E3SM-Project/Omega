@@ -28,25 +28,25 @@ void SfcStressForcingVars::registerFields(
 
    DimNames[0] = "NCells" + DimSuffix;
    auto ZonalStressCellField =
-       Field::create(ZonalStressCell.label(),          // field name
-                     "zonal surface stress",           // long name/describe
-                     "N m^{-2}",                       // units
-                     "",                               // CF standard Name
-                     std::numeric_limits<Real>::min(), // min valid value
-                     std::numeric_limits<Real>::max(), // max valid value
-                     NDims,                            // number of dimensions
-                     DimNames                          // dim names
+       Field::create(ZonalStressCell.label(),             // field name
+                     "zonal surface stress",              // long name/describe
+                     "N m-2",                             // units
+                     "",                                  // CF standard Name
+                     std::numeric_limits<Real>::lowest(), // min valid value
+                     std::numeric_limits<Real>::max(),    // max valid value
+                     NDims,   // number of dimensions
+                     DimNames // dim names
        );
 
    auto MeridStressCellField =
        Field::create(MeridStressCell.label(),     // field name
                      "meridional surface stress", // long Name or description
-                     "N m^{-2}",                  // units
+                     "N m-2",                     // units
                      "",                          // CF standard Name
-                     std::numeric_limits<Real>::min(), // min valid value
-                     std::numeric_limits<Real>::max(), // max valid value
-                     NDims,                            // number of dimensions
-                     DimNames                          // dimension names
+                     std::numeric_limits<Real>::lowest(), // min valid value
+                     std::numeric_limits<Real>::max(),    // max valid value
+                     NDims,   // number of dimensions
+                     DimNames // dimension names
        );
 
    FieldGroup::addFieldToGroup(ZonalStressCell.label(), "Forcing");

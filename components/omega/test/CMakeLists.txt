@@ -568,6 +568,17 @@ add_omega_test(
     "-n;8"
 )
 
+###################
+# CF metadata test
+###################
+
+add_omega_test(
+    CF_METADATA_TEST
+    testCFMetadata.exe
+    ocn/CFMetadataTest.cpp
+    "-n;8"
+)
+
 ##########################
 # Vert Mix test
 ##########################

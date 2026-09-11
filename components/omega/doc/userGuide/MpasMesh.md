@@ -546,6 +546,6 @@ internally by MPAS cores.
 | `double edgeNormalVectors(nEdges, R3)` | — | Vectors in Cartesian space normal to each edge |
 | `double localVerticalUnitVectors(nCells, R3)` | — | Vectors in Cartesian space pointing in the local vertical direction at cell centers |
 | `double cellTangentPlane(nCells, TWO, R3)` | — | Two orthonormal vectors in the tangent plane of each cell |
-| `double fCell(nCells)` | `HorzMeshIn` | Coriolis parameter at cell centers (radians s^-1) |
-| `double fEdge(nEdges)` | `HorzMeshIn` | Coriolis parameter at edges (radians s^-1) |
-| `double fVertex(nVertices)` | `HorzMeshIn` | Coriolis parameter at vertices (radians s^-1) |
+| `double fCell(nCells)` | `HorzMeshIn` | Coriolis parameter at cell centers (radians s-1) |
+| `double fEdge(nEdges)` | `HorzMeshIn` | Coriolis parameter at edges (radians s-1) |
+| `double fVertex(nVertices)` | `HorzMeshIn` | Coriolis parameter at vertices (radians s-1) |

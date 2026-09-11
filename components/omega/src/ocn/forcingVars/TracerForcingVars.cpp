@@ -54,58 +54,58 @@ void TracerForcingVars::registerFields(const std::string &MeshName) const {
    DimNames[0] = "NCells" + DimSuffix;
 
    auto SnowFluxField =
-       Field::create(SnowFluxCell.label(), "snow freshwater flux",
-                     "kg m^-2 s^-1", "", std::numeric_limits<Real>::lowest(),
+       Field::create(SnowFluxCell.label(), "snow freshwater flux", "kg m-2 s-1",
+                     "", std::numeric_limits<Real>::lowest(),
                      std::numeric_limits<Real>::max(), NDims, DimNames);
    auto RainFluxField =
-       Field::create(RainFluxCell.label(), "rain freshwater flux",
-                     "kg m^-2 s^-1", "", std::numeric_limits<Real>::lowest(),
+       Field::create(RainFluxCell.label(), "rain freshwater flux", "kg m-2 s-1",
+                     "", std::numeric_limits<Real>::lowest(),
                      std::numeric_limits<Real>::max(), NDims, DimNames);
    auto EvaporationFluxField =
        Field::create(EvaporationFluxCell.label(), "evaporation freshwater flux",
-                     "kg m^-2 s^-1", "", std::numeric_limits<Real>::lowest(),
+                     "kg m-2 s-1", "", std::numeric_limits<Real>::lowest(),
                      std::numeric_limits<Real>::max(), NDims, DimNames);
    auto SeaIceFreshWaterFluxField = Field::create(
        SeaIceFreshWaterFluxCell.label(), "sea-ice freshwater flux",
-       "kg m^-2 s^-1", "", std::numeric_limits<Real>::lowest(),
+       "kg m-2 s-1", "", std::numeric_limits<Real>::lowest(),
        std::numeric_limits<Real>::max(), NDims, DimNames);
    auto IceRunoffFluxField =
        Field::create(IceRunoffFluxCell.label(), "ice runoff freshwater flux",
-                     "kg m^-2 s^-1", "", std::numeric_limits<Real>::lowest(),
+                     "kg m-2 s-1", "", std::numeric_limits<Real>::lowest(),
                      std::numeric_limits<Real>::max(), NDims, DimNames);
    auto RiverRunoffFluxField = Field::create(
        RiverRunoffFluxCell.label(), "river runoff freshwater flux",
-       "kg m^-2 s^-1", "", std::numeric_limits<Real>::lowest(),
+       "kg m-2 s-1", "", std::numeric_limits<Real>::lowest(),
        std::numeric_limits<Real>::max(), NDims, DimNames);
 
    auto LatentHeatFluxEvapField =
        Field::create(LatentHeatFluxEvapCell.label(), "latent heat flux",
-                     "W m^-2", "", std::numeric_limits<Real>::lowest(),
+                     "W m-2", "", std::numeric_limits<Real>::lowest(),
                      std::numeric_limits<Real>::max(), NDims, DimNames);
    auto SensibleHeatFluxField =
        Field::create(SensibleHeatFluxCell.label(), "sensible heat flux",
-                     "W m^-2", "", std::numeric_limits<Real>::lowest(),
+                     "W m-2", "", std::numeric_limits<Real>::lowest(),
                      std::numeric_limits<Real>::max(), NDims, DimNames);
    auto LongWaveHeatFluxUpField = Field::create(
-       LongWaveHeatFluxUpCell.label(), "upward longwave heat flux", "W m^-2",
+       LongWaveHeatFluxUpCell.label(), "upward longwave heat flux", "W m-2", "",
+       std::numeric_limits<Real>::lowest(), std::numeric_limits<Real>::max(),
+       NDims, DimNames);
+   auto LongWaveHeatFluxDownField = Field::create(
+       LongWaveHeatFluxDownCell.label(), "downward longwave heat flux", "W m-2",
        "", std::numeric_limits<Real>::lowest(),
        std::numeric_limits<Real>::max(), NDims, DimNames);
-   auto LongWaveHeatFluxDownField = Field::create(
-       LongWaveHeatFluxDownCell.label(), "downward longwave heat flux",
-       "W m^-2", "", std::numeric_limits<Real>::lowest(),
-       std::numeric_limits<Real>::max(), NDims, DimNames);
    auto SeaIceHeatFluxField =
-       Field::create(SeaIceHeatFluxCell.label(), "sea-ice heat flux", "W m^-2",
+       Field::create(SeaIceHeatFluxCell.label(), "sea-ice heat flux", "W m-2",
                      "", std::numeric_limits<Real>::lowest(),
                      std::numeric_limits<Real>::max(), NDims, DimNames);
    auto ShortWaveHeatFluxField =
        Field::create(ShortWaveHeatFluxCell.label(), "shortwave heat flux",
-                     "W m^-2", "", std::numeric_limits<Real>::lowest(),
+                     "W m-2", "", std::numeric_limits<Real>::lowest(),
                      std::numeric_limits<Real>::max(), NDims, DimNames);
 
    auto SeaIceSaltFluxField =
        Field::create(SeaIceSaltFluxCell.label(), "sea-ice salt flux",
-                     "kg m^-2 s^-1", "", std::numeric_limits<Real>::lowest(),
+                     "kg m-2 s-1", "", std::numeric_limits<Real>::lowest(),
                      std::numeric_limits<Real>::max(), NDims, DimNames);
 
    FieldGroup::addFieldToGroup(SnowFluxCell.label(), "Forcing");
