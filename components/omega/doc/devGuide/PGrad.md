@@ -4,15 +4,20 @@
 
 Omega includes a `PressureGrad` class that computes horizontal pressure gradient
 tendencies for the non-Boussinesq momentum equation. The implementation supports a
-centered difference scheme as the default, with a placeholder for future high-order
-methods. The class follows the same factory pattern used by other Omega modules.
+centered difference scheme as the default and a layer-integrated finite-volume
+scheme as an option. The class follows the same factory pattern used by other
+Omega modules.
 
 ## PressureGradType enum
 
 An enumeration of the available pressure gradient schemes is defined in `PGrad.h`:
 
 ```c++
-enum class PressureGradType { Centered, HighOrder1, HighOrder2 };
+enum class PressureGradType {
+   Centered,    ///< existing 2nd-order Montgomery scheme
+   FiniteVolume ///< layer-integrated finite-volume scheme
+   // , <FutureVariant>  ///< e.g. a 6th-order option, added when implemented
+};
 ```
 
 This is used to select which pressure gradient method is applied at runtime.
@@ -66,21 +71,33 @@ to zero.
 To compute pressure gradient tendencies and accumulate them into a tendency array:
 
 ```c++
-PGrad->computePressureGrad(Tend, State, VCoord, EqState, TimeLevel);
+PGrad->computePressureGrad(Tend, PressureMid, PressureInterface, SpecVol,
+                           GeomZInterface, PseudoThick, ConservTemp,
+                           AbsSalinity, EqState);
 ```
 
 where:
 - `Tend` is a 2D array `(NEdgesAll × NVertLayers)` that the pressure gradient
   tendency is accumulated into
-- `State` is the current `OceanState`, from which pseudo-thickness is extracted
-  at the given `TimeLevel`
-- `VCoord` provides pressure, interface height, and geopotential fields
-- `EqState` provides the specific volume field
-- `TimeLevel` selects which time level of the state to use
+- `PressureMid`, `PressureInterface` and `GeomZInterface` come from `VertCoord`
+- `SpecVol` is the specific volume field from `Eos`
+- `PseudoThick` is the pseudo-thickness at the desired time level
+- `ConservTemp` and `AbsSalinity` are the layer-mean tracer fields, used by the
+  finite-volume scheme's vertical reconstruction and ignored by the centered one
+- `EqState` supplies the specific volume derivatives, likewise used only by the
+  finite-volume scheme
 
 The method uses hierarchical Kokkos parallelism: an outer `parallelForOuter` loop
 iterates over edges, and an inner `parallelForInner` loop iterates over vertical
-chunks. The appropriate functor is dispatched based on `PressureGradChoice`.
+chunks. The appropriate functor is dispatched based on `PressureGradChoice`. The
+finite-volume branch additionally runs two kernels ahead of that dispatch: one
+forming the per-cell reconstruction slopes, and the per-edge column scan.
+
+Note that `AuxiliaryState::computeMomVertAux` calls `Eos::computeSpecVolAndDerivs`
+in place of `Eos::computeSpecVol` when the finite-volume scheme is selected. That
+call fills `SpecVol` as well, so it replaces rather than accompanies the simpler
+one, and the branch keeps a centered run from paying for the derivative
+arithmetic.
 
 ## Functors
 
@@ -130,11 +147,109 @@ KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge, I4 KChunk,
                                 const Array2DReal &SpecVol) const;
 ```
 
-### PressureGradHighOrder
+### PressureGradFiniteVolume
 
-This functor is a placeholder for a future high-order pressure gradient implementation
-suitable for ice shelf cavities and complex bathymetry. Currently it performs no
-computation (a no-op).
+This functor assembles the finite-volume pressure gradient tendency. The whole
+horizontal pressure gradient is the geopotential compared at **fixed pressure**,
+and almost all of the work of forming that comparison happens before the functor
+runs, in the column scan described below. What remains per layer is:
+
+```
+DeltaPress = edge average of the two columns' layer pressure thicknesses
+LayerMean  = DeltaZFixedP(IEdge, K+1) + DeltaZMoment(IEdge, K) / DeltaPress
+Tend(IEdge, K) += EdgeMask(IEdge, K) * (-Gravity / DcEdge * LayerMean - GradGeoPot)
+```
+
+`LayerMean` is the layer average of the fixed-pressure height difference,
+recovered from its value at the layer's bottom interface and the first moment of
+the integrand over the layer. Its signature therefore takes the column scan's two
+output arrays rather than the state the scan consumed:
+
+```c++
+KOKKOS_FUNCTION void operator()(const Array2DReal &Tend, I4 IEdge, I4 KChunk,
+                                const Array2DReal &PressureInterface,
+                                const Array2DReal &DeltaZFixedP,
+                                const Array2DReal &DeltaZMoment,
+                                const Array1DReal &TidalPotential,
+                                const Array1DReal &SelfAttractionLoading) const;
+```
+
+## The per-edge column scan
+
+`PressureGrad::computeColumnScan` fills `DeltaZFixedP`, the fixed-pressure height
+difference at each edge-layer interface, and `DeltaZMoment`, the first moment of
+the integrand over each layer.
+
+**This cannot live in the functor.** It is a prefix sum down each column with
+edge-dependent coefficients, so it is not expressible as an independent
+per-vertical-chunk operation. It runs as a `parallelForOuter` over edges with a
+`parallelScanInner` down the column, in the same shape as
+`VertCoord::computeGeomZHeight`, and it is the one structural addition the
+finite-volume scheme makes beyond the per-edge, per-chunk pattern the centered
+scheme uses.
+
+The scan is anchored at the **sea floor**. `VertCoord` builds geometric height
+upward from a prescribed bathymetry, so at the bottom interface the cross-edge
+height difference is exact input and vanishes identically for a flat floor, where
+at the surface it would be the small residual of two column-length accumulations.
+There is a second reason: `VertCoord` accumulates a midpoint rule over each
+column's own layers, and on a curved profile two columns with different layer
+partitions give sums that differ at second order in layer thickness. Anchored at
+the surface that discrepancy would enter the height difference directly; anchored
+at the sea floor it never enters, because the scheme integrates its own
+reconstruction rather than accumulating `VertCoord`'s height.
+
+The anchor is computed, not assumed: each column's height at the deepest shared
+interface is shifted to the common pressure by integrating its own reconstruction
+over half the cross-edge pressure difference, and both short integrals vanish
+where the two columns' interface pressures agree.
+
+## Each column's state is looked up by pressure, not by layer index
+
+At each quadrature point of edge layer `K`, the integrand needs the
+reconstruction of whichever of *that column's* layers contains that pressure,
+which under coordinate tilt is generally **not** layer `K`. At a tilt of 50 m/km
+with 64 m layers the two columns' layer `K` are offset by nearly three layer
+thicknesses and do not overlap in pressure at all.
+
+`findLayerForPress` in `PGradRecon.h` performs that lookup. Within the column
+scan the answer advances monotonically with `K`, so passing the previous answer
+as a hint makes it a pair of incremented cursors rather than a search; the result
+does not depend on the hint. A pressure outside the column clamps to the
+outermost valid layer and extrapolates its reconstruction, which is the rule
+where the edge control volume extends past a column's own floor.
+
+**This is the single most important thing not to get wrong, and no answer-level
+test can catch it.** Replacing the lookup with a layer-index lookup passes every
+exactness and accuracy check in the test suite: on a profile linear in pressure
+every layer's mean-preserving reconstruction is that same line, so looking up the
+wrong layer costs nothing. It is pinned instead by direct property tests in
+`PGradTest.cpp`, which assert that the returned layer brackets the pressure, that
+it differs from the edge layer index under tilt, that the answer does not depend
+on the starting hint, and that a pressure outside the column clamps. Those tests
+are not optional.
+
+## Supporting headers
+
+| Header | Contents |
+| ------ | -------- |
+| `PGradRecon.h` | the mean-preserving linear reconstruction of temperature and salinity in pressure, and the per-column pressure lookup |
+| `PGradFiniteVolume.h` | the edge-shared equation-of-state expansion, the matched-pressure integrand, and the Gauss-Legendre rule |
+
+The equation-of-state expansion is **shared across each edge**: the coefficients
+and the expansion state are averaged from the edge's two cells and used for
+*both* columns. That one set multiplies both columns is what the exactness rests
+on -- it is what makes the constant and pressure-derivative terms cancel in the
+matched-pressure difference. Which set is used is an ordinary accuracy question
+and cannot break exactness, because the coefficients end up multiplying a
+quantity that is identically zero on profiles the reconstruction resolves.
+
+Specific volume is never integrated directly and the equation of state is never
+evaluated inside any integral. The four expansion coefficients come from the
+`SpecVol`, `SpecVolDCt`, `SpecVolDSa` and `SpecVolDP` fields `Eos` already
+computes, one evaluation per cell per layer, and the pressure gradient adds none
+of its own -- which the cost check in `PGradTest.cpp` asserts directly, using the
+`Eos::SpecVolEvalCount` counter.
 
 ## Configuration
 
@@ -147,10 +262,20 @@ PressureGrad:
 
 Valid options for `PressureGradType` are:
 - `'centered'` or `'Centered'`: centered difference approximation (default)
-- `'HighOrder1'`: first high-order method (placeholder, future implementation)
+- `'finiteVolume'` or `'FiniteVolume'`: the layer-integrated finite-volume method
 
-If an unrecognized value is provided, the implementation falls back to the centered
-scheme and logs an informational message.
+The `FiniteVolume` scheme reads three further keys from the same group, all
+optional: `HorzOrder` (default 2), `VerticalReconstruction` (default `'linear'`)
+and `QuadraturePoints` (default 2). Values reserved for a later phase --
+`HorzOrder: 4` and `VerticalReconstruction: 'ppm'` -- are rejected with an error
+rather than falling back, so that a configuration written for that phase cannot
+quietly run as this one. `QuadraturePoints` is an accuracy setting only: the
+integrand is zero at every point on a resolved profile, so no quadrature rule can
+affect the exactness.
+
+An unrecognized value is a fatal error rather than a silent fallback to the
+centered scheme, so that a typo -- or a configuration naming a scheme that no
+longer exists -- cannot produce a run that looks like a passing centered run.
 
 ## Data members
 
@@ -167,8 +292,18 @@ The `PressureGrad` class stores the following key data:
 | `TidalPotential` | `Array1DReal` | Tidal potential (placeholder, currently zero) |
 | `SelfAttractionLoading` | `Array1DReal` | Self-attraction and loading term (placeholder, currently zero) |
 | `CenteredPGrad` | `PressureGradCentered` | Centered pressure gradient functor |
-| `HighOrderPGrad` | `PressureGradHighOrder` | High-order pressure gradient functor |
+| `FiniteVolumePGrad` | `PressureGradFiniteVolume` | Finite-volume pressure gradient functor |
 | `PressureGradChoice` | `PressureGradType` | Selected pressure gradient method |
+| `ReconSlopeCt` | `Array2DReal` | Reconstruction slope of temperature in pressure, per cell and layer |
+| `ReconSlopeSa` | `Array2DReal` | Reconstruction slope of salinity in pressure |
+| `DeltaZIncr` | `Array2DReal` | Per-layer integral of the matched-pressure integrand |
+| `DeltaZMoment` | `Array2DReal` | Its first moment about the layer's top interface |
+| `DeltaZFixedP` | `Array2DReal` | Fixed-pressure height difference at edge-layer interfaces |
+
+The last five are allocated only when the `FiniteVolume` scheme is selected, so a
+centered run pays no memory for them. The reconstruction slopes are computed once
+per cell and layer and reused across each cell's edges; recomputing them per edge
+is what the cost check exists to catch.
 
 ## Removal
 
