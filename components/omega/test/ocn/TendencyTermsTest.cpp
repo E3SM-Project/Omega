@@ -205,16 +205,16 @@ struct TestSetupSphere {
    // radius of spherical mesh
    Real Radius = HorzMesh::getDefault()->SphereRadius;
 
-   ErrorMeasures ExpectedDivErrors     = {0.013652414501664885,
-                                          0.0036904315983599676};
-   ErrorMeasures ExpectedPVErrors      = {0.0219217796608757037,
-                                          0.0122537418367830303};
-   ErrorMeasures ExpectedGradErrors    = {0.0019094381714837498,
-                                          0.0015218320661105702};
-   ErrorMeasures ExpectedLaplaceErrors = {0.28193638497826856,
-                                          0.270546491554748};
-   ErrorMeasures ExpectedTrHAdvErrors  = {0.013259410329645643,
-                                          0.004094907022292395};
+   ErrorMeasures ExpectedDivErrors     = {0.013659556526126423,
+                                          0.0036698023569596279};
+   ErrorMeasures ExpectedPVErrors      = {0.021937128290005589,
+                                          0.012253081309866708};
+   ErrorMeasures ExpectedGradErrors    = {0.0018790366180557886,
+                                          0.0014984647360648147};
+   ErrorMeasures ExpectedLaplaceErrors = {0.2819223346929331,
+                                          0.27053032782204006};
+   ErrorMeasures ExpectedTrHAdvErrors  = {0.013259084476801913,
+                                          0.004075236217689366};
    ErrorMeasures ExpectedFCTErrors     = {0.00, 0.00};
    ErrorMeasures ExpectedFCTHProv      = {3.0542657508680904e-05,
                                           1.0779233406323438e-06};
@@ -226,18 +226,18 @@ struct TestSetupSphere {
    ErrorMeasures ExpectedFCT_Low = {0.2958192441638326, 0.09980000200239414};
    ErrorMeasures ExpectedFCTToNonFCT            = {1.5120472343676013e-15,
                                                    6.215666716489436e-16};
-   ErrorMeasures ExpectedTrDel2Errors           = {0.04865718541236144,
-                                                   0.005105510870642706};
-   ErrorMeasures ExpectedTrDel4Errors           = {0.0008646345116716073,
-                                                   0.0007118574326665881};
+   ErrorMeasures ExpectedTrDel2Errors           = {0.015620987792697782,
+                                                   0.0032365878896264888};
+   ErrorMeasures ExpectedTrDel4Errors           = {0.00081985237645818541,
+                                                   0.00064699727012728107};
    ErrorMeasures ExpectedSurfTrRestErrors       = {0, 0};
    ErrorMeasures ExpectedSfcStressForcingErrors = {0, 0};
-   ErrorMeasures ExpectedBottomDragErrors       = {0.0015333449035655053,
-                                                   0.0014897009917655022};
-   ErrorMeasures ExpectedCoriolis2DErrors       = {0.017830942909137566,
-                                                   0.00958613271059214};
-   ErrorMeasures ExpectedCoriolis1DErrors       = {0.01756710962800044,
-                                                   0.011526527317437694};
+   ErrorMeasures ExpectedBottomDragErrors       = {0.0015343843060931499,
+                                                   0.0014861805971789941};
+   ErrorMeasures ExpectedCoriolis2DErrors       = {0.017808748900211516,
+                                                   0.0095867629560083354};
+   ErrorMeasures ExpectedCoriolis1DErrors       = {0.017532349880532885,
+                                                   0.011526365807152578};
 
    KOKKOS_FUNCTION Real velEdgeX(Real X, Real Y) const { return 2; }
 

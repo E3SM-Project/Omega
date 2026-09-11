@@ -149,39 +149,39 @@ struct TestSetupSphere {
    // radius of spherical mesh
    Real Radius = HorzMesh::getDefault()->SphereRadius;
 
-   ErrorMeasures ExpectedKineticEnergyErrors = {0.0143579382532765844,
-                                                0.00681096618897046764};
-   ErrorMeasures ExpectedVelocityDivErrors   = {0.013652414501663887,
-                                                0.00369043159835992};
+   ErrorMeasures ExpectedKineticEnergyErrors = {0.014358161778181201,
+                                                0.0068116910597281113};
+   ErrorMeasures ExpectedVelocityDivErrors   = {0.013659556526123424,
+                                                0.0036698023569595927};
 
-   ErrorMeasures ExpectedFluxThickErrors = {0.0159821090867812224,
-                                            0.010364511516135164};
-   ErrorMeasures ExpectedMeanThickErrors = {0.000800109287518277435,
-                                            0.000406527457820634436};
+   ErrorMeasures ExpectedFluxThickErrors = {0.015981055597025,
+                                            0.010364584620791126};
+   ErrorMeasures ExpectedMeanThickErrors = {0.00079985423942030413,
+                                            0.00040654771018863028};
 
-   ErrorMeasures ExpectedRelVortVertexErrors        = {0.0271404735181343393,
-                                                       0.0252023166109219786};
-   ErrorMeasures ExpectedNormRelVortVertexErrors    = {0.0348741350737879693,
-                                                       0.0259506101504540822};
-   ErrorMeasures ExpectedNormPlanetVortVertexErrors = {0.00451268952953497778,
-                                                       0.00101771171197261793};
+   ErrorMeasures ExpectedRelVortVertexErrors        = {0.027146182264485331,
+                                                       0.025202560969432641};
+   ErrorMeasures ExpectedNormRelVortVertexErrors    = {0.034882855311945148,
+                                                       0.025950288113940474};
+   ErrorMeasures ExpectedNormPlanetVortVertexErrors = {0.0045134270290698875,
+                                                       0.0010179210697515548};
 
-   ErrorMeasures ExpectedNormRelVortEdgeErrors    = {0.01255832726488633,
-                                                     0.003093726580373857};
-   ErrorMeasures ExpectedNormPlanetVortEdgeErrors = {0.00495174534686814403,
-                                                     0.000855432390947949515};
+   ErrorMeasures ExpectedNormRelVortEdgeErrors    = {0.012528744550304859,
+                                                     0.0030749833896684914};
+   ErrorMeasures ExpectedNormPlanetVortEdgeErrors = {0.0049522329721762544,
+                                                     0.0008554077431009539};
 
-   ErrorMeasures ExpectedDel2Errors        = {0.0036327578533323366,
-                                              0.003161584491352198};
-   ErrorMeasures ExpectedDel2DivErrors     = {0.0177782108439020134,
-                                              0.0075764886471247385};
-   ErrorMeasures ExpectedDel2RelVortErrors = {0.09148975765556343,
-                                              0.0246736311927726465};
+   ErrorMeasures ExpectedDel2Errors        = {0.0036017312925143057,
+                                              0.003134053694265801};
+   ErrorMeasures ExpectedDel2DivErrors     = {0.017767406015402661,
+                                              0.007518774954098988};
+   ErrorMeasures ExpectedDel2RelVortErrors = {0.091446507985509698,
+                                              0.024667998533570906};
 
    ErrorMeasures ExpectedHTracerErrors    = {0.01603249913425972,
                                              0.00546762028673672059};
-   ErrorMeasures ExpectedDel2TracerErrors = {0.0081206665417422382,
-                                             0.004969575978774801};
+   ErrorMeasures ExpectedDel2TracerErrors = {0.0081209686316016313,
+                                             0.0049181207204490136};
 
    KOKKOS_FUNCTION Real pseudoThickness(Real Lon, Real Lat) const {
       return (2 + std::cos(Lon) * std::pow(std::cos(Lat), 4));
