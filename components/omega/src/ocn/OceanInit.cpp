@@ -20,6 +20,7 @@
 #include "HorzMesh.h"
 #include "IO.h"
 #include "IOStream.h"
+#include "KPPMix.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OceanDriver.h"
@@ -321,6 +322,7 @@ static int initOmegaModulesImpl() {
    Eos::init();
    PressureGrad::init();
    VertMix::init();
+   KPPMix::init();
    Tendencies::init();
 
    // Validate SurfaceTracerRestoring configuration

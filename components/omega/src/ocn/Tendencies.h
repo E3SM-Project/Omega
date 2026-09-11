@@ -94,6 +94,17 @@ class Tendencies {
    //   - The split factor for the barotropic pressure anomaly gradient
    Real SplitFactor = 0._Real;
 
+   // Diagnostics for temperature forcing pathways used in KPP comparison.
+   // These are raw contributions added to TracerTend before tracer update.
+   Array2DReal TempNonLocalTendDiag;
+   Array1DReal TempNonLocalColumnSumDiag;
+
+   // Enables explicit non-local tracer tendency from KPP
+   bool TracerNonLocalFluxEnabled = false;
+
+   // Enable diagnostics that isolate temperature non-local terms.
+   bool TracerNonLocalDiagnosticsEnable = true;
+
    std::string Name;
 
    /// Configure the velocity tendency for a mode-split time stepper

@@ -16,6 +16,7 @@
 #include "HorzMesh.h"
 #include "MachEnv.h"
 #include "OceanState.h"
+#include "SurfaceFlux.h"
 #include "VertCoord.h"
 
 #include <cmath> // for std::copysign
@@ -523,10 +524,9 @@ class SfcThicknessForcingOnCell {
          return;
       }
 
-      const Real FreshWaterFlux = SnowFlux(ICell) + RainFlux(ICell) +
-                                  EvaporationFlux(ICell) +
-                                  SeaIceFreshWaterFlux(ICell) +
-                                  IceRunoffFlux(ICell) + RiverRunoffFlux(ICell);
+      const Real FreshWaterFlux = sfcFreshWaterFlux(
+          ICell, SnowFlux, RainFlux, EvaporationFlux, SeaIceFreshWaterFlux,
+          IceRunoffFlux, RiverRunoffFlux);
 
       Tend(ICell, KTop) += (FreshWaterFlux + SeaIceSaltFlux(ICell)) / RhoSw;
    }
@@ -546,8 +546,8 @@ class SfcTracerForcingOnCell {
                           const Eos *EosInst);
 
    KOKKOS_FUNCTION void operator()(
-       const Array3DReal &Tend, I4 ICell, const Array3DReal &TracerCell,
-       const Array2DReal &PressureMid, const Array1DReal &LatentHeatFluxEvap,
+       const Array3DReal &Tend, const Array2DReal &SurfaceTracerFlux, I4 ICell,
+       const Array3DReal &TracerCell, const Array1DReal &LatentHeatFluxEvap,
        const Array1DReal &SensibleHeatFlux,
        const Array1DReal &LongWaveHeatFluxUp,
        const Array1DReal &LongWaveHeatFluxDown,
@@ -563,7 +563,6 @@ class SfcTracerForcingOnCell {
       }
 
       if (TempIndex >= 0) {
-
          const Real CtTop = TracerCell(TempIndex, ICell, KTop);
 
          // CT tendencies are due to direct heat fluxes + pot enthalpy fluxes
@@ -586,6 +585,7 @@ class SfcTracerForcingOnCell {
              (EosChoice == EosType::Teos10Eos) ? Ct0Fw : 0.0_Real;
          const Real PotEnthalpyFwIn  = Cp0Sw * Kokkos::max(CtLim, CtTop);
          const Real PotEnthalpyFwOut = Cp0Sw * CtTop;
+
          const Real HeatFlux =
              LongWaveHeatFluxUp(ICell) + LongWaveHeatFluxDown(ICell) +
              ShortWaveHeatFlux(ICell) + SensibleHeatFlux(ICell) +
@@ -595,11 +595,15 @@ class SfcTracerForcingOnCell {
              EvaporationFlux(ICell) * PotEnthalpyFwOut +
              (SnowFlux(ICell) + IceRunoffFlux(ICell)) * PotEnthalpyIce;
 
-         Tend(TempIndex, ICell, KTop) += HeatFlux * HFluxFac;
+         const Real TempFlux = HeatFlux * HFluxFac;
+         Tend(TempIndex, ICell, KTop) += TempFlux;
+         SurfaceTracerFlux(TempIndex, ICell) = TempFlux;
       }
 
       if (SaltIndex >= 0) {
-         Tend(SaltIndex, ICell, KTop) += SeaIceSaltFlux(ICell) * SFluxFac;
+         const Real SaltFlux = SeaIceSaltFlux(ICell) * SFluxFac;
+         Tend(SaltIndex, ICell, KTop) += SaltFlux;
+         SurfaceTracerFlux(SaltIndex, ICell) = SaltFlux;
       }
    }
 

@@ -141,6 +141,10 @@ int initTendenciesTest(const std::string &mesh) {
    HorzMesh::init(ModelClock);
    VertCoord::init();
 
+   // SurfacePressure holds the attachData fill value until this defaults it
+   // to zero (no initial-state read in this test) and exchanges halos.
+   VertCoord::getDefault()->initSurfacePressure(Halo::getDefault());
+
    Tracers::init();
    VertAdv::init();
    PressureGrad::init();
@@ -499,7 +503,9 @@ int testSfcTracerForcing() {
                                        ThickTimeLevel, VelTimeLevel,
                                        TracerTimeLevel, Time, Interval);
 
-   // Build a reference expectations for temperature tendency
+   // Build a reference expectations for temperature tendency. Production
+   // code approximates the snow/ice enthalpy as the constant -LatIce (see
+   // SfcTracerForcingOnCell), so no CtFrz term is expected here.
    const Real ExpectedTempTend =
        (TestSensibleHeat + TestRain * Cp0Sw * CtTopValue - TestSnow * LatIce) *
        HFluxFac;
@@ -518,12 +524,11 @@ int testSfcTracerForcing() {
    constexpr Real RelTol = 1.0e-10_Real;
    constexpr Real AbsTol = 1.0e-12_Real; // flux precision is ~e-15
 
-   // Expected-pass check with TEOS freezing CT reference.
    if (!isApprox(ComputedTempTend, ExpectedTempTend, RelTol, AbsTol)) {
       Err++;
       LOG_ERROR("TendenciesTest: SfcTracerForcing temp tendency FAIL");
-      LOG_ERROR("  with TEOS-CtFrz Expected: {},  Computed: {}, Diff: {}",
-                ExpectedTempTend, ComputedTempTend,
+      LOG_ERROR("  Expected: {},  Computed: {}, Diff: {}", ExpectedTempTend,
+                ComputedTempTend,
                 Kokkos::abs(ComputedTempTend - ExpectedTempTend));
    } else {
       LOG_INFO("TendenciesTest: SfcTracerForcing temp tendency PASS");

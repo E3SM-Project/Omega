@@ -42,13 +42,7 @@ SecondDerivativeOnCell::SecondDerivativeOnCell(HorzMesh const *Mesh)
       YPCell("YP", NCellsAll, MaxEdges),
       Angle2DCell("Angle2D", NCellsAll, MaxEdges),
       BCell("WorkSpaceForLeastSquares", NCellsAll, 6, MaxEdges),
-      CellListCell("CellList", NCellsAll, MaxEdges) {
-   if (MaxMaxEdges <= Mesh->MaxEdges)
-      LOG_CRITICAL(
-          "SecondDerivativeOnCell::SecondDerivativeOnCell Max Edges exceeded:"
-          "Max Allowed: {}  Found in Mesh:{}",
-          MaxMaxEdges - 1, Mesh->MaxEdges);
-}
+      CellListCell("CellList", NCellsAll, MaxEdges) {}
 
 MasksAndCoefficients::MasksAndCoefficients(
     HorzMesh const *Mesh, VertCoord const *VCoord, const Array3DReal DerivTwo,

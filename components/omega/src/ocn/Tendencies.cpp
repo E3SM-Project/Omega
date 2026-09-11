@@ -13,7 +13,10 @@
 #include "Eos.h"
 #include "Error.h"
 #include "Field.h"
+#include "FillValues.h"
 #include "Forcing.h"
+#include "HorzOperators.h"
+#include "KPPMix.h"
 #include "OceanState.h"
 #include "PGrad.h"
 #include "Pacer.h"
@@ -412,6 +415,21 @@ void Tendencies::readConfig(Config *OmegaConfig ///< [in] Omega config
          ABORT_ERROR("Tendencies: VertMix must be initialized when"
                      "vertical mixing tendencies are enabled");
       }
+      // Optional KPP non-local tracer tendency: no abort if missing
+      Error TracerNonLocalErr = TendConfig.get(
+          "TracerNonLocalFluxTendencyEnable", this->TracerNonLocalFluxEnabled);
+      if (!TracerNonLocalErr.isSuccess()) {
+         TracerNonLocalErr.reset();
+         this->TracerNonLocalFluxEnabled = false;
+      }
+
+      Error TracerDiagErr =
+          TendConfig.get("TracerNonLocalDiagnosticsEnable",
+                         this->TracerNonLocalDiagnosticsEnable);
+      if (!TracerDiagErr.isSuccess()) {
+         TracerDiagErr.reset();
+         this->TracerNonLocalDiagnosticsEnable = true;
+      }
    }
 }
 
@@ -437,10 +455,14 @@ void Tendencies::defineFields() {
    std::string PseudoThicknessTendFieldName = "PseudoThicknessTend";
    std::string NormalVelocityTendFieldName  = "NormalVelocityTend";
    std::string TracerTendFieldName          = "TracerTend";
+   std::string TempNonLocalDiagFieldName    = "TempNonLocalTendDiag";
+   std::string TempNonLocalColSumFieldName  = "TempNonLocalColumnSumDiag";
    if (Name != "Default") {
       PseudoThicknessTendFieldName.append(Name);
       NormalVelocityTendFieldName.append(Name);
       TracerTendFieldName.append(Name);
+      TempNonLocalDiagFieldName.append(Name);
+      TempNonLocalColSumFieldName.append(Name);
    }
 
    int NDims = 2;
@@ -468,6 +490,23 @@ void Tendencies::defineFields() {
                      "m/s^2", "sea_water_velocity_tendency", -9.99E+10,
                      9.99E+10, NDims, DimNamesVelocity);
 
+   NDims = 2;
+   std::vector<std::string> DimNamesTempDiag(NDims);
+   DimNamesTempDiag[0] = "NCells";
+   DimNamesTempDiag[1] = "NVertLayers";
+   auto TempNonLocalDiagField =
+       Field::create(TempNonLocalDiagFieldName,
+                     "Temperature non-local KPP tendency diagnostic", "1", "",
+                     -9.99E+10, 9.99E+10, NDims, DimNamesTempDiag);
+
+   NDims = 1;
+   std::vector<std::string> DimNamesCellOnly(NDims);
+   DimNamesCellOnly[0] = "NCells";
+   auto TempNonLocalColSumField =
+       Field::create(TempNonLocalColSumFieldName,
+                     "Temperature non-local tendency column-sum diagnostic",
+                     "1", "", -9.99E+10, 9.99E+10, NDims, DimNamesCellOnly);
+
    std::string TendGroupName = "Tendencies";
    if (Name != "Default") {
       TendGroupName.append(Name);
@@ -477,10 +516,15 @@ void Tendencies::defineFields() {
    TendGroup->addField(PseudoThicknessTendFieldName);
    TendGroup->addField(NormalVelocityTendFieldName);
    TendGroup->addField(TracerTendFieldName);
+   TendGroup->addField(TempNonLocalDiagFieldName);
+   TendGroup->addField(TempNonLocalColSumFieldName);
 
    PseudoThicknessTendField->attachData<Array2DReal>(PseudoThicknessTend);
    NormalVelocityTendField->attachData<Array2DReal>(NormalVelocityTend);
    TracerTendField->attachData<Array3DReal>(TracerTend);
+   TempNonLocalDiagField->attachData<Array2DReal>(TempNonLocalTendDiag, false);
+   TempNonLocalColSumField->attachData<Array1DReal>(TempNonLocalColumnSumDiag,
+                                                    false);
 
 } // end defineFields
 
@@ -519,6 +563,12 @@ Tendencies::Tendencies(const std::string &Name_, ///< [in] Name for tendencies
        Array2DReal("NormalVelocityTend", Mesh->NEdgesSize, VCoord->NVertLayers);
    TracerTend = Array3DReal("TracerTend", NTracersIn, Mesh->NCellsSize,
                             VCoord->NVertLayers);
+   TempNonLocalTendDiag = Array2DReal("TempNonLocalTendDiag", Mesh->NCellsSize,
+                                      VCoord->NVertLayers);
+   TempNonLocalColumnSumDiag =
+       Array1DReal("TempNonLocalColumnSumDiag", Mesh->NCellsSize);
+   deepCopy(TempNonLocalTendDiag, 0.0_Real);
+   deepCopy(TempNonLocalColumnSumDiag, 0.0_Real);
 
    Name = Name_;
 
@@ -938,6 +988,14 @@ void Tendencies::computeTracerTendenciesOnly(
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
    OMEGA_SCOPE(MinLayerEdgeBot, VCoord->MinLayerEdgeBot);
    OMEGA_SCOPE(MaxLayerEdgeTop, VCoord->MaxLayerEdgeTop);
+   OMEGA_SCOPE(LocTempNonLocalTendDiag, TempNonLocalTendDiag);
+   OMEGA_SCOPE(LocTempNonLocalColumnSumDiag, TempNonLocalColumnSumDiag);
+   const bool LocTracerNonLocalDiagnosticsEnable =
+       TracerNonLocalDiagnosticsEnable;
+   I4 TempTracerIndex = -1;
+   const bool LocHasTempTracer =
+       (Tracers::getIndex(TempTracerIndex, "Temperature") == 0);
+   const I4 LocTempTracerIndex = TempTracerIndex;
 
    Pacer::start("Tend:computeTracerTendenciesOnly", 1);
 
@@ -950,6 +1008,21 @@ void Tendencies::computeTracerTendenciesOnly(
               Team, Range{KMin, KMax},
               INNER_LAMBDA(int K) { LocTracerTend(L, ICell, K) = 0; });
        });
+
+   if (LocTracerNonLocalDiagnosticsEnable) {
+      parallelForOuter(
+          {Mesh->NCellsAll}, KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
+             const int KMin = MinLayerCell(ICell);
+             const int KMax = MaxLayerCell(ICell);
+             parallelForInner(
+                 Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+                    LocTempNonLocalTendDiag(ICell, K) = 0.0_Real;
+                 });
+             Kokkos::single(Kokkos::PerTeam(Team), [&]() {
+                LocTempNonLocalColumnSumDiag(ICell) = 0.0_Real;
+             });
+          });
+   }
 
    // compute tracer horizotal advection
    const auto &NormalTransportVelocity =
@@ -1034,7 +1107,8 @@ void Tendencies::computeTracerTendenciesOnly(
       Pacer::stop("Tend:surfaceTracerRestoring", 2);
    }
 
-   // compute tracer forcing tendency
+   // compute tracer forcing tendency; this also fills SurfaceTracerFlux,
+   // which the KPP non-local flux term below depends on
    if (LocSfcTracerForcing.Enabled) {
       Pacer::start("Tend:sfcTracerForcing", 2);
       const auto *ForcingState = Forcing::getDefault();
@@ -1060,17 +1134,83 @@ void Tendencies::computeTracerTendenciesOnly(
       const auto &SeaIceSaltFlux =
           ForcingState->TracerForcing.SeaIceSaltFluxCell;
       const auto &PressureMid = VCoord->PressureMid;
+      const auto &SurfaceTracerFlux =
+          ForcingState->TracerForcing.SurfaceTracerFluxCell;
 
       parallelFor(
           {Mesh->NCellsAll}, KOKKOS_LAMBDA(int ICell) {
-             LocSfcTracerForcing(LocTracerTend, ICell, TracerArray, PressureMid,
-                                 LatentHeatFluxEvap, SensibleHeatFlux,
-                                 LongWaveHeatFluxUp, LongWaveHeatFluxDown,
-                                 SeaIceHeatFlux, ShortWaveHeatFlux, SnowFlux,
-                                 RainFlux, IceRunoffFlux, RiverRunoffFlux,
-                                 EvaporationFlux, SeaIceSaltFlux);
+             LocSfcTracerForcing(
+                 LocTracerTend, SurfaceTracerFlux, ICell, TracerArray,
+                 LatentHeatFluxEvap, SensibleHeatFlux, LongWaveHeatFluxUp,
+                 LongWaveHeatFluxDown, SeaIceHeatFlux, ShortWaveHeatFlux,
+                 SnowFlux, RainFlux, IceRunoffFlux, RiverRunoffFlux,
+                 EvaporationFlux, SeaIceSaltFlux);
           });
       Pacer::stop("Tend:sfcTracerForcing", 2);
+   }
+
+   // Compute KPP non-local tracer tendency
+   if (TracerNonLocalFluxEnabled && LocSfcTracerForcing.Enabled) {
+      KPPMix *KPPInstance = KPPMix::getInstance();
+      if (KPPInstance && KPPInstance->Enabled) {
+         const auto *ForcingState = Forcing::getDefault();
+         OMEGA_REQUIRE(ForcingState,
+                       "KPP non-local tracer tendency requires Forcing");
+         const auto &SurfaceTracerFlux =
+             ForcingState->TracerForcing.SurfaceTracerFluxCell;
+         Pacer::start("Tend:tracerNonLocalFlux", 2);
+         OMEGA_SCOPE(LocNonLocalFlux, KPPInstance->VertNonLocalFlux);
+         parallelForOuter(
+             {NTracers, Mesh->NCellsAll},
+             KOKKOS_LAMBDA(int L, int ICell, const TeamMember &Team) {
+                const int KMin   = MinLayerCell(ICell);
+                const int KMax   = MaxLayerCell(ICell);
+                const int KRange = vertRangeChunked(KMin, KMax);
+                parallelForInner(
+                    Team, KRange, INNER_LAMBDA(int KChunk) {
+                       const I4 KStart = chunkStart(KChunk, KMin);
+                       const I4 KLen   = chunkLength(KChunk, KStart, KMax);
+                       for (int KVec = 0; KVec < KLen; ++KVec) {
+                          const I4 K = KStart + KVec;
+                          const Real NonLocalTend =
+                              SurfaceTracerFlux(L, ICell) *
+                              (LocNonLocalFlux(ICell, K) -
+                               LocNonLocalFlux(ICell, K + 1));
+                          LocTracerTend(L, ICell, K) += NonLocalTend;
+
+                          if (LocTracerNonLocalDiagnosticsEnable &&
+                              LocHasTempTracer && L == LocTempTracerIndex) {
+                             LocTempNonLocalTendDiag(ICell, K) += NonLocalTend;
+                          }
+                       }
+                    });
+             });
+
+         if (LocTracerNonLocalDiagnosticsEnable && LocHasTempTracer) {
+            parallelForOuter(
+                {Mesh->NCellsAll},
+                KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
+                   const int KMin = MinLayerCell(ICell);
+                   const int KMax = MaxLayerCell(ICell);
+                   Real Sum       = 0.0_Real;
+                   parallelReduceInner(
+                       Team, Range{KMin, KMax},
+                       [&](int K, Real &LocalSum) {
+                          const Real NonLocalTend =
+                              SurfaceTracerFlux(LocTempTracerIndex, ICell) *
+                              (LocNonLocalFlux(ICell, K) -
+                               LocNonLocalFlux(ICell, K + 1));
+                          LocalSum += NonLocalTend;
+                       },
+                       Sum);
+                   Kokkos::single(Kokkos::PerTeam(Team), [&]() {
+                      LocTempNonLocalColumnSumDiag(ICell) = Sum;
+                   });
+                });
+         }
+
+         Pacer::stop("Tend:tracerNonLocalFlux", 2);
+      }
    }
 
    Pacer::stop("Tend:computeTracerTendenciesOnly", 1);

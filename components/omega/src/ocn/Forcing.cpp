@@ -12,8 +12,10 @@
 #include "Forcing.h"
 #include "Error.h"
 #include "Field.h"
+#include "FillValues.h"
 #include "IOStream.h"
 #include "Logging.h"
+#include "OmegaKokkos.h"
 #include "Pacer.h"
 
 namespace OMEGA {
@@ -178,8 +180,16 @@ void Forcing::readConfigOptions(Config *OmegaConfig) {
    CHECK_ERROR_ABORT(Err, "Forcing: SfcTracerForcingTendencyEnable not found "
                           "in Tendencies config");
 
-   TracerForcingFieldsEnabled =
-       SfcThicknessForcingEnabled || SfcTracerForcingEnabled;
+   bool TracerNonLocalFluxEnabled = false;
+   Error NonLocalFluxErr = TendConfig.get("TracerNonLocalFluxTendencyEnable",
+                                          TracerNonLocalFluxEnabled);
+   if (!NonLocalFluxErr.isSuccess()) {
+      NonLocalFluxErr.reset();
+   }
+
+   TracerForcingFieldsEnabled = SfcThicknessForcingEnabled ||
+                                SfcTracerForcingEnabled ||
+                                TracerNonLocalFluxEnabled;
 }
 
 // Compute all forcing variables (dispatches to specific computations).
@@ -210,7 +220,25 @@ void Forcing::resetArrays() {
       deepCopy(TracerForcing.SeaIceHeatFluxCell, 0.0_Real);
       deepCopy(TracerForcing.ShortWaveHeatFluxCell, 0.0_Real);
       deepCopy(TracerForcing.SeaIceSaltFluxCell, 0.0_Real);
+      deepCopy(TracerForcing.SurfaceTracerFluxCell, FillValueReal);
    }
+}
+
+void Forcing::setSurfaceTracerFlux(const Array2DReal &Flux) {
+   auto &SurfaceTracerFlux = TracerForcing.SurfaceTracerFluxCell;
+   OMEGA_REQUIRE(Flux.extent(0) == SurfaceTracerFlux.extent(0),
+                 "Forcing::setSurfaceTracerFlux: tracer dimension mismatch");
+   OMEGA_REQUIRE(Flux.extent(1) == SurfaceTracerFlux.extent(1),
+                 "Forcing::setSurfaceTracerFlux: cell dimension mismatch");
+   deepCopy(SurfaceTracerFlux, Flux);
+
+   I4 HaloErr = 0;
+   for (I4 L = 0; L < SurfaceTracerFlux.extent(0); ++L) {
+      auto TracerFlux = subviewUnmanaged(SurfaceTracerFlux, L, Kokkos::ALL);
+      HaloErr += MeshHalo->exchangeFullArrayHalo(TracerFlux, OnCell);
+   }
+   OMEGA_REQUIRE(HaloErr == 0,
+                 "Forcing::setSurfaceTracerFlux: halo exchange failed");
 }
 
 // Compute edge-normal stress from cell-center zonal and meridional components.
@@ -235,6 +263,15 @@ I4 Forcing::exchangeHalo() const {
                                              OnCell);
       Err += MeshHalo->exchangeFullArrayHalo(SfcStressForcing.MeridStressCell,
                                              OnCell);
+   }
+
+   if (TracerForcingFieldsEnabled) {
+      const I4 NTracers = TracerForcing.SurfaceTracerFluxCell.extent(0);
+      for (I4 L = 0; L < NTracers; ++L) {
+         auto TracerFlux = subviewUnmanaged(TracerForcing.SurfaceTracerFluxCell,
+                                            L, Kokkos::ALL);
+         Err += MeshHalo->exchangeFullArrayHalo(TracerFlux, OnCell);
+      }
    }
 
    return Err;

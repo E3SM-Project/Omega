@@ -539,6 +539,8 @@ void SplitExplicitRK2Stepper::doStep(OceanState *State,
 
    VertMix *VMix = VertMix::getInstance();
 
+   updateKPPFields(State, CurLevel, CurLevel, CurLevel);
+
    // Initialize NextLevel from CurLevel
    // TODO: This can be optimized in the future.
    initializeNextState(State, CurLevel, NextLevel, SEConfig.SplitFactor,
