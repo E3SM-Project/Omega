@@ -315,17 +315,29 @@ struct TestSetupSphere {
       return Radius * std::pow(std::sin(Lon), 2) * std::pow(std::cos(Lat), 2);
    }
 
+   // scalarB is differentiated by the tracer diffusion test, so it must be
+   // smooth on the sphere: cos(Lon)*cos(Lat)*sin(Lat) = x*z/R^2 vanishes at
+   // the poles, whereas cos(Lon)*sin(Lat) has no limit there and makes the
+   // exact diffusion at a polar cell depend on the arbitrary longitude of
+   // that cell's center.
    KOKKOS_FUNCTION Real scalarB(Real Lon, Real Lat) const {
-      return 2. + std::cos(Lon) * std::sin(Lat);
+      return 2. + std::cos(Lon) * std::cos(Lat) * std::sin(Lat);
    }
 
+   // div(scalarB grad(scalarA)) on the sphere
    KOKKOS_FUNCTION Real tracerDiff(Real Lon, Real Lat, Real EddyDiff2) const {
-      return EddyDiff2 *
-             (4 * std::pow(std::cos(Lon), 2) -
-              2 * (1. + 3 * std::cos(2 * Lat)) * std::pow(std::sin(Lon), 2) +
-              2 * std::pow(std::cos(Lon), 3) * std::sin(Lat) -
-              8 * std::cos(Lon) * std::pow(std::cos(Lat), 2) *
-                  std::pow(std::sin(Lon), 2) * std::sin(Lat)) /
+      const Real CosLon = std::cos(Lon);
+      const Real SinLon = std::sin(Lon);
+      const Real CosLat = std::cos(Lat);
+      const Real SinLat = std::sin(Lat);
+      return 2 * EddyDiff2 *
+             (2 * std::cos(2 * Lon) +
+              CosLat * SinLat * CosLon *
+                  (CosLon * CosLon - 2 * SinLon * SinLon) -
+              SinLon * SinLon *
+                  (2 * (CosLat * CosLat - 2 * SinLat * SinLat) +
+                   CosLon * CosLat * SinLat *
+                       (2 * CosLat * CosLat - 3 * SinLat * SinLat))) /
              Radius;
    }
 
