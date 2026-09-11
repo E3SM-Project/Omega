@@ -16,6 +16,7 @@
 #include "Error.h"
 #include "Field.h"
 #include "Forcing.h"
+#include "Frazil.h"
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
@@ -319,6 +320,7 @@ static int initOmegaModulesImpl() {
    Forcing::init();
    AuxiliaryState::init();
    Eos::init();
+   Frazil::init();
    PressureGrad::init();
    VertMix::init();
    Tendencies::init();
