@@ -1,4 +1,5 @@
 #include "SfcCoupling.h"
+#include "AuxiliaryState.h"
 #include "Eos.h"
 #include "Error.h"
 #include "GlobalConstants.h"
@@ -374,6 +375,13 @@ void SfcCoupling::applyImportFields(Forcing *Forcing, VertCoord *VertCoord) {
 
 void SfcCoupling::updateExportFields(const OceanState *State,
                                      const Array3DReal &TracerArray) {
+
+   // SshCell is only written by computeMomVertAux, which the time steppers
+   // last call on a stage state, so it is stale with respect to the state
+   // being exported. Recompute it here, immediately before it is used.
+   // TODO: once SSH is coupled directly, instead of passing the averaged SSH
+   //       gradient, this will only need to be done once per coupling interval
+   AuxiliaryState::getDefault()->computeMomVertAux(State, TracerArray, 0);
 
    OcnToCpl.updateFields(State, TracerArray, NAccumSteps, NCellsOwned,
                          NEdgesAll);

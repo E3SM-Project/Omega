@@ -280,13 +280,20 @@ int ocnInit1(MPI_Comm Comm,                 ///< [in] ocean MPI communicator
 // until the coupler has sized/allocated them using Omega's decomposition
 void ocnInit2(const Real *CplToOcnData, Real *OcnToCplData) {
 
-   SfcCoupling *DefCoupling = SfcCoupling::getDefault();
-   DefCoupling->attachData(CplToOcnData, OcnToCplData);
+   SfcCoupling *DefSfcCoupling = SfcCoupling::getDefault();
+   OceanState *DefOceanState   = OceanState::getDefault();
 
-   DefCoupling->exportToCoupler();
-   DefCoupling->importFromCoupler();
-   DefCoupling->applyImportFields(Forcing::getDefault(),
-                                  VertCoord::getDefault());
+   DefSfcCoupling->attachData(CplToOcnData, OcnToCplData);
+
+   // Populate export fields with initial SST, SSS, velocities, and SSH
+   DefSfcCoupling->updateExportFields(DefOceanState, Tracers::getAll(0));
+
+   DefSfcCoupling->exportToCoupler();
+
+   // No importFromCoupler/applyImportFields here. The coupler has not filled
+   // x2o yet, so importing would overwrite the initial-state SurfacePressure
+   // with uninitialized memory. ocnRun calls both at the start of every
+   // coupling interval, including the first, so nothing is missed.
 } // end ocnInit2
 
 // Call init routines for remaining Omega modules
