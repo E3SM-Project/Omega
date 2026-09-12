@@ -52,9 +52,9 @@ target_link_libraries(
     OmegaLibFlags
     INTERFACE
     Kokkos::kokkos
-    spdlog
+    spdlog::spdlog
     pioc
-    yaml-cpp
+    yaml-cpp::yaml-cpp
     parmetis
     metis
     gptl

@@ -21,4 +21,14 @@
     <support_level>Experimental, under development</support_level>
   </compset>
 
+  <compset>
+    <alias>GOMEGA-IAF</alias>
+    <lname>2000_DATM%IAF_SLND_MPASSI_OMEGA%DATMFORCED_DROF%IAF_SGLC_SWAV</lname>
+  </compset>
+
+  <compset>
+    <alias>GOMEGA-JRA1p5</alias>
+    <lname>2000_DATM%JRA-1p5_SLND_MPASSI_OMEGA%DATMFORCED_DROF%JRA-1p5_SGLC_SWAV</lname>
+  </compset>
+
 </compsets>
