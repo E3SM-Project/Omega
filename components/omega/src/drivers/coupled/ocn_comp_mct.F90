@@ -14,7 +14,8 @@ module ocn_comp_mct
 
    ! toolkits mods
    use esmf, only: ESMF_Clock
-   use mct_mod, only: mct_aVect, mct_gsMap, mct_gGrid, mct_aVect_init
+   use mct_mod, only: &
+      mct_aVect, mct_gsMap, mct_gGrid, mct_aVect_init, mct_aVect_zero
 
    ! MPI
    ! allow(use-all)
@@ -235,6 +236,10 @@ contains
       ! Init import/export mct attribute vectors
       call mct_aVect_init(x2o, rList=seq_flds_x2o_fields, lsize=lsize)
       call mct_aVect_init(o2x, rList=seq_flds_o2x_fields, lsize=lsize)
+
+      ! Defensively zero out the attribute vecs to avoid uninitialized values
+      call mct_aVect_zero(x2o)
+      call mct_aVect_zero(o2x)
 
       ! coupler needs Omega's decomposition before it can size x2o/o2x, so
       ! attach/export/import/halo-update must wait until they're allocated
