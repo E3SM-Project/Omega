@@ -21,6 +21,8 @@
 #include "VertCoord.h"
 #include "mpi.h"
 
+#include <algorithm>
+
 using namespace OMEGA;
 
 struct TestSetup {
@@ -192,6 +194,12 @@ int testImportFromCoupler(const CouplingLayout Layout) {
    fillImportField("Si_bpress");
    fillImportField("Sa_pslv");
 
+   // Push one cell's sea ice pressure above the 5 m limit so the clamp in
+   // importFromCoupler is exercised
+   const int BPressFieldIdx = CouplingParams.ImportIdxMap.at("Si_bpress");
+   CplToOcnData[flatIdx(Layout, 0, BPressFieldIdx, NCells, NImports)] =
+       2.0_Real * MaxSeaIcePressure;
+
    DefCoupling->attachData(CplToOcnData.data(), OcnToCplData.data());
    DefCoupling->importFromCoupler();
 
@@ -208,8 +216,10 @@ int testImportFromCoupler(const CouplingLayout Layout) {
       const int PslvIdx   = CouplingParams.ImportIdxMap.at("Sa_pslv");
       HostArray1DReal Expected("ExpectedSurfacePressure", NCells);
       for (int Cell = 0; Cell < NCells; Cell++) {
-         Expected(Cell) =
-             Real(BPressIdx + Cell) + Real(PslvIdx + Cell) - AtmRefP;
+         const Real BPress = std::min(
+             CplToOcnData[flatIdx(Layout, Cell, BPressIdx, NCells, NImports)],
+             MaxSeaIcePressure);
+         Expected(Cell) = BPress + Real(PslvIdx + Cell) - AtmRefP;
       }
       return arraysEqual(DefCoupling->CplToOcn.SurfacePressureH, Expected);
    };

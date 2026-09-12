@@ -34,6 +34,10 @@ KOKKOS_INLINE_FUNCTION Real pressureAdjustedSsh(const Real Ssh,
    return Ssh + SurfacePressure / (Gravity * RhoSw);
 }
 
+/// Sea ice basal pressure is limited to 5 m of seawater equivalent
+/// TODO: This should be a config option, but for now it is hard-coded.
+constexpr Real MaxSeaIcePressure = RhoSw * Gravity * 5.0_Real;
+
 enum class CouplingLayout { MCT, MOAB };
 
 // Parameters needed to initialize a SfcCoupling object. The information

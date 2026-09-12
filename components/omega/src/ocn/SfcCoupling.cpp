@@ -263,11 +263,13 @@ void SfcCoupling::importFromCoupler() {
       ShortWaveHeatFlux_(Idx)    = CplToOcnView_(SwnetIdx, Idx);
       SeaIceSaltFlux_(Idx)       = CplToOcnView_(SaltIdx, Idx);
 
-      // Compute the relative surface pressure (Pa); as the sum of the sea ice
-      // basal pressure and the (absolute) sea level pressure minus the
-      // reference atmospheric pressure
-      SurfacePressure_(Idx) =
-          CplToOcnView_(BPressIdx, Idx) + CplToOcnView_(PslvIdx, Idx) - AtmRefP;
+      // Limit sea ice basal pressure (Pa) to 5 m of seawater equivalent
+      const Real SeaIcePressure =
+          Kokkos::min(CplToOcnView_(BPressIdx, Idx), MaxSeaIcePressure);
+      // Compute the relative sea level pressure (Pa)
+      const Real SeaLevelPressure = CplToOcnView_(PslvIdx, Idx) - AtmRefP;
+      // Compute the relative surface pressure (Pa);
+      SurfacePressure_(Idx) = SeaIcePressure + SeaLevelPressure;
    });
 }
 
