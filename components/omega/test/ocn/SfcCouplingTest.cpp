@@ -1,4 +1,5 @@
 #include "SfcCoupling.h"
+#include "AuxiliaryState.h"
 #include "Config.h"
 #include "DataTypes.h"
 #include "Decomp.h"
@@ -16,6 +17,7 @@
 #include "OmegaKokkos.h"
 #include "Pacer.h"
 #include "TimeStepper.h"
+#include "VertAdv.h"
 #include "VertCoord.h"
 #include "mpi.h"
 
@@ -139,6 +141,11 @@ int initSfcCouplingTest(const std::string &MeshFile) {
 
    Forcing::init();
    Tracers::init();
+
+   // Needed by SfcCoupling::updateExportFields, which recomputes the
+   // momentum/vertical aux variables so SshCell is current
+   VertAdv::init();
+   AuxiliaryState::init();
 
    return Err;
 }
@@ -628,6 +635,8 @@ int testEraseAndGet() {
 
 void finalizeSfcCouplingTest() {
 
+   AuxiliaryState::clear();
+   VertAdv::clear();
    Tracers::clear();
    Forcing::clear();
    OceanState::clear();
