@@ -373,6 +373,7 @@ IOStream::IOStream() {
    ReducePrecision    = false;
    OnStartup          = false;
    OnShutdown         = false;
+   HasPeriodicAlarm   = false;
    UsePointer         = false;
    PtrFilename        = " ";
    UseStartEnd        = false;
@@ -508,8 +509,9 @@ void IOStream::create(const std::string &StreamName, //< [in] name of stream
    if (IOFrqUnits != TimeUnits::None) { // standard time units cases
 
       TimeInterval AlarmInt(IOFreq, IOFrqUnits);
-      NewStream->MyAlarm = Alarm(AlarmName, AlarmInt, ClockStart);
-      HasAlarm           = true;
+      NewStream->MyAlarm          = Alarm(AlarmName, AlarmInt, ClockStart);
+      NewStream->HasPeriodicAlarm = true;
+      HasAlarm                    = true;
 
    } else if (IOFreqUnits == "onstartup") { // special startup case
 
@@ -2527,9 +2529,19 @@ void IOStream::writeStream(
    TimeInstant SimTime    = ModelClock->getCurrentTime();
    std::string SimTimeStr = SimTime.getString(4, 0, "_");
 
-   // On the first write, initialize the previous-write time to the model
-   // start time so the first averaging interval spans [StartTime, SimTime].
-   if (FirstWrite)
+   // Seed the lower bound of the averaging interval used by CF-compliant time
+   // bounds (time_bnds). Periodic streams are only written when MyAlarm is
+   // ringing, and the alarm already tracks the previous interval boundary
+   // (getRingTimePrev), which it seeds by walking interval boundaries from the
+   // clock start. This gives the correct lower bound on both fresh starts and
+   // restarts (restart periods are integer multiples of the averaging period),
+   // and must be read before the alarm is reset below (which would advance
+   // RingTimePrev to SimTime). For non-periodic streams (one-time / OnStartup /
+   // OnShutdown / forced writes) fall back to the model start time so the first
+   // interval spans [StartTime, SimTime].
+   if (HasPeriodicAlarm and MyAlarm.isRinging())
+      PrevWriteTime = *(MyAlarm.getRingTimePrev());
+   else if (FirstWrite)
       PrevWriteTime = StartTime;
 
    // Determine whether CF-compliant time bounds (time_bnds) should be written.
@@ -2805,9 +2817,7 @@ void IOStream::writeStream(
 
    LOG_INFO("Successfully wrote stream {} to file {}", Name, OutFileName);
 
-   // Update the previous-write time so the next averaging interval for any
-   // time bounds (time_bnds) begins where this write ended.
-   PrevWriteTime = SimTime;
+   // Update FirstWrite flag.
    FirstWrite    = false;
 
    // End of routine - return
