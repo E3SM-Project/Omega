@@ -2818,7 +2818,7 @@ void IOStream::writeStream(
    LOG_INFO("Successfully wrote stream {} to file {}", Name, OutFileName);
 
    // Update FirstWrite flag.
-   FirstWrite    = false;
+   FirstWrite = false;
 
    // End of routine - return
    return;
