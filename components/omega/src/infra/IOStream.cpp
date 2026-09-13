@@ -2549,6 +2549,12 @@ void IOStream::writeStream(
       }
    }
 
+   // Register a length-2 bounds dimension used by CF-compliant time bounds
+   // (time_bnds) before defining all dims, so it is assigned an ID below.
+   // Dimension::create returns the existing dimension if already defined.
+   if (WriteTimeBnds)
+      Dimension::create("D2", 2);
+
    // Determine the time to use for the filename. The default is to
    // use the current time.
    TimeInstant FileTime = ModelClock->getCurrentTime();
@@ -2678,12 +2684,6 @@ void IOStream::writeStream(
    // Write and then destroy temporary field
    writeFieldMeta("FileField", OutFileID, IO::GlobalID);
    Field::destroy("FileField");
-
-   // Register a length-2 bounds dimension used by CF-compliant time bounds
-   // (time_bnds) before defining all dims, so it is assigned an ID below.
-   // Dimension::create returns the existing dimension if already defined.
-   if (WriteTimeBnds)
-      Dimension::create("D2", 2);
 
    // Assign dimension IDs for all defined dimensions that have not been read
    // from the file.
