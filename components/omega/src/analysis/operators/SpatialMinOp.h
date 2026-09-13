@@ -65,17 +65,20 @@ template <typename ArrayT> class SpatialMinOp : public AnalysisOperator {
       DimNames[0]    = "Scalar";
       auto ScalarDim = Dimension::create(DimNames[0], 1);
 
-      // Register output Field with metadata
-      auto OutputField =
-          Field::create(OutputNames[0],
-                        "Spatial minimum of " + InputNames[0], // Description
-                        "",                                    // Units
-                        "",                                    // Standard name
-                        -std::numeric_limits<ScalarT>::max(), // Min valid value
-                        std::numeric_limits<ScalarT>::max(),  // Max valid value
-                        NDims,                                // Rank
-                        DimNames                              // Dimension names
-          );
+      // Register output Field with metadata. A minimum has the units and
+      // standard name of the field it reduces; its cell_methods record the
+      // reduction after any the input already carries.
+      auto CellMethod  = spatialCellMethod(InputNames[0], "minimum");
+      auto Meta        = inheritMetadata(InputNames[0], CellMethod);
+      auto OutputField = createOutputField(
+          OutputNames[0],
+          "Spatial minimum of " + InputNames[0], // Description
+          Meta,                                  // CF metadata
+          -std::numeric_limits<ScalarT>::max(),  // Min valid value
+          std::numeric_limits<ScalarT>::max(),   // Max valid value
+          NDims,                                 // Rank
+          DimNames                               // Dimension names
+      );
 
       // Attach output data array to Field
       OutputField->template attachData<Array1D_t<ScalarT>>(OutputData);

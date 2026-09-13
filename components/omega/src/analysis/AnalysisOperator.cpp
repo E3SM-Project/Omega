@@ -88,6 +88,86 @@ const std::vector<std::string> AnalysisOperator::getOutputFieldNames() {
 } // end getOutputFieldNames
 
 //------------------------------------------------------------------------------
+// Returns a string attribute of a Field, or an empty string if the Field has
+// no such attribute. Analysis output is derived from fields that may lack
+// units or a standard name, so absence is the empty string, not an error.
+std::string AnalysisOperator::getFieldAttribute(const std::string &FieldName,
+                                                const std::string &AttName) {
+
+   auto FieldPtr = Field::get(FieldName);
+   OMEGA_REQUIRE(FieldPtr, "AnalysisOperator: field {} not found", FieldName);
+
+   std::string Value;
+   if (FieldPtr->hasMetadata(AttName)) {
+      Error Err = FieldPtr->getMetadata(AttName, Value);
+      CHECK_ERROR_ABORT(Err,
+                        "AnalysisOperator: attribute {} of field {} is "
+                        "not a string",
+                        AttName, FieldName);
+   }
+   return Value;
+} // end getFieldAttribute
+
+//------------------------------------------------------------------------------
+// Collects the units, standard name and cell methods an output inherits from
+// its input. A new cell method is appended to the input's cell_methods so the
+// attribute lists the reductions in the order they were applied, as CF
+// requires (e.g. a time mean of a spatial mean is "area: mean time: mean").
+AnalysisOperator::InheritedMetadata
+AnalysisOperator::inheritMetadata(const std::string &InputName,
+                                  const std::string &CellMethod) {
+
+   InheritedMetadata Meta;
+   Meta.Units       = getFieldAttribute(InputName, "units");
+   Meta.StdName     = getFieldAttribute(InputName, "standard_name");
+   Meta.CellMethods = getFieldAttribute(InputName, "cell_methods");
+
+   if (!CellMethod.empty()) {
+      if (!Meta.CellMethods.empty())
+         Meta.CellMethods += " ";
+      Meta.CellMethods += CellMethod;
+   }
+   return Meta;
+} // end inheritMetadata
+
+//------------------------------------------------------------------------------
+// Returns the cell method for a reduction over all owned mesh entities and
+// layers of an input Field. The spatial operators treat a 1D field as
+// horizontal only and the last dimension of any higher-rank field as
+// vertical, so the method covers "area" alone or "area" and "depth". Both
+// are names CF allows in cell_methods without a matching coordinate.
+std::string AnalysisOperator::spatialCellMethod(const std::string &InputName,
+                                                const std::string &Method) {
+
+   auto FieldPtr = Field::get(InputName);
+   OMEGA_REQUIRE(FieldPtr, "AnalysisOperator: field {} not found", InputName);
+
+   if (FieldPtr->getNumDims() >= 2)
+      return "area: depth: " + Method;
+   return "area: " + Method;
+} // end spatialCellMethod
+
+//------------------------------------------------------------------------------
+// Creates an output Field carrying the inherited CF metadata. The cell
+// methods are stored as a std::string so the metadata can be retrieved and
+// written as a string attribute.
+std::shared_ptr<Field> AnalysisOperator::createOutputField(
+    const std::string &OutputName, const std::string &Description,
+    const InheritedMetadata &Meta, const std::any ValidMin,
+    const std::any ValidMax, const int NumDims,
+    const std::vector<std::string> &DimNames) {
+
+   auto OutputField =
+       Field::create(OutputName, Description, Meta.Units, Meta.StdName,
+                     ValidMin, ValidMax, NumDims, DimNames);
+
+   if (!Meta.CellMethods.empty())
+      OutputField->addMetadata("cell_methods", Meta.CellMethods);
+
+   return OutputField;
+} // end createOutputField
+
+//------------------------------------------------------------------------------
 // Checks whether the operator's output is valid for the given timestamp.
 // Returns true if the operator has been computed and the LastComputed
 // timestamp matches the current timestamp (cache hit), false otherwise.

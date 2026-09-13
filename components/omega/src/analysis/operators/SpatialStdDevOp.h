@@ -72,17 +72,21 @@ template <typename ArrayT> class SpatialStdDevOp : public AnalysisOperator {
       DimNames[0]    = "Scalar";
       auto ScalarDim = Dimension::create(DimNames[0], 1);
 
-      // Register output Field with metadata
-      auto OutputField =
-          Field::create(OutputNames[0],
-                        "Standard deviation of " + InputNames[0], // Description
-                        "",                                       // Units
-                        "",                               // Standard name
-                        static_cast<Real>(0),             // Min valid value
-                        std::numeric_limits<Real>::max(), // Max valid value
-                        NDims,                            // Rank
-                        DimNames                          // Dimension names
-          );
+      // Register output Field with metadata. A standard deviation has the
+      // units and standard name of the field it reduces; its cell_methods
+      // record the reduction after any the input already carries.
+      auto Meta = inheritMetadata(
+          InputNames[0],
+          spatialCellMethod(InputNames[0], "standard_deviation"));
+      auto OutputField = createOutputField(
+          OutputNames[0],
+          "Standard deviation of " + InputNames[0], // Description
+          Meta,                                     // CF metadata
+          static_cast<Real>(0),                     // Min valid value
+          std::numeric_limits<Real>::max(),         // Max valid value
+          NDims,                                    // Rank
+          DimNames                                  // Dimension names
+      );
 
       // Attach output data array to Field
       OutputField->template attachData<Array1DReal>(OutputData);

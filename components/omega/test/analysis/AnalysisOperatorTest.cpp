@@ -33,6 +33,11 @@ int NumTests  = 0;
 int NumPassed = 0;
 int NumFailed = 0;
 
+// Units and standard name given to every test field, which the operators
+// must pass through to their outputs
+const std::string TestUnits   = "m";
+const std::string TestStdName = "test_field_standard_name";
+
 //===----------------------------------------------------------------------===//
 // Generic Helper Template Struct
 //===----------------------------------------------------------------------===//
@@ -88,8 +93,8 @@ template <typename ArrayType> struct TestHelper {
 
       auto DimNames = getDimNames();
       auto TestField =
-          Field::create(FieldName, "Test field for multi-type validation", "m",
-                        "", -1.0e30, 1.0e30, 1, DimNames);
+          Field::create(FieldName, "Test field for multi-type validation",
+                        TestUnits, TestStdName, -1.0e30, 1.0e30, 1, DimNames);
 
       ArrayType TestData(FieldName + "_data", Dims[0]);
       TestField->attachData<ArrayType>(TestData);
@@ -109,8 +114,8 @@ template <typename ArrayType> struct TestHelper {
 
       auto DimNames = getDimNames();
       auto TestField =
-          Field::create(FieldName, "Test field for multi-type validation", "m",
-                        "", -1.0e30, 1.0e30, 2, DimNames);
+          Field::create(FieldName, "Test field for multi-type validation",
+                        TestUnits, TestStdName, -1.0e30, 1.0e30, 2, DimNames);
 
       ArrayType TestData(FieldName + "_data", Dims[0], Dims[1]);
       TestField->attachData<ArrayType>(TestData);
@@ -132,8 +137,8 @@ template <typename ArrayType> struct TestHelper {
 
       auto DimNames = getDimNames();
       auto TestField =
-          Field::create(FieldName, "Test field for multi-type validation", "m",
-                        "", -1.0e30, 1.0e30, 3, DimNames);
+          Field::create(FieldName, "Test field for multi-type validation",
+                        TestUnits, TestStdName, -1.0e30, 1.0e30, 3, DimNames);
 
       ArrayType TestData(FieldName + "_data", Dims[0], Dims[1], Dims[2]);
       TestField->attachData<ArrayType>(TestData);
@@ -160,6 +165,54 @@ void reportTest(const std::string &TestName, bool Passed) {
       NumFailed++;
       LOG_ERROR("FAIL: {}", TestName);
    }
+}
+
+//------------------------------------------------------------------------------
+// Returns a string attribute of a field, or an empty string if the field has
+// no such attribute. Field::create may store an empty attribute or omit it;
+// both mean the field has none.
+std::string getAttribute(const std::string &FieldName,
+                         const std::string &AttName) {
+   auto FieldPtr = Field::get(FieldName);
+   std::string Value;
+   if (FieldPtr && FieldPtr->hasMetadata(AttName))
+      FieldPtr->getMetadata(AttName, Value);
+   return Value;
+}
+
+//------------------------------------------------------------------------------
+// Checks that an operator's output field carries the expected units, standard
+// name and cell methods
+void checkOutputMetadata(const std::string &TestName,
+                         const std::string &OutputName,
+                         const std::string &ExpectedUnits,
+                         const std::string &ExpectedStdName,
+                         const std::string &ExpectedCellMethods) {
+
+   std::string Units       = getAttribute(OutputName, "units");
+   std::string StdName     = getAttribute(OutputName, "standard_name");
+   std::string CellMethods = getAttribute(OutputName, "cell_methods");
+
+   bool Passed = (Units == ExpectedUnits) && (StdName == ExpectedStdName) &&
+                 (CellMethods == ExpectedCellMethods);
+   reportTest(TestName + " metadata", Passed);
+
+   if (!Passed) {
+      LOG_ERROR("  units: '{}', expected '{}'", Units, ExpectedUnits);
+      LOG_ERROR("  standard_name: '{}', expected '{}'", StdName,
+                ExpectedStdName);
+      LOG_ERROR("  cell_methods: '{}', expected '{}'", CellMethods,
+                ExpectedCellMethods);
+   }
+}
+
+//------------------------------------------------------------------------------
+// Returns the cell method the spatial operators record for a test field of
+// the given rank: 1D fields are horizontal only, higher ranks have depth
+std::string expectedSpatialCellMethod(int Rank, const std::string &Method) {
+   if (Rank >= 2)
+      return "area: depth: " + Method;
+   return "area: " + Method;
 }
 
 //===----------------------------------------------------------------------===//
@@ -256,6 +309,9 @@ void testSpatialMaxOpType(const std::string &TypeName, const MachEnv *Env,
    bool Passed = (std::abs(ComputedMax - ExpectedMaxReal) <=
                   static_cast<Real>(Helper::getTolerance()));
    reportTest("SpatialMaxOp: " + TypeName, Passed);
+   checkOutputMetadata("SpatialMaxOp: " + TypeName, FieldName + "_SpatialMax",
+                       TestUnits, TestStdName,
+                       expectedSpatialCellMethod(Rank, "maximum"));
 
    if (!Passed) {
       LOG_ERROR("  Expected: {}, Got: {}", ExpectedMaxReal, ComputedMax);
@@ -334,6 +390,9 @@ void testSpatialMinOpType(const std::string &TypeName, const MachEnv *Env,
    bool Passed = (std::abs(ComputedMin - ExpectedMinReal) <=
                   static_cast<Real>(Helper::getTolerance()));
    reportTest("SpatialMinOp: " + TypeName, Passed);
+   checkOutputMetadata("SpatialMinOp: " + TypeName, FieldName + "_SpatialMin",
+                       TestUnits, TestStdName,
+                       expectedSpatialCellMethod(Rank, "minimum"));
 
    if (!Passed) {
       LOG_ERROR("  Expected: {}, Got: {}", ExpectedMinReal, ComputedMin);
@@ -443,6 +502,9 @@ void testSpatialMeanOpType(const std::string &TypeName, const MachEnv *Env,
    bool Passed = (std::abs(ComputedMean - ExpectedMean) <=
                   static_cast<Real>(Helper::getTolerance()));
    reportTest("SpatialMeanOp: " + TypeName, Passed);
+   checkOutputMetadata("SpatialMeanOp: " + TypeName, FieldName + "_SpatialMean",
+                       TestUnits, TestStdName,
+                       expectedSpatialCellMethod(Rank, "mean"));
 
    if (!Passed) {
       LOG_ERROR("  Expected: {}, Got: {}", ExpectedMean, ComputedMean);
@@ -567,6 +629,9 @@ void testSpatialStdDevOpType(const std::string &TypeName, const MachEnv *Env,
    bool Passed = (std::abs(ComputedStdDev - ExpectedStdDev) <=
                   static_cast<Real>(Helper::getTolerance()));
    reportTest("SpatialStdDevOp: " + TypeName, Passed);
+   checkOutputMetadata("SpatialStdDevOp: " + TypeName,
+                       FieldName + "_SpatialStdDev", TestUnits, TestStdName,
+                       expectedSpatialCellMethod(Rank, "standard_deviation"));
 
    if (!Passed) {
       LOG_ERROR("  Expected: {}, Got: {}", ExpectedStdDev, ComputedStdDev);
@@ -762,11 +827,63 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
    }
 
    reportTest("TimeMeanOp: " + TypeName, Passed);
+   checkOutputMetadata("TimeMeanOp: " + TypeName,
+                       FieldName + "_TimeMean" + PeriodLabel, TestUnits,
+                       TestStdName, "time: mean");
 
    if (!Passed) {
       LOG_ERROR("  Expected mean: {}", ExpectedMean);
       LOG_ERROR("  Period label: {}", PeriodLabel);
    }
+}
+
+//------------------------------------------------------------------------------
+// Tests that metadata is inherited along an operator chain: a time mean of a
+// spatial mean keeps the units and standard name and lists both reductions in
+// order in cell_methods. Also tests that a field without units or a standard
+// name yields outputs without them rather than with invented ones.
+void testInheritedMetadata(const MachEnv *Env, const HorzMesh *Mesh,
+                           const VertCoord *VCoord, Clock *ModelClock) {
+
+   using Helper = TestHelper<Array2DR8>;
+
+   std::vector<I4> Dims = Helper::getDims(Mesh, VCoord);
+   Config EmptyConfig;
+
+   // Chain: SpatialMean then TimeMean of a 2D field with units "m"
+   std::string FieldName = "TestFieldChain";
+   Helper::createField(FieldName, Dims,
+                       [](I4 i, I4 j) -> R8 { return static_cast<R8>(1); });
+
+   auto MeanOp =
+       AnalysisOpFactory::createOp("SpatialMean", {FieldName}, EmptyConfig);
+   MeanOp->initialize(Env, Mesh, VCoord, EmptyConfig);
+
+   std::string MeanName = FieldName + "_SpatialMean";
+   std::string Period   = "1day";
+   auto ChainOp         = AnalysisOpFactory::createOp(
+       "TimeMean", {MeanName}, makeOpConfig(opParam("Period", Period)));
+   ChainOp->initialize(Env, Mesh, VCoord, EmptyConfig);
+
+   checkOutputMetadata("TimeMean of SpatialMean",
+                       MeanName + "_TimeMean" + Period, TestUnits, TestStdName,
+                       "area: depth: mean time: mean");
+
+   // A field with no units and no standard name: the outputs have none either
+   std::string BareName              = "TestFieldBare";
+   std::vector<std::string> DimNames = Helper::getDimNames();
+   auto BareField = Field::create(BareName, "Test field without units", "", "",
+                                  -1.0e30, 1.0e30, 2, DimNames);
+   Array2DR8 BareData(BareName + "_data", Dims[0], Dims[1]);
+   BareField->attachData<Array2DR8>(BareData);
+
+   auto BareMaxOp =
+       AnalysisOpFactory::createOp("SpatialMax", {BareName}, EmptyConfig);
+   BareMaxOp->initialize(Env, Mesh, VCoord, EmptyConfig);
+
+   checkOutputMetadata("SpatialMax of field without units",
+                       BareName + "_SpatialMax", "", "",
+                       "area: depth: maximum");
 }
 
 //===----------------------------------------------------------------------===//
@@ -1037,6 +1154,8 @@ int main(int argc, char *argv[]) {
       testSpatialStdDevOp(DefEnv, Mesh, VCoord);
 
       testTimeMeanOp(DefEnv, Mesh, VCoord, ModelClock);
+
+      testInheritedMetadata(DefEnv, Mesh, VCoord, ModelClock);
 
       if (NumFailed > 0) {
          Err = 1;

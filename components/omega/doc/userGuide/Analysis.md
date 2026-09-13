@@ -97,7 +97,10 @@ For complete IOStream documentation, see the
 ### GlobalStats
 
 Computes global spatial statistics (mean, min, max, standard deviation) for
-user-specified fields.
+user-specified fields. Each statistic is written with the `units` and
+`standard_name` of the field it reduces and a CF `cell_methods` attribute
+describing the reduction, for example `area: depth: mean` for the mean of a
+layered field and `area: depth: mean time: mean` for its time mean.
 
 **Example:**
 
