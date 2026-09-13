@@ -147,6 +147,80 @@ Automatically created and named:
  - Instantaneous output: `GlobalStats_FreqInstants` (e.g.,
  `GlobalStats_6HourInstants`)
 
+### MOC
+
+Computes the Meridional Overturning Circulation (MOC) streamfunction using two
+methods: latitude-binned regional MOC and transect-based MOC. The MOC
+represents zonally integrated meridional mass transport as a function of
+latitude and depth (regional MOC) or depth alone (transect MOC). Output is in
+Sverdrups (Sv), where 1 Sv = 10⁶ m³/s.
+
+**Example:**
+
+```yaml
+Omega:
+  Analysis:
+    MOC:
+      Enable: true
+      NumBins: 180
+      MinLat: -90.0
+      MaxLat: 90.0
+      Regions: [Global]
+      Transects: []
+      ReductionPeriod: [1Month]
+      SnapshotPeriod: [1Day]
+      Filename: moc.$Y-$M
+      Stream:
+        FileFreq: 1
+        FileFreqUnits: months
+```
+
+**Group-Specific Parameters:**
+
+- **NumBins:** Optional integer specifying the number of latitude bins for
+  regional MOC (default: 180, approximately 1-degree resolution).
+
+- **MinLat:** Optional minimum latitude in degrees for binning (default: -90.0).
+
+- **MaxLat:** Optional maximum latitude in degrees for binning (default: 90.0).
+
+- **Regions:** Optional list of region names for regional MOC computation
+  (default: `[Global]`). Regional MOC computes the streamfunction as a function
+  of latitude and depth. Currently only `Global` is supported; region masks are
+  not yet implemented.
+
+- **Transects:** Optional list of transect names for transect-based MOC
+  computation (default: `[]`). Transect MOC computes the streamfunction as a
+  function of depth only by accumulating transport across specified transect
+  edges. Transect masks are not yet implemented.
+
+- **ReductionPeriod:** Optional list of time periods for temporal reduction.
+  Each period must divide evenly into the restart interval. At least one of
+  `ReductionPeriod` or `SnapshotPeriod` must be specified.
+
+- **SnapshotPeriod:** Optional list of intervals for instantaneous output. At
+  least one of `ReductionPeriod` or `SnapshotPeriod` must be specified.
+
+**Output fields:**
+
+- Regional MOC: `MOC_streamfunction_RegionName` (2D: latitude bins × depth)
+- Transect MOC: `MOC_streamfunction_transect_TransectName` (1D: depth only)
+
+For temporal reduction, `_TimeMeanPeriod` is appended (e.g.,
+`MOC_streamfunction_Global_TimeMean1Month`).
+
+**Output streams:**
+Automatically created and named:
+ - Time reduction: `MOC_FreqTimeStats` (e.g., `MOC_1MonthTimeStats`)
+ - Instantaneous output: `MOC_FreqInstants` (e.g., `MOC_1DayInstants`)
+
+```{note}
+Regional and transect masks are not yet implemented. The `Regions` parameter
+currently only supports `[Global]`, and `Transects` is a placeholder for future
+functionality. The underlying operator infrastructure is complete and ready for
+use once the mask fields are implemented in Omega.
+```
+
 ## Usage Notes
 
 ### Temporal Reduction Period Constraint
