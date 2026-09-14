@@ -221,3 +221,19 @@ Omega:
       Stream:
         FileFreq: 1
         FileFreqUnits: years
+    MonthlyAverages:
+      Enable: false
+      # Monthly Averages (MonthlyAverages) analysis group
+      # Computes time averages of the requested global fields. Each field is
+      # averaged over a temporal window. The averaging period defaults to one
+      # month but can be overridden with the optional ReductionPeriod parameter.
+      # Output is written to the stream MonthlyAverages_<Period>TimeStats
+      # (e.g., MonthlyAverages_1MonthTimeStats).
+      Fields: [Temperature, Salinity, NormalVelocity, PseudoThickness]
+                                # List of global fields to average
+      ReductionPeriod: [1Month]
+                                # Optional; averaging period(s), defaults to [1Month]
+      Filename: monthly.averages.$Y.nc
+      Stream:
+        FileFreq: 1
+        FileFreqUnits: years
