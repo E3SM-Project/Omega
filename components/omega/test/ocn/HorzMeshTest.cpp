@@ -25,6 +25,9 @@
 #include "TimeMgr.h"
 #include "mpi.h"
 
+#include <algorithm>
+#include <cmath>
+
 using namespace OMEGA;
 
 //------------------------------------------------------------------------------
@@ -573,6 +576,108 @@ int main(int argc, char *argv[]) {
 
       if (Count > 0)
          ABORT_ERROR("HorzMeshTest: edgeSignOnVertex test FAIL");
+
+      // Test mesh scaling with scaling disabled
+      Count = 0;
+      for (int Edge = 0; Edge < Mesh->NEdgesAll; Edge++) {
+         if (abs(Mesh->MeshScalingDel2H(Edge) - 1.0) > Tol)
+            Count++;
+         if (abs(Mesh->MeshScalingDel4H(Edge) - 1.0) > Tol)
+            Count++;
+      }
+
+      if (Count > 0)
+         ABORT_ERROR("HorzMeshTest: disabled mesh scaling test FAIL");
+
+      // Retrieve mesh scaling configuration so the two MPAS-O scaling modes
+      // can be tested independently.
+      Config *OmegaConfig = Config::getOmegaConfig();
+      Config HorzMeshConfig("HorzMesh");
+      Error ConfigErr = OmegaConfig->get(HorzMeshConfig);
+      CHECK_ERROR_ABORT(ConfigErr,
+                        "HorzMeshTest: HorzMesh group not found in Config");
+      Config MeshScalingConfig("MeshScaling");
+      ConfigErr = HorzMeshConfig.get(MeshScalingConfig);
+      CHECK_ERROR_ABORT(ConfigErr,
+                        "HorzMeshTest: MeshScaling group not found in Config");
+
+      // Test scaling based on a configured reference cell width
+      const Real RefWidth = 30000.0_Real;
+      MeshScalingConfig.set("ScaleWithMesh", true);
+      MeshScalingConfig.set("UseRefWidth", true);
+      MeshScalingConfig.set("RefWidth", RefWidth);
+      Mesh->computeMeshScaling();
+
+      Count = 0;
+      for (int Edge = 0; Edge < Mesh->NEdgesAll; Edge++) {
+         const int Cell0 = Mesh->CellsOnEdgeH(Edge, 0);
+         const int Cell1 = Mesh->CellsOnEdgeH(Edge, 1);
+         const Real CellWidth =
+             2.0_Real *
+             std::sqrt((Mesh->AreaCellH(Cell0) + Mesh->AreaCellH(Cell1)) /
+                       (2.0_Real * Pi));
+         const Real RefDel2 = CellWidth / RefWidth;
+         const Real RefDel4 = RefDel2 * RefDel2 * RefDel2;
+
+         if (abs(Mesh->MeshScalingDel2H(Edge) - RefDel2) >
+                 Tol * std::max(1.0_Real, std::abs(RefDel2)) ||
+             abs(Mesh->MeshScalingDel4H(Edge) - RefDel4) >
+                 Tol * std::max(1.0_Real, std::abs(RefDel4))) {
+            ++Count;
+         }
+      }
+
+      if (Count > 0)
+         ABORT_ERROR("HorzMeshTest: reference-width mesh scaling test FAIL");
+
+      // Test legacy scaling based on mesh density. A negative configured
+      // maximum requests that the global maximum be computed from the mesh.
+      MeshScalingConfig.set("UseRefWidth", false);
+      MeshScalingConfig.set("MaxMeshDensity", -1.0);
+      Mesh->computeMeshScaling();
+
+      Real MaxMeshDensity;
+      ConfigErr = MeshScalingConfig.get("MaxMeshDensity", MaxMeshDensity);
+      CHECK_ERROR_ABORT(
+          ConfigErr,
+          "HorzMeshTest: unable to retrieve computed MaxMeshDensity");
+
+      Real RefMaxMeshDensityLocal = 0.0_Real;
+      for (int Cell = 0; Cell < LocCells; ++Cell) {
+         RefMaxMeshDensityLocal =
+             std::max(RefMaxMeshDensityLocal, Mesh->MeshDensityH(Cell));
+      }
+      Real RefMaxMeshDensity;
+      Err = MPI_Allreduce(&RefMaxMeshDensityLocal, &RefMaxMeshDensity, 1,
+                          MPI_RealKind, MPI_MAX, Comm);
+      if (Err != MPI_SUCCESS)
+         ABORT_ERROR("HorzMeshTest: MPI error finding max mesh density");
+
+      if (abs(MaxMeshDensity - RefMaxMeshDensity) >
+          Tol * std::max(1.0_Real, std::abs(RefMaxMeshDensity))) {
+         ABORT_ERROR("HorzMeshTest: computed MaxMeshDensity test FAIL");
+      }
+
+      Count = 0;
+      for (int Edge = 0; Edge < Mesh->NEdgesAll; Edge++) {
+         const int Cell0 = Mesh->CellsOnEdgeH(Edge, 0);
+         const int Cell1 = Mesh->CellsOnEdgeH(Edge, 1);
+         const Real AvgDensity =
+             0.5_Real * (Mesh->MeshDensityH(Cell0) + Mesh->MeshDensityH(Cell1));
+         const Real DensityRatio = AvgDensity / RefMaxMeshDensity;
+         const Real RefDel2      = 1.0_Real / std::pow(DensityRatio, 0.25_Real);
+         const Real RefDel4      = 1.0_Real / std::pow(DensityRatio, 0.75_Real);
+
+         if (abs(Mesh->MeshScalingDel2H(Edge) - RefDel2) >
+                 Tol * std::max(1.0_Real, std::abs(RefDel2)) ||
+             abs(Mesh->MeshScalingDel4H(Edge) - RefDel4) >
+                 Tol * std::max(1.0_Real, std::abs(RefDel4))) {
+            ++Count;
+         }
+      }
+
+      if (Count > 0)
+         ABORT_ERROR("HorzMeshTest: mesh-density scaling test FAIL");
 
       // Test cell halo values
       // Perform halo exhange on owned cell only array and compare
