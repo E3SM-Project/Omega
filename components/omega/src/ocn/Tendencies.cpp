@@ -517,8 +517,9 @@ Tendencies::Tendencies(const std::string &Name_, ///< [in] Name for tendencies
                                      VCoord->NVertLayers);
    NormalVelocityTend =
        Array2DReal("NormalVelocityTend", Mesh->NEdgesSize, VCoord->NVertLayers);
-   TracerTend = Array3DReal("TracerTend", NTracersIn, Mesh->NCellsSize,
-                            VCoord->NVertLayers);
+   TracerTend  = Array3DReal("TracerTend", NTracersIn, Mesh->NCellsSize,
+                             VCoord->NVertLayers);
+   ExtraEnergy = Array1DReal("ExtraEnergy", Mesh->NCellsSize);
 
    Name = Name_;
 
@@ -929,6 +930,7 @@ void Tendencies::computeTracerTendenciesOnly(
    Array2DReal NormalVelEdge = State->getNormalVelocity(VelTimeLevel);
 
    OMEGA_SCOPE(LocTracerTend, TracerTend);
+   OMEGA_SCOPE(LocExtraEnergy, ExtraEnergy);
    OMEGA_SCOPE(LocTracerHorzAdv, TracerHorzAdv);
    OMEGA_SCOPE(LocTracerDiffusion, TracerDiffusion);
    OMEGA_SCOPE(LocTracerHyperDiff, TracerHyperDiff);
@@ -1035,6 +1037,7 @@ void Tendencies::computeTracerTendenciesOnly(
    }
 
    // compute tracer forcing tendency
+   deepCopy(ExtraEnergy, 0.0_Real);
    if (LocSfcTracerForcing.Enabled) {
       Pacer::start("Tend:sfcTracerForcing", 2);
       const auto *ForcingState = Forcing::getDefault();
@@ -1063,12 +1066,12 @@ void Tendencies::computeTracerTendenciesOnly(
 
       parallelFor(
           {Mesh->NCellsAll}, KOKKOS_LAMBDA(int ICell) {
-             LocSfcTracerForcing(LocTracerTend, ICell, TracerArray, PressureMid,
-                                 LatentHeatFluxEvap, SensibleHeatFlux,
-                                 LongWaveHeatFluxUp, LongWaveHeatFluxDown,
-                                 SeaIceHeatFlux, ShortWaveHeatFlux, SnowFlux,
-                                 RainFlux, IceRunoffFlux, RiverRunoffFlux,
-                                 EvaporationFlux, SeaIceSaltFlux);
+             LocSfcTracerForcing(
+                 LocTracerTend, LocExtraEnergy, ICell, TracerArray, PressureMid,
+                 LatentHeatFluxEvap, SensibleHeatFlux, LongWaveHeatFluxUp,
+                 LongWaveHeatFluxDown, SeaIceHeatFlux, ShortWaveHeatFlux,
+                 SnowFlux, RainFlux, IceRunoffFlux, RiverRunoffFlux,
+                 EvaporationFlux, SeaIceSaltFlux);
           });
       Pacer::stop("Tend:sfcTracerForcing", 2);
    }

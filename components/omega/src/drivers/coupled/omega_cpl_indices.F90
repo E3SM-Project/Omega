@@ -6,7 +6,7 @@ module omega_cpl_indices
    private
 
    integer, parameter, public :: num_omega_imports = 2
-   integer, parameter, public :: num_omega_exports = 5
+   integer, parameter, public :: num_omega_exports = 6
    integer, public :: num_coupler_imports, num_coupler_exports
 
    ! Names of import/export fields as defined by seq_flds_mod
@@ -58,6 +58,7 @@ contains
       export_field_names(3) = "So_u"
       export_field_names(4) = "So_v"
       export_field_names(5) = "So_ssh"
+      export_field_names(6) = "Faoo_h2otemp"
 
       ! get mct_avect_index value for each export field name
       call get_indices_from_names( &

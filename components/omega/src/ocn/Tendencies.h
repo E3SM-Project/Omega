@@ -70,6 +70,7 @@ class Tendencies {
    Array2DReal PseudoThicknessTend;
    Array2DReal NormalVelocityTend;
    Array3DReal TracerTend;
+   Array1DReal ExtraEnergy;
 
    // Instances of tendency terms
    PseudoThicknessFluxDivOnCell PseudoThicknessFluxDiv;
