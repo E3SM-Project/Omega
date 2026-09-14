@@ -83,16 +83,23 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
       std::vector<std::string> DimNames;
       InputField->getDimNames(DimNames);
 
+      // Fetch input metadata
+      std::string InputDescr, InputUnits, InputStdName;
+      ScalarT InputValidMin, InputValidMax;
+      InputField->getMetadata("Description", InputDescr);
+      InputField->getMetadata("Units", InputUnits);
+      InputField->getMetadata("StdName", InputStdName);
+
       // Register output Field with same dimensions as input but Real type
       auto OutputField =
           Field::create(OutputNames[0],
-                        "Time average of " + InputNames[0], // Description
-                        "",                                 // Units
-                        "",                                 // Standard name
-                        -std::numeric_limits<Real>::max(),  // Min valid value
-                        std::numeric_limits<Real>::max(),   // Max valid value
-                        NDims,                              // Rank
-                        DimNames                            // Dimension names
+                        "Time average of " + InputDescr,   // Description
+                        InputUnits,                        // Units
+                        InputStdName,                      // Standard name
+                        -std::numeric_limits<Real>::max(), // Min valid value
+                        std::numeric_limits<Real>::max(),  // Max valid value
+                        NDims,                             // Rank
+                        DimNames                           // Dimension names
           );
 
       // Store array size for parallel iteration
@@ -109,7 +116,71 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
       PeriodAlarm = nullptr;
       IsNewPeriod = true;
 
+      // Default to the flat (non-columnar) path until initialize() detects a
+      // recognized horizontal mesh dimension.
+      IsMeshDimension = false;
+      NHorizOwned     = 0;
+
    } // end constructor
+
+   /// Initializes the operator after all Fields exist. Determines the index
+   /// space (cells, edges, or vertices) from the input field's horizontal
+   /// dimension name and, for rank >= 2 mesh fields, stores the appropriate
+   /// MinLayer/MaxLayer arrays from VertCoord. TimeMeanOp does NOT abort on an
+   /// unrecognized index space: it simply falls back to the flat parallel
+   /// dispatch path.
+   void initialize(const MachEnv *Env, const HorzMesh *InMesh,
+                   const VertCoord *InVCoord, Config Options) override {
+
+      AnalysisOperator::initialize(Env, InMesh, InVCoord, Options);
+
+      constexpr I4 InputRank = ArrayT::rank;
+
+      auto InputField = Field::get(InputNames[0]);
+      std::vector<std::string> DimNames;
+      InputField->getDimNames(DimNames);
+
+      // For rank 1 the sole dimension is the horizontal index space; for rank
+      // >= 2 the horizontal index space is the 2nd-to-last dimension.
+      std::string IndexSpaceName;
+      if constexpr (InputRank == 1) {
+         IndexSpaceName = DimNames[0];
+      } else {
+         IndexSpaceName = DimNames[InputRank - 2];
+      }
+
+      IsMeshDimension =
+          (IndexSpaceName == "NCells" || IndexSpaceName == "NEdges" ||
+           IndexSpaceName == "NVertices");
+
+      // Non-mesh output: leave IsMeshDimension false and use the flat path.
+      if (!IsMeshDimension) {
+         return;
+      }
+
+      // Store owned horizontal count and, for rank >= 2, the active-layer
+      // bounds appropriate to the horizontal location.
+      if (IndexSpaceName == "NCells") {
+         NHorizOwned = Mesh->NCellsOwned;
+         if constexpr (InputRank > 1) {
+            MinLayer = VCoord->MinLayerCell;
+            MaxLayer = VCoord->MaxLayerCell;
+         }
+      } else if (IndexSpaceName == "NEdges") {
+         NHorizOwned = Mesh->NEdgesOwned;
+         if constexpr (InputRank > 1) {
+            MinLayer = VCoord->MinLayerEdgeBot;
+            MaxLayer = VCoord->MaxLayerEdgeTop;
+         }
+      } else { // NVertices
+         NHorizOwned = Mesh->NVerticesOwned;
+         if constexpr (InputRank > 1) {
+            MinLayer = VCoord->MinLayerVertexBot;
+            MaxLayer = VCoord->MaxLayerVertexTop;
+         }
+      }
+
+   } // end initialize
 
    /// Sets the period alarm that signals when to finalize the time average.
    /// Called by Analysis during initialization to provide the alarm associated
@@ -127,8 +198,6 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
    /// timestamp and computed flag.
    void compute(const TimeInstant &TimeStamp ///< [in] current timestamp
                 ) override {
-      // Create local scope reference to output array for kernel capture
-      OMEGA_SCOPE(LocOutputData, OutputData);
 
       // Retrieve input Field and extract data array
       auto InputField = Field::get(InputNames[0]);
@@ -137,13 +206,8 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
       // Accumulate input values into output array
       if (IsNewPeriod) {
          // Start of new averaging period: initialize with first input
-         // Cast to Real for accumulation
          NumAccum = 1;
-         parallelFor(
-             {ArraySize}, KOKKOS_LAMBDA(const int FlatIdx) {
-                LocOutputData.data()[FlatIdx] =
-                    static_cast<Real>(InputData.data()[FlatIdx]);
-             });
+         accumInit(InputData);
          IsNewPeriod = false;
 
          // If the period alarm rings on the first sample of a period, finalize
@@ -154,11 +218,7 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
          }
       } else {
          // Continue accumulation: add input to running sum
-         parallelFor(
-             {ArraySize}, KOKKOS_LAMBDA(const int FlatIdx) {
-                LocOutputData.data()[FlatIdx] +=
-                    static_cast<Real>(InputData.data()[FlatIdx]);
-             });
+         accumAdd(InputData);
          ++NumAccum;
 
          // Check if period alarm is ringing (time to finalize average)
@@ -167,11 +227,7 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
 
          if (ShouldFinalize) {
             // Finalize: divide accumulated sum by count to get mean
-            Real InvNumAccum = 1.0 / static_cast<Real>(NumAccum);
-            parallelFor(
-                {ArraySize}, KOKKOS_LAMBDA(const int FlatIdx) {
-                   LocOutputData.data()[FlatIdx] *= InvNumAccum;
-                });
+            finalize();
 
             // Reset state for next averaging period
             IsNewPeriod = true;
@@ -184,6 +240,161 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
 
    } // end compute
 
+   /// Initializes the output accumulator with the first input sample of a new
+   /// averaging period. For column-structured mesh fields the write is
+   /// restricted to active layers [MinLayer, MaxLayer] using hierarchical
+   /// parallelism. Otherwise a flat parallel loop over the entire array is
+   /// used.
+   void accumInit(const ArrayT &InputData) {
+      OMEGA_SCOPE(LocOutputData, OutputData);
+      constexpr I4 InputRank = ArrayT::rank;
+
+      if (IsMeshDimension && InputRank >= 2) {
+         OMEGA_SCOPE(LocMinLayer, MinLayer);
+         OMEGA_SCOPE(LocMaxLayer, MaxLayer);
+         OMEGA_SCOPE(LocInputData, InputData);
+
+         if constexpr (InputRank == 2) {
+            parallelForOuter(
+                "TimeMeanInit2D", LaunchConfig({NHorizOwned}),
+                KOKKOS_LAMBDA(int IHoriz, const TeamMember &Team) {
+                   const I4 KMin   = LocMinLayer(IHoriz);
+                   const I4 KMax   = LocMaxLayer(IHoriz);
+                   const I4 KRange = vertRange(KMin, KMax);
+                   parallelForInner(
+                       Team, KRange, INNER_LAMBDA(int KIdx) {
+                          const I4 K = KMin + KIdx;
+                          LocOutputData(IHoriz, K) =
+                              static_cast<Real>(LocInputData(IHoriz, K));
+                       });
+                });
+         } else if constexpr (InputRank == 3) {
+            const I4 Dim0 = InputData.extent(0);
+            parallelForOuter(
+                "TimeMeanInit3D", LaunchConfig({Dim0, NHorizOwned}),
+                KOKKOS_LAMBDA(int I0, int IHoriz, const TeamMember &Team) {
+                   const I4 KMin   = LocMinLayer(IHoriz);
+                   const I4 KMax   = LocMaxLayer(IHoriz);
+                   const I4 KRange = vertRange(KMin, KMax);
+                   parallelForInner(
+                       Team, KRange, INNER_LAMBDA(int KIdx) {
+                          const I4 K = KMin + KIdx;
+                          LocOutputData(I0, IHoriz, K) =
+                              static_cast<Real>(LocInputData(I0, IHoriz, K));
+                       });
+                });
+         }
+      } else {
+         // Flat fallback for scalars, rank-1, and non-mesh outputs
+         parallelFor(
+             {ArraySize}, KOKKOS_LAMBDA(const int FlatIdx) {
+                LocOutputData.data()[FlatIdx] =
+                    static_cast<Real>(InputData.data()[FlatIdx]);
+             });
+      }
+   } // end accumInit
+
+   /// Adds an input sample to the running accumulator. Uses the same active
+   /// layer bounds and dispatch logic as accumInit so that only the layers
+   /// initialized at the start of the period are accumulated.
+   void accumAdd(const ArrayT &InputData) {
+      OMEGA_SCOPE(LocOutputData, OutputData);
+      constexpr I4 InputRank = ArrayT::rank;
+
+      if (IsMeshDimension && InputRank >= 2) {
+         OMEGA_SCOPE(LocMinLayer, MinLayer);
+         OMEGA_SCOPE(LocMaxLayer, MaxLayer);
+         OMEGA_SCOPE(LocInputData, InputData);
+
+         if constexpr (InputRank == 2) {
+            parallelForOuter(
+                "TimeMeanAdd2D", LaunchConfig({NHorizOwned}),
+                KOKKOS_LAMBDA(int IHoriz, const TeamMember &Team) {
+                   const I4 KMin   = LocMinLayer(IHoriz);
+                   const I4 KMax   = LocMaxLayer(IHoriz);
+                   const I4 KRange = vertRange(KMin, KMax);
+                   parallelForInner(
+                       Team, KRange, INNER_LAMBDA(int KIdx) {
+                          const I4 K = KMin + KIdx;
+                          LocOutputData(IHoriz, K) +=
+                              static_cast<Real>(LocInputData(IHoriz, K));
+                       });
+                });
+         } else if constexpr (InputRank == 3) {
+            const I4 Dim0 = InputData.extent(0);
+            parallelForOuter(
+                "TimeMeanAdd3D", LaunchConfig({Dim0, NHorizOwned}),
+                KOKKOS_LAMBDA(int I0, int IHoriz, const TeamMember &Team) {
+                   const I4 KMin   = LocMinLayer(IHoriz);
+                   const I4 KMax   = LocMaxLayer(IHoriz);
+                   const I4 KRange = vertRange(KMin, KMax);
+                   parallelForInner(
+                       Team, KRange, INNER_LAMBDA(int KIdx) {
+                          const I4 K = KMin + KIdx;
+                          LocOutputData(I0, IHoriz, K) +=
+                              static_cast<Real>(LocInputData(I0, IHoriz, K));
+                       });
+                });
+         }
+      } else {
+         // Flat fallback for scalars, rank-1, and non-mesh outputs
+         parallelFor(
+             {ArraySize}, KOKKOS_LAMBDA(const int FlatIdx) {
+                LocOutputData.data()[FlatIdx] +=
+                    static_cast<Real>(InputData.data()[FlatIdx]);
+             });
+      }
+   } // end accumAdd
+
+   /// Divides the accumulated sum by the sample count to form the mean. Uses
+   /// the same active layer bounds and dispatch logic as accumInit/accumAdd so
+   /// fill values in inactive layers are preserved through finalization.
+   void finalize() {
+      OMEGA_SCOPE(LocOutputData, OutputData);
+      const Real InvNumAccum = 1.0 / static_cast<Real>(NumAccum);
+      constexpr I4 InputRank = ArrayT::rank;
+
+      if (IsMeshDimension && InputRank >= 2) {
+         OMEGA_SCOPE(LocMinLayer, MinLayer);
+         OMEGA_SCOPE(LocMaxLayer, MaxLayer);
+
+         if constexpr (InputRank == 2) {
+            parallelForOuter(
+                "TimeMeanFinal2D", LaunchConfig({NHorizOwned}),
+                KOKKOS_LAMBDA(int IHoriz, const TeamMember &Team) {
+                   const I4 KMin   = LocMinLayer(IHoriz);
+                   const I4 KMax   = LocMaxLayer(IHoriz);
+                   const I4 KRange = vertRange(KMin, KMax);
+                   parallelForInner(
+                       Team, KRange, INNER_LAMBDA(int KIdx) {
+                          const I4 K = KMin + KIdx;
+                          LocOutputData(IHoriz, K) *= InvNumAccum;
+                       });
+                });
+         } else if constexpr (InputRank == 3) {
+            const I4 Dim0 = LocOutputData.extent(0);
+            parallelForOuter(
+                "TimeMeanFinal3D", LaunchConfig({Dim0, NHorizOwned}),
+                KOKKOS_LAMBDA(int I0, int IHoriz, const TeamMember &Team) {
+                   const I4 KMin   = LocMinLayer(IHoriz);
+                   const I4 KMax   = LocMaxLayer(IHoriz);
+                   const I4 KRange = vertRange(KMin, KMax);
+                   parallelForInner(
+                       Team, KRange, INNER_LAMBDA(int KIdx) {
+                          const I4 K = KMin + KIdx;
+                          LocOutputData(I0, IHoriz, K) *= InvNumAccum;
+                       });
+                });
+         }
+      } else {
+         // Flat fallback for scalars, rank-1, and non-mesh outputs
+         parallelFor(
+             {ArraySize}, KOKKOS_LAMBDA(const int FlatIdx) {
+                LocOutputData.data()[FlatIdx] *= InvNumAccum;
+             });
+      }
+   } // end finalize
+
  private:
    /// Output data array matching input layout but with Real type, used to
    /// accumulate sum and store the final time-averaged mean
@@ -192,8 +403,22 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
    /// Number of values accumulated in current averaging period
    I4 NumAccum;
 
-   /// Total size of input/output arrays for parallel iteration
+   /// Total size of input/output arrays for the flat parallel path
    I4 ArraySize;
+
+   /// Number of owned points in the horizontal dimension (for MPI-correct
+   /// hierarchical loops over mesh-distributed fields)
+   I4 NHorizOwned;
+
+   /// Whether the horizontal dimension is a recognized mesh dimension
+   /// (NCells/NEdges/NVertices). When false, the flat fallback path is used.
+   bool IsMeshDimension;
+
+   /// Min active layer index for each horizontal point (rank >= 2 mesh fields)
+   Array1DI4 MinLayer;
+
+   /// Max active layer index for each horizontal point (rank >= 2 mesh fields)
+   Array1DI4 MaxLayer;
 
    /// Alarm that signals when averaging period is complete (e.g., end of
    /// day/month)
