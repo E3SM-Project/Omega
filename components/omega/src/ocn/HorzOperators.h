@@ -235,10 +235,9 @@ class SecondDerivativeOnCell {
       if (OnSphere) {
          const Array1DI4 edgesOnCell =
              Kokkos::subview(EdgesOnCell, ICell, Kokkos::ALL);
-         DetermineSphericalPatchGeometry(NEdges, edgesOnCell, VerticesOnEdge,
-                                         XCell, YCell, ZCell, XVertex, YVertex,
-                                         ZVertex, CellList, SphereRadius, XP,
-                                         YP, Angle2D, ThetaAbs[ICell]);
+         DetermineSphericalPatchGeometry(
+             NEdges, edgesOnCell, VerticesOnEdge, XCell, YCell, ZCell, XVertex,
+             YVertex, ZVertex, CellList, XP, YP, Angle2D, ThetaAbs[ICell]);
       } else { // On an x-y plane
          const Array1DI4 edgesOnCell =
              Kokkos::subview(EdgesOnCell, ICell, Kokkos::ALL);
@@ -271,7 +270,6 @@ class SecondDerivativeOnCell {
    static constexpr R8 Pii     = 3.141592653589793_Real;
 
    const bool OnSphere;
-   const Real SphereRadius; ///< radius (m) of the sphere the mesh lies on
    const I4 NCellsAll;
    const I4 MaxEdges;
    Array1DI4 NEdgesOnCell;
@@ -341,10 +339,11 @@ class SecondDerivativeOnCell {
        const Array2DI4 VerticesOnEdge, const Array1DReal XCell,
        const Array1DReal YCell, const Array1DReal ZCell,
        const Array1DReal XVertex, const Array1DReal YVertex,
-       const Array1DReal ZVertex, const Array1DI4 CellList,
-       const Real sphereRadius, Array1DReal XP, Array1DReal YP,
-       Array1DReal Angle2D, Real &ThetaAbs) {
+       const Array1DReal ZVertex, const Array1DI4 CellList, Array1DReal XP,
+       Array1DReal YP, Array1DReal Angle2D, Real &ThetaAbs) {
       const Real length_scale = 1._Real;
+      // the mesh is required to lie on the sphere of radius REarth
+      const Real sphereRadius = REarth;
       Real XC[MaxMaxEdges]    = {};
       Real YC[MaxMaxEdges]    = {};
       Real ZC[MaxMaxEdges]    = {};

@@ -639,7 +639,6 @@ void TimeStepper::prescribeVelocity(OceanState *State1, int TimeLevel1,
       OMEGA_SCOPE(LatEdge, Mesh->LatEdge);
       OMEGA_SCOPE(LonEdge, Mesh->LonEdge);
       OMEGA_SCOPE(AngleEdge, Mesh->AngleEdge);
-      const Real SphereRadius = Mesh->SphereRadius;
       OMEGA_SCOPE(MinLayerEdgeBot, VCoord->MinLayerEdgeBot);
       OMEGA_SCOPE(MaxLayerEdgeTop, VCoord->MaxLayerEdgeTop);
 
@@ -665,8 +664,8 @@ void TimeStepper::prescribeVelocity(OceanState *State1, int TimeLevel1,
                                        2.0 * Pi * cos(LatEdge(IEdge)));
              const R8 v     = (10.0 / Tau) * sin(2.0 * lon_p) *
                           cos(LatEdge(IEdge)) * cos(Pi * TSim / Tau);
-             const R8 normalVel = SphereRadius * (u * cos(AngleEdge(IEdge)) +
-                                                  v * sin(AngleEdge(IEdge)));
+             const R8 normalVel = REarth * (u * cos(AngleEdge(IEdge)) +
+                                            v * sin(AngleEdge(IEdge)));
 
              parallelForInner(
                  Team, KRange, INNER_LAMBDA(int KChunk) {
@@ -681,7 +680,6 @@ void TimeStepper::prescribeVelocity(OceanState *State1, int TimeLevel1,
       OMEGA_SCOPE(LatEdge, Mesh->LatEdge);
       OMEGA_SCOPE(LonEdge, Mesh->LonEdge);
       OMEGA_SCOPE(AngleEdge, Mesh->AngleEdge);
-      const Real SphereRadius = Mesh->SphereRadius;
       OMEGA_SCOPE(MinLayerEdgeBot, VCoord->MinLayerEdgeBot);
       OMEGA_SCOPE(MaxLayerEdgeTop, VCoord->MaxLayerEdgeTop);
 
@@ -710,8 +708,8 @@ void TimeStepper::prescribeVelocity(OceanState *State1, int TimeLevel1,
              const R8 v =
                  ((2.5 / Tau) * sin(lon_p) *
                   Kokkos::pow(cos(LatEdge(IEdge)), 3) * cos(Pi * TSim / Tau));
-             const R8 normalVel = SphereRadius * (u * cos(AngleEdge(IEdge)) +
-                                                  v * sin(AngleEdge(IEdge)));
+             const R8 normalVel = REarth * (u * cos(AngleEdge(IEdge)) +
+                                            v * sin(AngleEdge(IEdge)));
 
              parallelForInner(
                  Team, KRange, INNER_LAMBDA(int KChunk) {

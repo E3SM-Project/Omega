@@ -147,7 +147,7 @@ struct TestSetupPlane {
 struct TestSetupSphere {
 
    // radius of spherical mesh
-   Real Radius = HorzMesh::getDefault()->SphereRadius;
+   Real Radius = REarth;
 
    ErrorMeasures ExpectedKineticEnergyErrors = {0.014358161778181201,
                                                 0.0068116910597281113};
