@@ -192,12 +192,12 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
       // depend on the build precision; the tolerance leaves room for a mesh
       // file that stores the radius with fewer significant digits.
       constexpr R8 RadiusRelTol = 1.e-8;
-      if (std::abs((pcd::mean_radius - TmpRadius) / pcd::mean_radius) >
-          RadiusRelTol)
-         ABORT_ERROR("Input mesh sphere radius {} does not match the Earth "
-                     "radius {} from the Physical Constants Dictionary "
-                     "(relative tolerance {})",
-                     TmpRadius, pcd::mean_radius, RadiusRelTol);
+      OMEGA_REQUIRE(std::abs((pcd::mean_radius - TmpRadius) /
+                             pcd::mean_radius) <= RadiusRelTol,
+                    "Input mesh sphere radius {} does not match the Earth "
+                    "radius {} from the Physical Constants Dictionary "
+                    "(relative tolerance {})",
+                    TmpRadius, pcd::mean_radius, RadiusRelTol);
       IsPeriodic = false;
       XPeriod    = 0.0;
       YPeriod    = 0.0;
