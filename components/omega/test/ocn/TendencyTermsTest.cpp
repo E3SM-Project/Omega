@@ -317,9 +317,7 @@ struct TestSetupSphere {
 
    // scalarB is differentiated by the tracer diffusion test, so it must be
    // smooth on the sphere: cos(Lon)*cos(Lat)*sin(Lat) = x*z/R^2 vanishes at
-   // the poles, whereas cos(Lon)*sin(Lat) has no limit there and makes the
-   // exact diffusion at a polar cell depend on the arbitrary longitude of
-   // that cell's center.
+   // the poles, where Lon is undefined.
    KOKKOS_FUNCTION Real scalarB(Real Lon, Real Lat) const {
       return 2. + std::cos(Lon) * std::cos(Lat) * std::sin(Lat);
    }
