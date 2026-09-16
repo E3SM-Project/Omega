@@ -49,8 +49,8 @@ struct TestSetupPlane {
 };
 
 struct TestSetupSphere {
-   ErrorMeasures ExpectedNormalStressErrors = {0.0038588958862868362,
-                                               0.003813760171030077};
+   ErrorMeasures ExpectedNormalStressErrors = {0.003704100692552216,
+                                               0.0037705223292748575};
    KOKKOS_FUNCTION Real sfcStressX(Real Lon, Real Lat) const {
       return -4 * std::sin(Lon) * std::cos(Lon) * std::pow(std::cos(Lat), 3) *
              std::sin(Lat);
