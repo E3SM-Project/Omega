@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Time stepping &mdash; Omega develop documentation</title>
+  <title>Split Time Stepping &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Split Time Stepping" href="SplitTimeStepping.html" />
-    <link rel="prev" title="Time Manager (TimeMgr)" href="TimeMgr.html" />
+    <link rel="next" title="Global Reductions" href="Reductions.html" />
+    <link rel="prev" title="Time stepping" href="TimeStepping.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -72,11 +72,27 @@
 <li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Time stepping</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="SplitTimeStepping.html">Split Time Stepping</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="TimeStepping.html">Time stepping</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Split Time Stepping</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#configuration">Configuration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#barotropic-time-step">Barotropic time step</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#other-requirements">Other requirements</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="SplitTimeStepping.html">Split Time Stepping</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#state-variables-and-restart">State variables and restart</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Split Time Stepping</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#barotropic-time-step">Barotropic time step</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#other-requirements">Other requirements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#state-variables-and-restart">State variables and restart</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
@@ -193,9 +209,10 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Time stepping</li>
+          <li class="breadcrumb-item"><a href="TimeStepping.html">Time stepping</a></li>
+      <li class="breadcrumb-item active">Split Time Stepping</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/userGuide/TimeStepping.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/userGuide/SplitTimeStepping.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -203,36 +220,17 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section class="tex2jax_ignore mathjax_ignore" id="time-stepping">
-<span id="omega-user-time-stepping"></span><h1>Time stepping<a class="headerlink" href="#time-stepping" title="Permalink to this heading"></a></h1>
-<p>Time stepper refers to the means by which a simulation is advanced in time.
-The configuration of a simulation is set by the <code class="docutils literal notranslate"><span class="pre">TimeIntegration</span></code> section
-of the Omega configuration file:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="nt">TimeIntegration</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">CalendarType</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">No Leap</span>
-<span class="w">    </span><span class="nt">TimeStepper</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Forward-Backward</span>
-<span class="w">    </span><span class="nt">TimeStep</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0000_00:10:00</span>
-<span class="w">    </span><span class="nt">ModeSplitShare</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">BtrTimeStepper</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Predictor-Corrector</span>
-<span class="w">      </span><span class="nt">BtrTimeStep</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0000_00:00:20</span>
-<span class="w">      </span><span class="nt">NTimeStepIteration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
-<span class="w">      </span><span class="nt">NBclCoriolisIteration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
-<span class="w">      </span><span class="nt">ReinitSplitVelocity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-<span class="w">    </span><span class="nt">StartTime</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0001-01-01_00:00:00</span>
-<span class="w">    </span><span class="nt">StopTime</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0001-01-01_02:00:00</span>
-<span class="w">    </span><span class="nt">RunDuration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">none</span>
-</pre></div>
-</div>
-<p>This configuration refers to the default time stepping used for the model
-dynamics (momentum and continuity equations). Additional time steppers can
-be used for other portions of the model (eg the barotropic mode or tracer
-transport) that may have different time steps and use different algorithms.</p>
-<p>The Calendar choice is describe in the
-<a class="reference internal" href="TimeMgr.html#omega-user-time-manager"><span class="std std-ref">Time Management</span></a> section.</p>
-<p>The TimeStepper option refers to the numerical scheme used to advance the
-model in time. Omega implements a number of time-stepping schemes. The user
-can select the scheme they want in the configuration file.
-The following time steppers are currently available:</p>
+  <section class="tex2jax_ignore mathjax_ignore" id="split-time-stepping">
+<span id="omega-user-split-time-stepping"></span><h1>Split Time Stepping<a class="headerlink" href="#split-time-stepping" title="Permalink to this heading"></a></h1>
+<p>Ocean motion spans two very different speeds. The barotropic (depth-averaged)
+mode carries fast external gravity waves, while the baroclinic
+(depth-varying) mode evolves more slowly. An unsplit explicit time stepper
+must use a time step short enough for the fast barotropic waves, even though
+most of the ocean changes much more slowly. A split-explicit time stepper
+separates the two modes: the baroclinic velocity, thickness and tracers are
+advanced with the long model time step, while the barotropic mode is subcycled
+with a much shorter barotropic time step.</p>
+<p>Omega provides two time steppers built on the same RK2 scheme:</p>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Config option name</p></th>
@@ -240,61 +238,175 @@ The following time steppers are currently available:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>Forward-Backward</p></td>
-<td><p>forward-backward</p></td>
+<tr class="row-even"><td><p>SplitExplicitRK2</p></td>
+<td><p>mode-split RK2, with the barotropic mode subcycled by a forward-backward predictor-corrector scheme</p></td>
 </tr>
-<tr class="row-odd"><td><p>RungeKutta2</p></td>
-<td><p>second-order two-stage midpoint Runge Kutta method</p></td>
-</tr>
-<tr class="row-even"><td><p>RungeKutta4</p></td>
-<td><p>classic fourth-order four-stage Runge Kutta method</p></td>
-</tr>
-<tr class="row-odd"><td><p>SplitExplicitRK2</p></td>
-<td><p>mode-split RK2 with a subcycled barotropic mode</p></td>
-</tr>
-<tr class="row-even"><td><p>UnsplitRK2</p></td>
-<td><p>the same RK2 scheme with mode splitting disabled</p></td>
+<tr class="row-odd"><td><p>UnsplitRK2</p></td>
+<td><p>the same RK2 scheme without the mode split</p></td>
 </tr>
 </tbody>
 </table>
-<p><code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> and <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code> use the <code class="docutils literal notranslate"><span class="pre">ModeSplitShare</span></code> configuration
-subgroup shown above. See <a class="reference internal" href="SplitTimeStepping.html#omega-user-split-time-stepping"><span class="std std-ref">Split time stepping</span></a>
-for descriptions of these schemes and their configuration options.</p>
-<p>The time step refers to the main model time step used to advance the solution
-forward. The time step is specified as a formatted string and can be provided
-in any of the following forms:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">DDDD_HH:MM:SS(.sss...)</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">HH:MM:SS(.sss...)</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">MM:SS(.sss...)</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">SS(.sss...)</span></code></p></li>
-</ul>
-<p>Days, hours and minutes are optional but must be in order if included.
-Fractional seconds are optional.</p>
-<p>The StartTime refers to the starting time for the simulation. It is in the
-format <code class="docutils literal notranslate"><span class="pre">yyyy-mm-day_hh:mm:ss</span></code> for year, month, day, hour, minute, second.
-This refers to the initial start time; for a longer simulation, the current
-time will be modified by the restart file to update to the present time for
-the current segment of the simulation.</p>
-<p>The simulation will be stopped either at a fixed StopTime if provided or
-by the RunDuration. For shorter simulations, the StopTime can be used to
-specify a specific time to stop. For longer simulations with multiple
-segments that are restarted, the RunDuration should used and should be set
-to fit within the queue time. The format for StopTime is the same as StartTime.
-The format for RunDuration is the same as the TimeStep.</p>
-<p>Only one of the StopTime or RunDuration should be specified with the other
-set to either an empty string or “none”. If both are specified, the
-RunDuration is used instead of the StopTime.</p>
-<div class="toctree-wrapper compound">
+<p><code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code> advances the barotropic mode with the full time step, so it needs
+a time step short enough for the barotropic mode. It is useful as a reference
+for assessing the effect of mode splitting in <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code> and <code class="docutils literal notranslate"><span class="pre">RungeKutta2</span></code> both use an unsplit RK2 approach.
+<code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code> uses the split-explicit framework with mode splitting disabled
+and computes the Coriolis term separately, while <code class="docutils literal notranslate"><span class="pre">RungeKutta2</span></code> includes it in
+the potential-vorticity tendency. Both require a time step short enough for
+external gravity waves.</p>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading"></a></h2>
+<p>The time stepper is selected in the <code class="docutils literal notranslate"><span class="pre">TimeIntegration</span></code> section of the
+configuration file, together with a <code class="docutils literal notranslate"><span class="pre">ModeSplitShare</span></code> subgroup holding the
+options for <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> and <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="nt">TimeIntegration</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">TimeStepper</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SplitExplicitRK2</span>
+<span class="w">    </span><span class="nt">TimeStep</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0000_00:10:00</span>
+<span class="w">    </span><span class="nt">ModeSplitShare</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">BtrTimeStepper</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Predictor-Corrector</span>
+<span class="w">      </span><span class="nt">BtrTimeStep</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0000_00:00:20</span>
+<span class="w">      </span><span class="nt">NTimeStepIteration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">      </span><span class="nt">NBclCoriolisIteration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">      </span><span class="nt">ReinitSplitVelocity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
 </div>
+<p>The remaining <code class="docutils literal notranslate"><span class="pre">TimeIntegration</span></code> options are described in the <a class="reference internal" href="TimeStepping.html#omega-user-time-stepping"><span class="std std-ref">Time
+stepping</span></a> section, and the <code class="docutils literal notranslate"><span class="pre">ModeSplitShare</span></code> values
+shown are those of the default configuration. The <code class="docutils literal notranslate"><span class="pre">ModeSplitShare</span></code> subgroup is
+required whenever one of the two steppers is selected. Within it, only
+<code class="docutils literal notranslate"><span class="pre">BtrTimeStep</span></code> is required, and only for <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code>; the other options
+fall back to their defaults:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Configuration name</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Default</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>BtrTimeStepper</p></td>
+<td><p>scheme for the barotropic subcycle; <code class="docutils literal notranslate"><span class="pre">Predictor-Corrector</span></code> is the only option</p></td>
+<td><p>Predictor-Corrector</p></td>
+</tr>
+<tr class="row-odd"><td><p>BtrTimeStep</p></td>
+<td><p>barotropic time step, in the same format as <code class="docutils literal notranslate"><span class="pre">TimeStep</span></code>; must be positive and shorter than it</p></td>
+<td><p>required</p></td>
+</tr>
+<tr class="row-even"><td><p>NTimeStepIteration</p></td>
+<td><p>positive integer number of predictor-corrector iterations per time step</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p>NBclCoriolisIteration</p></td>
+<td><p>positive integer number of Coriolis iterations in the baroclinic velocity update; forced to 1 for <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code></p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-even"><td><p>ReinitSplitVelocity</p></td>
+<td><p>recompute the velocity split at every time step; has no effect for <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code></p></td>
+<td><p>false</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">BtrTimeStepper</span></code> and <code class="docutils literal notranslate"><span class="pre">BtrTimeStep</span></code> are ignored by <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code>, which also
+always uses a single Coriolis iteration. If <code class="docutils literal notranslate"><span class="pre">NBclCoriolisIteration</span></code> is
+supplied, it must still be a positive integer before it is overridden. Keep
+<code class="docutils literal notranslate"><span class="pre">NTimeStepIteration:</span> <span class="pre">2</span></code> for the RK2 predictor-corrector scheme. A single
+iteration retains only the predictor and reduces temporal accuracy to first
+order; more iterations do not make this a higher-order Runge Kutta method. The
+name <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> describes its RK2 structure, rather than a guarantee of
+second-order convergence of the complete split scheme: the current time-stepper
+test checks first-order convergence for its split configuration.</p>
+<p>For <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code>, a configuration block with all applicable default values
+explicitly specified is as follows:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="nt">TimeIntegration</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">TimeStepper</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">UnsplitRK2</span>
+<span class="w">    </span><span class="nt">TimeStep</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0000_00:00:20</span>
+<span class="w">    </span><span class="nt">ModeSplitShare</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">NTimeStepIteration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</pre></div>
+</div>
+<p>The time steps in these examples are illustrative; stability depends on the
+mesh and the simulated state.</p>
+<section id="barotropic-time-step">
+<h3>Barotropic time step<a class="headerlink" href="#barotropic-time-step" title="Permalink to this heading"></a></h3>
+<p>The subcycle count parameter <code class="docutils literal notranslate"><span class="pre">NBtrSubcycles</span></code> is <code class="docutils literal notranslate"><span class="pre">ceil(TimeStep/BtrTimeStep)</span></code>,
+and the barotropic time step actually used is <code class="docutils literal notranslate"><span class="pre">TimeStep</span></code> divided by that
+number, so it is never longer than <code class="docutils literal notranslate"><span class="pre">BtrTimeStep</span></code>. The resolved values are
+written to the log at initialization. For the <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> example above,
+the <code class="docutils literal notranslate"><span class="pre">omega.log</span></code> shows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SplitExplicitRK2</span><span class="p">:</span> <span class="n">TimeStep</span><span class="o">=</span><span class="mi">600</span> <span class="n">s</span><span class="p">,</span> <span class="n">BtrTimeStep</span><span class="o">=</span><span class="mi">20</span> <span class="n">s</span><span class="p">,</span> <span class="n">NBtrSubcycles</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">BtrDt</span><span class="o">=</span><span class="mi">20</span> <span class="n">s</span><span class="p">,</span> <span class="n">NTimeStepIteration</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">NBclCoriolisIteration</span><span class="o">=</span><span class="mi">2</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">BtrTimeStep</span></code> must be short enough (approximately 20~30x shorter than <code class="docutils literal notranslate"><span class="pre">TimeStep</span></code>)
+to resolve the external gravity waves on the
+mesh, while <code class="docutils literal notranslate"><span class="pre">TimeStep</span></code> must satisfy the stability limits of the remaining
+explicit processes. In each time-step iteration, the complete barotropic
+subcycling sequence spans twice the model time step. Each individual barotropic
+step has duration <code class="docutils literal notranslate"><span class="pre">TimeStep/NBtrSubcycles</span></code>, so a model time step takes <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">NTimeStepIteration</span> <span class="pre">*</span> <span class="pre">NBtrSubcycles</span></code> barotropic steps, 120 in the example above.</p>
+</section>
+<section id="other-requirements">
+<h3>Other requirements<a class="headerlink" href="#other-requirements" title="Permalink to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> places two requirements on other sections of the
+configuration file:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">HaloWidth</span></code> in the <code class="docutils literal notranslate"><span class="pre">Decomp</span></code> section must be at least 3, which is the default.
+The barotropic subcycle uses the extra halo layers to communicate only once
+per subcycle. This is checked when the barotropic update is first called; see <a class="reference internal" href="Decomp.html#omega-user-decomp"><span class="std std-ref">Domain Decomposition</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SSHTendencyEnable</span></code> in the <code class="docutils literal notranslate"><span class="pre">Tendencies</span></code> section must be false, which is also
+the default. The split time stepper computes the barotropic pressure gradient
+itself. This is checked at initialization; see <a class="reference internal" href="TendencyTerms.html#omega-user-tend-terms"><span class="std std-ref">Tendency Terms</span></a>.</p></li>
+</ul>
+</section>
+</section>
+<section id="state-variables-and-restart">
+<h2>State variables and restart<a class="headerlink" href="#state-variables-and-restart" title="Permalink to this heading"></a></h2>
+<p>The split time steppers carry three state variables in addition to
+<code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code> (for both <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> and
+<code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code>):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Field name</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Units</p></th>
+<th class="head"><p>Dimensions</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>NormalBaroclinicVelocity</p></td>
+<td><p>baroclinic velocity component normal to edge</p></td>
+<td><p>m/s</p></td>
+<td><p>NEdges, NVertLayers</p></td>
+</tr>
+<tr class="row-odd"><td><p>NormalBarotropicVelocity</p></td>
+<td><p>barotropic velocity component normal to edge</p></td>
+<td><p>m/s</p></td>
+<td><p>NEdges</p></td>
+</tr>
+<tr class="row-even"><td><p>BarotropicPressureAnomaly</p></td>
+<td><p>barotropic pressure anomaly</p></td>
+<td><p>Pa</p></td>
+<td><p>NCells</p></td>
+</tr>
+</tbody>
+</table>
+<p>These fields exist only when <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> or <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code> is selected.
+They are part of the <code class="docutils literal notranslate"><span class="pre">Restart</span></code> field group but not the <code class="docutils literal notranslate"><span class="pre">State</span></code> group, so they
+are written to restart files but are not needed in the initial-condition file.
+For <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code>, on a cold start the velocity split is computed from the
+initial <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code>, and the barotropic pressure
+anomaly from the initial pressure. On a restart, <code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> reads all
+three from the restart file instead. <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code> initializes its baroclinic
+velocity from the full <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code> and sets its barotropic velocity to
+zero on both cold starts and restarts; its barotropic pressure anomaly is
+unused.</p>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="TimeMgr.html" class="btn btn-neutral float-left" title="Time Manager (TimeMgr)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="SplitTimeStepping.html" class="btn btn-neutral float-right" title="Split Time Stepping" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="TimeStepping.html" class="btn btn-neutral float-left" title="Time stepping" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Reductions.html" class="btn btn-neutral float-right" title="Global Reductions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

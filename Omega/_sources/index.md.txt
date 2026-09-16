@@ -46,6 +46,7 @@ userGuide/Tendencies
 userGuide/OceanState
 userGuide/TimeMgr
 userGuide/TimeStepping
+userGuide/SplitTimeStepping
 userGuide/Reductions
 userGuide/Tracers
 userGuide/TridiagonalSolvers
@@ -95,6 +96,7 @@ devGuide/Tendencies
 devGuide/OceanState
 devGuide/TimeMgr
 devGuide/TimeStepping
+devGuide/SplitTimeStepping
 devGuide/Reductions
 devGuide/Tracers
 devGuide/TridiagonalSolvers
@@ -143,12 +145,12 @@ design/AuxiliaryState
 design/TimeMgr
 design/Timers
 design/TimeStepping
+design/SplitTimeStepping
 design/Tracers
 design/TridiagonalSolver
 design/VertAdv
 design/VertCoord
 design/VerticalMixingCoeff
-design/SplitTimeStepping
 
 design/Template
 ```

@@ -72,6 +72,7 @@
 <li class="toctree-l1"><a class="reference internal" href="userGuide/OceanState.html">Ocean State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/SplitTimeStepping.html">Split Time Stepping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
@@ -119,6 +120,7 @@
 <li class="toctree-l1"><a class="reference internal" href="devGuide/OceanState.html">Ocean State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/SplitTimeStepping.html">Split Time Stepping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="devGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="devGuide/Tracers.html">Tracers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
@@ -164,12 +166,12 @@
 <li class="toctree-l1"><a class="reference internal" href="design/TimeMgr.html">TimeManager</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/Timers.html">Timers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/SplitTimeStepping.html">Split Time Stepping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/Tracers.html">Tracer Infrastructure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/VertAdv.html">Vertical Advection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/VertCoord.html">Vertical Coordinate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
-<li class="toctree-l1"><a class="reference internal" href="design/SplitTimeStepping.html">Split Time Stepping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/Template.html">Template</a></li>
 </ul>
 
@@ -280,6 +282,11 @@ component of E3SM for comparison purposes.</p>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/OceanState.html">Ocean State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/SplitTimeStepping.html">Split Time Stepping</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/SplitTimeStepping.html#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/SplitTimeStepping.html#state-variables-and-restart">State variables and restart</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/Reductions.html">Global Reductions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/Tracers.html">Tracers</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="userGuide/Tracers.html#updating-tracer-defintions-in-tracerdefs-inc-file">Updating tracer defintions in <code class="docutils literal notranslate"><span class="pre">TracerDefs.inc</span></code> file</a></li>
@@ -453,6 +460,15 @@ component of E3SM for comparison purposes.</p>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/TimeStepping.html#implemented-time-steppers">Implemented time steppers</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/SplitTimeStepping.html">Split Time Stepping</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/SplitTimeStepping.html#source-layout">Source layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/SplitTimeStepping.html#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/SplitTimeStepping.html#initialization">Initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/SplitTimeStepping.html#one-time-step">One time step</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/SplitTimeStepping.html#scratch-arrays">Scratch arrays</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/SplitTimeStepping.html#testing">Testing</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="devGuide/Reductions.html">Global Reductions</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/Reductions.html#global-sum">Global sum</a></li>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/Reductions.html#global-sum-with-product">Global sum with product</a></li>
@@ -578,12 +594,12 @@ component of E3SM for comparison purposes.</p>
 <li class="toctree-l1"><a class="reference internal" href="design/TimeMgr.html">TimeManager</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/Timers.html">Timers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/SplitTimeStepping.html">Split Time Stepping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/Tracers.html">Tracer Infrastructure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/VertAdv.html">Vertical Advection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/VertCoord.html">Vertical Coordinate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
-<li class="toctree-l1"><a class="reference internal" href="design/SplitTimeStepping.html">Split Time Stepping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/Template.html">Template</a></li>
 </ul>
 </div>
