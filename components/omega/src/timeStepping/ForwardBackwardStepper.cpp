@@ -45,6 +45,8 @@ void ForwardBackwardStepper::doStep(
 
    VertMix *VMix = VertMix::getInstance();
 
+   const MPI_Comm Comm = MeshHalo->getComm();
+
    if (State == nullptr)
       LOG_CRITICAL("Invalid State");
    if (AuxState == nullptr)
@@ -60,14 +62,20 @@ void ForwardBackwardStepper::doStep(
    // u^{n+1} = u^{n} + R_u^{n}
    updateVelocityByTend(State, VelNextLevel, State, VelCurLevel, TimeStep);
 
-   updateVelocityByTend(State, VelNextLevel, State, VelCurLevel, TimeStep);
-
    prescribeVelocity(State, VelNextLevel, State, VelCurLevel,
                      SimTime + TimeStep);
 
+   // Exchange halo of u^{n+1} before it is used below
+   Array2DReal NextNormalVelocity = State->getNormalVelocity(VelNextLevel);
+   Pacer::timingBarrier("ForwardBackward:velHaloExchBarrier", 3, Comm);
+   Pacer::start("ForwardBackward:velHaloExch", 3);
+   MeshHalo->exchangeFullArrayHalo(NextNormalVelocity, OnEdge);
+   Pacer::stop("ForwardBackward:velHaloExch", 3);
+
    // R_h^{n} = RHS_h(u^{n+1}, h^{n}, t^{n})
-   Tend->computePseudoThicknessTendencies(State, AuxState, ThickCurLevel,
-                                          VelNextLevel, SimTime);
+   Tend->computePseudoThicknessTendencies(State, AuxState, CurTracerArray,
+                                          ThickCurLevel, VelNextLevel, SimTime,
+                                          TimeStep);
 
    // h^{n+1} = h^{n} + R_h^{n}
    updateThicknessByTend(State, ThickNextLevel, State, ThickCurLevel, TimeStep);
@@ -76,7 +84,8 @@ void ForwardBackwardStepper::doStep(
 
    // R_phi^{n} = RHS_phi(u^{n+1}, h^{n+1}, phi^{n}, t^{n})
    Tend->computeTracerTendencies(State, AuxState, CurTracerArray,
-                                 ThickNextLevel, VelNextLevel, SimTime);
+                                 ThickNextLevel, VelNextLevel, SimTime,
+                                 TimeStep);
 
    // phi^{n+1} = (phi^{n} * h^{n} + R_phi^{n}) / h^{n+1}
    updateTracersByTend(NextTracerArray, CurTracerArray, State, ThickNextLevel,
@@ -84,7 +93,6 @@ void ForwardBackwardStepper::doStep(
 
    // Update time levels (New -> Old) of prognostic variables with halo
    // exchanges
-   const MPI_Comm Comm = MeshHalo->getComm();
    Pacer::timingBarrier("ForwardBackward:haloExchBarrier", 3, Comm);
    Pacer::start("ForwardBackward:haloExch", 3);
    State->updateTimeLevels();

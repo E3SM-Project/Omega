@@ -148,7 +148,7 @@ class GradRichardsonNum {
 
             // Skip this edge contribution if it would access
             // invalid edge velocity levels.
-            if (K1 > MaxLayerEdgeBot(JEdge) || K2 > MaxLayerEdgeBot(JEdge))
+            if (K > MaxLayerEdgeTop(JEdge))
                continue;
 
             Real DNormVel =
@@ -472,17 +472,20 @@ class VertMix {
    /// Initialize VertMix from config and mesh
    static void init();
 
+   /// Apply implicit vertical mixing to velocities and tracers
+   void VertMixImplicit(OceanState *State, AuxiliaryState *AuxState,
+                        Array3DReal &TracerArray, int NTracers, int TimeLevel);
+
+   /// Apply implicit vertical mixing to velocities
    void applyVelVertMixImplicit(OceanState *State,
                                 const AuxiliaryState *AuxState,
                                 int ThickTimeLevel, int VelTimeLevel);
+
+   /// Apply implicit vertical mixing to tracers
    void applyTracerVertMixImplicit(OceanState *State,
                                    const AuxiliaryState *AuxState,
                                    Array3DReal &TracerArray, int NTracers,
                                    int ThickTimeLevel, int VelTimeLevel);
-
-   /// Apply implicit vertical mixing to velocities and tracers
-   void VertMixImplicit(OceanState *State, AuxiliaryState *AuxState,
-                        Array3DReal &TracerArray, int NTracers, int TimeLevel);
 
  private:
    /// Private constructor

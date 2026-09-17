@@ -17,6 +17,7 @@
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "forcingVars/SfcStressForcingVars.h"
+#include "forcingVars/TracerForcingVars.h"
 
 #include <map>
 #include <memory>
@@ -32,6 +33,7 @@ class Forcing {
    std::string Name; ///< Name identifier for this forcing instance
 
    SfcStressForcingVars SfcStressForcing; ///< Surface stress forcing variables
+   TracerForcingVars TracerForcing; ///< Tracer forcing vars (thickness and T,S)
 
    ~Forcing();
 
@@ -69,6 +71,9 @@ class Forcing {
    /// Read forcing fields from input stream at startup
    void readStreamIntoArrays();
 
+   /// Reset all forcing arrays to zero before reading optional fields
+   void resetArrays();
+
    /// Compute all forcing variables
    void computeAll() const;
 
@@ -86,6 +91,8 @@ class Forcing {
 
    const HorzMesh *Mesh;
    Halo *MeshHalo;
+   bool SfcStressFieldsEnabled     = false;
+   bool TracerForcingFieldsEnabled = false;
 
    static Forcing *DefaultForcing;
    static std::map<std::string, std::unique_ptr<Forcing>> AllForcing;

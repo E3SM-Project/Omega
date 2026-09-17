@@ -9,6 +9,12 @@ of the Omega configuration file:
     CalendarType: No Leap
     TimeStepper: Forward-Backward
     TimeStep: 0000_00:10:00
+    ModeSplitShare:
+      BtrTimeStepper: Predictor-Corrector
+      BtrTimeStep: 0000_00:00:20
+      NTimeStepIteration: 2
+      NBclCoriolisIteration: 2
+      ReinitSplitVelocity: false
     StartTime: 0001-01-01_00:00:00
     StopTime: 0001-01-01_02:00:00
     RunDuration: none
@@ -30,6 +36,12 @@ The following time steppers are currently available:
 | Forward-Backward | forward-backward |
 | RungeKutta2 | second-order two-stage midpoint Runge Kutta method |
 | RungeKutta4 | classic fourth-order four-stage Runge Kutta method |
+| SplitExplicitRK2 | mode-split RK2 with a subcycled barotropic mode |
+| UnsplitRK2 | the same RK2 scheme with mode splitting disabled |
+
+`SplitExplicitRK2` and `UnsplitRK2` use the `ModeSplitShare` configuration
+subgroup shown above. See [Split time stepping](#omega-user-split-time-stepping)
+for descriptions of these schemes and their configuration options.
 
 The time step refers to the main model time step used to advance the solution
 forward. The time step is specified as a formatted string and can be provided
@@ -59,3 +71,9 @@ The format for RunDuration is the same as the TimeStep.
 Only one of the StopTime or RunDuration should be specified with the other
 set to either an empty string or "none". If both are specified, the
 RunDuration is used instead of the StopTime.
+
+```{toctree}
+:hidden:
+
+SplitTimeStepping
+```

@@ -43,7 +43,7 @@ repos:
       - id: mypy
         args: ["--config=components/omega/mypy.cfg", "--show-error-codes"]
         verbose: true
-        additional_dependencies: ['types-requests']
+        additional_dependencies: ['types-requests', 'types-PyYAML']
         exclude: ^components/omega/cime_config/build.*
 
   # Can run individually with `pre-commit run fortitude --all-files`

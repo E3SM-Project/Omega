@@ -19,35 +19,42 @@ class KineticAuxVars {
                   const VertCoord *VCoord);
 
    KOKKOS_FUNCTION void
-   computeVarsOnCell(int ICell, int KChunk,
+   computeVarsOnCell(const TeamMember &Team, int ICell,
                      const Array2DReal &NormalVelEdge) const {
-
-      const int KStart = chunkStart(KChunk, MinLayerCell(ICell));
-      const int KLen   = chunkLength(KChunk, KStart, MaxLayerCell(ICell));
 
       const Real InvAreaCell = 1._Real / AreaCell(ICell);
 
-      Real KineticEnergyCellTmp[VecLength] = {0};
-      Real VelocityDivCellTmp[VecLength]   = {0};
+      ScratchArray1DReal KineticEnergyCellTmp(teamScratch(Team), NVertLayers);
+      ScratchArray1DReal VelocityDivCellTmp(teamScratch(Team), NVertLayers);
+
+      parallelForInner(
+          Team, NVertLayers, INNER_LAMBDA(int K) {
+             KineticEnergyCellTmp(K) = 0;
+             VelocityDivCellTmp(K)   = 0;
+          });
+
+      const int KMin = MinLayerCell(ICell);
+      const int KMax = MaxLayerCell(ICell);
 
       for (int J = 0; J < NEdgesOnCell(ICell); ++J) {
          const int JEdge     = EdgesOnCell(ICell, J);
          const Real AreaEdge = 0.5_Real * DvEdge(JEdge) * DcEdge(JEdge);
-         for (int KVec = 0; KVec < KLen; ++KVec) {
-            const int K = KStart + KVec;
-            KineticEnergyCellTmp[KVec] += AreaEdge * 0.5_Real * InvAreaCell *
-                                          NormalVelEdge(JEdge, K) *
-                                          NormalVelEdge(JEdge, K);
-            VelocityDivCellTmp[KVec] -= DvEdge(JEdge) * InvAreaCell *
-                                        EdgeSignOnCell(ICell, J) *
-                                        NormalVelEdge(JEdge, K);
-         }
+         parallelForInner(
+             Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+                KineticEnergyCellTmp(K) += AreaEdge * 0.5_Real * InvAreaCell *
+                                           NormalVelEdge(JEdge, K) *
+                                           NormalVelEdge(JEdge, K);
+                VelocityDivCellTmp(K) -= DvEdge(JEdge) * InvAreaCell *
+                                         EdgeSignOnCell(ICell, J) *
+                                         NormalVelEdge(JEdge, K);
+             });
       }
-      for (int KVec = 0; KVec < KLen; ++KVec) {
-         const int K                 = KStart + KVec;
-         KineticEnergyCell(ICell, K) = KineticEnergyCellTmp[KVec];
-         VelocityDivCell(ICell, K)   = VelocityDivCellTmp[KVec];
-      }
+
+      parallelForInner(
+          Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+             KineticEnergyCell(ICell, K) = KineticEnergyCellTmp(K);
+             VelocityDivCell(ICell, K)   = VelocityDivCellTmp(K);
+          });
    }
 
    void registerFields(const std::string &AuxGroupName,
@@ -61,6 +68,7 @@ class KineticAuxVars {
    Array1DReal DcEdge;
    Array1DReal DvEdge;
    Array1DReal AreaCell;
+   I4 NVertLayers;
    Array1DI4 MinLayerCell;
    Array1DI4 MaxLayerCell;
 };

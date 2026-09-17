@@ -276,6 +276,17 @@ add_omega_test(
     "-n;8"
 )
 
+##############################
+# Driver-owned IO params test
+##############################
+
+add_omega_test(
+    IO_INIT_PARAMS_TEST
+    testIOInitParams.exe
+    base/IOInitParamsTest.cpp
+    "-n;8"
+)
+
 ##################
 # Config test
 ##################

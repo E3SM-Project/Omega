@@ -280,6 +280,7 @@ int main(int argc, char **argv) {
    }
 
    // Finalize environments
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
 
    return RetVal;

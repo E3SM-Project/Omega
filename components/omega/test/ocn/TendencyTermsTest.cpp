@@ -65,6 +65,10 @@ struct TestSetupPlane {
    ErrorMeasures ExpectedSfcStressForcingErrors = {0, 0};
    ErrorMeasures ExpectedBottomDragErrors       = {0.033848740052302935,
                                                    0.01000133508329411};
+   ErrorMeasures ExpectedCoriolis2DErrors       = {0.01322503349256595,
+                                                   0.011816356596905431};
+   ErrorMeasures ExpectedCoriolis1DErrors       = {0.012883757868753419,
+                                                   0.011805932389752003};
 
    KOKKOS_FUNCTION Real vectorX(Real X, Real Y) const {
       return std::sin(TwoPi * X / Lx) * std::cos(TwoPi * Y / Ly);
@@ -139,8 +143,8 @@ struct TestSetupPlane {
       return 2. + std::cos(TwoPi * X / Lx) * std::cos(TwoPi * Y / Ly);
    }
 
-   KOKKOS_FUNCTION Real tracerDiff(Real X, Real Y) const {
-      return -TwoPi * TwoPi * std::sin(TwoPi * Y / Ly) *
+   KOKKOS_FUNCTION Real tracerDiff(Real X, Real Y, Real EddyDiff2) const {
+      return -EddyDiff2 * TwoPi * TwoPi * std::sin(TwoPi * Y / Ly) *
              (2 * (1 / Lx / Lx + 1 / Ly / Ly) * std::cos(TwoPi * X / Lx) +
               (1 / Ly / Ly +
                (1 / Lx / Lx + 1 / Ly / Ly) * std::cos(2 * TwoPi * X / Lx)) *
@@ -152,8 +156,8 @@ struct TestSetupPlane {
              std::pow(std::sin(TwoPi * Y / Ly), 2);
    }
 
-   KOKKOS_FUNCTION Real tracerHyperDiff(Real X, Real Y) const {
-      return -2 * TwoPi * TwoPi *
+   KOKKOS_FUNCTION Real tracerHyperDiff(Real X, Real Y, Real EddyDiff4) const {
+      return -EddyDiff4 * 2 * TwoPi * TwoPi *
              (std::cos(2 * TwoPi * X / Lx) / Lx / Lx +
               std::cos(2 * TwoPi * Y / Ly) / Ly / Ly);
    }
@@ -205,6 +209,10 @@ struct TestSetupSphere {
    ErrorMeasures ExpectedSfcStressForcingErrors = {0, 0};
    ErrorMeasures ExpectedBottomDragErrors       = {0.0015333449035655053,
                                                    0.0014897009917655022};
+   ErrorMeasures ExpectedCoriolis2DErrors       = {0.017830942909137566,
+                                                   0.00958613271059214};
+   ErrorMeasures ExpectedCoriolis1DErrors       = {0.01756710962800044,
+                                                   0.011526527317437694};
 
    KOKKOS_FUNCTION Real vectorX(Real Lon, Real Lat) const {
       return -Radius * std::pow(std::sin(Lon), 2) * std::pow(std::cos(Lat), 3);
@@ -282,8 +290,9 @@ struct TestSetupSphere {
       return 2. + std::cos(Lon) * std::sin(Lat);
    }
 
-   KOKKOS_FUNCTION Real tracerDiff(Real Lon, Real Lat) const {
-      return (4 * std::pow(std::cos(Lon), 2) -
+   KOKKOS_FUNCTION Real tracerDiff(Real Lon, Real Lat, Real EddyDiff2) const {
+      return EddyDiff2 *
+             (4 * std::pow(std::cos(Lon), 2) -
               2 * (1. + 3 * std::cos(2 * Lat)) * std::pow(std::sin(Lon), 2) +
               2 * std::pow(std::cos(Lon), 3) * std::sin(Lat) -
               8 * std::cos(Lon) * std::pow(std::cos(Lat), 2) *
@@ -296,8 +305,10 @@ struct TestSetupSphere {
              std::cos(Lon);
    }
 
-   KOKKOS_FUNCTION Real tracerHyperDiff(Real Lon, Real Lat) const {
-      return std::sqrt(3. / 2. / Pi) * std::cos(Lat) * std::cos(Lon) / Radius;
+   KOKKOS_FUNCTION Real tracerHyperDiff(Real Lon, Real Lat,
+                                        Real EddyDiff4) const {
+      return EddyDiff4 * std::sqrt(3. / 2. / Pi) * std::cos(Lat) *
+             std::cos(Lon) / Radius;
    }
 
    KOKKOS_FUNCTION Real sfcStressForcingX(Real Lon, Real Lat) const {
@@ -418,9 +429,10 @@ int testThickFluxDiv(int NVertLayers, Real RTol) {
    Array2DReal NumThickFluxDiv("NumThickFluxDiv", Mesh->NCellsOwned,
                                NVertLayers);
    PseudoThicknessFluxDivOnCell ThickFluxDivOnC(Mesh, VCoord);
-   parallelFor(
-       {Mesh->NCellsOwned, NVertLayers}, KOKKOS_LAMBDA(int ICell, int KLayer) {
-          ThickFluxDivOnC(NumThickFluxDiv, ICell, KLayer, OnesEdge,
+   parallelForOuter(
+       LaunchConfig({Mesh->NCellsOwned}, TeamScratch<Real>(NVertLayers)),
+       KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
+          ThickFluxDivOnC(Team, NumThickFluxDiv, ICell, OnesEdge,
                           ThickFluxEdge);
        });
 
@@ -496,9 +508,10 @@ int testPotVortHAdv(int NVertLayers, Real RTol) {
    Array2DReal NumPotVortHAdv("NumPotVortHAdv", Mesh->NEdgesOwned, NVertLayers);
 
    PotentialVortHAdvOnEdge PotVortHAdvOnE(Mesh, VCoord);
-   parallelFor(
-       {Mesh->NEdgesOwned, NVertLayers}, KOKKOS_LAMBDA(int IEdge, int KLayer) {
-          PotVortHAdvOnE(NumPotVortHAdv, IEdge, KLayer, NormRelVortEdge,
+   parallelForOuter(
+       LaunchConfig({Mesh->NEdgesOwned}, TeamScratch<Real>(NVertLayers)),
+       KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+          PotVortHAdvOnE(Team, NumPotVortHAdv, IEdge, NormRelVortEdge,
                          NormPlanetVortEdge, PseudoThickEdge, NormVelEdge);
        });
 
@@ -517,6 +530,104 @@ int testPotVortHAdv(int NVertLayers, Real RTol) {
 
    return Err;
 } // end testPotVortHAdv
+
+int testCoriolisAccelerationOnEdge(int NVertLayers, Real RTol) {
+
+   int Err = 0;
+   TestSetup Setup;
+
+   const auto Mesh   = HorzMesh::getDefault();
+   const auto VCoord = VertCoord::getDefault();
+
+   // Set input arrays
+
+   Array2DReal NormalVelEdge("NormalVelEdge", Mesh->NEdgesSize, NVertLayers);
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+          VecField[0] = Setup.vectorX(X, Y);
+          VecField[1] = Setup.vectorY(X, Y);
+       },
+       NormalVelEdge, EdgeComponent::Normal, Geom, Mesh);
+
+   Array1DReal NormalBarotropicVelEdge("NormalBarotropicVelEdge",
+                                       Mesh->NEdgesSize);
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+          VecField[0] = Setup.vectorY(X, Y);
+          VecField[1] = Setup.vectorX(X, Y);
+       },
+       NormalBarotropicVelEdge, EdgeComponent::Normal, Geom, Mesh);
+
+   Array1DReal FEdge("FEdge", Mesh->NEdgesSize);
+   Err += setScalar(
+       KOKKOS_LAMBDA(Real X, Real Y) { return Setup.planetaryVort(X, Y); },
+       FEdge, Geom, Mesh, OnEdge);
+
+   // Compute exact results
+
+   Array2DReal ExactCoriolis2D("ExactCoriolis2D", Mesh->NEdgesOwned,
+                               NVertLayers);
+   Array1DReal ExactCoriolis1D("ExactCoriolis1D", Mesh->NEdgesOwned);
+
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+          const Real PVort = Setup.planetaryVort(X, Y);
+          VecField[0]      = PVort * Setup.vectorX(X, Y);
+          VecField[1]      = PVort * Setup.vectorY(X, Y);
+       },
+       ExactCoriolis2D, EdgeComponent::Tangential, Geom, Mesh,
+       ExchangeHalos::No);
+
+   Err += setVectorEdge(
+       KOKKOS_LAMBDA(Real(&VecField)[2], Real X, Real Y) {
+          const Real PVort = Setup.planetaryVort(X, Y);
+          VecField[0]      = PVort * Setup.vectorY(X, Y);
+          VecField[1]      = PVort * Setup.vectorX(X, Y);
+       },
+       ExactCoriolis1D, EdgeComponent::Tangential, Geom, Mesh,
+       ExchangeHalos::No);
+
+   // Compute numerical results
+
+   Array2DReal NumCoriolis2D("NumCoriolis2D", Mesh->NEdgesOwned, NVertLayers);
+   Array1DReal NumCoriolis1D("NumCoriolis1D", Mesh->NEdgesOwned);
+
+   CoriolisAccelerationOnEdge CoriolisAccelOnE(Mesh, VCoord);
+
+   parallelForOuter(
+       LaunchConfig({Mesh->NEdgesOwned},
+                    TeamScratch<Real>(VCoord->NVertLayers)),
+       KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+          CoriolisAccelOnE(Team, NumCoriolis2D, NumCoriolis2D, IEdge,
+                           NormalVelEdge, FEdge);
+       });
+
+   parallelFor(
+       {Mesh->NEdgesOwned}, KOKKOS_LAMBDA(int IEdge) {
+          CoriolisAccelOnE(NumCoriolis1D, IEdge, NormalBarotropicVelEdge,
+                           FEdge);
+       });
+
+   // Compute errors and check error values
+
+   ErrorMeasures Coriolis2DErrors;
+   Err += computeErrors(Coriolis2DErrors, NumCoriolis2D, ExactCoriolis2D, Mesh,
+                        OnEdge);
+   Err += checkErrors("TendencyTermsTest", "CoriolisAcceleration2D",
+                      Coriolis2DErrors, Setup.ExpectedCoriolis2DErrors, RTol);
+
+   ErrorMeasures Coriolis1DErrors;
+   Err += computeErrors(Coriolis1DErrors, NumCoriolis1D, ExactCoriolis1D, Mesh,
+                        OnEdge);
+   Err += checkErrors("TendencyTermsTest", "CoriolisAcceleration1D",
+                      Coriolis1DErrors, Setup.ExpectedCoriolis1DErrors, RTol);
+
+   if (Err == 0) {
+      LOG_INFO("TendencyTermsTest: CoriolisAccelerationOnEdge PASS");
+   }
+
+   return Err;
+} // end testCoriolisAccelerationOnEdge
 
 int testKEGrad(int NVertLayers, Real RTol) {
 
@@ -547,9 +658,9 @@ int testKEGrad(int NVertLayers, Real RTol) {
    Array2DReal NumKEGrad("NumKEGrad", Mesh->NEdgesOwned, NVertLayers);
 
    KEGradOnEdge KEGradOnE(Mesh, VCoord);
-   parallelFor(
-       {Mesh->NEdgesOwned, NVertLayers}, KOKKOS_LAMBDA(int IEdge, int KLayer) {
-          KEGradOnE(NumKEGrad, IEdge, KLayer, KECell);
+   parallelForOuter(
+       {Mesh->NEdgesOwned}, KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+          KEGradOnE(Team, NumKEGrad, IEdge, KECell);
        });
 
    // Compute errors
@@ -595,9 +706,9 @@ int testSSHGrad(int NVertLayers, Real RTol) {
    Array2DReal NumSSHGrad("NumSSHGrad", Mesh->NEdgesOwned, NVertLayers);
 
    SSHGradOnEdge SSHGradOnE(Mesh, VCoord);
-   parallelFor(
-       {Mesh->NEdgesOwned, NVertLayers}, KOKKOS_LAMBDA(int IEdge, int KLayer) {
-          SSHGradOnE(NumSSHGrad, IEdge, KLayer, SSHCell);
+   parallelForOuter(
+       {Mesh->NEdgesOwned}, KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+          SSHGradOnE(Team, NumSSHGrad, IEdge, SSHCell);
        });
 
    // Compute errors
@@ -657,9 +768,9 @@ int testVelDiff(int NVertLayers, Real RTol) {
    // Compute numerical result
    Array2DReal NumVelDiff("NumVelDiff", Mesh->NEdgesOwned, NVertLayers);
 
-   parallelFor(
-       {Mesh->NEdgesOwned, NVertLayers}, KOKKOS_LAMBDA(int IEdge, int KLayer) {
-          VelDiffOnE(NumVelDiff, IEdge, KLayer, DivCell, RVortVertex);
+   parallelForOuter(
+       {Mesh->NEdgesOwned}, KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+          VelDiffOnE(Team, NumVelDiff, IEdge, DivCell, RVortVertex);
        });
 
    // Compute errors
@@ -728,9 +839,9 @@ int testVelHyperDiff(int NVertLayers, Real RTol) {
    Array2DReal NumVelHyperDiff("NumVelHyperDiff", Mesh->NEdgesOwned,
                                NVertLayers);
 
-   parallelFor(
-       {Mesh->NEdgesOwned, NVertLayers}, KOKKOS_LAMBDA(int IEdge, int KLayer) {
-          VelHyperDiffOnE(NumVelHyperDiff, IEdge, KLayer, DivCell, RVortVertex);
+   parallelForOuter(
+       {Mesh->NEdgesOwned}, KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+          VelHyperDiffOnE(Team, NumVelHyperDiff, IEdge, DivCell, RVortVertex);
        });
 
    // Compute errors
@@ -798,9 +909,9 @@ int testSfcStressForcing(int NVertLayers) {
 
    SfcStressForcingOnEdge SfcStressForcingOnE(Mesh, VCoord);
 
-   parallelFor(
-       {Mesh->NEdgesOwned, NVertLayers}, KOKKOS_LAMBDA(int IEdge, int KLayer) {
-          SfcStressForcingOnE(NumSfcStressForcing, IEdge, KLayer,
+   parallelForOuter(
+       {Mesh->NEdgesOwned}, KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+          SfcStressForcingOnE(Team, NumSfcStressForcing, IEdge,
                               NormalStressEdge, PseudoThickEdge);
        });
 
@@ -1115,16 +1226,18 @@ int testTracerHorzAdvOnCell(int NVertLayers, int NTracers, Real RTol) {
    TrHorzAdvOnC.ForceLowOrder = true;
    TrHorzAdvOnC.init();
 
-   parallelFor(
-       {NTracers, Mesh->NEdgesAll, NVertLayers},
-       KOKKOS_LAMBDA(int L, int IEdge, int KLayer) {
-          TrHorzAdvOnC(L, IEdge, KLayer, TrCell, ThickEdge, NormalVelocity);
+   parallelForOuter(
+       LaunchConfig({NTracers, Mesh->NEdgesAll},
+                    TeamScratch<Real>(NVertLayers)),
+       KOKKOS_LAMBDA(int L, int IEdge, const TeamMember &Team) {
+          TrHorzAdvOnC(Team, L, IEdge, TrCell, ThickEdge, NormalVelocity);
        });
 
-   parallelFor(
-       {NTracers, Mesh->NCellsOwned, NVertLayers},
-       KOKKOS_LAMBDA(int L, int ICell, int KLayer) {
-          TrHorzAdvOnC(NumTrFluxDiv, L, ICell, KLayer);
+   parallelForOuter(
+       LaunchConfig({NTracers, Mesh->NCellsOwned},
+                    TeamScratch<Real>(NVertLayers)),
+       KOKKOS_LAMBDA(int L, int ICell, const TeamMember &Team) {
+          TrHorzAdvOnC(Team, NumTrFluxDiv, L, ICell);
        });
 
    ErrorMeasures TrHAdvErrors;
@@ -1149,12 +1262,16 @@ int testTracerDiffOnCell(int NVertLayers, int NTracers, Real RTol) {
    const auto Mesh   = HorzMesh::getDefault();
    const auto VCoord = VertCoord::getDefault();
 
+   const Real EddyDiff2 = 0.84_Real;
+
    // Compute exact result
    Array3DReal ExactTracerDiff("ExactTracerDiff", NTracers, Mesh->NCellsOwned,
                                NVertLayers);
 
    Err += setScalar(
-       KOKKOS_LAMBDA(Real X, Real Y) { return Setup.tracerDiff(X, Y); },
+       KOKKOS_LAMBDA(Real X, Real Y) {
+          return Setup.tracerDiff(X, Y, EddyDiff2);
+       },
        ExactTracerDiff, Geom, Mesh, OnCell, ExchangeHalos::No);
 
    // Set input arrays
@@ -1176,13 +1293,13 @@ int testTracerDiffOnCell(int NVertLayers, int NTracers, Real RTol) {
    Array3DReal NumTracerDiff("NumTracerDiff", NTracers, Mesh->NCellsOwned,
                              NVertLayers);
    TracerDiffOnCell TrDiffOnC(Mesh, VCoord);
-   TrDiffOnC.EddyDiff2 = 1._Real;
+   TrDiffOnC.EddyDiff2 = EddyDiff2;
 
-   parallelFor(
-       {NTracers, Mesh->NCellsOwned, NVertLayers},
-       KOKKOS_LAMBDA(int L, int ICell, int KLayer) {
-          TrDiffOnC(NumTracerDiff, L, ICell, KLayer, TracerCell,
-                    PseudoThickEdge);
+   parallelForOuter(
+       LaunchConfig({NTracers, Mesh->NCellsOwned},
+                    TeamScratch<Real>(NVertLayers)),
+       KOKKOS_LAMBDA(int L, int ICell, const TeamMember &Team) {
+          TrDiffOnC(Team, NumTracerDiff, L, ICell, TracerCell, PseudoThickEdge);
        });
 
    ErrorMeasures TrDiffErrors;
@@ -1207,12 +1324,16 @@ int testTracerHyperDiffOnCell(int NVertLayers, int NTracers, Real RTol) {
    const auto Mesh   = HorzMesh::getDefault();
    const auto VCoord = VertCoord::getDefault();
 
+   const Real EddyDiff4 = 1.23_Real;
+
    // Compute exact result
    Array3DReal ExactTracerHyperDiff("ExactTracerHyperDiff", NTracers,
                                     Mesh->NCellsOwned, NVertLayers);
 
    Err += setScalar(
-       KOKKOS_LAMBDA(Real X, Real Y) { return -Setup.tracerHyperDiff(X, Y); },
+       KOKKOS_LAMBDA(Real X, Real Y) {
+          return -Setup.tracerHyperDiff(X, Y, EddyDiff4);
+       },
        ExactTracerHyperDiff, Geom, Mesh, OnCell, ExchangeHalos::No);
 
    // Set input arrays
@@ -1227,11 +1348,12 @@ int testTracerHyperDiffOnCell(int NVertLayers, int NTracers, Real RTol) {
    Array3DReal NumTracerHyperDiff("NumTracerHyperDiff", NTracers,
                                   Mesh->NCellsOwned, NVertLayers);
    TracerHyperDiffOnCell TrHypDiffOnC(Mesh, VCoord);
-   TrHypDiffOnC.EddyDiff4 = 1._Real;
-   parallelFor(
-       {NTracers, Mesh->NCellsOwned, NVertLayers},
-       KOKKOS_LAMBDA(int L, int ICell, int KLayer) {
-          TrHypDiffOnC(NumTracerHyperDiff, L, ICell, KLayer, TrDel2Cell);
+   TrHypDiffOnC.EddyDiff4 = EddyDiff4;
+   parallelForOuter(
+       LaunchConfig({NTracers, Mesh->NCellsOwned},
+                    TeamScratch<Real>(NVertLayers)),
+       KOKKOS_LAMBDA(int L, int ICell, const TeamMember &Team) {
+          TrHypDiffOnC(Team, NumTracerHyperDiff, L, ICell, TrDel2Cell);
        });
 
    ErrorMeasures TrHyperDiffErrors;
@@ -1430,6 +1552,8 @@ int tendencyTermsTest(const std::string &MeshFile = DefaultMeshFile) {
 
    Err += testPotVortHAdv(NVertLayers, RTol);
 
+   Err += testCoriolisAccelerationOnEdge(NVertLayers, RTol);
+
    Err += testKEGrad(NVertLayers, RTol);
 
    Err += testSSHGrad(NVertLayers, RTol);
@@ -1477,6 +1601,7 @@ int main(int argc, char *argv[]) {
 
    Pacer::finalize();
    Kokkos::finalize();
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
 
    return RetErr;

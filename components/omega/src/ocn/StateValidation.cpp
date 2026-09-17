@@ -271,9 +271,9 @@ std::pair<I4, I4> checkOceanState(const OceanState *State,
 void validateOceanState(const OceanState *State, const AuxiliaryState *AuxState,
                         const VertCoord *VCoord, I4 TimeLevel) {
 
-   auto [NaNs, OOBs]      = checkOceanState(State, AuxState, VCoord, TimeLevel);
-   const auto AbortConfig = getValidationAbortConfig();
-   bool abort             = false;
+   auto [NaNs, OOBs] = checkOceanState(State, AuxState, VCoord, TimeLevel);
+   static const auto AbortConfig = getValidationAbortConfig();
+   bool abort                    = false;
 
    if (NaNs > 0 && AbortConfig.AbortOnNan) {
       abort = true;

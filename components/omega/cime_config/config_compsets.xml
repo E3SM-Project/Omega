@@ -16,8 +16,8 @@
   </compset>
 
   <compset>
-    <alias>COMEGA-JRA1p4</alias>
-    <lname>2000_DATM%JRA-1p4-2018_SLND_DICE%SSMI_OMEGA%DATMFORCED_DROF%JRA-1p4-2018_SGLC_SWAV</lname>
+    <alias>COMEGA-JRA1p5</alias>
+    <lname>2000_DATM%JRA-1p5_SLND_DICE%SSMI_OMEGA%DATMFORCED_DROF%JRA-1p5_SGLC_SWAV</lname>
     <support_level>Experimental, under development</support_level>
   </compset>
 

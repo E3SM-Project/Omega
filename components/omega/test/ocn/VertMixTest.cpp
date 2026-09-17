@@ -14,6 +14,7 @@
 #include "Decomp.h"
 #include "Dimension.h"
 #include "Field.h"
+#include "FillValues.h"
 #include "HorzMesh.h"
 #include "IO.h"
 #include "IOStream.h"
@@ -142,21 +143,12 @@ void testGradRichNum() {
    /// Use deep copy to initialize results
    deepCopy(NormalVelEdge, NV);
    deepCopy(TangVelEdge, TV);
-   deepCopy(BruntVaisalaFreqSqCell, BVFP);
    deepCopy(TestVertMix->GradRichNum, 0.0);
-
-   parallelFor(
-       "populateArrays", {Mesh->NCellsAll, NVertLayers},
-       KOKKOS_LAMBDA(I4 ICell, I4 K) {
-          GeomZMid(ICell, K)  = -K;
-          NEdgesOnCell(ICell) = 5;
-          AreaCell(ICell)     = 3.6e10_Real;
-       });
 
    // Also test guard is working for skipping layer edge contribution
    // if it would access invalid edge velocity levels
    parallelFor(
-       "setMinMax", {Mesh->NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
+       "setMinMax", {Mesh->NCellsOwned}, KOKKOS_LAMBDA(I4 ICell) {
           MinLayerCell(ICell) = 0;
           if (ICell % 2 == 0) {
              MaxLayerCell(ICell) = 10;
@@ -165,37 +157,62 @@ void testGradRichNum() {
           }
        });
 
+   // Need to exchange halo after changing MaxLayerCell
+   MeshHalo->exchangeFullArrayHalo(MaxLayerCell, OnCell);
+
    // Refresh edge layer ranges after overriding MaxLayerCell.
    VCoord->minMaxLayerEdge(MeshHalo);
+
+   parallelForOuter(
+       "populateArrays", {Mesh->NCellsAll},
+       KOKKOS_LAMBDA(I4 ICell, const TeamMember &Team) {
+          AreaCell(ICell) = 3.6e10_Real;
+
+          // Set inactive layers to fill value to cause failure if used
+          parallelForInner(
+              Team, NVertLayers, INNER_LAMBDA(I4 K) {
+                 if (K > MaxLayerCell(ICell)) {
+                    GeomZMid(ICell, K) = FillValueReal;
+                 } else {
+                    GeomZMid(ICell, K) = -K;
+                 }
+              });
+
+          // Set inactive layers to fill value to cause failure if used
+          parallelForInner(
+              Team, NVertLayersP1, INNER_LAMBDA(I4 K) {
+                 if (K > MaxLayerCell(ICell) + 1) {
+                    BruntVaisalaFreqSqCell(ICell, K) = FillValueReal;
+                 } else {
+                    BruntVaisalaFreqSqCell(ICell, K) = BVFP;
+                 }
+              });
+       });
 
    // Rebind GradRichardsonNum so the functor captures refreshed edge ranges.
    TestVertMix->ComputeGradRichardsonNum = GradRichardsonNum(Mesh, VCoord);
 
    // Recapture after minMaxLayerEdge since it reallocates edge layer views.
    OMEGA_SCOPE(MaxLayerEdgeBot, VCoord->MaxLayerEdgeBot);
-
-   // filling CellsOnCell with simple mapping for this test
-   parallelFor(
-       "populateArrays", {Mesh->NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
-          CellsOnCell(ICell, 0) = ICell;
-          CellsOnCell(ICell, 1) = ICell;
-          CellsOnCell(ICell, 2) = ICell;
-          CellsOnCell(ICell, 3) = ICell;
-          CellsOnCell(ICell, 4) = ICell;
-       });
+   OMEGA_SCOPE(MaxLayerEdgeTop, VCoord->MaxLayerEdgeTop);
 
    parallelFor(
        "populateArrays", {NEdgesAll, NVertLayers},
        KOKKOS_LAMBDA(I4 IEdge, I4 K) {
           if (K > MaxLayerEdgeBot(IEdge)) {
              NormalVelEdge(IEdge, K) =
-                 -9.99e30; // Fill value to cause failure if used
-             TangVelEdge(IEdge, K) =
-                 -9.99e30; // Fill value to cause failure if used
+                 FillValueReal; // Fill value to cause failure if used
           } else {
              NormalVelEdge(IEdge, K) = NormalVelEdge(IEdge, K) + 0.5 * K;
-             TangVelEdge(IEdge, K)   = TangVelEdge(IEdge, K) + 0.5 * K;
           }
+
+          if (K > MaxLayerEdgeTop(IEdge)) {
+             TangVelEdge(IEdge, K) =
+                 FillValueReal; // Fill value to cause failure if used
+          } else {
+             TangVelEdge(IEdge, K) = TangVelEdge(IEdge, K) + 0.5 * K;
+          }
+
           DcEdge(IEdge) = 2.0e5_Real;
           DvEdge(IEdge) = 1.45e5_Real;
        });
@@ -233,8 +250,8 @@ void testGradRichNum() {
                  bool HasValidEdge = false;
                  for (int J = 0; J < NEdgesOnCell(ICell); ++J) {
                     const I4 JEdge = EdgesOnCell(ICell, J);
-                    if (K1 <= MaxLayerEdgeBot(JEdge) &&
-                        K2 <= MaxLayerEdgeBot(JEdge)) {
+                    if (K1 <= MaxLayerEdgeTop(JEdge) &&
+                        K2 <= MaxLayerEdgeTop(JEdge)) {
                        HasValidEdge = true;
                        break;
                     }
@@ -264,6 +281,15 @@ void testGradRichNum() {
    } else {
       LOG_INFO("TestVertMix: GradRichNum PASS");
    }
+
+   // Reset MaxLayerCell to the original values
+   parallelFor(
+       "resetMinMax", {Mesh->NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
+          MinLayerCell(ICell) = 0;
+          MaxLayerCell(ICell) = NVertLayers - 1;
+       });
+   // Refresh edge layer ranges after overriding MaxLayerCell.
+   VCoord->minMaxLayerEdge(MeshHalo);
 
    return;
 }
@@ -300,12 +326,6 @@ void testOneTwoOneFilter() {
           } else {
              GradRichNum(ICell, K) = -1.0;
           }
-       });
-
-   parallelFor(
-       "setMinMax", {Mesh->NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
-          MinLayerCell(ICell) = 0;
-          MaxLayerCell(ICell) = NVertLayers - 1;
        });
 
    // Apply the 1-2-1 filter to each cell
@@ -803,20 +823,8 @@ void testTotalVertMix() {
    parallelFor(
        "populateArrays", {Mesh->NCellsAll, NVertLayers},
        KOKKOS_LAMBDA(I4 ICell, I4 K) {
-          GeomZMid(ICell, K)  = -K;
-          NEdgesOnCell(ICell) = 5;
-          AreaCell(ICell)     = 3.6e10_Real;
-       });
-
-   // current mesh has some CellsOnCell value > NCellsAll, so
-   // filling CellsOnCell with simple mapping for this test
-   parallelFor(
-       "populateArrays", {Mesh->NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
-          CellsOnCell(ICell, 0) = ICell;
-          CellsOnCell(ICell, 1) = ICell;
-          CellsOnCell(ICell, 2) = ICell;
-          CellsOnCell(ICell, 3) = ICell;
-          CellsOnCell(ICell, 4) = ICell;
+          GeomZMid(ICell, K) = -K;
+          AreaCell(ICell)    = 3.6e10_Real;
        });
 
    parallelFor(
@@ -1085,6 +1093,7 @@ int main(int argc, char *argv[]) {
 
    LOG_INFO("------ Vertical Mixing Unit Tests Successful ------");
    Kokkos::finalize();
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
 
    // if we made it here, it is successful

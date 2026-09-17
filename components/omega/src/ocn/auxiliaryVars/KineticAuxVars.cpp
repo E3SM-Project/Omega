@@ -15,7 +15,8 @@ KineticAuxVars::KineticAuxVars(const std::string &AuxStateSuffix,
       NEdgesOnCell(Mesh->NEdgesOnCell), EdgesOnCell(Mesh->EdgesOnCell),
       EdgeSignOnCell(Mesh->EdgeSignOnCell), DcEdge(Mesh->DcEdge),
       DvEdge(Mesh->DvEdge), AreaCell(Mesh->AreaCell),
-      MinLayerCell(VCoord->MinLayerCell), MaxLayerCell(VCoord->MaxLayerCell) {}
+      NVertLayers(VCoord->NVertLayers), MinLayerCell(VCoord->MinLayerCell),
+      MaxLayerCell(VCoord->MaxLayerCell) {}
 
 void KineticAuxVars::registerFields(
     const std::string &AuxGroupName, // name of Auxiliary field group

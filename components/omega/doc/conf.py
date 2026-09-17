@@ -36,7 +36,6 @@ language = "en"
 extensions = [
     "myst_parser",
     "sphinx_rtd_theme",
-    "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
 ]
@@ -55,16 +54,6 @@ exclude_patterns = [
     "README.md",
     "**/README.md",
 ]
-
-intersphinx_mapping = {
-    "matplotlib": ("http://matplotlib.org/stable", None),
-    "numpy": ("https://numpy.org/doc/stable", None),
-    "polaris": ("https://e3sm-project.github.io/polaris/main", None),
-    "python": ("https://docs.python.org", None),
-    "scipy": ("http://docs.scipy.org/doc/scipy/reference", None),
-    "sphinx": ("https://www.sphinx-doc.org/en/master", None),
-    "xarray": ("http://xarray.pydata.org/en/stable", None),
-}
 
 # -- MyST settings ---------------------------------------------------
 

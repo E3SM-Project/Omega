@@ -13,6 +13,7 @@
 #include "VertMix.h"
 #include "DataTypes.h"
 #include "Eos.h"
+#include "Error.h"
 #include "GlobalConstants.h"
 #include "HorzMesh.h"
 #include "HorzOperators.h"
@@ -100,9 +101,13 @@ void VertMix::destroyInstance() {
 /// missing.
 void VertMix::init() {
 
+   HorzMesh *DefMesh = HorzMesh::getDefault();
+   OMEGA_REQUIRE(DefMesh, "Null default HorzMesh pointer in VertMix::init");
+   VertCoord *DefVCoord = VertCoord::getDefault();
+   OMEGA_REQUIRE(DefVCoord, "Null default VertCoord pointer in VertMix::init");
+
    if (!Instance) {
-      Instance = new VertMix("Default", HorzMesh::getDefault(),
-                             VertCoord::getDefault());
+      Instance = new VertMix("Default", DefMesh, DefVCoord);
    }
 
    Error Err; // error code
@@ -112,6 +117,7 @@ void VertMix::init() {
 
    /// Get VertMixConfig group from Omega config
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in VertMix::init");
    Config VertMixConfig("VertMix");
    Err += OmegaConfig->get(VertMixConfig);
    CHECK_ERROR_ABORT(Err, "VertMix::init: VertMix group not found in Config");
@@ -436,7 +442,10 @@ void VertMix::applyVelVertMixImplicit(
     int VelTimeLevel                ///< [in] Time level
 ) {
 
-   OMEGA_SCOPE(LocNEdgesAll, Mesh->NEdgesAll);
+   // Only owned edges are solved here. Halo edges are refreshed by the
+   // halo exchange that immediately follows the implicit vertical mixing
+   // in the time steppers.
+   OMEGA_SCOPE(LocNEdgesOwned, Mesh->NEdgesOwned);
    OMEGA_SCOPE(LocVelVertMixSetup, VelVertMixSetup);
    OMEGA_SCOPE(MinLayerEdgeBot, VCoord->MinLayerEdgeBot);
    OMEGA_SCOPE(MaxLayerEdgeTop, VCoord->MaxLayerEdgeTop);
@@ -465,13 +474,13 @@ void VertMix::applyVelVertMixImplicit(
       const int NVertLayers  = VCoord->NVertLayers;
       const int LocVecLength = VecLength;
       auto LConfig =
-          TriDiagSolver::makeLaunchConfig(Mesh->NEdgesAll, NVertLayers);
+          TriDiagSolver::makeLaunchConfig(Mesh->NEdgesOwned, NVertLayers);
 
       parallelForOuter(
           LConfig, KOKKOS_LAMBDA(int, const TeamMember &Team) {
              const int IStart = Team.league_rank() * LocVecLength;
              const int ILen   = Kokkos::max(
-                 0, Kokkos::min(LocVecLength, LocNEdgesAll - IStart));
+                 0, Kokkos::min(LocVecLength, LocNEdgesOwned - IStart));
 
              TriDiagDiffScratch Scratch(Team, NVertLayers);
 
@@ -480,7 +489,7 @@ void VertMix::applyVelVertMixImplicit(
                 for (int IVec = 0; IVec < LocVecLength; ++IVec) {
                    const int IEdge = IStart + IVec;
 
-                   if (IEdge >= LocNEdgesAll) {
+                   if (IEdge >= LocNEdgesOwned) {
                       // Fill values
                       Scratch.G(K, IVec) = 0._Real;
                       Scratch.H(K, IVec) = 1._Real;
@@ -542,7 +551,10 @@ void VertMix::applyTracerVertMixImplicit(
     int VelTimeLevel                ///< [in] Time level
 ) {
 
-   OMEGA_SCOPE(LocNCellsAll, Mesh->NCellsAll);
+   // Only owned cells are solved here. Halo cells are refreshed by the
+   // halo exchange that immediately follows the implicit vertical mixing
+   // in the time steppers.
+   OMEGA_SCOPE(LocNCellsOwned, Mesh->NCellsOwned);
    OMEGA_SCOPE(LocTracerVertMixSetup, TracerVertMixSetup);
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
@@ -567,7 +579,7 @@ void VertMix::applyTracerVertMixImplicit(
 
       const int NVertLayers = VCoord->NVertLayers;
       auto LConfig =
-          TriDiagSolver::makeLaunchConfig(Mesh->NCellsAll, NVertLayers);
+          TriDiagSolver::makeLaunchConfig(Mesh->NCellsOwned, NVertLayers);
       const int LocVecLength = VecLength;
 
       for (int L = 0; L < NTracers; ++L) {
@@ -575,7 +587,7 @@ void VertMix::applyTracerVertMixImplicit(
              LConfig, KOKKOS_LAMBDA(int, const TeamMember &Team) {
                 const int IStart = Team.league_rank() * LocVecLength;
                 const int ILen   = Kokkos::max(
-                    0, Kokkos::min(LocVecLength, LocNCellsAll - IStart));
+                    0, Kokkos::min(LocVecLength, LocNCellsOwned - IStart));
 
                 TriDiagDiffScratch Scratch(Team, NVertLayers);
 
@@ -584,7 +596,7 @@ void VertMix::applyTracerVertMixImplicit(
                    for (int IVec = 0; IVec < LocVecLength; ++IVec) {
                       const int ICell = IStart + IVec;
 
-                      if (ICell >= LocNCellsAll) {
+                      if (ICell >= LocNCellsOwned) {
                          // Fill values
                          Scratch.G(K, IVec) = 0._Real;
                          Scratch.H(K, IVec) = 1._Real;
@@ -689,23 +701,17 @@ void VertMix::VertMixImplicit(OceanState *State, AuxiliaryState *AuxState,
 
       Pacer::start("VertMix:computeKineticAuxForBottomDrag", 2);
       parallelForOuter(
-          "computeKineticAuxForBottomDrag", {Mesh->NCellsAll},
+          "computeKineticAuxForBottomDrag",
+          LaunchConfig({Mesh->NCellsAll},
+                       TeamScratch<Real>(2 * VCoord->NVertLayers)),
           KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
-             const int KMin   = MinLayerCell(ICell);
-             const int KMax   = MaxLayerCell(ICell);
-             const int KRange = vertRangeChunked(KMin, KMax);
-
-             parallelForInner(
-                 Team, KRange, INNER_LAMBDA(int KChunk) {
-                    LocKineticAux.computeVarsOnCell(ICell, KChunk,
-                                                    NormalVelEdge);
-                 });
+             LocKineticAux.computeVarsOnCell(Team, ICell, NormalVelEdge);
           });
       Pacer::stop("VertMix:computeKineticAuxForBottomDrag", 2);
    }
 
    // Update Pressure, SpecVol
-   AuxState->computeMomVertAux(State, TracerArray, TimeLevel, TimeLevel);
+   AuxState->computeMomVertAux(State, TracerArray, TimeLevel);
 
    // Compute Brunt-Vaisala frequency squared
    EqState->computeBruntVaisalaFreqSq(

@@ -691,6 +691,9 @@ void initAnalysisSystemTest() {
    // Initialize the default vertical coordinate
    VertCoord::init();
 
+   // Initialize VertAdv
+   VertAdv::init();
+
    // Initialize tracers
    Tracers::init();
 
@@ -711,9 +714,6 @@ void initAnalysisSystemTest() {
 
    // Initialize tendencies
    Tendencies::init();
-
-   // Initialize vertical advection
-   VertAdv::init();
 
    // Second step of time stepper initialization
    TimeStepper::init2();
@@ -822,6 +822,7 @@ int main(int argc, char *argv[]) {
    }
    Pacer::finalize();
    Kokkos::finalize();
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
 
    return ErrCode;

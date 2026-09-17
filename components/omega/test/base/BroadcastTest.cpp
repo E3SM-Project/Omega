@@ -215,6 +215,7 @@ int main(int argc, char *argv[]) {
    LOG_INFO("------ Broadcast Unit Tests Successful ------");
 
    // MPI_Status status;
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
 
    return 0; // if we made it here, return a success code

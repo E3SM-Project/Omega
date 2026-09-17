@@ -359,6 +359,7 @@
       <value component="scream"   >$COMP_ROOT_DIR_ATM/cime_config/testdefs/testmods_dirs</value>
       <value component="eamxx"    >$COMP_ROOT_DIR_ATM/cime_config/testdefs/testmods_dirs</value>
       <value component="mpaso"    >$COMP_ROOT_DIR_OCN/cime_config/testdefs/testmods_dirs</value>
+      <value component="omega"    >$COMP_ROOT_DIR_OCN/cime_config/testdefs/testmods_dirs</value>
       <value component="mpassi"   >$COMP_ROOT_DIR_ICE/cime_config/testdefs/testmods_dirs</value>
       <value component="ww3"      >$COMP_ROOT_DIR_WAV/cime_config/testdefs/testmods_dirs</value>
       <value component="mali"      >$COMP_ROOT_DIR_GLC/cime_config/testdefs/testmods_dirs</value>

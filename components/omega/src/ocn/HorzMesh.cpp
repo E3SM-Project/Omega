@@ -20,6 +20,8 @@
 #include "IOStream.h"
 #include "OmegaKokkos.h"
 
+#include <limits>
+
 namespace OMEGA {
 
 // create the static class members
@@ -33,8 +35,11 @@ std::map<std::string, std::unique_ptr<HorzMesh>> HorzMesh::AllHorzMeshes;
 void HorzMesh::init(const Clock *ModelClock //< [in] Model clock for IO alarms
 ) {
 
+   OMEGA_REQUIRE(ModelClock, "Null ModelClock pointer in HorzMesh::init");
+
    // Retrieve the default decomposition
    Decomp *DefDecomp = Decomp::getDefault();
+   OMEGA_REQUIRE(DefDecomp, "Null default Decomp pointer in HorzMesh::init");
 
    // Create the default mesh and set pointer to it
    HorzMesh::DefaultHorzMesh = create("Default", DefDecomp, ModelClock);
@@ -69,7 +74,7 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
    NEdgesSize     = MeshDecomp->NEdgesSize;
    MaxCellsOnEdge = MeshDecomp->MaxCellsOnEdge;
    MaxEdges       = MeshDecomp->MaxEdges;
-   MaxEdges2      = 2 * MaxEdges;
+   MaxEdges2      = MeshDecomp->MaxEdges2;
    NEdgesGlobal   = MeshDecomp->NEdgesGlobal;
 
    NVerticesHalo  = MeshDecomp->NVerticesHalo;
@@ -83,34 +88,48 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
 
    CellID = MeshDecomp->CellID;
 
-   CellsOnCellH    = MeshDecomp->CellsOnCellH;
-   EdgesOnCellH    = MeshDecomp->EdgesOnCellH;
-   NEdgesOnCellH   = MeshDecomp->NEdgesOnCellH;
-   VerticesOnCellH = MeshDecomp->VerticesOnCellH;
-   CellsOnEdgeH    = MeshDecomp->CellsOnEdgeH;
-   EdgesOnEdgeH    = MeshDecomp->EdgesOnEdgeH;
-   NEdgesOnEdgeH   = MeshDecomp->NEdgesOnEdgeH;
-   VerticesOnEdgeH = MeshDecomp->VerticesOnEdgeH;
-   CellsOnVertexH  = MeshDecomp->CellsOnVertexH;
-   EdgesOnVertexH  = MeshDecomp->EdgesOnVertexH;
+   CellsOnCellH       = MeshDecomp->CellsOnCellH;
+   EdgesOnCellH       = MeshDecomp->EdgesOnCellH;
+   NEdgesOnCellH      = MeshDecomp->NEdgesOnCellH;
+   VerticesOnCellH    = MeshDecomp->VerticesOnCellH;
+   CellsOnEdgeH       = MeshDecomp->CellsOnEdgeH;
+   EdgesOnEdgeH       = MeshDecomp->EdgesOnEdgeH;
+   NEdgesOnEdgeH      = MeshDecomp->NEdgesOnEdgeH;
+   VerticesOnEdgeH    = MeshDecomp->VerticesOnEdgeH;
+   CellsOnVertexH     = MeshDecomp->CellsOnVertexH;
+   EdgesOnVertexH     = MeshDecomp->EdgesOnVertexH;
+   NEdgesReconOnCellH = MeshDecomp->NEdgesReconOnCellH;
+   ReconStencilCellH  = MeshDecomp->ReconStencilCellH;
 
-   CellsOnCell    = MeshDecomp->CellsOnCell;
-   EdgesOnCell    = MeshDecomp->EdgesOnCell;
-   NEdgesOnCell   = MeshDecomp->NEdgesOnCell;
-   VerticesOnCell = MeshDecomp->VerticesOnCell;
-   CellsOnEdge    = MeshDecomp->CellsOnEdge;
-   EdgesOnEdge    = MeshDecomp->EdgesOnEdge;
-   NEdgesOnEdge   = MeshDecomp->NEdgesOnEdge;
-   VerticesOnEdge = MeshDecomp->VerticesOnEdge;
-   CellsOnVertex  = MeshDecomp->CellsOnVertex;
-   EdgesOnVertex  = MeshDecomp->EdgesOnVertex;
+   CellsOnCell       = MeshDecomp->CellsOnCell;
+   EdgesOnCell       = MeshDecomp->EdgesOnCell;
+   NEdgesOnCell      = MeshDecomp->NEdgesOnCell;
+   VerticesOnCell    = MeshDecomp->VerticesOnCell;
+   CellsOnEdge       = MeshDecomp->CellsOnEdge;
+   EdgesOnEdge       = MeshDecomp->EdgesOnEdge;
+   NEdgesOnEdge      = MeshDecomp->NEdgesOnEdge;
+   VerticesOnEdge    = MeshDecomp->VerticesOnEdge;
+   CellsOnVertex     = MeshDecomp->CellsOnVertex;
+   EdgesOnVertex     = MeshDecomp->EdgesOnVertex;
+   NEdgesReconOnCell = MeshDecomp->NEdgesReconOnCell;
+   ReconStencilCell  = MeshDecomp->ReconStencilCell;
+
+   // OnSphere is needed early (before the mesh field definitions below)
+   // to decide whether to define the ReconWeightsCell field, so we
+   // use the value Decomp already read from the mesh file. It is
+   // redetermined below (with the rest of the sphere/plane attributes)
+   // once the full mesh stream is read, which is redundant but harmless
+   // since both come from the same file.
+   OnSphere = MeshDecomp->OnSphere;
 
    // Create Omega Dimensions associated with this mesh
    createDimensions(MeshDecomp);
 
-   // Allocate remaining device arrays and define all mesh fields for associated
-   // I/O and initialization.  Equivalent host arrays will be allocated and
-   // initialized after the fields are filled on the device.
+   // Allocate remaining device arrays and define all mesh fields for
+   // associated I/O and initialization. Equivalent host arrays will be
+   // allocated and initialized after the fields are filled on the device.
+   // This must happen before the mesh stream is read below, since the
+   // read populates the arrays attached to these fields.
    defineMeshFields();
 
    // Read the input mesh stream to fill most of the fields
@@ -218,6 +237,13 @@ HorzMesh *HorzMesh::create(const std::string &Name, //< [in] Name for new mesh
                            Decomp *MeshDecomp,      //< [in] Decomp for new mesh
                            const Clock *ModelClock  //< [in] Model clock for IO
 ) {
+   OMEGA_REQUIRE(MeshDecomp,
+                 "Null Decomp pointer in HorzMesh::create with Name = {}",
+                 Name);
+   OMEGA_REQUIRE(ModelClock,
+                 "Null ModelClock pointer in HorzMesh::create with Name = {}",
+                 Name);
+
    // Check to see if a mesh of the same name already exists and
    // if so, exit with an error
    if (AllHorzMeshes.find(Name) != AllHorzMeshes.end())
@@ -275,6 +301,8 @@ void HorzMesh::createDimensions(Decomp *MeshDecomp) {
       auto MaxEdgesDim = Dimension::create("MaxEdges2", MaxEdges2);
    if (!Dimension::exists("VertexDegree"))
       auto VertexDegreeDim = Dimension::create("VertexDegree", VertexDegree);
+   if (!Dimension::exists("R3"))
+      auto R3Dim = Dimension::create("R3", 3);
 
    // For distributed dimensions we need to compute offsets along each
    // dimension (the global offset at each local point with -1 for non-owned
@@ -444,6 +472,18 @@ void HorzMesh::completeReadArrays() {
    HorzMeshHalo->exchangeFullArrayHalo(FCell, OnCell);
    HorzMeshHalo->exchangeFullArrayHalo(FEdge, OnEdge);
    HorzMeshHalo->exchangeFullArrayHalo(FVertex, OnVertex);
+   // ReconWeightsCell is (NCells, R3, MaxEdges2) to match the mesh
+   // file's on-disk dimension order. Halo's generic 3D exchange expects
+   // the mesh dimension in the middle (as in Tracers' [Tracer, Cell,
+   // Vert]), so exchange each R3 component as a 2D (Cell, MaxEdges2)
+   // slice instead of the full 3D array.
+   if (OnSphere) {
+      for (int IComp = 0; IComp < 3; ++IComp) {
+         auto ReconWeightsCellSlice =
+             Kokkos::subview(ReconWeightsCell, Kokkos::ALL, IComp, Kokkos::ALL);
+         HorzMeshHalo->exchangeFullArrayHalo(ReconWeightsCellSlice, OnCell);
+      }
+   }
 
    // Create host copies
    XCellH             = createHostMirrorCopy(XCell);
@@ -472,6 +512,9 @@ void HorzMesh::completeReadArrays() {
    FCellH             = createHostMirrorCopy(FCell);
    FEdgeH             = createHostMirrorCopy(FEdge);
    FVertexH           = createHostMirrorCopy(FVertex);
+   if (OnSphere) {
+      ReconWeightsCellH = createHostMirrorCopy(ReconWeightsCell);
+   }
 
 } // end completeReadArrays
 
@@ -993,6 +1036,35 @@ void HorzMesh::defineMeshFields() {
        );
    MeshGroupIn->addField(FieldName);
    Field::attachFieldData<Array1DReal>(FieldName, FCell);
+
+   if (OnSphere) {
+      // Vector Reconstruction
+      // NEdgesReconOnCell/ReconStencilCell come from Decomp (see
+      // constructor), not read here. ReconWeightsCell is pure data and
+      // is read as a normal mesh field below.
+      NDims = 3;
+      DimNames.resize(NDims);
+      DimNames[0] = "NCells";
+      DimNames[1] = "R3";
+      DimNames[2] = "MaxEdges2";
+      FieldName   = "ReconWeightsCell";
+      ReconWeightsCell =
+          Array3DReal("ReconWeightsCell", NCellsSize, 3, MaxEdges2);
+      auto ReconWeightsCellField = Field::create(
+          FieldName, // field name
+          "weights to reconstruct Cartesian vector field from edge-"
+          "normal values at cell centers",     // long name
+          "",                                  // units
+          "",                                  // CF standard name
+          std::numeric_limits<Real>::lowest(), // min valid value
+          std::numeric_limits<Real>::max(),    // max valid value
+          NDims,                               // num of dimensions
+          DimNames,                            // dimension names
+          false                                // not time dependent
+      );
+      MeshGroupIn->addField(FieldName);
+      Field::attachFieldData<Array3DReal>(FieldName, ReconWeightsCell);
+   }
 
    // The sign and scaling fields are computed internally so are allocated
    // here. Because they are not read from a file or typically written to a

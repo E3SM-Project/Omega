@@ -355,6 +355,7 @@ int main(int argc, char *argv[]) {
    LOG_INFO("------ MachEnv Unit Tests Successful ------");
 
    // MPI_Status status;
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
 
    return 0; // if we made it here, we were successful

@@ -1,0 +1,39 @@
+coupled:
+  TimeIntegration:
+    TimeStepper: RungeKutta4
+    StartTime: 9999-12-31_00:00:00
+    StopTime: 9999-12-31_00:00:00
+    RunDuration: none
+
+  Tendencies:
+    SfcStressForcingTendencyEnable: true
+
+  IOStreams:
+    Forcing:
+      FreqUnits: Never
+
+    RestartRead:
+      UsePointerFile: true
+      PointerFilename: rpointer.ocn
+      UseStartEnd: false
+
+    RestartWrite:
+      UsePointerFile: true
+      PointerFilename: rpointer.ocn
+      Mode: write
+      IfExists: replace
+      Precision: double
+      Freq: 1
+      FreqUnits: OnDemand
+      UseStartEnd: false
+      Contents: [Restart]
+
+meshes:
+  # Per-mesh overrides may set any option except `IOStreams`.
+  oQU240:
+    TimeIntegration:
+      TimeStep: "0000_00:05:00"
+
+  EC30to60E2r2:
+    TimeIntegration:
+      TimeStep: "0000_00:01:00"

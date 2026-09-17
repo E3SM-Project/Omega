@@ -36,6 +36,12 @@ AnalysisOperator::AnalysisOperator(const std::string &OperatorType) {
 void AnalysisOperator::initialize(const MachEnv *Env, const HorzMesh *InMesh,
                                   const VertCoord *InVCoord, Config Options) {
 
+   OMEGA_REQUIRE(Env, "Null MachEnv pointer in AnalysisOperator::initialize");
+   OMEGA_REQUIRE(InMesh,
+                 "Null HorzMesh pointer in AnalysisOperator::initialize");
+   OMEGA_REQUIRE(InVCoord,
+                 "Null VertCoord pointer in AnalysisOperator::initialize");
+
    // Store pointers needed during compute()
    Mesh   = InMesh;
    VCoord = InVCoord;

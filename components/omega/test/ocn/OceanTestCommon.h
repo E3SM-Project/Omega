@@ -63,6 +63,11 @@ KOKKOS_INLINE_FUNCTION void tangentVector(Real (&TanVec)[3],
    }
 }
 
+// returns the magnitude of a 2D vector given its (X, Y) components
+KOKKOS_INLINE_FUNCTION Real vecMagnitude(Real X, Real Y) {
+   return Kokkos::sqrt(X * X + Y * Y);
+}
+
 enum class EdgeComponent { Normal, Tangential };
 enum class Geometry { Planar, Spherical };
 enum class ExchangeHalos { Yes, No };

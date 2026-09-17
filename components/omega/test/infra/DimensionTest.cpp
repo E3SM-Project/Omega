@@ -271,6 +271,7 @@ int main(int argc, char **argv) {
    Decomp::clear();
    Pacer::finalize();
    Kokkos::finalize();
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
 
    // End of testing

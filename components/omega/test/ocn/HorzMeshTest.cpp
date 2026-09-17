@@ -676,6 +676,7 @@ int main(int argc, char *argv[]) {
 
    // Success if we made it here
    LOG_INFO("------ Horz Mesh unit tests successful ------");
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
 
    // Return success if we made it here

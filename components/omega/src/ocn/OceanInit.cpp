@@ -64,10 +64,9 @@ static bool PrintAllRanks = false;
 bool printTimingAllRanks() { return Timing::PrintAllRanks; }
 
 // Read timing configuration and set Pacer options
-static void readTimingConfig() {
+static void readTimingConfig(Config *OmegaConfig) {
    Error Err;
 
-   Config *OmegaConfig = Config::getOmegaConfig();
    Config TimingConfig("Timing");
    Err += OmegaConfig->get(TimingConfig);
    CHECK_ERROR_ABORT(Err, "Timing: Timing group not found in Config");
@@ -96,6 +95,25 @@ static void readTimingConfig() {
    CHECK_ERROR_ABORT(Err, "Timing: PrintAllRanks not found in TimingConfig");
 }
 
+// Records whether the coupled init read the state from a restart file. Set in
+// ocnInit1, where the start type is known, and used in ocnInit2, which is where
+// the state is far enough along for initStateForTimeStepper
+static bool CoupledReadRestart = false;
+
+// Perform any time-stepper specific state initialization that can only be done
+// once the input has been read and the halos have been exchanged. For the
+// split-explicit stepper this separates the input velocity into its barotropic
+// and baroclinic parts. Must be called after initUpdateHaloAndHostArrays.
+static void initStateForTimeStepper(
+    bool ReadRestart ///< [in] true if restart input initialized the state
+) {
+   // Both split-explicit variants need their velocity split established
+   // before the first step.
+   TimeStepper *DefStepper = TimeStepper::getDefault();
+   OceanState *DefState    = OceanState::getDefault();
+   DefStepper->initializeStateFromInput(DefState, ReadRestart);
+}
+
 int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
 ) {
 
@@ -104,6 +122,7 @@ int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
    // Init the default machine environment based on input MPI communicator
    MachEnv::init(Comm);
    MachEnv *DefEnv = MachEnv::getDefault();
+   OMEGA_REQUIRE(DefEnv, "Null default MachEnv pointer in ocnInit");
 
    // Initialize Omega logging
    initLogging(DefEnv);
@@ -112,8 +131,9 @@ int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
    Config("Omega");
    Config::readAll("omega.yml");
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in ocnInit");
 
-   readTimingConfig();
+   readTimingConfig(OmegaConfig);
 
    // initialize remaining Omega modules
    Err = initOmegaModules(Comm);
@@ -156,13 +176,17 @@ int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
 
    // If reading from restart, reset the current time to the input time
    SimTimeStr = std::any_cast<std::string>(ReqMeta["SimulationTime"]);
-   if (SimTimeStr != " ") {
+   const bool ReadRestart = SimTimeStr != " ";
+   if (ReadRestart) {
       TimeInstant NewCurrentTime(SimTimeStr);
       ModelClock->setCurrentTime(NewCurrentTime);
    }
 
    // Update Halo/Host arrays with new state, auxiliary state, and tracer fields
    Err = initUpdateHaloAndHostArrays();
+
+   // Finish any time-stepper specific state initialization
+   initStateForTimeStepper(ReadRestart);
 
    return Err;
 } // end ocnInit
@@ -173,22 +197,25 @@ int ocnInit1(MPI_Comm Comm,                 ///< [in] ocean MPI communicator
              const std::string &LogFile,    ///< [in] path to log file
              const StartType StartType,     ///< [in] simulation start type
              const TimeInitParams &TimeParams, ///< [in] simulation start time
-             const CouplingInitParams &CouplingParams ///< [in] coupler info
+             const CouplingInitParams &CouplingParams, ///< [in] coupler info
+             const IO::IOInitParams &IOParams ///< [in] driver-owned IO params
 ) {
 
    I4 Err = 0; // return error code
 
    MachEnv *DefEnv = MachEnv::getDefault();
+   OMEGA_REQUIRE(DefEnv, "Null default MachEnv pointer in ocnInit1");
 
    // Read config file into Config object
    Config("Omega");
    Config::readAll(ConfigFile);
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in ocnInit1");
 
-   readTimingConfig();
+   readTimingConfig(OmegaConfig);
 
    // initialize remaining Omega modules
-   Err = initOmegaModules(Comm, TimeParams, CouplingParams);
+   Err = initOmegaModules(Comm, TimeParams, CouplingParams, IOParams);
    if (Err != 0)
       ABORT_ERROR("ocnInit: Error initializing Omega modules");
 
@@ -203,6 +230,7 @@ int ocnInit1(MPI_Comm Comm,                 ///< [in] ocean MPI communicator
    }
 
    Metadata ReqMeta;
+   CoupledReadRestart = StartType != StartType::StartUp;
    if (StartType == StartType::StartUp) {
       // read from initial state if this is starting a new simulation
       Error IOError = IOStream::read("InitialState", ModelClock, ReqMeta);
@@ -253,13 +281,18 @@ int ocnInit2(const Real *CplToOcnData, Real *OcnToCplData) {
    DefCoupling->importFromCoupler();
    DefCoupling->applyImportFields(Forcing::getDefault());
 
-   return initUpdateHaloAndHostArrays();
+   int Err = initUpdateHaloAndHostArrays();
+
+   // Finish any time-stepper specific state initialization
+   initStateForTimeStepper(CoupledReadRestart);
+
+   return Err;
 } // end ocnInit2
 
 // Call init routines for remaining Omega modules
 // Internal helper — all module init after TimeStepper::init1 is called.
 // Called by both initOmegaModules overloads.
-static int initOmegaModulesImpl(MPI_Comm Comm) {
+static int initOmegaModulesImpl() {
 
    // error and return codes
    int Err = 0;
@@ -271,7 +304,6 @@ static int initOmegaModulesImpl(MPI_Comm Comm) {
    // of each file, only creates streams from Config
    IOStream::init(ModelClock);
 
-   IO::init(Comm);
    Field::init(ModelClock);
    Decomp::init();
 
@@ -317,16 +349,19 @@ int initOmegaModules(MPI_Comm Comm) {
    // calendar, model clock and start/stop times and alarms with all options
    // read from the config file
    TimeStepper::init1();
-   return initOmegaModulesImpl(Comm);
+   IO::init(Comm);
+   return initOmegaModulesImpl();
 }
 
 int initOmegaModules(MPI_Comm Comm, const TimeInitParams &TParams,
-                     const CouplingInitParams &CParams) {
+                     const CouplingInitParams &CParams,
+                     const IO::IOInitParams &IOParams) {
    int Err = 0;
    // Initialize time stepper (phase 1) using coupler provided time parameters
    // Calendar should have already been initalized
    TimeStepper::init1(TParams);
-   Err = initOmegaModulesImpl(Comm);
+   IO::init(Comm, IOParams);
+   Err = initOmegaModulesImpl();
    SfcCoupling::init(CParams);
 
    return Err;
@@ -359,6 +394,7 @@ int initUpdateHaloAndHostArrays() {
    if (Err != 0) {
       ABORT_ERROR("Error updating tracer halo");
    }
+
    Tracers::copyToHost(CurTimeLevel);
 
    return Err;

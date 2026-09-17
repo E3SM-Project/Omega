@@ -22,6 +22,8 @@ module prim_driver_mod
   public :: prim_run_subcycle
   public :: prim_init_elements_views
   public :: prim_init_grid_views
+  public :: prim_init_tensorvisc
+  public :: prim_init_tensorvisc2
   public :: prim_init_geopotential_views
   public :: prim_init_state_views
   public :: prim_init_ref_states_views
@@ -62,6 +64,12 @@ contains
     ! Init the c data structures
     call prim_create_c_data_structures(tl,hvcoord,elem(1)%mp)
 
+    ! Populate the ref-state views early: HyperviscosityFunctorImpl::setup(),
+    ! called from prim_init_kokkos_functors below, reads Fortran-computed
+    ! reference-state scalars (e.g. nu_scale_top_ilev_pack_lim) that are only
+    ! valid once this has run.
+    call prim_init_ref_states_views (elem)
+
     !Init the kokkos functors (and their boundary exchanges)
     call prim_init_kokkos_functors ()
 
@@ -85,7 +93,7 @@ contains
     use control_mod,   only : limiter_option, rsplit, qsplit, tstep_type, statefreq,   &
                               nu, nu_p, nu_q, nu_s, nu_div, nu_top, vert_remap_q_alg,  &
                               hypervis_order, hypervis_subcycle, hypervis_subcycle_tom,&
-                              hypervis_scaling,                                        &
+                              hypervis_scaling, laplace_scaling,                       &
                               ftype, prescribed_wind, use_moisture, disable_diagnostics,   &
                               use_cpstar, transport_alg, theta_hydrostatic_mode,       &
                               dcmip16_mu, theta_advect_form, test_case,                &
@@ -128,7 +136,7 @@ contains
     call init_simulation_params_c (vert_remap_q_alg, limiter_option, rsplit, qsplit, tstep_type,  &
                                    qsize, statefreq, nu, nu_p, nu_q, nu_s, nu_div, nu_top,        &
                                    hypervis_order, hypervis_subcycle, hypervis_subcycle_tom,      &
-                                   hypervis_scaling,                                              &
+                                   hypervis_scaling, laplace_scaling,                             &
                                    dcmip16_mu, ftype, theta_advect_form,                          &
                                    prescribed_wind,                                               &
                                    use_moisture_int,                                              &
@@ -174,14 +182,16 @@ contains
     ! Local(s)
     !
     real (kind=real_kind), target, dimension(np,np,2,2)     :: elem_D, elem_Dinv, elem_metinv, elem_tensorvisc
+    real (kind=real_kind), target, dimension(np,np,2,2)     :: elem_tensorvisc2
     real (kind=real_kind), target, dimension(np,np)         :: elem_fcor, elem_spheremp
     real (kind=real_kind), target, dimension(np,np)         :: elem_rspheremp, elem_metdet
-    real (kind=real_kind), target, dimension(np,np,3,2)     :: elem_vec_sph2cart
+    real (kind=real_kind), target, dimension(np,np,3,3)     :: elem_vec_sph2cart
 
     type (c_ptr) :: elem_D_ptr, elem_Dinv_ptr, elem_fcor_ptr
     type (c_ptr) :: elem_spheremp_ptr, elem_rspheremp_ptr
     type (c_ptr) :: elem_metdet_ptr, elem_metinv_ptr
     type (c_ptr) :: elem_tensorvisc_ptr, elem_vec_sph2cart_ptr
+    type (c_ptr) :: elem_tensorvisc2_ptr
 
     type (cartesian3D_t) :: sphere_cart
     real (kind=real_kind) :: sphere_cart_vec(3,np,np), sphere_latlon_vec(2,np,np)
@@ -198,6 +208,7 @@ contains
     elem_metinv_ptr       = c_loc(elem_metinv)
     elem_tensorvisc_ptr   = c_loc(elem_tensorvisc)
     elem_vec_sph2cart_ptr = c_loc(elem_vec_sph2cart)
+    elem_tensorvisc2_ptr  = c_loc(elem_tensorvisc2)
 
     is_sphere = trim(geometry) /= 'plane'
 
@@ -210,6 +221,7 @@ contains
       elem_metdet       = elem(ie)%metdet
       elem_metinv       = elem(ie)%metinv
       elem_tensorvisc   = elem(ie)%tensorVisc
+      elem_tensorvisc2  = elem(ie)%tensorVisc_2
       elem_vec_sph2cart = elem(ie)%vec_sphere2cart
       do j = 1,np
          do i = 1,np
@@ -232,9 +244,64 @@ contains
                                elem_spheremp_ptr, elem_rspheremp_ptr,     &
                                elem_metdet_ptr, elem_metinv_ptr,          &
                                elem_tensorvisc_ptr, elem_vec_sph2cart_ptr,&
-                               sphere_cart_vec, sphere_latlon_vec)
+                               sphere_cart_vec, sphere_latlon_vec,        &
+                               elem_tensorvisc2_ptr)
     enddo
   end subroutine prim_init_grid_views
+
+  ! Copies just tensorVisc into the C++ ElementsGeometry. This is used to
+  ! (re)populate tensorVisc after dss_hvtensor() has updated it, without
+  ! re-copying the other (constant) geometry fields that prim_init_grid_views
+  ! already sent to C++ earlier.
+  subroutine prim_init_tensorvisc (elem)
+    use iso_c_binding, only : c_ptr, c_loc
+    use element_mod,   only : element_t
+    use theta_f2c_mod, only : init_tensorvisc_c
+    !
+    ! Input(s)
+    !
+    type (element_t), intent(in) :: elem (:)
+    !
+    ! Local(s)
+    !
+    real (kind=real_kind), target, dimension(np,np,2,2) :: elem_tensorvisc
+    type (c_ptr) :: elem_tensorvisc_ptr
+
+    integer :: ie
+
+    elem_tensorvisc_ptr = c_loc(elem_tensorvisc)
+
+    do ie=1,nelemd
+      elem_tensorvisc = elem(ie)%tensorVisc
+      call init_tensorvisc_c (ie-1, elem_tensorvisc_ptr)
+    enddo
+  end subroutine prim_init_tensorvisc
+
+  ! Same as prim_init_tensorvisc, but for tensorVisc_2 (the sponge-layer
+  ! tensor coefficient), which is likewise recomputed by dss_hvtensor.
+  subroutine prim_init_tensorvisc2 (elem)
+    use iso_c_binding, only : c_ptr, c_loc
+    use element_mod,   only : element_t
+    use theta_f2c_mod, only : init_tensorvisc2_c
+    !
+    ! Input(s)
+    !
+    type (element_t), intent(in) :: elem (:)
+    !
+    ! Local(s)
+    !
+    real (kind=real_kind), target, dimension(np,np,2,2) :: elem_tensorvisc2
+    type (c_ptr) :: elem_tensorvisc2_ptr
+
+    integer :: ie
+
+    elem_tensorvisc2_ptr = c_loc(elem_tensorvisc2)
+
+    do ie=1,nelemd
+      elem_tensorvisc2 = elem(ie)%tensorVisc_2
+      call init_tensorvisc2_c (ie-1, elem_tensorvisc2_ptr)
+    enddo
+  end subroutine prim_init_tensorvisc2
 
   subroutine prim_init_geopotential_views (elem)
     use iso_c_binding, only : c_ptr, c_loc
@@ -364,9 +431,10 @@ contains
 
     ! Initialize the 3d states views in C++
     call prim_init_state_views (elem)
-    
-    ! Initialize the reference states in C++
-    call prim_init_ref_states_views (elem)
+
+    ! Note: reference states are already initialized earlier in prim_init2,
+    ! before prim_init_kokkos_functors (needed there for
+    ! HyperviscosityFunctorImpl::setup() to read valid nu_scale_top data).
 
     ! Initialize the diagnostics arrays in C++
     call prim_init_diags_views (elem)

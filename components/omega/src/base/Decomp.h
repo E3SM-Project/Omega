@@ -140,6 +140,21 @@ class Decomp {
        const std::vector<I4> &VerticesOnCellInit ///< [in] vertices around cell
    );
 
+   /// Redistribute the vector reconstruction stencil arrays
+   /// (NEdgesReconOnCell, ReconStencilCell) to the final cell
+   /// decomposition. Unlike rearrangeCellArrays, entries are copied verbatim
+   /// (no compaction of unused/padded slots) because ReconStencilCell
+   /// columns are positionally paired with the ReconWeightsCell array
+   /// read separately in HorzMesh. Must be called after rearrangeCellArrays
+   /// has established CellID/CellLoc for the final partition.
+   void rearrangeReconArrays(
+       const MachEnv *InEnv, ///< [in] MachEnv for the new partition
+       const std::vector<I4>
+           &NEdgesReconOnCellInit, ///< [in] num stencil edges per cell
+       const std::vector<I4>
+           &ReconStencilCellInit ///< [in] stencil edge IDs per cell
+   );
+
    /// Redistribute the various XxOnEdge index arrays to the final edge
    /// decomposition. The inputs are the various XxOnEdge arrays in the
    /// initial linear distribution. On exit, all the XxOnEdge arrays are
@@ -193,6 +208,7 @@ class Decomp {
    I4 NCellsAll;    ///< Total number of local cells (owned + all halo)
    I4 NCellsSize;   ///< Array size (incl padding, bndy cell) for cell arrays
    I4 MaxEdges;     ///< Max number of edges around a cell
+   I4 MaxEdges2;    ///< Twice max number of edges (2-edge-wide stencils)
 
    Array1DI4 NCellsHalo;      ///< num cells owned+halo for halo layer
    HostArray1DI4 NCellsHaloH; ///< num cells owned+halo for halo layer
@@ -258,6 +274,19 @@ class Decomp {
 
    Array2DI4 EdgesOnVertex;      ///< Indx of edges sharing vertex as endpoint
    HostArray2DI4 EdgesOnVertexH; ///< Indx of edges sharing vertex as endpoint
+
+   // Vector reconstruction stencil (mesh-dependent, precomputed and stored
+   // in the mesh file - see HorzMesh for the paired ReconWeightsCell)
+
+   bool OnSphere; ///< true if mesh is spherical (temporary local read of
+                  ///< the OnSphere attribute - only spherical meshes
+                  ///< currently have the reconstruction stencil below)
+
+   Array1DI4 NEdgesReconOnCell;      ///< Num of edges in reconstruction stencil
+   HostArray1DI4 NEdgesReconOnCellH; ///< Num of edges in reconstruction stencil
+
+   Array2DI4 ReconStencilCell;      ///< Local edge indices in the stencil
+   HostArray2DI4 ReconStencilCellH; ///< Local edge indices in the stencil
 
    // Methods
 

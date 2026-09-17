@@ -11,6 +11,7 @@
 #include "Logging.h"
 #include "RungeKutta2Stepper.h"
 #include "RungeKutta4Stepper.h"
+#include "SplitExplicitRK2Stepper.h"
 
 namespace OMEGA {
 //------------------------------------------------------------------------------
@@ -39,9 +40,14 @@ TimeStepperType getTimeStepperFromStr(const std::string &InString) {
       TimeStepperChoice = TimeStepperType::RungeKutta4;
    } else if (InString == "RungeKutta2") {
       TimeStepperChoice = TimeStepperType::RungeKutta2;
+   } else if (InString == "SplitExplicitRK2") {
+      TimeStepperChoice = TimeStepperType::SplitExplicitRK2;
+   } else if (InString == "UnsplitRK2") {
+      TimeStepperChoice = TimeStepperType::UnsplitRK2;
    } else {
       ABORT_ERROR("TimeStepper should be one of 'Forward-Backward', "
-                  "'RungeKutta4' or 'RungeKutta2' but got {}:",
+                  "'RungeKutta4', 'RungeKutta2', 'SplitExplicitRK2' or "
+                  "'UnsplitRK2' but got {}:",
                   InString);
    }
 
@@ -127,6 +133,23 @@ TimeStepper *TimeStepper::create(
     Halo *InMeshHalo                ///< [in] ptr to halos
 ) {
 
+   OMEGA_REQUIRE(
+       InTend, "Null Tendencies pointer in TimeStepper::create with Name = {}",
+       InName);
+   OMEGA_REQUIRE(
+       InAuxState,
+       "Null AuxiliaryState pointer in TimeStepper::create with Name = {}",
+       InName);
+   OMEGA_REQUIRE(InMesh,
+                 "Null HorzMesh pointer in TimeStepper::create with Name = {}",
+                 InName);
+   OMEGA_REQUIRE(InVCoord,
+                 "Null VertCoord pointer in TimeStepper::create with Name = {}",
+                 InName);
+   OMEGA_REQUIRE(InMeshHalo,
+                 "Null Halo pointer in TimeStepper::create with Name = {}",
+                 InName);
+
    // Start by calling the two-phase create function
    TimeStepper *NewTimeStepper =
        create(InName, InType, InTimeStep, InStartTime, InStopTime);
@@ -175,6 +198,14 @@ TimeStepper *TimeStepper::create(
    case TimeStepperType::RungeKutta2:
       NewTimeStepper =
           new RungeKutta2Stepper(InName, InTimeStep, InStartTime, InStopTime);
+      break;
+   // Both share an implementation; the type selects whether the barotropic
+   // mode is split off (SplitFactor 1) or carried in the baroclinic solve
+   // (SplitFactor 0).
+   case TimeStepperType::SplitExplicitRK2:
+   case TimeStepperType::UnsplitRK2:
+      NewTimeStepper = new SplitExplicitRK2Stepper(InName, InType, InTimeStep,
+                                                   InStartTime, InStopTime);
       break;
    case TimeStepperType::Invalid:
       ABORT_ERROR("Invalid time stepping method");
@@ -248,6 +279,7 @@ void TimeStepper::init1() {
 
    // Retrieve TimeStepper options from Config if available
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in TimeStepper::init1");
    Config TimeIntConfig("TimeIntegration");
    Err = OmegaConfig->get(TimeIntConfig);
    CHECK_ERROR_ABORT(Err, "TimeIntegration group not found in Config");
@@ -335,6 +367,7 @@ void TimeStepper::init1(const TimeInitParams &TimeParams) {
 
    // TimeStepper and TimeStep are always read from the Config
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in TimeStepper::init1");
    Config TimeIntConfig("TimeIntegration");
    Err = OmegaConfig->get(TimeIntConfig);
    CHECK_ERROR_ABORT(Err, "TimeIntegration group not found in Config");
@@ -363,12 +396,24 @@ void TimeStepper::init1(const TimeInitParams &TimeParams) {
 // Finish initialization of the default time stepper (phase 2)
 void TimeStepper::init2() {
 
+   OMEGA_REQUIRE(DefaultTimeStepper,
+                 "Null default TimeStepper pointer in TimeStepper::init2");
+
    // Get default pointers
-   HorzMesh *DefMesh        = HorzMesh::getDefault();
-   VertCoord *DefVCoord     = VertCoord::getDefault();
-   Halo *DefHalo            = Halo::getDefault();
-   Tendencies *DefTend      = Tendencies::getDefault();
+   HorzMesh *DefMesh = HorzMesh::getDefault();
+   OMEGA_REQUIRE(DefMesh,
+                 "Null default HorzMesh pointer in TimeStepper::init2");
+   VertCoord *DefVCoord = VertCoord::getDefault();
+   OMEGA_REQUIRE(DefVCoord,
+                 "Null default VertCoord pointer in TimeStepper::init2");
+   Halo *DefHalo = Halo::getDefault();
+   OMEGA_REQUIRE(DefHalo, "Null default Halo pointer in TimeStepper::init2");
+   Tendencies *DefTend = Tendencies::getDefault();
+   OMEGA_REQUIRE(DefTend,
+                 "Null default Tendencies pointer in TimeStepper::init2");
    AuxiliaryState *AuxState = AuxiliaryState::getDefault();
+   OMEGA_REQUIRE(AuxState,
+                 "Null default AuxiliaryState pointer in TimeStepper::init2");
 
    // Attach data pointers
    DefaultTimeStepper->attachData(DefTend, AuxState, DefMesh, DefVCoord,
@@ -385,6 +430,10 @@ void TimeStepper::changeTimeStep(const TimeInterval &TimeStepIn) {
 //------------------------------------------------------------------------------
 // Get number of doStep calls made on this instance
 I8 TimeStepper::getStepCount() const { return StepCount; }
+
+//------------------------------------------------------------------------------
+// Is this a split time stepper. False by default
+bool TimeStepper::isSplit() const { return false; }
 
 //------------------------------------------------------------------------------
 // Retrieval functions

@@ -85,6 +85,7 @@ int main(int argc, char *argv[]) {
       I4 NCellsOwned     = DefDecomp->NCellsOwned;
       I4 NEdgesGlobal    = DefDecomp->NEdgesGlobal;
       I4 NEdgesOwned     = DefDecomp->NEdgesOwned;
+      I4 NEdgesAll       = DefDecomp->NEdgesAll;
       I4 NVerticesGlobal = DefDecomp->NVerticesGlobal;
       I4 NVerticesOwned  = DefDecomp->NVerticesOwned;
 
@@ -126,6 +127,37 @@ int main(int argc, char *argv[]) {
          ABORT_ERROR("DecompTest: Sum vertex ID test FAIL {} {}", SumVertices,
                      RefSumVertices);
 
+      // Test the vector-reconstruction stencil arrays (spherical meshes
+      // only): each owned cell's count is in range, active entries are
+      // resolvable local edges, and padding columns carry the NEdgesAll
+      // sentinel (confirms no compaction, so columns stay aligned with
+      // ReconWeightsCell).
+      if (DefDecomp->OnSphere) {
+         I4 MaxEdges2                     = DefDecomp->MaxEdges2;
+         HostArray1DI4 NEdgesReconOnCellH = DefDecomp->NEdgesReconOnCellH;
+         HostArray2DI4 ReconStencilCellH  = DefDecomp->ReconStencilCellH;
+         I4 LocalReconErrors              = 0;
+         for (int Cell = 0; Cell < NCellsOwned; ++Cell) {
+            I4 NStencil = NEdgesReconOnCellH(Cell);
+            if (NStencil <= 0 || NStencil > MaxEdges2)
+               ++LocalReconErrors;
+            for (int J = 0; J < MaxEdges2; ++J) {
+               I4 StencilEdge = ReconStencilCellH(Cell, J);
+               if (J < NStencil) {
+                  if (StencilEdge < 0 || StencilEdge >= NEdgesAll)
+                     ++LocalReconErrors;
+               } else if (StencilEdge != NEdgesAll) {
+                  ++LocalReconErrors;
+               }
+            }
+         }
+         I4 ReconErrors = globalSum(LocalReconErrors, Comm);
+         if (ReconErrors != 0)
+            ABORT_ERROR("DecompTest: ReconStencilCell consistency "
+                        "test FAIL {}",
+                        ReconErrors);
+      }
+
       // Clean up
       Decomp::clear();
       MachEnv::removeAll();
@@ -134,6 +166,7 @@ int main(int argc, char *argv[]) {
    }
    Pacer::finalize();
    Kokkos::finalize();
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
 
    // if we made it to the end, return success

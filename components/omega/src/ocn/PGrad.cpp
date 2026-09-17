@@ -24,11 +24,16 @@ std::map<std::string, std::unique_ptr<PressureGrad>> PressureGrad::AllPGrads;
 void PressureGrad::init() {
 
    // Retrieve default mesh and vertical coordinate
-   HorzMesh *DefMesh    = HorzMesh::getDefault();
+   HorzMesh *DefMesh = HorzMesh::getDefault();
+   OMEGA_REQUIRE(DefMesh,
+                 "Null default HorzMesh pointer in PressureGrad::init");
    VertCoord *DefVCoord = VertCoord::getDefault();
+   OMEGA_REQUIRE(DefVCoord,
+                 "Null default VertCoord pointer in PressureGrad::init");
 
    // Retrieve omega config
    Config *OmegaConfig = Config::getOmegaConfig();
+   OMEGA_REQUIRE(OmegaConfig, "Null OmegaConfig pointer in PressureGrad::init");
 
    // Create the default PressureGrad and set pointer to it
    PressureGrad::DefaultPGrad =
@@ -43,6 +48,16 @@ PressureGrad::create(const std::string &Name, /// [in] Name for PressureGrad
                      const HorzMesh *Mesh,    ///< [in] Horizontal mesh
                      const VertCoord *VCoord, ///< [in] Vertical coordinate
                      Config *Options) {       ///< [in] Configuration options
+
+   OMEGA_REQUIRE(Mesh,
+                 "Null HorzMesh pointer in PressureGrad::create with Name = {}",
+                 Name);
+   OMEGA_REQUIRE(
+       VCoord, "Null VertCoord pointer in PressureGrad::create with Name = {}",
+       Name);
+   OMEGA_REQUIRE(Options,
+                 "Null Config pointer in PressureGrad::create with Name = {}",
+                 Name);
 
    // Check to see if a PressureGrad of the same name already exists and
    // if so, exit with an error
@@ -78,7 +93,7 @@ PressureGrad::PressureGrad(
     Config *Options)         ///< [in] Configuration options
     : MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop), CenteredPGrad(Mesh, VCoord),
-      HighOrderPGrad(Mesh, VCoord) {
+      HighOrderPGrad(Mesh, VCoord), BarotropicPGrad(Mesh, VCoord) {
 
    // store mesh sizes
    NEdgesAll     = Mesh->NEdgesAll;
@@ -215,6 +230,33 @@ void PressureGrad::computePressureGrad(Array2DReal &Tend,
 } // end compute pressure gradient
 
 //------------------------------------------------------------------------------
+// Compute the barotropic pressure anomaly gradient and add into Tend array
+void PressureGrad::computeBarotropicPressureGrad(
+    Array2DReal &Tend,                  ///< [inout] velocity tendency
+    const Array1DReal &BtrPressAnomaly, ///< [in] barotropic pressure anomaly
+    const Array1DReal &DepthMeanSpecVol ///< [in] depth-mean specific volume
+) const {
+
+   OMEGA_SCOPE(LocBarotropicPGrad, BarotropicPGrad);
+   OMEGA_SCOPE(LocMinLayerEdgeBot, MinLayerEdgeBot);
+   OMEGA_SCOPE(LocMaxLayerEdgeTop, MaxLayerEdgeTop);
+
+   parallelForOuter(
+       "pgrad-barotropic", {NEdgesAll},
+       KOKKOS_LAMBDA(I4 IEdge, const TeamMember &Team) {
+          const int KMin   = LocMinLayerEdgeBot(IEdge);
+          const int KMax   = LocMaxLayerEdgeTop(IEdge);
+          const int KRange = vertRangeChunked(KMin, KMax);
+
+          parallelForInner(
+              Team, KRange, INNER_LAMBDA(int KChunk) {
+                 LocBarotropicPGrad(Tend, IEdge, KChunk, BtrPressAnomaly,
+                                    DepthMeanSpecVol);
+              });
+       });
+} // end compute barotropic pressure gradient
+
+//------------------------------------------------------------------------------
 // Constructor for centered pressure gradient functor
 PressureGradCentered::PressureGradCentered(
     const HorzMesh *Mesh,   ///< [in] Horizontal mesh
@@ -227,6 +269,16 @@ PressureGradCentered::PressureGradCentered(
 //------------------------------------------------------------------------------
 // Constructor for high order pressure gradient functor
 PressureGradHighOrder::PressureGradHighOrder(
+    const HorzMesh *Mesh,   ///< [in] Horizontal mesh
+    const VertCoord *VCoord ///< [in] Vertical coordinate
+    )
+    : CellsOnEdge(Mesh->CellsOnEdge), DcEdge(Mesh->DcEdge),
+      EdgeMask(VCoord->EdgeMask), MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
+      MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
+
+//------------------------------------------------------------------------------
+// Constructor for barotropic pressure gradient functor
+BarotropicPressureGradOnEdge::BarotropicPressureGradOnEdge(
     const HorzMesh *Mesh,   ///< [in] Horizontal mesh
     const VertCoord *VCoord ///< [in] Vertical coordinate
     )

@@ -202,12 +202,20 @@ bool arraysEqual(const ArrayTypeA &A, const ArrayTypeB &B) {
    return Equal;
 }
 
+// Works the same as Kokkos::subview, but returns an unmanaged view
+// This is safe when we know that the subview won't outlive the input view
+// and can be slightly faster
+template <class View, class... Args>
+KOKKOS_FUNCTION auto subviewUnmanaged(const View &A, Args... args) {
+   return Kokkos::subview(View(A.data(), A.layout()), args...);
+}
+
 // Takes a functor that uses multidimensional indexing
 // and converts it into one that also accepts linear index
-template <class F, int Rank> struct LinearIdxWrapper : F {
+template <class F, int Rank> class LinearIdxWrapper : private F {
    static_assert(Rank >= 1 && Rank <= 5, "LinearIdxWrapper supports ranks 1-5");
-   using F::operator();
 
+ public:
    template <class Array>
    LinearIdxWrapper(F &&Functor, Array &&Bounds) : F(std::move(Functor)) {
       computeStrides(std::forward<Array>(Bounds));
@@ -228,12 +236,18 @@ template <class F, int Rank> struct LinearIdxWrapper : F {
    }
 
    template <int N = Rank, class... Args>
+   KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<N == 1>
+   operator()(int Idx, Args &&...OtherArgs) const {
+      F::operator()(Idx, std::forward<Args>(OtherArgs)...);
+   }
+
+   template <int N = Rank, class... Args>
    KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<N == 2>
    operator()(int Idx, Args &&...OtherArgs) const {
       const int I1 = Idx / Strides[0];
       const int I2 = Idx - I1 * Strides[0];
 
-      (*this)(I1, I2, std::forward<Args>(OtherArgs)...);
+      F::operator()(I1, I2, std::forward<Args>(OtherArgs)...);
    }
 
    template <int N = Rank, class... Args>
@@ -244,7 +258,7 @@ template <class F, int Rank> struct LinearIdxWrapper : F {
       const int I2 = Idx / Strides[1];
       const int I3 = Idx - I2 * Strides[1];
 
-      (*this)(I1, I2, I3, std::forward<Args>(OtherArgs)...);
+      F::operator()(I1, I2, I3, std::forward<Args>(OtherArgs)...);
    }
 
    template <int N = Rank, class... Args>
@@ -257,7 +271,7 @@ template <class F, int Rank> struct LinearIdxWrapper : F {
       const int I3 = Idx / Strides[2];
       const int I4 = Idx - I3 * Strides[2];
 
-      (*this)(I1, I2, I3, I4, std::forward<Args>(OtherArgs)...);
+      F::operator()(I1, I2, I3, I4, std::forward<Args>(OtherArgs)...);
    }
 
    template <int N = Rank, class... Args>
@@ -272,9 +286,10 @@ template <class F, int Rank> struct LinearIdxWrapper : F {
       const int I4 = Idx / Strides[3];
       const int I5 = Idx - I4 * Strides[3];
 
-      (*this)(I1, I2, I3, I4, I5, std::forward<Args>(OtherArgs)...);
+      F::operator()(I1, I2, I3, I4, I5, std::forward<Args>(OtherArgs)...);
    }
 
+ private:
 // SYCL doesn't allow 0-length arrays so add one extra element even though
 // it is not needed
 #ifdef KOKKOS_ENABLE_SYCL

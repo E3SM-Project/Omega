@@ -17,6 +17,7 @@ PseudoThicknessAuxVars::PseudoThicknessAuxVars(
       AreaCell(Mesh->AreaCell), DvEdge(Mesh->DvEdge),
       NEdgesOnCell(Mesh->NEdgesOnCell), EdgesOnCell(Mesh->EdgesOnCell),
       EdgeSignOnCell(Mesh->EdgeSignOnCell), CellsOnEdge(Mesh->CellsOnEdge),
+      NVertLayers(VCoord->NVertLayers),
       MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop),
       MinLayerCell(VCoord->MinLayerCell), MaxLayerCell(VCoord->MaxLayerCell) {}
@@ -62,6 +63,8 @@ void PseudoThicknessAuxVars::registerFields(const std::string &AuxGroupName,
        NDims,                            // number of dimensions
        DimNames                          // dimension names
    );
+
+   DimNames[0] = "NCells" + DimSuffix;
 
    // Provisional Thickness
    auto ProvPseudoThicknessField = Field::create(

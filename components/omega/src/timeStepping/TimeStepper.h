@@ -18,11 +18,27 @@
 ///    # Default is the No Leap (Gregorian calendar with no leap years)
 ///    CalendarType: No Leap
 ///    # Algorithm to use for the dynamics time integration
-///    # Supported options are Forward-Backward (default), RungeKutta2 and
-///    # RungeKutta4
+///    # Supported options are Forward-Backward (default), RungeKutta2,
+///    # RungeKutta4, SplitExplicitRK2 and UnsplitRK2
 ///    TimeStepper: Forward-Backward
 ///    # Time step to use, in form of DDDD_hh:mm:ss (days, hours, minutes, secs)
 ///    TimeStep: 0000_00:10:00
+///    # Options shared by the split time steppers SplitExplicitRK2 and
+///    # UnsplitRK2. The subgroup is required whenever one of those steppers
+///    # is selected. BtrTimeStep is required within it for SplitExplicitRK2
+///    # and must be smaller than TimeStep; the remaining keys are optional
+///    # and fall back to the SplitExplicitConfig defaults.
+///    ModeSplitShare:
+///      # BtrTimeStepper and BtrTimeStep are ignored by UnsplitRK2, which
+///      # has no barotropic subcycle
+///      BtrTimeStepper: Predictor-Corrector
+///      BtrTimeStep: 0000_00:00:20
+///      # Iterations over stages 1-3. Two are needed for the RK2 predictor-
+///      # corrector structure; one degrades the scheme to forward Euler.
+///      NTimeStepIteration: 2
+///      NBclCoriolisIteration: 2
+///      # Recompute the velocity split from NormalVelocity at every slow step
+///      ReinitSplitVelocity: false
 ///    # Start time of full simulation (YYYY-MM-DD_hh:mm:ss)
 ///    StartTime: 0001-01-01_00:00:00
 ///    # Either stop time or run duration must be supplied with Duration
@@ -61,6 +77,8 @@ enum class TimeStepperType {
    ForwardBackward,
    RungeKutta4,
    RungeKutta2,
+   SplitExplicitRK2,
+   UnsplitRK2,
    Invalid
 };
 
@@ -104,6 +122,12 @@ class TimeStepper {
    virtual void doStep(OceanState *State,   ///< [inout] model state
                        TimeInstant &SimTime ///< [inout] current simulation time
    ) const = 0;
+
+   /// Optional method-specific state initialization after initial/restart read.
+   virtual void initializeStateFromInput(
+       OceanState *, ///< [inout] model state after input has been read
+       bool          ///< [in] true if restart input initialized the state
+   ) const {}
 
    /// 1st phase of Initialization for the default time stepper
    static void init1();
@@ -196,6 +220,9 @@ class TimeStepper {
 
    /// Get number of doStep calls made on this instance
    I8 getStepCount() const;
+
+   /// Is this a split time stepper. False by default
+   virtual bool isSplit() const;
 
    // these should be protected, they are public only because of CUDA
    // limitations

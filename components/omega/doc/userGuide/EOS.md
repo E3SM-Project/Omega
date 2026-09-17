@@ -19,7 +19,7 @@ Eos:
 
 where `DRhoDT` is the thermal expansion coefficient ($\textrm{kg}/(\textrm{m}^3 \cdot ^{\circ}\textrm{C})$), `DRhoDS` is the saline contraction coefficient ($\textrm{kg}/\textrm{m}^3$), and `RhoT0S0` is the reference density at (T,S)=(0,0) (in $\textrm{kg}/\textrm{m}^3$).
 
-In addition to `SpecVol`, the displaced specific volume `SpecVolDisplaced` and `BruntVaisalaFreqSq` are also calculated by the EOS.
+In addition to `SpecVol`, the displaced specific volume `SpecVolDisplaced`, the squared Brunt-Vaisala frequency `BruntVaisalaFreqSq` and the first derivatives of specific volume `SpecVolDCt`, `SpecVolDSa` and `SpecVolDP` are also calculated by the EOS.
 
 ## TEOS-10 Helper Conversions
 
@@ -36,6 +36,16 @@ temperature conversions used by ocean thermodynamics workflows:
 These helper methods are available through the EOS implementation but do not
 replace the standard `computeSpecVol`, `computeSpecVolDisp`, or
 `computeBruntVaisalaFreqSq` calculations.
+
+## First Derivatives of Specific Volume
+
+The `Eos` class can also compute the first derivatives of the specific volume with respect to conservative temperature (in $\textrm{m}^3\textrm{kg}^{-1}\,^{\circ}\textrm{C}^{-1}$), absolute salinity (in $\textrm{m}^3\textrm{g}^{-1}$), and pressure (in $\textrm{m}^3\textrm{kg}^{-1}\textrm{Pa}^{-1}$). These are needed by the higher-order horizontal pressure gradient, which expands the specific volume about a reference state within each layer instead of evaluating the full equation of state at every quadrature point.
+
+There is no user-configurable option associated with the derivatives. They are computed on request by the parts of the model that need them, in the same pass that computes the specific volume, so selecting `teos10` does not make the model slower unless a scheme that uses them is enabled. They are available for all three `EosType` choices: for `teos10` they are the analytic derivatives of the same 75-term polynomial, for `linear` they follow from the configured `DRhoDT` and `DRhoDS` and have no pressure dependence, and for `constant` they are zero.
+
+The derivatives are stored in the `SpecVolDCt`, `SpecVolDSa` and `SpecVolDP` fields of the `Eos` field group and can be requested in a stream's contents just like `SpecVol`.
+
+The thermal expansion and haline contraction coefficients that enter the squared Brunt-Vaisala frequency are computed from these same derivatives.
 
 ## Displaced Specific Volume
 

@@ -119,6 +119,7 @@ int main(int argc, char **argv) {
    // If we made it here, we are successful
    LOG_INFO("----- TimeIntervalParseTest Successful -----");
 
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
    return 0;
 }

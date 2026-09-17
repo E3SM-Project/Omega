@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Halo.h"
+#include "Error.h"
 #include "mpi.h"
 #include <algorithm>
 #include <iterator>
@@ -134,8 +135,10 @@ int Halo::init() {
 
    I4 IErr{0}; // error code
 
-   MachEnv *DefEnv   = MachEnv::getDefault();
+   MachEnv *DefEnv = MachEnv::getDefault();
+   OMEGA_REQUIRE(DefEnv, "Null default MachEnv pointer in Halo::init");
    Decomp *DefDecomp = Decomp::getDefault();
+   OMEGA_REQUIRE(DefDecomp, "Null default Decomp pointer in Halo::init");
 
    Halo::DefaultHalo = create("Default", DefEnv, DefDecomp);
 
@@ -204,6 +207,11 @@ Halo::Halo(const std::string &Name, const MachEnv *InEnv,
 /// map
 Halo *Halo::create(const std::string &Name, const MachEnv *Env,
                    const Decomp *Decomp) {
+   OMEGA_REQUIRE(Env, "Null MachEnv pointer in Halo::create with Name = {}",
+                 Name);
+   OMEGA_REQUIRE(Decomp, "Null Decomp pointer in Halo::create with Name = {}",
+                 Name);
+
    // Check to see if a halo of the same name already exists and
    // if so, exit with an error
    if (AllHalos.find(Name) != AllHalos.end()) {

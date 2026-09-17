@@ -20,10 +20,9 @@ class VelocityDel2AuxVars {
                        const VertCoord *VCoord);
 
    KOKKOS_FUNCTION void
-   computeVarsOnEdge(int IEdge, int KChunk, const Array2DReal &VelocityDivCell,
+   computeVarsOnEdge(const TeamMember &Team, int IEdge,
+                     const Array2DReal &VelocityDivCell,
                      const Array2DReal &RelVortVertex) const {
-      const int KStart = chunkStart(KChunk, MinLayerEdgeBot(IEdge));
-      const int KLen   = chunkLength(KChunk, KStart, MaxLayerEdgeTop(IEdge));
 
       const int JCell0   = CellsOnEdge(IEdge, 0);
       const int JCell1   = CellsOnEdge(IEdge, 1);
@@ -34,47 +33,54 @@ class VelocityDel2AuxVars {
       const Real InvDvEdge =
           1._Real / Kokkos::max(DvEdge(IEdge), 0.25_Real * DcEdge(IEdge));
 
-      for (int KVec = 0; KVec < KLen; ++KVec) {
-         const int K = KStart + KVec;
-         const Real GradDiv =
-             (VelocityDivCell(JCell1, K) - VelocityDivCell(JCell0, K)) *
-             InvDcEdge;
-         const Real CurlVort =
-             -(RelVortVertex(JVertex1, K) - RelVortVertex(JVertex0, K)) *
-             InvDvEdge;
-         Del2Edge(IEdge, K) = EdgeMask(IEdge, K) * GradDiv + CurlVort;
-      }
+      const int KMin = MinLayerEdgeBot(IEdge);
+      const int KMax = MaxLayerEdgeTop(IEdge);
+
+      parallelForInner(
+          Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+             const Real GradDiv =
+                 (VelocityDivCell(JCell1, K) - VelocityDivCell(JCell0, K)) *
+                 InvDcEdge;
+             const Real CurlVort =
+                 -(RelVortVertex(JVertex1, K) - RelVortVertex(JVertex0, K)) *
+                 InvDvEdge;
+             Del2Edge(IEdge, K) = EdgeMask(IEdge, K) * GradDiv + CurlVort;
+          });
    }
 
-   KOKKOS_FUNCTION void computeVarsOnCell(int ICell, int KChunk) const {
+   KOKKOS_FUNCTION void computeVarsOnCell(const TeamMember &Team,
+                                          int ICell) const {
       const Real InvAreaCell = 1._Real / AreaCell(ICell);
-      const int KStartCell   = chunkStart(KChunk, MinLayerCell(ICell));
-      const int KLenCell = chunkLength(KChunk, KStartCell, MaxLayerCell(ICell));
-      const int KEndCell = KStartCell + KLenCell - 1;
 
-      Real Del2DivCellTmp[VecLength] = {0};
+      ScratchArray1DReal Del2DivCellTmp(teamScratch(Team), NVertLayers);
+      parallelForInner(
+          Team, NVertLayers, INNER_LAMBDA(int K) { Del2DivCellTmp(K) = 0; });
 
       for (int J = 0; J < NEdgesOnCell(ICell); ++J) {
          const int JEdge     = EdgesOnCell(ICell, J);
          const Real AreaEdge = 0.5_Real * DvEdge(JEdge) * DcEdge(JEdge);
 
-         const int KStartEdge = Kokkos::max(KStartCell, MinLayerEdgeBot(JEdge));
-         const int KEndEdge   = Kokkos::min(KEndCell, MaxLayerEdgeTop(JEdge));
+         const int MinLyrEdgeBot = MinLayerEdgeBot(JEdge);
+         const int MaxLyrEdgeTop = MaxLayerEdgeTop(JEdge);
 
-         for (int K = KStartEdge; K <= KEndEdge; ++K) {
-            const int KVec = K - KStartCell;
-            Del2DivCellTmp[KVec] -= DvEdge(JEdge) * InvAreaCell *
-                                    EdgeSignOnCell(ICell, J) *
-                                    Del2Edge(JEdge, K);
-         }
+         parallelForInner(
+             Team, Range{MinLyrEdgeBot, MaxLyrEdgeTop}, INNER_LAMBDA(int K) {
+                Del2DivCellTmp(K) -= DvEdge(JEdge) * InvAreaCell *
+                                     EdgeSignOnCell(ICell, J) *
+                                     Del2Edge(JEdge, K);
+             });
       }
-      for (int KVec = 0; KVec < KLenCell; ++KVec) {
-         const int K           = KStartCell + KVec;
-         Del2DivCell(ICell, K) = Del2DivCellTmp[KVec];
-      }
+
+      const int MinLyrCell = MinLayerCell(ICell);
+      const int MaxLyrCell = MaxLayerCell(ICell);
+
+      parallelForInner(
+          Team, Range{MinLyrCell, MaxLyrCell},
+          INNER_LAMBDA(int K) { Del2DivCell(ICell, K) = Del2DivCellTmp(K); });
    }
 
-   KOKKOS_FUNCTION void computeVarsOnVertex(int IVertex, int KChunk) const {
+   KOKKOS_FUNCTION void computeVarsOnVertex(const TeamMember &Team,
+                                            int IVertex) const {
       // Compute over the full vertex valid range [MinLayerVertexTop,
       // MaxLayerVertexBot] so that boundary-vertex layers (where only some
       // surrounding cells are active) receive a valid value. Each edge's
@@ -82,32 +88,36 @@ class VelocityDel2AuxVars {
       // MaxLayerEdgeBot], where Del2Edge has been computed or zeroed; this
       // matches VorticityAuxVars::computeVarsOnVertex and avoids reading
       // uninitialized (fill-value) layers of Del2Edge for deeper edges.
-      const int KStartVertex = chunkStart(KChunk, MinLayerVertexTop(IVertex));
-      const int KLenVertex =
-          chunkLength(KChunk, KStartVertex, MaxLayerVertexBot(IVertex));
-      const int KEndVertex = KStartVertex + KLenVertex - 1;
 
       const Real InvAreaTriangle = 1._Real / AreaTriangle(IVertex);
 
-      Real Del2RelVortVertexTmp[VecLength] = {0};
+      ScratchArray1DReal Del2RelVortVertexTmp(teamScratch(Team), NVertLayers);
+
+      parallelForInner(
+          Team, NVertLayers,
+          INNER_LAMBDA(int K) { Del2RelVortVertexTmp(K) = 0; });
+
+      const int MinLyrVertexTop = MinLayerVertexTop(IVertex);
+      const int MaxLyrVertexBot = MaxLayerVertexBot(IVertex);
 
       for (int J = 0; J < VertexDegree; ++J) {
          const int JEdge = EdgesOnVertex(IVertex, J);
-         const int KStartEdge =
-             Kokkos::max(KStartVertex, MinLayerEdgeTop(JEdge));
-         const int KEndEdge = Kokkos::min(KEndVertex, MaxLayerEdgeBot(JEdge));
-         for (int K = KStartEdge; K <= KEndEdge; ++K) {
-            const int KVec = K - KStartVertex;
-            Del2RelVortVertexTmp[KVec] += InvAreaTriangle * DcEdge(JEdge) *
-                                          EdgeSignOnVertex(IVertex, J) *
-                                          Del2Edge(JEdge, K);
-         }
+
+         const int MinLyrEdgeTop = MinLayerEdgeTop(JEdge);
+         const int MaxLyrEdgeBot = MaxLayerEdgeBot(JEdge);
+
+         parallelForInner(
+             Team, Range{MinLyrEdgeTop, MaxLyrEdgeBot}, INNER_LAMBDA(int K) {
+                Del2RelVortVertexTmp(K) += InvAreaTriangle * DcEdge(JEdge) *
+                                           EdgeSignOnVertex(IVertex, J) *
+                                           Del2Edge(JEdge, K);
+             });
       }
 
-      for (int KVec = 0; KVec < KLenVertex; ++KVec) {
-         const int K                   = KStartVertex + KVec;
-         Del2RelVortVertex(IVertex, K) = Del2RelVortVertexTmp[KVec];
-      }
+      parallelForInner(
+          Team, Range{MinLyrVertexTop, MaxLyrVertexBot}, INNER_LAMBDA(int K) {
+             Del2RelVortVertex(IVertex, K) = Del2RelVortVertexTmp(K);
+          });
    }
 
    void registerFields(const std::string &AuxGroupName,
@@ -128,6 +138,7 @@ class VelocityDel2AuxVars {
    Array1DReal AreaTriangle;
    Array2DReal EdgeMask;
    I4 VertexDegree;
+   I4 NVertLayers;
    Array1DI4 MinLayerEdgeBot;
    Array1DI4 MaxLayerEdgeTop;
    Array1DI4 MinLayerEdgeTop;

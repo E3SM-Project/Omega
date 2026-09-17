@@ -700,6 +700,7 @@ int main(int argc, char *argv[]) {
 
    // Finalize environments
    Pacer::finalize();
+   MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
 
    return 0; // successful completion

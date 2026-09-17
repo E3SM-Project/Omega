@@ -37,6 +37,7 @@ Currently, the following operators are implemented:
 - `GradientOnEdge`
 - `CurlOnVertex`
 - `TangentialReconOnEdge`
+- `VectorReconOnCell`
 
 Some tendency terms in the Omega PDE solver could in principle be constructed
 using these operators as building blocks. However, very often tendency terms

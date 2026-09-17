@@ -28,6 +28,7 @@ userGuide/Config
 userGuide/Broadcast
 userGuide/Logging
 userGuide/Driver
+userGuide/MpasMesh
 userGuide/Decomp
 userGuide/Dimension
 userGuide/EOS
@@ -45,6 +46,7 @@ userGuide/Tendencies
 userGuide/OceanState
 userGuide/TimeMgr
 userGuide/TimeStepping
+userGuide/SplitTimeStepping
 userGuide/Reductions
 userGuide/Tracers
 userGuide/TridiagonalSolvers
@@ -76,6 +78,7 @@ devGuide/Driver
 devGuide/EOS
 devGuide/Broadcast
 devGuide/CMakeBuild
+devGuide/BuildNml
 devGuide/Logging
 devGuide/Decomp
 devGuide/Dimension
@@ -93,6 +96,7 @@ devGuide/Tendencies
 devGuide/OceanState
 devGuide/TimeMgr
 devGuide/TimeStepping
+devGuide/SplitTimeStepping
 devGuide/Reductions
 devGuide/Tracers
 devGuide/TridiagonalSolvers
@@ -141,6 +145,7 @@ design/AuxiliaryState
 design/TimeMgr
 design/Timers
 design/TimeStepping
+design/SplitTimeStepping
 design/Tracers
 design/TridiagonalSolver
 design/VertAdv

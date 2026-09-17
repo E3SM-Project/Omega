@@ -11,6 +11,7 @@
 #include "TendencyTerms.h"
 #include "AuxiliaryState.h"
 #include "DataTypes.h"
+#include "Eos.h"
 #include "HorzMesh.h"
 #include "HorzOperators.h"
 #include "OceanState.h"
@@ -22,15 +23,22 @@ PseudoThicknessFluxDivOnCell::PseudoThicknessFluxDivOnCell(
     const HorzMesh *Mesh, const VertCoord *VCoord)
     : NEdgesOnCell(Mesh->NEdgesOnCell), EdgesOnCell(Mesh->EdgesOnCell),
       DvEdge(Mesh->DvEdge), AreaCell(Mesh->AreaCell),
-      EdgeSignOnCell(Mesh->EdgeSignOnCell), MinLayerCell(VCoord->MinLayerCell),
-      MaxLayerCell(VCoord->MaxLayerCell),
+      EdgeSignOnCell(Mesh->EdgeSignOnCell), NVertLayers(VCoord->NVertLayers),
+      MinLayerCell(VCoord->MinLayerCell), MaxLayerCell(VCoord->MaxLayerCell),
       MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
 
 PotentialVortHAdvOnEdge::PotentialVortHAdvOnEdge(const HorzMesh *Mesh,
                                                  const VertCoord *VCoord)
     : NEdgesOnEdge(Mesh->NEdgesOnEdge), EdgesOnEdge(Mesh->EdgesOnEdge),
-      WeightsOnEdge(Mesh->WeightsOnEdge), EdgeMask(VCoord->EdgeMask),
+      WeightsOnEdge(Mesh->WeightsOnEdge), NVertLayers(VCoord->NVertLayers),
+      EdgeMask(VCoord->EdgeMask), MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
+      MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
+
+CoriolisAccelerationOnEdge::CoriolisAccelerationOnEdge(const HorzMesh *Mesh,
+                                                       const VertCoord *VCoord)
+    : NEdgesOnEdge(Mesh->NEdgesOnEdge), EdgesOnEdge(Mesh->EdgesOnEdge),
+      WeightsOnEdge(Mesh->WeightsOnEdge), NVertLayers(VCoord->NVertLayers),
       MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
 
@@ -63,13 +71,27 @@ VelocityHyperDiffOnEdge::VelocityHyperDiffOnEdge(const HorzMesh *Mesh,
 SfcStressForcingOnEdge::SfcStressForcingOnEdge(const HorzMesh *Mesh,
                                                const VertCoord *VCoord)
     : Enabled(false), EdgeMask(VCoord->EdgeMask),
-      MinLayerEdgeBot(VCoord->MinLayerEdgeBot) {}
+      MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
+      MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
 
 BottomDragOnEdge::BottomDragOnEdge(const HorzMesh *Mesh,
                                    const VertCoord *VCoord)
     : Enabled(false), Coeff(0), CellsOnEdge(Mesh->CellsOnEdge),
       NVertLayers(VCoord->NVertLayers), EdgeMask(VCoord->EdgeMask),
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
+
+SfcThicknessForcingOnCell::SfcThicknessForcingOnCell(const HorzMesh *Mesh,
+                                                     const VertCoord *VCoord)
+    : MinLayerCell(VCoord->MinLayerCell), MaxLayerCell(VCoord->MaxLayerCell) {}
+
+SfcTracerForcingOnCell::SfcTracerForcingOnCell(const HorzMesh *Mesh,
+                                               const VertCoord *VCoord,
+                                               I4 TempTracerIndex,
+                                               I4 SaltTracerIndex,
+                                               const Eos *EosInst)
+    : TempIndex(TempTracerIndex), SaltIndex(SaltTracerIndex),
+      MinLayerCell(VCoord->MinLayerCell), MaxLayerCell(VCoord->MaxLayerCell),
+      EosChoice(EosInst->EosChoice) {}
 
 TracerHorzAdvOnCell::TracerHorzAdvOnCell(const HorzMesh *Mesh,
                                          const VertCoord *VCoord)
@@ -88,15 +110,20 @@ TracerHorzAdvOnCell::TracerHorzAdvOnCell(const HorzMesh *Mesh,
                        Mesh->NEdgesAll, VCoord->NVertLayers),
       NEdgesOnCell(Mesh->NEdgesOnCell), EdgesOnCell(Mesh->EdgesOnCell),
       CellsOnEdge(Mesh->CellsOnEdge), EdgeSignOnCell(Mesh->EdgeSignOnCell),
-      DvEdge(Mesh->DvEdge), AreaCell(Mesh->AreaCell) {}
+      DvEdge(Mesh->DvEdge), AreaCell(Mesh->AreaCell),
+      NVertLayers(VCoord->NVertLayers), MinLayerCell(VCoord->MinLayerCell),
+      MaxLayerCell(VCoord->MaxLayerCell),
+      MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
+      MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
 
 TracerDiffOnCell::TracerDiffOnCell(const HorzMesh *Mesh,
                                    const VertCoord *VCoord)
     : NEdgesOnCell(Mesh->NEdgesOnCell), EdgesOnCell(Mesh->EdgesOnCell),
       CellsOnEdge(Mesh->CellsOnEdge), EdgeSignOnCell(Mesh->EdgeSignOnCell),
       DvEdge(Mesh->DvEdge), DcEdge(Mesh->DcEdge), AreaCell(Mesh->AreaCell),
-      MeshScalingDel2(Mesh->MeshScalingDel2), EdgeMask(VCoord->EdgeMask),
-      MinLayerCell(VCoord->MinLayerCell), MaxLayerCell(VCoord->MaxLayerCell),
+      MeshScalingDel2(Mesh->MeshScalingDel2), NVertLayers(VCoord->NVertLayers),
+      EdgeMask(VCoord->EdgeMask), MinLayerCell(VCoord->MinLayerCell),
+      MaxLayerCell(VCoord->MaxLayerCell),
       MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
 
@@ -105,8 +132,9 @@ TracerHyperDiffOnCell::TracerHyperDiffOnCell(const HorzMesh *Mesh,
     : NEdgesOnCell(Mesh->NEdgesOnCell), EdgesOnCell(Mesh->EdgesOnCell),
       CellsOnEdge(Mesh->CellsOnEdge), EdgeSignOnCell(Mesh->EdgeSignOnCell),
       DvEdge(Mesh->DvEdge), DcEdge(Mesh->DcEdge), AreaCell(Mesh->AreaCell),
-      MeshScalingDel4(Mesh->MeshScalingDel4), EdgeMask(VCoord->EdgeMask),
-      MinLayerCell(VCoord->MinLayerCell), MaxLayerCell(VCoord->MaxLayerCell),
+      MeshScalingDel4(Mesh->MeshScalingDel4), NVertLayers(VCoord->NVertLayers),
+      EdgeMask(VCoord->EdgeMask), MinLayerCell(VCoord->MinLayerCell),
+      MaxLayerCell(VCoord->MaxLayerCell),
       MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
 

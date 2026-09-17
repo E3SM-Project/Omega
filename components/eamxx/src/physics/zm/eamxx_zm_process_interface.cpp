@@ -78,8 +78,8 @@ void ZMDeepConvection::create_requests ()
   add_field <Updated>("precip_ice_surf_mass", scalar2d,     kg/m2,  grid_name, "ACCUMULATED");
 
   // T/qv from previous time step for DCAPE
-  add_field<Computed>("zm_t_prev",            scalar3d_mid, K,      grid_name);
-  add_field<Computed>("zm_q_prev",            scalar3d_mid, kg/kg,  grid_name);
+  add_field<Updated>("zm_t_prev",             scalar3d_mid, K,      grid_name, pack_size);
+  add_field<Updated>("zm_q_prev",             scalar3d_mid, kg/kg,  grid_name, pack_size);
 
   // Diagnostic Outputs
   add_field<Computed>("zm_prec",              scalar2d,     m/s,    grid_name);
@@ -576,6 +576,10 @@ void ZMDeepConvection::run_impl (const double dt)
       qi (i,k)     += zm_detr_qi(i,k) * dt;
       nc (i,k)     += zm_detr_nc(i,k) * dt;
       ni (i,k)     += zm_detr_ni(i,k) * dt;
+      // latent heat of fusion released when detrained condensate, which is
+      // liquid-only in ZM without zm_microp, is partitioned into ice
+      // (mirrors EAM: ptend%s = dlf * ice_frac * latice in clubb_intr.F90)
+      T_mid(i,k)   += zm_detr_qi(i,k) * PC::LatIce.value / PC::CP.value * dt;
     }
     winds_v(i,0,k) += loc_zm_output_tend_out_u (i,k) * dt;
     winds_v(i,1,k) += loc_zm_output_tend_out_v (i,k) * dt;

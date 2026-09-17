@@ -136,7 +136,7 @@ Error Config::get(Config &SubConfig // [inout] sub-configuration to retrieve
 
    std::string GroupName = SubConfig.Name;
    if (Node[GroupName]) { // the group exists
-      SubConfig.Node = Node[GroupName];
+      SubConfig.Node.reset(Node[GroupName]);
    } else {
       RETURN_ERROR(Err, ErrorCode::Fail,
                    "Config get group: could not find group {}", GroupName);

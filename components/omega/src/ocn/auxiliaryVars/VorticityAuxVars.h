@@ -23,74 +23,78 @@ class VorticityAuxVars {
                     const VertCoord *VCoord);
 
    KOKKOS_FUNCTION void
-   computeVarsOnVertex(int IVertex, int KChunk,
+   computeVarsOnVertex(const TeamMember &Team, int IVertex,
                        const Array2DReal &PseudoThickCell,
                        const Array2DReal &NormalVelEdge) const {
 
-      const int KStartVertex = chunkStart(KChunk, MinLayerVertexTop(IVertex));
-      const int KLenVertex =
-          chunkLength(KChunk, KStartVertex, MaxLayerVertexBot(IVertex));
-      const int KEndVertex = KStartVertex + KLenVertex - 1;
-
       const Real InvAreaTriangle = 1._Real / AreaTriangle(IVertex);
 
-      Real PseudoThickVertex[VecLength] = {0};
-      Real RelVortVertexTmp[VecLength]  = {0};
+      ScratchArray1DReal PseudoThickVertex(teamScratch(Team), NVertLayers);
+      ScratchArray1DReal RelVortVertexTmp(teamScratch(Team), NVertLayers);
+
+      parallelForInner(
+          Team, NVertLayers, INNER_LAMBDA(int K) {
+             PseudoThickVertex(K) = 0;
+             RelVortVertexTmp(K)  = 0;
+          });
 
       for (int J = 0; J < VertexDegree; ++J) {
-         const int JCell = CellsOnVertex(IVertex, J);
+         const int JCell      = CellsOnVertex(IVertex, J);
+         const int MinLyrCell = MinLayerCell(JCell);
+         const int MaxLyrCell = MaxLayerCell(JCell);
 
-         const int KStartCell = Kokkos::max(KStartVertex, MinLayerCell(JCell));
-         const int KEndCell   = Kokkos::min(KEndVertex, MaxLayerCell(JCell));
+         parallelForInner(
+             Team, Range{MinLyrCell, MaxLyrCell}, INNER_LAMBDA(int K) {
+                PseudoThickVertex(K) += InvAreaTriangle *
+                                        KiteAreasOnVertex(IVertex, J) *
+                                        PseudoThickCell(JCell, K);
+             });
 
-         for (int K = KStartCell; K <= KEndCell; ++K) {
-            const int KVec = K - KStartVertex;
-            PseudoThickVertex[KVec] += InvAreaTriangle *
-                                       KiteAreasOnVertex(IVertex, J) *
-                                       PseudoThickCell(JCell, K);
-         }
+         const int JEdge         = EdgesOnVertex(IVertex, J);
+         const int MinLyrEdgeTop = MinLayerEdgeTop(JEdge);
+         const int MaxLyrEdgeBot = MaxLayerEdgeBot(JEdge);
 
-         const int JEdge = EdgesOnVertex(IVertex, J);
-         const int KStartEdge =
-             Kokkos::max(KStartVertex, MinLayerEdgeTop(JEdge));
-         const int KEndEdge = Kokkos::min(KEndVertex, MaxLayerEdgeBot(JEdge));
-
-         for (int K = KStartEdge; K <= KEndEdge; ++K) {
-            const int KVec = K - KStartVertex;
-            RelVortVertexTmp[KVec] += InvAreaTriangle * DcEdge(JEdge) *
-                                      EdgeSignOnVertex(IVertex, J) *
-                                      NormalVelEdge(JEdge, K);
-         }
+         parallelForInner(
+             Team, Range{MinLyrEdgeTop, MaxLyrEdgeBot}, INNER_LAMBDA(int K) {
+                RelVortVertexTmp(K) += InvAreaTriangle * DcEdge(JEdge) *
+                                       EdgeSignOnVertex(IVertex, J) *
+                                       NormalVelEdge(JEdge, K);
+             });
       }
 
-      for (int KVec = 0; KVec < KLenVertex; ++KVec) {
-         const int K                     = KStartVertex + KVec;
-         const Real InvPseudoThickVertex = 1._Real / PseudoThickVertex[KVec];
+      const int MinLyrVertexTop = MinLayerVertexTop(IVertex);
+      const int MaxLyrVertexBot = MaxLayerVertexBot(IVertex);
 
-         RelVortVertex(IVertex, K) = RelVortVertexTmp[KVec];
-         NormRelVortVertex(IVertex, K) =
-             RelVortVertexTmp[KVec] * InvPseudoThickVertex;
-         NormPlanetVortVertex(IVertex, K) =
-             FVertex(IVertex) * InvPseudoThickVertex;
-      }
+      parallelForInner(
+          Team, Range{MinLyrVertexTop, MaxLyrVertexBot}, INNER_LAMBDA(int K) {
+             const Real InvPseudoThickVertex = 1._Real / PseudoThickVertex(K);
+
+             RelVortVertex(IVertex, K) = RelVortVertexTmp(K);
+             NormRelVortVertex(IVertex, K) =
+                 RelVortVertexTmp(K) * InvPseudoThickVertex;
+             NormPlanetVortVertex(IVertex, K) =
+                 FVertex(IVertex) * InvPseudoThickVertex;
+          });
    }
 
-   KOKKOS_FUNCTION void computeVarsOnEdge(int IEdge, int KChunk) const {
-      const int KStart   = chunkStart(KChunk, MinLayerEdgeTop(IEdge));
-      const int KLen     = chunkLength(KChunk, KStart, MaxLayerEdgeBot(IEdge));
+   KOKKOS_FUNCTION void computeVarsOnEdge(const TeamMember &Team,
+                                          int IEdge) const {
       const int JVertex0 = VerticesOnEdge(IEdge, 0);
       const int JVertex1 = VerticesOnEdge(IEdge, 1);
 
-      for (int KVec = 0; KVec < KLen; ++KVec) {
-         const int K = KStart + KVec;
-         NormRelVortEdge(IEdge, K) =
-             0.5_Real *
-             (NormRelVortVertex(JVertex0, K) + NormRelVortVertex(JVertex1, K));
+      const int KMin = MinLayerEdgeTop(IEdge);
+      const int KMax = MaxLayerEdgeBot(IEdge);
 
-         NormPlanetVortEdge(IEdge, K) =
-             0.5_Real * (NormPlanetVortVertex(JVertex0, K) +
-                         NormPlanetVortVertex(JVertex1, K));
-      }
+      parallelForInner(
+          Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+             NormRelVortEdge(IEdge, K) =
+                 0.5_Real * (NormRelVortVertex(JVertex0, K) +
+                             NormRelVortVertex(JVertex1, K));
+
+             NormPlanetVortEdge(IEdge, K) =
+                 0.5_Real * (NormPlanetVortVertex(JVertex0, K) +
+                             NormPlanetVortVertex(JVertex1, K));
+          });
    }
 
    void registerFields(const std::string &AuxGroupName,
@@ -108,6 +112,7 @@ class VorticityAuxVars {
    Array2DI4 VerticesOnEdge;
    Array1DReal FVertex;
 
+   I4 NVertLayers;
    Array1DI4 MinLayerVertexTop;
    Array1DI4 MaxLayerVertexBot;
    Array1DI4 MinLayerCell;

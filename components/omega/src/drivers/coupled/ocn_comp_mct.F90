@@ -73,6 +73,7 @@ contains
       use shr_sys_mod, only: shr_sys_flush
       use shr_cal_mod, only: shr_cal_noleap, shr_cal_gregorian
       use shr_file_mod, only: shr_file_getunit, shr_file_setIO
+      use shr_pio_mod, only: shr_pio_getioroot, shr_pio_getrearranger
 
       ! !INPUT/OUTPUT PARAMETERS:
       type(ESMF_Clock), intent(inout) :: EClock
@@ -100,6 +101,9 @@ contains
       integer(IN) :: &
          coupling_time_step, case_start_tod, case_start_ymd, cur_tod, cur_ymd
       integer(kind=c_int) :: start_type_c
+      integer(kind=c_int) :: layout
+      integer(kind=c_int) :: io_base_task  ! driver-owned base (root) IO task
+      integer(kind=c_int) :: io_rearranger ! driver-owned PIO rearranger
       character(kind=c_char, len=CL), target :: calendar_c
       character(kind=c_char, len=CL), target :: ocn_log_fname_c
 
@@ -189,6 +193,18 @@ contains
       ! populate the import/export field name and index arrays
       call omega_set_cpl_indices()
 
+      ! The base IO task and rearranger are owned by the driver/coupler (set
+      ! by CIME via shr_pio) so they stay consistent with the rest of the
+      ! case; they are passed to Omega rather than read from omega.yml.
+      io_base_task = shr_pio_getioroot(OCN_ID)
+      io_rearranger = shr_pio_getrearranger(OCN_ID)
+
+#ifdef HAVE_MOAB
+      layout = omega_get_layout_moab()
+#else
+      layout = omega_get_layout_mct()
+#endif
+
       call omega_ocn_init1( &
          mpicom_ocn, &
          OCN_ID, &
@@ -207,6 +223,8 @@ contains
          c_loc(export_field_names), &
          c_loc(import_field_indices), &
          c_loc(export_field_indices), &
+         io_base_task, &
+         io_rearranger, &
          c_loc(cpl_x2o_field_names), &
          c_loc(cpl_o2x_field_names) &
          )
