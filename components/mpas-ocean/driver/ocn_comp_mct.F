@@ -3166,6 +3166,7 @@ contains
    integer, dimension(:), pointer :: landIceMask
 
    real (kind=RKIND), dimension(:), pointer :: seaIceEnergy, accumulatedFrazilIceMass, frazilSurfacePressure, &
+                                               accumulatedFrazilIceEnergy, &
                                                avgTotalFreshWaterTemperatureFlux, &
                                                avgCO2_gas_flux, DMSFlux, surfaceUpwardCO2Flux, &
                                                avgOceanSurfaceDIC, &
@@ -3286,6 +3287,7 @@ contains
         call mpas_pool_get_array(forcingPool, 'seaIceEnergy', seaIceEnergy)
         call mpas_pool_get_array(forcingPool, 'frazilSurfacePressure', frazilSurfacePressure)
         call mpas_pool_get_array(statePool, 'accumulatedFrazilIceMass', accumulatedFrazilIceMass, 1)
+        call mpas_pool_get_array(statePool, 'accumulatedFrazilIceEnergy', accumulatedFrazilIceEnergy, 1)
      end if
 
      ! Cryo fields
@@ -3384,36 +3386,45 @@ contains
              end if
           end if
 
+          if (index_o2x_Fioo_q /= 0) o2x_o(index_o2x_Fioo_q, n)  = 0.0_RKIND
+          if (index_o2x_Fioo_frazilh /= 0) o2x_o(index_o2x_Fioo_frazilh, n)  = 0.0_RKIND
           if ( keepFrazil ) then
 
              ! Calculate energy associated with frazil mass transfer to sea ice if frazil has accumulated
-             if ( accumulatedFrazilIceMass(i) > 0.0_RKIND ) then
+             if ( accumulatedFrazilIceMass(i) > 0.0_RKIND .and. index_o2x_Fioo_frazilh /= 0) then
 
-              seaIceEnergy(i) = accumulatedFrazilIceMass(i) * config_frazil_heat_of_fusion
+                seaIceEnergy(i) = accumulatedFrazilIceMass(i) * config_frazil_heat_of_fusion
+                if (config_use_accumulated_frazil_energy) then
+                   o2x_o(index_o2x_Fioo_frazilh, n) = accumulatedFrazilIceEnergy(i)/ ocn_cpl_dt
+                else
+                   o2x_o(index_o2x_Fioo_frazilh, n) = seaIceEnergy(i) / ocn_cpl_dt
+                end if
 
              ! Otherwise calculate the melt potential where avgTracersSurfaceValue represents only the
              ! top layer of the ocean
-             else
+             else if (index_o2x_Fioo_q /= 0) then
 
-              surfaceFreezingTemp = ocn_freezing_temperature(salinity=avgTracersSurfaceValue(index_salinitySurfaceValue, i), &
-                 pressure=0.0_RKIND,  inLandIceCavity=.false.)
+                surfaceFreezingTemp = ocn_freezing_temperature(salinity=avgTracersSurfaceValue(index_salinitySurfaceValue, i), &
+                  pressure=0.0_RKIND,  inLandIceCavity=.false.)
 
-              seaIceEnergy(i) = min(rho_sw*cp_sw*layerThickness(1, i)*( surfaceFreezingTemp + T0_Kelvin &
+                seaIceEnergy(i) = min(rho_sw*cp_sw*layerThickness(1, i)*( surfaceFreezingTemp + T0_Kelvin &
                               - avgTracersSurfaceValue(index_temperatureSurfaceValue, i) ), 0.0_RKIND )
 
-             end if
+                o2x_o(index_o2x_Fioo_q, n)  = seaIceEnergy(i) / ocn_cpl_dt
+             endif
 
-             o2x_o(index_o2x_Fioo_q, n)  = seaIceEnergy(i) / ocn_cpl_dt
-             o2x_o(index_o2x_Fioo_frazil, n) = accumulatedFrazilIceMass(i) / ocn_cpl_dt
-             o2x_o(index_o2x_Fioo_frazils, n) = 4.0_RKIND
-             o2x_o(index_o2x_Fioo_frazilh, n) = 0.0_RKIND
+             if (index_o2x_Fioo_frazil /= 0) then
+                o2x_o(index_o2x_Fioo_frazil, n) = accumulatedFrazilIceMass(i) / ocn_cpl_dt
+                o2x_o(index_o2x_Fioo_frazils, n) = accumulatedFrazilIceMass(i)/ 1000.0_RKIND * &
+                   config_frazil_sea_ice_reference_salinity / ocn_cpl_dt
+             endif
 
           else
 
-             o2x_o(index_o2x_Fioo_q, n)  = 0.0_RKIND
-             o2x_o(index_o2x_Fioo_frazil, n) = 0.0_RKIND
-             o2x_o(index_o2x_Fioo_frazils, n) = 0.0_RKIND
-             o2x_o(index_o2x_Fioo_frazilh, n) = 0.0_RKIND
+             if (index_o2x_Fioo_frazil /= 0) then
+                o2x_o(index_o2x_Fioo_frazil, n) = 0.0_RKIND
+                o2x_o(index_o2x_Fioo_frazils, n) = 0.0_RKIND
+             endif
              if (trim(config_land_ice_flux_mode) == 'standalone' .or. trim(config_land_ice_flux_mode) == 'data') then
                 o2x_o(index_o2x_Foxo_q_li, n) = accumulatedFrazilIceMass(i) * config_frazil_heat_of_fusion / ocn_cpl_dt
                 o2x_o(index_o2x_Foxo_frazil_li, n) = accumulatedFrazilIceMass(i) / ocn_cpl_dt
@@ -3424,6 +3435,7 @@ contains
           ! Reset SeaIce Energy and Accumulated Frazil Ice
           seaIceEnergy(i) = 0.0_RKIND
           accumulatedFrazilIceMass(i) = 0.0_RKIND
+          accumulatedFrazilIceEnergy(i) = 0.0_RKIND
           frazilSurfacePressure(i) = 0.0_RKIND
        end if
 

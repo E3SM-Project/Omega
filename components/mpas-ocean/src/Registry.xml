@@ -1083,6 +1083,10 @@
 					description="maximum fraction of layer thickness than can be used or created at an instant by frazil."
 					possible_values="Any positive real number between 0 and 1."
 		/>
+		<nml_option name="config_use_accumulated_frazil_energy" type="logical" default_value=".false."
+					description="If true, send the total energy accumulated from frazil ice formation to the sea ice model, otherwise use the latent heat."
+					possible_values=".true. or .false."
+		/>
 		<nml_option name="config_specific_heat_sea_water" type="real" default_value="3985.0" units="J kg^-1 C^-1"
 					description="Energy per kilogram per C needed to raise ocean temperature 1 C. NOTE: test and make consistent with E3SM."
 					possible_values="Any positive real number."
@@ -2146,6 +2150,7 @@
 			<var_struct name="ecosysAuxiliary"/>
 			<var name="accumulatedFrazilIceMass"/>
 			<var name="accumulatedFrazilIceSalinity"/>
+			<var name="accumulatedFrazilIceEnergy"/>
 			<var name="accumulatedLandIceMass"/>
 			<var name="accumulatedLandIceHeat"/>
 			<var name="accumulatedLandIceFrazilMass"/>
@@ -2515,6 +2520,10 @@
 		<!-- FIELDS FOR FRAZIL ICE -->
 		<var name="accumulatedFrazilIceMass" type="real" dimensions="nCells Time" units="kg m^-2"
 			 description="Mass per unit area of frazil ice produced. Reset to zero at each coupling interval"
+			 packages="frazilIce"
+		/>
+		<var name="accumulatedFrazilIceEnergy" type="real" dimensions="nCells Time" units="J m^-2"
+			 description="Accumulated frazil ice energy per unit area. Reset to zero at each coupling interval"
 			 packages="frazilIce"
 		/>
 		<var name="accumulatedFrazilIceSalinity" type="real" dimensions="nCells Time" units="kg m^-2"
