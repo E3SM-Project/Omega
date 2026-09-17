@@ -71,7 +71,11 @@
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Tendency Terms</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#second-order-horizontal-advection-algorithm">Second Order Horizontal Advection Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#second-order-horizontal-advection-algorithm">Second Order Horizontal Advection Algorithm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#monotonic-flux-limiting-transport-for-second-order-horizontal-advection">Monotonic Flux Limiting Transport for Second Order Horizontal Advection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#monotonic-flux-limiting-transport-example-of-limiting-ripple-effect">Monotonic Flux Limiting Transport Example of Limiting Ripple Effect</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#see-also">See Also</a></li>
 </ul>
 </li>
@@ -240,28 +244,25 @@ tendency terms are currently implemented:</p>
 <tr class="row-even"><td><p>TracerHorzAdvOnCell</p></td>
 <td><p>horizontal advection of thickness-weighted tracers</p></td>
 </tr>
-<tr class="row-odd"><td><p>TracerHighOrderHorzAdvOnCell</p></td>
-<td><p>second order horizontal advection of thickness-weighted tracers</p></td>
-</tr>
-<tr class="row-even"><td><p>TracerDiffOnCell</p></td>
+<tr class="row-odd"><td><p>TracerDiffOnCell</p></td>
 <td><p>horizontal diffusion of thickness-weighted tracers</p></td>
 </tr>
-<tr class="row-odd"><td><p>TracerHyperDiffOnCell</p></td>
+<tr class="row-even"><td><p>TracerHyperDiffOnCell</p></td>
 <td><p>biharmonic horizontal mixing of thickness-weighted tracers</p></td>
 </tr>
-<tr class="row-even"><td><p>SfcStressForcingOnEdge</p></td>
+<tr class="row-odd"><td><p>SfcStressForcingOnEdge</p></td>
 <td><p>forcing by surface stress (e.g. wind), defined on edges</p></td>
 </tr>
-<tr class="row-odd"><td><p>BottomDragOnEdge</p></td>
+<tr class="row-even"><td><p>BottomDragOnEdge</p></td>
 <td><p>bottom drag, defined on edges</p></td>
 </tr>
-<tr class="row-even"><td><p>SfcThicknessForcingOnCell</p></td>
+<tr class="row-odd"><td><p>SfcThicknessForcingOnCell</p></td>
 <td><p>surface pseudo-thickness forcing from coupled freshwater and salt fluxes, defined on cells</p></td>
 </tr>
-<tr class="row-odd"><td><p>SfcTracerForcingOnCell</p></td>
+<tr class="row-even"><td><p>SfcTracerForcingOnCell</p></td>
 <td><p>surface tracer forcing from coupled heat and salt fluxes, with direct heat always and mass-flux enthalpy terms gated by thickness forcing, defined on cells</p></td>
 </tr>
-<tr class="row-even"><td><p>SurfaceTracerRestoringOnCell</p></td>
+<tr class="row-odd"><td><p>SurfaceTracerRestoringOnCell</p></td>
 <td><p>surface tracer restoring, defined on cells</p></td>
 </tr>
 </tbody>
@@ -326,15 +327,23 @@ the currently available tendency terms:</p>
 </tr>
 <tr class="row-even"><td><p></p></td>
 <td><p>HorzTracerFluxOrder</p></td>
-<td><p>1 for standard linear advection</p></td>
+<td><p>2 for standard linear advection</p></td>
 </tr>
-<tr class="row-odd"><td><p>TracerHighOrderHorzAdvOnCell</p></td>
-<td><p>TracerHorzAdvTendencyEnable</p></td>
-<td><p>enable/disable term</p></td>
+<tr class="row-odd"><td><p></p></td>
+<td><p>HorzTracerFluxOrder</p></td>
+<td><p>3 for second order advection algorithm</p></td>
 </tr>
 <tr class="row-even"><td><p></p></td>
-<td><p>HorzTracerFluxOrder</p></td>
-<td><p>2 for second order advection algorithm</p></td>
+<td><p>HorzTracerFluxLimiterEnable</p></td>
+<td><p>enable/disable monotonic flux corrected transport (FCT). Requires HorzTracerFluxOrder to be greater than 2.</p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p>HorzTracerFluxLimiterBudgetsEnable</p></td>
+<td><p>enable/disable budgets if FCT is enabled</p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p>HorzTracerFluxLimiterMonotonicityCheckEnable</p></td>
+<td><p>enable/disable check for mon-mononic values if FCT is enabled</p></td>
 </tr>
 <tr class="row-odd"><td><p>TracerDiffOnCell</p></td>
 <td><p>TracerDiffTendencyEnable</p></td>
@@ -422,11 +431,11 @@ For edge <span class="math notranslate nohighlight">\(i\)</span> between element
 
 Where <span class="math notranslate nohighlight">\(u\)</span> is <span class="math notranslate nohighlight">\(\mathbf{V}\cdot\mathbf{n}\)</span> where <span class="math notranslate nohighlight">\(\mathbf{n}\)</span> is the unit normal along the edge being evaluated and <span class="math notranslate nohighlight">\(F\)</span> is the evaluation
 of <span class="math notranslate nohighlight">\(\psi\)</span> for the elements on each side of the edge being evaluated.
-This is used when the TracerHorzAdvOnCell user option is active and HorzTracerFluxOrder is 1.
+This is used when the TracerHorzAdvOnCell user option is active and HorzTracerFluxOrder is 2.
 To make the comparison to higher order methods explicit, this first order method is equivalent to defining <span class="math notranslate nohighlight">\(\psi\)</span> as a linear function,
 <span class="math notranslate nohighlight">\(\psi = c_0 + c_x x + c_y y\)</span>, between the two elements sharing the edge <span class="math notranslate nohighlight">\(i\)</span> and taking the directed derivative along the edge.</p>
 <p>For higher order flux calculations, higher order derivatives of <span class="math notranslate nohighlight">\(\psi\)</span> are needed and for the user option of
-TracerHorzAdvOnCell along with HorzTracerFluxOrder set to 2, a quadratic approximation of <span class="math notranslate nohighlight">\(\psi\)</span> is used,
+TracerHorzAdvOnCell along with HorzTracerFluxOrder set to 3, a quadratic approximation of <span class="math notranslate nohighlight">\(\psi\)</span> is used,
 <div class="math notranslate nohighlight">
 \[
 \psi = c_0 + c_x x + c_y y + c_{xx} x^2 + c_{xy} xy + c_{yy} y^2,
@@ -465,6 +474,85 @@ is about order 1.7 as shown in  <a class="reference internal" href="#tracer-high
 <p><span class="caption-number">Fig. 10 </span><span class="caption-text">Tracer higer order convergence example of a cosine bell advected on a sphere showing an order 1.71 convergence rate</span><a class="headerlink" href="#tracer-higher-order-convergence" title="Permalink to this image"></a></p>
 </figcaption>
 </figure>
+<section id="monotonic-flux-limiting-transport-for-second-order-horizontal-advection">
+<h3>Monotonic Flux Limiting Transport for Second Order Horizontal Advection<a class="headerlink" href="#monotonic-flux-limiting-transport-for-second-order-horizontal-advection" title="Permalink to this heading"></a></h3>
+<p>It is well known that higher order (order 2 and above) scheme for numerically integrating fluxes suffer
+from dispersive “ripples” in the results particularly near steep gradients.  Lower order schemes
+produce no ripples but suffer from excessive numerical diffusion. Flux-corrected transport (FCT) is a
+technique which embodies the best of both schemes.</p>
+<p>The implementation of a monotonic flux-corrected transport (FCT) in Omega follows a standard algorithm as given in</p>
+<p>Zalesak, S. T. (1979). Fully multidimensional flux-corrected transport algorithms for fluids.
+Journal of Computational Physics, 31(3), 335–362. DOI: 10.1016/0021-9991(79)90051-2</p>
+<p>The procedure is as follows given the notation above:</p>
+<ol class="arabic simple">
+<li><p>Compute <span class="math notranslate nohighlight">\(F^L_{i+1/2}(u\psi)\)</span>, the transportive flux by some low order scheme guarenteed to give
+monotonic (ripple-free) results.</p></li>
+<li><p>Compute  <span class="math notranslate nohighlight">\(F^H_{i+1/2}(u\psi)\)</span>, the transportative flux by some high order scheme.</p></li>
+<li><p>Define the “antififfusive flux”:
+<div class="math notranslate nohighlight">
+\[
+A_{i+1/2}(u\psi) = F^H_{i+1/2}(u\psi) - F^L_{i+1/2}(u\psi)
+\]</div>
+</p></li>
+<li><p>Compute the updated low order (“transported and diffused”) “td” solution:
+<div class="math notranslate nohighlight">
+\[
+w^{td}_i = w^n_i - \frac{1}{\Delta x}[F_{i+1/2}(u\psi) - F_{i-1/2}(u\psi)]
+\]</div>
+</p></li>
+<li><p>Limit he <span class="math notranslate nohighlight">\(A_{i+1/2}(u\psi)\)</span> in a manner such that <span class="math notranslate nohighlight">\(w^{n+1}\)</span> as computed below is free of extrema
+not found in <span class="math notranslate nohighlight">\(w^{td}\)</span> = <span class="math notranslate nohighlight">\(w^n\)</span>;
+<div class="math notranslate nohighlight">
+\[
+A^C_{i+1/2}(u\psi) =  C_{i+1/2}(u\psi) A_{i+1/2}(u\psi), \quad  \quad   0 \leq C_{i+1/2} \leq 1
+\]</div>
+</p></li>
+<li><p>Finally apply hte limited antidiffusive fluxes:
+<div class="math notranslate nohighlight">
+\[
+w^{n+1}_i = w^{td}_i - \frac{1}{\Delta x}[A^C_{i+1/2}(u\psi) - A^C_{i-1/2}(u\psi)]
+\]</div>
+</p></li>
+</ol>
+<figure class="align-center" id="tracer-higher-order-convergence-fct">
+<a class="reference internal image-reference" href="../_images/higher_order_tracer_convergence_on_sphere_FCT.jpeg"><img alt="../_images/higher_order_tracer_convergence_on_sphere_FCT.jpeg" src="../_images/higher_order_tracer_convergence_on_sphere_FCT.jpeg" style="width: 600px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 11 </span><span class="caption-text">Tracer higer order convergence example of a cosine bell advected on a sphere with FCT showing an order 2.23 convergence rate</span><a class="headerlink" href="#tracer-higher-order-convergence-fct" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>When monotonic flux limiting is used then there are two diagnostic options that can be enabled,
+HorzTracerFluxLimiterBudgetsEnable and HorzTracerFluxLimiterMonotonicityCheckEnable. The
+HorzTracerFluxLimiterMonotonicityCheckEnable flag enables a post-transport check that the
+resulting values are indeed monotone as required by the algorithm and any discrepancies are
+printed along with information on where they occur.</p>
+<p>The HorzTracerFluxLimiterBudgetsEnable option enables the output of two diagnostic fields to the
+output mesh file.  One is the “FCTActiveTracerHorizontalAdvectionEdgeFlux” variable which is the
+edge flux across every side of every element. The other is the “FCTActiveTracerHorizontalAdvectionTendency”
+variable which is the cell-centered value of the advection tendency.</p>
+</section>
+<section id="monotonic-flux-limiting-transport-example-of-limiting-ripple-effect">
+<h3>Monotonic Flux Limiting Transport Example of Limiting Ripple Effect<a class="headerlink" href="#monotonic-flux-limiting-transport-example-of-limiting-ripple-effect" title="Permalink to this heading"></a></h3>
+<p>The effect of monotonic higher order FCT horizontal transport verses just higher order horizontal transport
+can be seen in the Polaris test of the slotted cylinder. The cylinder is advected for one revolution under
+a constant velocity field. The result is advecting the solution back to the original configuration as
+an exact solution. The difference between the initial condition and the advected solution is the error
+in the advection scheme. This difference is shown in the following two plots for non-monotonic and monotonic
+advection.</p>
+<figure class="align-center" id="tracer-error-in-higher-order-convergence-non-monotonic">
+<a class="reference internal image-reference" href="../_images/higher_order_slotted_cylinder_non_monotonic_diff.jpg"><img alt="../_images/higher_order_slotted_cylinder_non_monotonic_diff.jpg" src="../_images/higher_order_slotted_cylinder_non_monotonic_diff.jpg" style="width: 600px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 12 </span><span class="caption-text">Error in a tracer higher order convergence example of a slotted cylinder advected on a sphere with the standard third order advection
+algorithm with no FCT flux correction. Notice the ringing due to the sharp edges of the tracer distribution.</span><a class="headerlink" href="#tracer-error-in-higher-order-convergence-non-monotonic" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-center" id="tracer-error-in-higher-order-convergence-fct">
+<a class="reference internal image-reference" href="../_images/higher_order_slotted_cylinder_FCT_diff.jpg"><img alt="../_images/higher_order_slotted_cylinder_FCT_diff.jpg" src="../_images/higher_order_slotted_cylinder_FCT_diff.jpg" style="width: 600px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 13 </span><span class="caption-text">Error Tracer higher order convergence example of a slotted cylinder advected on a sphere with FCT monotone
+flux correction. Notice the reduction in ringing around the sharp edges of the tracer distribution.</span><a class="headerlink" href="#tracer-error-in-higher-order-convergence-fct" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+</section>
 </section>
 <section id="see-also">
 <h2>See Also<a class="headerlink" href="#see-also" title="Permalink to this heading"></a></h2>
