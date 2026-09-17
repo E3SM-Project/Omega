@@ -22,30 +22,63 @@ set_target_properties(gswteos-10 PROPERTIES
 )
 
 # Add the spdlog library
-if (NOT TARGET spdlog::spdlog)
+# Guard on both of bare and namespaced names.
+if (NOT TARGET spdlog AND NOT TARGET spdlog::spdlog)
 	add_subdirectory(
 	  ${OMEGA_SOURCE_DIR}/external/spdlog
 	  ${CMAKE_CURRENT_BINARY_DIR}/external/spdlog
 	)
 endif()
 
+# Omega links the bare name (src/CMakeLists.txt), so guarantee it exists.
+if (NOT TARGET spdlog)
+	add_library(spdlog INTERFACE)
+	target_link_libraries(spdlog INTERFACE spdlog::spdlog)
+endif()
+
 # Add the yaml-cpp library
-if (NOT TARGET yaml-cpp::yaml-cpp)
+if (NOT TARGET yaml-cpp AND NOT TARGET yaml-cpp::yaml-cpp)
 	add_subdirectory(
 	  ${OMEGA_SOURCE_DIR}/external/yaml-cpp
 	  ${CMAKE_CURRENT_BINARY_DIR}/external/yaml-cpp
 	)
 endif()
 
-# Add the Kokkos library
+# Omega links the bare name (src/CMakeLists.txt)
+if (NOT TARGET yaml-cpp)
+	add_library(yaml-cpp INTERFACE)
+	target_link_libraries(yaml-cpp INTERFACE yaml-cpp::yaml-cpp)
+endif()
+
+# Add the Kokkos library.
+# Reuse-if-present: when Omega is built alongside EAMxx (or a shared EKAT),
+# the Kokkos::kokkos target already exists with the correct per-machine
+# architecture and compiler configuration, so Omega simply reuses it and this
+# block is skipped entirely. Otherwise Omega must build Kokkos itself.
+if (NOT TARGET Kokkos::kokkos AND NOT TARGET kokkos)
+	if ("${OMEGA_BUILD_MODE}" STREQUAL "E3SM")
+		list(APPEND CMAKE_MODULE_PATH
+			${E3SM_EXTERNALS_ROOT}/ekat/cmake
+			${E3SM_EXTERNALS_ROOT}/ekat/cmake/tpls
+		)
+		include(EkatBuildKokkos)
+	else()
+		add_subdirectory(
+			${E3SM_EXTERNALS_ROOT}/ekat/extern/kokkos
+			${CMAKE_CURRENT_BINARY_DIR}/ekat/extern/kokkos
+		)
+	endif()
+endif()
+
+# Omega links the namespaced name (src/CMakeLists.txt).
 if (NOT TARGET Kokkos::kokkos)
-	add_subdirectory(
-      ${E3SM_EXTERNALS_ROOT}/ekat/extern/kokkos
-      ${CMAKE_CURRENT_BINARY_DIR}/ekat/extern/kokkos
-	)
+	add_library(Kokkos::kokkos ALIAS kokkos)
 endif()
 
 # Add the Scorpio library
+# Deliberately left as a single-name guard: unlike the libraries above, "pioc"
+# has no namespaced alias to also test, so one name already covers every path
+# that supplies it.
 if (NOT TARGET pioc)
 
 	# forward env. variables to Scorpio build
@@ -80,14 +113,29 @@ if (NOT TARGET pioc)
 endif()
 
 # Add E3SM GPTL library
+# Also a single-name guard: "gptl" has no namespaced alias anywhere.
 if (NOT TARGET gptl)
 	add_subdirectory(
 	  ${E3SM_ROOT}/share/timing
 	  ${CMAKE_CURRENT_BINARY_DIR}/gptl
 	)
+elseif (compile_threaded)
+	# The Scorpio add_subdirectory above already created a target named "gptl"
+	# (externals/scorpio/src/gptl, pulled in whenever Scorpio's find_package(GPTL)
+	# comes up empty), so the guard skipped E3SM's share/timing GPTL -- the only
+	# one that sets -DTHREADED_OMP.
+	#
+	# Build Scorpio's copy threaded so it matches how E3SM uses it. Note the
+	# Omega subtree does not inherit Macros.cmake's flags (CMAKE_C_FLAGS and
+	# CMAKE_Fortran_FLAGS are empty here), so -fopenmp has to come along too.
+	find_package(OpenMP REQUIRED COMPONENTS C Fortran)
+	target_compile_definitions(gptl PRIVATE THREADED_OMP)
+	target_link_libraries(gptl PRIVATE OpenMP::OpenMP_C OpenMP::OpenMP_Fortran)
 endif()
 
 # Add the Pacer library
+# Single-name guard: no E3SM-side "pacer" target exists anywhere, so Omega
+# always builds it.
 if (NOT TARGET pacer)
     add_library(pacer ${E3SM_ROOT}/share/pacer/Pacer.cpp)
 
@@ -139,7 +187,10 @@ if(GKlib_FOUND)
 endif()
 
 # Add the cpptrace library
-if (NOT TARGET cpptrace::cpptrace)
+# Note the real target is named "cpptrace-lib", not "cpptrace"
+# (external/cpptrace/CMakeLists.txt sets target_name to avoid colliding with
+# its own PROJECT_NAME); cpptrace::cpptrace is an ALIAS of it.
+if (NOT TARGET cpptrace::cpptrace AND NOT TARGET cpptrace-lib)
 	# Unset PACKAGE_VERSION before adding cpptrace to prevent ADIOS2's
 	# PACKAGE_VERSION (e.g. 2.10.2) from leaking into libdwarf's configure_file
 	unset(PACKAGE_VERSION)
@@ -148,4 +199,9 @@ if (NOT TARGET cpptrace::cpptrace)
 	  ${OMEGA_SOURCE_DIR}/external/cpptrace
 	  ${CMAKE_CURRENT_BINARY_DIR}/external/cpptrace
 	)
+endif()
+
+# Omega links the namespaced name (src/CMakeLists.txt).
+if (NOT TARGET cpptrace::cpptrace)
+	add_library(cpptrace::cpptrace ALIAS cpptrace-lib)
 endif()
