@@ -67,13 +67,18 @@ class VorticityAuxVars {
 
       parallelForInner(
           Team, Range{MinLyrVertexTop, MaxLyrVertexBot}, INNER_LAMBDA(int K) {
-             const Real InvPseudoThickVertex = 1._Real / PseudoThickVertex(K);
-
              RelVortVertex(IVertex, K) = RelVortVertexTmp(K);
-             NormRelVortVertex(IVertex, K) =
-                 RelVortVertexTmp(K) * InvPseudoThickVertex;
-             NormPlanetVortVertex(IVertex, K) =
-                 FVertex(IVertex) * InvPseudoThickVertex;
+             if (PseudoThickVertex(K) > 0._Real) {
+                const Real InvPseudoThickVertex =
+                    1._Real / PseudoThickVertex(K);
+                NormRelVortVertex(IVertex, K) =
+                    RelVortVertexTmp(K) * InvPseudoThickVertex;
+                NormPlanetVortVertex(IVertex, K) =
+                    FVertex(IVertex) * InvPseudoThickVertex;
+             } else {
+                NormRelVortVertex(IVertex, K)    = 0._Real;
+                NormPlanetVortVertex(IVertex, K) = 0._Real;
+             }
           });
    }
 
