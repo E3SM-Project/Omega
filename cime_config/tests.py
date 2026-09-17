@@ -1146,17 +1146,43 @@ _TESTS = {
             "ERS_Vmct.ne30pg2_f09_oEC60to30v3.SSP245_ZATM_BGC",
             )
     },
+
     "e3sm_omega_developer" : {
-        "time"  : "0:30:00",
+        "time"  : "0:45:00",
         "tests" : (
-            "SMS_Vmct.T62_oQU240.COMEGA-IAF",
+            # --- C Cases (Data atm/ice forcing) ---
             "ERS_Vmct.T62_oQU240.COMEGA-IAF",
             "PEM_Vmct.T62_oQU240.COMEGA-IAF",
-            "SMS_Vmct_Ln5.TL319_EC30to60E2r2.COMEGA-JRA1p5.omega-jra_1958",
-            "ERS_Vmct_Ln5.TL319_EC30to60E2r2.COMEGA-JRA1p5.omega-jra_1958",
-            #"PEM_Vmct_Ln5.TL319_EC30to60E2r2.COMEGA-JRA1p5.omega-jra_1958",
-            )
+            "SMS_Vmct_Ld3.TL319_EC30to60E2r2.COMEGA-JRA1p5.omega-jra_1958",
+
+            # --- G Cases (Active sea-ice MPASSI coupling) ---
+            "SMS_Vmct.T62_oQU240.GOMEGA-IAF",
+            "PEM_Vmct.T62_oQU240.GOMEGA-IAF",
+            "ERS_Vmct_Ln9.TL319_EC30to60E2r2.GOMEGA-JRA1p5.omega-jra_1958",
+            "PEM_Vmct_Ln9.TL319_EC30to60E2r2.GOMEGA-JRA1p5.omega-jra_1958",
+
+            # --- B Cases (Fully coupled EAM/ELM/MOSART/MPASSI/OMEGA) ---
+            "SMS_Vmct.ne4_oQU240.WCYCL1850NS-OMEGA",
+            "ERS_Vmct_Ld3.ne4_oQU240.WCYCL1850NS-OMEGA",
+
+            # --- Debug builds (TODO: enable once confirmed working) ---
+            #"SMS_D_Vmct_Ln3.T62_oQU240.COMEGA-IAF",
+            #"SMS_D_Vmct_Ln3.T62_oQU240.GOMEGA-IAF",
+            #"SMS_D_Vmct_Ln3.ne4_oQU240.WCYCL1850NS-OMEGA",
+        )
     },
+
+    # Higher-res fully coupled tests, too expensive for the dev suite
+    "e3sm_omega_integration" : {
+        "time"  : "2:00:00",
+        "inherit" : ("e3sm_omega_developer"),
+        "tests" : (
+            # --- B Cases (Fully coupled EAM/ELM/MOSART/MPASSI/OMEGA) ---
+            "ERS_Vmct_Ln9.ne30pg2_r05_EC30to60E2r2.WCYCL1850NS-OMEGA",
+            "PEM_Vmct_Ln9.ne30pg2_r05_EC30to60E2r2.WCYCL1850NS-OMEGA",
+        )
+    },
+
     "e3sm_test_bless" : {
         "time"  : "10:00",
         "tests" : (

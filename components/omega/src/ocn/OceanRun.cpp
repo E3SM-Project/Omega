@@ -14,6 +14,7 @@
 #include "TimeMgr.h"
 #include "TimeStepper.h"
 #include "Tracers.h"
+#include "VertCoord.h"
 
 namespace OMEGA {
 
@@ -92,7 +93,9 @@ int ocnRun(TimeInstant &CurrTime, ///< [inout] current sim time
    OceanState *DefOceanState   = OceanState::getDefault();
    TimeStepper *DefTimeStepper = TimeStepper::getDefault();
    Forcing *DefForcing         = Forcing::getDefault();
+   VertCoord *DefVertCoord     = VertCoord::getDefault();
    SfcCoupling *DefSfcCoupling = SfcCoupling::getDefault();
+   Analysis *DefAnalysis       = Analysis::getDefault();
 
    // get simulation time and other time info
    Clock *OmegaClock     = DefTimeStepper->getClock();
@@ -104,13 +107,8 @@ int ocnRun(TimeInstant &CurrTime, ///< [inout] current sim time
    CouplingAlarm->reset(SimTime);
 
    DefSfcCoupling->importFromCoupler();
-   DefSfcCoupling->applyImportFields(DefForcing);
+   DefSfcCoupling->applyImportFields(DefForcing, DefVertCoord);
 
-   // TODO: move somewhere more apropriate
-   I4 HaloErr = DefForcing->exchangeHalo();
-   if (HaloErr != 0) {
-      ABORT_ERROR("Error updating forcing halos after coupler import");
-   }
    DefForcing->computeAll();
 
    // time loop, integrate until CouplingAlarm or error encountered
@@ -135,10 +133,12 @@ int ocnRun(TimeInstant &CurrTime, ///< [inout] current sim time
          Pacer::stop("Stepper:doStep", 1);
       }
 
+      // Update fields exported to the coupler
+      DefSfcCoupling->updateExportFields(DefOceanState, Tracers::getAll(0));
+      // Compute analysis fields whose alarms are ringing
+      DefAnalysis->computeAll();
       // Write any IOStreams with their alarms ringing
       IOStream::writeAll(OmegaClock);
-
-      DefSfcCoupling->updateExportFields(DefOceanState, Tracers::getAll(0));
 
       LOG_INFO("ocnRun: Time step {} complete, clock time: {}", IStep,
                SimTime.getString(4, 4, "-"));

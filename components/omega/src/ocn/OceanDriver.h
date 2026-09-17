@@ -49,8 +49,8 @@ int ocnInit1(
 
 /// Coupled init phase 2: runs once the coupler has allocated its MCT buffers;
 /// attaches them and exchanges the initial coupled state
-int ocnInit2(const Real *CplToOcnData, ///< [in] coupler import data pointer
-             Real *OcnToCplData        ///< [out] coupler export data pointer
+void ocnInit2(const Real *CplToOcnData, ///< [in] coupler import data pointer
+              Real *OcnToCplData        ///< [out] coupler export data pointer
 );
 
 /// Advance the model from starting from CurrTime until EndAlarm rings

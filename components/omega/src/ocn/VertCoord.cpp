@@ -743,6 +743,15 @@ void VertCoord::setStreamArrays(const bool ReadStream, Halo *MeshHalo) {
 }
 
 //------------------------------------------------------------------------------
+// Exchange SurfacePressure halo
+void VertCoord::updateSurfacePressure(Halo *MeshHalo) {
+   int Err = MeshHalo->exchangeFullArrayHalo(SurfacePressure, OnCell);
+   if (Err != 0) {
+      ABORT_ERROR("VertCoord: Error exchanging SurfacePressure halo");
+   }
+}
+
+//------------------------------------------------------------------------------
 // Apply the zero default when SurfacePressure was absent from the input, then
 // exchange halo and copy SurfacePressure to host after the initial-state or
 // restart stream has been read.
@@ -767,7 +776,7 @@ void VertCoord::initSurfacePressure(Halo *MeshHalo) {
       deepCopy(SurfacePressure, 0._Real);
    }
 
-   MeshHalo->exchangeFullArrayHalo(SurfacePressure, OnCell);
+   updateSurfacePressure(MeshHalo);
    deepCopy(SurfacePressureH, SurfacePressure);
 }
 
@@ -1279,6 +1288,8 @@ void VertCoord::copyToHost() {
    deepCopy(GeopotentialMidH, GeopotentialMid);
    deepCopy(PseudoThicknessTargetH, PseudoThicknessTarget);
    deepCopy(RefPseudoThicknessH, RefPseudoThickness);
+   // SurfacePressure is only ever written on the device (see copyToDevice)
+   deepCopy(SurfacePressureH, SurfacePressure);
 }
 
 //------------------------------------------------------------------------------
@@ -1294,6 +1305,12 @@ void VertCoord::copyToDevice() {
    deepCopy(GeopotentialMid, GeopotentialMidH);
    deepCopy(PseudoThicknessTarget, PseudoThicknessTargetH);
    deepCopy(RefPseudoThickness, RefPseudoThicknessH);
+   // Note the asymmetry with copyToHost, which does refresh SurfacePressureH:
+   // the device SurfacePressure is the authoritative copy (it is what
+   // Field::attachData registered and what computePressure reads) and is only
+   // ever written on the device, by the input stream read or by
+   // SfcCoupling::applyImportFields. SurfacePressureH is a read-only mirror of
+   // it, so copying it back here could only overwrite a newer device value.
 }
 
 //------------------------------------------------------------------------------

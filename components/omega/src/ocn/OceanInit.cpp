@@ -267,26 +267,33 @@ int ocnInit1(MPI_Comm Comm,                 ///< [in] ocean MPI communicator
       }
    }
 
+   Err = initUpdateHaloAndHostArrays();
+
+   // Finish any time-stepper specific state initialization
+   initStateForTimeStepper(CoupledReadRestart);
+
    return Err;
 } // end ocnInit1
 
 // Coupled init phase 2: attach the coupler's MCT buffers and exchange the
 // initial coupled state; split from ocnInit1 since these buffers don't exist
 // until the coupler has sized/allocated them using Omega's decomposition
-int ocnInit2(const Real *CplToOcnData, Real *OcnToCplData) {
-   SfcCoupling *DefCoupling = SfcCoupling::getDefault();
-   DefCoupling->attachData(CplToOcnData, OcnToCplData);
+void ocnInit2(const Real *CplToOcnData, Real *OcnToCplData) {
 
-   DefCoupling->exportToCoupler();
-   DefCoupling->importFromCoupler();
-   DefCoupling->applyImportFields(Forcing::getDefault());
+   SfcCoupling *DefSfcCoupling = SfcCoupling::getDefault();
+   OceanState *DefOceanState   = OceanState::getDefault();
 
-   int Err = initUpdateHaloAndHostArrays();
+   DefSfcCoupling->attachData(CplToOcnData, OcnToCplData);
 
-   // Finish any time-stepper specific state initialization
-   initStateForTimeStepper(CoupledReadRestart);
+   // Populate export fields with initial SST, SSS, velocities, and SSH
+   DefSfcCoupling->updateExportFields(DefOceanState, Tracers::getAll(0));
 
-   return Err;
+   DefSfcCoupling->exportToCoupler();
+
+   // No importFromCoupler/applyImportFields here. The coupler has not filled
+   // x2o yet, so importing would overwrite the initial-state SurfacePressure
+   // with uninitialized memory. ocnRun calls both at the start of every
+   // coupling interval, including the first, so nothing is missed.
 } // end ocnInit2
 
 // Call init routines for remaining Omega modules

@@ -152,6 +152,39 @@ int main(int argc, char *argv[]) {
                          "VertCoordTest: SurfacePressureH size FAIL");
       }
 
+      // Verify updateSurfacePressure fills halo cells. Seed the owned cells
+      // with their global cell ID, poison the halo, then confirm the exchange
+      // replaced every halo value with the owning rank's. This checks the
+      // device array: updateSurfacePressure deliberately does not refresh
+      // SurfacePressureH, which is a read-only mirror for IO refreshed by
+      // copyToHost.
+      HostArray1DReal SfcPressSeedH("SfcPressSeedH", NCellsSize);
+      for (int ICell = 0; ICell < NCellsAll; ++ICell) {
+         SfcPressSeedH(ICell) =
+             ICell < NCellsOwned ? static_cast<Real>(DefDecomp->CellIDH(ICell))
+                                 : -1.0_Real;
+      }
+      deepCopy(DefVertCoord->SurfacePressure, SfcPressSeedH);
+
+      DefVertCoord->updateSurfacePressure(DefHalo);
+
+      auto SfcPressH = createHostMirrorCopy(DefVertCoord->SurfacePressure);
+      Err            = 0;
+      for (int ICell = 0; ICell < NCellsAll; ++ICell) {
+         if (SfcPressH(ICell) != static_cast<Real>(DefDecomp->CellIDH(ICell)))
+            ++Err;
+      }
+
+      if (Err == 0) {
+         LOG_INFO("VertCoordTest: updateSurfacePressure PASS");
+      } else {
+         ErrAll += Error(ErrorCode::Fail,
+                         "VertCoordTest: updateSurfacePressure FAIL");
+      }
+
+      // Restore the zeroed state initSurfacePressure left behind
+      deepCopy(DefVertCoord->SurfacePressure, 0._Real);
+
       // Tests for computePressure
 
       Array2DReal PseudoThickness("PseudoThickness", NCellsSize, NVertLayers);

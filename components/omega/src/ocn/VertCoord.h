@@ -224,6 +224,9 @@ class VertCoord {
    /// Copy member arrays from device to host
    void copyToHost();
 
+   /// Exchange the SurfacePressure halo after its owned cells are updated
+   void updateSurfacePressure(Halo *MeshHalo);
+
    /// Exchange halo and copy SurfacePressure to host after the initial-state
    /// or restart stream has been read
    void initSurfacePressure(Halo *MeshHalo);
