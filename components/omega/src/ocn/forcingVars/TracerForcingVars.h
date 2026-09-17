@@ -31,6 +31,12 @@ class TracerForcingVars {
 
    Array1DReal SeaIceSaltFluxCell;
 
+   /// KPP non-local surface tracer fluxes [NTracers, NCellsSize]. External
+   /// forcing supplies non-temperature/salinity tracers; KPP derives and
+   /// overwrites temperature and salinity from the coupled heat and mass
+   /// fluxes.
+   Array2DReal SurfaceTracerFluxCell;
+
    TracerForcingVars(const std::string &Suffix, const HorzMesh *Mesh);
 
    void registerFields(const std::string &MeshName) const;

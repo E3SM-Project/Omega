@@ -85,6 +85,7 @@ class Tendencies {
    SfcTracerForcingOnCell SfcTracerForcing;
    TracerHorzAdvOnCell TracerHorzAdv;
    TracerDiffOnCell TracerDiffusion;
+   KPPNonLocalTracerFluxOnCell KPPNonLocalTracerFlux;
    TracerHyperDiffOnCell TracerHyperDiff;
    SurfaceTracerRestoringOnCell SurfaceTracerRestoring;
 
@@ -93,6 +94,14 @@ class Tendencies {
    CoriolisTendMode CoriolisMode = CoriolisTendMode::PVFlux;
    //   - The split factor for the barotropic pressure anomaly gradient
    Real SplitFactor = 0._Real;
+
+   // Diagnostics for temperature forcing pathways used in KPP comparison.
+   // These are raw contributions added to TracerTend before tracer update.
+   Array2DReal KPPNonLocalTracerTempTendDiag;
+   Array1DReal KPPNonLocalTracerTempColumnSumDiag;
+
+   // Enable diagnostics that isolate temperature non-local terms.
+   bool KPPNonLocalTracerDiagnosticsEnable = true;
 
    std::string Name;
 

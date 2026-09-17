@@ -18,6 +18,7 @@
 #include "HorzMesh.h"
 #include "IO.h"
 #include "IOStream.h"
+#include "KPPMix.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OceanTestCommon.h"
@@ -1041,8 +1042,111 @@ void testTotalVertMix() {
    return;
 }
 
+// This tests that VertMix's KPP-MatchBoth interior snapshot captures
+// background+shear only (excluding both KPP and convective contributions),
+// and that it is left untouched when MatchBoth is not the active technique.
+void testInteriorSnapshotForMatchBoth() {
+   const auto Mesh          = HorzMesh::getDefault();
+   const auto VCoord        = VertCoord::getDefault();
+   const auto &MinLayerCell = VCoord->MinLayerCell;
+   I4 NEdgesAll             = Mesh->NEdgesAll;
+
+   VertMix *TestVertMix = VertMix::getInstance();
+
+   // KPP contributes zero diffusivity/viscosity here; only its
+   // MatchTechnique setting is exercised.
+   KPPMix::init();
+   KPPMix *KPPInstance         = KPPMix::getInstance();
+   KPPInstance->Enabled        = true;
+   KPPInstance->MatchTechnique = KPPMatchType::MatchBoth;
+   deepCopy(KPPInstance->VertDiff, 0.0_Real);
+   deepCopy(KPPInstance->VertVisc, 0.0_Real);
+   deepCopy(KPPInstance->OSBLDepthIndex, 0);
+
+   auto NormalVelEdge =
+       Array2DReal("NormalVelEdgeInterior", NEdgesAll, NVertLayers);
+   auto TangVelEdge =
+       Array2DReal("TangVelEdgeInterior", NEdgesAll, NVertLayers);
+   auto BruntVaisalaFreqSqCell = Array2DReal("BruntVaisalaFreqSqCellInterior",
+                                             Mesh->NCellsSize, NVertLayersP1);
+   deepCopy(NormalVelEdge, NV);
+   deepCopy(TangVelEdge, TV);
+   // Strongly negative BVF everywhere so convective mixing definitely
+   // triggers, distinguishing the (conv-excluded) snapshot from the final
+   // merged VertDiff/VertVisc.
+   deepCopy(BruntVaisalaFreqSqCell, -1.0_Real);
+
+   constexpr Real TestConvDiff              = 2.0_Real;
+   TestVertMix->ComputeVertMixConv.Enabled  = true;
+   TestVertMix->ComputeVertMixConv.ConvDiff = TestConvDiff;
+   TestVertMix->ComputeVertMixShear.Enabled = true;
+   deepCopy(TestVertMix->InteriorVertDiff, -1.0_Real);
+   deepCopy(TestVertMix->InteriorVertVisc, -1.0_Real);
+
+   TestVertMix->computeVertMix(NormalVelEdge, TangVelEdge,
+                               BruntVaisalaFreqSqCell);
+
+   OMEGA_SCOPE(VertDiff, TestVertMix->VertDiff);
+   OMEGA_SCOPE(VertVisc, TestVertMix->VertVisc);
+   OMEGA_SCOPE(InteriorDiff, TestVertMix->InteriorVertDiff);
+   OMEGA_SCOPE(InteriorVisc, TestVertMix->InteriorVertVisc);
+
+   constexpr I4 TestLevel = 10; // deep enough to avoid OSBL/boundary edges
+
+   int NumMismatches = 0;
+   parallelReduce(
+       "CheckInteriorSnapshot", {Mesh->NCellsAll},
+       KOKKOS_LAMBDA(int ICell, int &Count) {
+          const int K       = MinLayerCell(ICell) + TestLevel;
+          const bool DiffOk = isApprox(
+              VertDiff(ICell, K), InteriorDiff(ICell, K) + TestConvDiff, RTol);
+          const bool ViscOk = isApprox(
+              VertVisc(ICell, K), InteriorVisc(ICell, K) + TestConvDiff, RTol);
+          const bool SnapshotFilled = InteriorDiff(ICell, K) != -1.0_Real;
+          if (!DiffOk || !ViscOk || !SnapshotFilled)
+             Count++;
+       },
+       NumMismatches);
+
+   if (NumMismatches != 0) {
+      ABORT_ERROR("TestVertMix: InteriorSnapshotForMatchBoth FAIL, {} "
+                  "mismatches",
+                  NumMismatches);
+   } else {
+      LOG_INFO("TestVertMix: InteriorSnapshotForMatchBoth (MatchBoth) PASS");
+   }
+
+   // Confirm the snapshot is skipped (left untouched) when MatchBoth is not
+   // the configured technique.
+   KPPInstance->MatchTechnique = KPPMatchType::SimpleShapes;
+   deepCopy(TestVertMix->InteriorVertDiff, -1.0_Real);
+   deepCopy(TestVertMix->InteriorVertVisc, -1.0_Real);
+   TestVertMix->computeVertMix(NormalVelEdge, TangVelEdge,
+                               BruntVaisalaFreqSqCell);
+
+   int NumUnexpectedUpdates = 0;
+   parallelReduce(
+       "CheckInteriorSnapshotSkipped", {Mesh->NCellsAll},
+       KOKKOS_LAMBDA(int ICell, int &Count) {
+          const int K = MinLayerCell(ICell) + TestLevel;
+          if (InteriorDiff(ICell, K) != -1.0_Real ||
+              InteriorVisc(ICell, K) != -1.0_Real)
+             Count++;
+       },
+       NumUnexpectedUpdates);
+
+   if (NumUnexpectedUpdates != 0) {
+      ABORT_ERROR("TestVertMix: InteriorSnapshotSkippedForSimpleShapes FAIL, "
+                  "{} mismatches",
+                  NumUnexpectedUpdates);
+   } else {
+      LOG_INFO("TestVertMix: InteriorSnapshotSkippedForSimpleShapes PASS");
+   }
+}
+
 /// Finalize and clean up all test infrastructure
 void finalizeVertMixTest() {
+   KPPMix::destroyInstance();
    VertMix::destroyInstance();
    HorzMesh::clear();
    Halo::clear();
@@ -1076,6 +1180,7 @@ void vertMixTest() {
    testConvVertMix();
    testShearVertMix();
    testTotalVertMix();
+   testInteriorSnapshotForMatchBoth();
 
    // clean up
    finalizeVertMixTest();

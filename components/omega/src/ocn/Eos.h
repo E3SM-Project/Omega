@@ -890,7 +890,7 @@ class Teos10BruntVaisalaFreqSq {
    /// answers. The stored derivatives are also filled only when
    /// computeSpecVolAndDerivs is called, which the Brunt-Vaisala calculation
    /// cannot assume.
-   KOKKOS_FUNCTION Real calcAlpha(Real Sa, Real Ct, Real P, Real Sp) const {
+   static KOKKOS_FUNCTION Real calcAlpha(Real Sa, Real Ct, Real P, Real Sp) {
 
       Real DTtPCoeffs[5];
 
@@ -910,7 +910,7 @@ class Teos10BruntVaisalaFreqSq {
    /// in dbar and Sp is the specific volume. As for calcAlpha above, this is
    /// evaluated at the interface state and so cannot reuse the layer-center
    /// Eos::SpecVolDSa array.
-   KOKKOS_FUNCTION Real calcBeta(Real Sa, Real Ct, Real P, Real Sp) const {
+   static KOKKOS_FUNCTION Real calcBeta(Real Sa, Real Ct, Real P, Real Sp) {
 
       Real DSsPCoeffs[5];
 
@@ -1049,6 +1049,43 @@ class Eos {
          return ComputeSpecVolTeos10.calcCtFromPt(Sa, Pt);
       }
       return Pt;
+   }
+
+   /// Get linear EOS density derivative with respect to temperature.
+   Real getLinearDRhodT() const { return ComputeSpecVolLinear.DRhodT; }
+
+   /// Get linear EOS density derivative with respect to salinity.
+   Real getLinearDRhodS() const { return ComputeSpecVolLinear.DRhodS; }
+
+   /// Calculate alpha (thermal expansion coefficient, per specific volume) for
+   /// the given EOS choice. P is relative pressure in dbar and Sp is the
+   /// specific volume. LinearDRhodT is only used for LinearEos.
+   static KOKKOS_FUNCTION Real computeAlpha(EosType Choice, Real Sa, Real Ct,
+                                            Real P, Real Sp,
+                                            Real LinearDRhodT) {
+      if (Choice == EosType::Teos10Eos) {
+         return Teos10BruntVaisalaFreqSq::calcAlpha(Sa, Ct, P, Sp);
+      }
+      if (Choice == EosType::LinearEos) {
+         return -LinearDRhodT * Sp;
+      }
+      // ConstantEos: specific volume does not depend on temperature
+      return 0.0_Real;
+   }
+
+   /// Calculate beta (haline contraction coefficient, per specific volume) for
+   /// the given EOS choice. P is relative pressure in dbar and Sp is the
+   /// specific volume. LinearDRhodS is only used for LinearEos.
+   static KOKKOS_FUNCTION Real computeBeta(EosType Choice, Real Sa, Real Ct,
+                                           Real P, Real Sp, Real LinearDRhodS) {
+      if (Choice == EosType::Teos10Eos) {
+         return Teos10BruntVaisalaFreqSq::calcBeta(Sa, Ct, P, Sp);
+      }
+      if (Choice == EosType::LinearEos) {
+         return LinearDRhodS * Sp;
+      }
+      // ConstantEos: specific volume does not depend on salinity
+      return 0.0_Real;
    }
 
    /// Calculate freezing temperature of seawater.

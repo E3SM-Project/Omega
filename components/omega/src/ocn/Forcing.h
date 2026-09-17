@@ -74,6 +74,11 @@ class Forcing {
    /// Reset all forcing arrays to zero before reading optional fields
    void resetArrays();
 
+   /// Replace the complete current-step KPP non-local tracer surface flux.
+   /// The caller must provide every non-temperature/salinity tracer and local
+   /// cell entry explicitly; KPP overwrites the temperature and salinity slots.
+   void setSurfaceTracerFlux(const Array2DReal &Flux);
+
    /// Compute all forcing variables
    void computeAll() const;
 

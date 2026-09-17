@@ -127,6 +127,11 @@ TracerDiffOnCell::TracerDiffOnCell(const HorzMesh *Mesh,
       MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
 
+KPPNonLocalTracerFluxOnCell::KPPNonLocalTracerFluxOnCell(
+    const HorzMesh *Mesh, const VertCoord *VCoord)
+    : Enabled(false), MinLayerCell(VCoord->MinLayerCell),
+      MaxLayerCell(VCoord->MaxLayerCell) {}
+
 TracerHyperDiffOnCell::TracerHyperDiffOnCell(const HorzMesh *Mesh,
                                              const VertCoord *VCoord)
     : NEdgesOnCell(Mesh->NEdgesOnCell), EdgesOnCell(Mesh->EdgesOnCell),
