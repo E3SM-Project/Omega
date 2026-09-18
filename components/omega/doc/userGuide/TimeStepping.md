@@ -9,25 +9,26 @@ of the Omega configuration file:
     CalendarType: No Leap
     TimeStepper: Forward-Backward
     TimeStep: 0000_00:10:00
+    StartType: StartUp
+    StartTime: 0001-01-01_00:00:00
+    StopType: AtTime
+    StopCriterion: 0001-01-01_02:00:00
     ModeSplitShare:
       BtrTimeStepper: Predictor-Corrector
       BtrTimeStep: 0000_00:00:20
       NTimeStepIteration: 2
       NBclCoriolisIteration: 2
       ReinitSplitVelocity: false
-    StartTime: 0001-01-01_00:00:00
-    StopTime: 0001-01-01_02:00:00
-    RunDuration: none
 ```
 This configuration refers to the default time stepping used for the model
 dynamics (momentum and continuity equations). Additional time steppers can
 be used for other portions of the model (eg the barotropic mode or tracer
 transport) that may have different time steps and use different algorithms.
 
-The Calendar choice is describe in the
+The ``CalendarType`` choice is described in the
 [Time Management](#omega-user-time-manager) section.
 
-The TimeStepper option refers to the numerical scheme used to advance the
+The ``TimeStepper`` option refers to the numerical scheme used to advance the
 model in time. Omega implements a number of time-stepping schemes. The user
 can select the scheme they want in the configuration file.
 The following time steppers are currently available:
@@ -43,7 +44,7 @@ The following time steppers are currently available:
 subgroup shown above. See [Split time stepping](#omega-user-split-time-stepping)
 for descriptions of these schemes and their configuration options.
 
-The time step refers to the main model time step used to advance the solution
+The ``TimeStep`` refers to the main model time step used to advance the solution
 forward. The time step is specified as a formatted string and can be provided
 in any of the following forms:
 
@@ -55,22 +56,31 @@ in any of the following forms:
 Days, hours and minutes are optional but must be in order if included.
 Fractional seconds are optional.
 
-The StartTime refers to the starting time for the simulation. It is in the
+The ``StartOption`` can be one of three choices. The ``StartUp`` option is for
+starting a solution from scratch from an initial state file. The ``Continue``
+option is for continuing a simulation from a restart file. The ``Branch``
+option will branch from an existing simulation by reading from the restart
+file, but it will reset the clock to the ``StartTime``.
+
+The ``StartTime`` refers to the starting time for the full simulation (not the
+current leg of an ongoing simulation). It is in the
 format ``yyyy-mm-day_hh:mm:ss`` for year, month, day, hour, minute, second.
-This refers to the initial start time; for a longer simulation, the current
-time will be modified by the restart file to update to the present time for
-the current segment of the simulation.
+If this is a continuation of an existing simulation, the current time for this
+leg of the full simulation will be set by the restart file.
 
-The simulation will be stopped either at a fixed StopTime if provided or
-by the RunDuration. For shorter simulations, the StopTime can be used to
-specify a specific time to stop. For longer simulations with multiple
-segments that are restarted, the RunDuration should used and should be set
-to fit within the queue time. The format for StopTime is the same as StartTime.
-The format for RunDuration is the same as the TimeStep.
+A ``StopType`` determines (with the ``StopCriterion`` below) how the simulation
+will be stopped. There are three options. The ``AtTime`` option will stop the
+simulation at a specific time and the ``StopCriterion`` holds that specific time
+as described below. The ``AfterDuration`` option runs the simulation for a fixed
+time interval and the ``StopCriterion`` is used to define that interval. A final
+option called ``OnSignal`` is primarily for coupled simulations where the
+simulation will stop after receiving a signal from the coupler.
 
-Only one of the StopTime or RunDuration should be specified with the other
-set to either an empty string or "none". If both are specified, the
-RunDuration is used instead of the StopTime.
+For the ``AtTime`` stop type, the ``StopCriterion`` must be a time instant in
+the format ``yyyy-mm-dd_hh:mm:ss``. If the ``StopType`` is ``AfterDuration``,
+the ``StopCriterion`` is a time interval in the format described above for the
+time step (but typically ``dddd_hh:mm:ss``). For the ``OnSignal`` option the
+``StopCriterion`` is ignored.
 
 ```{toctree}
 :hidden:

@@ -39,19 +39,8 @@
 
 namespace OMEGA {
 
-// Convienvence converter of an int to a StartType enum, with error checking
-StartType safeIntToStartType(int val) {
-   switch (val) {
-   case 0:
-      return StartType::StartUp;
-   case 1:
-      return StartType::Continue;
-   case 2:
-      return StartType::Branch;
-   default:
-      ABORT_ERROR("Invalid start type value: {}", val);
-   }
-}
+//------------------------------------------------------------------------------
+// Timing initialization routines
 
 namespace Timing {
 // Flag to determine if timing info should be printed from all ranks
@@ -100,6 +89,7 @@ static void readTimingConfig(Config *OmegaConfig) {
 // the state is far enough along for initStateForTimeStepper
 static bool CoupledReadRestart = false;
 
+//------------------------------------------------------------------------------
 // Perform any time-stepper specific state initialization that can only be done
 // once the input has been read and the halos have been exchanged. For the
 // split-explicit stepper this separates the input velocity into its barotropic
@@ -114,6 +104,8 @@ static void initStateForTimeStepper(
    DefStepper->initializeStateFromInput(DefState, ReadRestart);
 }
 
+//------------------------------------------------------------------------------
+// Ocean initialization - standalone case
 int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
 ) {
 
@@ -146,41 +138,58 @@ int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
    // Now that all fields have been defined, validate all the streams
    // contents
    bool StreamsValid = IOStream::validateAll();
-   if (!StreamsValid) {
+   if (!StreamsValid)
       ABORT_ERROR("ocnInit: Error validating IO Streams");
-   }
 
    // Initialize data from Restart or InitialState files
-   std::string SimTimeStr          = " "; // create SimulationTime metadata
    std::shared_ptr<Field> SimField = Field::get(SimMeta);
+   std::string SimTimeStr          = " ";
    SimField->addMetadata("SimulationTime", SimTimeStr);
    Error Err1;
-   Error Err2;
 
-   // read from initial state if this is starting a new simulation
-   Metadata ReqMeta; // no requested metadata for initial state
-   Err1 = IOStream::read("InitialState", ModelClock, ReqMeta);
+   Metadata ReqMeta; // empty requested metadata from file
+   TimeStepperStartType StartType = DefStepper->getStartType();
+   bool ReadRestart               = false;
 
-   // read restart if starting from restart
-   SimTimeStr                = " ";
-   ReqMeta["SimulationTime"] = SimTimeStr;
-   Err2 = IOStream::read("RestartRead", ModelClock, ReqMeta);
+   // Read from either initial state stream or restart stream based
+   // on the start option
+   switch (StartType) {
 
-   // One of the above two streams must be successful to initialize the
-   // state and other fields used in the model
-   if (Err1.isFail() and Err2.isFail()) {
-      CHECK_ERROR(Err1, "Errors encountered reading InitialState");
-      CHECK_ERROR(Err2, "Errors encountered reading RestartRead");
-      ABORT_ERROR("Error initializing ocean variables from input streams");
-   }
+   // Starting from scratch using an initial state
+   case (TimeStepperStartType::StartUp):
+      Err1 = IOStream::read("InitialState", ModelClock, ReqMeta);
+      CHECK_ERROR_ABORT(Err1, "Error reading InitialState file");
+      break;
 
-   // If reading from restart, reset the current time to the input time
-   SimTimeStr = std::any_cast<std::string>(ReqMeta["SimulationTime"]);
-   const bool ReadRestart = SimTimeStr != " ";
-   if (ReadRestart) {
+   // Continue simulation from a restart file and reset current time
+   // to the restart time read from restart metadata
+   case (TimeStepperStartType::Continue): {
+      ReqMeta["SimulationTime"] = SimTimeStr; // request current sim time
+      Err1        = IOStream::read("RestartRead", ModelClock, ReqMeta);
+      ReadRestart = true;
+
+      // Reset the current time to the input time from restart file and
+      // update the end alarm and stop time.
+      SimTimeStr = std::any_cast<std::string>(ReqMeta["SimulationTime"]);
+      if (SimTimeStr == " ")
+         ABORT_ERROR("Error reading current time from restart file");
       TimeInstant NewCurrentTime(SimTimeStr);
       ModelClock->setCurrentTime(NewCurrentTime);
-   }
+      DefStepper->resetEndAlarm();
+   } break;
+
+   // Branch a simulation from a previous restart file but keep the
+   // simulation StartTime rather than the restart time
+   case (TimeStepperStartType::Branch):
+      Err1 = IOStream::read("RestartRead", ModelClock, ReqMeta);
+      CHECK_ERROR_ABORT(Err1, "Error reading restart file for branch run");
+      ReadRestart = true;
+      break;
+
+   default:
+      ABORT_ERROR("Unknown StartType in OcnInit");
+
+   } // end switch StartType
 
    // Update Halo/Host arrays with new state, auxiliary state, and tracer fields
    Err = initUpdateHaloAndHostArrays();
@@ -191,12 +200,14 @@ int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
    return Err;
 } // end ocnInit
 
+//------------------------------------------------------------------------------
+// Ocean initialization - coupling case
 int ocnInit1(MPI_Comm Comm,                 ///< [in] ocean MPI communicator
              const int OcnId,               ///< [in] mct comp id for ocean
              const std::string &ConfigFile, ///< [in] path to yaml config file
              const std::string &LogFile,    ///< [in] path to log file
-             const StartType StartType,     ///< [in] simulation start type
-             const TimeInitParams &TimeParams, ///< [in] simulation start time
+             const TimeStepperStartType StartType, ///< [in] sim start type
+             const TimeInstant &StartTime, ///< [in] simulation start time
              const CouplingInitParams &CouplingParams, ///< [in] coupler info
              const IO::IOInitParams &IOParams ///< [in] driver-owned IO params
 ) {
@@ -215,7 +226,7 @@ int ocnInit1(MPI_Comm Comm,                 ///< [in] ocean MPI communicator
    readTimingConfig(OmegaConfig);
 
    // initialize remaining Omega modules
-   Err = initOmegaModules(Comm, TimeParams, CouplingParams, IOParams);
+   Err = initOmegaModules(Comm, StartType, StartTime, CouplingParams, IOParams);
    if (Err != 0)
       ABORT_ERROR("ocnInit: Error initializing Omega modules");
 
@@ -229,38 +240,56 @@ int ocnInit1(MPI_Comm Comm,                 ///< [in] ocean MPI communicator
       ABORT_ERROR("ocnInit: Error validating IO Streams");
    }
 
-   Metadata ReqMeta;
-   CoupledReadRestart = StartType != StartType::StartUp;
-   if (StartType == StartType::StartUp) {
-      // read from initial state if this is starting a new simulation
-      Error IOError = IOStream::read("InitialState", ModelClock, ReqMeta);
-      if (IOError.isFail()) {
-         ABORT_ERROR("Errors encountered reading InitialState");
-      }
-   } else if (StartType == StartType::Continue ||
-              StartType == StartType::Branch) {
-      // read restart if starting from restart
-      ReqMeta["SimulationTime"] = std::string(" ");
-      Error IOError = IOStream::read("RestartRead", ModelClock, ReqMeta);
-      if (IOError.isFail()) {
-         ABORT_ERROR("Errors encountered reading RestartRead");
-      }
+   // Initialize data from Restart or InitialState files
+   std::string SimTimeStr          = " "; // create SimulationTime metadata
+   std::shared_ptr<Field> SimField = Field::get(SimMeta);
+   SimField->addMetadata("SimulationTime", SimTimeStr);
+   Error Err1;
+   Metadata ReqMeta; // empty requested metadata from file
 
-      // Coupler only provides case start time, so on restart get the
-      // simulation time from the restart file
-      std::string SimTimeStr =
-          std::any_cast<std::string>(ReqMeta["SimulationTime"]);
-      if (SimTimeStr == " ") {
-         ABORT_ERROR("RestartRead stream did not provide SimulationTime");
-      }
+   // Read from either initial state stream or restart stream based
+   // on the start option
+   switch (StartType) {
 
-      // Set the model clock to the simulation time read from the restart file
+   // Starting from scratch using an initial state
+   case (TimeStepperStartType::StartUp):
+      Err1 = IOStream::read("InitialState", ModelClock, ReqMeta);
+      CHECK_ERROR_ABORT(Err1, "Error reading InitialState file");
+      CoupledReadRestart = false;
+      break;
+
+   // Continue simulation from a restart file and reset current time
+   // to the restart time read from restart metadata
+   case (TimeStepperStartType::Continue): {
+      ReqMeta["SimulationTime"] = SimTimeStr; // request current sim time
+      Err1               = IOStream::read("RestartRead", ModelClock, ReqMeta);
+      CoupledReadRestart = true;
+
+      // Reset the current time to the input time from restart file and
+      // update the end alarm and stop time.
+      SimTimeStr = std::any_cast<std::string>(ReqMeta["SimulationTime"]);
+      if (SimTimeStr == " ")
+         ABORT_ERROR("Error reading current time from restart file");
       TimeInstant NewCurrentTime(SimTimeStr);
       ModelClock->setCurrentTime(NewCurrentTime);
-   };
+      DefStepper->resetEndAlarm();
+   } break;
+
+   // Branch a simulation from a previous restart file but keep the
+   // simulation StartTime rather than the restart time
+   case (TimeStepperStartType::Branch):
+      Err1 = IOStream::read("RestartRead", ModelClock, ReqMeta);
+      CHECK_ERROR_ABORT(Err1, "Error reading restart file for branch run");
+      CoupledReadRestart = true;
+      break;
+
+   default:
+      ABORT_ERROR("Unknown StartType in OcnInit");
+
+   } // end switch StartType
 
    // Advance clock one coupling interval, to be in sync with couplers clock
-   if (StartType == StartType::StartUp) {
+   if (StartType == TimeStepperStartType::StartUp) {
       SfcCoupling *DefCoupling = SfcCoupling::getDefault();
       while (!DefCoupling->getCouplingAlarm()->isRinging()) {
          ModelClock->advance();
@@ -270,6 +299,7 @@ int ocnInit1(MPI_Comm Comm,                 ///< [in] ocean MPI communicator
    return Err;
 } // end ocnInit1
 
+//------------------------------------------------------------------------------
 // Coupled init phase 2: attach the coupler's MCT buffers and exchange the
 // initial coupled state; split from ocnInit1 since these buffers don't exist
 // until the coupler has sized/allocated them using Omega's decomposition
@@ -289,6 +319,7 @@ int ocnInit2(const Real *CplToOcnData, Real *OcnToCplData) {
    return Err;
 } // end ocnInit2
 
+//------------------------------------------------------------------------------
 // Call init routines for remaining Omega modules
 // Internal helper — all module init after TimeStepper::init1 is called.
 // Called by both initOmegaModules overloads.
@@ -331,6 +362,7 @@ static int initOmegaModulesImpl() {
                   "TracersToRestore is empty");
    }
 
+   // Add fields to time stepper
    TimeStepper::init2();
 
    Err = OceanState::init();
@@ -344,6 +376,7 @@ static int initOmegaModulesImpl() {
 
 } // end initOmegaModulesImpl
 
+//------------------------------------------------------------------------------
 int initOmegaModules(MPI_Comm Comm) {
    // Initialize the default time stepper (phase 1) that includes the
    // calendar, model clock and start/stop times and alarms with all options
@@ -353,13 +386,15 @@ int initOmegaModules(MPI_Comm Comm) {
    return initOmegaModulesImpl();
 }
 
-int initOmegaModules(MPI_Comm Comm, const TimeInitParams &TParams,
+//------------------------------------------------------------------------------
+int initOmegaModules(MPI_Comm Comm, TimeStepperStartType StartType,
+                     const TimeInstant &StartTime,
                      const CouplingInitParams &CParams,
                      const IO::IOInitParams &IOParams) {
    int Err = 0;
    // Initialize time stepper (phase 1) using coupler provided time parameters
    // Calendar should have already been initalized
-   TimeStepper::init1(TParams);
+   TimeStepper::init1(StartType, StartTime);
    IO::init(Comm, IOParams);
    Err = initOmegaModulesImpl();
    SfcCoupling::init(CParams);
@@ -367,6 +402,7 @@ int initOmegaModules(MPI_Comm Comm, const TimeInitParams &TParams,
    return Err;
 }
 
+//------------------------------------------------------------------------------
 int initUpdateHaloAndHostArrays() {
    // Update Halo/Host arrays with new state, auxiliary state, and tracer fields
    int Err = 0;

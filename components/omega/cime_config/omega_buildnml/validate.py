@@ -41,10 +41,10 @@ BLOCKED_STREAMS = frozenset(
 BLOCKED_OPTIONS = frozenset(
     {f"IOStreams.{stream}" for stream in BLOCKED_STREAMS}
     | {
-        # start, stop, and duration are provided by the coupler at runtime
+        # start time is provided by the coupler at runtime
         "TimeIntegration.StartTime",
-        "TimeIntegration.StopTime",
-        "TimeIntegration.RunDuration",
+        # stop criterion is ignored for coupled sims
+        "TimeIntegration.StopCriterion",
         # calendar must agree with the CIME ``CALENDAR`` setting
         "TimeIntegration.CalendarType",
         # base IO task and rearranger are owned by the driver (CIME/shr_pio)

@@ -2,8 +2,8 @@ coupled:
   TimeIntegration:
     TimeStepper: RungeKutta4
     StartTime: 9999-12-31_00:00:00
-    StopTime: 9999-12-31_00:00:00
-    RunDuration: none
+    StopType: OnSignal
+    StopCriterion: 9999-12-31_00:00:00
 
   Tendencies:
     SfcStressForcingTendencyEnable: true
