@@ -144,6 +144,7 @@ if (NOT TARGET cpptrace::cpptrace)
 	# PACKAGE_VERSION (e.g. 2.10.2) from leaking into libdwarf's configure_file
 	unset(PACKAGE_VERSION)
 	option(CPPTRACE_INHERIT_HOST_STANDARD "" ON)
+        option(CPPTRACE_DISABLE_CXX_20_MODULES "" ON)
 	add_subdirectory(
 	  ${OMEGA_SOURCE_DIR}/external/cpptrace
 	  ${CMAKE_CURRENT_BINARY_DIR}/external/cpptrace
