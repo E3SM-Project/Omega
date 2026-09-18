@@ -34,10 +34,10 @@ void SurfTracerRestAuxVars::registerFields(
    auto TracersMonthlySurfClimoCellField =
        Field::create(TracersMonthlySurfClimoCell.label(),
                      "monthly surface tracer climatology", // long name/describe
-                     "tracer units",                       // units
-                     "",                                   // CF standard Name
-                     std::numeric_limits<Real>::min(),     // min valid value
-                     std::numeric_limits<Real>::max(),     // max valid value
+                     "", // units (differ by tracer)
+                     "", // CF standard Name
+                     std::numeric_limits<Real>::lowest(), // min valid value
+                     std::numeric_limits<Real>::max(),    // max valid value
                      NDims,     // number of dimensions
                      DimNames); // dim names
 

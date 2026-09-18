@@ -312,7 +312,7 @@ void VertCoord::defineFields() {
        "sea surface height at cell center", // long Name or description
        "m",                                 // units
        "sea_surface_height",                // CF standard Name
-       std::numeric_limits<Real>::min(),    // min valid value
+       std::numeric_limits<Real>::lowest(), // min valid value
        std::numeric_limits<Real>::max(),    // max valid value
        NDims,                               // number of dimensions
        DimNames                             // dimension names
@@ -399,7 +399,7 @@ void VertCoord::defineFields() {
        "Geometric height at layer interfaces", // long name or description
        "m",                                    // units
        "height",                               // CF standard Name
-       std::numeric_limits<Real>::min(),       // min valid value
+       std::numeric_limits<Real>::lowest(),    // min valid value
        std::numeric_limits<Real>::max(),       // max valid value
        NDims,                                  // number of dimensions
        DimNames                                // dimension names
@@ -423,21 +423,21 @@ void VertCoord::defineFields() {
        "Geometric height at layer midpoints", // long name or description
        "m",                                   // units
        "height",                              // CF standard Name
-       std::numeric_limits<Real>::min(),      // min valid value
+       std::numeric_limits<Real>::lowest(),   // min valid value
        std::numeric_limits<Real>::max(),      // max valid value
        NDims,                                 // number of dimensions
        DimNames                               // dimension names
    );
 
    auto GeopotentialMidField = Field::create(
-       GeopotFldName,                     // field name
-       "Geopotential at layer midpoints", // long name or description
-       "m^2 s^-2",                        // units
-       "geopotential",                    // CF standard Name
-       std::numeric_limits<Real>::min(),  // min valid value
-       std::numeric_limits<Real>::max(),  // max valid value
-       NDims,                             // number of dimensions
-       DimNames                           // dimension names
+       GeopotFldName,                       // field name
+       "Geopotential at layer midpoints",   // long name or description
+       "m2 s-2",                            // units
+       "geopotential",                      // CF standard Name
+       std::numeric_limits<Real>::lowest(), // min valid value
+       std::numeric_limits<Real>::max(),    // max valid value
+       NDims,                               // number of dimensions
+       DimNames                             // dimension names
    );
 
    auto PseudoThicknessTargetField = Field::create(
