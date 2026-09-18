@@ -197,9 +197,44 @@ field(s).
 | -------- | ------ | ------- | ----------- | ------------- | ----------------- | ----------- |
 | `SpatialMin` | 1 | 1 | scalar with same type as input (`Array1D<InType>`, dimension `Scalar`) | `_SpatialMin` | — | Global minimum of the input field. |
 | `SpatialMax` | 1 | 1 | scalar with same type as input (`Array1D<InType>`, dimension `Scalar`) | `_SpatialMax` | — | Global maximum of the input field. |
-| `SpatialMean` | 1 | 1 | scalar (`Array1DReal`, dimension `Scalar`) | `_SpatialMean` | — | Global mean of the input field. |
-| `SpatialStdDev` | 2 (the field and its `_SpatialMean`) | 1 | scalar (`Array1DReal`, dimension `Scalar`) | `_SpatialStdDev` | — | Global standard deviation of the input field. Requires the field's `SpatialMean` as an upstream input, which is added to its input list automatically. |
+| `SpatialMean` | 1 | 1 | scalar (`Array1DReal`, dimension `Scalar`) | `_SpatialMean` | — | Global weighted mean of the input field: by area for a horizontal field, by mass for a layered one (see [Spatial weights](#omega-dev-analysis-spatial-weights)). |
+| `SpatialStdDev` | 2 (the field and its `_SpatialMean`) | 1 | scalar (`Array1DReal`, dimension `Scalar`) | `_SpatialStdDev` | — | Global weighted standard deviation of the input field, with the same weights as `SpatialMean`. Requires the field's `SpatialMean` as an upstream input, which is added to its input list automatically. |
 | `TimeMean` | 1 | 1 | same rank and dimensions as the input (`Real`) | `_TimeMean<period>` | `Period` (string, e.g. `"1Day"`) | Time average of the input field over a configurable period (e.g. `1Day`). Accumulates every time step and finalizes the mean when the period alarm rings. Output name embeds the period, e.g. `_TimeMean1Day`. |
+
+(omega-dev-analysis-spatial-weights)=
+### Spatial weights
+
+`SpatialMean` and `SpatialStdDev` weight each mesh entity by how much of the
+ocean it represents, so that the statistic does not depend on the mesh
+resolution. The weights are built by the `SpatialWeights` class in
+`analysis/SpatialWeights.h` from the input field's dimension names:
+
+- A horizontal field (rank 1) is weighted by area: `AreaCell` for cells,
+  `DcEdge * DvEdge` for edges and `AreaTriangle` for vertices.
+- A layered field (last dimension `NVertLayers`) is weighted by mass, the
+  area times the current `PseudoThickness` of the state, which is the layer's
+  renormalized mass per unit area. The pseudo-thickness at an edge is the mean
+  of its two cells and at a vertex the kite-area-weighted mean of its cells,
+  as in the auxiliary variables.
+- An interface field (last dimension `NVertLayersP1`) is weighted by half the
+  mass of each adjacent layer, so the weights sum to the column mass and the
+  result is the mass-weighted mean of the field taken as piecewise linear
+  between interfaces. The surface and bottom interfaces have one adjacent
+  layer each.
+
+Only active entries take part. The weights are built from the active masks
+of the vertical coordinate by selection rather than multiplication, and the
+reductions skip inactive entries, so the fill values in inactive layers are
+never read. Any leading extra dimensions of the field (e.g. tracers) share
+the same weights.
+
+An operator uses the weights by calling `init()` with the input field name
+in `initialize()`, `update()` in `compute()` (mass weights follow the state,
+so they are recomputed each time), and then `weightedSum()` or
+`weightedSquaredDeviation()` with the input array and `weightSum()` for the
+normalization. The sums accumulate each owned entity's terms in a fixed
+order and reduce them with `globalSum`, so they are as reproducible as
+Omega's other global sums.
 
 ## Operator factory and type dispatch
 

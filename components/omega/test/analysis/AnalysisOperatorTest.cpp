@@ -15,6 +15,7 @@
 #include "IO.h"
 #include "IOStream.h"
 #include "Logging.h"
+#include "OceanState.h"
 #include "TimeStepper.h"
 #include "VertAdv.h"
 #include "VertCoord.h"
@@ -23,6 +24,7 @@
 #include <cmath>
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <type_traits>
 #include <vector>
 
@@ -51,6 +53,16 @@ template <typename ArrayType> struct TestHelper {
          return 1.0e-4f; // Single precision tolerance
       } else {
          return 1.0e-8; // Double precision tolerance
+      }
+   }
+
+   // Relative tolerance for a weighted statistic, whose summation order
+   // differs from the host-side check
+   static Real getRelTolerance() {
+      if constexpr (std::is_same_v<ScalarT, float>) {
+         return 1.0e-5;
+      } else {
+         return 1.0e-12;
       }
    }
 
@@ -160,6 +172,114 @@ void reportTest(const std::string &TestName, bool Passed) {
       NumFailed++;
       LOG_ERROR("FAIL: {}", TestName);
    }
+}
+
+//------------------------------------------------------------------------------
+// Host-side weights for checking the spatial statistics, computed from the
+// host mesh, mask and pseudo-thickness arrays independently of SpatialWeights:
+// area for horizontal fields, mass (area times pseudo-thickness) for layered
+// fields with the thickness interpolated to edges and vertices as the
+// auxiliary variables do, and half the mass of each adjacent layer for
+// interface fields. Inactive entries have zero weight.
+struct HostWeights {
+   const HorzMesh *Mesh;
+   const VertCoord *VCoord;
+   HostArray2DReal ThickH;
+
+   HostWeights(const HorzMesh *InMesh, const VertCoord *InVCoord)
+       : Mesh(InMesh), VCoord(InVCoord) {
+      auto State      = OceanState::getDefault();
+      auto ThickField = Field::get(State->PseudoThicknessFldName);
+      ThickH = createHostMirrorCopy(ThickField->getDataArray<Array2DReal>());
+   }
+
+   bool cellActive(I4 ICell, I4 K) const {
+      return VCoord->CellMaskH(ICell, K) > 0;
+   }
+
+   // Mass of one layer of one entity
+   Real cellLayer(I4 ICell, I4 K) const {
+      return cellActive(ICell, K) ? Mesh->AreaCellH(ICell) * ThickH(ICell, K)
+                                  : 0;
+   }
+   Real edgeLayer(I4 IEdge, I4 K) const {
+      if (VCoord->EdgeMaskH(IEdge, K) <= 0)
+         return 0;
+      Real Thick = 0;
+      for (I4 J = 0; J < 2; ++J) {
+         I4 JCell = Mesh->CellsOnEdgeH(IEdge, J);
+         if (cellActive(JCell, K))
+            Thick += 0.5 * ThickH(JCell, K);
+      }
+      return Mesh->DcEdgeH(IEdge) * Mesh->DvEdgeH(IEdge) * Thick;
+   }
+   Real vertexLayer(I4 IVertex, I4 K) const {
+      if (VCoord->VertexMaskH(IVertex, K) <= 0)
+         return 0;
+      Real Mass = 0;
+      for (I4 J = 0; J < Mesh->VertexDegree; ++J) {
+         I4 JCell = Mesh->CellsOnVertexH(IVertex, J);
+         if (cellActive(JCell, K))
+            Mass += Mesh->KiteAreasOnVertexH(IVertex, J) * ThickH(JCell, K);
+      }
+      return Mass;
+   }
+
+   // Weight of one interface of one cell: half of each adjacent layer
+   Real cellInterface(I4 ICell, I4 K) const {
+      Real Above = (K > 0) ? cellLayer(ICell, K - 1) : 0;
+      Real Below = (K < VCoord->NVertLayers) ? cellLayer(ICell, K) : 0;
+      return 0.5 * (Above + Below);
+   }
+
+   // Area weights of horizontal fields
+   Real cellArea(I4 ICell) const {
+      return cellActive(ICell, 0) ? Mesh->AreaCellH(ICell) : 0;
+   }
+   Real edgeArea(I4 IEdge) const {
+      return (VCoord->EdgeMaskH(IEdge, 0) > 0)
+                 ? Mesh->DcEdgeH(IEdge) * Mesh->DvEdgeH(IEdge)
+                 : 0;
+   }
+};
+
+//------------------------------------------------------------------------------
+// Computes the expected weighted mean and standard deviation of a field from
+// a visitor that calls back with the weight and value of every local entry.
+// Two passes, so the deviations are taken from the global mean.
+using WeightedVisitor = std::function<void(std::function<void(Real, Real)>)>;
+
+void expectedStats(const WeightedVisitor &Visit, MPI_Comm Comm, Real &Mean,
+                   Real &StdDev) {
+   Real SumW = 0, SumWX = 0;
+   Visit([&](Real W, Real X) {
+      if (W > 0) {
+         SumW += W;
+         SumWX += W * X;
+      }
+   });
+   Real W = globalSum(SumW, Comm);
+   Mean   = globalSum(SumWX, Comm) / W;
+
+   Real SumWDev = 0;
+   Visit([&](Real Wt, Real X) {
+      if (Wt > 0)
+         SumWDev += Wt * (X - Mean) * (X - Mean);
+   });
+   StdDev = std::sqrt(globalSum(SumWDev, Comm) / W);
+}
+
+//------------------------------------------------------------------------------
+// Checks a computed statistic against its expected value to a relative
+// tolerance
+bool checkClose(const std::string &TestName, Real Computed, Real Expected,
+                Real RelTol) {
+   Real Scale  = std::max(std::abs(Expected), static_cast<Real>(1));
+   bool Passed = std::abs(Computed - Expected) <= RelTol * Scale;
+   reportTest(TestName, Passed);
+   if (!Passed)
+      LOG_ERROR("  Expected: {}, Got: {}", Expected, Computed);
+   return Passed;
 }
 
 //===----------------------------------------------------------------------===//
@@ -374,52 +494,30 @@ void testSpatialMeanOpType(const std::string &TypeName, const MachEnv *Env,
                           });
    }
 
-   // Calculate expected mean by counting actual Value1 and Value2 elements
-   // in the active region (accounting for masked layers)
-   I8 LocalCount1 = 0, LocalCount2 = 0;
-
-   if constexpr (Rank == 1) {
-      // 1D: count based on horizontal index pattern
-      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
-         if ((i % 2) == 0)
-            LocalCount1++;
-         else
-            LocalCount2++;
+   // Expected weighted mean from the host-side weights: area for the 1D
+   // field, mass for the layered ones, over owned cells and active layers
+   HostWeights Weights(Mesh, VCoord);
+   auto Value = [Value1, Value2](I4 Parity) -> Real {
+      return static_cast<Real>((Parity % 2) == 0 ? Value1 : Value2);
+   };
+   WeightedVisitor Visit = [&](std::function<void(Real, Real)> Add) {
+      if constexpr (Rank == 1) {
+         for (I4 i = 0; i < Mesh->NCellsOwned; ++i)
+            Add(Weights.cellArea(i), Value(i));
+      } else if constexpr (Rank == 2) {
+         for (I4 i = 0; i < Mesh->NCellsOwned; ++i)
+            for (I4 j = 0; j < VCoord->NVertLayers; ++j)
+               Add(Weights.cellLayer(i, j), Value(i + j));
+      } else if constexpr (Rank == 3) {
+         I4 NTracers = Tracers::getNumTracers();
+         for (I4 t = 0; t < NTracers; ++t)
+            for (I4 i = 0; i < Mesh->NCellsOwned; ++i)
+               for (I4 j = 0; j < VCoord->NVertLayers; ++j)
+                  Add(Weights.cellLayer(i, j), Value(t + i + j));
       }
-   } else if constexpr (Rank == 2) {
-      // 2D: count based on (i+j) pattern within active vertical layers
-      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
-         for (I4 j = VCoord->MinLayerCellH(i); j <= VCoord->MaxLayerCellH(i);
-              ++j) {
-            if (((i + j) % 2) == 0)
-               LocalCount1++;
-            else
-               LocalCount2++;
-         }
-      }
-   } else if constexpr (Rank == 3) {
-      // 3D: count based on (t+i+j) pattern within active layers
-      I4 NTracers = Tracers::getNumTracers();
-      for (I4 t = 0; t < NTracers; ++t) {
-         for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
-            for (I4 j = VCoord->MinLayerCellH(i); j <= VCoord->MaxLayerCellH(i);
-                 ++j) {
-               if (((t + i + j) % 2) == 0)
-                  LocalCount1++;
-               else
-                  LocalCount2++;
-            }
-         }
-      }
-   }
-
-   // Global sum across MPI ranks
-   I8 Count1         = globalSum(LocalCount1, Env->getComm());
-   I8 Count2         = globalSum(LocalCount2, Env->getComm());
-   I8 TotalElements  = Count1 + Count2;
-   Real ExpectedMean = (static_cast<Real>(Value1) * static_cast<Real>(Count1) +
-                        static_cast<Real>(Value2) * static_cast<Real>(Count2)) /
-                       static_cast<Real>(TotalElements);
+   };
+   Real ExpectedMean, ExpectedStdDev;
+   expectedStats(Visit, Env->getComm(), ExpectedMean, ExpectedStdDev);
 
    // Create and compute operator
    Config EmptyConfig;
@@ -440,13 +538,8 @@ void testSpatialMeanOpType(const std::string &TypeName, const MachEnv *Env,
    Real ComputedMean = ResultHost(0);
 
    // Verify
-   bool Passed = (std::abs(ComputedMean - ExpectedMean) <=
-                  static_cast<Real>(Helper::getTolerance()));
-   reportTest("SpatialMeanOp: " + TypeName, Passed);
-
-   if (!Passed) {
-      LOG_ERROR("  Expected: {}, Got: {}", ExpectedMean, ComputedMean);
-   }
+   checkClose("SpatialMeanOp: " + TypeName, ComputedMean, ExpectedMean,
+              Helper::getRelTolerance());
 }
 
 //------------------------------------------------------------------------------
@@ -483,60 +576,29 @@ void testSpatialStdDevOpType(const std::string &TypeName, const MachEnv *Env,
                           });
    }
 
-   // Calculate expected standard deviation by counting actual Value1 and Value2
-   // elements in the active region (accounting for masked layers)
-   I8 LocalCount1 = 0, LocalCount2 = 0;
-
-   if constexpr (Rank == 1) {
-      // 1D: count based on horizontal index pattern
-      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
-         if ((i % 2) == 0)
-            LocalCount1++;
-         else
-            LocalCount2++;
+   // Expected weighted standard deviation from the host-side weights
+   HostWeights Weights(Mesh, VCoord);
+   auto Value = [Value1, Value2](I4 Parity) -> Real {
+      return static_cast<Real>((Parity % 2) == 0 ? Value1 : Value2);
+   };
+   WeightedVisitor Visit = [&](std::function<void(Real, Real)> Add) {
+      if constexpr (Rank == 1) {
+         for (I4 i = 0; i < Mesh->NCellsOwned; ++i)
+            Add(Weights.cellArea(i), Value(i));
+      } else if constexpr (Rank == 2) {
+         for (I4 i = 0; i < Mesh->NCellsOwned; ++i)
+            for (I4 j = 0; j < VCoord->NVertLayers; ++j)
+               Add(Weights.cellLayer(i, j), Value(i + j));
+      } else if constexpr (Rank == 3) {
+         I4 NTracers = Tracers::getNumTracers();
+         for (I4 t = 0; t < NTracers; ++t)
+            for (I4 i = 0; i < Mesh->NCellsOwned; ++i)
+               for (I4 j = 0; j < VCoord->NVertLayers; ++j)
+                  Add(Weights.cellLayer(i, j), Value(t + i + j));
       }
-   } else if constexpr (Rank == 2) {
-      // 2D: count based on (i+j) pattern within active vertical layers
-      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
-         for (I4 j = VCoord->MinLayerCellH(i); j <= VCoord->MaxLayerCellH(i);
-              ++j) {
-            if (((i + j) % 2) == 0)
-               LocalCount1++;
-            else
-               LocalCount2++;
-         }
-      }
-   } else if constexpr (Rank == 3) {
-      // 3D: count based on (t+i+j) pattern within active layers
-      I4 NTracers = Tracers::getNumTracers();
-      for (I4 t = 0; t < NTracers; ++t) {
-         for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
-            for (I4 j = VCoord->MinLayerCellH(i); j <= VCoord->MaxLayerCellH(i);
-                 ++j) {
-               if (((t + i + j) % 2) == 0)
-                  LocalCount1++;
-               else
-                  LocalCount2++;
-            }
-         }
-      }
-   }
-
-   // Global sum across MPI ranks
-   I8 Count1        = globalSum(LocalCount1, Env->getComm());
-   I8 Count2        = globalSum(LocalCount2, Env->getComm());
-   I8 TotalElements = Count1 + Count2;
-   Real Mean        = (static_cast<Real>(Value1) * static_cast<Real>(Count1) +
-                static_cast<Real>(Value2) * static_cast<Real>(Count2)) /
-               static_cast<Real>(TotalElements);
-
-   // Standard deviation: sqrt(sum((x_i - mean)^2) / N)
-   Real SumSquaredDiff = static_cast<Real>(Count1) *
-                             std::pow(static_cast<Real>(Value1) - Mean, 2.0) +
-                         static_cast<Real>(Count2) *
-                             std::pow(static_cast<Real>(Value2) - Mean, 2.0);
-   Real ExpectedStdDev =
-       std::sqrt(SumSquaredDiff / static_cast<Real>(TotalElements));
+   };
+   Real ExpectedMean, ExpectedStdDev;
+   expectedStats(Visit, Env->getComm(), ExpectedMean, ExpectedStdDev);
 
    // SpatialStdDevOp requires a pre-existing _SpatialMean field for the input.
    // Create and compute a SpatialMeanOp first so that field is registered.
@@ -564,13 +626,8 @@ void testSpatialStdDevOpType(const std::string &TypeName, const MachEnv *Env,
    Real ComputedStdDev = ResultHost(0);
 
    // Verify
-   bool Passed = (std::abs(ComputedStdDev - ExpectedStdDev) <=
-                  static_cast<Real>(Helper::getTolerance()));
-   reportTest("SpatialStdDevOp: " + TypeName, Passed);
-
-   if (!Passed) {
-      LOG_ERROR("  Expected: {}, Got: {}", ExpectedStdDev, ComputedStdDev);
-   }
+   checkClose("SpatialStdDevOp: " + TypeName, ComputedStdDev, ExpectedStdDev,
+              Helper::getRelTolerance());
 }
 
 //------------------------------------------------------------------------------
@@ -766,6 +823,178 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
    if (!Passed) {
       LOG_ERROR("  Expected mean: {}", ExpectedMean);
       LOG_ERROR("  Period label: {}", PeriodLabel);
+   }
+}
+
+//------------------------------------------------------------------------------
+// Creates a 2D Real field on the given entities with the given vertical
+// dimension, filled with a pattern of values on active owned entries and
+// NaN everywhere else (inactive layers and halo entities), so that a
+// statistic that reads an inactive or halo entry comes out NaN. Returns the
+// host copy of the values.
+HostArray2DReal createEntityField(const std::string &FieldName,
+                                  const std::string &HorizDim,
+                                  const std::string &VertDim, I4 NEntities,
+                                  I4 NOwned, I4 NVert,
+                                  std::function<bool(I4, I4)> IsActive,
+                                  std::function<Real(I4, I4)> ValueFunc) {
+
+   std::vector<std::string> DimNames = {HorizDim, VertDim};
+   auto TestField = Field::create(FieldName, "Weighted statistics test field",
+                                  "m", "", -1.0e30, 1.0e30, 2, DimNames);
+   Array2DReal Data(FieldName + "_data", NEntities, NVert);
+   TestField->attachData<Array2DReal>(Data);
+
+   auto DataHost  = Kokkos::create_mirror_view(Data);
+   const Real NaN = std::numeric_limits<Real>::quiet_NaN();
+   for (I4 I = 0; I < NEntities; ++I) {
+      for (I4 K = 0; K < NVert; ++K) {
+         bool Use       = (I < NOwned) && IsActive(I, K);
+         DataHost(I, K) = Use ? ValueFunc(I, K) : NaN;
+      }
+   }
+   Kokkos::deep_copy(Data, DataHost);
+   return DataHost;
+}
+
+//------------------------------------------------------------------------------
+// Computes the mean and standard deviation of a field with the operators and
+// checks them against the expected values
+void checkMeanAndStdDev(const std::string &TestName,
+                        const std::string &FieldName, const MachEnv *Env,
+                        const HorzMesh *Mesh, const VertCoord *VCoord,
+                        Real ExpectedMean, Real ExpectedStdDev, Real RelTol) {
+
+   Config EmptyConfig;
+   auto MeanOp =
+       AnalysisOpFactory::createOp("SpatialMean", {FieldName}, EmptyConfig);
+   MeanOp->initialize(Env, Mesh, VCoord, EmptyConfig);
+   auto StdDevOp =
+       AnalysisOpFactory::createOp("SpatialStdDev", {FieldName}, EmptyConfig);
+   StdDevOp->initialize(Env, Mesh, VCoord, EmptyConfig);
+
+   TimeInstant TestTime;
+   MeanOp->compute(TestTime);
+   StdDevOp->compute(TestTime);
+
+   auto MeanHost = createHostMirrorCopy(
+       Field::get(FieldName + "_SpatialMean")->getDataArray<Array1DReal>());
+   auto StdDevHost = createHostMirrorCopy(
+       Field::get(FieldName + "_SpatialStdDev")->getDataArray<Array1DReal>());
+
+   checkClose(TestName + " mean", MeanHost(0), ExpectedMean, RelTol);
+   checkClose(TestName + " std dev", StdDevHost(0), ExpectedStdDev, RelTol);
+}
+
+//------------------------------------------------------------------------------
+// Tests the weighted mean and standard deviation on edges, vertices and cell
+// interfaces, and on a horizontal edge field, against host-side weights.
+// Inactive and halo entries hold NaN, so a statistic that touched them would
+// fail. A constant field must give its value and a zero standard deviation
+// whatever the weights.
+void testWeightedStats(const MachEnv *Env, const HorzMesh *Mesh,
+                       const VertCoord *VCoord) {
+
+   HostWeights Weights(Mesh, VCoord);
+   MPI_Comm Comm      = Env->getComm();
+   const Real RelTol  = 1.0e-12;
+   const I4 NVertLyrs = VCoord->NVertLayers;
+   auto Pattern       = [](I4 I, I4 K) -> Real {
+      return static_cast<Real>(10 + (7 * I + 3 * K) % 5);
+   };
+   auto Constant = [](I4 I, I4 K) -> Real { return static_cast<Real>(7.5); };
+   Real ExpectedMean, ExpectedStdDev;
+
+   // Layered field on edges, mass-weighted with the edge thickness
+   {
+      auto Active = [&](I4 E, I4 K) { return VCoord->EdgeMaskH(E, K) > 0; };
+      createEntityField("TestWeightedEdge", "NEdges", "NVertLayers",
+                        Mesh->NEdgesSize, Mesh->NEdgesOwned, NVertLyrs, Active,
+                        Pattern);
+      WeightedVisitor Visit = [&](std::function<void(Real, Real)> Add) {
+         for (I4 E = 0; E < Mesh->NEdgesOwned; ++E)
+            for (I4 K = 0; K < NVertLyrs; ++K)
+               Add(Weights.edgeLayer(E, K), Pattern(E, K));
+      };
+      expectedStats(Visit, Comm, ExpectedMean, ExpectedStdDev);
+      checkMeanAndStdDev("Weighted stats: edge layers", "TestWeightedEdge", Env,
+                         Mesh, VCoord, ExpectedMean, ExpectedStdDev, RelTol);
+   }
+
+   // Layered field on vertices, mass-weighted with the kite areas
+   {
+      auto Active = [&](I4 V, I4 K) { return VCoord->VertexMaskH(V, K) > 0; };
+      createEntityField("TestWeightedVertex", "NVertices", "NVertLayers",
+                        Mesh->NVerticesSize, Mesh->NVerticesOwned, NVertLyrs,
+                        Active, Pattern);
+      WeightedVisitor Visit = [&](std::function<void(Real, Real)> Add) {
+         for (I4 V = 0; V < Mesh->NVerticesOwned; ++V)
+            for (I4 K = 0; K < NVertLyrs; ++K)
+               Add(Weights.vertexLayer(V, K), Pattern(V, K));
+      };
+      expectedStats(Visit, Comm, ExpectedMean, ExpectedStdDev);
+      checkMeanAndStdDev("Weighted stats: vertex layers", "TestWeightedVertex",
+                         Env, Mesh, VCoord, ExpectedMean, ExpectedStdDev,
+                         RelTol);
+   }
+
+   // Interface field on cells, half the mass of each adjacent layer. The
+   // bottom interface of every active column takes part.
+   {
+      auto Active = [&](I4 C, I4 K) {
+         bool Above = (K > 0) && Weights.cellActive(C, K - 1);
+         bool Below = (K < NVertLyrs) && Weights.cellActive(C, K);
+         return Above || Below;
+      };
+      createEntityField("TestWeightedInterface", "NCells", "NVertLayersP1",
+                        Mesh->NCellsSize, Mesh->NCellsOwned, NVertLyrs + 1,
+                        Active, Pattern);
+      WeightedVisitor Visit = [&](std::function<void(Real, Real)> Add) {
+         for (I4 C = 0; C < Mesh->NCellsOwned; ++C)
+            for (I4 K = 0; K <= NVertLyrs; ++K)
+               Add(Weights.cellInterface(C, K), Pattern(C, K));
+      };
+      expectedStats(Visit, Comm, ExpectedMean, ExpectedStdDev);
+      checkMeanAndStdDev("Weighted stats: cell interfaces",
+                         "TestWeightedInterface", Env, Mesh, VCoord,
+                         ExpectedMean, ExpectedStdDev, RelTol);
+   }
+
+   // Horizontal field on edges, area-weighted
+   {
+      std::vector<std::string> DimNames = {"NEdges"};
+      auto TestField =
+          Field::create("TestWeightedEdge1D", "Weighted statistics test field",
+                        "m", "", -1.0e30, 1.0e30, 1, DimNames);
+      Array1DReal Data("TestWeightedEdge1D_data", Mesh->NEdgesSize);
+      TestField->attachData<Array1DReal>(Data);
+      auto DataHost  = Kokkos::create_mirror_view(Data);
+      const Real NaN = std::numeric_limits<Real>::quiet_NaN();
+      for (I4 E = 0; E < Mesh->NEdgesSize; ++E) {
+         bool Use    = (E < Mesh->NEdgesOwned) && (Weights.edgeArea(E) > 0);
+         DataHost(E) = Use ? Pattern(E, 0) : NaN;
+      }
+      Kokkos::deep_copy(Data, DataHost);
+      WeightedVisitor Visit = [&](std::function<void(Real, Real)> Add) {
+         for (I4 E = 0; E < Mesh->NEdgesOwned; ++E)
+            Add(Weights.edgeArea(E), Pattern(E, 0));
+      };
+      expectedStats(Visit, Comm, ExpectedMean, ExpectedStdDev);
+      checkMeanAndStdDev("Weighted stats: horizontal edges",
+                         "TestWeightedEdge1D", Env, Mesh, VCoord, ExpectedMean,
+                         ExpectedStdDev, RelTol);
+   }
+
+   // A constant layered field on cells: the mean is the constant and the
+   // standard deviation zero, whatever the weights
+   {
+      auto Active = [&](I4 C, I4 K) { return Weights.cellActive(C, K); };
+      createEntityField("TestWeightedConstant", "NCells", "NVertLayers",
+                        Mesh->NCellsSize, Mesh->NCellsOwned, NVertLyrs, Active,
+                        Constant);
+      checkMeanAndStdDev("Weighted stats: constant field",
+                         "TestWeightedConstant", Env, Mesh, VCoord, 7.5, 0.0,
+                         RelTol);
    }
 }
 
@@ -979,6 +1208,15 @@ void initAnalysisTest() {
    if (Err != 0)
       ABORT_ERROR("AnalysisOperatorTest: error initializing default state");
 
+   // Read the initial state so the pseudo-thickness the mass weights use is
+   // the one from the mesh file rather than fill values
+   if (!IOStream::validateAll())
+      ABORT_ERROR("AnalysisOperatorTest: stream validation failed");
+   Metadata ReqMeta;
+   Error ReadErr = IOStream::read("InitialState", ModelClock, ReqMeta);
+   CHECK_ERROR_ABORT(ReadErr,
+                     "AnalysisOperatorTest: failed to read initial state");
+
    // Register all analysis operators
    Analysis::init();
 }
@@ -1035,6 +1273,8 @@ int main(int argc, char *argv[]) {
       testSpatialMeanOp(DefEnv, Mesh, VCoord);
 
       testSpatialStdDevOp(DefEnv, Mesh, VCoord);
+
+      testWeightedStats(DefEnv, Mesh, VCoord);
 
       testTimeMeanOp(DefEnv, Mesh, VCoord, ModelClock);
 
