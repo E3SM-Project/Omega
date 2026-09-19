@@ -14,8 +14,9 @@
 /// needing to know individual header locations.
 ///
 /// Currently available bundled groups:
-/// - GlobalStats: Spatial statistics (mean, min, max, etc.) with optional
-///   temporal averaging
+/// - GlobalStats: Spatial statistics (mean, min, max, etc.) reduced across the
+///   whole mesh.
+/// - MonthlyAverages: Monthly time averages of a set of requested global fields
 ///
 /// New bundled groups should be added to this file to maintain the convenience
 /// of a single include point for analysis group functionality.
@@ -23,5 +24,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "analysisGroups/GlobalStats.h"
+#include "analysisGroups/MonthlyAverages.h"
 
 #endif

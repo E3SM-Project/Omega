@@ -147,6 +147,58 @@ Automatically created and named:
  - Instantaneous output: `GlobalStats_FreqInstants` (e.g.,
  `GlobalStats_6HourInstants`)
 
+### MonthlyAverages
+
+Computes monthly time averages of a set of requested global fields. Unlike
+`GlobalStats`, no spatial reduction is applied: each requested field is passed
+directly to a temporal-reduction (`TimeMean`) operator. The averaging period
+defaults to one month, but may be overridden with the optional
+`ReductionPeriod` parameter. This mirrors the `timeSeriesStatsMonthly` analysis
+member in MPAS-Ocean, which delivers monthly means of prognostic and derived
+fields.
+
+**Example:**
+
+```yaml
+Omega:
+  Analysis:
+    MonthlyAverages:
+      Enable: true
+      Fields: [Temperature, Salinity, NormalVelocity, PseudoThickness]
+      ReductionPeriod: [1Month]   # optional; defaults to [1Month]
+      Filename: monthly.averages.$Y
+      Stream:
+        FileFreq: 1
+        FileFreqUnits: years
+```
+
+**Group-Specific Parameters:**
+
+- **Fields:** Required list of field names to average. The simulation will abort
+  if a requested field does not exist.
+
+- **ReductionPeriod:** Optional list of time periods for temporal reduction
+  (e.g., `1Day`, `1Month`, `1Year`). Defaults to `[1Month]` when not specified.
+  Each period must divide evenly into the restart interval. Any `SnapshotPeriod`
+  supplied for this group is ignored.
+
+**Output fields:**
+For each requested field, a time-averaged field is produced:
+ - `FieldName_TimeMeanPeriod` (e.g., `Temperature_TimeMean1Month`)
+
+**Output streams:**
+Automatically created and named:
+ - Time reduction: `MonthlyAverages_FreqTimeStats` (e.g.,
+ `MonthlyAverages_1MonthTimeStats`)
+
+```{note}
+The default field list in `Default.yml` includes the core prognostic fields
+(`Temperature`, `Salinity`, `NormalVelocity`, `PseudoThickness`). Additional
+registered global fields may be requested by adding them to the `Fields` list.
+The averaging period must divide evenly into the restart interval, as described
+in the Temporal Reduction Period Constraint below.
+```
+
 ## Usage Notes
 
 ### Temporal Reduction Period Constraint
