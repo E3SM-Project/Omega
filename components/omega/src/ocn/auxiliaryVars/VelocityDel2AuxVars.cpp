@@ -50,9 +50,9 @@ void VelocityDel2AuxVars::registerFields(const std::string &AuxGroupName,
    auto Del2EdgeField = Field::create(
        Del2Edge.label(),                            // field name
        "laplacian of horizontal velocity on edges", // long Name or description
-       "m^-1 s^-1",                                 // units
+       "m-1 s-1",                                   // units
        "",                                          // CF standard Name
-       std::numeric_limits<Real>::min(),            // min valid value
+       std::numeric_limits<Real>::lowest(),         // min valid value
        std::numeric_limits<Real>::max(),            // max valid value
        NDims,                                       // number of dimensions
        DimNames                                     // dimension names
@@ -63,13 +63,13 @@ void VelocityDel2AuxVars::registerFields(const std::string &AuxGroupName,
    auto Del2DivCellField =
        Field::create(Del2DivCell.label(), // field name
                      "divergence of laplacian of horizontal velocity "
-                     "on cells",  // long Name or description
-                     "m^-2 s^-1", // units
-                     "",          // CF standard Name
-                     std::numeric_limits<Real>::min(), // min valid value
-                     std::numeric_limits<Real>::max(), // max valid value
-                     NDims,                            // number of dimensions
-                     DimNames                          // dimension names
+                     "on cells", // long Name or description
+                     "m-2 s-1",  // units
+                     "",         // CF standard Name
+                     std::numeric_limits<Real>::lowest(), // min valid value
+                     std::numeric_limits<Real>::max(),    // max valid value
+                     NDims,   // number of dimensions
+                     DimNames // dimension names
        );
 
    // Del2 of relative vorticity on vertices
@@ -77,9 +77,9 @@ void VelocityDel2AuxVars::registerFields(const std::string &AuxGroupName,
    auto Del2RelVortVertexField = Field::create(
        Del2RelVortVertex.label(),                     // field name
        "laplacian of relative vorticity at vertices", // long name, description
-       "m^-2 s^-1",                                   // units
+       "m-2 s-1",                                     // units
        "",                                            // CF standard Name
-       std::numeric_limits<Real>::min(),              // min valid value
+       std::numeric_limits<Real>::lowest(),           // min valid value
        std::numeric_limits<Real>::max(),              // max valid value
        NDims,                                         // number of dimensions
        DimNames                                       // dimension names

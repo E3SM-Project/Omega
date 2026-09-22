@@ -38,6 +38,10 @@ using Metadata = std::map<std::string, std::any>;
 static const std::string CodeMeta{"code"}; ///< name for code metadata
 /// Field name to use for global simulation metadata
 static const std::string SimMeta{"simulation"}; ///< name for sim metatdata
+/// Value written as the Conventions global attribute of every output file.
+/// CF-1.8 is the newest version the current CF checker release validates;
+/// Omega uses no features introduced after it.
+static const std::string CFConventions{"CF-1.8"};
 
 //------------------------------------------------------------------------------
 /// The Field class manages all metadata and attached data for OMEGA fields
@@ -120,12 +124,19 @@ class Field {
    );
 
    //---------------------------------------------------------------------------
+   /// Returns the names of all defined fields, including the global metadata
+   /// fields (CodeMeta, SimMeta) that hold no data array
+   static std::vector<std::string> getAllFieldNames();
+
+   //---------------------------------------------------------------------------
    /// Creates a field with standard metadata. This is the preferred
    /// interface for most fields in Omega. It enforces a list of required
    /// metadata. Note that if input parameters don't exist
    /// (eg stdName) or don't make sense (eg min/max or fill) for a
-   /// given field, empty or 0 entries can be provided. Actual field data is
-   /// attached in a separate call and additional metadata can be added later.
+   /// given field, empty or 0 entries can be provided. Empty units or
+   /// standard name are not stored, so no empty attribute is written.
+   /// Actual field data is attached in a separate call and additional
+   /// metadata can be added later.
    static std::shared_ptr<Field>
    create(const std::string &FieldName,   ///< [in] Name of variable/field
           const std::string &Description, ///< [in] long Name or description
