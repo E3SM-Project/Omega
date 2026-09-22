@@ -2051,7 +2051,9 @@ contains
 !    o  swvdf    -- sw: vis diffuse downward
 !    o  swnet    -- sw: net
 !    o  q        -- ocn frazil heat flux(+) / melt potential(-)
-!    o  frazil   -- ocn frazil mass flux
+!    o  frazilm  -- ocn frazil mass flux
+!    o  frazils  -- ocn frazil salt flux
+!    o  frazilh  -- ocn frazil energy flux (+)
 !    o  bcphidry -- Black Carbon hydrophilic dry deposition flux
 !    o  bcphodry -- Black Carbon hydrophobic dry deposition flux
 !    o  bcphiwet -- Black Carbon hydrophilic wet deposition flux
@@ -2127,8 +2129,6 @@ contains
       i,n,iFreq
 
    real (kind=RKIND) :: &
-      frazilMassFlux, &
-      frazilSaltMassFlux, &
       frazilMassFluxRev
 
    type (block_type), pointer :: block_ptr
@@ -2157,7 +2157,8 @@ contains
    character(len=strKIND), pointer ::   &
       config_column_physics_type,       &
       config_thermodynamics_type,       &
-      config_ocean_surface_type
+      config_ocean_surface_type,        &
+      config_frazil_coupling_type
 
    type (field1DReal), pointer ::       &
       seaSurfaceTemperatureField,       &
@@ -2165,6 +2166,9 @@ contains
       seaFreezingTemperatureField,      &
       freezingMeltingPotentialField,    &
       frazilMassAdjustField,            &
+      frazilMassFluxField,              &
+      frazilSaltFluxField,              &
+      frazilHeatFluxField,              &
       uOceanVelocityField,              &
       vOceanVelocityField,              &
       seaSurfaceTiltUField,             &
@@ -2211,6 +2215,9 @@ contains
       seaSurfaceSalinity,          &
       seaFreezingTemperature,      &
       freezingMeltingPotential,    &
+      frazilMassFlux,              &
+      frazilSaltFlux,              &
+      frazilHeatFlux,              &
       frazilMassAdjust,            &
       uOceanVelocity,              &
       vOceanVelocity,              &
@@ -2283,6 +2290,7 @@ contains
       call mpas_pool_get_config(configs, "config_couple_biogeochemistry_fields", config_couple_biogeochemistry_fields)
       call mpas_pool_get_config(configs, "config_use_zaerosols", config_use_zaerosols)
       call mpas_pool_get_config(configs, "config_use_column_waves", config_use_column_waves)
+      call mpas_pool_get_config(configs, "config_frazil_coupling_type", config_frazil_coupling_type)
 
       call mpas_pool_get_subpool(block_ptr % structs, 'mesh', meshPool)
       call mpas_pool_get_subpool(block_ptr % structs, 'ocean_coupling', oceanCoupling)
@@ -2295,6 +2303,9 @@ contains
       call mpas_pool_get_array(oceanCoupling, 'seaSurfaceSalinity', seaSurfaceSalinity)
       call mpas_pool_get_array(oceanCoupling, 'seaFreezingTemperature', seaFreezingTemperature)
       call mpas_pool_get_array(oceanCoupling, 'freezingMeltingPotential', freezingMeltingPotential)
+      call mpas_pool_get_array(oceanCoupling, 'frazilMassFlux', frazilMassFlux)
+      call mpas_pool_get_array(oceanCoupling, 'frazilSaltFlux', frazilSaltFlux)
+      call mpas_pool_get_array(oceanCoupling, 'frazilHeatFlux', frazilHeatFlux)
       call mpas_pool_get_array(oceanCoupling, 'frazilMassAdjust', frazilMassAdjust)
       call mpas_pool_get_array(oceanCoupling, 'uOceanVelocity', uOceanVelocity)
       call mpas_pool_get_array(oceanCoupling, 'vOceanVelocity', vOceanVelocity)
@@ -2383,11 +2394,18 @@ contains
            ! freezingMeltingPotential(i) is the ocean energy associated with frazil formation
            ! when it is positive and frazilMassFlux is positive. Conversely, freezingMeltingPotential(i)
            ! is negative when there is the melting potential in which case frazilMassFlux is zero.
+           if (x2i_i(index_x2i_Fioo_q, n) < 0.0_RKIND) then
+              freezingMeltingPotential(i) = x2i_i(index_x2i_Fioo_q, n)
+           else
+              freezingMeltingPotential(i) = x2i_i(index_x2i_Fioo_frazilh, n)
+           end if
 
-           freezingMeltingPotential(i) = x2i_i(index_x2i_Fioo_q, n)
+           frazilMassFlux(i)           = x2i_i(index_x2i_Fioo_frazilm, n)
 
-           frazilMassFlux              = x2i_i(index_x2i_Fioo_frazil, n) 
-           !frazilSaltMassFlux          = x2i_i(index_x2i_Fioo_frazils, n)
+           if (trim(config_frazil_coupling_type) == "omega-fluxes") then
+              frazilSaltFlux(i)           = x2i_i(index_x2i_Fioo_frazils, n)
+              frazilHeatFlux(i)           = x2i_i(index_x2i_Fioo_frazilh, n)
+              frazilMassAdjust(i)         = 0.0_RKIND
 
            ! Now determine the sea ice mass associated with the frazil heat flux given when
            ! freezingMeltingPotential(i) is positive. This produces a revised mass flux, given
@@ -2396,13 +2414,26 @@ contains
            ! coupling step as a freshwater and salt flux. This step is required to balance mass
            ! and heat with the ocean.
 
-           call frazil_mass(freezingMeltingPotential(i), frazilMassFluxRev, seaSurfaceSalinity(i))
+           else
+              call frazil_mass(freezingMeltingPotential(i), frazilMassFluxRev, seaSurfaceSalinity(i))
 
-           frazilMassAdjust(i) = frazilMassFlux-frazilMassFluxRev
+              frazilMassAdjust(i) = frazilMassFlux(i)-frazilMassFluxRev
+              frazilSaltFlux(i) = 0.0_RKIND
+              frazilHeatFlux(i) = 0.0_RKIND
+
+           endif
 
         else ! non-free surface (SOM)
+           if (x2i_i(index_x2i_Fioo_q, n) < 0.0_RKIND) then
+              freezingMeltingPotential(i) = x2i_i(index_x2i_Fioo_q, n)
+           else
+              freezingMeltingPotential(i) = x2i_i(index_x2i_Fioo_frazilh, n)
+           end if
 
-           freezingMeltingPotential(i) = x2i_i(index_x2i_Fioo_q, n)
+           frazilMassFlux(i)           = 0.0_RKIND
+           frazilSaltFlux(i)           = 0.0_RKIND
+           frazilHeatFlux(i)           = 0.0_RKIND
+           frazilMassAdjust(i)         = 0.0_RKIND
 
         endif
 
@@ -2568,6 +2599,9 @@ contains
    call mpas_pool_get_field(oceanCoupling, 'seaFreezingTemperature', seaFreezingTemperatureField)
    call mpas_pool_get_field(oceanCoupling, 'freezingMeltingPotential', freezingMeltingPotentialField)
    call mpas_pool_get_field(oceanCoupling, 'frazilMassAdjust', frazilMassAdjustField)
+   call mpas_pool_get_field(oceanCoupling, 'frazilMassFlux', frazilMassFluxField)
+   call mpas_pool_get_field(oceanCoupling, 'frazilSaltFlux', frazilSaltFluxField)
+   call mpas_pool_get_field(oceanCoupling, 'frazilHeatFlux', frazilHeatFluxField)
    call mpas_pool_get_field(oceanCoupling, 'uOceanVelocity', uOceanVelocityField)
    call mpas_pool_get_field(oceanCoupling, 'vOceanVelocity', vOceanVelocityField)
    call mpas_pool_get_field(oceanCoupling, 'seaSurfaceTiltU', seaSurfaceTiltUField)
@@ -2631,6 +2665,9 @@ contains
    call mpas_dmpar_exch_halo_field(seaFreezingTemperatureField)
    call mpas_dmpar_exch_halo_field(freezingMeltingPotentialField)
    call mpas_dmpar_exch_halo_field(frazilMassAdjustField)
+   call mpas_dmpar_exch_halo_field(frazilMassFluxField)
+   call mpas_dmpar_exch_halo_field(frazilSaltFluxField)
+   call mpas_dmpar_exch_halo_field(frazilHeatFluxField)
    call mpas_dmpar_exch_halo_field(uOceanVelocityField)
    call mpas_dmpar_exch_halo_field(vOceanVelocityField)
    call mpas_dmpar_exch_halo_field(seaSurfaceTiltUField)
@@ -3031,10 +3068,11 @@ contains
             ! field frazilMassAdjust.
             i2x_i(index_i2x_Fioi_melth  ,n) = oceanHeatFlux(i)
             i2x_i(index_i2x_Fioi_swpen  ,n) = oceanShortwaveFlux(i)
-            i2x_i(index_i2x_Fioi_meltw  ,n) = oceanFreshWaterFlux(i)
-            i2x_i(index_i2x_Fioi_frazil ,n) = frazilMassAdjust(i)/ailohi
-            i2x_i(index_i2x_Fioi_salt   ,n) = oceanSaltFlux(i) 
+            i2x_i(index_i2x_Fioi_meltw  ,n) = oceanFreshWaterFlux(i) + frazilMassAdjust(i)/ailohi
+            i2x_i(index_i2x_Fioi_frazilm,n) = frazilMassAdjust(i)/ailohi
+            i2x_i(index_i2x_Fioi_salt   ,n) = oceanSaltFlux(i) + seaiceReferenceSalinity*0.001_RKIND*frazilMassAdjust(i)/ailohi
             i2x_i(index_i2x_Fioi_frazils,n) = seaiceReferenceSalinity*0.001_RKIND*frazilMassAdjust(i)/ailohi
+            i2x_i(index_i2x_Fioi_frazilh,n) = 0.0_RKIND
             i2x_i(index_i2x_Fioi_taux   ,n) = tauxo
             i2x_i(index_i2x_Fioi_tauy   ,n) = tauyo
 
