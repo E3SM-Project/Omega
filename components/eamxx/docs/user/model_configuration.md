@@ -107,8 +107,10 @@ We can do that by using the `--grep` flag:
 $ ./atmquery --grep sub
     iop_options::iop_dosubsidence: false
     ctl_nl::hypervis_subcycle: 1
+    ctl_nl::horiz_turb_subcycle: 1
     ctl_nl::hypervis_subcycle_tom: 1
     ctl_nl::hypervis_subcycle_q: 6
+    ctl_nl::horiz_turb_subcycle_q: 1
     atmosphere_processes::number_of_subcycles: 1
     sc_import::number_of_subcycles: 1
     homme::number_of_subcycles: 1
@@ -227,6 +229,9 @@ $ ./atmquery --grep number_of_subcycles
     rrtmgp::number_of_subcycles: 3
     sc_export::number_of_subcycles: 3
 ```
+
+For the SHOC-HOMME 3D turbulence option and its user-facing parameters, see
+[SHOC-HOMME 3D Turbulence](shoc_homme_3d_turbulence.md).
 
 In addition, "ANY" can be used in a "scoped" string, to limit the set of matches:
 
@@ -505,6 +510,15 @@ the grid where the fields are defined and a coarser grid.
       the size of the output file.
           - **Note:** with this feature, the user can only specify fields
           from a single grid.
+- `horiz_remap_fill_threshold`: fraction (in `[0,1)`) of a target column that must
+come from valid (i.e., not fill-valued) source columns for the remapped value to be
+written out.
+      - When remapping fields that may contain fill values, EAMxx computes, for each
+      target column, the fraction of its interpolation weight that comes from valid
+      source columns.
+      - Target columns whose fraction is above this threshold store the average over
+      the valid source columns only, while the others are set to the fill value.
+      - If not set, it defaults to `0.5`, i.e., majority rules.
 - `vertical_remap_file`: similar to the previous option, this map file is used to
 refine/coarsen fields in the vertical direction.
 - `IOGrid`: this parameter can be specified inside one of the grids sections,
@@ -552,6 +566,14 @@ There are, however, particular use cases that require some less common options,
 which we list here (in parentheses, the location in the YAML file and the type
 of the parameter value).
 
+- `fill_threshold` (top-level list, `real`):
+      - This parameter is only used for `average` output of fields that may contain
+      fill values (e.g., vertically remapped fields, or `X_at_YhPa` diagnostics).
+      - It specifies the fraction (in `[0,1)`) of the output window that must be
+      unfilled for the time average to be written out; if the fraction of unfilled
+      snapshots does not exceed this threshold, the fill value is written instead.
+      - By default, it is `0.0`, meaning that the output stores the average over the
+      unfilled snapshots only, regardless of how many there are.
 - `flush_frequency` (top-level list, `integer`)
       - This parameter can be used to specify how often the IO library
       should sync the in-memory data to file.
@@ -617,3 +639,40 @@ of the parameter value).
               - By default, is is set to `false`, so that EAMxx will attempt to
               resume filling the last produced output file (if any, and if it
               can accommodate more snapshots).
+
+## Restart file compatibility
+
+EAMxx's model restart files (the `*.scream.r.*.nc` files used to resume a run,
+not to be confused with the _output stream_ restart options described above)
+are not guaranteed to remain compatible across EAMxx development: whenever the
+set of fields needed to restart the model changes, an older restart file may
+no longer be usable to resume a run with a newer version of the code.
+
+For instance, as of
+[PR #8606](https://github.com/E3SM-Project/E3SM/pull/8606), EAMxx
+initializes/restarts the wind components `U` and `V` directly, instead of the
+vector field `horiz_winds` that used to be read/written prior to that PR. If
+you try to restart a run using a restart file created before that PR, EAMxx
+will fail to find `U`/`V` in the file, and error out with a message like
+
+```text
+Error! Could not retrieve variable. Variable not found.
+ - filename: /path/to/my.scream.r.nc
+ - varname : U
+ - vars on file : [..., horiz_winds, ...]
+```
+
+To convert an old restart file so it can be used with the current code, you
+can use the following [NCO](http://nco.sourceforge.net/) commands, which
+extract `U`/`V` from `horiz_winds`, and drop `horiz_winds` from the file:
+
+``` {.shell .copy}
+ncap2 -O -s "U = horiz_winds(:,:,0,:); V = horiz_winds(:,:,1,:)" my.scream.r.nc temp.nc
+ncks -O -x -v horiz_winds temp.nc temp2.nc
+ncatted -a long_name,U,o,c,zonal_velocity -a long_name,V,o,c,meridional_velocity temp2.nc
+mv temp2.nc my.scream.r.nc
+```
+
+The last command overwrites the original restart file in place, so that
+`rpointer.atm` (which stores the restart file name) does not need to be
+updated.

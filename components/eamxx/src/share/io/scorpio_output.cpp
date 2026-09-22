@@ -219,6 +219,11 @@ AtmosphereOutput::AtmosphereOutput(const ekat::Comm &comm, const ekat::Parameter
     }
     if (params.isParameter("fill_threshold")) {
       m_avg_coeff_threshold = params.get<Real>("fill_threshold");
+      EKAT_REQUIRE_MSG (m_avg_coeff_threshold>=0 and m_avg_coeff_threshold<1,
+          "Error! Invalid value for 'fill_threshold'.\n"
+          "  - output stream: " + m_stream_name + "\n"
+          "  - fill_threshold: " + std::to_string(m_avg_coeff_threshold) + "\n"
+          "  - valid range   : [0,1)\n");
     }
   }
 
@@ -261,7 +266,11 @@ AtmosphereOutput::AtmosphereOutput(const ekat::Comm &comm, const ekat::Parameter
     if (use_horiz_remap_from_file) {
       // Construct the coarsening remapper
       auto horiz_remap_file   = params.get<std::string>("horiz_remap_file");
-      m_horiz_remapper = std::make_shared<HorizontalRemapper>(grid_after_vr,horiz_remap_file,true);
+      auto hr = std::make_shared<HorizontalRemapper>(grid_after_vr,horiz_remap_file,true);
+      if (params.isParameter("horiz_remap_fill_threshold")) {
+        hr->set_mask_threshold(params.get<Real>("horiz_remap_fill_threshold"));
+      }
+      m_horiz_remapper = hr;
     } else {
       // Construct a generic remapper (likely, Dyn->PhysicsGLL)
       grid_after_hr = fm_grid->get_aux_grid(output_data_layout);
@@ -642,6 +651,7 @@ run (const std::string& filename, const util::TimeStamp& ts,
 
       // Write to file
       auto func_start = std::chrono::steady_clock::now();
+
       if (m_transpose) {
         const auto& id = f_out.get_header().get_identifier();
         const auto& layout = id.get_layout();
@@ -792,6 +802,9 @@ register_variables(const std::string& filename,
     const auto& dimnames = m_vars_dims.at(field_name);
     std::string units = fid.get_units().to_string();
 
+    // Auxiliary coordinates (lat, lon) should not list themselves in coordinates attribute
+    const bool is_aux_coord = field_name=="lat" or field_name=="lon";
+
     // TODO  Need to change dtype to allow for other variables.
     // Currently the field_manager only stores Real variables so it is not an issue,
     // but in the future if non-Real variables are added we will want to accomodate that.
@@ -825,13 +838,16 @@ register_variables(const std::string& filename,
       scorpio::define_var (filename, field_name, units, dimnames,
                             "real",fp_precision, m_add_time_dim);
 
-      // Add FillValue as an attribute of each variable
-      // FillValue is a protected metadata, do not add it if it already existed
-      if (fp_precision=="double" or
-          (fp_precision=="real" and std::is_same<Real,double>::value)) {
-        scorpio::set_attribute(filename, field_name, "_FillValue",constants::fill_value<double>);
-      } else {
-        scorpio::set_attribute(filename, field_name, "_FillValue",constants::fill_value<float>);
+      // CF compliance: Only add _FillValue for fields that may actually contain fill values
+      // (e.g., pressure-interpolated fields). Coordinate variables and regular fields
+      // without missing values should not have _FillValue (may_be_filled() should return false).
+      if (f.get_header().may_be_filled()) {
+        if (fp_precision=="double" or
+            (fp_precision=="real" and std::is_same<Real,double>::value)) {
+          scorpio::set_attribute(filename, field_name, "_FillValue",constants::fill_value<double>);
+        } else {
+          scorpio::set_attribute(filename, field_name, "_FillValue",constants::fill_value<float>);
+        }
       }
       if (m_alias_to_orig.count(field_name)==1) {
         // Store what this field is the alias of
@@ -876,31 +892,36 @@ register_variables(const std::string& filename,
 
       // Gather standard name, CF-Compliant (if not already in the io: string attributes)
       if (str_atts.count("standard_name")==0) {
+        // Get standard name from metadata registry
         auto standardname = m_default_metadata.get_standardname(field_name);
+
         scorpio::set_attribute(filename, field_name, "standard_name", standardname);
       }
 
-      // If output represents an statistic over a time range add a "cell methods"
-      // attribute.
-      switch (m_avg_type) {
-        case OutputAvgType::Instant:
-          scorpio::set_attribute(filename, field_name, "cell_methods", "time: point");
-          break;  // Don't add the attribute
-        case OutputAvgType::Max:
-          scorpio::set_attribute(filename, field_name, "cell_methods", "time: maximum");
-          break;
-        case OutputAvgType::Min:
-          scorpio::set_attribute(filename, field_name, "cell_methods", "time: minimum");
-          break;
-        case OutputAvgType::Average:
-          scorpio::set_attribute(filename, field_name, "cell_methods", "time: mean");
-          break;
-        default:
-          EKAT_ERROR_MSG ("Unexpected/unsupported averaging type.\n");
+      // CF compliance: Only add cell_methods to variables with time dimension.
+      // Coordinate/dimension variables don't need cell_methods.
+      if (m_add_time_dim) {
+        switch (m_avg_type) {
+          case OutputAvgType::Instant:
+            scorpio::set_attribute(filename, field_name, "cell_methods", "time: point");
+            break;
+          case OutputAvgType::Max:
+            scorpio::set_attribute(filename, field_name, "cell_methods", "time: maximum");
+            break;
+          case OutputAvgType::Min:
+            scorpio::set_attribute(filename, field_name, "cell_methods", "time: minimum");
+            break;
+          case OutputAvgType::Average:
+            scorpio::set_attribute(filename, field_name, "cell_methods", "time: mean");
+            break;
+          default:
+            EKAT_ERROR_MSG ("Unexpected/unsupported averaging type.\n");
+        }
       }
 
-      // If output contains the column dimension add a "coordinates" attribute.
-      if (fid.get_layout().has_tag(COL)) {
+      // CF compliance: Auxiliary coordinate variables (lat, lon) should not list
+      // themselves in the coordinates attribute.
+      if (fid.get_layout().has_tag(COL) && !is_aux_coord) {
         scorpio::set_attribute(filename, field_name, "coordinates", "lat lon");
       }
 
@@ -1059,6 +1080,9 @@ process_requested_fields()
   std::set<std::string> intermediate_names;
   for (const auto& spec : m_intermediate_aliases) {
     auto tokens = ekat::split(spec, ":=");
+    for (auto& t : tokens) {
+      t = ekat::trim(t);
+    }
     EKAT_REQUIRE_MSG(tokens.size()==2 && !tokens[0].empty() && !tokens[1].empty(),
         "Error! Invalid entry in 'aliases' section. Should be 'alias:=original'.\n"
         " - entry: " + spec + "\n");
@@ -1083,11 +1107,26 @@ process_requested_fields()
   }
 
   // Next, find out which field names are just aliases (using ':=' syntax)
+  // NOTE: spaces around ':=' are allowed and stripped; expressions read
+  //       better with them.
   for (auto& name : m_fields_names) {
     auto tokens = ekat::split(name,":=");
+    for (auto& t : tokens) {
+      t = ekat::trim(t);
+    }
     EKAT_REQUIRE_MSG(tokens.size()==2 or tokens.size()==1,
         "Error! Invalid alias request. Should be 'alias:=original'.\n"
         " - request: " + name + "\n");
+    // Trimming can leave a token empty (' := expr', 'name :=', or an entry that
+    // is only whitespace). Catch it here: an empty name silently poisons
+    // m_fields_names/m_alias_to_orig, and only fails much later.
+    for (const auto& t : tokens) {
+      EKAT_REQUIRE_MSG(not t.empty(),
+          "Error! Empty field name in output request.\n"
+          " - stream name: " + m_stream_name + "\n"
+          " - request: '" + name + "'\n"
+          " - expected 'alias := original' with both sides non-empty.\n");
+    }
     if (tokens.size()==2) {
       EKAT_REQUIRE_MSG (m_alias_to_orig.count(tokens[0])==0,
           "Error! The same alias has been used multiple times.\n"
@@ -1095,8 +1134,8 @@ process_requested_fields()
           " - first alias: " + tokens[0] + ":=" + m_alias_to_orig[tokens[0]] + "\n"
           " - second alias: " + tokens[0] + ":=" + tokens[1] + "\n");
       m_alias_to_orig[tokens[0]] = tokens[1];
-      name = tokens[0];
     }
+    name = tokens[0];
   }
 
   // In case someone has an alias of an alias, we need to resolve the TRUE orig names.
@@ -1200,6 +1239,10 @@ process_requested_fields()
   // This ensures we can evaluate diags in order at runtime
   bool done = false;
   std::set<std::string> remaining(m_fields_names.begin(),m_fields_names.end());
+  // m_fields_names now holds exactly the variables that reach the nc file:
+  // alias targets live in m_alias_to_orig, 'aliases' entries are intermediates.
+  // Copy it, since 'remaining' shrinks below.
+  const std::set<std::string> written_names(remaining);
   for (const auto& it : m_alias_to_orig) {
     remaining.insert(it.second);
   }
@@ -1230,11 +1273,30 @@ process_requested_fields()
           remove_these.insert(name);
         }
       } else {
-        auto& diag = m_diag_repo[name];
-        if (not diag) {
-          // First time we run into this diag. Create it
-          diag = create_diagnostic(name,fm_model->get_grid());
-        }
+        // Reuse the diag if another stream built it, else create it.
+        // NOTE: cache it only after the check below, or a stream that fails to
+        //       build leaves it in the shared static repo for everyone else.
+        auto it = m_diag_repo.find(name);
+        auto diag = it==m_diag_repo.end()
+                  ? create_diagnostic(name,fm_model->get_grid())
+                  : it->second;
+
+        // Field names go into the nc file verbatim, and '(qc+qv)*p_mid' is
+        // not a usable variable name, so an expression we must WRITE needs one.
+        // As an alias target, an 'aliases' intermediate, or nested in a larger
+        // expression, it is fine and needs no name.
+        EKAT_REQUIRE_MSG (
+            not (written_names.count(name)==1 and
+                 diag->get_params().isParameter("from_expression")),
+            "Error! An expression must be given an output name.\n"
+            " - stream name: " + m_stream_name + "\n"
+            " - request: " + name + "\n"
+            " - instead of\n"
+            "     - " + name + "\n"
+            "   write\n"
+            "     - <name> := " + name + "\n");
+
+        m_diag_repo[name] = diag;
         // Add its deps to the list of fields to process (if not already in fm_model)
         bool deps_met = true;
         for (const auto& dep_name : diag->get_input_fields_names()) {

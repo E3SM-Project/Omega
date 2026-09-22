@@ -130,7 +130,7 @@ class Aurora(Machine):
         cls.c_compiler   = "mpicc"
         cls.ftn_compiler = "mpifort"
 
-        compiler = "oneapi-ifxgpu"
+        compiler = "intelgpu"
 
         cls.env_setup = [f"eval $({CIMEROOT}/CIME/Tools/get_case_env -c SMS.ne4pg2_ne4pg2.F2010-SCREAMv1.{cls.name}_{compiler})"]
 
@@ -176,6 +176,77 @@ class PMGPU(PM):
         cls.num_run_res = 4 # four gpus
         cls.gpu_arch = "cuda"
 
+###############################################################################
+class Alvarez(CrayMachine):
+###############################################################################
+    @classmethod
+    def setup_alvarez(cls, partition):
+        expect(partition in ["cpu", "gpu"], "Unknown Alvarez partition")
+
+        super().setup_cray("alvarez-" + partition)
+
+        compiler = "gnu" if partition == "cpu" else "gnugpu"
+        cls.env_setup = [f"eval $({CIMEROOT}/CIME/Tools/get_case_env -c SMS.ne4pg2_ne4pg2.F2010-SCREAMv1.{cls.name}_{compiler})"]
+        cls.batch = f"salloc --account e3sm_g --constraint={partition}"
+        if partition == "cpu":
+            cls.batch += " --time 00:30:00 --nodes=1 -q debug"
+        else:
+            cls.batch += " --time 02:00:00 --nodes=1 --gpus-per-node=4 --gpu-bind=none -q regular"
+            cls.num_run_res = 4
+            cls.gpu_arch = "cuda"
+
+###############################################################################
+class AlvarezCPU(Alvarez):
+###############################################################################
+    concrete = True
+    @classmethod
+    def setup(cls):
+        super().setup_alvarez("cpu")
+
+###############################################################################
+class AlvarezGPU(Alvarez):
+###############################################################################
+    concrete = True
+    @classmethod
+    def setup(cls):
+        super().setup_alvarez("gpu")
+
+###############################################################################
+class Muller(CrayMachine):
+###############################################################################
+    @classmethod
+    def setup_muller(cls, partition):
+        expect(partition in ["cpu", "gpu"], "Unknown Muller partition")
+
+        super().setup_cray("muller-" + partition)
+
+        compiler = "gnu" if partition == "cpu" else "gnugpu"
+        cls.env_setup = [f"eval $({CIMEROOT}/CIME/Tools/get_case_env -c SMS.ne4pg2_ne4pg2.F2010-SCREAMv1.{cls.name}_{compiler})"]
+        cls.batch = f"salloc --account e3sm_g --constraint={partition}"
+        if partition == "cpu":
+            cls.batch += " --time 00:30:00 --nodes=1 -q debug"
+        else:
+            cls.batch += " --time 02:00:00 --nodes=1 --gpus-per-node=4 --gpu-bind=none -q regular"
+            cls.num_run_res = 4
+            cls.gpu_arch = "cuda"
+
+###############################################################################
+class MullerCPU(Muller):
+###############################################################################
+    concrete = True
+    @classmethod
+    def setup(cls):
+        super().setup_muller("cpu")
+
+###############################################################################
+class MullerGPU(Muller):
+###############################################################################
+    concrete = True
+    @classmethod
+    def setup(cls):
+        super().setup_muller("gpu")
+
+###############################################################################
 ###############################################################################
 class Polaris(CrayMachine):
 ###############################################################################
@@ -241,6 +312,20 @@ class Lychee(Machine):
         cls.gpu_arch = "cuda"
 
 ###############################################################################
+class Vista(Machine):
+###############################################################################
+    concrete = True
+    @classmethod
+    def setup(cls):
+        super().setup_base("vista")
+
+        compiler = "gnugpu"
+        cls.env_setup = [f"eval $({CIMEROOT}/CIME/Tools/get_case_env -c SMS.ne4pg2_ne4pg2.F2010-SCREAMv1.{cls.name}_{compiler})"]
+        cls.batch = "salloc --account CDA24017 --partition gh-dev --time 00:30:00 --nodes=1"
+        cls.num_run_res = 1
+        cls.gpu_arch = "cuda"
+
+###############################################################################
 class Compy(Machine):
 ###############################################################################
     concrete = True
@@ -265,13 +350,13 @@ class GHCISNLGNU(Machine):
         cls.env_setup = ["export GATOR_INITIAL_MB=4000MB"]
 
 ###############################################################################
-class GHCISNLOneAPI(Machine):
+class GHCISNLIntel(Machine):
 ###############################################################################
     concrete = True
     @classmethod
     def setup(cls):
-        super().setup_base("ghci-snl-oneapi")
-        cls.baselines_dir = "/projects/e3sm/data/baselines/scream/ghci-snl-oneapi"
+        super().setup_base("ghci-snl-intel")
+        cls.baselines_dir = "/projects/e3sm/data/baselines/scream/ghci-snl-intel"
         cls.env_setup = ["export GATOR_INITIAL_MB=4000MB",
                          "export OMPI_MCA_io=romio321"]
 

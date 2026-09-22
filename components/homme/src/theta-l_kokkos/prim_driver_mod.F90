@@ -92,8 +92,8 @@ contains
     use hybvcoord_mod, only : hvcoord_t
     use control_mod,   only : limiter_option, rsplit, qsplit, tstep_type, statefreq,   &
                               nu, nu_p, nu_q, nu_s, nu_div, nu_top, vert_remap_q_alg,  &
-                              hypervis_order, hypervis_subcycle, hypervis_subcycle_tom,&
-                              hypervis_scaling, laplace_scaling,                       &
+                              hypervis_order, hypervis_subcycle, horiz_turb_subcycle, &
+                              hypervis_subcycle_tom, hypervis_scaling, laplace_scaling, &
                               ftype, prescribed_wind, use_moisture, disable_diagnostics,   &
                               use_cpstar, transport_alg, theta_hydrostatic_mode,       &
                               dcmip16_mu, theta_advect_form, test_case,                &
@@ -135,8 +135,8 @@ contains
 
     call init_simulation_params_c (vert_remap_q_alg, limiter_option, rsplit, qsplit, tstep_type,  &
                                    qsize, statefreq, nu, nu_p, nu_q, nu_s, nu_div, nu_top,        &
-                                   hypervis_order, hypervis_subcycle, hypervis_subcycle_tom,      &
-                                   hypervis_scaling, laplace_scaling,                             &
+                                   hypervis_order, hypervis_subcycle, horiz_turb_subcycle,        &
+                                   hypervis_subcycle_tom, hypervis_scaling, laplace_scaling,      &
                                    dcmip16_mu, ftype, theta_advect_form,                          &
                                    prescribed_wind,                                               &
                                    use_moisture_int,                                              &
@@ -481,6 +481,9 @@ contains
     use perf_mod,       only : t_startf, t_stopf
     use prim_state_mod, only : prim_printstate
     use theta_f2c_mod,  only : prim_run_subcycle_c, cxx_push_results_to_f90
+#if defined(CAM) && !defined(SCREAM)
+    use theta_f2c_mod,  only : cxx_push_results_to_f90_tl
+#endif
     use theta_f2c_mod,  only : push_forcing_to_c, sync_diagnostics_to_host_c
     !
     ! Inputs
@@ -573,11 +576,27 @@ contains
       elem_state_ps_v_ptr      = c_loc(elem_state_ps_v)
       elem_derived_omega_p_ptr = c_loc(elem_derived_omega_p)
 
+#if defined(CAM) && !defined(SCREAM)
+      ! CAM reads only n0 / n0_qdp after a step, so copy back just those levels.
+      ! Recompute the qdp levels first: those from before prim_run_subcycle_c
+      ! are stale, since tl%nstep has since advanced. n0_qdp is the level that
+      ! every f90 reader of elem_state_Qdp will index with.
+      call TimeLevel_Qdp(tl, dt_tracer_factor, n0_qdp, np1_qdp)
+#endif
+
       ! Copy cxx arrays back to f90 structures
       call t_startf('push_to_f90')
+#if defined(CAM) && !defined(SCREAM)
+      call cxx_push_results_to_f90_tl(elem_state_v_ptr, elem_state_w_i_ptr, elem_state_vtheta_dp_ptr,   &
+                                      elem_state_phinh_i_ptr, elem_state_dp3d_ptr, elem_state_ps_v_ptr, &
+                                      elem_state_Qdp_ptr, elem_state_Q_ptr, elem_derived_omega_p_ptr,   &
+                                      tl%n0, n0_qdp)
+#else
+      ! EAMxx may use current and previous timelevels for statefreq diagnostics, so keep the all-time-levels copy
       call cxx_push_results_to_f90(elem_state_v_ptr, elem_state_w_i_ptr, elem_state_vtheta_dp_ptr,   &
                                    elem_state_phinh_i_ptr, elem_state_dp3d_ptr, elem_state_ps_v_ptr, &
                                    elem_state_Qdp_ptr, elem_state_Q_ptr, elem_derived_omega_p_ptr)
+#endif
       call t_stopf('push_to_f90')
     endif
 
@@ -649,11 +668,20 @@ contains
     integer,              intent(in) :: statefreq, nextOutputStep, nsplit_iter
     logical,              intent(in) :: compute_diagnostics
 
-    logical                          :: push_to_f, time_for_homme_output
+    logical                          :: push_to_f
+    ! The CAM branch below no longer consumes this, and computing it there would
+    ! be a dead read of nextOutputStep, which a CAM build never assigns. Declaring
+    ! it under the same guard as its only assignment keeps the CAM build free of
+    ! unused-variable warnings. Other configurations keep the original behavior.
+#ifndef CAM
+    logical                          :: time_for_homme_output
+#endif
 
     push_to_f = .false.
+#ifndef CAM
     time_for_homme_output = &
          (MODULO(tl%nstep,statefreq)==0 .or. tl%nstep >= nextOutputStep .or. compute_diagnostics)
+#endif
 
 #ifdef HOMMEXX_BENCHMARK_NOFORCING
 !standalone homme, only benchmarks
@@ -664,16 +692,18 @@ contains
     push_to_f = compute_diagnostics
 
 #elif defined(CAM)
-!CAM run, push at the end of nsplit loop
-    if (nsplit_iter == nsplit) then
-       push_to_f = .true.
-    endif
-
-!CAM also needs some of homme output
-    !if (MODULO(tl%nstep,statefreq)==0 .or. tl%nstep >= nextOutputStep .or. compute_diagnostics) then
-    if ( time_for_homme_output ) then
-       push_to_f = .true.
-    endif
+!CAM run, push at the end of nsplit loop, plus whenever prim_printstate runs.
+!
+!Do NOT use time_for_homme_output here. It tests tl%nstep >= nextOutputStep, and
+!nextOutputStep is only ever assigned by the standalone driver (prim_main.F90),
+!which is not part of a CAM build -- so it reads 0 and the test is always true,
+!making this push fire on every nsplit iteration instead of just the last one.
+!HOMME's own output (prim_movie_output et al.) is not in the CAM build at all, so
+!there is nothing here for that term to guard. compute_diagnostics already covers
+!the statefreq test, because tl%nstep == nstep_end once prim_run_subcycle_c has
+!returned, and it is the gate on the only f90 reader in this routine
+!(prim_printstate). This mirrors the SCREAM branch above.
+    push_to_f = (nsplit_iter == nsplit) .or. compute_diagnostics
 
 #else
 !standalone homme, not benchmarks
