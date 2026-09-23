@@ -305,7 +305,7 @@ At the end, an example of using the specialized solver is presented.</p>
 <p>The team-level solvers need to be used inside a parallel loop using Kokkos team
 policy. To create a team policy for solving <code class="docutils literal notranslate"><span class="pre">NBatch</span></code> systems of size <code class="docutils literal notranslate"><span class="pre">NRow</span></code>
 the static member function <code class="docutils literal notranslate"><span class="pre">makeTeamPolicy</span></code> is used</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TeamPolicy</span><span class="w"> </span><span class="n">Policy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TridDiagSolver</span><span class="o">::</span><span class="n">makeTeamPolicy</span><span class="p">(</span><span class="n">NBatch</span><span class="p">,</span><span class="w"> </span><span class="n">NRow</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TeamPolicy</span><span class="w"> </span><span class="n">Policy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TriDiagSolver</span><span class="o">::</span><span class="n">makeTeamPolicy</span><span class="p">(</span><span class="n">NBatch</span><span class="p">,</span><span class="w"> </span><span class="n">NRow</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Every team of threads except the last is responsible for solving <code class="docutils literal notranslate"><span class="pre">VecLength</span></code> systems.
@@ -349,7 +349,7 @@ Overall, the code that defines the systems coefficients looks typically like thi
 <span class="w">   </span><span class="p">});</span>
 </pre></div>
 </div>
-<p>To perform a team-level solve a different overload of the static member function <code class="docutils literal notranslate"><span class="pre">TridDiagSolver::solve</span></code>
+<p>To perform a team-level solve a different overload of the static member function <code class="docutils literal notranslate"><span class="pre">TriDiagSolver::solve</span></code>
 needs to be called.
 This overload takes the team member <code class="docutils literal notranslate"><span class="pre">Member</span></code> and the filled scratch struct <code class="docutils literal notranslate"><span class="pre">Scratch</span></code>.
 This call needs to be surrounded by barriers to ensure that the
@@ -359,7 +359,7 @@ parallel loop setting the coefficients has finished and to make the computed sol
 
 <span class="w">   </span><span class="c1">// solve the system</span>
 <span class="w">   </span><span class="n">Member</span><span class="p">.</span><span class="n">team_barrier</span><span class="p">();</span>
-<span class="w">   </span><span class="n">TridDiagSolver</span><span class="o">::</span><span class="n">solve</span><span class="p">(</span><span class="n">Member</span><span class="p">,</span><span class="w"> </span><span class="n">Scratch</span><span class="p">);</span>
+<span class="w">   </span><span class="n">TriDiagSolver</span><span class="o">::</span><span class="n">solve</span><span class="p">(</span><span class="n">Member</span><span class="p">,</span><span class="w"> </span><span class="n">Scratch</span><span class="p">);</span>
 <span class="w">   </span><span class="n">Member</span><span class="p">.</span><span class="n">team_barrier</span><span class="p">();</span>
 
 <span class="w">   </span><span class="p">...</span>
@@ -395,7 +395,7 @@ parallel loop setting the coefficients has finished and to make the computed sol
 <p>The team-level specialized diffusion solver can be used similarly, the only substantial difference is in the form
 of the coefficients. A minimal complete example of using it is shown below.</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// create team policy</span>
-<span class="n">TeamPolicy</span><span class="w"> </span><span class="n">Policy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TridDiagDiffSolver</span><span class="o">::</span><span class="n">makeTeamPolicy</span><span class="p">(</span><span class="n">NBatch</span><span class="p">,</span><span class="w"> </span><span class="n">NRow</span><span class="p">);</span>
+<span class="n">TeamPolicy</span><span class="w"> </span><span class="n">Policy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TriDiagDiffSolver</span><span class="o">::</span><span class="n">makeTeamPolicy</span><span class="p">(</span><span class="n">NBatch</span><span class="p">,</span><span class="w"> </span><span class="n">NRow</span><span class="p">);</span>
 
 <span class="n">parallel_for</span><span class="p">(</span><span class="n">Policy</span><span class="p">,</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="w"> </span><span class="p">(</span><span class="n">TeamMember</span><span class="w"> </span><span class="o">&amp;</span><span class="n">member</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">   </span><span class="c1">// create scratch data</span>
@@ -417,7 +417,7 @@ of the coefficients. A minimal complete example of using it is shown below.</p>
 
 <span class="w">   </span><span class="c1">// solve the system</span>
 <span class="w">   </span><span class="n">Member</span><span class="p">.</span><span class="n">team_barrier</span><span class="p">();</span>
-<span class="w">   </span><span class="n">TridDiagDiffSolver</span><span class="o">::</span><span class="n">solve</span><span class="p">(</span><span class="n">Member</span><span class="p">,</span><span class="w"> </span><span class="n">Scratch</span><span class="p">);</span>
+<span class="w">   </span><span class="n">TriDiagDiffSolver</span><span class="o">::</span><span class="n">solve</span><span class="p">(</span><span class="n">Member</span><span class="p">,</span><span class="w"> </span><span class="n">Scratch</span><span class="p">);</span>
 <span class="w">   </span><span class="n">Member</span><span class="p">.</span><span class="n">team_barrier</span><span class="p">();</span>
 
 <span class="w">   </span><span class="c1">// store the solution</span>

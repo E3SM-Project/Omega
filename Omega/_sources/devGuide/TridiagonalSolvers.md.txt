@@ -87,7 +87,7 @@ The team-level solvers need to be used inside a parallel loop using Kokkos team
 policy. To create a team policy for solving `NBatch` systems of size `NRow`
 the static member function `makeTeamPolicy` is used
 ```c++
-TeamPolicy Policy = TridDiagSolver::makeTeamPolicy(NBatch, NRow);
+TeamPolicy Policy = TriDiagSolver::makeTeamPolicy(NBatch, NRow);
 ```
 Every team of threads except the last is responsible for solving `VecLength` systems.
 Since the total number of systems likely doesn't evenly divide `VecLength`, the last
@@ -131,7 +131,7 @@ parallel_for(Policy, KOKKOS_LAMBDA (TeamMember &member) {
       ...
    });
 ```
-To perform a team-level solve a different overload of the static member function `TridDiagSolver::solve`
+To perform a team-level solve a different overload of the static member function `TriDiagSolver::solve`
 needs to be called.
 This overload takes the team member `Member` and the filled scratch struct `Scratch`.
 This call needs to be surrounded by barriers to ensure that the
@@ -142,7 +142,7 @@ parallel_for(Policy, KOKKOS_LAMBDA (TeamMember &member) {
 
    // solve the system
    Member.team_barrier();
-   TridDiagSolver::solve(Member, Scratch);
+   TriDiagSolver::solve(Member, Scratch);
    Member.team_barrier();
 
    ...
@@ -178,7 +178,7 @@ The team-level specialized diffusion solver can be used similarly, the only subs
 of the coefficients. A minimal complete example of using it is shown below.
 ```cpp
 // create team policy
-TeamPolicy Policy = TridDiagDiffSolver::makeTeamPolicy(NBatch, NRow);
+TeamPolicy Policy = TriDiagDiffSolver::makeTeamPolicy(NBatch, NRow);
 
 parallel_for(Policy, KOKKOS_LAMBDA (TeamMember &member) {
    // create scratch data
@@ -200,7 +200,7 @@ parallel_for(Policy, KOKKOS_LAMBDA (TeamMember &member) {
 
    // solve the system
    Member.team_barrier();
-   TridDiagDiffSolver::solve(Member, Scratch);
+   TriDiagDiffSolver::solve(Member, Scratch);
    Member.team_barrier();
 
    // store the solution
