@@ -64,8 +64,7 @@ struct TestSetupPlane {
    ErrorMeasures ExpectedFCTHNew                = {0.00, 0.00};
    ErrorMeasures ExpectedFCT_High               = {1.0408340855860843e-17,
                                                    1.2836244918860014e-17};
-   ErrorMeasures ExpectedFCT_Low                = {1.0095554103513882e-15,
-                                                   1.0095554103514163e-15};
+   ErrorMeasures ExpectedFCT_Low                = {0, 0};
    ErrorMeasures ExpectedFCTToNonFCT            = {9.524542988823467e-16,
                                                    5.336197203674528e-16};
    ErrorMeasures ExpectedTrDel2Errors           = {0.00334357193650093847,
@@ -205,32 +204,32 @@ struct TestSetupSphere {
    // radius of spherical mesh
    Real Radius = REarth;
 
-   ErrorMeasures ExpectedDivErrors     = {0.013659556526126423,
-                                          0.0036698023569596279};
-   ErrorMeasures ExpectedPVErrors      = {0.021937128290005589,
-                                          0.012253081309866708};
-   ErrorMeasures ExpectedGradErrors    = {0.0018790366180557886,
-                                          0.0014984647360648147};
-   ErrorMeasures ExpectedLaplaceErrors = {0.2819223346929331,
-                                          0.27053032782204006};
-   ErrorMeasures ExpectedTrHAdvErrors  = {0.013259084476801913,
-                                          0.004075236217689366};
-   ErrorMeasures ExpectedFCTErrors     = {0.00, 0.00};
-   ErrorMeasures ExpectedFCTHProv      = {3.0542657508680904e-05,
-                                          1.0779233406323438e-06};
-   ErrorMeasures ExpectedFCTHInv       = {3.0541724683419424e-05,
-                                          1.0779233406323438e-06};
-   ErrorMeasures ExpectedFCTHNew       = {3.0541724683419424e-05,
-                                          1.0779233406323438e-06};
-   ErrorMeasures ExpectedFCT_High      = {0.00146484375, 16478.526025524854};
-   ErrorMeasures ExpectedFCT_Low = {0.2958192441638326, 0.09980000200239414};
-   ErrorMeasures ExpectedFCTToNonFCT            = {1.5120472343676013e-15,
-                                                   6.215666716489436e-16};
-   ErrorMeasures ExpectedTrDel2Errors           = {0.015620987792697782,
-                                                   0.0032365878896264888};
-   ErrorMeasures ExpectedTrDel4Errors           = {0.00081985237645818541,
-                                                   0.00064699727012728107};
-   ErrorMeasures ExpectedSurfTrRestErrors       = {0, 0};
+   ErrorMeasures ExpectedDivErrors        = {0.013659556526126423,
+                                             0.0036698023569596279};
+   ErrorMeasures ExpectedPVErrors         = {0.021937128290005589,
+                                             0.012253081309866708};
+   ErrorMeasures ExpectedGradErrors       = {0.0018790366180557886,
+                                             0.0014984647360648147};
+   ErrorMeasures ExpectedLaplaceErrors    = {0.2819223346929331,
+                                             0.27053032782204006};
+   ErrorMeasures ExpectedTrHAdvErrors     = {0.013259084476801913,
+                                             0.004075236217689366};
+   ErrorMeasures ExpectedFCTErrors        = {0.00, 0.00};
+   ErrorMeasures ExpectedFCTHProv         = {3.0542657508680904e-05,
+                                             1.0779233406323438e-06};
+   ErrorMeasures ExpectedFCTHInv          = {3.0541724683419424e-05,
+                                             1.0779233406323438e-06};
+   ErrorMeasures ExpectedFCTHNew          = {3.0541724683419424e-05,
+                                             1.0779233406323438e-06};
+   ErrorMeasures ExpectedFCT_High         = {0.00146484375, 16478.526025524854};
+   ErrorMeasures ExpectedFCT_Low          = {0, 0};
+   ErrorMeasures ExpectedFCTToNonFCT      = {1.5120472343676013e-15,
+                                             6.215666716489436e-16};
+   ErrorMeasures ExpectedTrDel2Errors     = {0.015620987792697782,
+                                             0.0032365878896264888};
+   ErrorMeasures ExpectedTrDel4Errors     = {0.00081985237645818541,
+                                             0.00064699727012728107};
+   ErrorMeasures ExpectedSurfTrRestErrors = {0, 0};
    ErrorMeasures ExpectedSfcStressForcingErrors = {0, 0};
    ErrorMeasures ExpectedBottomDragErrors       = {0.0015343843060931499,
                                                    0.0014861805971789941};
@@ -1481,14 +1480,12 @@ int testFCTTracerHorzAdvOnCell(int NVertLayers, int NTracers, Real RTol) {
       Kokkos::fence();
 
       Array2DReal LowOrderFlx = TrHorzAdvOnC.GetLowOrderFlx();
+      const auto DvEdge       = Mesh->DvEdge;
 
       parallelFor(
           {Mesh->NEdgesHaloH(1), NVertLayers},
           KOKKOS_LAMBDA(const int IEdge, const int K) {
-             const double DvEdgeFromMeshFile =
-                 Geom == Geometry::Planar ? 0.012028130608117 : 277371;
-             FluxSubView(IEdge, K) =
-                 DvEdgeFromMeshFile * NormalVelocity(IEdge, K);
+             FluxSubView(IEdge, K) = DvEdge(IEdge) * NormalVelocity(IEdge, K);
           });
 
       const Real ATol = 1.0e-10;
