@@ -25,6 +25,7 @@
 #include "VertAdv.h"
 #include "VertCoord.h"
 #include "VertMix.h"
+#include "analysisGroups/Groups.h"
 
 using namespace OMEGA;
 
@@ -312,8 +313,7 @@ void testFactoryCreatesValidOperators() {
 
 //------------------------------------------------------------------------------
 // Test 5.4.2: Verify type dispatch and operator creation
-void testFactoryTypeDispatch(const MachEnv *Env, const HorzMesh *Mesh,
-                             const VertCoord *VCoord) {
+void testFactoryTypeDispatch(const HorzMesh *Mesh, const VertCoord *VCoord) {
 
    // Create a test field specifically for this test
    std::string TestFieldName = "FactoryTestField";
@@ -413,8 +413,7 @@ void testFactoryDifferentFieldTypes(const HorzMesh *Mesh,
 
 //------------------------------------------------------------------------------
 // Test 5.4.4: Verify factory instantiates all operator types
-void testFactoryInstantiateAll(const MachEnv *Env, const HorzMesh *Mesh,
-                               const VertCoord *VCoord) {
+void testFactoryInstantiateAll(const HorzMesh *Mesh, const VertCoord *VCoord) {
 
    // Create a test field for all operators
    std::string TestFieldName = "FactoryInstantiateTestField";
@@ -635,6 +634,137 @@ void testStreamOutput() {
    }
 }
 
+//------------------------------------------------------------------------------
+// Test 5.6.4: Verify MOC operator chain with regional mask and transect BC
+void testMaskedMOCChainConstruction(const HorzMesh *Mesh,
+                                    const VertCoord *VCoord) {
+
+   bool Passed = true;
+
+   // Define test region and transect names
+   std::string RegionName           = "TestRegion";
+   std::string RegionMaskName       = "RegionMask" + RegionName;
+   std::string TransectName         = "TestTransect";
+   std::string TransectMaskName     = "TransectEdgeMask" + TransectName;
+   std::string TransectEdgeSignName = "TransectEdgeMaskSign" + TransectName;
+
+   // Get mesh dimensions
+   I4 NCells      = Mesh->NCellsSize;
+   I4 NEdges      = Mesh->NEdgesSize;
+   I4 NVertLayers = VCoord->NVertLayers;
+
+   // Get decomposition for global IDs
+   auto Decomp  = Decomp::getDefault();
+   auto CellIDH = Decomp->CellIDH;
+   auto EdgeIDH = Decomp->EdgeIDH;
+   // Create synthetic region mask field (on cells)
+   std::vector<std::string> DimNamesCells = {"NCells"};
+   auto RegionMaskField                   = Field::create(
+       RegionMaskName, "Synthetic test region mask for MOC chain testing", "",
+       "", 0, 1, 1, DimNamesCells);
+
+   Array1DI4 RegionMaskData(RegionMaskName + "_data", NCells);
+   RegionMaskField->attachData<Array1DI4>(RegionMaskData);
+   // Fill region mask using global cell IDs
+   auto RegionMaskHost = Kokkos::create_mirror_view(RegionMaskData);
+   for (I4 I = 0; I < Mesh->NCellsOwned; ++I) {
+      I4 GlobalCellID = CellIDH(I);
+      // Mark first half of global cells as "in region"
+      RegionMaskHost(I) = (GlobalCellID <= Mesh->NCellsGlobal / 2) ? 1 : 0;
+   }
+   deepCopy(RegionMaskData, RegionMaskHost);
+   // Create synthetic transect mask field (on edges)
+   std::vector<std::string> DimNamesEdges = {"NEdges"};
+   auto TransectMaskField                 = Field::create(
+       TransectMaskName, "Synthetic test transect mask for MOC chain testing",
+       "", "", 0, 1, 1, DimNamesEdges);
+
+   Array1DI4 TransectMaskData(TransectMaskName + "_data", NEdges);
+   TransectMaskField->attachData<Array1DI4>(TransectMaskData);
+
+   auto TransectEdgeSignField =
+       Field::create(TransectEdgeSignName,
+                     "Synthetic test transect edge sign for MOC chain testing",
+                     "", "", -1, 1, 1, DimNamesEdges);
+
+   Array1DI4 TransectEdgeSignData(TransectEdgeSignName + "_data", NEdges);
+   TransectEdgeSignField->attachData<Array1DI4>(TransectEdgeSignData);
+
+   // Fill transect mask using global edge IDs
+   auto TransectMaskHost     = Kokkos::create_mirror_view(TransectMaskData);
+   auto TransectEdgeSignHost = Kokkos::create_mirror_view(TransectEdgeSignData);
+   for (I4 I = 0; I < Mesh->NEdgesOwned; ++I) {
+      I4 GlobalEdgeID = EdgeIDH(I);
+      // Mark first third of global edges as transect
+      TransectMaskHost(I) = (GlobalEdgeID <= Mesh->NEdgesGlobal / 3) ? 1 : 0;
+      TransectEdgeSignHost(I) =
+          TransectMaskHost(I) * Mesh->NEdgesGlobal % 2 == 0 ? 1 : -1;
+   }
+   deepCopy(TransectMaskData, TransectMaskHost);
+   deepCopy(TransectEdgeSignData, TransectEdgeSignHost);
+   // Create MOC configuration
+   Config MOCConfig;
+   MOCConfig.add("NumBins", 180);
+   MOCConfig.add("MinLat", -90.0);
+   MOCConfig.add("MaxLat", 90.0);
+   MOCConfig.add("Regions", std::vector<std::string>{RegionName});
+   MOCConfig.add("Transects", std::vector<std::string>{TransectName});
+   MOCConfig.add("SnapshotPeriod", std::vector<std::string>{"1Day"});
+   MOCConfig.add("Filename", "testmoc");
+
+   // Create a test Analysis instance (separate from default)
+   auto DefEnv         = MachEnv::getDefault();
+   auto DefTimeStepper = TimeStepper::getDefault();
+   Clock *OmegaClock   = DefTimeStepper->getClock();
+   Config TestConfig;
+   TestConfig.add("Analysis", "");
+   auto TestAnalysis = Analysis::create("TestAnalysis", DefEnv, Mesh, VCoord,
+                                        OmegaClock, &TestConfig);
+
+   // Construct MOC object - this calls buildTransectBCChain and
+   // buildMOCChain
+   MOC TestMOC("TestMOC", MOCConfig, TestAnalysis);
+
+   TestAnalysis->buildOperatorDependencies();
+   TestAnalysis->setComputeAlarms();
+   TestAnalysis->initializeAllOps();
+
+   // Get operators from TestAnalysis
+   auto OpNodes = TestAnalysis->getOpNodes();
+
+   if (OpNodes.empty()) {
+      Passed = false;
+      LOG_ERROR("  MOC chain construction created no operators");
+   } else {
+
+      // Execute all operators in the chain
+      TimeInstant TestTime;
+      for (const auto *Node : OpNodes) {
+         Node->Op->compute(TestTime);
+      }
+
+      // Verify output fields exist
+      if (Passed) {
+         for (const auto *Node : OpNodes) {
+            auto OutputNames = Node->Op->getOutputFieldNames();
+            for (const auto &OutputName : OutputNames) {
+               if (!Field::exists(OutputName)) {
+                  Passed = false;
+                  LOG_ERROR("  Output field {} does not exist", OutputName);
+               }
+            }
+         }
+      }
+   }
+
+   // Clean up test fields
+   Field::destroy(RegionMaskName);
+   Field::destroy(TransectMaskName);
+
+   reportTest("Integration: Masked MOC chain construction and execution",
+              Passed);
+}
+
 //===----------------------------------------------------------------------===//
 // Initialization and finalization functions
 //===----------------------------------------------------------------------===//
@@ -796,9 +926,9 @@ int main(int argc, char *argv[]) {
 
       // Factory Registration and Type Dispatch
       testFactoryCreatesValidOperators();
-      testFactoryTypeDispatch(DefEnv, Mesh, VCoord);
+      testFactoryTypeDispatch(Mesh, VCoord);
       testFactoryDifferentFieldTypes(Mesh, VCoord);
-      testFactoryInstantiateAll(DefEnv, Mesh, VCoord);
+      testFactoryInstantiateAll(Mesh, VCoord);
 
       // Configuration Parsing and Validation
       testOperatorChainParsing();
@@ -809,6 +939,7 @@ int main(int argc, char *argv[]) {
       testComputeAllExecution(ModelClock);
       testOutputFieldsCreated();
       testStreamOutput();
+      testMaskedMOCChainConstruction(Mesh, VCoord);
 
       if (NumFailed > 0) {
          ErrCode = 1;

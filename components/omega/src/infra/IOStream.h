@@ -131,6 +131,25 @@ class IOStream {
    bool Multiframe;      ///< flag for multiple frames/time slices in file
    int Frame;            ///< current frame/slice for multi-frame stream
 
+   /// Flag indicating MyAlarm is a periodic/interval alarm (as opposed to a
+   /// one-time, OnStartup or OnShutdown stream). When true, the alarm's
+   /// previous ring time (getRingTimePrev) gives the correct lower bound of
+   /// the averaging interval for CF-compliant time bounds (time_bnds) on both
+   /// fresh starts and restarts, since periodic streams are only written when
+   /// the alarm is ringing.
+   bool HasPeriodicAlarm = false;
+
+   /// Previous write time on this stream, used as the lower bound of the
+   /// averaging interval when writing CF-compliant time bounds (time_bnds)
+   /// for time-mean fields. Initialized to the model start time and updated
+   /// at the end of each write.
+   TimeInstant PrevWriteTime;
+
+   /// Flag indicating the first write on this stream. Used to seed
+   /// PrevWriteTime to the model start time for non-periodic streams; periodic
+   /// streams instead derive the bound from the alarm (see HasPeriodicAlarm).
+   bool FirstWrite;
+
    /// A pointer file is used if we wish OMEGA to read the name of the file
    /// from another file. This is useful for writing the name of a restart
    /// file to be picked up by the next job submitted so that the input

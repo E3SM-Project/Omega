@@ -12,12 +12,8 @@
 /// include this header to access all available operators without needing to
 /// know individual header locations.
 ///
-/// Currently available operators:
-/// - SpatialMaxOp: Computes spatial maximum over all cells
-/// - SpatialMeanOp: Computes spatial mean
-/// - SpatialMinOp: Computes spatial minimum over all cells
-/// - SpatialStdDevOp: Computes spatial standard deviation
-/// - TimeMeanOp: Computes time-averaged mean over a specified period
+/// See Analysis.md in docs/devGuide for a description of currently available
+/// operators.
 ///
 /// All operators are templated on Kokkos array type to support multiple scalar
 /// types, ranks, and memory locations. The AnalysisOpFactory handles type-safe
@@ -28,10 +24,19 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include "operators/BinaryMultiplyOp.h"
+#include "operators/BinnedAccumulatorOp.h"
+#include "operators/CoordinateBinningOp.h"
+#include "operators/ExtractRegionOp.h"
+#include "operators/HorzMeanOp.h"
+#include "operators/PrefixSumOp.h"
+#include "operators/PseudoToGeometricOp.h"
+#include "operators/ScalarMultiplyOp.h"
 #include "operators/SpatialMaxOp.h"
 #include "operators/SpatialMeanOp.h"
 #include "operators/SpatialMinOp.h"
 #include "operators/SpatialStdDevOp.h"
 #include "operators/TimeMeanOp.h"
+#include "operators/TransectAccumulatorOp.h"
 
 #endif
