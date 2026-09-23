@@ -215,10 +215,10 @@ struct TestSetupSphere {
    ErrorMeasures ExpectedTrHAdvErrors     = {0.013259084476801913,
                                              0.004075236217689366};
    ErrorMeasures ExpectedFCTErrors        = {0.00, 0.00};
-   ErrorMeasures ExpectedFCTHProv         = {3.0542657508680904e-05,
-                                             1.0779233406323438e-06};
-   ErrorMeasures ExpectedFCTHInv          = {3.0541724683419424e-05,
-                                             1.0779233406323438e-06};
+   ErrorMeasures ExpectedFCTHProv         = {3.054304092320326e-05,
+                                             1.077950920692842e-06};
+   ErrorMeasures ExpectedFCTHInv          = {3.054397382906693e-05,
+                                             1.0779509220589763e-06};
    ErrorMeasures ExpectedFCTHNew          = {3.0541724683419424e-05,
                                              1.0779233406323438e-06};
    ErrorMeasures ExpectedFCT_High         = {0.00146484375, 16478.526025524854};
