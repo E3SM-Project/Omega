@@ -364,9 +364,16 @@ exchanges the halo and copies the device array to the host mirror:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">VertCoord</span><span class="o">::</span><span class="n">getDefault</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">initSurfacePressure</span><span class="p">(</span><span class="n">Halo</span><span class="o">::</span><span class="n">getDefault</span><span class="p">());</span>
 </pre></div>
 </div>
-<p>Eventually <code class="docutils literal notranslate"><span class="pre">SurfacePressure</span></code> will be updated each timestep via the coupler as a weighted sum of
-atmosphere, sea-ice, and land-ice pressure; that forcing update will live in a separate forcing
-class that writes into this array.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">SurfacePressure</span></code> is updated at runtime (e.g., each coupling interval from atmosphere and
+sea-ice pressure via <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code>), <code class="docutils literal notranslate"><span class="pre">updateSurfacePressure()</span></code> is called to exchange the halo of
+the device array:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">VertCoord</span><span class="o">::</span><span class="n">getDefault</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">updateSurfacePressure</span><span class="p">(</span><span class="n">Halo</span><span class="o">::</span><span class="n">getDefault</span><span class="p">());</span>
+</pre></div>
+</div>
+<p>The host mirror <code class="docutils literal notranslate"><span class="pre">SurfacePressureH</span></code> is not refreshed there; like the other host mirrors it is
+updated by <code class="docutils literal notranslate"><span class="pre">copyToHost()</span></code>. Note the asymmetry with <code class="docutils literal notranslate"><span class="pre">copyToDevice()</span></code>, which deliberately does not
+copy <code class="docutils literal notranslate"><span class="pre">SurfacePressureH</span></code> back: the device array is the authoritative copy and is the only one
+written by the stream read and by <code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code>.</p>
 </section>
 <section id="removal">
 <h2>Removal<a class="headerlink" href="#removal" title="Permalink to this heading"></a></h2>
