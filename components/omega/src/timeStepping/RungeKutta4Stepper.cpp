@@ -87,6 +87,8 @@ void RungeKutta4Stepper::doStep(OceanState *State,   // model state
 
    VertMix *VMix = VertMix::getInstance();
 
+   resetFrazilOcnStepRates();
+
    for (int Stage = 0; Stage < NStages; ++Stage) {
       const TimeInstant StageTime = SimTime + RKC[Stage] * TimeStep;
       // first stage does:
@@ -97,7 +99,7 @@ void RungeKutta4Stepper::doStep(OceanState *State,   // model state
          prescribeState(State, CurLevel, State, CurLevel, ForcingStageTime);
          Tend->computeAllTendencies(State, AuxState, CurTracerArray, CurLevel,
                                     CurLevel, CurLevel, StageTime,
-                                    RKProj[Stage] * TimeStep);
+                                    RKProj[Stage] * TimeStep, RKB[Stage]);
          updateStateByTend(State, NextLevel, State, CurLevel,
                            RKB[Stage] * TimeStep);
          accumulateTracersUpdate(NextTracerArray, RKB[Stage] * TimeStep);
@@ -122,7 +124,7 @@ void RungeKutta4Stepper::doStep(OceanState *State,   // model state
 
          Tend->computeAllTendencies(ProvisState, AuxState, ProvisTracers,
                                     CurLevel, CurLevel, CurLevel, StageTime,
-                                    RKProj[Stage] * TimeStep);
+                                    RKProj[Stage] * TimeStep, RKB[Stage]);
          updateStateByTend(State, NextLevel, State, NextLevel,
                            RKB[Stage] * TimeStep);
          accumulateTracersUpdate(NextTracerArray, RKB[Stage] * TimeStep);

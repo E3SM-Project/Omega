@@ -8,6 +8,7 @@
 #include "Config.h"
 #include "Error.h"
 #include "ForwardBackwardStepper.h"
+#include "Frazil.h"
 #include "Logging.h"
 #include "RungeKutta2Stepper.h"
 #include "RungeKutta4Stepper.h"
@@ -430,6 +431,13 @@ void TimeStepper::changeTimeStep(const TimeInterval &TimeStepIn) {
 //------------------------------------------------------------------------------
 // Get number of doStep calls made on this instance
 I8 TimeStepper::getStepCount() const { return StepCount; }
+
+void TimeStepper::resetFrazilOcnStepRates() const {
+   auto *DefaultFrazil = Frazil::getDefault();
+   if (DefaultFrazil) {
+      DefaultFrazil->resetOcnStepRates();
+   }
+}
 
 //------------------------------------------------------------------------------
 // Is this a split time stepper. False by default

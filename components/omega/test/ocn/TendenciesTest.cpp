@@ -87,6 +87,9 @@ int initState() {
        PseudoThickCell, Geom, Mesh, OnCell, VCoord->MinLayerCell,
        VCoord->MaxLayerCell, ExchangeHalos::Yes, SetBoundary::Yes);
 
+   deepCopy(VCoord->SurfacePressure, 0.0_Real);
+   VCoord->computePressure(PseudoThickCell, VCoord->SurfacePressure);
+
    Err += setScalar(
        KOKKOS_LAMBDA(Real X, Real Y) { return Setup.tracer(X, Y); },
        TracersCell, Geom, Mesh, OnCell, VCoord->MinLayerCell,
@@ -119,6 +122,11 @@ int initTendenciesTest(const std::string &mesh) {
    Config("Omega");
    Config::readAll("omega.yml");
 
+   Config *OmegaConfig = Config::getOmegaConfig();
+   Config TendConfig("Tendencies");
+   OmegaConfig->get(TendConfig);
+   TendConfig.set("FrazilTendencyEnable", true);
+
    // Initialize time stepping and model clock
    TimeStepper::init1();
    TimeStepper *DefStepper = TimeStepper::getDefault();
@@ -142,6 +150,7 @@ int initTendenciesTest(const std::string &mesh) {
    VertCoord::init();
 
    Tracers::init();
+   Frazil::init();
    VertAdv::init();
    PressureGrad::init();
    Eos::init();
@@ -247,6 +256,7 @@ int testTendencies() {
        "BaselineNormalVelocityTend", Mesh->NEdgesSize, VCoord->NVertLayers);
 
    DefTendencies->SfcStressForcing.Enabled = false;
+   DefTendencies->FrazilTerm.Enabled = false; // frazil needs to be off for now
    DefTendencies->computeAllTendencies(State, AuxState, TracerArray,
                                        ThickTimeLevel, VelTimeLevel,
                                        TracerTimeLevel, Time, Interval);
@@ -324,6 +334,145 @@ int testTendencies() {
    const int ThicknessForcingErr = testSfcThicknessForcing();
    Err += ThicknessForcingErr;
 
+   // Verify frazil tendencies are plumbed into pseudo-thickness and tracer
+   // tendencies by comparing runs with FrazilTerm disabled/enabled.
+   I4 TempTracerIndex = -1;
+   I4 SaltTracerIndex = -1;
+   Tracers::getIndex(TempTracerIndex, "Temperature");
+   Tracers::getIndex(SaltTracerIndex, "Salinity");
+
+   if (TempTracerIndex < 0 || SaltTracerIndex < 0) {
+      Err++;
+      LOG_ERROR("TendenciesTest: missing Temperature/Salinity tracer indices");
+   } else {
+      auto MinLayerCellH = createHostMirrorCopy(VCoord->MinLayerCell);
+      auto MaxLayerCellH = createHostMirrorCopy(VCoord->MaxLayerCell);
+      auto TracerArrayH  = createHostMirrorCopy(TracerArray);
+
+      // Set Salinity in active layers to [31, 33], top-to-bottom ramp.
+      for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
+         const I4 KMin = MinLayerCellH(ICell);
+         const I4 KMax = MaxLayerCellH(ICell);
+
+         for (I4 K = KMin; K <= KMax; ++K) {
+            Real frac = 0.0_Real;
+            if (KMax > KMin) {
+               frac =
+                   static_cast<Real>(K - KMin) / static_cast<Real>(KMax - KMin);
+            }
+            TracerArrayH(SaltTracerIndex, ICell, K) =
+                31.0_Real + 2.0_Real * frac;
+         }
+      }
+
+      // Optional: keep Temperature warm everywhere first, then add one cold
+      // point.
+      for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
+         const I4 KMin = MinLayerCellH(ICell);
+         const I4 KMax = MaxLayerCellH(ICell);
+         for (I4 K = KMin; K <= KMax; ++K) {
+            TracerArrayH(TempTracerIndex, ICell, K) = 8.0_Real;
+         }
+      }
+      const I4 FrazilTestCell  = 0;
+      const I4 FrazilTestLayer = MinLayerCellH(FrazilTestCell);
+      TracerArrayH(TempTracerIndex, FrazilTestCell, FrazilTestLayer) =
+          -2.0_Real;
+      deepCopy(TracerArray, TracerArrayH);
+
+      LOG_INFO("TendenciesTest: minLayerCell = {}", FrazilTestLayer);
+
+      Array2DReal BaselinePseudoThicknessTend(
+          "BaselinePseudoThicknessTend", Mesh->NCellsSize, VCoord->NVertLayers);
+      Array3DReal BaselineTracerTend("BaselineTracerTend",
+                                     Tracers::getNumTracers(), Mesh->NCellsSize,
+                                     VCoord->NVertLayers);
+
+      const bool OrigFrazilEnabled = DefTendencies->FrazilTerm.Enabled;
+
+      DefTendencies->FrazilTerm.Enabled = false;
+      DefTendencies->computeAllTendencies(State, AuxState, TracerArray,
+                                          ThickTimeLevel, VelTimeLevel,
+                                          TracerTimeLevel, Time, Interval);
+      deepCopy(BaselinePseudoThicknessTend, DefTendencies->PseudoThicknessTend);
+      deepCopy(BaselineTracerTend, DefTendencies->TracerTend);
+
+      deepCopy(DefTendencies->PseudoThicknessTend, 0.0_Real);
+      deepCopy(DefTendencies->NormalVelocityTend, 0.0_Real);
+      deepCopy(DefTendencies->TracerTend, 0.0_Real);
+
+      DefTendencies->FrazilTerm.Enabled = true;
+      DefTendencies->computeAllTendencies(State, AuxState, TracerArray,
+                                          ThickTimeLevel, VelTimeLevel,
+                                          TracerTimeLevel, Time, Interval);
+
+      Array2DReal PseudoThicknessTendDiff(
+          "PseudoThicknessTendDiff", Mesh->NCellsSize, VCoord->NVertLayers);
+      Array2DReal TempTracerTendDiff("TempTracerTendDiff", Mesh->NCellsSize,
+                                     VCoord->NVertLayers);
+      Array2DReal SaltTracerTendDiff("SaltTracerTendDiff", Mesh->NCellsSize,
+                                     VCoord->NVertLayers);
+
+      OMEGA_SCOPE(LocPseudoThicknessTendDiff, PseudoThicknessTendDiff);
+      OMEGA_SCOPE(LocTempTracerTendDiff, TempTracerTendDiff);
+      OMEGA_SCOPE(LocSaltTracerTendDiff, SaltTracerTendDiff);
+      OMEGA_SCOPE(LocPseudoThicknessTend, DefTendencies->PseudoThicknessTend);
+      OMEGA_SCOPE(LocBaselinePseudoThicknessTend, BaselinePseudoThicknessTend);
+      OMEGA_SCOPE(LocTracerTend, DefTendencies->TracerTend);
+      OMEGA_SCOPE(LocBaselineTracerTend, BaselineTracerTend);
+      OMEGA_SCOPE(LocMinLayerCell, VCoord->MinLayerCell);
+      OMEGA_SCOPE(LocMaxLayerCell, VCoord->MaxLayerCell);
+
+      parallelForOuter(
+          "TendenciesTest:FrazilTendDiff", {Mesh->NCellsAll},
+          KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
+             const int KMin = LocMinLayerCell(ICell);
+             const int KMax = LocMaxLayerCell(ICell);
+
+             parallelForInner(
+                 Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+                    LocPseudoThicknessTendDiff(ICell, K) =
+                        Kokkos::abs(LocPseudoThicknessTend(ICell, K) -
+                                    LocBaselinePseudoThicknessTend(ICell, K));
+                    LocTempTracerTendDiff(ICell, K) = Kokkos::abs(
+                        LocTracerTend(TempTracerIndex, ICell, K) -
+                        LocBaselineTracerTend(TempTracerIndex, ICell, K));
+                    LocSaltTracerTendDiff(ICell, K) = Kokkos::abs(
+                        LocTracerTend(SaltTracerIndex, ICell, K) -
+                        LocBaselineTracerTend(SaltTracerIndex, ICell, K));
+                 });
+          });
+
+      const Real PseudoDelta = sum(PseudoThicknessTendDiff, Mesh->NCellsOwned,
+                                   VCoord->MinLayerCell, VCoord->MaxLayerCell);
+      const Real TempDelta   = sum(TempTracerTendDiff, Mesh->NCellsOwned,
+                                   VCoord->MinLayerCell, VCoord->MaxLayerCell);
+      const Real SaltDelta   = sum(SaltTracerTendDiff, Mesh->NCellsOwned,
+                                   VCoord->MinLayerCell, VCoord->MaxLayerCell);
+
+      constexpr Real FrazilDeltaATol = 1e-12_Real;
+      if (!Kokkos::isfinite(PseudoDelta) ||
+          isApprox(PseudoDelta, 0._Real, 0._Real, FrazilDeltaATol)) {
+         Err++;
+         LOG_ERROR("TendenciesTest: Frazil did not change "
+                   "PseudoThicknessTend");
+      }
+      if (!Kokkos::isfinite(TempDelta) ||
+          isApprox(TempDelta, 0._Real, 0._Real, FrazilDeltaATol)) {
+         Err++;
+         LOG_ERROR("TendenciesTest: Frazil did not change Temperature tracer "
+                   "tendency");
+      }
+      if (!Kokkos::isfinite(SaltDelta) ||
+          isApprox(SaltDelta, 0._Real, 0._Real, FrazilDeltaATol)) {
+         Err++;
+         LOG_ERROR("TendenciesTest: Frazil did not change Salinity tracer "
+                   "tendency");
+      }
+      // add a log info if no errors?
+      DefTendencies->FrazilTerm.Enabled = OrigFrazilEnabled;
+   }
+
    // check that everything got computed correctly
    int NCellsOwned = Mesh->NCellsOwned;
    int NTracers    = Tracers::getNumTracers();
@@ -336,12 +485,12 @@ int testTendencies() {
       LOG_ERROR("TendenciesTest: PseudoThickTend FAIL");
    }
 
-   const Real TraceTendSum =
+   const Real TracerTendSum =
        sum(DefTendencies->TracerTend, NTracers, NCellsOwned,
            VCoord->MinLayerCell, VCoord->MaxLayerCell);
-   if (!Kokkos::isfinite(TraceTendSum) || TraceTendSum == 0) {
+   if (!Kokkos::isfinite(TracerTendSum) || TracerTendSum == 0) {
       Err++;
-      LOG_ERROR("TendenciesTest: TraceTendSum FAIL");
+      LOG_ERROR("TendenciesTest: TracerTendSum FAIL");
    }
 
    Tendencies::clear();
@@ -720,6 +869,7 @@ int testSfcThicknessForcing() {
 void finalizeTendenciesTest() {
    Forcing::clear();
    Tracers::clear();
+   Frazil::clear();
    PressureGrad::clear();
    VertMix::destroyInstance();
    Eos::destroyInstance();
