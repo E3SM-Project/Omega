@@ -31,6 +31,17 @@ int SfcCoupling::init(const CouplingInitParams &CouplingInitParams) {
    OMEGA_REQUIRE(DefTimeStepper,
                  "Null default TimeStepper pointer in SfcCoupling::init");
 
+   // The surface velocity and SSH gradient exported to the coupler are
+   // reconstructed at cell centers from edge-normal quantities, so a coupled
+   // run needs a mesh that supplies the reconstruction stencil and weights.
+   // Fail here rather than at the first export.
+   if (!DefHorzMesh->HasVectorRecon)
+      ABORT_ERROR("SfcCoupling: mesh {} has no vector reconstruction data, "
+                  "which is needed for the surface velocity and SSH gradient "
+                  "exports; the mesh file must supply NEdgesReconOnCell, "
+                  "ReconStencilCell and ReconWeightsCell",
+                  DefHorzMesh->MeshName);
+
    TimeInterval OcnTimeStep = DefTimeStepper->getTimeStep();
    TimeInterval CplTimeStep = CouplingInitParams.CouplingTimeStep;
 

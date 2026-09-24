@@ -72,9 +72,11 @@ VectorReconOnCell::VectorReconOnCell(HorzMesh const *Mesh)
       ReconStencilCell(Mesh->ReconStencilCell),
       ReconWeightsCell(Mesh->ReconWeightsCell), LatCell(Mesh->LatCell),
       LonCell(Mesh->LonCell) {
-   if (!Mesh->OnSphere)
-      ABORT_ERROR("VectorReconOnCell: reconstruction stencil/weights "
-                  "are only available for spherical meshes");
+   if (!Mesh->HasVectorRecon)
+      ABORT_ERROR("VectorReconOnCell: mesh {} has no vector reconstruction "
+                  "data; the mesh file must supply NEdgesReconOnCell, "
+                  "ReconStencilCell and ReconWeightsCell",
+                  Mesh->MeshName);
 }
 
 } // namespace OMEGA

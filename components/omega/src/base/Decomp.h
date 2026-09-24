@@ -278,9 +278,9 @@ class Decomp {
    // Vector reconstruction stencil (mesh-dependent, precomputed and stored
    // in the mesh file - see HorzMesh for the paired ReconWeightsCell)
 
-   bool OnSphere; ///< true if mesh is spherical (temporary local read of
-                  ///< the OnSphere attribute - only spherical meshes
-                  ///< currently have the reconstruction stencil below)
+   bool HasVectorRecon; ///< true if the mesh file supplied the vector
+                        ///< reconstruction arrays below (and the paired
+                        ///< ReconWeightsCell read by HorzMesh)
 
    Array1DI4 NEdgesReconOnCell;      ///< Num of edges in reconstruction stencil
    HostArray1DI4 NEdgesReconOnCellH; ///< Num of edges in reconstruction stencil

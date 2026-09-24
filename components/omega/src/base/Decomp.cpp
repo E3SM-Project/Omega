@@ -115,7 +115,7 @@ void readMesh(
     I4 &MaxCellsOnEdge,   // max number of cells sharing edge
     I4 &VertexDegree,     // number of cells/edges sharing vrtx
     I4 &MaxEdges2,        // twice max number of edges on a cell
-    bool &OnSphere,       // true if mesh is spherical
+    bool &HasVectorRecon, // true if mesh has vector reconstruction arrays
     std::vector<I4> &CellsOnCellInit,       // cell neighbors for each cell
     std::vector<I4> &EdgesOnCellInit,       // edge IDs for each cell edge
     std::vector<I4> &VerticesOnCellInit,    // vertices around each cell
@@ -224,19 +224,6 @@ void readMesh(
    I4 MaxEdgesOnEdge = MaxEdges2; // 2*MaxEdges, used below for
                                   // EdgesOnEdge/WeightsOnEdge offsets
 
-   // Determine whether the mesh is spherical or planar. This duplicates
-   // (temporarily) the OnSphere/on_a_sphere attribute parsing HorzMesh
-   // does via the full IOStream mechanism - here we just need a quick
-   // answer to decide whether the reconstruction stencil arrays (currently
-   // only generated for spherical meshes) are present in the file.
-   std::string OnSphereStr;
-   Err = IO::readMeta("OnSphere", OnSphereStr, MeshFileID, IO::GlobalID);
-   if (Err.isFail())
-      Err = IO::readMeta("on_a_sphere", OnSphereStr, MeshFileID, IO::GlobalID);
-   std::transform(OnSphereStr.begin(), OnSphereStr.end(), OnSphereStr.begin(),
-                  [](unsigned char c) { return std::tolower(c); });
-   OnSphere = (OnSphereStr == "yes");
-
    // Create the linear decompositions for parallel IO
    // Determine the size of each block, divided as evenly as possible
    I4 NCellsChunk    = (NCellsGlobal - 1) / NumTasks + 1;
@@ -324,24 +311,20 @@ void readMesh(
    }
 
    // Create the parallel IO decompositions
-   IO::Rearranger Rearr  = IO::RearrBox;
-   I4 OnCellDecomp       = IO::createDecomp(IO::IOTypeI4, NDims, OnCellDims,
-                                            OnCellSize, OnCellOffset, Rearr);
-   I4 OnEdgeDecomp       = IO::createDecomp(IO::IOTypeI4, NDims, OnEdgeDims,
-                                            OnEdgeSize, OnEdgeOffset, Rearr);
-   I4 OnEdgeDecomp2      = IO::createDecomp(IO::IOTypeI4, NDims, OnEdgeDims2,
-                                            OnEdgeSize2, OnEdgeOffset2, Rearr);
-   I4 OnVertexDecomp     = IO::createDecomp(IO::IOTypeI4, NDims, OnVertexDims,
-                                            OnVertexSize, OnVertexOffset, Rearr);
-   I4 OnCellDecompScalar = -1;
-   I4 OnCellDecomp2      = -1;
-   if (OnSphere) {
-      OnCellDecompScalar =
-          IO::createDecomp(IO::IOTypeI4, 1, OnCellDimsScalar, OnCellSizeScalar,
-                           OnCellOffsetScalar, Rearr);
-      OnCellDecomp2 = IO::createDecomp(IO::IOTypeI4, NDims, OnCellDims2,
+   IO::Rearranger Rearr = IO::RearrBox;
+   I4 OnCellDecomp      = IO::createDecomp(IO::IOTypeI4, NDims, OnCellDims,
+                                           OnCellSize, OnCellOffset, Rearr);
+   I4 OnEdgeDecomp      = IO::createDecomp(IO::IOTypeI4, NDims, OnEdgeDims,
+                                           OnEdgeSize, OnEdgeOffset, Rearr);
+   I4 OnEdgeDecomp2     = IO::createDecomp(IO::IOTypeI4, NDims, OnEdgeDims2,
+                                           OnEdgeSize2, OnEdgeOffset2, Rearr);
+   I4 OnVertexDecomp    = IO::createDecomp(IO::IOTypeI4, NDims, OnVertexDims,
+                                           OnVertexSize, OnVertexOffset, Rearr);
+   I4 OnCellDecompScalar =
+       IO::createDecomp(IO::IOTypeI4, 1, OnCellDimsScalar, OnCellSizeScalar,
+                        OnCellOffsetScalar, Rearr);
+   I4 OnCellDecomp2 = IO::createDecomp(IO::IOTypeI4, NDims, OnCellDims2,
                                        OnCellSize2, OnCellOffset2, Rearr);
-   }
 
    // Now read the connectivity arrays. Try reading under the new Omega
    // name convention and the older MPAS mesh names.
@@ -444,23 +427,34 @@ void readMesh(
 
    // Vector reconstruction stencil - Omega-native fields, no legacy MPAS
    // name to fall back on. These are mesh-dependent, precomputed as a
-   // preprocessing step (least-squares pseudo-inverse). Only spherical
-   // meshes currently have these fields, so require them only in that case.
-   if (OnSphere) {
-      NEdgesReconOnCellInit.resize(OnCellSizeScalar);
-      ReconStencilCellInit.resize(OnCellSize2);
+   // preprocessing step (least-squares pseudo-inverse), so they are only
+   // present in mesh files that have been through that step. A mesh
+   // without them is not an error here - it simply cannot reconstruct
+   // vectors at cell centers, and the code that needs that capability
+   // (see VectorReconOnCell) aborts if HasVectorRecon is false. The first
+   // read failing is the detection mechanism, so the error it logs is
+   // expected for such meshes.
+   NEdgesReconOnCellInit.resize(OnCellSizeScalar);
+   ReconStencilCellInit.resize(OnCellSize2);
 
-      VarName = "NEdgesReconOnCell";
-      int NEdgesReconOnCellID;
-      Err = IO::readArray(&NEdgesReconOnCellInit[0], OnCellSizeScalar, VarName,
-                          MeshFileID, OnCellDecompScalar, NEdgesReconOnCellID);
-      CHECK_ERROR_ABORT(Err, "Decomp: error reading NEdgesReconOnCell");
+   VarName = "NEdgesReconOnCell";
+   int NEdgesReconOnCellID;
+   Err = IO::readArray(&NEdgesReconOnCellInit[0], OnCellSizeScalar, VarName,
+                       MeshFileID, OnCellDecompScalar, NEdgesReconOnCellID);
+   HasVectorRecon = !Err.isFail();
 
+   if (HasVectorRecon) {
       VarName = "ReconStencilCell";
       int ReconStencilCellID;
       Err = IO::readArray(&ReconStencilCellInit[0], OnCellSize2, VarName,
                           MeshFileID, OnCellDecomp2, ReconStencilCellID);
       CHECK_ERROR_ABORT(Err, "Decomp: error reading ReconStencilCell");
+   } else {
+      LOG_INFO("Decomp: mesh file has no vector reconstruction arrays "
+               "(NEdgesReconOnCell); reconstruction of vectors at cell "
+               "centers will not be available");
+      NEdgesReconOnCellInit.clear();
+      ReconStencilCellInit.clear();
    }
 
    // Initial decompositions are no longer needed so remove them now
@@ -468,10 +462,8 @@ void readMesh(
    IO::destroyDecomp(OnEdgeDecomp);
    IO::destroyDecomp(OnEdgeDecomp2);
    IO::destroyDecomp(OnVertexDecomp);
-   if (OnSphere) {
-      IO::destroyDecomp(OnCellDecompScalar);
-      IO::destroyDecomp(OnCellDecomp2);
-   }
+   IO::destroyDecomp(OnCellDecompScalar);
+   IO::destroyDecomp(OnCellDecomp2);
 
 } // end readMesh
 
@@ -580,7 +572,7 @@ Decomp::Decomp(
    HaloWidth = InHaloWidth;
 
    readMesh(FileID, InEnv, NCellsGlobal, NEdgesGlobal, NVerticesGlobal,
-            MaxEdges, MaxCellsOnEdge, VertexDegree, MaxEdges2, OnSphere,
+            MaxEdges, MaxCellsOnEdge, VertexDegree, MaxEdges2, HasVectorRecon,
             CellsOnCellInit, EdgesOnCellInit, VerticesOnCellInit,
             CellsOnEdgeInit, EdgesOnEdgeInit, VerticesOnEdgeInit,
             CellsOnVertexInit, EdgesOnVertexInit, NEdgesReconOnCellInit,
@@ -635,9 +627,9 @@ Decomp::Decomp(
    // Redistribute the vector reconstruction stencil arrays to the same
    // final cell decomposition. This can happen as soon as CellID/CellLoc
    // are finalized above - it does not participate in defining the
-   // decomposition itself, unlike CellsOnCellInit. Only spherical meshes
-   // currently have these arrays.
-   if (OnSphere) {
+   // decomposition itself, unlike CellsOnCellInit. Skipped for meshes
+   // without the reconstruction arrays.
+   if (HasVectorRecon) {
       TimerFlag =
           Pacer::start("Decomp rearrange recon stencil", 2) && TimerFlag;
       rearrangeReconArrays(InEnv, NEdgesReconOnCellInit, ReconStencilCellInit);
@@ -732,8 +724,8 @@ Decomp::Decomp(
 
    // ReconStencilCell - translated the same way as EdgesOnCell
    // NEdgeReconOnCellH is a count, not an ID, and needs no translation.
-   // Only spherical meshes currently have this array.
-   if (OnSphere) {
+   // Skipped for meshes without the reconstruction arrays.
+   if (HasVectorRecon) {
       for (int Cell = 0; Cell < NCellsSize; ++Cell) {
          for (int Edge = 0; Edge < MaxEdges2; ++Edge) {
             I4 GlobID = ReconStencilCellH(Cell, Edge);
@@ -878,8 +870,8 @@ Decomp::Decomp(
    CellsOnVertex = createDeviceMirrorCopy(CellsOnVertexH);
    EdgesOnVertex = createDeviceMirrorCopy(EdgesOnVertexH);
 
-   // Only spherical meshes currently have the reconstruction stencil arrays
-   if (OnSphere) {
+   // Only meshes with reconstruction data have the stencil arrays
+   if (HasVectorRecon) {
       NEdgesReconOnCell = createDeviceMirrorCopy(NEdgesReconOnCellH);
       ReconStencilCell  = createDeviceMirrorCopy(ReconStencilCellH);
    }

@@ -41,6 +41,17 @@ given ocean state `State`, an array of tracers `TracerArray`, and time level `Ti
 AuxState.computeAll(State, TracerArray, TimeLevel);
 ```
 
+The reconstructed zonal and meridional velocity components are deliberately
+not part of `computeAll`, since no tendency reads them and `computeAll` runs
+once per time stepper stage. They are computed once per time step instead:
+```c++
+AuxState.computeVelocityRecon(State, TimeLevel);
+```
+This call does nothing unless the components are needed, which it decides
+by asking `IOStream::isFieldRequested` whether any stream contains them.
+Computing them requires a mesh whose file supplied the reconstruction
+stencil and weights; `computeVelocityRecon` aborts otherwise.
+
 ## Removal of auxiliary states
 To erase a specific named auxiliary state use `erase`
 ```c++

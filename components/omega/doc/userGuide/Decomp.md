@@ -39,8 +39,12 @@ An input mesh file must be provided that contains at a minimum
   - the total number of cells, edges and vertices (NCells, NEdges, NVertices)
   - the mesh connectivity contained in the arrays CellsOnCell, EdgesOnCell
     VerticesOnCell, CellsOnEdge, EdgesOnEdge, CellsOnVertex, EdgesOnVertex.
-For spherical meshes, the vector reconstruction stencil arrays
-NEdgesReconOnCell and ReconStencilCell are also required.
+The vector reconstruction stencil arrays NEdgesReconOnCell and
+ReconStencilCell are optional. They are precomputed as a mesh
+preprocessing step, so only mesh files that have been through that step
+contain them. A mesh without them is read normally, but reconstructing
+vectors at cell centers (for example the zonal and meridional velocity
+components) is then unavailable and requesting it is an error.
 Again, a full description of the mesh is given in the
 [Developer's Guide](#omega-dev-decomp).
 The file name for this input file is extracted from the HorzMeshIn input

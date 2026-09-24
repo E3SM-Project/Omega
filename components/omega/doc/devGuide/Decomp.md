@@ -88,11 +88,19 @@ described in the mesh specification above. In particular, it contains
   - NEdgesOnCell(NCellsSize): the number of actual edges on each cell
   - NEdgesOnEdge(NEdgesSize): the number of actual edges on each edge
   - NEdgesReconOnCell(NCellsSize): number of edges in the vector
-    reconstruction stencil for each cell (spherical meshes only)
+    reconstruction stencil for each cell (only for meshes that supply
+    the reconstruction arrays)
   - ReconStencilCell(NCellsSize,MaxEdges2): edge indices in the
-    vector reconstruction stencil for each cell (spherical meshes only)
-  - OnSphere: whether the mesh is spherical, read from the mesh file to
-    gate the reconstruction stencil arrays above
+    vector reconstruction stencil for each cell (only for meshes that
+    supply the reconstruction arrays)
+  - HasVectorRecon: whether the mesh file supplied the reconstruction
+    stencil arrays above. These are precomputed as a mesh preprocessing
+    step rather than by Omega, so they are absent from mesh files that
+    have not been through that step. Decomp detects this by attempting
+    the read of NEdgesReconOnCell and treating a failure as "not
+    present" rather than as an error, so the error logged by that read
+    is expected for such meshes. The paired ReconWeightsCell is read by
+    HorzMesh under the same flag.
 
 For each of the arrays above, there is a copy of the array on the host and
 device (GPU) with the host array named with an extra H on the end

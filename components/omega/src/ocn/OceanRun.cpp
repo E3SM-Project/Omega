@@ -6,6 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Analysis.h"
+#include "AuxiliaryState.h"
 #include "Forcing.h"
 #include "IOStream.h"
 #include "OceanDriver.h"
@@ -65,6 +66,12 @@ int ocnRun(TimeInstant &CurrTime ///< [inout] current sim time
          DefTimeStepper->doStep(DefOceanState, SimTime);
          Pacer::stop("Stepper:doStep", 1);
       }
+
+      // Compute diagnostics that are not needed by the time stepper, using
+      // the state the step just produced (time level 0). This is a no-op
+      // unless an IO stream asks for them.
+      AuxiliaryState *DefAuxState = AuxiliaryState::getDefault();
+      DefAuxState->computeVelocityRecon(DefOceanState, 0);
 
       // Compute analysis fields whose alarms are ringing
       Analysis *DefAnalysis = Analysis::getDefault();
@@ -132,6 +139,12 @@ int ocnRun(TimeInstant &CurrTime, ///< [inout] current sim time
          DefTimeStepper->doStep(DefOceanState, SimTime);
          Pacer::stop("Stepper:doStep", 1);
       }
+
+      // Compute diagnostics that are not needed by the time stepper, using
+      // the state the step just produced (time level 0). This is a no-op
+      // unless an IO stream asks for them.
+      AuxiliaryState *DefAuxState = AuxiliaryState::getDefault();
+      DefAuxState->computeVelocityRecon(DefOceanState, 0);
 
       // Update fields exported to the coupler
       DefSfcCoupling->updateExportFields(DefOceanState, Tracers::getAll(0));

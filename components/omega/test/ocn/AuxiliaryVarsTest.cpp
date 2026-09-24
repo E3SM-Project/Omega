@@ -6,6 +6,7 @@
 #include "GlobalConstants.h"
 #include "Halo.h"
 #include "HorzMesh.h"
+#include "HorzOperators.h"
 #include "IO.h"
 #include "IOStream.h"
 #include "Logging.h"
@@ -18,6 +19,7 @@
 #include "auxiliaryVars/PseudoThicknessAuxVars.h"
 #include "auxiliaryVars/TracerAuxVars.h"
 #include "auxiliaryVars/VelocityDel2AuxVars.h"
+#include "auxiliaryVars/VelocityReconAuxVars.h"
 #include "auxiliaryVars/VorticityAuxVars.h"
 #include "mpi.h"
 
@@ -709,6 +711,110 @@ int testTracerAuxVars(const Array2DReal &PseudoThickCell,
 
    return Err;
 }
+
+// Check the reconstructed velocity components next to bathymetry. A cell's
+// reconstruction stencil reaches beyond its own edges, so where the columns
+// have different depths it includes edges that are inactive in a layer
+// where the cell is active. Those edges hold zero or the fill value, and
+// must count as zero velocity. This changes the vertical layer ranges, so
+// it has to run after the tests that rely on full-depth columns.
+int testVelocityReconAuxVars(const Array2DReal &NormalVelEdge) {
+   int Err = 0;
+
+   const auto Decomp = Decomp::getDefault();
+   const auto Mesh   = HorzMesh::getDefault();
+   const auto VCoord = VertCoord::getDefault();
+
+   // Make every fourth column (by global ID, so halos agree) half as deep
+   const int ShallowMaxLayer = NVertLayers / 2 - 1;
+   for (int ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
+      VCoord->MinLayerCellH(ICell) = 0;
+      VCoord->MaxLayerCellH(ICell) =
+          Decomp->CellIDH(ICell) % 4 == 0 ? ShallowMaxLayer : NVertLayers - 1;
+   }
+   deepCopy(VCoord->MinLayerCell, VCoord->MinLayerCellH);
+   deepCopy(VCoord->MaxLayerCell, VCoord->MaxLayerCellH);
+   Kokkos::fence();
+   VCoord->minMaxLayerEdge(Halo::getDefault());
+
+   // Mask the velocity as the model does, with the fill value below both
+   // neighboring cells and zero below only one of them
+   Array2DReal MaskedVelEdge("MaskedVelEdge", Mesh->NEdgesSize, NVertLayers);
+   deepCopy(MaskedVelEdge, NormalVelEdge);
+   VCoord->applyEdgeLayerMask(MaskedVelEdge, Mesh->NEdgesAll);
+
+   // The expected result is the unmasked reconstruction operator applied to
+   // the same velocity with every inactive edge set to zero
+   Array2DReal ZeroedVelEdge("ZeroedVelEdge", Mesh->NEdgesSize, NVertLayers);
+   OMEGA_SCOPE(MinLayerEdgeBot, VCoord->MinLayerEdgeBot);
+   OMEGA_SCOPE(MaxLayerEdgeTop, VCoord->MaxLayerEdgeTop);
+   parallelFor(
+       {Mesh->NEdgesAll, NVertLayers}, KOKKOS_LAMBDA(int IEdge, int K) {
+          const bool Active =
+              K >= MinLayerEdgeBot(IEdge) && K <= MaxLayerEdgeTop(IEdge);
+          ZeroedVelEdge(IEdge, K) = Active ? NormalVelEdge(IEdge, K) : 0;
+       });
+
+   Array2DReal ExpectedZonalCell("ExpectedZonalCell", Mesh->NCellsOwned,
+                                 NVertLayers);
+   Array2DReal ExpectedMeridCell("ExpectedMeridCell", Mesh->NCellsOwned,
+                                 NVertLayers);
+   VectorReconOnCell ReconCell(Mesh);
+   parallelFor(
+       {Mesh->NCellsOwned, NVertLayers}, KOKKOS_LAMBDA(int ICell, int K) {
+          ReconCell(ExpectedZonalCell, ExpectedMeridCell, ICell, K,
+                    ZeroedVelEdge);
+       });
+
+   // Compute the reconstruction from the masked velocity
+   VelocityReconAuxVars VelocityReconAux("", Mesh, VCoord);
+   parallelFor(
+       {Mesh->NCellsOwned, NVertLayers}, KOKKOS_LAMBDA(int ICell, int K) {
+          VelocityReconAux.computeVarsOnCell(ICell, K, MaskedVelEdge);
+       });
+
+   // Compare in the active layers of each cell, relative to the largest
+   // expected component
+   OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
+   OMEGA_SCOPE(NumZonalCell, VelocityReconAux.VelocityZonalCell);
+   OMEGA_SCOPE(NumMeridCell, VelocityReconAux.VelocityMeridionalCell);
+   Real MaxDiff     = 0;
+   Real MaxExpected = 0;
+   parallelReduce(
+       {Mesh->NCellsOwned, NVertLayers},
+       KOKKOS_LAMBDA(int ICell, int K, Real &LocMaxDiff, Real &LocMaxExp) {
+          if (K > MaxLayerCell(ICell))
+             return;
+          LocMaxDiff = Kokkos::max(
+              LocMaxDiff,
+              Kokkos::max(Kokkos::abs(NumZonalCell(ICell, K) -
+                                      ExpectedZonalCell(ICell, K)),
+                          Kokkos::abs(NumMeridCell(ICell, K) -
+                                      ExpectedMeridCell(ICell, K))));
+          LocMaxExp = Kokkos::max(
+              LocMaxExp, Kokkos::max(Kokkos::abs(ExpectedZonalCell(ICell, K)),
+                                     Kokkos::abs(ExpectedMeridCell(ICell, K))));
+       },
+       Kokkos::Max<Real>(MaxDiff), Kokkos::Max<Real>(MaxExpected));
+
+   MPI_Comm Comm = MachEnv::getDefault()->getComm();
+   MPI_Allreduce(MPI_IN_PLACE, &MaxDiff, 1, MPI_RealKind, MPI_MAX, Comm);
+   MPI_Allreduce(MPI_IN_PLACE, &MaxExpected, 1, MPI_RealKind, MPI_MAX, Comm);
+
+   const Real RTol = sizeof(Real) == 4 ? 1e-5 : 1e-12;
+   if (!(MaxDiff <= RTol * MaxExpected)) {
+      Err++;
+      LOG_ERROR("AuxVarsTest: VelocityRecon FAIL, max difference {} "
+                "exceeds {} times the largest component {}",
+                MaxDiff, RTol, MaxExpected);
+   }
+
+   if (Err == 0) {
+      LOG_INFO("AuxVarsTest: VelocityReconAuxVars PASS");
+   }
+
+   return Err;
+}
 //------------------------------------------------------------------------------
 // The initialization routine for aux vars testing
 int initAuxVarsTest(const std::string &mesh) {
@@ -787,6 +893,9 @@ int auxVarsTest(const std::string &mesh = DefaultMeshFile) {
    Err += testVelocityDel2AuxVars(RTol);
 
    Err += testTracerAuxVars(PseudoThickCell, NormalVelEdge, RTol);
+
+   // Must come last since it changes the vertical layer ranges
+   Err += testVelocityReconAuxVars(NormalVelEdge);
 
    if (Err == 0) {
       LOG_INFO("AuxVarsTest: Successful completion");

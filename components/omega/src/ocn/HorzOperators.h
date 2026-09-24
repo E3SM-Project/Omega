@@ -657,8 +657,10 @@ class MasksAndCoefficients {
 class VectorReconOnCell {
  public:
    VectorReconOnCell(HorzMesh const *Mesh);
-   // Currently only support computing Zonal/Meridional (X/Y) for
-   // spherical (planar) meshes on a single vertical layer
+
+   // Reconstruct a single vertical layer. The reconstructed components are
+   // zonal/meridional on spherical meshes and the Cartesian X/Y components
+   // on planar meshes.
    KOKKOS_FUNCTION void operator()(const Array1DReal &UReconX,
                                    const Array1DReal &UReconY, int ICell,
                                    const Array1DReal &VecEdge) const {
@@ -674,6 +676,38 @@ class VectorReconOnCell {
          Uz += ReconWeightsCell(ICell, 2, J) * Field;
       }
 
+      cartesianToLocal(UReconX(ICell), UReconY(ICell), ICell, Ux, Uy, Uz);
+   }
+
+   // Reconstruct one layer of a multi-layer field. The reconstruction is
+   // independent in each layer, so this is the single-layer form above
+   // with a vertical index added.
+   KOKKOS_FUNCTION void operator()(const Array2DReal &UReconX,
+                                   const Array2DReal &UReconY, int ICell, int K,
+                                   const Array2DReal &VecEdge) const {
+
+      Real Ux = 0._Real, Uy = 0._Real, Uz = 0._Real;
+
+      for (int J = 0; J < NEdgesReconOnCell(ICell); ++J) {
+         const I4 JEdge   = ReconStencilCell(ICell, J);
+         const Real Field = VecEdge(JEdge, K);
+
+         Ux += ReconWeightsCell(ICell, 0, J) * Field;
+         Uy += ReconWeightsCell(ICell, 1, J) * Field;
+         Uz += ReconWeightsCell(ICell, 2, J) * Field;
+      }
+
+      cartesianToLocal(UReconX(ICell, K), UReconY(ICell, K), ICell, Ux, Uy, Uz);
+   }
+
+ private:
+   // Convert a reconstructed Cartesian vector at a cell center into the
+   // components stored in the output arrays: local geographic
+   // (zonal/meridional) on spherical meshes, Cartesian X/Y on planar meshes
+   // where the vector already lies in the plane of the mesh.
+   KOKKOS_FUNCTION void cartesianToLocal(Real &UReconX, Real &UReconY,
+                                         int ICell, Real Ux, Real Uy,
+                                         Real Uz) const {
       if (OnSphere) {
          const Real CLat = Kokkos::cos(LatCell(ICell));
          const Real SLat = Kokkos::sin(LatCell(ICell));
@@ -681,15 +715,14 @@ class VectorReconOnCell {
          const Real SLon = Kokkos::sin(LonCell(ICell));
 
          // cartesian to local geographic
-         UReconX(ICell) = -SLon * Ux + CLon * Uy;
-         UReconY(ICell) = -(CLon * Ux + SLon * Uy) * SLat + Uz * CLat;
+         UReconX = -SLon * Ux + CLon * Uy;
+         UReconY = -(CLon * Ux + SLon * Uy) * SLat + Uz * CLat;
       } else {
-         UReconX(ICell) = Ux;
-         UReconY(ICell) = Uy;
+         UReconX = Ux;
+         UReconY = Uy;
       }
    }
 
- private:
    bool OnSphere;
    Array1DI4 NEdgesReconOnCell;
    Array2DI4 ReconStencilCell;
