@@ -644,8 +644,7 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
       ValuesAtEachStep.push_back(CurrentValue);
 
       // Update the field data on device
-      auto TestDataHost = Kokkos::create_mirror_view(TestData);
-      Kokkos::deep_copy(TestDataHost, TestData);
+      auto TestDataHost = createHostMirrorCopy(TestData);
 
       if constexpr (Rank == 1) {
          for (I4 i = 0; i < Dims[0]; ++i) {
@@ -667,7 +666,7 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
          }
       }
 
-      Kokkos::deep_copy(TestData, TestDataHost);
+      deepCopy(TestData, TestDataHost);
 
       // Advance clock to next timestep
       ModelClock->advance();
@@ -704,10 +703,9 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
    bool Passed = true;
    if constexpr (Rank == 1) {
       auto ResultData = ResultField->getDataArray<Array1D_t<Real>>();
-      auto ResultHost = Kokkos::create_mirror_view(ResultData);
-      Kokkos::deep_copy(ResultHost, ResultData);
+      auto ResultHost = createHostMirrorCopy(ResultData);
 
-      for (I4 i = 0; i < std::min(10, Dims[0]); ++i) {
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
          Real ComputedValue = ResultHost(i);
          if (std::abs(ComputedValue - ExpectedMean) >
              static_cast<Real>(Helper::getTolerance())) {
@@ -719,17 +717,23 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
       }
    } else if constexpr (Rank == 2) {
       auto ResultData = ResultField->getDataArray<Array2D_t<Real>>();
-      auto ResultHost = Kokkos::create_mirror_view(ResultData);
-      Kokkos::deep_copy(ResultHost, ResultData);
+      auto ResultHost = createHostMirrorCopy(ResultData);
 
-      for (I4 i = 0; i < std::min(5, Dims[0]); ++i) {
-         for (I4 j = 0; j < std::min(5, Dims[1]); ++j) {
+      // Active layers [MinLayerCell, MaxLayerCell] must equal the analytic
+      // time-mean; inactive layers must retain FillValueReal (the refactored
+      // TimeMeanOp only writes active layers, preserving fill values).
+      for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
+         const I4 KMin = VCoord->MinLayerCellH(i);
+         const I4 KMax = VCoord->MaxLayerCellH(i);
+         for (I4 j = 0; j < VCoord->NVertLayers; ++j) {
             Real ComputedValue = ResultHost(i, j);
-            if (std::abs(ComputedValue - ExpectedMean) >
+            bool Active        = (j >= KMin && j <= KMax);
+            Real Expected      = Active ? ExpectedMean : FillValueReal;
+            if (std::abs(ComputedValue - Expected) >
                 static_cast<Real>(Helper::getTolerance())) {
                Passed = false;
-               LOG_ERROR("  At index ({}, {}): Expected {}, Got {}", i, j,
-                         ExpectedMean, ComputedValue);
+               LOG_ERROR("  At index ({}, {}) [active={}]: Expected {}, Got {}",
+                         i, j, Active, Expected, ComputedValue);
                break;
             }
          }
@@ -738,18 +742,22 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
       }
    } else if constexpr (Rank == 3) {
       auto ResultData = ResultField->getDataArray<Array3D_t<Real>>();
-      auto ResultHost = Kokkos::create_mirror_view(ResultData);
-      Kokkos::deep_copy(ResultHost, ResultData);
+      auto ResultHost = createHostMirrorCopy(ResultData);
 
-      for (I4 i = 0; i < std::min(3, Dims[0]); ++i) {
-         for (I4 j = 0; j < std::min(3, Dims[1]); ++j) {
-            for (I4 k = 0; k < std::min(3, Dims[2]); ++k) {
+      for (I4 i = 0; i < Dims[0]; ++i) {
+         for (I4 j = 0; j < Mesh->NCellsOwned; ++j) {
+            const I4 KMin = VCoord->MinLayerCellH(j);
+            const I4 KMax = VCoord->MaxLayerCellH(j);
+            for (I4 k = 0; k < VCoord->NVertLayers; ++k) {
                Real ComputedValue = ResultHost(i, j, k);
-               if (std::abs(ComputedValue - ExpectedMean) >
+               bool Active        = (k >= KMin && k <= KMax);
+               Real Expected      = Active ? ExpectedMean : FillValueReal;
+               if (std::abs(ComputedValue - Expected) >
                    static_cast<Real>(Helper::getTolerance())) {
                   Passed = false;
-                  LOG_ERROR("  At index ({}, {}, {}): Expected {}, Got {}", i,
-                            j, k, ExpectedMean, ComputedValue);
+                  LOG_ERROR("  At index ({}, {}, {}) [active={}]: Expected {}, "
+                            "Got {}",
+                            i, j, k, Active, Expected, ComputedValue);
                   break;
                }
             }
