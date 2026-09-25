@@ -16,13 +16,15 @@ namespace OMEGA {
 class SplitExplicitRK2Stepper : public TimeStepper {
  public:
    SplitExplicitRK2Stepper(
-       const std::string &InName, ///< [in] name of time stepper
-       ///< [in] SplitExplicitRK2 or UnsplitRK2
-       TimeStepperType InType,
-       const TimeInterval &InTimeStep, ///< [in] time step
-       const TimeInstant &InStartTime, ///< [in] start time for time stepping
-       ///< [in] stop time for time stepping, missing in coupled mode
-       std::optional<TimeInstant> InStopTime = std::nullopt);
+       const std::string &InName,              ///< [in] name of time stepper
+       TimeStepperType InType,                 ///< [in] SplitExplicit type
+       const TimeInterval &InTimeStep,         ///< [in] time step
+       const TimeStepperStartType InStartType, ///< [in] option for starting sim
+       const TimeInstant &InStartTime,         ///< [in] start time for full sim
+       const TimeStepperStopType InStopType,   ///< [in] option for stopping
+       std::optional<TimeInstant> InStopTime,  ///< [in] stop time if AtTime
+       std::optional<TimeInterval> InDuration  ///< [in] duration if AfterDur
+   );
 
    /// Indicate that this is a split time stepper
    bool isSplit() const override;
