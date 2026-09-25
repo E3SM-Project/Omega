@@ -141,7 +141,10 @@
 <li class="toctree-l3"><a class="reference internal" href="#configuration-helpers">Configuration helpers</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#built-in-operators">Built-in operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#built-in-operators">Built-in operators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#spatial-weights">Spatial weights</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#operator-factory-and-type-dispatch">Operator factory and type dispatch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#operator-chains-dependencies-and-caching">Operator chains, dependencies, and caching</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#alarm-based-scheduling">Alarm-based scheduling</a></li>
@@ -442,7 +445,7 @@ field(s).</p>
 <td><p>scalar (<code class="docutils literal notranslate"><span class="pre">Array1DReal</span></code>, dimension <code class="docutils literal notranslate"><span class="pre">Scalar</span></code>)</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">_SpatialMean</span></code></p></td>
 <td><p>—</p></td>
-<td><p>Global mean of the input field.</p></td>
+<td><p>Global weighted mean of the input field: by area for a horizontal field, by mass for a layered one (see <a class="reference internal" href="#omega-dev-analysis-spatial-weights">Spatial weights</a>).</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SpatialStdDev</span></code></p></td>
 <td><p>2 (the field and its <code class="docutils literal notranslate"><span class="pre">_SpatialMean</span></code>)</p></td>
@@ -450,7 +453,7 @@ field(s).</p>
 <td><p>scalar (<code class="docutils literal notranslate"><span class="pre">Array1DReal</span></code>, dimension <code class="docutils literal notranslate"><span class="pre">Scalar</span></code>)</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">_SpatialStdDev</span></code></p></td>
 <td><p>—</p></td>
-<td><p>Global standard deviation of the input field. Requires the field’s <code class="docutils literal notranslate"><span class="pre">SpatialMean</span></code> as an upstream input, which is added to its input list automatically.</p></td>
+<td><p>Global weighted standard deviation of the input field, with the same weights as <code class="docutils literal notranslate"><span class="pre">SpatialMean</span></code>. Requires the field’s <code class="docutils literal notranslate"><span class="pre">SpatialMean</span></code> as an upstream input, which is added to its input list automatically.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TimeMean</span></code></p></td>
 <td><p>1</p></td>
@@ -462,6 +465,39 @@ field(s).</p>
 </tr>
 </tbody>
 </table>
+<section id="spatial-weights">
+<span id="omega-dev-analysis-spatial-weights"></span><h3>Spatial weights<a class="headerlink" href="#spatial-weights" title="Permalink to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">SpatialMean</span></code> and <code class="docutils literal notranslate"><span class="pre">SpatialStdDev</span></code> weight each mesh entity by how much of the
+ocean it represents, so that the statistic does not depend on the mesh
+resolution. The weights are built by the <code class="docutils literal notranslate"><span class="pre">SpatialWeights</span></code> class in
+<code class="docutils literal notranslate"><span class="pre">analysis/SpatialWeights.h</span></code> from the input field’s dimension names:</p>
+<ul class="simple">
+<li><p>A horizontal field (rank 1) is weighted by area: <code class="docutils literal notranslate"><span class="pre">AreaCell</span></code> for cells,
+<code class="docutils literal notranslate"><span class="pre">DcEdge</span> <span class="pre">*</span> <span class="pre">DvEdge</span></code> for edges and <code class="docutils literal notranslate"><span class="pre">AreaTriangle</span></code> for vertices.</p></li>
+<li><p>A layered field (last dimension <code class="docutils literal notranslate"><span class="pre">NVertLayers</span></code>) is weighted by mass, the
+area times the current <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code> of the state, which is the layer’s
+renormalized mass per unit area. The pseudo-thickness at an edge is the mean
+of its two cells and at a vertex the kite-area-weighted mean of its cells,
+as in the auxiliary variables.</p></li>
+<li><p>An interface field (last dimension <code class="docutils literal notranslate"><span class="pre">NVertLayersP1</span></code>) is weighted by half the
+mass of each adjacent layer, so the weights sum to the column mass and the
+result is the mass-weighted mean of the field taken as piecewise linear
+between interfaces. The surface and bottom interfaces have one adjacent
+layer each.</p></li>
+</ul>
+<p>Only active entries take part. The weights are built from the active masks
+of the vertical coordinate by selection rather than multiplication, and the
+reductions skip inactive entries, so the fill values in inactive layers are
+never read. Any leading extra dimensions of the field (e.g. tracers) share
+the same weights.</p>
+<p>An operator uses the weights by calling <code class="docutils literal notranslate"><span class="pre">init()</span></code> with the input field name
+in <code class="docutils literal notranslate"><span class="pre">initialize()</span></code>, <code class="docutils literal notranslate"><span class="pre">update()</span></code> in <code class="docutils literal notranslate"><span class="pre">compute()</span></code> (mass weights follow the state,
+so they are recomputed each time), and then <code class="docutils literal notranslate"><span class="pre">weightedSum()</span></code> or
+<code class="docutils literal notranslate"><span class="pre">weightedSquaredDeviation()</span></code> with the input array and <code class="docutils literal notranslate"><span class="pre">weightSum()</span></code> for the
+normalization. The sums accumulate each owned entity’s terms in a fixed
+order and reduce them with <code class="docutils literal notranslate"><span class="pre">globalSum</span></code>, so they are as reproducible as
+Omega’s other global sums.</p>
+</section>
 </section>
 <section id="operator-factory-and-type-dispatch">
 <h2>Operator factory and type dispatch<a class="headerlink" href="#operator-factory-and-type-dispatch" title="Permalink to this heading"></a></h2>

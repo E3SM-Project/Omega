@@ -97,7 +97,11 @@ For complete IOStream documentation, see the
 ### GlobalStats
 
 Computes global spatial statistics (mean, min, max, standard deviation) for
-user-specified fields.
+user-specified fields. The mean and standard deviation are weighted so that
+they do not depend on the mesh resolution: by the area of each cell, edge or
+vertex for a horizontal field, and by mass (area times pseudo-thickness) for
+a field with a vertical dimension, with an interface field weighted by half
+the mass of each adjacent layer. Only active layers take part.
 
 **Example:**
 
