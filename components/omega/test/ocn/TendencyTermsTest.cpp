@@ -64,8 +64,7 @@ struct TestSetupPlane {
    ErrorMeasures ExpectedFCTHNew                = {0.00, 0.00};
    ErrorMeasures ExpectedFCT_High               = {1.0408340855860843e-17,
                                                    1.2836244918860014e-17};
-   ErrorMeasures ExpectedFCT_Low                = {1.0095554103513882e-15,
-                                                   1.0095554103514163e-15};
+   ErrorMeasures ExpectedFCT_Low                = {0, 0};
    ErrorMeasures ExpectedFCTToNonFCT            = {9.524542988823467e-16,
                                                    5.336197203674528e-16};
    ErrorMeasures ExpectedTrDel2Errors           = {0.00334357193650093847,
@@ -203,42 +202,41 @@ struct TestSetupPlane {
 
 struct TestSetupSphere {
    // radius of spherical mesh
-   // TODO: get this from the mesh
    Real Radius = REarth;
 
-   ErrorMeasures ExpectedDivErrors     = {0.013652414501664885,
-                                          0.0036904315983599676};
-   ErrorMeasures ExpectedPVErrors      = {0.0219217796608757037,
-                                          0.0122537418367830303};
-   ErrorMeasures ExpectedGradErrors    = {0.0019094381714837498,
-                                          0.0015218320661105702};
-   ErrorMeasures ExpectedLaplaceErrors = {0.28193638497826856,
-                                          0.270546491554748};
-   ErrorMeasures ExpectedTrHAdvErrors  = {0.013259410329645643,
-                                          0.004094907022292395};
-   ErrorMeasures ExpectedFCTErrors     = {0.00, 0.00};
-   ErrorMeasures ExpectedFCTHProv      = {3.0542657508680904e-05,
-                                          1.0779233406323438e-06};
-   ErrorMeasures ExpectedFCTHInv       = {3.0541724683419424e-05,
-                                          1.0779233406323438e-06};
-   ErrorMeasures ExpectedFCTHNew       = {3.0541724683419424e-05,
-                                          1.0779233406323438e-06};
-   ErrorMeasures ExpectedFCT_High      = {0.00146484375, 16478.526025524854};
-   ErrorMeasures ExpectedFCT_Low = {0.2958192441638326, 0.09980000200239414};
-   ErrorMeasures ExpectedFCTToNonFCT            = {1.5120472343676013e-15,
-                                                   6.215666716489436e-16};
-   ErrorMeasures ExpectedTrDel2Errors           = {0.04865718541236144,
-                                                   0.005105510870642706};
-   ErrorMeasures ExpectedTrDel4Errors           = {0.0008646345116716073,
-                                                   0.0007118574326665881};
-   ErrorMeasures ExpectedSurfTrRestErrors       = {0, 0};
+   ErrorMeasures ExpectedDivErrors        = {0.013659556526126423,
+                                             0.0036698023569596279};
+   ErrorMeasures ExpectedPVErrors         = {0.021937128290005589,
+                                             0.012253081309866708};
+   ErrorMeasures ExpectedGradErrors       = {0.0018790366180557886,
+                                             0.0014984647360648147};
+   ErrorMeasures ExpectedLaplaceErrors    = {0.2819223346929331,
+                                             0.27053032782204006};
+   ErrorMeasures ExpectedTrHAdvErrors     = {0.013259084476801913,
+                                             0.004075236217689366};
+   ErrorMeasures ExpectedFCTErrors        = {0.00, 0.00};
+   ErrorMeasures ExpectedFCTHProv         = {3.054304092320326e-05,
+                                             1.077950920692842e-06};
+   ErrorMeasures ExpectedFCTHInv          = {3.054397382906693e-05,
+                                             1.0779509220589763e-06};
+   ErrorMeasures ExpectedFCTHNew          = {3.0541724683419424e-05,
+                                             1.0779233406323438e-06};
+   ErrorMeasures ExpectedFCT_High         = {0.00146484375, 16478.526025524854};
+   ErrorMeasures ExpectedFCT_Low          = {0, 0};
+   ErrorMeasures ExpectedFCTToNonFCT      = {1.5120472343676013e-15,
+                                             6.215666716489436e-16};
+   ErrorMeasures ExpectedTrDel2Errors     = {0.015620987792697782,
+                                             0.0032365878896264888};
+   ErrorMeasures ExpectedTrDel4Errors     = {0.00081985237645818541,
+                                             0.00064699727012728107};
+   ErrorMeasures ExpectedSurfTrRestErrors = {0, 0};
    ErrorMeasures ExpectedSfcStressForcingErrors = {0, 0};
-   ErrorMeasures ExpectedBottomDragErrors       = {0.0015333449035655053,
-                                                   0.0014897009917655022};
-   ErrorMeasures ExpectedCoriolis2DErrors       = {0.017830942909137566,
-                                                   0.00958613271059214};
-   ErrorMeasures ExpectedCoriolis1DErrors       = {0.01756710962800044,
-                                                   0.011526527317437694};
+   ErrorMeasures ExpectedBottomDragErrors       = {0.0015343843060931499,
+                                                   0.0014861805971789941};
+   ErrorMeasures ExpectedCoriolis2DErrors       = {0.017808748900211516,
+                                                   0.0095867629560083354};
+   ErrorMeasures ExpectedCoriolis1DErrors       = {0.017532349880532885,
+                                                   0.011526365807152578};
 
    KOKKOS_FUNCTION Real velEdgeX(Real X, Real Y) const { return 2; }
 
@@ -316,17 +314,27 @@ struct TestSetupSphere {
       return Radius * std::pow(std::sin(Lon), 2) * std::pow(std::cos(Lat), 2);
    }
 
+   // scalarB is differentiated by the tracer diffusion test, so it must be
+   // smooth on the sphere: cos(Lon)*cos(Lat)*sin(Lat) = x*z/R^2 vanishes at
+   // the poles, where Lon is undefined.
    KOKKOS_FUNCTION Real scalarB(Real Lon, Real Lat) const {
-      return 2. + std::cos(Lon) * std::sin(Lat);
+      return 2. + std::cos(Lon) * std::cos(Lat) * std::sin(Lat);
    }
 
+   // div(scalarB grad(scalarA)) on the sphere
    KOKKOS_FUNCTION Real tracerDiff(Real Lon, Real Lat, Real EddyDiff2) const {
-      return EddyDiff2 *
-             (4 * std::pow(std::cos(Lon), 2) -
-              2 * (1. + 3 * std::cos(2 * Lat)) * std::pow(std::sin(Lon), 2) +
-              2 * std::pow(std::cos(Lon), 3) * std::sin(Lat) -
-              8 * std::cos(Lon) * std::pow(std::cos(Lat), 2) *
-                  std::pow(std::sin(Lon), 2) * std::sin(Lat)) /
+      const Real CosLon = std::cos(Lon);
+      const Real SinLon = std::sin(Lon);
+      const Real CosLat = std::cos(Lat);
+      const Real SinLat = std::sin(Lat);
+      return 2 * EddyDiff2 *
+             (2 * std::cos(2 * Lon) +
+              CosLat * SinLat * CosLon *
+                  (CosLon * CosLon - 2 * SinLon * SinLon) -
+              SinLon * SinLon *
+                  (2 * (CosLat * CosLat - 2 * SinLat * SinLat) +
+                   CosLon * CosLat * SinLat *
+                       (2 * CosLat * CosLat - 3 * SinLat * SinLat))) /
              Radius;
    }
 
@@ -1472,14 +1480,12 @@ int testFCTTracerHorzAdvOnCell(int NVertLayers, int NTracers, Real RTol) {
       Kokkos::fence();
 
       Array2DReal LowOrderFlx = TrHorzAdvOnC.GetLowOrderFlx();
+      const auto DvEdge       = Mesh->DvEdge;
 
       parallelFor(
           {Mesh->NEdgesHaloH(1), NVertLayers},
           KOKKOS_LAMBDA(const int IEdge, const int K) {
-             const double DvEdgeFromMeshFile =
-                 Geom == Geometry::Planar ? 0.012028130608117 : 277371;
-             FluxSubView(IEdge, K) =
-                 DvEdgeFromMeshFile * NormalVelocity(IEdge, K);
+             FluxSubView(IEdge, K) = DvEdge(IEdge) * NormalVelocity(IEdge, K);
           });
 
       const Real ATol = 1.0e-10;

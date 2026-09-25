@@ -26,6 +26,7 @@
 using namespace OMEGA;
 
 struct TestSetup {
+   // radius of spherical mesh
    Real Radius = REarth;
 
    KOKKOS_FUNCTION Real pseudoThickness(Real Lon, Real Lat) const {

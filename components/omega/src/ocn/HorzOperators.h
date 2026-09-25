@@ -342,6 +342,7 @@ class SecondDerivativeOnCell {
        const Array1DReal ZVertex, const Array1DI4 CellList, Array1DReal XP,
        Array1DReal YP, Array1DReal Angle2D, Real &ThetaAbs) {
       const Real length_scale = 1._Real;
+      // the mesh is required to lie on the sphere of radius REarth
       const Real sphereRadius = REarth;
       Real XC[MaxMaxEdges]    = {};
       Real YC[MaxMaxEdges]    = {};

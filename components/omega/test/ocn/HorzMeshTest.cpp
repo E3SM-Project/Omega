@@ -15,6 +15,7 @@
 #include "Dimension.h"
 #include "Error.h"
 #include "Field.h"
+#include "GlobalConstants.h"
 #include "Halo.h"
 #include "IO.h"
 #include "IOStream.h"
@@ -190,6 +191,24 @@ int main(int argc, char *argv[]) {
 
       if (Count > 0)
          ABORT_ERROR("HorzMeshTest: Cell sphere radius test FAIL");
+
+      // Test that the sphere radius read from the mesh metadata agrees with
+      // the radius implied by the cell coordinates and with the Earth radius
+      // from the Physical Constants Dictionary. The mesh reader aborts when
+      // the metadata disagrees with REarth, so this mostly confirms that the
+      // coordinates were generated on that same sphere. Coordinates are
+      // stored as Real, so the tolerance depends on the build precision.
+      R8 RadiusRelTol = sizeof(Real) == 4 ? 1.e-6 : 1.e-10;
+      if (!Mesh->OnSphere)
+         ABORT_ERROR("HorzMeshTest: OnSphere flag test FAIL");
+      if (abs((Mesh->SphereRadius - SphereRadius) / SphereRadius) >
+          RadiusRelTol)
+         ABORT_ERROR("HorzMeshTest: SphereRadius vs coordinates test FAIL "
+                     "{} {}",
+                     Mesh->SphereRadius, SphereRadius);
+      if (abs((Mesh->SphereRadius - REarth) / REarth) > RadiusRelTol)
+         ABORT_ERROR("HorzMeshTest: SphereRadius vs REarth test FAIL {} {}",
+                     Mesh->SphereRadius, REarth);
 
       // Test lon/lat coordinates of cell centers
       // Convert Cartesian coordinates to lon/lat and check these agree with the
