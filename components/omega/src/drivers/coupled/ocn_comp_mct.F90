@@ -46,9 +46,11 @@ contains
 
       use omega_f2cxx_mod, only: &
          omega_ocn_init1, &
-         omega_ocn_init2, &
-         omega_get_layout_mct, &
-         omega_get_layout_moab
+         omega_ocn_init2
+#ifdef HAVE_MOAB
+      use omega_f2cxx_mod, only: omega_get_moab_pid
+      use seq_comm_mct, only: mpoid
+#endif
 
       use omega_cpl_indices, only: &
          num_coupler_imports, &
@@ -57,6 +59,8 @@ contains
          export_field_names, &
          import_field_indices, &
          export_field_indices, &
+         cpl_x2o_field_names, &
+         cpl_o2x_field_names, &
          omega_set_cpl_indices
 
       use mct_mod, only: mct_gsMap_lsize
@@ -221,8 +225,16 @@ contains
          c_loc(import_field_indices), &
          c_loc(export_field_indices), &
          io_base_task, &
-         io_rearranger &
+         io_rearranger, &
+         c_loc(cpl_x2o_field_names), &
+         c_loc(cpl_o2x_field_names) &
          )
+
+#ifdef HAVE_MOAB
+      ! tell the coupler-side migration/mapping code (cplcomp_exchange_mod,
+      ! prep_ocn_mod) which MOAB app id is this ocean instance's own mesh
+      mpoid = omega_get_moab_pid()
+#endif
 
       !-------------------------------------------------------------------------
       ! initialize MCT gsmap, domain, and attribute vectors
@@ -252,7 +264,10 @@ contains
 
       ! TODO: Get case config info and add as MetaData to Omega
 
-      ! TODO: ifdef HAVE_MOAB
+      ! Under HAVE_MOAB, omega_ocn_init2 ignores these MCT attribute-vector
+      ! pointers and attaches its own MOAB-backed buffers instead (see
+      ! omega_cxx2f_interface.cpp); they're still passed here unconditionally
+      ! since x2o/o2x are always allocated above regardless of driver.
       call omega_ocn_init2(c_loc(x2o%rAttr), c_loc(o2x%rAttr))
 
    end subroutine ocn_init_mct
