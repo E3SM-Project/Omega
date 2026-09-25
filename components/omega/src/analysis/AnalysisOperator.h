@@ -20,6 +20,13 @@
 /// data from the Field registry and writes results to operator-owned output
 /// arrays.
 ///
+/// An output Field inherits its CF metadata from the input it is derived
+/// from: the base class provides helpers that collect an input's units,
+/// standard name and cell methods, append the cell method describing the new
+/// reduction, and create the output Field with them. Operators whose result
+/// has different units (an area-weighted sum, a product) derive them with
+/// CFUnits before creating the output Field.
+///
 /// This file also provides helper functions (opParam, makeOpConfig) for
 /// constructing Config objects inline when instantiating operators,
 /// providing a uniform parameter-passing mechanism whether operators are
@@ -27,6 +34,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include "CFUnits.h"
 #include "Config.h"
 #include "DataTypes.h"
 #include "Dimension.h"
@@ -157,6 +165,58 @@ class AnalysisOperator {
                         ) = 0;
 
  protected:
+   /// CF metadata an output Field inherits from the input it is derived
+   /// from. Units and standard name are copied and are empty when the input
+   /// has none. CellMethods records every reduction applied so far, in
+   /// order, as the CF cell_methods attribute (e.g. "area: mean time: mean").
+   struct InheritedMetadata {
+      std::string Units;       ///< units of the input, empty if unknown
+      std::string StdName;     ///< CF standard name, empty if none
+      std::string CellMethods; ///< CF cell_methods, empty if none
+   };
+
+   /// Collects the CF metadata an output Field inherits from an input Field,
+   /// with the cell method of the new reduction (if any) appended to those
+   /// the input already records. The units and standard name are copied
+   /// unchanged; an operator that changes the units or invalidates the
+   /// standard name edits the result before creating its output Field.
+   static InheritedMetadata
+   inheritMetadata(const std::string &InputName,      ///< [in] input field name
+                   const std::string &CellMethod = "" ///< [in] new reduction
+   );
+
+   /// Returns the CF cell method for a spatial reduction of an input Field
+   /// over all of its owned mesh entities and layers: "area: <Method>" for a
+   /// horizontal field and "area: depth: <Method>" for a field with a
+   /// vertical dimension. Method is a CF cell method name (mean, minimum,
+   /// maximum, standard_deviation, sum).
+   static std::string
+   spatialCellMethod(const std::string &InputName, ///< [in] input field name
+                     const std::string &Method     ///< [in] CF cell method
+   );
+
+   /// Returns the value of a string attribute (units, standard_name,
+   /// cell_methods, long_name) of a Field, or an empty string if the Field
+   /// has no such attribute
+   static std::string
+   getFieldAttribute(const std::string &FieldName, ///< [in] field name
+                     const std::string &AttName    ///< [in] attribute name
+   );
+
+   /// Creates an output Field with the given description, valid range and
+   /// dimensions, carrying the inherited units, standard name and cell
+   /// methods. Empty units or standard name are passed through to
+   /// Field::create; an empty cell_methods is not added.
+   static std::shared_ptr<Field> createOutputField(
+       const std::string &OutputName,  ///< [in] output field name
+       const std::string &Description, ///< [in] long name of the output
+       const InheritedMetadata &Meta,  ///< [in] inherited CF metadata
+       const std::any ValidMin,        ///< [in] min valid value
+       const std::any ValidMax,        ///< [in] max valid value
+       const int NumDims,              ///< [in] number of dimensions
+       const std::vector<std::string> &DimNames ///< [in] dimension names
+   );
+
    const HorzMesh *Mesh;    ///< Horizontal mesh for spatial operations
    const VertCoord *VCoord; ///< Vertical coordinate for vertical ops
    MPI_Comm Comm;           ///< MPI communicator for parallel reductions

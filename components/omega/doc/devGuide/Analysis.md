@@ -144,7 +144,9 @@ A concrete derived operator is responsible for three things:
    record the input Field names, construct the output Field name(s), allocate
    the output data array, and register the output [Field](#omega-dev-field)
    with the appropriate metadata. Output Field names follow the convention
-   `<input>_<OperatorSuffix>` (for example, `Temperature_SpatialMax`).
+   `<input>_<OperatorSuffix>` (for example, `Temperature_SpatialMax`). The
+   output's CF metadata is derived from the input's, as described under
+   [Output metadata](#omega-dev-analysis-output-metadata).
 2. **Initialization**: `initialize()` is called by the orchestrator after all
    Fields exist. The base implementation stores the mesh, vertical
    coordinate, and communicator; operators may override to perform additional
@@ -200,6 +202,53 @@ field(s).
 | `SpatialMean` | 1 | 1 | scalar (`Array1DReal`, dimension `Scalar`) | `_SpatialMean` | — | Global mean of the input field. |
 | `SpatialStdDev` | 2 (the field and its `_SpatialMean`) | 1 | scalar (`Array1DReal`, dimension `Scalar`) | `_SpatialStdDev` | — | Global standard deviation of the input field. Requires the field's `SpatialMean` as an upstream input, which is added to its input list automatically. |
 | `TimeMean` | 1 | 1 | same rank and dimensions as the input (`Real`) | `_TimeMean<period>` | `Period` (string, e.g. `"1Day"`) | Time average of the input field over a configurable period (e.g. `1Day`). Accumulates every time step and finalizes the mean when the period alarm rings. Output name embeds the period, e.g. `_TimeMean1Day`. |
+
+(omega-dev-analysis-output-metadata)=
+### Output metadata
+
+An output Field inherits its CF metadata from the input it is derived from.
+The base class provides the helpers that do this:
+
+- `inheritMetadata(InputName, CellMethod)` returns an `InheritedMetadata`
+  struct holding the input's `units`, `standard_name` and `cell_methods`,
+  each empty if the input has none, with `CellMethod` appended to the cell
+  methods. CF requires `cell_methods` to list the reductions in the order
+  they were applied, so a time mean of a spatial mean carries
+  `area: depth: mean time: mean`.
+- `spatialCellMethod(InputName, Method)` returns the cell method for a
+  reduction over all owned mesh entities and layers of the input:
+  `area: <Method>` for a horizontal (1D) field and `area: depth: <Method>`
+  for a field with a vertical dimension. `Method` is a CF cell method name
+  (`mean`, `minimum`, `maximum`, `standard_deviation`, `sum`).
+- `createOutputField(...)` calls `Field::create()` with the inherited units
+  and standard name and adds the `cell_methods` attribute when it is not
+  empty.
+- `getFieldAttribute(FieldName, AttName)` returns any string attribute of a
+  Field, or an empty string if the Field has none.
+
+The built-in reductions (mean, minimum, maximum, standard deviation, time
+mean) all have the units and standard name of the field they reduce, so
+they pass `inheritMetadata()` straight to `createOutputField()`:
+```c++
+auto CellMethod  = spatialCellMethod(InputNames[0], "mean");
+auto Meta        = inheritMetadata(InputNames[0], CellMethod);
+auto OutputField = createOutputField(OutputNames[0],
+                                     "Spatial mean of " + InputNames[0],
+                                     Meta, ValidMin, ValidMax, NDims, DimNames);
+```
+An operator whose result has different units derives them with
+[CFUnits](#omega-dev-cfunits) before creating the output, and clears the
+standard name if the result is no longer the same physical quantity. For
+example, an area-weighted sum multiplies the input's units by those of the
+cell area:
+```c++
+auto Meta  = inheritMetadata(InputNames[0],
+                             spatialCellMethod(InputNames[0], "sum"));
+Meta.Units = CFUnits::multiply(Meta.Units, "m2");
+Meta.StdName.clear();
+```
+A field without units yields outputs without units, never with invented ones,
+and a malformed units string aborts the run when the operator is constructed.
 
 ## Operator factory and type dispatch
 
@@ -365,9 +414,11 @@ To add a new operator:
    operator type name to the base constructor, set `InputNames`, build the
    output name as `<input>_<Suffix>`, set `OutputNames` and `InstanceName`,
    allocate the output data array, and register the output Field with
-   `Field::create()` plus `attachData()`. If the operator depends on another
-   operator's output (as `SpatialStdDev` depends on `SpatialMean`), append
-   that dependency to `InputNames`.
+   `createOutputField()` plus `attachData()`, deriving its units, standard
+   name and cell methods from the input as described under
+   [Output metadata](#omega-dev-analysis-output-metadata). If the operator
+   depends on another operator's output (as `SpatialStdDev` depends on
+   `SpatialMean`), append that dependency to `InputNames`.
 2. **Implement `compute()`** to retrieve the input array(s) from the Field
    registry, perform the transformation, write the output array(s), and update
    `LastComputed`/`FieldComputed`.

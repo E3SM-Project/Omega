@@ -84,6 +84,7 @@ devGuide/Decomp
 devGuide/Dimension
 devGuide/Error
 devGuide/Field
+devGuide/CFUnits
 devGuide/IO
 devGuide/IOStreams
 devGuide/Halo

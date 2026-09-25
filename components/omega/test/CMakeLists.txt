@@ -444,6 +444,17 @@ add_omega_test(
   "-n;1"
 )
 
+##########################
+# CFUnits units algebra test
+##########################
+
+add_omega_test(
+  CFUNITS_TEST
+  testCFUnits.exe
+  infra/CFUnitsTest.cpp
+  "-n;1"
+)
+
 add_omega_test(
   TIMEINTERVAL_PARSE_EXTENDED_FORMATS_TEST
   testTimeIntervalParseExtendedFormats.exe

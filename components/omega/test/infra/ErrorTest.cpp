@@ -132,6 +132,24 @@ int main(int argc, char **argv) {
       LOG_ERROR(" Error constructor with message actual:   {}", TotalError.Msg);
    }
 
+   // Test constructor with an argument that itself contains braces, which
+   // must be inserted verbatim and not be taken for a placeholder
+   {
+      std::string BraceLine   = std::to_string(__LINE__ + 3);
+      std::string BraceExpect = "   [error] [ErrorTest.cpp:" + BraceLine +
+                                "] Bad units m^{-2} in field\n";
+      Error BraceError(ErrorCode::Fail, __LINE__, __FILE__,
+                       "Bad units {} in field", "m^{-2}");
+      if (BraceError.isFail() and BraceError.Msg == BraceExpect) {
+         LOG_INFO("Error constructor with braces in argument: PASS");
+      } else {
+         ++RetVal;
+         LOG_ERROR("Error constructor with braces in argument: FAIL");
+         LOG_ERROR(" expected: {}", BraceExpect);
+         LOG_ERROR(" actual:   {}", BraceError.Msg);
+      }
+   }
+
    // Test reset of error code
    TotalError.reset();
    if (TotalError.isSuccess()) {

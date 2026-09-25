@@ -64,16 +64,19 @@ template <typename ArrayT> class SpatialMeanOp : public AnalysisOperator {
       DimNames[0]    = "Scalar";
       auto ScalarDim = Dimension::create(DimNames[0], 1);
 
-      // Register output Field with metadata
+      // Register output Field with metadata. A mean has the units and
+      // standard name of the field it reduces; its cell_methods record the
+      // reduction after any the input already carries.
+      auto Meta = inheritMetadata(InputNames[0],
+                                  spatialCellMethod(InputNames[0], "mean"));
       auto OutputField =
-          Field::create(OutputNames[0],
-                        "Spatial mean of " + InputNames[0], // Description
-                        "",                                 // Units
-                        "",                                 // Standard name
-                        -std::numeric_limits<Real>::max(),  // Min valid value
-                        std::numeric_limits<Real>::max(),   // Max valid value
-                        NDims,                              // Rank
-                        DimNames                            // Dimension names
+          createOutputField(OutputNames[0],
+                            "Spatial mean of " + InputNames[0], // Description
+                            Meta,                               // CF metadata
+                            -std::numeric_limits<Real>::max(),  // Min valid
+                            std::numeric_limits<Real>::max(),   // Max valid
+                            NDims,                              // Rank
+                            DimNames                            // Dim names
           );
 
       // Attach output data array to Field

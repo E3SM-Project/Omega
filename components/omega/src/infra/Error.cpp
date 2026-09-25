@@ -109,6 +109,9 @@ std::string Error::createErrMsg(
          int Length = EndPos - StartPos + 1;
          if (ArgIndex < MsgArgs.size()) {
             Result.replace(StartPos, Length, MsgArgs[ArgIndex]);
+            // Resume scanning after the inserted argument so that braces
+            // inside it are not taken for placeholders
+            EndPos = StartPos + MsgArgs[ArgIndex].size();
             ArgIndex++;
          } else {
             LOG_ERROR("Not enough arguments for placeholders in error msg");

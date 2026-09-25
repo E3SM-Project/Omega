@@ -83,16 +83,19 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
       std::vector<std::string> DimNames;
       InputField->getDimNames(DimNames);
 
-      // Register output Field with same dimensions as input but Real type
+      // Register output Field with same dimensions as input but Real type.
+      // A time mean has the units and standard name of the field it
+      // averages; its cell_methods record the reduction after any the input
+      // already carries (e.g. "area: mean time: mean").
+      auto Meta = inheritMetadata(InputNames[0], "time: mean");
       auto OutputField =
-          Field::create(OutputNames[0],
-                        "Time average of " + InputNames[0], // Description
-                        "",                                 // Units
-                        "",                                 // Standard name
-                        -std::numeric_limits<Real>::max(),  // Min valid value
-                        std::numeric_limits<Real>::max(),   // Max valid value
-                        NDims,                              // Rank
-                        DimNames                            // Dimension names
+          createOutputField(OutputNames[0],
+                            "Time average of " + InputNames[0], // Description
+                            Meta,                               // CF metadata
+                            -std::numeric_limits<Real>::max(),  // Min valid
+                            std::numeric_limits<Real>::max(),   // Max valid
+                            NDims,                              // Rank
+                            DimNames                            // Dim names
           );
 
       // Store array size for parallel iteration
