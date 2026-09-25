@@ -21,6 +21,7 @@ tendency terms are currently implemented:
 | BottomDragOnEdge | bottom drag, defined on edges
 | SfcThicknessForcingOnCell | surface pseudo-thickness forcing from coupled freshwater and salt fluxes, defined on cells
 | SfcTracerForcingOnCell | surface tracer forcing from coupled heat and salt fluxes, with direct heat always and mass-flux enthalpy terms gated by thickness forcing, defined on cells
+| PenetratingShortwaveOnCell | depth-dependent three-band shortwave heating, defined on cells
 | SurfaceTracerRestoringOnCell | surface tracer restoring, defined on cells
 
 Among the internal data stored by each functor is a `bool` which can enable or
@@ -62,6 +63,9 @@ the currently available tendency terms:
 | | BottomDragTendency:BottomDragCoeff | bottom drag coefficient
 | SfcThicknessForcingOnCell | SfcThicknessForcingTendencyEnable | enable/disable term
 | SfcTracerForcingOnCell | SfcTracerForcingTendencyEnable | enable/disable term
+| PenetratingShortwaveOnCell | PenetratingShortwaveTendencyEnable | enable/disable depth-dependent shortwave heating
+| | NearIrFraction | near-infrared fraction of shortwave flux
+| | NearIrCoeff | near-infrared extinction coefficient ($\mathrm{m}^{-1}$)
 | SurfaceTracerRestoringOnCell | SurfaceTracerRestoringEnable | enable/disable term
 
 ## Second Order Horizontal Advection Algorithm

@@ -150,6 +150,15 @@ int ocnInit(MPI_Comm Comm ///< [in] ocean MPI communicator
       ABORT_ERROR("ocnInit: Error validating IO Streams");
    }
 
+   if (Tendencies::getDefault()->PenetratingShortwave.Enabled) {
+      Metadata ShortwaveExtinctionMeta;
+      Error ShortwaveExtinctionError = IOStream::read(
+          "ShortwaveExtinctionIn", ModelClock, ShortwaveExtinctionMeta);
+      if (ShortwaveExtinctionError.isFail()) {
+         ABORT_ERROR("Errors encountered reading ShortwaveExtinctionIn");
+      }
+   }
+
    // Initialize data from Restart or InitialState files
    std::string SimTimeStr          = " "; // create SimulationTime metadata
    std::shared_ptr<Field> SimField = Field::get(SimMeta);
@@ -227,6 +236,16 @@ int ocnInit1(MPI_Comm Comm,                 ///< [in] ocean MPI communicator
 
    if (!StreamsValid) {
       ABORT_ERROR("ocnInit: Error validating IO Streams");
+   }
+
+   Metadata ShortwaveExtinctionMeta;
+   if (Tendencies::getDefault()->PenetratingShortwave.Enabled) {
+      Metadata ShortwaveExtinctionMeta;
+      Error ShortwaveExtinctionError = IOStream::read(
+          "ShortwaveExtinctionIn", ModelClock, ShortwaveExtinctionMeta);
+      if (ShortwaveExtinctionError.isFail()) {
+         ABORT_ERROR("Errors encountered reading ShortwaveExtinctionIn");
+      }
    }
 
    Metadata ReqMeta;

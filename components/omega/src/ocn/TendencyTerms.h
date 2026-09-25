@@ -540,7 +540,8 @@ class SfcThicknessForcingOnCell {
 /// Coupled surface flux forcing for active tracers.
 class SfcTracerForcingOnCell {
  public:
-   bool Enabled = false;
+   bool Enabled                  = false;
+   bool IncludeShortWaveHeatFlux = true;
 
    SfcTracerForcingOnCell(const HorzMesh *Mesh, const VertCoord *VCoord,
                           I4 TempTracerIndex, I4 SaltTracerIndex,
@@ -587,9 +588,11 @@ class SfcTracerForcingOnCell {
              (EosChoice == EosType::Teos10Eos) ? Ct0Fw : 0.0_Real;
          const Real PotEnthalpyFwIn  = Cp0Sw * Kokkos::max(CtLim, CtTop);
          const Real PotEnthalpyFwOut = Cp0Sw * CtTop;
+         const Real ShortWaveFlux =
+             IncludeShortWaveHeatFlux ? ShortWaveHeatFlux(ICell) : 0.0_Real;
          const Real HeatFlux =
              LongWaveHeatFluxUp(ICell) + LongWaveHeatFluxDown(ICell) +
-             ShortWaveHeatFlux(ICell) + SensibleHeatFlux(ICell) +
+             ShortWaveFlux + SensibleHeatFlux(ICell) +
              SeaIceHeatFlux(ICell) + // includes enthalpy of meltwater already
              (RainFlux(ICell) + RiverRunoffFlux(ICell)) * PotEnthalpyFwIn +
              LatentHeatFluxEvap(ICell) +
@@ -1209,6 +1212,61 @@ class TracerHyperDiffOnCell {
    Array1DI4 MaxLayerCell;
    Array1DI4 MinLayerEdgeBot;
    Array1DI4 MaxLayerEdgeTop;
+};
+/// Penetrating shortwave radiation forcing for conservative temperature.
+class PenetratingShortwaveOnCell {
+ public:
+   bool Enabled        = false;
+   Real NearIrFraction = 0.58_Real;
+   Real NearIrCoeff    = 2.86_Real;
+   Real RedFraction    = 0.23_Real;
+   Real BlueFraction   = 0.19_Real;
+
+   PenetratingShortwaveOnCell(const HorzMesh *Mesh, const VertCoord *VCoord,
+                              I4 TempTracerIndex);
+
+   KOKKOS_FUNCTION void
+   operator()(const Array3DReal &Tend, I4 ICell,
+              const Array2DReal &GeomZInterface,
+              const Array1DReal &ShortWaveHeatFlux,
+              const Array1DReal &ExtinctionCoeffRed,
+              const Array1DReal &ExtinctionCoeffBlue) const {
+
+      const I4 KTop = MinLayerCell(ICell);
+      const I4 KBot = MaxLayerCell(ICell);
+      if (KTop > KBot || TempIndex < 0) {
+         return;
+      }
+
+      const Real SurfaceFlux = ShortWaveHeatFlux(ICell);
+      const Real Kr          = ExtinctionCoeffRed(ICell);
+      const Real Kb          = ExtinctionCoeffBlue(ICell);
+      const Real ZSurface    = GeomZInterface(ICell, KTop);
+
+      Real FluxAtTop = SurfaceFlux;
+      for (I4 K = KTop; K <= KBot; ++K) {
+         Real FluxAtBottom;
+         if (K < KBot) {
+            const Real Depth =
+                Kokkos::abs(GeomZInterface(ICell, K + 1) - ZSurface);
+            FluxAtBottom = SurfaceFlux *
+                           (NearIrFraction * Kokkos::exp(-NearIrCoeff * Depth) +
+                            RedFraction * Kokkos::exp(-Kr * Depth) +
+                            BlueFraction * Kokkos::exp(-Kb * Depth));
+         } else {
+            // Deposit all shortwave radiation reaching the seafloor into the
+            // bottom layer so the column-integrated heating is conservative.
+            FluxAtBottom = 0.0_Real;
+         }
+         Tend(TempIndex, ICell, K) += (FluxAtTop - FluxAtBottom) * HFluxFac;
+         FluxAtTop = FluxAtBottom;
+      }
+   }
+
+ private:
+   I4 TempIndex;
+   Array1DI4 MinLayerCell;
+   Array1DI4 MaxLayerCell;
 };
 
 /// Surface tracer restoring term

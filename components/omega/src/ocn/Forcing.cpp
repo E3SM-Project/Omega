@@ -178,8 +178,17 @@ void Forcing::readConfigOptions(Config *OmegaConfig) {
    CHECK_ERROR_ABORT(Err, "Forcing: SfcTracerForcingTendencyEnable not found "
                           "in Tendencies config");
 
-   TracerForcingFieldsEnabled =
-       SfcThicknessForcingEnabled || SfcTracerForcingEnabled;
+   bool PenetratingShortwaveEnabled = false;
+   Err += TendConfig.get("PenetratingShortwaveTendencyEnable",
+                         PenetratingShortwaveEnabled);
+   CHECK_ERROR_ABORT(
+       Err,
+       "Forcing: PenetratingShortwaveTendencyEnable not found in Tendencies "
+       "config");
+
+   TracerForcingFieldsEnabled = SfcThicknessForcingEnabled ||
+                                SfcTracerForcingEnabled ||
+                                PenetratingShortwaveEnabled;
 }
 
 // Compute all forcing variables (dispatches to specific computations).
@@ -235,6 +244,11 @@ I4 Forcing::exchangeHalo() const {
                                              OnCell);
       Err += MeshHalo->exchangeFullArrayHalo(SfcStressForcing.MeridStressCell,
                                              OnCell);
+   }
+
+   if (TracerForcingFieldsEnabled) {
+      Err += MeshHalo->exchangeFullArrayHalo(
+          TracerForcing.ShortWaveHeatFluxCell, OnCell);
    }
 
    return Err;

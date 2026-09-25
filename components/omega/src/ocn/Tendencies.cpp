@@ -331,6 +331,24 @@ void Tendencies::readConfig(Config *OmegaConfig ///< [in] Omega config
        Err,
        "Tendencies: SfcTracerForcingTendencyEnable not found in TendConfig");
 
+   Err += TendConfig.get("PenetratingShortwaveTendencyEnable",
+                         this->PenetratingShortwave.Enabled);
+   CHECK_ERROR_ABORT(Err, "Tendencies: PenetratingShortwaveTendencyEnable not "
+                          "found in TendConfig");
+   Err += TendConfig.get("NearIrFraction",
+                         this->PenetratingShortwave.NearIrFraction);
+   CHECK_ERROR_ABORT(Err, "Tendencies: NearIrFraction not found in TendConfig");
+   Err += TendConfig.get("NearIrCoeff", this->PenetratingShortwave.NearIrCoeff);
+   CHECK_ERROR_ABORT(Err, "Tendencies: NearIrCoeff not found in TendConfig");
+   Err += TendConfig.get("RedFraction", this->PenetratingShortwave.RedFraction);
+   CHECK_ERROR_ABORT(Err, "Tendencies: RedFraction not found in TendConfig");
+   Err +=
+       TendConfig.get("BlueFraction", this->PenetratingShortwave.BlueFraction);
+   CHECK_ERROR_ABORT(Err, "Tendencies: BlueFraction not found in TendConfig");
+
+   this->SfcTracerForcing.IncludeShortWaveHeatFlux =
+       !this->PenetratingShortwave.Enabled;
+
    if (this->TracerDiffusion.Enabled) {
       Err += TendConfig.get("EddyDiff2", this->TracerDiffusion.EddyDiff2);
       CHECK_ERROR_ABORT(Err, "Tendencies: EddyDiff2 not found in TendConfig");
@@ -528,6 +546,7 @@ Tendencies::Tendencies(const std::string &Name_, ///< [in] Name for tendencies
       ExplicitBottomDrag(Mesh, VCoord), SfcThicknessForcing(Mesh, VCoord),
       SfcTracerForcing(Mesh, VCoord, Tracers::IndxTemp, Tracers::IndxSalt,
                        EqState),
+      PenetratingShortwave(Mesh, VCoord, Tracers::IndxTemp),
       TracerDiffusion(Mesh, VCoord), TracerHyperDiff(Mesh, VCoord),
       TracerHorzAdv(Mesh, VCoord, VAdv_), SurfaceTracerRestoring(Mesh),
       CustomThicknessTend(InCustomThicknessTend),
@@ -1175,6 +1194,27 @@ void Tendencies::computeTracerTendenciesOnly(
                                  EvaporationFlux, SeaIceSaltFlux);
           });
       Pacer::stop("Tend:sfcTracerForcing", 2);
+   }
+
+   OMEGA_SCOPE(LocPenetratingShortwave, PenetratingShortwave);
+   if (LocPenetratingShortwave.Enabled) {
+      Pacer::start("Tend:penetratingShortwave", 2);
+      const auto *ForcingState = Forcing::getDefault();
+      const auto &ShortWaveHeatFlux =
+          ForcingState->TracerForcing.ShortWaveHeatFluxCell;
+      const auto &GeomZInterface = VCoord->GeomZInterface;
+      const auto &ExtinctionCoeffRed =
+          AuxState->ShortwavePenAux.ExtinctionCoeffRedCell;
+      const auto &ExtinctionCoeffBlue =
+          AuxState->ShortwavePenAux.ExtinctionCoeffBlueCell;
+
+      parallelFor(
+          {Mesh->NCellsAll}, KOKKOS_LAMBDA(int ICell) {
+             LocPenetratingShortwave(LocTracerTend, ICell, GeomZInterface,
+                                     ShortWaveHeatFlux, ExtinctionCoeffRed,
+                                     ExtinctionCoeffBlue);
+          });
+      Pacer::stop("Tend:penetratingShortwave", 2);
    }
 
    Pacer::stop("Tend:computeTracerTendenciesOnly", 1);

@@ -69,6 +69,11 @@ Omega:
       BottomDragCoeff: 1.0e-3
     SfcThicknessForcingTendencyEnable: false
     SfcTracerForcingTendencyEnable: false
+    PenetratingShortwaveTendencyEnable: false
+    NearIrFraction: 0.58
+    NearIrCoeff: 2.86
+    BlueFraction: 0.19
+    RedFraction: 0.23
     TracerHorzAdvTendencyEnable: true
     TracerDiffTendencyEnable: true
     EddyDiff2: 10.0
@@ -157,6 +162,16 @@ Omega:
       UseStartEnd: false
       Contents:
         - Forcing
+    ShortwaveExtinctionIn:
+      UsePointerFile: false
+      Filename: shortwave_extinction_coeffs.nc
+      Mode: read
+      Precision: double
+      Freq: 1
+      FreqUnits: OnStartup
+      UseStartEnd: false
+      Contents:
+        - ShortwaveExtinction
     # Restarts are used to initialize for all job submissions after the very
     # first startup job. We use UseStartEnd with a start time just after the
     # simulation start time so that omega does not attempt to use a restart
