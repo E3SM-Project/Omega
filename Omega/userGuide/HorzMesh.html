@@ -16,6 +16,8 @@
       <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
       <script src="../_static/doctools.js"></script>
       <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -239,7 +241,11 @@ variables. These include <code class="docutils literal notranslate"><span class=
 <code class="docutils literal notranslate"><span class="pre">IsPeriodic</span></code> (<code class="docutils literal notranslate"><span class="pre">is_periodic</span></code>), <code class="docutils literal notranslate"><span class="pre">SphereRadius</span></code> (<code class="docutils literal notranslate"><span class="pre">sphere_radius</span></code>),
 <code class="docutils literal notranslate"><span class="pre">XPeriod</span></code> (<code class="docutils literal notranslate"><span class="pre">x_period</span></code>), and <code class="docutils literal notranslate"><span class="pre">YPeriod</span></code> (<code class="docutils literal notranslate"><span class="pre">y_period</span></code>). The two flags
 OnSphere and IsPeriodic are stored as YES/NO strings in the metadata but as
-boolean flags in the code.</p>
+boolean flags in the code. For a spherical mesh, <code class="docutils literal notranslate"><span class="pre">SphereRadius</span></code> must match
+the Earth radius from the Physical Constants Dictionary (<code class="docutils literal notranslate"><span class="pre">REarth</span></code> in
+<code class="docutils literal notranslate"><span class="pre">GlobalConstants.h</span></code>) to a relative tolerance of <span class="math notranslate nohighlight">\(10^{-8}\)</span>; the model aborts
+otherwise. See the <a class="reference internal" href="MpasMesh.html#mpas-mesh-specification"><span class="std std-ref">MPAS mesh specification</span></a> for how to
+bring older meshes into compliance.</p>
 <p>In the future, the Mesh class will optionally compute internally those fields
 the specification marks as <em>could be computed internally</em> — the areas, lengths,
 angles, and weights needed for the TRiSK discretization.</p>

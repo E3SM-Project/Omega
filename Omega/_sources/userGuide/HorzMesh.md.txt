@@ -43,7 +43,11 @@ variables. These include ``OnSphere`` (or ``on_a_sphere`` for backcompatibility)
 ``IsPeriodic`` (``is_periodic``), ``SphereRadius`` (``sphere_radius``),
 ``XPeriod`` (``x_period``), and ``YPeriod`` (``y_period``). The two flags
 OnSphere and IsPeriodic are stored as YES/NO strings in the metadata but as
-boolean flags in the code.
+boolean flags in the code. For a spherical mesh, ``SphereRadius`` must match
+the Earth radius from the Physical Constants Dictionary (``REarth`` in
+``GlobalConstants.h``) to a relative tolerance of $10^{-8}$; the model aborts
+otherwise. See the {ref}`MPAS mesh specification <mpas-mesh-specification>` for how to
+bring older meshes into compliance.
 
 In the future, the Mesh class will optionally compute internally those fields
 the specification marks as *could be computed internally* — the areas, lengths,
