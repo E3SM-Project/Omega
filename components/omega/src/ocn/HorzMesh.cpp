@@ -605,8 +605,8 @@ void HorzMesh::defineMeshFields() {
        Field::create(FieldName,                           // field name
                      "X Coordinates of cell centers (m)", // long Name
                      "m",                                 // units
-                     "x",                                 // CF standard Name
-                     0.0,                                 // min valid value
+                     "",                                  // CF standard Name
+                     -7.0E+6,                             // min valid value
                      7.0E+6,                              // max valid value
                      NDims,                               // num of dimensions
                      DimNames,                            // dimension names
@@ -621,8 +621,8 @@ void HorzMesh::defineMeshFields() {
        Field::create(FieldName,                           // field name
                      "Y Coordinates of cell centers (m)", // long Name
                      "m",                                 // units
-                     "y",                                 // CF standard Name
-                     0.0,                                 // min valid value
+                     "",                                  // CF standard Name
+                     -7.0E+6,                             // min valid value
                      7.0E+6,                              // max valid value
                      NDims,                               // num of dimensions
                      DimNames,                            // dimension names
@@ -637,8 +637,8 @@ void HorzMesh::defineMeshFields() {
        Field::create(FieldName,                           // field name
                      "Z Coordinates of cell centers (m)", // long Name
                      "m",                                 // units
-                     "z",                                 // CF standard Name
-                     0.0,                                 // min valid value
+                     "",                                  // CF standard Name
+                     -7.0E+6,                             // min valid value
                      7.0E+6,                              // max valid value
                      NDims,                               // num of dimensions
                      DimNames,                            // dimension names
@@ -687,8 +687,8 @@ void HorzMesh::defineMeshFields() {
        Field::create(FieldName,                         // field name
                      "X Coordinates of cell edges (m)", // long Name
                      "m",                               // units
-                     "x",                               // CF standard Name
-                     0.0,                               // min valid value
+                     "",                                // CF standard Name
+                     -7.0E+6,                           // min valid value
                      7.0E+6,                            // max valid value
                      NDims,                             // num of dimensions
                      DimNames,                          // dimension names
@@ -703,8 +703,8 @@ void HorzMesh::defineMeshFields() {
        Field::create(FieldName,                         // field name
                      "Y Coordinates of cell edges (m)", // long Name
                      "m",                               // units
-                     "y",                               // CF standard Name
-                     0.0,                               // min valid value
+                     "",                                // CF standard Name
+                     -7.0E+6,                           // min valid value
                      7.0E+6,                            // max valid value
                      NDims,                             // num of dimensions
                      DimNames,                          // dimension names
@@ -719,8 +719,8 @@ void HorzMesh::defineMeshFields() {
        Field::create(FieldName,                         // field name
                      "Z Coordinates of cell edges (m)", // long Name
                      "m",                               // units
-                     "z",                               // CF standard Name
-                     0.0,                               // min valid value
+                     "",                                // CF standard Name
+                     -7.0E+6,                           // min valid value
                      7.0E+6,                            // max valid value
                      NDims,                             // num of dimensions
                      DimNames,                          // dimension names
@@ -769,8 +769,8 @@ void HorzMesh::defineMeshFields() {
        Field::create(FieldName,                            // field name
                      "X Coordinates of cell vertices (m)", // long Name
                      "m",                                  // units
-                     "x",                                  // CF standard Name
-                     0.0,                                  // min valid value
+                     "",                                   // CF standard Name
+                     -7.0E+6,                              // min valid value
                      7.0E+6,                               // max valid value
                      NDims,                                // num of dimensions
                      DimNames,                             // dimension names
@@ -785,8 +785,8 @@ void HorzMesh::defineMeshFields() {
        Field::create(FieldName,                            // field name
                      "Y Coordinates of cell vertices (m)", // long Name
                      "m",                                  // units
-                     "y",                                  // CF standard Name
-                     0.0,                                  // min valid value
+                     "",                                   // CF standard Name
+                     -7.0E+6,                              // min valid value
                      7.0E+6,                               // max valid value
                      NDims,                                // num of dimensions
                      DimNames,                             // dimension names
@@ -801,8 +801,8 @@ void HorzMesh::defineMeshFields() {
        Field::create(FieldName,                            // field name
                      "Z Coordinates of cell vertices (m)", // long Name
                      "m",                                  // units
-                     "z",                                  // CF standard Name
-                     0.0,                                  // min valid value
+                     "",                                   // CF standard Name
+                     -7.0E+6,                              // min valid value
                      7.0E+6,                               // max valid value
                      NDims,                                // num of dimensions
                      DimNames,                             // dimension names
@@ -849,8 +849,8 @@ void HorzMesh::defineMeshFields() {
    FieldName          = "AreaCell";
    AreaCell           = Array1DReal("AreaCell", NCellsSize); // allocate space
    auto AreaCellField = Field::create(FieldName,             // field name
-                                      "Area of each cell (m^2)", // long name
-                                      "m2",                      // units
+                                      "Area of each cell (m2)", // long name
+                                      "m2",                     // units
                                       "cell_area", // CF standard name
                                       0.0,         // min valid value
                                       9.99E+30,    // max valid value
@@ -883,8 +883,8 @@ void HorzMesh::defineMeshFields() {
    AreaTriangle = Array1DReal("AreaTriangle", NVerticesSize); // allocate space
    auto AreaTriangleField =
        Field::create(FieldName, // field name
-                     "Area of each triangle in the dual grid (m^2)", // lng name
-                     "m2",                                           // units
+                     "Area of each triangle in the dual grid (m2)", // lng name
+                     "m2",                                          // units
                      "cell_area", // CF standard name
                      0.0,         // min valid value
                      9.99E+30,    // max valid value
@@ -957,14 +957,14 @@ void HorzMesh::defineMeshFields() {
    auto KiteAreasOnVertexField =
        Field::create(FieldName, // field name
                      "Area of the portions of each dual cell that are part of "
-                     "each cellsOnVertex (m^2)", // long name
-                     "m2",                       // units
-                     "",                         // CF standard name
-                     0.0,                        // min valid value
-                     9.99E+30,                   // max valid value
-                     NDims,                      // num of dimensions
-                     DimNames,                   // dimension names
-                     false                       // not time dependent
+                     "each cellsOnVertex (m2)", // long name
+                     "m2",                      // units
+                     "",                        // CF standard name
+                     0.0,                       // min valid value
+                     9.99E+30,                  // max valid value
+                     NDims,                     // num of dimensions
+                     DimNames,                  // dimension names
+                     false                      // not time dependent
        );
    MeshGroupIn->addField(FieldName);
    Field::attachFieldData<Array2DReal>(FieldName, KiteAreasOnVertex);
@@ -996,9 +996,9 @@ void HorzMesh::defineMeshFields() {
    FieldName   = "FEdge";
    FEdge       = Array1DReal("FEdge", NEdgesSize);
    auto FEdgeField =
-       Field::create(FieldName,                                    // field name
-                     "Coriolis parameter at edges (radians s^-1)", // long name
-                     "radians s-1",                                // units
+       Field::create(FieldName,                                   // field name
+                     "Coriolis parameter at edges (radians s-1)", // long name
+                     "radians s-1",                               // units
                      "coriolis_parameter", // CF standard name
                      -1.0E-3,              // min valid value
                      1.0E-3,               // max valid value
@@ -1014,7 +1014,7 @@ void HorzMesh::defineMeshFields() {
    FVertex     = Array1DReal("FVertex", NVerticesSize);
    auto FVertexField =
        Field::create(FieldName, // field name
-                     "Coriolis parameter at vertices (radians s^-1)",
+                     "Coriolis parameter at vertices (radians s-1)",
                      "radians s-1",        // units
                      "coriolis_parameter", // CF standard name
                      -1.0E-3,              // min valid value
@@ -1031,7 +1031,7 @@ void HorzMesh::defineMeshFields() {
    FCell       = Array1DReal("FCell", NCellsSize);
    auto FCellField =
        Field::create(FieldName, // field name
-                     "Coriolis parameter at cell centers (radians s^-1)",
+                     "Coriolis parameter at cell centers (radians s-1)",
                      "radians s-1",        // units
                      "coriolis_parameter", // CF standard name
                      -1.0E-3,              // min valid value

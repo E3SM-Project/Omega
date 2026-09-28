@@ -39,7 +39,7 @@ void KineticAuxVars::registerFields(
    auto KineticEnergyCellField = Field::create(
        KineticEnergyCell.label(),                        // field name
        "kinetic energy of horizontal velocity on cells", // long name/describe
-       "m^2 s^-2",                                       // units
+       "m2 s-2",                                         // units
        "specific_kinetic_energy_of_sea_water",           // CF standard Name
        0,                                                // min valid value
        std::numeric_limits<Real>::max(),                 // max valid value
@@ -51,9 +51,9 @@ void KineticAuxVars::registerFields(
    auto VelocityDivCellField = Field::create(
        VelocityDivCell.label(),             // field name
        "divergence of horizontal velocity", // long Name or description
-       "s^-1",                              // units
+       "s-1",                               // units
        "",                                  // CF standard Name
-       std::numeric_limits<Real>::min(),    // min valid value
+       std::numeric_limits<Real>::lowest(), // min valid value
        std::numeric_limits<Real>::max(),    // max valid value
        NDims,                               // number of dimensions
        DimNames                             // dimension names

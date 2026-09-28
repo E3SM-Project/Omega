@@ -393,7 +393,7 @@ void Eos::defineFields() {
        Field::create(SpecVolFldName,                   // Field name
                      "Layer-averaged Specific Volume", // Long Name
                      "m3 kg-1",                        // Units
-                     "sea_water_specific_volume",      // CF-ish Name
+                     "",                               // CF standard Name
                      0.0,                              // Min valid value
                      std::numeric_limits<Real>::max(), // Max valid value
                      NDims,                            // Number of dimensions
@@ -403,13 +403,13 @@ void Eos::defineFields() {
    auto SpecVolDisplacedField =
        Field::create(SpecVolDisplacedFldName, // Field name
                      "Specific Volume displaced adiabatically "
-                     "to specified layer",                  // long Name
-                     "m3 kg-1",                             // Units
-                     "sea_water_specific_volume_displaced", // CF-ish Name
-                     0.0,                                   // Min valid value
-                     std::numeric_limits<Real>::max(),      // Max valid value
-                     NDims,   // Number of dimensions
-                     DimNames // Dimension names
+                     "to specified layer",             // long Name
+                     "m3 kg-1",                        // Units
+                     "",                               // CF standard Name
+                     0.0,                              // Min valid value
+                     std::numeric_limits<Real>::max(), // Max valid value
+                     NDims,                            // Number of dimensions
+                     DimNames                          // Dimension names
        );
 
    /// The specific volume derivatives are legitimately negative, so their
@@ -417,34 +417,32 @@ void Eos::defineFields() {
    auto SpecVolDCtField = Field::create(
        SpecVolDCtFldName, // Field name
        "Derivative of specific volume with respect to conservative "
-       "temperature",    // Long Name
-       "m3 kg-1 degC-1", // Units
-       // CF-ish Name
-       "sea_water_specific_volume_derivative_wrt_conservative_temperature",
+       "temperature",                       // Long Name
+       "m3 kg-1 K-1",                       // Units
+       "",                                  // CF standard Name
        std::numeric_limits<Real>::lowest(), // Min valid value
        std::numeric_limits<Real>::max(),    // Max valid value
        NDims,                               // Number of dimensions
        DimNames                             // Dimension names
    );
 
-   auto SpecVolDSaField = Field::create(
-       SpecVolDSaFldName, // Field name
-       "Derivative of specific volume with respect to absolute "
-       "salinity", // Long Name
-       "m3 g-1",   // Units
-       // CF-ish Name
-       "sea_water_specific_volume_derivative_wrt_absolute_salinity",
-       std::numeric_limits<Real>::lowest(), // Min valid value
-       std::numeric_limits<Real>::max(),    // Max valid value
-       NDims,                               // Number of dimensions
-       DimNames                             // Dimension names
-   );
+   auto SpecVolDSaField =
+       Field::create(SpecVolDSaFldName, // Field name
+                     "Derivative of specific volume with respect to absolute "
+                     "salinity",                          // Long Name
+                     "m3 g-1",                            // Units
+                     "",                                  // CF standard Name
+                     std::numeric_limits<Real>::lowest(), // Min valid value
+                     std::numeric_limits<Real>::max(),    // Max valid value
+                     NDims,   // Number of dimensions
+                     DimNames // Dimension names
+       );
 
    auto SpecVolDPField = Field::create(
        SpecVolDPFldName,                                         // Field name
        "Derivative of specific volume with respect to pressure", // Long Name
        "m3 kg-1 Pa-1",                                           // Units
-       "sea_water_specific_volume_derivative_wrt_pressure",      // CF-ish Name
+       "",                                  // CF standard Name
        std::numeric_limits<Real>::lowest(), // Min valid value
        std::numeric_limits<Real>::max(),    // Max valid value
        NDims,                               // Num dimensions
@@ -455,16 +453,16 @@ void Eos::defineFields() {
    DimNames[1] = "NVertLayersP1";
 
    /// Create and register the BruntVaisalaFreqSq field
-   auto BruntVaisalaFreqSqField =
-       Field::create(BruntVaisalaFreqSqFldName,                   // Field name
-                     "Brunt-Vaisala frequency squared",           // Long Name
-                     "s-2",                                       // Units
-                     "sea_water_brunt_vaisala_frequency_squared", // CF-ish Name
-                     std::numeric_limits<Real>::min(), // Min valid value
-                     std::numeric_limits<Real>::max(), // Max valid value
-                     NDims,                            // Number of dimensions
-                     DimNames                          // Dimension names
-       );
+   auto BruntVaisalaFreqSqField = Field::create(
+       BruntVaisalaFreqSqFldName,                        // Field name
+       "Brunt-Vaisala frequency squared",                // Long Name
+       "s-2",                                            // Units
+       "square_of_brunt_vaisala_frequency_in_sea_water", // CF name
+       std::numeric_limits<Real>::lowest(),              // Min valid value
+       std::numeric_limits<Real>::max(),                 // Max valid value
+       NDims,                                            // Number of dimensions
+       DimNames                                          // Dimension names
+   );
 
    NDims = 1;
    DimNames.resize(NDims);

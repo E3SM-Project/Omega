@@ -370,48 +370,48 @@ void VertMix::defineFields() {
    auto VertDiffField =
        Field::create(VertDiffFldName, // Field name
                      "Vertical diffusivity at center of"
-                     " cell and top of layer",         // Long Name
-                     "m2 s-1",                         // Units
-                     "vertical_diffusivity",           // CF-ish Name
-                     0.0,                              // Min valid value
-                     std::numeric_limits<Real>::max(), // Max valid value
-                     NDims,                            // Number of dimensions
-                     DimNames                          // Dimension names
+                     " cell and top of layer",            // Long Name
+                     "m2 s-1",                            // Units
+                     "ocean_vertical_tracer_diffusivity", // CF name
+                     0.0,                                 // Min valid value
+                     std::numeric_limits<Real>::max(),    // Max valid value
+                     NDims,   // Number of dimensions
+                     DimNames // Dimension names
        );
    /// Create and register the VertVisc field
    auto VertViscField =
        Field::create(VertViscFldName, // Field name
                      "Vertical viscosity at center of"
-                     " cell and top of layer",         // Long Name
-                     "m2 s-1",                         // Units
-                     "vertical_viscosity",             // CF-ish Name
-                     0.0,                              // Min valid value
-                     std::numeric_limits<Real>::max(), // Max valid value
-                     NDims,                            // Number of dimensions
-                     DimNames                          // Dimension names
+                     " cell and top of layer",              // Long Name
+                     "m2 s-1",                              // Units
+                     "ocean_vertical_momentum_diffusivity", // CF name
+                     0.0,                                   // Min valid value
+                     std::numeric_limits<Real>::max(),      // Max valid value
+                     NDims,   // Number of dimensions
+                     DimNames // Dimension names
        );
    /// Create and register the GradRichNum field
    auto GradRichNumField =
-       Field::create(GradRichNumFldName,                     // Field name
-                     "Gradient Richardson number",           // Long Name
-                     "dimensionless",                        // Units
-                     "sea_water_gradient_richardson_number", // CF-ish Name
-                     std::numeric_limits<Real>::min(),       // Min valid value
-                     std::numeric_limits<Real>::max(),       // Max valid value
+       Field::create(GradRichNumFldName,                  // Field name
+                     "Gradient Richardson number",        // Long Name
+                     "1",                                 // Units
+                     "",                                  // CF standard Name
+                     std::numeric_limits<Real>::lowest(), // Min valid value
+                     std::numeric_limits<Real>::max(),    // Max valid value
                      NDims,   // Number of dimensions
                      DimNames // Dimension names
        );
    /// Create and register the GradRichNumSmoothed field
-   auto GradRichNumSmoothedField = Field::create(
-       GradRichNumSmoothedFldName,                      // Field name
-       "Smoothed Gradient Richardson number",           // Long Name
-       "dimensionless",                                 // Units
-       "sea_water_gradient_richardson_number_smoothed", // CF-ish Name
-       std::numeric_limits<Real>::min(),                // Min valid value
-       std::numeric_limits<Real>::max(),                // Max valid value
-       NDims,                                           // Number of dimensions
-       DimNames                                         // Dimension names
-   );
+   auto GradRichNumSmoothedField =
+       Field::create(GradRichNumSmoothedFldName,            // Field name
+                     "Smoothed Gradient Richardson number", // Long Name
+                     "1",                                   // Units
+                     "",                                    // CF standard Name
+                     std::numeric_limits<Real>::lowest(),   // Min valid value
+                     std::numeric_limits<Real>::max(),      // Max valid value
+                     NDims,   // Number of dimensions
+                     DimNames // Dimension names
+       );
 
    // Create a field group for the vertmix-specific state fields
    VertMixGroupName = "VertMix";

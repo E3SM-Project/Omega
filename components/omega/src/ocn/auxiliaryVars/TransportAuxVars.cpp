@@ -34,7 +34,7 @@ void TransportAuxVars::registerFields(
        Field::create(NormalTransportVelocity.label(), // field name
                      "horizontal velocity used to transport pseudo-thickness "
                      "and tracers", // long Name or description
-                     "m/s",         // units
+                     "m s-1",       // units
                      "",            // CF standard Name
                      std::numeric_limits<Real>::lowest(), // min valid value
                      std::numeric_limits<Real>::max(),    // max valid value
