@@ -93,6 +93,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#analysis-groups">Analysis Groups</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#stream-parameters">Stream Parameters</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#globalstats">GlobalStats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#moc">MOC</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#usage-notes">Usage Notes</a><ul>
@@ -360,6 +361,72 @@ Automatically created and named:</p>
 <li><p>Instantaneous output: <code class="docutils literal notranslate"><span class="pre">GlobalStats_FreqInstants</span></code> (e.g.,
 <code class="docutils literal notranslate"><span class="pre">GlobalStats_6HourInstants</span></code>)</p></li>
 </ul>
+</section>
+<section id="moc">
+<h3>MOC<a class="headerlink" href="#moc" title="Permalink to this heading"></a></h3>
+<p>Computes the Meridional Overturning Circulation (MOC) streamfunction using two
+methods: latitude-binned regional MOC and transect-based MOC. The MOC
+represents zonally integrated meridional mass transport as a function of
+latitude and depth (regional MOC) or depth alone (transect MOC). Output is in
+Sverdrups (Sv), where 1 Sv = 10⁶ m³/s.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Omega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Analysis</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">MOC</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">NumBins</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">180</span>
+<span class="w">      </span><span class="nt">MinLat</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-90.0</span>
+<span class="w">      </span><span class="nt">MaxLat</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90.0</span>
+<span class="w">      </span><span class="nt">Regions</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Global</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">Transects</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
+<span class="w">      </span><span class="nt">ReductionPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1Month</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">SnapshotPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1Day</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">moc.$Y-$M</span>
+<span class="w">      </span><span class="nt">Stream</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">FileFreq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">        </span><span class="nt">FileFreqUnits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">months</span>
+</pre></div>
+</div>
+<p><strong>Group-Specific Parameters:</strong></p>
+<ul class="simple">
+<li><p><strong>NumBins:</strong> Optional integer specifying the number of latitude bins for
+regional MOC (default: 180, approximately 1-degree resolution).</p></li>
+<li><p><strong>MinLat:</strong> Optional minimum latitude in degrees for binning (default: -90.0).</p></li>
+<li><p><strong>MaxLat:</strong> Optional maximum latitude in degrees for binning (default: 90.0).</p></li>
+<li><p><strong>Regions:</strong> Optional list of region names for regional MOC computation
+(default: <code class="docutils literal notranslate"><span class="pre">[Global]</span></code>). Regional MOC computes the streamfunction as a function
+of latitude and depth. Currently only <code class="docutils literal notranslate"><span class="pre">Global</span></code> is supported; region masks are
+not yet implemented.</p></li>
+<li><p><strong>Transects:</strong> Optional list of transect names for transect-based MOC
+computation (default: <code class="docutils literal notranslate"><span class="pre">[]</span></code>). Transect MOC computes the streamfunction as a
+function of depth only by accumulating transport across specified transect
+edges. Transect masks are not yet implemented.</p></li>
+<li><p><strong>ReductionPeriod:</strong> Optional list of time periods for temporal reduction.
+Each period must divide evenly into the restart interval. At least one of
+<code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> or <code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code> must be specified.</p></li>
+<li><p><strong>SnapshotPeriod:</strong> Optional list of intervals for instantaneous output. At
+least one of <code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> or <code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code> must be specified.</p></li>
+</ul>
+<p><strong>Output fields:</strong></p>
+<ul class="simple">
+<li><p>Regional MOC: <code class="docutils literal notranslate"><span class="pre">MOC_streamfunction_RegionName</span></code> (2D: latitude bins × depth)</p></li>
+<li><p>Transect MOC: <code class="docutils literal notranslate"><span class="pre">MOC_streamfunction_transect_TransectName</span></code> (1D: depth only)</p></li>
+</ul>
+<p>For temporal reduction, <code class="docutils literal notranslate"><span class="pre">_TimeMeanPeriod</span></code> is appended (e.g.,
+<code class="docutils literal notranslate"><span class="pre">MOC_streamfunction_Global_TimeMean1Month</span></code>).</p>
+<p><strong>Output streams:</strong>
+Automatically created and named:</p>
+<ul class="simple">
+<li><p>Time reduction: <code class="docutils literal notranslate"><span class="pre">MOC_FreqTimeStats</span></code> (e.g., <code class="docutils literal notranslate"><span class="pre">MOC_1MonthTimeStats</span></code>)</p></li>
+<li><p>Instantaneous output: <code class="docutils literal notranslate"><span class="pre">MOC_FreqInstants</span></code> (e.g., <code class="docutils literal notranslate"><span class="pre">MOC_1DayInstants</span></code>)</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Regional and transect masks are not yet implemented. The <code class="docutils literal notranslate"><span class="pre">Regions</span></code> parameter
+currently only supports <code class="docutils literal notranslate"><span class="pre">[Global]</span></code>, and <code class="docutils literal notranslate"><span class="pre">Transects</span></code> is a placeholder for future
+functionality. The underlying operator infrastructure is complete and ready for
+use once the mask fields are implemented in Omega.</p>
+</div>
 </section>
 </section>
 <section id="usage-notes">

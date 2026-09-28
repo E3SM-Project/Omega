@@ -150,6 +150,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#alarm-based-scheduling">Alarm-based scheduling</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#analysis-groups">Analysis groups</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#globalstats">GlobalStats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#moc">MOC</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#extensibility">Extensibility</a><ul>
@@ -463,6 +464,78 @@ field(s).</p>
 <td><p><code class="docutils literal notranslate"><span class="pre">Period</span></code> (string, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;1Day&quot;</span></code>)</p></td>
 <td><p>Time average of the input field over a configurable period (e.g. <code class="docutils literal notranslate"><span class="pre">1Day</span></code>). Accumulates every time step and finalizes the mean when the period alarm rings. Output name embeds the period, e.g. <code class="docutils literal notranslate"><span class="pre">_TimeMean1Day</span></code>.</p></td>
 </tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BinaryMultiply</span></code></p></td>
+<td><p>2</p></td>
+<td><p>1</p></td>
+<td><p>same as first input</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_BinaryMultiply(&lt;field2&gt;)</span></code></p></td>
+<td><p>—</p></td>
+<td><p>Element-wise multiplication of two fields. Supports vertical expansion (1D field replicated across vertical layers when multiplied with 2D/3D field).</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">HorzMean</span></code></p></td>
+<td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>1D Real (<code class="docutils literal notranslate"><span class="pre">Array1DReal</span></code>) over the input’s vertical dimension</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_HorzMean</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">WeightField</span></code> (string, optional, default <code class="docutils literal notranslate"><span class="pre">AreaCell</span></code>)</p></td>
+<td><p>Area-weighted horizontal mean per vertical layer/interface.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BinnedAccumulator</span></code></p></td>
+<td><p>2 (data field, bin index field)</p></td>
+<td><p>1</p></td>
+<td><p>replaces horizontal dimension with <code class="docutils literal notranslate"><span class="pre">NumBins</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_BinnedAccumulator(&lt;binfield&gt;)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">NumBins</span></code> (I4)</p></td>
+<td><p>Accumulates field values into spatial bins. Uses MPI reduction for global totals. Automatically applies regional mask if attached to input Field.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CoordinateBinning</span></code></p></td>
+<td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>1D integer (<code class="docutils literal notranslate"><span class="pre">Array1DI4</span></code>)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_BinIndex</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">NumBins</span></code> (I4), <code class="docutils literal notranslate"><span class="pre">MinBin</span></code> (Real, optional), <code class="docutils literal notranslate"><span class="pre">MaxBin</span></code> (Real, optional)</p></td>
+<td><p>Assigns mesh entities to bins based on coordinate values (e.g., latitude). Computed once during initialization and cached.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ExtractRegion</span></code></p></td>
+<td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>same as input</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_&lt;RegionName&gt;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">MaskName</span></code> (string)</p></td>
+<td><p>Applies regional mask to field by multiplying values with mask. Attaches mask to output Field for downstream operators. Supports mask intersection.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PrefixSum</span></code></p></td>
+<td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>same as input</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_PrefixSum</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Dimension</span></code> (I4), <code class="docutils literal notranslate"><span class="pre">Reverse</span></code> (bool, default false)</p></td>
+<td><p>Cumulative summation along specified dimension. Forward (start→end) or reverse (end→start) scan.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">PseudoToGeometric</span></code></p></td>
+<td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>same as input</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_Geometric</span></code></p></td>
+<td><p>—</p></td>
+<td><p>Converts pseudo-height coordinates to geometric coordinates using specific volume. Handles vertical grid staggering automatically.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ScalarMultiply</span></code></p></td>
+<td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>same as input</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_ScalarMultiply(&lt;value&gt;)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Scalar</span></code> (string, parsed to Real)</p></td>
+<td><p>Multiplies field by scalar constant. Can be used for unit conversions (e.g., ×1e-6 for Sverdrups).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TransectAccumulator</span></code></p></td>
+<td><p>3 (data field, mask field, sign field)</p></td>
+<td><p>1</p></td>
+<td><p>1D vertical profile</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_TransectAccumulator(&lt;transect&gt;)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">TransectName</span></code> (string)</p></td>
+<td><p>Accumulates transport across transect edges. Only supports 2D Real arrays for the data field. Uses MPI reduction for global totals.</p></td>
+</tr>
 </tbody>
 </table>
 <section id="spatial-weights">
@@ -516,6 +589,18 @@ location, registering a creator lambda for each. The currently enabled ranks
 are 1 through 3 (the 4D and 5D entries are present but commented out because
 Omega currently utilizes no arrays with rank <span class="math notranslate nohighlight">\(&gt;\)</span> 3, and each registered
 operator variant increases compile time and binary size).</p>
+<p>For operators that only support specific array ranks, the factory provides
+specialized registration methods using SFINAE (Substitution Failure Is Not An
+Error) to prevent invalid template instantiations at compile time:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">register1DVariants</span></code> — registers only 1D array variants (horizontal fields without vertical structure)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">register2DVariants</span></code> — registers only 2D array variants (horizontal × vertical)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">register2DRealVariants</span></code> — registers only 2D Real array variants (excludes integer types)</p></li>
+</ul>
+<p>These methods use compile-time type checking to filter out incompatible array
+types, reducing compile time and binary size while catching type errors early.
+The SFINAE helpers (<code class="docutils literal notranslate"><span class="pre">register1DVariantHelper</span></code>, etc.) expand over all array types
+but only register the matching variants, with no-op branches for mismatched types.</p>
 <p>At creation time, the orchestrator calls:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">auto</span><span class="w"> </span><span class="n">Op</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AnalysisOpFactory</span><span class="o">::</span><span class="n">createOp</span><span class="p">(</span><span class="n">OpType</span><span class="p">,</span><span class="w"> </span><span class="n">UpstreamNames</span><span class="p">,</span><span class="w"> </span><span class="n">Options</span><span class="p">);</span>
 </pre></div>
@@ -544,6 +629,22 @@ operator kind is identified from the token (a <code class="docutils literal notr
 spatial reduction; a <code class="docutils literal notranslate"><span class="pre">Time</span></code> prefix denotes a temporal reduction, with the
 period parsed from the first digit in the token) and the operator is created
 via the factory and wrapped in an <code class="docutils literal notranslate"><span class="pre">OperatorNode</span></code>.</p>
+<p><strong>Parenthesized arguments:</strong> The parser supports operators with parenthesized
+arguments for passing field names, scalar values, or other parameters. The
+parser respects parenthesis depth when splitting on underscores, so
+<code class="docutils literal notranslate"><span class="pre">Field_BinaryMultiply(OtherField)_ScalarMultiply(1.0e-6)</span></code> correctly parses as
+three tokens: <code class="docutils literal notranslate"><span class="pre">Field</span></code>, <code class="docutils literal notranslate"><span class="pre">BinaryMultiply(OtherField)</span></code>, and <code class="docutils literal notranslate"><span class="pre">ScalarMultiply(1.0e-6)</span></code>.
+Different operators interpret parenthesized arguments differently:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">BinaryMultiply(FieldName)</span></code> — second input field name</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ScalarMultiply(Value)</span></code> — scalar value (parsed from string to Real)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ExtractRegion(MaskName)</span></code> — mask field name passed via Config</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BinnedAccumulator(BinIndexField)</span></code> — bin index field name</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TransectAccumulator(TransectName)</span></code> — transect name for mask lookup</p></li>
+</ul>
+<p>An optional <code class="docutils literal notranslate"><span class="pre">Config</span></code> parameter can be passed to <code class="docutils literal notranslate"><span class="pre">parseChainAndBuildOps()</span></code> to
+provide operator-specific configuration that applies to all operators in the
+chain (e.g., binning parameters, integration direction).</p>
 <p>After all groups have registered their chains, the constructor resolves the
 graph edges with <code class="docutils literal notranslate"><span class="pre">buildOperatorDependencies()</span></code>, which matches each node’s
 input Field names against the output Field names of every other node and
@@ -641,6 +742,61 @@ appends a <code class="docutils literal notranslate"><span class="pre">TimeMean<
 the discrete-sampling chain for instantaneous output. It then calls
 <code class="docutils literal notranslate"><span class="pre">createAnalysisGroupStreams()</span></code> to create the corresponding output streams. At
 least one of <code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> or <code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code> must be present.</p>
+</section>
+<section id="moc">
+<h3>MOC<a class="headerlink" href="#moc" title="Permalink to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">MOC</span></code> computes the Meridional Overturning Circulation (MOC) streamfunction
+using two methods: latitude-binned regional MOC and transect-based MOC.
+Configuration specifies binning parameters, region/transect names, and output
+frequencies:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">MOC</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">NumBins</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">180</span><span class="w">                  </span><span class="c1"># Number of latitude bins</span>
+<span class="w">  </span><span class="nt">MinLat</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-90.0</span><span class="w">                 </span><span class="c1"># Minimum latitude in degrees</span>
+<span class="w">  </span><span class="nt">MaxLat</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90.0</span><span class="w">                  </span><span class="c1"># Maximum latitude in degrees</span>
+<span class="w">  </span><span class="nt">Regions</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Global</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Atlantic</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># Regional MOC (latitude × depth)</span>
+<span class="w">  </span><span class="nt">Transects</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Drake</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Atlantic26N</span><span class="p p-Indicator">]</span><span class="w">  </span><span class="c1"># Transect MOC (depth only)</span>
+<span class="w">  </span><span class="nt">ReductionPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1Month</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">SnapshotPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1Day</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<p><strong>Latitude-binned MOC</strong> computes the streamfunction as a function of latitude
+and depth for each specified region. The constructor builds a complex operator
+chain for each region:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">LatCell_CoordinateBinning</span></code> — assigns cells to latitude bins (initialization only, shared across regions)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VerticalPseudoVelocity_PseudoToGeometric</span></code> — converts to geometric coordinates</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VerticalVelocity_BinaryMultiply(AreaCell)</span></code> — computes vertical flux</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[Optional]</span> <span class="pre">VerticalFlux_ExtractRegion(RegionMask)</span></code> — applies regional mask (for non-global regions)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VerticalFlux_BinnedAccumulator(LatCell_BinIndex)</span></code> — accumulates flux into latitude bins</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BinnedFlux_PrefixSum</span></code> — horizontal integration (south to north)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MOC_ScalarMultiply(1.0e-6)</span></code> — converts to Sverdrups (Sv)</p></li>
+</ol>
+<p><strong>Transect-based MOC</strong> computes the streamfunction across specific transects
+as a function of depth only. The constructor builds a chain for each transect:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">PseudoThickness_PseudoToGeometric</span></code> — converts to geometric layer thickness</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LayerThickness_BinaryMultiply(NormalVelocity)</span></code> — thickness × velocity</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">EdgeTransport_BinaryMultiply(DvEdge)</span></code> — transport × edge width</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TransportField_TransectAccumulator(TransectName)</span></code> — accumulates across transect edges</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TransectTransport_PrefixSum</span></code> — vertical integration (bottom to top, reverse)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TransectMOC_ScalarMultiply(1.0e-6)</span></code> — converts to Sverdrups</p></li>
+</ol>
+<p>For each chain, the constructor stores an operator configuration (<code class="docutils literal notranslate"><span class="pre">Config</span></code>)
+containing parameters like <code class="docutils literal notranslate"><span class="pre">NumBins</span></code>, <code class="docutils literal notranslate"><span class="pre">Dimension</span></code>, <code class="docutils literal notranslate"><span class="pre">Reverse</span></code>, and <code class="docutils literal notranslate"><span class="pre">TransectName</span></code>
+in a <code class="docutils literal notranslate"><span class="pre">ChainConfigs</span></code> vector. These configs are passed to <code class="docutils literal notranslate"><span class="pre">buildTemporalChains()</span></code>,
+which appends temporal operators and applies custom <code class="docutils literal notranslate"><span class="pre">IOName</span></code> metadata to
+produce user-friendly output variable names (e.g., <code class="docutils literal notranslate"><span class="pre">MOC_streamfunction_Global</span></code>
+instead of the full operator chain string). At least one of <code class="docutils literal notranslate"><span class="pre">Regions</span></code> or
+<code class="docutils literal notranslate"><span class="pre">Transects</span></code> must be specified.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Regional and transect masks are not yet implemented in the Omega infrastructure.
+The <code class="docutils literal notranslate"><span class="pre">Regions</span></code> configuration currently only supports <code class="docutils literal notranslate"><span class="pre">[Global]</span></code>, and <code class="docutils literal notranslate"><span class="pre">Transects</span></code>
+is a placeholder. The operator infrastructure (ExtractRegionOp,
+TransectAccumulatorOp) is fully implemented and ready for use once mask fields
+become available.</p>
+</div>
 </section>
 </section>
 <section id="extensibility">

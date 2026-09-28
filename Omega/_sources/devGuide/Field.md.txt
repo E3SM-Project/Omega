@@ -263,6 +263,37 @@ and before exiting, all fields should be removed using:
    Field::clear();
 ```
 
+Fields can optionally have a regional mask attached to support spatial subsetting
+in analysis operations. A regional mask is a 1D integer array (`Array1DI4`) over
+the horizontal dimension (cells, edges, or vertices) where mask values indicate
+inclusion (1) or exclusion (0) of each location.
+
+Regional masks are set, queried, and retrieved using:
+```c++
+   // Set a regional mask for a field (shallow copy - shares data with source)
+   MyField->setRegionalMask(MaskArray);
+
+   // Check if a field has a regional mask attached
+   bool HasMask = MyField->hasRegionalMask();
+
+   // Retrieve the regional mask (returns Array1DI4)
+   Array1DI4 Mask = MyField->getRegionalMask();
+```
+
+Key implementation details:
+- The mask is stored as a shallow copy (Kokkos view), so the original mask array and the field's mask share the same data
+- `hasRegionalMask()` returns true if `setRegionalMask()` was called, even if the pointer is null (used for lifetime bug detection)
+- `getRegionalMask()` validates pointer integrity and aborts if mask was set but deallocated
+- Regional masks are automatically propagated through analysis operator chains:
+  - Binary operators (e.g., BinaryMultiplyOp) propagate mask from first input
+  - ExtractRegionOp attaches masks and can compute mask intersections
+  - Spatial reduction operators (e.g., BinnedAccumulatorOp) apply masks automatically
+
+Regional masks are primarily used by the Analysis framework for regional statistics
+and diagnostics (e.g., Atlantic MOC, basin-averaged temperatures). The mask mechanism
+enables efficient spatial subsetting without modifying field data or creating separate
+regional field copies.
+
 As mentioned above, Fields can be assigned to groups to provide an easy way
 to reference fields that commonly appear together, especially when listing
 contents of fields in IO files. Internally, a field group is implemented as

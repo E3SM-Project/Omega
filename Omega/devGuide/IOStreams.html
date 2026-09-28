@@ -110,7 +110,10 @@
 <li class="toctree-l1"><a class="reference internal" href="Error.html">Error Handler</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">IO Streams (IOStream)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">IO Streams (IOStream)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#ioname-metadata-for-user-friendly-output-variable-names">IOName Metadata for User-Friendly Output Variable Names</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
 <li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
@@ -298,10 +301,29 @@ initialized with</p>
 <p>The Metadata corresponding to ForcingTime will then be read from the file
 and inserted as the Metadata value. If no metadata is to be read from the
 file, then an empty ReqMetadata variable can be passed.</p>
+<section id="ioname-metadata-for-user-friendly-output-variable-names">
+<h2>IOName Metadata for User-Friendly Output Variable Names<a class="headerlink" href="#ioname-metadata-for-user-friendly-output-variable-names" title="Permalink to this heading"></a></h2>
+<p>Fields written to netCDF files can optionally specify a custom output variable
+name using the <code class="docutils literal notranslate"><span class="pre">IOName</span></code> metadata field. By default, IOStream uses the field’s
+internal name (which may be a long operator chain string like
+<code class="docutils literal notranslate"><span class="pre">VerticalPseudoVelocity_PseudoToGeometric_BinaryMultiply_...</span></code>) as the netCDF
+variable name. Setting <code class="docutils literal notranslate"><span class="pre">IOName</span></code> metadata allows specifying a more readable name
+for end users:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">MyField</span><span class="o">-&gt;</span><span class="n">addMetadata</span><span class="p">(</span><span class="s">"IOName"</span><span class="p">,</span><span class="w"> </span><span class="s">"MOC_streamfunction_Global"</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>During output, IOStream checks for the presence of <code class="docutils literal notranslate"><span class="pre">IOName</span></code> metadata and uses it
+as the netCDF variable name if found, falling back to the field’s internal name
+otherwise. The <code class="docutils literal notranslate"><span class="pre">IOName</span></code> metadata is automatically filtered out of CF attribute
+writing since it is an internal control key, not a CF-compliant attribute.</p>
+<p>This feature is particularly useful for analysis outputs where operator chain
+names are long and technical, but output files should have concise, descriptive
+variable names.</p>
 <p>As described in the <a class="reference internal" href="../userGuide/IOStreams.html#omega-user-iostreams"><span class="std std-ref">User Guide</span></a>, all streams are
 defined in the input configuration file and most other IOStream functions
 are associated either with that initialization or to support the read/write
 functions above.</p>
+</section>
 </section>
 
 
