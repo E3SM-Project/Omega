@@ -94,6 +94,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#stream-parameters">Stream Parameters</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#globalstats">GlobalStats</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#moc">MOC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#monthlyaverages">MonthlyAverages</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#usage-notes">Usage Notes</a><ul>
@@ -325,7 +326,7 @@ the mass of each adjacent layer. Only active layers take part.</p>
 <span class="w">      </span><span class="nt">SpatialStats</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Mean</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Max</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Min</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">StdDev</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="nt">ReductionPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1Day</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1Month</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="nt">SnapshotPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">6Hour</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">global.stats.$Y</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">global.stats.$Y.nc</span>
 <span class="w">      </span><span class="nt">Stream</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">FileFreq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 <span class="w">        </span><span class="nt">FileFreqUnits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">years</span>
@@ -381,7 +382,7 @@ Sverdrups (Sv), where 1 Sv = 10⁶ m³/s.</p>
 <span class="w">      </span><span class="nt">Transects</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
 <span class="w">      </span><span class="nt">ReductionPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1Month</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="nt">SnapshotPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1Day</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">moc.$Y-$M</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">moc.$Y-$M.nc</span>
 <span class="w">      </span><span class="nt">Stream</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">FileFreq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 <span class="w">        </span><span class="nt">FileFreqUnits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">months</span>
@@ -426,6 +427,57 @@ Automatically created and named:</p>
 currently only supports <code class="docutils literal notranslate"><span class="pre">[Global]</span></code>, and <code class="docutils literal notranslate"><span class="pre">Transects</span></code> is a placeholder for future
 functionality. The underlying operator infrastructure is complete and ready for
 use once the mask fields are implemented in Omega.</p>
+</div>
+</section>
+<section id="monthlyaverages">
+<h3>MonthlyAverages<a class="headerlink" href="#monthlyaverages" title="Permalink to this heading"></a></h3>
+<p>Computes monthly time averages of a set of requested global fields. Unlike
+<code class="docutils literal notranslate"><span class="pre">GlobalStats</span></code>, no spatial reduction is applied: each requested field is passed
+directly to a temporal-reduction (<code class="docutils literal notranslate"><span class="pre">TimeMean</span></code>) operator. The averaging period
+defaults to one month, but may be overridden with the optional
+<code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> parameter. This mirrors the <code class="docutils literal notranslate"><span class="pre">timeSeriesStatsMonthly</span></code> analysis
+member in MPAS-Ocean, which delivers monthly means of prognostic and derived
+fields.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Omega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Analysis</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">MonthlyAverages</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">Fields</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Temperature</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Salinity</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">NormalVelocity</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">PseudoThickness</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">ReductionPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1Month</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># optional; defaults to [1Month]</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">monthly.averages.$Y.nc</span>
+<span class="w">      </span><span class="nt">Stream</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">FileFreq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">        </span><span class="nt">FileFreqUnits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">years</span>
+</pre></div>
+</div>
+<p><strong>Group-Specific Parameters:</strong></p>
+<ul class="simple">
+<li><p><strong>Fields:</strong> Required list of field names to average. The simulation will abort
+if a requested field does not exist.</p></li>
+<li><p><strong>ReductionPeriod:</strong> Optional list of time periods for temporal reduction
+(e.g., <code class="docutils literal notranslate"><span class="pre">1Day</span></code>, <code class="docutils literal notranslate"><span class="pre">1Month</span></code>, <code class="docutils literal notranslate"><span class="pre">1Year</span></code>). Defaults to <code class="docutils literal notranslate"><span class="pre">[1Month]</span></code> when not specified.
+Each period must divide evenly into the restart interval. Any <code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code>
+supplied for this group is ignored.</p></li>
+</ul>
+<p><strong>Output fields:</strong>
+For each requested field, a time-averaged field is produced:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">FieldName_TimeMeanPeriod</span></code> (e.g., <code class="docutils literal notranslate"><span class="pre">Temperature_TimeMean1Month</span></code>)</p></li>
+</ul>
+<p><strong>Output streams:</strong>
+Automatically created and named:</p>
+<ul class="simple">
+<li><p>Time reduction: <code class="docutils literal notranslate"><span class="pre">MonthlyAverages_FreqTimeStats</span></code> (e.g.,
+<code class="docutils literal notranslate"><span class="pre">MonthlyAverages_1MonthTimeStats</span></code>)</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The default field list in <code class="docutils literal notranslate"><span class="pre">Default.yml</span></code> includes the core prognostic fields
+(<code class="docutils literal notranslate"><span class="pre">Temperature</span></code>, <code class="docutils literal notranslate"><span class="pre">Salinity</span></code>, <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code>, <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code>). Additional
+registered global fields may be requested by adding them to the <code class="docutils literal notranslate"><span class="pre">Fields</span></code> list.
+The averaging period must divide evenly into the restart interval, as described
+in the Temporal Reduction Period Constraint below.</p>
 </div>
 </section>
 </section>
