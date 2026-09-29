@@ -7,6 +7,7 @@
 
 #include "DataTypes.h"
 #include "Error.h"
+#include "FloatExcept.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "TimeMgr.h"
@@ -97,6 +98,7 @@ int main(int argc, char **argv) {
    MachEnv *defEnv = MachEnv::getDefault();
    initLogging(defEnv);
 
+   enableFloatExceptionsInTests();
    LOG_INFO("----- TimeIntervalParseTest -----");
 
    // Currently documented/implemented format is:
@@ -118,6 +120,7 @@ int main(int argc, char **argv) {
 
    // If we made it here, we are successful
    LOG_INFO("----- TimeIntervalParseTest Successful -----");
+   disableFloatExceptions();
 
    MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();

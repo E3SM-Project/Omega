@@ -15,6 +15,7 @@
 #include "Dimension.h"
 #include "Error.h"
 #include "Field.h"
+#include "FloatExcept.h"
 #include "GlobalConstants.h"
 #include "Halo.h"
 #include "IO.h"
@@ -132,6 +133,7 @@ int main(int argc, char *argv[]) {
 
    // Initialize the global MPI environment
    MPI_Init(&argc, &argv);
+   enableFloatExceptionsInTests();
    Kokkos::initialize();
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
@@ -690,6 +692,7 @@ int main(int argc, char *argv[]) {
       Decomp::clear();
       MachEnv::removeAll();
    }
+   disableFloatExceptions();
    Pacer::finalize();
    Kokkos::finalize();
 

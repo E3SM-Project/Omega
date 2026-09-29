@@ -15,6 +15,7 @@
 #include "Decomp.h"
 #include "Dimension.h"
 #include "Error.h"
+#include "FloatExcept.h"
 #include "IO.h"
 #include "Logging.h"
 #include "MachEnv.h"
@@ -432,6 +433,7 @@ int main(int argc, char **argv) {
 
    // Initialize the global MPI environment
    MPI_Init(&argc, &argv);
+   enableFloatExceptionsInTests();
    Kokkos::initialize();
    {
       // Call initialization to create reference IO field
@@ -881,6 +883,7 @@ int main(int argc, char **argv) {
       FieldExists = Field::exists("Test2DR8");
       TstEval<bool>("Clear all fields 2DR8", FieldExists, ShouldExist, Err);
    }
+   disableFloatExceptions();
 
    CHECK_ERROR_ABORT(Err, "Some Field Unit Tests FAIL");
    LOG_INFO("------ Field Unit Tests Successful ------");

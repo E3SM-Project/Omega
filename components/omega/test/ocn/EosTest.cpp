@@ -15,6 +15,7 @@
 #include "Decomp.h"
 #include "Dimension.h"
 #include "Field.h"
+#include "FloatExcept.h"
 #include "IO.h"
 #include "IOStream.h"
 #include "Logging.h"
@@ -1590,11 +1591,13 @@ void eosTest(const std::string &MeshFile = "OmegaMesh.nc") {
 int main(int argc, char *argv[]) {
 
    MPI_Init(&argc, &argv);
+   enableFloatExceptionsInTests();
    Kokkos::initialize(argc, argv);
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
 
    eosTest();
+   disableFloatExceptions();
 
    LOG_INFO("------ EOS Unit Tests Successful ------");
 

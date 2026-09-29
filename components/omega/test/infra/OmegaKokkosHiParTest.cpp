@@ -9,6 +9,7 @@
 //===-----------------------------------------------------------------------===/
 
 #include "Error.h"
+#include "FloatExcept.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OmegaKokkos.h"
@@ -847,6 +848,7 @@ int main(int argc, char **argv) {
    MachEnv *DefEnv = MachEnv::getDefault();
    initLogging(DefEnv);
 
+   enableFloatExceptionsInTests();
    try {
       Kokkos::initialize(argc, argv);
       {
@@ -890,6 +892,7 @@ int main(int argc, char **argv) {
    } catch (...) {
       Err += Error(ErrorCode::Fail, "Unknown: FAIL");
    }
+   disableFloatExceptions();
 
    CHECK_ERROR_ABORT(Err, "Kokkos Wrappers Unit Tests FAIL");
 

@@ -11,6 +11,7 @@
 //===-----------------------------------------------------------------------===/
 
 #include "Error.h"
+#include "FloatExcept.h"
 #include "Logging.h"
 #include "MachEnv.h"
 
@@ -82,6 +83,7 @@ int main(int argc, char **argv) {
    MachEnv *DefEnv = OMEGA::MachEnv::getDefault();
    initLogging(DefEnv);
 
+   enableFloatExceptionsInTests();
    LOG_INFO("------ Error handler test ------");
    // Test default constructor and success check
    Error ErrDefault;
@@ -162,6 +164,7 @@ int main(int argc, char **argv) {
    } else {
       passError1(TotalError);
    }
+   disableFloatExceptions();
 
    // If code reaches here, the critical error test has failed so return a
    // success code

@@ -28,6 +28,7 @@
 #include "Eos.h"
 #include "Error.h"
 #include "Field.h"
+#include "FloatExcept.h"
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
@@ -154,6 +155,7 @@ int main(int argc, char *argv[]) {
    Error ErrAll;
 
    MPI_Init(&argc, &argv);
+   enableFloatExceptionsInTests();
    Kokkos::initialize();
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
@@ -456,6 +458,7 @@ int main(int argc, char *argv[]) {
       Decomp::clear();
       MachEnv::removeAll();
    }
+   disableFloatExceptions();
    Pacer::finalize();
    Kokkos::finalize();
    int RetVal = ErrAll.isFail() ? 1 : 0;

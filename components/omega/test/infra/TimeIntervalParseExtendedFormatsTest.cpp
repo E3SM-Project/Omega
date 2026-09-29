@@ -10,6 +10,7 @@
 
 #include "DataTypes.h"
 #include "Error.h"
+#include "FloatExcept.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "TimeMgr.h"
@@ -64,6 +65,7 @@ int main(int argc, char **argv) {
    MachEnv *defEnv = MachEnv::getDefault();
    initLogging(defEnv);
 
+   enableFloatExceptionsInTests();
    LOG_INFO("----- TimeIntervalParseExtendedFormatsTest -----");
 
    // Desired: HH:MM:SS(.sss)
@@ -86,6 +88,7 @@ int main(int argc, char **argv) {
 
    // If we made it here, the tests were successful
    LOG_INFO("----- TimeIntervalParseExtendedFormatsTest Successful -----");
+   disableFloatExceptions();
 
    MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();

@@ -11,6 +11,7 @@
 #include "Config.h"
 #include "DataTypes.h"
 #include "Decomp.h"
+#include "FloatExcept.h"
 #include "GlobalConstants.h"
 #include "HorzMesh.h"
 #include "IO.h"
@@ -170,6 +171,7 @@ int main(int argc, char *argv[]) {
 
    // Initialize the global MPI environment
    MPI_Init(&argc, &argv);
+   enableFloatExceptionsInTests();
    Kokkos::initialize();
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
@@ -446,6 +448,7 @@ int main(int argc, char *argv[]) {
 
       finalizeVertAdvTest();
    }
+   disableFloatExceptions();
    Pacer::finalize();
    Kokkos::finalize();
 

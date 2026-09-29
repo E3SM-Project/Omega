@@ -12,6 +12,7 @@
 #include "Dimension.h"
 #include "Error.h"
 #include "Field.h"
+#include "FloatExcept.h"
 #include "GlobalConstants.h"
 #include "Halo.h"
 #include "HorzMesh.h"
@@ -374,11 +375,13 @@ int main(int argc, char *argv[]) {
    int RetErr = 0;
 
    MPI_Init(&argc, &argv);
+   enableFloatExceptionsInTests();
    Kokkos::initialize(argc, argv);
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
 
    RetErr = forcingTest();
+   disableFloatExceptions();
 
    Pacer::finalize();
    Kokkos::finalize();

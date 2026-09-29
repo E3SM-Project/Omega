@@ -5,6 +5,7 @@
 #include "Dimension.h"
 #include "Eos.h"
 #include "Field.h"
+#include "FloatExcept.h"
 #include "GlobalConstants.h"
 #include "Halo.h"
 #include "HorzMesh.h"
@@ -81,6 +82,8 @@ int initState() {
        NormalVelEdge, EdgeComponent::Normal, Geom, Mesh,
        VCoord->MinLayerEdgeTop, VCoord->MaxLayerEdgeBot, ExchangeHalos::Yes,
        CartProjection::No);
+
+   deepCopy(VCoord->SurfacePressure, 0);
 
    return Err;
 }
@@ -369,11 +372,13 @@ int main(int argc, char *argv[]) {
    int RetVal = 0;
 
    MPI_Init(&argc, &argv);
+   enableFloatExceptionsInTests();
    Kokkos::initialize(argc, argv);
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
 
    RetVal += auxStateTest();
+   disableFloatExceptions();
 
    Pacer::finalize();
    Kokkos::finalize();

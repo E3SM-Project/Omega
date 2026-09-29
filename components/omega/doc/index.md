@@ -58,6 +58,7 @@ userGuide/VertAdv
 userGuide/Forcing
 userGuide/SfcCoupling
 userGuide/Analysis
+userGuide/FloatExcept
 ```
 
 ```{toctree}
@@ -108,6 +109,7 @@ devGuide/VertAdv
 devGuide/Forcing
 devGuide/SfcCoupling
 devGuide/Analysis
+devGuide/FloatExcept
 ```
 
 ```{toctree}

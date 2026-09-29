@@ -14,6 +14,7 @@
 #include "TimeMgr.h"
 #include "DataTypes.h"
 #include "Error.h"
+#include "FloatExcept.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "mpi.h"
@@ -3469,6 +3470,7 @@ int main(int argc, char *argv[]) {
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv = MachEnv::getDefault();
 
+   enableFloatExceptionsInTests();
    // Initialize the Logging system
    initLogging(DefEnv);
 
@@ -3481,6 +3483,7 @@ int main(int argc, char *argv[]) {
 
    // if it made it here, all tests successful
    LOG_INFO("----- TimeMgr Unit Tests Successful -----");
+   disableFloatExceptions();
 
    MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();

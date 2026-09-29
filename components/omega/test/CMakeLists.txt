@@ -639,3 +639,15 @@ add_omega_test(
     analysis/AnalysisSystemTest.cpp
     "-n;8"
 )
+
+################################
+# Floating-point exceptions test
+################################
+
+add_omega_test(
+    FLOAT_EXCEPT_TEST
+    testFloatExcept.exe
+    infra/FloatExceptTest.cpp
+    "-n;1"
+)
+set_tests_properties(FLOAT_EXCEPT_TEST PROPERTIES WILL_FAIL true)

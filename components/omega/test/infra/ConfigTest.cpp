@@ -14,6 +14,7 @@
 #include "Config.h"
 #include "Broadcast.h"
 #include "Error.h"
+#include "FloatExcept.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "Pacer.h"
@@ -43,6 +44,7 @@ int main(int argc, char *argv[]) {
    initLogging(DefEnv);
    Pacer::initialize(OmegaComm);
    Pacer::setPrefix("Omega:");
+   enableFloatExceptionsInTests();
    LOG_INFO("------ Config unit tests ------");
 
    // Define some variables for a reference configuration
@@ -699,6 +701,7 @@ int main(int argc, char *argv[]) {
    CHECK_ERROR(Err, "Config: expected error retrieving removed config - PASS");
 
    // Finalize environments
+   disableFloatExceptions();
    Pacer::finalize();
    MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();

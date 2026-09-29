@@ -40,6 +40,7 @@
 
 #include "DataTypes.h"
 #include "Error.h"
+#include "FloatExcept.h"
 #include "mpi.h"
 #include "pio.h"
 

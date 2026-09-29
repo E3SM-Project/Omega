@@ -14,6 +14,7 @@
 #include <mpi.h>
 
 #include "Error.h"
+#include "FloatExcept.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OmegaKokkos.h"
@@ -1644,6 +1645,7 @@ int main(int argc, char *argv[]) {
 
    // Initialize various environments and utilities
    MPI_Init(&argc, &argv);
+   enableFloatExceptionsInTests();
    Kokkos::initialize();
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv = MachEnv::getDefault();
@@ -1664,6 +1666,7 @@ int main(int argc, char *argv[]) {
    testArrayReductions();
 
    LOG_INFO("------ Global Reductions Unit Tests Sucessful ------");
+   disableFloatExceptions();
 
    // clean up
    MachEnv::removeAll();

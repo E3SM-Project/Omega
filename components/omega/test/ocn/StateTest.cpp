@@ -16,6 +16,7 @@
 #include "Eos.h"
 #include "Error.h"
 #include "Field.h"
+#include "FloatExcept.h"
 #include "Forcing.h"
 #include "Halo.h"
 #include "HorzMesh.h"
@@ -226,6 +227,7 @@ int main(int argc, char *argv[]) {
 
    // Initialize the global MPI environment
    MPI_Init(&argc, &argv);
+   enableFloatExceptionsInTests();
    Kokkos::initialize();
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
@@ -469,6 +471,7 @@ int main(int argc, char *argv[]) {
       if (RetVal == 0)
          LOG_INFO("State: Successful completion");
    }
+   disableFloatExceptions();
    Pacer::finalize();
    Kokkos::finalize();
    MPI_Barrier(MPI_COMM_WORLD);

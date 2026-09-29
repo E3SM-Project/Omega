@@ -18,6 +18,7 @@
 
 #include "DataTypes.h"
 #include "Error.h"
+#include "FloatExcept.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OmegaKokkos.h"
@@ -64,6 +65,7 @@ int main(int argc, char *argv[]) {
 
    // Initialize the global MPI environment
    MPI_Init(&argc, &argv);
+   enableFloatExceptionsInTests();
    Kokkos::initialize();
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
@@ -144,6 +146,7 @@ int main(int argc, char *argv[]) {
       LOG_INFO("BuildConfigTest: OMEGA_TARGET_DEVICE = {}",
                OmegaIsDevice ? "defined" : "not defined");
    }
+   disableFloatExceptions();
 
    LOG_INFO("----- Build Configuration Unit Tests Successful -----");
    Pacer::finalize();

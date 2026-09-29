@@ -17,6 +17,7 @@
 #include "Config.h"
 #include "DataTypes.h"
 #include "Error.h"
+#include "FloatExcept.h"
 #include "IO.h"
 #include "Logging.h"
 #include "MachEnv.h"
@@ -34,6 +35,7 @@ int main(int argc, char *argv[]) {
 
    // Initialize the global MPI environment
    MPI_Init(&argc, &argv);
+   enableFloatExceptionsInTests();
    Kokkos::initialize();
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
@@ -141,6 +143,7 @@ int main(int argc, char *argv[]) {
 
       LOG_INFO("IOInitParamsTest: Successful completion");
    }
+   disableFloatExceptions();
 
    LOG_INFO("----- Driver-owned IO Parameters Unit Tests Successful -----");
    Pacer::finalize();

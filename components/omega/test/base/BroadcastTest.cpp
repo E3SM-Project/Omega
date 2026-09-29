@@ -11,6 +11,7 @@
 
 #include "Broadcast.h"
 #include "Error.h"
+#include "FloatExcept.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "mpi.h"
@@ -174,6 +175,7 @@ int main(int argc, char *argv[]) {
 
    // Initialize the Logging system
    initLogging(DefEnv);
+   enableFloatExceptionsInTests();
    LOG_INFO("------ Broadcast Unit Tests ------");
 
    // The subset environments create 4-task sub-environments so
@@ -213,6 +215,7 @@ int main(int argc, char *argv[]) {
    // Cleanup
    MachEnv::removeEnv("Subset");
    LOG_INFO("------ Broadcast Unit Tests Successful ------");
+   disableFloatExceptions();
 
    // MPI_Status status;
    MPI_Barrier(MPI_COMM_WORLD);

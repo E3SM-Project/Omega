@@ -5,6 +5,7 @@
 #include "Decomp.h"
 #include "Eos.h"
 #include "Field.h"
+#include "FloatExcept.h"
 #include "Forcing.h"
 #include "GlobalConstants.h"
 #include "Halo.h"
@@ -695,11 +696,13 @@ int main(int argc, char *argv[]) {
    int RetVal = 0;
 
    MPI_Init(&argc, &argv);
+   enableFloatExceptionsInTests();
    Kokkos::initialize(argc, argv);
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
 
    RetVal += sfcCouplingTest();
+   disableFloatExceptions();
 
    Pacer::finalize();
    Kokkos::finalize();

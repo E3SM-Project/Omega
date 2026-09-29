@@ -22,6 +22,7 @@
 #include "Eos.h"
 #include "Error.h"
 #include "Field.h"
+#include "FloatExcept.h"
 #include "Forcing.h"
 #include "Halo.h"
 #include "HorzMesh.h"
@@ -548,6 +549,7 @@ int main(int argc, char *argv[]) {
    int RetVal = 0;
 
    MPI_Init(&argc, &argv);
+   enableFloatExceptionsInTests();
    Kokkos::initialize(argc, argv);
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
@@ -555,6 +557,7 @@ int main(int argc, char *argv[]) {
    LOG_INFO("----- Time Stepper Unit Test -----");
 
    RetVal += timeStepperTest("OmegaSphereMesh.nc");
+   disableFloatExceptions();
 
    Pacer::finalize();
    Kokkos::finalize();

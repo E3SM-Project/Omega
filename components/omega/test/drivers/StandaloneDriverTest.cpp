@@ -11,6 +11,7 @@
 //
 //===-----------------------------------------------------------------------===/
 
+#include "FloatExcept.h"
 #include "OceanDriver.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
@@ -28,7 +29,8 @@ int main(int argc, char *argv[]) {
    OMEGA::I4 ErrFinalize;
 
    MPI_Init(&argc, &argv); // initialize MPI
-   Kokkos::initialize();   // initialize Kokkos
+   OMEGA::enableFloatExceptionsInTests();
+   Kokkos::initialize(); // initialize Kokkos
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
 
@@ -71,6 +73,8 @@ int main(int argc, char *argv[]) {
    if (ErrAll == 0) {
       LOG_INFO("DriverTest: Successful completion");
    }
+
+   OMEGA::disableFloatExceptions();
 
    Pacer::print("omega_driver_test", OMEGA::printTimingAllRanks());
    Pacer::finalize();

@@ -21,6 +21,7 @@
 #include "Dimension.h"
 #include "Error.h"
 #include "Field.h"
+#include "FloatExcept.h"
 #include "GlobalConstants.h"
 #include "Halo.h"
 #include "HorzMesh.h"
@@ -1372,7 +1373,7 @@ int testFCTTracerHorzAdvOnCell(int NVertLayers, int NTracers, Real RTol) {
    VertAdv::init();
    const auto VAdv = VertAdv::getDefault();
    deepCopy(VAdv->VerticalPseudoVelocity, 10._Real);
-   deepCopy(VAdv->TotalVerticalPseudoVelocity, 10._Real);
+   deepCopy(VAdv->TotalVerticalTransportPseudoVelocity, 10._Real);
 
    TracerHorzAdvOnCellTest TrHorzAdvOnC(Mesh, VCoord, VAdv);
    TrHorzAdvOnC.ForceLowOrder = false;
@@ -2027,11 +2028,13 @@ int main(int argc, char *argv[]) {
    int RetErr = 0;
 
    MPI_Init(&argc, &argv);
+   enableFloatExceptionsInTests();
    Kokkos::initialize(argc, argv);
    Pacer::initialize(MPI_COMM_WORLD);
    Pacer::setPrefix("Omega:");
 
    RetErr = tendencyTermsTest();
+   disableFloatExceptions();
 
    Pacer::finalize();
    Kokkos::finalize();

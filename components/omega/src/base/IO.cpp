@@ -255,6 +255,10 @@ void openFileRead(
     const std::string &Filename, // [in] name (incl path) of file to open
     FileFmt InFormat             // [in] (optional) file format
 ) {
+   // Workaround for HDF5 v1.14.3 raising floating-point exceptions
+   // Disable fpes in this function and re-enable before exiting
+   // Remove this workaround after HDF5 is upgraded on every machine
+   FloatExceptStatus Status = disableFloatExceptions();
 
    int PIOErr = 0;        // internal SCORPIO/PIO return call
    int Format = InFormat; // coerce to integer for PIO calls
@@ -263,6 +267,10 @@ void openFileRead(
    PIOErr = PIOc_openfile(SysID, &FileID, &Format, &Filename[0], ModeRead);
    if (PIOErr != PIO_NOERR)
       ABORT_ERROR("IO::openFile: PIO error opening file {} for read", Filename);
+
+   if (Status.Err.isSuccess()) {
+      enableFloatExceptions(Status.OldExceptions);
+   }
 
    return;
 

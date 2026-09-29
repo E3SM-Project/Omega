@@ -12,6 +12,7 @@
 
 #include <iostream>
 
+#include "FloatExcept.h"
 #include "Logging.h"
 #include "MachEnv.h"
 
@@ -248,6 +249,7 @@ int main(int argc, char **argv) {
    OMEGA::MachEnv *DefEnv = OMEGA::MachEnv::getDefault();
    OMEGA::I4 TaskId       = DefEnv->getMyTask();
 
+   enableFloatExceptionsInTests();
    try {
 
       std::string LogFilePath = "tmplog_" + std::to_string(TaskId) + ".log";
@@ -278,6 +280,7 @@ int main(int argc, char **argv) {
       std::cout << "Unknown: FAIL" << std::endl;
       RetVal += 1;
    }
+   disableFloatExceptions();
 
    // Finalize environments
    MPI_Barrier(MPI_COMM_WORLD);

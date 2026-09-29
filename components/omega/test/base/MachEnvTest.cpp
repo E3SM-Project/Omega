@@ -14,6 +14,7 @@
 
 #include "MachEnv.h"
 #include "Error.h"
+#include "FloatExcept.h"
 #include "Logging.h"
 #include "mpi.h"
 
@@ -63,6 +64,7 @@ int main(int argc, char *argv[]) {
    // Initialize the global MPI environment
    MPI_Init(&argc, &argv);
 
+   enableFloatExceptionsInTests();
    // Create reference values based on MPI_COMM_WORLD
    int WorldTask;
    int WorldSize;
@@ -353,6 +355,7 @@ int main(int argc, char *argv[]) {
    MachEnv::removeAll();
 
    LOG_INFO("------ MachEnv Unit Tests Successful ------");
+   disableFloatExceptions();
 
    // MPI_Status status;
    MPI_Barrier(MPI_COMM_WORLD);

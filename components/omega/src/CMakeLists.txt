@@ -35,6 +35,25 @@ if(OMEGA_SINGLE_PRECISION)
   )
 endif()
 
+include(CheckCXXSymbolExists)
+# check if cfenv provides feenableexcept which is a gnu extension for enabling floating-point exceptions
+check_cxx_symbol_exists(feenableexcept "cfenv" OMEGA_HAVE_FEENABLEEXCEPT)
+if (OMEGA_HAVE_FEENABLEEXCEPT)
+  target_compile_definitions(
+      OmegaLibFlags
+      INTERFACE
+      OMEGA_HAVE_FEENABLEEXCEPT=1
+  )
+endif()
+
+if(OMEGA_FPEXCEPTS_IN_TESTS)
+  target_compile_definitions(
+      OmegaLibFlags
+      INTERFACE
+      OMEGA_FPEXCEPTS_IN_TESTS=1
+  )
+endif()
+
 
 target_link_options(
     OmegaLibFlags
