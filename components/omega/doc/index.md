@@ -56,6 +56,7 @@ userGuide/Timing
 userGuide/VerticalMixingCoeff
 userGuide/VertAdv
 userGuide/Forcing
+userGuide/Frazil
 userGuide/SfcCoupling
 userGuide/Analysis
 ```
@@ -106,6 +107,7 @@ devGuide/Timing
 devGuide/VerticalMixingCoeff
 devGuide/VertAdv
 devGuide/Forcing
+devGuide/Frazil
 devGuide/SfcCoupling
 devGuide/Analysis
 ```

@@ -154,11 +154,12 @@ void initIOStreamTest(Clock *&ModelClock // Model clock
    // Initialize VertMix
    VertMix::init();
 
+   // Initialize Tracers before Tendencies so tracer indices are available
+   // during FrazilOnCell construction inside Tendencies::init().
+   Tracers::init();
+
    // Intialize Tendencies
    Tendencies::init();
-
-   // Initialize Tracers
-   Tracers::init();
 
    // IOStream::validateAll() depends on Forcing::init() so Forcing fields
    // are registered before stream validation.

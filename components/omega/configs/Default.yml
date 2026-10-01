@@ -81,6 +81,7 @@ Omega:
     VelocityVertAdvTendencyEnable: true
     TracerVertAdvTendencyEnable: true
     PressureGradTendencyEnable: true
+    FrazilTendencyEnable: false
     VelVertMixTendencyEnable: true
     TracerVertMixTendencyEnable: true
   ManufacturedSolution:
@@ -96,6 +97,12 @@ Omega:
       DRhoDT: -0.2
       DRhoDS: 0.8
       RhoT0S0: 1000.0
+  Frazil:
+    FrazilType: teos10
+    LayerMassFracMax: 0.1
+    Phi: 0.75
+    DepthLimit: -1.0
+    ConservationCheck: true
   VertMix:
     Background:
       Diffusivity: 1.0e-5
@@ -195,6 +202,19 @@ Omega:
         - Tracers
         - State
         - SshCell
+    FrazilOutput:
+      UsePointerFile: false
+      Filename: ocn.frazil.$Y-$M-$D_$h.$m.$s
+      Mode: write
+      IfExists: append
+      Precision: double
+      Freq: 600
+      FreqUnits: Never
+      FileFreq: 1
+      FileFreqUnits: days
+      UseStartEnd: false
+      Contents:
+        - Frazil
     Highfreq:
       UsePointerFile: false
       Filename: ocn.hifreq.$Y-$M
