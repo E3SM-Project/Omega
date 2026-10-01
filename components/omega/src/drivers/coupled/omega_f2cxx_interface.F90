@@ -29,7 +29,7 @@ module omega_f2cxx_mod
          import_field_indices, &
          export_field_indices, &
          io_base_task, &
-         io_rearranger,
+         io_rearranger, &
          cpl_x2o_field_names, &
          cpl_o2x_field_names) bind(c)
 

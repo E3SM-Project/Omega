@@ -200,12 +200,6 @@ contains
       io_base_task = shr_pio_getioroot(OCN_ID)
       io_rearranger = shr_pio_getrearranger(OCN_ID)
 
-#ifdef HAVE_MOAB
-      layout = omega_get_layout_moab()
-#else
-      layout = omega_get_layout_mct()
-#endif
-
       call omega_ocn_init1( &
          mpicom_ocn, &
          OCN_ID, &
@@ -225,7 +219,7 @@ contains
          c_loc(import_field_indices), &
          c_loc(export_field_indices), &
          io_base_task, &
-         io_rearranger &
+         io_rearranger, &
          c_loc(cpl_x2o_field_names), &
          c_loc(cpl_o2x_field_names) &
          )
@@ -236,39 +230,39 @@ contains
       mpoid = omega_get_moab_pid()
 #endif
 
-      !-------------------------------------------------------------------------
-      ! initialize MCT gsmap, domain, and attribute vectors
-      !-------------------------------------------------------------------------
-      call ocn_set_gsmap_mct(mpicom_ocn, ocn_id, gsMap_ocn)
+!-------------------------------------------------------------------------
+       ! initialize MCT gsmap, domain, and attribute vectors
+       !-------------------------------------------------------------------------
+       call ocn_set_gsmap_mct(mpicom_ocn, ocn_id, gsMap_ocn)
 
-      lsize = mct_gsMap_lsize(gsMap_ocn, mpicom_ocn)
+       lsize = mct_gsMap_lsize(gsMap_ocn, mpicom_ocn)
 
-      call ocn_set_domain_mct(lsize, gsMap_ocn, gGrid_ocn)
+       call ocn_set_domain_mct(lsize, gsMap_ocn, gGrid_ocn)
 
-      ! Init import/export mct attribute vectors
-      call mct_aVect_init(x2o, rList=seq_flds_x2o_fields, lsize=lsize)
-      call mct_aVect_init(o2x, rList=seq_flds_o2x_fields, lsize=lsize)
+       ! Init import/export mct attribute vectors (needed for seq_mctext_avCreate
+       ! to broadcast attribute lists to coupler PEs, even under HAVE_MOAB)
+       call mct_aVect_init(x2o, rList=seq_flds_x2o_fields, lsize=lsize)
+       call mct_aVect_init(o2x, rList=seq_flds_o2x_fields, lsize=lsize)
 
-      ! Defensively zero out the attribute vecs to avoid uninitialized values
-      call mct_aVect_zero(x2o)
-      call mct_aVect_zero(o2x)
+       ! Defensively zero out the attribute vecs to avoid uninitialized values
+       call mct_aVect_zero(x2o)
+       call mct_aVect_zero(o2x)
 
-      ! coupler needs Omega's decomposition before it can size x2o/o2x, so
-      ! attach/export/import/halo-update must wait until they're allocated
-      call seq_infodata_PutData( &
-         infodata, &
-         ocn_prognostic=.true., &
-         ocnrof_prognostic=.true., &
-         ocn_c2_glcshelf=.false. &
-         )
+       ! coupler needs Omega's decomposition before it can size x2o/o2x, so
+       ! attach/export/import/halo-update must wait until they're allocated
+       call seq_infodata_PutData( &
+          infodata, &
+          ocn_prognostic=.true., &
+          ocnrof_prognostic=.true., &
+          ocn_c2_glcshelf=.false. &
+          )
 
-      ! TODO: Get case config info and add as MetaData to Omega
+       ! TODO: Get case config info and add as MetaData to Omega
 
-      ! Under HAVE_MOAB, omega_ocn_init2 ignores these MCT attribute-vector
-      ! pointers and attaches its own MOAB-backed buffers instead (see
-      ! omega_cxx2f_interface.cpp); they're still passed here unconditionally
-      ! since x2o/o2x are always allocated above regardless of driver.
-      call omega_ocn_init2(c_loc(x2o%rAttr), c_loc(o2x%rAttr))
+       ! Under HAVE_MOAB, omega_ocn_init2 ignores these MCT attribute-vector
+       ! pointers and attaches its own MOAB-backed buffers instead 
+       ! (see omega_cxx2f_interface.cpp)
+       call omega_ocn_init2(c_loc(x2o%rAttr), c_loc(o2x%rAttr))
 
    end subroutine ocn_init_mct
 
