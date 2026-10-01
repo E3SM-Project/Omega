@@ -208,10 +208,13 @@ void AuxiliaryState::computeMomAux(const OceanState *State,
 
    computeMomVertAux(State, TracerArray, ThickTimeLevel);
 
+   // Restrict to vertices fully surrounded by local cells in NCellAll
+   // to avoid division by zero in PsuedoThickVertex on outer halo vertices.
+   const I4 HaloAll = static_cast<I4>(Mesh->NVerticesHaloH.extent(0)) - 1;
    Pacer::start("AuxState:vertexAuxState1", 2);
    parallelForOuter(
        "vertexAuxState1",
-       LaunchConfig({Mesh->NVerticesAll},
+       LaunchConfig({Mesh->NVerticesHalo(HaloAll)},
                     TeamScratch<Real>(2 * VCoord->NVertLayers)),
        KOKKOS_LAMBDA(int IVertex, const TeamMember &Team) {
           LocVorticityAux.computeVarsOnVertex(Team, IVertex, PseudoThickCell,
