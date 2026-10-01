@@ -7,13 +7,12 @@
 # linting
 pre-commit
 
-# c++ linting
-clang-format >=18.1.0,<18.2.0
-clang-tools >=18.1.0,<18.2.0
-cppcheck
-cpplint
-lizard
-include-what-you-use
+# c++ linting (keep clang-format in sync with .pre-commit-config.yaml)
+clang-format >=22.1.8,<22.2.0
+clang-tools >=22.1.8,<22.2.0
+# clang provides the builtin headers that clang-tidy needs
+clang >=22.1.8,<22.2.0
+cppcheck >=2.22.0,<2.23.0
 
 # fortran linting
 fprettify
