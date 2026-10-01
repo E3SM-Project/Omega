@@ -182,9 +182,9 @@ void createMesh(int LocalPid, int OcnID) {
    std::vector<double> Coords(3 * static_cast<size_t>(NCompactVerts));
    for (int V = 0; V < NCompactVerts; ++V) {
       const I4 LocalVertex = CompactToLocal[V];
-      Coords[3 * V + 0] = DefMesh->XVertexH[LocalVertex] / DefMesh->SphereRadius;
-      Coords[3 * V + 1] = DefMesh->YVertexH[LocalVertex] / DefMesh->SphereRadius;
-      Coords[3 * V + 2] = DefMesh->ZVertexH[LocalVertex] / DefMesh->SphereRadius;
+      Coords[3 * V + 0] = DefMesh->XVertexH[LocalVertex] / REarth;
+      Coords[3 * V + 1] = DefMesh->YVertexH[LocalVertex] / REarth;
+      Coords[3 * V + 2] = DefMesh->ZVertexH[LocalVertex] / REarth;
    }
 
    ErrCode Err;
@@ -257,15 +257,14 @@ void setDomainTags(int LocalPid) {
    deepCopy(DefMesh->LatCellH, DefMesh->LatCell);
    deepCopy(DefMesh->AreaCellH, DefMesh->AreaCell);
 
-   const Real SphereRadius2 = DefMesh->SphereRadius * DefMesh->SphereRadius;
-
+   constexpr Real REarth2 = REarth * REarth;
    std::vector<double> Lon(NCellsOwned), Lat(NCellsOwned), Area(NCellsOwned);
    std::vector<double> MaskFrac(NCellsOwned, 1.0);
    std::vector<double> AreaM(NCellsOwned, -9999.0);
    for (I4 Cell = 0; Cell < NCellsOwned; ++Cell) {
       Lon[Cell]  = static_cast<double>(DefMesh->LonCellH[Cell] * Rad2Deg);
       Lat[Cell]  = static_cast<double>(DefMesh->LatCellH[Cell] * Rad2Deg);
-      Area[Cell] = static_cast<double>(DefMesh->AreaCellH[Cell] / SphereRadius2);
+      Area[Cell] = static_cast<double>(DefMesh->AreaCellH[Cell] / REarth2);
    }
 
    defineAndSetElemDoubleTag(LocalPid, "lon", NCellsOwned, Lon.data());
