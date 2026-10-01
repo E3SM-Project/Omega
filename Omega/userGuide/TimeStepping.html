@@ -212,24 +212,25 @@ of the Omega configuration file:</p>
 <span class="w">    </span><span class="nt">CalendarType</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">No Leap</span>
 <span class="w">    </span><span class="nt">TimeStepper</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Forward-Backward</span>
 <span class="w">    </span><span class="nt">TimeStep</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0000_00:10:00</span>
+<span class="w">    </span><span class="nt">StartType</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">StartUp</span>
+<span class="w">    </span><span class="nt">StartTime</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0001-01-01_00:00:00</span>
+<span class="w">    </span><span class="nt">StopType</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AtTime</span>
+<span class="w">    </span><span class="nt">StopCriterion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0001-01-01_02:00:00</span>
 <span class="w">    </span><span class="nt">ModeSplitShare</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">BtrTimeStepper</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Predictor-Corrector</span>
 <span class="w">      </span><span class="nt">BtrTimeStep</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0000_00:00:20</span>
 <span class="w">      </span><span class="nt">NTimeStepIteration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
 <span class="w">      </span><span class="nt">NBclCoriolisIteration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
 <span class="w">      </span><span class="nt">ReinitSplitVelocity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-<span class="w">    </span><span class="nt">StartTime</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0001-01-01_00:00:00</span>
-<span class="w">    </span><span class="nt">StopTime</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0001-01-01_02:00:00</span>
-<span class="w">    </span><span class="nt">RunDuration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">none</span>
 </pre></div>
 </div>
 <p>This configuration refers to the default time stepping used for the model
 dynamics (momentum and continuity equations). Additional time steppers can
 be used for other portions of the model (eg the barotropic mode or tracer
 transport) that may have different time steps and use different algorithms.</p>
-<p>The Calendar choice is describe in the
+<p>The <code class="docutils literal notranslate"><span class="pre">CalendarType</span></code> choice is described in the
 <a class="reference internal" href="TimeMgr.html#omega-user-time-manager"><span class="std std-ref">Time Management</span></a> section.</p>
-<p>The TimeStepper option refers to the numerical scheme used to advance the
+<p>The <code class="docutils literal notranslate"><span class="pre">TimeStepper</span></code> option refers to the numerical scheme used to advance the
 model in time. Omega implements a number of time-stepping schemes. The user
 can select the scheme they want in the configuration file.
 The following time steppers are currently available:</p>
@@ -260,7 +261,7 @@ The following time steppers are currently available:</p>
 <p><code class="docutils literal notranslate"><span class="pre">SplitExplicitRK2</span></code> and <code class="docutils literal notranslate"><span class="pre">UnsplitRK2</span></code> use the <code class="docutils literal notranslate"><span class="pre">ModeSplitShare</span></code> configuration
 subgroup shown above. See <a class="reference internal" href="SplitTimeStepping.html#omega-user-split-time-stepping"><span class="std std-ref">Split time stepping</span></a>
 for descriptions of these schemes and their configuration options.</p>
-<p>The time step refers to the main model time step used to advance the solution
+<p>The <code class="docutils literal notranslate"><span class="pre">TimeStep</span></code> refers to the main model time step used to advance the solution
 forward. The time step is specified as a formatted string and can be provided
 in any of the following forms:</p>
 <ul class="simple">
@@ -271,20 +272,39 @@ in any of the following forms:</p>
 </ul>
 <p>Days, hours and minutes are optional but must be in order if included.
 Fractional seconds are optional.</p>
-<p>The StartTime refers to the starting time for the simulation. It is in the
+<p>The <code class="docutils literal notranslate"><span class="pre">StartOption</span></code> can be one of five choices. The <code class="docutils literal notranslate"><span class="pre">StartUp</span></code> option is for
+starting a solution from scratch from an initial state file. The <code class="docutils literal notranslate"><span class="pre">Continue</span></code>
+option is for continuing a simulation from a restart file. The <code class="docutils literal notranslate"><span class="pre">Branch</span></code>
+option will branch from an existing simulation by reading from the restart
+file and is identical to <code class="docutils literal notranslate"><span class="pre">Continue</span></code> except that some other simulation
+metadata (eg case name or simulation name) can be changed. The <code class="docutils literal notranslate"><span class="pre">Hybrid</span></code>
+option will continue a branch from a restart file but will reset the start
+time and should only be used for the first step of a hybrid run, similar to the
+<code class="docutils literal notranslate"><span class="pre">StartUp</span></code> option. It is equivalent to using the <code class="docutils literal notranslate"><span class="pre">StartUp</span></code> option and
+specifying the restart file as an init file. It is only provided in the event
+a future mult-level time stepping scheme is used in which starting from a
+restart with multiple time levels is an advantage over a fresh start. Finally,
+a <code class="docutils literal notranslate"><span class="pre">Coupled</span></code> option specifies that the <code class="docutils literal notranslate"><span class="pre">StartType</span></code> is provided by the
+coupler in a coupled configuration. The actual <code class="docutils literal notranslate"><span class="pre">StartType</span></code> used internally
+is created by the E3SM CIME tools from a combination of the <code class="docutils literal notranslate"><span class="pre">RUN_TYPE</span></code> and
+<code class="docutils literal notranslate"><span class="pre">CONTINUE</span></code> options.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">StartTime</span></code> refers to the starting time for the full simulation (not the
+current leg of an ongoing simulation). It is in the
 format <code class="docutils literal notranslate"><span class="pre">yyyy-mm-day_hh:mm:ss</span></code> for year, month, day, hour, minute, second.
-This refers to the initial start time; for a longer simulation, the current
-time will be modified by the restart file to update to the present time for
-the current segment of the simulation.</p>
-<p>The simulation will be stopped either at a fixed StopTime if provided or
-by the RunDuration. For shorter simulations, the StopTime can be used to
-specify a specific time to stop. For longer simulations with multiple
-segments that are restarted, the RunDuration should used and should be set
-to fit within the queue time. The format for StopTime is the same as StartTime.
-The format for RunDuration is the same as the TimeStep.</p>
-<p>Only one of the StopTime or RunDuration should be specified with the other
-set to either an empty string or “none”. If both are specified, the
-RunDuration is used instead of the StopTime.</p>
+If this is a continuation of an existing simulation, the current time for this
+leg of the full simulation will be set by the restart file.</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">StopType</span></code> determines (with the <code class="docutils literal notranslate"><span class="pre">StopCriterion</span></code> below) how the simulation
+will be stopped. There are three options. The <code class="docutils literal notranslate"><span class="pre">AtTime</span></code> option will stop the
+simulation at a specific time and the <code class="docutils literal notranslate"><span class="pre">StopCriterion</span></code> holds that specific time
+as described below. The <code class="docutils literal notranslate"><span class="pre">AfterDuration</span></code> option runs the simulation for a fixed
+time interval and the <code class="docutils literal notranslate"><span class="pre">StopCriterion</span></code> is used to define that interval. A final
+option called <code class="docutils literal notranslate"><span class="pre">Coupled</span></code> is primarily for coupled simulations where the
+simulation will stop after receiving a signal from the coupler.</p>
+<p>For the <code class="docutils literal notranslate"><span class="pre">AtTime</span></code> stop type, the <code class="docutils literal notranslate"><span class="pre">StopCriterion</span></code> must be a time instant in
+the format <code class="docutils literal notranslate"><span class="pre">yyyy-mm-dd_hh:mm:ss</span></code>. If the <code class="docutils literal notranslate"><span class="pre">StopType</span></code> is <code class="docutils literal notranslate"><span class="pre">AfterDuration</span></code>,
+the <code class="docutils literal notranslate"><span class="pre">StopCriterion</span></code> is a time interval in the format described above for the
+time step (but typically <code class="docutils literal notranslate"><span class="pre">dddd_hh:mm:ss</span></code>). For the <code class="docutils literal notranslate"><span class="pre">Coupled</span></code> option the
+<code class="docutils literal notranslate"><span class="pre">StopCriterion</span></code> is ignored.</p>
 <div class="toctree-wrapper compound">
 </div>
 </section>
