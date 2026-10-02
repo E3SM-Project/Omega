@@ -27,6 +27,22 @@ target_compile_definitions(
     OMEGA_VECTOR_LENGTH=${OMEGA_VECTOR_LENGTH}
 )
 
+# Disable floating point contraction (e.g. fused multiply-add) for GPU
+# architectures. Needed for ERS and PEM test to pass COMPARE step
+if (OMEGA_ARCH STREQUAL "CUDA")
+  target_compile_options(OmegaLibFlags INTERFACE
+    $<$<COMPILE_LANGUAGE:CXX>:--fmad=false -Xcompiler -ffp-contract=off>
+  )
+elseif (OMEGA_ARCH STREQUAL "HIP")
+   target_compile_options(OmegaLibFlags INTERFACE
+      $<$<COMPILE_LANGUAGE:CXX>:-ffp-contract=off>
+   )
+elseif (OMEGA_ARCH STREQUAL "SYCL")
+   target_compile_options(OmegaLibFlags INTERFACE
+      $<$<COMPILE_LANGUAGE:CXX>:-fp-model=precise -ffp-contract=off>
+   )
+endif()
+
 if(OMEGA_SINGLE_PRECISION)
   target_compile_definitions(
       OmegaLibFlags
