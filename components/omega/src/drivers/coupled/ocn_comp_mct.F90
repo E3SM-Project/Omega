@@ -239,8 +239,8 @@ contains
 
        call ocn_set_domain_mct(lsize, gsMap_ocn, gGrid_ocn)
 
-       ! Init import/export mct attribute vectors (needed for seq_mctext_avCreate
-       ! to broadcast attribute lists to coupler PEs, even under HAVE_MOAB)
+       ! Initialize MCT AVs with the ocean decomposition. The MOAB driver
+       ! uses their field lists during coupler-side initialization.
        call mct_aVect_init(x2o, rList=seq_flds_x2o_fields, lsize=lsize)
        call mct_aVect_init(o2x, rList=seq_flds_o2x_fields, lsize=lsize)
 

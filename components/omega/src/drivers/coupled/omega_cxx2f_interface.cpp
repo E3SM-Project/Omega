@@ -13,6 +13,8 @@
 #include "Pacer.h"
 #include "TimeMgr.h"
 #include "TimeStepper.h"
+#include <cmath>
+#include <map>
 #include <mpi.h>
 #include <vector>
 
@@ -51,12 +53,16 @@ std::map<std::string, int> buildFieldIndexMap(const char *FieldNames,
    return FieldIdx;
 }
 
+// Coupler field counts and indices are independent of the transfer backend.
+// Retain them across init1/init2/run for the MOAB coupling buffers and checks.
+int NCouplerImports = 0;
+int NCouplerExports = 0;
+std::map<std::string, int> ImportIdxMap;
+
 #ifdef HAVE_MOAB
 // Coupling buffers for the MOAB path: attached once (by address) to
 // SfcCoupling in omega_ocn_init2, refilled from/drained to MOAB tag storage
 // around each omega_ocn_run call.
-int MoabNCouplerImports = 0;
-int MoabNCouplerExports = 0;
 std::vector<OMEGA::Real> MoabCplToOcn;
 std::vector<OMEGA::Real> MoabOcnToCpl;
 
@@ -81,8 +87,8 @@ void omega_ocn_init1(
     const int RunStartYMD,         // [in] run start date in YYYYMMDD
     const int RunStartTOD,         // [in] run start time in seconds of day
     const int CouplingTimeStep,    // [in] coupling time step in seconds
-    const int NCouplerImports,     // [in] number of coupler import fields
-    const int NCouplerExports,     // [in] number of coupler export fields
+    const int InNCouplerImports,   // [in] number of coupler import fields
+    const int InNCouplerExports,   // [in] number of coupler export fields
     const int NOmegaImports,       // [in] number of omega import fields
     const int NOmegaExports,       // [in] number of omega export fields
     const char *ImportFieldNames,  // [in] array of import field names
@@ -128,8 +134,10 @@ void omega_ocn_init1(
    OMEGA::TimeInterval CouplingInterval(CouplingTimeStep,
                                         OMEGA::TimeUnits::Seconds);
 
-   std::map<std::string, int> ImportIdxMap =
-       buildFieldIndexMap(ImportFieldNames, ImportFieldIndices, NOmegaImports);
+   NCouplerImports = InNCouplerImports;
+   NCouplerExports = InNCouplerExports;
+   ImportIdxMap = buildFieldIndexMap(ImportFieldNames, ImportFieldIndices,
+                                     NOmegaImports);
    std::map<std::string, int> ExportIdxMap =
        buildFieldIndexMap(ExportFieldNames, ExportFieldIndices, NOmegaExports);
 
@@ -163,8 +171,6 @@ void omega_ocn_init1(
 #ifdef HAVE_MOAB
    // Decomp/HorzMesh exist by now (built inside OMEGA::ocnInit1 above), so
    // the MOAB mesh can be constructed from them.
-   MoabNCouplerImports = NCouplerImports;
-   MoabNCouplerExports = NCouplerExports;
    MoabPid              = OMEGA::moabInit(Comm, OcnID);
    OMEGA::moabDefineTagStorage(MoabPid, Cpl2OcnFieldNames, Ocn2CplFieldNames);
 #endif
@@ -182,13 +188,16 @@ void omega_ocn_init2(const double *cpl_to_ocn_data, double *ocn_to_cpl_data) {
    // These are refilled/drained in place (same memory address) by
    // omega_ocn_run on every subsequent coupling interval.
    const int NCellsOwned = static_cast<int>(OMEGA::Decomp::getDefault()->NCellsOwned);
-   MoabCplToOcn.assign(static_cast<size_t>(MoabNCouplerImports) * NCellsOwned,
-                       0);
-   MoabOcnToCpl.assign(static_cast<size_t>(MoabNCouplerExports) * NCellsOwned,
-                       0);
+   MoabCplToOcn.assign(static_cast<size_t>(NCouplerImports) * NCellsOwned, 0);
+   MoabOcnToCpl.assign(static_cast<size_t>(NCouplerExports) * NCellsOwned, 0);
    OMEGA::moabImportTagStorage(MoabCplToOcn.data(),
                                static_cast<int>(MoabCplToOcn.size()));
    OMEGA::ocnInit2(MoabCplToOcn.data(), MoabOcnToCpl.data());
+   // ocnInit2 computes initial ocean exports into the attached buffer.
+   // Publish them now: the driver performs initial area correction and
+   // component-to-coupler exchanges before the first omega_ocn_run call.
+   OMEGA::moabExportTagStorage(MoabOcnToCpl.data(),
+                               static_cast<int>(MoabOcnToCpl.size()));
 #else
    OMEGA::ocnInit2(cpl_to_ocn_data, ocn_to_cpl_data);
 #endif
@@ -207,6 +216,19 @@ void omega_ocn_run(bool WriteRestart) {
 #ifdef HAVE_MOAB
    OMEGA::moabImportTagStorage(MoabCplToOcn.data(),
                                static_cast<int>(MoabCplToOcn.size()));
+   // Check the fields actually consumed by SfcCoupling before they can
+   // contaminate the state. iMOAB stores one contiguous cell block per tag.
+   const int NCellsOwned = static_cast<int>(OMEGA::Decomp::getDefault()->NCellsOwned);
+   for (const auto &[Name, Index] : ImportIdxMap) {
+      if (Index < 0 || Index >= NCouplerImports)
+         ABORT_ERROR("Invalid MOAB ocean import index {} for {} ({} fields)",
+                     Index, Name, NCouplerImports);
+      for (int Cell = 0; Cell < NCellsOwned; ++Cell) {
+         if (!std::isfinite(MoabCplToOcn[static_cast<size_t>(Index) * NCellsOwned + Cell]))
+            ABORT_ERROR("Non-finite MOAB ocean import {} at local cell {} (field index {})",
+                        Name, Cell, Index);
+      }
+   }
 #endif
    ErrRun = OMEGA::ocnRun(CurrTime, WriteRestart);
    if (ErrRun != 0)
