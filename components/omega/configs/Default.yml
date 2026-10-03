@@ -110,6 +110,9 @@ Omega:
       RiCrit: 0.7
       Exponent: 3.0
       RiSmoothLoops: 2
+  RayleighDamping:
+    Enable: false
+    DampingCoeff: 1.0e-4
   IOStreams:
     HorzMeshIn:
       UsePointerFile: false
