@@ -211,9 +211,6 @@ class SecondDerivativeOnCell {
    KOKKOS_FUNCTION void operator()(const Array3DReal &DerivTwo,
                                    const int ICell) const {
       const int NEdges = NEdgesOnCell(ICell);
-      if (MaxMaxEdges < NEdges)
-         Kokkos::abort("SecondDerivativeOnCell: number of edges on cell "
-                       "exceeds MaxMaxEdges");
 
       // check to see if we are reaching outside the halo
       auto CellList = Kokkos::subview(CellListCell, ICell, Kokkos::ALL);
@@ -266,8 +263,8 @@ class SecondDerivativeOnCell {
  private:
    // MaxMaxEdges is used to dimention arrays that include ICell and the
    // neighbor cells, so it is technically one more than MaxEdges.
-   static const I4 MaxMaxEdges = 10;
-   static constexpr R8 Pii     = 3.141592653589793_Real;
+   static constexpr I4 MaxMaxEdges = HorzMesh::MaxEdgesBound + 1;
+   static constexpr R8 Pii         = 3.141592653589793_Real;
 
    const bool OnSphere;
    const I4 NCellsAll;

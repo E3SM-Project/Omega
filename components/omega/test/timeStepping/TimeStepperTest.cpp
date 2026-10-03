@@ -288,6 +288,8 @@ int initTimeStepperTest(const std::string &mesh) {
    DefVAdv->TracerVertAdvEnabled                  = false;
    DefVMix->VelVertMixSetup.Enabled               = false;
    DefVMix->TracerVertMixSetup.Enabled            = false;
+   TestTendencies->VelVertMixTendencyEnable       = false;
+   TestTendencies->TracerVertMixTendencyEnable    = false;
 
    return Err;
 }

@@ -1748,6 +1748,80 @@ int testTracerDiffOnCell(int NVertLayers, int NTracers, Real RTol) {
    return Err;
 } // end testTracerDiffOnCell
 
+int testKPPNonLocalTracerFluxOnCell(int NVertLayers, int NTracers, Real RTol) {
+
+   I4 Err = 0;
+
+   const auto Mesh   = HorzMesh::getDefault();
+   const auto VCoord = VertCoord::getDefault();
+
+   constexpr Real InitialTendency = 0.375_Real;
+   constexpr Real FluxScale       = 0.25_Real;
+   constexpr Real ProfileScale    = 0.01_Real;
+
+   Array2DReal SurfaceTracerFlux("SurfaceTracerFlux", NTracers,
+                                 Mesh->NCellsSize);
+   Array2DReal VertNonLocalFlux("VertNonLocalFlux", Mesh->NCellsSize,
+                                NVertLayers + 1);
+   Array3DReal ExactTendency("ExactKPPNonLocalTracerTendency", NTracers,
+                             Mesh->NCellsOwned, NVertLayers);
+   Array3DReal NumTendency("NumKPPNonLocalTracerTendency", NTracers,
+                           Mesh->NCellsOwned, NVertLayers);
+
+   deepCopy(ExactTendency, InitialTendency);
+   deepCopy(NumTendency, InitialTendency);
+
+   parallelFor(
+       {NTracers, Mesh->NCellsSize}, KOKKOS_LAMBDA(int L, int ICell) {
+          SurfaceTracerFlux(L, ICell) = FluxScale * Real(L + 1);
+       });
+   parallelFor(
+       {Mesh->NCellsSize, NVertLayers + 1}, KOKKOS_LAMBDA(int ICell, int K) {
+          const Real DistanceFromBottom = Real(NVertLayers - K);
+          VertNonLocalFlux(ICell, K)    = ProfileScale * Real(ICell + 1) *
+                                       DistanceFromBottom * DistanceFromBottom;
+       });
+
+   const auto MinLayerCell = VCoord->MinLayerCell;
+   const auto MaxLayerCell = VCoord->MaxLayerCell;
+   parallelForOuter(
+       {NTracers, Mesh->NCellsOwned},
+       KOKKOS_LAMBDA(int L, int ICell, const TeamMember &Team) {
+          const int KMin = MinLayerCell(ICell);
+          const int KMax = MaxLayerCell(ICell);
+          parallelForInner(
+              Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+                 const Real DistanceFromBottom = Real(NVertLayers - K);
+                 ExactTendency(L, ICell, K) +=
+                     FluxScale * Real(L + 1) * ProfileScale * Real(ICell + 1) *
+                     (2.0_Real * DistanceFromBottom - 1.0_Real);
+              });
+       });
+
+   KPPNonLocalTracerFluxOnCell KPPNonLocalFlux(Mesh, VCoord);
+   parallelForOuter(
+       {NTracers, Mesh->NCellsOwned},
+       KOKKOS_LAMBDA(int L, int ICell, const TeamMember &Team) {
+          KPPNonLocalFlux(Team, NumTendency, L, ICell, SurfaceTracerFlux,
+                          VertNonLocalFlux);
+       });
+
+   ErrorMeasures KPPNonLocalErrors;
+   Err += computeErrors(KPPNonLocalErrors, NumTendency, ExactTendency, Mesh,
+                        OnCell);
+
+   const ErrorMeasures ExpectedErrors{0.0_Real, 0.0_Real};
+   const Real ATol = 100 * std::numeric_limits<Real>::epsilon();
+   Err += checkErrors("TendencyTermsTest", "KPPNonLocalTracerFlux",
+                      KPPNonLocalErrors, ExpectedErrors, RTol, ATol);
+
+   if (Err == 0) {
+      LOG_INFO("TendencyTermsTest: KPPNonLocalTracerFluxOnCell PASS");
+   }
+
+   return Err;
+} // end testKPPNonLocalTracerFluxOnCell
+
 int testTracerHyperDiffOnCell(int NVertLayers, int NTracers, Real RTol) {
 
    I4 Err = 0;
@@ -2007,6 +2081,8 @@ int tendencyTermsTest(const std::string &MeshFile = DefaultMeshFile) {
    Err += testFCTTracerHorzAdvOnCell(NVertLayers, NTracers, RTol);
 
    Err += testTracerDiffOnCell(NVertLayers, NTracers, RTol);
+
+   Err += testKPPNonLocalTracerFluxOnCell(NVertLayers, NTracers, RTol);
 
    Err += testTracerHyperDiffOnCell(NVertLayers, NTracers, RTol);
 

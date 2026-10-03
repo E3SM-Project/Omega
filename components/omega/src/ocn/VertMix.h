@@ -437,6 +437,12 @@ class VertMix {
    Array2DReal
        GradRichNumSmoothed; ///< Smoothed Gradient Richardson number field
 
+   /// Background+shear-only mixing from the previous step, snapshotted
+   /// before the KPP merge; used by KPP's MatchBoth to join its profile
+   /// to the interior scheme. Only kept up to date when MatchBoth is active.
+   Array2DReal InteriorVertDiff;
+   Array2DReal InteriorVertVisc;
+
    // TODO: Temporary handling of TangentialVelocity
    Array2DReal TangentialVelocity; ///< Tangential velocity
 
