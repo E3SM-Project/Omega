@@ -94,6 +94,12 @@ SfcTracerForcingOnCell::SfcTracerForcingOnCell(const HorzMesh *Mesh,
       MinLayerCell(VCoord->MinLayerCell), MaxLayerCell(VCoord->MaxLayerCell),
       EosChoice(EosInst->EosChoice) {}
 
+PenetratingShortwaveOnCell::PenetratingShortwaveOnCell(const HorzMesh *Mesh,
+                                                       const VertCoord *VCoord,
+                                                       I4 TempTracerIndex)
+    : TempIndex(TempTracerIndex), MinLayerCell(VCoord->MinLayerCell),
+      MaxLayerCell(VCoord->MaxLayerCell) {}
+
 TracerHorzAdvOnCell::TracerHorzAdvOnCell(const HorzMesh *Mesh,
                                          const VertCoord *VCoord,
                                          const VertAdv *VAdv)

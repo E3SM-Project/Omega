@@ -237,6 +237,11 @@ I4 Forcing::exchangeHalo() const {
                                              OnCell);
    }
 
+   if (TracerForcingFieldsEnabled) {
+      Err += MeshHalo->exchangeFullArrayHalo(
+          TracerForcing.ShortWaveHeatFluxCell, OnCell);
+   }
+
    return Err;
 }
 

@@ -102,3 +102,16 @@ The following auxiliary variable groups are currently implemented:
 | TracerAuxVars | HTracersEdge | Center or Upwind|
 || Del2TracersCell ||
 | SurfTracerRestAuxVars | TracersMonthlySurfClimoCell ||
+| ShortwavePenAuxVars | ExtinctionCoeffRedCell | annual-average red-band extinction coefficient |
+|| ExtinctionCoeffBlueCell | annual-average blue/green-band extinction coefficient |
+
+## Shortwave penetration coefficients
+
+`ShortwavePenAuxVars` is a lightweight auxiliary-variable container for the
+cell-centered optical properties used by `PenetratingShortwaveOnCell`. It owns
+`ExtinctionCoeffRedCell` and `ExtinctionCoeffBlueCell`, registers both fields
+with the `ShortwaveExtinction` field group, and does not compute either field.
+The `ShortwaveExtinctionIn` IO stream reads them from the annual-average input
+file at startup. Because the fields are cell-centered and can be accessed by
+neighboring kernels, `AuxiliaryState::exchangeHalo()` exchanges their halos
+after input is read.
