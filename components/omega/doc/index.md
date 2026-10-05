@@ -54,6 +54,7 @@ userGuide/VertCoord
 userGuide/PGrad
 userGuide/Timing
 userGuide/VerticalMixingCoeff
+userGuide/SubmesoEddies
 userGuide/VertAdv
 userGuide/Forcing
 userGuide/SfcCoupling
@@ -104,6 +105,7 @@ devGuide/VertCoord
 devGuide/PGrad
 devGuide/Timing
 devGuide/VerticalMixingCoeff
+devGuide/SubmesoEddies
 devGuide/VertAdv
 devGuide/Forcing
 devGuide/SfcCoupling
