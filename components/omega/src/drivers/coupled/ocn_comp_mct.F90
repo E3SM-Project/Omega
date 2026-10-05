@@ -231,38 +231,38 @@ contains
 #endif
 
 !-------------------------------------------------------------------------
-       ! initialize MCT gsmap, domain, and attribute vectors
-       !-------------------------------------------------------------------------
-       call ocn_set_gsmap_mct(mpicom_ocn, ocn_id, gsMap_ocn)
+      ! initialize MCT gsmap, domain, and attribute vectors
+      !-------------------------------------------------------------------------
+      call ocn_set_gsmap_mct(mpicom_ocn, ocn_id, gsMap_ocn)
 
-       lsize = mct_gsMap_lsize(gsMap_ocn, mpicom_ocn)
+      lsize = mct_gsMap_lsize(gsMap_ocn, mpicom_ocn)
 
-       call ocn_set_domain_mct(lsize, gsMap_ocn, gGrid_ocn)
+      call ocn_set_domain_mct(lsize, gsMap_ocn, gGrid_ocn)
 
-       ! Initialize MCT AVs with the ocean decomposition. The MOAB driver
-       ! uses their field lists during coupler-side initialization.
-       call mct_aVect_init(x2o, rList=seq_flds_x2o_fields, lsize=lsize)
-       call mct_aVect_init(o2x, rList=seq_flds_o2x_fields, lsize=lsize)
+      ! Initialize MCT AVs with the ocean decomposition. The MOAB driver
+      ! uses their field lists during coupler-side initialization.
+      call mct_aVect_init(x2o, rList=seq_flds_x2o_fields, lsize=lsize)
+      call mct_aVect_init(o2x, rList=seq_flds_o2x_fields, lsize=lsize)
 
-       ! Defensively zero out the attribute vecs to avoid uninitialized values
-       call mct_aVect_zero(x2o)
-       call mct_aVect_zero(o2x)
+      ! Defensively zero out the attribute vecs to avoid uninitialized values
+      call mct_aVect_zero(x2o)
+      call mct_aVect_zero(o2x)
 
-       ! coupler needs Omega's decomposition before it can size x2o/o2x, so
-       ! attach/export/import/halo-update must wait until they're allocated
-       call seq_infodata_PutData( &
-          infodata, &
-          ocn_prognostic=.true., &
-          ocnrof_prognostic=.true., &
-          ocn_c2_glcshelf=.false. &
-          )
+      ! coupler needs Omega's decomposition before it can size x2o/o2x, so
+      ! attach/export/import/halo-update must wait until they're allocated
+      call seq_infodata_PutData( &
+         infodata, &
+         ocn_prognostic=.true., &
+         ocnrof_prognostic=.true., &
+         ocn_c2_glcshelf=.false. &
+         )
 
-       ! TODO: Get case config info and add as MetaData to Omega
+      ! TODO: Get case config info and add as MetaData to Omega
 
-       ! Under HAVE_MOAB, omega_ocn_init2 ignores these MCT attribute-vector
-       ! pointers and attaches its own MOAB-backed buffers instead 
-       ! (see omega_cxx2f_interface.cpp)
-       call omega_ocn_init2(c_loc(x2o%rAttr), c_loc(o2x%rAttr))
+      ! Under HAVE_MOAB, omega_ocn_init2 ignores these MCT attribute-vector
+      ! pointers and attaches its own MOAB-backed buffers instead
+      ! (see omega_cxx2f_interface.cpp)
+      call omega_ocn_init2(c_loc(x2o%rAttr), c_loc(o2x%rAttr))
 
    end subroutine ocn_init_mct
 

@@ -27,7 +27,7 @@ int moabInit(MPI_Comm Comm, int OcnID);
 // x2o/o2x field lists (colon-separated, null-terminated) on the ocean's
 // MOAB application.
 void moabDefineTagStorage(int Pid, const std::string &Cpl2OcnFieldNames,
-                           const std::string &Ocn2CplFieldNames);
+                          const std::string &Ocn2CplFieldNames);
 
 // Reads the x2o tag storage (NFields, NCellsOwned, unrolled by tag) into
 // Buffer.

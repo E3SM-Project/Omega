@@ -105,13 +105,13 @@ int ocnRun(TimeInstant &CurrTime, ///< [inout] current sim time
    // Reset coupling alarm at the start of the coupling interval
    CouplingAlarm->reset(SimTime);
 
- #ifdef HAVE_MOAB
+#ifdef HAVE_MOAB
    // On the first coupled step, distinguish bad initial conditions from
    // state corrupted after importing forcing or advancing the timestep.
    if (DefTimeStepper->getStepCount() == 0)
       validateOceanState(DefOceanState, AuxiliaryState::getDefault(),
                          DefVertCoord, 0);
- #endif
+#endif
 
    DefSfcCoupling->importFromCoupler();
    DefSfcCoupling->applyImportFields(DefForcing, DefVertCoord);

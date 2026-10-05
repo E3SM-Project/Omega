@@ -68,9 +68,8 @@ void setDoubleTagStorage(const std::string &TagNames, const T *Buffer,
    if constexpr (std::is_same_v<T, double>) {
       // iMOAB_SetDoubleTagStorage takes a non-const double* even though it
       // only reads from it; the const_cast is safe, not a real mutation.
-      ErrCode Err = iMOAB_SetDoubleTagStorage(&Pid, TagNames.c_str(), &Len,
-                                              &EntType,
-                                              const_cast<double *>(Buffer));
+      ErrCode Err = iMOAB_SetDoubleTagStorage(
+          &Pid, TagNames.c_str(), &Len, &EntType, const_cast<double *>(Buffer));
       checkMoabErr(Err, "iMOAB_SetDoubleTagStorage");
    } else {
       std::vector<double> Scratch(Len);
@@ -102,7 +101,7 @@ int registerApplication(MPI_Comm Comm, int OcnID) {
 // Defines a dense double tag with 1 component per entity on elements and
 // sets it from Data (size NCellsOwned).
 void defineAndSetElemDoubleTag(int LocalPid, const std::string &TagName,
-                                int NCellsOwned, const double *Data) {
+                               int NCellsOwned, const double *Data) {
    ErrCode Err;
    int TagType = DENSE_DOUBLE;
    int NumCo   = 1;
@@ -125,8 +124,8 @@ void defineAndSetElemDoubleTag(int LocalPid, const std::string &TagName,
 // its component-side MOAB application).
 void createMesh(int LocalPid, int OcnID) {
 
-   Decomp *DefDecomp   = Decomp::getDefault();
-   HorzMesh *DefMesh   = HorzMesh::getDefault();
+   Decomp *DefDecomp    = Decomp::getDefault();
+   HorzMesh *DefMesh    = HorzMesh::getDefault();
    const I4 NCellsOwned = DefDecomp->NCellsOwned;
    const I4 MaxEdges    = DefDecomp->MaxEdges;
 
@@ -182,9 +181,9 @@ void createMesh(int LocalPid, int OcnID) {
    std::vector<double> Coords(3 * static_cast<size_t>(NCompactVerts));
    for (int V = 0; V < NCompactVerts; ++V) {
       const I4 LocalVertex = CompactToLocal[V];
-      Coords[3 * V + 0] = DefMesh->XVertexH[LocalVertex] / REarth;
-      Coords[3 * V + 1] = DefMesh->YVertexH[LocalVertex] / REarth;
-      Coords[3 * V + 2] = DefMesh->ZVertexH[LocalVertex] / REarth;
+      Coords[3 * V + 0]    = DefMesh->XVertexH[LocalVertex] / REarth;
+      Coords[3 * V + 1]    = DefMesh->YVertexH[LocalVertex] / REarth;
+      Coords[3 * V + 2]    = DefMesh->ZVertexH[LocalVertex] / REarth;
    }
 
    ErrCode Err;
@@ -193,10 +192,10 @@ void createMesh(int LocalPid, int OcnID) {
    Err = iMOAB_CreateVertices(&LocalPid, &CoordsLen, &Dim, Coords.data());
    checkMoabErr(Err, "iMOAB_CreateVertices");
 
-   int NElem          = static_cast<int>(NCellsOwned);
-   int MBType         = 4; // MBPOLYGON
-   int NNodesPerElem  = static_cast<int>(MaxEdges);
-   int BlockID = 100 * OcnID + MachEnv::getDefault()->getMyTask();
+   int NElem         = static_cast<int>(NCellsOwned);
+   int MBType        = 4; // MBPOLYGON
+   int NNodesPerElem = static_cast<int>(MaxEdges);
+   int BlockID       = 100 * OcnID + MachEnv::getDefault()->getMyTask();
    Err = iMOAB_CreateElements(&LocalPid, &NElem, &MBType, &NNodesPerElem,
                               Connectivity.data(), &BlockID);
    checkMoabErr(Err, "iMOAB_CreateElements");
@@ -205,8 +204,8 @@ void createMesh(int LocalPid, int OcnID) {
    // ResolveSharedEntities and so the coupler-side offline weight file's
    // row/column numbering lines up with this mesh.
    std::string TagName = "GLOBAL_ID";
-   int TagType          = DENSE_INTEGER;
-   int NumCo            = 1;
+   int TagType         = DENSE_INTEGER;
+   int NumCo           = 1;
    int TagIndex;
    Err = iMOAB_DefineTagStorage(&LocalPid, TagName.c_str(), &TagType, &NumCo,
                                 &TagIndex);
@@ -226,8 +225,8 @@ void createMesh(int LocalPid, int OcnID) {
       CellGlobalIDs[Cell] = DefDecomp->CellIDH[Cell];
 
    int ElemEntType = 1; // elements
-   Err = iMOAB_SetIntTagStorage(&LocalPid, TagName.c_str(), &NElem,
-                                &ElemEntType, CellGlobalIDs.data());
+   Err             = iMOAB_SetIntTagStorage(&LocalPid, TagName.c_str(), &NElem,
+                                            &ElemEntType, CellGlobalIDs.data());
    checkMoabErr(Err, "iMOAB_SetIntTagStorage(GLOBAL_ID, elements)");
 
    Err = iMOAB_ResolveSharedEntities(&LocalPid, &NCompactVerts,
@@ -286,7 +285,7 @@ int moabInit(MPI_Comm Comm, int OcnID) {
 }
 
 void moabDefineTagStorage(int LocalPid, const std::string &Cpl2OcnFieldNames,
-                           const std::string &Ocn2CplFieldNames) {
+                          const std::string &Ocn2CplFieldNames) {
 
    X2oTagNames = Cpl2OcnFieldNames;
    O2xTagNames = Ocn2CplFieldNames;

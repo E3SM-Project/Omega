@@ -3,8 +3,8 @@
 //
 //===----------------------------------------------------------------------===//
 #include "DataTypes.h"
-#include "IO.h"
 #include "Decomp.h"
+#include "IO.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OceanDriver.h"
@@ -136,8 +136,8 @@ void omega_ocn_init1(
 
    NCouplerImports = InNCouplerImports;
    NCouplerExports = InNCouplerExports;
-   ImportIdxMap = buildFieldIndexMap(ImportFieldNames, ImportFieldIndices,
-                                     NOmegaImports);
+   ImportIdxMap =
+       buildFieldIndexMap(ImportFieldNames, ImportFieldIndices, NOmegaImports);
    std::map<std::string, int> ExportIdxMap =
        buildFieldIndexMap(ExportFieldNames, ExportFieldIndices, NOmegaExports);
 
@@ -145,13 +145,15 @@ void omega_ocn_init1(
 
    OMEGA::TimeStepperStartType StartTypeEnum =
        OMEGA::getTimeStepperStartTypeFromE3SM(InStartType);
-   OMEGA::CouplingInitParams CouplingParams{
-       NCouplerImports, NCouplerExports,  ImportIdxMap,
-       ExportIdxMap,    CouplingInterval,
+   OMEGA::CouplingInitParams CouplingParams{NCouplerImports,
+                                            NCouplerExports,
+                                            ImportIdxMap,
+                                            ExportIdxMap,
+                                            CouplingInterval,
 #ifdef HAVE_MOAB
-       OMEGA::CouplingLayout::MOAB};
+                                            OMEGA::CouplingLayout::MOAB};
 #else
-       OMEGA::CouplingLayout::MCT};
+                                            OMEGA::CouplingLayout::MCT};
 #endif
 
    // The base IO task and rearranger are owned by the driver/coupler (via
@@ -171,7 +173,7 @@ void omega_ocn_init1(
 #ifdef HAVE_MOAB
    // Decomp/HorzMesh exist by now (built inside OMEGA::ocnInit1 above), so
    // the MOAB mesh can be constructed from them.
-   MoabPid              = OMEGA::moabInit(Comm, OcnID);
+   MoabPid = OMEGA::moabInit(Comm, OcnID);
    OMEGA::moabDefineTagStorage(MoabPid, Cpl2OcnFieldNames, Ocn2CplFieldNames);
 #endif
 }
@@ -187,7 +189,8 @@ void omega_ocn_init2(const double *cpl_to_ocn_data, double *ocn_to_cpl_data) {
    // attach Omega's own buffers instead, filled from MOAB tag storage.
    // These are refilled/drained in place (same memory address) by
    // omega_ocn_run on every subsequent coupling interval.
-   const int NCellsOwned = static_cast<int>(OMEGA::Decomp::getDefault()->NCellsOwned);
+   const int NCellsOwned =
+       static_cast<int>(OMEGA::Decomp::getDefault()->NCellsOwned);
    MoabCplToOcn.assign(static_cast<size_t>(NCouplerImports) * NCellsOwned, 0);
    MoabOcnToCpl.assign(static_cast<size_t>(NCouplerExports) * NCellsOwned, 0);
    OMEGA::moabImportTagStorage(MoabCplToOcn.data(),
@@ -218,14 +221,17 @@ void omega_ocn_run(bool WriteRestart) {
                                static_cast<int>(MoabCplToOcn.size()));
    // Check the fields actually consumed by SfcCoupling before they can
    // contaminate the state. iMOAB stores one contiguous cell block per tag.
-   const int NCellsOwned = static_cast<int>(OMEGA::Decomp::getDefault()->NCellsOwned);
+   const int NCellsOwned =
+       static_cast<int>(OMEGA::Decomp::getDefault()->NCellsOwned);
    for (const auto &[Name, Index] : ImportIdxMap) {
       if (Index < 0 || Index >= NCouplerImports)
          ABORT_ERROR("Invalid MOAB ocean import index {} for {} ({} fields)",
                      Index, Name, NCouplerImports);
       for (int Cell = 0; Cell < NCellsOwned; ++Cell) {
-         if (!std::isfinite(MoabCplToOcn[static_cast<size_t>(Index) * NCellsOwned + Cell]))
-            ABORT_ERROR("Non-finite MOAB ocean import {} at local cell {} (field index {})",
+         if (!std::isfinite(
+                 MoabCplToOcn[static_cast<size_t>(Index) * NCellsOwned + Cell]))
+            ABORT_ERROR("Non-finite MOAB ocean import {} at local cell {} "
+                        "(field index {})",
                         Name, Cell, Index);
       }
    }
