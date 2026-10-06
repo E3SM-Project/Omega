@@ -92,8 +92,17 @@ int registerApplication(MPI_Comm Comm, int OcnID) {
    std::snprintf(OcnIDStr, sizeof(OcnIDStr), "%02d", OcnID);
    std::string AppName = std::string("OMEGA_MB_") + OcnIDStr;
 
-   Err = iMOAB_RegisterApplication(AppName.c_str(), &Comm, &CompID, &LocalPid);
-   checkMoabErr(Err, "iMOAB_RegisterApplication");
+   // Register through the Fortran entry point. The coupler (Fortran) later
+   // calls iMOAB_SendMesh, iMOAB_ReceiveElementTag, etc. for this app with
+   // Fortran integer MPI handles, and iMOAB decides whether to convert them
+   // from the registering entry point (appData.is_fortran). Registering with
+   // the C entry point leaves is_fortran false, so the Fortran handle is used
+   // as a C MPI_Comm*, which only works by accident when both are plain ints
+   // (MPICH-derived MPIs) and segfaults on pointer-handle MPIs (Open MPI).
+   MPI_Fint FComm = MPI_Comm_c2f(Comm);
+   Err = iMOAB_RegisterApplicationFortran(AppName.c_str(), &FComm, &CompID,
+                                          &LocalPid);
+   checkMoabErr(Err, "iMOAB_RegisterApplicationFortran");
 
    return LocalPid;
 }
