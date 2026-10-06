@@ -1,0 +1,427 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KPP Boundary Layer Mixing &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Vertical Advection" href="VertAdv.html" />
+    <link rel="prev" title="Vertical Mixing Coefficients" href="VerticalMixingCoeff.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html#coupled-mode">Coupled mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MpasMesh.html">MPAS Mesh Specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SplitTimeStepping.html">Split Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">KPP Boundary Layer Mixing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#what-kpp-provides">What KPP Provides</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-kpp-is-used-in-time-stepping">How KPP Is Used in Time Stepping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#key-options">Key Options</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#output-and-diagnostics">Output and Diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#typical-workflow">Typical Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#practical-notes">Practical Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Forcing.html">Forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SfcCoupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Analysis.html">Analysis</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Testing.html">Testing Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/ParallelLoops.html">Parallel loops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/SplitTimeStepping.html">Split Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/PGrad.html">Pressure Gradient (PGrad)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/KPPMix.html">KPP Boundary Layer Mixing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Forcing.html">Forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/SfcCoupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Analysis.html">Analysis</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/OmegaV1GoverningEqns.html">Omega V1: Governing Equations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Analysis.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Coupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/FillValues.html">Fill Values</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/StateValidation.html">Ocean State Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/SubmesoscaleEddies.html">Submesoscale Eddy Parameterization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/SplitTimeStepping.html">Split Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/KPPMix.html">KPP Boundary Layer Mixing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">KPP Boundary Layer Mixing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/userGuide/KPPMix.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="kpp-boundary-layer-mixing">
+<span id="omega-kppmix"></span><h1>KPP Boundary Layer Mixing<a class="headerlink" href="#kpp-boundary-layer-mixing" title="Permalink to this heading"></a></h1>
+<p>This page explains how to enable, configure, and use Omega K-Profile
+Parameterization (KPP) boundary layer mixing in runs.  The implementation follows
+directly from the MPAS-Ocean implementation.</p>
+<p>Related pages:</p>
+<ul class="simple">
+<li><p>KPP design/theory: <a class="reference internal" href="../design/KPPMix.html"><span class="std std-doc">Design KPP document</span></a></p></li>
+<li><p>KPP implementation details: <a class="reference internal" href="../devGuide/KPPMix.html"><span class="std std-doc">Developer KPP document</span></a></p></li>
+<li><p>Broader vertical mixing options: <a class="reference internal" href="VerticalMixingCoeff.html"><span class="std std-doc">Vertical Mixing Coefficients</span></a></p></li>
+</ul>
+<section id="what-kpp-provides">
+<h2>What KPP Provides<a class="headerlink" href="#what-kpp-provides" title="Permalink to this heading"></a></h2>
+<p>KPP computes:</p>
+<ul class="simple">
+<li><p>Ocean surface boundary layer depth (<code class="docutils literal notranslate"><span class="pre">OSBLDepth</span></code>)</p></li>
+<li><p>Vertical viscosity (<code class="docutils literal notranslate"><span class="pre">VertVisc</span></code>)</p></li>
+<li><p>Vertical diffusivity (<code class="docutils literal notranslate"><span class="pre">VertDiff</span></code>)</p></li>
+<li><p>Non-local tracer flux profile (<code class="docutils literal notranslate"><span class="pre">VertNonLocalFlux</span></code>)</p></li>
+</ul>
+<p>It uses a bulk Richardson depth search followed by profile-based coefficient
+construction. The non-local flux is a standard part of the KPP formulation and
+is included by default.</p>
+</section>
+<section id="how-kpp-is-used-in-time-stepping">
+<h2>How KPP Is Used in Time Stepping<a class="headerlink" href="#how-kpp-is-used-in-time-stepping" title="Permalink to this heading"></a></h2>
+<p>KPP is connected to all three Omega time steppers: Forward-Backward, RungeKutta2, and RungeKutta4. For
+whichever stepper is active, KPP is computed <strong>once per time step</strong>, at the
+start of the step (in contrast to MPAS-Ocean), before any tendency is evaluated.
+Boundary-layer depth, viscosity, diffusivity, and the non-local flux profile
+are then held fixed for the rest of the step and are used by:</p>
+<ul class="simple">
+<li><p>the non-local tracer tendency at every internal stage of the stepper, and</p></li>
+<li><p>the implicit vertical mixing solve applied after the time levels are
+advanced.</p></li>
+</ul>
+<p>Because both use the same KPP fields, the non-local flux and the diffusivity
+it is paired with are always consistent with one another.</p>
+<p>The KPP diagnostics written to output for a step therefore describe the ocean
+state at the <strong>beginning</strong> of that step, not the updated state at the end of
+it. This is the same convention used by the MPAS-Ocean split-explicit
+stepper.</p>
+</section>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading"></a></h2>
+<p>KPP settings are under <code class="docutils literal notranslate"><span class="pre">VertMix:</span> <span class="pre">KPP</span></code> in <code class="docutils literal notranslate"><span class="pre">omega.yml</span></code>.</p>
+<section id="example">
+<h3>Example<a class="headerlink" href="#example" title="Permalink to this heading"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">VertMix</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">KPP</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">CriticalBulkRichardsonNumber</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.25</span>
+<span class="w">    </span><span class="nt">SurfaceLayerExtent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+<span class="w">    </span><span class="nt">MatchTechnique</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SimpleShapes</span>
+<span class="w">    </span><span class="nt">InterpType2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LMD94</span>
+<span class="w">    </span><span class="nt">UseEnhancedDiffusion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">UseOSBLSmoothing</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">UseLangmuirTurbulence</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">IceFractionThresholdForLangmuir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.05</span>
+<span class="w">    </span><span class="nt">IceFractionThresholdForMinimumOSBL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.15</span>
+<span class="w">    </span><span class="nt">MinimumOSBLUnderSeaIce</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span>
+<span class="w">    </span><span class="nt">DebugDiagnostics</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+</section>
+<section id="key-options">
+<h3>Key Options<a class="headerlink" href="#key-options" title="Permalink to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Meaning</p></th>
+<th class="head"><p>Typical default</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Enable</span></code></p></td>
+<td><p>Enable KPP mixing</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CriticalBulkRichardsonNumber</span></code></p></td>
+<td><p>OBL depth criterion threshold</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0.25</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SurfaceLayerExtent</span></code></p></td>
+<td><p>Surface layer thickness as a fraction of the OBL depth (<span class="math notranslate nohighlight">\(\epsilon\)</span> in Large et al. 1994)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0.1</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">MatchTechnique</span></code></p></td>
+<td><p>How the K profile meets interior mixing at the OBL base: <code class="docutils literal notranslate"><span class="pre">SimpleShapes</span></code> or <code class="docutils literal notranslate"><span class="pre">MatchBoth</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SimpleShapes</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">InterpType2</span></code></p></td>
+<td><p>Interpolation type used near OBL matching/base logic</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">LMD94</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">UseEnhancedDiffusion</span></code></p></td>
+<td><p>Enable enhanced diffusion treatment near OBL base</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">UseOSBLSmoothing</span></code></p></td>
+<td><p>Apply horizontal smoothing to the OSBL depth</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">UseLangmuirTurbulence</span></code></p></td>
+<td><p>Apply Langmuir enhancement to the turbulent velocity scale</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">IceFractionThresholdForLangmuir</span></code></p></td>
+<td><p>Above this ice fraction, disable Langmuir enhancement</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0.05</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">IceFractionThresholdForMinimumOSBL</span></code></p></td>
+<td><p>Above this ice fraction, enforce minimum OSBL depth</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0.15</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MinimumOSBLUnderSeaIce</span></code></p></td>
+<td><p>Minimum OSBL depth under sea ice (m)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">5.0</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DebugDiagnostics</span></code></p></td>
+<td><p>Enable additional KPP diagnostics/logging in debug workflows, and extend the Ri diagnostic profiles below the boundary layer base</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>Independent of those options, KPP keeps the diagnosed OSBL depth at least as deep
+as the bottom of the first active layer.</p>
+</section>
+</section>
+<section id="output-and-diagnostics">
+<h2>Output and Diagnostics<a class="headerlink" href="#output-and-diagnostics" title="Permalink to this heading"></a></h2>
+<p>To diagnose KPP, include KPP fields in output stream contents. Common fields:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">OSBLDepth</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VertNonLocalFlux</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BulkRichardsonNumber</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BulkRichardsonShear</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">UnresolvedShear</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BuoyancyJump</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TurbulentVelocityScale</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PotentialDensity</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SurfaceFrictionVelocity</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SurfaceBuoyancyFlux</span></code></p></li>
+</ul>
+<p>The boundary layer search stops at the first level where the bulk Richardson
+number reaches its critical value, so <code class="docutils literal notranslate"><span class="pre">BulkRichardsonNumber</span></code>,
+<code class="docutils literal notranslate"><span class="pre">BulkRichardsonShear</span></code>, <code class="docutils literal notranslate"><span class="pre">UnresolvedShear</span></code> and <code class="docutils literal notranslate"><span class="pre">BuoyancyJump</span></code> are zero below the
+boundary layer base. Set <code class="docutils literal notranslate"><span class="pre">DebugDiagnostics:</span> <span class="pre">true</span></code> to compute and output the
+full water column profile of these four fields; it does not change
+<code class="docutils literal notranslate"><span class="pre">OSBLDepth</span></code> or any mixing coefficient.</p>
+</section>
+<section id="typical-workflow">
+<h2>Typical Workflow<a class="headerlink" href="#typical-workflow" title="Permalink to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Enable KPP and set baseline options in <code class="docutils literal notranslate"><span class="pre">omega.yml</span></code>.</p></li>
+<li><p>Run a short case.</p></li>
+<li><p>Inspect <code class="docutils literal notranslate"><span class="pre">OSBLDepth</span></code> and coefficient fields.</p></li>
+<li><p>If needed, tune <code class="docutils literal notranslate"><span class="pre">CriticalBulkRichardsonNumber</span></code>, <code class="docutils literal notranslate"><span class="pre">MatchTechnique</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">InterpType2</span></code>.</p></li>
+<li><p>Re-run and compare diagnostics.</p></li>
+</ol>
+</section>
+<section id="practical-notes">
+<h2>Practical Notes<a class="headerlink" href="#practical-notes" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>Non-local tracer transport is required for physically correct KPP boundary
+layer tracer fluxes. It is applied through the
+<code class="docutils literal notranslate"><span class="pre">Tendencies:</span> <span class="pre">KPPNonLocalTracerFluxTendencyEnable</span></code> flag, which is on by default
+and should be left enabled; see
+<a class="reference internal" href="TendencyTerms.html"><span class="std std-doc">Tendency Terms</span></a>.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">DebugDiagnostics</span></code> sparingly for troubleshooting targeted cases.</p></li>
+<li><p>When studying sea-ice regions, review minimum-OBL and ice-threshold options.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="VerticalMixingCoeff.html" class="btn btn-neutral float-left" title="Vertical Mixing Coefficients" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="VertAdv.html" class="btn btn-neutral float-right" title="Vertical Advection" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

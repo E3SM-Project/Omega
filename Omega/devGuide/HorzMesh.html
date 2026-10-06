@@ -81,6 +81,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/PGrad.html">Pressure Gradient</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Timing.html">Timing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/KPPMix.html">KPP Boundary Layer Mixing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/VertAdv.html">Vertical Advection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Forcing.html">Forcing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/SfcCoupling.html">Surface Coupling</a></li>
@@ -129,6 +130,7 @@
 <li class="toctree-l1"><a class="reference internal" href="PGrad.html">Pressure Gradient (PGrad)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Timing.html">Timing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KPPMix.html">KPP Boundary Layer Mixing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Forcing.html">Forcing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SfcCoupling.html">Surface Coupling</a></li>
@@ -170,6 +172,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../design/SplitTimeStepping.html">Split Time Stepping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/Tracers.html">Tracer Infrastructure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/KPPMix.html">KPP Boundary Layer Mixing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/VertAdv.html">Vertical Advection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/VertCoord.html">Vertical Coordinate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
@@ -244,6 +247,14 @@ passed to the PDE solver routines:</p>
 <span class="p">}</span>
 </pre></div>
 </div>
+<p><code class="docutils literal notranslate"><span class="pre">MaxEdges</span></code> is read from the mesh file and is therefore only known at run time.
+Kernels that need a fixed-size per-thread array indexed by edge should size it
+with the compile-time bound instead:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OMEGA</span><span class="p">::</span><span class="n">Real</span> <span class="n">Weights</span><span class="p">[</span><span class="n">OMEGA</span><span class="p">::</span><span class="n">HorzMesh</span><span class="p">::</span><span class="n">MaxEdgesBound</span><span class="p">];</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">MaxEdgesBound</span></code> is a single shared upper bound on <code class="docutils literal notranslate"><span class="pre">MaxEdges</span></code>; meshes exceeding
+it are rejected. Do not introduce a local copy of this limit.</p>
 <p>For member variables that are host arrays, variable names are appended with an
 <code class="docutils literal notranslate"><span class="pre">H</span></code>.  Array variable names not ending in <code class="docutils literal notranslate"><span class="pre">H</span></code> are device arrays.</p>
 <p>The device arrays are deallocated by the <code class="docutils literal notranslate"><span class="pre">HorzMesh::clear()</span></code> method, which is

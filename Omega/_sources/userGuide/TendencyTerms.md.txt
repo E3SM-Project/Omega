@@ -64,6 +64,33 @@ the currently available tendency terms:
 | SfcTracerForcingOnCell | SfcTracerForcingTendencyEnable | enable/disable term
 | SurfaceTracerRestoringOnCell | SurfaceTracerRestoringEnable | enable/disable term
 
+The vertical advection, pressure gradient and vertical mixing tendencies are not
+implemented as the functors above, but they are enabled from the same
+`Tendencies` section of the configuration file:
+
+| Parameter | Description
+| ------------ | ------------ |
+| ThicknessVertAdvTendencyEnable | enable/disable vertical advection of thickness
+| VelocityVertAdvTendencyEnable | enable/disable vertical advection of velocity
+| TracerVertAdvTendencyEnable | enable/disable vertical advection of tracers
+| PressureGradTendencyEnable | enable/disable the pressure gradient tendency
+| VelVertMixTendencyEnable | enable/disable vertical mixing of velocity; required when bottom drag uses `Implicit` mode
+| TracerVertMixTendencyEnable | enable/disable vertical mixing of tracers
+| KPPNonLocalTracerFluxTendencyEnable | enable/disable the KPP non-local tracer flux; see [KPP Boundary Layer Mixing](./KPPMix.md)
+| KPPNonLocalTracerDiagnosticsEnable | enable/disable diagnostic output of the non-local flux tendency
+
+The non-local options are only read when velocity or tracer vertical mixing is
+enabled. If omitted, `KPPNonLocalTracerFluxTendencyEnable` defaults to disabled
+and `KPPNonLocalTracerDiagnosticsEnable` defaults to enabled.
+The non-local tracer tendency is applied only when
+`TracerVertMixTendencyEnable` is also enabled; velocity-only vertical mixing
+does not apply a tracer mixing tendency.
+
+Two further flags control tendency sources rather than individual terms:
+`UseCustomTendency` enables user-supplied tendencies and
+`ManufacturedSolutionTendency` adds the forcing used by the manufactured
+solution test case.
+
 ## Second Order Horizontal Advection Algorithm
 
 The horizontal advection is done independently within each ocean layer

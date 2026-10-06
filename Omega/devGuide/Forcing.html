@@ -83,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/PGrad.html">Pressure Gradient</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Timing.html">Timing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/KPPMix.html">KPP Boundary Layer Mixing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/VertAdv.html">Vertical Advection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Forcing.html">Forcing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/SfcCoupling.html">Surface Coupling</a></li>
@@ -131,6 +132,7 @@
 <li class="toctree-l1"><a class="reference internal" href="PGrad.html">Pressure Gradient (PGrad)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Timing.html">Timing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KPPMix.html">KPP Boundary Layer Mixing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Forcing</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#surface-stress-forcing-design">Surface stress forcing design</a><ul>
@@ -194,6 +196,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../design/SplitTimeStepping.html">Split Time Stepping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/Tracers.html">Tracer Infrastructure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/KPPMix.html">KPP Boundary Layer Mixing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/VertAdv.html">Vertical Advection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/VertCoord.html">Vertical Coordinate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
@@ -328,6 +331,11 @@ and applies the external sea-ice salt flux to the top layer salt content thus im
 <li><p>Stores 13 coupled flux cell-centered fields: 6 freshwater fluxes, 6 heat
 fluxes, and 1 salt flux component</p></li>
 <li><p>Fields initialized to zero and registered in <code class="docutils literal notranslate"><span class="pre">Forcing</span></code> field group</p></li>
+<li><p>Stores <code class="docutils literal notranslate"><span class="pre">SurfaceTracerFlux[NTracers,</span> <span class="pre">NCells]</span></code>, the unified forcing input
+for KPP non-local tracer mixing. External forcing supplies every
+non-temperature/salinity tracer flux explicitly; an explicit zero is a
+valid flux. KPP derives temperature and salinity from the heat and mass
+flux components and overwrites those two entries before using the field.</p></li>
 </ul>
 </li>
 <li><p><code class="docutils literal notranslate"><span class="pre">SfcThicknessForcingOnCell</span></code> tendency term</p>
@@ -384,6 +392,16 @@ These potential enthalpy terms are then scaled by <span class="math notranslate 
 <ul class="simple">
 <li><p>Currently all forcing is applied to the surface layer only. In the future, vertical spreading of river runoff contributions will be needed.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">SeaIceFreshWaterFlux</span></code> is the pure freshwater mass from sea ice. The full mass flux from sea ice is <code class="docutils literal notranslate"><span class="pre">SeaIceFreshWaterFlux</span> <span class="pre">+</span> <span class="pre">SeaIceSaltFlux</span></code></p></li>
+<li><p>When <code class="docutils literal notranslate"><span class="pre">KPPNonLocalTracerFluxTendencyEnable</span></code> is true, every active
+<code class="docutils literal notranslate"><span class="pre">SurfaceTracerFlux</span></code> entry must be supplied for the current forcing step.
+KPP validates this after inserting its temperature and salinity fluxes and
+aborts if an active entry retains its fill value. This prevents a missing
+carbon or passive-tracer flux from becoming a non-local tendency.</p></li>
+<li><p>Coupled callers update the full field with <code class="docutils literal notranslate"><span class="pre">Forcing::setSurfaceTracerFlux</span></code>.
+They supply every non-temperature/salinity entry; KPP overwrites the two
+reserved temperature and salinity entries. Partial non-temperature/salinity
+updates are not supported, so omitted values cannot persist from a previous
+forcing step.</p></li>
 </ul>
 </section>
 <section id="surface-tracer-restoring-design">
