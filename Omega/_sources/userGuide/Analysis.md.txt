@@ -101,7 +101,11 @@ user-specified fields. The mean and standard deviation are weighted so that
 they do not depend on the mesh resolution: by the area of each cell, edge or
 vertex for a horizontal field, and by mass (area times pseudo-thickness) for
 a field with a vertical dimension, with an interface field weighted by half
-the mass of each adjacent layer. Only active layers take part.
+the mass of each adjacent layer. Only active layers take part. Each statistic
+is written with the `units` and `standard_name` of the field it reduces and a
+CF `cell_methods` attribute describing the reduction, for example
+`area: depth: mean` for the mean of a layered field and
+`area: depth: mean time: mean` for its time mean.
 
 **Example:**
 
@@ -157,7 +161,9 @@ Computes the Meridional Overturning Circulation (MOC) streamfunction using two
 methods: latitude-binned regional MOC and transect-based MOC. The MOC
 represents zonally integrated meridional mass transport as a function of
 latitude and depth (regional MOC) or depth alone (transect MOC). Output is in
-Sverdrups (Sv), where 1 Sv = 10⁶ m³/s.
+Sverdrups (Sv), where 1 Sv = 10⁶ m³/s, so its `units` attribute is
+`1e+06 m3 s-1`, the udunits spelling of a Sverdrup (udunits reads `Sv` as the
+sievert).
 
 **Example:**
 

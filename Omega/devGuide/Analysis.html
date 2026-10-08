@@ -112,6 +112,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Error.html">Error Handler</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CFUnits.html">CFUnits</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
@@ -145,6 +146,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#built-in-operators">Built-in operators</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#spatial-weights">Spatial weights</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output-metadata">Output metadata</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#operator-factory-and-type-dispatch">Operator factory and type dispatch</a></li>
@@ -368,7 +370,9 @@ timestamp and <code class="docutils literal notranslate"><span class="pre">Field
 record the input Field names, construct the output Field name(s), allocate
 the output data array, and register the output <a class="reference internal" href="Field.html#omega-dev-field"><span class="std std-ref">Field</span></a>
 with the appropriate metadata. Output Field names follow the convention
-<code class="docutils literal notranslate"><span class="pre">&lt;input&gt;_&lt;OperatorSuffix&gt;</span></code> (for example, <code class="docutils literal notranslate"><span class="pre">Temperature_SpatialMax</span></code>).</p></li>
+<code class="docutils literal notranslate"><span class="pre">&lt;input&gt;_&lt;OperatorSuffix&gt;</span></code> (for example, <code class="docutils literal notranslate"><span class="pre">Temperature_SpatialMax</span></code>). The
+output’s CF metadata is derived from the input’s, as described under
+<a class="reference internal" href="#omega-dev-analysis-output-metadata">Output metadata</a>.</p></li>
 <li><p><strong>Initialization</strong>: <code class="docutils literal notranslate"><span class="pre">initialize()</span></code> is called by the orchestrator after all
 Fields exist. The base implementation stores the mesh, vertical
 coordinate, and communicator; operators may override to perform additional
@@ -573,6 +577,68 @@ so they are recomputed each time), and then <code class="docutils literal notran
 normalization. The sums accumulate each owned entity’s terms in a fixed
 order and reduce them with <code class="docutils literal notranslate"><span class="pre">globalSum</span></code>, so they are as reproducible as
 Omega’s other global sums.</p>
+</section>
+<section id="output-metadata">
+<span id="omega-dev-analysis-output-metadata"></span><h3>Output metadata<a class="headerlink" href="#output-metadata" title="Permalink to this heading"></a></h3>
+<p>An output Field inherits its CF metadata from the input it is derived from.
+The base class provides the helpers that do this:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">inheritMetadata(InputName,</span> <span class="pre">CellMethod)</span></code> returns an <code class="docutils literal notranslate"><span class="pre">InheritedMetadata</span></code>
+struct holding the input’s <code class="docutils literal notranslate"><span class="pre">units</span></code>, <code class="docutils literal notranslate"><span class="pre">standard_name</span></code> and <code class="docutils literal notranslate"><span class="pre">cell_methods</span></code>,
+each empty if the input has none, with <code class="docutils literal notranslate"><span class="pre">CellMethod</span></code> appended to the cell
+methods. CF requires <code class="docutils literal notranslate"><span class="pre">cell_methods</span></code> to list the reductions in the order
+they were applied, so a time mean of a spatial mean carries
+<code class="docutils literal notranslate"><span class="pre">area:</span> <span class="pre">depth:</span> <span class="pre">mean</span> <span class="pre">time:</span> <span class="pre">mean</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spatialCellMethod(InputName,</span> <span class="pre">Method)</span></code> returns the cell method for a
+reduction over all owned mesh entities and layers of the input:
+<code class="docutils literal notranslate"><span class="pre">area:</span> <span class="pre">&lt;Method&gt;</span></code> for a horizontal (1D) field and <code class="docutils literal notranslate"><span class="pre">area:</span> <span class="pre">depth:</span> <span class="pre">&lt;Method&gt;</span></code>
+for a field with a vertical dimension. <code class="docutils literal notranslate"><span class="pre">Method</span></code> is a CF cell method name
+(<code class="docutils literal notranslate"><span class="pre">mean</span></code>, <code class="docutils literal notranslate"><span class="pre">minimum</span></code>, <code class="docutils literal notranslate"><span class="pre">maximum</span></code>, <code class="docutils literal notranslate"><span class="pre">standard_deviation</span></code>, <code class="docutils literal notranslate"><span class="pre">sum</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">createOutputField(...)</span></code> calls <code class="docutils literal notranslate"><span class="pre">Field::create()</span></code> with the inherited units
+and standard name and adds the <code class="docutils literal notranslate"><span class="pre">cell_methods</span></code> attribute when it is not
+empty.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">getFieldAttribute(FieldName,</span> <span class="pre">AttName)</span></code> returns any string attribute of a
+Field, or an empty string if the Field has none.</p></li>
+</ul>
+<p>The built-in reductions (mean, minimum, maximum, standard deviation, time
+mean) all have the units and standard name of the field they reduce, so
+they pass <code class="docutils literal notranslate"><span class="pre">inheritMetadata()</span></code> straight to <code class="docutils literal notranslate"><span class="pre">createOutputField()</span></code>:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">auto</span><span class="w"> </span><span class="n">CellMethod</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">spatialCellMethod</span><span class="p">(</span><span class="n">InputNames</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="s">"mean"</span><span class="p">);</span>
+<span class="k">auto</span><span class="w"> </span><span class="n">Meta</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="n">inheritMetadata</span><span class="p">(</span><span class="n">InputNames</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="n">CellMethod</span><span class="p">);</span>
+<span class="k">auto</span><span class="w"> </span><span class="n">OutputField</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">createOutputField</span><span class="p">(</span><span class="n">OutputNames</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+<span class="w">                                     </span><span class="s">"Spatial mean of "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">InputNames</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+<span class="w">                                     </span><span class="n">Meta</span><span class="p">,</span><span class="w"> </span><span class="n">ValidMin</span><span class="p">,</span><span class="w"> </span><span class="n">ValidMax</span><span class="p">,</span><span class="w"> </span><span class="n">NDims</span><span class="p">,</span><span class="w"> </span><span class="n">DimNames</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>An operator whose result has different units derives them with
+<a class="reference internal" href="CFUnits.html#omega-dev-cfunits"><span class="std std-ref">CFUnits</span></a> before creating the output, and clears the
+standard name if the result is no longer the same physical quantity. For
+example, an area-weighted sum multiplies the input’s units by those of the
+cell area:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">auto</span><span class="w"> </span><span class="n">Meta</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">inheritMetadata</span><span class="p">(</span><span class="n">InputNames</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+<span class="w">                             </span><span class="n">spatialCellMethod</span><span class="p">(</span><span class="n">InputNames</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="s">"sum"</span><span class="p">));</span>
+<span class="n">Meta</span><span class="p">.</span><span class="n">Units</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CFUnits</span><span class="o">::</span><span class="n">multiply</span><span class="p">(</span><span class="n">Meta</span><span class="p">.</span><span class="n">Units</span><span class="p">,</span><span class="w"> </span><span class="s">"m2"</span><span class="p">);</span>
+<span class="n">Meta</span><span class="p">.</span><span class="n">StdName</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>The other operators derive their units the same way:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">BinaryMultiply</span></code> multiplies the units of its two inputs (a velocity in
+<code class="docutils literal notranslate"><span class="pre">m</span> <span class="pre">s-1</span></code> times an area in <code class="docutils literal notranslate"><span class="pre">m2</span></code> is <code class="docutils literal notranslate"><span class="pre">m3</span> <span class="pre">s-1</span></code>) and has no standard name or cell
+methods, since the product is a new quantity.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ScalarMultiply</span></code> scales the units by the reciprocal of its scalar with
+<code class="docutils literal notranslate"><span class="pre">CFUnits::scale()</span></code>, so a flux in <code class="docutils literal notranslate"><span class="pre">m3</span> <span class="pre">s-1</span></code> multiplied by <code class="docutils literal notranslate"><span class="pre">1e-6</span></code> is in
+<code class="docutils literal notranslate"><span class="pre">1e+06</span> <span class="pre">m3</span> <span class="pre">s-1</span></code> (Sverdrups). A negative scalar also clears the standard
+name, since it reverses the quantity.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HorzMean</span></code> inherits the units and standard name and appends <code class="docutils literal notranslate"><span class="pre">area:</span> <span class="pre">mean</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BinnedAccumulator</span></code>, <code class="docutils literal notranslate"><span class="pre">TransectAccumulator</span></code> and <code class="docutils literal notranslate"><span class="pre">PrefixSum</span></code> sum their input,
+and <code class="docutils literal notranslate"><span class="pre">ExtractRegion</span></code> and <code class="docutils literal notranslate"><span class="pre">PseudoToGeometric</span></code> multiply it by a mask or a
+dimensionless factor, so all of them inherit its units. <code class="docutils literal notranslate"><span class="pre">PrefixSum</span></code> aborts
+if its boundary condition field has different units from its input.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CoordinateBinning</span></code> outputs a bin index, which is dimensionless (<code class="docutils literal notranslate"><span class="pre">1</span></code>).</p></li>
+</ul>
+<p>A field without units yields outputs without units, never with invented ones,
+and a malformed units string aborts the run when the operator is constructed.</p>
 </section>
 </section>
 <section id="operator-factory-and-type-dispatch">
@@ -816,9 +882,11 @@ array type, deriving from <code class="docutils literal notranslate"><span class
 operator type name to the base constructor, set <code class="docutils literal notranslate"><span class="pre">InputNames</span></code>, build the
 output name as <code class="docutils literal notranslate"><span class="pre">&lt;input&gt;_&lt;Suffix&gt;</span></code>, set <code class="docutils literal notranslate"><span class="pre">OutputNames</span></code> and <code class="docutils literal notranslate"><span class="pre">InstanceName</span></code>,
 allocate the output data array, and register the output Field with
-<code class="docutils literal notranslate"><span class="pre">Field::create()</span></code> plus <code class="docutils literal notranslate"><span class="pre">attachData()</span></code>. If the operator depends on another
-operator’s output (as <code class="docutils literal notranslate"><span class="pre">SpatialStdDev</span></code> depends on <code class="docutils literal notranslate"><span class="pre">SpatialMean</span></code>), append
-that dependency to <code class="docutils literal notranslate"><span class="pre">InputNames</span></code>.</p></li>
+<code class="docutils literal notranslate"><span class="pre">createOutputField()</span></code> plus <code class="docutils literal notranslate"><span class="pre">attachData()</span></code>, deriving its units, standard
+name and cell methods from the input as described under
+<a class="reference internal" href="#omega-dev-analysis-output-metadata">Output metadata</a>. If the operator
+depends on another operator’s output (as <code class="docutils literal notranslate"><span class="pre">SpatialStdDev</span></code> depends on
+<code class="docutils literal notranslate"><span class="pre">SpatialMean</span></code>), append that dependency to <code class="docutils literal notranslate"><span class="pre">InputNames</span></code>.</p></li>
 <li><p><strong>Implement <code class="docutils literal notranslate"><span class="pre">compute()</span></code></strong> to retrieve the input array(s) from the Field
 registry, perform the transformation, write the output array(s), and update
 <code class="docutils literal notranslate"><span class="pre">LastComputed</span></code>/<code class="docutils literal notranslate"><span class="pre">FieldComputed</span></code>.</p></li>

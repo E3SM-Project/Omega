@@ -131,6 +131,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CFUnits.html">CFUnits</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
@@ -319,7 +320,11 @@ user-specified fields. The mean and standard deviation are weighted so that
 they do not depend on the mesh resolution: by the area of each cell, edge or
 vertex for a horizontal field, and by mass (area times pseudo-thickness) for
 a field with a vertical dimension, with an interface field weighted by half
-the mass of each adjacent layer. Only active layers take part.</p>
+the mass of each adjacent layer. Only active layers take part. Each statistic
+is written with the <code class="docutils literal notranslate"><span class="pre">units</span></code> and <code class="docutils literal notranslate"><span class="pre">standard_name</span></code> of the field it reduces and a
+CF <code class="docutils literal notranslate"><span class="pre">cell_methods</span></code> attribute describing the reduction, for example
+<code class="docutils literal notranslate"><span class="pre">area:</span> <span class="pre">depth:</span> <span class="pre">mean</span></code> for the mean of a layered field and
+<code class="docutils literal notranslate"><span class="pre">area:</span> <span class="pre">depth:</span> <span class="pre">mean</span> <span class="pre">time:</span> <span class="pre">mean</span></code> for its time mean.</p>
 <p><strong>Example:</strong></p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Omega</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">Analysis</span><span class="p">:</span>
@@ -372,7 +377,9 @@ Automatically created and named:</p>
 methods: latitude-binned regional MOC and transect-based MOC. The MOC
 represents zonally integrated meridional mass transport as a function of
 latitude and depth (regional MOC) or depth alone (transect MOC). Output is in
-Sverdrups (Sv), where 1 Sv = 10⁶ m³/s.</p>
+Sverdrups (Sv), where 1 Sv = 10⁶ m³/s, so its <code class="docutils literal notranslate"><span class="pre">units</span></code> attribute is
+<code class="docutils literal notranslate"><span class="pre">1e+06</span> <span class="pre">m3</span> <span class="pre">s-1</span></code>, the udunits spelling of a Sverdrup (udunits reads <code class="docutils literal notranslate"><span class="pre">Sv</span></code> as the
+sievert).</p>
 <p><strong>Example:</strong></p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Omega</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">Analysis</span><span class="p">:</span>
