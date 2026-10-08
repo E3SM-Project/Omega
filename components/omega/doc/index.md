@@ -57,6 +57,7 @@ userGuide/VerticalMixingCoeff
 userGuide/KPPMix
 userGuide/VertAdv
 userGuide/Forcing
+userGuide/Frazil
 userGuide/SfcCoupling
 userGuide/Analysis
 ```
@@ -109,6 +110,7 @@ devGuide/VerticalMixingCoeff
 devGuide/KPPMix
 devGuide/VertAdv
 devGuide/Forcing
+devGuide/Frazil
 devGuide/SfcCoupling
 devGuide/Analysis
 ```
@@ -129,6 +131,7 @@ design/Driver
 design/EOS
 design/Error
 design/FillValues
+design/Frazil
 design/Halo
 design/HorzMeshClass
 design/Logging

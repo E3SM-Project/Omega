@@ -147,9 +147,10 @@ void SplitExplicitRK2Stepper::doThicknessTracerUpdate(
    Tend->computePseudoThicknessTendenciesOnly(
        State, AuxState, NextLevel, NextLevel, StageTime + 0.5 * StageTimeStep);
 
-   Tend->computeTracerTendenciesOnly(State, AuxState, NextTracerArray,
-                                     NextLevel, NextLevel,
-                                     StageTime + 0.5 * StageTimeStep);
+   // Only count frazil totals once, on the iteration that yields n+1
+   Tend->computeTracerTendenciesOnly(
+       State, AuxState, NextTracerArray, NextLevel, NextLevel,
+       StageTime + 0.5 * StageTimeStep, FinalIteration ? 1.0_Real : 0.0_Real);
 
    if (FinalIteration) {
       // Retain the full-step conservative update on the final iteration.
@@ -546,6 +547,7 @@ void SplitExplicitRK2Stepper::doStep(OceanState *State,
 
    VertMix *VMix = VertMix::getInstance();
 
+   resetFrazilFluxes();
    updateKPPFields(State, CurLevel, CurLevel, CurLevel);
 
    // Initialize NextLevel from CurLevel

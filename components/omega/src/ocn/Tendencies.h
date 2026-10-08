@@ -88,6 +88,7 @@ class Tendencies {
    KPPNonLocalTracerFluxOnCell KPPNonLocalTracerFlux;
    TracerHyperDiffOnCell TracerHyperDiff;
    SurfaceTracerRestoringOnCell SurfaceTracerRestoring;
+   FrazilOnCell FrazilTerm;
 
    /// Mode-split configuration of the velocity tendency
    ///  - Coriolis treatment in the vorticity flux term
@@ -128,12 +129,14 @@ class Tendencies {
                                 const AuxiliaryState *AuxState,
                                 const Array3DReal &TracerArray,
                                 int ThickTimeLevel, int VelTimeLevel,
-                                TimeInstant Time, TimeInterval ProjDt);
+                                TimeInstant Time, TimeInterval ProjDt,
+                                Real FinalUpdateWeight = 1.0_Real);
    void computeAllTendencies(const OceanState *State,
                              const AuxiliaryState *AuxState,
                              const Array3DReal &TracerArray, int ThickTimeLevel,
                              int VelTimeLevel, int TracerTimeLevel,
-                             TimeInstant Time, TimeInterval ProjDt);
+                             TimeInstant Time, TimeInterval ProjDt,
+                             Real FinalUpdateWeight = 1.0_Real);
    void computePseudoThicknessTendenciesOnly(const OceanState *State,
                                              const AuxiliaryState *AuxState,
                                              int ThickTimeLevel,
@@ -148,7 +151,8 @@ class Tendencies {
                                     const AuxiliaryState *AuxState,
                                     const Array3DReal &TracerArray,
                                     int ThickTimeLevel, int VelTimeLevel,
-                                    TimeInstant Time);
+                                    TimeInstant Time,
+                                    Real FinalUpdateWeight = 1.0_Real);
    void computeCoriolisAccelerationOnEdge(
        const Array2DReal &Tend,          ///< [inout] velocity tendency
        const Array2DReal &NormalVelEdge, ///< [in] normal velocity on edges

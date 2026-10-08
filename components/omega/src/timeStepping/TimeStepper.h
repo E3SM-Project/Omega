@@ -463,6 +463,9 @@ class TimeStepper {
    VertCoord *VCoord;        /// Ptr to vertical coordinate
    Halo *MeshHalo;           /// Ptr to defined halos
 
+   /// Reset frazil fluxes accumulated across the current outer ocean step.
+   void resetFrazilFluxes() const;
+
    /// Function for any method-specific modifications for the default stepper
    virtual void finalizeInit() {}
 
