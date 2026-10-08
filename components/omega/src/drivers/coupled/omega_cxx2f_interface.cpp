@@ -3,6 +3,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "DataTypes.h"
+#include "Decomp.h"
 #include "IO.h"
 #include "Logging.h"
 #include "MachEnv.h"
@@ -12,7 +13,14 @@
 #include "Pacer.h"
 #include "TimeMgr.h"
 #include "TimeStepper.h"
+#include <cmath>
+#include <map>
 #include <mpi.h>
+#include <vector>
+
+#ifdef HAVE_MOAB
+#include "MoabInterface.h"
+#endif
 
 // Track whether Omega initialized Kokkos and is therefore responsible for
 // finalizing it. Needed in coupled mode when multiple components use Kokkos.
@@ -44,6 +52,27 @@ std::map<std::string, int> buildFieldIndexMap(const char *FieldNames,
    }
    return FieldIdx;
 }
+
+// Coupler field counts and indices are independent of the transfer backend.
+// Retain them across init1/init2/run for the MOAB coupling buffers and checks.
+int NCouplerImports = 0;
+int NCouplerExports = 0;
+std::map<std::string, int> ImportIdxMap;
+
+#ifdef HAVE_MOAB
+// Coupling buffers for the MOAB path: attached once (by address) to
+// SfcCoupling in omega_ocn_init2, refilled from/drained to MOAB tag storage
+// around each omega_ocn_run call.
+std::vector<OMEGA::Real> MoabCplToOcn;
+std::vector<OMEGA::Real> MoabOcnToCpl;
+
+// The ocean's own MOAB application id, returned by moabInit. The Fortran
+// cap must copy this into seq_comm_mct's mpoid module variable, since that
+// is what the coupler-side migration/mapping code reads to find the
+// ocean's mesh.
+int MoabPid = -1;
+#endif
+
 } // namespace
 
 extern "C" {
@@ -58,8 +87,8 @@ void omega_ocn_init1(
     const int RunStartYMD,         // [in] run start date in YYYYMMDD
     const int RunStartTOD,         // [in] run start time in seconds of day
     const int CouplingTimeStep,    // [in] coupling time step in seconds
-    const int NCouplerImports,     // [in] number of coupler import fields
-    const int NCouplerExports,     // [in] number of coupler export fields
+    const int InNCouplerImports,   // [in] number of coupler import fields
+    const int InNCouplerExports,   // [in] number of coupler export fields
     const int NOmegaImports,       // [in] number of omega import fields
     const int NOmegaExports,       // [in] number of omega export fields
     const char *ImportFieldNames,  // [in] array of import field names
@@ -67,7 +96,9 @@ void omega_ocn_init1(
     const int *ImportFieldIndices, // [in] array of import field indices
     const int *ExportFieldIndices, // [in] array of export field indices
     const int IOBaseTask,          // [in] driver-owned base (root) IO task
-    const int IORearranger         // [in] driver-owned PIO rearranger (int)
+    const int IORearranger,        // [in] driver-owned PIO rearranger (int)
+    const char *Cpl2OcnFieldNames, // [in] full CIME x2o field list (MOAB)
+    const char *Ocn2CplFieldNames  // [in] full CIME o2x field list (MOAB)
 ) {
 
    // Create the C MPI_Comm from the Fortran one
@@ -103,7 +134,9 @@ void omega_ocn_init1(
    OMEGA::TimeInterval CouplingInterval(CouplingTimeStep,
                                         OMEGA::TimeUnits::Seconds);
 
-   std::map<std::string, int> ImportIdxMap =
+   NCouplerImports = InNCouplerImports;
+   NCouplerExports = InNCouplerExports;
+   ImportIdxMap =
        buildFieldIndexMap(ImportFieldNames, ImportFieldIndices, NOmegaImports);
    std::map<std::string, int> ExportIdxMap =
        buildFieldIndexMap(ExportFieldNames, ExportFieldIndices, NOmegaExports);
@@ -112,9 +145,16 @@ void omega_ocn_init1(
 
    OMEGA::TimeStepperStartType StartTypeEnum =
        OMEGA::getTimeStepperStartTypeFromE3SM(InStartType);
-   OMEGA::CouplingInitParams CouplingParams{
-       NCouplerImports, NCouplerExports,  ImportIdxMap,
-       ExportIdxMap,    CouplingInterval, OMEGA::CouplingLayout::MCT};
+   OMEGA::CouplingInitParams CouplingParams{NCouplerImports,
+                                            NCouplerExports,
+                                            ImportIdxMap,
+                                            ExportIdxMap,
+                                            CouplingInterval,
+#ifdef HAVE_MOAB
+                                            OMEGA::CouplingLayout::MOAB};
+#else
+                                            OMEGA::CouplingLayout::MCT};
+#endif
 
    // The base IO task and rearranger are owned by the driver/coupler (via
    // CIME/shr_pio). The rearranger int uses the same PIO_REARR_* values as
@@ -129,11 +169,41 @@ void omega_ocn_init1(
 
    LOG_INFO("ocnInit: Finished initializing ocean model");
    int ErrAll;
+
+#ifdef HAVE_MOAB
+   // Decomp/HorzMesh exist by now (built inside OMEGA::ocnInit1 above), so
+   // the MOAB mesh can be constructed from them.
+   MoabPid = OMEGA::moabInit(Comm, OcnID);
+   OMEGA::moabDefineTagStorage(MoabPid, Cpl2OcnFieldNames, Ocn2CplFieldNames);
+#endif
 }
+
+#ifdef HAVE_MOAB
+int omega_get_moab_pid() { return MoabPid; }
+#endif
 
 void omega_ocn_init2(const double *cpl_to_ocn_data, double *ocn_to_cpl_data) {
    Pacer::start("Init2", 0);
+#ifdef HAVE_MOAB
+   // The MCT attribute-vector pointers above are meaningless under MOAB;
+   // attach Omega's own buffers instead, filled from MOAB tag storage.
+   // These are refilled/drained in place (same memory address) by
+   // omega_ocn_run on every subsequent coupling interval.
+   const int NCellsOwned =
+       static_cast<int>(OMEGA::Decomp::getDefault()->NCellsOwned);
+   MoabCplToOcn.assign(static_cast<size_t>(NCouplerImports) * NCellsOwned, 0);
+   MoabOcnToCpl.assign(static_cast<size_t>(NCouplerExports) * NCellsOwned, 0);
+   OMEGA::moabImportTagStorage(MoabCplToOcn.data(),
+                               static_cast<int>(MoabCplToOcn.size()));
+   OMEGA::ocnInit2(MoabCplToOcn.data(), MoabOcnToCpl.data());
+   // ocnInit2 computes initial ocean exports into the attached buffer.
+   // Publish them now: the driver performs initial area correction and
+   // component-to-coupler exchanges before the first omega_ocn_run call.
+   OMEGA::moabExportTagStorage(MoabOcnToCpl.data(),
+                               static_cast<int>(MoabOcnToCpl.size()));
+#else
    OMEGA::ocnInit2(cpl_to_ocn_data, ocn_to_cpl_data);
+#endif
    Pacer::stop("Init2", 0);
 }
 
@@ -146,9 +216,33 @@ void omega_ocn_run(bool WriteRestart) {
    OMEGA::TimeInstant CurrTime    = ModelClock->getCurrentTime();
 
    Pacer::start("Run", 0);
+#ifdef HAVE_MOAB
+   OMEGA::moabImportTagStorage(MoabCplToOcn.data(),
+                               static_cast<int>(MoabCplToOcn.size()));
+   // Check the fields actually consumed by SfcCoupling before they can
+   // contaminate the state. iMOAB stores one contiguous cell block per tag.
+   const int NCellsOwned =
+       static_cast<int>(OMEGA::Decomp::getDefault()->NCellsOwned);
+   for (const auto &[Name, Index] : ImportIdxMap) {
+      if (Index < 0 || Index >= NCouplerImports)
+         ABORT_ERROR("Invalid MOAB ocean import index {} for {} ({} fields)",
+                     Index, Name, NCouplerImports);
+      for (int Cell = 0; Cell < NCellsOwned; ++Cell) {
+         if (!std::isfinite(
+                 MoabCplToOcn[static_cast<size_t>(Index) * NCellsOwned + Cell]))
+            ABORT_ERROR("Non-finite MOAB ocean import {} at local cell {} "
+                        "(field index {})",
+                        Name, Cell, Index);
+      }
+   }
+#endif
    ErrRun = OMEGA::ocnRun(CurrTime, WriteRestart);
    if (ErrRun != 0)
       LOG_ERROR("Error advancing Omega run interval");
+#ifdef HAVE_MOAB
+   OMEGA::moabExportTagStorage(MoabOcnToCpl.data(),
+                               static_cast<int>(MoabOcnToCpl.size()));
+#endif
    Pacer::stop("Run", 0);
 }
 
@@ -182,14 +276,6 @@ void omega_ocn_finalize() {
    if (OmegaOwnsKokkos) {
       Kokkos::finalize();
    }
-}
-
-int omega_get_layout_mct() {
-   return static_cast<int>(OMEGA::CouplingLayout::MCT);
-}
-
-int omega_get_layout_moab() {
-   return static_cast<int>(OMEGA::CouplingLayout::MOAB);
 }
 
 int omega_get_ncells_local() {

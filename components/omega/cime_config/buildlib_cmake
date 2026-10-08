@@ -31,6 +31,12 @@ def buildlib(bldroot, installpath, case):
         f' -DOMEGA_PARMETIS_ROOT="{parmetis_root}"'
     )
 
+    comp_interface = case.get_value("COMP_INTERFACE")
+    if comp_interface == "moab":
+        moab_root = os.environ.get("MOAB_ROOT")
+        if os.path.exists(moab_root):
+            cmake_args += f' -DOMEGA_MOAB_ROOT="{moab_root}"'
+
     print(f"omega cmake options: '{cmake_args}'")
 
     return cmake_args
