@@ -126,6 +126,9 @@ Omega:
       IceFractionThresholdForMinimumOSBL: 0.15
       MinimumOSBLUnderSeaIce: 5.0
       DebugDiagnostics: false
+  RayleighDamping:
+    Enable: false
+    DampingCoeff: 1.0e-4
   IOStreams:
     HorzMeshIn:
       UsePointerFile: false

@@ -46,7 +46,8 @@ OneTwoOneFilter::OneTwoOneFilter(const VertCoord *VCoord)
 VelVertMixSetupOnEdge::VelVertMixSetupOnEdge(const HorzMesh *Mesh,
                                              const VertCoord *VCoord)
     : Enabled(false), ImplicitBottomDragEnabled(false),
-      BottomDragCoeff(0.0_Real), LocRhoSw(RhoSw),
+      BottomDragCoeff(0.0_Real), RayleighDampingEnabled(false),
+      RayleighDampingCoeff(0.0_Real), LocRhoSw(RhoSw),
       NVertLayers(VCoord->NVertLayers), CellsOnEdge(Mesh->CellsOnEdge),
       EdgeMask(VCoord->EdgeMask), MinLayerEdgeBot(VCoord->MinLayerEdgeBot),
       MaxLayerEdgeTop(VCoord->MaxLayerEdgeTop) {}
@@ -207,6 +208,37 @@ void VertMix::init() {
                              DefVertMix->ComputeVertMixShear.RiSmoothLoops);
       CHECK_ERROR_ABORT(Err, "VertMix::init: Parameter Shear:RiSmoothLoops not "
                              "found in ShearConfig");
+   }
+
+   /// Get RayleighDamping group from Omega config
+   Config RayleighConfig("RayleighDamping");
+   Err += OmegaConfig->get(RayleighConfig);
+   CHECK_ERROR_ABORT(
+       Err, "VertMix::init: RayleighDamping group not found in Config");
+
+   Err += RayleighConfig.get(
+       "Enable", DefVertMix->VelVertMixSetup.RayleighDampingEnabled);
+   CHECK_ERROR_ABORT(Err, "VertMix::init: Parameter RayleighDamping:Enable not "
+                          "found in RayleighConfig");
+
+   if (!DefVertMix->VelVertMixSetup.RayleighDampingEnabled) {
+      LOG_INFO("VertMix::init: Rayleigh damping is disabled.");
+   } else {
+      Err += RayleighConfig.get(
+          "DampingCoeff", DefVertMix->VelVertMixSetup.RayleighDampingCoeff);
+      CHECK_ERROR_ABORT(Err, "VertMix::init: Parameter "
+                             "RayleighDamping:DampingCoeff not found in "
+                             "RayleighConfig");
+
+      if (DefVertMix->VelVertMixSetup.RayleighDampingCoeff < 0.0_Real) {
+         ABORT_ERROR("VertMix::init: RayleighDamping:DampingCoeff must be "
+                     "non-negative but got {}",
+                     DefVertMix->VelVertMixSetup.RayleighDampingCoeff);
+      }
+
+      LOG_INFO("VertMix::init: Rayleigh damping is enabled with coefficient "
+               "{} s^-1.",
+               DefVertMix->VelVertMixSetup.RayleighDampingCoeff);
    }
 } // end init
 

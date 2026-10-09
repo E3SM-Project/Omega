@@ -422,6 +422,12 @@ void Tendencies::readConfig(Config *OmegaConfig ///< [in] Omega config
                   "VelVertMixTendencyEnable to be true");
    }
 
+   if (this->VMix->VelVertMixSetup.RayleighDampingEnabled &&
+       !this->VMix->VelVertMixSetup.Enabled) {
+      ABORT_ERROR("Tendencies: RayleighDamping Enable requires "
+                  "VelVertMixTendencyEnable to be true");
+   }
+
    Err += TendConfig.get("TracerVertMixTendencyEnable",
                          this->TracerVertMixTendencyEnable);
    CHECK_ERROR_ABORT(

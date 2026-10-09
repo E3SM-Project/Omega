@@ -4,15 +4,19 @@
 /// \brief Test driver for OMEGA Vertical Mixing Coefficients
 ///
 /// This driver tests that VertMix can be called and returns expected values
-/// of diffusivity, viscosity and Brunt-Vaisala frequency
+/// of diffusivity, viscosity and Brunt-Vaisala frequency, and that the
+/// implicit velocity vertical mixing solve, including Rayleigh damping,
+/// produces the expected velocities
 ///
 //===-----------------------------------------------------------------------===/
 
 #include "VertMix.h"
+#include "AuxiliaryState.h"
 #include "Config.h"
 #include "DataTypes.h"
 #include "Decomp.h"
 #include "Dimension.h"
+#include "Eos.h"
 #include "Field.h"
 #include "FillValues.h"
 #include "HorzMesh.h"
@@ -21,11 +25,19 @@
 #include "KPPMix.h"
 #include "Logging.h"
 #include "MachEnv.h"
+#include "OceanState.h"
 #include "OceanTestCommon.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
+#include "TimeStepper.h"
+#include "Tracers.h"
+#include "VertAdv.h"
 #include "VertCoord.h"
 #include "mpi.h"
+
+#include <cmath>
+#include <limits>
+#include <vector>
 
 using namespace OMEGA;
 
@@ -79,6 +91,12 @@ void initVertMixTest() {
    Config("Omega");
    Config::readAll("omega.yml");
 
+   /// Initialize the default time stepper, which provides the calendar, the
+   /// model clock for stream IO and the time step used by the implicit
+   /// vertical mixing solve
+   TimeStepper::init1();
+   Clock *ModelClock = TimeStepper::getDefault()->getClock();
+
    // Initialize the IO system
    IO::init(DefComm);
 
@@ -87,13 +105,6 @@ void initVertMixTest() {
 
    /// Initialize Halo
    Halo::init();
-
-   /// Create dummy model clock for stream IO
-   Calendar::init("No Leap");
-   TimeInstant StartTime(0, 1, 1, 0, 0, 0.0);
-   TimeInterval TimeStep(1, TimeUnits::Hours);
-   Clock ModelClockTmp(StartTime, TimeStep);
-   Clock *ModelClock = &ModelClockTmp;
 
    /// Initialize IO streams for mesh IO
    Field::init(ModelClock);
@@ -104,6 +115,13 @@ void initVertMixTest() {
 
    /// Initialize vertical coordinate
    VertCoord::init(false);
+
+   /// Initialize the tracers, auxiliary state and equation of state needed
+   /// by the implicit vertical mixing solve
+   Tracers::init();
+   VertAdv::init();
+   AuxiliaryState::init();
+   Eos::init();
 
    /// Initialize VertMix
    VertMix::init();
@@ -1144,10 +1162,369 @@ void testInteriorSnapshotForMatchBoth() {
    }
 }
 
+//------------------------------------------------------------------------------
+// Tests of Rayleigh damping in the implicit velocity vertical mixing solve
+
+/// Name of the ocean state used by the implicit vertical mixing tests
+const std::string ImplicitStateName = "VertMixImplicitTest";
+
+/// Test input values for the implicit vertical mixing tests
+constexpr Real ImplicitNV     = 0.3;    // Normal velocity scale in m/s
+constexpr Real ImplicitDrag   = 1.0e-3; // Bottom drag coefficient
+constexpr Real ImplicitViscSc = 1.0e-3; // Vertical viscosity scale in m^2/s
+
+/// Relative tolerance for comparing implicit solve results with expected
+/// values, which differ only by round-off
+const Real SolveRTol = 1000 * std::numeric_limits<Real>::epsilon();
+
+/// Initial normal velocity, which alternates in sign between edges so that
+/// both signs are tested
+KOKKOS_INLINE_FUNCTION Real initNormalVel(I4 IEdge, I4 K) {
+   const Real Sign = (IEdge % 2 == 0) ? 1.0_Real : -1.0_Real;
+   return Sign * ImplicitNV * (1.0_Real + 0.01_Real * K);
+}
+
+/// Return the time step (s) used by VertMix::applyVelVertMixImplicit
+R8 getImplicitTimeStep() {
+   R8 DT;
+   TimeStepper::getDefault()->getTimeStep().get(DT, TimeUnits::Seconds);
+   return DT;
+}
+
+/// Set the state, auxiliary state, specific volume and viscosity used by the
+/// implicit velocity vertical mixing solve. Pseudo-thickness is nonuniform in
+/// both the horizontal and the vertical. If UseVisc is false, the vertical
+/// viscosity is zero so that the layers decouple.
+OceanState *initImplicitTestState(bool UseVisc) {
+   const auto Mesh   = HorzMesh::getDefault();
+   const auto VCoord = VertCoord::getDefault();
+   auto *MeshHalo    = Halo::getDefault();
+   auto *AuxState    = AuxiliaryState::getDefault();
+   VertMix *VMix     = VertMix::getInstance();
+   Eos *EqState      = Eos::getInstance();
+   const I4 NLayers  = VCoord->NVertLayers;
+
+   OceanState *State = OceanState::get(ImplicitStateName);
+   if (!State) {
+      State = OceanState::create(ImplicitStateName, Mesh, MeshHalo, NLayers, 2);
+      if (!State)
+         ABORT_ERROR("TestVertMixImplicit: error creating test state");
+   }
+
+   Array2DReal PseudoThick = State->getPseudoThickness(0);
+   Array2DReal NormalVel   = State->getNormalVelocity(0);
+   Array2DReal SpecVol     = EqState->SpecVol;
+   Array2DReal VertVisc    = VMix->VertVisc;
+   Array2DReal KECell      = AuxState->KineticAux.KineticEnergyCell;
+
+   parallelFor(
+       "initImplicitCells", {Mesh->NCellsAll, NLayers},
+       KOKKOS_LAMBDA(I4 ICell, I4 K) {
+          PseudoThick(ICell, K) =
+              1.0_Real + 0.5_Real * K + 0.1_Real * (ICell % 7);
+          SpecVol(ICell, K) = (1.0_Real + 1.0e-3_Real * (K % 3)) / RhoSw;
+          KECell(ICell, K)  = 0.01_Real * (1 + (ICell + K) % 3);
+       });
+
+   parallelFor(
+       "initImplicitEdges", {Mesh->NEdgesAll, NLayers},
+       KOKKOS_LAMBDA(I4 IEdge, I4 K) {
+          NormalVel(IEdge, K) = initNormalVel(IEdge, K);
+       });
+
+   if (UseVisc) {
+      parallelFor(
+          "initImplicitVisc", {Mesh->NCellsAll, NLayers + 1},
+          KOKKOS_LAMBDA(I4 ICell, I4 K) {
+             VertVisc(ICell, K) = ImplicitViscSc * (1 + (ICell + K) % 5);
+          });
+   } else {
+      deepCopy(VertVisc, 0.0_Real);
+   }
+
+   return State;
+}
+
+/// Return a host copy of an array. Unlike createHostMirrorCopy, the result
+/// never aliases the array, even when host and device memory are the same.
+HostArray2DReal copyToHost(const Array2DReal &Arr) {
+   const auto ArrMirror = createHostMirrorCopy(Arr);
+   HostArray2DReal ArrH("ArrH", Arr.extent(0), Arr.extent(1));
+   deepCopy(ArrH, ArrMirror);
+   return ArrH;
+}
+
+/// Run the implicit velocity vertical mixing solve with the given options
+/// and return a host copy of the resulting normal velocity
+HostArray2DReal runImplicitVelVertMix(bool UseVisc, bool BottomDragEnabled,
+                                      bool RayleighEnabled,
+                                      Real RayleighCoeff) {
+   VertMix *VMix = VertMix::getInstance();
+   auto *State   = initImplicitTestState(UseVisc);
+
+   VMix->VelVertMixSetup.Enabled                   = true;
+   VMix->VelVertMixSetup.ImplicitBottomDragEnabled = BottomDragEnabled;
+   VMix->VelVertMixSetup.BottomDragCoeff           = ImplicitDrag;
+   VMix->VelVertMixSetup.RayleighDampingEnabled    = RayleighEnabled;
+   VMix->VelVertMixSetup.RayleighDampingCoeff      = RayleighCoeff;
+
+   VMix->applyVelVertMixImplicit(State, AuxiliaryState::getDefault(), 0, 0);
+
+   // Restore the default (disabled) state of the optional terms
+   VMix->VelVertMixSetup.ImplicitBottomDragEnabled = false;
+   VMix->VelVertMixSetup.BottomDragCoeff           = 0.0_Real;
+   VMix->VelVertMixSetup.RayleighDampingEnabled    = false;
+   VMix->VelVertMixSetup.RayleighDampingCoeff      = 0.0_Real;
+
+   return copyToHost(State->getNormalVelocity(0));
+}
+
+/// Independently assemble the tridiagonal system for the implicit velocity
+/// solve on the host and solve it with the Thomas algorithm, starting from
+/// the initial normal velocity. Assumes that initImplicitTestState has been
+/// called with the same UseVisc.
+HostArray2DReal computeReferenceVel(bool BottomDragEnabled, R8 RayleighCoeff) {
+   const auto Mesh   = HorzMesh::getDefault();
+   const auto VCoord = VertCoord::getDefault();
+   const I4 NLayers  = VCoord->NVertLayers;
+   const R8 DT       = getImplicitTimeStep();
+   auto *AuxState    = AuxiliaryState::getDefault();
+   const auto *State = OceanState::get(ImplicitStateName);
+   const auto HH     = createHostMirrorCopy(State->getPseudoThickness(0));
+   const auto SpecVH = createHostMirrorCopy(Eos::getInstance()->SpecVol);
+   const auto ViscH  = createHostMirrorCopy(VertMix::getInstance()->VertVisc);
+   const auto KEH =
+       createHostMirrorCopy(AuxState->KineticAux.KineticEnergyCell);
+   const auto CellsOnEdgeH = createHostMirrorCopy(Mesh->CellsOnEdge);
+   const auto KMinH        = createHostMirrorCopy(VCoord->MinLayerEdgeBot);
+   const auto KMaxH        = createHostMirrorCopy(VCoord->MaxLayerEdgeTop);
+
+   // The state's normal velocity has already been updated by the implicit
+   // solve, so the initial velocity is recomputed here instead
+   HostArray2DReal RefVel("RefVel", Mesh->NEdgesSize, NLayers);
+   for (I4 IEdge = 0; IEdge < Mesh->NEdgesOwned; ++IEdge) {
+      for (I4 K = 0; K < NLayers; ++K) {
+         RefVel(IEdge, K) = initNormalVel(IEdge, K);
+      }
+   }
+
+   std::vector<R8> Lower(NLayers), Diag(NLayers), Upper(NLayers), Rhs(NLayers);
+
+   for (I4 IEdge = 0; IEdge < Mesh->NEdgesOwned; ++IEdge) {
+      const I4 C0   = CellsOnEdgeH(IEdge, 0);
+      const I4 C1   = CellsOnEdgeH(IEdge, 1);
+      const I4 KMin = KMinH(IEdge);
+      const I4 KMax = KMaxH(IEdge);
+
+      // Skip columns with no active layers
+      if (KMax < KMin)
+         continue;
+
+      auto edgeAvg = [&](const auto &Arr, I4 K) {
+         return 0.5 * (R8(Arr(C0, K)) + R8(Arr(C1, K)));
+      };
+
+      // Coupling between layers K and K+1 through the interface between them
+      std::vector<R8> Coupling(NLayers, 0.0);
+      for (I4 K = KMin; K < KMax; ++K) {
+         const R8 HK   = edgeAvg(HH, K);
+         const R8 HKp1 = edgeAvg(HH, K + 1);
+         const R8 HBot = 0.5 * (HK + HKp1);
+         const R8 AlpB =
+             (edgeAvg(SpecVH, K) * HKp1 + edgeAvg(SpecVH, K + 1) * HK) /
+             (HK + HKp1);
+         const R8 Visc = edgeAvg(ViscH, K + 1);
+         Coupling[K]   = DT * Visc / (R8(RhoSw) * AlpB) / HBot;
+      }
+
+      for (I4 K = KMin; K <= KMax; ++K) {
+         const R8 HK = edgeAvg(HH, K);
+         R8 DiagOnly = HK * (1.0 + DT * RayleighCoeff);
+         if (BottomDragEnabled && K == KMax) {
+            const R8 VelMag = std::sqrt(R8(KEH(C0, K)) + R8(KEH(C1, K)));
+            DiagOnly += DT * R8(ImplicitDrag) * VelMag /
+                        (R8(RhoSw) * edgeAvg(SpecVH, K));
+         }
+         const R8 GAbove = (K > KMin) ? Coupling[K - 1] : 0.0;
+         const R8 GBelow = (K < KMax) ? Coupling[K] : 0.0;
+         Lower[K]        = -GAbove;
+         Upper[K]        = -GBelow;
+         Diag[K]         = GAbove + GBelow + DiagOnly;
+         Rhs[K]          = HK * R8(initNormalVel(IEdge, K));
+      }
+
+      // Thomas algorithm: forward elimination and back substitution
+      for (I4 K = KMin + 1; K <= KMax; ++K) {
+         const R8 W = Lower[K] / Diag[K - 1];
+         Diag[K] -= W * Upper[K - 1];
+         Rhs[K] -= W * Rhs[K - 1];
+      }
+      R8 Below            = Rhs[KMax] / Diag[KMax];
+      RefVel(IEdge, KMax) = Below;
+      for (I4 K = KMax - 1; K >= KMin; --K) {
+         Below            = (Rhs[K] - Upper[K] * Below) / Diag[K];
+         RefVel(IEdge, K) = Below;
+      }
+   }
+
+   return RefVel;
+}
+
+/// Count mismatches between the implicit solve result and the expected
+/// velocity on owned edges. Active layers must match to within SolveRTol,
+/// and inactive layers must be unchanged from the initial velocity.
+int countImplicitMismatches(const HostArray2DReal &Vel,
+                            const HostArray2DReal &ExpectedVel) {
+   const auto Mesh   = HorzMesh::getDefault();
+   const auto VCoord = VertCoord::getDefault();
+   const auto KMinH  = createHostMirrorCopy(VCoord->MinLayerEdgeBot);
+   const auto KMaxH  = createHostMirrorCopy(VCoord->MaxLayerEdgeTop);
+
+   int NumMismatches = 0;
+   for (I4 IEdge = 0; IEdge < Mesh->NEdgesOwned; ++IEdge) {
+      for (I4 K = 0; K < VCoord->NVertLayers; ++K) {
+         if (K < KMinH(IEdge) || K > KMaxH(IEdge)) {
+            if (Vel(IEdge, K) != initNormalVel(IEdge, K))
+               NumMismatches++;
+         } else if (!std::isfinite(Vel(IEdge, K)) ||
+                    !isApprox(Vel(IEdge, K), ExpectedVel(IEdge, K),
+                              SolveRTol)) {
+            NumMismatches++;
+         }
+      }
+   }
+   return NumMismatches;
+}
+
+/// With no vertical viscosity and no bottom drag, the layers decouple and
+/// the implicit damping gives u^{n+1} = u^n / (1 + DT * Coeff) in every
+/// active layer. The analytic factor is independent of pseudo-thickness, so
+/// this also checks the pseudo-thickness weighting of the damping term. For
+/// large DT * Coeff, this also checks that the decay is stable, monotone,
+/// and preserves the sign of the velocity.
+void testRayleighDampingDecay(const std::string &TestName, Real Coeff) {
+   const auto Mesh   = HorzMesh::getDefault();
+   const auto VCoord = VertCoord::getDefault();
+   const R8 DT       = getImplicitTimeStep();
+   const R8 Factor   = 1.0 / (1.0 + DT * Coeff);
+
+   HostArray2DReal Vel = runImplicitVelVertMix(false, false, true, Coeff);
+
+   HostArray2DReal ExpectedVel("ExpectedVel", Vel.extent(0), Vel.extent(1));
+   int NumSignErrors = 0;
+   for (I4 IEdge = 0; IEdge < Mesh->NEdgesOwned; ++IEdge) {
+      for (I4 K = 0; K < VCoord->NVertLayers; ++K) {
+         const Real U0         = initNormalVel(IEdge, K);
+         ExpectedVel(IEdge, K) = Factor * U0;
+         if (Vel(IEdge, K) * U0 <= 0.0_Real ||
+             std::abs(Vel(IEdge, K)) > std::abs(U0))
+            NumSignErrors++;
+      }
+   }
+
+   const int NumMismatches = countImplicitMismatches(Vel, ExpectedVel);
+
+   if (NumMismatches != 0 || NumSignErrors != 0) {
+      ABORT_ERROR("TestVertMixRayleigh: {} FAIL with DT * Coeff = {}, "
+                  "{} mismatches and {} sign or growth errors",
+                  TestName, DT * Coeff, NumMismatches, NumSignErrors);
+   } else {
+      LOG_INFO("TestVertMixRayleigh: {} PASS", TestName);
+   }
+}
+
+/// Disabled Rayleigh damping, and enabled damping with a zero coefficient,
+/// must give bit-for-bit identical results, and both must match the system
+/// without damping
+void testRayleighDampingNeutral() {
+   const auto Mesh   = HorzMesh::getDefault();
+   const auto VCoord = VertCoord::getDefault();
+
+   HostArray2DReal DisabledVel =
+       runImplicitVelVertMix(true, true, false, 1.0e-4_Real);
+   HostArray2DReal RefVel = computeReferenceVel(true, 0.0);
+   HostArray2DReal ZeroCoeffVel =
+       runImplicitVelVertMix(true, true, true, 0.0_Real);
+
+   int NumDiffs = 0;
+   for (I4 IEdge = 0; IEdge < Mesh->NEdgesOwned; ++IEdge) {
+      for (I4 K = 0; K < VCoord->NVertLayers; ++K) {
+         if (DisabledVel(IEdge, K) != ZeroCoeffVel(IEdge, K))
+            NumDiffs++;
+      }
+   }
+
+   const int NumMismatches = countImplicitMismatches(DisabledVel, RefVel);
+
+   if (NumDiffs != 0 || NumMismatches != 0) {
+      ABORT_ERROR("TestVertMixRayleigh: Neutral FAIL with {} differences "
+                  "from zero coefficient and {} mismatches from reference",
+                  NumDiffs, NumMismatches);
+   } else {
+      LOG_INFO("TestVertMixRayleigh: Neutral PASS");
+   }
+}
+
+/// Rayleigh damping combined with nonuniform vertical viscosity and implicit
+/// bottom drag must match an independent host solve of the same system
+void testRayleighDampingCombined() {
+   const Real Coeff = 1.0e-3_Real;
+
+   HostArray2DReal Vel    = runImplicitVelVertMix(true, true, true, Coeff);
+   HostArray2DReal RefVel = computeReferenceVel(true, Coeff);
+
+   // Also make sure the damping changed the result
+   HostArray2DReal UndampedVel =
+       runImplicitVelVertMix(true, true, false, Coeff);
+
+   const auto Mesh   = HorzMesh::getDefault();
+   const auto VCoord = VertCoord::getDefault();
+   const auto KMinH  = createHostMirrorCopy(VCoord->MinLayerEdgeBot);
+   const auto KMaxH  = createHostMirrorCopy(VCoord->MaxLayerEdgeTop);
+   int NumUnchanged  = 0;
+   for (I4 IEdge = 0; IEdge < Mesh->NEdgesOwned; ++IEdge) {
+      for (I4 K = KMinH(IEdge); K <= KMaxH(IEdge); ++K) {
+         if (!(std::abs(Vel(IEdge, K)) < std::abs(UndampedVel(IEdge, K))))
+            NumUnchanged++;
+      }
+   }
+
+   const int NumMismatches = countImplicitMismatches(Vel, RefVel);
+
+   if (NumMismatches != 0 || NumUnchanged != 0) {
+      ABORT_ERROR("TestVertMixRayleigh: Combined FAIL with {} mismatches "
+                  "from reference and {} layers not damped",
+                  NumMismatches, NumUnchanged);
+   } else {
+      LOG_INFO("TestVertMixRayleigh: Combined PASS");
+   }
+}
+
+/// Run all of the Rayleigh damping tests
+void testRayleighDamping() {
+   const R8 DT = getImplicitTimeStep();
+
+   // Typical coefficient for the first segment of a dynamic adjustment
+   testRayleighDampingDecay("Decay", 1.0e-4_Real);
+
+   // DT * Coeff = 1000, far outside the range an explicit scheme could
+   // tolerate
+   testRayleighDampingDecay("LargeCoeff", Real(1.0e3 / DT));
+
+   testRayleighDampingNeutral();
+   testRayleighDampingCombined();
+}
+
 /// Finalize and clean up all test infrastructure
 void finalizeVertMixTest() {
    KPPMix::destroyInstance();
    VertMix::destroyInstance();
+   Eos::destroyInstance();
+   OceanState::clear();
+   AuxiliaryState::clear();
+   VertAdv::clear();
+   Tracers::clear();
+   TimeStepper::clear();
    HorzMesh::clear();
    Halo::clear();
    VertCoord::clear();
@@ -1168,6 +1545,8 @@ void finalizeVertMixTest() {
 // for only shear
 // --> next tests the linear superposition of the
 // background, convective, and shear contributions
+// --> finally tests Rayleigh damping in the implicit
+// velocity vertical mixing solve
 void vertMixTest() {
 
    // initialize vertical mix and other infrastructure
@@ -1181,6 +1560,9 @@ void vertMixTest() {
    testShearVertMix();
    testTotalVertMix();
    testInteriorSnapshotForMatchBoth();
+
+   // test Rayleigh damping in the implicit velocity vertical mixing solve
+   testRayleighDamping();
 
    // clean up
    finalizeVertMixTest();
