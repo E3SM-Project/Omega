@@ -3,6 +3,7 @@
 
 #include "DataTypes.h"
 #include "HorzMesh.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 #include "VertCoord.h"
 
@@ -31,7 +32,7 @@ class VelocityDel2AuxVars {
 
       const Real InvDcEdge = 1._Real / DcEdge(IEdge);
       const Real InvDvEdge =
-          1._Real / Kokkos::max(DvEdge(IEdge), 0.25_Real * DcEdge(IEdge));
+          1._Real / Math::max(DvEdge(IEdge), 0.25_Real * DcEdge(IEdge));
 
       const int KMin = MinLayerEdgeBot(IEdge);
       const int KMax = MaxLayerEdgeTop(IEdge);

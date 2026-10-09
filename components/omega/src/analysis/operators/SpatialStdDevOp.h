@@ -22,6 +22,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AnalysisOperator.h"
+#include "MathUtils.h"
 #include "Reductions.h"
 #include "SpatialWeights.h"
 
@@ -128,7 +129,7 @@ template <typename ArrayT> class SpatialStdDevOp : public AnalysisOperator {
       Real Variance = DevSum / (Weights.weightSum() * Replication);
 
       // Compute standard deviation: square root of variance
-      StdDev = std::sqrt(Variance);
+      StdDev = Math::sqrt(Variance);
 
       // Write result to output array
       deepCopy(OutputData, StdDev);

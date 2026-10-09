@@ -27,6 +27,7 @@
 #include "IO.h"
 #include "IOStream.h"
 #include "Logging.h"
+#include "MathUtils.h"
 #include "OceanTestCommon.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
@@ -85,50 +86,50 @@ struct TestSetupPlane {
    KOKKOS_FUNCTION Real velEdgeY(Real X, Real Y) const { return 3 / Ly; }
 
    KOKKOS_FUNCTION Real vectorX(Real X, Real Y) const {
-      return std::sin(TwoPi * X / Lx) * std::cos(TwoPi * Y / Ly);
+      return Math::sin(TwoPi * X / Lx) * Math::cos(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real vectorY(Real X, Real Y) const {
-      return std::cos(TwoPi * X / Lx) * std::sin(TwoPi * Y / Ly);
+      return Math::cos(TwoPi * X / Lx) * Math::sin(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real divergence(Real X, Real Y) const {
-      return TwoPi * (1. / Lx + 1. / Ly) * std::cos(TwoPi * X / Lx) *
-             std::cos(TwoPi * Y / Ly);
+      return TwoPi * (1. / Lx + 1. / Ly) * Math::cos(TwoPi * X / Lx) *
+             Math::cos(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real scalar(Real X, Real Y) const {
-      return std::sin(TwoPi * X / Lx) * std::sin(TwoPi * Y / Ly);
+      return Math::sin(TwoPi * X / Lx) * Math::sin(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real gradX(Real X, Real Y) const {
-      return TwoPi / Lx * std::cos(TwoPi * X / Lx) * std::sin(TwoPi * Y / Ly);
+      return TwoPi / Lx * Math::cos(TwoPi * X / Lx) * Math::sin(TwoPi * Y / Ly);
    }
    KOKKOS_FUNCTION Real gradY(Real X, Real Y) const {
-      return TwoPi / Ly * std::sin(TwoPi * X / Lx) * std::cos(TwoPi * Y / Ly);
+      return TwoPi / Ly * Math::sin(TwoPi * X / Lx) * Math::cos(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real curl(Real X, Real Y) const {
-      return TwoPi * (-1. / Lx + 1. / Ly) * std::sin(TwoPi * X / Lx) *
-             std::sin(TwoPi * Y / Ly);
+      return TwoPi * (-1. / Lx + 1. / Ly) * Math::sin(TwoPi * X / Lx) *
+             Math::sin(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real laplaceVecX(Real X, Real Y) const {
       return -TwoPi * TwoPi * (1. / Lx / Lx + 1. / Ly / Ly) *
-             std::sin(TwoPi * X / Lx) * std::cos(TwoPi * Y / Ly);
+             Math::sin(TwoPi * X / Lx) * Math::cos(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real laplaceVecY(Real X, Real Y) const {
       return -TwoPi * TwoPi * (1. / Lx / Lx + 1. / Ly / Ly) *
-             std::cos(TwoPi * X / Lx) * std::sin(TwoPi * Y / Ly);
+             Math::cos(TwoPi * X / Lx) * Math::sin(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real pseudoThick(Real X, Real Y) const {
-      return 2. + std::sin(TwoPi * X / Lx) * std::cos(TwoPi * Y / Ly);
+      return 2. + Math::sin(TwoPi * X / Lx) * Math::cos(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real planetaryVort(Real X, Real Y) const {
-      return std::cos(TwoPi * X / Lx) * std::cos(TwoPi * Y / Ly);
+      return Math::cos(TwoPi * X / Lx) * Math::cos(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real normRelVort(Real X, Real Y) const {
@@ -141,39 +142,39 @@ struct TestSetupPlane {
 
    KOKKOS_FUNCTION Real tracerFluxDiv(Real X, Real Y) const {
       return (TwoPi / (Lx * Ly)) *
-             (std::cos(TwoPi * X / Lx) *
-              (2 * (Lx + Ly) * std::cos(TwoPi * Y / Ly) +
-               (Lx + 2 * Ly) * std::sin(TwoPi * X / Lx) *
-                   std::pow(std::cos(TwoPi * Y / Ly), 2) -
-               Lx * std::sin(TwoPi * X / Lx) *
-                   std::pow(std::sin(TwoPi * Y / Ly), 2)));
+             (Math::cos(TwoPi * X / Lx) *
+              (2 * (Lx + Ly) * Math::cos(TwoPi * Y / Ly) +
+               (Lx + 2 * Ly) * Math::sin(TwoPi * X / Lx) *
+                   Math::pow(Math::cos(TwoPi * Y / Ly), 2) -
+               Lx * Math::sin(TwoPi * X / Lx) *
+                   Math::pow(Math::sin(TwoPi * Y / Ly), 2)));
    }
 
    KOKKOS_FUNCTION Real scalarA(Real X, Real Y) const {
-      return std::cos(TwoPi * X / Lx) * std::sin(TwoPi * Y / Ly);
+      return Math::cos(TwoPi * X / Lx) * Math::sin(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real scalarB(Real X, Real Y) const {
-      return 2. + std::cos(TwoPi * X / Lx) * std::cos(TwoPi * Y / Ly);
+      return 2. + Math::cos(TwoPi * X / Lx) * Math::cos(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real tracerDiff(Real X, Real Y, Real EddyDiff2) const {
-      return -EddyDiff2 * TwoPi * TwoPi * std::sin(TwoPi * Y / Ly) *
-             (2 * (1 / Lx / Lx + 1 / Ly / Ly) * std::cos(TwoPi * X / Lx) +
+      return -EddyDiff2 * TwoPi * TwoPi * Math::sin(TwoPi * Y / Ly) *
+             (2 * (1 / Lx / Lx + 1 / Ly / Ly) * Math::cos(TwoPi * X / Lx) +
               (1 / Ly / Ly +
-               (1 / Lx / Lx + 1 / Ly / Ly) * std::cos(2 * TwoPi * X / Lx)) *
-                  std::cos(TwoPi * Y / Ly));
+               (1 / Lx / Lx + 1 / Ly / Ly) * Math::cos(2 * TwoPi * X / Lx)) *
+                  Math::cos(TwoPi * Y / Ly));
    }
 
    KOKKOS_FUNCTION Real scalarC(Real X, Real Y) const {
-      return std::pow(std::cos(TwoPi * X / Lx), 2) -
-             std::pow(std::sin(TwoPi * Y / Ly), 2);
+      return Math::pow(Math::cos(TwoPi * X / Lx), 2) -
+             Math::pow(Math::sin(TwoPi * Y / Ly), 2);
    }
 
    KOKKOS_FUNCTION Real tracerHyperDiff(Real X, Real Y, Real EddyDiff4) const {
       return -EddyDiff4 * 2 * TwoPi * TwoPi *
-             (std::cos(2 * TwoPi * X / Lx) / Lx / Lx +
-              std::cos(2 * TwoPi * Y / Ly) / Ly / Ly);
+             (Math::cos(2 * TwoPi * X / Lx) / Lx / Lx +
+              Math::cos(2 * TwoPi * Y / Ly) / Ly / Ly);
    }
 
    KOKKOS_FUNCTION Real sfcStressForcingX(Real X, Real Y) const {
@@ -190,12 +191,12 @@ struct TestSetupPlane {
 
    KOKKOS_FUNCTION Real bottomDragX(Real X, Real Y, Real Coeff) const {
       const Real UVel = vectorX(X, Y);
-      return -Coeff * std::abs(scalarA(X, Y)) / scalarB(X, Y) * UVel;
+      return -Coeff * Math::abs(scalarA(X, Y)) / scalarB(X, Y) * UVel;
    }
 
    KOKKOS_FUNCTION Real bottomDragY(Real X, Real Y, Real Coeff) const {
       const Real VVel = vectorY(X, Y);
-      return -Coeff * std::abs(scalarA(X, Y)) / scalarB(X, Y) * VVel;
+      return -Coeff * Math::abs(scalarA(X, Y)) / scalarB(X, Y) * VVel;
    }
 
 }; // end TestSetupPlane
@@ -243,55 +244,57 @@ struct TestSetupSphere {
    KOKKOS_FUNCTION Real velEdgeY(Real X, Real Y) const { return 3; }
 
    KOKKOS_FUNCTION Real vectorX(Real Lon, Real Lat) const {
-      return -Radius * std::pow(std::sin(Lon), 2) * std::pow(std::cos(Lat), 3);
+      return -Radius * Math::pow(Math::sin(Lon), 2) *
+             Math::pow(Math::cos(Lat), 3);
    }
 
    KOKKOS_FUNCTION Real vectorY(Real Lon, Real Lat) const {
-      return -4 * Radius * std::sin(Lon) * std::cos(Lon) *
-             std::pow(std::cos(Lat), 3) * std::sin(Lat);
+      return -4 * Radius * Math::sin(Lon) * Math::cos(Lon) *
+             Math::pow(Math::cos(Lat), 3) * Math::sin(Lat);
    }
 
    KOKKOS_FUNCTION Real divergence(Real Lon, Real Lat) const {
-      return std::sin(Lon) * std::cos(Lon) * std::pow(std::cos(Lat), 2) *
-             (20 * std::pow(std::sin(Lat), 2) - 6);
+      return Math::sin(Lon) * Math::cos(Lon) * Math::pow(Math::cos(Lat), 2) *
+             (20 * Math::pow(Math::sin(Lat), 2) - 6);
    }
 
    KOKKOS_FUNCTION Real scalar(Real Lon, Real Lat) const {
-      return Radius * std::cos(Lon) * std::pow(std::cos(Lat), 4);
+      return Radius * Math::cos(Lon) * Math::pow(Math::cos(Lat), 4);
    }
 
    KOKKOS_FUNCTION Real gradX(Real Lon, Real Lat) const {
-      return -std::sin(Lon) * std::pow(std::cos(Lat), 3);
+      return -Math::sin(Lon) * Math::pow(Math::cos(Lat), 3);
    }
 
    KOKKOS_FUNCTION Real gradY(Real Lon, Real Lat) const {
-      return -4 * std::cos(Lon) * std::pow(std::cos(Lat), 3) * std::sin(Lat);
+      return -4 * Math::cos(Lon) * Math::pow(Math::cos(Lat), 3) *
+             Math::sin(Lat);
    }
 
    KOKKOS_FUNCTION Real curl(Real Lon, Real Lat) const {
-      return -4 * std::pow(std::cos(Lon), 2) * std::pow(std::cos(Lat), 2) *
-             std::sin(Lat);
+      return -4 * Math::pow(Math::cos(Lon), 2) * Math::pow(Math::cos(Lat), 2) *
+             Math::sin(Lat);
    }
 
    KOKKOS_FUNCTION Real laplaceVecX(Real Lon, Real Lat) const {
-      return std::cos(Lat) *
-             (std::pow(std::sin(Lat), 2) *
-                  (17 - 37 * std::pow(std::sin(Lon), 2)) +
-              11 * std::pow(std::sin(Lon), 2) - 5) /
+      return Math::cos(Lat) *
+             (Math::pow(Math::sin(Lat), 2) *
+                  (17 - 37 * Math::pow(Math::sin(Lon), 2)) +
+              11 * Math::pow(Math::sin(Lon), 2) - 5) /
              Radius;
    }
 
    KOKKOS_FUNCTION Real laplaceVecY(Real Lon, Real Lat) const {
-      return std::sin(Lon) * std::cos(Lon) * std::sin(Lat) * std::cos(Lat) *
-             (96 * std::pow(std::cos(Lat), 2) - 22) / Radius;
+      return Math::sin(Lon) * Math::cos(Lon) * Math::sin(Lat) * Math::cos(Lat) *
+             (96 * Math::pow(Math::cos(Lat), 2) - 22) / Radius;
    }
 
    KOKKOS_FUNCTION Real pseudoThick(Real Lon, Real Lat) const {
-      return (2 + std::cos(Lon) * std::pow(std::cos(Lat), 4));
+      return (2 + Math::cos(Lon) * Math::pow(Math::cos(Lat), 4));
    }
 
    KOKKOS_FUNCTION Real planetaryVort(Real Lon, Real Lat) const {
-      return std::sin(Lat);
+      return Math::sin(Lat);
    }
 
    KOKKOS_FUNCTION Real normRelVort(Real Lon, Real Lat) const {
@@ -303,32 +306,33 @@ struct TestSetupSphere {
    }
 
    KOKKOS_FUNCTION Real tracerFluxDiv(Real Lon, Real Lat) const {
-      return std::sin(Lon) * std::pow(std::cos(Lat), 2) *
-             (std::cos(Lon) * (8 - 20 * std::cos(2 * Lat)) -
-              6 * std::pow(std::cos(Lon), 2) * std::pow(std::cos(Lat), 4) *
-                  (-2 + 3 * std::cos(2 * Lat)) +
-              std::pow(std::cos(Lat), 4) * std::pow(std::sin(Lon), 2));
+      return Math::sin(Lon) * Math::pow(Math::cos(Lat), 2) *
+             (Math::cos(Lon) * (8 - 20 * Math::cos(2 * Lat)) -
+              6 * Math::pow(Math::cos(Lon), 2) * Math::pow(Math::cos(Lat), 4) *
+                  (-2 + 3 * Math::cos(2 * Lat)) +
+              Math::pow(Math::cos(Lat), 4) * Math::pow(Math::sin(Lon), 2));
    }
 
    KOKKOS_FUNCTION Real scalarA(Real Lon, Real Lat) const {
-      return Radius * std::pow(std::sin(Lon), 2) * std::pow(std::cos(Lat), 2);
+      return Radius * Math::pow(Math::sin(Lon), 2) *
+             Math::pow(Math::cos(Lat), 2);
    }
 
    // scalarB is differentiated by the tracer diffusion test, so it must be
    // smooth on the sphere: cos(Lon)*cos(Lat)*sin(Lat) = x*z/R^2 vanishes at
    // the poles, where Lon is undefined.
    KOKKOS_FUNCTION Real scalarB(Real Lon, Real Lat) const {
-      return 2. + std::cos(Lon) * std::cos(Lat) * std::sin(Lat);
+      return 2. + Math::cos(Lon) * Math::cos(Lat) * Math::sin(Lat);
    }
 
    // div(scalarB grad(scalarA)) on the sphere
    KOKKOS_FUNCTION Real tracerDiff(Real Lon, Real Lat, Real EddyDiff2) const {
-      const Real CosLon = std::cos(Lon);
-      const Real SinLon = std::sin(Lon);
-      const Real CosLat = std::cos(Lat);
-      const Real SinLat = std::sin(Lat);
+      const Real CosLon = Math::cos(Lon);
+      const Real SinLon = Math::sin(Lon);
+      const Real CosLat = Math::cos(Lat);
+      const Real SinLat = Math::sin(Lat);
       return 2 * EddyDiff2 *
-             (2 * std::cos(2 * Lon) +
+             (2 * Math::cos(2 * Lon) +
               CosLat * SinLat * CosLon *
                   (CosLon * CosLon - 2 * SinLon * SinLon) -
               SinLon * SinLon *
@@ -339,14 +343,14 @@ struct TestSetupSphere {
    }
 
    KOKKOS_FUNCTION Real scalarC(Real Lon, Real Lat) const {
-      return -(Radius / 2) * std::sqrt(3. / 2. / Pi) * std::cos(Lat) *
-             std::cos(Lon);
+      return -(Radius / 2) * Math::sqrt(3. / 2. / Pi) * Math::cos(Lat) *
+             Math::cos(Lon);
    }
 
    KOKKOS_FUNCTION Real tracerHyperDiff(Real Lon, Real Lat,
                                         Real EddyDiff4) const {
-      return EddyDiff4 * std::sqrt(3. / 2. / Pi) * std::cos(Lat) *
-             std::cos(Lon) / Radius;
+      return EddyDiff4 * Math::sqrt(3. / 2. / Pi) * Math::cos(Lat) *
+             Math::cos(Lon) / Radius;
    }
 
    KOKKOS_FUNCTION Real sfcStressForcingX(Real Lon, Real Lat) const {
@@ -363,12 +367,12 @@ struct TestSetupSphere {
 
    KOKKOS_FUNCTION Real bottomDragX(Real Lon, Real Lat, Real Coeff) const {
       const Real UVel = vectorX(Lon, Lat);
-      return -Coeff * std::abs(scalarA(Lon, Lat)) / scalarB(Lon, Lat) * UVel;
+      return -Coeff * Math::abs(scalarA(Lon, Lat)) / scalarB(Lon, Lat) * UVel;
    }
 
    KOKKOS_FUNCTION Real bottomDragY(Real Lon, Real Lat, Real Coeff) const {
       const Real VVel = vectorY(Lon, Lat);
-      return -Coeff * std::abs(scalarA(Lon, Lat)) / scalarB(Lon, Lat) * VVel;
+      return -Coeff * Math::abs(scalarA(Lon, Lat)) / scalarB(Lon, Lat) * VVel;
    }
 
 }; // end TestSetupSphere
@@ -1203,7 +1207,7 @@ int testBottomDragInactiveEdges(int NVertLayers) {
        KOKKOS_LAMBDA(int IEdge, int K, I4 &Accum) {
           const Real Num = NumBottomDrag(IEdge, K);
           const Real Ref = RefBottomDrag(IEdge, K);
-          if (Num != Ref or Kokkos::isnan(Num) or Kokkos::isinf(Num))
+          if (Num != Ref or Math::isnan(Num) or Math::isinf(Num))
              Accum += 1;
        },
        NumBad);

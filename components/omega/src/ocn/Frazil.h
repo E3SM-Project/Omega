@@ -49,7 +49,7 @@ class FixedPropertyFrazilFormation {
 
       const Real Potential =
           PseudoThickness * Cp0Sw * RhoSw * (ConservTemp - CtFreezing);
-      const Real FreezingEnergy = Kokkos::max(0.0_Real, -Potential);
+      const Real FreezingEnergy = Math::max(0.0_Real, -Potential);
 
       HTend = 0.0_Real;
       TTend = 0.0_Real;
@@ -60,7 +60,7 @@ class FixedPropertyFrazilFormation {
           (LatFrazil * RhoSw); // frazil (ice) mass in pseudo-thickness terms
 
       NewFrzThickness =
-          Kokkos::min(NewFrzThickness, PseudoThickness * LayerMassFracMax);
+          Math::min(NewFrzThickness, PseudoThickness * LayerMassFracMax);
       Real NewFrzEnergy =
           NewFrzThickness *
           (-LatFrazil +
@@ -70,7 +70,7 @@ class FixedPropertyFrazilFormation {
       // MANUAL TOGGLE: uncomment line below to use porosity
       // const Real FrazilIceSalinity = FrazilPorosity * AbsSalinity;
 
-      const Real FrazilSalinity = Kokkos::min(FrazilIceSalinity, AbsSalinity);
+      const Real FrazilSalinity = Math::min(FrazilIceSalinity, AbsSalinity);
       const Real NewSaltContent =
           NewFrzThickness * FrazilSalinity; // in m.(g/kg)
 
@@ -113,7 +113,7 @@ class FixedPropertyFrazilMelt {
       }
       const Real Potential =
           PseudoThickness * Cp0Sw * RhoSw * (ConservTemp - CtFreezing);
-      const Real AvailableEnergy = Kokkos::max(0.0_Real, Potential);
+      const Real AvailableEnergy = Math::max(0.0_Real, Potential);
 
       HTend = 0.0_Real;
       TTend = 0.0_Real;
@@ -122,8 +122,8 @@ class FixedPropertyFrazilMelt {
       Real MeltThickness =
           AvailableEnergy /
           (LatFrazil * RhoSw); // mass in pseudo-thickness units
-      MeltThickness = Kokkos::min(MeltThickness, SumIceThickness);
-      MeltThickness = Kokkos::min(
+      MeltThickness = Math::min(MeltThickness, SumIceThickness);
+      MeltThickness = Math::min(
           MeltThickness,
           PseudoThickness * LayerMassFracMax); // also 0.1h lim on added mass
       const Real FrazilFractionMelted =
@@ -234,13 +234,13 @@ class FrazilMelt {
 
       // 3. we calculate the mass fraction of the frazil (pure) ice that was
       // melted - limited by a total mass limit of 0.1h
-      const Real SolidMassMelted = Kokkos::max(
+      const Real SolidMassMelted = Math::max(
           0.0_Real,
           AccMIce - WIhOut * NewLayerMass); // original - left-over solid ice,
       const Real FrazilFractionMelted =
-          Kokkos::min(SolidMassMelted / AccMIce,
-                      PseudoThickness * LayerMassFracMax /
-                          (AccMIce + AccMLiq)); // added mass < 0.1h
+          Math::min(SolidMassMelted / AccMIce,
+                    PseudoThickness * LayerMassFracMax /
+                        (AccMIce + AccMLiq)); // added mass < 0.1h
 
       // the frazil fraction based on the solid ice also sets the (proportional)
       // contributions from the frazil brine
@@ -318,11 +318,11 @@ class FrazilFormation {
       ConservTempNew = static_cast<Real>(CTNew_d);
       WIh            = static_cast<Real>(WIh_d);
 
-      const Real OneMinusPhi = Kokkos::max(1.0e-12_Real, 1.0_Real - Phi);
+      const Real OneMinusPhi = Math::max(1.0e-12_Real, 1.0_Real - Phi);
       // anything called mass below is in pseudo-thickness units (m) and needs
       // to be scaled by RhoSw for coupling
       SolidMass =
-          PseudoThickness * Kokkos::min(WIh, OneMinusPhi * LayerMassFracMax);
+          PseudoThickness * Math::min(WIh, OneMinusPhi * LayerMassFracMax);
       LiquidMass     = (Phi / OneMinusPhi) * SolidMass;
       SolidEnthalpy  = SolidMass * gsw_pot_enthalpy_from_pt_ice_poly(PTNew_d);
       LiquidEnthalpy = LiquidMass * Cp0Sw * ConservTempNew;

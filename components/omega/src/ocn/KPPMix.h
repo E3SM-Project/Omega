@@ -21,6 +21,7 @@
 #include "HorzOperators.h"
 #include "KPPConstants.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 #include "SurfaceFlux.h"
 #include "TimeMgr.h"
@@ -80,7 +81,7 @@ class PotentialDensityOnCell {
                                    I4 ICell, I4 K,
                                    const Array2DReal &SpecVolDisplaced) const {
       PotentialDensity(ICell, K) =
-          1.0_Real / Kokkos::max(1.0e-12_Real, SpecVolDisplaced(ICell, K));
+          1.0_Real / Math::max(1.0e-12_Real, SpecVolDisplaced(ICell, K));
    }
 };
 
@@ -110,11 +111,10 @@ class KPPSurfaceForcingOnCell {
       if (KTop < 0 || KTop >= NVertLayers)
          return;
 
-      const Real TauMag = Kokkos::sqrt(ZonalStress(ICell) * ZonalStress(ICell) +
-                                       MeridStress(ICell) * MeridStress(ICell));
-      FrictionVelocity(ICell) =
-          Kokkos::sqrt(Kokkos::max(0.0_Real, TauMag / RhoSw));
-      BuoyancyFlux(ICell) = 0.0_Real;
+      const Real TauMag = Math::sqrt(ZonalStress(ICell) * ZonalStress(ICell) +
+                                     MeridStress(ICell) * MeridStress(ICell));
+      FrictionVelocity(ICell) = Math::sqrt(Math::max(0.0_Real, TauMag / RhoSw));
+      BuoyancyFlux(ICell)     = 0.0_Real;
       if (!UseTracerForcing)
          return;
 
@@ -132,7 +132,7 @@ class KPPSurfaceForcingOnCell {
       const Real TempFlux = HeatFlux * HFluxFac;
       const Real SaltFlux =
           SeaIceSaltFlux(ICell) * SFluxFac - FreshWaterFlux * SaTop / RhoSw;
-      const Real SpVol = Kokkos::max(1.0e-12_Real, SpecVol(ICell, KTop));
+      const Real SpVol = Math::max(1.0e-12_Real, SpecVol(ICell, KTop));
       // LinearDRhodT/LinearDRhodS are ignored unless EosChoice is LinearEos.
       const Real Alpha = Eos::computeAlpha(EosChoice, SaTop, CtTop, PTopDb,
                                            SpVol, LinearDRhodT);
@@ -218,11 +218,11 @@ class KPPOSBLDepthSearch {
       // Vt^2 = Cv * sqrt(-beta_T/(c_s*eps)) / (kappa^2 * Ri_crit) * d*N*w_s
       // CSUnres is c_s for the strongly-unstable scalar branch and VtCoef
       // collects the constant prefactor.
-      const Real CSUnres = 24.0_Real * Kokkos::sqrt(17.0_Real);
+      const Real CSUnres = 24.0_Real * Math::sqrt(17.0_Real);
       const Real VtCoef =
-          Kokkos::sqrt(0.2_Real / Kokkos::fmax(KPP::NumericalTolerance,
-                                               CSUnres * SurfaceLayerExtent)) /
-          (VonKar * VonKar);
+          Math::sqrt(0.2_Real / Math::max(KPP::NumericalTolerance,
+                                          CSUnres * SurfaceLayerExtent)) /
+          Math::pow<2>(VonKar);
 
       // ----------------------------------------------------------------
       // Edge weights are the MPAS triangle areas formed between the
@@ -262,7 +262,7 @@ class KPPOSBLDepthSearch {
       // Cell surface-layer density average
       I4 KSurfaceAvg = KMin;
       const Real ThickTop =
-          Kokkos::abs(ZInterface(ICell, KMin + 1) - ZInterface(ICell, KMin));
+          Math::abs(ZInterface(ICell, KMin + 1) - ZInterface(ICell, KMin));
       Real SumThickness = ThickTop;
       Real SumRho       = PotentialDensity(ICell, KMin) * SumThickness;
 
@@ -282,14 +282,14 @@ class KPPOSBLDepthSearch {
          const I4 JCell  = CellsOnCell(ICell, J);
          const I4 KEMin  = MinLayerEdgeBot(IEdge);
          KSurfE[J]       = KEMin;
-         const I4 KIntE0 = Kokkos::min(KEMin + 1, NVertLayers);
+         const I4 KIntE0 = Math::min(KEMin + 1, NVertLayers);
          const Real ZEdgeTop =
              0.5_Real * (ZInterface(ICell, KEMin) + ZInterface(JCell, KEMin));
          const Real ZEdgeBot =
              0.5_Real * (ZInterface(ICell, KIntE0) + ZInterface(JCell, KIntE0));
-         const Real Thick0 = Kokkos::abs(ZEdgeBot - ZEdgeTop);
+         const Real Thick0 = Math::abs(ZEdgeBot - ZEdgeTop);
          SumThickE[J]      = Thick0;
-         const I4 KE0      = Kokkos::min(KEMin, NVertLayers - 1);
+         const I4 KE0      = Math::min(KEMin, NVertLayers - 1);
          SumUnE[J]         = NormalVelocity(IEdge, KE0) * SumThickE[J];
          SumVtE[J]         = TangentialVelocity(IEdge, KE0) * SumThickE[J];
       }
@@ -307,9 +307,9 @@ class KPPOSBLDepthSearch {
          while (KSurfaceAvg < K &&
                 (Ssh - ZInterface(ICell, KSurfaceAvg + 1)) < SurfLayerDepth) {
             ++KSurfaceAvg;
-            const I4 KSA      = Kokkos::min(KSurfaceAvg, NVertLayers - 1);
-            const Real DZ     = Kokkos::abs(ZInterface(ICell, KSurfaceAvg + 1) -
-                                            ZInterface(ICell, KSurfaceAvg));
+            const I4 KSA      = Math::min(KSurfaceAvg, NVertLayers - 1);
+            const Real DZ     = Math::abs(ZInterface(ICell, KSurfaceAvg + 1) -
+                                          ZInterface(ICell, KSurfaceAvg));
             const Real ThickK = DZ;
             SumThickness += ThickK;
             SumRho += PotentialDensity(ICell, KSA) * ThickK;
@@ -329,14 +329,14 @@ class KPPOSBLDepthSearch {
                                           ZInterface(JCell, KSurfE[J] + 1))) <
                        SurfLayerDepth) {
                ++KSurfE[J];
-               const I4 KE = Kokkos::min(
-                   Kokkos::max(KSurfE[J], MinLayerEdgeBot(IEdge)), KEMax);
+               const I4 KE = Math::min(
+                   Math::max(KSurfE[J], MinLayerEdgeBot(IEdge)), KEMax);
                const Real ZEdgeTop = 0.5_Real * (ZInterface(ICell, KSurfE[J]) +
                                                  ZInterface(JCell, KSurfE[J]));
                const Real ZEdgeBot =
                    0.5_Real * (ZInterface(ICell, KSurfE[J] + 1) +
                                ZInterface(JCell, KSurfE[J] + 1));
-               const Real DZ     = Kokkos::abs(ZEdgeBot - ZEdgeTop);
+               const Real DZ     = Math::abs(ZEdgeBot - ZEdgeTop);
                const Real ThickK = DZ;
                SumThickE[J] += ThickK;
                SumUnE[J] += NormalVelocity(IEdge, KE) * ThickK;
@@ -366,7 +366,7 @@ class KPPOSBLDepthSearch {
             const I4 IEdge       = EdgesOnCell(ICell, J);
             const I4 KEMin       = MinLayerEdgeBot(IEdge);
             const I4 KEMax       = MaxLayerEdgeTop(IEdge);
-            const I4 KE          = Kokkos::min(Kokkos::max(K, KEMin), KEMax);
+            const I4 KE          = Math::min(Math::max(K, KEMin), KEMax);
             const Real InvThickE = 1.0_Real / SumThickE[J];
             const Real UnAvg     = SumUnE[J] * InvThickE;
             const Real VtAvg     = SumVtE[J] * InvThickE;
@@ -374,7 +374,7 @@ class KPPOSBLDepthSearch {
             const Real VtK       = TangentialVelocity(IEdge, KE);
             const Real DUn       = UnK - UnAvg;
             const Real DVt       = VtK - VtAvg;
-            const Real EdgeShear = DUn * DUn + DVt * DVt;
+            const Real EdgeShear = Math::pow<2>(DUn) + Math::pow<2>(DVt);
             DeltaVSq += EdgeWeights[J] * EdgeShear;
             EdgeWeightSum += EdgeWeights[J];
          }
@@ -386,9 +386,9 @@ class KPPOSBLDepthSearch {
          // Turbulent scalar velocity scale w_s at the surface-layer depth
          Real WTurb = 0.0_Real;
          if (UStar > KPP::NumericalTolerance) {
-            const Real U3   = UStar * UStar * UStar;
+            const Real U3   = Math::pow<3>(UStar);
             const Real Zeta = SurfaceLayerExtent * ZDepth * VonKar *
-                              BuoyFluxEff / Kokkos::fmax(U3, KPP::Tiny);
+                              BuoyFluxEff / Math::max(U3, KPP::Tiny);
             // kppPhiInvScalar is positive over its whole domain.
             WTurb = VonKar * UStar * KPP::kppPhiInvScalar(Zeta);
          } else if (BuoyFluxEff < 0.0_Real) {
@@ -396,17 +396,17 @@ class KPPOSBLDepthSearch {
             const Real CS = KPP::CMoS;
             const Real WS3 =
                 -CS * SurfaceLayerExtent * ZDepth * VonKar * BuoyFluxEff;
-            WTurb = VonKar * Kokkos::pow(Kokkos::max(WS3, 0.0_Real),
-                                         1.0_Real / 3.0_Real);
+            WTurb = VonKar *
+                    Math::pow(Math::max(WS3, 0.0_Real), 1.0_Real / 3.0_Real);
          }
 
          // Unresolved turbulent shear Vt^2 (m^2/s^2), Large et al. Eq.
          // (23). Cv ramps from 2.1 to 1.7 as stratification strengthens.
-         const Real NInt = Kokkos::sqrt(
-             Kokkos::max(0.0_Real, BruntVaisalaFreqSq(ICell, KInt)));
+         const Real NInt =
+             Math::sqrt(Math::max(0.0_Real, BruntVaisalaFreqSq(ICell, KInt)));
          const Real Cv =
              (NInt < 0.002_Real) ? (2.1_Real - 200.0_Real * NInt) : 1.7_Real;
-         const Real Vt2 = Kokkos::fmax(
+         const Real Vt2 = Math::max(
              KPP::MinUnresolvedShearSq,
              // CriticalRichardson is clamped positive once in KPPMix::init().
              Cv * VtCoef * ZCenter * NInt * WTurb / RiCritical);
@@ -458,7 +458,7 @@ class KPPOSBLDepthSearch {
                   const Real ZPrev  = Ssh - ZMid(ICell, KPrev);
                   const Real RiPrev = BulkRichardsonNumber(ICell, KPrevRi);
                   const Real DZPrev = ZAbove - ZPrev;
-                  if (Kokkos::abs(DZPrev) > KPP::NumericalTolerance) {
+                  if (Math::abs(DZPrev) > KPP::NumericalTolerance) {
                      SlopeAbove = (RiAbove - RiPrev) / DZPrev;
                   }
                }
@@ -468,24 +468,24 @@ class KPPOSBLDepthSearch {
                // fixed by requiring Ri(H) = RiBelow. The OSBL base is the
                // root of Ri(T) = RiCritical.
                const Real QuadA =
-                   (RiBelow - RiAbove - SlopeAbove * H) / (H * H);
+                   (RiBelow - RiAbove - SlopeAbove * H) / Math::pow<2>(H);
                const Real QuadC = RiAbove - RiCritical;
 
                Real TCross = H;
-               if (Kokkos::abs(QuadA) < 1.0e-14_Real) {
+               if (Math::abs(QuadA) < 1.0e-14_Real) {
                   // Degenerate quadratic -> linear fallback.
                   const Real DRi = RiBelow - RiAbove;
-                  if (Kokkos::abs(DRi) > KPP::NumericalTolerance) {
-                     const Real Frac = Kokkos::fmax(
+                  if (Math::abs(DRi) > KPP::NumericalTolerance) {
+                     const Real Frac = Math::max(
                          0.0_Real,
-                         Kokkos::fmin(1.0_Real, (RiCritical - RiAbove) / DRi));
+                         Math::min(1.0_Real, (RiCritical - RiAbove) / DRi));
                      TCross = Frac * H;
                   }
                } else {
                   const Real Disc =
-                      SlopeAbove * SlopeAbove - 4.0_Real * QuadA * QuadC;
+                      Math::pow<2>(SlopeAbove) - 4.0_Real * QuadA * QuadC;
                   if (Disc >= 0.0_Real) {
-                     const Real SqrtDisc = Kokkos::sqrt(Disc);
+                     const Real SqrtDisc = Math::sqrt(Disc);
                      const Real T1 =
                          (-SlopeAbove + SqrtDisc) / (2.0_Real * QuadA);
                      const Real T2 =
@@ -497,10 +497,9 @@ class KPPOSBLDepthSearch {
                         // Both roots lie in the interval; prefer the one
                         // nearest mid-interval, as CVMix does.
                         const Real Mid = 0.5_Real * H;
-                        TCross =
-                            (Kokkos::abs(T1 - Mid) <= Kokkos::abs(T2 - Mid))
-                                ? T1
-                                : T2;
+                        TCross = (Math::abs(T1 - Mid) <= Math::abs(T2 - Mid))
+                                     ? T1
+                                     : T2;
                      } else if (T1Ok) {
                         TCross = T1;
                      } else if (T2Ok) {
@@ -511,7 +510,7 @@ class KPPOSBLDepthSearch {
                   }
                }
 
-               TCross   = Kokkos::fmax(0.0_Real, Kokkos::fmin(H, TCross));
+               TCross   = Math::max(0.0_Real, Math::min(H, TCross));
                OBLDepth = ZAbove + TCross;
             } else {
                OBLDepth = ZBelow;
@@ -526,7 +525,7 @@ class KPPOSBLDepthSearch {
       }
 
       const Real TopLayerThickness =
-          Kokkos::abs(ZInterface(ICell, KIntTop) - ZInterface(ICell, KMin));
+          Math::abs(ZInterface(ICell, KIntTop) - ZInterface(ICell, KMin));
       const Real MinOBLDepth = TopLayerThickness;
       const Real MaxOBLDepth = Ssh - ZMid(ICell, KMax);
       // Impose chosen limits on the depth of the OSBL
@@ -625,7 +624,7 @@ class KPPOSBLCommit {
 
       const I4 KIntTop = KMin + 1;
       const Real TopLayerThickness =
-          Kokkos::abs(ZInterface(ICell, KIntTop) - ZInterface(ICell, KMin));
+          Math::abs(ZInterface(ICell, KIntTop) - ZInterface(ICell, KMin));
       const Real MinOBLDepth = TopLayerThickness;
       const Real MaxOBLDepth = Ssh - ZMid(ICell, KMax);
 
@@ -707,7 +706,7 @@ class KPPMixingCoeffs {
       if (KMin < 0 || KMin >= NVertLayers || KMax < KMin) {
          return;
       }
-      const I4 KMatch = Kokkos::min(KMax + 1, OSBLDepthIndex(ICell) + 1);
+      const I4 KMatch = Math::min(KMax + 1, OSBLDepthIndex(ICell) + 1);
 
       // KPP depths are measured below the free surface, so geometric
       // heights must be offset by the sea surface height.
@@ -726,15 +725,15 @@ class KPPMixingCoeffs {
          if (ZDepth <= H && H > 0.0_Real) {
             // Normalized depth in Omega sign convention: sigma in [-1,0].
             Real Sigma = -ZDepth / H;
-            Sigma      = Kokkos::fmax(-1.0_Real, Kokkos::fmin(0.0_Real, Sigma));
+            Sigma      = Math::max(-1.0_Real, Math::min(0.0_Real, Sigma));
 
             // CVMix-style turbulent scales: w = kappa*u*/phi in general,
             // with explicit free-convection limits when u*=0. The scales
             // are frozen at the surface-layer depth below the surface
             // layer, so SigmaLoc is capped at SurfaceLayerExtent.
             const Real SigmaCoord = -Sigma; // [0,1]
-            const Real SigmaLoc   = Kokkos::fmin(
-                SurfaceLayerExtent, Kokkos::fmax(0.0_Real, SigmaCoord));
+            const Real SigmaLoc =
+                Math::min(SurfaceLayerExtent, Math::max(0.0_Real, SigmaCoord));
 
             Real WMTurb = 0.0_Real;
             Real WSTurb = 0.0_Real;
@@ -806,28 +805,27 @@ class KPPMixingCoeffs {
       // there, weighted by where H falls between the two cell centers.
       if (UseEnhancedDiffusion && H > 0.0_Real) {
          const I4 KOBL =
-             Kokkos::max(KMin, Kokkos::min(OSBLDepthIndex(ICell), KMax));
+             Math::max(KMin, Math::min(OSBLDepthIndex(ICell), KMax));
          const Real ZMidOBL = Ssh - ZMid(ICell, KOBL);
 
          const bool TargetOutsideOSBL = H >= ZMidOBL;
-         const I4 KKtup =
-             TargetOutsideOSBL ? KOBL : Kokkos::max(KMin, KOBL - 1);
-         const I4 KTarget = TargetOutsideOSBL ? Kokkos::min(KOBL + 1, KMax + 1)
-                                              : Kokkos::max(KMin + 1, KOBL);
+         const I4 KKtup = TargetOutsideOSBL ? KOBL : Math::max(KMin, KOBL - 1);
+         const I4 KTarget = TargetOutsideOSBL ? Math::min(KOBL + 1, KMax + 1)
+                                              : Math::max(KMin + 1, KOBL);
 
          const Real ZKtup = Ssh - ZMid(ICell, KKtup);
          const Real ZNext = (KKtup < KMax)
                                 ? (Ssh - ZMid(ICell, KKtup + 1))
                                 : (Ssh - ZInterface(ICell, KKtup + 1));
-         const Real Delta = Kokkos::fmax(
-             0.0_Real, Kokkos::fmin(1.0_Real, (H - ZKtup) / (ZNext - ZKtup)));
+         const Real Delta = Math::max(
+             0.0_Real, Math::min(1.0_Real, (H - ZKtup) / (ZNext - ZKtup)));
          const Real OneMinusDelta = 1.0_Real - Delta;
 
          Real SigmaKtup = -ZKtup / H;
-         SigmaKtup = Kokkos::fmax(-1.0_Real, Kokkos::fmin(0.0_Real, SigmaKtup));
+         SigmaKtup      = Math::max(-1.0_Real, Math::min(0.0_Real, SigmaKtup));
          const Real SigmaCoord = -SigmaKtup;
-         const Real SigmaLoc   = Kokkos::fmin(SurfaceLayerExtent,
-                                              Kokkos::fmax(0.0_Real, SigmaCoord));
+         const Real SigmaLoc =
+             Math::min(SurfaceLayerExtent, Math::max(0.0_Real, SigmaCoord));
 
          Real WMKtup = 0.0_Real;
          Real WSKtup = 0.0_Real;
@@ -855,10 +853,10 @@ class KPPMixingCoeffs {
          const Real ViscProfile = VertVisc(ICell, KTarget);
          const Real DiffProfile = VertDiff(ICell, KTarget);
 
-         const Real EnhVisc = OneMinusDelta * OneMinusDelta * ViscKtup +
-                              Delta * Delta * ViscProfile;
-         const Real EnhDiff = OneMinusDelta * OneMinusDelta * DiffKtup +
-                              Delta * Delta * DiffProfile;
+         const Real EnhVisc = Math::pow<2>(OneMinusDelta) * ViscKtup +
+                              Math::pow<2>(Delta) * ViscProfile;
+         const Real EnhDiff = Math::pow<2>(OneMinusDelta) * DiffKtup +
+                              Math::pow<2>(Delta) * DiffProfile;
 
          const Real OldVisc =
              UseInteriorMix ? InteriorVertVisc(ICell, KTarget) : 0.0_Real;

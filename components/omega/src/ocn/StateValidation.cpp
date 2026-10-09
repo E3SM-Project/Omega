@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "StateValidation.h"
+#include "MathUtils.h"
 
 #include "AuxiliaryState.h"
 #include "Config.h"
@@ -89,7 +90,7 @@ static std::pair<I4, I4> checkArray2D(const Array2DReal &Arr, I4 NRows,
              return;
           }
           Real Val = Arr(Row, Col);
-          if (Kokkos::isnan(Val)) {
+          if (Math::isnan(Val)) {
              ++Accum;
           }
        },
@@ -102,7 +103,7 @@ static std::pair<I4, I4> checkArray2D(const Array2DReal &Arr, I4 NRows,
              return;
           }
           Real Val = Arr(Row, Col);
-          if (!Kokkos::isnan(Val)) {
+          if (!Math::isnan(Val)) {
              if (Val > MaxVal) {
                 ++Accum;
              } else if (CheckMin && Val < MinVal) {
@@ -133,7 +134,7 @@ static std::pair<I4, I4> checkTracerArray(const Array3DReal &Tracers3D,
              return;
           }
           Real Val = Tracers3D(TracerIdx, Cell, K);
-          if (Kokkos::isnan(Val)) {
+          if (Math::isnan(Val)) {
              ++Accum;
           }
        },
@@ -146,7 +147,7 @@ static std::pair<I4, I4> checkTracerArray(const Array3DReal &Tracers3D,
              return;
           }
           Real Val = Tracers3D(TracerIdx, Cell, K);
-          if (!Kokkos::isnan(Val)) {
+          if (!Math::isnan(Val)) {
              if (Val < MinVal || Val > MaxVal) {
                 ++Accum;
              }
