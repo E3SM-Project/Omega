@@ -18,6 +18,7 @@
 #include "GlobalConstants.h"
 #include "KPPConstants.h"
 #include "Logging.h"
+#include "MathUtils.h"
 #include "OceanState.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
@@ -183,11 +184,11 @@ void KPPMix::init() {
                         DefKPPMix->CriticalRichardson);
    // Clamp once here so kernels can trust CriticalRichardson is positive
    DefKPPMix->CriticalRichardson =
-       Kokkos::fmax(KPP::NumericalTolerance, DefKPPMix->CriticalRichardson);
+       Math::max(KPP::NumericalTolerance, DefKPPMix->CriticalRichardson);
    Err += KPPConfig.get("SurfaceLayerExtent", DefKPPMix->SurfaceLayerExtent);
    // Clamp once here so kernels can trust SurfaceLayerExtent is in [0,1]
-   DefKPPMix->SurfaceLayerExtent = Kokkos::fmax(
-       0.0_Real, Kokkos::fmin(1.0_Real, DefKPPMix->SurfaceLayerExtent));
+   DefKPPMix->SurfaceLayerExtent =
+       Math::max(0.0_Real, Math::min(1.0_Real, DefKPPMix->SurfaceLayerExtent));
 
    // KPP matching/profile semantics.
    std::string MatchStr = "SimpleShapes";
@@ -467,8 +468,8 @@ void KPPMix::logDiagnostics(const Array2DReal &PotentialDensity,
    int MaxVertViscCell = -1;
    int MaxVertViscK    = -1;
    for (int C = 0; C < NCellsAll; ++C) {
-      const Real AbsB0    = Kokkos::abs(B0H(C));
-      const Real AbsUStar = Kokkos::abs(UStarH(C));
+      const Real AbsB0    = Math::abs(B0H(C));
+      const Real AbsUStar = Math::abs(UStarH(C));
       if (AbsB0 > MaxAbsB0) {
          MaxAbsB0     = AbsB0;
          MaxAbsB0Cell = C;
@@ -504,10 +505,10 @@ void KPPMix::logDiagnostics(const Array2DReal &PotentialDensity,
       return;
    }
 
-   const int KSurf     = Kokkos::min(KMin, NVertLayers - 1);
+   const int KSurf     = Math::min(KMin, NVertLayers - 1);
    const Real RhoSurf  = DensityH(ICell, KSurf);
    const Real UStar    = UStarH(ICell);
-   const Real UStarEff = Kokkos::fmax(KPP::MinUStar, UStar);
+   const Real UStarEff = Math::max(KPP::MinUStar, UStar);
    const Real BuoyFlux = B0H(ICell);
    Real Wind10m        = 0.0_Real;
    if (WindSpeed10m.extent(0) > 0) {
@@ -520,16 +521,16 @@ void KPPMix::logDiagnostics(const Array2DReal &PotentialDensity,
            : 1.0_Real;
    const Real BuoyFluxEff = BuoyFlux * LangmuirFactor;
 
-   const int KOblIface = Kokkos::min(
-       NVertLayers, Kokkos::max(KMin, static_cast<int>(OSBLIndexH(ICell)) + 1));
+   const int KOblIface = Math::min(
+       NVertLayers, Math::max(KMin, static_cast<int>(OSBLIndexH(ICell)) + 1));
 
-   const int KTop   = Kokkos::min(KMax, KMin + 3);
+   const int KTop   = Math::min(KMax, KMin + 3);
    const int KOSBL  = OSBLIndexH(ICell);
    const Real HOSBL = OSBLDepthH(ICell);
 
    for (int K = KMin; K <= KTop; ++K) {
-      const int KCell   = Kokkos::min(K, NVertLayers - 1);
-      const int KIface  = Kokkos::min(K + 1, NVertLayers);
+      const int KCell   = Math::min(K, NVertLayers - 1);
+      const int KIface  = Math::min(K + 1, NVertLayers);
       const Real ZDepth = SshCellH(ICell) - ZInterfaceH(ICell, KIface);
 
       const Real RhoK     = DensityH(ICell, KCell);
@@ -538,22 +539,22 @@ void KPPMix::logDiagnostics(const Array2DReal &PotentialDensity,
       const Real WTurb =
           computeTurbVelocityScale(UStarEff, BuoyFluxEff, ZDepth);
       const Real RiBulk =
-          DeltaB * ZDepth / (WTurb * WTurb + KPP::NumericalTolerance);
+          DeltaB * ZDepth / (Math::pow<2>(WTurb) + KPP::NumericalTolerance);
 
       Real Sigma = 0.0_Real;
       if (K <= KOSBL) {
          Sigma = -1.0_Real * static_cast<Real>(K - KMin) /
                  static_cast<Real>(KOSBL - KMin + 1);
-         Sigma = Kokkos::fmax(-1.0_Real, Kokkos::fmin(0.0_Real, Sigma));
+         Sigma = Math::max(-1.0_Real, Math::min(0.0_Real, Sigma));
       }
 
       // Monin-Obukhov coordinate zeta = d/L at this depth
       const Real ZLocal = -Sigma * HOSBL;
       Real Zeta         = 0.0_Real;
       const Real Denom  = VonKar * BuoyFlux;
-      if (Kokkos::abs(Denom) > 1.0e-16_Real) {
-         const Real LMoninObukhov = (UStarEff * UStarEff * UStarEff) / Denom;
-         if (Kokkos::abs(LMoninObukhov) > 1.0e-16_Real) {
+      if (Math::abs(Denom) > 1.0e-16_Real) {
+         const Real LMoninObukhov = Math::pow<3>(UStarEff) / Denom;
+         if (Math::abs(LMoninObukhov) > 1.0e-16_Real) {
             Zeta = ZLocal / LMoninObukhov;
          }
       }

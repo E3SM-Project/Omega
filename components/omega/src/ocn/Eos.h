@@ -15,6 +15,7 @@
 #include "GlobalConstants.h"
 #include "HorzMesh.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 #include "TimeMgr.h"
 #include "VertCoord.h"
@@ -81,8 +82,8 @@ class Teos10Eos {
                     calcDelta(SpecVolPCoeffs, Pressure(ICell, K) * Pa2Db);
              } else {
                 // Displacement, use the displaced pressure
-                I4 KTmp = Kokkos::min(K + KDisp, KMax);
-                KTmp    = Kokkos::max(KMin, KTmp);
+                I4 KTmp = Math::min(K + KDisp, KMax);
+                KTmp    = Math::max(KMin, KTmp);
                 SpecVol(ICell, K) =
                     calcRefProfile(Pressure(ICell, KTmp) * Pa2Db) +
                     calcDelta(SpecVolPCoeffs, Pressure(ICell, KTmp) * Pa2Db);
@@ -94,7 +95,7 @@ class Teos10Eos {
    /// Calculate pressure polynomial coefficients for TEOS-10
    KOKKOS_FUNCTION void calcPCoeffs(Real (&SpecVolPCoeffs)[6], const Real Ct,
                                     const Real Sa) const {
-      Real Ss = Kokkos::sqrt((Sa + DeltaS) / SaNorm);
+      Real Ss = Math::sqrt((Sa + DeltaS) / SaNorm);
       Real Tt = Ct / CtNorm;
 
       /// Coefficients for the polynomial expansion
@@ -504,7 +505,7 @@ class Teos10Eos {
       Real DTtPCoeffs[5];
       Real DSsPCoeffs[5];
 
-      const Real Ss  = Kokkos::sqrt((Sa + DeltaS) / SaNorm);
+      const Real Ss  = Math::sqrt((Sa + DeltaS) / SaNorm);
       const Real Tt  = Ct / CtNorm;
       const Real Pdb = P * Pa2Db;
 
@@ -549,7 +550,7 @@ class Teos10Eos {
    /// Calculate 2nd derivative of Gibbs wrt pot temp at ref P for TEOS-10
    KOKKOS_FUNCTION Real calcGibbsDerivPt0Pt0(Real Sa, Real P) const {
       Real x2 = Sfac * Sa;
-      Real x  = Kokkos::sqrt(x2);
+      Real x  = Math::sqrt(x2);
       Real y  = P * 0.025;
 
       Real g03 =
@@ -619,7 +620,7 @@ class Teos10Eos {
       Real x2, x, y, pot_enthalpy;
 
       x2 = Sfac * Sa;
-      x  = Kokkos::sqrt(x2);
+      x  = Math::sqrt(x2);
       y  = Pt * 0.025e0; /*! normalize for F03 and F08 */
       pot_enthalpy =
           61.01362420681071e0 +
@@ -695,7 +696,7 @@ class Teos10Eos {
       constexpr Real B = 0.057000649899720;
 
       Real Sar = Sa * 1.0e-2;
-      Real X   = Kokkos::sqrt(Sar);
+      Real X   = Math::sqrt(Sar);
       Real Pr  = P * 1.0e-4;
 
       Real CtFreez =
@@ -769,8 +770,8 @@ class LinearEos {
                                         DRhodS * AbsSalinity(ICell, K)));
 
              SpecVol(ICell, K)    = Sv;
-             SpecVolDCt(ICell, K) = -DRhodT * Sv * Sv;
-             SpecVolDSa(ICell, K) = -DRhodS * Sv * Sv;
+             SpecVolDCt(ICell, K) = -DRhodT * Math::pow<2>(Sv);
+             SpecVolDSa(ICell, K) = -DRhodS * Math::pow<2>(Sv);
              SpecVolDP(ICell, K)  = 0.0_Real;
           });
    }
@@ -868,7 +869,7 @@ class Teos10BruntVaisalaFreqSq {
              Real DCt      = ConservTemp(ICell, K) - ConservTemp(ICell, K - 1);
              Real DP       = Pressure(ICell, K) - Pressure(ICell, K - 1);
 
-             BruntVaisalaFreqSq(ICell, K) = Gravity * Gravity *
+             BruntVaisalaFreqSq(ICell, K) = Math::pow<2>(Gravity) *
                                             (BetaInt * DSa - AlphaInt * DCt) /
                                             (SpInt * DP);
           });
@@ -894,8 +895,7 @@ class Teos10BruntVaisalaFreqSq {
 
       Real DTtPCoeffs[5];
 
-      const Real Ss =
-          Kokkos::sqrt((Sa + Teos10Eos::DeltaS) / Teos10Eos::SaNorm);
+      const Real Ss = Math::sqrt((Sa + Teos10Eos::DeltaS) / Teos10Eos::SaNorm);
       const Real Tt = Ct / Teos10Eos::CtNorm;
 
       Teos10Eos::calcPCoeffsDTt(DTtPCoeffs, Ss, Tt);
@@ -914,8 +914,7 @@ class Teos10BruntVaisalaFreqSq {
 
       Real DSsPCoeffs[5];
 
-      const Real Ss =
-          Kokkos::sqrt((Sa + Teos10Eos::DeltaS) / Teos10Eos::SaNorm);
+      const Real Ss = Math::sqrt((Sa + Teos10Eos::DeltaS) / Teos10Eos::SaNorm);
       const Real Tt = Ct / Teos10Eos::CtNorm;
 
       Teos10Eos::calcPCoeffsDSs(DSsPCoeffs, Ss, Tt);

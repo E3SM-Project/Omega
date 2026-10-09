@@ -9,6 +9,7 @@
 #include "Error.h"
 #include "GlobalConstants.h"
 #include "Logging.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 
 #include <algorithm>
@@ -137,7 +138,7 @@ I4 SplitExplicitInit::computeSubcycleCount(const TimeInterval &TimeStep,
    }
 
    return std::max<I4>(
-       1, static_cast<I4>(std::ceil(TimeStepSeconds / BtrTimeStepSeconds)));
+       1, static_cast<I4>(Math::ceil(TimeStepSeconds / BtrTimeStepSeconds)));
 }
 
 //------------------------------------------------------------------------------

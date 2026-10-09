@@ -20,6 +20,7 @@
 #include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OceanTestCommon.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
@@ -217,12 +218,12 @@ int main(int argc, char *argv[]) {
               K < DefVertCoord->MaxLayerCellH(ICell) + 1; K++) {
             // Interface pressure at layer K should be K+1
             Real Expected = K + 1;
-            if (!isApprox(PressInterfH(ICell, K), Expected, RTol, ATol)) {
+            if (!Math::isApprox(PressInterfH(ICell, K), Expected, RTol, ATol)) {
                Err += 1;
             }
             // Mid pressures at layer K should be K+1.5
             Expected = K + 1.5;
-            if (!isApprox(PressMidH(ICell, K), Expected, RTol, ATol)) {
+            if (!Math::isApprox(PressMidH(ICell, K), Expected, RTol, ATol)) {
                Err += 1;
             }
          }
@@ -260,7 +261,8 @@ int main(int argc, char *argv[]) {
               K < DefVertCoord->MaxLayerCellH(ICell) + 1; K++) {
             /// Interface pressure should be (K+1)*K/2 + the cell number
             Real Expected = ((K + 1.0_Real) * K) / 2.0_Real + ICell;
-            if (!isApprox(PressInterfH2(ICell, K), Expected, RTol, ATol)) {
+            if (!Math::isApprox(PressInterfH2(ICell, K), Expected, RTol,
+                                ATol)) {
                Err += 1;
             }
          }
@@ -314,18 +316,18 @@ int main(int argc, char *argv[]) {
               K < DefVertCoord->MaxLayerCellH(ICell) + 1; K++) {
             /// Z value at interface K should be -K
             Real Expected = -K;
-            if (!isApprox(GeomZInterfH(ICell, K), Expected, RTol, ATol)) {
+            if (!Math::isApprox(GeomZInterfH(ICell, K), Expected, RTol, ATol)) {
                Err += 1;
             }
             /// Z value at mid point of layer K should be -(K + .5)
             Expected = -K - 0.5;
-            if (!isApprox(GeomZMidH(ICell, K), Expected, RTol, ATol)) {
+            if (!Math::isApprox(GeomZMidH(ICell, K), Expected, RTol, ATol)) {
                Err += 1;
             }
          }
          /// SshCell should equal ZInterface at the top of the active column
          Real Expected = -DefVertCoord->MinLayerCellH(ICell);
-         if (!isApprox(SshCellH(ICell), Expected, RTol, ATol)) {
+         if (!Math::isApprox(SshCellH(ICell), Expected, RTol, ATol)) {
             Err += 1;
          }
       }
@@ -364,7 +366,7 @@ int main(int argc, char *argv[]) {
               K < DefVertCoord->MaxLayerCellH(ICell) + 1; K++) {
             /// Z value at interface should be -(K+1)*K/2
             Real Expected = -((K + 1.0_Real) * K) / 2.0_Real;
-            if (!isApprox(ZInterfH2(ICell, K), Expected, RTol, ATol)) {
+            if (!Math::isApprox(ZInterfH2(ICell, K), Expected, RTol, ATol)) {
                Err += 1;
             }
          }
@@ -372,7 +374,7 @@ int main(int argc, char *argv[]) {
          /// which is -((MinLayer+1)*MinLayer)/2
          I4 MinK       = DefVertCoord->MinLayerCellH(ICell);
          Real Expected = -((MinK + 1.0_Real) * MinK) / 2.0_Real;
-         if (!isApprox(SshCellH2(ICell), Expected, RTol, ATol)) {
+         if (!Math::isApprox(SshCellH2(ICell), Expected, RTol, ATol)) {
             Err += 1;
          }
       }
@@ -417,7 +419,8 @@ int main(int argc, char *argv[]) {
               K < DefVertCoord->MaxLayerCellH(ICell) + 1; K++) {
             /// Geopotential should be cell number + layer number
             Real Expected = ICell + K;
-            if (!isApprox(GeopotentialMidH(ICell, K), Expected, RTol, ATol)) {
+            if (!Math::isApprox(GeopotentialMidH(ICell, K), Expected, RTol,
+                                ATol)) {
                Err += 1;
             }
          }
@@ -460,8 +463,8 @@ int main(int argc, char *argv[]) {
               K < DefVertCoord->MaxLayerCellH(ICell) + 1; K++) {
             /// target thickness should be 2
             Real Expected = 2.0;
-            if (!isApprox(PseudoThicknessTargetH(ICell, K), Expected, RTol,
-                          ATol)) {
+            if (!Math::isApprox(PseudoThicknessTargetH(ICell, K), Expected,
+                                RTol, ATol)) {
                Err += 1;
             }
          }
@@ -516,8 +519,8 @@ int main(int argc, char *argv[]) {
                /// target thickness is 1 in all other layer
                Expected = 1.0;
             }
-            if (!isApprox(PseudoThicknessTargetH2(ICell, K), Expected, RTol,
-                          ATol)) {
+            if (!Math::isApprox(PseudoThicknessTargetH2(ICell, K), Expected,
+                                RTol, ATol)) {
                LOG_INFO("PseudoThicknessTargetH({},{}) = {}, {}", ICell, K,
                         PseudoThicknessTargetH2(ICell, K), Expected);
                Err += 1;
@@ -568,27 +571,27 @@ int main(int argc, char *argv[]) {
          I4 CellID1 = DefDecomp->CellIDH(DefMesh->CellsOnEdgeH(IEdge, 0));
          I4 CellID2 = DefDecomp->CellIDH(DefMesh->CellsOnEdgeH(IEdge, 1));
          /// MinLayerEdgeTop is the min of the min cell values on edge
-         Expected = std::min(-2 * CellID1, -2 * CellID2);
-         if (!isApprox(DefVertCoord->MinLayerEdgeTopH(IEdge), Expected, RTol,
-                       ATol)) {
+         Expected = Math::min(-2 * CellID1, -2 * CellID2);
+         if (!Math::isApprox(DefVertCoord->MinLayerEdgeTopH(IEdge), Expected,
+                             RTol, ATol)) {
             Err += 1;
          }
          /// MinLayerEdgeBot is the max of the min cell values on edge
-         Expected = std::max(-2 * CellID1, -2 * CellID2);
-         if (!isApprox(DefVertCoord->MinLayerEdgeBotH(IEdge), Expected, RTol,
-                       ATol)) {
+         Expected = Math::max(-2 * CellID1, -2 * CellID2);
+         if (!Math::isApprox(DefVertCoord->MinLayerEdgeBotH(IEdge), Expected,
+                             RTol, ATol)) {
             Err += 1;
          }
          /// MaxLayerEdgeTop is the min of the max cell values on edge
-         Expected = std::min(2 * CellID1, 2 * CellID2);
-         if (!isApprox(DefVertCoord->MaxLayerEdgeTopH(IEdge), Expected, RTol,
-                       ATol)) {
+         Expected = Math::min(2 * CellID1, 2 * CellID2);
+         if (!Math::isApprox(DefVertCoord->MaxLayerEdgeTopH(IEdge), Expected,
+                             RTol, ATol)) {
             Err += 1;
          }
          /// MaxLayerEdgeBot is the max of the max cell values on edge
-         Expected = std::max(2 * CellID1, 2 * CellID2);
-         if (!isApprox(DefVertCoord->MaxLayerEdgeBotH(IEdge), Expected, RTol,
-                       ATol)) {
+         Expected = Math::max(2 * CellID1, 2 * CellID2);
+         if (!Math::isApprox(DefVertCoord->MaxLayerEdgeBotH(IEdge), Expected,
+                             RTol, ATol)) {
             Err += 1;
          }
       }
@@ -632,40 +635,40 @@ int main(int argc, char *argv[]) {
          /// MinLayerVertexTop is the min of the min cell values on vertex
          I4 Expected = 1e7;
          for (int I = 0; I < VertexDegree; I++) {
-            Expected = std::min(Expected, -2 * CellIDs[I]);
+            Expected = Math::min(Expected, -2 * CellIDs[I]);
          }
-         if (!isApprox(DefVertCoord->MinLayerVertexTopH(IVertex), Expected,
-                       RTol, ATol)) {
+         if (!Math::isApprox(DefVertCoord->MinLayerVertexTopH(IVertex),
+                             Expected, RTol, ATol)) {
             Err += 1;
          }
 
          /// MinLayerVertexBot is the max of the min cell values on vertex
          Expected = -1e7;
          for (int I = 0; I < VertexDegree; I++) {
-            Expected = std::max(Expected, -2 * CellIDs[I]);
+            Expected = Math::max(Expected, -2 * CellIDs[I]);
          }
-         if (!isApprox(DefVertCoord->MinLayerVertexBotH(IVertex), Expected,
-                       RTol, ATol)) {
+         if (!Math::isApprox(DefVertCoord->MinLayerVertexBotH(IVertex),
+                             Expected, RTol, ATol)) {
             Err += 1;
          }
 
          /// MaxLayerVertexTop is the min of the max cell values on vertex
          Expected = 1e7;
          for (int I = 0; I < VertexDegree; I++) {
-            Expected = std::min(Expected, 2 * CellIDs[I]);
+            Expected = Math::min(Expected, 2 * CellIDs[I]);
          }
-         if (!isApprox(DefVertCoord->MaxLayerVertexTopH(IVertex), Expected,
-                       RTol, ATol)) {
+         if (!Math::isApprox(DefVertCoord->MaxLayerVertexTopH(IVertex),
+                             Expected, RTol, ATol)) {
             Err += 1;
          }
 
          /// MaxLayerVertexBot is the max of the max cell values on vertex
          Expected = -1e7;
          for (int I = 0; I < VertexDegree; I++) {
-            Expected = std::max(Expected, 2 * CellIDs[I]);
+            Expected = Math::max(Expected, 2 * CellIDs[I]);
          }
-         if (!isApprox(DefVertCoord->MaxLayerVertexBotH(IVertex), Expected,
-                       RTol, ATol)) {
+         if (!Math::isApprox(DefVertCoord->MaxLayerVertexBotH(IVertex),
+                             Expected, RTol, ATol)) {
             Err += 1;
          }
       }
@@ -718,7 +721,7 @@ int main(int argc, char *argv[]) {
             Sum += DefVertCoord->CellMaskH(ICell, K);
          }
 
-         if (!isApprox(Sum, Expected, RTol, ATol)) {
+         if (!Math::isApprox(Sum, Expected, RTol, ATol)) {
             Err += 1;
          }
       }
@@ -739,7 +742,7 @@ int main(int argc, char *argv[]) {
          for (int K = 0; K < NVertLayers; ++K) {
             Sum += DefVertCoord->EdgeMaskH(IEdge, K);
          }
-         if (!isApprox(Sum, Expected, RTol, ATol)) {
+         if (!Math::isApprox(Sum, Expected, RTol, ATol)) {
             Err += 1;
          }
       }
@@ -752,7 +755,7 @@ int main(int argc, char *argv[]) {
          for (int K = 0; K < NVertLayers; ++K) {
             Sum += DefVertCoord->VertexMaskH(IVertex, K);
          }
-         if (!isApprox(Sum, Expected, RTol, ATol)) {
+         if (!Math::isApprox(Sum, Expected, RTol, ATol)) {
             Err += 1;
          }
       }

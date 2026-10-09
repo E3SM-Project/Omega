@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "GlobalConstants.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 
 namespace OMEGA::KPP {
@@ -125,7 +126,7 @@ constexpr Real ConvectiveVelFac = 0.35;
 /// @return Dimensionless shape value
 KOKKOS_INLINE_FUNCTION
 Real kppShapeMomentum(Real Sigma) {
-   Sigma = Kokkos::fmax(-1.0, Kokkos::fmin(0.0, Sigma));
+   Sigma = Math::max(-1.0, Math::min(0.0, Sigma));
 
    const Real SigmaMu = -Sigma;
    return SigmaMu * (1.0 - SigmaMu) * (1.0 - SigmaMu);
@@ -139,11 +140,11 @@ Real kppShapeMomentum(Real Sigma) {
 /// preserving SimpleShapes behavior when ShapeAtBase is zero.
 KOKKOS_INLINE_FUNCTION
 Real kppShapeMatched(Real Sigma, Real ShapeAtBase) {
-   Sigma = Kokkos::fmax(-1.0, Kokkos::fmin(0.0, Sigma));
+   Sigma = Math::max(-1.0, Math::min(0.0, Sigma));
 
    const Real SigmaMu = -Sigma;
-   const Real Simple  = SigmaMu * (1.0 - SigmaMu) * (1.0 - SigmaMu);
-   const Real Smooth  = SigmaMu * SigmaMu * (3.0 - 2.0 * SigmaMu);
+   const Real Simple  = SigmaMu * Math::pow<2>(1.0 - SigmaMu);
+   const Real Smooth  = Math::pow<2>(SigmaMu) * (3.0 - 2.0 * SigmaMu);
    return Simple + ShapeAtBase * Smooth;
 }
 
@@ -161,10 +162,10 @@ Real kppPhiInvMomentum(Real Zeta) {
       return 1.0_Real / (1.0_Real + 5.0_Real * Zeta);
    } else if (Zeta >= ZetaM) {
       // Weakly unstable: (1 - 16*zeta)^{1/4}
-      return Kokkos::pow(1.0_Real - 16.0_Real * Zeta, 0.25_Real);
+      return Math::pow(1.0_Real - 16.0_Real * Zeta, 0.25_Real);
    } else {
       // Strongly unstable (convective): (a_m - c_m*zeta)^{1/3}
-      return Kokkos::pow(AMoM - CMoM * Zeta, 1.0_Real / 3.0_Real);
+      return Math::pow(AMoM - CMoM * Zeta, 1.0_Real / 3.0_Real);
    }
 }
 
@@ -178,7 +179,7 @@ Real kppPhiInvMomentum(Real Zeta) {
 /// @return Dimensionless shape value
 KOKKOS_INLINE_FUNCTION
 Real kppShapeScalar(Real Sigma) {
-   Sigma = Kokkos::fmax(-1.0, Kokkos::fmin(0.0, Sigma));
+   Sigma = Math::max(-1.0, Math::min(0.0, Sigma));
 
    const Real SigmaMu = -Sigma;
    return SigmaMu * (1.0 - SigmaMu) * (1.0 - SigmaMu);
@@ -200,10 +201,10 @@ Real kppPhiInvScalar(Real Zeta) {
       return 1.0_Real / (1.0_Real + 5.0_Real * Zeta);
    } else if (Zeta >= ZetaS) {
       // Weakly unstable: (1 - 16*zeta)^{1/2}
-      return Kokkos::sqrt(1.0_Real - 16.0_Real * Zeta);
+      return Math::sqrt(1.0_Real - 16.0_Real * Zeta);
    } else {
       // Strongly unstable (convective): (a_s - c_s*zeta)^{1/3}
-      return Kokkos::pow(AMoS - CMoS * Zeta, 1.0_Real / 3.0_Real);
+      return Math::pow(AMoS - CMoS * Zeta, 1.0_Real / 3.0_Real);
    }
 }
 
@@ -245,12 +246,12 @@ Real kppSurfaceMomentumScale(Real Sigma) {
 /// @return Stokes drift velocity scale (m/s)
 KOKKOS_INLINE_FUNCTION
 Real estimateStokesDriftSL(Real Wind10m, Real HBL) {
-   Wind10m = Kokkos::fmax(0.0, Wind10m);
-   HBL     = Kokkos::fmax(1.0, HBL);
+   Wind10m = Math::max(0.0, Wind10m);
+   HBL     = Math::max(1.0, HBL);
 
    const Real UStokes = 0.016 * Wind10m;
 
-   return Kokkos::fmax(0.0, UStokes);
+   return Math::max(0.0, UStokes);
 }
 
 /// @brief Turbulent Langmuir number from friction velocity and Stokes drift
@@ -261,10 +262,10 @@ Real estimateStokesDriftSL(Real Wind10m, Real HBL) {
 /// @return Langmuir number (dimensionless)
 KOKKOS_INLINE_FUNCTION
 Real computeLangmuirNumber(Real UStar, Real UStokes) {
-   UStar   = Kokkos::fmax(MinUStar, UStar);
-   UStokes = Kokkos::fmax(MinStokesDrift, UStokes);
+   UStar   = Math::max(MinUStar, UStar);
+   UStokes = Math::max(MinStokesDrift, UStokes);
 
-   return Kokkos::sqrt(UStar / UStokes);
+   return Math::sqrt(UStar / UStokes);
 }
 
 /// @brief Langmuir enhancement factor applied to the KPP velocity scales
@@ -276,19 +277,19 @@ Real computeLangmuirNumber(Real UStar, Real UStokes) {
 /// @return Enhancement factor R_L (dimensionless, > 1.0 enhances mixing)
 KOKKOS_INLINE_FUNCTION
 Real computeLangmuirEnhancement(Real Wind10m, Real UStar, Real HBL) {
-   UStar   = Kokkos::fmax(MinUStar, UStar);
-   Wind10m = Kokkos::fmax(0.0, Wind10m);
-   HBL     = Kokkos::fmax(1.0, HBL);
+   UStar   = Math::max(MinUStar, UStar);
+   Wind10m = Math::max(0.0, Wind10m);
+   HBL     = Math::max(1.0, HBL);
 
    const Real UStokes = estimateStokesDriftSL(Wind10m, HBL);
    const Real La      = computeLangmuirNumber(UStar, UStokes);
 
    // R_L = sqrt(1 + 0.5/La^2); La is floored at 0.5 so that the weak-wave
    // limit returns the unenhanced scales rather than diverging.
-   const Real LaInv = 1.0 / Kokkos::fmax(0.5, La);
-   const Real RL    = Kokkos::sqrt(1.0 + 0.5 * LaInv * LaInv);
+   const Real LaInv = 1.0 / Math::max(0.5, La);
+   const Real RL    = Math::sqrt(1.0 + 0.5 * Math::pow<2>(LaInv));
 
-   return Kokkos::fmin(2.0, Kokkos::fmax(1.0, RL));
+   return Math::min(2.0, Math::max(1.0, RL));
 }
 
 // ==========================================================================
@@ -317,15 +318,15 @@ KOKKOS_INLINE_FUNCTION
 Real constrainOSBLDepth(Real HOSBL, Real LayerThickness, Real WaterDepth,
                         Real IceFrac) {
    // Lower bound: at least the full surface layer thickness
-   HOSBL = Kokkos::fmax(HOSBL, LayerThickness);
+   HOSBL = Math::max(HOSBL, LayerThickness);
 
    // Enforce minimum under ice
    if (IceFrac > IceSuppressThresh) {
-      HOSBL = Kokkos::fmax(HOSBL, MinOSBLUnderIce);
+      HOSBL = Math::max(HOSBL, MinOSBLUnderIce);
    }
 
    // Upper bound: cannot exceed water depth
-   HOSBL = Kokkos::fmin(HOSBL, WaterDepth * 0.95);
+   HOSBL = Math::min(HOSBL, WaterDepth * 0.95);
 
    return HOSBL;
 }
@@ -345,19 +346,17 @@ Real constrainOSBLDepth(Real HOSBL, Real LayerThickness, Real WaterDepth,
 /// @return Turbulent velocity scale w_s (m/s)
 KOKKOS_INLINE_FUNCTION
 Real computeTurbVelocityScale(Real UStar, Real BuoyFlux, Real HOBL) {
-   UStar = Kokkos::fmax(0.0_Real, UStar);
-   HOBL  = Kokkos::fmax(0.0_Real, HOBL);
+   UStar = Math::max(0.0_Real, UStar);
+   HOBL  = Math::max(0.0_Real, HOBL);
 
    // Momentum contribution
-   const Real WMom = UStar * UStar * UStar;
+   const Real WMom = Math::pow<3>(UStar);
 
    // Buoyancy contribution for unstable (cooling/densifying) forcing.
    // In this sign convention, free convection corresponds to BuoyFlux < 0.
-   const Real WBuoy =
-       ConvectiveVelFac * Kokkos::fmax(0.0_Real, -BuoyFlux) * HOBL;
+   const Real WBuoy = ConvectiveVelFac * Math::max(0.0_Real, -BuoyFlux) * HOBL;
 
-   return Kokkos::pow(Kokkos::fmax(0.0_Real, WMom + WBuoy),
-                      1.0_Real / 3.0_Real);
+   return Math::pow(Math::max(0.0_Real, WMom + WBuoy), 1.0_Real / 3.0_Real);
 }
 
 /// @brief Momentum and scalar turbulent velocity scales at a point in the OSBL
@@ -381,9 +380,9 @@ void kppTurbScales(Real UStar, Real BuoyFlux, Real HOBL, Real SigmaLoc,
    WSTurb = 0.0_Real;
 
    if (UStar > 0.0_Real) {
-      const Real U3 = UStar * UStar * UStar;
+      const Real U3 = Math::pow<3>(UStar);
       const Real Zeta =
-          SigmaLoc * HOBL * BuoyFlux * Kappa / Kokkos::max(U3, Real(Tiny));
+          SigmaLoc * HOBL * BuoyFlux * Kappa / Math::max(U3, Real(Tiny));
 
       // These return phi^{-1}, which is positive over their whole domain;
       // do not invert or floor again.
@@ -393,10 +392,8 @@ void kppTurbScales(Real UStar, Real BuoyFlux, Real HOBL, Real SigmaLoc,
       // Free-convection edge case (u*=0, unstable forcing).
       const Real WM3 = -CMoM * SigmaLoc * HOBL * Kappa * BuoyFlux;
       const Real WS3 = -CMoS * SigmaLoc * HOBL * Kappa * BuoyFlux;
-      WMTurb =
-          Kappa * Kokkos::pow(Kokkos::max(0.0_Real, WM3), 1.0_Real / 3.0_Real);
-      WSTurb =
-          Kappa * Kokkos::pow(Kokkos::max(0.0_Real, WS3), 1.0_Real / 3.0_Real);
+      WMTurb = Kappa * Math::pow(Math::max(0.0_Real, WM3), 1.0_Real / 3.0_Real);
+      WSTurb = Kappa * Math::pow(Math::max(0.0_Real, WS3), 1.0_Real / 3.0_Real);
    }
 }
 
@@ -430,7 +427,7 @@ Real kppMatchShape(Real InteriorCoeff, Real HOBL, Real W) {
 KOKKOS_INLINE_FUNCTION
 Real kppNonLocalCs(Real Kappa, Real SurfLayerExtent) {
    return 10.0_Real * Kappa *
-          Kokkos::pow(CMoS * Kappa * SurfLayerExtent, 1.0_Real / 3.0_Real);
+          Math::pow(CMoS * Kappa * SurfLayerExtent, 1.0_Real / 3.0_Real);
 }
 
 /// @brief Clamp a trial OSBL depth to the range supported by the column
@@ -444,13 +441,13 @@ Real kppNonLocalCs(Real Kappa, Real SurfLayerExtent) {
 KOKKOS_INLINE_FUNCTION
 Real kppClampOSBLDepth(Real OSBLDepth, Real MinOSBLDepth, Real MaxOSBLDepth,
                        bool ApplyIceMinimum, Real MinOSBLUnderIce) {
-   OSBLDepth = Kokkos::fmax(OSBLDepth, MinOSBLDepth);
+   OSBLDepth = Math::max(OSBLDepth, MinOSBLDepth);
 
    if (ApplyIceMinimum) {
-      OSBLDepth = Kokkos::fmax(OSBLDepth, MinOSBLUnderIce);
+      OSBLDepth = Math::max(OSBLDepth, MinOSBLUnderIce);
    }
 
-   return Kokkos::fmin(OSBLDepth, MaxOSBLDepth);
+   return Math::min(OSBLDepth, MaxOSBLDepth);
 }
 
 /// @brief Index of the cell layer containing a given OSBL depth

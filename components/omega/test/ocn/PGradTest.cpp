@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===/
 
 #include "PGrad.h"
+#include "MathUtils.h"
 
 #include "DataTypes.h"
 #include "Decomp.h"
@@ -244,7 +245,7 @@ int main(int argc, char *argv[]) {
             parallelReduce(
                 {NCellsAll, NVertLayers},
                 KOKKOS_LAMBDA(int i, int k, Real &max) {
-                   Real Diff = Kokkos::abs(SpecVol(i, k) - SpecVolOld(i, k));
+                   Real Diff = Math::abs(SpecVol(i, k) - SpecVolOld(i, k));
                    if (Diff > max)
                       max = Diff;
                 },
@@ -286,7 +287,7 @@ int main(int argc, char *argv[]) {
          parallelReduce(
              {NEdgesAll, NVertLayers - 2},
              KOKKOS_LAMBDA(int i, int k, Real &max) {
-                Real Val = Kokkos::abs(Tend(i, k + 1));
+                Real Val = Math::abs(Tend(i, k + 1));
                 if (Val > max)
                    max = Val;
              },
@@ -298,7 +299,7 @@ int main(int argc, char *argv[]) {
                 LSum += Tend(i, k + 1) * Tend(i, k + 1);
              },
              Kokkos::Sum<Real>(SumValue));
-         Real RmseVal = std::sqrt(SumValue / (NEdgesAll * (NVertLayers - 2)));
+         Real RmseVal = Math::sqrt(SumValue / (NEdgesAll * (NVertLayers - 2)));
          Rmse(Refinement) = RmseVal;
 
          LOG_INFO("refinement level {}: max |Tend| = {}, average Tend = {}",
@@ -312,7 +313,8 @@ int main(int argc, char *argv[]) {
 
       // Test for second order convergence
       // resolution (dC) increases in refimenent loop
-      if (Rmse(0) < Rmse(NRefinements - 1) / pow(4.0_Real, NRefinements - 1)) {
+      if (Rmse(0) <
+          Rmse(NRefinements - 1) / Math::pow(4.0_Real, NRefinements - 1)) {
          RetVal = 0;
       } else {
          RetVal = 1;

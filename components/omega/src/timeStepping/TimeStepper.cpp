@@ -10,6 +10,7 @@
 #include "ForwardBackwardStepper.h"
 #include "KPPMix.h"
 #include "Logging.h"
+#include "MathUtils.h"
 #include "Pacer.h"
 #include "RungeKutta2Stepper.h"
 #include "RungeKutta4Stepper.h"
@@ -859,14 +860,15 @@ void TimeStepper::prescribeVelocity(OceanState *State1, int TimeLevel1,
              const int KRange = vertRange(KMin, KMax);
 
              const R8 lon_p = LonEdge(IEdge) - 2.0 * Pi * TSim / Tau;
-             const R8 u     = (1 / Tau) * (10.0 * Kokkos::pow(sin(lon_p), 2) *
-                                           sin(2.0 * LatEdge(IEdge)) *
-                                           cos(Pi * TSim / Tau) +
-                                       2.0 * Pi * cos(LatEdge(IEdge)));
-             const R8 v     = (10.0 / Tau) * sin(2.0 * lon_p) *
-                          cos(LatEdge(IEdge)) * cos(Pi * TSim / Tau);
-             const R8 normalVel = REarth * (u * cos(AngleEdge(IEdge)) +
-                                            v * sin(AngleEdge(IEdge)));
+             const R8 u = (1 / Tau) * (10.0 * Math::pow(Math::sin(lon_p), 2) *
+                                           Math::sin(2.0 * LatEdge(IEdge)) *
+                                           Math::cos(Pi * TSim / Tau) +
+                                       2.0 * Pi * Math::cos(LatEdge(IEdge)));
+             const R8 v = (10.0 / Tau) * Math::sin(2.0 * lon_p) *
+                          Math::cos(LatEdge(IEdge)) *
+                          Math::cos(Pi * TSim / Tau);
+             const R8 normalVel = REarth * (u * Math::cos(AngleEdge(IEdge)) +
+                                            v * Math::sin(AngleEdge(IEdge)));
 
              parallelForInner(
                  Team, KRange, INNER_LAMBDA(int KChunk) {
@@ -901,16 +903,16 @@ void TimeStepper::prescribeVelocity(OceanState *State1, int TimeLevel1,
 
              const R8 lon_p = LonEdge(IEdge) - 2.0 * Pi * TSim / Tau;
              const R8 u =
-                 (1.0 / Tau) * (-5.0 * Kokkos::pow(sin(lon_p / 2), 2) *
-                                    sin(2.0 * LatEdge(IEdge)) *
-                                    Kokkos::pow(cos(LatEdge(IEdge)), 2) *
-                                    cos(Pi * TSim / Tau) +
-                                2.0 * Pi * cos(LatEdge(IEdge)));
-             const R8 v =
-                 ((2.5 / Tau) * sin(lon_p) *
-                  Kokkos::pow(cos(LatEdge(IEdge)), 3) * cos(Pi * TSim / Tau));
-             const R8 normalVel = REarth * (u * cos(AngleEdge(IEdge)) +
-                                            v * sin(AngleEdge(IEdge)));
+                 (1.0 / Tau) * (-5.0 * Math::pow(Math::sin(lon_p / 2), 2) *
+                                    Math::sin(2.0 * LatEdge(IEdge)) *
+                                    Math::pow(Math::cos(LatEdge(IEdge)), 2) *
+                                    Math::cos(Pi * TSim / Tau) +
+                                2.0 * Pi * Math::cos(LatEdge(IEdge)));
+             const R8 v         = ((2.5 / Tau) * Math::sin(lon_p) *
+                           Math::pow(Math::cos(LatEdge(IEdge)), 3) *
+                           Math::cos(Pi * TSim / Tau));
+             const R8 normalVel = REarth * (u * Math::cos(AngleEdge(IEdge)) +
+                                            v * Math::sin(AngleEdge(IEdge)));
 
              parallelForInner(
                  Team, KRange, INNER_LAMBDA(int KChunk) {

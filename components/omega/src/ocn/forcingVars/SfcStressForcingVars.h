@@ -4,6 +4,7 @@
 #include "DataTypes.h"
 #include "HorzMesh.h"
 #include "HorzOperators.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 
 #include <string>
@@ -23,9 +24,8 @@ class SfcStressForcingVars {
       const Real ZonalStressEdge = Interp(IEdge, ZonalStressCell, InterpChoice);
       const Real MeridStressEdge = Interp(IEdge, MeridStressCell, InterpChoice);
 
-      NormalStressEdge(IEdge) =
-          Kokkos::cos(AngleEdge(IEdge)) * ZonalStressEdge +
-          Kokkos::sin(AngleEdge(IEdge)) * MeridStressEdge;
+      NormalStressEdge(IEdge) = Math::cos(AngleEdge(IEdge)) * ZonalStressEdge +
+                                Math::sin(AngleEdge(IEdge)) * MeridStressEdge;
    }
 
    void registerFields(const std::string &MeshName) const;

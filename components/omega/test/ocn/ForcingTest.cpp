@@ -19,6 +19,7 @@
 #include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OceanTestCommon.h"
 #include "Pacer.h"
 #include "TimeStepper.h"
@@ -40,11 +41,11 @@ struct TestSetupPlane {
    ErrorMeasures ExpectedNormalStressErrors = {0.0033910709836867704,
                                                0.0039954090464502795};
    KOKKOS_FUNCTION Real sfcStressX(Real X, Real Y) const {
-      return std::cos(TwoPi * X / Lx) * std::sin(TwoPi * Y / Ly);
+      return Math::cos(TwoPi * X / Lx) * Math::sin(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real sfcStressY(Real X, Real Y) const {
-      return std::sin(TwoPi * X / Lx) * std::cos(TwoPi * Y / Ly);
+      return Math::sin(TwoPi * X / Lx) * Math::cos(TwoPi * Y / Ly);
    }
 };
 
@@ -52,12 +53,12 @@ struct TestSetupSphere {
    ErrorMeasures ExpectedNormalStressErrors = {0.003704100692552216,
                                                0.0037705223292748575};
    KOKKOS_FUNCTION Real sfcStressX(Real Lon, Real Lat) const {
-      return -4 * std::sin(Lon) * std::cos(Lon) * std::pow(std::cos(Lat), 3) *
-             std::sin(Lat);
+      return -4 * Math::sin(Lon) * Math::cos(Lon) *
+             Math::pow(Math::cos(Lat), 3) * Math::sin(Lat);
    }
 
    KOKKOS_FUNCTION Real sfcStressY(Real Lon, Real Lat) const {
-      return -std::pow(std::sin(Lon), 2) * std::pow(std::cos(Lat), 3);
+      return -Math::pow(Math::sin(Lon), 2) * Math::pow(Math::cos(Lat), 3);
    }
 };
 
@@ -253,8 +254,8 @@ int testForcingComputeAll() {
    parallelReduce(
        {Mesh->NEdgesOwned},
        KOKKOS_LAMBDA(int IEdge, Real &LocalMax) {
-          const Real Expected = Kokkos::cos(AngleEdge(IEdge));
-          const Real AbsErr   = Kokkos::abs(NormalStress(IEdge) - Expected);
+          const Real Expected = Math::cos(AngleEdge(IEdge));
+          const Real AbsErr   = Math::abs(NormalStress(IEdge) - Expected);
           if (AbsErr > LocalMax) {
              LocalMax = AbsErr;
           }
@@ -278,8 +279,8 @@ int testForcingComputeAll() {
    parallelReduce(
        {Mesh->NEdgesOwned},
        KOKKOS_LAMBDA(int IEdge, Real &LocalMax) {
-          const Real Expected = Kokkos::sin(AngleEdge(IEdge));
-          const Real AbsErr   = Kokkos::abs(NormalStress(IEdge) - Expected);
+          const Real Expected = Math::sin(AngleEdge(IEdge));
+          const Real AbsErr   = Math::abs(NormalStress(IEdge) - Expected);
           if (AbsErr > LocalMax) {
              LocalMax = AbsErr;
           }
@@ -291,7 +292,7 @@ int testForcingComputeAll() {
                  MachEnv::getDefault()->getComm());
 
    const Real Tol       = 1e-11;
-   const Real GlobalErr = Kokkos::max(GlobalMaxErrCos, GlobalMaxErrSin);
+   const Real GlobalErr = Math::max(GlobalMaxErrCos, GlobalMaxErrSin);
    // Expected outcome: both projection passes remain below strict tolerance.
    if (GlobalErr > Tol) {
       LOG_ERROR(

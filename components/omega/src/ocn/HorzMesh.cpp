@@ -18,6 +18,7 @@
 #include "GlobalConstants.h"
 #include "Halo.h"
 #include "IOStream.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 
 #include <limits>
@@ -172,15 +173,15 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
 
    R8 NewRadius = std::any_cast<R8>(ReqMetaData["SphereRadius"]);
    R8 OldRadius = std::any_cast<R8>(ReqMetaData["sphere_radius"]);
-   R8 TmpRadius = std::max(NewRadius, OldRadius);
+   R8 TmpRadius = Math::max(NewRadius, OldRadius);
 
    R8 NewXPeriod = std::any_cast<R8>(ReqMetaData["XPeriod"]);
    R8 OldXPeriod = std::any_cast<R8>(ReqMetaData["x_period"]);
-   R8 TmpXPeriod = std::max(NewXPeriod, OldXPeriod);
+   R8 TmpXPeriod = Math::max(NewXPeriod, OldXPeriod);
 
    R8 NewYPeriod = std::any_cast<R8>(ReqMetaData["YPeriod"]);
    R8 OldYPeriod = std::any_cast<R8>(ReqMetaData["y_period"]);
-   R8 TmpYPeriod = std::max(NewYPeriod, OldYPeriod);
+   R8 TmpYPeriod = Math::max(NewYPeriod, OldYPeriod);
 
    if (OnSphereStr == "yes" or OnSphereOld == "yes") { // mesh on sphere
       OnSphere = true;
@@ -196,8 +197,8 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
       // depend on the build precision; the tolerance leaves room for a mesh
       // file that stores the radius with fewer significant digits.
       constexpr R8 RadiusRelTol = 1.e-8;
-      OMEGA_REQUIRE(std::abs((pcd::mean_radius - TmpRadius) /
-                             pcd::mean_radius) <= RadiusRelTol,
+      OMEGA_REQUIRE(Math::abs((pcd::mean_radius - TmpRadius) /
+                              pcd::mean_radius) <= RadiusRelTol,
                     "Input mesh sphere radius {} does not match the Earth "
                     "radius {} from the Physical Constants Dictionary "
                     "(relative tolerance {})",

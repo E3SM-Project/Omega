@@ -10,6 +10,8 @@
 //
 //===--------------------------------------------------------------------------------------===//
 
+#include "MathUtils.h"
+
 namespace OMEGA {
 
 using TeamPolicy      = Kokkos::TeamPolicy<ExecSpace>;
@@ -255,7 +257,7 @@ struct Range {
 
    // Clamp Last to ensure zero iterations if First > Last.
    KOKKOS_FUNCTION Range(int First, int Last)
-       : First(First), Last(Kokkos::max(Last, First - 1)) {}
+       : First(First), Last(Math::max(Last, First - 1)) {}
 };
 
 // parallelForInner

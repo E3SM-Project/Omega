@@ -16,6 +16,7 @@
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OceanState.h"
 #include "SurfaceFlux.h"
 #include "VertCoord.h"
@@ -490,7 +491,7 @@ class BottomDragOnEdge {
       const I4 JCell1 = CellsOnEdge(IEdge, 1);
 
       const Real VelNormEdge =
-          Kokkos::sqrt(KECell(JCell0, KBot) + KECell(JCell1, KBot));
+          Math::sqrt(KECell(JCell0, KBot) + KECell(JCell1, KBot));
 
       const Real InvThickEdge = 1._Real / PseudoThickEdge(IEdge, KBot);
       Tend(IEdge, KBot) -= EdgeMask(IEdge, KBot) * Coeff * VelNormEdge *
@@ -584,7 +585,7 @@ class SfcTracerForcingOnCell {
          // top ocean layer; not capped, to keep the mass flux CT-neutral.
          const Real CtLim =
              (EosChoice == EosType::Teos10Eos) ? Ct0Fw : 0.0_Real;
-         const Real PotEnthalpyFwIn  = Cp0Sw * Kokkos::max(CtLim, CtTop);
+         const Real PotEnthalpyFwIn  = Cp0Sw * Math::max(CtLim, CtTop);
          const Real PotEnthalpyFwOut = Cp0Sw * CtTop;
 
          const Real HeatFlux =
@@ -672,7 +673,7 @@ class TracerHorzAdvOnCell {
                 const Real TracerWgt =
                     (AdvCoefs(I, IEdge) +
                      Coef3rdOrder *
-                         std::copysign(1._Real, NormalThicknessFlux) *
+                         Math::copysign(1._Real, NormalThicknessFlux) *
                          AdvCoefs3rd(I, IEdge)) *
                     NormalThicknessFlux;
                 FlxTmp(K) += TracerWgt * LTracerCell(ICell, K) *
@@ -788,14 +789,14 @@ class TracerHorzAdvOnCell {
       const I4 NEdges = NEdgesOnCell(ICell);
       for (I4 I = 0; I < NEdges; ++I) {
          const I4 ICell2 = CellsOnCell(ICell, I);
-         const I4 KMin1  = Kokkos::max(KMin, MinLayerCell(ICell2));
-         const I4 KMax1  = Kokkos::min(KMax, MaxLayerCell(ICell2));
+         const I4 KMin1  = Math::max(KMin, MinLayerCell(ICell2));
+         const I4 KMax1  = Math::min(KMax, MaxLayerCell(ICell2));
          parallelForInner(
              Team, Range(KMin1, KMax1), INNER_LAMBDA(int K) {
                 TracerMax(ICell, K) =
-                    Kokkos::max(TracerMax(ICell, K), TracerCur(ICell2, K));
+                    Math::max(TracerMax(ICell, K), TracerCur(ICell2, K));
                 TracerMin(ICell, K) =
-                    Kokkos::min(TracerMin(ICell, K), TracerCur(ICell2, K));
+                    Math::min(TracerMin(ICell, K), TracerCur(ICell2, K));
              });
       }
    }
@@ -829,7 +830,7 @@ class TracerHorzAdvOnCell {
                 const Real TracerWgt =
                     NormalThicknessFlux *
                     (Coef1 +
-                     Coef3 * std::copysign(1.0_Real, NormalThicknessFlux));
+                     Coef3 * Math::copysign(1.0_Real, NormalThicknessFlux));
                 HighOrderFlx(IEdge, K) += TracerWgt * TracerCur(ICell, K) *
                                           AdvMaskHighOrder(IEdge, K);
              });
@@ -846,9 +847,9 @@ class TracerHorzAdvOnCell {
                                        (DvEdge(IEdge) * 0.5_Real) *
                                        NormalThicknessFlux;
              LowOrderFlx(IEdge, K) =
-                 DvEdge(IEdge) * (Kokkos::max(0.0_Real, NormalThicknessFlux) *
+                 DvEdge(IEdge) * (Math::max(0.0_Real, NormalThicknessFlux) *
                                       TracerCur(ICell1, K) +
-                                  Kokkos::min(0.0_Real, NormalThicknessFlux) *
+                                  Math::min(0.0_Real, NormalThicknessFlux) *
                                       TracerCur(ICell2, K));
              HighOrderFlx(IEdge, K) +=
                  TracerWeight * (TracerCur(ICell1, K) + TracerCur(ICell2, K));
@@ -881,10 +882,10 @@ class TracerHorzAdvOnCell {
                 // upwind (low order) fluxes.
                 WorkTend(ICell, K) += SignedFactor * LowOrderFlx(IEdge, K);
                 // Accumulate remaining high order fluxes
-                FlxOut(ICell, K) += Kokkos::min(
-                    0.0_Real, SignedFactor * HighOrderFlx(IEdge, K));
-                FlxIn(ICell, K) += Kokkos::max(
-                    0.0_Real, SignedFactor * HighOrderFlx(IEdge, K));
+                FlxOut(ICell, K) +=
+                    Math::min(0.0_Real, SignedFactor * HighOrderFlx(IEdge, K));
+                FlxIn(ICell, K) +=
+                    Math::max(0.0_Real, SignedFactor * HighOrderFlx(IEdge, K));
              });
       }
       // Build the factors for the FCT
@@ -906,12 +907,12 @@ class TracerHorzAdvOnCell {
                  (TracerMax(ICell, K) - TracerUpwindNew) /
                  (TracerMaxNew - TracerUpwindNew + Eps);
              FlxIn(ICell, K) =
-                 Kokkos::min(1.0_Real, Kokkos::max(0.0_Real, ScaleFactorIn));
+                 Math::min(1.0_Real, Math::max(0.0_Real, ScaleFactorIn));
              const Real ScaleFactorOut =
                  (TracerUpwindNew - TracerMin(ICell, K)) /
                  (TracerUpwindNew - TracerMinNew + Eps);
              FlxOut(ICell, K) =
-                 Kokkos::min(1.0_Real, Kokkos::max(0.0_Real, ScaleFactorOut));
+                 Math::min(1.0_Real, Math::max(0.0_Real, ScaleFactorOut));
           });
    }
 
@@ -928,10 +929,10 @@ class TracerHorzAdvOnCell {
       const I4 ICell1 = CellsOnEdge(IEdge, 0);
       const I4 ICell2 = CellsOnEdge(IEdge, 1);
       HighOrderFlx(IEdge, K) =
-          Kokkos::max(0.0_Real, HighOrderFlx(IEdge, K)) *
-              Kokkos::min(FlxOut(ICell1, K), FlxIn(ICell2, K)) +
-          Kokkos::min(0.0_Real, HighOrderFlx(IEdge, K)) *
-              Kokkos::min(FlxIn(ICell1, K), FlxOut(ICell2, K));
+          Math::max(0.0_Real, HighOrderFlx(IEdge, K)) *
+              Math::min(FlxOut(ICell1, K), FlxIn(ICell2, K)) +
+          Math::min(0.0_Real, HighOrderFlx(IEdge, K)) *
+              Math::min(FlxIn(ICell1, K), FlxOut(ICell2, K));
    }
 
    KOKKOS_FUNCTION void

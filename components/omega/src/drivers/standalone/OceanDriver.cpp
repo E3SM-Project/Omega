@@ -5,6 +5,7 @@
 
 #include "OceanDriver.h"
 #include "DataTypes.h"
+#include "MathUtils.h"
 #include "OceanState.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
@@ -53,7 +54,7 @@ int main(int argc, char **argv) {
       LOG_ERROR("Error finalizing OMEGA");
    Pacer::stop("Finalize", 0);
 
-   ErrAll = abs(ErrCurr) + abs(ErrFinalize);
+   ErrAll = OMEGA::Math::abs(ErrCurr) + OMEGA::Math::abs(ErrFinalize);
    if (ErrAll == 0) {
       LOG_INFO("OMEGA successfully completed");
    } else {

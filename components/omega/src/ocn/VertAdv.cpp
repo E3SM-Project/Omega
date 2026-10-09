@@ -11,6 +11,7 @@
 #include "VertAdv.h"
 #include "Error.h"
 #include "Field.h"
+#include "MathUtils.h"
 #include "Tracers.h"
 
 #include <limits>
@@ -788,7 +789,7 @@ void VertAdv::computeVerticalFluxes(
                                  (Tracers(L, ICell, K + 1) +
                                   Tracers(L, ICell, K - 2))) -
                             LocCoef3rdOrder *
-                                std::abs(LocTotVertTransVel(ICell, K)) *
+                                Math::abs(LocTotVertTransVel(ICell, K)) *
                                 ((Tracers(L, ICell, K + 1) -
                                   Tracers(L, ICell, K - 2)) -
                                  3._Real * (Tracers(L, ICell, K) -
@@ -871,9 +872,9 @@ void VertAdv::computeVerticalFluxes(
                     for (int KVec = 0; KVec < KLen; ++KVec) {
                        const I4 K = KStart + KVec;
                        LocLowOrderVertFlux(L, ICell, K) =
-                           Kokkos::min(0._Real, LocTotVertTransVel(ICell, K)) *
+                           Math::min(0._Real, LocTotVertTransVel(ICell, K)) *
                                Tracers(L, ICell, K - 1) +
-                           Kokkos::max(0._Real, LocTotVertTransVel(ICell, K)) *
+                           Math::max(0._Real, LocTotVertTransVel(ICell, K)) *
                                Tracers(L, ICell, K);
 
                        LocVertFlux(L, ICell, K) -=
@@ -970,24 +971,22 @@ void VertAdv::computeFCTVAdvTend(
                     // Determine bounds on tracer from neighbor values for
                     // limiting
                     if (K == KMin) {
-                       TracerMax = Kokkos::max(Tracers(L, ICell, K),
-                                               Tracers(L, ICell, K + 1));
-                       TracerMin = Kokkos::min(Tracers(L, ICell, K),
-                                               Tracers(L, ICell, K + 1));
+                       TracerMax = Math::max(Tracers(L, ICell, K),
+                                             Tracers(L, ICell, K + 1));
+                       TracerMin = Math::min(Tracers(L, ICell, K),
+                                             Tracers(L, ICell, K + 1));
                     } else if (K == KMax) {
-                       TracerMax = Kokkos::max(Tracers(L, ICell, K - 1),
-                                               Tracers(L, ICell, K));
-                       TracerMin = Kokkos::min(Tracers(L, ICell, K - 1),
-                                               Tracers(L, ICell, K));
+                       TracerMax = Math::max(Tracers(L, ICell, K - 1),
+                                             Tracers(L, ICell, K));
+                       TracerMin = Math::min(Tracers(L, ICell, K - 1),
+                                             Tracers(L, ICell, K));
                     } else {
-                       TracerMax =
-                           Kokkos::max(Tracers(L, ICell, K - 1),
-                                       Kokkos::max(Tracers(L, ICell, K),
-                                                   Tracers(L, ICell, K + 1)));
-                       TracerMin =
-                           Kokkos::min(Tracers(L, ICell, K - 1),
-                                       Kokkos::min(Tracers(L, ICell, K),
-                                                   Tracers(L, ICell, K + 1)));
+                       TracerMax = Math::max(Tracers(L, ICell, K - 1),
+                                             Tracers(L, ICell, K),
+                                             Tracers(L, ICell, K + 1));
+                       TracerMin = Math::min(Tracers(L, ICell, K - 1),
+                                             Tracers(L, ICell, K),
+                                             Tracers(L, ICell, K + 1));
                     }
 
                     // Accumulate upwind flux in WorkTend
@@ -995,12 +994,12 @@ void VertAdv::computeFCTVAdvTend(
                                   LocLowOrderVertFlux(L, ICell, K);
                     // Accumulate remaining high-order flux into layer
                     FlxIn(K) =
-                        Kokkos::max(0._Real, LocVertFlux(L, ICell, K + 1)) -
-                        Kokkos::min(0._Real, LocVertFlux(L, ICell, K));
+                        Math::max(0._Real, LocVertFlux(L, ICell, K + 1)) -
+                        Math::min(0._Real, LocVertFlux(L, ICell, K));
                     // Accumulate remaining high-order flux out of layer
                     FlxOut(K) =
-                        Kokkos::min(0._Real, LocVertFlux(L, ICell, K + 1)) -
-                        Kokkos::max(0._Real, LocVertFlux(L, ICell, K));
+                        Math::min(0._Real, LocVertFlux(L, ICell, K + 1)) -
+                        Math::max(0._Real, LocVertFlux(L, ICell, K));
                     // Build scale factors to limit flux for FCT using the
                     // bounds determined above and bounds on newly updated
                     // values. Factors are stored in FlxIn and FlxOut
@@ -1021,11 +1020,11 @@ void VertAdv::computeFCTVAdvTend(
                         (TracerMax - TracerUpwindNew) /
                         (TracerMaxNew - TracerUpwindNew + LocEps);
                     FlxIn(K) =
-                        Kokkos::min(1._Real, Kokkos::max(0._Real, ScaleFactor));
+                        Math::min(1._Real, Math::max(0._Real, ScaleFactor));
                     ScaleFactor = (TracerUpwindNew - TracerMin) /
                                   (TracerUpwindNew - TracerMinNew + LocEps);
                     FlxOut(K) =
-                        Kokkos::min(1._Real, Kokkos::max(0._Real, ScaleFactor));
+                        Math::min(1._Real, Math::max(0._Real, ScaleFactor));
                  }
               });
 
@@ -1045,10 +1044,10 @@ void VertAdv::computeFCTVAdvTend(
                     const I4 K = KStart + KVec;
 
                     RescaledFlux(K) =
-                        Kokkos::max(0._Real, LocVertFlux(L, ICell, K)) *
-                            Kokkos::min(FlxOut(K), FlxIn(K - 1)) +
-                        Kokkos::min(0._Real, LocVertFlux(L, ICell, K)) *
-                            Kokkos::min(FlxOut(K - 1), FlxIn(K));
+                        Math::max(0._Real, LocVertFlux(L, ICell, K)) *
+                            Math::min(FlxOut(K), FlxIn(K - 1)) +
+                        Math::min(0._Real, LocVertFlux(L, ICell, K)) *
+                            Math::min(FlxOut(K - 1), FlxIn(K));
                  }
               });
 

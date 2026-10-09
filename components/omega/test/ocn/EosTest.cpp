@@ -19,6 +19,7 @@
 #include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OceanTestCommon.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
@@ -205,7 +206,7 @@ void testEosLinear() {
               Team, KRange,
               INNER_LAMBDA(int KOff, int &InnerCount) {
                  const int K = KMin + KOff;
-                 if (!isApprox(SpecVol(ICell, K), LinearExpValue, RTol)) {
+                 if (!Math::isApprox(SpecVol(ICell, K), LinearExpValue, RTol)) {
                     InnerCount++;
                  }
               },
@@ -221,7 +222,7 @@ void testEosLinear() {
       auto SpecVolH = createHostMirrorCopy(TestEos->SpecVol);
       for (int I = 0; I < Mesh->NCellsAll; ++I) {
          for (int K = 0; K < NVertLayers; ++K) {
-            if (!isApprox(SpecVolH(I, K), LinearExpValue, RTol))
+            if (!Math::isApprox(SpecVolH(I, K), LinearExpValue, RTol))
                LOG_ERROR("EosTest: SpecVol Linear Bad Value: "
                          "SpecVol({},{}) = {}; Expected {}",
                          I, K, SpecVolH(I, K), LinearExpValue);
@@ -275,8 +276,8 @@ void testEosLinearDisplaced() {
               Team, KRange,
               INNER_LAMBDA(int KOff, int &InnerCount) {
                  const int K = KMin + KOff;
-                 if (!isApprox(SpecVolDisplaced(ICell, K), LinearExpValue,
-                               RTol)) {
+                 if (!Math::isApprox(SpecVolDisplaced(ICell, K), LinearExpValue,
+                                     RTol)) {
                     InnerCount++;
                  }
               },
@@ -292,7 +293,7 @@ void testEosLinearDisplaced() {
       auto SpecVolDisplacedH = createHostMirrorCopy(SpecVolDisplaced);
       for (int I = 0; I < Mesh->NCellsAll; ++I) {
          for (int K = 0; K < NVertLayers; ++K) {
-            if (!isApprox(SpecVolDisplacedH(I, K), LinearExpValue, RTol))
+            if (!Math::isApprox(SpecVolDisplacedH(I, K), LinearExpValue, RTol))
                LOG_ERROR("EosTest: SpecVol Linear Displaced Bad Value: "
                          "SpecVol({},{}) = {}; Expected {}",
                          I, K, SpecVolDisplacedH(I, K), LinearExpValue);
@@ -345,7 +346,8 @@ void testEosConstant() {
               Team, KRange,
               INNER_LAMBDA(int KOff, int &InnerCount) {
                  const int K = KMin + KOff;
-                 if (!isApprox(SpecVol(ICell, K), ConstantExpValue, RTol)) {
+                 if (!Math::isApprox(SpecVol(ICell, K), ConstantExpValue,
+                                     RTol)) {
                     InnerCount++;
                  }
               },
@@ -361,7 +363,7 @@ void testEosConstant() {
       auto SpecVolH = createHostMirrorCopy(SpecVol);
       for (int I = 0; I < NCellsAll; ++I) {
          for (int K = 0; K < NVertLayers; ++K) {
-            if (!isApprox(SpecVolH(I, K), ConstantExpValue, RTol))
+            if (!Math::isApprox(SpecVolH(I, K), ConstantExpValue, RTol))
                LOG_ERROR("EosTest: SpecVol Constant Bad Value: "
                          "SpecVol({},{}) = {}; Expected {}",
                          I, K, SpecVolH(I, K), ConstantExpValue);
@@ -400,7 +402,7 @@ void testDepthMeanSpecificVolume() {
    int NumMismatches = 0;
    for (int ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
       const Real Expected = 2._Real;
-      if (!isApprox(DepthMeanSpecificVolumeH(ICell), Expected, RTol)) {
+      if (!Math::isApprox(DepthMeanSpecificVolumeH(ICell), Expected, RTol)) {
          LOG_ERROR("EosTest: DepthMeanSpecificVolume Bad Value: "
                    "DepthMeanSpecificVolume({}) = {}; Expected {}",
                    ICell, DepthMeanSpecificVolumeH(ICell), Expected);
@@ -489,13 +491,13 @@ void testBruntVaisalaFreqSqLinear() {
               INNER_LAMBDA(int KOff, int &InnerCount) {
                  const int K = KMin + KOff;
                  if (K == 1 || K == 0) { // should be ref value
-                    if (!isApprox(BruntVaisalaFreqSq(ICell, K),
-                                  LinearBVFExpValue, RTol))
+                    if (!Math::isApprox(BruntVaisalaFreqSq(ICell, K),
+                                        LinearBVFExpValue, RTol))
                        InnerCount++;
                  } else { // just check for unreasonable values
                     if (BruntVaisalaFreqSq(ICell, K) == 0.0 or
-                        Kokkos::isnan(BruntVaisalaFreqSq(ICell, K)) or
-                        Kokkos::isinf(BruntVaisalaFreqSq(ICell, K)))
+                        Math::isnan(BruntVaisalaFreqSq(ICell, K)) or
+                        Math::isinf(BruntVaisalaFreqSq(ICell, K)))
                        InnerCount++;
                  }
               },
@@ -511,20 +513,22 @@ void testBruntVaisalaFreqSqLinear() {
       auto BruntVaisalaFreqSqH = createHostMirrorCopy(BruntVaisalaFreqSq);
       for (int I = 0; I < Mesh->NCellsAll; ++I) {
          // top layer should be ref value
-         if (!isApprox(BruntVaisalaFreqSqH(I, 0), LinearBVFExpValue, RTol))
+         if (!Math::isApprox(BruntVaisalaFreqSqH(I, 0), LinearBVFExpValue,
+                             RTol))
             LOG_ERROR("EosTest: Brunt-Vaisala Linear Bad Value: "
                       "BruntVaisala({},{}) = {}; Expected {}",
                       I, 0, BruntVaisalaFreqSqH(I, 0), LinearBVFExpValue);
          // K = 1 should be ref value
-         if (!isApprox(BruntVaisalaFreqSqH(I, 1), LinearBVFExpValue, RTol))
+         if (!Math::isApprox(BruntVaisalaFreqSqH(I, 1), LinearBVFExpValue,
+                             RTol))
             LOG_ERROR("EosTest: Brunt-Vaisala Linear Bad Value: "
                       "BruntVaisala({},{}) = {}; Expected {}",
                       I, 1, BruntVaisalaFreqSqH(I, 1), LinearBVFExpValue);
          // remaining values just check for other conditions
          for (int K = 2; K < NVertLayers + 1; ++K) {
             if (BruntVaisalaFreqSqH(I, K) == 0.0 or
-                Kokkos::isnan(BruntVaisalaFreqSqH(I, K)) or
-                Kokkos::isinf(BruntVaisalaFreqSqH(I, K)))
+                Math::isnan(BruntVaisalaFreqSqH(I, K)) or
+                Math::isinf(BruntVaisalaFreqSqH(I, K)))
                LOG_ERROR("EosTest: Brunt-Vaisala Linear Bad Value: "
                          "BruntVaisala({},{}) = {}",
                          I, K, BruntVaisalaFreqSqH(I, K));
@@ -578,7 +582,7 @@ void testEosTeos10() {
               Team, KRange,
               INNER_LAMBDA(int KOff, int &InnerCount) {
                  const int K = KMin + KOff;
-                 if (!isApprox(SpecVol(ICell, K), TeosSVExpValue, RTol)) {
+                 if (!Math::isApprox(SpecVol(ICell, K), TeosSVExpValue, RTol)) {
                     InnerCount++;
                  }
               },
@@ -594,7 +598,7 @@ void testEosTeos10() {
       auto SpecVolH = createHostMirrorCopy(SpecVol);
       for (int I = 0; I < Mesh->NCellsAll; ++I) {
          for (int K = 0; K < NVertLayers; ++K) {
-            if (!isApprox(SpecVolH(I, K), LinearExpValue, RTol))
+            if (!Math::isApprox(SpecVolH(I, K), LinearExpValue, RTol))
                LOG_ERROR("EosTest: SpecVol TEOS Bad Value: "
                          "SpecVol({},{}) = {}; Expected {}",
                          I, K, SpecVolH(I, K), LinearExpValue);
@@ -648,8 +652,8 @@ void testEosTeos10Displaced() {
               Team, KRange,
               INNER_LAMBDA(int KOff, int &InnerCount) {
                  const int K = KMin + KOff;
-                 if (!isApprox(SpecVolDisplaced(ICell, K), TeosSVExpValue,
-                               RTol)) {
+                 if (!Math::isApprox(SpecVolDisplaced(ICell, K), TeosSVExpValue,
+                                     RTol)) {
                     InnerCount++;
                  }
               },
@@ -665,7 +669,7 @@ void testEosTeos10Displaced() {
       auto SpecVolDisplacedH = createHostMirrorCopy(SpecVolDisplaced);
       for (int I = 0; I < Mesh->NCellsAll; ++I) {
          for (int K = 0; K < NVertLayers; ++K) {
-            if (!isApprox(SpecVolDisplacedH(I, K), LinearExpValue, RTol))
+            if (!Math::isApprox(SpecVolDisplacedH(I, K), LinearExpValue, RTol))
                LOG_ERROR("EosTest: SpecVol Displaced TEOS Bad Value: "
                          "SpecVol({},{}) = {}; Expected {}",
                          I, K, SpecVolDisplacedH(I, K), LinearExpValue);
@@ -750,13 +754,13 @@ void testBruntVaisalaFreqSqTeos10() {
               INNER_LAMBDA(int KOff, int &InnerCount) {
                  const int K = KMin + KOff;
                  if (K == 1 || K == 0) { // should be ref value
-                    if (!isApprox(BruntVaisalaFreqSq(ICell, K), TeosBVFExpValue,
-                                  RTol))
+                    if (!Math::isApprox(BruntVaisalaFreqSq(ICell, K),
+                                        TeosBVFExpValue, RTol))
                        InnerCount++;
                  } else { // just check for unreasonable values
                     if (BruntVaisalaFreqSq(ICell, K) == 0.0 or
-                        Kokkos::isnan(BruntVaisalaFreqSq(ICell, K)) or
-                        Kokkos::isinf(BruntVaisalaFreqSq(ICell, K)))
+                        Math::isnan(BruntVaisalaFreqSq(ICell, K)) or
+                        Math::isinf(BruntVaisalaFreqSq(ICell, K)))
                        InnerCount++;
                  }
               },
@@ -772,20 +776,22 @@ void testBruntVaisalaFreqSqTeos10() {
       auto BruntVaisalaFreqSqH = createHostMirrorCopy(BruntVaisalaFreqSq);
       for (int ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
          // top layer should be ref value
-         if (!isApprox(BruntVaisalaFreqSqH(ICell, 0), TeosBVFExpValue, RTol))
+         if (!Math::isApprox(BruntVaisalaFreqSqH(ICell, 0), TeosBVFExpValue,
+                             RTol))
             LOG_ERROR("EosTest: Brunt-Vaisala TEOS Bad Value: "
                       "BruntVaisala({},{}) = {}; Expected {}",
                       ICell, 0, BruntVaisalaFreqSqH(ICell, 0), TeosBVFExpValue);
          // K = 1 should be ref value
-         if (!isApprox(BruntVaisalaFreqSqH(ICell, 1), TeosBVFExpValue, RTol))
+         if (!Math::isApprox(BruntVaisalaFreqSqH(ICell, 1), TeosBVFExpValue,
+                             RTol))
             LOG_ERROR("EosTest: Brunt-Vaisala TEOS Bad Value: "
                       "BruntVaisala({},{}) = {}; Expected {}",
                       ICell, 1, BruntVaisalaFreqSqH(ICell, 1), TeosBVFExpValue);
          // remaining values just check for other conditions
          for (int K = 2; K < NVertLayers + 1; ++K) {
             if (BruntVaisalaFreqSqH(ICell, K) == 0.0 or
-                Kokkos::isnan(BruntVaisalaFreqSqH(ICell, K)) or
-                Kokkos::isinf(BruntVaisalaFreqSqH(ICell, K)))
+                Math::isnan(BruntVaisalaFreqSqH(ICell, K)) or
+                Math::isinf(BruntVaisalaFreqSqH(ICell, K)))
                LOG_ERROR("EosTest: Brunt-Vaisala TEOS Bad Value: "
                          "BruntVaisala({},{}) = {}",
                          ICell, K, BruntVaisalaFreqSqH(ICell, K));
@@ -893,11 +899,14 @@ void testEosTeos10Derivs() {
               Team, KRange,
               INNER_LAMBDA(int KOff, int &InnerCount) {
                  const int K = KMin + KOff;
-                 if (!isApprox(SpecVol(ICell, K), ExpSpecVol(K), DerivRTol) or
-                     !isApprox(SpecVolDCt(ICell, K), ExpDCt(K), DerivRTol,
-                               DerivDCtATol) or
-                     !isApprox(SpecVolDSa(ICell, K), ExpDSa(K), DerivRTol) or
-                     !isApprox(SpecVolDP(ICell, K), ExpDP(K), DerivDPRTol)) {
+                 if (!Math::isApprox(SpecVol(ICell, K), ExpSpecVol(K),
+                                     DerivRTol) or
+                     !Math::isApprox(SpecVolDCt(ICell, K), ExpDCt(K), DerivRTol,
+                                     DerivDCtATol) or
+                     !Math::isApprox(SpecVolDSa(ICell, K), ExpDSa(K),
+                                     DerivRTol) or
+                     !Math::isApprox(SpecVolDP(ICell, K), ExpDP(K),
+                                     DerivDPRTol)) {
                     InnerCount++;
                  }
               },
@@ -916,20 +925,20 @@ void testEosTeos10Derivs() {
       auto SpecVolDPH  = createHostMirrorCopy(SpecVolDP);
       for (int I = 0; I < Mesh->NCellsAll; ++I) {
          for (int K = 0; K < NVertLayers; ++K) {
-            if (!isApprox(SpecVolH(I, K), ExpSpecVolH(K), DerivRTol))
+            if (!Math::isApprox(SpecVolH(I, K), ExpSpecVolH(K), DerivRTol))
                LOG_ERROR("EosTest: SpecVol Deriv Bad Value: "
                          "SpecVol({},{}) = {}; Expected {}",
                          I, K, SpecVolH(I, K), ExpSpecVolH(K));
-            if (!isApprox(SpecVolDCtH(I, K), ExpDCtH(K), DerivRTol,
-                          DerivDCtATol))
+            if (!Math::isApprox(SpecVolDCtH(I, K), ExpDCtH(K), DerivRTol,
+                                DerivDCtATol))
                LOG_ERROR("EosTest: SpecVolDCt Bad Value: "
                          "SpecVolDCt({},{}) = {}; Expected {}",
                          I, K, SpecVolDCtH(I, K), ExpDCtH(K));
-            if (!isApprox(SpecVolDSaH(I, K), ExpDSaH(K), DerivRTol))
+            if (!Math::isApprox(SpecVolDSaH(I, K), ExpDSaH(K), DerivRTol))
                LOG_ERROR("EosTest: SpecVolDSa Bad Value: "
                          "SpecVolDSa({},{}) = {}; Expected {}",
                          I, K, SpecVolDSaH(I, K), ExpDSaH(K));
-            if (!isApprox(SpecVolDPH(I, K), ExpDPH(K), DerivDPRTol))
+            if (!Math::isApprox(SpecVolDPH(I, K), ExpDPH(K), DerivDPRTol))
                LOG_ERROR("EosTest: SpecVolDP Bad Value: "
                          "SpecVolDP({},{}) = {}; Expected {}",
                          I, K, SpecVolDPH(I, K), ExpDPH(K));
@@ -1019,9 +1028,11 @@ void testEosLinearDerivs() {
               Team, KRange,
               INNER_LAMBDA(int KOff, int &InnerCount) {
                  const int K = KMin + KOff;
-                 if (!isApprox(SpecVol(ICell, K), LinearExpValue, RTol) or
-                     !isApprox(SpecVolDCt(ICell, K), LinearDCtExpValue, RTol) or
-                     !isApprox(SpecVolDSa(ICell, K), LinearDSaExpValue, RTol) or
+                 if (!Math::isApprox(SpecVol(ICell, K), LinearExpValue, RTol) or
+                     !Math::isApprox(SpecVolDCt(ICell, K), LinearDCtExpValue,
+                                     RTol) or
+                     !Math::isApprox(SpecVolDSa(ICell, K), LinearDSaExpValue,
+                                     RTol) or
                      SpecVolDP(ICell, K) != 0.0_Real) {
                     InnerCount++;
                  }
@@ -1040,11 +1051,11 @@ void testEosLinearDerivs() {
       auto SpecVolDPH  = createHostMirrorCopy(SpecVolDP);
       for (int I = 0; I < Mesh->NCellsAll; ++I) {
          for (int K = 0; K < NVertLayers; ++K) {
-            if (!isApprox(SpecVolDCtH(I, K), LinearDCtExpValue, RTol))
+            if (!Math::isApprox(SpecVolDCtH(I, K), LinearDCtExpValue, RTol))
                LOG_ERROR("EosTest: SpecVolDCt Linear Bad Value: "
                          "SpecVolDCt({},{}) = {}; Expected {}",
                          I, K, SpecVolDCtH(I, K), LinearDCtExpValue);
-            if (!isApprox(SpecVolDSaH(I, K), LinearDSaExpValue, RTol))
+            if (!Math::isApprox(SpecVolDSaH(I, K), LinearDSaExpValue, RTol))
                LOG_ERROR("EosTest: SpecVolDSa Linear Bad Value: "
                          "SpecVolDSa({},{}) = {}; Expected {}",
                          I, K, SpecVolDSaH(I, K), LinearDSaExpValue);
@@ -1109,7 +1120,8 @@ void testEosConstantDerivs() {
               Team, KRange,
               INNER_LAMBDA(int KOff, int &InnerCount) {
                  const int K = KMin + KOff;
-                 if (!isApprox(SpecVol(ICell, K), ConstantExpValue, RTol) or
+                 if (!Math::isApprox(SpecVol(ICell, K), ConstantExpValue,
+                                     RTol) or
                      SpecVolDCt(ICell, K) != 0.0_Real or
                      SpecVolDSa(ICell, K) != 0.0_Real or
                      SpecVolDP(ICell, K) != 0.0_Real) {
@@ -1143,7 +1155,7 @@ void testCalcCtFreezing() {
        gsw_ct_freezing_poly(SaLocal, PDb, SaturationFrac);
    const Real CtTeos =
        Eos::calcCtFreezing(EosType::Teos10Eos, SaLocal, PDb, SaturationFrac);
-   if (!isApprox(CtTeos, CtTeosExpected, RTol)) {
+   if (!Math::isApprox(CtTeos, CtTeosExpected, RTol)) {
       ABORT_ERROR("testCalcCtFreezing: Teos10 FAIL, expected {}, got {}",
                   CtTeosExpected, CtTeos);
    }
@@ -1151,7 +1163,7 @@ void testCalcCtFreezing() {
    const Real CtLinearExpected = -0.054_Real * SaLocal / Psu2Gpkg;
    const Real CtLinear =
        Eos::calcCtFreezing(EosType::LinearEos, SaLocal, PDb, SaturationFrac);
-   if (!isApprox(CtLinear, CtLinearExpected, RTol)) {
+   if (!Math::isApprox(CtLinear, CtLinearExpected, RTol)) {
       ABORT_ERROR("testCalcCtFreezing: Linear FAIL, expected {}, got {}",
                   CtLinearExpected, CtLinear);
    }
@@ -1159,7 +1171,7 @@ void testCalcCtFreezing() {
    const Real CtConstExpected = -1.9_Real;
    const Real CtConst =
        Eos::calcCtFreezing(EosType::ConstantEos, SaLocal, PDb, SaturationFrac);
-   if (!isApprox(CtConst, CtConstExpected, RTol)) {
+   if (!Math::isApprox(CtConst, CtConstExpected, RTol)) {
       ABORT_ERROR("testCalcCtFreezing: Constant FAIL, expected {}, got {}",
                   CtConstExpected, CtConst);
    }
@@ -1186,7 +1198,7 @@ void checkValueGswcSpecVol() {
    /// Get specific volume from GSW-C library
    double SpecVol = gsw_specvol(Sa, Ct, P * Pa2Db);
    /// Check the value against the expected TEOS-10 value
-   bool Check = isApprox(SpecVol, TeosSVExpValue, RTol);
+   bool Check = Math::isApprox(SpecVol, TeosSVExpValue, RTol);
    if (!Check) {
       ABORT_ERROR("checkValueGswcSpecVol: SpecVol FAIL, expected {}, got {}",
                   TeosSVExpValue, SpecVol);
@@ -1219,7 +1231,7 @@ void checkValueGswcN2() {
    gsw_nsquared(Salt, Temp, Press, Latitude, Nz, N2, PMid);
 
    /// Check the value against the expected TEOS-10 value
-   bool Check = isApprox(N2[0], GswBVFExpValue, RTol);
+   bool Check = Math::isApprox(N2[0], GswBVFExpValue, RTol);
    if (!Check) {
       ABORT_ERROR("checkValueGswcN2: N2 FAIL, expected {}, got {}",
                   GswBVFExpValue, N2[0]);
@@ -1241,7 +1253,7 @@ void checkValueGswcCtFreezing() {
        Teos10Eos::calcCtFreezingTeos10(Sa, P * Pa2Db, SaturationFrac);
 
    /// Check the value against the GSW-C value
-   bool Check = isApprox(CtFreezGswc, CtFreez, RTol);
+   bool Check = Math::isApprox(CtFreezGswc, CtFreez, RTol);
    if (!Check) {
       ABORT_ERROR("checkValueGswcCtFreezing: CtFreez FAIL, expected {}, got {}",
                   CtFreezGswc, CtFreez);
@@ -1251,8 +1263,8 @@ void checkValueGswcCtFreezing() {
 
 /// Relative difference between two values, zero when both vanish
 Real relDiff(Real X, Real Y) {
-   const Real Scale = std::max(std::abs(X), std::abs(Y));
-   return Scale > 0.0 ? std::abs(X - Y) / Scale : 0.0;
+   const Real Scale = Math::max(Math::abs(X), Math::abs(Y));
+   return Scale > 0.0 ? Math::abs(X - Y) / Scale : 0.0;
 }
 
 /// Test the TEOS-10 specific volume derivatives against the GSW-C library over
@@ -1302,31 +1314,31 @@ void checkValueGswcSpecVolDerivs() {
                                           &GswDP);
             const double GswSpecVol = gsw_specvol(SaVal, CtVal, PDb);
 
-            WorstSv  = std::max(WorstSv, relDiff(SpecVol, GswSpecVol));
-            WorstDCt = std::max(WorstDCt, relDiff(SpecVolDCt, GswDCt));
-            WorstDSa = std::max(WorstDSa, relDiff(SpecVolDSa, GswDSa));
-            WorstDP  = std::max(WorstDP, relDiff(SpecVolDP, GswDP));
+            WorstSv  = Math::max(WorstSv, relDiff(SpecVol, GswSpecVol));
+            WorstDCt = Math::max(WorstDCt, relDiff(SpecVolDCt, GswDCt));
+            WorstDSa = Math::max(WorstDSa, relDiff(SpecVolDSa, GswDSa));
+            WorstDP  = Math::max(WorstDP, relDiff(SpecVolDP, GswDP));
             ++NumChecked;
 
-            if (!isApprox(SpecVol, GswSpecVol, DerivRTol)) {
+            if (!Math::isApprox(SpecVol, GswSpecVol, DerivRTol)) {
                LOG_ERROR("EosTest: SpecVol Bad Value at Sa={}, Ct={}, "
                          "P={} dbar: expected {}, got {}",
                          SaVal, CtVal, PDb, GswSpecVol, SpecVol);
                ++NumBad;
             }
-            if (!isApprox(SpecVolDCt, GswDCt, DerivRTol, DerivDCtATol)) {
+            if (!Math::isApprox(SpecVolDCt, GswDCt, DerivRTol, DerivDCtATol)) {
                LOG_ERROR("EosTest: SpecVolDCt Bad Value at Sa={}, Ct={}, "
                          "P={} dbar: expected {}, got {}",
                          SaVal, CtVal, PDb, GswDCt, SpecVolDCt);
                ++NumBad;
             }
-            if (!isApprox(SpecVolDSa, GswDSa, DerivRTol)) {
+            if (!Math::isApprox(SpecVolDSa, GswDSa, DerivRTol)) {
                LOG_ERROR("EosTest: SpecVolDSa Bad Value at Sa={}, Ct={}, "
                          "P={} dbar: expected {}, got {}",
                          SaVal, CtVal, PDb, GswDSa, SpecVolDSa);
                ++NumBad;
             }
-            if (!isApprox(SpecVolDP, GswDP, DerivDPRTol)) {
+            if (!Math::isApprox(SpecVolDP, GswDP, DerivDPRTol)) {
                LOG_ERROR("EosTest: SpecVolDP Bad Value at Sa={}, Ct={}, "
                          "P={} dbar: expected {}, got {}",
                          SaVal, CtVal, PDb, GswDP, SpecVolDP);
@@ -1405,19 +1417,19 @@ void checkFiniteDiffSpecVolDerivs() {
                               SpecVolAt(CtVal, SaVal, PPa - DPStep)) /
                              (2.0_Real * DPStep);
 
-            if (!isApprox(SpecVolDCt, FDCt, FDRTol, FDCtATol)) {
+            if (!Math::isApprox(SpecVolDCt, FDCt, FDRTol, FDCtATol)) {
                LOG_ERROR("EosTest: SpecVolDCt disagrees with finite difference "
                          "at Sa={}, Ct={}, P={} dbar: {} vs {}",
                          SaVal, CtVal, PTest[IP], SpecVolDCt, FDCt);
                ++NumBad;
             }
-            if (!isApprox(SpecVolDSa, FDSa, FDRTol, FDSaATol)) {
+            if (!Math::isApprox(SpecVolDSa, FDSa, FDRTol, FDSaATol)) {
                LOG_ERROR("EosTest: SpecVolDSa disagrees with finite difference "
                          "at Sa={}, Ct={}, P={} dbar: {} vs {}",
                          SaVal, CtVal, PTest[IP], SpecVolDSa, FDSa);
                ++NumBad;
             }
-            if (!isApprox(SpecVolDP, FDP, FDRTol, FDPATol)) {
+            if (!Math::isApprox(SpecVolDP, FDP, FDRTol, FDPATol)) {
                LOG_ERROR("EosTest: SpecVolDP disagrees with finite difference "
                          "at Sa={}, Ct={}, P={} dbar: {} vs {}",
                          SaVal, CtVal, PTest[IP], SpecVolDP, FDP);
@@ -1473,16 +1485,16 @@ void checkValueGswcAlphaBeta() {
             gsw_specvol_alpha_beta(SaVal, CtVal, PDb, &GswSpecVol, &GswAlpha,
                                    &GswBeta);
 
-            WorstAlpha = std::max(WorstAlpha, relDiff(Alpha, GswAlpha));
-            WorstBeta  = std::max(WorstBeta, relDiff(Beta, GswBeta));
+            WorstAlpha = Math::max(WorstAlpha, relDiff(Alpha, GswAlpha));
+            WorstBeta  = Math::max(WorstBeta, relDiff(Beta, GswBeta));
 
-            if (!isApprox(Alpha, GswAlpha, DerivRTol, AlphaATol)) {
+            if (!Math::isApprox(Alpha, GswAlpha, DerivRTol, AlphaATol)) {
                LOG_ERROR("EosTest: Alpha Bad Value at Sa={}, Ct={}, "
                          "P={} dbar: expected {}, got {}",
                          SaVal, CtVal, PDb, GswAlpha, Alpha);
                ++NumBad;
             }
-            if (!isApprox(Beta, GswBeta, DerivRTol)) {
+            if (!Math::isApprox(Beta, GswBeta, DerivRTol)) {
                LOG_ERROR("EosTest: Beta Bad Value at Sa={}, Ct={}, "
                          "P={} dbar: expected {}, got {}",
                          SaVal, CtVal, PDb, GswBeta, Beta);
@@ -1511,7 +1523,7 @@ void checkValueGswcCtFromPt() {
 
    Real CtExpValue = gsw_ct_from_pt(Sa, Ct);
    Real CtTeos     = TestEos->calcCtFromPt(Sa, Ct);
-   bool Check      = isApprox(CtTeos, CtExpValue, RTol);
+   bool Check      = Math::isApprox(CtTeos, CtExpValue, RTol);
    if (!Check) {
       ABORT_ERROR("checkValueGswcCtFromPt: Ct FAIL, expected {}, got {}",
                   CtExpValue, CtTeos);
@@ -1526,7 +1538,7 @@ void checkValueGswcPtFromCt() {
 
    Real PtExpValue = gsw_pt_from_ct(Sa, Ct);
    Real PtTeos     = TestEos->calcPtFromCt(Sa, Ct);
-   bool Check      = isApprox(PtTeos, PtExpValue, RTol);
+   bool Check      = Math::isApprox(PtTeos, PtExpValue, RTol);
    if (!Check) {
       ABORT_ERROR("checkValueGswcPtFromCt: Pt FAIL, expected {}, got {}",
                   PtExpValue, PtTeos);

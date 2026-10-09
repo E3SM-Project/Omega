@@ -14,6 +14,7 @@
 #include "IO.h"
 #include "IOStream.h"
 #include "Logging.h"
+#include "MathUtils.h"
 #include "OceanState.h"
 #include "TimeStepper.h"
 #include "VertAdv.h"
@@ -313,7 +314,7 @@ void expectedStats(const WeightedVisitor &Visit, MPI_Comm Comm, Real &Mean,
       if (Wt > 0)
          SumWDev += Wt * (X - Mean) * (X - Mean);
    });
-   StdDev = std::sqrt(globalSum(SumWDev, Comm) / W);
+   StdDev = Math::sqrt(globalSum(SumWDev, Comm) / W);
 }
 
 //------------------------------------------------------------------------------
@@ -321,8 +322,8 @@ void expectedStats(const WeightedVisitor &Visit, MPI_Comm Comm, Real &Mean,
 // tolerance
 bool checkClose(const std::string &TestName, Real Computed, Real Expected,
                 Real RelTol) {
-   Real Scale  = std::max(std::abs(Expected), static_cast<Real>(1));
-   bool Passed = std::abs(Computed - Expected) <= RelTol * Scale;
+   Real Scale  = Math::max(Math::abs(Expected), static_cast<Real>(1));
+   bool Passed = Math::abs(Computed - Expected) <= RelTol * Scale;
    reportTest(TestName, Passed);
    if (!Passed)
       LOG_ERROR("  Expected: {}, Got: {}", Expected, Computed);
@@ -466,7 +467,7 @@ void testSpatialMaxOpType(const std::string &TypeName, const MachEnv *Env,
    Real ExpectedMaxReal = static_cast<Real>(ExpectedMax);
 
    // Verify
-   bool Passed = (std::abs(ComputedMax - ExpectedMaxReal) <=
+   bool Passed = (Math::abs(ComputedMax - ExpectedMaxReal) <=
                   static_cast<Real>(Helper::getTolerance()));
    reportTest("SpatialMaxOp: " + TypeName, Passed);
    checkOutputMetadata("SpatialMaxOp: " + TypeName, FieldName + "_SpatialMax",
@@ -545,7 +546,7 @@ void testSpatialMinOpType(const std::string &TypeName, const MachEnv *Env,
    Real ExpectedMinReal = static_cast<Real>(ExpectedMin);
 
    // Verify
-   bool Passed = (std::abs(ComputedMin - ExpectedMinReal) <=
+   bool Passed = (Math::abs(ComputedMin - ExpectedMinReal) <=
                   static_cast<Real>(Helper::getTolerance()));
    reportTest("SpatialMinOp: " + TypeName, Passed);
    checkOutputMetadata("SpatialMinOp: " + TypeName, FieldName + "_SpatialMin",
@@ -863,7 +864,7 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
 
       for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
          Real ComputedValue = ResultHost(i);
-         if (std::abs(ComputedValue - ExpectedMean) >
+         if (Math::abs(ComputedValue - ExpectedMean) >
              static_cast<Real>(Helper::getTolerance())) {
             Passed = false;
             LOG_ERROR("  At index {}: Expected {}, Got {}", i, ExpectedMean,
@@ -885,7 +886,7 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
             Real ComputedValue = ResultHost(i, j);
             bool Active        = (j >= KMin && j <= KMax);
             Real Expected      = Active ? ExpectedMean : FillValueReal;
-            if (std::abs(ComputedValue - Expected) >
+            if (Math::abs(ComputedValue - Expected) >
                 static_cast<Real>(Helper::getTolerance())) {
                Passed = false;
                LOG_ERROR("  At index ({}, {}) [active={}]: Expected {}, Got {}",
@@ -908,7 +909,7 @@ void testTimeMeanOpType(const std::string &TypeName, const MachEnv *Env,
                Real ComputedValue = ResultHost(i, j, k);
                bool Active        = (k >= KMin && k <= KMax);
                Real Expected      = Active ? ExpectedMean : FillValueReal;
-               if (std::abs(ComputedValue - Expected) >
+               if (Math::abs(ComputedValue - Expected) >
                    static_cast<Real>(Helper::getTolerance())) {
                   Passed = false;
                   LOG_ERROR("  At index ({}, {}, {}) [active={}]: Expected {}, "
@@ -997,7 +998,7 @@ void testTimeMeanOpInterfaceField(const MachEnv *Env, const HorzMesh *Mesh,
          const bool Active   = (K >= KMin && K <= KMax);
          const Real Expected = Active ? ExpectedMean : FillValueReal;
          const Real Actual   = ResultHost(ICell, K);
-         if (std::abs(Actual - Expected) > 1.0e-8) {
+         if (Math::abs(Actual - Expected) > 1.0e-8) {
             Passed = false;
             LOG_ERROR("  Interface field at ({}, {}) [active={}]: Expected {}, "
                       "Got {}",
@@ -1472,8 +1473,8 @@ void testScalarMultiplyOpType(const std::string &TypeName, const MachEnv *Env,
    bool Passed = true;
    if constexpr (Rank == 1) {
       for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
-         if (std::abs(static_cast<Real>(ResultHost(i)) -
-                      static_cast<Real>(ExpectedValue)) >
+         if (Math::abs(static_cast<Real>(ResultHost(i)) -
+                       static_cast<Real>(ExpectedValue)) >
              static_cast<Real>(Helper::getTolerance())) {
             Passed = false;
             break;
@@ -1483,8 +1484,8 @@ void testScalarMultiplyOpType(const std::string &TypeName, const MachEnv *Env,
       for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
          for (I4 j = VCoord->MinLayerCellH(i); j <= VCoord->MaxLayerCellH(i);
               ++j) {
-            if (std::abs(static_cast<Real>(ResultHost(i, j)) -
-                         static_cast<Real>(ExpectedValue)) >
+            if (Math::abs(static_cast<Real>(ResultHost(i, j)) -
+                          static_cast<Real>(ExpectedValue)) >
                 static_cast<Real>(Helper::getTolerance())) {
                Passed = false;
                break;
@@ -1498,8 +1499,8 @@ void testScalarMultiplyOpType(const std::string &TypeName, const MachEnv *Env,
          for (I4 j = 0; j < Mesh->NCellsOwned; ++j) {
             for (I4 k = VCoord->MinLayerCellH(j); k <= VCoord->MaxLayerCellH(j);
                  ++k) {
-               if (std::abs(static_cast<Real>(ResultHost(i, j, k)) -
-                            static_cast<Real>(ExpectedValue)) >
+               if (Math::abs(static_cast<Real>(ResultHost(i, j, k)) -
+                             static_cast<Real>(ExpectedValue)) >
                    static_cast<Real>(Helper::getTolerance())) {
                   Passed = false;
                   break;
@@ -1606,8 +1607,8 @@ void testBinaryMultiplyOpSameRank(const std::string &TypeName,
    bool Passed = true;
    if constexpr (Rank == 1) {
       for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
-         if (std::abs(static_cast<Real>(ResultHost(i)) -
-                      static_cast<Real>(ExpectedValue)) >
+         if (Math::abs(static_cast<Real>(ResultHost(i)) -
+                       static_cast<Real>(ExpectedValue)) >
              static_cast<Real>(Helper::getTolerance())) {
             Passed = false;
             break;
@@ -1617,8 +1618,8 @@ void testBinaryMultiplyOpSameRank(const std::string &TypeName,
       for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
          for (I4 j = VCoord->MinLayerCellH(i); j <= VCoord->MaxLayerCellH(i);
               ++j) {
-            if (std::abs(static_cast<Real>(ResultHost(i, j)) -
-                         static_cast<Real>(ExpectedValue)) >
+            if (Math::abs(static_cast<Real>(ResultHost(i, j)) -
+                          static_cast<Real>(ExpectedValue)) >
                 static_cast<Real>(Helper::getTolerance())) {
                Passed = false;
                break;
@@ -1632,8 +1633,8 @@ void testBinaryMultiplyOpSameRank(const std::string &TypeName,
          for (I4 j = 0; j < Mesh->NCellsOwned; ++j) {
             for (I4 k = VCoord->MinLayerCellH(j); k <= VCoord->MaxLayerCellH(j);
                  ++k) {
-               if (std::abs(static_cast<Real>(ResultHost(i, j, k)) -
-                            static_cast<Real>(ExpectedValue)) >
+               if (Math::abs(static_cast<Real>(ResultHost(i, j, k)) -
+                             static_cast<Real>(ExpectedValue)) >
                    static_cast<Real>(Helper::getTolerance())) {
                   Passed = false;
                   break;
@@ -1716,8 +1717,8 @@ void testBinaryMultiplyOpVerticalExpansion(const std::string &TypeName,
    for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
       for (I4 j = VCoord->MinLayerCellH(i); j <= VCoord->MaxLayerCellH(i);
            ++j) {
-         if (std::abs(static_cast<Real>(ResultHost(i, j)) -
-                      static_cast<Real>(ExpectedValue)) >
+         if (Math::abs(static_cast<Real>(ResultHost(i, j)) -
+                       static_cast<Real>(ExpectedValue)) >
              static_cast<Real>(Helper2D::getTolerance())) {
             Passed = false;
             LOG_ERROR("  At ({}, {}): Expected {}, Got {}", i, j,
@@ -1815,7 +1816,7 @@ void testPrefixSumOpType(const std::string &TypeName, const MachEnv *Env,
          // Inclusive forward sum: Output[k] = sum(1..k+1) = (k+1)(k+2)/2
          Real Expected = static_cast<Real>((k + 1) * (k + 2)) / 2.0;
          Real Computed = static_cast<Real>(FwdResultHost(k));
-         if (std::abs(Computed - Expected) >
+         if (Math::abs(Computed - Expected) >
              static_cast<Real>(Helper::getTolerance())) {
             FwdPassed = false;
             LOG_ERROR("  1D forward at {}: Expected {}, Got {}", k, Expected,
@@ -1857,7 +1858,7 @@ void testPrefixSumOpType(const std::string &TypeName, const MachEnv *Env,
             Expected += static_cast<Real>(j + 1);
          }
          Real Computed = static_cast<Real>(RevResultHost(k));
-         if (std::abs(Computed - Expected) >
+         if (Math::abs(Computed - Expected) >
              static_cast<Real>(Helper::getTolerance())) {
             RevPassed = false;
             LOG_ERROR("  1D reverse at {}: Expected {}, Got {}", k, Expected,
@@ -1916,7 +1917,7 @@ void testPrefixSumOpType(const std::string &TypeName, const MachEnv *Env,
 
             Real Computed = static_cast<Real>(ResultHost(i, j));
 
-            if (std::abs(Computed - Expected) >
+            if (Math::abs(Computed - Expected) >
                 static_cast<Real>(Helper::getTolerance())) {
                Passed = false;
                LOG_ERROR("  At bin {} level {}: Expected {}, Got {}", i, j,
@@ -2049,7 +2050,7 @@ void testPrefixSumOpWithBCType(const std::string &TypeName, const MachEnv *Env,
 
          Real Computed = static_cast<Real>(ResultHost(i, k));
 
-         if (std::abs(Computed - Expected) >
+         if (Math::abs(Computed - Expected) >
              static_cast<Real>(Helper::getTolerance())) {
             Passed = false;
             LOG_ERROR("  At bin {} level {}: Expected {}, Got {}", i, k,
@@ -2248,7 +2249,7 @@ void testBinnedAccumulatorOp(const MachEnv *Env, const HorzMesh *Mesh,
          Real Expected = static_cast<Real>(GlobalCounts[bin][k]) * 1.0;
          Real Computed = ResultHost(bin, k);
 
-         if (std::abs(Computed - Expected) > 1.0e-8) {
+         if (Math::abs(Computed - Expected) > 1.0e-8) {
             Passed = false;
             LOG_ERROR("  Bin {}, Layer {}: Expected {}, Got {}", bin, k,
                       Expected, Computed);
@@ -2356,8 +2357,8 @@ void testPseudoToGeometricOpType(const std::string &TypeName,
              static_cast<ScalarT>(RhoSw * SpecVolVal * PseudoVal);
          ScalarT Computed = ResultHost(i);
 
-         if (std::abs(static_cast<Real>(Computed) -
-                      static_cast<Real>(Expected)) /
+         if (Math::abs(static_cast<Real>(Computed) -
+                       static_cast<Real>(Expected)) /
                  static_cast<Real>(Expected) >
              Tolerance) {
             Passed = false;
@@ -2379,8 +2380,8 @@ void testPseudoToGeometricOpType(const std::string &TypeName,
                 static_cast<ScalarT>(RhoSw * SpecVolVal * PseudoVal);
             ScalarT Computed = ResultHost(i, k);
 
-            if (std::abs(static_cast<Real>(Computed) -
-                         static_cast<Real>(Expected)) /
+            if (Math::abs(static_cast<Real>(Computed) -
+                          static_cast<Real>(Expected)) /
                     static_cast<Real>(Expected) >
                 Tolerance) {
                Passed = false;
@@ -2407,8 +2408,8 @@ void testPseudoToGeometricOpType(const std::string &TypeName,
                    static_cast<ScalarT>(RhoSw * SpecVolVal * PseudoVal);
                ScalarT Computed = ResultHost(i, j, k);
 
-               if (std::abs(static_cast<Real>(Computed) -
-                            static_cast<Real>(Expected)) /
+               if (Math::abs(static_cast<Real>(Computed) -
+                             static_cast<Real>(Expected)) /
                        static_cast<Real>(Expected) >
                    Tolerance) {
                   Passed = false;
@@ -2538,8 +2539,8 @@ void testExtractRegionOpType(const std::string &TypeName, const MachEnv *Env,
             Expected = InputHost(i);
          }
 
-         Real RelErr = std::abs(static_cast<Real>(Computed - Expected)) /
-                       std::abs(static_cast<Real>(Expected));
+         Real RelErr = Math::abs(static_cast<Real>(Computed - Expected)) /
+                       Math::abs(static_cast<Real>(Expected));
          if (RelErr > Tol) {
             Passed = false;
             LOG_ERROR("  1D mismatch at cell {}: Mask={}, Expected {}, Got {}, "
@@ -2568,8 +2569,8 @@ void testExtractRegionOpType(const std::string &TypeName, const MachEnv *Env,
                Expected = InputHost(i, k);
             }
 
-            Real RelErr = std::abs(static_cast<Real>(Computed - Expected)) /
-                          std::abs(static_cast<Real>(Expected));
+            Real RelErr = Math::abs(static_cast<Real>(Computed - Expected)) /
+                          Math::abs(static_cast<Real>(Expected));
             if (RelErr > Tol) {
                Passed = false;
                LOG_ERROR("  2D mismatch at cell {}, layer {}: Mask={}, "
@@ -2602,8 +2603,8 @@ void testExtractRegionOpType(const std::string &TypeName, const MachEnv *Env,
                   Expected = InputHost(i, j, k);
                }
 
-               Real RelErr = std::abs(static_cast<Real>(Computed - Expected)) /
-                             std::abs(static_cast<Real>(Expected));
+               Real RelErr = Math::abs(static_cast<Real>(Computed - Expected)) /
+                             Math::abs(static_cast<Real>(Expected));
                if (RelErr > Tol) {
                   Passed = false;
                   LOG_ERROR("  3D mismatch at i={}, cell {}, layer {}: "
@@ -2733,8 +2734,8 @@ void testHorzMeanOp(const MachEnv *Env, const HorzMesh *Mesh,
 
       Real Expected = (GlobalDen != 0.0) ? (GlobalNum / GlobalDen) : 0.0;
       Real Computed = ResultHost(k);
-      Real Err      = std::abs(Computed - Expected);
-      if (Err > Tol * (1.0 + std::abs(Expected))) {
+      Real Err      = Math::abs(Computed - Expected);
+      if (Err > Tol * (1.0 + Math::abs(Expected))) {
          Passed = false;
          LOG_ERROR("  HorzMean (unmasked) mismatch at level {}: "
                    "Expected {}, Got {}",
@@ -2744,7 +2745,7 @@ void testHorzMeanOp(const MachEnv *Env, const HorzMesh *Mesh,
    }
 
    // Explicitly confirm the fully-zeroed level yielded the guarded zero.
-   if (Passed && std::abs(ResultHost(ZeroLevel)) > Tol) {
+   if (Passed && Math::abs(ResultHost(ZeroLevel)) > Tol) {
       Passed = false;
       LOG_ERROR("  HorzMean zero-denominator guard failed at level {}: Got {}",
                 ZeroLevel, ResultHost(ZeroLevel));
@@ -2808,8 +2809,8 @@ void testHorzMeanOp(const MachEnv *Env, const HorzMesh *Mesh,
 
       Real Expected = (GlobalDen != 0.0) ? (GlobalNum / GlobalDen) : 0.0;
       Real Computed = ResultHost2(k);
-      Real Err      = std::abs(Computed - Expected);
-      if (Err > Tol * (1.0 + std::abs(Expected))) {
+      Real Err      = Math::abs(Computed - Expected);
+      if (Err > Tol * (1.0 + Math::abs(Expected))) {
          Passed2 = false;
          LOG_ERROR("  HorzMean (masked) mismatch at level {}: "
                    "Expected {}, Got {}",
@@ -2873,8 +2874,8 @@ void testHorzMeanOp(const MachEnv *Env, const HorzMesh *Mesh,
 
       Real Expected = (GlobalDen != 0.0) ? (GlobalNum / GlobalDen) : 0.0;
       Real Computed = ResultHost3(k);
-      Real Err      = std::abs(Computed - Expected);
-      if (Err > Tol * (1.0 + std::abs(Expected))) {
+      Real Err      = Math::abs(Computed - Expected);
+      if (Err > Tol * (1.0 + Math::abs(Expected))) {
          Passed3 = false;
          LOG_ERROR("  HorzMean (interface) mismatch at level {}: "
                    "Expected {}, Got {}",
@@ -3030,7 +3031,7 @@ void testTransectAccumulatorOp(const MachEnv *Env, const HorzMesh *Mesh,
       Real Computed = ResultHost(k);
       Real Expected = ExpectedPerLayer[k];
 
-      if (std::abs(Computed - Expected) > 1.0e-8) {
+      if (Math::abs(Computed - Expected) > 1.0e-8) {
          Passed = false;
          LOG_ERROR("  Layer {}: Expected {}, Got {}", k, Expected, Computed);
          break;

@@ -11,6 +11,7 @@
 #include "Error.h"
 #include "Logging.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 
 #include "mpi.h"
@@ -85,7 +86,7 @@ Error testHiparFor1DReduce1D(int N1) {
       I4 Max = std::numeric_limits<I4>::min();
       for (int J2 = 0; J2 < J1; ++J2) {
          Sum += f2(J1, J2, N1, N2);
-         Max = std::max(Max, f2(J1, J2, N1, N2));
+         Max = Math::max(Max, f2(J1, J2, N1, N2));
       }
       RefSumH(J1) = Sum;
       RefMaxH(J1) = Max;
@@ -106,7 +107,7 @@ Error testHiparFor1DReduce1D(int N1) {
           parallelReduceInner(
               Team, J1,
               INNER_LAMBDA(int J2, I4 &Accum) {
-                 Accum = Kokkos::max(Accum, f2(J1, J2, N1, N2));
+                 Accum = Math::max(Accum, f2(J1, J2, N1, N2));
               },
               Kokkos::Max<I4>(Max));
           Max1(J1) = Max;
@@ -131,7 +132,7 @@ Error testHiparFor1DReduce1D(int N1) {
               Team, J1,
               INNER_LAMBDA(int J2, I4 &AccumSum, I4 &AccumMax) {
                  AccumSum += f2(J1, J2, N1, N2);
-                 AccumMax = Kokkos::max(AccumMax, f2(J1, J2, N1, N2));
+                 AccumMax = Math::max(AccumMax, f2(J1, J2, N1, N2));
               },
               Sum, Kokkos::Max<I4>(Max));
           Sum2(J1) = Sum;
@@ -190,7 +191,7 @@ Error testHiparReduce1DReduce1D(int N1) {
    for (int J1 = 0; J1 < N1; ++J1) {
       for (int J2 = 0; J2 < J1; ++J2) {
          RefSum += f2(J1, J2, N1, N2);
-         RefMax = std::max(RefMax, f2(J1, J2, N1, N2));
+         RefMax = Math::max(RefMax, f2(J1, J2, N1, N2));
       }
    }
 
@@ -223,10 +224,10 @@ Error testHiparReduce1DReduce1D(int N1) {
           parallelReduceInner(
               Team, J1,
               INNER_LAMBDA(int J2, I4 &AccumInner) {
-                 AccumInner = Kokkos::max(AccumInner, f2(J1, J2, N1, N2));
+                 AccumInner = Math::max(AccumInner, f2(J1, J2, N1, N2));
               },
               Kokkos::Max<I4>(MaxInner));
-          AccumOuter = Kokkos::max(AccumOuter, MaxInner);
+          AccumOuter = Math::max(AccumOuter, MaxInner);
        },
        Kokkos::Max<I4>(Max1));
 
@@ -245,12 +246,12 @@ Error testHiparReduce1DReduce1D(int N1) {
               Team, J1,
               INNER_LAMBDA(int J2, I4 &AccumSumInner, I4 &AccumMaxInner) {
                  AccumSumInner += f2(J1, J2, N1, N2);
-                 AccumMaxInner = Kokkos::max(AccumMaxInner, f2(J1, J2, N1, N2));
+                 AccumMaxInner = Math::max(AccumMaxInner, f2(J1, J2, N1, N2));
               },
               SumInner, Kokkos::Max<I4>(MaxInner));
 
           Kokkos::single(PerTeam(Team), [&]() { AccumSumOuter += SumInner; });
-          AccumMaxOuter = Kokkos::max(AccumMaxOuter, MaxInner);
+          AccumMaxOuter = Math::max(AccumMaxOuter, MaxInner);
        },
        Sum2, Kokkos::Max<I4>(Max2));
 
@@ -562,7 +563,7 @@ Error testHiparFor2DReduce1D(int N1, int N2) {
          I4 Max = std::numeric_limits<I4>::min();
          for (int J3 = J1; J3 <= J1 + J2; ++J3) {
             Sum += f3(J1, J2, J3, N1, N2, N3);
-            Max = std::max(Max, f3(J1, J2, J3, N1, N2, N3));
+            Max = Math::max(Max, f3(J1, J2, J3, N1, N2, N3));
          }
          RefSumH(J1, J2) = Sum;
          RefMaxH(J1, J2) = Max;
@@ -586,7 +587,7 @@ Error testHiparFor2DReduce1D(int N1, int N2) {
           parallelReduceInner(
               Team, Range{J1, J1 + J2},
               INNER_LAMBDA(int J3, I4 &Accum) {
-                 Accum = Kokkos::max(Accum, f3(J1, J2, J3, N1, N2, N3));
+                 Accum = Math::max(Accum, f3(J1, J2, J3, N1, N2, N3));
               },
               Kokkos::Max<I4>(Max));
           Max1(J1, J2) = Max;
@@ -611,7 +612,7 @@ Error testHiparFor2DReduce1D(int N1, int N2) {
               Team, Range{J1, J1 + J2},
               INNER_LAMBDA(int J3, I4 &AccumSum, I4 &AccumMax) {
                  AccumSum += f3(J1, J2, J3, N1, N2, N3);
-                 AccumMax = Kokkos::max(AccumMax, f3(J1, J2, J3, N1, N2, N3));
+                 AccumMax = Math::max(AccumMax, f3(J1, J2, J3, N1, N2, N3));
               },
               Sum, Kokkos::Max<I4>(Max));
           Sum2(J1, J2) = Sum;
@@ -674,7 +675,7 @@ Error testHiparReduce2DReduce1D(int N1, int N2) {
       for (int J2 = 0; J2 < N2; ++J2) {
          for (int J3 = J1; J3 <= J1 + J2; ++J3) {
             RefSum += f3(J1, J2, J3, N1, N2, N3);
-            RefMax = std::max(RefMax, f3(J1, J2, J3, N1, N2, N3));
+            RefMax = Math::max(RefMax, f3(J1, J2, J3, N1, N2, N3));
          }
       }
    }
@@ -708,11 +709,10 @@ Error testHiparReduce2DReduce1D(int N1, int N2) {
           parallelReduceInner(
               Team, Range{J1, J1 + J2},
               INNER_LAMBDA(int J3, I4 &AccumInner) {
-                 AccumInner =
-                     Kokkos::max(AccumInner, f3(J1, J2, J3, N1, N2, N3));
+                 AccumInner = Math::max(AccumInner, f3(J1, J2, J3, N1, N2, N3));
               },
               Kokkos::Max<I4>(MaxInner));
-          AccumOuter = Kokkos::max(AccumOuter, MaxInner);
+          AccumOuter = Math::max(AccumOuter, MaxInner);
        },
        Kokkos::Max<I4>(Max1));
 
@@ -732,12 +732,12 @@ Error testHiparReduce2DReduce1D(int N1, int N2) {
               INNER_LAMBDA(int J3, I4 &AccumSumInner, I4 &AccumMaxInner) {
                  AccumSumInner += f3(J1, J2, J3, N1, N2, N3);
                  AccumMaxInner =
-                     Kokkos::max(AccumMaxInner, f3(J1, J2, J3, N1, N2, N3));
+                     Math::max(AccumMaxInner, f3(J1, J2, J3, N1, N2, N3));
               },
               SumInner, Kokkos::Max<I4>(MaxInner));
 
           Kokkos::single(PerTeam(Team), [&]() { AccumSumOuter += SumInner; });
-          AccumMaxOuter = Kokkos::max(AccumMaxOuter, MaxInner);
+          AccumMaxOuter = Math::max(AccumMaxOuter, MaxInner);
        },
        Sum2, Kokkos::Max<I4>(Max2));
 

@@ -14,6 +14,7 @@
 
 #include "DataTypes.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 
 namespace OMEGA {
@@ -155,7 +156,7 @@ struct PCRSolver {
       const int K = Team.team_rank();
 
       // Number of reduction levels
-      const int NLevels = Kokkos::ceil(Kokkos::log2(NRow));
+      const int NLevels = Math::ceil(Math::log2(NRow));
 
       // Perform NLevels of parallel cyclic reduction
       for (int Lev = 1; Lev < NLevels; ++Lev) {
@@ -376,7 +377,7 @@ struct PCRDiffusionSolver {
       const int K = Team.team_rank();
 
       // Number of reduction levels
-      const int NLevels = Kokkos::ceil(Kokkos::log2(NRow));
+      const int NLevels = Math::ceil(Math::log2(NRow));
 
       // Perform NLevels of parallel cyclic reduction
       for (int Lev = 1; Lev < NLevels; ++Lev) {

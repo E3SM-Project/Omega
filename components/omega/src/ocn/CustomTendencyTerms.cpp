@@ -9,6 +9,7 @@
 #include "CustomTendencyTerms.h"
 #include "Config.h"
 #include "GlobalConstants.h"
+#include "MathUtils.h"
 #include "TimeStepper.h"
 #include "VertCoord.h"
 
@@ -83,9 +84,11 @@ void ManufacturedSolution::init() {
    R8 H0                = DefVCoord->BottomGeomDepthH(0);
 
    // Define and compute common constants
-   R8 Kx      = TwoPi / WavelengthX;                      // Wave in X-dir
-   R8 Ky      = TwoPi / WavelengthY;                      // Wave in Y-dir
-   R8 AngFreq = sqrt(H0 * Gravity * (Kx * Kx + Ky * Ky)); // Angular frequency
+   R8 Kx = TwoPi / WavelengthX; // Wave in X-dir
+   R8 Ky = TwoPi / WavelengthY; // Wave in Y-dir
+   R8 AngFreq =
+       Math::sqrt(H0 * Gravity *
+                  (Math::pow<2>(Kx) + Math::pow<2>(Ky))); // Angular frequency
 
    // Assign constants for thickness tendency function
    ManufacturedThickTend.H0      = H0;
@@ -135,8 +138,9 @@ void ManufacturedSolution::ManufacturedThicknessTendency::operator()(
           R8 Phase = LocKx * X + LocKy * Y - LocAngFreq * ElapsedTimeSec;
           ThicknessTend(ICell, KLevel) +=
               LocEta0 *
-              (-LocH0 * (LocKx + LocKy) * sin(Phase) - LocAngFreq * cos(Phase) +
-               LocEta0 * (LocKx + LocKy) * cos(2.0_Real * Phase));
+              (-LocH0 * (LocKx + LocKy) * Math::sin(Phase) -
+               LocAngFreq * Math::cos(Phase) +
+               LocEta0 * (LocKx + LocKy) * Math::cos(2.0_Real * Phase));
        });
 
 } // end void ManufacturedThicknessTendency
@@ -172,10 +176,10 @@ void ManufacturedSolution::ManufacturedVelocityTendency::operator()(
    OMEGA_SCOPE(LocVelDiffTendencyEnable, VelDiffTendencyEnable);
    OMEGA_SCOPE(LocVelHyperDiffTendencyEnable, VelHyperDiffTendencyEnable);
 
-   R8 LocKx2 = LocKx * LocKx;
-   R8 LocKy2 = LocKy * LocKy;
-   R8 LocKx4 = LocKx2 * LocKx2;
-   R8 LocKy4 = LocKy2 * LocKy2;
+   R8 LocKx2 = Math::pow<2>(LocKx);
+   R8 LocKy2 = Math::pow<2>(LocKy);
+   R8 LocKx4 = Math::pow<4>(LocKx);
+   R8 LocKy4 = Math::pow<4>(LocKy);
 
    parallelFor(
        {Mesh->NEdgesAll, NVertLayers}, KOKKOS_LAMBDA(int IEdge, int KLevel) {
@@ -183,29 +187,31 @@ void ManufacturedSolution::ManufacturedVelocityTendency::operator()(
           R8 Y = YEdge(IEdge);
 
           R8 Phase       = LocKx * X + LocKy * Y - LocAngFreq * ElapsedTimeSec;
-          R8 SourceTerm0 = LocAngFreq * sin(Phase) - 0.5_Real * LocEta0 *
-                                                         (LocKx + LocKy) *
-                                                         sin(2.0_Real * Phase);
+          R8 SourceTerm0 = LocAngFreq * Math::sin(Phase) -
+                           0.5_Real * LocEta0 * (LocKx + LocKy) *
+                               Math::sin(2.0_Real * Phase);
 
-          R8 U = LocEta0 *
-                 ((-FEdge(IEdge) + LocGrav * LocKx) * cos(Phase) + SourceTerm0);
-          R8 V = LocEta0 *
-                 ((FEdge(IEdge) + LocGrav * LocKy) * cos(Phase) + SourceTerm0);
+          R8 U =
+              LocEta0 * ((-FEdge(IEdge) + LocGrav * LocKx) * Math::cos(Phase) +
+                         SourceTerm0);
+          R8 V =
+              LocEta0 * ((FEdge(IEdge) + LocGrav * LocKy) * Math::cos(Phase) +
+                         SourceTerm0);
 
           // Del2 and del4 source terms
           if (LocVelDiffTendencyEnable) {
-             U += LocViscDel2 * LocEta0 * (LocKx2 + LocKy2) * cos(Phase);
-             V += LocViscDel2 * LocEta0 * (LocKx2 + LocKy2) * cos(Phase);
+             U += LocViscDel2 * LocEta0 * (LocKx2 + LocKy2) * Math::cos(Phase);
+             V += LocViscDel2 * LocEta0 * (LocKx2 + LocKy2) * Math::cos(Phase);
           }
           if (LocVelHyperDiffTendencyEnable) {
              U -= LocViscDel4 * LocEta0 *
-                  ((LocKx4 + LocKy4 + LocKx2 * LocKy2) * cos(Phase));
+                  ((LocKx4 + LocKy4 + LocKx2 * LocKy2) * Math::cos(Phase));
              V -= LocViscDel4 * LocEta0 *
-                  ((LocKx4 + LocKy4 + LocKx2 * LocKy2) * cos(Phase));
+                  ((LocKx4 + LocKy4 + LocKx2 * LocKy2) * Math::cos(Phase));
           }
 
           R8 NormalCompSourceTerm =
-              cos(AngleEdge(IEdge)) * U + sin(AngleEdge(IEdge)) * V;
+              Math::cos(AngleEdge(IEdge)) * U + Math::sin(AngleEdge(IEdge)) * V;
           NormalVelTend(IEdge, KLevel) += NormalCompSourceTerm;
        });
 
