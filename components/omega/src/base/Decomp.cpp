@@ -324,15 +324,15 @@ void readMesh(
    }
 
    // Create the parallel IO decompositions
-   IO::Rearranger Rearr  = IO::RearrBox;
-   I4 OnCellDecomp       = IO::createDecomp(IO::IOTypeI4, NDims, OnCellDims,
-                                            OnCellSize, OnCellOffset, Rearr);
-   I4 OnEdgeDecomp       = IO::createDecomp(IO::IOTypeI4, NDims, OnEdgeDims,
-                                            OnEdgeSize, OnEdgeOffset, Rearr);
-   I4 OnEdgeDecomp2      = IO::createDecomp(IO::IOTypeI4, NDims, OnEdgeDims2,
-                                            OnEdgeSize2, OnEdgeOffset2, Rearr);
-   I4 OnVertexDecomp     = IO::createDecomp(IO::IOTypeI4, NDims, OnVertexDims,
-                                            OnVertexSize, OnVertexOffset, Rearr);
+   IO::Rearranger Rearr = IO::RearrBox;
+   I4 OnCellDecomp      = IO::createDecomp(IO::IOTypeI4, NDims, OnCellDims,
+                                           OnCellSize, OnCellOffset, Rearr);
+   I4 OnEdgeDecomp      = IO::createDecomp(IO::IOTypeI4, NDims, OnEdgeDims,
+                                           OnEdgeSize, OnEdgeOffset, Rearr);
+   I4 OnEdgeDecomp2     = IO::createDecomp(IO::IOTypeI4, NDims, OnEdgeDims2,
+                                           OnEdgeSize2, OnEdgeOffset2, Rearr);
+   I4 OnVertexDecomp    = IO::createDecomp(IO::IOTypeI4, NDims, OnVertexDims,
+                                           OnVertexSize, OnVertexOffset, Rearr);
    I4 OnCellDecompScalar = -1;
    I4 OnCellDecomp2      = -1;
    if (OnSphere) {

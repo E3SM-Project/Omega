@@ -1427,8 +1427,8 @@ TimeFrac Calendar::getElapsedTime(
       // Gregorian date (year, month, day) => Julian days (JD)
       I4 Temp = (Month - 14) / 12;
       JD      = (1461 * (Year + 4800 + Temp)) / 4 +
-           (367 * (Month - 2 - 12 * Temp)) / 12 -
-           (3 * ((Year + 4900 + Temp) / 100)) / 4 + Day - 32075;
+                (367 * (Month - 2 - 12 * Temp)) / 12 -
+                (3 * ((Year + 4900 + Temp) / 100)) / 4 + Day - 32075;
 
       // Julian Day starts at noon, so correct for the half day
       HourTmp = Hour - 12;
@@ -2579,7 +2579,7 @@ void TimeInterval::get(
       case TimeUnits::Days:
          TmpResult = CalInterval;
          Length    = TmpResult * static_cast<R8>(SECONDS_PER_DAY) /
-                  static_cast<R8>(SECONDS_PER_MINUTE);
+                     static_cast<R8>(SECONDS_PER_MINUTE);
          break;
       case TimeUnits::None:
       default:
@@ -2603,7 +2603,7 @@ void TimeInterval::get(
       case TimeUnits::Days:
          TmpResult = CalInterval;
          Length    = TmpResult * static_cast<R8>(SECONDS_PER_DAY) /
-                  static_cast<R8>(SECONDS_PER_HOUR);
+                     static_cast<R8>(SECONDS_PER_HOUR);
          break;
       case TimeUnits::None:
       default:

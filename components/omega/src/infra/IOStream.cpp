@@ -896,9 +896,9 @@ void IOStream::computeDecomp(
                   I4 IGlob = (DimOffsets[4])(I);
                   if (IGlob < 0)
                      continue;
-                  int Add = I * StrideLoc[4] + J * StrideLoc[3] +
-                            K * StrideLoc[2] + M * StrideLoc[1] +
-                            N * StrideLoc[0];
+                  int Add     = I * StrideLoc[4] + J * StrideLoc[3] +
+                                K * StrideLoc[2] + M * StrideLoc[1] +
+                                N * StrideLoc[0];
                   Offset[Add] = IGlob * StrideGlob[4] + JGlob * StrideGlob[3] +
                                 KGlob * StrideGlob[2] + MGlob * StrideGlob[1] +
                                 NGlob * StrideGlob[0];
