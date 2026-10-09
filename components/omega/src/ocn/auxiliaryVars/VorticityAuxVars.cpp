@@ -51,9 +51,9 @@ void VorticityAuxVars::registerFields(const std::string &AuxGroupName,
    auto RelVortVertexField = Field::create(
        RelVortVertex.label(),                              // field name
        "curl of horizontal velocity, defined at vertices", // long name/describe
-       "s^-1",                                             // units
+       "s-1",                                              // units
        "ocean_relative_vorticity",                         // CF standard Name
-       std::numeric_limits<Real>::min(),                   // min valid value
+       std::numeric_limits<Real>::lowest(),                // min valid value
        std::numeric_limits<Real>::max(),                   // max valid value
        NDims,   // number of dimensions
        DimNames // dimension names
@@ -63,25 +63,25 @@ void VorticityAuxVars::registerFields(const std::string &AuxGroupName,
    auto NormRelVortVertexField = Field::create(
        NormRelVortVertex.label(),                                 // field name
        "curl of horizontal velocity divided by pseudo-thickness", // long Name
-       "m^-1 s^-1",                                               // units
-       "",                               // CF standard Name
-       std::numeric_limits<Real>::min(), // min valid value
-       std::numeric_limits<Real>::max(), // max valid value
-       NDims,                            // number of dimensions
-       DimNames                          // dimension names
+       "m-1 s-1",                                                 // units
+       "",                                  // CF standard Name
+       std::numeric_limits<Real>::lowest(), // min valid value
+       std::numeric_limits<Real>::max(),    // max valid value
+       NDims,                               // number of dimensions
+       DimNames                             // dimension names
    );
 
    // Normalized planetary vorticity on vertices
    auto NormPlanetVortVertexField = Field::create(
        NormPlanetVortVertex.label(), // field name
        "earth's rotational rate (Coriolis parameter, f) divided by layer "
-       "thickness",                      // long Name or description
-       "m^-1 s^-1",                      // units
-       "",                               // CF standard Name
-       std::numeric_limits<Real>::min(), // min valid value
-       std::numeric_limits<Real>::max(), // max valid value
-       NDims,                            // number of dimensions
-       DimNames                          // dimension names
+       "thickness",                         // long Name or description
+       "m-1 s-1",                           // units
+       "",                                  // CF standard Name
+       std::numeric_limits<Real>::lowest(), // min valid value
+       std::numeric_limits<Real>::max(),    // max valid value
+       NDims,                               // number of dimensions
+       DimNames                             // dimension names
    );
 
    // Normalized relative vorticity on edges
@@ -89,13 +89,13 @@ void VorticityAuxVars::registerFields(const std::string &AuxGroupName,
    auto NormRelVortEdgeField = Field::create(
        NormRelVortEdge.label(), // field name
        "curl of horizontal velocity divided by pseudo-thickness, averaged from "
-       "vertices to edges",              // long Name or description
-       "m^-1 s^-1",                      // units
-       "",                               // CF standard Name
-       std::numeric_limits<Real>::min(), // min valid value
-       std::numeric_limits<Real>::max(), // max valid value
-       NDims,                            // number of dimensions
-       DimNames                          // dimension names
+       "vertices to edges",                 // long Name or description
+       "m-1 s-1",                           // units
+       "",                                  // CF standard Name
+       std::numeric_limits<Real>::lowest(), // min valid value
+       std::numeric_limits<Real>::max(),    // max valid value
+       NDims,                               // number of dimensions
+       DimNames                             // dimension names
    );
 
    // Normalized planetary vorticity on edges
@@ -103,9 +103,9 @@ void VorticityAuxVars::registerFields(const std::string &AuxGroupName,
        NormPlanetVortEdge.label(), // field name
        "earth's rotational rate (Coriolis parameter, f) divided by layer "
        "thickness, averaged from vertices to edges", // long Name or description
-       "m^-1 s^-1",                                  // units
+       "m-1 s-1",                                    // units
        "",                                           // CF standard Name
-       std::numeric_limits<Real>::min(),             // min valid value
+       std::numeric_limits<Real>::lowest(),          // min valid value
        std::numeric_limits<Real>::max(),             // max valid value
        NDims,                                        // number of dimensions
        DimNames                                      // dimension names

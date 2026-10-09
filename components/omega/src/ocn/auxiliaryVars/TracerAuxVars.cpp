@@ -40,11 +40,11 @@ void TracerAuxVars::registerFields(const std::string &AuxGroupName,
        "laplacian of thickness-weighted tracers at cell center", // long name or
                                                                  // description
        "",                                                       // units
-       "",                               // CF standard name
-       std::numeric_limits<Real>::min(), // min valid value
-       std::numeric_limits<Real>::max(), // max valid value
-       NDims,                            // number of dimensions
-       DimNames                          // dimension names
+       "",                                  // CF standard name
+       std::numeric_limits<Real>::lowest(), // min valid value
+       std::numeric_limits<Real>::max(),    // max valid value
+       NDims,                               // number of dimensions
+       DimNames                             // dimension names
    );
 
    // Add fields to Aux Field group
