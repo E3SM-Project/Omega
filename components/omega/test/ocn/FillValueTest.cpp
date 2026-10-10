@@ -28,6 +28,7 @@
 #include "Eos.h"
 #include "Error.h"
 #include "Field.h"
+#include "Forcing.h"
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "IO.h"
@@ -132,6 +133,7 @@ void initFillValueTest() {
    VertCoord::init();
    VertAdv::init();
    Tracers::init();
+   Forcing::init();
    AuxiliaryState::init();
    PressureGrad::init();
    Eos::init();
@@ -444,6 +446,7 @@ int main(int argc, char *argv[]) {
       VertMix::destroyInstance();
       PressureGrad::clear();
       AuxiliaryState::clear();
+      Forcing::clear();
       Tracers::clear();
       IOStream::finalize();
       TimeStepper::clear();

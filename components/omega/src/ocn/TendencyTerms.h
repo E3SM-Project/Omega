@@ -540,7 +540,8 @@ class SfcThicknessForcingOnCell {
 /// Coupled surface flux forcing for active tracers.
 class SfcTracerForcingOnCell {
  public:
-   bool Enabled = false;
+   bool Enabled                  = false;
+   bool IncludeShortWaveHeatFlux = true;
 
    SfcTracerForcingOnCell(const HorzMesh *Mesh, const VertCoord *VCoord,
                           I4 TempTracerIndex, I4 SaltTracerIndex,
@@ -586,10 +587,11 @@ class SfcTracerForcingOnCell {
              (EosChoice == EosType::Teos10Eos) ? Ct0Fw : 0.0_Real;
          const Real PotEnthalpyFwIn  = Cp0Sw * Kokkos::max(CtLim, CtTop);
          const Real PotEnthalpyFwOut = Cp0Sw * CtTop;
-
+         const Real ShortWaveFlux =
+             IncludeShortWaveHeatFlux ? ShortWaveHeatFlux(ICell) : 0.0_Real;
          const Real HeatFlux =
              LongWaveHeatFluxUp(ICell) + LongWaveHeatFluxDown(ICell) +
-             ShortWaveHeatFlux(ICell) + SensibleHeatFlux(ICell) +
+             ShortWaveFlux + SensibleHeatFlux(ICell) +
              SeaIceHeatFlux(ICell) + // includes enthalpy of meltwater already
              (RainFlux(ICell) + RiverRunoffFlux(ICell)) * PotEnthalpyFwIn +
              LatentHeatFluxEvap(ICell) +
@@ -1240,6 +1242,73 @@ class TracerHyperDiffOnCell {
    Array1DI4 MaxLayerCell;
    Array1DI4 MinLayerEdgeBot;
    Array1DI4 MaxLayerEdgeTop;
+};
+/// Penetrating shortwave radiation forcing for conservative temperature.
+class PenetratingShortwaveOnCell {
+ public:
+   bool Enabled        = false;
+   Real NearIrFraction = 0.58_Real;
+   Real NearIrCoeff    = 2.86_Real;
+   Real RedFraction    = 0.21_Real;
+   Real BlueFraction   = 0.21_Real;
+
+   PenetratingShortwaveOnCell(const HorzMesh *Mesh, const VertCoord *VCoord,
+                              I4 TempTracerIndex);
+
+   KOKKOS_FUNCTION void
+   operator()(const TeamMember &Team, const Array3DReal &Tend, I4 ICell,
+              const Array2DReal &GeomZInterface,
+              const Array1DReal &ShortWaveHeatFlux,
+              const Array1DReal &ExtinctionCoeffRed,
+              const Array1DReal &ExtinctionCoeffBlue) const {
+
+      const I4 KTop = MinLayerCell(ICell);
+      const I4 KBot = MaxLayerCell(ICell);
+      if (KTop > KBot || TempIndex < 0) {
+         return;
+      }
+
+      const Real SurfaceFlux = ShortWaveHeatFlux(ICell);
+      const Real Kr          = ExtinctionCoeffRed(ICell);
+      const Real Kb          = ExtinctionCoeffBlue(ICell);
+      const Real ZSurface    = GeomZInterface(ICell, KTop);
+
+      // First compute the shortwave flux crossing each layer interface and
+      // store in scratch. The top interface receives the full surface flux and
+      // the bottom interface is set to zero.
+      ScratchArray1DReal FluxAtInterface(teamScratch(Team), NVertLayers + 1);
+      parallelForInner(
+          Team, Range{KTop, KBot + 1}, INNER_LAMBDA(int K) {
+             if (K == KTop) {
+                FluxAtInterface(K) = SurfaceFlux;
+             } else if (K == KBot + 1) {
+                FluxAtInterface(K) = 0.0_Real;
+             } else {
+                const Real Depth =
+                    Kokkos::abs(GeomZInterface(ICell, K) - ZSurface);
+                FluxAtInterface(K) =
+                    SurfaceFlux *
+                    (NearIrFraction * Kokkos::exp(-NearIrCoeff * Depth) +
+                     RedFraction * Kokkos::exp(-Kr * Depth) +
+                     BlueFraction * Kokkos::exp(-Kb * Depth));
+             }
+          });
+
+      teamBarrier(Team);
+
+      // Deposit the flux divergence across each layer as the heating tendency.
+      parallelForInner(
+          Team, Range{KTop, KBot}, INNER_LAMBDA(int K) {
+             Tend(TempIndex, ICell, K) +=
+                 (FluxAtInterface(K) - FluxAtInterface(K + 1)) * HFluxFac;
+          });
+   }
+
+ private:
+   I4 TempIndex;
+   I4 NVertLayers;
+   Array1DI4 MinLayerCell;
+   Array1DI4 MaxLayerCell;
 };
 
 /// Surface tracer restoring term

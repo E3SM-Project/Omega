@@ -17,6 +17,7 @@
 #include "Halo.h"
 #include "HorzMesh.h"
 #include "forcingVars/SfcStressForcingVars.h"
+#include "forcingVars/ShortwavePenForcingVars.h"
 #include "forcingVars/TracerForcingVars.h"
 
 #include <map>
@@ -25,15 +26,15 @@
 
 namespace OMEGA {
 
-/// A class that manages surface stress forcing for ocean dynamics.
-/// The Forcing class provides surface stress data and handles IO,
-/// halo exchanges, and the computation of stress forcing on edges.
+/// A class that manages forcing data for ocean dynamics.
+/// The Forcing class handles field registration, IO, and halo exchanges.
 class Forcing {
  public:
    std::string Name; ///< Name identifier for this forcing instance
 
    SfcStressForcingVars SfcStressForcing; ///< Surface stress forcing variables
    TracerForcingVars TracerForcing; ///< Tracer forcing vars (thickness and T,S)
+   ShortwavePenForcingVars ShortwavePenForcing; ///< Shortwave extinction coeffs
 
    /// 10 m wind speed (m/s), used for the KPP Langmuir enhancement estimate.
    /// Only read/registered when KPP Langmuir turbulence is enabled.
@@ -71,7 +72,7 @@ class Forcing {
    /// Read and apply configuration options for surface stress
    void readConfigOptions(Config *OmegaConfig);
 
-   /// Register surface stress fields with IO streams
+   /// Register forcing fields with IO streams
    void registerFields(const std::string &MeshName) const;
 
    /// Unregister surface stress fields from IO streams
@@ -105,10 +106,11 @@ class Forcing {
 
    const HorzMesh *Mesh;
    Halo *MeshHalo;
-   bool SfcStressFieldsEnabled     = false;
-   bool TracerForcingFieldsEnabled = false;
-   bool WindSpeed10mFieldEnabled   = false;
-   bool IceFractionFieldEnabled    = false;
+   bool SfcStressFieldsEnabled               = false;
+   bool TracerForcingFieldsEnabled           = false;
+   bool WindSpeed10mFieldEnabled             = false;
+   bool IceFractionFieldEnabled              = false;
+   mutable bool ShortwavePenFieldsRegistered = false;
 
    static Forcing *DefaultForcing;
    static std::map<std::string, std::unique_ptr<Forcing>> AllForcing;

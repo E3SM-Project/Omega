@@ -1991,6 +1991,154 @@ int testSurfaceTracerRestoringOnCell(int NVertLayers, int NTracers, Real RTol) {
    return Err;
 } // end testSurfaceTracerRestoringOnCell
 
+int testPenetratingShortwaveOnCell(int NVertLayers, Real RTol) {
+
+   I4 Err = 0;
+
+   const auto Mesh   = HorzMesh::getDefault();
+   const auto VCoord = VertCoord::getDefault();
+
+   // Test values for a shallow water column where shortwave radiation
+   // penetrates all the way to the seafloor with significant leftover energy. A
+   // layer thickness of 1.0 m (16 m total depth) with realistic blue and red
+   // extinction coefficients ensures that substantial flux reaches the bottom
+   // interface. The test verifies that this leftover flux is fully absorbed
+   // into the bottom layer so that column-integrated heating is conserved
+   // (integrated fraction is 1.0).
+   const Real SurfaceFluxVal    = 235.0_Real; // W/m^2
+   const Real ExtinctionRedVal  = 0.2_Real;   // 1/m
+   const Real ExtinctionBlueVal = 0.05_Real;  // 1/m
+   const Real NearIrFractionVal = 0.58_Real;
+   const Real NearIrCoeffVal    = 2.86_Real; // 1/m
+   const Real RedFractionVal    = 0.21_Real;
+   const Real BlueFractionVal   = 0.21_Real;
+   const Real LayerThickness    = 1.0_Real; // m
+
+   Array1DReal ShortWaveHeatFlux("ShortWaveHeatFlux", Mesh->NCellsSize);
+   Array1DReal ExtinctionCoeffRed("ExtinctionCoeffRed", Mesh->NCellsSize);
+   Array1DReal ExtinctionCoeffBlue("ExtinctionCoeffBlue", Mesh->NCellsSize);
+   deepCopy(ShortWaveHeatFlux, SurfaceFluxVal);
+   deepCopy(ExtinctionCoeffRed, ExtinctionRedVal);
+   deepCopy(ExtinctionCoeffBlue, ExtinctionBlueVal);
+
+   // An independent, exactly-known column geometry (uniform layer
+   // thickness), rather than relying on the mesh's default vertical
+   // coordinate, so the expected result is known exactly.
+   Array2DReal GeomZInterface("GeomZInterface", Mesh->NCellsSize,
+                              NVertLayers + 1);
+   parallelFor(
+       {Mesh->NCellsSize, NVertLayers + 1}, KOKKOS_LAMBDA(int ICell, int K) {
+          GeomZInterface(ICell, K) = -LayerThickness * K;
+       });
+
+   Array3DReal Tend("Tend", 1, Mesh->NCellsSize, NVertLayers);
+   deepCopy(Tend, 0);
+
+   PenetratingShortwaveOnCell PenSwOnC(Mesh, VCoord, /*TempTracerIndex=*/0);
+   PenSwOnC.Enabled        = true;
+   PenSwOnC.NearIrFraction = NearIrFractionVal;
+   PenSwOnC.NearIrCoeff    = NearIrCoeffVal;
+   PenSwOnC.RedFraction    = RedFractionVal;
+   PenSwOnC.BlueFraction   = BlueFractionVal;
+   const auto MinLayerCell = VCoord->MinLayerCell;
+   const auto MaxLayerCell = VCoord->MaxLayerCell;
+
+   parallelForOuter(
+       LaunchConfig({Mesh->NCellsOwned}, TeamScratch<Real>(NVertLayers + 1)),
+       KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
+          PenSwOnC(Team, Tend, ICell, GeomZInterface, ShortWaveHeatFlux,
+                   ExtinctionCoeffRed, ExtinctionCoeffBlue);
+       });
+
+   I4 NumBad                        = 0;
+   const Real ExpectedColumnHeating = SurfaceFluxVal * HFluxFac;
+   parallelReduce(
+       {Mesh->NCellsOwned},
+       KOKKOS_LAMBDA(int ICell, I4 &Accum) {
+          const I4 KTop = MinLayerCell(ICell);
+          const I4 KBot = MaxLayerCell(ICell);
+          if (KTop > KBot) {
+             return;
+          }
+
+          // Analytic flux that would reach the seafloor interface without
+          // bottom-layer absorption
+          const Real SeafloorDepth = Kokkos::abs(
+              GeomZInterface(ICell, KBot + 1) - GeomZInterface(ICell, KTop));
+          const Real ResidualSeafloorFlux =
+              SurfaceFluxVal *
+              (NearIrFractionVal *
+                   Kokkos::exp(-NearIrCoeffVal * SeafloorDepth) +
+               RedFractionVal * Kokkos::exp(-ExtinctionRedVal * SeafloorDepth) +
+               BlueFractionVal *
+                   Kokkos::exp(-ExtinctionBlueVal * SeafloorDepth));
+
+          // Ensure the test setup genuinely has significant leftover flux at
+          // the bottom interface (at least 5% of incident flux)
+          if (ResidualSeafloorFlux < 0.05_Real * SurfaceFluxVal) {
+             Accum += 1;
+          }
+
+          Real FluxAtLayerTop = SurfaceFluxVal;
+          Real ColumnHeating  = 0.0_Real;
+          for (I4 K = KTop; K <= KBot; ++K) {
+             Real FluxAtLayerBottom = 0.0_Real;
+             if (K < KBot) {
+                const Real Depth = Kokkos::abs(GeomZInterface(ICell, K + 1) -
+                                               GeomZInterface(ICell, KTop));
+                FluxAtLayerBottom =
+                    SurfaceFluxVal *
+                    (NearIrFractionVal * Kokkos::exp(-NearIrCoeffVal * Depth) +
+                     RedFractionVal * Kokkos::exp(-ExtinctionRedVal * Depth) +
+                     BlueFractionVal * Kokkos::exp(-ExtinctionBlueVal * Depth));
+             }
+             const Real ExpectedLayerHeating =
+                 (FluxAtLayerTop - FluxAtLayerBottom) * HFluxFac;
+             ColumnHeating += Tend(0, ICell, K);
+             const Real RelErr =
+                 Kokkos::abs(Tend(0, ICell, K) - ExpectedLayerHeating) /
+                 Kokkos::abs(ExpectedLayerHeating);
+             if (RelErr > RTol || Kokkos::isnan(Tend(0, ICell, K)) ||
+                 Kokkos::isinf(Tend(0, ICell, K))) {
+                Accum += 1;
+             }
+
+             // In the bottom layer, verify that the absorbed heating is
+             // strictly greater than unadjusted exponential divergence,
+             // confirming the leftover seafloor flux was absorbed in the bottom
+             // layer
+             if (K == KBot) {
+                const Real UnadjustedBottomHeating =
+                    (FluxAtLayerTop - ResidualSeafloorFlux) * HFluxFac;
+                if (Tend(0, ICell, K) <= UnadjustedBottomHeating) {
+                   Accum += 1;
+                }
+             }
+
+             FluxAtLayerTop = FluxAtLayerBottom;
+          }
+          const Real ColumnRelErr =
+              Kokkos::abs(ColumnHeating - ExpectedColumnHeating) /
+              Kokkos::abs(ExpectedColumnHeating);
+          if (ColumnRelErr > RTol || Kokkos::isnan(ColumnHeating) ||
+              Kokkos::isinf(ColumnHeating)) {
+             Accum += 1;
+          }
+       },
+       NumBad);
+
+   if (NumBad > 0) {
+      LOG_ERROR("TendencyTermsTest: PenetratingShortwave FAIL, {} layer or "
+                "column heating values do not match the expected results",
+                NumBad);
+      Err += 1;
+   } else {
+      LOG_INFO("TendencyTermsTest: PenetratingShortwave PASS");
+   }
+
+   return Err;
+} // end testPenetratingShortwaveOnCell
+
 void initTendTest(const std::string &MeshFile, int NVertLayers) {
 
    Error Err;
@@ -2087,6 +2235,8 @@ int tendencyTermsTest(const std::string &MeshFile = DefaultMeshFile) {
    Err += testTracerHyperDiffOnCell(NVertLayers, NTracers, RTol);
 
    Err += testSurfaceTracerRestoringOnCell(NVertLayers, NTracers, RTol);
+
+   Err += testPenetratingShortwaveOnCell(NVertLayers, RTol);
 
    if (Err == 0) {
       LOG_INFO("TendencyTermsTest: Successful completion");
