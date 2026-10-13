@@ -126,8 +126,8 @@ The split time steppers carry three state variables in addition to
 
 | Field name | Description | Units | Dimensions |
 | ---------- | ----------- | ----- | ---------- |
-| NormalBaroclinicVelocity | baroclinic velocity component normal to edge | m/s | NEdges, NVertLayers |
-| NormalBarotropicVelocity | barotropic velocity component normal to edge | m/s | NEdges |
+| NormalBaroclinicVelocity | baroclinic velocity component normal to edge | m s-1 | NEdges, NVertLayers |
+| NormalBarotropicVelocity | barotropic velocity component normal to edge | m s-1 | NEdges |
 | BarotropicPressureAnomaly | barotropic pressure anomaly | Pa | NCells |
 
 These fields exist only when `SplitExplicitRK2` or `UnsplitRK2` is selected.

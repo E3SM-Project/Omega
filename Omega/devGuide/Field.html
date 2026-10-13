@@ -225,11 +225,17 @@ Fields initialized with the init method:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Field</span><span class="o">::</span><span class="n">init</span><span class="p">();</span>
 </pre></div>
 </div>
-<p>which primarily defines the CodeMeta and SimMeta fields for later use.
+<p>which primarily defines the CodeMeta and SimMeta fields for later use. The
+CodeMeta field is created with a <code class="docutils literal notranslate"><span class="pre">Conventions</span></code> entry (the <code class="docutils literal notranslate"><span class="pre">CFConventions</span></code>
+constant in <code class="docutils literal notranslate"><span class="pre">Field.h</span></code>, currently <code class="docutils literal notranslate"><span class="pre">CF-1.8</span></code>) so that every output file declares
+the metadata conventions it follows.
 For array fields, the appropriate Dimensions must be defined. The default
 dimensions (eg NCells, NEdges, NVertLayers) will be defined by the relevant
 Mesh initialization and should be done before any Fields are defined.
 See <a class="reference internal" href="Dimension.html#omega-dev-dimension"><span class="std std-ref">Dimension</span></a>.</p>
+<p>The names of every field defined so far, including CodeMeta and SimMeta, can
+be listed with <code class="docutils literal notranslate"><span class="pre">Field::getAllFieldNames()</span></code>; this is intended for tests and
+diagnostics that need to inspect all metadata rather than for model code.</p>
 <p>Fields are created with standard metadata using</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Field</span><span class="o">&gt;</span><span class="w"> </span><span class="n">MyField</span><span class="w"> </span><span class="o">=</span>
 <span class="w">   </span><span class="n">Field</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="n">FieldName</span><span class="p">,</span><span class="w">   </span><span class="c1">///&lt; [in] Name of variable/field (string)</span>
@@ -245,12 +251,27 @@ See <a class="reference internal" href="Dimension.html#omega-dev-dimension"><spa
 <span class="w">   </span><span class="p">);</span>
 </pre></div>
 </div>
-<p>This interface enforces a list of required metadata. If a CF standard name does
-not exist, an empty string can be provided. This is uncommon for most fields
-since the CF conventions maintain a fairly complete list, but can be the case
-for some intermediate calculations or unique analyses. If there is no
+<p>This interface enforces a list of required metadata, stored under the CF
+attribute names <code class="docutils literal notranslate"><span class="pre">long_name</span></code>, <code class="docutils literal notranslate"><span class="pre">units</span></code>, <code class="docutils literal notranslate"><span class="pre">standard_name</span></code>, <code class="docutils literal notranslate"><span class="pre">valid_min</span></code> and
+<code class="docutils literal notranslate"><span class="pre">valid_max</span></code> (the <code class="docutils literal notranslate"><span class="pre">_FillValue</span></code> attribute is added when data is attached). No
+other attributes are written for these entries; in particular the field name
+is not repeated as an attribute since it is the netCDF variable name itself.
+The units string must be
+one that <a class="reference external" href="https://docs.unidata.ucar.edu/udunits/current/">udunits</a> can parse,
+written in the plain form used by the CF standard name table: factors separated
+by spaces, each with a signed integer exponent and no caret, slash or braces
+(<code class="docutils literal notranslate"><span class="pre">m</span> <span class="pre">s-1</span></code>, <code class="docutils literal notranslate"><span class="pre">m-2</span> <span class="pre">s-1</span></code>, <code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">m-2</span></code>, <code class="docutils literal notranslate"><span class="pre">m3</span> <span class="pre">kg-1</span></code>, <code class="docutils literal notranslate"><span class="pre">degree_C</span></code>). A dimensionless quantity
+uses <code class="docutils literal notranslate"><span class="pre">1</span></code>. Fields that have no meaningful units (for example, an array holding
+several tracers with different units) or no CF standard name should pass an
+empty string, in which case the corresponding attribute is not written at all;
+the CF conventions reject an empty <code class="docutils literal notranslate"><span class="pre">standard_name</span></code>. A standard name is only
+valid if it appears in the
+<a class="reference external" href="https://cfconventions.org/standard-names.html">CF standard name table</a>, so
+do not invent descriptive names. If there is no
 restriction on valid range, an appropriately large range should be provided for
-the data type. The fill value is not specified when creating a field; it is
+the data type (<code class="docutils literal notranslate"><span class="pre">std::numeric_limits&lt;Real&gt;::lowest()</span></code> for the minimum of a
+signed quantity; <code class="docutils literal notranslate"><span class="pre">min()</span></code> is the smallest <em>positive</em> value and would mark every
+negative entry invalid). The fill value is not specified when creating a field; it is
 automatically deduced from the element type of the array passed to
 <code class="docutils literal notranslate"><span class="pre">attachData()</span></code> and set to the corresponding standard constant from <code class="docutils literal notranslate"><span class="pre">FillValues.h</span></code>
 (<code class="docutils literal notranslate"><span class="pre">FillValueI4</span></code>, <code class="docutils literal notranslate"><span class="pre">FillValueI8</span></code>, <code class="docutils literal notranslate"><span class="pre">FillValueR4</span></code>, or <code class="docutils literal notranslate"><span class="pre">FillValueR8</span></code>). These match
