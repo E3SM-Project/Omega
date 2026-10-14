@@ -6,6 +6,7 @@
 #include "Halo.h"
 #include "HorzOperators.h"
 #include "Logging.h"
+#include "MathUtils.h"
 #include "OceanState.h"
 #include "OmegaKokkos.h"
 #include "Tracers.h"
@@ -265,7 +266,7 @@ void SfcCoupling::importFromCoupler() {
 
       // Limit sea ice basal pressure (Pa) to 5 m of seawater equivalent
       const Real SeaIcePressure =
-          Kokkos::min(CplToOcnView_(BPressIdx, Idx), MaxSeaIcePressure);
+          Math::min(CplToOcnView_(BPressIdx, Idx), MaxSeaIcePressure);
       // Compute the relative sea level pressure (Pa)
       const Real SeaLevelPressure = CplToOcnView_(PslvIdx, Idx) - AtmRefP;
       // Compute the relative surface pressure (Pa);

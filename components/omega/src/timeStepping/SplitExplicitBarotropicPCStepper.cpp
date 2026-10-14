@@ -10,6 +10,7 @@
 #include "Eos.h"
 #include "GlobalConstants.h"
 #include "Logging.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
 
@@ -36,7 +37,7 @@ KOKKOS_INLINE_FUNCTION Real deltaBtrPressureEdge(Real Delta0, Real Delta1,
       return Delta0;
    if (NormalBtrVelEdge < 0._Real)
       return Delta1;
-   return Kokkos::max(Delta0, Delta1);
+   return Math::max(Delta0, Delta1);
 }
 
 } // anonymous namespace
@@ -191,9 +192,8 @@ void SplitExplicitBarotropicPCStepper::doBarotropicVelocityUpdate(
    constexpr I4 VelCorrShrink   = 1;
    constexpr I4 PressCorrShrink = 2;
 
-   constexpr I4 MinHaloWidth =
-       1 + Kokkos::max(Kokkos::max(VelPredShrink, PressPredShrink),
-                       Kokkos::max(VelCorrShrink, PressCorrShrink));
+   constexpr I4 MinHaloWidth = 1 + Math::max(VelPredShrink, PressPredShrink,
+                                             VelCorrShrink, PressCorrShrink);
 
    if (HaloWidth < MinHaloWidth)
       ABORT_ERROR("Split-explicit barotropic subcycling needs a Decomp "

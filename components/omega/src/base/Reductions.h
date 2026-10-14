@@ -29,6 +29,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MathUtils.h"
 #include <complex>
 using std::complex;
 
@@ -1005,7 +1006,7 @@ localMinVal(const Kokkos::View<T, ML, MS> Array, ///< [in] array to find min
                                    K * LocStrides(2) + L * LocStrides(3) +
                                    M * LocStrides(4);
                 IT TestVal = LocArray.data()[LinearAdd];
-                DevMin     = Kokkos::min(TestVal, DevMin);
+                DevMin     = Math::min(TestVal, DevMin);
              }
           },
           Kokkos::Min<IT>(LocalMin));
@@ -1076,7 +1077,7 @@ localMinVal(const Kokkos::View<T, ML, MS> Arr1, ///< [in] 1st array in product
                                    M * LocStrides(4);
                 IT TestVal =
                     LocArr1.data()[LinearAdd] * LocArr2.data()[LinearAdd];
-                DevMin = Kokkos::min(TestVal, DevMin);
+                DevMin = Math::min(TestVal, DevMin);
              }
           },
           Kokkos::Min<IT>(LocalMin));
@@ -1308,7 +1309,7 @@ localMaxVal(const Kokkos::View<T, ML, MS> Array, ///< [in] array to find max
                                    K * LocStrides(2) + L * LocStrides(3) +
                                    M * LocStrides(4);
                 IT TestVal = LocArray.data()[LinearAdd];
-                DevMax     = Kokkos::max(TestVal, DevMax);
+                DevMax     = Math::max(TestVal, DevMax);
              }
           },
           Kokkos::Max<IT>(LocalMax));
@@ -1380,7 +1381,7 @@ localMaxVal(const Kokkos::View<T, ML, MS> Arr1, ///< [in] 1st array in product
                                    M * LocStrides(4);
                 IT TestVal =
                     LocArr1.data()[LinearAdd] * LocArr2.data()[LinearAdd];
-                DevMax = Kokkos::max(TestVal, DevMax);
+                DevMax = Math::max(TestVal, DevMax);
              }
           },
           Kokkos::Max<IT>(LocalMax));
@@ -1723,7 +1724,7 @@ globalMaskedSum(const Kokkos::View<T1, ML1, MS1> Arr1,
                    int HorizIdx1 = (Arr1Rank == 1) ? 0 : Arr1Rank - 2;
                    Addr2         = Indices[HorizIdx1];
                 } else {
-                   int HorizIdx = Indices[Kokkos::max(0, Arr1Rank - 2)];
+                   int HorizIdx = Indices[Math::max(0, Arr1Rank - 2)];
                    int VertIdx  = Indices[Arr1Rank - 1];
                    Addr2        = HorizIdx * LocArr2.extent(1) + VertIdx;
                 }
@@ -1843,7 +1844,7 @@ globalMaskedSum(const Kokkos::View<T1, ML1, MS1> Arr1,
                    int HorizIdx1 = (Arr1Rank == 1) ? 0 : Arr1Rank - 2;
                    Addr2         = Indices[HorizIdx1];
                 } else {
-                   int HorizIdx = Indices[Kokkos::max(0, Arr1Rank - 2)];
+                   int HorizIdx = Indices[Math::max(0, Arr1Rank - 2)];
                    int VertIdx  = Indices[Arr1Rank - 1];
                    Addr2        = HorizIdx * LocArr2.extent(1) + VertIdx;
                 }
@@ -1966,7 +1967,7 @@ globalMaskedSum(const Kokkos::View<T1, ML1, MS1> Arr1,
                    int HorizIdx1 = (Arr1Rank == 1) ? 0 : Arr1Rank - 2;
                    Addr2         = Indices[HorizIdx1];
                 } else {
-                   int HorizIdx = Indices[Kokkos::max(0, Arr1Rank - 2)];
+                   int HorizIdx = Indices[Math::max(0, Arr1Rank - 2)];
                    int VertIdx  = Indices[Arr1Rank - 1];
                    Addr2        = HorizIdx * LocArr2.extent(1) + VertIdx;
                 }
@@ -2099,7 +2100,7 @@ globalMaskedSum(const Kokkos::View<T1, ML1, MS1> Arr1,
                    int HorizIdx1 = (Arr1Rank == 1) ? 0 : Arr1Rank - 2;
                    Addr2         = Indices[HorizIdx1];
                 } else {
-                   int HorizIdx = Indices[Kokkos::max(0, Arr1Rank - 2)];
+                   int HorizIdx = Indices[Math::max(0, Arr1Rank - 2)];
                    int VertIdx  = Indices[Arr1Rank - 1];
                    Addr2        = HorizIdx * LocArr2.extent(1) + VertIdx;
                 }
@@ -2238,7 +2239,7 @@ localMaskedMin(
                    int HorizIdx1 = (Arr1Rank == 1) ? 0 : Arr1Rank - 2;
                    Addr2         = Indices[HorizIdx1];
                 } else {
-                   int HorizIdx = Indices[Kokkos::max(0, Arr1Rank - 2)];
+                   int HorizIdx = Indices[Math::max(0, Arr1Rank - 2)];
                    int VertIdx  = Indices[Arr1Rank - 1];
                    Addr2        = HorizIdx * LocArr2.extent(1) + VertIdx;
                 }
@@ -2246,7 +2247,7 @@ localMaskedMin(
                 R8 MaskVal = static_cast<R8>(LocArr2.data()[Addr2]);
                 if (MaskVal != 0.0) {
                    IT TestVal = LocArr1.data()[Addr1] * MaskVal;
-                   Lmin       = Kokkos::min(TestVal, Lmin);
+                   Lmin       = Math::min(TestVal, Lmin);
                 }
              }
           },
@@ -2476,7 +2477,7 @@ localMaskedMax(const Kokkos::View<T1, ML1, MS1> Arr1, ///< [in] 1st array
                    int HorizIdx1 = (Arr1Rank == 1) ? 0 : Arr1Rank - 2;
                    Addr2         = Indices[HorizIdx1];
                 } else {
-                   int HorizIdx = Indices[Kokkos::max(0, Arr1Rank - 2)];
+                   int HorizIdx = Indices[Math::max(0, Arr1Rank - 2)];
                    int VertIdx  = Indices[Arr1Rank - 1];
                    Addr2        = HorizIdx * LocArr2.extent(1) + VertIdx;
                 }
@@ -2484,7 +2485,7 @@ localMaskedMax(const Kokkos::View<T1, ML1, MS1> Arr1, ///< [in] 1st array
                 R8 MaskVal = static_cast<R8>(LocArr2.data()[Addr2]);
                 if (MaskVal != 0.0) {
                    IT TestVal = LocArr1.data()[Addr1] * MaskVal;
-                   Lmax       = Kokkos::max(TestVal, Lmax);
+                   Lmax       = Math::max(TestVal, Lmax);
                 }
              }
           },

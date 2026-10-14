@@ -3,10 +3,12 @@
 
 #include "DataTypes.h"
 #include "Logging.h"
+#include "MathUtils.h"
 namespace OMEGA {
 
 KOKKOS_INLINE_FUNCTION Real distance(const Real x, const Real y, const Real z) {
-   const Real dist = Kokkos::sqrt(x * x + y * y + z * z);
+   const Real dist =
+       Math::sqrt(Math::pow<2>(x) + Math::pow<2>(y) + Math::pow<2>(z));
    return dist;
 }
 
@@ -21,14 +23,14 @@ KOKKOS_INLINE_FUNCTION Real sphere_angle(const Real ax, const Real ay,
    const Real one     = 1._Real;
    const Real neg_one = -1._Real;
    const auto a =
-       Kokkos::acos(Kokkos::max(Kokkos::min(bx * cx + by * cy + bz * cz, one),
-                                neg_one)); // Eqn. (3)
+       Math::acos(Math::max(Math::min(bx * cx + by * cy + bz * cz, one),
+                            neg_one)); // Eqn. (3)
    const auto b =
-       Kokkos::acos(Kokkos::max(Kokkos::min(ax * cx + ay * cy + az * cz, one),
-                                neg_one)); // Eqn. (2)
+       Math::acos(Math::max(Math::min(ax * cx + ay * cy + az * cz, one),
+                            neg_one)); // Eqn. (2)
    const auto c =
-       Kokkos::acos(Kokkos::max(Kokkos::min(ax * bx + ay * by + az * bz, one),
-                                neg_one)); // Eqn. (1)
+       Math::acos(Math::max(Math::min(ax * bx + ay * by + az * bz, one),
+                            neg_one)); // Eqn. (1)
    const auto ABx = bx - ax;
    const auto ABy = by - ay;
    const auto ABz = bz - az;
@@ -42,12 +44,12 @@ KOKKOS_INLINE_FUNCTION Real sphere_angle(const Real ax, const Real ay,
    const auto Dz = (ABx * ACy) - (ABy * ACx);
 
    const auto s         = 0.5_Real * (a + b + c);
-   const auto sin_angle = Kokkos::sqrt(Kokkos::min(
-       one, Kokkos::max(0._Real,
-                        (Kokkos::sin(s - b) * Kokkos::sin(s - c)) /
-                            (Kokkos::sin(b) * Kokkos::sin(c))))); // Eqn. (28)
-   Real sa              = 2._Real *
-             Kokkos::asin(Kokkos::max(Kokkos::min(sin_angle, one), neg_one));
+   const auto sin_angle = Math::sqrt(Math::min(
+       one, Math::max(0._Real,
+                      (Math::sin(s - b) * Math::sin(s - c)) /
+                          (Math::sin(b) * Math::sin(c))))); // Eqn. (28)
+   Real sa =
+       2._Real * Math::asin(Math::max(Math::min(sin_angle, one), neg_one));
    if ((Dx * ax + Dy * ay + Dz * az) < 0.0)
       sa *= neg_one;
    return sa;
@@ -61,9 +63,11 @@ KOKKOS_INLINE_FUNCTION Real arc_length(const Real ax, const Real ay,
    const auto cx = bx - ax;
    const auto cy = by - ay;
    const auto cz = bz - az;
-   const auto r  = Kokkos::sqrt(ax * ax + ay * ay + az * az);
-   const auto c  = Kokkos::sqrt(cx * cx + cy * cy + cz * cz);
-   const auto al = r * 2.0 * Kokkos::asin(c / (2.0 * r));
+   const auto r =
+       Math::sqrt(Math::pow<2>(ax) + Math::pow<2>(ay) + Math::pow<2>(az));
+   const auto c =
+       Math::sqrt(Math::pow<2>(cx) + Math::pow<2>(cy) + Math::pow<2>(cz));
+   const auto al = r * 2.0 * Math::asin(c / (2.0 * r));
    return al;
 }
 template <int NA>
@@ -92,14 +96,14 @@ KOKKOS_INLINE_FUNCTION void elgs(Real A[NA][NA], I4 Indx[NA]) {
    Real C[NA] = {};
    for (int I = 0; I < N; ++I)
       for (int J = 0; J < N; ++J)
-         C[I] = Kokkos::max(C[I], Kokkos::abs(A[I][J]));
+         C[I] = Math::max(C[I], Math::abs(A[I][J]));
 
    // search the pivoting (largest) element from each column
    for (int J = 0; J < N - 1; ++J) {
       Real pi1 = 0._Real;
       I4 K     = 0;
       for (int I = J; I < N; ++I) {
-         const Real pi = Kokkos::abs(A[Indx[I]][J]) / C[Indx[I]];
+         const Real pi = Math::abs(A[Indx[I]][J]) / C[Indx[I]];
          if (pi1 < pi) {
             pi1 = pi;
             K   = I;
@@ -185,11 +189,13 @@ KOKKOS_INLINE_FUNCTION void arc_bisect(const Real ax, const Real ay,
    if (cx == 0. && cy == 0. && cz == 0.) {
       Kokkos::abort("arc_bisect: A and B are diametrically opposite");
    } else {
-      const Real d = Kokkos::sqrt(cx * cx + cy * cy + cz * cz);
-      const Real r = Kokkos::sqrt(ax * ax + ay * ay + az * az);
-      cx           = r * cx / d;
-      cy           = r * cy / d;
-      cz           = r * cz / d;
+      const Real d =
+          Math::sqrt(Math::pow<2>(cx) + Math::pow<2>(cy) + Math::pow<2>(cz));
+      const Real r =
+          Math::sqrt(Math::pow<2>(ax) + Math::pow<2>(ay) + Math::pow<2>(az));
+      cx = r * cx / d;
+      cy = r * cy / d;
+      cz = r * cz / d;
    }
 }
 

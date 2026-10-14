@@ -34,6 +34,7 @@
 #include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OceanState.h"
 #include "OmegaKokkos.h"
 #include "PGrad.h"
@@ -72,7 +73,7 @@ void logNormalVelocityFillDiagnostics(const char *Stage) {
    int NLogged        = 0;
    for (int IEdge = 0; IEdge < NEdgesOwned; ++IEdge) {
       int KTop = MinLayerEdgeTopH(IEdge);
-      int KBot = std::max(0, (int)MaxLayerEdgeBotH(IEdge));
+      int KBot = Math::max(0, (int)MaxLayerEdgeBotH(IEdge));
       int KMin = MinLayerEdgeBotH(IEdge);
       int KMax = MaxLayerEdgeTopH(IEdge);
 
@@ -296,7 +297,7 @@ int main(int argc, char *argv[]) {
 
          for (int IEdge = 0; IEdge < NEdgesOwned; ++IEdge) {
             int KTop = MinLayerEdgeTopH(IEdge);
-            int KBot = std::max(0, (int)MaxLayerEdgeBotH(IEdge));
+            int KBot = Math::max(0, (int)MaxLayerEdgeBotH(IEdge));
             int KMin = MinLayerEdgeBotH(IEdge);
             int KMax = MaxLayerEdgeTopH(IEdge); // -1 for land-adjacent edges
 

@@ -6,31 +6,20 @@
 #include "HorzMesh.h"
 #include "Logging.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 
 namespace OMEGA {
-
-// check if two real numbers are equal with a given relative tolerance
-KOKKOS_INLINE_FUNCTION
-bool isApprox(Real X, Real Y, Real RTol, Real ATol = 0) {
-   if (Kokkos::isnan(X) || Kokkos::isnan(Y) || Kokkos::isinf(X) ||
-       Kokkos::isinf(Y)) {
-      return false; // Treat NaN or Inf as failure
-   }
-
-   return Kokkos::abs(X - Y) <=
-          Kokkos::max(ATol, RTol * Kokkos::max(Kokkos::abs(X), Kokkos::abs(Y)));
-}
 
 // convert spherical components of a vector to Cartesian
 KOKKOS_INLINE_FUNCTION void sphereToCartVec(Real (&CartVec)[3],
                                             const Real (&SphereVec)[2],
                                             Real Lon, Real Lat) {
-   using std::cos;
-   using std::sin;
-   CartVec[0] = -sin(Lon) * SphereVec[0] - sin(Lat) * cos(Lon) * SphereVec[1];
-   CartVec[1] = cos(Lon) * SphereVec[0] - sin(Lat) * sin(Lon) * SphereVec[1];
-   CartVec[2] = cos(Lat) * SphereVec[1];
+   CartVec[0] = -Math::sin(Lon) * SphereVec[0] -
+                Math::sin(Lat) * Math::cos(Lon) * SphereVec[1];
+   CartVec[1] = Math::cos(Lon) * SphereVec[0] -
+                Math::sin(Lat) * Math::sin(Lon) * SphereVec[1];
+   CartVec[2] = Math::cos(Lat) * SphereVec[1];
 }
 
 // returns Cartesian components of unit vector tangent to the spherical arc
@@ -39,7 +28,7 @@ KOKKOS_INLINE_FUNCTION void tangentVector(Real (&TanVec)[3],
                                           const Real (&X1)[3],
                                           const Real (&X2)[3], Real t = 0) {
    const Real Radius =
-       Kokkos::sqrt(X1[0] * X1[0] + X1[1] * X1[1] + X1[2] * X1[2]);
+       Math::sqrt(X1[0] * X1[0] + X1[1] * X1[1] + X1[2] * X1[2]);
    Real XC[3];
    Real DX[3];
    for (int Dim = 0; Dim < 3; ++Dim) {
@@ -48,7 +37,7 @@ KOKKOS_INLINE_FUNCTION void tangentVector(Real (&TanVec)[3],
    }
    const Real XCDotDX = XC[0] * DX[0] + XC[1] * DX[1] + XC[2] * DX[2];
    const Real NormXC =
-       Kokkos::sqrt(XC[0] * XC[0] + XC[1] * XC[1] + XC[2] * XC[2]);
+       Math::sqrt(XC[0] * XC[0] + XC[1] * XC[1] + XC[2] * XC[2]);
 
    for (int Dim = 0; Dim < 3; ++Dim) {
       const Real NormXC3 = NormXC * NormXC * NormXC;
@@ -56,7 +45,7 @@ KOKKOS_INLINE_FUNCTION void tangentVector(Real (&TanVec)[3],
           Radius / NormXC * DX[Dim] - (Radius * XCDotDX) / NormXC3 * XC[Dim];
    }
 
-   const Real NormTanVec = Kokkos::sqrt(
+   const Real NormTanVec = Math::sqrt(
        TanVec[0] * TanVec[0] + TanVec[1] * TanVec[1] + TanVec[2] * TanVec[2]);
    for (int Dim = 0; Dim < 3; ++Dim) {
       TanVec[Dim] /= NormTanVec;
@@ -65,7 +54,7 @@ KOKKOS_INLINE_FUNCTION void tangentVector(Real (&TanVec)[3],
 
 // returns the magnitude of a 2D vector given its (X, Y) components
 KOKKOS_INLINE_FUNCTION Real vecMagnitude(Real X, Real Y) {
-   return Kokkos::sqrt(X * X + Y * Y);
+   return Math::sqrt(X * X + Y * Y);
 }
 
 enum class EdgeComponent { Normal, Tangential };
@@ -270,15 +259,15 @@ int setVectorEdge(const Functor &Fun, const Array &VectorFieldEdge,
          Fun(VecField, XE, YE);
 
          if (EdgeComp == EdgeComponent::Normal) {
-            const Real EdgeNormalX = std::cos(AngleEdge(IEdge));
-            const Real EdgeNormalY = std::sin(AngleEdge(IEdge));
+            const Real EdgeNormalX = Math::cos(AngleEdge(IEdge));
+            const Real EdgeNormalY = Math::sin(AngleEdge(IEdge));
             VecFieldEdge =
                 EdgeNormalX * VecField[0] + EdgeNormalY * VecField[1];
          }
 
          if (EdgeComp == EdgeComponent::Tangential) {
-            const Real EdgeTangentX = -std::sin(AngleEdge(IEdge));
-            const Real EdgeTangentY = std::cos(AngleEdge(IEdge));
+            const Real EdgeTangentX = -Math::sin(AngleEdge(IEdge));
+            const Real EdgeTangentY = Math::cos(AngleEdge(IEdge));
             VecFieldEdge =
                 EdgeTangentX * VecField[0] + EdgeTangentY * VecField[1];
          }
@@ -321,15 +310,15 @@ int setVectorEdge(const Functor &Fun, const Array &VectorFieldEdge,
             }
          } else {
             if (EdgeComp == EdgeComponent::Normal) {
-               const Real EdgeNormalX = std::cos(AngleEdge(IEdge));
-               const Real EdgeNormalY = std::sin(AngleEdge(IEdge));
+               const Real EdgeNormalX = Math::cos(AngleEdge(IEdge));
+               const Real EdgeNormalY = Math::sin(AngleEdge(IEdge));
                VecFieldEdge =
                    EdgeNormalX * VecField[0] + EdgeNormalY * VecField[1];
             }
 
             if (EdgeComp == EdgeComponent::Tangential) {
-               const Real EdgeTangentX = -std::sin(AngleEdge(IEdge));
-               const Real EdgeTangentY = std::cos(AngleEdge(IEdge));
+               const Real EdgeTangentX = -Math::sin(AngleEdge(IEdge));
+               const Real EdgeTangentY = Math::cos(AngleEdge(IEdge));
                VecFieldEdge =
                    EdgeTangentX * VecField[0] + EdgeTangentY * VecField[1];
             }
@@ -563,8 +552,8 @@ int computeErrors(ErrorMeasures &ErrorMeasures, const Array &NumFieldElement,
              const Real ExactValElement = ExactFieldElement(IElement);
 
              // Errors
-             LInfElement(IElement) = std::abs(NumValElement - ExactValElement);
-             LInfScaleElement(IElement) = std::abs(ExactValElement);
+             LInfElement(IElement) = Math::abs(NumValElement - ExactValElement);
+             LInfScaleElement(IElement) = Math::abs(ExactValElement);
              L2Element(IElement)        = AreaElement(IElement) *
                                    LInfElement(IElement) *
                                    LInfElement(IElement);
@@ -589,8 +578,8 @@ int computeErrors(ErrorMeasures &ErrorMeasures, const Array &NumFieldElement,
 
              // Errors
              LInfElement(IElement, K) =
-                 std::abs(NumValElement - ExactValElement);
-             LInfScaleElement(IElement, K) = std::abs(ExactValElement);
+                 Math::abs(NumValElement - ExactValElement);
+             LInfScaleElement(IElement, K) = Math::abs(ExactValElement);
              L2Element(IElement, K)        = AreaElement(IElement) *
                                       LInfElement(IElement, K) *
                                       LInfElement(IElement, K);
@@ -620,8 +609,8 @@ int computeErrors(ErrorMeasures &ErrorMeasures, const Array &NumFieldElement,
 
              // Errors
              LInfElement(L, IElement, K) =
-                 std::abs(NumValElement - ExactValElement);
-             LInfScaleElement(L, IElement, K) = std::abs(ExactValElement);
+                 Math::abs(NumValElement - ExactValElement);
+             LInfScaleElement(L, IElement, K) = Math::abs(ExactValElement);
              L2Element(L, IElement, K)        = AreaElement(IElement) *
                                          LInfElement(L, IElement, K) *
                                          LInfElement(L, IElement, K);
@@ -655,9 +644,9 @@ int computeErrors(ErrorMeasures &ErrorMeasures, const Array &NumFieldElement,
       LOG_ERROR("computeErrors: MPI Allreduce error");
 
    if (L2Scale > 0) {
-      L2Error = std::sqrt(L2Error / L2Scale);
+      L2Error = Math::sqrt(L2Error / L2Scale);
    } else {
-      L2Error = std::sqrt(L2Error);
+      L2Error = Math::sqrt(L2Error);
    }
 
    ErrorMeasures.L2   = L2Error;
@@ -671,12 +660,12 @@ inline int checkErrors(const std::string &TestSuite,
                        const ErrorMeasures &ExpectedErrors, Real RTol,
                        Real ATol = 0) {
    int Err = 0;
-   if (!isApprox(Errors.LInf, ExpectedErrors.LInf, RTol, ATol)) {
+   if (!Math::isApprox(Errors.LInf, ExpectedErrors.LInf, RTol, ATol)) {
       Err++;
       LOG_ERROR("{}: {} LInf FAIL, expected {}, got {}", TestSuite, Variable,
                 ExpectedErrors.LInf, Errors.LInf);
    }
-   if (!isApprox(Errors.L2, ExpectedErrors.L2, RTol, ATol)) {
+   if (!Math::isApprox(Errors.L2, ExpectedErrors.L2, RTol, ATol)) {
       Err++;
       LOG_ERROR("{}: {} L2 FAIL, expected {}, got {}", TestSuite, Variable,
                 ExpectedErrors.L2, Errors.L2);

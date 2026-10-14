@@ -19,6 +19,7 @@
 #include "KPPConstants.h"
 #include "Logging.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OceanTestCommon.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
@@ -154,27 +155,29 @@ void testStabilityFunctions() {
           if (Zeta >= 0.0_Real) {
              ExpectedM = 1.0_Real / (1.0_Real + 5.0_Real * Zeta);
           } else if (Zeta >= KPP::ZetaM) {
-             ExpectedM = Kokkos::pow(1.0_Real - 16.0_Real * Zeta, 0.25_Real);
+             ExpectedM = Math::pow(1.0_Real - 16.0_Real * Zeta, 0.25_Real);
           } else {
              ExpectedM =
-                 Kokkos::pow(KPP::AMoM - KPP::CMoM * Zeta, 1.0_Real / 3.0_Real);
+                 Math::pow(KPP::AMoM - KPP::CMoM * Zeta, 1.0_Real / 3.0_Real);
           }
 
           Real ExpectedS;
           if (Zeta >= 0.0_Real) {
              ExpectedS = 1.0_Real / (1.0_Real + 5.0_Real * Zeta);
           } else if (Zeta >= KPP::ZetaS) {
-             ExpectedS = Kokkos::sqrt(1.0_Real - 16.0_Real * Zeta);
+             ExpectedS = Math::sqrt(1.0_Real - 16.0_Real * Zeta);
           } else {
              ExpectedS =
-                 Kokkos::pow(KPP::AMoS - KPP::CMoS * Zeta, 1.0_Real / 3.0_Real);
+                 Math::pow(KPP::AMoS - KPP::CMoS * Zeta, 1.0_Real / 3.0_Real);
           }
 
           const Real ActualM = KPP::kppPhiInvMomentum(Zeta);
           const Real ActualS = KPP::kppPhiInvScalar(Zeta);
-          if (!isApprox(ActualM, ExpectedM, RTol, ATol) || ActualM <= 0.0_Real)
+          if (!Math::isApprox(ActualM, ExpectedM, RTol, ATol) ||
+              ActualM <= 0.0_Real)
              ++ErrorCount;
-          if (!isApprox(ActualS, ExpectedS, RTol, ATol) || ActualS <= 0.0_Real)
+          if (!Math::isApprox(ActualS, ExpectedS, RTol, ATol) ||
+              ActualS <= 0.0_Real)
              ++ErrorCount;
        },
        NumErrors);
@@ -193,7 +196,7 @@ void testStabilityFunctions() {
           const Real Below      = ITest == 0
                                       ? KPP::kppPhiInvMomentum(Transition - Epsilon)
                                       : KPP::kppPhiInvScalar(Transition - Epsilon);
-          if (!isApprox(Above, Below, 2.0e-5_Real, 2.0e-5_Real))
+          if (!Math::isApprox(Above, Below, 2.0e-5_Real, 2.0e-5_Real))
              ++ErrorCount;
        },
        NumErrors);
@@ -233,7 +236,7 @@ void testShapeFunctions() {
           }
 
           const Real SigmaClamped =
-              Kokkos::fmax(-1.0_Real, Kokkos::fmin(0.0_Real, Sigma));
+              Math::max(-1.0_Real, Math::min(0.0_Real, Sigma));
           const Real SigmaMu         = -SigmaClamped;
           const Real OneMinus        = 1.0_Real - SigmaMu;
           const Real ExpectedSimple  = SigmaMu * OneMinus * OneMinus;
@@ -241,19 +244,21 @@ void testShapeFunctions() {
           const Real Smooth =
               SigmaMu * SigmaMu * (3.0_Real - 2.0_Real * SigmaMu);
 
-          if (!isApprox(KPP::kppShapeMomentum(Sigma), ExpectedSimple, RTol,
-                        ATol))
+          if (!Math::isApprox(KPP::kppShapeMomentum(Sigma), ExpectedSimple,
+                              RTol, ATol))
              ++ErrorCount;
-          if (!isApprox(KPP::kppShapeScalar(Sigma), ExpectedSimple, RTol, ATol))
+          if (!Math::isApprox(KPP::kppShapeScalar(Sigma), ExpectedSimple, RTol,
+                              ATol))
              ++ErrorCount;
-          if (!isApprox(KPP::kppShapeMatched(Sigma, ShapeAtBase),
-                        ExpectedSimple + ShapeAtBase * Smooth, RTol, ATol))
+          if (!Math::isApprox(KPP::kppShapeMatched(Sigma, ShapeAtBase),
+                              ExpectedSimple + ShapeAtBase * Smooth, RTol,
+                              ATol))
              ++ErrorCount;
-          if (!isApprox(KPP::kppShapeMatched(Sigma, 0.0_Real), ExpectedSimple,
-                        RTol, ATol))
+          if (!Math::isApprox(KPP::kppShapeMatched(Sigma, 0.0_Real),
+                              ExpectedSimple, RTol, ATol))
              ++ErrorCount;
-          if (!isApprox(KPP::kppSurfaceMomentumScale(Sigma),
-                        KPP::HuOn * (1.0_Real + Sigma), RTol, ATol))
+          if (!Math::isApprox(KPP::kppSurfaceMomentumScale(Sigma),
+                              KPP::HuOn * (1.0_Real + Sigma), RTol, ATol))
              ++ErrorCount;
        },
        NumErrors);
@@ -272,26 +277,26 @@ void testLangmuirFunctions() {
                                       : ITest == 2 ? 10.0_Real
                                                    : 100.0_Real;
           const Real UStar          = ITest < 2 ? 0.0_Real : 0.01_Real;
-          const Real WindClamped    = Kokkos::fmax(0.0_Real, Wind);
+          const Real WindClamped    = Math::max(0.0_Real, Wind);
           const Real ExpectedStokes = 0.016_Real * WindClamped;
-          const Real UStarClamped   = Kokkos::fmax(KPP::MinUStar, UStar);
-          const Real StokesClamped  = Kokkos::fmax(1.0e-8_Real, ExpectedStokes);
-          const Real ExpectedLa = Kokkos::sqrt(UStarClamped / StokesClamped);
-          const Real LaInv      = 1.0_Real / Kokkos::fmax(0.5_Real, ExpectedLa);
-          const Real ExpectedEnhancement = Kokkos::fmin(
+          const Real UStarClamped   = Math::max(KPP::MinUStar, UStar);
+          const Real StokesClamped  = Math::max(1.0e-8_Real, ExpectedStokes);
+          const Real ExpectedLa     = Math::sqrt(UStarClamped / StokesClamped);
+          const Real LaInv = 1.0_Real / Math::max(0.5_Real, ExpectedLa);
+          const Real ExpectedEnhancement = Math::min(
               2.0_Real,
-              Kokkos::fmax(1.0_Real,
-                           Kokkos::sqrt(1.0_Real + 0.5_Real * LaInv * LaInv)));
+              Math::max(1.0_Real,
+                        Math::sqrt(1.0_Real + 0.5_Real * LaInv * LaInv)));
 
           const Real Stokes = KPP::estimateStokesDriftSL(Wind, 50.0_Real);
           const Real La     = KPP::computeLangmuirNumber(UStar, Stokes);
           const Real Enhancement =
               KPP::computeLangmuirEnhancement(Wind, UStar, 50.0_Real);
-          if (!isApprox(Stokes, ExpectedStokes, RTol, ATol))
+          if (!Math::isApprox(Stokes, ExpectedStokes, RTol, ATol))
              ++ErrorCount;
-          if (!isApprox(La, ExpectedLa, RTol, ATol))
+          if (!Math::isApprox(La, ExpectedLa, RTol, ATol))
              ++ErrorCount;
-          if (!isApprox(Enhancement, ExpectedEnhancement, RTol, ATol) ||
+          if (!Math::isApprox(Enhancement, ExpectedEnhancement, RTol, ATol) ||
               Enhancement < 1.0_Real || Enhancement > 2.0_Real)
              ++ErrorCount;
        },
@@ -322,13 +327,13 @@ void testOSBLUtilities() {
                                   : ITest == 1 ? 20.0_Real
                                   : ITest == 2 ? 1.0_Real
                                                : 200.0_Real;
-          Real ExpectedDepth    = Kokkos::fmax(InputDepth, 4.0_Real);
+          Real ExpectedDepth    = Math::max(InputDepth, 4.0_Real);
           if (IceFraction > KPP::IceSuppressThresh)
-             ExpectedDepth = Kokkos::fmax(ExpectedDepth, KPP::MinOSBLUnderIce);
-          ExpectedDepth = Kokkos::fmin(ExpectedDepth, 95.0_Real);
-          if (!isApprox(KPP::constrainOSBLDepth(InputDepth, 4.0_Real,
-                                                100.0_Real, IceFraction),
-                        ExpectedDepth, RTol, ATol))
+             ExpectedDepth = Math::max(ExpectedDepth, KPP::MinOSBLUnderIce);
+          ExpectedDepth = Math::min(ExpectedDepth, 95.0_Real);
+          if (!Math::isApprox(KPP::constrainOSBLDepth(InputDepth, 4.0_Real,
+                                                      100.0_Real, IceFraction),
+                              ExpectedDepth, RTol, ATol))
              ++ErrorCount;
        },
        NumErrors);
@@ -353,15 +358,16 @@ void testTurbulentVelocityScale() {
                                     : ITest == 3 ? 1.0e-7_Real
                                                  : 0.0_Real;
           const Real H            = ITest == 5 ? -50.0_Real : 50.0_Real;
-          const Real UStarClamped = Kokkos::fmax(0.0_Real, UStar);
-          const Real HClamped     = Kokkos::fmax(0.0_Real, H);
+          const Real UStarClamped = Math::max(0.0_Real, UStar);
+          const Real HClamped     = Math::max(0.0_Real, H);
           const Real Momentum     = UStarClamped * UStarClamped * UStarClamped;
           const Real Buoyancy =
-              KPP::ConvectiveVelFac * Kokkos::fmax(0.0_Real, -B0) * HClamped;
+              KPP::ConvectiveVelFac * Math::max(0.0_Real, -B0) * HClamped;
           const Real Expected =
-              Kokkos::pow(Momentum + Buoyancy, 1.0_Real / 3.0_Real);
+              Math::pow(Momentum + Buoyancy, 1.0_Real / 3.0_Real);
           const Real Actual = KPP::computeTurbVelocityScale(UStar, B0, H);
-          if (!isApprox(Actual, Expected, RTol, ATol) || Actual < 0.0_Real)
+          if (!Math::isApprox(Actual, Expected, RTol, ATol) ||
+              Actual < 0.0_Real)
              ++ErrorCount;
        },
        NumErrors);
@@ -395,20 +401,20 @@ void testTurbScales() {
           if (UStar > 0.0_Real) {
              const Real U3 = UStar * UStar * UStar;
              const Real Zeta =
-                 SigmaLoc * HOSBL * B0 * VonKar / Kokkos::max(U3, 1.0e-20_Real);
+                 SigmaLoc * HOSBL * B0 * VonKar / Math::max(U3, 1.0e-20_Real);
              ExpectedWM = VonKar * UStar *
-                          Kokkos::max(KPP::kppPhiInvMomentum(Zeta), 0.0_Real);
+                          Math::max(KPP::kppPhiInvMomentum(Zeta), 0.0_Real);
              ExpectedWS = VonKar * UStar *
-                          Kokkos::max(KPP::kppPhiInvScalar(Zeta), 0.0_Real);
+                          Math::max(KPP::kppPhiInvScalar(Zeta), 0.0_Real);
           } else if (B0 < 0.0_Real) {
              const Real WM3 = -KPP::CMoM * SigmaLoc * HOSBL * VonKar * B0;
              const Real WS3 = -KPP::CMoS * SigmaLoc * HOSBL * VonKar * B0;
-             ExpectedWM     = VonKar * Kokkos::pow(WM3, 1.0_Real / 3.0_Real);
-             ExpectedWS     = VonKar * Kokkos::pow(WS3, 1.0_Real / 3.0_Real);
+             ExpectedWM     = VonKar * Math::pow(WM3, 1.0_Real / 3.0_Real);
+             ExpectedWS     = VonKar * Math::pow(WS3, 1.0_Real / 3.0_Real);
           }
 
-          if (!isApprox(WM, ExpectedWM, RTol, ATol) ||
-              !isApprox(WS, ExpectedWS, RTol, ATol))
+          if (!Math::isApprox(WM, ExpectedWM, RTol, ATol) ||
+              !Math::isApprox(WS, ExpectedWS, RTol, ATol))
              ++ErrorCount;
 
           // Scales must never go negative, and scalars mix at least as
@@ -446,12 +452,12 @@ void testMatchShape() {
              return;
           }
 
-          if (!isApprox(Shape, Interior / (HOSBL * W), RTol, ATol))
+          if (!Math::isApprox(Shape, Interior / (HOSBL * W), RTol, ATol))
              ++ErrorCount;
 
           // The matched shape must reproduce the interior coefficient when
           // multiplied back by h*w, which is the whole point of matching.
-          if (!isApprox(HOSBL * W * Shape, Interior, RTol, ATol))
+          if (!Math::isApprox(HOSBL * W * Shape, Interior, RTol, ATol))
              ++ErrorCount;
        },
        NumErrors);
@@ -468,13 +474,13 @@ void testNonLocalCs() {
           const Real Cs = KPP::kppNonLocalCs(VonKar, KPP::SurfaceLayerExtent);
           const Real Expected =
               10.0_Real * VonKar *
-              Kokkos::pow(KPP::CMoS * VonKar * KPP::SurfaceLayerExtent,
-                          1.0_Real / 3.0_Real);
-          if (!isApprox(Cs, Expected, RTol, ATol))
+              Math::pow(KPP::CMoS * VonKar * KPP::SurfaceLayerExtent,
+                        1.0_Real / 3.0_Real);
+          if (!Math::isApprox(Cs, Expected, RTol, ATol))
              ++ErrorCount;
 
           // Large et al. (1994) quote C_s ~ 6.33 for the default constants.
-          if (Kokkos::abs(Cs - 6.33_Real) > 0.05_Real)
+          if (Math::abs(Cs - 6.33_Real) > 0.05_Real)
              ++ErrorCount;
        },
        NumErrors);
@@ -500,12 +506,12 @@ void testClampOSBLDepth() {
           const Real Actual = KPP::kppClampOSBLDepth(
               Input, MinDepth, MaxDepth, ApplyIce, KPP::MinOSBLUnderIce);
 
-          Real Expected = Kokkos::fmax(Input, MinDepth);
+          Real Expected = Math::max(Input, MinDepth);
           if (ApplyIce)
-             Expected = Kokkos::fmax(Expected, KPP::MinOSBLUnderIce);
-          Expected = Kokkos::fmin(Expected, MaxDepth);
+             Expected = Math::max(Expected, KPP::MinOSBLUnderIce);
+          Expected = Math::min(Expected, MaxDepth);
 
-          if (!isApprox(Actual, Expected, RTol, ATol))
+          if (!Math::isApprox(Actual, Expected, RTol, ATol))
              ++ErrorCount;
 
           // Result must always land inside the supported range.
@@ -586,8 +592,8 @@ void setCoefficientTestGeometry(Real Ssh = 0.0_Real) {
 
 Real nonLocalNormalization() {
    return 10.0_Real * VonKar *
-          Kokkos::pow(KPP::CMoS * VonKar * KPP::SurfaceLayerExtent,
-                      1.0_Real / 3.0_Real);
+          Math::pow(KPP::CMoS * VonKar * KPP::SurfaceLayerExtent,
+                    1.0_Real / 3.0_Real);
 }
 
 void testWindOnlyCoefficients() {
@@ -621,13 +627,13 @@ void testWindOnlyCoefficients() {
    const Real ExpectedNonLocal = nonLocalNormalization() * Shape;
    int NumErrors               = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(VertDiffH(ICell, 2), ExpectedMix, RTol, ATol) ||
-          !isApprox(VertViscH(ICell, 2), ExpectedMix, RTol, ATol) ||
-          !isApprox(TurbVelH(ICell, 2), TurbVel, RTol, ATol) ||
-          !isApprox(NonLocalH(ICell, 2), ExpectedNonLocal, RTol, ATol)) {
+      if (!Math::isApprox(VertDiffH(ICell, 2), ExpectedMix, RTol, ATol) ||
+          !Math::isApprox(VertViscH(ICell, 2), ExpectedMix, RTol, ATol) ||
+          !Math::isApprox(TurbVelH(ICell, 2), TurbVel, RTol, ATol) ||
+          !Math::isApprox(NonLocalH(ICell, 2), ExpectedNonLocal, RTol, ATol)) {
          ++NumErrors;
       }
-      if (!isApprox(KPP::kppShapeMomentum(Sigma), Shape, RTol, ATol) ||
+      if (!Math::isApprox(KPP::kppShapeMomentum(Sigma), Shape, RTol, ATol) ||
           VertDiffH(ICell, 0) != 0.0_Real || VertViscH(ICell, 0) != 0.0_Real ||
           VertDiffH(ICell, 4) != 0.0_Real || VertViscH(ICell, 4) != 0.0_Real ||
           VertDiffH(ICell, 5) != 0.0_Real || NonLocalH(ICell, 5) != 0.0_Real) {
@@ -660,21 +666,21 @@ void testConvectionOnlyCoefficients() {
    const auto TurbVelH =
        createHostMirrorCopy(KPPInstance->TurbulentVelocityScale);
    const Real SigmaLoc = KPP::SurfaceLayerExtent;
-   const Real WM = VonKar * Kokkos::pow(KPP::CMoM * SigmaLoc * TestOSBLDepth *
-                                            VonKar * 1.0e-7_Real,
-                                        1.0_Real / 3.0_Real);
-   const Real WS = VonKar * Kokkos::pow(KPP::CMoS * SigmaLoc * TestOSBLDepth *
-                                            VonKar * 1.0e-7_Real,
-                                        1.0_Real / 3.0_Real);
+   const Real WM = VonKar * Math::pow(KPP::CMoM * SigmaLoc * TestOSBLDepth *
+                                          VonKar * 1.0e-7_Real,
+                                      1.0_Real / 3.0_Real);
+   const Real WS = VonKar * Math::pow(KPP::CMoS * SigmaLoc * TestOSBLDepth *
+                                          VonKar * 1.0e-7_Real,
+                                      1.0_Real / 3.0_Real);
    constexpr Real Shape    = 0.125_Real;
    const Real ExpectedVisc = TestOSBLDepth * WM * Shape;
    const Real ExpectedDiff = TestOSBLDepth * WS * Shape;
 
    int NumErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(VertViscH(ICell, 2), ExpectedVisc, RTol, ATol) ||
-          !isApprox(VertDiffH(ICell, 2), ExpectedDiff, RTol, ATol) ||
-          !isApprox(TurbVelH(ICell, 2), WS, RTol, ATol) ||
+      if (!Math::isApprox(VertViscH(ICell, 2), ExpectedVisc, RTol, ATol) ||
+          !Math::isApprox(VertDiffH(ICell, 2), ExpectedDiff, RTol, ATol) ||
+          !Math::isApprox(TurbVelH(ICell, 2), WS, RTol, ATol) ||
           !(VertDiffH(ICell, 2) > VertViscH(ICell, 2))) {
          ++NumErrors;
       }
@@ -707,8 +713,8 @@ void testNonLocalProfileModes() {
    auto NonLocalH = createHostMirrorCopy(KPPInstance->VertNonLocalFlux);
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
       if (NonLocalH(ICell, 0) != 0.0_Real ||
-          !isApprox(NonLocalH(ICell, 2), 0.125_Real * Normalization, RTol,
-                    ATol) ||
+          !Math::isApprox(NonLocalH(ICell, 2), 0.125_Real * Normalization, RTol,
+                          ATol) ||
           NonLocalH(ICell, 4) != 0.0_Real) {
          ++NumErrors;
       }
@@ -778,13 +784,17 @@ void testMatchBothInteriorCoefficients() {
 
    int NumErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(VertDiffH(ICell, 2), ExpectedDiffMid, RTol, ATol) ||
-          !isApprox(VertViscH(ICell, 2), ExpectedViscMid, RTol, ATol) ||
-          !isApprox(NonLocalH(ICell, 2), ExpectedNonLocal, RTol, ATol) ||
-          !isApprox(VertDiffH(ICell, 4), ExpectedInteriorDiff, RTol, ATol) ||
-          !isApprox(VertViscH(ICell, 4), ExpectedInteriorVisc, RTol, ATol) ||
-          !isApprox(VertDiffH(ICell, 5), ExpectedInteriorDiff, RTol, ATol) ||
-          !isApprox(VertViscH(ICell, 5), ExpectedInteriorVisc, RTol, ATol) ||
+      if (!Math::isApprox(VertDiffH(ICell, 2), ExpectedDiffMid, RTol, ATol) ||
+          !Math::isApprox(VertViscH(ICell, 2), ExpectedViscMid, RTol, ATol) ||
+          !Math::isApprox(NonLocalH(ICell, 2), ExpectedNonLocal, RTol, ATol) ||
+          !Math::isApprox(VertDiffH(ICell, 4), ExpectedInteriorDiff, RTol,
+                          ATol) ||
+          !Math::isApprox(VertViscH(ICell, 4), ExpectedInteriorVisc, RTol,
+                          ATol) ||
+          !Math::isApprox(VertDiffH(ICell, 5), ExpectedInteriorDiff, RTol,
+                          ATol) ||
+          !Math::isApprox(VertViscH(ICell, 5), ExpectedInteriorVisc, RTol,
+                          ATol) ||
           NonLocalH(ICell, 4) != 0.0_Real || NonLocalH(ICell, 5) != 0.0_Real) {
          ++NumErrors;
       }
@@ -830,8 +840,8 @@ void testEnhancedDiffusion() {
    const Real ExpectedOutside = OutsideDelta * (1.0_Real - OutsideDelta) *
                                 (1.0_Real - OutsideDelta) * OutsideProfile;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(VertDiffH(ICell, 4), ExpectedOutside, RTol, ATol) ||
-          !isApprox(VertViscH(ICell, 4), ExpectedOutside, RTol, ATol) ||
+      if (!Math::isApprox(VertDiffH(ICell, 4), ExpectedOutside, RTol, ATol) ||
+          !Math::isApprox(VertViscH(ICell, 4), ExpectedOutside, RTol, ATol) ||
           NonLocalH(ICell, 4) != 0.0_Real) {
          ++NumErrors;
       }
@@ -860,9 +870,10 @@ void testEnhancedDiffusion() {
                                        KPP::kppShapeScalar(TargetSigma) *
                                        ExpectedInside / TargetProfile;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(VertDiffH(ICell, 3), ExpectedInside, RTol, ATol) ||
-          !isApprox(VertViscH(ICell, 3), ExpectedInside, RTol, ATol) ||
-          !isApprox(NonLocalH(ICell, 3), ExpectedInsideNonLocal, RTol, ATol)) {
+      if (!Math::isApprox(VertDiffH(ICell, 3), ExpectedInside, RTol, ATol) ||
+          !Math::isApprox(VertViscH(ICell, 3), ExpectedInside, RTol, ATol) ||
+          !Math::isApprox(NonLocalH(ICell, 3), ExpectedInsideNonLocal, RTol,
+                          ATol)) {
          ++NumErrors;
       }
    }
@@ -900,10 +911,10 @@ void testEnhancedDiffusion() {
    const Real ExpectedInteriorEnhancedVisc =
        0.625_Real * InteriorViscValue + 0.125_Real * ViscKtup;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(VertDiffH(ICell, 4), ExpectedInteriorEnhancedDiff, RTol,
-                    ATol) ||
-          !isApprox(VertViscH(ICell, 4), ExpectedInteriorEnhancedVisc, RTol,
-                    ATol)) {
+      if (!Math::isApprox(VertDiffH(ICell, 4), ExpectedInteriorEnhancedDiff,
+                          RTol, ATol) ||
+          !Math::isApprox(VertViscH(ICell, 4), ExpectedInteriorEnhancedVisc,
+                          RTol, ATol)) {
          ++NumErrors;
       }
    }
@@ -1004,8 +1015,8 @@ void testCoefficientVerticalDomainEdges() {
    int NumErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
       if (VertDiffH(ICell, 0) != 0.0_Real || VertDiffH(ICell, 1) != 0.0_Real ||
-          !isApprox(VertDiffH(ICell, 2), ExpectedPartial, RTol, ATol) ||
-          !isApprox(VertViscH(ICell, 2), ExpectedPartial, RTol, ATol) ||
+          !Math::isApprox(VertDiffH(ICell, 2), ExpectedPartial, RTol, ATol) ||
+          !Math::isApprox(VertViscH(ICell, 2), ExpectedPartial, RTol, ATol) ||
           !(NonLocalH(ICell, 2) > 0.0_Real) ||
           VertDiffH(ICell, 4) != 0.0_Real || VertDiffH(ICell, 5) != 0.0_Real) {
          ++NumErrors;
@@ -1027,8 +1038,8 @@ void testCoefficientVerticalDomainEdges() {
    const Real ExpectedOneLayer =
        25.0_Real * VonKar * 0.02_Real * KPP::kppShapeScalar(-0.8_Real);
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(VertDiffH(ICell, 2), ExpectedOneLayer, RTol, ATol) ||
-          !isApprox(VertViscH(ICell, 2), ExpectedOneLayer, RTol, ATol) ||
+      if (!Math::isApprox(VertDiffH(ICell, 2), ExpectedOneLayer, RTol, ATol) ||
+          !Math::isApprox(VertViscH(ICell, 2), ExpectedOneLayer, RTol, ATol) ||
           !(NonLocalH(ICell, 2) > 0.0_Real) ||
           VertDiffH(ICell, 3) != 0.0_Real || VertViscH(ICell, 3) != 0.0_Real ||
           NonLocalH(ICell, 3) != 0.0_Real) {
@@ -1134,15 +1145,15 @@ void testConfiguredValues() {
        KPPInstance->DebugDiagnostics != ExpectedDebug ||
        KPPInstance->MatchTechnique != ExpectedMatchType ||
        KPPInstance->InterpType2Str != ExpectedInterp ||
-       !isApprox(KPPInstance->CriticalRichardson, ExpectedCriticalRi, RTol,
-                 ATol) ||
-       !isApprox(KPPInstance->IceFractionThresholdForLangmuir,
-                 ExpectedLangmuirIce, RTol, ATol) ||
-       !isApprox(KPPInstance->IceFractionThresholdForMinimumOSBL,
-                 ExpectedMinimumOSBLIce, RTol, ATol) ||
-       !isApprox(KPPInstance->MinimumOSBLUnderSeaIce, ExpectedMinimumOSBL, RTol,
-                 ATol) ||
-       !isApprox(KPPInstance->SurfaceLayerExtent, 0.1_Real, RTol, ATol) ||
+       !Math::isApprox(KPPInstance->CriticalRichardson, ExpectedCriticalRi,
+                       RTol, ATol) ||
+       !Math::isApprox(KPPInstance->IceFractionThresholdForLangmuir,
+                       ExpectedLangmuirIce, RTol, ATol) ||
+       !Math::isApprox(KPPInstance->IceFractionThresholdForMinimumOSBL,
+                       ExpectedMinimumOSBLIce, RTol, ATol) ||
+       !Math::isApprox(KPPInstance->MinimumOSBLUnderSeaIce, ExpectedMinimumOSBL,
+                       RTol, ATol) ||
+       !Math::isApprox(KPPInstance->SurfaceLayerExtent, 0.1_Real, RTol, ATol) ||
        !KPPInstance->UseLangmuirTurbulence) {
       ++NumErrors;
    }
@@ -1178,7 +1189,7 @@ void testOSBLDepth() {
    constexpr Real RiScaling = 1.0_Real - 0.5_Real * KPP::SurfaceLayerExtent;
    constexpr Real TestN     = 1.0_Real;
    const Real UnresolvedShearConstant =
-       Kokkos::sqrt(0.2_Real / (KPP::CMoS * KPP::SurfaceLayerExtent)) /
+       Math::sqrt(0.2_Real / (KPP::CMoS * KPP::SurfaceLayerExtent)) /
        (VonKar * VonKar);
    const Real WindTurbulentScale = VonKar * 0.02_Real;
    parallelFor(
@@ -1222,20 +1233,22 @@ void testOSBLDepth() {
    const Real Discriminant =
        Slope * Slope - 4.0_Real * Quadratic * (RiAbove - 0.25_Real);
    const Real ExpectedBLD =
-       ZAbove + (-Slope + Kokkos::sqrt(Discriminant)) / (2.0_Real * Quadratic);
+       ZAbove + (-Slope + Math::sqrt(Discriminant)) / (2.0_Real * Quadratic);
    const Real ExpectedVt2 = 1.7_Real * UnresolvedShearConstant * 25.0_Real *
                             TestN * WindTurbulentScale / 0.25_Real;
    const Real ExpectedDeltaB = 0.4_Real * ExpectedVt2 / (RiScaling * 25.0_Real);
 
    int NumErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(BulkRiH(ICell, 2), RiAbove, BLDRTol, ATol) ||
-          !isApprox(BulkRiH(ICell, 3), RiBelow, BLDRTol, ATol) ||
-          !isApprox(BLDH(ICell), ExpectedBLD, BLDRTol, ATol) ||
+      if (!Math::isApprox(BulkRiH(ICell, 2), RiAbove, BLDRTol, ATol) ||
+          !Math::isApprox(BulkRiH(ICell, 3), RiBelow, BLDRTol, ATol) ||
+          !Math::isApprox(BLDH(ICell), ExpectedBLD, BLDRTol, ATol) ||
           BLDIndexH(ICell) != 2 ||
-          !isApprox(BulkShearH(ICell, 3), 0.0_Real, RTol, ATol) ||
-          !isApprox(UnresolvedShearH(ICell, 3), ExpectedVt2, RTol, ATol) ||
-          !isApprox(BuoyancyJumpH(ICell, 3), ExpectedDeltaB, BLDRTol, ATol)) {
+          !Math::isApprox(BulkShearH(ICell, 3), 0.0_Real, RTol, ATol) ||
+          !Math::isApprox(UnresolvedShearH(ICell, 3), ExpectedVt2, RTol,
+                          ATol) ||
+          !Math::isApprox(BuoyancyJumpH(ICell, 3), ExpectedDeltaB, BLDRTol,
+                          ATol)) {
          ++NumErrors;
       }
    }
@@ -1262,9 +1275,9 @@ void testOSBLDepth() {
    BulkRiH   = createHostMirrorCopy(KPPInstance->BulkRichardsonNumber);
    NumErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(BulkRiH(ICell, 3), 0.2_Real, BLDRTol, ATol) ||
-          !isApprox(BulkRiH(ICell, 4), 0.3_Real, BLDRTol, ATol) ||
-          !isApprox(BLDH(ICell), 30.0_Real, BLDRTol, ATol) ||
+      if (!Math::isApprox(BulkRiH(ICell, 3), 0.2_Real, BLDRTol, ATol) ||
+          !Math::isApprox(BulkRiH(ICell, 4), 0.3_Real, BLDRTol, ATol) ||
+          !Math::isApprox(BLDH(ICell), 30.0_Real, BLDRTol, ATol) ||
           BLDIndexH(ICell) != 2) {
          ++NumErrors;
       }
@@ -1306,7 +1319,7 @@ void testOSBLDepth() {
    BulkRiH   = createHostMirrorCopy(KPPInstance->BulkRichardsonNumber);
    NumErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(BLDH(ICell), 45.0_Real, RTol, ATol) ||
+      if (!Math::isApprox(BLDH(ICell), 45.0_Real, RTol, ATol) ||
           BLDIndexH(ICell) != 4 || BulkRiH(ICell, 1) != FillValueReal ||
           BulkRiH(ICell, 2) != 0.0_Real) {
          ++NumErrors;
@@ -1354,10 +1367,10 @@ void testOSBLDepth() {
    const Real ExpectedShearedRi = RiScaling * ExpectedDeltaB * 25.0_Real /
                                   (ExpectedResolvedShear + ExpectedVt2);
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(ResolvedShearH(ICell, 3), ExpectedResolvedShear, RTol,
-                    ATol) ||
-          !isApprox(ShearedBulkRiH(ICell, 3), ExpectedShearedRi, BLDRTol,
-                    ATol) ||
+      if (!Math::isApprox(ResolvedShearH(ICell, 3), ExpectedResolvedShear, RTol,
+                          ATol) ||
+          !Math::isApprox(ShearedBulkRiH(ICell, 3), ExpectedShearedRi, BLDRTol,
+                          ATol) ||
           !(BLDH(ICell) > ExpectedBLD)) {
          ++NumErrors;
       }
@@ -1375,7 +1388,7 @@ void testOSBLDepth() {
    const Real DeepestMidpoint =
        LayerThickness * (static_cast<Real>(NVertLayers) - 0.5_Real);
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(BLDH(ICell), DeepestMidpoint, RTol, ATol) ||
+      if (!Math::isApprox(BLDH(ICell), DeepestMidpoint, RTol, ATol) ||
           BLDIndexH(ICell) != NVertLayers - 1) {
          ++NumErrors;
       }
@@ -1402,7 +1415,7 @@ void testOSBLDepth() {
    BLDIndexH = createHostMirrorCopy(KPPInstance->OSBLDepthIndex);
    NumErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(BLDH(ICell), 25.0_Real, RTol, ATol) ||
+      if (!Math::isApprox(BLDH(ICell), 25.0_Real, RTol, ATol) ||
           BLDIndexH(ICell) != 2) {
          ++NumErrors;
       }
@@ -1439,7 +1452,7 @@ void testBoundaryLayerNonuniformThickness() {
    constexpr Real TestN     = 1.0_Real;
    constexpr Real TestUStar = 0.02_Real;
    const Real UnresolvedShearConstant =
-       Kokkos::sqrt(0.2_Real / (KPP::CMoS * KPP::SurfaceLayerExtent)) /
+       Math::sqrt(0.2_Real / (KPP::CMoS * KPP::SurfaceLayerExtent)) /
        (VonKar * VonKar);
    const Real WindTurbulentScale = VonKar * TestUStar;
 
@@ -1552,7 +1565,7 @@ void testBoundaryLayerNonuniformThickness() {
    const Real Discriminant =
        Slope * Slope - 4.0_Real * Quadratic * (RiAbove - 0.25_Real);
    const Real ExpectedBLD =
-       ZAbove + (-Slope + Kokkos::sqrt(Discriminant)) / (2.0_Real * Quadratic);
+       ZAbove + (-Slope + Math::sqrt(Discriminant)) / (2.0_Real * Quadratic);
    const Real ExpectedDeltaB =
        0.40_Real *
        (0.25_Real + 1.7_Real * UnresolvedShearConstant * ZBelow * TestN *
@@ -1561,13 +1574,14 @@ void testBoundaryLayerNonuniformThickness() {
 
    int NumErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(BulkRiH(ICell, 2), RiPrevious, BLDRTol, ATol) ||
-          !isApprox(BulkRiH(ICell, 3), RiAbove, BLDRTol, ATol) ||
-          !isApprox(BulkRiH(ICell, 4), RiBelow, BLDRTol, ATol) ||
-          !isApprox(BulkShearH(ICell, 2), 0.18_Real, RTol, ATol) ||
-          !isApprox(BulkShearH(ICell, 4), 0.25_Real, RTol, ATol) ||
-          !isApprox(BuoyancyJumpH(ICell, 4), ExpectedDeltaB, BLDRTol, ATol) ||
-          !isApprox(BLDH(ICell), ExpectedBLD, BLDRTol, ATol) ||
+      if (!Math::isApprox(BulkRiH(ICell, 2), RiPrevious, BLDRTol, ATol) ||
+          !Math::isApprox(BulkRiH(ICell, 3), RiAbove, BLDRTol, ATol) ||
+          !Math::isApprox(BulkRiH(ICell, 4), RiBelow, BLDRTol, ATol) ||
+          !Math::isApprox(BulkShearH(ICell, 2), 0.18_Real, RTol, ATol) ||
+          !Math::isApprox(BulkShearH(ICell, 4), 0.25_Real, RTol, ATol) ||
+          !Math::isApprox(BuoyancyJumpH(ICell, 4), ExpectedDeltaB, BLDRTol,
+                          ATol) ||
+          !Math::isApprox(BLDH(ICell), ExpectedBLD, BLDRTol, ATol) ||
           BLDIndexH(ICell) != 3) {
          ++NumErrors;
       }
@@ -1704,11 +1718,11 @@ void testBoundaryLayerHorizontalThicknessVariation() {
       const Real OldDUn   = 0.6_Real - OldUnAvg;
       const Real OldDVt   = 0.8_Real - OldVtAvg;
       const Real OldShear = OldDUn * OldDUn + OldDVt * OldDVt;
-      if (!isApprox(ExpectedShear, OldShear, RTol, ATol)) {
+      if (!Math::isApprox(ExpectedShear, OldShear, RTol, ATol)) {
          ++NumDiscriminatingCells;
       }
 
-      if (!isApprox(BulkShearH(ICell, 4), ExpectedShear, RTol, ATol)) {
+      if (!Math::isApprox(BulkShearH(ICell, 4), ExpectedShear, RTol, ATol)) {
          ++NumErrors;
       }
    }
@@ -1750,7 +1764,7 @@ void testSshOffsetInvariance() {
    constexpr Real RiScaling = 1.0_Real - 0.5_Real * KPP::SurfaceLayerExtent;
    constexpr Real TestN     = 1.0_Real;
    const Real UnresolvedShearConstant =
-       Kokkos::sqrt(0.2_Real / (KPP::CMoS * KPP::SurfaceLayerExtent)) /
+       Math::sqrt(0.2_Real / (KPP::CMoS * KPP::SurfaceLayerExtent)) /
        (VonKar * VonKar);
    const Real WindTurbulentScale = VonKar * 0.02_Real;
    parallelFor(
@@ -1810,16 +1824,18 @@ void testSshOffsetInvariance() {
          ++NumErrors;
          continue;
       }
-      if (!isApprox(BLDShift(ICell), BLDRef(ICell), BLDRTol, ATol) ||
+      if (!Math::isApprox(BLDShift(ICell), BLDRef(ICell), BLDRTol, ATol) ||
           BLDIndexShift(ICell) != BLDIndexRef(ICell)) {
          ++NumErrors;
          continue;
       }
       for (I4 K = 0; K <= NVertLayers; ++K) {
-         if (!isApprox(DiffShift(ICell, K), DiffRef(ICell, K), BLDRTol, ATol) ||
-             !isApprox(ViscShift(ICell, K), ViscRef(ICell, K), BLDRTol, ATol) ||
-             !isApprox(NonLocalShift(ICell, K), NonLocalRef(ICell, K), BLDRTol,
-                       ATol)) {
+         if (!Math::isApprox(DiffShift(ICell, K), DiffRef(ICell, K), BLDRTol,
+                             ATol) ||
+             !Math::isApprox(ViscShift(ICell, K), ViscRef(ICell, K), BLDRTol,
+                             ATol) ||
+             !Math::isApprox(NonLocalShift(ICell, K), NonLocalRef(ICell, K),
+                             BLDRTol, ATol)) {
             ++NumErrors;
             break;
          }
@@ -1880,7 +1896,7 @@ void testBoundaryLayerEdgeFallbacks() {
    auto BulkShearH = createHostMirrorCopy(KPPInstance->BulkRichardsonShear);
    int NumErrors   = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(BulkShearH(ICell, 3), 0.0_Real, RTol, ATol)) {
+      if (!Math::isApprox(BulkShearH(ICell, 3), 0.0_Real, RTol, ATol)) {
          ++NumErrors;
       }
    }
@@ -1894,7 +1910,7 @@ void testBoundaryLayerEdgeFallbacks() {
                                  UStar, B0, BVF, IceFraction, Wind);
    BulkShearH = createHostMirrorCopy(KPPInstance->BulkRichardsonShear);
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(BulkShearH(ICell, 3), 0.0_Real, RTol, ATol)) {
+      if (!Math::isApprox(BulkShearH(ICell, 3), 0.0_Real, RTol, ATol)) {
          ++NumErrors;
       }
    }
@@ -1928,7 +1944,7 @@ void testBoundaryLayerLangmuir() {
    constexpr Real TestN     = 1.0_Real;
    constexpr Real RiScaling = 1.0_Real - 0.5_Real * KPP::SurfaceLayerExtent;
    const Real UnresolvedShearConstant =
-       Kokkos::sqrt(0.2_Real / (KPP::CMoS * KPP::SurfaceLayerExtent)) /
+       Math::sqrt(0.2_Real / (KPP::CMoS * KPP::SurfaceLayerExtent)) /
        (VonKar * VonKar);
 
    deepCopy(NormalVelocity, 0.0_Real);
@@ -1945,7 +1961,7 @@ void testBoundaryLayerLangmuir() {
           const Real ZCenter = LayerThickness * (K + 0.5_Real);
           const Real Zeta = KPP::SurfaceLayerExtent * ZDepth * VonKar * TestB0 /
                             (TestUStar * TestUStar * TestUStar);
-          const Real PhiInv = Kokkos::sqrt(1.0_Real - 16.0_Real * Zeta);
+          const Real PhiInv = Math::sqrt(1.0_Real - 16.0_Real * Zeta);
           const Real WTurb  = VonKar * TestUStar * PhiInv;
           const Real Vt2    = 1.7_Real * UnresolvedShearConstant * ZCenter *
                            TestN * WTurb / 0.25_Real;
@@ -2000,14 +2016,14 @@ void testBoundaryLayerLangmuir() {
 
    constexpr Real ZDepth   = 30.0_Real;
    constexpr Real ZCenter  = 25.0_Real;
-   const Real Enhancement  = Kokkos::sqrt(3.0_Real);
+   const Real Enhancement  = Math::sqrt(3.0_Real);
    const Real DisabledZeta = KPP::SurfaceLayerExtent * ZDepth * VonKar *
                              TestB0 / (TestUStar * TestUStar * TestUStar);
    const Real EnabledZeta = DisabledZeta * Enhancement;
    const Real DisabledWTurb =
-       VonKar * TestUStar * Kokkos::sqrt(1.0_Real - 16.0_Real * DisabledZeta);
+       VonKar * TestUStar * Math::sqrt(1.0_Real - 16.0_Real * DisabledZeta);
    const Real EnabledWTurb =
-       VonKar * TestUStar * Kokkos::sqrt(1.0_Real - 16.0_Real * EnabledZeta);
+       VonKar * TestUStar * Math::sqrt(1.0_Real - 16.0_Real * EnabledZeta);
    const Real ExpectedDisabledVt2 = 1.7_Real * UnresolvedShearConstant *
                                     ZCenter * TestN * DisabledWTurb / 0.25_Real;
    const Real ExpectedEnabledVt2 = 1.7_Real * UnresolvedShearConstant *
@@ -2020,20 +2036,24 @@ void testBoundaryLayerLangmuir() {
    int DepthErrors       = 0;
    int SuppressionErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(DisabledRiH(ICell, 3), 0.26_Real, BLDRTol, ATol) ||
-          !isApprox(EnabledRiH(ICell, 3), ExpectedEnabledRi, BLDRTol, ATol)) {
+      if (!Math::isApprox(DisabledRiH(ICell, 3), 0.26_Real, BLDRTol, ATol) ||
+          !Math::isApprox(EnabledRiH(ICell, 3), ExpectedEnabledRi, BLDRTol,
+                          ATol)) {
          ++RiErrors;
       }
-      if (!isApprox(DisabledVt2H(ICell, 3), ExpectedDisabledVt2, RTol, ATol) ||
-          !isApprox(EnabledVt2H(ICell, 3), ExpectedEnabledVt2, RTol, ATol)) {
+      if (!Math::isApprox(DisabledVt2H(ICell, 3), ExpectedDisabledVt2, RTol,
+                          ATol) ||
+          !Math::isApprox(EnabledVt2H(ICell, 3), ExpectedEnabledVt2, RTol,
+                          ATol)) {
          ++Vt2Errors;
       }
       if (!(EnabledBLDH(ICell) > DisabledBLDH(ICell))) {
          ++DepthErrors;
       }
-      if (!isApprox(SuppressedRiH(ICell, 3), DisabledRiH(ICell, 3), RTol,
-                    ATol) ||
-          !isApprox(SuppressedBLDH(ICell), DisabledBLDH(ICell), RTol, ATol)) {
+      if (!Math::isApprox(SuppressedRiH(ICell, 3), DisabledRiH(ICell, 3), RTol,
+                          ATol) ||
+          !Math::isApprox(SuppressedBLDH(ICell), DisabledBLDH(ICell), RTol,
+                          ATol)) {
          ++SuppressionErrors;
       }
    }
@@ -2079,7 +2099,7 @@ void testBoundaryLayerSmoothing() {
    constexpr Real TestN     = 1.0_Real;
    constexpr Real RiScaling = 1.0_Real - 0.5_Real * KPP::SurfaceLayerExtent;
    const Real UnresolvedShearConstant =
-       Kokkos::sqrt(0.2_Real / (KPP::CMoS * KPP::SurfaceLayerExtent)) /
+       Math::sqrt(0.2_Real / (KPP::CMoS * KPP::SurfaceLayerExtent)) /
        (VonKar * VonKar);
    const Real WTurb = VonKar * TestUStar;
 
@@ -2151,8 +2171,8 @@ void testBoundaryLayerSmoothing() {
       }
       Real ExpectedDepth =
           AreaSum > 0.0_Real ? WeightedDepth / AreaSum : UnsmoothedBLDH(ICell);
-      ExpectedDepth = Kokkos::fmax(MinDepth, ExpectedDepth);
-      ExpectedDepth = Kokkos::fmin(MaxDepth, ExpectedDepth);
+      ExpectedDepth = Math::max(MinDepth, ExpectedDepth);
+      ExpectedDepth = Math::min(MaxDepth, ExpectedDepth);
 
       I4 ExpectedIndex = NVertLayers - 1;
       for (I4 K = 0; K < NVertLayers - 1; ++K) {
@@ -2163,12 +2183,12 @@ void testBoundaryLayerSmoothing() {
             break;
          }
       }
-      if (!isApprox(SmoothedBLDH(ICell), ExpectedDepth, BLDRTol, ATol) ||
+      if (!Math::isApprox(SmoothedBLDH(ICell), ExpectedDepth, BLDRTol, ATol) ||
           SmoothedIndexH(ICell) != ExpectedIndex) {
          ++NumErrors;
       }
-      if (!isApprox(SmoothedBLDH(ICell), UnsmoothedBLDH(ICell), BLDRTol,
-                    ATol)) {
+      if (!Math::isApprox(SmoothedBLDH(ICell), UnsmoothedBLDH(ICell), BLDRTol,
+                          ATol)) {
          ++NumChanged;
       }
    }
@@ -2276,26 +2296,26 @@ void testEnabledFullCall() {
 
    int NumErrors = 0;
    for (I4 ICell = 0; ICell < Mesh->NCellsAll; ++ICell) {
-      if (!isApprox(ActualBLDH(ICell), ExpectedBLDH(ICell), RTol, ATol) ||
+      if (!Math::isApprox(ActualBLDH(ICell), ExpectedBLDH(ICell), RTol, ATol) ||
           ActualBLDIndexH(ICell) != ExpectedBLDIndexH(ICell)) {
          ++NumErrors;
       }
       for (I4 K = 0; K <= NVertLayers; ++K) {
-         if (!isApprox(ActualBulkRiH(ICell, K), ExpectedBulkRiH(ICell, K), RTol,
-                       ATol) ||
-             !isApprox(ActualVertDiffH(ICell, K), ExpectedVertDiffH(ICell, K),
-                       RTol, ATol) ||
-             !isApprox(ActualVertViscH(ICell, K), ExpectedVertViscH(ICell, K),
-                       RTol, ATol) ||
-             !isApprox(ActualNonLocalH(ICell, K), ExpectedNonLocalH(ICell, K),
-                       RTol, ATol) ||
-             !isApprox(ActualTurbVelH(ICell, K), ExpectedTurbVelH(ICell, K),
-                       RTol, ATol)) {
+         if (!Math::isApprox(ActualBulkRiH(ICell, K), ExpectedBulkRiH(ICell, K),
+                             RTol, ATol) ||
+             !Math::isApprox(ActualVertDiffH(ICell, K),
+                             ExpectedVertDiffH(ICell, K), RTol, ATol) ||
+             !Math::isApprox(ActualVertViscH(ICell, K),
+                             ExpectedVertViscH(ICell, K), RTol, ATol) ||
+             !Math::isApprox(ActualNonLocalH(ICell, K),
+                             ExpectedNonLocalH(ICell, K), RTol, ATol) ||
+             !Math::isApprox(ActualTurbVelH(ICell, K),
+                             ExpectedTurbVelH(ICell, K), RTol, ATol)) {
             ++NumErrors;
          }
          if (K < NVertLayers &&
-             !isApprox(RetainedDensityH(ICell, K), InputDensityH(ICell, K),
-                       RTol, ATol)) {
+             !Math::isApprox(RetainedDensityH(ICell, K),
+                             InputDensityH(ICell, K), RTol, ATol)) {
             ++NumErrors;
          }
       }
