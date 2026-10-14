@@ -102,3 +102,5 @@ The following auxiliary variable groups are currently implemented:
 | TracerAuxVars | HTracersEdge | Center or Upwind|
 || Del2TracersCell ||
 | SurfTracerRestAuxVars | TracersMonthlySurfClimoCell ||
+| MixedLayerAuxVars | DenMixLayerDepth ||
+|| DenMixLayerIndex ||

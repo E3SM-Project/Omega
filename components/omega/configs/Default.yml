@@ -98,6 +98,12 @@ Omega:
       DRhoDT: -0.2
       DRhoDS: 0.8
       RhoT0S0: 1000.0
+  Submeso:
+    Enable: false
+    Tau: 172800.0
+    Ce: 0.08
+    LfMin: 1.0e3
+    DsMax: 100.0e3
   VertMix:
     Background:
       Diffusivity: 1.0e-5
