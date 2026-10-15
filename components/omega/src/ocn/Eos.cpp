@@ -142,6 +142,10 @@ void Eos::init() {
 void Eos::computeSpecVol(const Array2DReal &ConservTemp,
                          const Array2DReal &AbsSalinity,
                          const Array2DReal &Pressure) {
+   // count the evaluations this call performs, for the pressure gradient
+   // cost check
+   SpecVolEvalCount += static_cast<I8>(Mesh->NCellsAll) * VCoord->NVertLayers;
+
    OMEGA_SCOPE(LocSpecVol, SpecVol); /// Create a local view for computation
    OMEGA_SCOPE(LocComputeSpecVolLinear,
                ComputeSpecVolLinear); /// Local view for linear EOS computation
@@ -210,6 +214,10 @@ void Eos::computeDepthMeanSpecificVolume(
 void Eos::computeSpecVolDisp(const Array2DReal &ConservTemp,
                              const Array2DReal &AbsSalinity,
                              const Array2DReal &Pressure, I4 KDisp) {
+   // count the evaluations this call performs, for the pressure gradient
+   // cost check
+   SpecVolEvalCount += static_cast<I8>(Mesh->NCellsAll) * VCoord->NVertLayers;
+
    OMEGA_SCOPE(LocSpecVolDisplaced,
                SpecVolDisplaced); /// Local view for computation
    OMEGA_SCOPE(LocComputeSpecVolLinear,
@@ -250,6 +258,10 @@ void Eos::computeSpecVolDisp(const Array2DReal &ConservTemp,
 void Eos::computeSpecVolAndDerivs(const Array2DReal &ConservTemp,
                                   const Array2DReal &AbsSalinity,
                                   const Array2DReal &Pressure) {
+   // count the evaluations this call performs, for the pressure gradient
+   // cost check
+   SpecVolEvalCount += static_cast<I8>(Mesh->NCellsAll) * VCoord->NVertLayers;
+
    OMEGA_SCOPE(LocSpecVol, SpecVol);       /// Local views for computation
    OMEGA_SCOPE(LocSpecVolDCt, SpecVolDCt); /// Temperature derivative
    OMEGA_SCOPE(LocSpecVolDSa, SpecVolDSa); /// Salinity derivative
