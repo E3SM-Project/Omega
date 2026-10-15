@@ -1076,7 +1076,7 @@ void Tendencies::computeTracerTendenciesOnly(
       Pacer::start("Tend:tracerHorzAdv", 2);
       if (LocTracerHorzAdv.FCT) {
          parallelForOuter(
-             "Tend:FCTProvisionaLayerThicknesses", {Mesh->NCellsAll},
+             "Tend:FCTProvisionaLayerThicknesses", {Mesh->NCellsHaloH(0)},
              KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
                 LocTracerHorzAdv.FCTProvisionaLayerThicknesses(
                     Team, ICell, Dt, LocFluxPseudoThickEdge, LocPseudoThickCell,
