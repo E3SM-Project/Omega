@@ -55,6 +55,7 @@ userGuide/PGrad
 userGuide/Timing
 userGuide/VerticalMixingCoeff
 userGuide/KPPMix
+userGuide/RayleighDamping
 userGuide/VertAdv
 userGuide/Forcing
 userGuide/SfcCoupling
@@ -107,6 +108,7 @@ devGuide/PGrad
 devGuide/Timing
 devGuide/VerticalMixingCoeff
 devGuide/KPPMix
+devGuide/RayleighDamping
 devGuide/VertAdv
 devGuide/Forcing
 devGuide/SfcCoupling
@@ -137,6 +139,7 @@ design/Metadata
 design/PGrad
 design/IO
 design/IOStreams
+design/RayleighDamping
 design/Reductions
 design/State
 design/StateValidation
