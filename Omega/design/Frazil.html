@@ -1,0 +1,608 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frazil &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Halo" href="Halo.html" />
+    <link rel="prev" title="Fill Values" href="FillValues.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html#coupled-mode">Coupled mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MpasMesh.html">MPAS Mesh Specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/SplitTimeStepping.html">Split Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/KPPMix.html">KPP Boundary Layer Mixing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Forcing.html">Forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Frazil.html">Frazil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/SfcCoupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Analysis.html">Analysis</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Testing.html">Testing Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/ParallelLoops.html">Parallel loops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CFUnits.html">CFUnits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/SplitTimeStepping.html">Split Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/PGrad.html">Pressure Gradient (PGrad)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/KPPMix.html">KPP Boundary Layer Mixing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Forcing.html">Forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Frazil.html">Frazil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/SfcCoupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Analysis.html">Analysis</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OmegaV1GoverningEqns.html">Omega V1: Governing Equations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Analysis.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Coupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FillValues.html">Fill Values</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Frazil</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-compute-frazil-tendencies-from-formation-and-melt">2.1 Requirement: Compute frazil tendencies from formation and melt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-preserve-conservation-and-physical-consistency">2.2 Requirement: Preserve conservation and physical consistency</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-support-configuration-based-enable-disable">2.3 Requirement: Support configuration-based enable/disable</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-provide-per-cell-per-timestep-accumulated-diagnostics">2.4 Requirement: Provide per-cell per-timestep accumulated diagnostics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-calculate-frazil-contributions-consistent-with-the-teos-10-thermodynamics">2.5 Requirement: calculate frazil contributions consistent with the TEOS-10 thermodynamics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-support-io-field-registration-and-output">2.6 Requirement: Support IO field registration and output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-include-a-thickness-limit">2.6 Requirement: Include a thickness limit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-include-a-depth-limit">2.7 Desired: Include a depth limit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-have-a-simpler-frazil-scheme">2.7 Desired: have a simpler frazil scheme</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-limit-computational-expense">2.8 Desired: limit computational expense</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#initialization">4.2.1 Initialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#creation-and-retrieval">4.2.2 Creation and retrieval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#computation">4.2.3 Computation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#completed-step-accumulation">4.2.4 Completed-step accumulation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#field-registration-and-output">4.2.5 Field registration and output</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tendency-hook">4.2.6 Tendency hook</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#ctest-test-cold-formation">5.1 Ctest - Test cold formation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ctest-test-warm-formation">5.2 Ctest - Test warm formation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ctest-test-column-conservation-and-formation-melt-switching">5.4 Ctest - Test column conservation and formation/melt switching</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-depth-limit">5.5 Test depth limit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-mass-limit">5.6 Test mass limit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-phi-sensitivity">5.7 Test Phi sensitivity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-per-timestep-conservation">5.8 Test per-timestep conservation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="StateValidation.html">Ocean State Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SubmesoscaleEddies.html">Submesoscale Eddy Parameterization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SplitTimeStepping.html">Split Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KPPMix.html">KPP Boundary Layer Mixing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Frazil</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/Frazil.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="frazil">
+<span id="omega-design-frazil"></span><h1>Frazil<a class="headerlink" href="#frazil" title="Permalink to this heading"></a></h1>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>The Frazil module computes the frazil tendencies in the ocean column from the local temperature, salinity, pressure, and layer-thickness state. It is used as a tendency term in the OMEGA model and accumulates completed-step totals for export to the coupler. The module is organized as a registry with a default instance and optional non-default instances, and it exposes per-column per-timestep totals for accumulated freshwater mass, salt mass, and energy.</p>
+<p>The implementation is intended to be:</p>
+<ul class="simple">
+<li><p>local to a single ocean column,</p></li>
+<li><p>consistent with the thermodynamic assumptions in the EOS,</p></li>
+<li><p>conservative with respect to water mass, salt mass and energy</p></li>
+<li><p>compatible with the existing tendency infrastructure and enable flag.</p></li>
+</ul>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-compute-frazil-tendencies-from-formation-and-melt">
+<h3>2.1 Requirement: Compute frazil tendencies from formation and melt<a class="headerlink" href="#requirement-compute-frazil-tendencies-from-formation-and-melt" title="Permalink to this heading"></a></h3>
+<p>The module must compute the total pseudo-thickness (aka mass), salt and conservative temperature tendency contribution from frazil formation and melt as a function of the water column state.
+The calculation must allow for tendency contributions from</p>
+<ul class="simple">
+<li><p>the formation of frazil ice from supercooled seawater (leading to the removal of the supercooled water)</p></li>
+<li><p>melt of existing frazil if frazil is formed below encounters a layer warm enough to melt it.</p></li>
+<li><p>salt and energy contributions from the above processes.</p></li>
+</ul>
+</section>
+<section id="requirement-preserve-conservation-and-physical-consistency">
+<h3>2.2 Requirement: Preserve conservation and physical consistency<a class="headerlink" href="#requirement-preserve-conservation-and-physical-consistency" title="Permalink to this heading"></a></h3>
+<p>The implementation must maintain column-level conservation: the sum of each Frazil tendency in a column should match the corresponding column-integrated Frazil term. it must reject or flag situations where the computed mass, salt or energy budgets cannot be reconciled. The implementation should also treat the 3 terms (mass, salt, and energy) in a self-consistent way, in line with the thermodynamic assumptions of each frazil option.</p>
+<p>Incorrect mass or energy partitioning can corrupt the tracer and thickness budgets and lead to a mass, salt, or energy leak in the coupled model.</p>
+</section>
+<section id="requirement-support-configuration-based-enable-disable">
+<h3>2.3 Requirement: Support configuration-based enable/disable<a class="headerlink" href="#requirement-support-configuration-based-enable-disable" title="Permalink to this heading"></a></h3>
+<p>The frazil capability must be enabled by configuration. When disabled, the default frazil object must not be created and the tendency contribution must be skipped.</p>
+<p>This requirement is needed because the model should be able to run without a frazil parameterization without introducing unresolved dependencies or unnecessary computation.</p>
+</section>
+<section id="requirement-provide-per-cell-per-timestep-accumulated-diagnostics">
+<h3>2.4 Requirement: Provide per-cell per-timestep accumulated diagnostics<a class="headerlink" href="#requirement-provide-per-cell-per-timestep-accumulated-diagnostics" title="Permalink to this heading"></a></h3>
+<p>The module must track column-accumulated totals for:</p>
+<ul class="simple">
+<li><p>frazil freshwater mass,</p></li>
+<li><p>salt mass,</p></li>
+<li><p>energy associated with the mass fluxes</p></li>
+</ul>
+<p>These totals are used to compute completed-step contributions and are needed for coupling to the sea ice model.</p>
+</section>
+<section id="requirement-calculate-frazil-contributions-consistent-with-the-teos-10-thermodynamics">
+<h3>2.5 Requirement: calculate frazil contributions consistent with the TEOS-10 thermodynamics<a class="headerlink" href="#requirement-calculate-frazil-contributions-consistent-with-the-teos-10-thermodynamics" title="Permalink to this heading"></a></h3>
+<p>Omega uses ocean thermodynamics consistent with TEOS-10. We target to form (and melt) frazil in a way consistent with the choice of the TEOS-10 Equation Of State (EOS).</p>
+</section>
+<section id="requirement-support-io-field-registration-and-output">
+<h3>2.6 Requirement: Support IO field registration and output<a class="headerlink" href="#requirement-support-io-field-registration-and-output" title="Permalink to this heading"></a></h3>
+<p>The per-timestep column-wise frazil totals should be exposed as fields so they can be selected in output streams. The fields must be attached to the correct arrays and registered under a group.</p>
+<p>This is needed because we desire to test the frazil contributions in standalone mode before coupling. This will also be useful for diagnostics of production simulations.</p>
+</section>
+<section id="requirement-include-a-thickness-limit">
+<h3>2.6 Requirement: Include a thickness limit<a class="headerlink" href="#requirement-include-a-thickness-limit" title="Permalink to this heading"></a></h3>
+<p>For stability reasons, the total mass tendency removed (or added) to a layer should be limited to a maximum fraction of the layer thickness. Ten percent is a threshold used in previous implementations (and the intended default value). The requirement is for there to be a parameter that caps the mass tendency.</p>
+</section>
+<section id="desired-include-a-depth-limit">
+<h3>2.7 Desired: Include a depth limit<a class="headerlink" href="#desired-include-a-depth-limit" title="Permalink to this heading"></a></h3>
+<p>In other implementations, deep formation of frazil (e.g. below 1000m) was an issue. Thus we prefer to have a parameter restricting the frazil formation (and melt) to depths shallower than this parameter.</p>
+</section>
+<section id="desired-have-a-simpler-frazil-scheme">
+<h3>2.7 Desired: have a simpler frazil scheme<a class="headerlink" href="#desired-have-a-simpler-frazil-scheme" title="Permalink to this heading"></a></h3>
+<p>To limit the risk of instability, we desire to implement a frazil scheme to provide a simpler alternative to the TEOS-10 option. As much as possible, this simpler frazil scheme should rely on assumptions that past frazil implementations have made to increase the chances of providing a stable frazil scheme in a coupled model.</p>
+</section>
+<section id="desired-limit-computational-expense">
+<h3>2.8 Desired: limit computational expense<a class="headerlink" href="#desired-limit-computational-expense" title="Permalink to this heading"></a></h3>
+<p>We desire to limit unnecessary calls and computations. Thus, we add a check on the water column state (is there super cooled water in this column?) before running through the frazil calculation. This is inspired by MPAS-O implementation.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<p>The frazil calculation is implemented as a local column process. The model state provides:</p>
+<ul class="simple">
+<li><p>conservative temperature <span class="math notranslate nohighlight">\(T\)</span>,</p></li>
+<li><p>absolute salinity <span class="math notranslate nohighlight">\(S\)</span>,</p></li>
+<li><p>pressure <span class="math notranslate nohighlight">\(P\)</span>,</p></li>
+<li><p>layer thickness <span class="math notranslate nohighlight">\(H\)</span>.</p></li>
+</ul>
+<p>For a given active-layer cell, the module computes the formation and melt contributions to:</p>
+<ul class="simple">
+<li><p>ice mass,</p></li>
+<li><p>liquid mass,</p></li>
+<li><p>salt mass,</p></li>
+<li><p>total energy.</p></li>
+</ul>
+<p>The calculation is organized around a set of vertically-accumulated quantities:
+<div class="math notranslate nohighlight">
+\[
+M_{ice},\quad M_{liq},\quad M_{salt},\quad E_{ice},\quad E_{liq}
+\]</div>
+
+and the tendency terms
+<div class="math notranslate nohighlight">
+\[
+\frac{\partial H}{\partial t},\quad
+\frac{\partial T}{\partial t},\quad
+\frac{\partial S}{\partial t}.
+\]</div>
+</p>
+<p>For each stage of a timestep, the calculation resets the (vertical) accumulator arrays, applies the local frazil algorithm, and stores the resulting stage-local contributions in the tendency arrays. At the end of the completed outer-step update, the accumulated totals are normalized by the full ocean timestep:
+<div class="math notranslate nohighlight">
+\[
+\bar{F}_{mass} = \frac{\sum_k w_k M_{mass,k}}{\Delta t},
+\quad
+\bar{F}_{salt} = \frac{\sum_k w_k M_{salt,k}}{\Delta t},
+\quad
+\bar{F}_{energy} = \frac{\sum_k w_k E_k}{\Delta t},
+\]</div>
+
+where <span class="math notranslate nohighlight">\(w_k\)</span> are the timestepper-specific update weights. This preserves the correct outer-step mean flux while remaining compatible with Runge-Kutta stage logic.
+We prefer that the public output arrays captures mean fluxes rather than stage or timestep totals to make the Polaris testing independent of the timestep used.</p>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>The Frazil configuration is stored under the <code class="docutils literal notranslate"><span class="pre">Frazil</span></code> config group. Relevant entries include:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">FrazilType</span></code>: fixed-property or TEOS-based formulation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LayerMassFracMax</span></code>: maximum total frazil mass changed allowed in an ocean layer</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Phi</span></code>: target liquid mass fraction for the formed frazil</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DepthLimit</span></code>: optional depth limit below which frazil is disabled</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ConservationCheck</span></code>: whether conservation must be validated</p></li>
+</ul>
+<p>These parameters are read during object creation in <code class="docutils literal notranslate"><span class="pre">Frazil.cpp</span></code>.</p>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>The relevant public structures in the Frazil implementation are:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">FrazilType</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="n">FixedPropertyFrazil</span><span class="p">,</span>
+<span class="w">   </span><span class="n">TeosFrazil</span>
+<span class="p">};</span>
+
+<span class="k">struct</span><span class="w"> </span><span class="nc">FrazilFormation</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">};</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">FrazilMelt</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">};</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">FixedPropertyFrazilFormation</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">};</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">FixedPropertyFrazilMelt</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">};</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Frazil</span><span class="w"> </span><span class="p">{</span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">init</span><span class="p">();</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">Frazil</span><span class="w"> </span><span class="o">*</span><span class="nf">getDefault</span><span class="p">();</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="n">Frazil</span><span class="w"> </span><span class="o">*</span><span class="nf">get</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Name</span><span class="p">);</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">clear</span><span class="p">();</span>
+<span class="w">   </span><span class="k">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">erase</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">InName</span><span class="p">);</span>
+
+<span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">FrazilTTend</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">FrazilSTend</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array2DReal</span><span class="w"> </span><span class="n">FrazilHTend</span><span class="p">;</span>
+
+<span class="w">   </span><span class="n">Array1DReal</span><span class="w"> </span><span class="n">AccMIce</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array1DReal</span><span class="w"> </span><span class="n">AccEIce</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array1DReal</span><span class="w"> </span><span class="n">AccMLiq</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array1DReal</span><span class="w"> </span><span class="n">AccELiq</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array1DReal</span><span class="w"> </span><span class="n">AccMSalt</span><span class="p">;</span>
+
+<span class="w">   </span><span class="n">Array1DReal</span><span class="w"> </span><span class="n">FrazilMassFlux</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array1DReal</span><span class="w"> </span><span class="n">FrazilSaltFlux</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Array1DReal</span><span class="w"> </span><span class="n">FrazilEnergyFlux</span><span class="p">;</span>
+
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">computeFrazil</span><span class="p">(...);</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">resetOcnStepFluxes</span><span class="p">();</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">accumulateOcnStepFluxes</span><span class="p">(</span><span class="n">Real</span><span class="w"> </span><span class="n">FinalUpdateWeight</span><span class="p">,</span><span class="w"> </span><span class="n">R8</span><span class="w"> </span><span class="n">TimeStepSeconds</span><span class="p">);</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">registerFields</span><span class="p">();</span>
+<span class="w">   </span><span class="kt">void</span><span class="w"> </span><span class="nf">unregisterFields</span><span class="p">();</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>The design keeps the arrays and accumulation logic local to the Frazil object, which makes the lifetime management explicit and avoids leaking the data model into time-stepping logic.</p>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<section id="initialization">
+<h4>4.2.1 Initialization<a class="headerlink" href="#initialization" title="Permalink to this heading"></a></h4>
+<p>The static <code class="docutils literal notranslate"><span class="pre">Frazil::init()</span></code> method:</p>
+<ul class="simple">
+<li><p>ensures the mesh and vertical coordinate exist,</p></li>
+<li><p>initializes EOS dependencies,</p></li>
+<li><p>checks the <code class="docutils literal notranslate"><span class="pre">Tendencies</span></code> config for <code class="docutils literal notranslate"><span class="pre">FrazilTendencyEnable</span></code>,</p></li>
+<li><p>creates the default Frazil instance when enabled.</p></li>
+</ul>
+<p>This ensures the object exists only when the feature is active.</p>
+</section>
+<section id="creation-and-retrieval">
+<h4>4.2.2 Creation and retrieval<a class="headerlink" href="#creation-and-retrieval" title="Permalink to this heading"></a></h4>
+<p>The creation pattern mirrors the rest of the Omega module structure:</p>
+<ul class="simple">
+<li><p>a map of all Frazil objects,</p></li>
+<li><p>a pointer to the default instance,</p></li>
+<li><p>a name-based retrieval method,</p></li>
+<li><p>methods for erase and clear.</p></li>
+</ul>
+<p>This design allows future non-default instances while keeping the default case fast and simple.</p>
+</section>
+<section id="computation">
+<h4>4.2.3 Computation<a class="headerlink" href="#computation" title="Permalink to this heading"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">computeFrazil()</span></code> method is the core thermodynamic routine. It:</p>
+<ul class="simple">
+<li><p>reads the local tracer state,</p></li>
+<li><p>evaluates the local freezing point,</p></li>
+<li><p>computes mass and energy changes associated with frazil formation or melt,</p></li>
+<li><p>writes the results into the layer-by-layer tendency arrays.</p></li>
+</ul>
+<p>The method is later invoked from the tendency operator, which is the integration point between the frazil module and the model tendency machinery.</p>
+</section>
+<section id="completed-step-accumulation">
+<h4>4.2.4 Completed-step accumulation<a class="headerlink" href="#completed-step-accumulation" title="Permalink to this heading"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">accumulateOcnStepFluxes()</span></code> method updates the final per-cell ocean-step fluxes. It:</p>
+<ul class="simple">
+<li><p>reads the stage-local accumulation arrays,</p></li>
+<li><p>applies the update weight,</p></li>
+<li><p>divides by the full ocean timestep seconds,</p></li>
+<li><p>flips the sign, because the accumulators are counted positive into the frazil reservoir while the exported fluxes follow the coupler convention of being positive into the ocean,</p></li>
+<li><p>writes the mean flux into the public output arrays.</p></li>
+</ul>
+<p>This is a key design choice because it keeps the output/coupling values independent of the internal stage ordering of the timestepper.</p>
+</section>
+<section id="field-registration-and-output">
+<h4>4.2.5 Field registration and output<a class="headerlink" href="#field-registration-and-output" title="Permalink to this heading"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">registerFields()</span></code> method creates the three default output fields:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">FrazilMassFlux</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FrazilSaltFlux</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FrazilEnergyFlux</span></code></p></li>
+</ul>
+<p>All three are counted positive into the ocean, so frazil formation gives
+negative values and net melt gives positive ones.</p>
+<p>Each field is:</p>
+<ul class="simple">
+<li><p>1D with <code class="docutils literal notranslate"><span class="pre">NCells</span></code> dimension,</p></li>
+<li><p>attached to the corresponding array,</p></li>
+<li><p>inserted into the <code class="docutils literal notranslate"><span class="pre">Frazil</span></code> field group.</p></li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">unregisterFields()</span></code> method is guarded by a registration flag so only the object that successfully registered the fields destroys them. This avoids collisions when non-default instances are later introduced.</p>
+</section>
+<section id="tendency-hook">
+<h4>4.2.6 Tendency hook<a class="headerlink" href="#tendency-hook" title="Permalink to this heading"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">FrazilOnCell</span></code> object is the bridge between the Frazil module and the tendency infrastructure. It:</p>
+<ul class="simple">
+<li><p>checks whether frazil is enabled,</p></li>
+<li><p>resets the stage-local accumulators,</p></li>
+<li><p>calls <code class="docutils literal notranslate"><span class="pre">computeFrazil()</span></code>,</p></li>
+<li><p>accumulates the completed-step totals,</p></li>
+<li><p>writes the resultant tendency contributions into the thickness and tracer tendency arrays.</p></li>
+</ul>
+<p>This is the integration point used by <code class="docutils literal notranslate"><span class="pre">TendencyTerms.cpp</span></code>.</p>
+</section>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="ctest-test-cold-formation">
+<h3>5.1 Ctest - Test cold formation<a class="headerlink" href="#ctest-test-cold-formation" title="Permalink to this heading"></a></h3>
+<p>The cold-case frazil formation test verifies that in a single layer set to super-cooled conditons, a call to FrazilFormation() produces:</p>
+<ul class="simple">
+<li><p>accumulated frazil ice mass is positive,</p></li>
+<li><p>accumulated frazil salt mass is positive,</p></li>
+<li><p>accumulated frazil energy is negative,</p></li>
+<li><p>layer temperature tendency is positive,</p></li>
+<li><p>layer salinity and thickness tendencies are negative.</p></li>
+</ul>
+<p>This verifies the sign and directionality of the formation branch for a single layer.
+The <code class="docutils literal notranslate"><span class="pre">testFrazilFormationCold</span></code> verifies the Teos-10 implementation, and <code class="docutils literal notranslate"><span class="pre">testFixedPropertyFrazilFormationCold</span></code> verifies the FixedProperty implementation.</p>
+</section>
+<section id="ctest-test-warm-formation">
+<h3>5.2 Ctest - Test warm formation<a class="headerlink" href="#ctest-test-warm-formation" title="Permalink to this heading"></a></h3>
+<p>The warm-case formation test verifies that the formation branch is zero when water is not supercooled. This checks that the algorithm respects the physical cutoff condition.
+The <code class="docutils literal notranslate"><span class="pre">testFrazilFormationWarm</span></code> verifies the Teos-10 implementation, and <code class="docutils literal notranslate"><span class="pre">testFixedPropertyFrazilFormationWarm</span></code> verifies the FixedProperty implementation.</p>
+</section>
+<section id="ctest-test-column-conservation-and-formation-melt-switching">
+<h3>5.4 Ctest - Test column conservation and formation/melt switching<a class="headerlink" href="#ctest-test-column-conservation-and-formation-melt-switching" title="Permalink to this heading"></a></h3>
+<p>The column test verifies the full <code class="docutils literal notranslate"><span class="pre">Frazil::computeFrazil()</span></code> path across a single water column with multiple active layers.  The test constructs a vertical profile with cold layers separated by warm layers so that frazil can form in supercooled water, be carried upward through the column accumulators, and melt again where warmer water is encountered.</p>
+<p>The test checks the branch switching through the signs of the layer tendencies:</p>
+<ul class="simple">
+<li><p>cold layers should form frazil, giving negative thickness and salinity tendencies and a positive temperature tendency;</p></li>
+<li><p>warm layers with accumulated frazil should produce melt, giving the opposite tendency signs.</p></li>
+</ul>
+<p>The test also forcibly enables the internal frazil column conservation check, which verifies that the summed layer tendencies balance the accumulated frazil mass, salt, and energy reservoirs.  This provides coverage of the conservation relationship inside one call to <code class="docutils literal notranslate"><span class="pre">computeFrazil()</span></code>, while the separate timestep-level tests cover completed-step output and coupling diagnostics.</p>
+<p>This case has also been used for manual checks by adding logging commands (which work on CPU). The checks on layer accummulation, left over after limited melt etc. are not part of the automated checks.</p>
+</section>
+<section id="test-depth-limit">
+<h3>5.5 Test depth limit<a class="headerlink" href="#test-depth-limit" title="Permalink to this heading"></a></h3>
+<p>The depth-limit test ensures that any layers below the configured depth threshold generate frazil tendencies of zero, which guards the parameterized cutoff behavior.</p>
+</section>
+<section id="test-mass-limit">
+<h3>5.6 Test mass limit<a class="headerlink" href="#test-mass-limit" title="Permalink to this heading"></a></h3>
+<p>The mass-limit tests verify that <code class="docutils literal notranslate"><span class="pre">LayerMassFracMax</span></code> caps the frazil mass change to a
+fixed fraction of the layer thickness.  The tests are single layer, use the default value <code class="docutils literal notranslate"><span class="pre">LayerMassFracMax</span> <span class="pre">=</span> <span class="pre">0.10</span></code> and exercise both available frazil formulations.</p>
+<p>For formation, the initial conditions are set to produce a large frazil mass (i.e. small layer of 1m pseudothickness and very super-cooled water), which should be capped. <code class="docutils literal notranslate"><span class="pre">testFrazilFormationMassLimit()</span></code> verifies the TEOS-10 path and
+<code class="docutils literal notranslate"><span class="pre">testFixedPropertyFrazilFormationMassLimit()</span></code> verifies the fixed-property path.
+The TEOS-10 test checks that the produced solid ice mass, the <code class="docutils literal notranslate"><span class="pre">Phi</span></code>-dependent liquid
+mass, and thickness tendency against the analytical capped values.  The fixed-property test checks that the produced ice thickness and thickness tendency are equal to the
+expected capped value.</p>
+<p>For melt, the initial ocean conditions are set to allow melting:  the small layer of 1m pseudothickness is warm water and a large amount of frazil terms is present for melting, which should be capped. <code class="docutils literal notranslate"><span class="pre">testFrazilMeltMassLimit()</span></code> verifies the TEOS-10 path and <code class="docutils literal notranslate"><span class="pre">testFixedPropertyFrazilMeltMassLimit()</span></code> verifies the fixed-property path.
+These tests check that the computed fraction of frazil to be melted is bounded between zero and one,
+that the 3 frazil tendencies match the expected values, and that the remaining frazil
+reservoirs are reduced consistently.</p>
+</section>
+<section id="test-phi-sensitivity">
+<h3>5.7 Test Phi sensitivity<a class="headerlink" href="#test-phi-sensitivity" title="Permalink to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">testFrazilFormationPhi()</span></code> test verifies that the TEOS-10 formation path
+responds to the <code class="docutils literal notranslate"><span class="pre">Phi</span></code> parameter.  The test runs the same scalar state with
+<code class="docutils literal notranslate"><span class="pre">Phi</span> <span class="pre">=</span> <span class="pre">0.75</span></code> and <code class="docutils literal notranslate"><span class="pre">Phi</span> <span class="pre">=</span> <span class="pre">0.85</span></code>.  With all other inputs unchanged, increasing
+<code class="docutils literal notranslate"><span class="pre">Phi</span></code> should increase the total frazil mass, increase the salt content, and
+make the total frazil energy more negative.  The test also checks that the
+solid ice mass is unchanged so the comparison is not accidentally testing the
+mass limiter.</p>
+</section>
+<section id="test-per-timestep-conservation">
+<h3>5.8 Test per-timestep conservation<a class="headerlink" href="#test-per-timestep-conservation" title="Permalink to this heading"></a></h3>
+<p>A future test should check that the ocean tendencies and the terms ready for coupling export are conserved. The above test 5.4 ensures conservation within the frazil call but does not check the full timestep totals, which will differ across time stepper choice.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="FillValues.html" class="btn btn-neutral float-left" title="Fill Values" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Halo.html" class="btn btn-neutral float-right" title="Halo" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -70,6 +70,23 @@ Tendencies.computeVelocityTendencies(State, AuxState, ThickTimeLevel, VelTimeLev
 To call only the tracer tendency terms:
 Tendencies.computeTracerTendencies(State, AuxState, TracerArray, ThickTimeLevel, VelTimeLevel);
 
+## Frazil tendencies
+
+Frazil tendencies are calculated by the Frazil class, not the TendencyTerms.
+The tendencies are integrated in the tracer tendency compute path and read in from
+the frazil computation. When
+`Omega.Tendencies.FrazilTendencyEnable` is true, `computeTracerTendenciesOnly`
+invokes `FrazilOnCell`, which calls the default `Frazil` object and adds frazil
+contributions to:
+
+- `PseudoThicknessTend`
+- `TracerTend` for `Temperature`
+- `TracerTend` for `Salinity`
+
+The frazil implementation choice and parameters are read from the
+`Omega.Frazil` block. Detailed algorithm/physics notes are in
+[Frazil](Frazil.md).
+
 ## Removal of tendencies
 To erase a specific named tendencies instance use `erase`
 ```c++

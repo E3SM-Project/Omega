@@ -83,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="userGuide/KPPMix.html">KPP Boundary Layer Mixing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/VertAdv.html">Vertical Advection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/Forcing.html">Forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Frazil.html">Frazil</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/SfcCoupling.html">Surface Coupling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/Analysis.html">Analysis</a></li>
 </ul>
@@ -133,6 +134,7 @@
 <li class="toctree-l1"><a class="reference internal" href="devGuide/KPPMix.html">KPP Boundary Layer Mixing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="devGuide/VertAdv.html">Vertical Advection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="devGuide/Forcing.html">Forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Frazil.html">Frazil</a></li>
 <li class="toctree-l1"><a class="reference internal" href="devGuide/SfcCoupling.html">Surface Coupling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="devGuide/Analysis.html">Analysis</a></li>
 </ul>
@@ -150,6 +152,7 @@
 <li class="toctree-l1"><a class="reference internal" href="design/EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/Error.html">ErrorHandler (Error)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/FillValues.html">Fill Values</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Frazil.html">Frazil</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/Halo.html">Halo</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/HorzMeshClass.html">Horizontal Mesh</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/Logging.html">Logging</a></li>
@@ -340,6 +343,13 @@ component of E3SM for comparison purposes.</p>
 <li class="toctree-l2"><a class="reference internal" href="userGuide/Forcing.html#id2">Notes</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="userGuide/Frazil.html">Frazil</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/Frazil.html#scientific-basis">Scientific basis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/Frazil.html#configuration-overview">Configuration overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/Frazil.html#available-frazil-options">Available frazil options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userGuide/Frazil.html#notes">Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/SfcCoupling.html">Surface Coupling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userGuide/Analysis.html">Analysis</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="userGuide/Analysis.html#background">Background</a></li>
@@ -462,6 +472,7 @@ component of E3SM for comparison purposes.</p>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/Tendencies.html#initialization">Initialization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/Tendencies.html#creation-of-non-default-tendencies">Creation of non-default tendencies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/Tendencies.html#computation-of-tendencies">Computation of tendencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Tendencies.html#frazil-tendencies">Frazil tendencies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/Tendencies.html#removal-of-tendencies">Removal of tendencies</a></li>
 </ul>
 </li>
@@ -564,6 +575,15 @@ component of E3SM for comparison purposes.</p>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/Forcing.html#id1">Notes</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="devGuide/Frazil.html">Frazil</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Frazil.html#purpose-and-coupling-points">Purpose and coupling points</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Frazil.html#data-flow-and-call-sequence">Data flow and call sequence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Frazil.html#configuration-coupling">Configuration coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Frazil.html#physics-algorithm-summary">Physics/algorithm summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Frazil.html#existing-ctest-coverage">Existing ctest coverage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devGuide/Frazil.html#related-pages">Related pages</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="devGuide/SfcCoupling.html">Surface Coupling</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/SfcCoupling.html#initialization">Initialization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="devGuide/SfcCoupling.html#creation-of-non-default-surface-coupling-objects">Creation of non-default surface coupling objects</a></li>
@@ -602,6 +622,7 @@ component of E3SM for comparison purposes.</p>
 <li class="toctree-l1"><a class="reference internal" href="design/EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/Error.html">ErrorHandler (Error)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/FillValues.html">Fill Values</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design/Frazil.html">Frazil</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/Halo.html">Halo</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/HorzMeshClass.html">Horizontal Mesh</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design/Logging.html">Logging</a></li>

@@ -84,6 +84,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/KPPMix.html">KPP Boundary Layer Mixing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/VertAdv.html">Vertical Advection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Forcing.html">Forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Frazil.html">Frazil</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/SfcCoupling.html">Surface Coupling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Analysis.html">Analysis</a></li>
 </ul>
@@ -123,6 +124,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#initialization">Initialization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#creation-of-non-default-tendencies">Creation of non-default tendencies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#computation-of-tendencies">Computation of tendencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#frazil-tendencies">Frazil tendencies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#removal-of-tendencies">Removal of tendencies</a></li>
 </ul>
 </li>
@@ -140,6 +142,7 @@
 <li class="toctree-l1"><a class="reference internal" href="KPPMix.html">KPP Boundary Layer Mixing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Forcing.html">Forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Frazil.html">Frazil</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SfcCoupling.html">Surface Coupling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Analysis.html">Analysis</a></li>
 </ul>
@@ -157,6 +160,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../design/EOS.html">Equation of State (EOS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/Error.html">ErrorHandler (Error)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/FillValues.html">Fill Values</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/Frazil.html">Frazil</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/Halo.html">Halo</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/HorzMeshClass.html">Horizontal Mesh</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design/Logging.html">Logging</a></li>
@@ -278,6 +282,23 @@ and time instant <code class="docutils literal notranslate"><span class="pre">Ti
 </div>
 <p>To call only the tracer tendency terms:
 Tendencies.computeTracerTendencies(State, AuxState, TracerArray, ThickTimeLevel, VelTimeLevel);</p>
+</section>
+<section id="frazil-tendencies">
+<h2>Frazil tendencies<a class="headerlink" href="#frazil-tendencies" title="Permalink to this heading"></a></h2>
+<p>Frazil tendencies are calculated by the Frazil class, not the TendencyTerms.
+The tendencies are integrated in the tracer tendency compute path and read in from
+the frazil computation. When
+<code class="docutils literal notranslate"><span class="pre">Omega.Tendencies.FrazilTendencyEnable</span></code> is true, <code class="docutils literal notranslate"><span class="pre">computeTracerTendenciesOnly</span></code>
+invokes <code class="docutils literal notranslate"><span class="pre">FrazilOnCell</span></code>, which calls the default <code class="docutils literal notranslate"><span class="pre">Frazil</span></code> object and adds frazil
+contributions to:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">PseudoThicknessTend</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TracerTend</span></code> for <code class="docutils literal notranslate"><span class="pre">Temperature</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TracerTend</span></code> for <code class="docutils literal notranslate"><span class="pre">Salinity</span></code></p></li>
+</ul>
+<p>The frazil implementation choice and parameters are read from the
+<code class="docutils literal notranslate"><span class="pre">Omega.Frazil</span></code> block. Detailed algorithm/physics notes are in
+<a class="reference internal" href="Frazil.html"><span class="std std-doc">Frazil</span></a>.</p>
 </section>
 <section id="removal-of-tendencies">
 <h2>Removal of tendencies<a class="headerlink" href="#removal-of-tendencies" title="Permalink to this heading"></a></h2>
