@@ -297,7 +297,8 @@ module seq_diag_mct
   integer :: index_x2r_Flrl_irrig
 
   integer :: index_o2x_Faoo_h2otemp
-  integer :: index_o2x_Fioo_frazil
+   integer :: index_o2x_Fioo_frazilm
+   integer :: index_o2x_Fioo_frazilh
   integer :: index_o2x_Foxo_frazil_li
   integer :: index_o2x_Fioo_q
   integer :: index_o2x_Foxo_q_li
@@ -342,7 +343,8 @@ module seq_diag_mct
   integer :: index_x2i_Faxa_lwdn
   integer :: index_x2i_Faxa_rain
   integer :: index_x2i_Faxa_snow
-  integer :: index_x2i_Fioo_frazil
+   integer :: index_x2i_Fioo_frazilm
+   integer :: index_x2i_Fioo_frazilh
   integer :: index_x2i_Fioo_q
   integer :: index_x2i_Fixx_rofi
 
@@ -1480,7 +1482,8 @@ contains
 
     if (present(do_o2x)) then
        if (first_time) then
-          index_o2x_Fioo_frazil  = mct_aVect_indexRA(o2x_o,'Fioo_frazil')
+          index_o2x_Fioo_frazilm = mct_aVect_indexRA(o2x_o,'Fioo_frazilm')
+          index_o2x_Fioo_frazilh = mct_aVect_indexRA(o2x_o,'Fioo_frazilh')
           index_o2x_Foxo_frazil_li= mct_aVect_indexRA(o2x_o,'Foxo_frazil_li',perrWith='quiet')
           index_o2x_Fioo_q       = mct_aVect_indexRA(o2x_o,'Fioo_q')
           index_o2x_Foxo_q_li    = mct_aVect_indexRA(o2x_o,'Foxo_q_li',perrWith='quiet')
@@ -1502,8 +1505,8 @@ contains
           ca_i =  dom_o%data%rAttr(kArea,n) * frac_o%rAttr(ki,n)
           ca_c =  dom_o%data%rAttr(kArea,n)
           nf = f_area; budg_dataL(nf,ic,ip) = budg_dataL(nf,ic,ip) + ca_o
-          nf = f_wfrz;  budg_dataL(nf,ic,ip) = budg_dataL(nf,ic,ip) - (ca_o+ca_i)*max(0.0_r8,o2x_o%rAttr(index_o2x_Fioo_frazil,n))
-          nf = f_hfrz;  budg_dataL(nf,ic,ip) = budg_dataL(nf,ic,ip) + (ca_o+ca_i)*max(0.0_r8,o2x_o%rAttr(index_o2x_Fioo_q,n))
+          nf = f_wfrz;  budg_dataL(nf,ic,ip) = budg_dataL(nf,ic,ip) - (ca_o+ca_i)*max(0.0_r8,o2x_o%rAttr(index_o2x_Fioo_frazilm,n))
+          nf = f_hfrz;  budg_dataL(nf,ic,ip) = budg_dataL(nf,ic,ip) + (ca_o+ca_i)*max(0.0_r8,o2x_o%rAttr(index_o2x_Fioo_frazilh,n))
           nf = f_hh2ot; budg_dataL(nf,ic,ip) = budg_dataL(nf,ic,ip) + (ca_o+ca_i)*o2x_o%rAttr(index_o2x_Faoo_h2otemp,n)
           if (flds_polar) then
              nf = f_wpolar;budg_dataL(nf,ic,ip) = budg_dataL(nf,ic,ip) - ca_c*o2x_o%rAttr(index_o2x_Foxo_frazil_li,n)
@@ -1812,7 +1815,8 @@ contains
           index_x2i_Faxa_lwdn   = mct_aVect_indexRA(x2i_i,'Faxa_lwdn')
           index_x2i_Faxa_rain   = mct_aVect_indexRA(x2i_i,'Faxa_rain')
           index_x2i_Faxa_snow   = mct_aVect_indexRA(x2i_i,'Faxa_snow')
-          index_x2i_Fioo_frazil = mct_aVect_indexRA(x2i_i,'Fioo_frazil')
+          index_x2i_Fioo_frazilm = mct_aVect_indexRA(x2i_i,'Fioo_frazilm')
+          index_x2i_Fioo_frazilh = mct_aVect_indexRA(x2i_i,'Fioo_frazilh')
           index_x2i_Fioo_q      = mct_aVect_indexRA(x2i_i,'Fioo_q')
           index_x2i_Fixx_rofi   = mct_aVect_indexRA(x2i_i,'Fixx_rofi')
 
@@ -1844,9 +1848,9 @@ contains
           nf = f_wioff; budg_dataL(nf,ic,ip) = budg_dataL(nf,ic,ip) + ca_i*x2i_i%rAttr(index_x2i_Fixx_rofi,n)
 
           nf = f_wfrz ; budg_dataL(nf,ic,ip) = budg_dataL(nf,ic,ip) + &
-               (ca_o+ca_i)*max(0.0_r8,x2i_i%rAttr(index_x2i_Fioo_frazil,n))
+               (ca_o+ca_i)*max(0.0_r8,x2i_i%rAttr(index_x2i_Fioo_frazilm,n))
           nf = f_hfrz ; budg_dataL(nf,ic,ip) = budg_dataL(nf,ic,ip) - &
-               (ca_o+ca_i)*max(0.0_r8,x2i_i%rAttr(index_x2i_Fioo_q,n))
+            (ca_o+ca_i)*max(0.0_r8,x2i_i%rAttr(index_x2i_Fioo_frazilh,n))
 
           if ( flds_wiso_ice_x2i )then
              nf  = f_wrain_16O;

@@ -1116,7 +1116,7 @@ v=accumulatedIcebergTemperatureFlux*rho_sw*cp_sw; write(m,"('IcebergTemperatureF
             c = 1.0e6_RKIND/A
             call mpas_log_write('MASS FLUXES')
             call mpas_log_write('MPAS-Ocean name          kg/s (F)       coupler name     short name     kg/m^2/s*1e6 (F/A)')
-v=accumulatedFrazilFlux            ; write(m,"('frazilFreshwaterFlux   ',es16.8,' o2x_Fioo_frazil  wfreeze        ',f16.8)") v,v*c; call mpas_log_write(m); s=s+v
+v=accumulatedFrazilFlux            ; write(m,"('frazilFreshwaterFlux   ',es16.8,' o2x_Fioo_frazilm wfreeze        ',f16.8)") v,v*c; call mpas_log_write(m); s=s+v
 v=accumulatedSeaIceFlux            ; write(m,"('seaIceFreshwaterFlux   ',es16.8,' x2o_Fioi_meltw   wmelt          ',f16.8)") v,v*c; call mpas_log_write(m); s=s+v
 v=accumulatedRainFlux              ; write(m,"('rainFlux               ',es16.8,' x2o_Faxa_rain    wrain          ',f16.8)") v,v*c; call mpas_log_write(m); s=s+v
 v=accumulatedSnowFlux              ; write(m,"('snowFlux               ',es16.8,' x2o_Faxa_snow    wsnow          ',f16.8)") v,v*c; call mpas_log_write(m); s=s+v
