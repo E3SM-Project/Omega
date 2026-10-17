@@ -150,6 +150,12 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#notes">Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#penetrating-shortwave-radiation-design">Penetrating shortwave radiation design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-flow">Data flow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#key-classes-and-fields">Key classes and fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vertical-deposition">Vertical deposition</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#surface-tracer-restoring-design">Surface tracer restoring design</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#surface-tracer-restoring-data-flow">Surface tracer restoring data flow</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#surface-tracer-restoring-key-classes-components">Surface tracer restoring key classes/components</a></li>
@@ -239,6 +245,7 @@ pathways in Omega, currently this includes:</p>
 <li><p>Surface stress forcing (e.g. wind stress)</p></li>
 <li><p>Surface thickness and tracer flux forcing (actively coupled or data-forced)</p></li>
 <li><p>Surface tracer restoring (soon to be ported as a field originating from the coupler)</p></li>
+<li><p>Penetrating shortwave radiation</p></li>
 </ul>
 <section id="surface-stress-forcing-design">
 <h2>Surface stress forcing design<a class="headerlink" href="#surface-stress-forcing-design" title="Permalink to this heading"></a></h2>
@@ -407,6 +414,68 @@ reserved temperature and salinity entries. Partial non-temperature/salinity
 updates are not supported, so omitted values cannot persist from a previous
 forcing step.</p></li>
 </ul>
+</section>
+<section id="penetrating-shortwave-radiation-design">
+<h2>Penetrating shortwave radiation design<a class="headerlink" href="#penetrating-shortwave-radiation-design" title="Permalink to this heading"></a></h2>
+<section id="data-flow">
+<h3>Data flow<a class="headerlink" href="#data-flow" title="Permalink to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p>The coupled driver imports <code class="docutils literal notranslate"><span class="pre">Foxx_swnet</span></code> and stores it in
+<code class="docutils literal notranslate"><span class="pre">CplToOcnFields::ShortWaveHeatFlux</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SfcCoupling::applyImportFields()</span></code> copies the field to
+<code class="docutils literal notranslate"><span class="pre">TracerForcingVars::ShortWaveHeatFluxCell</span></code>.</p></li>
+<li><p>Surface tracer forcing and penetrating shortwave heating are computed only
+on owned cells, so the shortwave forcing field needs no halo exchange.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Forcing</span></code> owns the cell-centered annual-average fields
+<code class="docutils literal notranslate"><span class="pre">ExtinctionCoeffRedCell</span></code> and <code class="docutils literal notranslate"><span class="pre">ExtinctionCoeffBlueCell</span></code> from the
+<code class="docutils literal notranslate"><span class="pre">ShortwaveExtinctionIn</span></code> stream.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Tendencies::computeTracerTendenciesOnly()</span></code> invokes
+<code class="docutils literal notranslate"><span class="pre">PenetratingShortwaveOnCell</span></code> when
+<code class="docutils literal notranslate"><span class="pre">PenetratingShortwaveTendency.Enable</span></code> is enabled and
+<code class="docutils literal notranslate"><span class="pre">SfcTracerForcingTendencyEnable</span></code> is true.</p></li>
+</ol>
+</section>
+<section id="key-classes-and-fields">
+<h3>Key classes and fields<a class="headerlink" href="#key-classes-and-fields" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CplToOcnFields::ShortWaveHeatFlux</span></code>: host-side coupled shortwave flux.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TracerForcingVars::ShortWaveHeatFluxCell</span></code>: device-side cell forcing field.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ShortwavePenForcingVars</span></code>: owns and registers the two extinction coefficient
+fields in the <code class="docutils literal notranslate"><span class="pre">ShortwaveExtinction</span></code> field group.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PenetratingShortwaveOnCell</span></code>: Kokkos functor whose operator is defined in
+<code class="docutils literal notranslate"><span class="pre">ocn/TendencyTerms.h</span></code>; its constructor is defined in
+<code class="docutils literal notranslate"><span class="pre">ocn/TendencyTerms.cpp</span></code>.</p></li>
+</ul>
+</section>
+<section id="vertical-deposition">
+<h3>Vertical deposition<a class="headerlink" href="#vertical-deposition" title="Permalink to this heading"></a></h3>
+<p>For a cell with surface depth coordinate <span class="math notranslate nohighlight">\(z=0\)</span>, the downward flux at depth <span class="math notranslate nohighlight">\(z\)</span>
+is defined following <a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2004GL020778">Manizza et al. (2005)</a> as</p>
+<div class="math notranslate nohighlight">
+\[
+I(z) = I_0 \left[
+  f_{nir} e^{-k_{nir}z} +
+  f_{red} e^{-k_r z} +
+  f_{blue} e^{-k_b z}
+\right].
+\]</div>
+<p>Here <span class="math notranslate nohighlight">\(f_{nir}\)</span>, <span class="math notranslate nohighlight">\(k_{nir}\)</span>, <span class="math notranslate nohighlight">\(f_{red}\)</span>, and <span class="math notranslate nohighlight">\(f_{blue}\)</span> are configured with
+<code class="docutils literal notranslate"><span class="pre">Omega.Tendencies.PenetratingShortwaveTendency.NearIrFraction</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Omega.Tendencies.PenetratingShortwaveTendency.NearIrCoeff</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Omega.Tendencies.PenetratingShortwaveTendency.RedFraction</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">Omega.Tendencies.PenetratingShortwaveTendency.BlueFraction</span></code>,
+respectively. Their default values are <span class="math notranslate nohighlight">\(0.58\)</span>, <span class="math notranslate nohighlight">\(2.86\ \mathrm{m}^{-1}\)</span>, <span class="math notranslate nohighlight">\(0.21\)</span>,
+and <span class="math notranslate nohighlight">\(0.21\)</span>, and their sum <span class="math notranslate nohighlight">\(f_{nir} + f_{red} + f_{blue}\)</span> must equal 1.</p>
+<p>For each active layer, the deposited heat is the flux at its upper interface
+minus the flux at its lower interface. For the bottom active layer, the lower
+interface flux is set to zero. This residual-flux rule makes the vertically
+integrated deposited heat equal to <code class="docutils literal notranslate"><span class="pre">ShortWaveHeatFluxCell</span></code> even when the
+analytic attenuation profile has not reached zero at the model bottom.</p>
+<p>When penetration is enabled, <code class="docutils literal notranslate"><span class="pre">Tendencies</span></code> sets
+<code class="docutils literal notranslate"><span class="pre">SfcTracerForcingOnCell::IncludeShortWaveHeatFlux</span></code> to false. This prevents
+the same shortwave energy from being applied once through the penetrating
+kernel and again in the surface tracer forcing kernel.</p>
+</section>
 </section>
 <section id="surface-tracer-restoring-design">
 <h2>Surface tracer restoring design<a class="headerlink" href="#surface-tracer-restoring-design" title="Permalink to this heading"></a></h2>

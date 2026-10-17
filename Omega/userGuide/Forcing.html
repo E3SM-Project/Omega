@@ -97,6 +97,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#notes">Notes</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#penetrating-shortwave-radiation">Penetrating shortwave radiation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#surface-tracer-restoring">Surface tracer restoring</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#surface-tracer-restoring-configuration">Surface tracer restoring configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#restoring-target-fields">Restoring target fields</a></li>
@@ -342,6 +343,53 @@ conversion factor from mass to pseudo-thickness.</p></li>
 <li><p>No iceberg fluxes are included for now.</p></li>
 </ul>
 </section>
+</section>
+<section id="penetrating-shortwave-radiation">
+<h2>Penetrating shortwave radiation<a class="headerlink" href="#penetrating-shortwave-radiation" title="Permalink to this heading"></a></h2>
+<p>Penetrating shortwave radiation distributes incoming solar heat through the
+active water column instead of applying all shortwave heating to the surface
+layer. It is enabled with:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Omega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Tendencies</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">SfcTracerForcingTendencyEnable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">PenetratingShortwaveTendency</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">NearIrFraction</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.58</span>
+<span class="w">      </span><span class="nt">NearIrCoeff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.86</span>
+<span class="w">      </span><span class="nt">RedFraction</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.21</span>
+<span class="w">      </span><span class="nt">BlueFraction</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.21</span>
+
+<span class="w">  </span><span class="nt">IOStreams</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">ShortwaveExtinctionIn</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">shortwave_extinction_coeffs.nc</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">ShortwaveExtinctionIn</span></code> stream is read at startup. Its file must provide
+the cell-centered fields <code class="docutils literal notranslate"><span class="pre">ExtinctionCoeffRedCell</span></code> and
+<code class="docutils literal notranslate"><span class="pre">ExtinctionCoeffBlueCell</span></code>, both in <code class="docutils literal notranslate"><span class="pre">m^-1</span></code>. These fields provide the red-band
+(<span class="math notranslate nohighlight">\(k_r\)</span>) and blue/green-band (<span class="math notranslate nohighlight">\(k_b\)</span>) attenuation coefficients for the annual
+average used by the simulation.</p>
+<p>The incoming <code class="docutils literal notranslate"><span class="pre">ShortWaveHeatFlux</span></code> is split into three bands:</p>
+<ul class="simple">
+<li><p>near infrared: fraction <code class="docutils literal notranslate"><span class="pre">NearIrFraction</span></code>, extinction coefficient
+<code class="docutils literal notranslate"><span class="pre">NearIrCoeff</span></code> (<span class="math notranslate nohighlight">\(0.58\)</span> and <span class="math notranslate nohighlight">\(2.86\ \mathrm{m}^{-1}\)</span> by default)</p></li>
+<li><p>red: fraction <code class="docutils literal notranslate"><span class="pre">RedFraction</span></code> (<span class="math notranslate nohighlight">\(0.21\)</span> by default), extinction coefficient <span class="math notranslate nohighlight">\(k_r\)</span></p></li>
+<li><p>blue/green: fraction <code class="docutils literal notranslate"><span class="pre">BlueFraction</span></code> (<span class="math notranslate nohighlight">\(0.21\)</span> by default), extinction coefficient <span class="math notranslate nohighlight">\(k_b\)</span></p></li>
+</ul>
+<p>The fractions (<code class="docutils literal notranslate"><span class="pre">NearIrFraction</span></code>, <code class="docutils literal notranslate"><span class="pre">RedFraction</span></code>, and <code class="docutils literal notranslate"><span class="pre">BlueFraction</span></code>) and the
+near-infrared extinction coefficient (<code class="docutils literal notranslate"><span class="pre">NearIrCoeff</span></code>) can be configured under
+<code class="docutils literal notranslate"><span class="pre">Omega.Tendencies.PenetratingShortwaveTendency</span></code>. By default, the red and blue
+fractions are set to 0.21 as in <a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2004GL020778">Manizza et al. (2005)</a>.
+The sum of <code class="docutils literal notranslate"><span class="pre">NearIrFraction</span></code>, <code class="docutils literal notranslate"><span class="pre">RedFraction</span></code>, and <code class="docutils literal notranslate"><span class="pre">BlueFraction</span></code> must equal 1.</p>
+<p>The attenuated flux is converted to temperature heating from the difference
+between the flux at the top and bottom of each layer. Any flux remaining at the
+bottom of the active column is deposited in the bottom active layer, so the
+full incoming shortwave flux is conserved.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">PenetratingShortwaveTendency.Enable</span></code> is true,
+<code class="docutils literal notranslate"><span class="pre">SfcTracerForcingTendencyEnable</span></code> must also be enabled. Shortwave is removed
+from the surface-only heat sum in <code class="docutils literal notranslate"><span class="pre">SfcTracerForcingOnCell</span></code>; the other surface
+heat, freshwater enthalpy, and salt fluxes remain controlled by
+<code class="docutils literal notranslate"><span class="pre">SfcTracerForcingTendencyEnable</span></code>.</p>
 </section>
 <section id="surface-tracer-restoring">
 <h2>Surface tracer restoring<a class="headerlink" href="#surface-tracer-restoring" title="Permalink to this heading"></a></h2>

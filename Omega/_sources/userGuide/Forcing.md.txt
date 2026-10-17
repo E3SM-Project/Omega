@@ -111,6 +111,58 @@ by the equivalent `ocn_comp_mct.F`.
   conversion factor from mass to pseudo-thickness.
 - No iceberg fluxes are included for now.
 
+## Penetrating shortwave radiation
+
+Penetrating shortwave radiation distributes incoming solar heat through the
+active water column instead of applying all shortwave heating to the surface
+layer. It is enabled with:
+
+```yaml
+Omega:
+  Tendencies:
+    SfcTracerForcingTendencyEnable: true
+    PenetratingShortwaveTendency:
+      Enable: true
+      NearIrFraction: 0.58
+      NearIrCoeff: 2.86
+      RedFraction: 0.21
+      BlueFraction: 0.21
+
+  IOStreams:
+    ShortwaveExtinctionIn:
+      Filename: shortwave_extinction_coeffs.nc
+```
+
+The `ShortwaveExtinctionIn` stream is read at startup. Its file must provide
+the cell-centered fields `ExtinctionCoeffRedCell` and
+`ExtinctionCoeffBlueCell`, both in `m^-1`. These fields provide the red-band
+($k_r$) and blue/green-band ($k_b$) attenuation coefficients for the annual
+average used by the simulation.
+
+The incoming `ShortWaveHeatFlux` is split into three bands:
+
+- near infrared: fraction `NearIrFraction`, extinction coefficient
+  `NearIrCoeff` ($0.58$ and $2.86\ \mathrm{m}^{-1}$ by default)
+- red: fraction `RedFraction` ($0.21$ by default), extinction coefficient $k_r$
+- blue/green: fraction `BlueFraction` ($0.21$ by default), extinction coefficient $k_b$
+
+The fractions (`NearIrFraction`, `RedFraction`, and `BlueFraction`) and the
+near-infrared extinction coefficient (`NearIrCoeff`) can be configured under
+`Omega.Tendencies.PenetratingShortwaveTendency`. By default, the red and blue
+fractions are set to 0.21 as in [Manizza et al. (2005)](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2004GL020778).
+The sum of `NearIrFraction`, `RedFraction`, and `BlueFraction` must equal 1.
+
+The attenuated flux is converted to temperature heating from the difference
+between the flux at the top and bottom of each layer. Any flux remaining at the
+bottom of the active column is deposited in the bottom active layer, so the
+full incoming shortwave flux is conserved.
+
+When `PenetratingShortwaveTendency.Enable` is true,
+`SfcTracerForcingTendencyEnable` must also be enabled. Shortwave is removed
+from the surface-only heat sum in `SfcTracerForcingOnCell`; the other surface
+heat, freshwater enthalpy, and salt fluxes remain controlled by
+`SfcTracerForcingTendencyEnable`.
+
 ## Surface tracer restoring
 
 Surface tracer restoring applies a piston-velocity tendency, or damping, at the ocean

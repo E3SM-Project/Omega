@@ -269,7 +269,10 @@ tendency terms are currently implemented:</p>
 <tr class="row-even"><td><p>SfcTracerForcingOnCell</p></td>
 <td><p>surface tracer forcing from coupled heat and salt fluxes, with direct heat always and mass-flux enthalpy terms gated by thickness forcing, defined on cells</p></td>
 </tr>
-<tr class="row-odd"><td><p>SurfaceTracerRestoringOnCell</p></td>
+<tr class="row-odd"><td><p>PenetratingShortwaveOnCell</p></td>
+<td><p>depth-dependent three-band shortwave heating, defined on cells</p></td>
+</tr>
+<tr class="row-even"><td><p>SurfaceTracerRestoringOnCell</p></td>
 <td><p>surface tracer restoring, defined on cells</p></td>
 </tr>
 </tbody>
@@ -395,6 +398,30 @@ the currently available tendency terms:</p>
 <tr class="row-odd"><td><p>SfcTracerForcingOnCell</p></td>
 <td><p>SfcTracerForcingTendencyEnable</p></td>
 <td><p>enable/disable term</p></td>
+</tr>
+<tr class="row-even"><td><p>PenetratingShortwaveOnCell</p></td>
+<td><p>PenetratingShortwaveTendency</p></td>
+<td><p>enable/disable depth-dependent shortwave heating</p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p>PenetratingShortwaveTendency:Enable</p></td>
+<td><p>enable/disable term</p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p>PenetratingShortwaveTendency:NearIrFraction</p></td>
+<td><p>near-infrared fraction of shortwave flux</p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p>PenetratingShortwaveTendency:NearIrCoeff</p></td>
+<td><p>near-infrared extinction coefficient (<span class="math notranslate nohighlight">\(\mathrm{m}^{-1}\)</span>)</p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p>PenetratingShortwaveTendency:RedFraction</p></td>
+<td><p>red-band fraction of shortwave flux</p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p>PenetratingShortwaveTendency:BlueFraction</p></td>
+<td><p>blue/green-band fraction of shortwave flux</p></td>
 </tr>
 <tr class="row-even"><td><p>SurfaceTracerRestoringOnCell</p></td>
 <td><p>SurfaceTracerRestoringEnable</p></td>

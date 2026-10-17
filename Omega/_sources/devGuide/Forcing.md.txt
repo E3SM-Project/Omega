@@ -1,13 +1,13 @@
 (omega-dev-forcing)=
 
 # Forcing
-
 This page describes design and implementation details for forcing-related
 pathways in Omega, currently this includes:
 
 - Surface stress forcing (e.g. wind stress)
 - Surface thickness and tracer flux forcing (actively coupled or data-forced)
 - Surface tracer restoring (soon to be ported as a field originating from the coupler)
+- Penetrating shortwave radiation
 
 ## Surface stress forcing design
 
@@ -116,6 +116,66 @@ the surface layer pseudo-thickness.
   reserved temperature and salinity entries. Partial non-temperature/salinity
   updates are not supported, so omitted values cannot persist from a previous
   forcing step.
+
+## Penetrating shortwave radiation design
+
+### Data flow
+
+1. The coupled driver imports `Foxx_swnet` and stores it in
+  `CplToOcnFields::ShortWaveHeatFlux`.
+2. `SfcCoupling::applyImportFields()` copies the field to
+  `TracerForcingVars::ShortWaveHeatFluxCell`.
+3. Surface tracer forcing and penetrating shortwave heating are computed only
+  on owned cells, so the shortwave forcing field needs no halo exchange.
+4. `Forcing` owns the cell-centered annual-average fields
+  `ExtinctionCoeffRedCell` and `ExtinctionCoeffBlueCell` from the
+  `ShortwaveExtinctionIn` stream.
+5. `Tendencies::computeTracerTendenciesOnly()` invokes
+  `PenetratingShortwaveOnCell` when
+  `PenetratingShortwaveTendency.Enable` is enabled and
+   `SfcTracerForcingTendencyEnable` is true.
+
+### Key classes and fields
+
+- `CplToOcnFields::ShortWaveHeatFlux`: host-side coupled shortwave flux.
+- `TracerForcingVars::ShortWaveHeatFluxCell`: device-side cell forcing field.
+- `ShortwavePenForcingVars`: owns and registers the two extinction coefficient
+  fields in the `ShortwaveExtinction` field group.
+- `PenetratingShortwaveOnCell`: Kokkos functor whose operator is defined in
+  `ocn/TendencyTerms.h`; its constructor is defined in
+  `ocn/TendencyTerms.cpp`.
+
+### Vertical deposition
+
+For a cell with surface depth coordinate $z=0$, the downward flux at depth $z$
+is defined following [Manizza et al. (2005)](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2004GL020778) as
+
+$$
+I(z) = I_0 \left[
+  f_{nir} e^{-k_{nir}z} +
+  f_{red} e^{-k_r z} +
+  f_{blue} e^{-k_b z}
+\right].
+$$
+
+Here $f_{nir}$, $k_{nir}$, $f_{red}$, and $f_{blue}$ are configured with
+`Omega.Tendencies.PenetratingShortwaveTendency.NearIrFraction`,
+`Omega.Tendencies.PenetratingShortwaveTendency.NearIrCoeff`,
+`Omega.Tendencies.PenetratingShortwaveTendency.RedFraction`, and
+`Omega.Tendencies.PenetratingShortwaveTendency.BlueFraction`,
+respectively. Their default values are $0.58$, $2.86\ \mathrm{m}^{-1}$, $0.21$,
+and $0.21$, and their sum $f_{nir} + f_{red} + f_{blue}$ must equal 1.
+
+For each active layer, the deposited heat is the flux at its upper interface
+minus the flux at its lower interface. For the bottom active layer, the lower
+interface flux is set to zero. This residual-flux rule makes the vertically
+integrated deposited heat equal to `ShortWaveHeatFluxCell` even when the
+analytic attenuation profile has not reached zero at the model bottom.
+
+When penetration is enabled, `Tendencies` sets
+`SfcTracerForcingOnCell::IncludeShortWaveHeatFlux` to false. This prevents
+the same shortwave energy from being applied once through the penetrating
+kernel and again in the surface tracer forcing kernel.
 
 ## Surface tracer restoring design
 
