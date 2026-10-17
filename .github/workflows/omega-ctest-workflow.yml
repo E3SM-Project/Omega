@@ -1,0 +1,129 @@
+name: omega-ctest
+
+# Builds Omega standalone and runs its CTests in the E3SM container images
+# (github.com/E3SM-Project/containers), on GitHub-hosted runners. The images carry the
+# compilers, MPI and I/O libraries and their own CIME machine (e3sm-container);
+# components/omega/ci/Dockerfile adds the Metis/ParMETIS Omega needs on top.
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'components/omega/**'
+      - '!components/omega/doc/**'
+      - '.github/workflows/omega-ctest-workflow.yml'
+
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'components/omega/**'
+      - '!components/omega/doc/**'
+      - '.github/workflows/omega-ctest-workflow.yml'
+
+  workflow_dispatch:
+
+concurrency:
+  # Cancel in progress runs testing the same git ref
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ctest:
+    if: ${{ github.repository == 'E3SM-Project/E3SM' ||
+            github.repository == 'E3SM-Project/Omega' }}
+    name: ctest (${{ matrix.env }}, ${{ matrix.build_type }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [gnu13-openmpi4]
+        build_type: [Release, Debug]
+        # Uncomment once the gnu jobs are green
+        # include:
+        #   - env: intel2024-openmpi4
+        #     build_type: Release
+    env:
+      BASE_IMAGE: ghcr.io/e3sm-project/e3sm-image:${{ matrix.env }}
+      IMAGE: omega-ci:${{ matrix.env }}
+    steps:
+      # Hosted runners start with ~20 GB free; the image, Omega's submodules and a build
+      # need more. These are preinstalled SDKs nothing here uses.
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/local/.ghcup \
+            /usr/share/swift
+          sudo docker image prune --all --force > /dev/null
+          df -h /
+
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Only the submodules a standalone build needs (doc/devGuide/CMakeBuild.md); several
+      # use git@ URLs, which need an SSH key the runner does not have.
+      - name: Update submodules
+        run: |
+          git config --global url."https://github.com/".insteadOf git@github.com:
+          git submodule update --init --recursive --depth 1 \
+            externals/YAKL \
+            externals/ekat \
+            externals/scorpio \
+            components/omega/external \
+            cime
+
+      - name: Download meshes
+        run: components/omega/ci/get-meshes.sh omega-meshes
+
+      # The base image plus Metis/ParMETIS, built locally on the runner every time (nothing
+      # is cached or pushed) until the base images carry Metis/ParMETIS themselves.
+      - name: Build the Omega CI image
+        run: |
+          docker build --pull \
+            --build-arg BASE_IMAGE="$BASE_IMAGE" \
+            -t "$IMAGE" \
+            components/omega/ci
+
+      # As the image's default user (uid 1000). The runner's own uid is 1001, so hand it
+      # what the build writes to, and take it back after for the log upload.
+      - name: Build Omega and run CTests
+        run: |
+          mkdir -p omega-build
+          sudo chown -R 1000:1000 . omega-build
+          rc=0
+          docker run --rm --shm-size=1g \
+            -e OMEGA_BUILD_TYPE=${{ matrix.build_type }} \
+            -v "$PWD:/projects/e3sm/work/Omega" \
+            -v "$PWD/omega-meshes:/projects/e3sm/data/omega-meshes:ro" \
+            -v "$PWD/omega-build:/home/e3sm/omega-build" \
+            "$IMAGE" bash -l /projects/e3sm/work/Omega/components/omega/ci/omega-ctest.sh \
+            2>&1 | tee omega-ctest.log || rc=$?
+          sudo chown -R "$(id -u):$(id -g)" . omega-build
+          {
+            echo "### ${{ matrix.env }}, ${{ matrix.build_type }}"
+            echo
+            echo '```'
+            grep -E 'tests passed|tests failed|\*\*\*Failed|\(Failed\)|\(Timeout\)' \
+              omega-ctest.log || echo "no ctest summary"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
+
+      # Into the job log rather than an artifact, so nothing is stored beyond the run's logs
+      - name: Show logs
+        if: failure()
+        run: |
+          shopt -s nullglob
+          for f in omega-build/e3smcase/*.log* \
+                   omega-build/Testing/Temporary/LastTest*.log \
+                   omega-build/test/logs/*.log; do
+            echo "::group::$f"
+            cat "$f"
+            echo "::endgroup::"
+          done
