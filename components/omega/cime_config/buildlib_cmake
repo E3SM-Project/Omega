@@ -31,6 +31,19 @@ def buildlib(bldroot, installpath, case):
         f' -DOMEGA_PARMETIS_ROOT="{parmetis_root}"'
     )
 
+    comp_interface = case.get_value("COMP_INTERFACE")
+    if comp_interface == "moab":
+        moab_root = os.environ.get("MOAB_ROOT")
+        if not moab_root or not os.path.exists(moab_root):
+            _MSG = (
+                "\nERROR: MOAB_ROOT environmental variable is not set to a "
+                "valid directory. \n\n\tA valid MOAB_ROOT value is needed "
+                "when using the MOAB driver.\n\tPlease set a valid MOAB_ROOT "
+                "in the cime_config/machines/config_machines.xml file."
+            )
+            raise SystemExit(_MSG)
+        cmake_args += f' -DOMEGA_MOAB_ROOT="{moab_root}"'
+
     print(f"omega cmake options: '{cmake_args}'")
 
     return cmake_args
