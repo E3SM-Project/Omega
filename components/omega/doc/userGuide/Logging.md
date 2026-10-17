@@ -84,6 +84,14 @@ The Omega unit tests use this variable to give each test its own log file,
 `test/logs/<TEST_NAME>.log` in the build directory, rather than a single
 shared log for the whole test suite.
 
+## Standard output and error
+
+In Standalone mode, Omega redirects `std::cout` and `std::cerr` to the log file
+on the ranks that log.
+
 ## E3SM Component Build
 
-T.B.D.
+The E3SM driver sets the log file name, so Omega's messages go to `ocn.log.*`
+in the run directory and `OMEGA_LOG_FILE` is ignored. `std::cout` and
+`std::cerr` are not redirected: other output, including crash backtraces, stays
+in `e3sm.log.*`. Check both files when a run fails.
