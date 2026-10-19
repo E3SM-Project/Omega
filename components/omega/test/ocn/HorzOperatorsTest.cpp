@@ -11,6 +11,7 @@
 #include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OceanTestCommon.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
@@ -48,33 +49,33 @@ struct TestSetupPlane {
                                               0.004200067675522098};
 
    KOKKOS_FUNCTION Real exactScalar(Real X, Real Y) const {
-      return std::sin(TwoPi * X / Lx) * std::sin(TwoPi * Y / Ly);
+      return Math::sin(TwoPi * X / Lx) * Math::sin(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real exactGradScalarX(Real X, Real Y) const {
-      return TwoPi / Lx * std::cos(TwoPi * X / Lx) * std::sin(TwoPi * Y / Ly);
+      return TwoPi / Lx * Math::cos(TwoPi * X / Lx) * Math::sin(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real exactGradScalarY(Real X, Real Y) const {
-      return TwoPi / Ly * std::sin(TwoPi * X / Lx) * std::cos(TwoPi * Y / Ly);
+      return TwoPi / Ly * Math::sin(TwoPi * X / Lx) * Math::cos(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real exactVecX(Real X, Real Y) const {
-      return std::sin(TwoPi * X / Lx) * std::cos(TwoPi * Y / Ly);
+      return Math::sin(TwoPi * X / Lx) * Math::cos(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real exactVecY(Real X, Real Y) const {
-      return std::cos(TwoPi * X / Lx) * std::sin(TwoPi * Y / Ly);
+      return Math::cos(TwoPi * X / Lx) * Math::sin(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real exactDivVec(Real X, Real Y) const {
-      return TwoPi * (1. / Lx + 1. / Ly) * std::cos(TwoPi * X / Lx) *
-             std::cos(TwoPi * Y / Ly);
+      return TwoPi * (1. / Lx + 1. / Ly) * Math::cos(TwoPi * X / Lx) *
+             Math::cos(TwoPi * Y / Ly);
    }
 
    KOKKOS_FUNCTION Real exactCurlVec(Real X, Real Y) const {
-      return TwoPi * (-1. / Lx + 1. / Ly) * std::sin(TwoPi * X / Lx) *
-             std::sin(TwoPi * Y / Ly);
+      return TwoPi * (-1. / Lx + 1. / Ly) * Math::sin(TwoPi * X / Lx) *
+             Math::sin(TwoPi * Y / Ly);
    }
 };
 
@@ -98,34 +99,36 @@ struct TestSetupSphere1 {
                                               0.0029922776661517052};
 
    KOKKOS_FUNCTION Real exactScalar(Real Lon, Real Lat) const {
-      return Radius * std::cos(Lon) * std::pow(std::cos(Lat), 4);
+      return Radius * Math::cos(Lon) * Math::pow(Math::cos(Lat), 4);
    }
 
    KOKKOS_FUNCTION Real exactGradScalarX(Real Lon, Real Lat) const {
-      return -std::sin(Lon) * std::pow(std::cos(Lat), 3);
+      return -Math::sin(Lon) * Math::pow(Math::cos(Lat), 3);
    }
 
    KOKKOS_FUNCTION Real exactGradScalarY(Real Lon, Real Lat) const {
-      return -4 * std::cos(Lon) * std::pow(std::cos(Lat), 3) * std::sin(Lat);
+      return -4 * Math::cos(Lon) * Math::pow(Math::cos(Lat), 3) *
+             Math::sin(Lat);
    }
 
    KOKKOS_FUNCTION Real exactVecX(Real Lon, Real Lat) const {
-      return -Radius * std::pow(std::sin(Lon), 2) * std::pow(std::cos(Lat), 3);
+      return -Radius * Math::pow(Math::sin(Lon), 2) *
+             Math::pow(Math::cos(Lat), 3);
    }
 
    KOKKOS_FUNCTION Real exactVecY(Real Lon, Real Lat) const {
-      return -4 * Radius * std::sin(Lon) * std::cos(Lon) *
-             std::pow(std::cos(Lat), 3) * std::sin(Lat);
+      return -4 * Radius * Math::sin(Lon) * Math::cos(Lon) *
+             Math::pow(Math::cos(Lat), 3) * Math::sin(Lat);
    }
 
    KOKKOS_FUNCTION Real exactDivVec(Real Lon, Real Lat) const {
-      return std::sin(Lon) * std::cos(Lon) * std::pow(std::cos(Lat), 2) *
-             (20 * std::pow(std::sin(Lat), 2) - 6);
+      return Math::sin(Lon) * Math::cos(Lon) * Math::pow(Math::cos(Lat), 2) *
+             (20 * Math::pow(Math::sin(Lat), 2) - 6);
    }
 
    KOKKOS_FUNCTION Real exactCurlVec(Real Lon, Real Lat) const {
-      return -4 * std::pow(std::cos(Lon), 2) * std::pow(std::cos(Lat), 2) *
-             std::sin(Lat);
+      return -4 * Math::pow(Math::cos(Lon), 2) * Math::pow(Math::cos(Lat), 2) *
+             Math::sin(Lat);
    }
 };
 
@@ -149,17 +152,17 @@ struct TestSetupSphere2 {
                                               0.0025556382734782538};
 
    KOKKOS_FUNCTION Real exactScalar(Real Lon, Real Lat) const {
-      return -Radius * std::pow(std::sin(Lat), 2);
+      return -Radius * Math::pow(Math::sin(Lat), 2);
    }
 
    KOKKOS_FUNCTION Real exactGradScalarX(Real Lon, Real Lat) const { return 0; }
 
    KOKKOS_FUNCTION Real exactGradScalarY(Real Lon, Real Lat) const {
-      return -2 * std::sin(Lat) * std::cos(Lat);
+      return -2 * Math::sin(Lat) * Math::cos(Lat);
    }
 
    KOKKOS_FUNCTION Real exactVecX(Real Lon, Real Lat) const {
-      return std::cos(Lat);
+      return Math::cos(Lat);
    }
 
    KOKKOS_FUNCTION Real exactVecY(Real Lon, Real Lat) const { return 0; }
@@ -167,7 +170,7 @@ struct TestSetupSphere2 {
    KOKKOS_FUNCTION Real exactDivVec(Real Lon, Real Lat) const { return 0; }
 
    KOKKOS_FUNCTION Real exactCurlVec(Real Lon, Real Lat) const {
-      return 2 * std::sin(Lat) / Radius;
+      return 2 * Math::sin(Lat) / Radius;
    }
 };
 
@@ -526,8 +529,8 @@ int testsecondderivativeoncellDeterminePlanerPatchGeometry(Real RTol) {
    for (int c = 0; c < 12; ++c) {
       for (int i = 0; i < 6; ++i) {
          const int j = (i + 1) % 6;
-         const std::pair<int, int> edge(std::min(E[c][i], E[c][j]),
-                                        std::max(E[c][i], E[c][j]));
+         const std::pair<int, int> edge(Math::min(E[c][i], E[c][j]),
+                                        Math::max(E[c][i], E[c][j]));
          if (!Edges.count(edge))
             Edges[edge] = Edges.size();
       }
@@ -540,15 +543,15 @@ int testsecondderivativeoncellDeterminePlanerPatchGeometry(Real RTol) {
    for (int c = 0; c < 12; ++c) {
       for (int i = 0; i < 6; ++i) {
          const int j = (i + 1) % 6;
-         const std::pair<int, int> edge(std::min(E[c][i], E[c][j]),
-                                        std::max(E[c][i], E[c][j]));
+         const std::pair<int, int> edge(Math::min(E[c][i], E[c][j]),
+                                        Math::max(E[c][i], E[c][j]));
          const int e       = Edges.at(edge);
          edgesOnCell[c][i] = e;
          if (cellsOnEdge[e].empty()) {
             const int v0[2]    = {C[E[c][i]][0], C[E[c][i]][1]};
             const int v1[2]    = {C[E[c][j]][0], C[E[c][j]][1]};
             const int v[2]     = {v1[0] - v0[0], v1[1] - v0[1]};
-            const double theta = std::atan2(-v[0], v[1]);
+            const double theta = Math::atan2(-v[0], v[1]);
             angleEdge[e]       = theta;
          }
          cellsOnEdge[e].push_back(c);
@@ -620,23 +623,23 @@ int testsecondderivativeoncellDeterminePlanerPatchGeometry(Real RTol) {
       for (int i = 0; i < 6; ++i) {
          const Real RTol    = sizeof(Real) == 4 ? 1e-3 : 1e-5;
          const double theta = -Pii / 2 + (5 == i ? -Pii / 3 : i * Pii / 3);
-         const double x     = CtoC * std::cos(theta);
-         const double y     = CtoC * std::sin(theta);
-         if (!isApprox(XPH[i], x, RTol)) {
+         const double x     = CtoC * Math::cos(theta);
+         const double y     = CtoC * Math::sin(theta);
+         if (!Math::isApprox(XPH[i], x, RTol)) {
             Err++;
             LOG_ERROR(
                 "{}: FAIL, expected {}, got {}",
                 "testsecondderivativeoncellDeterminePlanerPatchGeometry:x", x,
                 XP[i]);
          }
-         if (!isApprox(YPH[i], y, RTol)) {
+         if (!Math::isApprox(YPH[i], y, RTol)) {
             Err++;
             LOG_ERROR(
                 "{}: FAIL, expected {}, got {}",
                 "testsecondderivativeoncellDeterminePlanerPatchGeometry:y", y,
                 YP[i]);
          }
-         if (!isApprox(Angle2DH[i], theta, RTol)) {
+         if (!Math::isApprox(Angle2DH[i], theta, RTol)) {
             Err++;
             LOG_ERROR(
                 "{}: FAIL, expected {}, got {}",
@@ -673,8 +676,8 @@ int testsecondderivativeoncellLeastSquaresFit(Real RTol) {
    auto YPH = createHostMirrorCopy(YP);
    for (int i = 0; i < NEdges; ++i) {
       const double theta = -Pii / 2 + i * Pii / 3;
-      XPH[i]             = CtoC * std::cos(theta);
-      YPH[i]             = CtoC * std::sin(theta);
+      XPH[i]             = CtoC * Math::cos(theta);
+      YPH[i]             = CtoC * Math::sin(theta);
    }
    OMEGA::deepCopy(XP, XPH);
    OMEGA::deepCopy(YP, YPH);
@@ -704,14 +707,14 @@ int testsecondderivativeoncellLeastSquaresFit(Real RTol) {
          const Real RTol = sizeof(Real) == 4 ? 1e-3 : 1e-5;
          const Real m    = (i < 6 && j < 7) ? M[i][j] : 0;
          if (i < 6 && j < 7 && !m) {
-            if (1e-12 < std::abs(BH(i, j))) {
+            if (1e-12 < Math::abs(BH(i, j))) {
                Err++;
                LOG_ERROR("{}: FAIL, expected {}, got {}",
                          "testsecondderivativeoncellLeastSquaresFit", m,
                          BH(i, j));
             }
          } else {
-            if (!isApprox(BH(i, j), m, RTol)) {
+            if (!Math::isApprox(BH(i, j), m, RTol)) {
                Err++;
                LOG_ERROR("{}: FAIL, expected {}, got {}",
                          "testsecondderivativeoncellLeastSquaresFit", m,
@@ -758,8 +761,8 @@ int testsecondderivativeoncellDetermineSphericalPatchGeometry(Real RTol) {
    for (int c = 0; c < 12; ++c) {
       for (int i = 0; i < 6; ++i) {
          const int j = (i + 1) % 6;
-         const std::pair<int, int> edge(std::min(E[c][i], E[c][j]),
-                                        std::max(E[c][i], E[c][j]));
+         const std::pair<int, int> edge(Math::min(E[c][i], E[c][j]),
+                                        Math::max(E[c][i], E[c][j]));
          if (!Edges.count(edge))
             Edges[edge] = Edges.size();
       }
@@ -773,15 +776,15 @@ int testsecondderivativeoncellDetermineSphericalPatchGeometry(Real RTol) {
    for (int c = 0; c < 12; ++c) {
       for (int i = 0; i < 6; ++i) {
          const int j = (i + 1) % 6;
-         const std::pair<int, int> edge(std::min(E[c][i], E[c][j]),
-                                        std::max(E[c][i], E[c][j]));
+         const std::pair<int, int> edge(Math::min(E[c][i], E[c][j]),
+                                        Math::max(E[c][i], E[c][j]));
          const int e       = Edges.at(edge);
          edgesOnCell[c][i] = e;
          if (cellsOnEdge[e].empty()) {
             const int v0[2]      = {C[E[c][i]][0], C[E[c][i]][1]};
             const int v1[2]      = {C[E[c][j]][0], C[E[c][j]][1]};
             const int v[2]       = {v1[0] - v0[0], v1[1] - v0[1]};
-            const double theta   = std::atan2(-v[0], v[1]);
+            const double theta   = Math::atan2(-v[0], v[1]);
             angleEdge[e]         = theta;
             verticesOnEdge[e][0] = E[c][i];
             verticesOnEdge[e][1] = E[c][j];
@@ -824,10 +827,10 @@ int testsecondderivativeoncellDetermineSphericalPatchGeometry(Real RTol) {
       }
       T[0] /= 6;
       T[1] /= 6;
-      const double d = std::sqrt(T[0] * T[0] + T[1] * T[1]);
-      xcellh[I]      = R * std::sin(d / R) * T[0] / d;
-      ycellh[I]      = R * std::sin(d / R) * T[1] / d;
-      zcellh[I]      = R * std::cos(d / R);
+      const double d = Math::sqrt(T[0] * T[0] + T[1] * T[1]);
+      xcellh[I]      = R * Math::sin(d / R) * T[0] / d;
+      ycellh[I]      = R * Math::sin(d / R) * T[1] / d;
+      zcellh[I]      = R * Math::cos(d / R);
    }
    for (int I = 0; I < 12; ++I) {
       XCellH(I) = xcellh[I];
@@ -847,10 +850,10 @@ int testsecondderivativeoncellDetermineSphericalPatchGeometry(Real RTol) {
 
    for (int I = 0; I < 38; ++I) {
       const double x = X[I][0], y = X[I][1];
-      const double d = std::sqrt(x * x + y * y);
-      XVertexH(I)    = R * std::sin(d / R) * X[I][0] / d;
-      YVertexH(I)    = R * std::sin(d / R) * X[I][1] / d;
-      ZVertexH(I)    = R * std::cos(d / R);
+      const double d = Math::sqrt(x * x + y * y);
+      XVertexH(I)    = R * Math::sin(d / R) * X[I][0] / d;
+      YVertexH(I)    = R * Math::sin(d / R) * X[I][1] / d;
+      ZVertexH(I)    = R * Math::cos(d / R);
    }
    OMEGA::deepCopy(XVertex, XVertexH);
    OMEGA::deepCopy(YVertex, YVertexH);
@@ -944,21 +947,21 @@ int testsecondderivativeoncellDetermineSphericalPatchGeometry(Real RTol) {
          const double x = -T[0]; // same as CtoC*std::cos(phi);
          const double y = -T[1]; // same as CtoC*std::sin(phi);
 
-         if (!isApprox(1 + XPH[i], 1 + x, RTol)) {
+         if (!Math::isApprox(1 + XPH[i], 1 + x, RTol)) {
             Err++;
             LOG_ERROR(
                 "{}: FAIL, expected {}, got {}",
                 "testsecondderivativeoncellDetermineSphericalPatchGeometry:x",
                 x, XPH[i]);
          }
-         if (!isApprox(1 + YPH[i], 1 + y, RTol)) {
+         if (!Math::isApprox(1 + YPH[i], 1 + y, RTol)) {
             Err++;
             LOG_ERROR(
                 "{}: FAIL, expected {}, got {}",
                 "testsecondderivativeoncellDetermineSphericalPatchGeometry:y",
                 y, YPH[i]);
          }
-         if (!isApprox(Angle2DH[i], phi, RTol)) {
+         if (!Math::isApprox(Angle2DH[i], phi, RTol)) {
             Err++;
             LOG_ERROR(
                 "{}: FAIL, expected {}, got {}",

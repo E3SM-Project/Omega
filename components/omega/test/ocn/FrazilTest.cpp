@@ -191,39 +191,39 @@ void testFrazilFormationWarm() {
                           PseudoThicknessIn, AccMIce, AccMLiq, AccMSalt,
                           AccELiq, AccEIce, HTend, TTend, STend);
 
-   if (!isApprox(AccMIce, 0.0_Real, RTol)) {
+   if (!Math::isApprox(AccMIce, 0.0_Real, RTol)) {
       ABORT_ERROR("FrazilFormationTest warm: expected zero AccMIce, got {}",
                   AccMIce);
    }
 
-   if (!isApprox(AccMSalt, 0.0_Real, RTol)) {
+   if (!Math::isApprox(AccMSalt, 0.0_Real, RTol)) {
       ABORT_ERROR("FrazilFormationTest warm: expected zero AccMSalt, got {}",
                   AccMSalt);
    }
-   if (!isApprox(AccMLiq, 0.0_Real, RTol)) {
+   if (!Math::isApprox(AccMLiq, 0.0_Real, RTol)) {
       ABORT_ERROR("FrazilFormationTest warm: expected zero AccMLiq, got {}",
                   AccMLiq);
    }
 
-   if (!isApprox(AccELiq, 0.0_Real, RTol)) {
+   if (!Math::isApprox(AccELiq, 0.0_Real, RTol)) {
       ABORT_ERROR("FrazilFormationTest warm: expected zero AccELiq, got {}",
                   AccELiq);
    }
-   if (!isApprox(AccEIce, 0.0_Real, RTol)) {
+   if (!Math::isApprox(AccEIce, 0.0_Real, RTol)) {
       ABORT_ERROR("FrazilFormationTest warm: expected zero AccEIce, got {}",
                   AccEIce);
    }
-   if (!isApprox(HTend, 0.0_Real, RTol)) {
+   if (!Math::isApprox(HTend, 0.0_Real, RTol)) {
       ABORT_ERROR("FrazilFormationTest warm: expected zero HTend, got {}",
                   HTend);
    }
 
-   if (!isApprox(TTend, 0.0_Real, RTol)) {
+   if (!Math::isApprox(TTend, 0.0_Real, RTol)) {
       ABORT_ERROR("FrazilFormationTest warm: expected zero TTend, got {}",
                   TTend);
    }
 
-   if (!isApprox(STend, 0.0_Real, RTol)) {
+   if (!Math::isApprox(STend, 0.0_Real, RTol)) {
       ABORT_ERROR("FrazilFormationTest warm: expected zero STend, got {}",
                   STend);
    }
@@ -267,15 +267,15 @@ void testFrazilFormationMassLimit() {
    const Real ExpectedLiquidMass = Phi / (1.0_Real - Phi) * ExpectedIceMass;
    const Real ExpectedTotalMass  = ExpectedIceMass + ExpectedLiquidMass;
 
-   if (!isApprox(AccMIce, ExpectedIceMass, RTol)) {
+   if (!Math::isApprox(AccMIce, ExpectedIceMass, RTol)) {
       ABORT_ERROR("FrazilFormationMassLimit: expected AccMIce={}, got {}",
                   ExpectedIceMass, AccMIce);
    }
-   if (!isApprox(AccMLiq, ExpectedLiquidMass, RTol)) {
+   if (!Math::isApprox(AccMLiq, ExpectedLiquidMass, RTol)) {
       ABORT_ERROR("FrazilFormationMassLimit: expected AccMLiq={}, got {}",
                   ExpectedLiquidMass, AccMLiq);
    }
-   if (!isApprox(HTend, -ExpectedTotalMass, RTol)) {
+   if (!Math::isApprox(HTend, -ExpectedTotalMass, RTol)) {
       ABORT_ERROR("FrazilFormationMassLimit: expected HTend={}, got {}",
                   -ExpectedTotalMass, HTend);
    }
@@ -326,7 +326,7 @@ void testFrazilFormationPhi() {
                           PseudoThicknessIn, AccMIce1, AccMLiq1, AccMSalt1,
                           AccELiq1, AccEIce1, HTend1, TTend1, STend1);
 
-   if (!isApprox(AccMIce0, AccMIce1, RTol)) {
+   if (!Math::isApprox(AccMIce0, AccMIce1, RTol)) {
       ABORT_ERROR("FrazilFormationPhi: AccMIce changed from {} to {}; "
                   "chosen state may be mass-limit capped",
                   AccMIce0, AccMIce1);
@@ -385,36 +385,36 @@ void testFixedPropertyFrazilFormationWarm() {
                           PseudoThicknessIn, AccMIce, AccMSalt, AccEIce, HTend,
                           TTend, STend, CtFreezing);
 
-   if (!isApprox(AccMIce, 0.0_Real, RTol)) {
+   if (!Math::isApprox(AccMIce, 0.0_Real, RTol)) {
       ABORT_ERROR("FrazilFixedPropertyFormationTest warm: expected zero "
                   "AccMIce, got {}",
                   AccMIce);
    }
 
-   if (!isApprox(AccMSalt, 0.0_Real, RTol)) {
+   if (!Math::isApprox(AccMSalt, 0.0_Real, RTol)) {
       ABORT_ERROR("FrazilFixedPropertyFormationTest warm: expected zero "
                   "AccMSalt, got {}",
                   AccMSalt);
    }
 
-   if (!isApprox(AccEIce, 0.0_Real, RTol)) {
+   if (!Math::isApprox(AccEIce, 0.0_Real, RTol)) {
       ABORT_ERROR("FrazilFixedPropertyFormationTest warm: expected zero "
                   "AccEIce, got {}",
                   AccEIce);
    }
-   if (!isApprox(HTend, 0.0_Real, RTol)) {
+   if (!Math::isApprox(HTend, 0.0_Real, RTol)) {
       ABORT_ERROR(
           "FrazilFixedPropertyFormationTest warm: expected zero HTend, got {}",
           HTend);
    }
 
-   if (!isApprox(TTend, 0.0_Real, RTol)) {
+   if (!Math::isApprox(TTend, 0.0_Real, RTol)) {
       ABORT_ERROR(
           "FrazilFixedPropertyFormationTest warm: expected zero TTend, got {}",
           TTend);
    }
 
-   if (!isApprox(STend, 0.0_Real, RTol)) {
+   if (!Math::isApprox(STend, 0.0_Real, RTol)) {
       ABORT_ERROR(
           "FrazilFixedPropertyFormationTest warm: expected zero STend, got {}",
           STend);
@@ -535,12 +535,12 @@ void testFixedPropertyFrazilFormationMassLimit() {
 
    const Real ExpectedIceThickness = PseudoThicknessIn * LayerMassFracMax;
 
-   if (!isApprox(AccMIce, ExpectedIceThickness, RTol)) {
+   if (!Math::isApprox(AccMIce, ExpectedIceThickness, RTol)) {
       ABORT_ERROR("FrazilFixedPropertyFormationMassLimit: expected AccMIce={}, "
                   "got {}",
                   ExpectedIceThickness, AccMIce);
    }
-   if (!isApprox(HTend, -ExpectedIceThickness, RTol)) {
+   if (!Math::isApprox(HTend, -ExpectedIceThickness, RTol)) {
       ABORT_ERROR("FrazilFixedPropertyFormationMassLimit: expected HTend={}, "
                   "got {}",
                   -ExpectedIceThickness, HTend);
@@ -589,24 +589,29 @@ void testFrazilMeltMassLimit() {
                   "[0, 1]",
                   ExpectedFraction);
    }
-   if (!isApprox(HTend, ExpectedFraction * (AccMIce0 + AccMLiq0), RTol)) {
+   if (!Math::isApprox(HTend, ExpectedFraction * (AccMIce0 + AccMLiq0), RTol)) {
       ABORT_ERROR("FrazilMeltMassLimit: expected HTend={}, got {}",
                   ExpectedFraction * (AccMIce0 + AccMLiq0), HTend);
    }
-   if (!isApprox(STend, ExpectedFraction * AccMSalt0, RTol)) {
+   if (!Math::isApprox(STend, ExpectedFraction * AccMSalt0, RTol)) {
       ABORT_ERROR("FrazilMeltMassLimit: expected STend={}, got {}",
                   ExpectedFraction * AccMSalt0, STend);
    }
-   if (!isApprox(TTend, ExpectedFraction * (AccELiq0 + AccEIce0) / Cp0Sw,
-                 RTol)) {
+   if (!Math::isApprox(TTend, ExpectedFraction * (AccELiq0 + AccEIce0) / Cp0Sw,
+                       RTol)) {
       ABORT_ERROR("FrazilMeltMassLimit: expected TTend={}, got {}",
                   ExpectedFraction * (AccELiq0 + AccEIce0) / Cp0Sw, TTend);
    }
-   if (!isApprox(AccMIce, (1.0_Real - ExpectedFraction) * AccMIce0, RTol) ||
-       !isApprox(AccMLiq, (1.0_Real - ExpectedFraction) * AccMLiq0, RTol) ||
-       !isApprox(AccMSalt, (1.0_Real - ExpectedFraction) * AccMSalt0, RTol) ||
-       !isApprox(AccELiq, (1.0_Real - ExpectedFraction) * AccELiq0, RTol) ||
-       !isApprox(AccEIce, (1.0_Real - ExpectedFraction) * AccEIce0, RTol)) {
+   if (!Math::isApprox(AccMIce, (1.0_Real - ExpectedFraction) * AccMIce0,
+                       RTol) ||
+       !Math::isApprox(AccMLiq, (1.0_Real - ExpectedFraction) * AccMLiq0,
+                       RTol) ||
+       !Math::isApprox(AccMSalt, (1.0_Real - ExpectedFraction) * AccMSalt0,
+                       RTol) ||
+       !Math::isApprox(AccELiq, (1.0_Real - ExpectedFraction) * AccELiq0,
+                       RTol) ||
+       !Math::isApprox(AccEIce, (1.0_Real - ExpectedFraction) * AccEIce0,
+                       RTol)) {
       ABORT_ERROR("FrazilMeltMassLimit: remaining reservoirs areinconsistent "
                   "with expected fraction {}",
                   ExpectedFraction);
@@ -651,21 +656,23 @@ void testFixedPropertyFrazilMeltMassLimit() {
                   "outside [0, 1]",
                   ExpectedFraction);
    }
-   if (!isApprox(HTend, ExpectedFraction * SumIce0, RTol)) {
+   if (!Math::isApprox(HTend, ExpectedFraction * SumIce0, RTol)) {
       ABORT_ERROR("FrazilFixedPropertyMeltMassLimit: expected HTend={}, got {}",
                   ExpectedFraction * SumIce0, HTend);
    }
-   if (!isApprox(STend, ExpectedFraction * SumSalt0, RTol)) {
+   if (!Math::isApprox(STend, ExpectedFraction * SumSalt0, RTol)) {
       ABORT_ERROR("FrazilFixedPropertyMeltMassLimit: expected STend={}, got {}",
                   ExpectedFraction * SumSalt0, STend);
    }
-   if (!isApprox(TTend, ExpectedFraction * SumEnergy0 / Cp0Sw, RTol)) {
+   if (!Math::isApprox(TTend, ExpectedFraction * SumEnergy0 / Cp0Sw, RTol)) {
       ABORT_ERROR("FrazilFixedPropertyMeltMassLimit: expected TTend={}, got {}",
                   ExpectedFraction * SumEnergy0 / Cp0Sw, TTend);
    }
-   if (!isApprox(SumIce, (1.0_Real - ExpectedFraction) * SumIce0, RTol) ||
-       !isApprox(SumSalt, (1.0_Real - ExpectedFraction) * SumSalt0, RTol) ||
-       !isApprox(SumEnergy, (1.0_Real - ExpectedFraction) * SumEnergy0, RTol)) {
+   if (!Math::isApprox(SumIce, (1.0_Real - ExpectedFraction) * SumIce0, RTol) ||
+       !Math::isApprox(SumSalt, (1.0_Real - ExpectedFraction) * SumSalt0,
+                       RTol) ||
+       !Math::isApprox(SumEnergy, (1.0_Real - ExpectedFraction) * SumEnergy0,
+                       RTol)) {
       ABORT_ERROR("FrazilFixedPropertyMeltMassLimit: remaining reservoir is "
                   "inconsistent with expected fraction {}",
                   ExpectedFraction);
@@ -912,9 +919,9 @@ void testComputeFrazilDepthLimit() {
 
       if (AbsDepth > TestDepthLimit) {
          FoundExcludedLayer = true;
-         if (!isApprox(HTendH(ICell, K), 0.0_Real, RTol) ||
-             !isApprox(TTendH(ICell, K), 0.0_Real, RTol) ||
-             !isApprox(STendH(ICell, K), 0.0_Real, RTol)) {
+         if (!Math::isApprox(HTendH(ICell, K), 0.0_Real, RTol) ||
+             !Math::isApprox(TTendH(ICell, K), 0.0_Real, RTol) ||
+             !Math::isApprox(STendH(ICell, K), 0.0_Real, RTol)) {
             ABORT_ERROR("FrazilDepthLimitTest: excluded layer K={} has "
                         "non-zero tendencies (HTend={}, TTend={}, STend={})",
                         K, HTendH(ICell, K), TTendH(ICell, K),

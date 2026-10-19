@@ -1,5 +1,6 @@
 #include "TriDiagSolvers.h"
 #include "../ocn/OceanTestCommon.h"
+#include "MathUtils.h"
 
 using namespace OMEGA;
 
@@ -52,7 +53,7 @@ int testCorrectness(int NBatch, int NRow) {
    parallelReduce(
        {NBatch, NRow},
        KOKKOS_LAMBDA(int I, int K, Real &Accum) {
-          Accum = Kokkos::max(Accum, Kokkos::abs(X(I, K) - AX(I, K)));
+          Accum = Math::max(Accum, Math::abs(X(I, K) - AX(I, K)));
        },
        Kokkos::Max<Real>(Error));
 
@@ -106,7 +107,7 @@ int testDiffusionCorrectness(int NBatch, int NRow) {
    parallelReduce(
        {NBatch, NRow},
        KOKKOS_LAMBDA(int I, int K, Real &Accum) {
-          Accum = Kokkos::max(Accum, Kokkos::abs(X(I, K) - AX(I, K)));
+          Accum = Math::max(Accum, Math::abs(X(I, K) - AX(I, K)));
        },
        Kokkos::Max<Real>(Error));
 
@@ -120,17 +121,18 @@ int testDiffusionCorrectness(int NBatch, int NRow) {
 }
 
 KOKKOS_FUNCTION Real manufacturedSolution(Real X, Real T) {
-   return Kokkos::cos(X) * Kokkos::sin(T);
+   return Math::cos(X) * Math::sin(T);
 }
 
 KOKKOS_FUNCTION Real manufacturedDiffusivity(Real X, Real T) {
-   return 2 + Kokkos::sin(X);
+   return 2 + Math::sin(X);
 }
 
 KOKKOS_FUNCTION Real manufacturedForcing(Real X, Real T) {
    using Kokkos::cos;
    using Kokkos::sin;
-   return (2 * sin(T) * sin(X) + 2 * sin(T) + cos(T)) * cos(X);
+   return (2 * Math::sin(T) * Math::sin(X) + 2 * Math::sin(T) + Math::cos(T)) *
+          Math::cos(X);
 }
 
 Real runDiffManufactured(int NCells) {
@@ -141,7 +143,7 @@ Real runDiffManufactured(int NCells) {
    const Real TimeEnd  = 1;
    const Real TimeStep = 0.001 / (NCells / 100);
 
-   const int NSteps = std::ceil(TimeEnd / TimeStep);
+   const int NSteps = Math::ceil(TimeEnd / TimeStep);
 
    Array1DReal XVertex("XVertex", NVertices);
    Array1DReal Diffusivity("Diffusivity", NVertices);
@@ -149,7 +151,7 @@ Real runDiffManufactured(int NCells) {
        {NVertices}, KOKKOS_LAMBDA(int IVertex) {
           const Real XVertexUni = IVertex * (1._Real / NCells);
           // A simple transformation to make grid spacing non-uniform
-          XVertex(IVertex)     = Kokkos::tanh(5 * XVertexUni);
+          XVertex(IVertex)     = Math::tanh(5 * XVertexUni);
           Diffusivity(IVertex) = manufacturedDiffusivity(XVertex(IVertex), 0);
        });
 
@@ -189,7 +191,7 @@ Real runDiffManufactured(int NCells) {
                       // Boundary condition
                       const Real XBnd = XVertex(ICell + 1);
                       const Real BoundaryCoeff =
-                          -(2 + Kokkos::sin(XBnd)) * Kokkos::tan(XBnd);
+                          -(2 + Math::sin(XBnd)) * Math::tan(XBnd);
                       Scratch.H(ICell, IVec) -= TimeStep * BoundaryCoeff;
                       Scratch.G(ICell, IVec) = 0;
                    } else {
@@ -227,7 +229,7 @@ Real runDiffManufactured(int NCells) {
        },
        L2Error);
 
-   L2Error = Kokkos::sqrt(L2Error);
+   L2Error = Math::sqrt(L2Error);
 
    return L2Error;
 }
@@ -243,10 +245,10 @@ int testDiffusionManufactured() {
    NCells *= 2;
    const Real L2Err200 = runDiffManufactured(NCells);
 
-   const Real L2Rate = std::log2(L2Err100 / L2Err200);
+   const Real L2Rate = Math::log2(L2Err100 / L2Err200);
 
    // Check convergence rate
-   if (std::abs(L2Rate - 2) > 0.1) {
+   if (Math::abs(L2Rate - 2) > 0.1) {
       Err += 1;
       LOG_ERROR("TridiagonalSolver: Wrong conv rate for manufactured solution, "
                 "rate = {}",
@@ -274,7 +276,7 @@ Real runDiffusionStability(bool UseGeneralSolver, Real DiffValue) {
    const Real TimeEnd  = 100;
    const Real TimeStep = 1;
 
-   const int NSteps = std::ceil(TimeEnd / TimeStep);
+   const int NSteps = Math::ceil(TimeEnd / TimeStep);
 
    // Problem domain is [0, 1]
    const Real DX = 1.0 / NCells;
@@ -286,7 +288,7 @@ Real runDiffusionStability(bool UseGeneralSolver, Real DiffValue) {
        {NVertices}, KOKKOS_LAMBDA(int IVertex) {
           XVertex(IVertex) = IVertex * DX;
           Diffusivity(IVertex) =
-              Kokkos::abs(XVertex(IVertex) - 0.5) < 0.2 ? DiffValue : 0;
+              Math::abs(XVertex(IVertex) - 0.5) < 0.2 ? DiffValue : 0;
        });
 
    Array1DReal XCell("XCell", NCells);
@@ -299,7 +301,7 @@ Real runDiffusionStability(bool UseGeneralSolver, Real DiffValue) {
           XCell(ICell)       = ICell * DX + DX / 2;
           PseudoThick(ICell) = DX;
           const Real Tmp     = XCell(ICell) - 0.5_Real;
-          U(ICell)           = Kokkos::exp(-Tmp * Tmp);
+          U(ICell)           = Math::exp(-Tmp * Tmp);
        });
 
    // Compute initial condition norm
@@ -310,7 +312,7 @@ Real runDiffusionStability(bool UseGeneralSolver, Real DiffValue) {
           Accum += PseudoThick(ICell) * U(ICell) * U(ICell);
        },
        NormInit);
-   NormInit = std::sqrt(NormInit);
+   NormInit = Math::sqrt(NormInit);
 
    // Time integration using backward Euler
    for (int Step = 0; Step < NSteps; ++Step) {
@@ -411,7 +413,7 @@ Real runDiffusionStability(bool UseGeneralSolver, Real DiffValue) {
           Accum += PseudoThick(ICell) * U(ICell) * U(ICell);
        },
        Norm);
-   Norm = std::sqrt(Norm);
+   Norm = Math::sqrt(Norm);
 
    // Return normalized change in the norm
    return (Norm - NormInit) / NormInit;
@@ -435,7 +437,7 @@ int testDiffusionStability() {
    const Real NormCustomSmallDiff =
        runDiffusionStability(UseGeneralSolver, SmallDiffValue);
 
-   if (!isApprox(NormGeneralSmallDiff, NormCustomSmallDiff, 1e-3)) {
+   if (!Math::isApprox(NormGeneralSmallDiff, NormCustomSmallDiff, 1e-3)) {
       Err += 1;
       LOG_ERROR("TridiagonalSolver: Different norms");
    }
@@ -449,7 +451,7 @@ int testDiffusionStability() {
    const Real NormGeneralLargeDiff =
        runDiffusionStability(UseGeneralSolver, LargeDiffValue);
 
-   if (!std::isnan(NormGeneralLargeDiff)) {
+   if (!Math::isnan(NormGeneralLargeDiff)) {
       Err += 1;
       LOG_ERROR("TridiagonalSolver: Expected general solver to fail");
    }
@@ -458,7 +460,7 @@ int testDiffusionStability() {
    const Real NormCustomLargeDiff =
        runDiffusionStability(UseGeneralSolver, LargeDiffValue);
 
-   if (std::isnan(NormCustomLargeDiff)) {
+   if (Math::isnan(NormCustomLargeDiff)) {
       Err += 1;
       LOG_ERROR("TridiagonalSolver: Expected custom solver to pass");
    }

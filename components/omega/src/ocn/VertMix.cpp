@@ -18,6 +18,7 @@
 #include "HorzMesh.h"
 #include "HorzOperators.h"
 #include "KPPMix.h"
+#include "MathUtils.h"
 #include "TimeStepper.h"
 #include "TriDiagSolvers.h"
 
@@ -543,8 +544,8 @@ void VertMix::applyVelVertMixImplicit(
       parallelForOuter(
           LConfig, KOKKOS_LAMBDA(int, const TeamMember &Team) {
              const int IStart = Team.league_rank() * LocVecLength;
-             const int ILen   = Kokkos::max(
-                 0, Kokkos::min(LocVecLength, LocNEdgesOwned - IStart));
+             const int ILen =
+                 Math::max(0, Math::min(LocVecLength, LocNEdgesOwned - IStart));
 
              TriDiagDiffScratch Scratch(Team, NVertLayers);
 
@@ -650,8 +651,8 @@ void VertMix::applyTracerVertMixImplicit(
          parallelForOuter(
              LConfig, KOKKOS_LAMBDA(int, const TeamMember &Team) {
                 const int IStart = Team.league_rank() * LocVecLength;
-                const int ILen   = Kokkos::max(
-                    0, Kokkos::min(LocVecLength, LocNCellsOwned - IStart));
+                const int ILen   = Math::max(
+                    0, Math::min(LocVecLength, LocNCellsOwned - IStart));
 
                 TriDiagDiffScratch Scratch(Team, NVertLayers);
 

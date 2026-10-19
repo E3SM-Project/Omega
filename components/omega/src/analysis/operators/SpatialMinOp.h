@@ -24,6 +24,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AnalysisOperator.h"
+#include "MathUtils.h"
 #include "Reductions.h"
 
 namespace OMEGA {
@@ -106,7 +107,7 @@ template <typename ArrayT> class SpatialMinOp : public AnalysisOperator {
       // Determine mesh index space (cells/edges/vertices) from dimension name
       // For 1D: dimension is horizontal
       // For 2D+: second-to-last dimension is horizontal
-      std::string IndexSpaceName = InputDimNames[std::max(0, NDims - 2)];
+      std::string IndexSpaceName = InputDimNames[Math::max(0, NDims - 2)];
 
       // Get appropriate mask and owned entity count for this index space
       Array2DReal MaskArray;

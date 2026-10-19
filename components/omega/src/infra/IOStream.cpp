@@ -15,6 +15,7 @@
 #include "Field.h"
 #include "IO.h"
 #include "Logging.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 #include "TimeMgr.h"
 #include <algorithm>
@@ -1014,7 +1015,7 @@ void IOStream::writeFieldData(
    // get the relevant size information
    int MyDecompID;
    int LocSize;
-   int NDimsTmp = std::max(NDims, 1);
+   int NDimsTmp = Math::max(NDims, 1);
    std::vector<int> DimLengths(NDimsTmp);
    if (IsDistributed) {
       computeDecomp(FieldPtr, MyDecompID, LocSize, DimLengths);
@@ -1691,7 +1692,7 @@ Error IOStream::readFieldData(
    // get the relevant size information
    int DecompID;
    int LocSize;
-   int NDimsTmp = std::max(NDims, 1);
+   int NDimsTmp = Math::max(NDims, 1);
    std::vector<int> DimLengths(NDimsTmp);
    if (IsDistributed) {
       computeDecomp(FieldPtr, DecompID, LocSize, DimLengths);
@@ -2651,7 +2652,7 @@ void IOStream::writeStream(
                                    TmpID, IFrame, &TmpDimLengths);
                CHECK_ERROR_ABORT(Err, "Error reading frame time in {}",
                                  OutFileName);
-               if (std::abs(ElapsedTimeR8 - FrameTime) < 1.e-5) { // overwrite
+               if (Math::abs(ElapsedTimeR8 - FrameTime) < 1.e-5) { // overwrite
                   Frame = IFrame;
                   break;
                } else if (ElapsedTimeR8 > FrameTime) { // move to next frame
@@ -2949,7 +2950,7 @@ std::string IOStream::buildFilename(
       // Convert the SimTime to a string
       int YearLength         = SYear.length();
       int MinWidth           = 4;
-      int YearWidth          = std::max(YearLength, MinWidth);
+      int YearWidth          = Math::max(YearLength, MinWidth);
       std::string SimTimeStr = FileTime.getString(YearWidth, 0, "_");
       Outfile.replace(Pos, 8, SimTimeStr);
    }

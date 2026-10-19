@@ -29,6 +29,7 @@
 #include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OceanState.h"
 #include "OmegaKokkos.h"
 #include "PGrad.h"
@@ -59,7 +60,7 @@ struct DecayVelocityTendency {
 
    // exact solution assumes that this is the only tendency active
    // the solution is exponential decay
-   Real exactSolution(Real Time) { return std::exp(-Coeff * Time); }
+   Real exactSolution(Real Time) { return Math::exp(-Coeff * Time); }
 
    void operator()(Array2DReal NormalVelTend, const OceanState *State,
                    const AuxiliaryState *AuxState, int ThickTimeLevel,
@@ -301,7 +302,7 @@ int adjustTimeStep(TimeStepper *Stepper, Real TimeEnd) {
    R8 TimeStepSeconds;
    TimeStep.get(TimeStepSeconds, TimeUnits::Seconds);
 
-   const int NSteps = std::ceil(TimeEnd / TimeStepSeconds);
+   const int NSteps = Math::ceil(TimeEnd / TimeStepSeconds);
 
    TimeStepSeconds = TimeEnd / NSteps;
    TimeStep.set(TimeStepSeconds, TimeUnits::Seconds);
@@ -406,10 +407,10 @@ int testTimeStepper(const std::string &Name, TimeStepperType Type,
    std::vector<Real> ConvRates(NRefinements - 1);
    for (int RefLevel = 0; RefLevel < NRefinements - 1; ++RefLevel) {
       ConvRates[RefLevel] =
-          std::log2(Errors[RefLevel].LInf / Errors[RefLevel + 1].LInf);
+          Math::log2(Errors[RefLevel].LInf / Errors[RefLevel + 1].LInf);
    }
 
-   if (std::abs(ConvRates.back() - ExpectedOrder) > ATol) {
+   if (Math::abs(ConvRates.back() - ExpectedOrder) > ATol) {
       Err++;
       LOG_ERROR(
           "Wrong convergence rate for time stepper {}, got {:.3f}, expected {}",

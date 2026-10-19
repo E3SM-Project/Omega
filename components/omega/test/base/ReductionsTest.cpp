@@ -6,6 +6,7 @@
 //
 //===-----------------------------------------------------------------------===/
 
+#include "MathUtils.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -59,10 +60,10 @@ void testScalarReductions() {
    R4 EpsR4      = 0.0001;
    R8 EpsR8      = 0.0000000000001;
    // Compute max safe exponents based on adjusted max above
-   I4 ExpI4 = std::log2(MaxI4);
-   I4 ExpI8 = std::log2(MaxI8);
-   I4 ExpR4 = std::log10(MaxR4);
-   I4 ExpR8 = std::log10(MaxR8);
+   I4 ExpI4 = Math::log2(MaxI4);
+   I4 ExpI8 = Math::log2(MaxI8);
+   I4 ExpR4 = Math::log10(MaxR4);
+   I4 ExpR8 = Math::log10(MaxR8);
    // To cover a large range of values, compute a factor for test vals
    // on each rank
    std::vector<I4> FacI4(NTasks);
@@ -70,10 +71,10 @@ void testScalarReductions() {
    std::vector<R4> FacR4(NTasks);
    std::vector<R8> FacR8(NTasks);
    for (int I = 0; I < NTasks; ++I) {
-      FacI4[I] = pow(2, std::min(I, ExpI4));
-      FacI8[I] = pow(2, std::min(I, ExpI8));
-      FacR4[I] = pow(10.0, std::min(I, ExpR4));
-      FacR8[I] = pow(10.0, std::min(I, ExpR8));
+      FacI4[I] = Math::pow(2, Math::min(I, ExpI4));
+      FacI8[I] = Math::pow(2, Math::min(I, ExpI8));
+      FacR4[I] = Math::pow(10.0, Math::min(I, ExpR4));
+      FacR8[I] = Math::pow(10.0, Math::min(I, ExpR8));
    }
 
    // Initialize test and reference values
@@ -519,10 +520,10 @@ void testArrayReductions() {
    R4 EpsR4 = 0.0001;
    R8 EpsR8 = 0.0000000000001;
    // Compute max safe exponents based on adjusted max above
-   I4 ExpI4 = std::log2(MaxI4);
-   I4 ExpI8 = std::log2(MaxI8);
-   I4 ExpR4 = std::log10(MaxR4);
-   I4 ExpR8 = std::log10(MaxR8);
+   I4 ExpI4 = Math::log2(MaxI4);
+   I4 ExpI8 = Math::log2(MaxI8);
+   I4 ExpR4 = Math::log10(MaxR4);
+   I4 ExpR8 = Math::log10(MaxR8);
    // To cover a large range of values, compute a factor for test vals
    // on each rank
    std::vector<I4> FacI4(NTasks);
@@ -530,10 +531,10 @@ void testArrayReductions() {
    std::vector<R4> FacR4(NTasks);
    std::vector<R8> FacR8(NTasks);
    for (int I = 0; I < NTasks; ++I) {
-      FacI4[I] = pow(2, std::min(I, ExpI4));
-      FacI8[I] = pow(2, std::min(I, ExpI8));
-      FacR4[I] = pow(10.0, std::min(I, ExpR4));
-      FacR8[I] = pow(10.0, std::min(I, ExpR8));
+      FacI4[I] = Math::pow(2, Math::min(I, ExpI4));
+      FacI8[I] = Math::pow(2, Math::min(I, ExpI8));
+      FacR4[I] = Math::pow(10.0, Math::min(I, ExpR4));
+      FacR8[I] = Math::pow(10.0, Math::min(I, ExpR8));
    }
 
    // Allocate test arrays
@@ -665,14 +666,14 @@ void testArrayReductions() {
          Tmp1DR4 += (IGlob + EpsR4) * FacR4[Task];
          DDVal1D = (IGlob + EpsR8) * FacR8[Task];
          sumDDTest(DDSumRef1D, DDVal1D); // local repro sum
-         RefMin1DI4 = std::min(RefMin1DI4, IGlob * FacI4[Task]);
-         RefMin1DI8 = std::min(RefMin1DI8, IGlob * FacI8[Task]);
-         RefMin1DR4 = std::min(RefMin1DR4, (IGlob + EpsR4) * FacR4[Task]);
-         RefMin1DR8 = std::min(RefMin1DR8, (IGlob + EpsR8) * FacR8[Task]);
-         RefMax1DI4 = std::max(RefMax1DI4, IGlob * FacI4[Task]);
-         RefMax1DI8 = std::max(RefMax1DI8, IGlob * FacI8[Task]);
-         RefMax1DR4 = std::max(RefMax1DR4, (IGlob + EpsR4) * FacR4[Task]);
-         RefMax1DR8 = std::max(RefMax1DR8, (IGlob + EpsR8) * FacR8[Task]);
+         RefMin1DI4 = Math::min(RefMin1DI4, IGlob * FacI4[Task]);
+         RefMin1DI8 = Math::min(RefMin1DI8, IGlob * FacI8[Task]);
+         RefMin1DR4 = Math::min(RefMin1DR4, (IGlob + EpsR4) * FacR4[Task]);
+         RefMin1DR8 = Math::min(RefMin1DR8, (IGlob + EpsR8) * FacR8[Task]);
+         RefMax1DI4 = Math::max(RefMax1DI4, IGlob * FacI4[Task]);
+         RefMax1DI8 = Math::max(RefMax1DI8, IGlob * FacI8[Task]);
+         RefMax1DR4 = Math::max(RefMax1DR4, (IGlob + EpsR4) * FacR4[Task]);
+         RefMax1DR8 = Math::max(RefMax1DR8, (IGlob + EpsR8) * FacR8[Task]);
          for (int J = 0; J < Ny; ++J) {
             int Jindx = IGlob + J;
             Ref2DI4 += Jindx * FacI4[Task];
@@ -680,14 +681,14 @@ void testArrayReductions() {
             Tmp2DR4 += (Jindx + EpsR4) * FacR4[Task];
             DDVal2D = (Jindx + EpsR8) * FacR8[Task];
             sumDDTest(DDSumRef2D, DDVal2D); // local repro sum
-            RefMin2DI4 = std::min(RefMin2DI4, Jindx * FacI4[Task]);
-            RefMin2DI8 = std::min(RefMin2DI8, Jindx * FacI8[Task]);
-            RefMin2DR4 = std::min(RefMin2DR4, (Jindx + EpsR4) * FacR4[Task]);
-            RefMin2DR8 = std::min(RefMin2DR8, (Jindx + EpsR8) * FacR8[Task]);
-            RefMax2DI4 = std::max(RefMax2DI4, Jindx * FacI4[Task]);
-            RefMax2DI8 = std::max(RefMax2DI8, Jindx * FacI8[Task]);
-            RefMax2DR4 = std::max(RefMax2DR4, (Jindx + EpsR4) * FacR4[Task]);
-            RefMax2DR8 = std::max(RefMax2DR8, (Jindx + EpsR8) * FacR8[Task]);
+            RefMin2DI4 = Math::min(RefMin2DI4, Jindx * FacI4[Task]);
+            RefMin2DI8 = Math::min(RefMin2DI8, Jindx * FacI8[Task]);
+            RefMin2DR4 = Math::min(RefMin2DR4, (Jindx + EpsR4) * FacR4[Task]);
+            RefMin2DR8 = Math::min(RefMin2DR8, (Jindx + EpsR8) * FacR8[Task]);
+            RefMax2DI4 = Math::max(RefMax2DI4, Jindx * FacI4[Task]);
+            RefMax2DI8 = Math::max(RefMax2DI8, Jindx * FacI8[Task]);
+            RefMax2DR4 = Math::max(RefMax2DR4, (Jindx + EpsR4) * FacR4[Task]);
+            RefMax2DR8 = Math::max(RefMax2DR8, (Jindx + EpsR8) * FacR8[Task]);
             for (int K = 0; K < Nz; ++K) {
                int Kindx = IGlob + J + K;
                Ref3DI4 += Kindx * FacI4[Task];
@@ -695,14 +696,18 @@ void testArrayReductions() {
                Tmp3DR4 += (Kindx + EpsR4) * FacR4[Task];
                DDVal3D = (Kindx + EpsR8) * FacR8[Task];
                sumDDTest(DDSumRef3D, DDVal3D); // local repro sum
-               RefMin3DI4 = std::min(RefMin3DI4, Kindx * FacI4[Task]);
-               RefMin3DI8 = std::min(RefMin3DI8, Kindx * FacI8[Task]);
-               RefMin3DR4 = std::min(RefMin3DR4, (Kindx + EpsR4) * FacR4[Task]);
-               RefMin3DR8 = std::min(RefMin3DR8, (Kindx + EpsR8) * FacR8[Task]);
-               RefMax3DI4 = std::max(RefMax3DI4, Kindx * FacI4[Task]);
-               RefMax3DI8 = std::max(RefMax3DI8, Kindx * FacI8[Task]);
-               RefMax3DR4 = std::max(RefMax3DR4, (Kindx + EpsR4) * FacR4[Task]);
-               RefMax3DR8 = std::max(RefMax3DR8, (Kindx + EpsR8) * FacR8[Task]);
+               RefMin3DI4 = Math::min(RefMin3DI4, Kindx * FacI4[Task]);
+               RefMin3DI8 = Math::min(RefMin3DI8, Kindx * FacI8[Task]);
+               RefMin3DR4 =
+                   Math::min(RefMin3DR4, (Kindx + EpsR4) * FacR4[Task]);
+               RefMin3DR8 =
+                   Math::min(RefMin3DR8, (Kindx + EpsR8) * FacR8[Task]);
+               RefMax3DI4 = Math::max(RefMax3DI4, Kindx * FacI4[Task]);
+               RefMax3DI8 = Math::max(RefMax3DI8, Kindx * FacI8[Task]);
+               RefMax3DR4 =
+                   Math::max(RefMax3DR4, (Kindx + EpsR4) * FacR4[Task]);
+               RefMax3DR8 =
+                   Math::max(RefMax3DR8, (Kindx + EpsR8) * FacR8[Task]);
                for (int M = 0; M < Nm; ++M) {
                   int Mindx = IGlob + J + K + M;
                   Ref4DI4 += Mindx * FacI4[Task];
@@ -710,18 +715,18 @@ void testArrayReductions() {
                   Tmp4DR4 += (Mindx + EpsR4) * FacR4[Task];
                   DDVal4D = (Mindx + EpsR8) * FacR8[Task];
                   sumDDTest(DDSumRef4D, DDVal4D); // local repro sum
-                  RefMin4DI4 = std::min(RefMin4DI4, Mindx * FacI4[Task]);
-                  RefMin4DI8 = std::min(RefMin4DI8, Mindx * FacI8[Task]);
+                  RefMin4DI4 = Math::min(RefMin4DI4, Mindx * FacI4[Task]);
+                  RefMin4DI8 = Math::min(RefMin4DI8, Mindx * FacI8[Task]);
                   RefMin4DR4 =
-                      std::min(RefMin4DR4, (Mindx + EpsR4) * FacR4[Task]);
+                      Math::min(RefMin4DR4, (Mindx + EpsR4) * FacR4[Task]);
                   RefMin4DR8 =
-                      std::min(RefMin4DR8, (Mindx + EpsR8) * FacR8[Task]);
-                  RefMax4DI4 = std::max(RefMax4DI4, Mindx * FacI4[Task]);
-                  RefMax4DI8 = std::max(RefMax4DI8, Mindx * FacI8[Task]);
+                      Math::min(RefMin4DR8, (Mindx + EpsR8) * FacR8[Task]);
+                  RefMax4DI4 = Math::max(RefMax4DI4, Mindx * FacI4[Task]);
+                  RefMax4DI8 = Math::max(RefMax4DI8, Mindx * FacI8[Task]);
                   RefMax4DR4 =
-                      std::max(RefMax4DR4, (Mindx + EpsR4) * FacR4[Task]);
+                      Math::max(RefMax4DR4, (Mindx + EpsR4) * FacR4[Task]);
                   RefMax4DR8 =
-                      std::max(RefMax4DR8, (Mindx + EpsR8) * FacR8[Task]);
+                      Math::max(RefMax4DR8, (Mindx + EpsR8) * FacR8[Task]);
                   for (int N = 0; N < Nn; ++N) {
                      int Nindx = IGlob + J + K + M + N;
                      Ref5DI4 += Nindx * FacI4[Task];
@@ -729,18 +734,18 @@ void testArrayReductions() {
                      Tmp5DR4 += (Nindx + EpsR4) * FacR4[Task];
                      DDVal5D = (Nindx + EpsR8) * FacR8[Task];
                      sumDDTest(DDSumRef5D, DDVal5D); // local repro sum
-                     RefMin5DI4 = std::min(RefMin5DI4, Nindx * FacI4[Task]);
-                     RefMin5DI8 = std::min(RefMin5DI8, Nindx * FacI8[Task]);
+                     RefMin5DI4 = Math::min(RefMin5DI4, Nindx * FacI4[Task]);
+                     RefMin5DI8 = Math::min(RefMin5DI8, Nindx * FacI8[Task]);
                      RefMin5DR4 =
-                         std::min(RefMin5DR4, (Nindx + EpsR4) * FacR4[Task]);
+                         Math::min(RefMin5DR4, (Nindx + EpsR4) * FacR4[Task]);
                      RefMin5DR8 =
-                         std::min(RefMin5DR8, (Nindx + EpsR8) * FacR8[Task]);
-                     RefMax5DI4 = std::max(RefMax5DI4, Nindx * FacI4[Task]);
-                     RefMax5DI8 = std::max(RefMax5DI8, Nindx * FacI8[Task]);
+                         Math::min(RefMin5DR8, (Nindx + EpsR8) * FacR8[Task]);
+                     RefMax5DI4 = Math::max(RefMax5DI4, Nindx * FacI4[Task]);
+                     RefMax5DI8 = Math::max(RefMax5DI8, Nindx * FacI8[Task]);
                      RefMax5DR4 =
-                         std::max(RefMax5DR4, (Nindx + EpsR4) * FacR4[Task]);
+                         Math::max(RefMax5DR4, (Nindx + EpsR4) * FacR4[Task]);
                      RefMax5DR8 =
-                         std::max(RefMax5DR8, (Nindx + EpsR8) * FacR8[Task]);
+                         Math::max(RefMax5DR8, (Nindx + EpsR8) * FacR8[Task]);
                   }
                }
             }
@@ -1078,14 +1083,14 @@ void testArrayReductions() {
          Tmp1DR4 += (IGlob + EpsR4) * FacR4[Task];
          DDVal1D = (IGlob + EpsR8) * FacR8[Task];
          sumDDTest(DDSumRef1D, DDVal1D); // local repro sum
-         RefMin1DI4 = std::min(RefMin1DI4, IGlob * FacI4[Task]);
-         RefMin1DI8 = std::min(RefMin1DI8, IGlob * FacI8[Task]);
-         RefMin1DR4 = std::min(RefMin1DR4, (IGlob + EpsR4) * FacR4[Task]);
-         RefMin1DR8 = std::min(RefMin1DR8, (IGlob + EpsR8) * FacR8[Task]);
-         RefMax1DI4 = std::max(RefMax1DI4, IGlob * FacI4[Task]);
-         RefMax1DI8 = std::max(RefMax1DI8, IGlob * FacI8[Task]);
-         RefMax1DR4 = std::max(RefMax1DR4, (IGlob + EpsR4) * FacR4[Task]);
-         RefMax1DR8 = std::max(RefMax1DR8, (IGlob + EpsR8) * FacR8[Task]);
+         RefMin1DI4 = Math::min(RefMin1DI4, IGlob * FacI4[Task]);
+         RefMin1DI8 = Math::min(RefMin1DI8, IGlob * FacI8[Task]);
+         RefMin1DR4 = Math::min(RefMin1DR4, (IGlob + EpsR4) * FacR4[Task]);
+         RefMin1DR8 = Math::min(RefMin1DR8, (IGlob + EpsR8) * FacR8[Task]);
+         RefMax1DI4 = Math::max(RefMax1DI4, IGlob * FacI4[Task]);
+         RefMax1DI8 = Math::max(RefMax1DI8, IGlob * FacI8[Task]);
+         RefMax1DR4 = Math::max(RefMax1DR4, (IGlob + EpsR4) * FacR4[Task]);
+         RefMax1DR8 = Math::max(RefMax1DR8, (IGlob + EpsR8) * FacR8[Task]);
          for (int J = JMin; J <= JMax; ++J) {
             int Jindx = IGlob + J;
             Ref2DI4 += Jindx * FacI4[Task];
@@ -1093,14 +1098,14 @@ void testArrayReductions() {
             Tmp2DR4 += (Jindx + EpsR4) * FacR4[Task];
             DDVal2D = (Jindx + EpsR8) * FacR8[Task];
             sumDDTest(DDSumRef2D, DDVal2D); // local repro sum
-            RefMin2DI4 = std::min(RefMin2DI4, Jindx * FacI4[Task]);
-            RefMin2DI8 = std::min(RefMin2DI8, Jindx * FacI8[Task]);
-            RefMin2DR4 = std::min(RefMin2DR4, (Jindx + EpsR4) * FacR4[Task]);
-            RefMin2DR8 = std::min(RefMin2DR8, (Jindx + EpsR8) * FacR8[Task]);
-            RefMax2DI4 = std::max(RefMax2DI4, Jindx * FacI4[Task]);
-            RefMax2DI8 = std::max(RefMax2DI8, Jindx * FacI8[Task]);
-            RefMax2DR4 = std::max(RefMax2DR4, (Jindx + EpsR4) * FacR4[Task]);
-            RefMax2DR8 = std::max(RefMax2DR8, (Jindx + EpsR8) * FacR8[Task]);
+            RefMin2DI4 = Math::min(RefMin2DI4, Jindx * FacI4[Task]);
+            RefMin2DI8 = Math::min(RefMin2DI8, Jindx * FacI8[Task]);
+            RefMin2DR4 = Math::min(RefMin2DR4, (Jindx + EpsR4) * FacR4[Task]);
+            RefMin2DR8 = Math::min(RefMin2DR8, (Jindx + EpsR8) * FacR8[Task]);
+            RefMax2DI4 = Math::max(RefMax2DI4, Jindx * FacI4[Task]);
+            RefMax2DI8 = Math::max(RefMax2DI8, Jindx * FacI8[Task]);
+            RefMax2DR4 = Math::max(RefMax2DR4, (Jindx + EpsR4) * FacR4[Task]);
+            RefMax2DR8 = Math::max(RefMax2DR8, (Jindx + EpsR8) * FacR8[Task]);
             for (int K = KMin; K <= KMax; ++K) {
                int Kindx = IGlob + J + K;
                Ref3DI4 += Kindx * FacI4[Task];
@@ -1108,14 +1113,18 @@ void testArrayReductions() {
                Tmp3DR4 += (Kindx + EpsR4) * FacR4[Task];
                DDVal3D = (Kindx + EpsR8) * FacR8[Task];
                sumDDTest(DDSumRef3D, DDVal3D); // local repro sum
-               RefMin3DI4 = std::min(RefMin3DI4, Kindx * FacI4[Task]);
-               RefMin3DI8 = std::min(RefMin3DI8, Kindx * FacI8[Task]);
-               RefMin3DR4 = std::min(RefMin3DR4, (Kindx + EpsR4) * FacR4[Task]);
-               RefMin3DR8 = std::min(RefMin3DR8, (Kindx + EpsR8) * FacR8[Task]);
-               RefMax3DI4 = std::max(RefMax3DI4, Kindx * FacI4[Task]);
-               RefMax3DI8 = std::max(RefMax3DI8, Kindx * FacI8[Task]);
-               RefMax3DR4 = std::max(RefMax3DR4, (Kindx + EpsR4) * FacR4[Task]);
-               RefMax3DR8 = std::max(RefMax3DR8, (Kindx + EpsR8) * FacR8[Task]);
+               RefMin3DI4 = Math::min(RefMin3DI4, Kindx * FacI4[Task]);
+               RefMin3DI8 = Math::min(RefMin3DI8, Kindx * FacI8[Task]);
+               RefMin3DR4 =
+                   Math::min(RefMin3DR4, (Kindx + EpsR4) * FacR4[Task]);
+               RefMin3DR8 =
+                   Math::min(RefMin3DR8, (Kindx + EpsR8) * FacR8[Task]);
+               RefMax3DI4 = Math::max(RefMax3DI4, Kindx * FacI4[Task]);
+               RefMax3DI8 = Math::max(RefMax3DI8, Kindx * FacI8[Task]);
+               RefMax3DR4 =
+                   Math::max(RefMax3DR4, (Kindx + EpsR4) * FacR4[Task]);
+               RefMax3DR8 =
+                   Math::max(RefMax3DR8, (Kindx + EpsR8) * FacR8[Task]);
                for (int M = MMin; M <= MMax; ++M) {
                   int Mindx = IGlob + J + K + M;
                   Ref4DI4 += Mindx * FacI4[Task];
@@ -1123,18 +1132,18 @@ void testArrayReductions() {
                   Tmp4DR4 += (Mindx + EpsR4) * FacR4[Task];
                   DDVal4D = (Mindx + EpsR8) * FacR8[Task];
                   sumDDTest(DDSumRef4D, DDVal4D); // local repro sum
-                  RefMin4DI4 = std::min(RefMin4DI4, Mindx * FacI4[Task]);
-                  RefMin4DI8 = std::min(RefMin4DI8, Mindx * FacI8[Task]);
+                  RefMin4DI4 = Math::min(RefMin4DI4, Mindx * FacI4[Task]);
+                  RefMin4DI8 = Math::min(RefMin4DI8, Mindx * FacI8[Task]);
                   RefMin4DR4 =
-                      std::min(RefMin4DR4, (Mindx + EpsR4) * FacR4[Task]);
+                      Math::min(RefMin4DR4, (Mindx + EpsR4) * FacR4[Task]);
                   RefMin4DR8 =
-                      std::min(RefMin4DR8, (Mindx + EpsR8) * FacR8[Task]);
-                  RefMax4DI4 = std::max(RefMax4DI4, Mindx * FacI4[Task]);
-                  RefMax4DI8 = std::max(RefMax4DI8, Mindx * FacI8[Task]);
+                      Math::min(RefMin4DR8, (Mindx + EpsR8) * FacR8[Task]);
+                  RefMax4DI4 = Math::max(RefMax4DI4, Mindx * FacI4[Task]);
+                  RefMax4DI8 = Math::max(RefMax4DI8, Mindx * FacI8[Task]);
                   RefMax4DR4 =
-                      std::max(RefMax4DR4, (Mindx + EpsR4) * FacR4[Task]);
+                      Math::max(RefMax4DR4, (Mindx + EpsR4) * FacR4[Task]);
                   RefMax4DR8 =
-                      std::max(RefMax4DR8, (Mindx + EpsR8) * FacR8[Task]);
+                      Math::max(RefMax4DR8, (Mindx + EpsR8) * FacR8[Task]);
                   for (int N = NMin; N <= NMax; ++N) {
                      int Nindx = IGlob + J + K + M + N;
                      Ref5DI4 += Nindx * FacI4[Task];
@@ -1142,18 +1151,18 @@ void testArrayReductions() {
                      Tmp5DR4 += (Nindx + EpsR4) * FacR4[Task];
                      DDVal5D = (Nindx + EpsR8) * FacR8[Task];
                      sumDDTest(DDSumRef5D, DDVal5D); // local repro sum
-                     RefMin5DI4 = std::min(RefMin5DI4, Nindx * FacI4[Task]);
-                     RefMin5DI8 = std::min(RefMin5DI8, Nindx * FacI8[Task]);
+                     RefMin5DI4 = Math::min(RefMin5DI4, Nindx * FacI4[Task]);
+                     RefMin5DI8 = Math::min(RefMin5DI8, Nindx * FacI8[Task]);
                      RefMin5DR4 =
-                         std::min(RefMin5DR4, (Nindx + EpsR4) * FacR4[Task]);
+                         Math::min(RefMin5DR4, (Nindx + EpsR4) * FacR4[Task]);
                      RefMin5DR8 =
-                         std::min(RefMin5DR8, (Nindx + EpsR8) * FacR8[Task]);
-                     RefMax5DI4 = std::max(RefMax5DI4, Nindx * FacI4[Task]);
-                     RefMax5DI8 = std::max(RefMax5DI8, Nindx * FacI8[Task]);
+                         Math::min(RefMin5DR8, (Nindx + EpsR8) * FacR8[Task]);
+                     RefMax5DI4 = Math::max(RefMax5DI4, Nindx * FacI4[Task]);
+                     RefMax5DI8 = Math::max(RefMax5DI8, Nindx * FacI8[Task]);
                      RefMax5DR4 =
-                         std::max(RefMax5DR4, (Nindx + EpsR4) * FacR4[Task]);
+                         Math::max(RefMax5DR4, (Nindx + EpsR4) * FacR4[Task]);
                      RefMax5DR8 =
-                         std::max(RefMax5DR8, (Nindx + EpsR8) * FacR8[Task]);
+                         Math::max(RefMax5DR8, (Nindx + EpsR8) * FacR8[Task]);
                   }
                }
             }

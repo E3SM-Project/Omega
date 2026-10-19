@@ -12,6 +12,7 @@
 #include "Error.h"
 #include "Field.h"
 #include "Logging.h"
+#include "MathUtils.h"
 #include "OceanState.h"
 #include "OmegaKokkos.h"
 #include "Reductions.h"
@@ -53,7 +54,7 @@ void SpatialWeights::init(const std::string &InName, const HorzMesh *InMesh,
                  InputName);
 
    Horizontal               = (NDims == 1);
-   std::string HorizDimName = DimNames[std::max(0, NDims - 2)];
+   std::string HorizDimName = DimNames[Math::max(0, NDims - 2)];
    I4 NEntities             = 0;
    Array1DReal EntityArea;
    Array2DReal EntityMask;

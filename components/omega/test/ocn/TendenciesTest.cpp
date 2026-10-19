@@ -17,6 +17,7 @@
 #include "KPPMix.h"
 #include "Logging.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OceanTestCommon.h"
 #include "OmegaKokkos.h"
 #include "PGrad.h"
@@ -36,20 +37,21 @@ struct TestSetup {
    Real Radius = REarth;
 
    KOKKOS_FUNCTION Real pseudoThickness(Real Lon, Real Lat) const {
-      return (2 + std::cos(Lon) * std::pow(std::cos(Lat), 4));
+      return (2 + Math::cos(Lon) * Math::pow(Math::cos(Lat), 4));
    }
 
    KOKKOS_FUNCTION Real velocityX(Real Lon, Real Lat) const {
-      return -Radius * std::pow(std::sin(Lon), 2) * std::pow(std::cos(Lat), 3);
+      return -Radius * Math::pow(Math::sin(Lon), 2) *
+             Math::pow(Math::cos(Lat), 3);
    }
 
    KOKKOS_FUNCTION Real velocityY(Real Lon, Real Lat) const {
-      return -4 * Radius * std::sin(Lon) * std::cos(Lon) *
-             std::pow(std::cos(Lat), 3) * std::sin(Lat);
+      return -4 * Radius * Math::sin(Lon) * Math::cos(Lon) *
+             Math::pow(Math::cos(Lat), 3) * Math::sin(Lat);
    }
 
    KOKKOS_FUNCTION Real tracer(Real Lon, Real Lat) const {
-      return (2 - std::cos(Lon) * std::pow(std::cos(Lat), 4));
+      return (2 - Math::cos(Lon) * Math::pow(Math::cos(Lat), 4));
    }
 };
 
@@ -309,8 +311,8 @@ int testTendencies() {
                  for (int K = KChunk; K <= KMax; K += VecLength) {
                     if (K >= KMin) {
                        LocNormalVelocityTendDiff(IEdge, K) =
-                           Kokkos::abs(LocNormalVelocityTend(IEdge, K) -
-                                       LocBaselineNormalVelocityTend(IEdge, K));
+                           Math::abs(LocNormalVelocityTend(IEdge, K) -
+                                     LocBaselineNormalVelocityTend(IEdge, K));
                     }
                  }
               });
@@ -320,8 +322,8 @@ int testTendencies() {
        sum(NormalVelocityTendDiff, Mesh->NEdgesOwned, VCoord->MinLayerEdgeBot,
            VCoord->MaxLayerEdgeTop);
    constexpr Real DeltaATol = 1e-12_Real;
-   if (!Kokkos::isfinite(NormVelTendDelta) ||
-       isApprox(NormVelTendDelta, 0._Real, 0._Real, DeltaATol)) {
+   if (!Math::isfinite(NormVelTendDelta) ||
+       Math::isApprox(NormVelTendDelta, 0._Real, 0._Real, DeltaATol)) {
       Err++;
       LOG_ERROR("TendenciesTest: SfcStress forcing did not change "
                 "NormalVelocityTend");
@@ -330,7 +332,7 @@ int testTendencies() {
    const Real NormVelTendSum =
        sum(DefTendencies->NormalVelocityTend, Mesh->NEdgesOwned,
            VCoord->MinLayerEdgeBot, VCoord->MaxLayerEdgeTop);
-   if (!Kokkos::isfinite(NormVelTendSum) || NormVelTendSum == 0) {
+   if (!Math::isfinite(NormVelTendSum) || NormVelTendSum == 0) {
       Err++;
       LOG_ERROR("TendenciesTest: NormVelTendSum FAIL");
    }
@@ -443,12 +445,12 @@ int testTendencies() {
              parallelForInner(
                  Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
                     LocPseudoThicknessTendDiff(ICell, K) =
-                        Kokkos::abs(LocPseudoThicknessTend(ICell, K) -
-                                    LocBaselinePseudoThicknessTend(ICell, K));
-                    LocTempTracerTendDiff(ICell, K) = Kokkos::abs(
+                        Math::abs(LocPseudoThicknessTend(ICell, K) -
+                                  LocBaselinePseudoThicknessTend(ICell, K));
+                    LocTempTracerTendDiff(ICell, K) = Math::abs(
                         LocTracerTend(TempTracerIndex, ICell, K) -
                         LocBaselineTracerTend(TempTracerIndex, ICell, K));
-                    LocSaltTracerTendDiff(ICell, K) = Kokkos::abs(
+                    LocSaltTracerTendDiff(ICell, K) = Math::abs(
                         LocTracerTend(SaltTracerIndex, ICell, K) -
                         LocBaselineTracerTend(SaltTracerIndex, ICell, K));
                  });
@@ -462,20 +464,20 @@ int testTendencies() {
                                    VCoord->MinLayerCell, VCoord->MaxLayerCell);
 
       constexpr Real FrazilDeltaATol = 1e-12_Real;
-      if (!Kokkos::isfinite(PseudoDelta) ||
-          isApprox(PseudoDelta, 0._Real, 0._Real, FrazilDeltaATol)) {
+      if (!Math::isfinite(PseudoDelta) ||
+          Math::isApprox(PseudoDelta, 0._Real, 0._Real, FrazilDeltaATol)) {
          Err++;
          LOG_ERROR("TendenciesTest: Frazil did not change "
                    "PseudoThicknessTend");
       }
-      if (!Kokkos::isfinite(TempDelta) ||
-          isApprox(TempDelta, 0._Real, 0._Real, FrazilDeltaATol)) {
+      if (!Math::isfinite(TempDelta) ||
+          Math::isApprox(TempDelta, 0._Real, 0._Real, FrazilDeltaATol)) {
          Err++;
          LOG_ERROR("TendenciesTest: Frazil did not change Temperature tracer "
                    "tendency");
       }
-      if (!Kokkos::isfinite(SaltDelta) ||
-          isApprox(SaltDelta, 0._Real, 0._Real, FrazilDeltaATol)) {
+      if (!Math::isfinite(SaltDelta) ||
+          Math::isApprox(SaltDelta, 0._Real, 0._Real, FrazilDeltaATol)) {
          Err++;
          LOG_ERROR("TendenciesTest: Frazil did not change Salinity tracer "
                    "tendency");
@@ -494,7 +496,7 @@ int testTendencies() {
    const Real PseudoThickTendSum =
        sum(DefTendencies->PseudoThicknessTend, NCellsOwned,
            VCoord->MinLayerCell, VCoord->MaxLayerCell);
-   if (!Kokkos::isfinite(PseudoThickTendSum) || PseudoThickTendSum == 0) {
+   if (!Math::isfinite(PseudoThickTendSum) || PseudoThickTendSum == 0) {
       Err++;
       LOG_ERROR("TendenciesTest: PseudoThickTend FAIL");
    }
@@ -502,7 +504,7 @@ int testTendencies() {
    const Real TracerTendSum =
        sum(DefTendencies->TracerTend, NTracers, NCellsOwned,
            VCoord->MinLayerCell, VCoord->MaxLayerCell);
-   if (!Kokkos::isfinite(TracerTendSum) || TracerTendSum == 0) {
+   if (!Math::isfinite(TracerTendSum) || TracerTendSum == 0) {
       Err++;
       LOG_ERROR("TendenciesTest: TracerTendSum FAIL");
    }
@@ -683,23 +685,23 @@ int testSfcTracerForcing() {
    constexpr Real RelTol = 1.0e-10_Real;
    constexpr Real AbsTol = 1.0e-12_Real; // flux precision is ~e-15
 
-   if (!isApprox(ComputedTempTend, ExpectedTempTend, RelTol, AbsTol)) {
+   if (!Math::isApprox(ComputedTempTend, ExpectedTempTend, RelTol, AbsTol)) {
       Err++;
       LOG_ERROR("TendenciesTest: SfcTracerForcing temp tendency FAIL");
       LOG_ERROR("  Expected: {},  Computed: {}, Diff: {}", ExpectedTempTend,
                 ComputedTempTend,
-                Kokkos::abs(ComputedTempTend - ExpectedTempTend));
+                Math::abs(ComputedTempTend - ExpectedTempTend));
    } else {
       LOG_INFO("TendenciesTest: SfcTracerForcing temp tendency PASS");
    }
 
    // Check salinity tendency
-   if (!isApprox(ComputedSaltTend, ExpectedSaltTend, RelTol, AbsTol)) {
+   if (!Math::isApprox(ComputedSaltTend, ExpectedSaltTend, RelTol, AbsTol)) {
       Err++;
       LOG_ERROR("TendenciesTest: SfcTracerForcing salt tendency FAIL");
       LOG_INFO("  Expected: {},  Computed: {}, Diff: {}", ExpectedSaltTend,
                ComputedSaltTend,
-               Kokkos::abs(ComputedSaltTend - ExpectedSaltTend));
+               Math::abs(ComputedSaltTend - ExpectedSaltTend));
    } else {
       LOG_INFO("TendenciesTest: SfcTracerForcing salt tendency PASS");
    }
@@ -811,8 +813,8 @@ int testKPPNonLocalVerticalMixGate() {
    DefTendencies->KPPNonLocalTracerFlux.Enabled = true;
    const Real BothDisabledTendency              = ComputeTempTendency();
 
-   if (!isApprox(BothDisabledTendency, BaselineTendency, 1.0e-10_Real,
-                 1.0e-12_Real)) {
+   if (!Math::isApprox(BothDisabledTendency, BaselineTendency, 1.0e-10_Real,
+                       1.0e-12_Real)) {
       Err++;
       LOG_ERROR("TendenciesTest: KPP non-local flux was applied with both "
                 "vertical mixing flags disabled");
@@ -820,8 +822,8 @@ int testKPPNonLocalVerticalMixGate() {
 
    DefTendencies->VelVertMixTendencyEnable = true;
    const Real VelocityOnlyTendency         = ComputeTempTendency();
-   if (!isApprox(VelocityOnlyTendency, BaselineTendency, 1.0e-10_Real,
-                 1.0e-12_Real)) {
+   if (!Math::isApprox(VelocityOnlyTendency, BaselineTendency, 1.0e-10_Real,
+                       1.0e-12_Real)) {
       Err++;
       LOG_ERROR("TendenciesTest: KPP non-local flux was applied with only "
                 "velocity vertical mixing enabled");
@@ -836,9 +838,10 @@ int testKPPNonLocalVerticalMixGate() {
    const Real ExpectedTendencyDelta =
        SurfaceFluxHost(TempIndex, ICellTest) * (Real(KTest) - Real(KTest + 1));
    const Real ComputedTendencyDelta = EnabledTendency - BaselineTendency;
-   if (isApprox(ExpectedTendencyDelta, 0.0_Real, 0.0_Real, 1.0e-12_Real) ||
-       !isApprox(ComputedTendencyDelta, ExpectedTendencyDelta, 1.0e-10_Real,
-                 1.0e-12_Real)) {
+   if (Math::isApprox(ExpectedTendencyDelta, 0.0_Real, 0.0_Real,
+                      1.0e-12_Real) ||
+       !Math::isApprox(ComputedTendencyDelta, ExpectedTendencyDelta,
+                       1.0e-10_Real, 1.0e-12_Real)) {
       Err++;
       LOG_ERROR("TendenciesTest: KPP non-local flux did not run with tracer "
                 "vertical mixing enabled (expected {}, got {})",
@@ -994,12 +997,12 @@ int testSfcThicknessForcing() {
    constexpr Real AbsTol = 1.0e-12_Real;
 
    // Check thickness tendency
-   if (!isApprox(ComputedThickTend, ExpectedThickTend, RelTol, AbsTol)) {
+   if (!Math::isApprox(ComputedThickTend, ExpectedThickTend, RelTol, AbsTol)) {
       Err++;
       LOG_ERROR("TendenciesTest: SfcThicknessForcing thickness tendency FAIL");
       LOG_INFO("  Expected: {},  Computed: {}, Diff: {}", ExpectedThickTend,
                ComputedThickTend,
-               Kokkos::abs(ComputedThickTend - ExpectedThickTend));
+               Math::abs(ComputedThickTend - ExpectedThickTend));
    } else {
       LOG_INFO("TendenciesTest: SfcThicknessForcing thickness tendency PASS");
    }
