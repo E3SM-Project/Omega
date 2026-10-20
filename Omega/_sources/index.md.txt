@@ -55,6 +55,7 @@ userGuide/PGrad
 userGuide/Timing
 userGuide/VerticalMixingCoeff
 userGuide/KPPMix
+userGuide/SubmesoEddies
 userGuide/VertAdv
 userGuide/Forcing
 userGuide/Frazil
@@ -108,6 +109,7 @@ devGuide/PGrad
 devGuide/Timing
 devGuide/VerticalMixingCoeff
 devGuide/KPPMix
+devGuide/SubmesoEddies
 devGuide/VertAdv
 devGuide/Forcing
 devGuide/Frazil

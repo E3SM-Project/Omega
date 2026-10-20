@@ -31,6 +31,8 @@ The following auxiliary variables are currently available:
 | Del2TracersCell | laplacian of tracers on cells
 | SurfTracerRestoringDiffsCell | surface tracer restoring differences on cells
 | TracersMonthlySurfClimoCell | monthly climatology values to restore to for surface tracer on cells
+| DenMixLayerDepth | density-threshold mixed-layer depth on cells
+
 
 ## Kinetic energy on cells
 
