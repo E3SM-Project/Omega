@@ -1401,9 +1401,9 @@ void checkFiniteDiffSpecVolDerivs() {
             const Real FDSa = (SpecVolAt(CtVal, SaVal + DSaStep, PPa) -
                                SpecVolAt(CtVal, SaVal - DSaStep, PPa)) /
                               (2.0_Real * DSaStep);
-            const Real FDP = (SpecVolAt(CtVal, SaVal, PPa + DPStep) -
-                              SpecVolAt(CtVal, SaVal, PPa - DPStep)) /
-                             (2.0_Real * DPStep);
+            const Real FDP  = (SpecVolAt(CtVal, SaVal, PPa + DPStep) -
+                               SpecVolAt(CtVal, SaVal, PPa - DPStep)) /
+                              (2.0_Real * DPStep);
 
             if (!isApprox(SpecVolDCt, FDCt, FDRTol, FDCtATol)) {
                LOG_ERROR("EosTest: SpecVolDCt disagrees with finite difference "

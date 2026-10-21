@@ -33,23 +33,29 @@ with the same arguments you would normally use for `git commit`.
 
 ## Linting C++ Code
 
-The tools used to lint C++ code are from
-[cmake-pre-commit-hooks](https://github.com/Takishima/cmake-pre-commit-hooks)
-and include [clang-format](https://clang.llvm.org/docs/ClangFormat.html),
-[clang-tidy](https://clang.llvm.org/extra/clang-tidy/),
-[cppcheck](https://cppcheck.sourceforge.io/), and
-[include-what-you-use](https://github.com/include-what-you-use/include-what-you-use).
-(Currently `clang-tidy`, `cppcheck` and `include-what-you-use` are disabled
-but they will be enabled shortly.)
+C++ code is formatted with
+[clang-format](https://clang.llvm.org/docs/ClangFormat.html) using the style in
+`components/omega/.clang-format`.
 
-You can run these tools individually if you need to:
+The `pre-commit` hook installs its own copy of `clang-format` at the version
+pinned in `.pre-commit-config.yaml`, so the result does not depend on which
+`clang-format` is on your path. Different major versions of `clang-format`
+format some code differently. If your editor formats on save, point it at the
+`clang-format` in the `omega_dev` environment, which is pinned to the same
+LLVM release (in VS Code, for example, set `C_Cpp.clang_format_path`).
+
+You can run the formatter on its own with:
 ```bash
 pre-commit run clang-format --all-files
-pre-commit run clang-tidy --all-files
-pre-commit run cppcheck --all-files
-pre-commit run include-what-you-use --all-files
 ```
-You can specify one more more files instead of `--all-files`.
+You can specify one or more files instead of `--all-files`.
+
+When the pinned version changes, the code is reformatted in a single commit
+that is listed in `.git-blame-ignore-revs` at the top of the repository. To
+have `git blame` skip such commits, run this once in your clone:
+```bash
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
 
 ## Linting Python Code
 

@@ -1,14 +1,12 @@
 files: ^components/omega/
 repos:
-  - repo: https://github.com/Takishima/cmake-pre-commit-hooks
-    rev: v1.9.6
+  # Installs its own pinned clang-format, independent of the one on the path.
+  # Keep the version in sync with components/omega/dev-conda.txt.
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v22.1.8
     hooks:
       - id: clang-format
-        args: ["-i"]
-      # - id: clang-tidy
-      #   args: [--checks=readability-magic-numbers,--warnings-as-errors=*]
-      # - id: cppcheck
-      # - id: include-what-you-use
+        types_or: [c, c++, cuda]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
