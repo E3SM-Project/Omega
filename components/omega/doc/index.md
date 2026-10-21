@@ -127,6 +127,7 @@ design/Analysis
 design/Broadcast
 design/Config
 design/Coupling
+design/CppLinting
 design/DataTypes
 design/Decomp
 design/Driver
