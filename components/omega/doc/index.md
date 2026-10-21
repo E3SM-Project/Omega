@@ -143,6 +143,7 @@ design/PGrad
 design/IO
 design/IOStreams
 design/Reductions
+design/ReorgDocs
 design/State
 design/StateValidation
 design/SubmesoscaleEddies
