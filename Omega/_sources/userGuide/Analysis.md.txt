@@ -21,19 +21,62 @@ The Analysis module supports two output modes:
 - **Temporal reduction:** Time-averaged output over a specified period (e.g.,
  daily or monthly means). Fields are accumulated each timestep; the reduction
  is finalized and written at the end of each period. Temporal reduction is
- configured with the `ReductionPeriod` parameter. When using temporal
- reduction, the reduction period must be evenly divisible into the restart
- interval. This ensures that temporal reduction states can be properly
- checkpointed and restored. For calendars with variable month lengths, restart
- intervals based on months can only be divided by reduction periods based on
- months or periods of 1 day or whole-number fractions of a day, e.g., 6 hours.
- The Analysis system validates that the reduction period divides evenly into
- the restart interval during initialization and will abort if this requirement
- is violated.
+ configured with the `ReductionPeriod` parameter. A reduction period may span a
+ restart: the mid-period accumulation state (the partial sum and sample count)
+ is checkpointed in the restart file and restored on continuation, so the final
+ average is identical to an uninterrupted run. There is no requirement that the
+ reduction period divide evenly into the restart interval.
 
 - **Instantaneous output:** Snapshots of analysis fields written at specified
  frequencies (e.g., every 6 hours). Instantaneous output is configured with the
  `SnapshotPeriod` parameter.
+
+(omega-user-analysis-sampling-interval)=
+### Sampling interval for temporal reductions
+
+The `SamplingInterval` parameter set the temporal reduction accumulation
+cadence. The values `dt` and `timestep` are accepted as keys to accumulate
+a sample on **every** model timestep. Setting `SamplingInterval` to one of the
+accepted forms below instead collects samples at a coarser cadence, so the time
+average is formed from fewer, evenly-spaced samples. This is the in-model
+equivalent of MPAS-Ocean's driver-level `compute_interval` for the
+`time_series_stats` analysis member.
+
+`SamplingInterval` accepts three forms, distinguished by suffix:
+
+| Form               | Example        | Meaning                              |
+|--------------------|----------------|--------------------------------------|
+| TimeInterval units | `6hour`        | a fixed time interval between samples |
+| Timestep count     | `4steps`       | every 4 model timesteps              |
+| Samples per period | `8perPeriod`   | 8 evenly-spaced samples per reduction period |
+
+Behavior and constraints:
+
+- **Omitted/empty:** sample every timestep.
+- **Phasing:** the first sample falls one `SamplingInterval` after the start of
+  each reduction period (samples at `PeriodStart + n*SamplingInterval`).
+- **Snap-to-step:** like all model alarms, sampling fires on the first timestep
+  at or after each target time. A `SamplingInterval` that is not a whole
+  multiple of the timestep therefore snaps to the next step, giving a bounded
+  sub-timestep phase error (zero when the interval is a timestep multiple).
+- **Samples per period:** `<n>perPeriod` divides a period given in days or
+  shorter units into `n` equal intervals. Months vary in length, so for a
+  period given in months or years `n` must divide the number of months, as
+  in `3perPeriod` for `1Year`; otherwise use a fixed interval such as `1day`.
+- **Period-divisibility (required):** the reduction period must be evenly
+  divisible by the sampling interval, so the simple count-mean remains an
+  unbiased estimate of the time average. A violation aborts the run. **This
+  check is unrelated to the restart interval** — temporal reductions may still
+  span restarts with no restart-interval divisibility requirement.
+- **Accuracy caveat:** the averaged value stays unbiased, but when the interval
+  is not a timestep multiple the per-period sample count may differ by ±1
+  between periods (a boundary-adjacent sample can snap to either side). This
+  per-period count variation is **reproducible across restarts**: the sample
+  schedule is anchored to the absolute clock start, so an exact-restart (ERS)
+  run reconstructs the identical boundaries and reproduces the straight-through
+  result bit-for-bit. When the interval is a timestep multiple, the count is
+  constant and this does not arise at all.
+
 
 ## Configuration Overview
 
@@ -70,8 +113,9 @@ output)
 
 All groups automatically handle intermediate operator sharing—if multiple
 chains require the same intermediate result, it is computed once and reused.
-Groups also validate that temporal reduction periods divide evenly into the
-restart interval to ensure proper checkpoint/restart behavior.
+Temporal reduction operators automatically checkpoint their mid-period
+accumulation state to the restart file, so reduction periods may span restarts
+without any divisibility requirement.
 
 ### Stream Parameters
 
@@ -117,6 +161,7 @@ Omega:
       Fields: [Temperature, GeomZInterface, Salinity, NormalVelocity]
       SpatialStats: [Mean, Max, Min, StdDev]
       ReductionPeriod: [1Day, 1Month]
+      SamplingInterval: "dt"
       SnapshotPeriod: [6Hour]
       Filename: global.stats.$Y.nc
       Stream:
@@ -133,9 +178,13 @@ Omega:
 - **SpatialStats:** Required list of spatial operators.
 
 - **ReductionPeriod:** Optional list of time periods for temporal reduction
-  (e.g., `1Hour`, `1Day`, `1Month`, `1Year`). Each period must divide evenly
-  into the restart interval. At least one of `ReductionPeriod` or
-  `SnapshotPeriod` must be specified.
+  (e.g., `1Hour`, `1Day`, `1Month`, `1Year`). At least one of `ReductionPeriod`
+  or `SnapshotPeriod` must be specified.
+
+- **SamplingInterval:** Cadence at which the temporal reductions accumulate
+  samples; see
+  [Sampling interval for temporal reductions](#omega-user-analysis-sampling-interval).
+  Empty, `dt`, or `timestep` samples every timestep.
 
 - **SnapshotPeriod:** Optional list of intervals for instantaneous output
   (e.g., `1Hour`, `6Hour`, `1Day`). At least one of `ReductionPeriod` or
@@ -178,6 +227,7 @@ Omega:
       Regions: [Global]
       Transects: []
       ReductionPeriod: [1Month]
+      SamplingInterval: "dt"
       SnapshotPeriod: [1Day]
       Filename: moc.$Y-$M.nc
       Stream:
@@ -205,8 +255,12 @@ Omega:
   edges. Transect masks are not yet implemented.
 
 - **ReductionPeriod:** Optional list of time periods for temporal reduction.
-  Each period must divide evenly into the restart interval. At least one of
-  `ReductionPeriod` or `SnapshotPeriod` must be specified.
+  At least one of `ReductionPeriod` or `SnapshotPeriod` must be specified.
+
+- **SamplingInterval:** Cadence at which the temporal reductions accumulate
+  samples; see
+  [Sampling interval for temporal reductions](#omega-user-analysis-sampling-interval).
+  Empty, `dt`, or `timestep` samples every timestep.
 
 - **SnapshotPeriod:** Optional list of intervals for instantaneous output. At
   least one of `ReductionPeriod` or `SnapshotPeriod` must be specified.
@@ -237,9 +291,10 @@ Computes monthly time averages of a set of requested global fields. Unlike
 `GlobalStats`, no spatial reduction is applied: each requested field is passed
 directly to a temporal-reduction (`TimeMean`) operator. The averaging period
 defaults to one month, but may be overridden with the optional
-`ReductionPeriod` parameter. This mirrors the `timeSeriesStatsMonthly` analysis
-member in MPAS-Ocean, which delivers monthly means of prognostic and derived
-fields.
+`ReductionPeriod` parameter. The `MonghtlyAverages` group is specifically for
+temporal reductions, any defined `SnapshotPeriod` parameter is ignored. This
+group mirrors the `timeSeriesStatsMonthly` analysis member in MPAS-Ocean, which
+delivers monthly means of prognostic and derived fields.
 
 **Example:**
 
@@ -250,6 +305,7 @@ Omega:
       Enable: true
       Fields: [Temperature, Salinity, NormalVelocity, PseudoThickness]
       ReductionPeriod: [1Month]   # optional; defaults to [1Month]
+      SamplingInterval: "dt"
       Filename: monthly.averages.$Y.nc
       Stream:
         FileFreq: 1
@@ -263,8 +319,12 @@ Omega:
 
 - **ReductionPeriod:** Optional list of time periods for temporal reduction
   (e.g., `1Day`, `1Month`, `1Year`). Defaults to `[1Month]` when not specified.
-  Each period must divide evenly into the restart interval. Any `SnapshotPeriod`
-  supplied for this group is ignored.
+  Any `SnapshotPeriod` supplied for this group is ignored.
+
+- **SamplingInterval:** Cadence at which the temporal reductions accumulate
+  samples; see
+  [Sampling interval for temporal reductions](#omega-user-analysis-sampling-interval).
+  Empty, `dt`, or `timestep` samples every timestep.
 
 **Output fields:**
 For each requested field, a time-averaged field is produced:
@@ -279,19 +339,24 @@ Automatically created and named:
 The default field list in `Default.yml` includes the core prognostic fields
 (`Temperature`, `Salinity`, `NormalVelocity`, `PseudoThickness`). Additional
 registered global fields may be requested by adding them to the `Fields` list.
-The averaging period must divide evenly into the restart interval, as described
-in the Temporal Reduction Period Constraint below.
+A reduction period may span a restart; see
+[Temporal Reduction and Restarts](#temporal-reduction-and-restarts) below.
 ```
 
 ## Usage Notes
 
-### Temporal Reduction Period Constraint
+### Temporal Reduction and Restarts
 
-When using temporal reduction (`ReductionPeriod`), the period must divide
-evenly into the restart interval to ensure proper checkpoint/restart behavior.
-The Analysis module validates this during initialization. For example, if the
-restart interval is 6 months, valid periods include `6hours`, `1Day`, `1Month`,
-`2Months`, `3Months`, and `6Months`, but `5Days` or `7Months` are invalid.
+Temporal reductions (`ReductionPeriod`) may span a model restart. There is no
+requirement that the reduction period divide evenly into the restart interval,
+so any combination of periods and restart intervals is valid (for example, a
+`1Month` average with a 10-day restart interval). When a restart is written in
+the middle of a reduction period, the mid-period accumulation state (the
+partial sum and the sample count) is checkpointed in the restart file and
+restored on continuation, so the final written average is identical to that of
+an uninterrupted run. Restart files written before this capability was added
+remain readable; a reduction that lacks checkpointed state simply begins a
+fresh accumulation period on restart.
 
 ### Field Availability
 

@@ -201,7 +201,7 @@ field(s).
 | `SpatialMax` | 1 | 1 | scalar with same type as input (`Array1D<InType>`, dimension `Scalar`) | `_SpatialMax` | — | Global maximum of the input field. |
 | `SpatialMean` | 1 | 1 | scalar (`Array1DReal`, dimension `Scalar`) | `_SpatialMean` | — | Global weighted mean of the input field: by area for a horizontal field, by mass for a layered one (see [Spatial weights](#omega-dev-analysis-spatial-weights)). |
 | `SpatialStdDev` | 2 (the field and its `_SpatialMean`) | 1 | scalar (`Array1DReal`, dimension `Scalar`) | `_SpatialStdDev` | — | Global weighted standard deviation of the input field, with the same weights as `SpatialMean`. Requires the field's `SpatialMean` as an upstream input, which is added to its input list automatically. |
-| `TimeMean` | 1 | 1 | same rank and dimensions as the input (`Real`) | `_TimeMean<period>` | `Period` (string, e.g. `"1Day"`) | Time average of the input field over a configurable period (e.g. `1Day`). Accumulates every time step and finalizes the mean when the period alarm rings. Output name embeds the period, e.g. `_TimeMean1Day`. |
+| `TimeMean` | 1 | 1 | same rank and dimensions as the input (`Real`) | `_TimeMean<period>` | `Period` (string, e.g. `"1Day"`); `SamplingInterval` (string, optional) | Time average of the input field over a configurable period (e.g. `1Day`). By default accumulates every time step; the optional `SamplingInterval` instead gates accumulation to a coarser cadence (see below). Finalizes the mean when the period alarm rings. Output name embeds the period, e.g. `_TimeMean1Day`. |
 | `BinaryMultiply` | 2 | 1 | same as first input | `_BinaryMultiply(<field2>)` | — | Element-wise multiplication of two fields. Supports vertical expansion (1D field replicated across vertical layers when multiplied with 2D/3D field). |
 | `HorzMean` | 1 | 1 | 1D Real (`Array1DReal`) over the input's vertical dimension | `_HorzMean` | `WeightField` (string, optional, default `AreaCell`) | Area-weighted horizontal mean per vertical layer/interface. |
 | `BinnedAccumulator` | 2 (data field, bin index field) | 1 | replaces horizontal dimension with `NumBins` | `_BinnedAccumulator(<binfield>)` | `NumBins` (I4) | Accumulates field values into spatial bins. Uses MPI reduction for global totals. Automatically applies regional mask if attached to input Field. |
@@ -211,6 +211,58 @@ field(s).
 | `PseudoToGeometric` | 1 | 1 | same as input | `_Geometric` | — | Converts pseudo-height coordinates to geometric coordinates using specific volume. Handles vertical grid staggering automatically. |
 | `ScalarMultiply` | 1 | 1 | same as input | `_ScalarMultiply(<value>)` | `Scalar` (string, parsed to Real) | Multiplies field by scalar constant. Can be used for unit conversions (e.g., ×1e-6 for Sverdrups). |
 | `TransectAccumulator` | 3 (data field, mask field, sign field) | 1 | 1D vertical profile | `_TransectAccumulator(<transect>)` | `TransectName` (string) | Accumulates transport across transect edges. Only supports 2D Real arrays for the data field. Uses MPI reduction for global totals. |
+
+(omega-dev-analysis-sampling-gate)=
+### Sampling gate for temporal reductions
+
+Temporal reduction operators (currently `TimeMeanOp`) inherit a reusable
+sampling gate from the `AnalysisOperator` base class. The base class provides:
+
+- `TimeInterval SamplingInterval`, `bool HasSamplingInterval`, and
+  `Alarm *SampleAlarm` members (sampling disabled by default).
+- `Alarm *getSampleAlarm()`, which returns `SampleAlarm` (null when sampling
+  every timestep).
+- `bool shouldSample(const TimeInstant &)`: returns `true` on every call when
+  no sampling interval is configured (`HasSamplingInterval == false`), so the
+  default path is bit-for-bit with the prior every-step behavior; otherwise it
+  returns `true` only on steps where `SampleAlarm` is ringing and resets the
+  alarm to schedule the next sample.
+
+`TimeMeanOp` wraps its accumulate block in `if (shouldSample(TimeStamp))`; the
+period-finalization logic runs **outside** this gate (every call) so a period
+boundary that lands on a non-sample step is still honored. The operator reads
+the `SamplingInterval` string from its own `Config` and, in `setPeriodAlarm()`
+(where the reduction period and model timestep are both available), normalizes
+the three accepted forms to a single `TimeInterval`:
+
+- `"<n>perPeriod"` → `PeriodInterval / n`, divided in seconds for a period
+  in days and in whole months for a period in months or years, since
+  `TimeInterval` division truncates calendar intervals
+- `"<n>steps"` → `n * ModelTimeStep`
+- otherwise parsed directly as a `TimeInterval` string (e.g. `"6hour"`)
+
+It then enforces the single constraint
+`PeriodInterval.isDivisibleBy(SamplingInterval)` (`ABORT_ERROR` on failure) and
+builds an operator-owned recurring `SampleAlarm` **anchored to the absolute
+clock start** (`Clock::getStartTime()`), attaching it to the model clock; the
+operator's destructor detaches it with `Clock::detachAlarm()`. The
+alarm is then seeded to the current time via `SampleAlarm->reset(getCurrentTime())`,
+which walks its boundaries forward to the first interval after "now". On a
+restart, `Clock::setCurrentTime()` resets it again, with the clock's other
+periodic alarms, once the restart time has been read. Because
+the boundary sequence `ClockStart + n*SamplingInterval` is a deterministic walk
+from a fixed origin, it is reconstructed identically on fresh starts and
+restarts, making arbitrary `SamplingInterval` values ERS-safe.
+
+No new restart state is needed: the sample schedule is reconstructed purely from
+the absolute clock start, `SamplingInterval`, and the current time, so a restart
+lands on the same boundary a straight-through run would hold.
+
+`Analysis::setComputeAlarms()` uses the sample alarm, in place of the
+every-step accumulation alarm, as the operator's accumulation alarm. Since
+compute alarms propagate upstream, the operators that feed a sampled reduction
+(for example, the MOC binning or a spatial mean) are also computed only on
+sample steps, as with MPAS-Ocean's `compute_interval`.
 
 (omega-dev-analysis-spatial-weights)=
 ### Spatial weights
@@ -418,9 +470,12 @@ Each `OperatorNode` carries a list of compute alarms in `ComputeAlarms`.
 - **Terminal operators** (those that write to one or more output streams)
   borrow the write alarm from each associated stream via
   `IOStream::getAlarm()`.
-- **Temporal reduction operators** additionally receive an accumulation alarm
-  that is created and owned by the `Analysis` instance and attached to the
-  model clock. The stream's write alarm serves as the period (output) alarm;
+- **Temporal reduction operators** additionally receive an accumulation alarm.
+  With a `SamplingInterval`, it is the operator's sample alarm (see
+  [Sampling gate](#omega-dev-analysis-sampling-gate)); otherwise it rings
+  every timestep and is created and owned by the `Analysis` instance and
+  attached to the model clock. The stream's write alarm serves as the period
+  (output) alarm;
   it is passed to the operator with `setPeriodAlarm()` so the operator knows
   when to finalize and reset its accumulator. Thus a temporal operator has
   two alarms: one that triggers accumulation and one that triggers
@@ -451,8 +506,7 @@ outputs. The base class provides helper structures and methods:
   them to a `Config` with `toConfig()`.
 - `createAnalysisGroupStreams()` groups the chains by their output
   characteristics (period and reduction type), creates the associated
-  IOStreams, associates operator output Fields with those streams, and
-  validates temporal reduction periods against the restart interval.
+  IOStreams, and associates operator output Fields with those streams.
 
 Concrete groups are dispatched by name in the `Analysis` constructor, which
 reads the `Analysis` configuration node, iterates over its child group nodes,
@@ -465,6 +519,42 @@ aborts. This is a first-version choice; the dispatch mechanism and support
 for user-defined composable groups are expected to be generalized in a future
 update.
 ```
+
+### Restart persistence for temporal reductions
+
+A temporal reduction may span a model restart (for example, a monthly mean
+when restarts are written every ten days). To keep the running average
+correct across such a boundary, each `TimeMeanOp` checkpoints its mid-period
+accumulation state in the restart file.
+
+Two pieces of state are persisted per operator, both as data Fields added to
+the existing `Restart` FieldGroup (the same mechanism other modules such as
+`OceanState`, `Tracers`, and `VertCoord` already use):
+
+1. The partial accumulated sum — the operator's existing output array is
+   attached directly to a restart Field (no copy), since that array already
+   holds the running sum mid-period.
+2. `NumAccum` — a one-element `I4` data Field holding the sample count. A data
+   Field (not metadata) is required because Field-level metadata is written
+   but not read back on restart.
+
+The restart Fields are created at the end of the `TimeMeanOp` constructor via
+the operator-private, non-virtual `createRestartFields()`; there is no
+base-class hook for it. Both Fields use `OptionalRead = true` for backward
+compatibility, so restart files written before this feature read cleanly with
+`NumAccum` left at `0` (a fresh period, i.e. the pre-existing behavior).
+
+`IsNewPeriod` is not stored; it is reconstructed as `(NumAccum == 0)`. The
+backing count array is kept in sync inline inside `TimeMeanOp::compute()`
+(the only place `NumAccum` is mutated), so the checkpoint is consistent
+regardless of when the restart write occurs. After a period finalizes the
+count is normalized to `0` to mark that no partial period is in progress.
+
+On restart, `Analysis::applyRestartState()` iterates the operator nodes and,
+for each operator reporting `needsRestart()`, derives `IsNewPeriod` from the
+restored `NumAccum`. It is a restart-only step, invoked in `OceanInit.cpp`
+after the restart read and gated on `ReadRestart` for standalone runs and
+`CoupledReadRestart` in coupled runs.
 
 ### GlobalStats
 

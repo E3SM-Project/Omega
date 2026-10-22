@@ -88,7 +88,10 @@
 <li class="toctree-l1"><a class="reference internal" href="Frazil.html">Frazil</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SfcCoupling.html">Surface Coupling</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Analysis</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#background">Background</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sampling-interval-for-temporal-reductions">Sampling interval for temporal reductions</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#configuration-overview">Configuration Overview</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#common-configuration-parameters">Common Configuration Parameters</a></li>
 </ul>
@@ -101,7 +104,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#usage-notes">Usage Notes</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#temporal-reduction-period-constraint">Temporal Reduction Period Constraint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#temporal-reduction-and-restarts">Temporal Reduction and Restarts</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#field-availability">Field Availability</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#intermediate-results">Intermediate Results</a></li>
 </ul>
@@ -249,19 +252,75 @@ using pre-defined bundled groups will persist as convenient defaults.</p>
 <li><p><strong>Temporal reduction:</strong> Time-averaged output over a specified period (e.g.,
 daily or monthly means). Fields are accumulated each timestep; the reduction
 is finalized and written at the end of each period. Temporal reduction is
-configured with the <code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> parameter. When using temporal
-reduction, the reduction period must be evenly divisible into the restart
-interval. This ensures that temporal reduction states can be properly
-checkpointed and restored. For calendars with variable month lengths, restart
-intervals based on months can only be divided by reduction periods based on
-months or periods of 1 day or whole-number fractions of a day, e.g., 6 hours.
-The Analysis system validates that the reduction period divides evenly into
-the restart interval during initialization and will abort if this requirement
-is violated.</p></li>
+configured with the <code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> parameter. A reduction period may span a
+restart: the mid-period accumulation state (the partial sum and sample count)
+is checkpointed in the restart file and restored on continuation, so the final
+average is identical to an uninterrupted run. There is no requirement that the
+reduction period divide evenly into the restart interval.</p></li>
 <li><p><strong>Instantaneous output:</strong> Snapshots of analysis fields written at specified
 frequencies (e.g., every 6 hours). Instantaneous output is configured with the
 <code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code> parameter.</p></li>
 </ul>
+<section id="sampling-interval-for-temporal-reductions">
+<span id="omega-user-analysis-sampling-interval"></span><h3>Sampling interval for temporal reductions<a class="headerlink" href="#sampling-interval-for-temporal-reductions" title="Permalink to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">SamplingInterval</span></code> parameter set the temporal reduction accumulation
+cadence. The values <code class="docutils literal notranslate"><span class="pre">dt</span></code> and <code class="docutils literal notranslate"><span class="pre">timestep</span></code> are accepted as keys to accumulate
+a sample on <strong>every</strong> model timestep. Setting <code class="docutils literal notranslate"><span class="pre">SamplingInterval</span></code> to one of the
+accepted forms below instead collects samples at a coarser cadence, so the time
+average is formed from fewer, evenly-spaced samples. This is the in-model
+equivalent of MPAS-Ocean’s driver-level <code class="docutils literal notranslate"><span class="pre">compute_interval</span></code> for the
+<code class="docutils literal notranslate"><span class="pre">time_series_stats</span></code> analysis member.</p>
+<p><code class="docutils literal notranslate"><span class="pre">SamplingInterval</span></code> accepts three forms, distinguished by suffix:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Form</p></th>
+<th class="head"><p>Example</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>TimeInterval units</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">6hour</span></code></p></td>
+<td><p>a fixed time interval between samples</p></td>
+</tr>
+<tr class="row-odd"><td><p>Timestep count</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">4steps</span></code></p></td>
+<td><p>every 4 model timesteps</p></td>
+</tr>
+<tr class="row-even"><td><p>Samples per period</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">8perPeriod</span></code></p></td>
+<td><p>8 evenly-spaced samples per reduction period</p></td>
+</tr>
+</tbody>
+</table>
+<p>Behavior and constraints:</p>
+<ul class="simple">
+<li><p><strong>Omitted/empty:</strong> sample every timestep.</p></li>
+<li><p><strong>Phasing:</strong> the first sample falls one <code class="docutils literal notranslate"><span class="pre">SamplingInterval</span></code> after the start of
+each reduction period (samples at <code class="docutils literal notranslate"><span class="pre">PeriodStart</span> <span class="pre">+</span> <span class="pre">n*SamplingInterval</span></code>).</p></li>
+<li><p><strong>Snap-to-step:</strong> like all model alarms, sampling fires on the first timestep
+at or after each target time. A <code class="docutils literal notranslate"><span class="pre">SamplingInterval</span></code> that is not a whole
+multiple of the timestep therefore snaps to the next step, giving a bounded
+sub-timestep phase error (zero when the interval is a timestep multiple).</p></li>
+<li><p><strong>Samples per period:</strong> <code class="docutils literal notranslate"><span class="pre">&lt;n&gt;perPeriod</span></code> divides a period given in days or
+shorter units into <code class="docutils literal notranslate"><span class="pre">n</span></code> equal intervals. Months vary in length, so for a
+period given in months or years <code class="docutils literal notranslate"><span class="pre">n</span></code> must divide the number of months, as
+in <code class="docutils literal notranslate"><span class="pre">3perPeriod</span></code> for <code class="docutils literal notranslate"><span class="pre">1Year</span></code>; otherwise use a fixed interval such as <code class="docutils literal notranslate"><span class="pre">1day</span></code>.</p></li>
+<li><p><strong>Period-divisibility (required):</strong> the reduction period must be evenly
+divisible by the sampling interval, so the simple count-mean remains an
+unbiased estimate of the time average. A violation aborts the run. <strong>This
+check is unrelated to the restart interval</strong> — temporal reductions may still
+span restarts with no restart-interval divisibility requirement.</p></li>
+<li><p><strong>Accuracy caveat:</strong> the averaged value stays unbiased, but when the interval
+is not a timestep multiple the per-period sample count may differ by ±1
+between periods (a boundary-adjacent sample can snap to either side). This
+per-period count variation is <strong>reproducible across restarts</strong>: the sample
+schedule is anchored to the absolute clock start, so an exact-restart (ERS)
+run reconstructs the identical boundaries and reproduces the straight-through
+result bit-for-bit. When the interval is a timestep multiple, the count is
+constant and this does not arise at all.</p></li>
+</ul>
+</section>
 </section>
 <section id="configuration-overview">
 <h2>Configuration Overview<a class="headerlink" href="#configuration-overview" title="Permalink to this heading"></a></h2>
@@ -297,8 +356,9 @@ output)</p></li>
 </ol>
 <p>All groups automatically handle intermediate operator sharing—if multiple
 chains require the same intermediate result, it is computed once and reused.
-Groups also validate that temporal reduction periods divide evenly into the
-restart interval to ensure proper checkpoint/restart behavior.</p>
+Temporal reduction operators automatically checkpoint their mid-period
+accumulation state to the restart file, so reduction periods may span restarts
+without any divisibility requirement.</p>
 <section id="stream-parameters">
 <h3>Stream Parameters<a class="headerlink" href="#stream-parameters" title="Permalink to this heading"></a></h3>
 <p>All AnalysisGroups support the optional <code class="docutils literal notranslate"><span class="pre">Stream</span></code> sub-node for customizing
@@ -338,6 +398,7 @@ CF <code class="docutils literal notranslate"><span class="pre">cell_methods</sp
 <span class="w">      </span><span class="nt">Fields</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Temperature</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">GeomZInterface</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Salinity</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">NormalVelocity</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="nt">SpatialStats</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Mean</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Max</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Min</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">StdDev</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="nt">ReductionPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1Day</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1Month</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">SamplingInterval</span><span class="p">:</span><span class="w"> </span><span class="s">"dt"</span>
 <span class="w">      </span><span class="nt">SnapshotPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">6Hour</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">global.stats.$Y.nc</span>
 <span class="w">      </span><span class="nt">Stream</span><span class="p">:</span>
@@ -352,9 +413,12 @@ CF <code class="docutils literal notranslate"><span class="pre">cell_methods</sp
 abort if a requested field does not exist.</p></li>
 <li><p><strong>SpatialStats:</strong> Required list of spatial operators.</p></li>
 <li><p><strong>ReductionPeriod:</strong> Optional list of time periods for temporal reduction
-(e.g., <code class="docutils literal notranslate"><span class="pre">1Hour</span></code>, <code class="docutils literal notranslate"><span class="pre">1Day</span></code>, <code class="docutils literal notranslate"><span class="pre">1Month</span></code>, <code class="docutils literal notranslate"><span class="pre">1Year</span></code>). Each period must divide evenly
-into the restart interval. At least one of <code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> or
-<code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code> must be specified.</p></li>
+(e.g., <code class="docutils literal notranslate"><span class="pre">1Hour</span></code>, <code class="docutils literal notranslate"><span class="pre">1Day</span></code>, <code class="docutils literal notranslate"><span class="pre">1Month</span></code>, <code class="docutils literal notranslate"><span class="pre">1Year</span></code>). At least one of <code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code>
+or <code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code> must be specified.</p></li>
+<li><p><strong>SamplingInterval:</strong> Cadence at which the temporal reductions accumulate
+samples; see
+<a class="reference internal" href="#omega-user-analysis-sampling-interval">Sampling interval for temporal reductions</a>.
+Empty, <code class="docutils literal notranslate"><span class="pre">dt</span></code>, or <code class="docutils literal notranslate"><span class="pre">timestep</span></code> samples every timestep.</p></li>
 <li><p><strong>SnapshotPeriod:</strong> Optional list of intervals for instantaneous output
 (e.g., <code class="docutils literal notranslate"><span class="pre">1Hour</span></code>, <code class="docutils literal notranslate"><span class="pre">6Hour</span></code>, <code class="docutils literal notranslate"><span class="pre">1Day</span></code>). At least one of <code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> or
 <code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code> must be specified.</p></li>
@@ -396,6 +460,7 @@ sievert).</p>
 <span class="w">      </span><span class="nt">Regions</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Global</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="nt">Transects</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
 <span class="w">      </span><span class="nt">ReductionPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1Month</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">SamplingInterval</span><span class="p">:</span><span class="w"> </span><span class="s">"dt"</span>
 <span class="w">      </span><span class="nt">SnapshotPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1Day</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">moc.$Y-$M.nc</span>
 <span class="w">      </span><span class="nt">Stream</span><span class="p">:</span>
@@ -418,8 +483,11 @@ computation (default: <code class="docutils literal notranslate"><span class="pr
 function of depth only by accumulating transport across specified transect
 edges. Transect masks are not yet implemented.</p></li>
 <li><p><strong>ReductionPeriod:</strong> Optional list of time periods for temporal reduction.
-Each period must divide evenly into the restart interval. At least one of
-<code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> or <code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code> must be specified.</p></li>
+At least one of <code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> or <code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code> must be specified.</p></li>
+<li><p><strong>SamplingInterval:</strong> Cadence at which the temporal reductions accumulate
+samples; see
+<a class="reference internal" href="#omega-user-analysis-sampling-interval">Sampling interval for temporal reductions</a>.
+Empty, <code class="docutils literal notranslate"><span class="pre">dt</span></code>, or <code class="docutils literal notranslate"><span class="pre">timestep</span></code> samples every timestep.</p></li>
 <li><p><strong>SnapshotPeriod:</strong> Optional list of intervals for instantaneous output. At
 least one of <code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> or <code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code> must be specified.</p></li>
 </ul>
@@ -450,9 +518,10 @@ use once the mask fields are implemented in Omega.</p>
 <code class="docutils literal notranslate"><span class="pre">GlobalStats</span></code>, no spatial reduction is applied: each requested field is passed
 directly to a temporal-reduction (<code class="docutils literal notranslate"><span class="pre">TimeMean</span></code>) operator. The averaging period
 defaults to one month, but may be overridden with the optional
-<code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> parameter. This mirrors the <code class="docutils literal notranslate"><span class="pre">timeSeriesStatsMonthly</span></code> analysis
-member in MPAS-Ocean, which delivers monthly means of prognostic and derived
-fields.</p>
+<code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code> parameter. The <code class="docutils literal notranslate"><span class="pre">MonghtlyAverages</span></code> group is specifically for
+temporal reductions, any defined <code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code> parameter is ignored. This
+group mirrors the <code class="docutils literal notranslate"><span class="pre">timeSeriesStatsMonthly</span></code> analysis member in MPAS-Ocean, which
+delivers monthly means of prognostic and derived fields.</p>
 <p><strong>Example:</strong></p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Omega</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">Analysis</span><span class="p">:</span>
@@ -460,6 +529,7 @@ fields.</p>
 <span class="w">      </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">      </span><span class="nt">Fields</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Temperature</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">Salinity</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">NormalVelocity</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">PseudoThickness</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="nt">ReductionPeriod</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1Month</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># optional; defaults to [1Month]</span>
+<span class="w">      </span><span class="nt">SamplingInterval</span><span class="p">:</span><span class="w"> </span><span class="s">"dt"</span>
 <span class="w">      </span><span class="nt">Filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">monthly.averages.$Y.nc</span>
 <span class="w">      </span><span class="nt">Stream</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">FileFreq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
@@ -472,8 +542,11 @@ fields.</p>
 if a requested field does not exist.</p></li>
 <li><p><strong>ReductionPeriod:</strong> Optional list of time periods for temporal reduction
 (e.g., <code class="docutils literal notranslate"><span class="pre">1Day</span></code>, <code class="docutils literal notranslate"><span class="pre">1Month</span></code>, <code class="docutils literal notranslate"><span class="pre">1Year</span></code>). Defaults to <code class="docutils literal notranslate"><span class="pre">[1Month]</span></code> when not specified.
-Each period must divide evenly into the restart interval. Any <code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code>
-supplied for this group is ignored.</p></li>
+Any <code class="docutils literal notranslate"><span class="pre">SnapshotPeriod</span></code> supplied for this group is ignored.</p></li>
+<li><p><strong>SamplingInterval:</strong> Cadence at which the temporal reductions accumulate
+samples; see
+<a class="reference internal" href="#omega-user-analysis-sampling-interval">Sampling interval for temporal reductions</a>.
+Empty, <code class="docutils literal notranslate"><span class="pre">dt</span></code>, or <code class="docutils literal notranslate"><span class="pre">timestep</span></code> samples every timestep.</p></li>
 </ul>
 <p><strong>Output fields:</strong>
 For each requested field, a time-averaged field is produced:</p>
@@ -491,20 +564,25 @@ Automatically created and named:</p>
 <p>The default field list in <code class="docutils literal notranslate"><span class="pre">Default.yml</span></code> includes the core prognostic fields
 (<code class="docutils literal notranslate"><span class="pre">Temperature</span></code>, <code class="docutils literal notranslate"><span class="pre">Salinity</span></code>, <code class="docutils literal notranslate"><span class="pre">NormalVelocity</span></code>, <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code>). Additional
 registered global fields may be requested by adding them to the <code class="docutils literal notranslate"><span class="pre">Fields</span></code> list.
-The averaging period must divide evenly into the restart interval, as described
-in the Temporal Reduction Period Constraint below.</p>
+A reduction period may span a restart; see
+<a class="reference internal" href="#temporal-reduction-and-restarts">Temporal Reduction and Restarts</a> below.</p>
 </div>
 </section>
 </section>
 <section id="usage-notes">
 <h2>Usage Notes<a class="headerlink" href="#usage-notes" title="Permalink to this heading"></a></h2>
-<section id="temporal-reduction-period-constraint">
-<h3>Temporal Reduction Period Constraint<a class="headerlink" href="#temporal-reduction-period-constraint" title="Permalink to this heading"></a></h3>
-<p>When using temporal reduction (<code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code>), the period must divide
-evenly into the restart interval to ensure proper checkpoint/restart behavior.
-The Analysis module validates this during initialization. For example, if the
-restart interval is 6 months, valid periods include <code class="docutils literal notranslate"><span class="pre">6hours</span></code>, <code class="docutils literal notranslate"><span class="pre">1Day</span></code>, <code class="docutils literal notranslate"><span class="pre">1Month</span></code>,
-<code class="docutils literal notranslate"><span class="pre">2Months</span></code>, <code class="docutils literal notranslate"><span class="pre">3Months</span></code>, and <code class="docutils literal notranslate"><span class="pre">6Months</span></code>, but <code class="docutils literal notranslate"><span class="pre">5Days</span></code> or <code class="docutils literal notranslate"><span class="pre">7Months</span></code> are invalid.</p>
+<section id="temporal-reduction-and-restarts">
+<h3>Temporal Reduction and Restarts<a class="headerlink" href="#temporal-reduction-and-restarts" title="Permalink to this heading"></a></h3>
+<p>Temporal reductions (<code class="docutils literal notranslate"><span class="pre">ReductionPeriod</span></code>) may span a model restart. There is no
+requirement that the reduction period divide evenly into the restart interval,
+so any combination of periods and restart intervals is valid (for example, a
+<code class="docutils literal notranslate"><span class="pre">1Month</span></code> average with a 10-day restart interval). When a restart is written in
+the middle of a reduction period, the mid-period accumulation state (the
+partial sum and the sample count) is checkpointed in the restart file and
+restored on continuation, so the final written average is identical to that of
+an uninterrupted run. Restart files written before this capability was added
+remain readable; a reduction that lacks checkpointed state simply begins a
+fresh accumulation period on restart.</p>
 </section>
 <section id="field-availability">
 <h3>Field Availability<a class="headerlink" href="#field-availability" title="Permalink to this heading"></a></h3>

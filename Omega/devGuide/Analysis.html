@@ -149,6 +149,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#built-in-operators">Built-in operators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sampling-gate-for-temporal-reductions">Sampling gate for temporal reductions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#spatial-weights">Spatial weights</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#output-metadata">Output metadata</a></li>
 </ul>
@@ -157,6 +158,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#operator-chains-dependencies-and-caching">Operator chains, dependencies, and caching</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#alarm-based-scheduling">Alarm-based scheduling</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#analysis-groups">Analysis groups</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#restart-persistence-for-temporal-reductions">Restart persistence for temporal reductions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#globalstats">GlobalStats</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#moc">MOC</a></li>
 </ul>
@@ -473,8 +475,8 @@ field(s).</p>
 <td><p>1</p></td>
 <td><p>same rank and dimensions as the input (<code class="docutils literal notranslate"><span class="pre">Real</span></code>)</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">_TimeMean&lt;period&gt;</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">Period</span></code> (string, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;1Day&quot;</span></code>)</p></td>
-<td><p>Time average of the input field over a configurable period (e.g. <code class="docutils literal notranslate"><span class="pre">1Day</span></code>). Accumulates every time step and finalizes the mean when the period alarm rings. Output name embeds the period, e.g. <code class="docutils literal notranslate"><span class="pre">_TimeMean1Day</span></code>.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Period</span></code> (string, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;1Day&quot;</span></code>); <code class="docutils literal notranslate"><span class="pre">SamplingInterval</span></code> (string, optional)</p></td>
+<td><p>Time average of the input field over a configurable period (e.g. <code class="docutils literal notranslate"><span class="pre">1Day</span></code>). By default accumulates every time step; the optional <code class="docutils literal notranslate"><span class="pre">SamplingInterval</span></code> instead gates accumulation to a coarser cadence (see below). Finalizes the mean when the period alarm rings. Output name embeds the period, e.g. <code class="docutils literal notranslate"><span class="pre">_TimeMean1Day</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BinaryMultiply</span></code></p></td>
 <td><p>2</p></td>
@@ -550,6 +552,55 @@ field(s).</p>
 </tr>
 </tbody>
 </table>
+<section id="sampling-gate-for-temporal-reductions">
+<span id="omega-dev-analysis-sampling-gate"></span><h3>Sampling gate for temporal reductions<a class="headerlink" href="#sampling-gate-for-temporal-reductions" title="Permalink to this heading"></a></h3>
+<p>Temporal reduction operators (currently <code class="docutils literal notranslate"><span class="pre">TimeMeanOp</span></code>) inherit a reusable
+sampling gate from the <code class="docutils literal notranslate"><span class="pre">AnalysisOperator</span></code> base class. The base class provides:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TimeInterval</span> <span class="pre">SamplingInterval</span></code>, <code class="docutils literal notranslate"><span class="pre">bool</span> <span class="pre">HasSamplingInterval</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">Alarm</span> <span class="pre">*SampleAlarm</span></code> members (sampling disabled by default).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Alarm</span> <span class="pre">*getSampleAlarm()</span></code>, which returns <code class="docutils literal notranslate"><span class="pre">SampleAlarm</span></code> (null when sampling
+every timestep).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bool</span> <span class="pre">shouldSample(const</span> <span class="pre">TimeInstant</span> <span class="pre">&amp;)</span></code>: returns <code class="docutils literal notranslate"><span class="pre">true</span></code> on every call when
+no sampling interval is configured (<code class="docutils literal notranslate"><span class="pre">HasSamplingInterval</span> <span class="pre">==</span> <span class="pre">false</span></code>), so the
+default path is bit-for-bit with the prior every-step behavior; otherwise it
+returns <code class="docutils literal notranslate"><span class="pre">true</span></code> only on steps where <code class="docutils literal notranslate"><span class="pre">SampleAlarm</span></code> is ringing and resets the
+alarm to schedule the next sample.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">TimeMeanOp</span></code> wraps its accumulate block in <code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">(shouldSample(TimeStamp))</span></code>; the
+period-finalization logic runs <strong>outside</strong> this gate (every call) so a period
+boundary that lands on a non-sample step is still honored. The operator reads
+the <code class="docutils literal notranslate"><span class="pre">SamplingInterval</span></code> string from its own <code class="docutils literal notranslate"><span class="pre">Config</span></code> and, in <code class="docutils literal notranslate"><span class="pre">setPeriodAlarm()</span></code>
+(where the reduction period and model timestep are both available), normalizes
+the three accepted forms to a single <code class="docutils literal notranslate"><span class="pre">TimeInterval</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;&lt;n&gt;perPeriod&quot;</span></code> → <code class="docutils literal notranslate"><span class="pre">PeriodInterval</span> <span class="pre">/</span> <span class="pre">n</span></code>, divided in seconds for a period
+in days and in whole months for a period in months or years, since
+<code class="docutils literal notranslate"><span class="pre">TimeInterval</span></code> division truncates calendar intervals</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;&lt;n&gt;steps&quot;</span></code> → <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">*</span> <span class="pre">ModelTimeStep</span></code></p></li>
+<li><p>otherwise parsed directly as a <code class="docutils literal notranslate"><span class="pre">TimeInterval</span></code> string (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;6hour&quot;</span></code>)</p></li>
+</ul>
+<p>It then enforces the single constraint
+<code class="docutils literal notranslate"><span class="pre">PeriodInterval.isDivisibleBy(SamplingInterval)</span></code> (<code class="docutils literal notranslate"><span class="pre">ABORT_ERROR</span></code> on failure) and
+builds an operator-owned recurring <code class="docutils literal notranslate"><span class="pre">SampleAlarm</span></code> <strong>anchored to the absolute
+clock start</strong> (<code class="docutils literal notranslate"><span class="pre">Clock::getStartTime()</span></code>), attaching it to the model clock; the
+operator’s destructor detaches it with <code class="docutils literal notranslate"><span class="pre">Clock::detachAlarm()</span></code>. The
+alarm is then seeded to the current time via <code class="docutils literal notranslate"><span class="pre">SampleAlarm-&gt;reset(getCurrentTime())</span></code>,
+which walks its boundaries forward to the first interval after “now”. On a
+restart, <code class="docutils literal notranslate"><span class="pre">Clock::setCurrentTime()</span></code> resets it again, with the clock’s other
+periodic alarms, once the restart time has been read. Because
+the boundary sequence <code class="docutils literal notranslate"><span class="pre">ClockStart</span> <span class="pre">+</span> <span class="pre">n*SamplingInterval</span></code> is a deterministic walk
+from a fixed origin, it is reconstructed identically on fresh starts and
+restarts, making arbitrary <code class="docutils literal notranslate"><span class="pre">SamplingInterval</span></code> values ERS-safe.</p>
+<p>No new restart state is needed: the sample schedule is reconstructed purely from
+the absolute clock start, <code class="docutils literal notranslate"><span class="pre">SamplingInterval</span></code>, and the current time, so a restart
+lands on the same boundary a straight-through run would hold.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Analysis::setComputeAlarms()</span></code> uses the sample alarm, in place of the
+every-step accumulation alarm, as the operator’s accumulation alarm. Since
+compute alarms propagate upstream, the operators that feed a sampled reduction
+(for example, the MOC binning or a spatial mean) are also computed only on
+sample steps, as with MPAS-Ocean’s <code class="docutils literal notranslate"><span class="pre">compute_interval</span></code>.</p>
+</section>
 <section id="spatial-weights">
 <span id="omega-dev-analysis-spatial-weights"></span><h3>Spatial weights<a class="headerlink" href="#spatial-weights" title="Permalink to this heading"></a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">SpatialMean</span></code> and <code class="docutils literal notranslate"><span class="pre">SpatialStdDev</span></code> weight each mesh entity by how much of the
@@ -748,9 +799,12 @@ version.</p>
 <li><p><strong>Terminal operators</strong> (those that write to one or more output streams)
 borrow the write alarm from each associated stream via
 <code class="docutils literal notranslate"><span class="pre">IOStream::getAlarm()</span></code>.</p></li>
-<li><p><strong>Temporal reduction operators</strong> additionally receive an accumulation alarm
-that is created and owned by the <code class="docutils literal notranslate"><span class="pre">Analysis</span></code> instance and attached to the
-model clock. The stream’s write alarm serves as the period (output) alarm;
+<li><p><strong>Temporal reduction operators</strong> additionally receive an accumulation alarm.
+With a <code class="docutils literal notranslate"><span class="pre">SamplingInterval</span></code>, it is the operator’s sample alarm (see
+<a class="reference internal" href="#omega-dev-analysis-sampling-gate">Sampling gate</a>); otherwise it rings
+every timestep and is created and owned by the <code class="docutils literal notranslate"><span class="pre">Analysis</span></code> instance and
+attached to the model clock. The stream’s write alarm serves as the period
+(output) alarm;
 it is passed to the operator with <code class="docutils literal notranslate"><span class="pre">setPeriodAlarm()</span></code> so the operator knows
 when to finalize and reset its accumulator. Thus a temporal operator has
 two alarms: one that triggers accumulation and one that triggers
@@ -781,8 +835,7 @@ to be overridden from the group configuration via <code class="docutils literal 
 them to a <code class="docutils literal notranslate"><span class="pre">Config</span></code> with <code class="docutils literal notranslate"><span class="pre">toConfig()</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">createAnalysisGroupStreams()</span></code> groups the chains by their output
 characteristics (period and reduction type), creates the associated
-IOStreams, associates operator output Fields with those streams, and
-validates temporal reduction periods against the restart interval.</p></li>
+IOStreams, and associates operator output Fields with those streams.</p></li>
 </ul>
 <p>Concrete groups are dispatched by name in the <code class="docutils literal notranslate"><span class="pre">Analysis</span></code> constructor, which
 reads the <code class="docutils literal notranslate"><span class="pre">Analysis</span></code> configuration node, iterates over its child group nodes,
@@ -795,6 +848,39 @@ aborts. This is a first-version choice; the dispatch mechanism and support
 for user-defined composable groups are expected to be generalized in a future
 update.</p>
 </div>
+<section id="restart-persistence-for-temporal-reductions">
+<h3>Restart persistence for temporal reductions<a class="headerlink" href="#restart-persistence-for-temporal-reductions" title="Permalink to this heading"></a></h3>
+<p>A temporal reduction may span a model restart (for example, a monthly mean
+when restarts are written every ten days). To keep the running average
+correct across such a boundary, each <code class="docutils literal notranslate"><span class="pre">TimeMeanOp</span></code> checkpoints its mid-period
+accumulation state in the restart file.</p>
+<p>Two pieces of state are persisted per operator, both as data Fields added to
+the existing <code class="docutils literal notranslate"><span class="pre">Restart</span></code> FieldGroup (the same mechanism other modules such as
+<code class="docutils literal notranslate"><span class="pre">OceanState</span></code>, <code class="docutils literal notranslate"><span class="pre">Tracers</span></code>, and <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> already use):</p>
+<ol class="arabic simple">
+<li><p>The partial accumulated sum — the operator’s existing output array is
+attached directly to a restart Field (no copy), since that array already
+holds the running sum mid-period.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NumAccum</span></code> — a one-element <code class="docutils literal notranslate"><span class="pre">I4</span></code> data Field holding the sample count. A data
+Field (not metadata) is required because Field-level metadata is written
+but not read back on restart.</p></li>
+</ol>
+<p>The restart Fields are created at the end of the <code class="docutils literal notranslate"><span class="pre">TimeMeanOp</span></code> constructor via
+the operator-private, non-virtual <code class="docutils literal notranslate"><span class="pre">createRestartFields()</span></code>; there is no
+base-class hook for it. Both Fields use <code class="docutils literal notranslate"><span class="pre">OptionalRead</span> <span class="pre">=</span> <span class="pre">true</span></code> for backward
+compatibility, so restart files written before this feature read cleanly with
+<code class="docutils literal notranslate"><span class="pre">NumAccum</span></code> left at <code class="docutils literal notranslate"><span class="pre">0</span></code> (a fresh period, i.e. the pre-existing behavior).</p>
+<p><code class="docutils literal notranslate"><span class="pre">IsNewPeriod</span></code> is not stored; it is reconstructed as <code class="docutils literal notranslate"><span class="pre">(NumAccum</span> <span class="pre">==</span> <span class="pre">0)</span></code>. The
+backing count array is kept in sync inline inside <code class="docutils literal notranslate"><span class="pre">TimeMeanOp::compute()</span></code>
+(the only place <code class="docutils literal notranslate"><span class="pre">NumAccum</span></code> is mutated), so the checkpoint is consistent
+regardless of when the restart write occurs. After a period finalizes the
+count is normalized to <code class="docutils literal notranslate"><span class="pre">0</span></code> to mark that no partial period is in progress.</p>
+<p>On restart, <code class="docutils literal notranslate"><span class="pre">Analysis::applyRestartState()</span></code> iterates the operator nodes and,
+for each operator reporting <code class="docutils literal notranslate"><span class="pre">needsRestart()</span></code>, derives <code class="docutils literal notranslate"><span class="pre">IsNewPeriod</span></code> from the
+restored <code class="docutils literal notranslate"><span class="pre">NumAccum</span></code>. It is a restart-only step, invoked in <code class="docutils literal notranslate"><span class="pre">OceanInit.cpp</span></code>
+after the restart read and gated on <code class="docutils literal notranslate"><span class="pre">ReadRestart</span></code> for standalone runs and
+<code class="docutils literal notranslate"><span class="pre">CoupledReadRestart</span></code> in coupled runs.</p>
+</section>
 <section id="globalstats">
 <h3>GlobalStats<a class="headerlink" href="#globalstats" title="Permalink to this heading"></a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">GlobalStats</span></code> is the first concrete group. It computes global spatial
