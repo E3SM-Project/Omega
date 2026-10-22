@@ -33,6 +33,14 @@ temperature conversions used by ocean thermodynamics workflows:
 - `calcCtFromPt(Sa, Pt)` converts potential temperature to Conservative
    Temperature.
 
+Negative absolute salinity is clamped to 0 g/kg in the TEOS-10 temperature
+conversion and freezing helpers, and in the linear EOS freezing calculation.
+The clamp is local to these helpers; it does not modify tracer salinity or
+apply to specific-volume and derivative calculations. This clamp is to avoid
+producing NaNs in the tracer tendencies (teos-10 functions) or produce a
+positive freezing temperature (linear case) that would trigger frazil formation
+if the ocean state reaches negative salinity.
+
 These helper methods are available through the EOS implementation but do not
 replace the standard `computeSpecVol`, `computeSpecVolDisp`, or
 `computeBruntVaisalaFreqSq` calculations.
