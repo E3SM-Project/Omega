@@ -83,7 +83,8 @@ jobs:
         run: docker pull "$IMAGE"
 
       # As the image's default user (uid 1000). The runner's own uid is 1001, so hand it
-      # what the build writes to, and take it back after for the logs.
+      # what the build writes to, and take it back after for the logs. ctest exits non-zero
+      # if any test fails, which fails this step.
       - name: Build Omega and run CTests
         run: |
           mkdir -p omega-build
@@ -95,16 +96,8 @@ jobs:
             -v "$PWD/omega-meshes:/projects/e3sm/data/omega-meshes:ro" \
             -v "$PWD/omega-build:/home/e3sm/omega-build" \
             "$IMAGE" bash -l /projects/e3sm/work/Omega/components/omega/ci/omega-ctest.sh \
-            2>&1 | tee omega-ctest.log || rc=$?
+            || rc=$?
           sudo chown -R "$(id -u):$(id -g)" . omega-build
-          {
-            echo "### ${{ matrix.env }}, ${{ matrix.build_type }}"
-            echo
-            echo '```'
-            grep -E 'tests passed|tests failed|\*\*\*Failed|\(Failed\)|\(Timeout\)' \
-              omega-ctest.log || echo "no ctest summary"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
           exit "$rc"
 
       # Into the job log rather than an artifact, so nothing is stored beyond the run's logs
