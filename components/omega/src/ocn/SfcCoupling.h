@@ -105,9 +105,28 @@ class OcnToCplFields {
    /// instantaneous field, so no device mirror is needed
    HostArray1DReal InstSshCellH;
 
+   ///< Fioo_q [W m^-2], non-positive melt potential
+   HostArray1DReal MeltPotentialFluxH;
+
+   ///< Fioo_frazilm [kg m^-2 s^-1], positive for frazil production
+   HostArray1DReal AvgFrazilMassFluxH;
+   ///< Fioo_frazils [kg m^-2 s^-1], positive for frazil production
+   HostArray1DReal AvgFrazilSaltFluxH;
+   ///< Fioo_frazilh [W m^-2], positive for frazil production
+   HostArray1DReal AvgFrazilEnergyFluxH;
+
    // Accumulate one ocean timestep's contribution to the running averages
    void updateFields(const OceanState *State, const Array3DReal &TracerArray,
                      I4 NAccumSteps, I4 NCellsOwned, I4 NEdgesAll);
+
+   // Accumulate per-step frazil fluxes over the coupling interval.
+   void updateFrazilFields(const Array1DReal &FrazilMassFlux,
+                           const Array1DReal &FrazilSaltFlux,
+                           const Array1DReal &FrazilEnergyFlux, I4 NAccumSteps,
+                           I4 NCellsOwned);
+
+   void updateMeltPotential(const OceanState *State, I4 NCellsOwned,
+                            R8 CouplingTimeStepSeconds);
 
    // Copy device arrays into their host mirrors and do unit conversion.
    void copyToHost();
@@ -122,8 +141,12 @@ class OcnToCplFields {
    // except through copyToHost(), so that the different unit bewteen the
    // device and host mirrors of temperature and salinity are not exposed to
    // the rest of the code.
-   Array1DReal AvgSfcTemperature; // [C], conservative temperature
-   Array1DReal AvgSfcSalinity;    // [g kg^-1], absolute salinity
+   Array1DReal AvgSfcTemperature;   // [C], conservative temperature
+   Array1DReal AvgSfcSalinity;      // [g kg^-1], absolute salinity
+   Array1DReal MeltPotentialFlux;   // [W m^-2], non-positive
+   Array1DReal AvgFrazilMassFlux;   // [kg m^-2 s^-1], positive for production
+   Array1DReal AvgFrazilSaltFlux;   // [kg m^-2 s^-1], positive for production
+   Array1DReal AvgFrazilEnergyFlux; // [W m^-2], positive for production
 
    Array1DReal AvgSfcNormalVelocity; // [m s^-1], velocity normal to edge
    Array1DReal AvgSfcSshGrad;        // [m m^-1], ssh gradient normal to edge
@@ -167,6 +190,7 @@ class SfcCoupling {
 
    // Number of ocn timesteps acccumulated over the coupling interval
    I4 NAccumSteps;
+   R8 CouplingTimeStepSeconds;
 
    CouplingLayout Layout; ///< Coupling layout (MCT or MOAB)
 

@@ -2379,13 +2379,15 @@ contains
 
         if (trim(config_ocean_surface_type) == "free") then ! free surface (MPAS-O)
 
-           ! freezingMeltingPotential(i) is the ocean energy associated with frazil formation
-           ! when it is positive and frazilMassFlux is positive. Conversely, freezingMeltingPotential(i)
-           ! is negative when there is the melting potential in which case frazilMassFlux is zero.
+           ! Frazil enthalpy is negative for formation; convert it to the
+           ! positive freezing potential expected by the sea-ice routine.
+           if (x2i_i(index_x2i_Fioo_q, n) < 0.0_RKIND) then
+              freezingMeltingPotential(i) = x2i_i(index_x2i_Fioo_q, n)
+           else
+              freezingMeltingPotential(i) = x2i_i(index_x2i_Fioo_frazilh, n)
+           endif
 
-           freezingMeltingPotential(i) = x2i_i(index_x2i_Fioo_q, n)
-
-           frazilMassFlux              = x2i_i(index_x2i_Fioo_frazil, n)
+           frazilMassFlux              = x2i_i(index_x2i_Fioo_frazilm, n)
 
            ! Now determine the sea ice mass associated with the frazil heat flux given when
            ! freezingMeltingPotential(i) is positive. This produces a revised mass flux, given
@@ -2400,7 +2402,11 @@ contains
 
         else ! non-free surface (SOM)
 
-           freezingMeltingPotential(i) = x2i_i(index_x2i_Fioo_q, n)
+           if (x2i_i(index_x2i_Fioo_q, n) < 0.0_RKIND) then
+              freezingMeltingPotential(i) = x2i_i(index_x2i_Fioo_q, n)
+           else
+              freezingMeltingPotential(i) = x2i_i(index_x2i_Fioo_frazilh, n)
+           endif
 
         endif
 

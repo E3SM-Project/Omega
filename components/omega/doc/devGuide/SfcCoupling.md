@@ -71,6 +71,35 @@ To keep this invariant, `OcnToCplFields`'s averaged device arrays are
 private: they can only be written via `updateAverages()` (called each
 ocean time step from `updateExportFields()`) and read via `copyToHost()`.
 
+## Frazil Sign Conventions
+
+The frazil exports use the following signs during formation:
+
+| Coupler field | Units | Positive meaning |
+| --- | --- | --- |
+| `Fioo_frazilm` | kg m^-2 s^-1 | Mass removed from the ocean into frazil (counted positive out of the ocean)|
+| `Fioo_frazils` | kg m^-2 s^-1 | Salt removed from the ocean with frazil (counted positive out of the ocean)|
+| `Fioo_frazilh` | W m^-2 | Energy gain by the ocean from frazil formation (counted positive into the ocean)|
+
+The current sign of `Fioo_frazilm` and `Fioo_frazils` goes against the
+common coupling convention. The convention for these fluxes will be flipped
+once the sea ice and coupler conventions are changed.
+
+Newly formed frazil has negative enthalpy, so removing it increases ocean
+energy. `FrazilEnergyFlux` already represents this positive-into-ocean
+contribution and is exported without an additional sign change. Sea ice
+uses the positive `Fioo_frazilh` to reconstruct negative ice enthalpy.
+
+`OcnToCplFields::updateFrazilFields` negates the ocean-facing
+`FrazilMassFlux` and `FrazilSaltFlux`, but preserves `FrazilEnergyFlux`,
+and accumulates coupling-interval means. Mass and salt exports therefore
+use a positive-out-of-ocean convention to match the sea-ice expectation,
+whereas energy retains the CPL positive-into-ocean convention.
+
+`Fioo_q` is separate, nonpositive melt potential, not formation heat or an
+already-applied heat flux. It is zero when frazil production is exported;
+otherwise it represents the surface ocean's available energy for melting.
+
 ## Removal of surface coupling objects
 
 To erase a specific named instance use `erase`:
