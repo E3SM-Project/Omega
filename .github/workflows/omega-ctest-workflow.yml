@@ -2,8 +2,8 @@ name: omega-ctest
 
 # Builds Omega standalone and runs its CTests in the E3SM container images
 # (github.com/E3SM-Project/containers), on GitHub-hosted runners. The images carry the
-# compilers, MPI and I/O libraries and their own CIME machine (e3sm-container);
-# components/omega/ci/Dockerfile adds the Metis/ParMETIS Omega needs on top.
+# compilers, MPI, I/O libraries, Metis/ParMETIS and their own CIME machine (e3sm-container).
+# The containers repo runs the same build weekly against Omega develop (omega-case.yaml).
 
 on:
   push:
@@ -35,20 +35,17 @@ jobs:
     if: ${{ github.repository == 'E3SM-Project/E3SM' ||
             github.repository == 'E3SM-Project/Omega' }}
     name: ctest (${{ matrix.env }}, ${{ matrix.build_type }})
+    # x86_64 only: on aarch64 the standalone build picks up x86's -mcmodel=medium from the
+    # CIME macros and fails to configure (E3SM-Project/Omega#610).
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
-        env: [gnu13-openmpi4]
+        env: [gnu13-openmpi4, intel2024-openmpi4]
         build_type: [Release, Debug]
-        # Uncomment once the gnu jobs are green
-        # include:
-        #   - env: intel2024-openmpi4
-        #     build_type: Release
     env:
-      BASE_IMAGE: ghcr.io/e3sm-project/e3sm-image:${{ matrix.env }}
-      IMAGE: omega-ci:${{ matrix.env }}
+      IMAGE: ghcr.io/e3sm-project/e3sm-image:${{ matrix.env }}
     steps:
       # Hosted runners start with ~20 GB free; the image, Omega's submodules and a build
       # need more. These are preinstalled SDKs nothing here uses.
@@ -67,11 +64,11 @@ jobs:
           persist-credentials: false
 
       # Only the submodules a standalone build needs (doc/devGuide/CMakeBuild.md); several
-      # use git@ URLs, which need an SSH key the runner does not have.
+      # use git@ URLs, rewritten to https for this command only.
       - name: Update submodules
         run: |
-          git config --global url."https://github.com/".insteadOf git@github.com:
-          git submodule update --init --recursive --depth 1 \
+          git -c url."https://github.com/".insteadOf=git@github.com: \
+            submodule update --init --recursive --depth 1 \
             externals/YAKL \
             externals/ekat \
             externals/scorpio \
@@ -81,17 +78,12 @@ jobs:
       - name: Download meshes
         run: components/omega/ci/get-meshes.sh omega-meshes
 
-      # The base image plus Metis/ParMETIS, built locally on the runner every time (nothing
-      # is cached or pushed) until the base images carry Metis/ParMETIS themselves.
-      - name: Build the Omega CI image
-        run: |
-          docker build --pull \
-            --build-arg BASE_IMAGE="$BASE_IMAGE" \
-            -t "$IMAGE" \
-            components/omega/ci
+      # The published images are public; no login needed
+      - name: Pull the image
+        run: docker pull "$IMAGE"
 
       # As the image's default user (uid 1000). The runner's own uid is 1001, so hand it
-      # what the build writes to, and take it back after for the log upload.
+      # what the build writes to, and take it back after for the logs.
       - name: Build Omega and run CTests
         run: |
           mkdir -p omega-build

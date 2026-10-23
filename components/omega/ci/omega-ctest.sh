@@ -1,13 +1,14 @@
 #!/bin/bash
-# Build Omega standalone and run its CTests inside the Omega CI image (ci/Dockerfile), using
-# the image's own CIME machine, e3sm-container. Run as the image's default user under a login
-# shell, with the Omega checkout (required submodules included) and the meshes mounted:
+# Build Omega standalone and run its CTests inside an E3SM container image
+# (github.com/E3SM-Project/containers), using the image's own CIME machine, e3sm-container,
+# and its Metis/ParMETIS. Run as the image's default user under a login shell, with the
+# Omega checkout (required submodules included) and the meshes mounted:
 #
 #   docker run --rm -e OMEGA_BUILD_TYPE=Debug \
 #     -v /path/to/Omega:/projects/e3sm/work/Omega \
 #     -v /path/to/omega-meshes:/projects/e3sm/data/omega-meshes \
 #     -v /path/to/build:/home/e3sm/omega-build \
-#     omega-ci bash -l /projects/e3sm/work/Omega/components/omega/ci/omega-ctest.sh
+#     ghcr.io/e3sm-project/e3sm-image:gnu13-openmpi4 bash -l /projects/e3sm/work/Omega/components/omega/ci/omega-ctest.sh
 #
 # The checkout and build mounts must be writable by the e3sm user (uid 1000).
 set -euo pipefail
@@ -27,8 +28,8 @@ test "${CIME_MACHINE:-}" = e3sm-container ||
     { echo "CIME_MACHINE is '${CIME_MACHINE:-}', not e3sm-container" >&2; exit 1; }
 # The image's default compiler: the first one its machine lists
 compiler=$(sed -n 's:.*<COMPILERS>\([^,<]*\).*:\1:p' "$HOME/.cime/config_machines.xml")
-: "${METIS_ROOT:?not set; is this the Omega CI image (ci/Dockerfile)?}"
-: "${PARMETIS_ROOT:?not set; is this the Omega CI image (ci/Dockerfile)?}"
+: "${METIS_ROOT:?not set; was the image built with WITH_PARMETIS=yes?}"
+: "${PARMETIS_ROOT:?not set; was the image built with WITH_PARMETIS=yes?}"
 echo "machine $CIME_MACHINE, compiler $compiler, build type $OMEGA_BUILD_TYPE"
 echo "Omega $(git -C "$OMEGA_SRC" rev-parse HEAD 2>/dev/null || echo unknown)"
 
