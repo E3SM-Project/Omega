@@ -239,6 +239,11 @@ it is omitted, the path comes from the <code class="docutils literal notranslate
 if that is set and non-empty, and from <code class="docutils literal notranslate"><span class="pre">OMEGA::OmegaDefaultLogfile</span></code>
 (<code class="docutils literal notranslate"><span class="pre">omega.log</span></code>) otherwise. The log file is truncated when it is opened, so it
 holds only the messages from the current run.</p>
+<p>By default, <code class="docutils literal notranslate"><span class="pre">initLogging</span></code> also redirects <code class="docutils literal notranslate"><span class="pre">std::cout</span></code> and <code class="docutils literal notranslate"><span class="pre">std::cerr</span></code> to the log
+file on the ranks that log. Pass <code class="docutils literal notranslate"><span class="pre">false</span></code> as the third argument to leave them
+alone. The coupled driver does this, since these streams are shared with any
+other component on the same rank. In coupled runs they stay in <code class="docutils literal notranslate"><span class="pre">e3sm.log.*</span></code>,
+while Omega’s own messages go to <code class="docutils literal notranslate"><span class="pre">ocn.log.*</span></code>.</p>
 </section>
 <section id="log-files-in-the-unit-tests">
 <h2>Log files in the unit tests<a class="headerlink" href="#log-files-in-the-unit-tests" title="Permalink to this heading"></a></h2>

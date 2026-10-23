@@ -55,6 +55,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Omega Logging</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#logging-in-standalone-build-mode">Logging in Standalone Build mode</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#log-file-name">Log file name</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#standard-output-and-error">Standard output and error</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#e3sm-component-build">E3SM Component Build</a></li>
 </ul>
 </li>
@@ -285,9 +286,17 @@ always contains only the messages from the current run.</p>
 <code class="docutils literal notranslate"><span class="pre">test/logs/&lt;TEST_NAME&gt;.log</span></code> in the build directory, rather than a single
 shared log for the whole test suite.</p>
 </section>
+<section id="standard-output-and-error">
+<h2>Standard output and error<a class="headerlink" href="#standard-output-and-error" title="Permalink to this heading"></a></h2>
+<p>In Standalone mode, Omega redirects <code class="docutils literal notranslate"><span class="pre">std::cout</span></code> and <code class="docutils literal notranslate"><span class="pre">std::cerr</span></code> to the log file
+on the ranks that log.</p>
+</section>
 <section id="e3sm-component-build">
 <h2>E3SM Component Build<a class="headerlink" href="#e3sm-component-build" title="Permalink to this heading"></a></h2>
-<p>T.B.D.</p>
+<p>The E3SM driver sets the log file name, so Omega’s messages go to <code class="docutils literal notranslate"><span class="pre">ocn.log.*</span></code>
+in the run directory and <code class="docutils literal notranslate"><span class="pre">OMEGA_LOG_FILE</span></code> is ignored. <code class="docutils literal notranslate"><span class="pre">std::cout</span></code> and
+<code class="docutils literal notranslate"><span class="pre">std::cerr</span></code> are not redirected: other output, including crash backtraces, stays
+in <code class="docutils literal notranslate"><span class="pre">e3sm.log.*</span></code>. Check both files when a run fails.</p>
 </section>
 </section>
 
