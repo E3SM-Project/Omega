@@ -7,9 +7,13 @@ coupled:
     StopCriterion: 9999-12-31_00:00:00
 
   Tendencies:
+    FrazilTendencyEnable: true
     SfcStressForcingTendencyEnable: true
     SfcThicknessForcingTendencyEnable: true
     SfcTracerForcingTendencyEnable: true
+
+  Frazil:
+    ConservationCheck: false
 
   IOStreams:
     Forcing:
