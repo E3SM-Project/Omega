@@ -66,7 +66,10 @@
 <li class="toctree-l1"><a class="reference internal" href="IO.html">Parallel IO (IO)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IO Streams (IOStream)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo Exchanges (Halo)</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Horizontal Mesh</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Horizontal Mesh</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#horizontal-mixing-mesh-scaling">Horizontal mixing mesh scaling</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="HorzOperators.html">Horizontal Operators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary Variables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">Auxiliary State</a></li>
@@ -258,6 +261,80 @@ bring older meshes into compliance.</p>
 <p>In the future, the Mesh class will optionally compute internally those fields
 the specification marks as <em>could be computed internally</em> — the areas, lengths,
 angles, and weights needed for the TRiSK discretization.</p>
+<section id="horizontal-mixing-mesh-scaling">
+<h2>Horizontal mixing mesh scaling<a class="headerlink" href="#horizontal-mixing-mesh-scaling" title="Permalink to this heading"></a></h2>
+<p>Omega scales horizontal viscosity and diffusivity with the local mesh size.
+This scaling is enabled by default and is controlled by the following
+configuration option:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="nt">HorzMesh</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">MeshScalingEnable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<p>The reference width is the global median cell width, computed during mesh
+initialization. Each cell’s width is defined as the diameter of a circle
+with the same area as the cell.</p>
+<p>At each edge, an effective cell width is computed from the mean area of the
+two adjacent cells. The Laplacian mixing coefficient is multiplied by the
+ratio of this width to the reference width, and the biharmonic mixing
+coefficient by the cube of that ratio. The parameters <code class="docutils literal notranslate"><span class="pre">ViscDel2</span></code>, <code class="docutils literal notranslate"><span class="pre">ViscDel4</span></code>,
+<code class="docutils literal notranslate"><span class="pre">EddyDiff2</span></code> and <code class="docutils literal notranslate"><span class="pre">EddyDiff4</span></code> therefore specify the mixing coefficients at the
+median resolution. Their values may need adjustment when changing to a mesh
+with a different median cell width.</p>
+<p>On a mesh with equal cell areas, both scaling factors are one. Setting
+<code class="docutils literal notranslate"><span class="pre">MeshScalingEnable</span></code> to false also sets both factors to one, giving spatially
+uniform mixing coefficients.</p>
+<p>The initialization log reports whether mesh scaling is enabled, the median
+cell width and the range of both scaling factors over interior edges.</p>
+<p>MPAS-Ocean in E3SM references its mixing coefficients to the finest cells of
+the mesh, where its scaling factors are one, rather than to the median cell.
+To reproduce the MPAS-Ocean mixing on a given mesh, multiply the MPAS-Ocean
+Laplacian coefficients by <span class="math notranslate nohighlight">\(W_{med}/W_{ref}\)</span> and the biharmonic coefficients by
+<span class="math notranslate nohighlight">\((W_{med}/W_{ref})^3\)</span>. Here <span class="math notranslate nohighlight">\(W_{med}\)</span> is the median cell width and <span class="math notranslate nohighlight">\(W_{ref}\)</span>
+is the nominal finest resolution of the mesh (for example, 30 km for
+EC30to60E2r2). The table below lists the converted viscosities for some E3SM
+meshes.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Mesh</p></th>
+<th class="head text-right"><p><span class="math notranslate nohighlight">\(W_{med}\)</span> (km)</p></th>
+<th class="head text-right"><p><span class="math notranslate nohighlight">\(W_{ref}\)</span> (km)</p></th>
+<th class="head"><p>Parameter</p></th>
+<th class="head text-right"><p>Omega</p></th>
+<th class="head text-right"><p>MPAS-Ocean</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>EC30to60E2r2</p></td>
+<td class="text-right"><p>35.92</p></td>
+<td class="text-right"><p>30.00</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ViscDel2</span></code> (m<span class="math notranslate nohighlight">\(^2\)</span>/s)</p></td>
+<td class="text-right"><p>1197</p></td>
+<td class="text-right"><p>1000</p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ViscDel4</span></code> (m<span class="math notranslate nohighlight">\(^4\)</span>/s)</p></td>
+<td class="text-right"><p>2.06e11</p></td>
+<td class="text-right"><p>1.20e11</p></td>
+</tr>
+<tr class="row-even"><td><p>RRS18to6v3</p></td>
+<td class="text-right"><p>8.77</p></td>
+<td class="text-right"><p>6.00</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ViscDel4</span></code> (m<span class="math notranslate nohighlight">\(^4\)</span>/s)</p></td>
+<td class="text-right"><p>9.99e9</p></td>
+<td class="text-right"><p>3.20e9</p></td>
+</tr>
+<tr class="row-odd"><td><p>RRSwISC6to18E3r5</p></td>
+<td class="text-right"><p>8.48</p></td>
+<td class="text-right"><p>6.00</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ViscDel4</span></code> (m<span class="math notranslate nohighlight">\(^4\)</span>/s)</p></td>
+<td class="text-right"><p>9.03e9</p></td>
+<td class="text-right"><p>3.20e9</p></td>
+</tr>
+</tbody>
+</table>
+</section>
 </section>
 
 
