@@ -553,11 +553,12 @@ void testConvVertMix() {
 
    /// Compute only convective vertical viscosity and diffusivity
    OMEGA_SCOPE(ComputeVertMixConv, TestVertMix->ComputeVertMixConv);
+   Array1DI4 KPPBoundaryLayerIndex; // Empty, so KPP is disabled for this test
    parallelFor(
        "ApplyVertMixConv", {Mesh->NCellsAll, NChunks},
        KOKKOS_LAMBDA(I4 ICell, I4 KChunk) {
           ComputeVertMixConv(VertDiffOut, VertViscOut, ICell, KChunk,
-                             BruntVaisalaFreqSqIn);
+                             BruntVaisalaFreqSqIn, KPPBoundaryLayerIndex);
        });
 
    const auto &MinLayerCell = VCoord->MinLayerCell;

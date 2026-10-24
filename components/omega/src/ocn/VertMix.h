@@ -36,7 +36,8 @@ class ConvectiveMix {
 
    KOKKOS_FUNCTION void
    operator()(Array2DReal VertDiff, Array2DReal VertVisc, I4 ICell, I4 KChunk,
-              const Array2DReal &BruntVaisalaFreqSq) const {
+              const Array2DReal &BruntVaisalaFreqSq,
+              const Array1DI4 &KPPBoundaryLayerIndex) const {
 
       const I4 KStart = chunkStart(KChunk, MinLayerCell(ICell) + 1);
       const I4 KLen   = chunkLength(KChunk, KStart, MaxLayerCell(ICell));
@@ -44,7 +45,12 @@ class ConvectiveMix {
       for (int KVec = 0; KVec < KLen; ++KVec) {
          const I4 K = KStart + KVec;
 
-         if (BruntVaisalaFreqSq(ICell, K) < ConvTriggerBVF) {
+         // KPP is enabled when the index array is not empty
+         const bool KPPEnabled = KPPBoundaryLayerIndex.data();
+         const bool ApplyConv =
+             (!KPPEnabled) || (K > KPPBoundaryLayerIndex(ICell) + 1);
+
+         if (ApplyConv && BruntVaisalaFreqSq(ICell, K) < ConvTriggerBVF) {
             VertDiff(ICell, K) += ConvDiff;
             VertVisc(ICell, K) += ConvDiff;
          }
