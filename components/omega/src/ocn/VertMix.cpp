@@ -778,8 +778,8 @@ void VertMix::VertMixImplicit(OceanState *State, AuxiliaryState *AuxState,
    AuxState->computeMomVertAux(State, TracerArray, TimeLevel);
 
    // Compute Brunt-Vaisala frequency squared
-   EqState->computeBruntVaisalaFreqSq(
-       ConservTemp, AbsSalinity, VCoord->PressureInterface, EqState->SpecVol);
+   EqState->computeBruntVaisalaFreqSq(ConservTemp, AbsSalinity,
+                                      VCoord->PressureMid, EqState->SpecVol);
 
    // Compute vertical mixing coefficients
    computeVertMix(NormalVelEdge, LocTangentialVelocity,
