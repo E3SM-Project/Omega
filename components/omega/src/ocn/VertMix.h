@@ -234,6 +234,8 @@ class VelVertMixSetupOnEdge {
    bool Enabled;
    bool ImplicitBottomDragEnabled;
    Real BottomDragCoeff;
+   bool RayleighDampingEnabled; ///< Enable Rayleigh damping flag
+   Real RayleighDampingCoeff;   ///< Rayleigh damping coefficient (s^-1)
    Real LocRhoSw;
 
    VelVertMixSetupOnEdge(const HorzMesh *Mesh, const VertCoord *VCoord);
@@ -274,7 +276,8 @@ class VelVertMixSetupOnEdge {
       //
       //   G_k = [DT * VertVisc_k^top / (Rho_0 * SpecVol_k^top)]
       //         / PseudoThick_k^top
-      //   H_k = PseudoThick_k, plus implicit bottom-drag contribution
+      //   H_k = PseudoThick_k * (1 + DT * RayleighDampingCoeff), plus
+      //         implicit bottom-drag contribution
       //   X_k = PseudoThick_k * NormVel_k
 
       // Fill values
@@ -289,6 +292,13 @@ class VelVertMixSetupOnEdge {
           0.5_Real * (PseudoThickCell(JCell0, K) + PseudoThickCell(JCell1, K));
 
       H = PseudoThickEdgeK;
+
+      // Rayleigh damping: a linear drag on momentum applied in every active
+      // layer. Treated implicitly, so it is unconditionally stable for any
+      // DT * RayleighDampingCoeff.
+      if (RayleighDampingEnabled) {
+         H += DT * RayleighDampingCoeff * PseudoThickEdgeK;
+      }
 
       // Unknown is NormVel^{n+1}.
       X = PseudoThickEdgeK * NormalVelEdge(IEdge, K);
