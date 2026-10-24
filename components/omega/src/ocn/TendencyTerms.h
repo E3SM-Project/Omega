@@ -751,6 +751,10 @@ class TracerHorzAdvOnCell {
       HProv(ICell, K)        = LayerThickness(ICell, K);
       for (I4 I = 0; I < NEdgesOnCell(ICell); ++I) {
          const I4 IEdge = EdgesOnCell(ICell, I);
+         // Skip edges that are inactive at this layer, where the flux
+         // pseudo-thickness and transport velocity are never computed
+         if (K < MinLayerEdgeBot(IEdge) || K > MaxLayerEdgeTop(IEdge))
+            continue;
          const Real SignedFactor =
              InvAreaCell * DvEdge(IEdge) * EdgeSignOnCell(ICell, I);
          // Provisional layer thickness is after horizontal
