@@ -245,6 +245,10 @@ class Tendencies {
    I4 NTracers;           ///< Number of tracers
    TimeInterval TimeStep; ///< Time step
 
+   /// Tracers after horizontal advection alone, the starting point for
+   /// flux-corrected vertical advection
+   Array3DReal ProvTracers;
+
    // Pointer to default tendencies
    static Tendencies *DefaultTendencies;
 

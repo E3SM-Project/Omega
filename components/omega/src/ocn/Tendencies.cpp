@@ -652,6 +652,11 @@ Tendencies::Tendencies(const std::string &Name_, ///< [in] Name for tendencies
        Array2DReal("NormalVelocityTend", Mesh->NEdgesSize, VCoord->NVertLayers);
    TracerTend = Array3DReal("TracerTend", NTracersIn, Mesh->NCellsSize,
                             VCoord->NVertLayers);
+   // Provisional tracers are only needed for flux-corrected vertical advection
+   if (VAdv->VertAdvChoice == VertAdvOption::FCT) {
+      ProvTracers = Array3DReal("ProvTracers", NTracersIn, Mesh->NCellsSize,
+                                VCoord->NVertLayers);
+   }
    KPPNonLocalTracerTempTendDiag = Array2DReal(
        "KPPNonLocalTracerTempTendDiag", Mesh->NCellsSize, VCoord->NVertLayers);
    KPPNonLocalTracerTempColumnSumDiag =
@@ -1221,6 +1226,32 @@ void Tendencies::computeTracerTendenciesOnly(
       }
       Pacer::stop("Tend:tracerHorzAdv", 2);
    }
+
+   // Flux-corrected vertical advection starts from the tracers after
+   // horizontal advection alone, as in MPAS-Ocean, so that its limiter bounds
+   // the combined horizontal and vertical update. TracerTend holds only the
+   // horizontal advection tendency at this point.
+   if (VAdv->TracerVertAdvEnabled &&
+       VAdv->VertAdvChoice == VertAdvOption::FCT) {
+      OMEGA_SCOPE(LocProvTracers, ProvTracers);
+      OMEGA_SCOPE(LocProvPseudoThick,
+                  AuxState->PseudoThicknessAux.ProvPseudoThickness);
+      parallelForOuter(
+          "Tend:ProvTracers", {NTracers, Mesh->NCellsOwned},
+          KOKKOS_LAMBDA(int L, int ICell, const TeamMember &Team) {
+             const int KMin = LocMinLayerCell(ICell);
+             const int KMax = LocMaxLayerCell(ICell);
+             parallelForInner(
+                 Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+                    LocProvTracers(L, ICell, K) =
+                        (LocTracerArray(L, ICell, K) *
+                             LocPseudoThickCell(ICell, K) +
+                         Dt * LocTracerTend(L, ICell, K)) /
+                        LocProvPseudoThick(ICell, K);
+                 });
+          });
+   }
+
    // compute tracer diffusion
    const Array2DReal &MeanPseudoThickEdge =
        AuxState->PseudoThicknessAux.MeanPseudoThickEdge;
@@ -1252,12 +1283,15 @@ void Tendencies::computeTracerTendenciesOnly(
    // compute tracer tendency from vertical advection
    Pacer::start("Tend:computeTracerVAdvTend", 2);
    Array2DReal ThicknessForVAdv;
+   Array3DReal TracersForVAdv;
    if (VAdv->VertAdvChoice == VertAdvOption::Standard) {
       ThicknessForVAdv = State->getPseudoThickness(ThickTimeLevel);
+      TracersForVAdv   = LocTracerArray;
    } else if (VAdv->VertAdvChoice == VertAdvOption::FCT) {
       ThicknessForVAdv = AuxState->PseudoThicknessAux.ProvPseudoThickness;
+      TracersForVAdv   = ProvTracers;
    }
-   VAdv->computeTracerVAdvTend(LocTracerTend, LocTracerArray, ThicknessForVAdv,
+   VAdv->computeTracerVAdvTend(LocTracerTend, TracersForVAdv, ThicknessForVAdv,
                                TimeStep);
    Pacer::stop("Tend:computeTracerVAdvTend", 2);
 
