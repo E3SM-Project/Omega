@@ -456,7 +456,9 @@ are additional work.
 The first-order expansion [](#alpha-taylor) is what Phase 1 implements. A second-order expansion
 (adding $\alpha_{\Theta\Theta}$, $\alpha_{SS}$, $\alpha_{\Theta S}$, $\alpha_{pp}$, …) is a Phase 2
 option where stratification is strong; it adds derivative evaluations but still no in-integral
-TEOS-10 calls. It has no configuration key yet.
+TEOS-10 calls. It has no configuration key yet. It is the last part of Phase 2 to be taken up,
+after the parabolic reconstruction and the wide stencil, and it is dropped only if measurement then
+shows that it does not help (§4.5.3).
 
 #### 3.3.1 The expansion point must be shared across the edge
 
@@ -1386,6 +1388,9 @@ rather than keys, so no configuration written for Phase 1 needs to change when P
   `QuadraturePoints: 2`.
 - **Phase 2 target:** `HorzOrder: 4`, `VerticalReconstruction: 'ppm'`.
 
+The Phase 2 values become available as each is implemented, but the defaults stay at Phase 1's
+until a realistic configuration shows that the gain is worth the cost (§4.5.3).
+
 The three sub-options are optional: where a key is absent the Phase 1 default is used, so a
 configuration written before they existed still runs. They are read and validated in the
 `PressureGrad` constructor and cached on the `PressureGradFiniteVolume` functor. **Values that are
@@ -1776,9 +1781,23 @@ well as on the assumption-A2 grounds §3.6.1 gives.
    spurious velocity to expect. It is **not** the A4 diagnostic: §5.3 explains why that one cannot
    be run with `Centered` and has to wait for Phase 1.
 3. Implement and verify Phase 1 against §5.1, §5.2, §5.3, and §5.5.
-4. Take up Phase 2. Re-examine [](#z-increment-exact) before adopting the second-order
-   equation-of-state expansion; that, and not the stencil, is the item that could reopen a settled
-   question.
+4. Take up Phase 2, in three parts that each ship on their own. In each, the Polaris kernel gains
+   the change first, written from this document, so that it stays an independent reference for
+   Omega (§5.1).
+
+   1. **The parabolic reconstruction** of §3.4, with the two-cell stencil. It is useful without
+      the rest, widening the exact set to profiles quadratic in pressure; with the two-cell stencil
+      the §5.1 gradient variants stay second order in the horizontal.
+   2. **The wide stencil** of §3.6.1. A multi-column Polaris configuration and a Python prototype
+      settle its form, which is recorded in §3.6.1 before the C++ is written.
+   3. **The second-order expansion** of §3.3, measured in Polaris with the parabolic
+      reconstruction and the wide stencil in place, and implemented in Omega unless that
+      measurement shows it does not help. It needs second derivatives from `Eos` (§4.1.2) and
+      three quadrature points (§4.5.2), and [](#z-increment-exact) must be re-examined before it
+      is adopted; that, and not the stencil, is the item that could reopen a settled question.
+
+   `linear` and `HorzOrder: 2` stay the default until a realistic configuration shows that the
+   gain is worth the cost.
 
 Steps 1–3 are done: step 1 in the Polaris `horiz_press_grad` kernel (polaris#675, with the anchor
 rule in polaris#900), step 2 in the Polaris seamount tasks (polaris#681), and step 3 in Omega#493
