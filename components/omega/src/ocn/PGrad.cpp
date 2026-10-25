@@ -156,13 +156,10 @@ PressureGrad::PressureGrad(
    if (VertReconStr == "linear" || VertReconStr == "Linear") {
       FiniteVolumePGrad.VertRecon = PressureGradVertRecon::Linear;
    } else if (VertReconStr == "ppm" || VertReconStr == "PPM") {
-      ABORT_ERROR("PressureGrad: VerticalReconstruction '{}' is not "
-                  "implemented for the FiniteVolume pressure gradient; "
-                  "only 'linear' is available",
-                  VertReconStr);
+      FiniteVolumePGrad.VertRecon = PressureGradVertRecon::PPM;
    } else {
-      ABORT_ERROR("PressureGrad: unknown VerticalReconstruction '{}'; only "
-                  "'linear' is available",
+      ABORT_ERROR("PressureGrad: unknown VerticalReconstruction '{}'; valid "
+                  "values are 'linear' and 'ppm'",
                   VertReconStr);
    }
 
@@ -187,6 +184,12 @@ PressureGrad::PressureGrad(
           Array2DReal("PGradReconSlopeCt", Mesh->NCellsSize, NVertLayers);
       ReconSlopeSa =
           Array2DReal("PGradReconSlopeSa", Mesh->NCellsSize, NVertLayers);
+      if (FiniteVolumePGrad.VertRecon == PressureGradVertRecon::PPM) {
+         ReconCurvCt =
+             Array2DReal("PGradReconCurvCt", Mesh->NCellsSize, NVertLayers);
+         ReconCurvSa =
+             Array2DReal("PGradReconCurvSa", Mesh->NCellsSize, NVertLayers);
+      }
       DeltaZIncr =
           Array2DReal("PGradDeltaZIncr", Mesh->NEdgesSize, NVertLayers);
       DeltaZMoment =
@@ -248,17 +251,43 @@ PressureGrad *PressureGrad::get(const std::string &Name ///< [in] Name of
 
 //------------------------------------------------------------------------------
 // Compute the mean-preserving reconstruction slopes of temperature and
-// salinity in pressure, once per cell and layer.
+// salinity in pressure, and for the parabolic reconstruction their
+// curvatures, once per cell and layer.
 void PressureGrad::computeReconSlopes(
-    const Array2DReal &ConservTemp, ///< [in] layer-mean temperature
-    const Array2DReal &AbsSalinity, ///< [in] layer-mean salinity
-    const Array2DReal &PressureMid  ///< [in] mid-layer pressure
+    const Array2DReal &ConservTemp,      ///< [in] layer-mean temperature
+    const Array2DReal &AbsSalinity,      ///< [in] layer-mean salinity
+    const Array2DReal &PressureMid,      ///< [in] mid-layer pressure
+    const Array2DReal &PressureInterface ///< [in] interface pressure
 ) const {
 
    OMEGA_SCOPE(LocReconSlopeCt, ReconSlopeCt);
    OMEGA_SCOPE(LocReconSlopeSa, ReconSlopeSa);
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+
+   if (FiniteVolumePGrad.VertRecon == PressureGradVertRecon::PPM) {
+
+      OMEGA_SCOPE(LocReconCurvCt, ReconCurvCt);
+      OMEGA_SCOPE(LocReconCurvSa, ReconCurvSa);
+
+      parallelForOuter(
+          "pgrad-recon-ppm", {NCellsAll},
+          KOKKOS_LAMBDA(I4 ICell, const TeamMember &Team) {
+             const I4 KMin = LocMinLayerCell(ICell);
+             const I4 KMax = LocMaxLayerCell(ICell);
+
+             parallelForInner(
+                 Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+                    ppmReconCoeffs(ConservTemp, PressureInterface, ICell, K,
+                                   KMin, KMax, LocReconSlopeCt(ICell, K),
+                                   LocReconCurvCt(ICell, K));
+                    ppmReconCoeffs(AbsSalinity, PressureInterface, ICell, K,
+                                   KMin, KMax, LocReconSlopeSa(ICell, K),
+                                   LocReconCurvSa(ICell, K));
+                 });
+          });
+      return;
+   }
 
    parallelForOuter(
        "pgrad-recon-slopes", {NCellsAll},
@@ -334,8 +363,14 @@ void PressureGrad::computeColumnScan(
    const I4 NQuad               = FiniteVolumePGrad.QuadraturePoints;
    const Real InvGravity        = 1.0_Real / Gravity;
 
+   // the curvature arrays are read only by the parabolic reconstruction
+   const bool Parabolic =
+       FiniteVolumePGrad.VertRecon == PressureGradVertRecon::PPM;
+
    OMEGA_SCOPE(LocReconSlopeCt, ReconSlopeCt);
    OMEGA_SCOPE(LocReconSlopeSa, ReconSlopeSa);
+   OMEGA_SCOPE(LocReconCurvCt, ReconCurvCt);
+   OMEGA_SCOPE(LocReconCurvSa, ReconCurvSa);
    OMEGA_SCOPE(LocDeltaZIncr, DeltaZIncr);
    OMEGA_SCOPE(LocDeltaZMoment, DeltaZMoment);
    OMEGA_SCOPE(LocDeltaZFixedP, DeltaZFixedP);
@@ -396,22 +431,18 @@ void PressureGrad::computeColumnScan(
                         PressureInterface, ICell1, LocMinLayerCell(ICell1),
                         LocMaxLayerCell(ICell1), Press, K);
 
-                    const Real Temp0 =
-                        linearReconEval(ConservTemp(ICell0, KFound0),
-                                        LocReconSlopeCt(ICell0, KFound0),
-                                        PressureMid(ICell0, KFound0), Press);
-                    const Real Salt0 =
-                        linearReconEval(AbsSalinity(ICell0, KFound0),
-                                        LocReconSlopeSa(ICell0, KFound0),
-                                        PressureMid(ICell0, KFound0), Press);
-                    const Real Temp1 =
-                        linearReconEval(ConservTemp(ICell1, KFound1),
-                                        LocReconSlopeCt(ICell1, KFound1),
-                                        PressureMid(ICell1, KFound1), Press);
-                    const Real Salt1 =
-                        linearReconEval(AbsSalinity(ICell1, KFound1),
-                                        LocReconSlopeSa(ICell1, KFound1),
-                                        PressureMid(ICell1, KFound1), Press);
+                    const Real Temp0 = reconEval(
+                        Parabolic, ConservTemp, LocReconSlopeCt, LocReconCurvCt,
+                        PressureMid, PressureInterface, ICell0, KFound0, Press);
+                    const Real Salt0 = reconEval(
+                        Parabolic, AbsSalinity, LocReconSlopeSa, LocReconCurvSa,
+                        PressureMid, PressureInterface, ICell0, KFound0, Press);
+                    const Real Temp1 = reconEval(
+                        Parabolic, ConservTemp, LocReconSlopeCt, LocReconCurvCt,
+                        PressureMid, PressureInterface, ICell1, KFound1, Press);
+                    const Real Salt1 = reconEval(
+                        Parabolic, AbsSalinity, LocReconSlopeSa, LocReconCurvSa,
+                        PressureMid, PressureInterface, ICell1, KFound1, Press);
 
                     const Real SpecVolDiff = matchedPressSpecVolDiff(
                         EdgeEos, Temp0, Salt0, Temp1, Salt1);
@@ -485,12 +516,12 @@ void PressureGrad::computeColumnScan(
                     PressureInterface, ICell, LocMinLayerCell(ICell),
                     LocMaxLayerCell(ICell), Press, KAnchor);
 
-                const Real Temp = linearReconEval(
-                    ConservTemp(ICell, KFound), LocReconSlopeCt(ICell, KFound),
-                    PressureMid(ICell, KFound), Press);
-                const Real Salt = linearReconEval(
-                    AbsSalinity(ICell, KFound), LocReconSlopeSa(ICell, KFound),
-                    PressureMid(ICell, KFound), Press);
+                const Real Temp = reconEval(
+                    Parabolic, ConservTemp, LocReconSlopeCt, LocReconCurvCt,
+                    PressureMid, PressureInterface, ICell, KFound, Press);
+                const Real Salt = reconEval(
+                    Parabolic, AbsSalinity, LocReconSlopeSa, LocReconCurvSa,
+                    PressureMid, PressureInterface, ICell, KFound, Press);
 
                 Integral += Weight * edgeSpecVol(AnchorEos, Temp, Salt, Press);
              }
@@ -522,22 +553,18 @@ void PressureGrad::computeColumnScan(
                     PressureInterface, ICell1, LocMinLayerCell(ICell1),
                     LocMaxLayerCell(ICell1), Press, KBot);
 
-                const Real Temp0 =
-                    linearReconEval(ConservTemp(ICell0, KFound0),
-                                    LocReconSlopeCt(ICell0, KFound0),
-                                    PressureMid(ICell0, KFound0), Press);
-                const Real Salt0 =
-                    linearReconEval(AbsSalinity(ICell0, KFound0),
-                                    LocReconSlopeSa(ICell0, KFound0),
-                                    PressureMid(ICell0, KFound0), Press);
-                const Real Temp1 =
-                    linearReconEval(ConservTemp(ICell1, KFound1),
-                                    LocReconSlopeCt(ICell1, KFound1),
-                                    PressureMid(ICell1, KFound1), Press);
-                const Real Salt1 =
-                    linearReconEval(AbsSalinity(ICell1, KFound1),
-                                    LocReconSlopeSa(ICell1, KFound1),
-                                    PressureMid(ICell1, KFound1), Press);
+                const Real Temp0 = reconEval(
+                    Parabolic, ConservTemp, LocReconSlopeCt, LocReconCurvCt,
+                    PressureMid, PressureInterface, ICell0, KFound0, Press);
+                const Real Salt0 = reconEval(
+                    Parabolic, AbsSalinity, LocReconSlopeSa, LocReconCurvSa,
+                    PressureMid, PressureInterface, ICell0, KFound0, Press);
+                const Real Temp1 = reconEval(
+                    Parabolic, ConservTemp, LocReconSlopeCt, LocReconCurvCt,
+                    PressureMid, PressureInterface, ICell1, KFound1, Press);
+                const Real Salt1 = reconEval(
+                    Parabolic, AbsSalinity, LocReconSlopeSa, LocReconCurvSa,
+                    PressureMid, PressureInterface, ICell1, KFound1, Press);
 
                 Integral += Weight * matchedPressSpecVolDiff(
                                          FloorEos, Temp0, Salt0, Temp1, Salt1);
@@ -600,9 +627,11 @@ void PressureGrad::computePressureGrad(
 
    } else {
 
-      // The per-cell reconstruction slopes are formed once and reused across
-      // each cell's edges; the per-edge work is polynomial arithmetic on them
-      computeReconSlopes(ConservTemp, AbsSalinity, PressureMid);
+      // The per-cell reconstruction slopes, and curvatures for the parabolic
+      // reconstruction, are formed once and reused across each cell's edges;
+      // the per-edge work is polynomial arithmetic on them
+      computeReconSlopes(ConservTemp, AbsSalinity, PressureMid,
+                         PressureInterface);
 
       // The column scan is a prefix sum with edge-dependent coefficients, so
       // it cannot live inside the per-vertical-chunk functor below

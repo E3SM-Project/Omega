@@ -30,10 +30,11 @@ enum class PressureGradType {
 /// Mean-preserving vertical reconstruction of ConservTemp and AbsSalinity in
 /// pressure used by the FiniteVolume scheme. The degree of the reconstruction
 /// sets the scheme's exact set: linear deviations make the scheme exact for
-/// profiles that vary linearly with pressure.
+/// profiles that vary linearly with pressure, parabolic ones for profiles that
+/// vary quadratically.
 enum class PressureGradVertRecon {
-   Linear ///< linear deviations
-   // , PPM  ///< parabolic (PPM-style) deviations, added when implemented
+   Linear, ///< linear deviations
+   PPM     ///< parabolic deviations: the unlimited piecewise parabolic method
 };
 
 // Centered pressure gradient functor
@@ -110,7 +111,7 @@ class PressureGradFiniteVolume {
 
    // Options cached from the PressureGrad config group by the PressureGrad
    // constructor, which is also where they are validated. Only HorzOrder 2
-   // and VertRecon Linear are implemented.
+   // is implemented; VertRecon is Linear or PPM.
    //
    // QuadraturePoints is a pure accuracy knob: the matched-pressure integrand
    // is zero pointwise for any profile the reconstruction resolves exactly, so
@@ -295,12 +296,14 @@ class PressureGrad {
                                  const Array1DReal &DepthMeanSpecVol) const;
 
    // Compute the mean-preserving reconstruction slopes of temperature and
-   // salinity in pressure, once per cell and layer. These are the per-cell
-   // quantities the per-edge work reuses rather than recomputing them per
-   // edge. Public because of CUDA requirements.
+   // salinity in pressure, and for the parabolic reconstruction their
+   // curvatures, once per cell and layer. These are the per-cell quantities
+   // the per-edge work reuses rather than recomputing them per edge. Public
+   // because of CUDA requirements.
    void computeReconSlopes(const Array2DReal &ConservTemp,
                            const Array2DReal &AbsSalinity,
-                           const Array2DReal &PressureMid) const;
+                           const Array2DReal &PressureMid,
+                           const Array2DReal &PressureInterface) const;
 
    // Accumulate the fixed-pressure height difference down each edge's column.
    // This is a prefix sum with edge-dependent coefficients, so it is not
@@ -345,6 +348,10 @@ class PressureGrad {
    // when that scheme is selected, so a Centered run pays no memory for them.
    Array2DReal ReconSlopeCt; ///< d(ConservTemp)/dp of the reconstruction
    Array2DReal ReconSlopeSa; ///< d(AbsSalinity)/dp of the reconstruction
+   Array2DReal ReconCurvCt;  ///< curvature of the parabolic reconstruction
+                             ///< of ConservTemp, allocated only for it
+   Array2DReal ReconCurvSa;  ///< curvature of the parabolic reconstruction
+                             ///< of AbsSalinity, allocated only for it
    Array2DReal DeltaZIncr;   ///< per-layer integral of the matched-pressure
                              ///< integrand, the increment of the recurrence
    Array2DReal DeltaZMoment; ///< its first moment about the layer's top
