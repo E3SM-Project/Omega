@@ -39,7 +39,7 @@ The pressure gradient method is configured in the input YAML file under the
 PressureGrad:
    PressureGradType: 'FiniteVolume'   # Centered | FiniteVolume
    HorzOrder: 2                       # FiniteVolume only
-   VerticalReconstruction: 'linear'
+   VerticalReconstruction: 'linear'   # linear | ppm; FiniteVolume only
    QuadraturePoints: 2
 ```
 
@@ -60,9 +60,10 @@ like a passing centered run.
 - Compares the geopotential of the two columns sharing an edge at a **common
   pressure**, rather than at a common layer index
 - Gives a pressure gradient that is zero to machine precision for any resting
-  ocean whose temperature and salinity vary linearly with pressure, at any
-  coordinate tilt or layer thickness, provided the two columns' sea floors are
-  at the same pressure
+  ocean whose temperature and salinity vary linearly with pressure -- or
+  quadratically, with `VerticalReconstruction: 'ppm'` -- at any coordinate
+  tilt or layer thickness, provided the two columns' sea floors are at the
+  same pressure
 - Over a sloping sea floor a small residual remains, because the two columns'
   sea-floor heights come from `VertCoord`'s sums over different layers. It is
   smallest where partial bottom cells cut the floor beneath level interior
@@ -82,7 +83,7 @@ optional; a configuration written without them gets the values below.
 | Option | Default | Meaning |
 | ------ | ------- | ------- |
 | `HorzOrder` | `2` | Width of the edge stencil. `2`, the two-cell stencil, is the only value implemented; other values are rejected with an error |
-| `VerticalReconstruction` | `'linear'` | Degree of the mean-preserving reconstruction of temperature and salinity in pressure. `'linear'` is the only value implemented; other values are rejected with an error |
+| `VerticalReconstruction` | `'linear'` | The mean-preserving reconstruction of temperature and salinity in pressure: `'linear'`, or `'ppm'`, a parabola in each layer (the piecewise parabolic method without its limiter), which makes the scheme exact for profiles quadratic in pressure. Other values are rejected with an error |
 | `QuadraturePoints` | `2` | Number of points, 1 to 4, at which the integrand is evaluated within each edge layer |
 
 `QuadraturePoints` is an **accuracy setting only**. The quantity being
