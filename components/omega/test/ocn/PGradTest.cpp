@@ -240,6 +240,302 @@ int testReconstruction() {
 
 } // end testReconstruction
 
+// The exact layer average over [PressLo, PressHi] of a profile that is up to
+// cubic in pressure; defined further down, with the profiles it serves.
+KOKKOS_INLINE_FUNCTION Real exactLayerAvg(const Real Coeff0, const Real Coeff1,
+                                          const Real Coeff2, const Real Coeff3,
+                                          const Real PressLo,
+                                          const Real PressHi);
+
+// Check the parabolic reconstruction estimator on a single column, without a
+// mesh, as testReconstruction does for the linear one.
+//
+// Layer means are the exact layer averages of a prescribed profile on
+// deliberately non-uniform layers. On a quadratic the reconstruction must be
+// the profile itself in every layer, including the two at each end whose
+// window is one-sided and whose coefficients come from the polynomial's own
+// derivatives, and beyond the ends of the column, where it is extrapolated. On
+// a cubic it must still meet the profile at every interface, since the
+// interface values are exact for cubics. Also checked are the mean-preserving
+// constraint, columns of one to three valid layers, and a thin bottom cell
+// extrapolated below the floor, which is what the end-layer form exists for.
+int testParabolicReconstruction() {
+
+   int Err = 0;
+
+   const Real Eps        = std::numeric_limits<Real>::epsilon();
+   const bool DoublePrec = Eps < 1.0e-10_Real;
+
+   // a quadratic and a cubic in pressure, sized so that every term matters
+   // over the column
+   const Real C0 = 12.0_Real, C1 = -3.0e-7_Real, C2 = 4.0e-14_Real;
+   const Real C3 = -2.0e-21_Real;
+   auto profile  = [&](const Real Press, const Real Cubic) {
+      return C0 + Press * (C1 + Press * (C2 + Press * Cubic));
+   };
+
+   // the reconstruction of one layer at a pressure
+   auto evaluate = [](const HostArray2DReal &Value,
+                      const HostArray2DReal &PressInterface, const I4 K,
+                      const Real Slope, const Real Curv, const Real Press) {
+      const Real PressMid =
+          0.5_Real * (PressInterface(0, K) + PressInterface(0, K + 1));
+      return ppmReconEval(Value(0, K), Slope, Curv, PressMid,
+                          PressInterface(0, K + 1) - PressInterface(0, K),
+                          Press);
+   };
+
+   // the column, with means from the profile with cubic coefficient Cubic
+   auto column = [&](const std::vector<Real> &DeltaPress, const Real Cubic,
+                     HostArray2DReal &PressInterface, HostArray2DReal &Value) {
+      const I4 NLayers     = DeltaPress.size();
+      PressInterface       = HostArray2DReal("PressInterface", 1, NLayers + 1);
+      Value                = HostArray2DReal("Value", 1, NLayers);
+      PressInterface(0, 0) = 0.0_Real;
+      for (int K = 0; K < NLayers; ++K) {
+         PressInterface(0, K + 1) = PressInterface(0, K) + DeltaPress[K];
+         Value(0, K) = exactLayerAvg(C0, C1, C2, Cubic, PressInterface(0, K),
+                                     PressInterface(0, K + 1));
+      }
+   };
+
+   // round-off in the reconstructed profile is a modest multiple of epsilon
+   // times the size of the profile, whatever the precision
+   const Real Tol = 1.0e3_Real * Eps * C0;
+
+   const std::vector<Real> NonUniform = {0.5e6, 3.0e6,  1.0e6, 4.0e6,
+                                         2.0e6, 0.25e6, 6.0e6};
+   HostArray2DReal PressInterface, Value;
+
+   // A quadratic is the profile itself everywhere, extrapolated a layer and
+   // more beyond both ends of the column included.
+   {
+      column(NonUniform, 0.0_Real, PressInterface, Value);
+      const I4 NLayers = NonUniform.size();
+      const I4 KMax    = NLayers - 1;
+      Real MaxErr      = 0.0_Real;
+      for (int K = 0; K <= KMax; ++K) {
+         Real Slope, Curv;
+         ppmReconCoeffs(Value, PressInterface, 0, K, 0, KMax, Slope, Curv);
+         std::vector<Real> Probes;
+         for (int I = 0; I <= 4; ++I)
+            Probes.push_back(
+                PressInterface(0, K) +
+                0.25_Real * I *
+                    (PressInterface(0, K + 1) - PressInterface(0, K)));
+         if (K == 0) {
+            Probes.push_back(-1.0e6_Real);
+            Probes.push_back(-2.0e6_Real);
+         }
+         if (K == KMax) {
+            Probes.push_back(PressInterface(0, NLayers) + 1.0e6_Real);
+            Probes.push_back(PressInterface(0, NLayers) + 6.0e6_Real);
+         }
+         for (const Real Press : Probes)
+            MaxErr = std::max(MaxErr, std::abs(evaluate(Value, PressInterface,
+                                                        K, Slope, Curv, Press) -
+                                               profile(Press, 0.0_Real)));
+      }
+      if (MaxErr <= Tol) {
+         LOG_INFO("PGradTest: parabolic reconstruction of a quadratic PASS: "
+                  "{} degC",
+                  MaxErr);
+      } else {
+         LOG_ERROR("PGradTest: parabolic reconstruction of a quadratic FAIL: "
+                   "{} degC against {}",
+                   MaxErr, Tol);
+         ++Err;
+      }
+   }
+
+   // A cubic is met exactly at every layer's two interfaces.
+   {
+      column(NonUniform, C3, PressInterface, Value);
+      const I4 KMax = NonUniform.size() - 1;
+      Real MaxErr   = 0.0_Real;
+      for (int K = 0; K <= KMax; ++K) {
+         Real Slope, Curv;
+         ppmReconCoeffs(Value, PressInterface, 0, K, 0, KMax, Slope, Curv);
+         for (int J = K; J <= K + 1; ++J) {
+            const Real Press = PressInterface(0, J);
+            MaxErr = std::max(MaxErr, std::abs(evaluate(Value, PressInterface,
+                                                        K, Slope, Curv, Press) -
+                                               profile(Press, C3)));
+         }
+      }
+      if (MaxErr <= Tol) {
+         LOG_INFO("PGradTest: parabolic interface values of a cubic PASS: {} "
+                  "degC",
+                  MaxErr);
+      } else {
+         LOG_ERROR("PGradTest: parabolic interface values of a cubic FAIL: "
+                   "{} degC against {}",
+                   MaxErr, Tol);
+         ++Err;
+      }
+   }
+
+   // The deviation integrates to zero over its layer, by two-point Gauss
+   // quadrature, which is exact for a quadratic integrand. The means come
+   // from no particular profile.
+   {
+      const std::vector<Real> Means = {22.0, 18.0, 8.0, 6.0, 4.0, 2.0, 1.0};
+      column(NonUniform, 0.0_Real, PressInterface, Value);
+      const I4 KMax = NonUniform.size() - 1;
+      for (int K = 0; K <= KMax; ++K)
+         Value(0, K) = Means[K];
+      Real MaxIntegral = 0.0_Real;
+      for (int K = 0; K <= KMax; ++K) {
+         Real Slope, Curv;
+         ppmReconCoeffs(Value, PressInterface, 0, K, 0, KMax, Slope, Curv);
+         const Real HalfWidth =
+             0.5_Real * (PressInterface(0, K + 1) - PressInterface(0, K));
+         const Real Mid    = PressInterface(0, K) + HalfWidth;
+         const Real Offset = HalfWidth / std::sqrt(3.0_Real);
+         const Real Integral =
+             HalfWidth *
+             (evaluate(Value, PressInterface, K, Slope, Curv, Mid - Offset) +
+              evaluate(Value, PressInterface, K, Slope, Curv, Mid + Offset) -
+              2.0_Real * Value(0, K));
+         const Real DevScale =
+             HalfWidth * (std::abs(Value(0, K)) + std::abs(Slope) * HalfWidth +
+                          std::abs(Curv) * HalfWidth * HalfWidth);
+         MaxIntegral =
+             std::max(MaxIntegral, std::abs(Integral) / (Eps * DevScale));
+      }
+      if (MaxIntegral <= 16.0_Real) {
+         LOG_INFO("PGradTest: parabolic layer integral PASS: {} eps",
+                  MaxIntegral);
+      } else {
+         LOG_ERROR("PGradTest: parabolic layer integral FAIL: {} eps",
+                   MaxIntegral);
+         ++Err;
+      }
+   }
+
+   // Short columns use the polynomial through all their interfaces: three
+   // layers stay exact for a quadratic, two give the linear reconstruction
+   // exactly, and one a constant.
+   {
+      column({1.0e6, 3.0e6, 0.5e6}, 0.0_Real, PressInterface, Value);
+      Real MaxErr = 0.0_Real;
+      for (int K = 0; K <= 2; ++K) {
+         Real Slope, Curv;
+         ppmReconCoeffs(Value, PressInterface, 0, K, 0, 2, Slope, Curv);
+         for (int I = 0; I <= 4; ++I) {
+            const Real Press =
+                PressInterface(0, K) +
+                0.25_Real * I *
+                    (PressInterface(0, K + 1) - PressInterface(0, K));
+            MaxErr = std::max(MaxErr, std::abs(evaluate(Value, PressInterface,
+                                                        K, Slope, Curv, Press) -
+                                               profile(Press, 0.0_Real)));
+         }
+      }
+
+      column({1.0e6, 3.0e6}, 0.0_Real, PressInterface, Value);
+      const Real PressMid0 =
+          0.5_Real * (PressInterface(0, 0) + PressInterface(0, 1));
+      const Real PressMid1 =
+          0.5_Real * (PressInterface(0, 1) + PressInterface(0, 2));
+      const Real Linear =
+          linearReconSlope(Value(0, 0), Value(0, 1), PressMid0, PressMid1);
+      Real TwoSlopeErr = 0.0_Real;
+      bool TwoCurvZero = true;
+      for (int K = 0; K <= 1; ++K) {
+         Real Slope, Curv;
+         ppmReconCoeffs(Value, PressInterface, 0, K, 0, 1, Slope, Curv);
+         TwoSlopeErr = std::max(TwoSlopeErr, std::abs(Slope - Linear));
+         TwoCurvZero = TwoCurvZero && Curv == 0.0_Real;
+      }
+
+      column({2.0e6}, 0.0_Real, PressInterface, Value);
+      Real OneSlope, OneCurv;
+      ppmReconCoeffs(Value, PressInterface, 0, 0, 0, 0, OneSlope, OneCurv);
+
+      if (MaxErr <= Tol && TwoSlopeErr <= 16.0_Real * Eps * std::abs(Linear) &&
+          TwoCurvZero && OneSlope == 0.0_Real && OneCurv == 0.0_Real) {
+         LOG_INFO("PGradTest: parabolic reconstruction of short columns PASS");
+      } else {
+         LOG_ERROR("PGradTest: parabolic reconstruction of short columns FAIL: "
+                   "three layers {} degC, two layers slope error {} and "
+                   "curvature zero {}, one layer slope {} curvature {}",
+                   MaxErr, TwoSlopeErr, TwoCurvZero, OneSlope, OneCurv);
+         ++Err;
+      }
+   }
+
+   // A thin bottom cell, its reconstruction extrapolated two layers below the
+   // floor. The profile is a quadratic, which the extrapolation still
+   // reproduces, so whatever error remains is round-off. Built from the two
+   // interface values, the thin cell's curvature is a small difference of
+   // nearly equal values divided by the square of its thickness, and the
+   // extrapolation amplifies the round-off in it without limit; built from the
+   // polynomial's own derivatives it does not. The interface form is
+   // evaluated alongside, to show that this test can tell the two apart. The
+   // effect shows in single precision at a cell a thousandth of a layer thick,
+   // and in double at one a billionth.
+   {
+      const I4 NLayers          = 16;
+      const Real LayerThickness = 2.5e6_Real;
+      const Real Fraction       = DoublePrec ? 1.0e-9_Real : 1.0e-3_Real;
+      const Real Bound          = DoublePrec ? 1.0e-10_Real : 1.0e-3_Real;
+      const Real Broken         = DoublePrec ? 1.0_Real : 0.1_Real;
+      std::vector<Real> DeltaPress(NLayers, LayerThickness);
+      DeltaPress[NLayers - 1] = Fraction * LayerThickness;
+      column(DeltaPress, 0.0_Real, PressInterface, Value);
+      const I4 K = NLayers - 1;
+
+      Real Slope, Curv;
+      ppmReconCoeffs(Value, PressInterface, 0, K, 0, K, Slope, Curv);
+
+      // the same layer from its two interface values instead
+      I4 JLo, JHi;
+      ppmReconWindow(K, 0, K, JLo, JHi);
+      Real Derivs[4];
+      ppmReconDerivs(Value, PressInterface, 0, JLo, JHi, PressInterface(0, K),
+                     Value(0, K), Derivs);
+      const Real Top = Derivs[0];
+      ppmReconDerivs(Value, PressInterface, 0, JLo, JHi,
+                     PressInterface(0, K + 1), Value(0, K), Derivs);
+      const Real Bot    = Derivs[0];
+      const Real Thin   = PressInterface(0, K + 1) - PressInterface(0, K);
+      const Real Slope2 = (Bot - Top) / Thin;
+      const Real Curv2  = 3.0_Real * (Top + Bot) / (Thin * Thin);
+
+      Real MaxErr = 0.0_Real, MaxBroken = 0.0_Real;
+      for (int I = 0; I <= 20; ++I) {
+         const Real Press =
+             PressInterface(0, NLayers) + 0.1_Real * I * LayerThickness;
+         const Real Truth = profile(Press, 0.0_Real);
+         MaxErr = std::max(MaxErr, std::abs(evaluate(Value, PressInterface, K,
+                                                     Slope, Curv, Press) -
+                                            Truth));
+         MaxBroken = std::max(
+             MaxBroken,
+             std::abs(evaluate(Value, PressInterface, K, Slope2, Curv2, Press) -
+                      Truth));
+      }
+      if (MaxErr <= Bound && MaxBroken > Broken) {
+         LOG_INFO("PGradTest: parabolic thin bottom cell PASS: extrapolated "
+                  "{} degC, against {} degC from the interface values",
+                  MaxErr, MaxBroken);
+      } else {
+         LOG_ERROR("PGradTest: parabolic thin bottom cell FAIL: extrapolated "
+                   "{} degC (bound {}), against {} degC from the interface "
+                   "values (expected above {})",
+                   MaxErr, Bound, MaxBroken, Broken);
+         ++Err;
+      }
+   }
+
+   if (Err == 0)
+      LOG_INFO("PGradTest: parabolic reconstruction estimator PASS");
+
+   return Err;
+
+} // end testParabolicReconstruction
+
 // Pin the per-column pressure lookup with direct property tests, on a
 // fabricated pair of columns and without a mesh.
 //
@@ -443,7 +739,12 @@ struct PGradProfile {
 // it, so the integrand is nonzero there, and the gap between the two cases is
 // what makes the linear result meaningful rather than a statement that
 // everything in the test is zero.
-int testMatchedPressIntegrand() {
+//
+// With the parabolic reconstruction the exact profile is the quadratic and
+// the control a cubic.
+int testMatchedPressIntegrand(const bool Parabolic ///< [in] parabolic, not
+                                                   ///< linear, reconstruction
+) {
 
    int Err = 0;
 
@@ -469,9 +770,13 @@ int testMatchedPressIntegrand() {
    EdgeEos.AbsSalinity = 34.9_Real;
    EdgeEos.Press       = 2.0e7_Real;
 
-   // the prescribed continuous profile, linear then quadratic in pressure
+   // the prescribed continuous profile: linear then quadratic in pressure,
+   // or for the parabolic reconstruction quadratic then cubic
    const Real Temp0 = 12.0_Real, Temp1 = -2.0e-7_Real;
    const Real Salt0 = 34.5_Real, Salt1 = 2.5e-8_Real;
+   const char *Recon   = Parabolic ? "parabolic" : "linear";
+   const char *Exact   = Parabolic ? "quadratic" : "linear";
+   const char *Control = Parabolic ? "cubic" : "quadratic";
 
    Real MaxLinear       = 0.0_Real;
    Real MaxQuadratic    = 0.0_Real;
@@ -481,8 +786,10 @@ int testMatchedPressIntegrand() {
    for (int ICase = 0; ICase < 2; ++ICase) {
 
       const bool Curved = (ICase == 1);
-      const Real Temp2  = Curved ? 3.0e-15_Real : 0.0_Real;
-      const Real Salt2  = Curved ? -4.0e-16_Real : 0.0_Real;
+      const Real Temp2  = (Curved || Parabolic) ? 3.0e-15_Real : 0.0_Real;
+      const Real Salt2  = (Curved || Parabolic) ? -4.0e-16_Real : 0.0_Real;
+      const Real Temp3  = (Curved && Parabolic) ? -5.0e-23_Real : 0.0_Real;
+      const Real Salt3  = (Curved && Parabolic) ? 8.0e-24_Real : 0.0_Real;
 
       // Column 0 is uniform in pressure; column 1 shares its surface and
       // bottom pressure but is offset from it by up to three layer
@@ -493,6 +800,8 @@ int testMatchedPressIntegrand() {
       HostArray2DReal AbsSalinity("AbsSalinity", 2, NLayers);
       HostArray2DReal SlopeCt("SlopeCt", 2, NLayers);
       HostArray2DReal SlopeSa("SlopeSa", 2, NLayers);
+      HostArray2DReal CurvCt("CurvCt", 2, NLayers);
+      HostArray2DReal CurvSa("CurvSa", 2, NLayers);
 
       for (int ICell = 0; ICell < 2; ++ICell) {
          for (int K = 0; K <= NLayers; ++K) {
@@ -504,14 +813,21 @@ int testMatchedPressIntegrand() {
          for (int K = 0; K < NLayers; ++K) {
             PressMid(ICell, K)    = 0.5_Real * (PressInterface(ICell, K) +
                                              PressInterface(ICell, K + 1));
-            ConservTemp(ICell, K) = exactLayerAvg(Temp0, Temp1, Temp2, 0.0_Real,
+            ConservTemp(ICell, K) = exactLayerAvg(Temp0, Temp1, Temp2, Temp3,
                                                   PressInterface(ICell, K),
                                                   PressInterface(ICell, K + 1));
-            AbsSalinity(ICell, K) = exactLayerAvg(Salt0, Salt1, Salt2, 0.0_Real,
+            AbsSalinity(ICell, K) = exactLayerAvg(Salt0, Salt1, Salt2, Salt3,
                                                   PressInterface(ICell, K),
                                                   PressInterface(ICell, K + 1));
          }
          for (int K = 0; K < NLayers; ++K) {
+            if (Parabolic) {
+               ppmReconCoeffs(ConservTemp, PressInterface, ICell, K, KMin, KMax,
+                              SlopeCt(ICell, K), CurvCt(ICell, K));
+               ppmReconCoeffs(AbsSalinity, PressInterface, ICell, K, KMin, KMax,
+                              SlopeSa(ICell, K), CurvSa(ICell, K));
+               continue;
+            }
             I4 KLo, KHi;
             linearReconStencil(K, KMin, KMax, KLo, KHi);
             SlopeCt(ICell, K) = linearReconSlope(
@@ -552,12 +868,12 @@ int testMatchedPressIntegrand() {
                // under the offset is generally not layer K
                const I4 KFound = findLayerForPress(PressInterface, ICell, KMin,
                                                    KMax, Press, K);
-               TempAt[ICell]   = linearReconEval(ConservTemp(ICell, KFound),
-                                                 SlopeCt(ICell, KFound),
-                                                 PressMid(ICell, KFound), Press);
-               SaltAt[ICell]   = linearReconEval(AbsSalinity(ICell, KFound),
-                                                 SlopeSa(ICell, KFound),
-                                                 PressMid(ICell, KFound), Press);
+               TempAt[ICell] =
+                   reconEval(Parabolic, ConservTemp, SlopeCt, CurvCt, PressMid,
+                             PressInterface, ICell, KFound, Press);
+               SaltAt[ICell] =
+                   reconEval(Parabolic, AbsSalinity, SlopeSa, CurvSa, PressMid,
+                             PressInterface, ICell, KFound, Press);
             }
 
             const Real SpecVolDiff = matchedPressSpecVolDiff(
@@ -574,9 +890,10 @@ int testMatchedPressIntegrand() {
          }
       }
 
-      LOG_INFO("PGradTest: matched-pressure integrand, {} profile: max "
-               "|dSpecVol| = {} m3/kg = {} eps of the cancelling terms",
-               Curved ? "quadratic" : "linear", MaxAbs, MaxScaled);
+      LOG_INFO("PGradTest: matched-pressure integrand, {} reconstruction, {} "
+               "profile: max |dSpecVol| = {} m3/kg = {} eps of the cancelling "
+               "terms",
+               Recon, Curved ? Control : Exact, MaxAbs, MaxScaled);
 
       if (Curved) {
          MaxQuadratic    = MaxScaled;
@@ -588,13 +905,13 @@ int testMatchedPressIntegrand() {
    }
 
    if (MaxLinear <= Tol) {
-      LOG_INFO("PGradTest: matched-pressure integrand PASS: {} eps on a "
-               "profile linear in pressure",
-               MaxLinear);
+      LOG_INFO("PGradTest: matched-pressure integrand, {} reconstruction, "
+               "PASS: {} eps on a profile {} in pressure",
+               Recon, MaxLinear, Exact);
    } else {
-      LOG_ERROR("PGradTest: matched-pressure integrand FAIL: {} eps on a "
-                "profile linear in pressure exceeds {} eps",
-                MaxLinear, Tol);
+      LOG_ERROR("PGradTest: matched-pressure integrand, {} reconstruction, "
+                "FAIL: {} eps on a profile {} in pressure exceeds {} eps",
+                Recon, MaxLinear, Exact, Tol);
       ++Err;
    }
 
@@ -604,17 +921,30 @@ int testMatchedPressIntegrand() {
    // so that it means the same thing in a single-precision build, where the
    // linear result rises with the round-off floor while the quadratic one, a
    // truncation error, does not.
+   //
+   // The parabolic reconstruction is too accurate for that in single
+   // precision: on the cubic its residual, some 3e-12 m3/kg in double
+   // precision, is below the single-precision round-off floor of the
+   // integrand, and a cubic strong enough to rise above it would be no
+   // ocean profile. Its control is therefore made in double precision only.
    const Real ControlRatio =
        (MaxAbsLinear > 0.0_Real) ? MaxAbsQuadratic / MaxAbsLinear : 0.0_Real;
-   if (ControlRatio > 100.0_Real) {
-      LOG_INFO("PGradTest: matched-pressure integrand control PASS: the "
-               "quadratic profile is {} times the linear one ({} eps)",
-               ControlRatio, MaxQuadratic);
+   const bool DoublePrec = Eps < 1.0e-10_Real;
+   if (Parabolic && !DoublePrec) {
+      LOG_INFO("PGradTest: single precision: skipping the parabolic "
+               "integrand's control, whose cubic residual is below this "
+               "build's round-off floor ({} times the quadratic one)",
+               ControlRatio);
+   } else if (ControlRatio > 100.0_Real) {
+      LOG_INFO("PGradTest: matched-pressure integrand control, {} "
+               "reconstruction, PASS: the {} profile is {} times the {} one "
+               "({} eps)",
+               Recon, Control, ControlRatio, Exact, MaxQuadratic);
    } else {
-      LOG_ERROR("PGradTest: matched-pressure integrand control FAIL: the "
-                "quadratic profile is only {} times the linear one, so the "
-                "linear result may be trivial",
-                ControlRatio);
+      LOG_ERROR("PGradTest: matched-pressure integrand control, {} "
+                "reconstruction, FAIL: the {} profile is only {} times the "
+                "{} one, so the exact-set result may be trivial",
+                Recon, Control, ControlRatio, Exact);
       ++Err;
    }
 
@@ -1031,7 +1361,9 @@ void referenceScan(const HostArray2DReal &PressInterface, ///< [in]
                    const I4 NQuad,                        ///< [in]
                    const PGradGuardRules &Rules,          ///< [in]
                    std::vector<Real> &DeltaZ,             ///< [out] NLayers+1
-                   std::vector<Real> &Tend                ///< [out] NLayers
+                   std::vector<Real> &Tend,               ///< [out] NLayers
+                   const bool Parabolic = false ///< [in] parabolic, not
+                                                ///< linear, reconstruction
 ) {
 
    const I4 KMin = 0;
@@ -1040,21 +1372,41 @@ void referenceScan(const HostArray2DReal &PressInterface, ///< [in]
    DeltaZ.assign(NLayers + 1, 0.0_Real);
    Tend.assign(NLayers, 0.0_Real);
 
-   // the per-cell reconstruction slopes
-   std::vector<std::vector<Real>> SlopeCt(2, std::vector<Real>(NLayers));
-   std::vector<std::vector<Real>> SlopeSa(2, std::vector<Real>(NLayers));
+   // the per-cell reconstruction slopes, and curvatures for the parabolic
+   // reconstruction, from the functions the kernel uses
+   HostArray2DReal SlopeCt("RefSlopeCt", 2, NLayers);
+   HostArray2DReal SlopeSa("RefSlopeSa", 2, NLayers);
+   HostArray2DReal CurvCt("RefCurvCt", 2, NLayers);
+   HostArray2DReal CurvSa("RefCurvSa", 2, NLayers);
    for (int ICell = 0; ICell < 2; ++ICell) {
       for (int K = 0; K < NLayers; ++K) {
+         if (Parabolic) {
+            ppmReconCoeffs(Temp, PressInterface, ICell, K, KMin, KMax,
+                           SlopeCt(ICell, K), CurvCt(ICell, K));
+            ppmReconCoeffs(Salt, PressInterface, ICell, K, KMin, KMax,
+                           SlopeSa(ICell, K), CurvSa(ICell, K));
+            continue;
+         }
          I4 KLo, KHi;
          linearReconStencil(K, KMin, KMax, KLo, KHi);
-         SlopeCt[ICell][K] =
+         SlopeCt(ICell, K) =
              linearReconSlope(Temp(ICell, KLo), Temp(ICell, KHi),
                               PressMid(ICell, KLo), PressMid(ICell, KHi));
-         SlopeSa[ICell][K] =
+         SlopeSa(ICell, K) =
              linearReconSlope(Salt(ICell, KLo), Salt(ICell, KHi),
                               PressMid(ICell, KLo), PressMid(ICell, KHi));
       }
    }
+
+   // a column's reconstruction at a pressure, as the kernel evaluates it
+   auto temp = [&](int ICell, I4 KF, Real Press) {
+      return reconEval(Parabolic, Temp, SlopeCt, CurvCt, PressMid,
+                       PressInterface, ICell, KF, Press);
+   };
+   auto salt = [&](int ICell, I4 KF, Real Press) {
+      return reconEval(Parabolic, Salt, SlopeSa, CurvSa, PressMid,
+                       PressInterface, ICell, KF, Press);
+   };
 
    Real Nodes[MaxPGradQuadPoints];
    Real Weights[MaxPGradQuadPoints];
@@ -1104,14 +1456,10 @@ void referenceScan(const HostArray2DReal &PressInterface, ///< [in]
          const I4 KF0 = lookup(0, Press, K);
          const I4 KF1 = lookup(1, Press, K);
 
-         const Real T0 = linearReconEval(Temp(0, KF0), SlopeCt[0][KF0],
-                                         PressMid(0, KF0), Press);
-         const Real S0 = linearReconEval(Salt(0, KF0), SlopeSa[0][KF0],
-                                         PressMid(0, KF0), Press);
-         const Real T1 = linearReconEval(Temp(1, KF1), SlopeCt[1][KF1],
-                                         PressMid(1, KF1), Press);
-         const Real S1 = linearReconEval(Salt(1, KF1), SlopeSa[1][KF1],
-                                         PressMid(1, KF1), Press);
+         const Real T0 = temp(0, KF0, Press);
+         const Real S0 = salt(0, KF0, Press);
+         const Real T1 = temp(1, KF1, Press);
+         const Real S1 = salt(1, KF1, Press);
 
          Real Diff;
          if (Rules.SharedExpansion) {
@@ -1160,10 +1508,8 @@ void referenceScan(const HostArray2DReal &PressInterface, ///< [in]
             const Real Press  = Mid + Half * Nodes[IQuad];
             const Real Weight = Half * Weights[IQuad];
             const I4 KF       = lookup(ICell, Press, KAnchor[ICell]);
-            const Real T = linearReconEval(Temp(ICell, KF), SlopeCt[ICell][KF],
-                                           PressMid(ICell, KF), Press);
-            const Real S = linearReconEval(Salt(ICell, KF), SlopeSa[ICell][KF],
-                                           PressMid(ICell, KF), Press);
+            const Real T      = temp(ICell, KF, Press);
+            const Real S      = salt(ICell, KF, Press);
             Integral += Weight * edgeSpecVol(AnchorEos, T, S, Press);
          }
          Anchor += Sign * InvGravity * Integral;
@@ -1183,14 +1529,10 @@ void referenceScan(const HostArray2DReal &PressInterface, ///< [in]
             const Real Weight = Half * Weights[IQuad];
             const I4 KF0      = lookup(0, Press, KMax);
             const I4 KF1      = lookup(1, Press, KMax);
-            const Real T0     = linearReconEval(Temp(0, KF0), SlopeCt[0][KF0],
-                                                PressMid(0, KF0), Press);
-            const Real S0     = linearReconEval(Salt(0, KF0), SlopeSa[0][KF0],
-                                                PressMid(0, KF0), Press);
-            const Real T1     = linearReconEval(Temp(1, KF1), SlopeCt[1][KF1],
-                                                PressMid(1, KF1), Press);
-            const Real S1     = linearReconEval(Salt(1, KF1), SlopeSa[1][KF1],
-                                                PressMid(1, KF1), Press);
+            const Real T0     = temp(0, KF0, Press);
+            const Real S0     = salt(0, KF0, Press);
+            const Real T1     = temp(1, KF1, Press);
+            const Real S1     = salt(1, KF1, Press);
             Integral +=
                 Weight * matchedPressSpecVolDiff(FloorEos, T0, S0, T1, S1);
          }
@@ -1244,16 +1586,18 @@ PGradHostState copyStateToHost(VertCoord *VCoord, Eos *EqState) {
 // design's measured rates were taken in, so the two are comparable.
 Real runFiniteVolume(HorzMesh *Mesh, VertCoord *VCoord, OceanState *State,
                      Eos *EqState, I4 NVertLayers, Real &MaxDeltaZ,
-                     Real &MaxDeltaZUpper, Real &MaxDeltaZLower,
-                     Real &RmsTend) {
+                     Real &MaxDeltaZUpper, Real &MaxDeltaZLower, Real &RmsTend,
+                     const std::string &VertRecon = "linear") {
 
    Config *Options = Config::getOmegaConfig();
    Config PGradConfig("PressureGrad");
    Options->get(PGradConfig);
    PGradConfig.set("PressureGradType", std::string("FiniteVolume"));
+   PGradConfig.set("VerticalReconstruction", VertRecon);
    PressureGrad *FVPGrad =
        PressureGrad::create("TestFV", Mesh, VCoord, Options);
    PGradConfig.set("PressureGradType", std::string("Centered"));
+   PGradConfig.set("VerticalReconstruction", std::string("linear"));
    // create returns null if an instance of this name already exists, and
    // dereferencing that gives a segmentation fault rather than a message
    CHECK_ERROR_ABORT(
@@ -1348,6 +1692,32 @@ Real runCentered(HorzMesh *Mesh, VertCoord *VCoord, OceanState *State,
 
 } // end runCentered
 
+// The size of the terms the exactness gates cancel: the hydrostatic
+// contribution of the temperature and salinity structure over the column, in
+// m. Tolerances are scaled by it, so that they track Real's epsilon and the
+// size of the hydrostatic terms rather than a physical tolerance.
+Real hydrostaticCancelScale(Eos *EqState, ///< [in] Equation of state
+                            I4 NLayers,   ///< [in] Number of layers
+                            Real PressBot ///< [in] pressure at the floor
+) {
+   const auto &SpecVolDCt = EqState->SpecVolDCt;
+   const auto &SpecVolDSa = EqState->SpecVolDSa;
+   Array2DReal Temp       = Tracers::getByName(0, "Temperature");
+   Array2DReal Salinity   = Tracers::getByName(0, "Salinity");
+   Real CancelScale       = 0.0_Real;
+   parallelReduce(
+       {2, NLayers},
+       KOKKOS_LAMBDA(int i, int k, Real &MaxV) {
+          const Real V = (Kokkos::abs(SpecVolDCt(i, k) * Temp(i, k)) +
+                          Kokkos::abs(SpecVolDSa(i, k) * Salinity(i, k))) *
+                         PressBot / Gravity;
+          if (V > MaxV)
+             MaxV = V;
+       },
+       Kokkos::Max<Real>(CancelScale));
+   return CancelScale;
+}
+
 // The gating test of design section 5.2: exactness on the exact set, the
 // convergence of the residual off it, and the guards.
 int testExactnessAndGuards(HorzMesh *Mesh,    ///< [in] Horizontal mesh
@@ -1383,23 +1753,8 @@ int testExactnessAndGuards(HorzMesh *Mesh,    ///< [in] Horizontal mesh
    const Real PressBot = setupProfileState(
        Mesh, VCoord, State, EqState, NLayers, DC, Bulge, Linear, 0.0_Real);
 
-   // the size of the terms that had to cancel: the hydrostatic contribution of
-   // the temperature and salinity structure over the column
-   const auto &SpecVolDCt = EqState->SpecVolDCt;
-   const auto &SpecVolDSa = EqState->SpecVolDSa;
-   Array2DReal Temp       = Tracers::getByName(0, "Temperature");
-   Array2DReal Salinity   = Tracers::getByName(0, "Salinity");
-   Real CancelScale       = 0.0_Real;
-   parallelReduce(
-       {2, NLayers},
-       KOKKOS_LAMBDA(int i, int k, Real &MaxV) {
-          const Real V = (Kokkos::abs(SpecVolDCt(i, k) * Temp(i, k)) +
-                          Kokkos::abs(SpecVolDSa(i, k) * Salinity(i, k))) *
-                         PressBot / Gravity;
-          if (V > MaxV)
-             MaxV = V;
-       },
-       Kokkos::Max<Real>(CancelScale));
+   // the size of the terms that had to cancel
+   const Real CancelScale = hydrostaticCancelScale(EqState, NLayers, PressBot);
 
    Real MaxDeltaZ, MaxUpper, MaxLower, RmsFV;
    const Real MaxFV = runFiniteVolume(Mesh, VCoord, State, EqState, NLayers,
@@ -1705,6 +2060,187 @@ int testExactnessAndGuards(HorzMesh *Mesh,    ///< [in] Horizontal mesh
    return Err;
 
 } // end testExactnessAndGuards
+
+// The parabolic reconstruction on the two-column state: exactness on its exact
+// set, which adds profiles quadratic in pressure to the linear ones; the host
+// assembly's fidelity to the kernel; and, on a cubic profile, which it does
+// not resolve, a residual smaller than the linear reconstruction's that
+// converges faster under vertical refinement.
+//
+// The guards of testExactnessAndGuards test rules of the scheme that do not
+// depend on the reconstruction, so they are not repeated here.
+int testParabolicExactness(HorzMesh *Mesh,    ///< [in] Horizontal mesh
+                           VertCoord *VCoord, ///< [inout] Vertical coordinate
+                           OceanState *State, ///< [inout] Ocean state
+                           Eos *EqState       ///< [inout] Equation of state
+) {
+
+   int Err = 0;
+
+   const Real Eps        = std::numeric_limits<Real>::epsilon();
+   const bool DoublePrec = Eps < 1.0e-10_Real;
+   const Real DC         = 4000.0_Real;
+   const Real Bulge      = 7.5e6_Real;
+   const I4 NLayers      = 32;
+   const I4 NQuad        = 2;
+
+   // the profiles of testExactnessAndGuards
+   const PGradProfile Linear    = {12.0_Real, -2.0e-7_Real, 0.0_Real, 0.0_Real,
+                                   34.0_Real, 2.5e-8_Real,  0.0_Real, 0.0_Real};
+   const PGradProfile Quadratic = {12.0_Real,     -2.0e-7_Real, 3.0e-15_Real,
+                                   0.0_Real,      34.0_Real,    2.5e-8_Real,
+                                   -4.0e-16_Real, 0.0_Real};
+   const PGradProfile Cubic     = {12.0_Real,     -2.0e-7_Real, 3.0e-15_Real,
+                                   -5.0e-23_Real, 34.0_Real,    2.5e-8_Real,
+                                   -4.0e-16_Real, 8.0e-24_Real};
+
+   // The exact set: zero to machine precision at every edge and layer, with
+   // the gate of testExactnessAndGuards. On the quadratic profile the linear
+   // reconstruction is recorded alongside, as the control.
+   const PGradProfile Exact[2] = {Linear, Quadratic};
+   const char *ExactNames[2]   = {"linear", "quadratic"};
+   Real LinearOnQuadratic      = 0.0_Real;
+   Real ParabolicOnQuadratic   = 0.0_Real;
+   for (int IProf = 0; IProf < 2; ++IProf) {
+      const Real PressBot =
+          setupProfileState(Mesh, VCoord, State, EqState, NLayers, DC, Bulge,
+                            Exact[IProf], 0.0_Real);
+      const Real HeightScale =
+          hydrostaticCancelScale(EqState, NLayers, PressBot);
+      const Real TendScale = Gravity * HeightScale / DC;
+
+      Real MaxDeltaZ, MaxUpper, MaxLower, Rms;
+      const Real MaxFV =
+          runFiniteVolume(Mesh, VCoord, State, EqState, NLayers, MaxDeltaZ,
+                          MaxUpper, MaxLower, Rms, "ppm");
+      const Real ScaledTend   = MaxFV / (Eps * TendScale);
+      const Real ScaledDeltaZ = MaxDeltaZ / (Eps * HeightScale);
+
+      LOG_INFO("PGradTest: parabolic reconstruction, {} profile: max |Tend| "
+               "= {} m/s2 ({} eps), max |DeltaZFixedP| = {} m ({} eps)",
+               ExactNames[IProf], MaxFV, ScaledTend, MaxDeltaZ, ScaledDeltaZ);
+
+      const Real ExactTol = DoublePrec ? 4.0_Real : 16.0_Real;
+      if (ScaledTend <= ExactTol && ScaledDeltaZ <= ExactTol) {
+         LOG_INFO("PGradTest: parabolic exactness gate, {} profile, PASS",
+                  ExactNames[IProf]);
+      } else {
+         LOG_ERROR("PGradTest: parabolic exactness gate, {} profile, FAIL: "
+                   "tendency {} eps, height difference {} eps, against {} eps",
+                   ExactNames[IProf], ScaledTend, ScaledDeltaZ, ExactTol);
+         ++Err;
+      }
+
+      if (IProf == 1) {
+         ParabolicOnQuadratic = MaxFV;
+         Real DZ, Up, Low, LinRms;
+         LinearOnQuadratic = runFiniteVolume(Mesh, VCoord, State, EqState,
+                                             NLayers, DZ, Up, Low, LinRms);
+      }
+   }
+
+   // What follows measures truncation errors, which a single-precision build
+   // cannot resolve, as testExactnessAndGuards explains.
+   if (!DoublePrec) {
+      LOG_INFO("PGradTest: single precision: skipping the parabolic control, "
+               "harness fidelity and convergence checks");
+      return Err;
+   }
+
+   // The quadratic result means nothing unless the linear reconstruction,
+   // which does not resolve that profile, gives a large answer on it.
+   const Real ControlRatio = (ParabolicOnQuadratic > 0.0_Real)
+                                 ? LinearOnQuadratic / ParabolicOnQuadratic
+                                 : 0.0_Real;
+   if (ControlRatio > 100.0_Real) {
+      LOG_INFO("PGradTest: parabolic control PASS: on the quadratic profile "
+               "the linear reconstruction gives {} m/s2, {} times the "
+               "parabolic one",
+               LinearOnQuadratic, ControlRatio);
+   } else {
+      LOG_ERROR("PGradTest: parabolic control FAIL: on the quadratic profile "
+                "the linear reconstruction gives only {} times the parabolic "
+                "one, so the exactness result may be trivial",
+                ControlRatio);
+      ++Err;
+   }
+
+   // The host assembly with the parabolic reconstruction must reproduce the
+   // kernel, on a profile it does not resolve, where both sides are large.
+   setupProfileState(Mesh, VCoord, State, EqState, NLayers, DC, Bulge, Cubic,
+                     0.0_Real);
+   Real CubicDeltaZ, CubicUpper, CubicLower, CubicRms;
+   const Real CubicKernel =
+       runFiniteVolume(Mesh, VCoord, State, EqState, NLayers, CubicDeltaZ,
+                       CubicUpper, CubicLower, CubicRms, "ppm");
+   PGradHostState H = copyStateToHost(VCoord, EqState);
+   std::vector<Real> RefDeltaZ, RefTend;
+   referenceScan(H.PressInterface, H.PressMid, H.Temp, H.Salt, H.SpecVol,
+                 H.SpecVolDCt, H.SpecVolDSa, H.SpecVolDP, H.GeomZ, NLayers, DC,
+                 NQuad, PGradGuardRules(), RefDeltaZ, RefTend, true);
+   Real RefMax = 0.0_Real;
+   for (int K = 0; K < NLayers; ++K)
+      RefMax = std::max(RefMax, std::abs(RefTend[K]));
+   const Real RelDiff = (CubicKernel > 0.0_Real)
+                            ? std::abs(RefMax - CubicKernel) / CubicKernel
+                            : 1.0_Real;
+   if (RelDiff <= 1.0e-10_Real) {
+      LOG_INFO("PGradTest: parabolic harness fidelity PASS: reference {} "
+               "m/s2 against kernel {} m/s2",
+               RefMax, CubicKernel);
+   } else {
+      LOG_ERROR("PGradTest: parabolic harness fidelity FAIL: reference {} "
+                "m/s2 against kernel {} m/s2, relative difference {}",
+                RefMax, CubicKernel, RelDiff);
+      ++Err;
+   }
+
+   // The cubic under vertical refinement at fixed tilt, against the linear
+   // reconstruction on the same states. Measured over 15, 30 and 60 layers,
+   // the rates are 5.1 and 4.4, against 2.9 and 2.8 for the linear
+   // reconstruction, which is 40 to 600 times less accurate. The gate is set
+   // below the measured rates with margin, and high enough to catch a
+   // parabolic reconstruction that had become a linear one.
+   Real PrevRms          = 0.0_Real;
+   Real WorstRate        = 1.0e30_Real;
+   bool AlwaysAhead      = true;
+   const I4 RefLayers[3] = {15, 30, 60};
+   for (int IRef = 0; IRef < 3; ++IRef) {
+      const I4 NRef = RefLayers[IRef];
+      setupProfileState(Mesh, VCoord, State, EqState, NRef, DC, Bulge, Cubic,
+                        0.0_Real);
+      Real DZ, Up, Low, Rms, LinRms;
+      runFiniteVolume(Mesh, VCoord, State, EqState, NRef, DZ, Up, Low, Rms,
+                      "ppm");
+      runFiniteVolume(Mesh, VCoord, State, EqState, NRef, DZ, Up, Low, LinRms);
+      AlwaysAhead = AlwaysAhead && Rms < LinRms;
+      if (IRef > 0 && Rms > 0.0_Real) {
+         const Real Rate = std::log2(PrevRms / Rms);
+         WorstRate       = std::min(WorstRate, Rate);
+         LOG_INFO("PGradTest: parabolic, cubic profile, {} layers: RMS |Tend| "
+                  "= {} m/s2 against {} linear, rate {}",
+                  NRef, Rms, LinRms, Rate);
+      } else {
+         LOG_INFO("PGradTest: parabolic, cubic profile, {} layers: RMS |Tend| "
+                  "= {} m/s2 against {} linear",
+                  NRef, Rms, LinRms);
+      }
+      PrevRms = Rms;
+   }
+   if (WorstRate >= 3.5_Real && AlwaysAhead) {
+      LOG_INFO("PGradTest: parabolic convergence PASS: worst rate {}",
+               WorstRate);
+   } else {
+      LOG_ERROR("PGradTest: parabolic convergence FAIL: worst rate {} "
+                "(expected at least 3.5), ahead of the linear reconstruction "
+                "at every resolution {}",
+                WorstRate, AlwaysAhead);
+      ++Err;
+   }
+
+   return Err;
+
+} // end testParabolicExactness
 
 // The anchor where the two columns' floors are more than a layer apart in
 // pressure.
@@ -2143,6 +2679,21 @@ int testPGradConfig(const HorzMesh *Mesh,   ///< [in] Horizontal mesh
    PGradConfig.set("PressureGradType", std::string("Centered"));
    PressureGrad::erase("TestFiniteVolume");
 
+   // The parabolic reconstruction is selected by name
+   PGradConfig.set("PressureGradType", std::string("FiniteVolume"));
+   PGradConfig.set("VerticalReconstruction", std::string("ppm"));
+   PressureGrad *PPMPGrad =
+       PressureGrad::create("TestFiniteVolumePPM", Mesh, VCoord, Options);
+   PGradConfig.set("PressureGradType", std::string("Centered"));
+   PGradConfig.set("VerticalReconstruction", std::string("linear"));
+   if (PPMPGrad && PPMPGrad->getVertRecon() == PressureGradVertRecon::PPM) {
+      LOG_INFO("PGradTest: VerticalReconstruction ppm parse PASS");
+   } else {
+      LOG_ERROR("PGradTest: VerticalReconstruction ppm parse FAIL");
+      ++Err;
+   }
+   PressureGrad::erase("TestFiniteVolumePPM");
+
    return Err;
 
 } // end testPGradConfig
@@ -2255,6 +2806,10 @@ int main(int argc, char *argv[]) {
       // failure here localizes immediately.
       int ReconErr = testReconstruction();
 
+      // The same for the parabolic reconstruction, including the short
+      // columns and the thin bottom cell its end-layer form exists for.
+      int PPMReconErr = testParabolicReconstruction();
+
       // Pin the per-column pressure lookup. No answer-level check anywhere
       // can distinguish this from a layer-index lookup, so these property
       // tests are the only protection against that failure mode.
@@ -2262,11 +2817,17 @@ int main(int argc, char *argv[]) {
 
       // The matched-pressure integrand must be zero at every quadrature
       // point on a resolved profile, not merely in the integral.
-      int IntegrandErr = testMatchedPressIntegrand();
+      int IntegrandErr =
+          testMatchedPressIntegrand(false) + testMatchedPressIntegrand(true);
 
       // The gating test: exactness on the exact set, the convergence of the
       // residual off it, and the guards.
       int ScanErr = testExactnessAndGuards(DefMesh, VCoord, DefState, DefEos);
+
+      // The same gate with the parabolic reconstruction, whose exact set
+      // adds profiles quadratic in pressure.
+      int PPMScanErr =
+          testParabolicExactness(DefMesh, VCoord, DefState, DefEos);
 
       // The anchor where the two floors are more than a layer apart.
       int SlopeErr = testSlopingFloorAnchor(DefMesh, VCoord, DefState, DefEos);
@@ -2308,8 +2869,8 @@ int main(int argc, char *argv[]) {
                   Rmse(0));
       }
 
-      RetVal += ReconErr + LookupErr + IntegrandErr + ScanErr + SlopeErr +
-                IdentityErr + ConfigErr;
+      RetVal += ReconErr + PPMReconErr + LookupErr + IntegrandErr + ScanErr +
+                PPMScanErr + SlopeErr + IdentityErr + ConfigErr;
 
       // Flush before teardown. Omega logs at info level but only flushes at
       // warn and above, so a run that aborts during cleanup loses every
