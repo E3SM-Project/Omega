@@ -1741,10 +1741,12 @@ well as on the assumption-A2 grounds §3.6.1 gives.
   quintic moment, which need three points. Exactness on the exact set is unaffected either way
   (§3.5, consequence 2). Off the exact set, though, the default rule spans each edge layer whole,
   so it does not resolve the kinks the parabolic reconstruction leaves at either column's
-  interfaces within the layer. Measured on the reconstruction alone, that holds the column scan to
-  about third order where integrating exactly between the kinks gives about fourth (§6.7). Whether
-  splitting the rule at those interfaces is worth its cost is a question for the wide stencil, once
-  the horizontal error no longer dominates.
+  interfaces within the layer. Measured on the reconstruction alone, refining with the two columns'
+  displacement held at a fixed number of layer thicknesses, that holds the column scan to about
+  third order where integrating exactly between the kinks gives about fourth (§6.7); at fixed tilt,
+  Omega's unit test measures faster convergence (§6.8). Whether splitting the rule at those
+  interfaces is worth its cost is a question for the wide stencil, once the horizontal error no
+  longer dominates.
 - *Horizontal stencil.* The cell lists and weights are cached on the functor (§4.1.3).
 - *Tests.* The reconstruction unit test gains a quadratic profile on non-uniform layers, columns of
   one to three valid layers (§3.4), and a thin end layer extrapolated beyond the column, in both
@@ -1755,6 +1757,7 @@ well as on the assumption-A2 grounds §3.6.1 gives.
   the comparison stays independent.
 - *The sigma instability* (§5.3.1). Phase 2 should be run on the sigma seamount. A 700-fold smaller
   starting error grew at the same rate there, so higher accuracy alone is not expected to cure it.
+  Run there with the parabolic reconstruction, it grows three to five times faster (§6.8).
 
 #### 4.5.3 Suggested order of work
 
@@ -2229,6 +2232,12 @@ anomaly reaches a third of the profile's whole range.
 Because a 700-fold smaller starting error grows at the same rate, this looks like the scheme's
 response on steep sigma layers rather than its accuracy, so Phase 2's higher order is not expected
 to cure it by accuracy alone (§4.5.2).
+
+**The parabolic reconstruction makes it worse.** On the same sigma trees under TEOS-10 it starts as
+much as four times more accurate and then grows three to five times faster, overturning at day 0.58
+rather than 1.42 on the exponential profile and at day 1.50 rather than 2.58 on the one linear in
+pressure; on z-star it stays stable (§6.8). That fits the reading above: the instability is the
+scheme's response on steep layers, and the parabolic reconstruction responds more strongly.
 
 **What this does and does not mean.** Sigma layers follow the bathymetry, which is the steepest
 tilt against isobars in the whole suite and is not what Omega runs — p-star, like z-star, keeps
@@ -2730,7 +2739,9 @@ leave only kinks, and theirs is also the cleanest convergence under that rule.
 
 **The default rule also costs the parabolic reconstruction an order.** All three estimators
 converge at about third order with two Gauss points, where integrating exactly between the breaks
-gives the parabolic ones about fourth. §4.5.2 records what follows from that.
+gives the parabolic ones about fourth. The refinement here holds the second column's displacement
+at a fixed number of layer thicknesses, so the tilt shrinks with the layers; at fixed tilt Omega's
+unit test measures more (§6.8). §4.5.2 records what follows from that.
 
 **Below a thin bottom cell.** Assumption A5's extrapolation was measured on the exponential profile
 with 32 layers and a bottom cell from a full layer down to $10^{-4}$ of one, by evaluating the
@@ -2744,3 +2755,48 @@ at the ends of a column.
 
 These are measurements of the reconstruction alone. The Polaris reference implementation and Omega
 measure the scheme as a whole (§5.1, §5.2).
+
+### 6.8 Confirmation of the parabolic reconstruction in Omega
+
+The parabolic reconstruction was implemented in Omega as §3.4 specifies it, and measured on
+chrysalis with Intel against the Polaris kernel that §5.1 compares with, which was written from this
+document.
+
+**The unit test** (§5.2). On the two-column state the exactness gate returns 0.06 to 0.08 $\epsilon$
+of the cancelling terms on profiles linear and quadratic in pressure in double precision, and 0.12
+to 0.18 $\epsilon$ in single, where the linear reconstruction leaves $3.1\times10^{-7}$ m s$^{-2}$
+on the quadratic. The host-side assembly reproduces the kernel bit for bit on a cubic. On that
+cubic, under refinement at fixed tilt over 15, 30 and 60 layers, the error converges at 5.1 and 4.4,
+against 2.9 and 2.8 for the linear reconstruction, and is 40 to 600 times smaller. Extrapolated two
+layers below a bottom cell a billionth of a layer thick, the reconstruction of a quadratic is off by
+$2.6\times10^{-13}$ °C in double precision, against $1.4\times10^{4}$ °C built from [](#ppm-coeffs);
+in single precision, for a cell a thousandth of a layer thick, the two are $1.8\times10^{-4}$ and
+2.4 °C.
+
+**The two-column tasks** (§5.1). `finite_volume_ppm` agrees with the Polaris kernel to at most
+$1.6\times10^{-13}$ m s$^{-2}$ on all ten `horiz_press_grad` variants, and reproduces its
+predictions. The resting-state ratios are the smallest anywhere in each sweep:
+
+| variant | centered over `finite_volume_ppm` | against `finite_volume` |
+| --- | --- | --- |
+| `ztilde_gradient`, at 4 km | 5.11 | 2.8 to 2.9 times more accurate, converging at 1.99 |
+| `surface_pressure_gradient`, at 4 km | 3.27 | 1.5 times more accurate |
+| `temperature_gradient`, `salinity_gradient` | 1.00 | the same |
+| `hydrostatic_consistency` | 5.05 | 1.4 to 2.6 times more accurate |
+| `hydrostatic_consistency_linear` | 29.4 | the same; what remains of both is the anchor |
+| `hydrostatic_consistency_quadratic` | 27.5 | in the exact set; what remains is the anchor |
+| `bathymetry_step` | 632 | three times less accurate at 256 m, up to a thousand times more at 128 m |
+| `bathymetry_step_linear` | 58829 | the same |
+| `bathymetry_step_quadratic` | 61515 | in the exact set |
+
+On `bathymetry_step` at 256 m the profile's PCHIP node at −3000 m, where its curvature jumps, lies
+inside the five-interface window of the bottom layers. Moved to −2000 m, the parabolic
+reconstruction is 340 to 510 times more accurate there instead.
+
+**The seamount** (§5.3), for six days under TEOS-10. On z-star the parabolic reconstruction stays
+stable: at day 6 the maximum speed is $1.75\times10^{-4}$ m s$^{-1}$ on the exponential profile,
+against $3.24\times10^{-4}$ with the linear one, and $1.30\times10^{-6}$ with either on the profile
+linear in pressure. On sigma it starts up to four times more accurate and then grows three to five
+times faster: mean kinetic energy e-folds at 11.6 per day against 2.3 on the exponential profile,
+and at 7.9 against 2.8 on the linear one, and the columns first overturn at day 0.58 rather than
+1.42, and at day 1.50 rather than 2.58. The centered runs are unchanged.
