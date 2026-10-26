@@ -21,6 +21,7 @@
 #include "HorzMesh.h"
 #include "IO.h"
 #include "IOStream.h"
+#include "GLSMix.h"
 #include "KPPMix.h"
 #include "Logging.h"
 #include "MachEnv.h"
@@ -415,6 +416,7 @@ static int initOmegaModulesImpl() {
    PressureGrad::init();
    VertMix::init();
    KPPMix::init();
+   GLSMix::init();
    SubmesoEddies::init();
    Tendencies::init();
 

@@ -145,6 +145,41 @@ Omega:
       IceFractionThresholdForMinimumOSBL: 0.15
       MinimumOSBLUnderSeaIce: 5.0
       DebugDiagnostics: false
+    GLS:
+      # Generic Length Scale turbulence closure; an alternative to KPP, not
+      # combinable with it. Better suited than KPP for shallow, strongly
+      # stratified basins (e.g. the Great Lakes).
+      Enable: false
+      # Closure-family exponents: p=3, m=1.5, n=-1 is k-epsilon (default).
+      # Other choices (e.g. p=-2,m=0.5,n=-1 for k-omega, or p=0,m=1,n=1 for
+      # k-kl/Mellor-Yamada 2.5) are supported but not individually tuned here.
+      P: 3.0
+      M: 1.5
+      N: -1.0
+      # Canuto_A, Canuto_B, or Galperin
+      StabilityFunction: Canuto_A
+      Cmu0: 0.5477
+      C1: 1.44
+      C2: 1.92
+      C3Minus: -0.4
+      C3Plus: 1.0
+      SigmaK: 1.0
+      SigmaPsi: 1.3
+      Kmin: 7.6e-6
+      Pmin: 1.0e-12
+      AkvBak: 5.0e-6
+      AktBak: 1.0e-6
+      AkkBak: 5.0e-6
+      AkpBak: 5.0e-6
+      Zos: 0.02
+      Zob: 0.02
+      BottomDragCoeff: 3.0e-3
+      # Cap the turbulence length scale at LengthScaleCapFraction times the
+      # local water-column depth, independent of stratification. Fixes a
+      # REMORA/ROMS bug where an unbounded length scale under neutral or
+      # unstable stratification could drive viscosity to unphysical values.
+      LengthScaleCapEnable: true
+      LengthScaleCapFraction: 0.4
   IOStreams:
     HorzMeshIn:
       UsePointerFile: false

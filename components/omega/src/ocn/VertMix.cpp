@@ -14,6 +14,7 @@
 #include "DataTypes.h"
 #include "Eos.h"
 #include "Error.h"
+#include "GLSMix.h"
 #include "GlobalConstants.h"
 #include "HorzMesh.h"
 #include "HorzOperators.h"
@@ -246,6 +247,61 @@ void VertMix::computeVertMix(const Array2DReal &NormalVelocity,
       deepCopy(KPPBoundaryLayerIndex, KPPInstance->OSBLDepthIndex);
    }
    OMEGA_SCOPE(LocKPPBoundaryLayerIndex, KPPBoundaryLayerIndex);
+
+   // GLS is a full-column closure (its own production/dissipation balance
+   // already folds in background, shear, and boundary-layer mixing), so when
+   // enabled it replaces the Background/Shear/KPP path entirely rather than
+   // merging with it. GLSMix::init() rejects a config with both GLS and KPP
+   // enabled, so LocKPPEnabled is guaranteed false whenever GLS is enabled.
+   // Convective mixing may still be layered on top, same as for KPP, since
+   // it only triggers where static instability is diagnosed.
+   GLSMix *GLSInstance      = GLSMix::getInstance();
+   const bool LocGLSEnabled = (GLSInstance && GLSInstance->Enabled);
+   if (LocGLSEnabled) {
+      OMEGA_SCOPE(LocGLSVertDiff, GLSInstance->VertDiff);
+      OMEGA_SCOPE(LocGLSVertVisc, GLSInstance->VertVisc);
+      parallelFor(
+          "VertMix-GLS", {Mesh->NCellsAll, VCoord->NVertLayersP1},
+          KOKKOS_LAMBDA(I4 ICell, I4 K) {
+             LocVertDiff(ICell, K) = LocGLSVertDiff(ICell, K);
+             LocVertVisc(ICell, K) = LocGLSVertVisc(ICell, K);
+          });
+
+      if (LocComputeVertMixConv.Enabled) {
+         parallelForOuter(
+             "VertMix-Conv", {Mesh->NCellsAll},
+             KOKKOS_LAMBDA(I4 ICell, const TeamMember &Team) {
+                const int KMin   = MinLayerCell(ICell) + 1;
+                const int KMax   = MaxLayerCell(ICell);
+                const int KRange = vertRangeChunked(KMin, KMax);
+
+                parallelForInner(
+                    Team, KRange, INNER_LAMBDA(int KChunk) {
+                       const I4 KStart = chunkStart(KChunk, KMin);
+                       const I4 KLen   = chunkLength(KChunk, KStart, KMax);
+                       for (int KVec = 0; KVec < KLen; ++KVec) {
+                          const I4 K = KStart + KVec;
+                          if (BruntVaisalaFreqSq(ICell, K) <
+                              LocConvTriggerBVF) {
+                             LocVertDiff(ICell, K) += LocConvDiff;
+                             LocVertVisc(ICell, K) += LocConvDiff;
+                          }
+                       }
+                    });
+             });
+      }
+
+      parallelFor(
+          "VertMix-Boundaries", {Mesh->NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
+             const int KMin           = MinLayerCell(ICell);
+             const int KMax           = MaxLayerCell(ICell) + 1;
+             LocVertDiff(ICell, KMin) = 0.0_Real;
+             LocVertVisc(ICell, KMin) = 0.0_Real;
+             LocVertDiff(ICell, KMax) = 0.0_Real;
+             LocVertVisc(ICell, KMax) = 0.0_Real;
+          });
+      return;
+   }
 
    /// First, initialize VertDiff and VertVisc to background values
    parallelForOuter(
@@ -780,6 +836,23 @@ void VertMix::VertMixImplicit(OceanState *State, AuxiliaryState *AuxState,
    // Compute Brunt-Vaisala frequency squared
    EqState->computeBruntVaisalaFreqSq(
        ConservTemp, AbsSalinity, VCoord->PressureInterface, EqState->SpecVol);
+
+   // Advance the GLS turbulence closure (if enabled) using this step's
+   // velocity and stratification, before it is merged into VertDiff/VertVisc
+   // below.
+   GLSMix *GLSInstance = GLSMix::getInstance();
+   if (GLSInstance && GLSInstance->Enabled) {
+      const auto *DefTimeStepper  = TimeStepper::getDefault();
+      const TimeInterval TimeStep = DefTimeStepper->getTimeStep();
+      R8 DT;
+      TimeStep.get(DT, TimeUnits::Seconds);
+
+      const Array2DReal &PseudoThickCell = State->getPseudoThickness(TimeLevel);
+      GLSInstance->computeGLSFields(NormalVelEdge, LocTangentialVelocity,
+                                    EqState->BruntVaisalaFreqSq,
+                                    PseudoThickCell,
+                                    AuxState->KineticAux.KineticEnergyCell, DT);
+   }
 
    // Compute vertical mixing coefficients
    computeVertMix(NormalVelEdge, LocTangentialVelocity,
