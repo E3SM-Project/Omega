@@ -682,6 +682,27 @@ set_tests_properties(
   PROPERTIES WILL_FAIL TRUE
 )
 
+##########################
+# GLS tests
+##########################
+
+add_omega_test(
+  GLS_STABILITY_TEST
+  testGLSMix.exe
+  ocn/GLSMixTest.cpp
+  "-n;1"
+  test_arg=stability
+)
+add_omega_ctest(GLS_LENGTHCAP_TEST testGLSMix.exe "-n;1" lengthcap)
+# Each injects a rejected config and must abort in GLSMix::init.
+add_omega_ctest(GLS_CONFIG_STABILITY_TEST testGLSMix.exe "-n;1" config-stability)
+add_omega_ctest(GLS_CONFIG_EXCLUSIVE_TEST testGLSMix.exe "-n;1" config-exclusive)
+set_tests_properties(
+  GLS_CONFIG_STABILITY_TEST
+  GLS_CONFIG_EXCLUSIVE_TEST
+  PROPERTIES WILL_FAIL TRUE
+)
+
 ##################
 # VAdv test
 ##################
