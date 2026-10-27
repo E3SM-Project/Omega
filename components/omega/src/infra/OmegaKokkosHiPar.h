@@ -24,6 +24,13 @@ using ScratchArray1D =
 using ScratchArray1DReal = ScratchArray1D<Real>;
 using ScratchArray1DI4   = ScratchArray1D<I4>;
 
+template <class T>
+using ScratchArray2D =
+    Kokkos::View<T **, ScratchMemSpace, Kokkos::MemoryUnmanaged>;
+
+using ScratchArray2DReal = ScratchArray2D<Real>;
+using ScratchArray2DI4   = ScratchArray2D<I4>;
+
 /// team_size for hierarchical parallelism
 #ifdef OMEGA_TARGET_DEVICE
 constexpr int OMEGA_TEAMSIZE = 64;

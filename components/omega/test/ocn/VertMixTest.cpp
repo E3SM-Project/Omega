@@ -331,12 +331,21 @@ void testOneTwoOneFilter() {
 
    // Apply the 1-2-1 filter to each cell
    OMEGA_SCOPE(ComputeOneTwoOneFilter, TestVertMix->ComputeOneTwoOneFilter);
-   parallelFor(
-       "ApplyOneTwoOneFilter", {Mesh->NCellsAll, NChunks},
-       KOKKOS_LAMBDA(I4 ICell, I4 KChunk) {
-          ComputeOneTwoOneFilter(GradRichNumSmoothed, ICell, KChunk,
-                                 GradRichNum);
+
+   const int RiSmoothLoopsOrig = ComputeOneTwoOneFilter.RiSmoothLoops;
+   // Perform only one smoothing iteration for this test
+   ComputeOneTwoOneFilter.RiSmoothLoops = 1;
+
+   parallelForOuter(
+       "ApplyOneTwoOneFilter",
+       LaunchConfig({Mesh->NCellsAll},
+                    TeamScratch<Real>(2 * VCoord->NVertLayersP1)),
+       KOKKOS_LAMBDA(I4 ICell, const TeamMember &Team) {
+          ComputeOneTwoOneFilter(Team, GradRichNumSmoothed, ICell, GradRichNum);
        });
+
+   // Restore original number of smoothing iterations
+   ComputeOneTwoOneFilter.RiSmoothLoops = RiSmoothLoopsOrig;
 
    /// Check all array values against expected value
    int NumMismatches = 0;
@@ -351,7 +360,7 @@ void testOneTwoOneFilter() {
               Team, KRange,
               INNER_LAMBDA(int KOff, int &InnerCount) {
                  const int K = KMin + KOff;
-                 if (K > MinLayerCell(ICell) && K < MaxLayerCell(ICell)) {
+                 if (K > MinLayerCell(ICell) && K <= MaxLayerCell(ICell)) {
                     // Interior layers should be smoothed to 0.0
                     if (!isApprox(GradRichNumSmoothed(ICell, K), 0.0_Real,
                                   RTol))
@@ -553,11 +562,12 @@ void testConvVertMix() {
 
    /// Compute only convective vertical viscosity and diffusivity
    OMEGA_SCOPE(ComputeVertMixConv, TestVertMix->ComputeVertMixConv);
+   Array1DI4 KPPBoundaryLayerIndex; // Empty, so KPP is disabled for this test
    parallelFor(
        "ApplyVertMixConv", {Mesh->NCellsAll, NChunks},
        KOKKOS_LAMBDA(I4 ICell, I4 KChunk) {
           ComputeVertMixConv(VertDiffOut, VertViscOut, ICell, KChunk,
-                             BruntVaisalaFreqSqIn);
+                             BruntVaisalaFreqSqIn, KPPBoundaryLayerIndex);
        });
 
    const auto &MinLayerCell = VCoord->MinLayerCell;

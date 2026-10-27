@@ -272,8 +272,9 @@ int initLogging(
 // Initialize logging for a default logger and provide log file name
 // return code: 1->enabled, 0->disabled, negative values->errors
 int initLogging(
-    const OMEGA::MachEnv *DefEnv,  //[in] default environment for MPI info
-    std::string const &LogFilePath //[in] log file name with path
+    const OMEGA::MachEnv *DefEnv,   //[in] default environment for MPI info
+    std::string const &LogFilePath, //[in] log file name with path
+    bool RedirectStdStreams         //[in] redirect stdout/stderr to log file
 ) {
 
    int RetVal = 0;
@@ -301,11 +302,11 @@ int initLogging(
             NewLogFilePath = addTaskIdToPath(NewLogFilePath, TaskId);
 
          // Start the run with an empty log file so that it only ever holds
-         // messages from this run. Both the spdlog sink created below and the
-         // stdout/stderr stream opened at the end of this function append to
-         // the file, so that their writes interleave correctly rather than
-         // overwriting each other; the file is therefore truncated here, ahead
-         // of both, rather than by either of them.
+         // messages from this run. Both the spdlog sink created below and, when
+         // redirection is requested, the stdout/stderr stream opened at the end
+         // of this function append to the file, so that their writes interleave
+         // correctly rather than overwriting each other; the file is therefore
+         // truncated here, ahead of both, rather than by either of them.
          std::ofstream Truncate(NewLogFilePath, std::ios::trunc);
          Truncate.close();
 
@@ -333,14 +334,16 @@ int initLogging(
       RetVal = 0; // log disabled
    }
 
-   // If logging is successful, also redirect stdout and stderr to log file
+   // If logging is successful
    if (RetVal == 1) {
-      // Open an output filestream to the new log file defined above
-      LogFileStream.open(NewLogFilePath, std::ios::app);
-
-      // Set the stdout and stderr buffers to the file streambuffer
-      std::cout.rdbuf(LogFileStream.rdbuf());
-      std::cerr.rdbuf(LogFileStream.rdbuf());
+      // Only redirect stdout and stderr to the log file if requested.
+      if (RedirectStdStreams) { // Open an output filestream to the new log file
+                                // defined above
+         LogFileStream.open(NewLogFilePath, std::ios::app);
+         // Set the stdout and stderr buffers to the file streambuffer
+         std::cout.rdbuf(LogFileStream.rdbuf());
+         std::cerr.rdbuf(LogFileStream.rdbuf());
+      }
 
       // Open the log with a banner giving the file and the time it was
       // opened, so the log can always be tied to the run that wrote it

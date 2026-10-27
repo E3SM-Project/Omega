@@ -14,11 +14,13 @@
 #include "AuxiliaryState.h"
 #include "Config.h"
 #include "DataTypes.h"
+#include "Eos.h"
 #include "Error.h"
 #include "Logging.h"
 #include "MachEnv.h"
 #include "OceanState.h"
 #include "OmegaKokkos.h"
+#include "Reductions.h"
 #include "Tracers.h"
 #include "VertCoord.h"
 #include "mpi.h"
@@ -301,6 +303,19 @@ void validateOceanState(const OceanState *State, const AuxiliaryState *AuxState,
       LOG_CRITICAL("StateValidation: Ocean state validation failed with {} "
                    "NaNs and {} OOBs. {}; continuing after logging.",
                    NaNs, OOBs, Flags);
+   }
+
+   Eos *EosInstance = Eos::getInstance();
+   if (EosInstance) {
+      const I8 NNegSalinity = globalSum(EosInstance->NNegSalinity,
+                                        MachEnv::getDefault()->getComm());
+      if (NNegSalinity > 0) {
+         LOG_WARN("StateValidation: {} negative salinity value(s) seen by "
+                  "the EOS during this time step (summed over all stages "
+                  "and calls)",
+                  NNegSalinity);
+      }
+      EosInstance->NNegSalinity = 0;
    }
 }
 

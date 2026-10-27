@@ -195,29 +195,27 @@ supported E3SM machines. The pattern is:
 +--------------+------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Machine      | Compiler         | Parmetis path                                                                                                                                                               |
 +==============+==================+=============================================================================================================================================================================+
-| aurora       | oneapi-ifx       | /lus/flare/projects/E3SM_Dec/soft/polaris/aurora/spack/dev_polaris_1.0.0/var/spack/environments/spack_env_oneapi-ifx_mpich/.spack-env/view                                  |
+| aurora       | intel            | /lus/flare/projects/E3SM_Dec/soft/polaris/aurora/spack/dev_polaris_1.2.0/var/spack/environments/spack_env_intel_mpich/.spack-env/view                                       |
+|              +------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|              | intelgpu         | /lus/flare/projects/E3SM_Dec/soft/polaris/aurora/spack/dev_polaris_1.2.0/var/spack/environments/spack_env_intelgpu_mpich/.spack-env/view                                    |
 +--------------+------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| chrysalis    | intel            | /lcrc/soft/climate/polaris/chrysalis/spack/dev_polaris_1.0.0/var/spack/environments/spack_env_intel_openmpi/.spack-env/view                                                 |
+| chrysalis    | intel            | /lcrc/soft/climate/polaris/chrysalis/spack/dev_polaris_1.2.0/var/spack/environments/spack_env_intel_openmpi/.spack-env/view                                                 |
 |              +------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|              | gnu              | /lcrc/soft/climate/polaris/chrysalis/spack/dev_polaris_1.0.0/var/spack/environments/spack_env_gnu_openmpi/.spack-env/view                                                   |
+|              | gnu              | /lcrc/soft/climate/polaris/chrysalis/spack/dev_polaris_1.2.0/var/spack/environments/spack_env_gnu_openmpi/.spack-env/view                                                   |
 +--------------+------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| frontier     | craygnu          | /ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_10_0_craygnu_mpich/var/spack/environments/dev_polaris_0_10_0_craygnu_mpich/.spack-env/view                   |
+| frontier     | craygnu          | /ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_1.2.0/var/spack/environments/spack_env_craygnu_mpich/.spack-env/view                                           |
 |              +------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|              | craygnu-mphipcc  | /ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_10_0_craygnu-mphipcc_mpich/var/spack/environments/dev_polaris_0_10_0_craygnu-mphipcc_mpich/.spack-env/view   |
+|              | craygnu-mphipcc  | /ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_1.2.0/var/spack/environments/spack_env_craygnu_mpich/.spack-env/view                                           |
 |              +------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|              | craycray         | /ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_10_0_craycray_mpich/var/spack/environments/dev_polaris_0_10_0_craycray_mpich/.spack-env/view                 |
+|              | craycray         | /ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_1.2.0/var/spack/environments/spack_env_craycray_mpich/.spack-env/view                                          |
 |              +------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|              | craycray-mphipcc | /ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_10_0_craycray-mphipcc_mpich/var/spack/environments/dev_polaris_0_10_0_craycray-mphipcc_mpich/.spack-env/view |
-+              +------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|              | crayamd          | /ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_10_0_crayamd_mpich/var/spack/environments/dev_polaris_0_10_0_crayamd_mpich/.spack-env/view                   |
-|              +------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|              | crayamd-mphipcc  | /ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_0_10_0_crayamd-mphipcc_mpich/var/spack/environments/dev_polaris_0_10_0_crayamd-mphipcc_mpich/.spack-env/view   |
+|              | craycray-mphipcc | /ccs/proj/cli115/software/polaris/frontier/spack/dev_polaris_1.2.0/var/spack/environments/spack_env_craycray_mpich/.spack-env/view                                          |
 +--------------+------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| pm-cpu       | gnu              | /global/cfs/cdirs/e3sm/software/polaris/pm-cpu/spack/dev_polaris_1.0.0/var/spack/environments/spack_env_gnu_mpich/.spack-env/view                                           |
+| pm-cpu       | gnu              | /global/cfs/cdirs/e3sm/software/polaris/pm-cpu/spack/dev_polaris_1.2.0/var/spack/environments/spack_env_gnu_mpich/.spack-env/view                                           |
 |              +------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|              | intel            | /global/cfs/cdirs/e3sm/software/polaris/pm-cpu/spack/dev_polaris_1.0.0/var/spack/environments/spack_env_intel_mpich/.spack-env/view                                         |
+|              | intel            | /global/cfs/cdirs/e3sm/software/polaris/pm-cpu/spack/dev_polaris_1.2.0/var/spack/environments/spack_env_intel_mpich/.spack-env/view                                         |
 +--------------+------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| pm-gpu       | gnugpu           | /global/cfs/cdirs/e3sm/software/polaris/pm-gpu/spack/dev_polaris_1.0.0/var/spack/environments/spack_env_gnugpu_mpich/.spack-env/view                                        |
+| pm-gpu       | gnugpu           | /global/cfs/cdirs/e3sm/software/polaris/pm-gpu/spack/dev_polaris_1.2.0/var/spack/environments/spack_env_gnugpu_mpich/.spack-env/view                                        |
 +--------------+------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 ```
 

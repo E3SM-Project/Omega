@@ -96,6 +96,9 @@ VertAdv::computeTracerVAdvTend(TracerTend, TracerArray, Thickness, TimeStep);
 For the standard advection algorithm, `PseudoThickness` from the `OceanState` is
 passed as the thickness argument; for the FCT algorithm, the `ProvPseudoThickness`
 from the `AuxiliaryState` is used instead.
+With FCT, `Tendencies` also passes the tracers after horizontal advection alone
+(`ProvTracers`) in place of the tracer array, as MPAS-Ocean does, so that the
+vertical limiter bounds the combined horizontal and vertical update.
 
 This method first calls `computeVerticalFluxes` to compute the tracer fluxes at
 layer interfaces, using the order of accuracy specified in the configuration

@@ -26,6 +26,10 @@
 #include "TimeMgr.h"
 #include "mpi.h"
 
+#include <algorithm>
+#include <cmath>
+#include <vector>
+
 using namespace OMEGA;
 
 //------------------------------------------------------------------------------
@@ -592,6 +596,86 @@ int main(int argc, char *argv[]) {
 
       if (Count > 0)
          ABORT_ERROR("HorzMeshTest: edgeSignOnVertex test FAIL");
+
+      // Test the mesh scaling coefficients computed when the mesh was created,
+      // which are based on the global median cell width.
+      std::vector<Real> LocWidths(LocCells);
+      for (int Cell = 0; Cell < LocCells; ++Cell)
+         LocWidths[Cell] = 2.0_Real * std::sqrt(Mesh->AreaCellH(Cell) / Pi);
+
+      std::vector<I4> CellCounts(NumTasks, 0);
+      Err = MPI_Allgather(&LocCells, 1, MPI_INT32_T, CellCounts.data(), 1,
+                          MPI_INT32_T, Comm);
+      if (Err != MPI_SUCCESS)
+         ABORT_ERROR("HorzMeshTest: MPI error gathering cell counts");
+
+      std::vector<I4> CellOffsets(NumTasks, 0);
+      for (int Task = 1; Task < NumTasks; ++Task)
+         CellOffsets[Task] = CellOffsets[Task - 1] + CellCounts[Task - 1];
+
+      std::vector<Real> AllWidths(CellOffsets[NumTasks - 1] +
+                                  CellCounts[NumTasks - 1]);
+      Err = MPI_Allgatherv(LocWidths.data(), LocCells, MPI_RealKind,
+                           AllWidths.data(), CellCounts.data(),
+                           CellOffsets.data(), MPI_RealKind, Comm);
+      if (Err != MPI_SUCCESS)
+         ABORT_ERROR("HorzMeshTest: MPI error gathering cell widths");
+
+      std::sort(AllWidths.begin(), AllWidths.end());
+      const size_t NWidths = AllWidths.size();
+      const Real RefMedian = NWidths % 2 == 1
+                                 ? AllWidths[NWidths / 2]
+                                 : 0.5_Real * (AllWidths[NWidths / 2 - 1] +
+                                               AllWidths[NWidths / 2]);
+
+      if (abs(Mesh->MedianCellWidth - RefMedian) > Tol * RefMedian)
+         ABORT_ERROR("HorzMeshTest: median cell width test FAIL");
+
+      Count = 0;
+      for (int Edge = 0; Edge < Mesh->NEdgesAll; Edge++) {
+         const int Cell0 = Mesh->CellsOnEdgeH(Edge, 0);
+         const int Cell1 = Mesh->CellsOnEdgeH(Edge, 1);
+         const Real CellWidth =
+             2.0_Real *
+             std::sqrt((Mesh->AreaCellH(Cell0) + Mesh->AreaCellH(Cell1)) /
+                       (2.0_Real * Pi));
+         const Real RefDel2 = CellWidth / RefMedian;
+         const Real RefDel4 = RefDel2 * RefDel2 * RefDel2;
+
+         if (abs(Mesh->MeshScalingDel2H(Edge) - RefDel2) >
+                 Tol * std::max(1.0_Real, std::abs(RefDel2)) ||
+             abs(Mesh->MeshScalingDel4H(Edge) - RefDel4) >
+                 Tol * std::max(1.0_Real, std::abs(RefDel4))) {
+            ++Count;
+         }
+      }
+
+      if (Count > 0)
+         ABORT_ERROR("HorzMeshTest: median-width mesh scaling test FAIL");
+
+      // Test that turning mesh scaling off gives coefficients of one, then
+      // restore the default mesh scaling
+      Config *OmegaConfig = Config::getOmegaConfig();
+      Config HorzMeshConfig("HorzMesh");
+      Error ConfigErr = OmegaConfig->get(HorzMeshConfig);
+      CHECK_ERROR_ABORT(ConfigErr,
+                        "HorzMeshTest: HorzMesh group not found in Config");
+      HorzMeshConfig.set("MeshScalingEnable", false);
+      Mesh->computeMeshScaling();
+
+      Count = 0;
+      for (int Edge = 0; Edge < Mesh->NEdgesAll; Edge++) {
+         if (abs(Mesh->MeshScalingDel2H(Edge) - 1.0) > Tol)
+            Count++;
+         if (abs(Mesh->MeshScalingDel4H(Edge) - 1.0) > Tol)
+            Count++;
+      }
+
+      if (Count > 0)
+         ABORT_ERROR("HorzMeshTest: disabled mesh scaling test FAIL");
+
+      HorzMeshConfig.set("MeshScalingEnable", true);
+      Mesh->computeMeshScaling();
 
       // Test cell halo values
       // Perform halo exhange on owned cell only array and compare

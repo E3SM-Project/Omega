@@ -29,6 +29,12 @@ if that is set and non-empty, and from `OMEGA::OmegaDefaultLogfile`
 (`omega.log`) otherwise. The log file is truncated when it is opened, so it
 holds only the messages from the current run.
 
+By default, `initLogging` also redirects `std::cout` and `std::cerr` to the log
+file on the ranks that log. Pass `false` as the third argument to leave them
+alone. The coupled driver does this, since these streams are shared with any
+other component on the same rank. In coupled runs they stay in `e3sm.log.*`,
+while Omega's own messages go to `ocn.log.*`.
+
 ## Log files in the unit tests
 
 Every unit test driver calls `OMEGA::initLogging(DefEnv)` without a file name,

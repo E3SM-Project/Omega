@@ -589,6 +589,9 @@ class Teos10Eos {
       Real a5ct, b3ct, ct_factor, pt_num, pt_recden, ct_diff;
       Real pt, pt_old, ptm, dpt_dct, s1;
 
+      // Negative salinity would give NaN in sqrt(Sa) below
+      Sa = Kokkos::max(Sa, 0.0_Real);
+
       s1 = Sa / Psu2Gpkg;
 
       a5ct = a5 * Ct;
@@ -617,6 +620,9 @@ class Teos10Eos {
    /// Calculate Conservative Temmperature from Potential Temp
    KOKKOS_FUNCTION Real calcCtFromPt(Real Sa, Real Pt) const {
       Real x2, x, y, pot_enthalpy;
+
+      // Negative salinity would give NaN in sqrt(x2) below
+      Sa = Kokkos::max(Sa, 0.0_Real);
 
       x2 = Sfac * Sa;
       x  = Kokkos::sqrt(x2);
@@ -694,7 +700,10 @@ class Teos10Eos {
       constexpr Real A = 0.014289763856964;
       constexpr Real B = 0.057000649899720;
 
-      Real Sar = Sa * 1.0e-2;
+      // Negative salinity would give NaN in sqrt(Sar) below
+      const Real SaPos = Kokkos::max(Sa, 0.0_Real);
+
+      Real Sar = SaPos * 1.0e-2;
       Real X   = Kokkos::sqrt(Sar);
       Real Pr  = P * 1.0e-4;
 
@@ -708,8 +717,8 @@ class Teos10Eos {
                     Sar * (C16 + C20 * Pr + C22 * Sar)));
 
       /* Adjust for the effects of dissolved air */
-      CtFreez = CtFreez - SaturationFract * (1e-3) * (2.4 - A * Sa) *
-                              (1.0 + B * (1.0 - Sa / Sso));
+      CtFreez = CtFreez - SaturationFract * (1e-3) * (2.4 - A * SaPos) *
+                              (1.0 + B * (1.0 - SaPos / Sso));
 
       return CtFreez;
    }
@@ -983,6 +992,7 @@ class Eos {
    Array2DReal SpecVolDSa;         ///< d(SpecVol)/d(AbsSalinity), per (g/kg)
    Array2DReal SpecVolDP;          ///< d(SpecVol)/d(Pressure), per Pa
    Array1DReal DepthMeanSpecificVolume; ///< Depth-mean specific volume
+   I8 NNegSalinity = 0; ///< Local negative-salinity count since last report
 
    std::string SpecVolFldName; ///< Field name for specific volume
    std::string
@@ -1103,7 +1113,8 @@ class Eos {
          // degC/PSU with absolute-to-practical salinity conversion (g/kg ->
          // PSU).
          constexpr Real Coeff = -0.054_Real;
-         return Coeff * Sa / Psu2Gpkg;
+         const Real SaPos     = Kokkos::max(Sa, 0.0_Real);
+         return Coeff * SaPos / Psu2Gpkg;
       }
       // ConstantEos: constant approximate ocean freezing point (degC)
       return -1.9_Real;

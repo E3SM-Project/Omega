@@ -2154,6 +2154,15 @@ void initTendTest(const std::string &MeshFile, int NVertLayers) {
    Config::Initialize();
    Config::readAll("omega.yml");
 
+   // The analytic solutions assume constant viscosity and diffusivity, so
+   // turn off the mesh scaling
+   Config *OmegaConfig = Config::getOmegaConfig();
+   Config HorzMeshConfig("HorzMesh");
+   Err = OmegaConfig->get(HorzMeshConfig);
+   CHECK_ERROR_ABORT(Err,
+                     "TendencyTermsTest: HorzMesh group not found in Config");
+   HorzMeshConfig.set("MeshScalingEnable", false);
+
    // Initialize time stepping and get model clock
    TimeStepper::init1();
    TimeStepper *DefStepper = TimeStepper::getDefault();

@@ -42,7 +42,8 @@ GradRichardsonNum::GradRichardsonNum(const HorzMesh *Mesh,
       DvEdge(Mesh->DvEdge) {}
 
 OneTwoOneFilter::OneTwoOneFilter(const VertCoord *VCoord)
-    : MinLayerCell(VCoord->MinLayerCell), MaxLayerCell(VCoord->MaxLayerCell) {}
+    : NVertLayersP1(VCoord->NVertLayersP1), MinLayerCell(VCoord->MinLayerCell),
+      MaxLayerCell(VCoord->MaxLayerCell) {}
 
 VelVertMixSetupOnEdge::VelVertMixSetupOnEdge(const HorzMesh *Mesh,
                                              const VertCoord *VCoord)
@@ -205,7 +206,7 @@ void VertMix::init() {
           "VertMix::init: Parameter Shear:Exponent not found in ShearConfig");
 
       Err += ShearConfig.get("RiSmoothLoops",
-                             DefVertMix->ComputeVertMixShear.RiSmoothLoops);
+                             DefVertMix->ComputeOneTwoOneFilter.RiSmoothLoops);
       CHECK_ERROR_ABORT(Err, "VertMix::init: Parameter Shear:RiSmoothLoops not "
                              "found in ShearConfig");
    }
@@ -236,17 +237,12 @@ void VertMix::computeVertMix(const Array2DReal &NormalVelocity,
    OMEGA_SCOPE(LocBackVisc, BackVisc);
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
-   const Real LocConvDiff       = LocComputeVertMixConv.ConvDiff;
-   const Real LocConvTriggerBVF = LocComputeVertMixConv.ConvTriggerBVF;
-   Array1DI4 KPPBoundaryLayerIndex("VertMix-KPPBoundaryLayerIndex",
-                                   Mesh->NCellsSize);
-   deepCopy(KPPBoundaryLayerIndex, -1);
+   Array1DI4 KPPBoundaryLayerIndex;
    KPPMix *KPPInstance      = KPPMix::getInstance();
    const bool LocKPPEnabled = (KPPInstance && KPPInstance->Enabled);
    if (LocKPPEnabled) {
-      deepCopy(KPPBoundaryLayerIndex, KPPInstance->OSBLDepthIndex);
+      KPPBoundaryLayerIndex = KPPInstance->OSBLDepthIndex;
    }
-   OMEGA_SCOPE(LocKPPBoundaryLayerIndex, KPPBoundaryLayerIndex);
 
    // GLS is a full-column closure (its own production/dissipation balance
    // already folds in background, shear, and boundary-layer mixing), so when
@@ -358,22 +354,14 @@ void VertMix::computeVertMix(const Array2DReal &NormalVelocity,
           });
       /// Smooth Richardson number with 1-2-1 filter the number of times
       /// specified by RiSmoothLoops
-      deepCopy(LocGradRichNumSmoothed, LocGradRichNum);
-      for (int SmoothLoop = 0;
-           SmoothLoop < LocComputeVertMixShear.RiSmoothLoops; ++SmoothLoop) {
-         parallelForOuter(
-             "VertMix-RiSmooth", {Mesh->NCellsAll},
-             KOKKOS_LAMBDA(I4 ICell, const TeamMember &Team) {
-                const int KMin   = MinLayerCell(ICell);
-                const int KMax   = MaxLayerCell(ICell);
-                const int KRange = vertRangeChunked(KMin, KMax);
-                parallelForInner(
-                    Team, KRange, INNER_LAMBDA(int KChunk) {
-                       LocOneTwoOneFilter(LocGradRichNumSmoothed, ICell, KChunk,
-                                          LocGradRichNumSmoothed);
-                    });
-             });
-      }
+      parallelForOuter(
+          "VertMix-RiSmooth",
+          LaunchConfig({Mesh->NCellsAll},
+                       TeamScratch<Real>(2 * VCoord->NVertLayersP1)),
+          KOKKOS_LAMBDA(I4 ICell, const TeamMember &Team) {
+             LocOneTwoOneFilter(Team, LocGradRichNumSmoothed, ICell,
+                                LocGradRichNum);
+          });
       /// Compute shear mixing using smoothed Richardson number
       parallelForOuter(
           "VertMix-Shear", {Mesh->NCellsAll},
@@ -414,7 +402,7 @@ void VertMix::computeVertMix(const Array2DReal &NormalVelocity,
       parallelFor(
           "VertMix-KPP", {Mesh->NCellsAll, NVertLayers + 1},
           KOKKOS_LAMBDA(I4 ICell, I4 K) {
-             if (K <= LocKPPBoundaryLayerIndex(ICell) + 1) {
+             if (K <= KPPBoundaryLayerIndex(ICell) + 1) {
                 if (KPPMergeMode == 1) {
                    LocVertDiff(ICell, K) = LocKPPVertDiff(ICell, K);
                    LocVertVisc(ICell, K) = LocKPPVertVisc(ICell, K);
@@ -437,19 +425,9 @@ void VertMix::computeVertMix(const Array2DReal &NormalVelocity,
 
              parallelForInner(
                  Team, KRange, INNER_LAMBDA(int KChunk) {
-                    const I4 KStart = chunkStart(KChunk, KMin);
-                    const I4 KLen   = chunkLength(KChunk, KStart, KMax);
-                    for (int KVec = 0; KVec < KLen; ++KVec) {
-                       const I4 K = KStart + KVec;
-                       const bool ApplyConv =
-                           (!LocKPPEnabled) ||
-                           (K > LocKPPBoundaryLayerIndex(ICell) + 1);
-                       if (ApplyConv &&
-                           BruntVaisalaFreqSq(ICell, K) < LocConvTriggerBVF) {
-                          LocVertDiff(ICell, K) += LocConvDiff;
-                          LocVertVisc(ICell, K) += LocConvDiff;
-                       }
-                    }
+                    LocComputeVertMixConv(LocVertDiff, LocVertVisc, ICell,
+                                          KChunk, BruntVaisalaFreqSq,
+                                          KPPBoundaryLayerIndex);
                  });
           });
    }
@@ -834,8 +812,8 @@ void VertMix::VertMixImplicit(OceanState *State, AuxiliaryState *AuxState,
    AuxState->computeMomVertAux(State, TracerArray, TimeLevel);
 
    // Compute Brunt-Vaisala frequency squared
-   EqState->computeBruntVaisalaFreqSq(
-       ConservTemp, AbsSalinity, VCoord->PressureInterface, EqState->SpecVol);
+   EqState->computeBruntVaisalaFreqSq(ConservTemp, AbsSalinity,
+                                      VCoord->PressureMid, EqState->SpecVol);
 
    // Advance the GLS turbulence closure (if enabled) using this step's
    // velocity and stratification, before it is merged into VertDiff/VertVisc

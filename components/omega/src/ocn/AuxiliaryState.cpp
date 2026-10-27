@@ -134,6 +134,7 @@ void AuxiliaryState::computeTransportVelocity(
    Array2DReal NormalVelocity          = State->getNormalVelocity(VelTimeLevel);
    const auto &NormalTransportVelocity = TransportAux.NormalTransportVelocity;
 
+   OMEGA_SCOPE(NVertLayers, VCoord->NVertLayers);
    OMEGA_SCOPE(MinLayerEdgeBot, VCoord->MinLayerEdgeBot);
    OMEGA_SCOPE(MaxLayerEdgeTop, VCoord->MaxLayerEdgeTop);
 
@@ -163,12 +164,20 @@ void AuxiliaryState::computeTransportVelocity(
    parallelForOuter(
        "computeTransportVelocity", {Mesh->NEdgesAll},
        KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
+          // copy NormalVelocity using full vertical extent to preserve
+          // the 3-zone masking enforced by applyEdgeLayerMask
+          parallelForInner(
+              Team, NVertLayers, INNER_LAMBDA(int K) {
+                 NormalTransportVelocity(IEdge, K) = NormalVelocity(IEdge, K);
+              });
+
+          teamBarrier(Team);
+
           const int KMin = MinLayerEdgeBot(IEdge);
           const int KMax = MaxLayerEdgeTop(IEdge);
 
           parallelForInner(
               Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
-                 NormalTransportVelocity(IEdge, K) = NormalVelocity(IEdge, K);
                  if (TransportVelocityAdd.data()) {
                     NormalTransportVelocity(IEdge, K) +=
                         TransportVelocityAdd(IEdge, K);

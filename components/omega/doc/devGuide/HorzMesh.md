@@ -18,7 +18,9 @@ connectivity information from Decomp so this information can be passed among the
 computational routines, alongside the other local mesh information.  It then
 reads most of the remaining mesh variables (coordinates, lengths, areas)
 from the input HorzMeshIn IOStream. A few variables, like masks and operator
-scaling are computed internally. After reading, the init routine fills all
+scaling are computed internally; the mesh scaling is relative to
+the global median cell width, which is computed during initialization.
+After reading, the init routine fills all
 halos and synchronizes the host and device copies of the mesh variables.
 These tasks are organized into several private methods. Eventually,
 dependent mesh variables will be computed from the minimum set of required mesh

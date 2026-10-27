@@ -125,7 +125,7 @@ void omega_ocn_init1(
    OMEGA::MachEnv::init(Comm);
    OMEGA::MachEnv *DefEnv = OMEGA::MachEnv::getDefault();
 
-   initLogging(DefEnv, LogFileStr);
+   initLogging(DefEnv, LogFileStr, /*RedirectStdStreams=*/false);
 
    // Init Calendar prior to creating the TimeInstant/TimeInterval objects
    OMEGA::Calendar::init(CalendarKindStr);

@@ -16,6 +16,7 @@
 #include "FillValues.h"
 #include "Forcing.h"
 #include "GlobalConstants.h"
+#include "Halo.h"
 #include "KPPConstants.h"
 #include "Logging.h"
 #include "OceanState.h"
@@ -287,12 +288,12 @@ void KPPMix::update(const Array3DReal &TracerArray, I4 TempTracerIndex,
    {
       TangentialReconOnEdge TanReconEdge(Mesh);
       OMEGA_SCOPE(LocTangentialVelocity, TangentialVelocity);
-      OMEGA_SCOPE(LocMinLayerEdgeTop, VCoord->MinLayerEdgeTop);
-      OMEGA_SCOPE(LocMaxLayerEdgeBot, VCoord->MaxLayerEdgeBot);
+      OMEGA_SCOPE(LocMinLayerEdgeBot, VCoord->MinLayerEdgeBot);
+      OMEGA_SCOPE(LocMaxLayerEdgeTop, VCoord->MaxLayerEdgeTop);
       parallelForOuter(
           {Mesh->NEdgesAll}, KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
-             const int KMin   = LocMinLayerEdgeTop(IEdge);
-             const int KMax   = LocMaxLayerEdgeBot(IEdge);
+             const int KMin   = LocMinLayerEdgeBot(IEdge);
+             const int KMax   = LocMaxLayerEdgeTop(IEdge);
              const int KRange = vertRangeChunked(KMin, KMax);
              parallelForInner(
                  Team, KRange, INNER_LAMBDA(int KChunk) {
@@ -369,8 +370,12 @@ void KPPMix::update(const Array3DReal &TracerArray, I4 TempTracerIndex,
       }
    }
 
+   // The individual surface flux components are only valid on owned cells
+   // (they are not halo exchanged), so compute u* and B0 on owned cells and
+   // exchange them for the halo cells used by the OSBL smoothing and by the
+   // edge-based implicit momentum mixing.
    parallelFor(
-       "KPP-SurfaceForcing", {NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
+       "KPP-SurfaceForcing", {Mesh->NCellsOwned}, KOKKOS_LAMBDA(I4 ICell) {
           LocSurfaceForcing(
               LocFrictionVelocity, LocBuoyancyFlux, ICell, ConservTemp,
               AbsSalinity, LocPressureMid, LocSpecVol, ZonalStress, MeridStress,
@@ -379,6 +384,14 @@ void KPPMix::update(const Array3DReal &TracerArray, I4 TempTracerIndex,
               RainFlux, EvaporationFlux, SeaIceFreshWaterFlux, IceRunoffFlux,
               RiverRunoffFlux, SeaIceSaltFlux);
        });
+
+   Halo *MeshHalo = Halo::getDefault();
+   OMEGA_REQUIRE(MeshHalo, "KPPMix::update: null default Halo pointer");
+   I4 HaloErr = 0;
+   HaloErr += MeshHalo->exchangeFullArrayHalo(SurfaceFrictionVelocity, OnCell);
+   HaloErr += MeshHalo->exchangeFullArrayHalo(SurfaceBuoyancyFlux, OnCell);
+   OMEGA_REQUIRE(HaloErr == 0,
+                 "KPPMix::update: halo exchange of surface forcing failed");
 
    computeKPPMix(PotentialDensity, NormalVelocity, TangentialVelocity,
                  SurfaceFrictionVelocity, SurfaceBuoyancyFlux,
@@ -677,7 +690,7 @@ void KPPMix::computeOSBLDepth(const Array2DReal &PotentialDensity,
        });
 
    parallelFor(
-       "KPP-OSBLDepth", {Mesh->NCellsAll}, KOKKOS_LAMBDA(I4 ICell) {
+       "KPP-OSBLDepth", {Mesh->NCellsOwned}, KOKKOS_LAMBDA(I4 ICell) {
           OSBLDepthCalc(LocOSBLDepth, LocOSBLDepthIndex, LocBulkRichardson,
                         LocBulkRichardsonShear, LocUnresolvedShear,
                         LocBuoyancyJump, ICell, LocPotentialDensity,
@@ -685,6 +698,18 @@ void KPPMix::computeOSBLDepth(const Array2DReal &PotentialDensity,
                         LocSurfFricVel, LocSurfBuoyFlux, LocBruntVaisalaFreqSq,
                         LocIceFraction, LocLangmuirFactor);
        });
+
+   // Exchange OSBLDepth (and OSBLDepthIndex when smoothing is disabled) so
+   // halo cells hold exact unsmoothed values prior to Laplacian smoothing.
+   Halo *MeshHalo = Halo::getDefault();
+   OMEGA_REQUIRE(MeshHalo,
+                 "KPPMix::computeOSBLDepth: null default Halo pointer");
+   I4 HaloErr = MeshHalo->exchangeFullArrayHalo(OSBLDepth, OnCell);
+   if (!UseOSBLSmoothing) {
+      HaloErr += MeshHalo->exchangeFullArrayHalo(OSBLDepthIndex, OnCell);
+   }
+   OMEGA_REQUIRE(HaloErr == 0,
+                 "KPPMix::computeOSBLDepth: halo exchange of OSBLDepth failed");
 
    if (UseOSBLSmoothing) {
       OMEGA_SCOPE(LocOSBLDepthSmooth, OSBLDepthSmooth);

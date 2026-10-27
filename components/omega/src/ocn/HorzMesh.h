@@ -42,6 +42,10 @@ class HorzMesh {
    /// and creating host mirror copies
    void completeReadArrays();
 
+   /// Computes the global median of the cell widths, where the width of a
+   /// cell is the diameter of a circle with the same area as the cell
+   void computeMedianCellWidth();
+
    /// The horizontal mesh defined for the default decomposition. Used to
    /// provide a shortcut to this common mesh
    static HorzMesh *DefaultHorzMesh;
@@ -252,6 +256,9 @@ class HorzMesh {
    HostArray2DReal EdgeSignOnVertexH; ///< Sign of vector connecting vertices
 
    // Mesh scaling
+   Real MedianCellWidth; ///< Global median cell width (m), the reference
+                         ///< width for the mesh scaling coefficients
+
    Array1DReal MeshScalingDel2;      /// Coef to Laplacian mixing terms
    HostArray1DReal MeshScalingDel2H; /// Coef to Laplacian mixing terms
 

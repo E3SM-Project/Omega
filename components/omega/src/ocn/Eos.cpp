@@ -175,6 +175,21 @@ void Eos::computeSpecVol(const Array2DReal &ConservTemp,
                                        AbsSalinity);
           });
    }
+
+   // Owned cells only, so halo cells are not counted on multiple ranks
+   OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
+   OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
+   I4 LocNNegSalinity = 0;
+   parallelReduce(
+       "eos-count-neg-salinity", {Mesh->NCellsOwned, VCoord->NVertLayers},
+       KOKKOS_LAMBDA(int ICell, int K, I4 &Accum) {
+          if (K >= MinLayerCell(ICell) && K <= MaxLayerCell(ICell) &&
+              AbsSalinity(ICell, K) < 0.0_Real) {
+             ++Accum;
+          }
+       },
+       LocNNegSalinity);
+   NNegSalinity += LocNNegSalinity;
 }
 
 /// Compute depth-mean specific volume for all cells

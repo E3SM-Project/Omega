@@ -1167,6 +1167,60 @@ void testCalcCtFreezing() {
    return;
 }
 
+/// Check negative salinity handling in TEOS-10 EOS functions.
+void testNegativeSalinityTeos10() {
+   Eos *TestEos       = Eos::getInstance();
+   TestEos->EosChoice = EosType::Teos10Eos;
+   Teos10Eos Teos(VertCoord::getDefault());
+
+   constexpr Real PDb        = 500.0;
+   constexpr Real PPa        = PDb * Db2Pa;
+   constexpr Real Pt         = 10.0;
+   const Real PtFromCtAtZero = TestEos->calcPtFromCt(0.0_Real, Ct);
+   const Real CtFromPtAtZero = TestEos->calcCtFromPt(0.0_Real, Pt);
+   const Real CtFreezingAtZero =
+       Eos::calcCtFreezing(EosType::Teos10Eos, 0.0_Real, PDb, 0.0_Real);
+   const Real CtFreezingLinearAtZero =
+       Eos::calcCtFreezing(EosType::LinearEos, 0.0_Real, PDb, 0.0_Real);
+   const Real NegativeSalinity[2] = {-1.0_Real, -2.0_Real};
+
+   for (const Real SaValue : NegativeSalinity) {
+      const Real PtFromCt = TestEos->calcPtFromCt(SaValue, Ct);
+      const Real CtFromPt = TestEos->calcCtFromPt(SaValue, Pt);
+      const Real CtFreezing =
+          Eos::calcCtFreezing(EosType::Teos10Eos, SaValue, PDb, 0.0_Real);
+      const Real CtFreezingLinear =
+          Eos::calcCtFreezing(EosType::LinearEos, SaValue, PDb, 0.0_Real);
+      if (!isApprox(PtFromCt, PtFromCtAtZero, RTol) ||
+          !isApprox(CtFromPt, CtFromPtAtZero, RTol) ||
+          !isApprox(CtFreezing, CtFreezingAtZero, RTol) ||
+          !isApprox(CtFreezingLinear, CtFreezingLinearAtZero, RTol)) {
+         ABORT_ERROR("testNegativeSalinityTeos10: clamped conversion mismatch "
+                     "at Sa={}",
+                     SaValue);
+      }
+
+      Real SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP;
+      Teos.calcSpecVolAndDerivsAtPoint(Ct, SaValue, PPa, SpecVol, SpecVolDCt,
+                                       SpecVolDSa, SpecVolDP);
+      const Real Alpha = Eos::computeAlpha(EosType::Teos10Eos, SaValue, Ct, PDb,
+                                           SpecVol, 0.0_Real);
+      const Real Beta  = Eos::computeBeta(EosType::Teos10Eos, SaValue, Ct, PDb,
+                                          SpecVol, 0.0_Real);
+      if (Kokkos::isnan(SpecVol) || Kokkos::isinf(SpecVol) ||
+          Kokkos::isnan(SpecVolDCt) || Kokkos::isinf(SpecVolDCt) ||
+          Kokkos::isnan(SpecVolDSa) || Kokkos::isinf(SpecVolDSa) ||
+          Kokkos::isnan(SpecVolDP) || Kokkos::isinf(SpecVolDP) ||
+          Kokkos::isnan(Alpha) || Kokkos::isinf(Alpha) || Kokkos::isnan(Beta) ||
+          Kokkos::isinf(Beta)) {
+         ABORT_ERROR("testNegativeSalinityTeos10: non-finite EOS output at "
+                     "Sa={}",
+                     SaValue);
+      }
+   }
+   LOG_INFO("testNegativeSalinityTeos10: PASS");
+}
+
 /// Finalize and clean up all test infrastructure
 void finalizeEosTest() {
    Eos::destroyInstance();
@@ -1577,6 +1631,7 @@ void eosTest(const std::string &MeshFile = "OmegaMesh.nc") {
    testEosTeos10Displaced();
    testBruntVaisalaFreqSqTeos10();
    testCalcCtFreezing();
+   testNegativeSalinityTeos10();
    testEosTeos10Derivs();
    testEosLinearDerivs();
    testEosConstantDerivs();

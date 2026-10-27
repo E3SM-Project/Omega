@@ -36,7 +36,8 @@ class ConvectiveMix {
 
    KOKKOS_FUNCTION void
    operator()(Array2DReal VertDiff, Array2DReal VertVisc, I4 ICell, I4 KChunk,
-              const Array2DReal &BruntVaisalaFreqSq) const {
+              const Array2DReal &BruntVaisalaFreqSq,
+              const Array1DI4 &KPPBoundaryLayerIndex) const {
 
       const I4 KStart = chunkStart(KChunk, MinLayerCell(ICell) + 1);
       const I4 KLen   = chunkLength(KChunk, KStart, MaxLayerCell(ICell));
@@ -44,7 +45,12 @@ class ConvectiveMix {
       for (int KVec = 0; KVec < KLen; ++KVec) {
          const I4 K = KStart + KVec;
 
-         if (BruntVaisalaFreqSq(ICell, K) < ConvTriggerBVF) {
+         // KPP is enabled when the index array is not empty
+         const bool KPPEnabled = KPPBoundaryLayerIndex.data();
+         const bool ApplyConv =
+             (!KPPEnabled) || (K > KPPBoundaryLayerIndex(ICell) + 1);
+
+         if (ApplyConv && BruntVaisalaFreqSq(ICell, K) < ConvTriggerBVF) {
             VertDiff(ICell, K) += ConvDiff;
             VertVisc(ICell, K) += ConvDiff;
          }
@@ -66,7 +72,6 @@ class ShearMix {
    Real ShearRiCrit = 0.7;      ///< Critical Richardson number of LMD94
    Real ShearExponent =
        3.0; /// Exponent value used interior shear mixing calculation of LMD94
-   I4 RiSmoothLoops = 2; ///< Number of smoothing loops for Richardson number
 
    /// Constructor for ShearMix
    ShearMix(const VertCoord *VCoord);
@@ -198,32 +203,59 @@ class GradRichardsonNum {
 /// Class for Gradient Richardson Number calculation
 class OneTwoOneFilter {
  public:
+   I4 RiSmoothLoops = 2; ///< Number of smoothing loops for Richardson number
+
    /// constructor declaration
    OneTwoOneFilter(const VertCoord *VCoord);
    //   The functor takes the full arrays of Richardson number (inout),
    //   the index ICell, and normal and tangential velocities as inputs,
    //   and outputs the Richardson number.
-   KOKKOS_FUNCTION void operator()(Array2DReal VarOut, I4 ICell, I4 KChunk,
-                                   const Array2DReal &VarIn) const {
+   KOKKOS_FUNCTION void operator()(const TeamMember &Team, Array2DReal VarOut,
+                                   I4 ICell, const Array2DReal &VarIn) const {
 
-      const I4 KStart = chunkStart(KChunk, MinLayerCell(ICell));
-      const I4 KLen   = chunkLength(KChunk, KStart, MaxLayerCell(ICell) + 1);
+      const I4 MinLyrCell = MinLayerCell(ICell);
+      const I4 MaxLyrCell = MaxLayerCell(ICell);
 
-      for (int KVec = 0; KVec < KLen; ++KVec) {
-         const I4 K = KStart + KVec;
-         if (K > MinLayerCell(ICell) && K < MaxLayerCell(ICell)) {
-            // apply 1-2-1 filter
-            VarOut(ICell, K) =
-                (VarIn(ICell, K - 1) + 2.0_Real * VarIn(ICell, K) +
-                 VarIn(ICell, K + 1)) /
-                4.0_Real;
-         } else {
-            VarOut(ICell, K) = VarIn(ICell, K);
-         }
+      ScratchArray2DReal VarTmp(teamScratch(Team), 2, NVertLayersP1);
+
+      int Cur  = 0;
+      int Next = 1;
+
+      parallelForInner(
+          Team, Range{MinLyrCell, MaxLyrCell + 1},
+          INNER_LAMBDA(int K) { VarTmp(Cur, K) = VarIn(ICell, K); });
+
+      teamBarrier(Team);
+
+      for (int SmoothLoop = 0; SmoothLoop < RiSmoothLoops; ++SmoothLoop) {
+         parallelForInner(
+             Team, Range{MinLyrCell + 1, MaxLyrCell}, INNER_LAMBDA(int K) {
+                // apply 1-2-1 filter
+                VarTmp(Next, K) =
+                    (VarTmp(Cur, K - 1) + 2.0_Real * VarTmp(Cur, K) +
+                     VarTmp(Cur, K + 1)) /
+                    4.0_Real;
+             });
+
+         Kokkos::single(
+             PerTeam(Team), INNER_LAMBDA() {
+                VarTmp(Next, MinLyrCell)     = VarTmp(Cur, MinLyrCell);
+                VarTmp(Next, MaxLyrCell + 1) = VarTmp(Cur, MaxLyrCell + 1);
+             });
+
+         teamBarrier(Team);
+
+         Cur ^= 1;
+         Next ^= 1;
       }
+
+      parallelForInner(
+          Team, Range{MinLyrCell, MaxLyrCell + 1},
+          INNER_LAMBDA(int K) { VarOut(ICell, K) = VarTmp(Cur, K); });
    }
 
  private:
+   I4 NVertLayersP1;
    Array1DI4 MinLayerCell;
    Array1DI4 MaxLayerCell;
 };

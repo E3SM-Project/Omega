@@ -28,18 +28,7 @@ KOKKOS_INLINE_FUNCTION Real sfcHeatFluxWithoutMassEnthalpy(
    const Real SaSeaIce = SeaIceFreshWater > 0.0_Real && SeaIceSalt > 0.0_Real
                              ? SeaIceSalt / SeaIceFreshWater * Salt2PPt
                              : SaTop;
-   if (EosChoice == EosType::Teos10Eos && !(SaSeaIce >= 0.0_Real)) {
-      Kokkos::printf("SurfaceFlux: invalid freezing salinity %lg at cell %d "
-                     "(ocean salinity=%lg, sea-ice freshwater flux=%lg, "
-                     "sea-ice salt flux=%lg, pressure=%lg dbar)\n",
-                     static_cast<double>(SaSeaIce), ICell,
-                     static_cast<double>(SaTop),
-                     static_cast<double>(SeaIceFreshWaterFlux(ICell)),
-                     static_cast<double>(SeaIceSaltFlux(ICell)),
-                     static_cast<double>(PTopDb));
-      Kokkos::abort(
-          "SurfaceFlux: TEOS-10 freezing requires nonnegative salinity");
-   }
+
    const Real SeaIceLiqEnthalpyEstimate =
        SeaIceFreshWaterFlux(ICell) * Cp0Sw *
        Eos::calcCtFreezing(EosChoice, SaSeaIce, PTopDb, 0.0_Real);

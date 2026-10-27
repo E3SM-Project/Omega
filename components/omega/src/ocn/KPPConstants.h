@@ -49,11 +49,11 @@ constexpr Real AMoS = -28.8617393793_Real;
 constexpr Real CMoS = 98.9545350148_Real;
 
 /// Surface value of the momentum shape function (dimensionless)
-constexpr Real HuOn = 0.03;
+constexpr Real HuOn = 0.03_Real;
 
 /// Floor on friction velocity (m/s). Keeps the turbulent velocity scales and
 /// the Monin-Obukhov length finite in near-calm conditions.
-constexpr Real MinUStar = 1.0e-4;
+constexpr Real MinUStar = 1.0e-4_Real;
 
 // ===========================================================================
 // Numerical Safeguards
@@ -81,16 +81,16 @@ constexpr Real MinStokesDrift = 1.0e-8_Real;
 ///
 /// Critical bulk Richardson number defining the OSBL base
 /// REFERENCES: Large et al. (1994) Eq. (21)
-constexpr Real CriticalRi = 0.25;
+constexpr Real CriticalRi = 0.25_Real;
 
 /// Minimum OSBL depth under sea ice (m), applied above IceSuppressThresh
-constexpr Real MinOSBLUnderIce = 5.0;
+constexpr Real MinOSBLUnderIce = 5.0_Real;
 
 /// Ice fraction above which Langmuir enhancement is disabled
-constexpr Real IceFracThresh = 0.05;
+constexpr Real IceFracThresh = 0.05_Real;
 
 /// Ice fraction above which the minimum OSBL depth is enforced
-constexpr Real IceSuppressThresh = 0.15;
+constexpr Real IceSuppressThresh = 0.15_Real;
 
 // ==========================================================================
 // Surface Layer Parameters
@@ -99,11 +99,11 @@ constexpr Real IceSuppressThresh = 0.15;
 /// Surface layer extent as a fraction of the trial OSBL depth (epsilon in
 /// Large et al. 1994). Reference values entering the bulk Richardson number
 /// are averaged over the top SurfaceLayerExtent * d of the column.
-constexpr Real SurfaceLayerExtent = 0.1;
+constexpr Real SurfaceLayerExtent = 0.1_Real;
 
 /// Empirical convective velocity coefficient in the turbulent velocity scale
 /// w_s = (u*^3 + ConvectiveVelFac * max(-B_0,0) * h)^(1/3)
-constexpr Real ConvectiveVelFac = 0.35;
+constexpr Real ConvectiveVelFac = 0.35_Real;
 
 // ==========================================================================
 // KPP Shape and Stability Functions
@@ -125,10 +125,10 @@ constexpr Real ConvectiveVelFac = 0.35;
 /// @return Dimensionless shape value
 KOKKOS_INLINE_FUNCTION
 Real kppShapeMomentum(Real Sigma) {
-   Sigma = Kokkos::fmax(-1.0, Kokkos::fmin(0.0, Sigma));
+   Sigma = Kokkos::fmax(-1.0_Real, Kokkos::fmin(0.0_Real, Sigma));
 
    const Real SigmaMu = -Sigma;
-   return SigmaMu * (1.0 - SigmaMu) * (1.0 - SigmaMu);
+   return SigmaMu * (1.0_Real - SigmaMu) * (1.0_Real - SigmaMu);
 }
 
 /// @brief Matched KPP gradient shape function.
@@ -139,11 +139,11 @@ Real kppShapeMomentum(Real Sigma) {
 /// preserving SimpleShapes behavior when ShapeAtBase is zero.
 KOKKOS_INLINE_FUNCTION
 Real kppShapeMatched(Real Sigma, Real ShapeAtBase) {
-   Sigma = Kokkos::fmax(-1.0, Kokkos::fmin(0.0, Sigma));
+   Sigma = Kokkos::fmax(-1.0_Real, Kokkos::fmin(0.0_Real, Sigma));
 
    const Real SigmaMu = -Sigma;
-   const Real Simple  = SigmaMu * (1.0 - SigmaMu) * (1.0 - SigmaMu);
-   const Real Smooth  = SigmaMu * SigmaMu * (3.0 - 2.0 * SigmaMu);
+   const Real Simple  = SigmaMu * (1.0_Real - SigmaMu) * (1.0_Real - SigmaMu);
+   const Real Smooth  = SigmaMu * SigmaMu * (3.0_Real - 2.0_Real * SigmaMu);
    return Simple + ShapeAtBase * Smooth;
 }
 
@@ -178,10 +178,10 @@ Real kppPhiInvMomentum(Real Zeta) {
 /// @return Dimensionless shape value
 KOKKOS_INLINE_FUNCTION
 Real kppShapeScalar(Real Sigma) {
-   Sigma = Kokkos::fmax(-1.0, Kokkos::fmin(0.0, Sigma));
+   Sigma = Kokkos::fmax(-1.0_Real, Kokkos::fmin(0.0_Real, Sigma));
 
    const Real SigmaMu = -Sigma;
-   return SigmaMu * (1.0 - SigmaMu) * (1.0 - SigmaMu);
+   return SigmaMu * (1.0_Real - SigmaMu) * (1.0_Real - SigmaMu);
 }
 
 /// @brief phi_s^{-1}(zeta) - Inverse scalar Monin-Obukhov stability function
@@ -216,7 +216,7 @@ Real kppPhiInvScalar(Real Zeta) {
 KOKKOS_INLINE_FUNCTION
 Real kppSurfaceMomentumScale(Real Sigma) {
    // Linear decay from HuOn at the surface to zero at the OSBL base
-   return HuOn * (1.0 + Sigma);
+   return HuOn * (1.0_Real + Sigma);
 }
 
 // ==========================================================================
@@ -245,12 +245,12 @@ Real kppSurfaceMomentumScale(Real Sigma) {
 /// @return Stokes drift velocity scale (m/s)
 KOKKOS_INLINE_FUNCTION
 Real estimateStokesDriftSL(Real Wind10m, Real HBL) {
-   Wind10m = Kokkos::fmax(0.0, Wind10m);
-   HBL     = Kokkos::fmax(1.0, HBL);
+   Wind10m = Kokkos::fmax(0.0_Real, Wind10m);
+   HBL     = Kokkos::fmax(1.0_Real, HBL);
 
-   const Real UStokes = 0.016 * Wind10m;
+   const Real UStokes = 0.016_Real * Wind10m;
 
-   return Kokkos::fmax(0.0, UStokes);
+   return Kokkos::fmax(0.0_Real, UStokes);
 }
 
 /// @brief Turbulent Langmuir number from friction velocity and Stokes drift
@@ -277,18 +277,18 @@ Real computeLangmuirNumber(Real UStar, Real UStokes) {
 KOKKOS_INLINE_FUNCTION
 Real computeLangmuirEnhancement(Real Wind10m, Real UStar, Real HBL) {
    UStar   = Kokkos::fmax(MinUStar, UStar);
-   Wind10m = Kokkos::fmax(0.0, Wind10m);
-   HBL     = Kokkos::fmax(1.0, HBL);
+   Wind10m = Kokkos::fmax(0.0_Real, Wind10m);
+   HBL     = Kokkos::fmax(1.0_Real, HBL);
 
    const Real UStokes = estimateStokesDriftSL(Wind10m, HBL);
    const Real La      = computeLangmuirNumber(UStar, UStokes);
 
    // R_L = sqrt(1 + 0.5/La^2); La is floored at 0.5 so that the weak-wave
    // limit returns the unenhanced scales rather than diverging.
-   const Real LaInv = 1.0 / Kokkos::fmax(0.5, La);
-   const Real RL    = Kokkos::sqrt(1.0 + 0.5 * LaInv * LaInv);
+   const Real LaInv = 1.0_Real / Kokkos::fmax(0.5_Real, La);
+   const Real RL    = Kokkos::sqrt(1.0_Real + 0.5_Real * LaInv * LaInv);
 
-   return Kokkos::fmin(2.0, Kokkos::fmax(1.0, RL));
+   return Kokkos::fmin(2.0_Real, Kokkos::fmax(1.0_Real, RL));
 }
 
 // ==========================================================================
@@ -325,7 +325,7 @@ Real constrainOSBLDepth(Real HOSBL, Real LayerThickness, Real WaterDepth,
    }
 
    // Upper bound: cannot exceed water depth
-   HOSBL = Kokkos::fmin(HOSBL, WaterDepth * 0.95);
+   HOSBL = Kokkos::fmin(HOSBL, WaterDepth * 0.95_Real);
 
    return HOSBL;
 }
