@@ -105,7 +105,7 @@ T^p &= - \int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \rho_
 & + \int_A \rho_0 \left[ \alpha \left<p \nabla \tilde{z}_k^{\text{bot}} \right> \right]_{\tilde{z} = \tilde{z}_k^{\text{bot}}} \, dA.
 $$
 These volume and area integrals will be computed using quadrature to account for the variability of $\alpha$ with the reconstructed values of temperature, salinity, and pressure at the quadrature points.
-The complete details for the high-order pressure gradient will be the subject of a future design document.
+The complete details for the high-order pressure gradient are given in the {ref}`Higher-Order Horizontal Pressure Gradient <omega-design-pressure-grad-high-order>` design document, which also revises the form above.
 
 %### 3.3 Barotropic Pressure Gradient
 %
