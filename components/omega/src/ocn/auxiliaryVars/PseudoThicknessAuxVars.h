@@ -3,6 +3,7 @@
 
 #include "DataTypes.h"
 #include "HorzMesh.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 #include "VertCoord.h"
 
@@ -60,7 +61,7 @@ class PseudoThicknessAuxVars {
                 } else if (NormalVelEdge(IEdge, K) < 0) {
                    FluxPseudoThickEdge(IEdge, K) = PseudoThickCell(JCell1, K);
                 } else {
-                   FluxPseudoThickEdge(IEdge, K) = Kokkos::max(
+                   FluxPseudoThickEdge(IEdge, K) = Math::max(
                        PseudoThickCell(JCell0, K), PseudoThickCell(JCell1, K));
                 }
              });

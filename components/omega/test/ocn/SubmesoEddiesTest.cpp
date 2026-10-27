@@ -19,11 +19,11 @@ constexpr Geometry Geom = Geometry::Spherical;
 
 KOKKOS_FUNCTION Real verticalSpacing(Real Lon, Real Lat, Real Scale) {
    return Scale * 10 *
-          (0.5 + 0.3 * Kokkos::sin(Lon) * Kokkos::sin(Lon) * Kokkos::cos(Lat));
+          (0.5 + 0.3 * Math::pow<2>(Math::sin(Lon)) * Math::cos(Lat));
 }
 
 KOKKOS_FUNCTION Real surfaceHeight(Real Lon, Real Lat) {
-   return -20 * Kokkos::sin(Lon) * Kokkos::cos(Lat);
+   return -20 * Math::sin(Lon) * Math::cos(Lat);
 }
 
 KOKKOS_FUNCTION Real geomHeightMid(int K, Real Lon, Real Lat, Real Scale) {
@@ -44,34 +44,34 @@ constexpr Real Alpha = 0.4;
 
 KOKKOS_FUNCTION Real specVol(Real Lon, Real Lat, Real Z) {
    return 1 / RhoSw *
-          (1 + Alpha * Kokkos::cos(Lon) * Kokkos::pow(Kokkos::cos(Lat), 4)) *
-          Kokkos::exp(-(Z * Z) / (H0 * H0));
+          (1 + Alpha * Math::cos(Lon) * Math::pow<4>(Math::cos(Lat))) *
+          Math::exp(-(Z * Z) / (H0 * H0));
 }
 
 KOKKOS_FUNCTION Real gradBuoyancyX(Real Lon, Real Lat, Real Z) {
-   return Alpha * Gravity / REarth * Kokkos::sin(Lon) *
-          Kokkos::pow(Kokkos::cos(Lat), 3) * Kokkos::exp(-(Z * Z) / (H0 * H0));
+   return Alpha * Gravity / REarth * Math::sin(Lon) *
+          Math::pow<3>(Math::cos(Lat)) * Math::exp(-(Z * Z) / (H0 * H0));
 }
 
 KOKKOS_FUNCTION Real gradBuoyancyY(Real Lon, Real Lat, Real Z) {
-   return Alpha * Gravity / REarth * 4 * Kokkos::cos(Lon) *
-          Kokkos::pow(Kokkos::cos(Lat), 3) * Kokkos::sin(Lat) *
-          Kokkos::exp(-(Z * Z) / (H0 * H0));
+   return Alpha * Gravity / REarth * 4 * Math::cos(Lon) *
+          Math::pow<3>(Math::cos(Lat)) * Math::sin(Lat) *
+          Math::exp(-(Z * Z) / (H0 * H0));
 }
 
 // Buoyancy gradient averaged between Z1 and Z2
 KOKKOS_FUNCTION Real meanGradBuoyancyX(Real Lon, Real Lat, Real Z1, Real Z2) {
-   const Real Tmp = Alpha * Gravity / REarth * Kokkos::sin(Lon) *
-                    Kokkos::pow(Kokkos::cos(Lat), 3);
-   return Tmp * H0 * Kokkos::sqrt(Pi) / 2 *
-          (Kokkos::erf(Z2 / H0) - Kokkos::erf(Z1 / H0)) / (Z2 - Z1);
+   const Real Tmp =
+       Alpha * Gravity / REarth * Math::sin(Lon) * Math::pow<3>(Math::cos(Lat));
+   return Tmp * H0 * Math::sqrt(Pi) / 2 *
+          (Math::erf(Z2 / H0) - Math::erf(Z1 / H0)) / (Z2 - Z1);
 }
 
 KOKKOS_FUNCTION Real meanGradBuoyancyY(Real Lon, Real Lat, Real Z1, Real Z2) {
-   const Real Tmp = Alpha * Gravity / REarth * 4 * Kokkos::cos(Lon) *
-                    Kokkos::pow(Kokkos::cos(Lat), 3) * Kokkos::sin(Lat);
-   return Tmp * H0 * Kokkos::sqrt(Pi) / 2 *
-          (Kokkos::erf(Z2 / H0) - Kokkos::erf(Z1 / H0)) / (Z2 - Z1);
+   const Real Tmp = Alpha * Gravity / REarth * 4 * Math::cos(Lon) *
+                    Math::pow<3>(Math::cos(Lat)) * Math::sin(Lat);
+   return Tmp * H0 * Math::sqrt(Pi) / 2 *
+          (Math::erf(Z2 / H0) - Math::erf(Z1 / H0)) / (Z2 - Z1);
 }
 
 KOKKOS_FUNCTION Real bruntVaisalaFreqSq(Real Lon, Real Lat, Real Z) {
@@ -81,8 +81,8 @@ KOKKOS_FUNCTION Real bruntVaisalaFreqSq(Real Lon, Real Lat, Real Z) {
 // Brunt-Vaisala frequency averaged between Z1 and Z2
 KOKKOS_FUNCTION Real meanBVML(Real Lon, Real Lat, Real Z1, Real Z2) {
    const Real Tmp = Gravity * (2 / (H0 * H0));
-   return 2._Real / 3 * Kokkos::sqrt(Tmp) *
-          (Z2 * Kokkos::sqrt(-Z2) - Z1 * Kokkos::sqrt(-Z1)) / (Z2 - Z1);
+   return 2._Real / 3 * Math::sqrt(Tmp) *
+          (Z2 * Math::sqrt(-Z2) - Z1 * Math::sqrt(-Z1)) / (Z2 - Z1);
 }
 
 KOKKOS_FUNCTION Real shapeFunctionDeriv(Real Z, Real H) {
@@ -339,7 +339,7 @@ Array1DReal computeExactGradML(const Array2DReal &GeomZInterfaceEdge,
           const int JCell0 = CellsOnEdge(IEdge, 0);
           const int JCell1 = CellsOnEdge(IEdge, 1);
           const Real MLDepthEdge =
-              Kokkos::min(DenMixLayerDepth(JCell0), DenMixLayerDepth(JCell1));
+              Math::min(DenMixLayerDepth(JCell0), DenMixLayerDepth(JCell1));
 
           const Real Z0 = GeomZInterfaceEdge(IEdge, MinLayerEdgeBot(IEdge));
 
@@ -367,7 +367,7 @@ Array1DReal computeExactBVML(const Array2DReal &GeomZInterfaceEdge,
           const int JCell0 = CellsOnEdge(IEdge, 0);
           const int JCell1 = CellsOnEdge(IEdge, 1);
           const Real MLDepthEdge =
-              Kokkos::min(DenMixLayerDepth(JCell0), DenMixLayerDepth(JCell1));
+              Math::min(DenMixLayerDepth(JCell0), DenMixLayerDepth(JCell1));
 
           const Real Z0 = GeomZInterfaceEdge(IEdge, MinLayerEdgeBot(IEdge));
 
@@ -409,7 +409,7 @@ Error testDenMixedLayerDepth(bool SetupExact) {
           const Real MaxDepth =
               GeomZInterface(ICell, KMin) - GeomZMid(ICell, KMax);
 
-          const int KDen = Kokkos::max(10, ICell % NVertLayers);
+          const int KDen = Math::max(10, ICell % NVertLayers);
 
           const bool KDenValid = KDen <= KMax;
 
@@ -561,7 +561,7 @@ Error testEddyVelocity(const Array2DReal &GeomZInterfaceEdge,
        {Mesh->NCellsAll}, KOKKOS_LAMBDA(int ICell) {
           const int KMax = MaxLayerCell(ICell);
 
-          int MLIndex                = Kokkos::min(KMax, 15 + ICell % 10);
+          int MLIndex                = Math::min(KMax, 15 + ICell % 10);
           DenMixLayerIndexTmp(ICell) = MLIndex;
        });
 
@@ -575,7 +575,7 @@ Error testEddyVelocity(const Array2DReal &GeomZInterfaceEdge,
           for (int J = 0; J < NEdgesOnCell(ICell); ++J) {
              const int JCell = CellsOnCell(ICell, J);
              if (JCell != NCellsAll) {
-                MLIndex = Kokkos::min(MLIndex, DenMixLayerIndexTmp(JCell));
+                MLIndex = Math::min(MLIndex, DenMixLayerIndexTmp(JCell));
              }
           }
           DenMixLayerIndex(ICell) = MLIndex;
@@ -632,18 +632,18 @@ Error testEddyVelocity(const Array2DReal &GeomZInterfaceEdge,
           const Real TScale = TimeScale(IEdge);
 
           const Real MLDepthEdge =
-              Kokkos::min(DenMixLayerDepth(JCell0), DenMixLayerDepth(JCell1));
+              Math::min(DenMixLayerDepth(JCell0), DenMixLayerDepth(JCell1));
 
-          const Real Ds = Kokkos::min(DcEdge(IEdge), DsMax);
+          const Real Ds = Math::min(DcEdge(IEdge), DsMax);
 
           const Real GradBuoyML = MeanBuoyGrad(IEdge);
           const Real BVFreqML   = MeanBV(IEdge);
 
           const Real Lf1 =
-              Kokkos::abs(GradBuoyML) * MLDepthEdge / (TScale * TScale);
+              Math::abs(GradBuoyML) * MLDepthEdge / (TScale * TScale);
           const Real Lf2 = BVFreqML * MLDepthEdge / TScale;
 
-          const Real Lf = Kokkos::max(LfMin, Kokkos::max(Lf1, Lf2));
+          const Real Lf = Math::max(LfMin, Lf1, Lf2);
 
           const Real Factor =
               Ce * Ds / Lf * MLDepthEdge * MLDepthEdge * GradBuoyML / TScale;

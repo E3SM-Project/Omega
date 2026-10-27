@@ -71,7 +71,7 @@ class MixedLayerAuxVars {
          return;
       }
 
-      const int KRefM1 = Kokkos::max(KRef - 1, MinLayerCell(ICell));
+      const int KRefM1 = Math::max(KRef - 1, MinLayerCell(ICell));
 
       const Real DepthKRef   = SSH - GeomZMid(ICell, KRef);
       const Real DepthKRefM1 = SSH - GeomZMid(ICell, KRefM1);
@@ -95,7 +95,7 @@ class MixedLayerAuxVars {
          DenMixLayerIndex(ICell) = KMax;
          DenMixLayerDepth(ICell) = SSH - GeomZMid(ICell, KMax);
       } else { // Found
-         const int KDenM1 = Kokkos::max(KDen - 1, MinLayerCell(ICell));
+         const int KDenM1 = Math::max(KDen - 1, MinLayerCell(ICell));
 
          const Real DepthKDen   = SSH - GeomZMid(ICell, KDen);
          const Real DepthKDenM1 = SSH - GeomZMid(ICell, KDenM1);

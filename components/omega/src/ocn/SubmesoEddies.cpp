@@ -5,8 +5,9 @@
 namespace OMEGA {
 
 static KOKKOS_FUNCTION Real shapeFunction(Real Z, Real H) {
-   const Real Tmp = (2 * Z) / H + 1;
-   return Kokkos::max(0._Real, (1 - Tmp * Tmp) * (1 + 5 * Tmp * Tmp / 21));
+   const Real Tmp   = (2 * Z) / H + 1;
+   const Real TmpSq = Math::pow<2>(Tmp);
+   return Math::max(0._Real, (1 - TmpSq) * (1 + 5 * TmpSq / 21));
 }
 
 /// Instance management
@@ -141,7 +142,7 @@ void SubmesoEddies::computeTimeScale() {
    parallelFor(
        {Mesh->NEdgesAll}, KOKKOS_LAMBDA(int IEdge) {
           TimeScale(IEdge) =
-              Kokkos::sqrt(FEdge(IEdge) * FEdge(IEdge) + 1._Real / (Tau * Tau));
+              Math::sqrt(Math::pow<2>(FEdge(IEdge)) + Math::pow<-2>(Tau));
        });
 }
 
@@ -323,8 +324,8 @@ void SubmesoEddies::computeEddyVelocity(
              Real GradBuoyML;
              Real BVFreqML;
 
-             const I4 IndexMLEdge = Kokkos::min(DenMixLayerIndex(JCell0),
-                                                DenMixLayerIndex(JCell1));
+             const I4 IndexMLEdge =
+                 Math::min(DenMixLayerIndex(JCell0), DenMixLayerIndex(JCell1));
 
              // compute mixed layer averages of buoyancy gradient and
              // Brunt-Vaisala frequency
@@ -345,8 +346,8 @@ void SubmesoEddies::computeEddyVelocity(
                     const Real GradBuoy = GradBuoyEdgeInterface(IEdge, K);
 
                     const Real BVFEdge =
-                        Kokkos::sqrt(0.5_Real * (Kokkos::max(Tiny, BVFSq0) +
-                                                 Kokkos::max(Tiny, BVFSq1)));
+                        Math::sqrt(0.5_Real * (Math::max(Tiny, BVFSq0) +
+                                               Math::max(Tiny, BVFSq1)));
 
                     AccumThick += PseudoThickAvg;
                     AccumGradBuoy += PseudoThickAvg * GradBuoy;
@@ -364,19 +365,19 @@ void SubmesoEddies::computeEddyVelocity(
                  Team, NVertLayersP1,
                  INNER_LAMBDA(int K) { StreamFunction(K) = 0; });
 
-             const Real MLDepthEdge = Kokkos::min(DenMixLayerDepth(JCell0),
-                                                  DenMixLayerDepth(JCell1));
+             const Real MLDepthEdge =
+                 Math::min(DenMixLayerDepth(JCell0), DenMixLayerDepth(JCell1));
 
              const Real TScale = TimeScale(IEdge);
-             const Real Ds     = Kokkos::min(DcEdge(IEdge), DsMax);
+             const Real Ds     = Math::min(DcEdge(IEdge), DsMax);
 
              const Real Lf1 =
-                 Kokkos::abs(GradBuoyML) * MLDepthEdge / (TScale * TScale);
+                 Math::abs(GradBuoyML) * MLDepthEdge * Math::pow<-2>(TScale);
              const Real Lf2 = BVFreqML * MLDepthEdge / TScale;
-             const Real Lf  = Kokkos::max(LfMin, Kokkos::max(Lf1, Lf2));
+             const Real Lf  = Math::max(LfMin, Lf1, Lf2);
 
              const Real Factor =
-                 Ce * Ds / Lf * MLDepthEdge * MLDepthEdge * GradBuoyML / TScale;
+                 Ce * Ds / Lf * Math::pow<2>(MLDepthEdge) * GradBuoyML / TScale;
 
              parallelForInner(
                  Team, Range{MinLyrEdgeBot, MaxLyrEdgeTop + 1},

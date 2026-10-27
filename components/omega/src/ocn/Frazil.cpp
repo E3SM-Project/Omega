@@ -16,21 +16,6 @@
 
 namespace OMEGA {
 
-namespace {
-
-KOKKOS_INLINE_FUNCTION bool isApprox(const Real X, const Real Y,
-                                     const Real RTol, const Real ATol = 0) {
-   if (Kokkos::isnan(X) || Kokkos::isnan(Y) || Kokkos::isinf(X) ||
-       Kokkos::isinf(Y)) {
-      return false;
-   }
-
-   return Kokkos::abs(X - Y) <=
-          Kokkos::max(ATol, RTol * Kokkos::max(Kokkos::abs(X), Kokkos::abs(Y)));
-}
-
-} // namespace
-
 Frazil *Frazil::DefaultFrazil = nullptr;
 std::map<std::string, std::unique_ptr<Frazil>> Frazil::AllFrazil;
 
@@ -352,17 +337,17 @@ void Frazil::checkColumnConservation() const {
                   SaltTend * RhoSw * PPt2Salt + SaltTotal);
       }
 
-      if (!isApprox(-MassTend * RhoSw, MassTotal, RTol)) {
+      if (!Math::isApprox(-MassTend * RhoSw, MassTotal, RTol)) {
          ABORT_ERROR(
              "Frazil column mass check failed: cell {} tendency={} total={}",
              ICell, -MassTend * RhoSw, MassTotal);
       }
-      if (!isApprox(-EnergyTend * Cp0Sw * RhoSw, EnergyTotal, RTol)) {
+      if (!Math::isApprox(-EnergyTend * Cp0Sw * RhoSw, EnergyTotal, RTol)) {
          ABORT_ERROR(
              "Frazil column energy check failed: cell {} tendency={} total={}",
              ICell, -EnergyTend * Cp0Sw * RhoSw, EnergyTotal);
       }
-      if (!isApprox(-SaltTend * RhoSw * PPt2Salt, SaltTotal, RTol)) {
+      if (!Math::isApprox(-SaltTend * RhoSw * PPt2Salt, SaltTotal, RTol)) {
          ABORT_ERROR(
              "Frazil column salt check failed: cell {} tendency={} total={}",
              ICell, -SaltTend * RhoSw * PPt2Salt, SaltTotal);
@@ -421,7 +406,7 @@ void Frazil::computeFrazilFixedPropertyImpl(
           if (Limit) {
              HasKLim = false;
              for (I4 K = KMax; K >= KMin; --K) {
-                if (Kokkos::abs(LocGeomZMid(ICell, K)) <= LocDepthLimit) {
+                if (Math::abs(LocGeomZMid(ICell, K)) <= LocDepthLimit) {
                    KLim    = K;
                    HasKLim = true;
                    break;
@@ -444,10 +429,10 @@ void Frazil::computeFrazilFixedPropertyImpl(
              if (AbsSalinityRaw < 0.0_Real) {
                 ++Accum;
              }
-             const Real AbsSalinityIn = Kokkos::max(0.0_Real, AbsSalinityRaw);
-             const Real ConservTempIn = ConservTemp(ICell, K);
-             const Real PressureIn    = Pressure(ICell, K);
-             const Real PressureDb    = PressureIn * Pa2Db;
+             const Real AbsSalinityIn     = Math::max(0.0_Real, AbsSalinityRaw);
+             const Real ConservTempIn     = ConservTemp(ICell, K);
+             const Real PressureIn        = Pressure(ICell, K);
+             const Real PressureDb        = PressureIn * Pa2Db;
              const Real PseudoThicknessIn = PseudoThickness(ICell, K);
 
              const Real CtFreezing = Eos::calcCtFreezing(
@@ -539,7 +524,7 @@ void Frazil::computeFrazilTeosImpl(const Array2DReal &ConservTemp,
           if (Limit) {
              HasKLim = false;
              for (I4 K = KMax; K >= KMin; --K) {
-                if (Kokkos::abs(LocGeomZMid(ICell, K)) <= LocDepthLimit) {
+                if (Math::abs(LocGeomZMid(ICell, K)) <= LocDepthLimit) {
                    KLim    = K;
                    HasKLim = true;
                    break;
@@ -562,10 +547,10 @@ void Frazil::computeFrazilTeosImpl(const Array2DReal &ConservTemp,
              if (AbsSalinityRaw < 0.0_Real) {
                 ++Accum;
              }
-             const Real AbsSalinityIn = Kokkos::max(0.0_Real, AbsSalinityRaw);
-             const Real ConservTempIn = ConservTempH(ICell, K);
-             const Real PressureIn    = PressureH(ICell, K);
-             const Real PressureDb    = PressureIn * Pa2Db;
+             const Real AbsSalinityIn     = Math::max(0.0_Real, AbsSalinityRaw);
+             const Real ConservTempIn     = ConservTempH(ICell, K);
+             const Real PressureIn        = PressureH(ICell, K);
+             const Real PressureDb        = PressureIn * Pa2Db;
              const Real PseudoThicknessIn = PseudoThicknessH(ICell, K);
 
              const Real CtFreezing = Eos::calcCtFreezing(

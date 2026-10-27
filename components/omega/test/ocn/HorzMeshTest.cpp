@@ -21,6 +21,7 @@
 #include "IOStream.h"
 #include "Logging.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
 #include "TimeMgr.h"
@@ -83,7 +84,7 @@ void initHorzMeshTest() {
 // Computes the distance of a x,y,z coordinate from the origin
 R8 distance(R8 X, R8 Y, R8 Z) {
 
-   R8 Dist = sqrt(X * X + Y * Y + Z * Z);
+   R8 Dist = Math::sqrt(X * X + Y * Y + Z * Z);
    return Dist;
 }
 
@@ -91,17 +92,18 @@ R8 distance(R8 X, R8 Y, R8 Z) {
 // Computes the distance between two lon/lat points on the sphere
 R8 sphereDistance(R8 Lon1, R8 Lat1, R8 Lon2, R8 Lat2) {
 
-   R8 Arg = sqrt(pow(sin(0.5 * (Lat1 - Lat2)), 2) +
-                 cos(Lat2) * cos(Lat1) * pow(sin(0.5 * (Lon1 - Lon2)), 2));
-   return 2.0 * asin(Arg);
+   R8 Arg = Math::sqrt(Math::pow(Math::sin(0.5 * (Lat1 - Lat2)), 2) +
+                       Math::cos(Lat2) * Math::cos(Lat1) *
+                           Math::pow(Math::sin(0.5 * (Lon1 - Lon2)), 2));
+   return 2.0 * Math::asin(Arg);
 }
 
 //------------------------------------------------------------------------------
 // Computes the longitude of a point given its Cartesian coordinates
 R8 computeLon(R8 X, R8 Y, R8 Z) {
 
-   R8 Lon = atan2(Y, X);
-   R8 Pi  = 4.0 * atan(1.0);
+   R8 Lon = Math::atan2(Y, X);
+   R8 Pi  = 4.0 * Math::atan(1.0);
    if (Lon < 0.0) {
       Lon = 2.0 * Pi + Lon;
    }
@@ -113,7 +115,7 @@ R8 computeLon(R8 X, R8 Y, R8 Z) {
 R8 computeLat(R8 X, R8 Y, R8 Z) {
 
    R8 Dist = distance(X, Y, Z);
-   R8 Lat  = asin(Z / Dist);
+   R8 Lat  = Math::asin(Z / Dist);
 
    return Lat;
 }
@@ -123,7 +125,7 @@ R8 computeLat(R8 X, R8 Y, R8 Z) {
 R8 coriolis(R8 Lat) {
 
    R8 Omega = 7.29212e-5;
-   R8 F     = 2.0 * Omega * sin(Lat);
+   R8 F     = 2.0 * Omega * Math::sin(Lat);
 
    return F;
 }
@@ -143,7 +145,7 @@ int main(int argc, char *argv[]) {
 
       int Err = 0;
       R8 Tol  = 1e-6;
-      R8 Pi   = 4.0 * atan(1.0);
+      R8 Pi   = 4.0 * Math::atan(1.0);
 
       // Call initialization routine to create the default decomposition
       initHorzMeshTest();
@@ -189,7 +191,7 @@ int main(int argc, char *argv[]) {
       for (int Cell = 0; Cell < LocCells; Cell++) {
          Dist = distance(Mesh->XCellH(Cell), Mesh->YCellH(Cell),
                          Mesh->ZCellH(Cell));
-         if (abs(SphereRadius - Dist) > Tol)
+         if (Math::abs(SphereRadius - Dist) > Tol)
             Count++;
       }
 
@@ -205,12 +207,12 @@ int main(int argc, char *argv[]) {
       R8 RadiusRelTol = sizeof(Real) == 4 ? 1.e-6 : 1.e-10;
       if (!Mesh->OnSphere)
          ABORT_ERROR("HorzMeshTest: OnSphere flag test FAIL");
-      if (abs((Mesh->SphereRadius - SphereRadius) / SphereRadius) >
+      if (Math::abs((Mesh->SphereRadius - SphereRadius) / SphereRadius) >
           RadiusRelTol)
          ABORT_ERROR("HorzMeshTest: SphereRadius vs coordinates test FAIL "
                      "{} {}",
                      Mesh->SphereRadius, SphereRadius);
-      if (abs((Mesh->SphereRadius - REarth) / REarth) > RadiusRelTol)
+      if (Math::abs((Mesh->SphereRadius - REarth) / REarth) > RadiusRelTol)
          ABORT_ERROR("HorzMeshTest: SphereRadius vs REarth test FAIL {} {}",
                      Mesh->SphereRadius, REarth);
 
@@ -229,9 +231,9 @@ int main(int argc, char *argv[]) {
          Lat = computeLat(Mesh->XCellH(Cell), Mesh->YCellH(Cell),
                           Mesh->ZCellH(Cell));
 
-         if (abs(Lon - Mesh->LonCellH(Cell)) > Tol)
+         if (Math::abs(Lon - Mesh->LonCellH(Cell)) > Tol)
             Count++;
-         if (abs(Lat - Mesh->LatCellH(Cell)) > Tol)
+         if (Math::abs(Lat - Mesh->LatCellH(Cell)) > Tol)
             Count++;
       }
 
@@ -261,7 +263,7 @@ int main(int argc, char *argv[]) {
       for (int Edge = 0; Edge < LocEdges; Edge++) {
          Dist = distance(Mesh->XEdgeH(Edge), Mesh->YEdgeH(Edge),
                          Mesh->ZEdgeH(Edge));
-         if (abs(SphereRadius - Dist) > Tol)
+         if (Math::abs(SphereRadius - Dist) > Tol)
             Count++;
       }
 
@@ -281,9 +283,9 @@ int main(int argc, char *argv[]) {
          Lat = computeLat(Mesh->XEdgeH(Edge), Mesh->YEdgeH(Edge),
                           Mesh->ZEdgeH(Edge));
 
-         if (abs(Lon - Mesh->LonEdgeH(Edge)) > Tol)
+         if (Math::abs(Lon - Mesh->LonEdgeH(Edge)) > Tol)
             Count++;
-         if (abs(Lat - Mesh->LatEdgeH(Edge)) > Tol)
+         if (Math::abs(Lat - Mesh->LatEdgeH(Edge)) > Tol)
             Count++;
       }
 
@@ -316,7 +318,7 @@ int main(int argc, char *argv[]) {
       for (int Vertex = 0; Vertex < LocVertices; Vertex++) {
          Dist = distance(Mesh->XVertexH(Vertex), Mesh->YVertexH(Vertex),
                          Mesh->ZVertexH(Vertex));
-         if (abs(SphereRadius - Dist) > Tol)
+         if (Math::abs(SphereRadius - Dist) > Tol)
             Count++;
       }
 
@@ -336,10 +338,10 @@ int main(int argc, char *argv[]) {
          Lat = computeLat(Mesh->XVertexH(Vertex), Mesh->YVertexH(Vertex),
                           Mesh->ZVertexH(Vertex));
 
-         if (abs(Lon - Mesh->LonVertexH(Vertex)) > Tol)
+         if (Math::abs(Lon - Mesh->LonVertexH(Vertex)) > Tol)
             Count++;
 
-         if (abs(Lat - Mesh->LatVertexH(Vertex)) > Tol)
+         if (Math::abs(Lat - Mesh->LatVertexH(Vertex)) > Tol)
             Count++;
       }
 
@@ -361,7 +363,7 @@ int main(int argc, char *argv[]) {
          ABORT_ERROR("HorzMeshTest: MPI error summing cell area");
 
       R8 OceanArea = 3.61e14;
-      if (abs(SumCellArea - OceanArea) / OceanArea > 0.05)
+      if (Math::abs(SumCellArea - OceanArea) / OceanArea > 0.05)
          ABORT_ERROR("HorzMeshTest: Cell area test FAIL");
 
       // Test triangle areas
@@ -378,7 +380,7 @@ int main(int argc, char *argv[]) {
       if (Err != MPI_SUCCESS)
          ABORT_ERROR("HorzMeshTest: MPI error summing triangle area");
 
-      if (abs(SumTriangleArea - OceanArea) / OceanArea > 0.05)
+      if (Math::abs(SumTriangleArea - OceanArea) / OceanArea > 0.05)
          ABORT_ERROR("HorzMeshTest: Triangle area test FAIL");
 
       // Test kite areas
@@ -397,7 +399,7 @@ int main(int argc, char *argv[]) {
       if (Err != MPI_SUCCESS)
          ABORT_ERROR("HorzMeshTest: MPI error summing kite area");
 
-      if (abs(SumKiteArea - OceanArea) / OceanArea > 0.05)
+      if (Math::abs(SumKiteArea - OceanArea) / OceanArea > 0.05)
          ABORT_ERROR("HorzMeshTest: Kite area test FAIL");
 
       // Test DcEdge
@@ -416,7 +418,8 @@ int main(int argc, char *argv[]) {
                                Mesh->LonCellH(Cell2), Mesh->LatCellH(Cell2));
             Dc = SphereRadius * Dc;
 
-            if (abs((Dc - Mesh->DcEdgeH(Edge)) / Mesh->DcEdgeH(Edge)) > Tol) {
+            if (Math::abs((Dc - Mesh->DcEdgeH(Edge)) / Mesh->DcEdgeH(Edge)) >
+                Tol) {
                Count++;
             }
          }
@@ -443,7 +446,8 @@ int main(int argc, char *argv[]) {
 
             Dv = SphereRadius * Dv;
 
-            if (abs((Dv - Mesh->DvEdgeH(Edge)) / Mesh->DvEdgeH(Edge)) > Tol) {
+            if (Math::abs((Dv - Mesh->DvEdgeH(Edge)) / Mesh->DvEdgeH(Edge)) >
+                Tol) {
                Count++;
             }
          }
@@ -457,7 +461,7 @@ int main(int argc, char *argv[]) {
       // Tests that the edge angles have been read in correctly
       Count = 0;
       for (int Edge = 0; Edge < LocEdges; Edge++) {
-         if (abs(Mesh->AngleEdgeH(Edge)) > Pi) {
+         if (Math::abs(Mesh->AngleEdgeH(Edge)) > Pi) {
             Count++;
          }
       }
@@ -473,7 +477,7 @@ int main(int argc, char *argv[]) {
       for (int Cell = 0; Cell < LocCells; Cell++) {
          R8 F = coriolis(Mesh->LatCellH(Cell));
 
-         if (abs(F - Mesh->FCellH(Cell)) > Tol) {
+         if (Math::abs(F - Mesh->FCellH(Cell)) > Tol) {
             Count++;
          }
       }
@@ -490,7 +494,7 @@ int main(int argc, char *argv[]) {
 
          R8 F = coriolis(Mesh->LatVertexH(Vertex));
 
-         if (abs(F - Mesh->FVertexH(Vertex)) > Tol) {
+         if (Math::abs(F - Mesh->FVertexH(Vertex)) > Tol) {
             Count++;
          }
       }
@@ -506,7 +510,7 @@ int main(int argc, char *argv[]) {
       for (int Edge = 0; Edge < LocEdges; Edge++) {
          R8 F = coriolis(Mesh->LatEdgeH(Edge));
 
-         if (abs(F - Mesh->FEdgeH(Edge)) > Tol) {
+         if (Math::abs(F - Mesh->FEdgeH(Edge)) > Tol) {
             Count++;
          }
       }
@@ -520,7 +524,7 @@ int main(int argc, char *argv[]) {
       Count = 0;
       for (int Edge = 0; Edge < LocEdges; Edge++) {
          for (int i = 0; i < Mesh->MaxEdges2; i++) {
-            if (abs(Mesh->WeightsOnEdgeH(Edge, i)) > 1.0) {
+            if (Math::abs(Mesh->WeightsOnEdgeH(Edge, i)) > 1.0) {
                Count++;
             }
          }
@@ -542,7 +546,7 @@ int main(int argc, char *argv[]) {
                break;
             }
          }
-         if (abs(Mesh->EdgeSignOnCellH(Cell0, IEdge0) + 1.0) > Tol) {
+         if (Math::abs(Mesh->EdgeSignOnCellH(Cell0, IEdge0) + 1.0) > Tol) {
             Count++;
          }
 
@@ -555,7 +559,7 @@ int main(int argc, char *argv[]) {
                   break;
                }
             }
-            if (abs(Mesh->EdgeSignOnCellH(Cell1, IEdge1) - 1.0) > Tol) {
+            if (Math::abs(Mesh->EdgeSignOnCellH(Cell1, IEdge1) - 1.0) > Tol) {
                Count++;
             }
          }
@@ -577,7 +581,7 @@ int main(int argc, char *argv[]) {
                break;
             }
          }
-         if (abs(Mesh->EdgeSignOnVertexH(Vertex0, IEdge0) + 1.0) > Tol) {
+         if (Math::abs(Mesh->EdgeSignOnVertexH(Vertex0, IEdge0) + 1.0) > Tol) {
             Count++;
          }
 
@@ -589,7 +593,7 @@ int main(int argc, char *argv[]) {
                break;
             }
          }
-         if (abs(Mesh->EdgeSignOnVertexH(Vertex1, IEdge1) - 1.0) > Tol) {
+         if (Math::abs(Mesh->EdgeSignOnVertexH(Vertex1, IEdge1) - 1.0) > Tol) {
             Count++;
          }
       }

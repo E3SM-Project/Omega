@@ -14,6 +14,7 @@
 #include "GlobalConstants.h"
 #include "IO.h"
 #include "IOStream.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 
 #include <limits>
@@ -809,16 +810,16 @@ void VertCoord::minMaxLayerEdge(Halo *MeshHalo) {
                                                : LocMinLayerCell(ICell1);
           Lyr2 = LocMaxLayerCell(ICell2) == -1 ? LocNVertLayersP1
                                                : LocMinLayerCell(ICell2);
-          LocMinLayerEdgeTop(IEdge) = Kokkos::min(Lyr1, Lyr2);
+          LocMinLayerEdgeTop(IEdge) = Math::min(Lyr1, Lyr2);
 
           Lyr1 = LocMaxLayerCell(ICell1) == -1 ? 0 : LocMinLayerCell(ICell1);
           Lyr2 = LocMaxLayerCell(ICell2) == -1 ? 0 : LocMinLayerCell(ICell2);
-          LocMinLayerEdgeBot(IEdge) = Kokkos::max(Lyr1, Lyr2);
+          LocMinLayerEdgeBot(IEdge) = Math::max(Lyr1, Lyr2);
 
           LocMaxLayerEdgeTop(IEdge) =
-              Kokkos::min(LocMaxLayerCell(ICell1), LocMaxLayerCell(ICell2));
+              Math::min(LocMaxLayerCell(ICell1), LocMaxLayerCell(ICell2));
           LocMaxLayerEdgeBot(IEdge) =
-              Kokkos::max(LocMaxLayerCell(ICell1), LocMaxLayerCell(ICell2));
+              Math::max(LocMaxLayerCell(ICell1), LocMaxLayerCell(ICell2));
        });
 
    MeshHalo->exchangeFullArrayHalo(MinLayerEdgeTop, OnEdge);
@@ -888,7 +889,7 @@ void VertCoord::minMaxLayerVertex(Halo *MeshHalo) {
              ICell = LocCellsOnVertex(IVertex, I);
              Lyr   = LocMaxLayerCell(ICell) == -1 ? 0 : LocMinLayerCell(ICell);
              LocMinLayerVertexBot(IVertex) =
-                 Kokkos::max(LocMinLayerVertexBot(IVertex), Lyr);
+                 Math::max(LocMinLayerVertexBot(IVertex), Lyr);
           }
 
           ICell = LocCellsOnVertex(IVertex, 0);
@@ -900,14 +901,14 @@ void VertCoord::minMaxLayerVertex(Halo *MeshHalo) {
              Lyr   = LocMaxLayerCell(ICell) == -1 ? LocNVertLayersP1
                                                   : LocMinLayerCell(ICell);
              LocMinLayerVertexTop(IVertex) =
-                 Kokkos::min(LocMinLayerVertexTop(IVertex), Lyr);
+                 Math::min(LocMinLayerVertexTop(IVertex), Lyr);
           }
 
           ICell                         = LocCellsOnVertex(IVertex, 0);
           LocMaxLayerVertexBot(IVertex) = LocMaxLayerCell(ICell);
           for (int I = 1; I < LocVertexDegree; ++I) {
              ICell                         = LocCellsOnVertex(IVertex, I);
-             LocMaxLayerVertexBot(IVertex) = Kokkos::max(
+             LocMaxLayerVertexBot(IVertex) = Math::max(
                  LocMaxLayerVertexBot(IVertex), LocMaxLayerCell(ICell));
           }
 
@@ -915,7 +916,7 @@ void VertCoord::minMaxLayerVertex(Halo *MeshHalo) {
           LocMaxLayerVertexTop(IVertex) = LocMaxLayerCell(ICell);
           for (int I = 1; I < LocVertexDegree; ++I) {
              ICell                         = LocCellsOnVertex(IVertex, I);
-             LocMaxLayerVertexTop(IVertex) = Kokkos::min(
+             LocMaxLayerVertexTop(IVertex) = Math::min(
                  LocMaxLayerVertexTop(IVertex), LocMaxLayerCell(ICell));
           }
        });
@@ -1346,7 +1347,7 @@ void VertCoord::zeroEdgeField(Array2DReal Arr, I4 NEdgesAll) const {
    parallelForOuter(
        {NEdgesAll}, KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
           const int KTop = LocMinLayerEdgeTop(IEdge);
-          const int KBot = Kokkos::max(0, LocMaxLayerEdgeBot(IEdge));
+          const int KBot = Math::max(0, LocMaxLayerEdgeBot(IEdge));
           parallelForInner(
               Team, Range{KTop, KBot},
               INNER_LAMBDA(int K) { Arr(IEdge, K) = 0._Real; });
@@ -1405,7 +1406,7 @@ void VertCoord::applyEdgeLayerMask(Array2DReal Arr, I4 NEdgesAll) const {
    parallelForOuter(
        {NEdgesAll}, KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
           const int KTop = LocMinLayerEdgeTop(IEdge);
-          const int KBot = Kokkos::max(0, LocMaxLayerEdgeBot(IEdge));
+          const int KBot = Math::max(0, LocMaxLayerEdgeBot(IEdge));
           const int KMin = LocMinLayerEdgeBot(IEdge);
           const int KMax = LocMaxLayerEdgeTop(IEdge);
           parallelForInner(
