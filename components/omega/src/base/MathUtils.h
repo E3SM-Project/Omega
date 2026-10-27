@@ -29,7 +29,7 @@ KOKKOS_INLINE_FUNCTION constexpr T pow(T X)
    } else if constexpr (N % 2 == 0) {
       const T Y = pow<N / 2>(X);
       return Y * Y;
-   } else if constexpr (N % 2 == 1) {
+   } else {
       const T Y = pow<N / 2>(X);
       return Y * Y * X;
    }
@@ -125,6 +125,8 @@ bool isApprox(Real X, Real Y, Real RTol, Real ATol = 0) {
 // Below is a list of mathematical functions that we take from Kokkos without
 // modification See
 // https://kokkos.org/kokkos-core-wiki/API/core/numerics/mathematical-functions.html
+// The commented-out ones are not yet available in the Kokkos version used by
+// E3SM on all supported platforms
 
 // Basic operations
 using Kokkos::abs;

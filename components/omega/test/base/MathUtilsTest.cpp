@@ -1,5 +1,4 @@
-//===-- Test driver for OMEGA math utilities -------------------------*- C++
-//-*-===//
+//===-- Test driver for OMEGA math utilities ---------------------*- C++ -*-===/
 ///
 /// \file
 /// \brief Unit tests for mathematical functions and utilities
@@ -264,7 +263,7 @@ int main(int argc, char *argv[]) {
       Err += Error(ErrorCode::Fail, "Unknown: FAIL");
    }
 
-   CHECK_ERROR_ABORT(Err, "Kokkos Wrappers Unit Tests FAIL");
+   CHECK_ERROR_ABORT(Err, "Math Utils Unit Tests FAIL");
 
    MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
