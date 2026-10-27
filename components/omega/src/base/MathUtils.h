@@ -111,8 +111,15 @@ KOKKOS_INLINE_FUNCTION constexpr auto max(T X0, Ts... Xs) {
    return max(X0, max(Xs...));
 }
 
-KOKKOS_INLINE_FUNCTION
-bool isApprox(Real X, Real Y, Real RTol, Real ATol = 0) {
+template <class T>
+constexpr auto defaultRelativeTolerance =
+    Kokkos::sqrt(std::numeric_limits<T>::epsilon());
+
+template <class T1, class T2, class CT = std::common_type_t<T1, T2>>
+KOKKOS_INLINE_FUNCTION bool
+isApprox(T1 X, T2 Y, CT RTol = defaultRelativeTolerance<CT>, CT ATol = 0)
+   requires(std::floating_point<T1> || std::floating_point<T2>)
+{
    if (Kokkos::isnan(X) || Kokkos::isnan(Y) || Kokkos::isinf(X) ||
        Kokkos::isinf(Y)) {
       return false; // Treat NaN or Inf as failure
