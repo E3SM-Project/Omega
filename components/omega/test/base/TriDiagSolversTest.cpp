@@ -129,8 +129,6 @@ KOKKOS_FUNCTION Real manufacturedDiffusivity(Real X, Real T) {
 }
 
 KOKKOS_FUNCTION Real manufacturedForcing(Real X, Real T) {
-   using Kokkos::cos;
-   using Kokkos::sin;
    return (2 * Math::sin(T) * Math::sin(X) + 2 * Math::sin(T) + Math::cos(T)) *
           Math::cos(X);
 }

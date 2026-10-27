@@ -363,7 +363,7 @@ void Tendencies::readConfig(Config *OmegaConfig ///< [in] Omega config
    const Real TotalFraction = this->PenetratingShortwave.NearIrFraction +
                               this->PenetratingShortwave.RedFraction +
                               this->PenetratingShortwave.BlueFraction;
-   if (Kokkos::abs(TotalFraction - 1.0_Real) > 1.0e-5_Real) {
+   if (Math::abs(TotalFraction - 1.0_Real) > 1.0e-5_Real) {
       ABORT_ERROR(
           "Tendencies: The sum of NearIrFraction ({}), RedFraction ({}), "
           "and BlueFraction ({}) must equal 1 (got {})",

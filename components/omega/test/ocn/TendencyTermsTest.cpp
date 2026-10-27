@@ -2067,15 +2067,13 @@ int testPenetratingShortwaveOnCell(int NVertLayers, Real RTol) {
 
           // Analytic flux that would reach the seafloor interface without
           // bottom-layer absorption
-          const Real SeafloorDepth = Kokkos::abs(
-              GeomZInterface(ICell, KBot + 1) - GeomZInterface(ICell, KTop));
+          const Real SeafloorDepth = Math::abs(GeomZInterface(ICell, KBot + 1) -
+                                               GeomZInterface(ICell, KTop));
           const Real ResidualSeafloorFlux =
               SurfaceFluxVal *
-              (NearIrFractionVal *
-                   Kokkos::exp(-NearIrCoeffVal * SeafloorDepth) +
-               RedFractionVal * Kokkos::exp(-ExtinctionRedVal * SeafloorDepth) +
-               BlueFractionVal *
-                   Kokkos::exp(-ExtinctionBlueVal * SeafloorDepth));
+              (NearIrFractionVal * Math::exp(-NearIrCoeffVal * SeafloorDepth) +
+               RedFractionVal * Math::exp(-ExtinctionRedVal * SeafloorDepth) +
+               BlueFractionVal * Math::exp(-ExtinctionBlueVal * SeafloorDepth));
 
           // Ensure the test setup genuinely has significant leftover flux at
           // the bottom interface (at least 5% of incident flux)
@@ -2088,22 +2086,22 @@ int testPenetratingShortwaveOnCell(int NVertLayers, Real RTol) {
           for (I4 K = KTop; K <= KBot; ++K) {
              Real FluxAtLayerBottom = 0.0_Real;
              if (K < KBot) {
-                const Real Depth = Kokkos::abs(GeomZInterface(ICell, K + 1) -
-                                               GeomZInterface(ICell, KTop));
+                const Real Depth = Math::abs(GeomZInterface(ICell, K + 1) -
+                                             GeomZInterface(ICell, KTop));
                 FluxAtLayerBottom =
                     SurfaceFluxVal *
-                    (NearIrFractionVal * Kokkos::exp(-NearIrCoeffVal * Depth) +
-                     RedFractionVal * Kokkos::exp(-ExtinctionRedVal * Depth) +
-                     BlueFractionVal * Kokkos::exp(-ExtinctionBlueVal * Depth));
+                    (NearIrFractionVal * Math::exp(-NearIrCoeffVal * Depth) +
+                     RedFractionVal * Math::exp(-ExtinctionRedVal * Depth) +
+                     BlueFractionVal * Math::exp(-ExtinctionBlueVal * Depth));
              }
              const Real ExpectedLayerHeating =
                  (FluxAtLayerTop - FluxAtLayerBottom) * HFluxFac;
              ColumnHeating += Tend(0, ICell, K);
              const Real RelErr =
-                 Kokkos::abs(Tend(0, ICell, K) - ExpectedLayerHeating) /
-                 Kokkos::abs(ExpectedLayerHeating);
-             if (RelErr > RTol || Kokkos::isnan(Tend(0, ICell, K)) ||
-                 Kokkos::isinf(Tend(0, ICell, K))) {
+                 Math::abs(Tend(0, ICell, K) - ExpectedLayerHeating) /
+                 Math::abs(ExpectedLayerHeating);
+             if (RelErr > RTol || Math::isnan(Tend(0, ICell, K)) ||
+                 Math::isinf(Tend(0, ICell, K))) {
                 Accum += 1;
              }
 
@@ -2122,10 +2120,10 @@ int testPenetratingShortwaveOnCell(int NVertLayers, Real RTol) {
              FluxAtLayerTop = FluxAtLayerBottom;
           }
           const Real ColumnRelErr =
-              Kokkos::abs(ColumnHeating - ExpectedColumnHeating) /
-              Kokkos::abs(ExpectedColumnHeating);
-          if (ColumnRelErr > RTol || Kokkos::isnan(ColumnHeating) ||
-              Kokkos::isinf(ColumnHeating)) {
+              Math::abs(ColumnHeating - ExpectedColumnHeating) /
+              Math::abs(ExpectedColumnHeating);
+          if (ColumnRelErr > RTol || Math::isnan(ColumnHeating) ||
+              Math::isinf(ColumnHeating)) {
              Accum += 1;
           }
        },

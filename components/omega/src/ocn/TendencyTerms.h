@@ -1299,12 +1299,12 @@ class PenetratingShortwaveOnCell {
                 FluxAtInterface(K) = 0.0_Real;
              } else {
                 const Real Depth =
-                    Kokkos::abs(GeomZInterface(ICell, K) - ZSurface);
+                    Math::abs(GeomZInterface(ICell, K) - ZSurface);
                 FluxAtInterface(K) =
                     SurfaceFlux *
-                    (NearIrFraction * Kokkos::exp(-NearIrCoeff * Depth) +
-                     RedFraction * Kokkos::exp(-Kr * Depth) +
-                     BlueFraction * Kokkos::exp(-Kb * Depth));
+                    (NearIrFraction * Math::exp(-NearIrCoeff * Depth) +
+                     RedFraction * Math::exp(-Kr * Depth) +
+                     BlueFraction * Math::exp(-Kb * Depth));
              }
           });
 

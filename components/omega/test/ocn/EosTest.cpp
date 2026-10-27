@@ -1219,12 +1219,12 @@ void testNegativeSalinityTeos10() {
                                            SpecVol, 0.0_Real);
       const Real Beta  = Eos::computeBeta(EosType::Teos10Eos, SaValue, Ct, PDb,
                                           SpecVol, 0.0_Real);
-      if (Kokkos::isnan(SpecVol) || Kokkos::isinf(SpecVol) ||
-          Kokkos::isnan(SpecVolDCt) || Kokkos::isinf(SpecVolDCt) ||
-          Kokkos::isnan(SpecVolDSa) || Kokkos::isinf(SpecVolDSa) ||
-          Kokkos::isnan(SpecVolDP) || Kokkos::isinf(SpecVolDP) ||
-          Kokkos::isnan(Alpha) || Kokkos::isinf(Alpha) || Kokkos::isnan(Beta) ||
-          Kokkos::isinf(Beta)) {
+      if (Math::isnan(SpecVol) || Math::isinf(SpecVol) ||
+          Math::isnan(SpecVolDCt) || Math::isinf(SpecVolDCt) ||
+          Math::isnan(SpecVolDSa) || Math::isinf(SpecVolDSa) ||
+          Math::isnan(SpecVolDP) || Math::isinf(SpecVolDP) ||
+          Math::isnan(Alpha) || Math::isinf(Alpha) || Math::isnan(Beta) ||
+          Math::isinf(Beta)) {
          ABORT_ERROR("testNegativeSalinityTeos10: non-finite EOS output at "
                      "Sa={}",
                      SaValue);
