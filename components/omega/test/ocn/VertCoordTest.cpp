@@ -572,26 +572,22 @@ int main(int argc, char *argv[]) {
          I4 CellID2 = DefDecomp->CellIDH(DefMesh->CellsOnEdgeH(IEdge, 1));
          /// MinLayerEdgeTop is the min of the min cell values on edge
          Expected = Math::min(-2 * CellID1, -2 * CellID2);
-         if (!Math::isApprox(DefVertCoord->MinLayerEdgeTopH(IEdge), Expected,
-                             RTol, ATol)) {
+         if (DefVertCoord->MinLayerEdgeTopH(IEdge) != Expected) {
             Err += 1;
          }
          /// MinLayerEdgeBot is the max of the min cell values on edge
          Expected = Math::max(-2 * CellID1, -2 * CellID2);
-         if (!Math::isApprox(DefVertCoord->MinLayerEdgeBotH(IEdge), Expected,
-                             RTol, ATol)) {
+         if (DefVertCoord->MinLayerEdgeBotH(IEdge) != Expected) {
             Err += 1;
          }
          /// MaxLayerEdgeTop is the min of the max cell values on edge
          Expected = Math::min(2 * CellID1, 2 * CellID2);
-         if (!Math::isApprox(DefVertCoord->MaxLayerEdgeTopH(IEdge), Expected,
-                             RTol, ATol)) {
+         if (DefVertCoord->MaxLayerEdgeTopH(IEdge) != Expected) {
             Err += 1;
          }
          /// MaxLayerEdgeBot is the max of the max cell values on edge
          Expected = Math::max(2 * CellID1, 2 * CellID2);
-         if (!Math::isApprox(DefVertCoord->MaxLayerEdgeBotH(IEdge), Expected,
-                             RTol, ATol)) {
+         if (DefVertCoord->MaxLayerEdgeBotH(IEdge) != Expected) {
             Err += 1;
          }
       }
@@ -637,8 +633,7 @@ int main(int argc, char *argv[]) {
          for (int I = 0; I < VertexDegree; I++) {
             Expected = Math::min(Expected, -2 * CellIDs[I]);
          }
-         if (!Math::isApprox(DefVertCoord->MinLayerVertexTopH(IVertex),
-                             Expected, RTol, ATol)) {
+         if (DefVertCoord->MinLayerVertexTopH(IVertex) != Expected) {
             Err += 1;
          }
 
@@ -647,8 +642,7 @@ int main(int argc, char *argv[]) {
          for (int I = 0; I < VertexDegree; I++) {
             Expected = Math::max(Expected, -2 * CellIDs[I]);
          }
-         if (!Math::isApprox(DefVertCoord->MinLayerVertexBotH(IVertex),
-                             Expected, RTol, ATol)) {
+         if (DefVertCoord->MinLayerVertexBotH(IVertex) != Expected) {
             Err += 1;
          }
 
@@ -657,8 +651,7 @@ int main(int argc, char *argv[]) {
          for (int I = 0; I < VertexDegree; I++) {
             Expected = Math::min(Expected, 2 * CellIDs[I]);
          }
-         if (!Math::isApprox(DefVertCoord->MaxLayerVertexTopH(IVertex),
-                             Expected, RTol, ATol)) {
+         if (DefVertCoord->MaxLayerVertexTopH(IVertex) != Expected) {
             Err += 1;
          }
 
@@ -667,8 +660,7 @@ int main(int argc, char *argv[]) {
          for (int I = 0; I < VertexDegree; I++) {
             Expected = Math::max(Expected, 2 * CellIDs[I]);
          }
-         if (!Math::isApprox(DefVertCoord->MaxLayerVertexBotH(IVertex),
-                             Expected, RTol, ATol)) {
+         if (DefVertCoord->MaxLayerVertexBotH(IVertex) != Expected) {
             Err += 1;
          }
       }
