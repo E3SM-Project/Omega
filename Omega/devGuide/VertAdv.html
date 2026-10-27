@@ -321,7 +321,10 @@ tracer tendency array:</p>
 </div>
 <p>For the standard advection algorithm, <code class="docutils literal notranslate"><span class="pre">PseudoThickness</span></code> from the <code class="docutils literal notranslate"><span class="pre">OceanState</span></code> is
 passed as the thickness argument; for the FCT algorithm, the <code class="docutils literal notranslate"><span class="pre">ProvPseudoThickness</span></code>
-from the <code class="docutils literal notranslate"><span class="pre">AuxiliaryState</span></code> is used instead.</p>
+from the <code class="docutils literal notranslate"><span class="pre">AuxiliaryState</span></code> is used instead.
+With FCT, <code class="docutils literal notranslate"><span class="pre">Tendencies</span></code> also passes the tracers after horizontal advection alone
+(<code class="docutils literal notranslate"><span class="pre">ProvTracers</span></code>) in place of the tracer array, as MPAS-Ocean does, so that the
+vertical limiter bounds the combined horizontal and vertical update.</p>
 <p>This method first calls <code class="docutils literal notranslate"><span class="pre">computeVerticalFluxes</span></code> to compute the tracer fluxes at
 layer interfaces, using the order of accuracy specified in the configuration
 file. It then dispatches to the selected advection algorithm (standard or FCT)
