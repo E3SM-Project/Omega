@@ -273,16 +273,9 @@ void VertMix::computeVertMix(const Array2DReal &NormalVelocity,
 
                 parallelForInner(
                     Team, KRange, INNER_LAMBDA(int KChunk) {
-                       const I4 KStart = chunkStart(KChunk, KMin);
-                       const I4 KLen   = chunkLength(KChunk, KStart, KMax);
-                       for (int KVec = 0; KVec < KLen; ++KVec) {
-                          const I4 K = KStart + KVec;
-                          if (BruntVaisalaFreqSq(ICell, K) <
-                              LocConvTriggerBVF) {
-                             LocVertDiff(ICell, K) += LocConvDiff;
-                             LocVertVisc(ICell, K) += LocConvDiff;
-                          }
-                       }
+                       LocComputeVertMixConv(LocVertDiff, LocVertVisc, ICell,
+                                             KChunk, BruntVaisalaFreqSq,
+                                             KPPBoundaryLayerIndex);
                     });
              });
       }
