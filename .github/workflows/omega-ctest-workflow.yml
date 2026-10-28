@@ -34,7 +34,7 @@ jobs:
   ctest:
     if: ${{ github.repository == 'E3SM-Project/E3SM' ||
             github.repository == 'E3SM-Project/Omega' }}
-    name: ctest (${{ matrix.env }}, ${{ matrix.build_type }})
+    name: ${{ matrix.env }}, ${{ matrix.build_type }}
     # x86_64 only: on aarch64 the standalone build picks up x86's -mcmodel=medium from the
     # CIME macros and fails to configure (E3SM-Project/Omega#610).
     runs-on: ubuntu-latest

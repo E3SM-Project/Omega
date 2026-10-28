@@ -35,15 +35,17 @@ jobs:
   cime-test:
     if: ${{ github.repository == 'E3SM-Project/E3SM' ||
             github.repository == 'E3SM-Project/Omega' }}
-    name: cime-test (${{ matrix.env }}, ${{ matrix.test }})
+    name: ${{ matrix.test }}.${{ matrix.grid_compset }} (${{ matrix.env }})
     runs-on: ubuntu-latest
     timeout-minutes: 180
     strategy:
       fail-fast: false
-      # One test per job, so each gets a whole runner and fails on its own
+      # One test per job, so each gets a whole runner and fails on its own. grid_compset
+      # is a matrix entry, not env, because job names can't read env.
       matrix:
         env: [gnu13-openmpi4, intel2024-openmpi4]
         test: [ERS_D_Ln9, PEM_D_Ln9, PET_D_Ln9]
+        grid_compset: [T62_oQU240.GOMEGA-NYF]
     env:
       IMAGE: ghcr.io/e3sm-project/e3sm-image:${{ matrix.env }}
     steps:
@@ -91,6 +93,7 @@ jobs:
           rc=0
           docker run --rm --shm-size=1g \
             -e OMEGA_TEST_TYPES=${{ matrix.test }} \
+            -e OMEGA_GRID_COMPSET=${{ matrix.grid_compset }} \
             -v "$PWD:/projects/e3sm/work/Omega" \
             -v "$PWD/inputdata:/projects/e3sm/data/inputdata" \
             -v "$PWD/scratch:/home/e3sm/e3sm_scratch" \
