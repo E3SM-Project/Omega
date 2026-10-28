@@ -1,0 +1,115 @@
+name: omega-cime-test
+
+# Runs CIME system tests (ERS, PEM, PET) of Omega in a small G case (T62_oQU240.GOMEGA-NYF)
+# in the E3SM container images (github.com/E3SM-Project/containers), on GitHub-hosted
+# runners, using the images' own CIME machine (e3sm-container). These catch coupling,
+# restart, decomposition and threading problems early; targeted tests on production
+# machines are still up to authors and reviewers.
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'components/omega/**'
+      - '!components/omega/doc/**'
+      - '.github/workflows/omega-cime-test-workflow.yml'
+
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'components/omega/**'
+      - '!components/omega/doc/**'
+      - '.github/workflows/omega-cime-test-workflow.yml'
+
+  workflow_dispatch:
+
+concurrency:
+  # Cancel in progress runs testing the same git ref
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  cime-test:
+    if: ${{ github.repository == 'E3SM-Project/E3SM' ||
+            github.repository == 'E3SM-Project/Omega' }}
+    name: cime-test (${{ matrix.env }}, ${{ matrix.test }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      # One test per job, so each gets a whole runner and fails on its own
+      matrix:
+        env: [gnu13-openmpi4, intel2024-openmpi4]
+        test: [ERS_D_Ln9, PEM_D_Ln9, PET_D_Ln9]
+    env:
+      IMAGE: ghcr.io/e3sm-project/e3sm-image:${{ matrix.env }}
+    steps:
+      # Hosted runners start with ~20 GB free; the image, the submodules and a case build
+      # need more. These are preinstalled SDKs nothing here uses.
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/local/.ghcup \
+            /usr/share/swift
+          sudo docker image prune --all --force > /dev/null
+          df -h /
+
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Only the submodules a G case with Omega needs; several use git@ URLs, rewritten
+      # to https for this command only.
+      - name: Update submodules
+        run: |
+          git -c url."https://github.com/".insteadOf=git@github.com: \
+            submodule update --init --recursive --depth 1 \
+            cime \
+            externals/YAKL \
+            externals/ekat \
+            externals/mct \
+            externals/scorpio \
+            components/mpas-seaice/src/icepack \
+            components/omega/external
+
+      # The published images are public; no login needed
+      - name: Pull the image
+        run: docker pull "$IMAGE"
+
+      # As the image's default user (uid 1000). The runner's own uid is 1001, so hand it
+      # what the test writes to, and take it back after for the logs. Inputdata (< 1 GB)
+      # is downloaded fresh each run.
+      - name: Run CIME test
+        run: |
+          mkdir -p inputdata scratch
+          sudo chown -R 1000:1000 . inputdata scratch
+          rc=0
+          docker run --rm --shm-size=1g \
+            -e OMEGA_TEST_TYPES=${{ matrix.test }} \
+            -v "$PWD:/projects/e3sm/work/Omega" \
+            -v "$PWD/inputdata:/projects/e3sm/data/inputdata" \
+            -v "$PWD/scratch:/home/e3sm/e3sm_scratch" \
+            "$IMAGE" bash -l /projects/e3sm/work/Omega/components/omega/ci/omega-cime-test.sh \
+            || rc=$?
+          sudo chown -R "$(id -u):$(id -g)" . inputdata scratch
+          exit "$rc"
+
+      # Into the job log rather than an artifact, so nothing is stored beyond the run's
+      # logs. CIME gzips most of them, hence zcat -f.
+      - name: Show logs
+        if: failure()
+        run: |
+          shopt -s nullglob
+          for f in scratch/*.omega-ci/TestStatus.log \
+                   scratch/*.omega-ci/bld/*.bldlog.* \
+                   scratch/*.omega-ci/run/*.log.* \
+                   scratch/*.omega-ci/run/case2run/*.log.*; do
+            echo "::group::$f"
+            zcat -f "$f"
+            echo "::endgroup::"
+          done
