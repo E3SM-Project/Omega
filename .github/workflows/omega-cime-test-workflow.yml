@@ -40,11 +40,11 @@ jobs:
     timeout-minutes: 180
     strategy:
       fail-fast: false
-      # One test per job, so each gets a whole runner and fails on its own. grid_compset
-      # is a matrix entry, not env, because job names can't read env.
+      # One test per job, so each gets a whole runner and fails on its own. NYF forcing
+      # is a single year, so the case needs < 1 GB of inputdata.
       matrix:
         env: [gnu13-openmpi4, intel2024-openmpi4]
-        test: [ERS_D_Ln9, PEM_D_Ln9, PET_D_Ln9]
+        test: [ERS_D_Ln5, PEM_D_Ln5, PET_D_Ln5]
         grid_compset: [T62_oQU240.GOMEGA-NYF]
     env:
       IMAGE: ghcr.io/e3sm-project/e3sm-image:${{ matrix.env }}
@@ -92,12 +92,11 @@ jobs:
           sudo chown -R 1000:1000 . inputdata scratch
           rc=0
           docker run --rm --shm-size=1g \
-            -e OMEGA_TEST_TYPES=${{ matrix.test }} \
-            -e OMEGA_GRID_COMPSET=${{ matrix.grid_compset }} \
             -v "$PWD:/projects/e3sm/work/Omega" \
             -v "$PWD/inputdata:/projects/e3sm/data/inputdata" \
             -v "$PWD/scratch:/home/e3sm/e3sm_scratch" \
             "$IMAGE" bash -l /projects/e3sm/work/Omega/components/omega/ci/omega-cime-test.sh \
+            "${{ matrix.test }}.${{ matrix.grid_compset }}" \
             || rc=$?
           sudo chown -R "$(id -u):$(id -g)" . inputdata scratch
           exit "$rc"

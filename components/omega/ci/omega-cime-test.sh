@@ -1,26 +1,24 @@
 #!/bin/bash
-# Run CIME system tests of Omega (by default ERS, PEM and PET on a small G case)
-# inside an E3SM container image, using the image's CIME machine (e3sm-container).
-# Run as the image's default user in a login shell, with the Omega checkout,
-# inputdata and scratch mounted:
+# Run CIME system tests of Omega inside an E3SM container image, using the
+# image's CIME machine (e3sm-container). The tests are given as arguments, as
+# full CIME test names without machine or compiler. Run as the image's default
+# user in a login shell, with the Omega checkout, inputdata and scratch mounted:
 #
-#   docker run --rm -e OMEGA_TEST_TYPES="ERS_D_Ln9 PEM_D_Ln9" \
+#   docker run --rm \
 #     -v /path/to/Omega:/projects/e3sm/work/Omega \
 #     -v /path/to/inputdata:/projects/e3sm/data/inputdata \
 #     -v /path/to/scratch:/home/e3sm/e3sm_scratch \
 #     ghcr.io/e3sm-project/e3sm-image:gnu13-openmpi4 \
-#     bash -l /projects/e3sm/work/Omega/components/omega/ci/omega-cime-test.sh
+#     bash -l /projects/e3sm/work/Omega/components/omega/ci/omega-cime-test.sh \
+#     ERS_D_Ln5.T62_oQU240.GOMEGA-NYF
 #
 # Missing inputdata is downloaded into the inputdata mount. Test cases end up in
 # ~/e3sm_scratch/<test>.omega-ci. All three mounts must be writable by the e3sm
 # user (uid 1000).
 set -euo pipefail
 
-# Settings, each overridable from the environment
 src_dir=${OMEGA_SRC:-/projects/e3sm/work/Omega}
-read -ra test_types <<<"${OMEGA_TEST_TYPES:-ERS_D_Ln9 PEM_D_Ln9 PET_D_Ln9}"
-# NYF forcing is a single year, so this case needs < 1 GB of inputdata
-grid_compset=${OMEGA_GRID_COMPSET:-T62_oQU240.GOMEGA-NYF}
+tests=("$@")
 test_id=omega-ci
 scratch=$HOME/e3sm_scratch
 
@@ -28,6 +26,10 @@ error() {
     echo "ERROR: $*" >&2
     exit 1
 }
+
+if [[ ${#tests[@]} -eq 0 ]]; then
+    error "no tests given; usage: $0 TEST [TEST ...]"
+fi
 
 echo "== CIME machine"
 # The images ship the e3sm-container machine, but it has to be enabled
@@ -39,11 +41,6 @@ fi
 
 echo "machine $CIME_MACHINE"
 echo "Omega $(git -C "$src_dir" rev-parse HEAD 2>/dev/null || echo unknown)"
-
-tests=()
-for test_type in "${test_types[@]}"; do
-    tests+=("$test_type.$grid_compset")
-done
 
 echo "== create_test ${tests[*]}"
 mkdir -p "$scratch"
