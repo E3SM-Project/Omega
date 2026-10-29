@@ -140,6 +140,7 @@ design/Logging
 design/MachEnv
 design/Metadata
 design/PGrad
+design/PGradHighOrder
 design/IO
 design/IOStreams
 design/Reductions

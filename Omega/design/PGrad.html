@@ -21,7 +21,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Input/Output (IO)" href="IO.html" />
+    <link rel="next" title="Higher-Order Horizontal Pressure Gradient" href="PGradHighOrder.html" />
     <link rel="prev" title="Metadata" href="Metadata.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
@@ -199,6 +199,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="PGradHighOrder.html">Higher-Order Horizontal Pressure Gradient</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
@@ -379,7 +380,7 @@ T^p &amp;= - \int_A \int_{\tilde{z}_k^{\text{bot}}}^{\tilde{z}_k^{\text{top}}} \
 \end{split}\]</div>
 
 These volume and area integrals will be computed using quadrature to account for the variability of <span class="math notranslate nohighlight">\(\alpha\)</span> with the reconstructed values of temperature, salinity, and pressure at the quadrature points.
-The complete details for the high-order pressure gradient will be the subject of a future design document.</p>
+The complete details for the high-order pressure gradient are given in the <a class="reference internal" href="PGradHighOrder.html#omega-design-pressure-grad-high-order"><span class="std std-ref">Higher-Order Horizontal Pressure Gradient</span></a> design document, which also revises the form above.</p>
 </section>
 </section>
 <section id="design">
@@ -594,7 +595,7 @@ This will be implemented as a two-column test in Polaris.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="Metadata.html" class="btn btn-neutral float-left" title="Metadata" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="IO.html" class="btn btn-neutral float-right" title="Input/Output (IO)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="PGradHighOrder.html" class="btn btn-neutral float-right" title="Higher-Order Horizontal Pressure Gradient" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
