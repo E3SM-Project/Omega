@@ -140,9 +140,12 @@
 <li class="toctree-l2"><a class="reference internal" href="#computing-the-pressure-gradient">Computing the pressure gradient</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#functors">Functors</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#pressuregradcentered">PressureGradCentered</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#pressuregradhighorder">PressureGradHighOrder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pressuregradfinitevolume">PressureGradFiniteVolume</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#the-per-edge-column-scan">The per-edge column scan</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#each-column-s-state-is-looked-up-by-pressure-not-by-layer-index">Each column’s state is looked up by pressure, not by layer index</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#supporting-headers">Supporting headers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#data-members">Data members</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#removal">Removal</a></li>
@@ -231,12 +234,17 @@
 <span id="omega-dev-pgrad"></span><h1>Pressure Gradient (PGrad)<a class="headerlink" href="#pressure-gradient-pgrad" title="Permalink to this heading"></a></h1>
 <p>Omega includes a <code class="docutils literal notranslate"><span class="pre">PressureGrad</span></code> class that computes horizontal pressure gradient
 tendencies for the non-Boussinesq momentum equation. The implementation supports a
-centered difference scheme as the default, with a placeholder for future high-order
-methods. The class follows the same factory pattern used by other Omega modules.</p>
+layer-integrated finite-volume scheme as the default and a centered difference
+scheme as an option. The class follows the same factory pattern used by other
+Omega modules.</p>
 <section id="pressuregradtype-enum">
 <h2>PressureGradType enum<a class="headerlink" href="#pressuregradtype-enum" title="Permalink to this heading"></a></h2>
 <p>An enumeration of the available pressure gradient schemes is defined in <code class="docutils literal notranslate"><span class="pre">PGrad.h</span></code>:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">PressureGradType</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">Centered</span><span class="p">,</span><span class="w"> </span><span class="n">HighOrder1</span><span class="p">,</span><span class="w"> </span><span class="n">HighOrder2</span><span class="w"> </span><span class="p">};</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">PressureGradType</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="n">Centered</span><span class="p">,</span><span class="w">    </span><span class="c1">///&lt; existing 2nd-order Montgomery scheme</span>
+<span class="w">   </span><span class="n">FiniteVolume</span><span class="w"> </span><span class="c1">///&lt; layer-integrated finite-volume scheme</span>
+<span class="w">   </span><span class="c1">// , &lt;FutureVariant&gt;  ///&lt; e.g. a 6th-order option, added when implemented</span>
+<span class="p">};</span>
 </pre></div>
 </div>
 <p>This is used to select which pressure gradient method is applied at runtime.</p>
@@ -282,22 +290,33 @@ to zero.</p>
 <section id="computing-the-pressure-gradient">
 <h2>Computing the pressure gradient<a class="headerlink" href="#computing-the-pressure-gradient" title="Permalink to this heading"></a></h2>
 <p>To compute pressure gradient tendencies and accumulate them into a tendency array:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">PGrad</span><span class="o">-&gt;</span><span class="n">computePressureGrad</span><span class="p">(</span><span class="n">Tend</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="n">VCoord</span><span class="p">,</span><span class="w"> </span><span class="n">EqState</span><span class="p">,</span><span class="w"> </span><span class="n">TimeLevel</span><span class="p">);</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">PGrad</span><span class="o">-&gt;</span><span class="n">computePressureGrad</span><span class="p">(</span><span class="n">Tend</span><span class="p">,</span><span class="w"> </span><span class="n">PressureMid</span><span class="p">,</span><span class="w"> </span><span class="n">PressureInterface</span><span class="p">,</span><span class="w"> </span><span class="n">SpecVol</span><span class="p">,</span>
+<span class="w">                           </span><span class="n">GeomZInterface</span><span class="p">,</span><span class="w"> </span><span class="n">PseudoThick</span><span class="p">,</span><span class="w"> </span><span class="n">ConservTemp</span><span class="p">,</span>
+<span class="w">                           </span><span class="n">AbsSalinity</span><span class="p">,</span><span class="w"> </span><span class="n">EqState</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>where:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">Tend</span></code> is a 2D array <code class="docutils literal notranslate"><span class="pre">(NEdgesAll</span> <span class="pre">×</span> <span class="pre">NVertLayers)</span></code> that the pressure gradient
 tendency is accumulated into</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">State</span></code> is the current <code class="docutils literal notranslate"><span class="pre">OceanState</span></code>, from which pseudo-thickness is extracted
-at the given <code class="docutils literal notranslate"><span class="pre">TimeLevel</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">VCoord</span></code> provides pressure, interface height, and geopotential fields</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">EqState</span></code> provides the specific volume field</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">TimeLevel</span></code> selects which time level of the state to use</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PressureMid</span></code>, <code class="docutils literal notranslate"><span class="pre">PressureInterface</span></code> and <code class="docutils literal notranslate"><span class="pre">GeomZInterface</span></code> come from <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> is the specific volume field from <code class="docutils literal notranslate"><span class="pre">Eos</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PseudoThick</span></code> is the pseudo-thickness at the desired time level</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ConservTemp</span></code> and <code class="docutils literal notranslate"><span class="pre">AbsSalinity</span></code> are the layer-mean tracer fields, used by the
+finite-volume scheme’s vertical reconstruction and ignored by the centered one</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">EqState</span></code> supplies the specific volume derivatives, likewise used only by the
+finite-volume scheme</p></li>
 </ul>
 <p>The method uses hierarchical Kokkos parallelism: an outer <code class="docutils literal notranslate"><span class="pre">parallelForOuter</span></code> loop
 iterates over edges, and an inner <code class="docutils literal notranslate"><span class="pre">parallelForInner</span></code> loop iterates over vertical
-chunks. The appropriate functor is dispatched based on <code class="docutils literal notranslate"><span class="pre">PressureGradChoice</span></code>.</p>
+chunks. The appropriate functor is dispatched based on <code class="docutils literal notranslate"><span class="pre">PressureGradChoice</span></code>. The
+finite-volume branch additionally runs two kernels ahead of that dispatch: one
+forming the per-cell reconstruction slopes, and the per-edge column scan.</p>
+<p>Note that <code class="docutils literal notranslate"><span class="pre">AuxiliaryState::computeMomVertAux</span></code> calls <code class="docutils literal notranslate"><span class="pre">Eos::computeSpecVolAndDerivs</span></code>
+in place of <code class="docutils literal notranslate"><span class="pre">Eos::computeSpecVol</span></code> when the finite-volume scheme is selected. That
+call fills <code class="docutils literal notranslate"><span class="pre">SpecVol</span></code> as well, so it replaces rather than accompanies the simpler
+one, and the branch keeps a centered run from paying for the derivative
+arithmetic.</p>
 </section>
 <section id="functors">
 <h2>Functors<a class="headerlink" href="#functors" title="Permalink to this heading"></a></h2>
@@ -340,27 +359,141 @@ signature is:</p>
 </pre></div>
 </div>
 </section>
-<section id="pressuregradhighorder">
-<h3>PressureGradHighOrder<a class="headerlink" href="#pressuregradhighorder" title="Permalink to this heading"></a></h3>
-<p>This functor is a placeholder for a future high-order pressure gradient implementation
-suitable for ice shelf cavities and complex bathymetry. Currently it performs no
-computation (a no-op).</p>
+<section id="pressuregradfinitevolume">
+<h3>PressureGradFiniteVolume<a class="headerlink" href="#pressuregradfinitevolume" title="Permalink to this heading"></a></h3>
+<p>This functor assembles the finite-volume pressure gradient tendency. The whole
+horizontal pressure gradient is the geopotential compared at <strong>fixed pressure</strong>,
+and almost all of the work of forming that comparison happens before the functor
+runs, in the column scan described below. What remains per layer is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DeltaPress</span> <span class="o">=</span> <span class="n">edge</span> <span class="n">average</span> <span class="n">of</span> <span class="n">the</span> <span class="n">two</span> <span class="n">columns</span><span class="s1">' layer pressure thicknesses</span>
+<span class="n">LayerMean</span>  <span class="o">=</span> <span class="n">DeltaZFixedP</span><span class="p">(</span><span class="n">IEdge</span><span class="p">,</span> <span class="n">K</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">DeltaZMoment</span><span class="p">(</span><span class="n">IEdge</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span> <span class="o">/</span> <span class="n">DeltaPress</span>
+<span class="n">Tend</span><span class="p">(</span><span class="n">IEdge</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span> <span class="o">+=</span> <span class="n">EdgeMask</span><span class="p">(</span><span class="n">IEdge</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">Gravity</span> <span class="o">/</span> <span class="n">DcEdge</span> <span class="o">*</span> <span class="n">LayerMean</span> <span class="o">-</span> <span class="n">GradGeoPot</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">LayerMean</span></code> is the layer average of the fixed-pressure height difference,
+recovered from its value at the layer’s bottom interface and the first moment of
+the integrand over the layer. Its signature therefore takes the column scan’s two
+output arrays rather than the state the scan consumed:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">KOKKOS_FUNCTION</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="k">operator</span><span class="p">()(</span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Tend</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">IEdge</span><span class="p">,</span><span class="w"> </span><span class="n">I4</span><span class="w"> </span><span class="n">KChunk</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">PressureInterface</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">DeltaZFixedP</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">Array2DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">DeltaZMoment</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">Array1DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">TidalPotential</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">Array1DReal</span><span class="w"> </span><span class="o">&amp;</span><span class="n">SelfAttractionLoading</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+</pre></div>
+</div>
 </section>
+</section>
+<section id="the-per-edge-column-scan">
+<h2>The per-edge column scan<a class="headerlink" href="#the-per-edge-column-scan" title="Permalink to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">PressureGrad::computeColumnScan</span></code> fills <code class="docutils literal notranslate"><span class="pre">DeltaZFixedP</span></code>, the fixed-pressure height
+difference at each edge-layer interface, and <code class="docutils literal notranslate"><span class="pre">DeltaZMoment</span></code>, the first moment of
+the integrand over each layer.</p>
+<p><strong>This cannot live in the functor.</strong> It is a prefix sum down each column with
+edge-dependent coefficients, so it is not expressible as an independent
+per-vertical-chunk operation. It runs as a <code class="docutils literal notranslate"><span class="pre">parallelForOuter</span></code> over edges: a
+<code class="docutils literal notranslate"><span class="pre">parallelForInner</span></code> over the edge’s active layers forms both integrals, and after a
+team barrier a <code class="docutils literal notranslate"><span class="pre">parallelScanInner</span></code> accumulates them up the column, in the same
+shape as <code class="docutils literal notranslate"><span class="pre">VertCoord::computeGeomZHeight</span></code>. It is the one structural addition the
+finite-volume scheme makes beyond the per-edge, per-chunk pattern the centered
+scheme uses.</p>
+<p>The scan is anchored at the <strong>sea floor</strong>. <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> builds geometric height
+upward from a prescribed bathymetry, so at the bottom interface the cross-edge
+height difference is exact input and vanishes identically for a flat floor, where
+at the surface it would be the small residual of two column-length accumulations.
+There is a second reason: <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code> accumulates a midpoint rule over each
+column’s own layers, and on a curved profile two columns with different layer
+partitions give sums that differ at second order in layer thickness. Anchored at
+the surface that discrepancy would enter the height difference directly; anchored
+at the sea floor it never enters, because the scheme integrates its own
+reconstruction rather than accumulating <code class="docutils literal notranslate"><span class="pre">VertCoord</span></code>’s height.</p>
+<p>The anchor is computed, not assumed: each column’s height at the deepest shared
+interface is shifted to the common pressure by integrating its own reconstruction
+over half the cross-edge pressure difference, and both short integrals vanish
+where the two columns’ interface pressures agree.</p>
+<p>The scheme has a known instability on terrain-following (sigma) layers over a
+steep seamount that the centered scheme does not share. It is described, with
+the tests that rule out the anchor, extrapolation below the floor and the tracer
+limiter as causes, in the
+<a class="reference internal" href="../userGuide/PGrad.html#omega-user-pgrad-sigma-instability"><span class="std std-ref">user guide</span></a>.</p>
+</section>
+<section id="each-column-s-state-is-looked-up-by-pressure-not-by-layer-index">
+<h2>Each column’s state is looked up by pressure, not by layer index<a class="headerlink" href="#each-column-s-state-is-looked-up-by-pressure-not-by-layer-index" title="Permalink to this heading"></a></h2>
+<p>At each quadrature point of edge layer <code class="docutils literal notranslate"><span class="pre">K</span></code>, the integrand needs the
+reconstruction of whichever of <em>that column’s</em> layers contains that pressure,
+which under coordinate tilt is generally <strong>not</strong> layer <code class="docutils literal notranslate"><span class="pre">K</span></code>. At a tilt of 50 m/km
+with 64 m layers the two columns’ layer <code class="docutils literal notranslate"><span class="pre">K</span></code> are offset by nearly three layer
+thicknesses and do not overlap in pressure at all.</p>
+<p><code class="docutils literal notranslate"><span class="pre">findLayerForPress</span></code> in <code class="docutils literal notranslate"><span class="pre">PGradRecon.h</span></code> performs that lookup. Within the column
+scan the answer advances monotonically with <code class="docutils literal notranslate"><span class="pre">K</span></code>, so passing the previous answer
+as a hint makes it a pair of incremented cursors rather than a search; the result
+does not depend on the hint. A pressure outside the column clamps to the
+outermost valid layer and extrapolates its reconstruction, which is the rule
+where the edge control volume extends past a column’s own floor.</p>
+<p><strong>This is the single most important thing not to get wrong, and no answer-level
+test can catch it.</strong> Replacing the lookup with a layer-index lookup passes every
+exactness and accuracy check in the test suite: on a profile linear in pressure
+every layer’s mean-preserving reconstruction is that same line, so looking up the
+wrong layer costs nothing. It is pinned instead by direct property tests in
+<code class="docutils literal notranslate"><span class="pre">PGradTest.cpp</span></code>, which assert that the returned layer brackets the pressure, that
+it differs from the edge layer index under tilt, that the answer does not depend
+on the starting hint, and that a pressure outside the column clamps. Those tests
+are not optional.</p>
+</section>
+<section id="supporting-headers">
+<h2>Supporting headers<a class="headerlink" href="#supporting-headers" title="Permalink to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Header</p></th>
+<th class="head"><p>Contents</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PGradRecon.h</span></code></p></td>
+<td><p>the mean-preserving linear reconstruction of temperature and salinity in pressure, and the per-column pressure lookup</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">PGradFiniteVolume.h</span></code></p></td>
+<td><p>the edge-shared equation-of-state expansion, the matched-pressure integrand, and the Gauss-Legendre rule</p></td>
+</tr>
+</tbody>
+</table>
+<p>The equation-of-state expansion is <strong>shared across each edge</strong>: the coefficients
+and the expansion state are averaged from the edge’s two cells and used for
+<em>both</em> columns. That one set multiplies both columns is what the exactness rests
+on – it is what makes the constant and pressure-derivative terms cancel in the
+matched-pressure difference. Which set is used is an ordinary accuracy question
+and cannot break exactness, because the coefficients end up multiplying a
+quantity that is identically zero on profiles the reconstruction resolves.</p>
+<p>Specific volume is never integrated directly and the equation of state is never
+evaluated inside any integral. The four expansion coefficients come from the
+<code class="docutils literal notranslate"><span class="pre">SpecVol</span></code>, <code class="docutils literal notranslate"><span class="pre">SpecVolDCt</span></code>, <code class="docutils literal notranslate"><span class="pre">SpecVolDSa</span></code> and <code class="docutils literal notranslate"><span class="pre">SpecVolDP</span></code> fields <code class="docutils literal notranslate"><span class="pre">Eos</span></code> already
+computes, one evaluation per cell per layer, and the pressure gradient adds none
+of its own.</p>
 </section>
 <section id="configuration">
 <h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading"></a></h2>
 <p>The pressure gradient type is selected in the input YAML file:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">PressureGrad</span><span class="p">:</span>
-<span class="w">   </span><span class="nt">PressureGradType</span><span class="p">:</span><span class="w"> </span><span class="s">'centered'</span>
+<span class="w">   </span><span class="nt">PressureGradType</span><span class="p">:</span><span class="w"> </span><span class="s">'FiniteVolume'</span>
 </pre></div>
 </div>
 <p>Valid options for <code class="docutils literal notranslate"><span class="pre">PressureGradType</span></code> are:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">'centered'</span></code> or <code class="docutils literal notranslate"><span class="pre">'Centered'</span></code>: centered difference approximation (default)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">'HighOrder1'</span></code>: first high-order method (placeholder, future implementation)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'centered'</span></code> or <code class="docutils literal notranslate"><span class="pre">'Centered'</span></code>: centered difference approximation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'finiteVolume'</span></code> or <code class="docutils literal notranslate"><span class="pre">'FiniteVolume'</span></code>: the layer-integrated finite-volume method
+(default)</p></li>
 </ul>
-<p>If an unrecognized value is provided, the implementation falls back to the centered
-scheme and logs an informational message.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">FiniteVolume</span></code> scheme reads three further keys from the same group, all
+optional: <code class="docutils literal notranslate"><span class="pre">HorzOrder</span></code> (default 2), <code class="docutils literal notranslate"><span class="pre">VerticalReconstruction</span></code> (default <code class="docutils literal notranslate"><span class="pre">'linear'</span></code>)
+and <code class="docutils literal notranslate"><span class="pre">QuadraturePoints</span></code> (default 2). Only <code class="docutils literal notranslate"><span class="pre">HorzOrder:</span> <span class="pre">2</span></code> and
+<code class="docutils literal notranslate"><span class="pre">VerticalReconstruction:</span> <span class="pre">'linear'</span></code> are implemented; other values are rejected
+with an error rather than falling back, so that a configuration requesting them
+cannot quietly run as the implemented scheme. <code class="docutils literal notranslate"><span class="pre">QuadraturePoints</span></code> is an accuracy
+setting only: the integrand is zero at every point on a resolved profile, so no
+quadrature rule can affect the exactness.</p>
+<p>An unrecognized value is a fatal error rather than a silent fallback to the
+centered scheme, so that a typo – or a configuration naming a scheme that no
+longer exists – cannot produce a run that looks like a passing centered run.</p>
 </section>
 <section id="data-members">
 <h2>Data members<a class="headerlink" href="#data-members" title="Permalink to this heading"></a></h2>
@@ -409,16 +542,40 @@ scheme and logs an informational message.</p>
 <td><p><code class="docutils literal notranslate"><span class="pre">PressureGradCentered</span></code></p></td>
 <td><p>Centered pressure gradient functor</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">HighOrderPGrad</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">PressureGradHighOrder</span></code></p></td>
-<td><p>High-order pressure gradient functor</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">FiniteVolumePGrad</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PressureGradFiniteVolume</span></code></p></td>
+<td><p>Finite-volume pressure gradient functor</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PressureGradChoice</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">PressureGradType</span></code></p></td>
 <td><p>Selected pressure gradient method</p></td>
 </tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ReconSlopeCt</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Array2DReal</span></code></p></td>
+<td><p>Reconstruction slope of temperature in pressure, per cell and layer</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ReconSlopeSa</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Array2DReal</span></code></p></td>
+<td><p>Reconstruction slope of salinity in pressure</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DeltaZIncr</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Array2DReal</span></code></p></td>
+<td><p>Per-layer integral of the matched-pressure integrand</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DeltaZMoment</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Array2DReal</span></code></p></td>
+<td><p>Its first moment about the layer’s top interface</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DeltaZFixedP</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Array2DReal</span></code></p></td>
+<td><p>Fixed-pressure height difference at edge-layer interfaces</p></td>
+</tr>
 </tbody>
 </table>
+<p>The last five are allocated only when the <code class="docutils literal notranslate"><span class="pre">FiniteVolume</span></code> scheme is selected, so a
+centered run pays no memory for them. The reconstruction slopes are computed once
+per cell and layer and reused across each cell’s edges rather than recomputed per
+edge.</p>
 </section>
 <section id="removal">
 <h2>Removal<a class="headerlink" href="#removal" title="Permalink to this heading"></a></h2>

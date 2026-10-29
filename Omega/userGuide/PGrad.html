@@ -84,6 +84,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#physical-background">Physical Background</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#configuration-options">Configuration Options</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#available-methods">Available Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#finite-volume-sub-options">Finite-volume sub-options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#known-issue-terrain-following-layers-over-steep-slopes">Known issue: terrain-following layers over steep slopes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
@@ -253,9 +255,15 @@ to zero and will be provided by a future tidal forcing module.</p></li>
 <p>The pressure gradient method is configured in the input YAML file under the
 <code class="docutils literal notranslate"><span class="pre">PressureGrad</span></code> section:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">PressureGrad</span><span class="p">:</span>
-<span class="w">   </span><span class="nt">PressureGradType</span><span class="p">:</span><span class="w"> </span><span class="s">'centered'</span>
+<span class="w">   </span><span class="nt">PressureGradType</span><span class="p">:</span><span class="w"> </span><span class="s">'FiniteVolume'</span><span class="w">   </span><span class="c1"># Centered | FiniteVolume</span>
+<span class="w">   </span><span class="nt">HorzOrder</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w">                       </span><span class="c1"># FiniteVolume only</span>
+<span class="w">   </span><span class="nt">VerticalReconstruction</span><span class="p">:</span><span class="w"> </span><span class="s">'linear'</span>
+<span class="w">   </span><span class="nt">QuadraturePoints</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
 </pre></div>
 </div>
+<p>An unrecognized <code class="docutils literal notranslate"><span class="pre">PressureGradType</span></code> is a fatal error rather than a silent
+fallback to the centered scheme, so that a typo cannot produce a run that looks
+like a passing centered run.</p>
 <section id="available-methods">
 <h3>Available Methods<a class="headerlink" href="#available-methods" title="Permalink to this heading"></a></h3>
 <p><strong>Centered Difference</strong> (<code class="docutils literal notranslate"><span class="pre">'centered'</span></code> or <code class="docutils literal notranslate"><span class="pre">'Centered'</span></code>)</p>
@@ -263,16 +271,100 @@ to zero and will be provided by a future tidal forcing module.</p></li>
 <li><p>Computes the pressure gradient using a centered finite-difference approximation
 of the Montgomery potential gradient and specific volume correction</p></li>
 <li><p>Suitable for global ocean simulations without ice shelf cavities</p></li>
-<li><p>Default and currently the only fully implemented option</p></li>
+<li><p>The reference implementation the finite-volume scheme is checked against</p></li>
 </ul>
-<p><strong>High-Order</strong> (<code class="docutils literal notranslate"><span class="pre">'HighOrder1'</span></code>)</p>
+<p><strong>Finite Volume</strong> (<code class="docutils literal notranslate"><span class="pre">'FiniteVolume'</span></code> or <code class="docutils literal notranslate"><span class="pre">'finiteVolume'</span></code>)</p>
 <ul class="simple">
-<li><p>Placeholder for a future high-order pressure gradient method based on volume
-integral formulations</p></li>
-<li><p>Intended for simulations with ice shelf cavities and steep bathymetry where the
-centered scheme may be inaccurate</p></li>
-<li><p>Not yet implemented; selecting this option produces zero pressure gradient tendency</p></li>
+<li><p>The default</p></li>
+<li><p>Compares the geopotential of the two columns sharing an edge at a <strong>common
+pressure</strong>, rather than at a common layer index</p></li>
+<li><p>Gives a pressure gradient that is zero to machine precision for any resting
+ocean whose temperature and salinity vary linearly with pressure, at any
+coordinate tilt or layer thickness, provided the two columns’ sea floors are
+at the same pressure</p></li>
+<li><p>Over a sloping sea floor a residual remains, from shifting the two columns’
+sea-floor heights to a common pressure. It grows with the cube of the
+pressure difference between the two floors, so it stays small where partial
+bottom cells cut the floor beneath level interior layers, but with
+terrain-following layers over slopes of order 100 m/km it approaches the
+centered scheme’s error</p></li>
+<li><p>Intended for simulations with ice shelf cavities and steep bathymetry, where
+the centered scheme carries an error that is first order in the coordinate
+tilt and accumulates downward through the column</p></li>
+<li><p>Second order in the horizontal, using the same two-cell stencil as the
+centered scheme</p></li>
 </ul>
+</section>
+<section id="finite-volume-sub-options">
+<h3>Finite-volume sub-options<a class="headerlink" href="#finite-volume-sub-options" title="Permalink to this heading"></a></h3>
+<p>These apply only when <code class="docutils literal notranslate"><span class="pre">PressureGradType</span></code> is <code class="docutils literal notranslate"><span class="pre">FiniteVolume</span></code>. All three are
+optional; a configuration written without them gets the values below.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">HorzOrder</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">2</span></code></p></td>
+<td><p>Width of the edge stencil. <code class="docutils literal notranslate"><span class="pre">2</span></code>, the two-cell stencil, is the only value implemented; other values are rejected with an error</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">VerticalReconstruction</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">'linear'</span></code></p></td>
+<td><p>Degree of the mean-preserving reconstruction of temperature and salinity in pressure. <code class="docutils literal notranslate"><span class="pre">'linear'</span></code> is the only value implemented; other values are rejected with an error</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">QuadraturePoints</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">2</span></code></p></td>
+<td><p>Number of points, 1 to 4, at which the integrand is evaluated within each edge layer</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">QuadraturePoints</span></code> is an <strong>accuracy setting only</strong>. The quantity being
+integrated is zero at every point for any profile the reconstruction resolves
+exactly, so no choice of quadrature can affect that exactness; the setting
+trades cost against accuracy elsewhere. Two points is exact for the integrand
+within a sub-interval and is the default. More is worth considering only where
+neighbouring columns’ layer interfaces are strongly offset in pressure.</p>
+<p>There is no setting that reduces the finite-volume scheme to the centered one.
+The two are separate implementations, which is deliberate: their agreement is
+used as a cross-check on the mesh, vertical coordinate and equation-of-state
+state they both read.</p>
+</section>
+<section id="known-issue-terrain-following-layers-over-steep-slopes">
+<span id="omega-user-pgrad-sigma-instability"></span><h3>Known issue: terrain-following layers over steep slopes<a class="headerlink" href="#known-issue-terrain-following-layers-over-steep-slopes" title="Permalink to this heading"></a></h3>
+<p>On terrain-following (sigma) layers over a steep seamount, the finite-volume
+scheme develops a grid-scale instability that the centered scheme does not.
+It starts in the bottom layer on the seamount’s steep flank, grows by a factor
+of about 2.6 per day, and produces static instabilities after one to three
+days (<a class="reference internal" href="#pgrad-fv-sigma-seamount"><span class="std std-numref">Fig. 14</span></a>). The growth rate follows the slope of
+the seamount, not the number of layers: halving the seamount height delays the
+instability but does not remove it. The centered scheme stays stable in every
+sigma configuration tested, while on z-star layers over the same seamount the
+finite-volume scheme stays clean through 20 days and the centered scheme does
+not.</p>
+<figure class="align-center" id="pgrad-fv-sigma-seamount">
+<a class="reference internal image-reference" href="../_images/pgrad_fv_sigma_seamount.png"><img alt="../_images/pgrad_fv_sigma_seamount.png" src="../_images/pgrad_fv_sigma_seamount.png" style="width: 800px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 14 </span><span class="caption-text">Bottom-layer maximum speed, mean kinetic energy and number of statically
+unstable layer pairs over six days of the Polaris seamount test, for sigma
+layers with exponential and linear-in-pressure stratification and for z-star
+layers as a control. The two experimental curves change only the
+finite-volume treatment at the sea floor.</span><a class="headerlink" href="#pgrad-fv-sigma-seamount" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>The cause is not yet known. It is not the sea-floor anchor described under
+“Over a sloping sea floor” above: an experimental anchor that removes that
+error starts the linear-in-pressure sigma run about 700 times lower in kinetic
+energy, but the same mode then grows at the same rate to the same state.
+Turning off extrapolation below a column’s floor as well makes the instability
+worse, and the runs already use the monotonic tracer limiter.</p>
+<p>Omega’s default p-star coordinate, like z-star, keeps its layers close to
+level rather than following the bathymetry, so the instability is not expected
+in operational configurations. However, p-star over the seamount has not been
+tested directly. Use the centered scheme with sigma coordinates over steep
+bathymetry until this is resolved.</p>
 </section>
 </section>
 <section id="dependencies">
