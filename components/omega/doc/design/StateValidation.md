@@ -22,6 +22,8 @@ configuration options under `Omega::State::Validation`:
   (with a full stack backtrace printed first).
 - **`AbortOnOOB`** (default: `false`) — when `true`, out-of-bounds values
   trigger the same hard abort.
+- **`WriteStreamOnAbort`** (default: `History`) — the stream that every task
+  writes before an abort, so the state that failed can be inspected.
 
 When both flags are `false` and errors are detected, a critical-level log
 message is emitted and the run continues rather than being terminated.
@@ -81,7 +83,9 @@ parallel reductions.
 
 On detection of any failure the module must log a critical-level message that
 identifies the field name, the nature of the problem (NaN or out-of-bounds),
-and the number of offending elements.
+the number of offending elements, and the global cell ID, latitude, longitude,
+layer and value of the first of them. The message must reach the user from
+the task that found the problem, whether or not that task writes a log.
 
 ### 2.9 Requirement: Graceful handling of absent tracers
 
@@ -103,7 +107,11 @@ out-of-bounds errors cause the run to abort.  Two boolean YAML options
 - When both are `false`, errors are logged at critical severity and the run
   continues.
 
-The defaults are `AbortOnNan: true` and `AbortOnOOB: false`.
+The defaults are `AbortOnNan: true` and `AbortOnOOB: false`. The decision is
+made from the counts summed over all tasks, so that every task takes part in
+the abort. Before aborting, every task writes the stream named by
+`WriteStreamOnAbort` (default `History`, `''` for none), so that the state that
+failed can be inspected afterwards.
 
 ### 2.11 Desired: Configurable valid ranges
 
@@ -129,7 +137,10 @@ skipped):
    $[\text{MinVal},\, \text{MaxVal}]$.
 
 Separating the two passes avoids potentially undefined behaviour when
-comparing NaN values with `<` or `>`.
+comparing NaN values with `<` or `>`. Only when a count is nonzero, a further
+`parallelReduce` with a `Kokkos::Min` reducer finds the smallest flat index
+$i N_\text{vert} + k$ of an offending element, whose location and value are
+then reported. A valid state therefore costs only the two counting passes.
 
 For a 2-D field $f_{i,k}$ with $i \in [0,\, N_\text{cells})$ and
 $k \in [0,\, N_\text{vert})$ the two counts are:
@@ -178,18 +189,41 @@ under `Omega::State::Validation`:
 |---------------|------|---------|----------------------------------------------|
 | `AbortOnNan`  | bool | `true`  | Abort via `MPI_Abort` when NaNs are detected |
 | `AbortOnOOB`  | bool | `false` | Abort via `MPI_Abort` when OOBs are detected |
+| `WriteStreamOnAbort` | string | `History` | Stream written on every task before an abort (`''` for none) |
 
 When both flags are `false` and errors are found, a CRITICAL log message is
 emitted and the run continues.
 
 #### 4.1.2 Class/structs/data types
 
-The module introduces one file-local plain struct:
+The module introduces one public struct, which `checkOceanState` can fill
+for the caller:
+
+```c++
+struct ValidationIssue {
+   std::string Field; // e.g. Temperature
+   bool IsNaN;        // NaN (true) or out of the valid range (false)
+   I4 Count;          // number of entries on this task with the problem
+   I4 Cell;           // local cell index of the first entry
+   I4 Layer;          // vertical layer of the first entry
+   Real Value;        // value of the first entry
+};
+```
+
+and two file-local plain structs:
 
 ```c++
 struct ValidationAbortConfig {
-   bool AbortOnOOB = false;
-   bool AbortOnNan = true;
+   bool AbortOnOOB                = false;
+   bool AbortOnNan                = true;
+   std::string WriteStreamOnAbort = "History";
+};
+
+struct FieldCheck {
+   I4 NaNs     = 0;
+   I4 OOBs     = 0;
+   I4 FirstNaN = -1; // flat index of the first NaN, -1 if none
+   I4 FirstOOB = -1; // flat index of the first OOB, -1 if none
 };
 ```
 
@@ -208,13 +242,15 @@ Performs all field checks and returns separate NaN and out-of-bounds counts:
 std::pair<I4, I4> checkOceanState(const OceanState *State,
                                   const AuxiliaryState *AuxState,
                                   const VertCoord *VCoord,
-                                  I4 TimeLevel);
+                                  I4 TimeLevel,
+                                  std::vector<ValidationIssue> *Issues = nullptr);
 ```
 
-Checks all fields described in Section 2, skipping inactive cells
-(`CellMask == 0`). Logs critical messages for each type of error. Returns
-`{TotalNaNs, TotalOOBs}` where both values are 0 if all checks pass. Does
-**not** abort. Suitable for calling from tests.
+Checks all fields described in Section 2 on the local task, skipping inactive
+cells (`CellMask == 0`). Logs a critical message for each type of error, with
+the location and value of the first, and appends the same to `Issues` if it
+is given. Returns `{TotalNaNs, TotalOOBs}` where both values are 0 if all
+checks pass. Does **not** abort. Suitable for calling from tests.
 
 #### 4.2.2 `validateOceanState` (public)
 
@@ -224,48 +260,53 @@ Production entry-point that applies the configured abort policy on failure:
 void validateOceanState(const OceanState *State,
                         const AuxiliaryState *AuxState,
                         const VertCoord *VCoord,
-                        I4 TimeLevel);
+                        I4 TimeLevel,
+                        const Clock *ModelClock = nullptr);
 ```
 
-Calls `checkOceanState` to obtain `{NaNs, OOBs}`, then reads
-`ValidationAbortConfig` via `getValidationAbortConfig`. Aborts via
-`abortWithMessage` (which logs at CRITICAL severity, prints a stack
-backtrace, and calls `MPI_Abort`) if:
+Calls `checkOceanState` to obtain the local `{NaNs, OOBs}`, sums them over all
+tasks (in one `globalSum` together with the EOS negative-salinity count), then
+reads `ValidationAbortConfig` via `getValidationAbortConfig`. It must
+therefore be called on every task. Aborts via `abortRun` if:
 - `NaNs > 0` **and** `AbortOnNan` is `true`, **or**
 - `OOBs > 0` **and** `AbortOnOOB` is `true`.
 
-If neither abort condition is met but errors were detected, a CRITICAL log
-message is emitted and the function returns normally.
+If neither abort condition is met but errors were detected, the master task
+logs a CRITICAL message with the totals and the function returns normally.
+The time steppers pass their clock as `ModelClock`, which time-stamps the
+stream written before an abort.
 
 #### 4.2.3 `checkArray2D` (file-local helper)
 
 ```c++
-static std::pair<I4, I4> checkArray2D(const Array2DReal &Arr,
-                                      I4 NRows, I4 NCols,
-                                      Real MinVal, Real MaxVal,
-                                      bool CheckMin,
-                                      const Array2DReal &CellMask);
+static FieldCheck checkArray2D(const Array2DReal &Arr,
+                               I4 NRows, I4 NCols,
+                               Real MinVal, Real MaxVal,
+                               bool CheckMin,
+                               const Array2DReal &CellMask);
 ```
 
 Performs the NaN and bounds counts for a 2-D device array over the first
 `NRows` rows and `NCols` columns, restricted to active cells
 (`CellMask(Row, Col) > 0`). When `CheckMin` is `false` only the upper
 bound is enforced (not needed for any current field but useful for future
-extension). Returns `{NaNCount, OutOfRangeCount}`.
+extension). Returns the counts and the flat index of the first NaN and
+out-of-range element.
 
 #### 4.2.4 `checkTracerArray` (file-local helper)
 
 ```c++
-static std::pair<I4, I4> checkTracerArray(const Array3DReal &Tracers3D,
-                                          I4 TracerIdx,
-                                          I4 NCells, I4 NVert,
-                                          Real MinVal, Real MaxVal,
-                                          const Array2DReal &CellMask);
+static FieldCheck checkTracerArray(const Array3DReal &Tracers3D,
+                                   I4 TracerIdx,
+                                   I4 NCells, I4 NVert,
+                                   Real MinVal, Real MaxVal,
+                                   const Array2DReal &CellMask);
 ```
 
 Performs the NaN and bounds counts for a single tracer slice (identified by
 `TracerIdx`) of the 3-D tracer array, restricted to active cells
-(`CellMask(Cell, K) > 0`). Returns `{NaNCount, OutOfRangeCount}`.
+(`CellMask(Cell, K) > 0`). Returns the counts and the flat index of the
+first NaN and out-of-range element.
 
 #### 4.2.5 `getValidationAbortConfig` (file-local helper)
 
@@ -273,21 +314,32 @@ Performs the NaN and bounds counts for a single tracer slice (identified by
 static ValidationAbortConfig getValidationAbortConfig();
 ```
 
-Reads the two boolean options `AbortOnNan` and `AbortOnOOB` from the OMEGA
-config under `Omega::State::Validation` and returns a populated
+Reads the options `AbortOnNan`, `AbortOnOOB` and `WriteStreamOnAbort` from
+the OMEGA config under `Omega::State::Validation` and returns a populated
 `ValidationAbortConfig`. If the config node is absent the struct's
-default-initialised values (`AbortOnNan = true`, `AbortOnOOB = false`) are
-returned unchanged.
+default-initialised values (`AbortOnNan = true`, `AbortOnOOB = false`,
+`WriteStreamOnAbort = "History"`) are returned unchanged.
 
-#### 4.2.6 `abortWithMessage` (file-local helper)
+#### 4.2.6 `abortRun` (file-local helper)
 
 ```c++
-static void abortWithMessage(const std::string &Msg);
+static void abortRun(I8 NaNs, I8 OOBs, const std::string &StreamName,
+                     const Clock *ModelClock);
 ```
 
-Logs `Msg` at critical severity, prints a stack backtrace using `cpptrace`,
-then calls `MPI_Abort` on the default OMEGA communicator with error code
-`ErrorCode::Critical`.
+Called on every task. The master task logs the totals at critical severity.
+If `StreamName` is not empty, the stream is defined (`IOStream::isDefined`)
+and `ModelClock` is given, every task force-writes the stream with
+`IOStream::write`. The master task then prints a stack backtrace using
+`cpptrace`, and after a barrier every task calls `MPI_Abort` on the default
+OMEGA communicator with error code `ErrorCode::Critical`.
+
+#### 4.2.7 Critical messages on tasks that do not log
+
+The critical messages of `checkOceanState` come from the task that owns the
+offending cells, which is usually not a task that writes a log. Logging
+therefore keeps critical messages on the other tasks, writing them to stderr
+labeled with the task, while all lower levels stay off there.
 
 ## 5 Verification and Testing
 
@@ -336,3 +388,13 @@ The following sub-tests are implemented:
 | `testOOBSalinity`             | 9999 g kg⁻¹ (> max 60) | Salinity           |
 
 Tests requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.10.
+
+### 5.3 Location of the first bad value
+
+On each task, a single NaN is put in `Temperature`, and then a single value of
+99 g kg⁻¹ in `Salinity`, at the last owned cell that is active in the second
+layer. `checkOceanState` must return exactly one `ValidationIssue`, for the
+right field and kind, with a count of 1, that cell and layer and, for the
+out-of-range value, a value of 99.
+
+Tests requirement: 2.8.

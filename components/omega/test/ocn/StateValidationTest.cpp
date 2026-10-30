@@ -8,6 +8,8 @@
 /// (NaN and out-of-bounds values in each checked field are detected) of
 /// validateOceanState / checkOceanState. Checked fields are:
 ///   - PseudoThickness, KineticEnergyCell, Temperature, Salinity.
+/// Also checks that a single bad value is reported at the cell and layer
+/// where it was put.
 //
 //===-----------------------------------------------------------------------===/
 
@@ -37,6 +39,8 @@
 
 #include <cmath>
 #include <limits>
+#include <string>
+#include <vector>
 
 using namespace OMEGA;
 
@@ -308,6 +312,86 @@ static int testOOBSalinity(OceanState *State, AuxiliaryState *AuxState,
    return expectErrors("OOB in Salinity", State, AuxState, VCoord);
 }
 
+// --- Location of the first bad entry ---
+
+// Find the last owned cell that is active in its second layer (or its only
+// one), so that a bad value put there is away from the first index checked
+static std::pair<I4, I4> pickActiveEntry(OceanState *State, VertCoord *VCoord) {
+   auto CellMaskH = createHostMirrorCopy(VCoord->CellMask);
+   const I4 K     = State->NVertLayers > 1 ? 1 : 0;
+   for (I4 Cell = State->NCellsOwned - 1; Cell >= 0; --Cell) {
+      if (CellMaskH(Cell, K) != 0) {
+         return {Cell, K};
+      }
+   }
+   return {-1, -1};
+}
+
+// Check that a single bad value is reported as the only issue, at the cell
+// and layer where it was put
+static int expectIssueAt(const char *TestName, OceanState *State,
+                         AuxiliaryState *AuxState, VertCoord *VCoord,
+                         const std::string &Field, bool IsNaN, I4 Cell, I4 K) {
+   std::vector<ValidationIssue> Issues;
+   checkOceanState(State, AuxState, VCoord, 0, &Issues);
+
+   bool Pass = Issues.size() == 1 && Issues[0].Field == Field &&
+               Issues[0].IsNaN == IsNaN && Issues[0].Count == 1 &&
+               Issues[0].Cell == Cell && Issues[0].Layer == K;
+   if (!Pass) {
+      LOG_ERROR("StateValidationTest: {} - expected one {} issue in {} at "
+                "cell {}, layer {}; got {} issue(s)",
+                TestName, IsNaN ? "NaN" : "OOB", Field, Cell, K, Issues.size());
+      for (const auto &Issue : Issues) {
+         LOG_ERROR("StateValidationTest:   {} {} x{} at cell {}, layer {}",
+                   Issue.Field, Issue.IsNaN ? "NaN" : "OOB", Issue.Count,
+                   Issue.Cell, Issue.Layer);
+      }
+      return 1;
+   }
+   LOG_INFO("StateValidationTest: {} PASS", TestName);
+   return 0;
+}
+
+static int testLocationOfNaN(OceanState *State, AuxiliaryState *AuxState,
+                             VertCoord *VCoord) {
+   if (Tracers::IndxTemp == -1)
+      return 0; // tracer not active; skip
+   restoreValidState(State, AuxState);
+   auto [Cell, K] = pickActiveEntry(State, VCoord);
+   if (Cell < 0)
+      return 0; // no active owned cell on this task; nothing to check
+   const Real NaN      = std::numeric_limits<Real>::quiet_NaN();
+   Array2DReal TempArr = Tracers::getByIndex(0, Tracers::IndxTemp);
+   Kokkos::deep_copy(Kokkos::subview(TempArr, Cell, K), NaN);
+   return expectIssueAt("Location of NaN in Temperature", State, AuxState,
+                        VCoord, "Temperature", /*IsNaN=*/true, Cell, K);
+}
+
+static int testLocationOfOOB(OceanState *State, AuxiliaryState *AuxState,
+                             VertCoord *VCoord) {
+   if (Tracers::IndxSalt == -1)
+      return 0; // tracer not active; skip
+   restoreValidState(State, AuxState);
+   auto [Cell, K] = pickActiveEntry(State, VCoord);
+   if (Cell < 0)
+      return 0; // no active owned cell on this task; nothing to check
+   Array2DReal SaltArr = Tracers::getByIndex(0, Tracers::IndxSalt);
+   // 99 g/kg is above the valid max of 60 g/kg
+   Kokkos::deep_copy(Kokkos::subview(SaltArr, Cell, K), 99.0);
+
+   std::vector<ValidationIssue> Issues;
+   checkOceanState(State, AuxState, VCoord, 0, &Issues);
+   if (Issues.size() == 1 && Issues[0].Value != 99.0) {
+      LOG_ERROR("StateValidationTest: OOB in Salinity reported value {}, "
+                "expected 99",
+                Issues[0].Value);
+      return 1;
+   }
+   return expectIssueAt("Location of OOB in Salinity", State, AuxState, VCoord,
+                        "Salinity", /*IsNaN=*/false, Cell, K);
+}
+
 //------------------------------------------------------------------------------
 // Run all state validation tests
 
@@ -362,6 +446,10 @@ int testStateValidation() {
    // Salinity tracer
    Err += testNaNSalinity(DefState, DefAuxState, VCoord);
    Err += testOOBSalinity(DefState, DefAuxState, VCoord);
+
+   // Location of the first bad entry
+   Err += testLocationOfNaN(DefState, DefAuxState, VCoord);
+   Err += testLocationOfOOB(DefState, DefAuxState, VCoord);
 
    AuxiliaryState::clear();
    return Err;

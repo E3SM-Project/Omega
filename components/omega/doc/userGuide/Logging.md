@@ -89,6 +89,14 @@ shared log for the whole test suite.
 In Standalone mode, Omega redirects `std::cout` and `std::cerr` to the log file
 on the ranks that log.
 
+The ranks that do not log still write critical messages, and only those, to
+`std::cerr`, each labeled with the rank, e.g. `[critical] task 1475: ...`.
+Critical messages come before an abort, and are often raised only on the rank
+that found the problem, such as a NaN found by
+[state validation](omega-user-state-validation) in a cell that rank owns.
+When a run aborts, look for them in the job's standard error as well as in the
+log.
+
 ## E3SM Component Build
 
 The E3SM driver sets the log file name, so Omega's messages go to `ocn.log.*`

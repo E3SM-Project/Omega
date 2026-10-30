@@ -19,6 +19,7 @@
 #include <limits>
 #include <set>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_sinks.h>
 #include <sstream>
 #include <vector>
 
@@ -229,6 +230,24 @@ static std::vector<int> resolveLogTasks(const OMEGA::MachEnv *DefEnv,
 }
 
 //------------------------------------------------------------------------------
+// Set up logging on a task that does not log. Only critical messages get
+// through, to stderr and labeled with the task. They come just before an
+// abort, often from a task other than the ones that log (e.g. the task that
+// found a NaN), and would otherwise be lost.
+static void initCriticalOnlyLogging(OMEGA::I4 TaskId) {
+
+   const std::string Name = "critical_only";
+   auto Logger            = spdlog::get(Name);
+   if (!Logger)
+      Logger = spdlog::stderr_logger_mt(Name);
+   spdlog::set_default_logger(Logger);
+
+   spdlog::set_pattern("[%l] task " + std::to_string(TaskId) + ": %v");
+   spdlog::set_level(spdlog::level::critical);
+   spdlog::flush_on(spdlog::level::critical);
+}
+
+//------------------------------------------------------------------------------
 // Initialize logging for case of a pre-defined custom logger
 // Return code: 1->enabled, 0->disabled, negative values->errors
 int initLogging(
@@ -261,7 +280,7 @@ int initLogging(
       RetVal = 1; // log enabled
 
    } else {
-      spdlog::set_level(spdlog::level::off);
+      initCriticalOnlyLogging(TaskId);
       RetVal = 0; // log disabled
    }
 
@@ -330,7 +349,7 @@ int initLogging(
       }
 
    } else {
-      spdlog::set_level(spdlog::level::off);
+      initCriticalOnlyLogging(TaskId);
       RetVal = 0; // log disabled
    }
 

@@ -238,6 +238,23 @@ int testKokkosDataTypes(bool LogEnabled) {
    return RetVal;
 }
 
+// Tasks that do not log still let critical messages through, and only those
+int testOtherTasksKeepCritical(bool LogEnabled) {
+
+   if (LogEnabled)
+      return 0;
+
+   auto Logger = spdlog::default_logger();
+   bool Pass   = Logger->name() == "critical_only" &&
+               Logger->should_log(spdlog::level::critical) &&
+               !Logger->should_log(spdlog::level::err);
+
+   std::cout << "Critical only on other tasks: " << (Pass ? "PASS" : "FAIL")
+             << std::endl;
+
+   return Pass ? 0 : 1;
+}
+
 int main(int argc, char **argv) {
 
    int RetVal = 0;
@@ -270,6 +287,7 @@ int main(int argc, char **argv) {
 
       RetVal += testDefaultLogLevel(LogEnabled);
       RetVal += testKokkosDataTypes(LogEnabled);
+      RetVal += testOtherTasksKeepCritical(LogEnabled);
 
    } catch (const std::exception &Ex) {
       std::cout << Ex.what() << ": FAIL" << std::endl;

@@ -275,6 +275,13 @@ bool IOStream::validateAll() {
 } // End validateAll
 
 //------------------------------------------------------------------------------
+// Returns true if a stream with the given name has been defined.
+bool IOStream::isDefined(const std::string &StreamName // [in] stream name
+) {
+   return AllStreams.find(StreamName) != AllStreams.end();
+}
+
+//------------------------------------------------------------------------------
 // Reads a single stream if it is time.
 Error IOStream::read(
     const std::string &StreamName, // [in] Name of stream

@@ -83,7 +83,8 @@ void RungeKutta2Stepper::doStep(OceanState *State,   // model state
 
    applyImplicitVerticalMixing(State, CurLevel, CurLevel, CurLevel, "RK2");
 
-   validateOceanState(State, AuxState, VertCoord::getDefault(), CurLevel);
+   validateOceanState(State, AuxState, VertCoord::getDefault(), CurLevel,
+                      StepClock.get());
 
    // Advance the clock and update the simulation time
    StepClock->advance();

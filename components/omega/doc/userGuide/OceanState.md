@@ -15,3 +15,29 @@ The relative pressure at the top of the ocean column, `SurfacePressure`, is owne
 boundary condition of the pressure field. It is still registered in the `State` and `Restart`
 field groups, so it continues to be written to restart files and read from the initial-condition
 and restart files when present; if it is absent, it defaults to zero.
+
+(omega-user-state-validation)=
+
+### State validation
+
+After each time step, Omega checks `PseudoThickness`, `KineticEnergyCell`, `Temperature` and
+`Salinity` for NaNs and for values outside a plausible range. For each problem it finds, the rank
+that owns the cells writes a critical message giving the field, the number of entries and the
+global cell ID, latitude, longitude and layer of the first one, with its value if it is out of
+range. Ranks that do not log write these messages to standard error (see
+[logging](omega-user-logging)). What happens next is set under `State: Validation`:
+
+```yaml
+Omega:
+  State:
+    Validation:
+      AbortOnOOB: false
+      AbortOnNan: true
+      WriteStreamOnAbort: History
+```
+
+`AbortOnNan` and `AbortOnOOB` decide whether NaNs and out-of-range values abort the run; the
+decision is based on the counts summed over all ranks. Before aborting, every rank writes the
+stream named by `WriteStreamOnAbort`, so the bad state can be inspected. The record has the time
+at the start of the failing step. Set it to `''` to write nothing; a stream that is not defined
+is skipped. When the run continues instead, the master rank logs the total counts.

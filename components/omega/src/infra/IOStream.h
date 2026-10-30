@@ -366,6 +366,11 @@ class IOStream {
    static bool validateAll();
 
    //---------------------------------------------------------------------------
+   /// Returns true if a stream with the given name has been defined.
+   static bool isDefined(const std::string &StreamName ///< [in] stream name
+   );
+
+   //---------------------------------------------------------------------------
    /// Reads a stream if it is time.
    static Error read(const std::string &StreamName, ///< [in] Name of stream
                      const Clock *ModelClock, ///< [in] Model clock w time info

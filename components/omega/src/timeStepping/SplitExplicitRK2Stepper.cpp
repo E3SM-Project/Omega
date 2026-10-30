@@ -640,7 +640,8 @@ void SplitExplicitRK2Stepper::doStep(OceanState *State,
       Pacer::stop("SE-RK2:vMixHaloExch", 3);
    }
 
-   validateOceanState(State, AuxState, VertCoord::getDefault(), CurLevel);
+   validateOceanState(State, AuxState, VertCoord::getDefault(), CurLevel,
+                      StepClock.get());
 
    // Advance the clock and update the simulation time
    StepClock->advance();
