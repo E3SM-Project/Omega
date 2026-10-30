@@ -283,15 +283,17 @@ Omega:
       # Global Statistics (GlobalStats) analysis group
       # Computes spatial reduction statistics (Mean, Min, Max, StdDev)
       # for a set of ocean fields.
-      Fields: [NormalVelocity, PseudoThickness, Temperature, Salinity]
+      Fields: [NormalVelocity, PseudoThickness, Temperature, Salinity,
+          KineticEnergyCell, SshCell]
                                 # List of field names to compute statistics for
       SpatialStats: [Max, Min, Mean, StdDev]
                                 # Spatial statistics to compute (one per field)
-      ReductionPeriod: [1Day, 1Month]
+      ReductionPeriod: []
                                 # Temporal reduction periods
-      SamplingInterval: "dt"    # Accumulation cadence of the reductions
-      SnapshotPeriod: [6Hours]
+      SamplingInterval: dt      # Accumulation cadence of the reductions
+      SnapshotPeriod: [1Day]
                                 # Instantaneous snapshot output intervals
+      # TODO: NAME
       Filename: global.stats.$Y.nc
       Stream:
         FileFreq: 1
@@ -311,6 +313,7 @@ Omega:
       ReductionPeriod: [1Month] # Temporal reduction periods
       SamplingInterval: "dt"    # Accumulation cadence of the reductions
       SnapshotPeriod: []        # Instantaneous output periods
+      # TODO: NAME
       Filename: moc.$Y-$M.nc
       Stream:
         FileFreq: 1
@@ -324,12 +327,14 @@ Omega:
       # overridden with the optional ReductionPeriod parameter.
       # Output is written to the stream MonthlyAverages_<Period>TimeStats
       # (e.g., MonthlyAverages_1MonthTimeStats).
-      Fields: [Temperature, Salinity, NormalVelocity, PseudoThickness]
+      Fields: [Temperature, Salinity, PseudoThickness, SpecVol, GeomZMid,
+          GeomZInterface, SshCell, NormalVelocity, KineticEnergyCell]
                                 # List of global fields to average
       ReductionPeriod: [1Month]
                                 # Optional; averaging period(s)
-      SamplingInterval: "dt"    # Accumulation cadence of the reductions
-      Filename: monthly.averages.$Y.nc
+      SamplingInterval: dt      # Accumulation cadence of the reductions
+      # TODO: NAME
+      Filename: monthly.averages.$Y-$M.nc
       Stream:
         FileFreq: 1
-        FileFreqUnits: years
+        FileFreqUnits: months
