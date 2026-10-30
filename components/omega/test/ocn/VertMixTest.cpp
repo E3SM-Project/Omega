@@ -302,7 +302,6 @@ void testOneTwoOneFilter() {
    VCoord->NVertLayers   = NVertLayers;
    VCoord->NVertLayersP1 = NVertLayersP1;
    I4 NCellsSize         = Mesh->NCellsSize;
-   I4 NChunks            = VCoord->NVertLayers / VecLength;
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
    OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
 
@@ -317,25 +316,24 @@ void testOneTwoOneFilter() {
    deepCopy(GradRichNumSmoothed, 1.0);
    deepCopy(GradRichNum, 1.0);
 
-   // Populate GradRichNum with alternating +1.0 and -1.0 values in vertical
-   // GradRichNumSmoothed should smooth these to 0.0
+   // Populate GradRichNum with values in vertical that become smoothed to 0.0
+   // in exactly two iterations
    parallelFor(
        "populateArrays", {Mesh->NCellsAll, NVertLayersP1},
        KOKKOS_LAMBDA(I4 ICell, I4 K) {
           if (K % 2 == 0) {
-             GradRichNum(ICell, K) = 1.0;
+             GradRichNum(ICell, K) = 2 * K * K;
           } else {
-             GradRichNum(ICell, K) = -1.0;
+             GradRichNum(ICell, K) = -2 * K * K;
           }
        });
 
-   // Apply the 1-2-1 filter to each cell
    OMEGA_SCOPE(ComputeOneTwoOneFilter, TestVertMix->ComputeOneTwoOneFilter);
-
    const int RiSmoothLoopsOrig = ComputeOneTwoOneFilter.RiSmoothLoops;
-   // Perform only one smoothing iteration for this test
-   ComputeOneTwoOneFilter.RiSmoothLoops = 1;
+   // Perform two smoothing iterations for this test
+   ComputeOneTwoOneFilter.RiSmoothLoops = 2;
 
+   // Apply the 1-2-1 filter to each cell
    parallelForOuter(
        "ApplyOneTwoOneFilter",
        LaunchConfig({Mesh->NCellsAll},
@@ -353,23 +351,46 @@ void testOneTwoOneFilter() {
        "CheckGradRichNum", {Mesh->NCellsAll},
        KOKKOS_LAMBDA(int ICell, const TeamMember &Team, int &OuterCount) {
           int NumMismatchesCol;
-          const int KMin   = MinLayerCell(ICell);
-          const int KMax   = MaxLayerCell(ICell) + 1;
-          const int KRange = vertRange(KMin, KMax);
+          const int KMin = MinLayerCell(ICell);
+          const int KMax = MaxLayerCell(ICell) + 1;
           parallelReduceInner(
-              Team, KRange,
-              INNER_LAMBDA(int KOff, int &InnerCount) {
-                 const int K = KMin + KOff;
-                 if (K > MinLayerCell(ICell) && K <= MaxLayerCell(ICell)) {
-                    // Interior layers should be smoothed to 0.0
+              Team, Range{KMin, KMax},
+              INNER_LAMBDA(int K, int &InnerCount) {
+                 if (K > MinLayerCell(ICell) + 1 && K < MaxLayerCell(ICell)) {
+                    // Interior interfaces sufficiently away from the boundary
+                    // should be smoothed to 0.0
                     if (!isApprox(GradRichNumSmoothed(ICell, K), 0.0_Real,
                                   RTol))
                        InnerCount++;
-                 } else {
-                    // Boundary layers (K==0 or K==NVertLayers) should be
+                 } else if (K == MinLayerCell(ICell) ||
+                            K == MaxLayerCell(ICell) + 1) {
+                    // Boundary interfaces (K==0 or K==NVertLayers) should be
                     // the same as input
                     if (!isApprox(GradRichNumSmoothed(ICell, K),
                                   GradRichNum(ICell, K), RTol))
+                       InnerCount++;
+                 } else if (K == MaxLayerCell(ICell)) {
+                    // Exact formula for the top interface of the bottom cell
+                    const Real Expected = (6 * GradRichNum(ICell, K + 1) +
+                                           5 * GradRichNum(ICell, K) +
+                                           4 * GradRichNum(ICell, K - 1) +
+                                           GradRichNum(ICell, K - 2)) /
+                                          16;
+
+                    if (!isApprox(GradRichNumSmoothed(ICell, K), Expected,
+                                  RTol))
+                       InnerCount++;
+
+                 } else {
+                    // Exact formula for the bottom interface of the top cell
+                    const Real Expected = (6 * GradRichNum(ICell, K - 1) +
+                                           5 * GradRichNum(ICell, K) +
+                                           4 * GradRichNum(ICell, K + 1) +
+                                           GradRichNum(ICell, K + 2)) /
+                                          16;
+
+                    if (!isApprox(GradRichNumSmoothed(ICell, K), Expected,
+                                  RTol))
                        InnerCount++;
                  }
               },
