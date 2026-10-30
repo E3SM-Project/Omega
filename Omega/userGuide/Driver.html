@@ -53,8 +53,10 @@
 <li class="toctree-l1"><a class="reference internal" href="Config.html">Model Configuration (Config)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Logging.html">Omega Logging</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Driver</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#coupled-mode">Coupled mode</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Driver</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#coupled-mode">Coupled mode</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="MpasMesh.html">MPAS Mesh Specification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Dimension.html">Dimension</a></li>
@@ -210,7 +212,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="driver">
+  <section class="tex2jax_ignore mathjax_ignore" id="driver">
 <span id="omega-user-driver"></span><h1>Driver<a class="headerlink" href="#driver" title="Permalink to this heading"></a></h1>
 <p>The Omega Driver manages the execution of the Omega ocean model. Currently,
 the only user-configurable parameters unique to the Driver relate to the
@@ -270,14 +272,14 @@ simulation. The supported calendar types are:</p>
 </tr>
 </tbody>
 </table>
-</section>
 <section id="coupled-mode">
-<h1>Coupled mode<a class="headerlink" href="#coupled-mode" title="Permalink to this heading"></a></h1>
+<h2>Coupled mode<a class="headerlink" href="#coupled-mode" title="Permalink to this heading"></a></h2>
 <p>When Omega runs as the <code class="docutils literal notranslate"><span class="pre">ocn</span></code> component of E3SM, <code class="docutils literal notranslate"><span class="pre">StartTime</span></code>, <code class="docutils literal notranslate"><span class="pre">StopTime</span></code>,
 and <code class="docutils literal notranslate"><span class="pre">RunDuration</span></code> are not read from <code class="docutils literal notranslate"><span class="pre">omega.yml</span></code>; the E3SM case’s start
 time and the coupler’s clock control the simulation instead, and
 <code class="docutils literal notranslate"><span class="pre">omega/cime_config/buildnml</span></code> writes placeholder values for these three options.
 <code class="docutils literal notranslate"><span class="pre">CalendarType</span></code> is still set, from the case’s <code class="docutils literal notranslate"><span class="pre">CALENDAR</span></code> XML variable.</p>
+</section>
 </section>
 
 

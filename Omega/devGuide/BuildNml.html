@@ -54,7 +54,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html#coupled-mode">Coupled mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/MpasMesh.html">MPAS Mesh Specification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
@@ -245,6 +244,16 @@ under a mesh entry in <code class="docutils literal notranslate"><span class="pr
 per-mesh IOStreams overrides aren’t a supported use case; put IOStreams
 that apply to every mesh under <code class="docutils literal notranslate"><span class="pre">coupled</span></code> instead. The required streams
 (<code class="docutils literal notranslate"><span class="pre">HorzMeshIn</span></code>, <code class="docutils literal notranslate"><span class="pre">InitialVertCoord</span></code>, <code class="docutils literal notranslate"><span class="pre">InitialState</span></code>) are always enforced.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Because CIME imports and executes <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> in-process within the Python
+interpreter running CIME commands (<code class="docutils literal notranslate"><span class="pre">case.setup</span></code>, <code class="docutils literal notranslate"><span class="pre">case.submit</span></code>, <code class="docutils literal notranslate"><span class="pre">create_test</span></code>),
+<code class="docutils literal notranslate"><span class="pre">pyyaml</span></code> must be importable in that interpreter. On supported machines, source
+the machine’s CIME environment loader before invoking CIME commands (see the
+<a class="reference internal" href="Testing.html#omega-cime-env"><span class="std std-ref">CIME environment table</span></a>). For discussion on
+shared Python environments across E3SM, see
+<a class="reference external" href="https://github.com/E3SM-Project/E3SM/discussions/8906">E3SM Discussion #8906</a>.</p>
+</div>
 </section>
 <section id="validation-and-ci">
 <h2>Validation and CI<a class="headerlink" href="#validation-and-ci" title="Permalink to this heading"></a></h2>

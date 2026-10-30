@@ -54,7 +54,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html#coupled-mode">Coupled mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/MpasMesh.html">MPAS Mesh Specification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
@@ -309,13 +308,21 @@ Omega. Instead, rely on Polaris auto-build during <code class="docutils literal 
 <li><p>Building E3SM components:
 <a class="reference external" href="https://docs.e3sm.org/polaris/main/developers_guide/quick_start.html#building-e3sm-components">https://docs.e3sm.org/polaris/main/developers_guide/quick_start.html#building-e3sm-components</a></p></li>
 </ul>
-<p>For Omega development, you are expected to validate changes with the Polaris
-<code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> suite before non-trivial PRs (see <a class="reference internal" href="Testing.html#omega-dev-testing"><span class="std std-ref">Testing Code</span></a>):</p>
+<p>For Omega development, testing comprises two equally important pillars:
+standalone testing and coupled testing. Testing must be performed on at least
+one CPU and one GPU machine/compiler combination, covering both standalone
+testing (the Polaris <code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> regression suite and CTests) and coupled testing
+(targeted CIME tests such as <code class="docutils literal notranslate"><span class="pre">ERS</span></code> and <code class="docutils literal notranslate"><span class="pre">PEM</span></code>; see <a class="reference internal" href="Testing.html#omega-dev-testing"><span class="std std-ref">Testing Code</span></a>):</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> suite:
 <a class="reference external" href="https://docs.e3sm.org/polaris/main/users_guide/ocean/suites.html#omega-pr-suite">https://docs.e3sm.org/polaris/main/users_guide/ocean/suites.html#omega-pr-suite</a></p></li>
+<li><p>Coupled CIME tests:
+see <a class="reference internal" href="Testing.html#omega-dev-cime-testing"><span class="std std-ref">Coupled Testing with CIME</span></a> (and the test catalog in <a class="reference external" href="https://github.com/E3SM-Project/Omega/blob/develop/cime_config/tests.py"><code class="docutils literal notranslate"><span class="pre">cime_config/tests.py</span></code></a>)</p></li>
 </ul>
-<p>Both Polaris-based and standalone/manual workflows are supported.</p>
+<p>Both Polaris-based standalone workflows and CIME coupled workflows are supported.
+To build and test Omega as part of a coupled E3SM simulation or run CIME
+system tests, see <a class="reference internal" href="Testing.html#omega-dev-cime-testing"><span class="std std-ref">Coupled Testing with CIME</span></a>. Remember to source the machine’s
+<a class="reference internal" href="Testing.html#omega-cime-env"><span class="std std-ref">CIME environment</span></a> before running CIME commands.</p>
 <section id="polaris-ctest-utility">
 <span id="omega-dev-quick-start-ctest-util"></span><h3>Polaris CTest Utility<a class="headerlink" href="#polaris-ctest-utility" title="Permalink to this heading"></a></h3>
 <p>If you are using Polaris, you may wish to use its

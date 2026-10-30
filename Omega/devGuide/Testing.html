@@ -54,7 +54,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html#coupled-mode">Coupled mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/MpasMesh.html">MPAS Mesh Specification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
@@ -107,7 +106,6 @@
 <li class="toctree-l4"><a class="reference internal" href="#diffs-between-your-branch-and-baseline">Diffs between your branch and baseline</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#what-to-include-in-your-pr-testing-comment">What to include in your PR Testing comment</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#updating-polaris">Updating Polaris</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#adding-new-omega-dimensions-or-variables">Adding new Omega dimensions or variables</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#updates-to-default-yml">Updates to Default.yml</a></li>
@@ -115,6 +113,21 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#coupled-testing-with-cime">Coupled Testing with CIME</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#why-coupled-testing-is-essential">Why Coupled Testing is Essential</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sourcing-the-cime-environment">Sourcing the CIME Environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#omega-compsets-and-grid-compatibility">Omega Compsets and Grid Compatibility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-coupled-tests-with-create-test">Running Coupled Tests with <code class="docutils literal notranslate"><span class="pre">create_test</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#test-name-syntax">Test Name Syntax</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#recommended-tests-exact-restart-ers-and-pe-count-pem">Recommended Tests: Exact Restart (<code class="docutils literal notranslate"><span class="pre">ERS</span></code>) and PE-Count (<code class="docutils literal notranslate"><span class="pre">PEM</span></code>)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-e3sm-omega-developer-test-suite">The <code class="docutils literal notranslate"><span class="pre">e3sm_omega_developer</span></code> Test Suite</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#monitoring-diagnosing-and-iterating-on-failed-tests">Monitoring, Diagnosing, and Iterating on Failed Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#interactive-coupled-cases">Interactive Coupled Cases</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#what-to-include-in-your-pr-testing-comment">What to Include in Your PR Testing Comment</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="DataTypes.html">Data Types and Precision</a></li>
@@ -232,6 +245,19 @@
              
   <section class="tex2jax_ignore mathjax_ignore" id="testing-code">
 <span id="omega-dev-testing"></span><h1>Testing Code<a class="headerlink" href="#testing-code" title="Permalink to this heading"></a></h1>
+<p>Omega development requires both <strong>standalone testing</strong> and <strong>coupled testing</strong>:</p>
+<ul class="simple">
+<li><p><strong>Standalone testing:</strong> CTest unit tests and the Polaris <code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> regression suite.</p></li>
+<li><p><strong>Coupled testing:</strong> CIME system tests and coupled cases.</p></li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p><strong>Coupled testing is just as important as standalone testing.</strong> Omega is the ocean
+component of E3SM, and changes that pass standalone testing can still break
+coupled simulations (e.g., causing restart <code class="docutils literal notranslate"><span class="pre">ERS</span></code> or <code class="docutils literal notranslate"><span class="pre">PEM</span></code> tests to fail).
+Developers are expected to validate both standalone and coupled behavior on at
+least one CPU and one GPU machine before submitting pull requests.</p>
+</div>
 <p>For instructions on how to build Omega and run CTest unit tests, see
 <a class="reference internal" href="QuickStart.html#omega-dev-quick-start-build-test"><span class="std std-ref">Building and testing Omega</span></a>.</p>
 <section id="running-the-polaris-omega-pr-test-suite">
@@ -388,93 +414,6 @@ and then reach out to the Omega team if you need help.</p>
 utility to help debug which commit introduced the unexpected differences.</p>
 </section>
 </section>
-<section id="what-to-include-in-your-pr-testing-comment">
-<h3>What to include in your PR Testing comment<a class="headerlink" href="#what-to-include-in-your-pr-testing-comment" title="Permalink to this heading"></a></h3>
-<p>Please add a PR comment titled “Testing” that summarizes what you ran and the
-outcomes. Include the following so reviewers can validate apples-to-apples
-runs.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>At a minimum, you need to run both CTests and the <code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> suite on one
-machine and compiler.</p>
-</div>
-<ul class="simple">
-<li><p>CTest unit tests</p>
-<ul>
-<li><p>Machine(s) and partition/queue (if applicable)</p></li>
-<li><p>Compiler(s), and build type(s) (Debug/Release)</p></li>
-<li><p>Result: either “All tests passed” or a short list of failing tests with
-a one-line note each</p></li>
-</ul>
-</li>
-<li><p>Polaris <code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> regression suite</p>
-<ul>
-<li><p>Baseline run (Polaris <code class="docutils literal notranslate"><span class="pre">e3sm_submodules/Omega</span></code>)</p>
-<ul>
-<li><p>Build path used for -p (from Polaris <code class="docutils literal notranslate"><span class="pre">e3sm_submodules/Omega</span></code>)</p>
-<ul>
-<li><p>Work directory used for -w</p></li>
-</ul>
-</li>
-<li><p>PR branch run</p>
-<ul>
-<li><p>Build directory used for -p</p></li>
-<li><p>Work directory used for -w</p></li>
-</ul>
-</li>
-<li><p>Machine/partition, compiler, and build type (should match between baseline and PR)</p></li>
-<li><p>Result: “All tests passed” or a concise list of diffs/failures with a brief note</p></li>
-<li><p>If there are issues, add the path to the relevant log(s) (e.g.,
-polaris_omega_pr.o$JOBID) and a short excerpt if helpful</p></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Tests added/modified/impacted</p>
-<ul>
-<li><p>Briefly list any new or updated CTest or Polaris tests and what they cover</p></li>
-</ul>
-</li>
-<li><p>Performance PRs</p>
-<ul>
-<li><p>Link to the relevant PACE experiment and summarize before/after metrics</p></li>
-</ul>
-</li>
-</ul>
-<p>The <a class="reference external" href="https://github.com/E3SM-Project/polaris/blob/main/utils/omega/ctest/README.md">Omega CTest Utility</a>
-and the <code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> suite will produce output in a format you can copy/paste into the PR
-description. These outputs follow roughly the template below.  If you want to add the
-information manually, you can copy-paste template you can use in your PR comment:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>## Testing
-
-CTest unit tests
-- Machine: &lt;machine&gt;[, &lt;partition&gt;]
-- Compiler: &lt;compiler&gt;
-- Build type: &lt;Debug|Release&gt;
-- Result: All tests passed | Failures (X of Y): &lt;name&gt; (&lt;one-line note&gt;), ...
-
-Polaris omega_pr regression suite
-- Baseline build (-p): &lt;path/to/build of Polaris e3sm_submodules/Omega&gt;
-- Baseline workdir (-w): &lt;path/to/baseline_omega_pr&gt;
-- PR build (-p): &lt;path/to/pr/build&gt;
-- PR workdir (-w): &lt;path/to/my_branch_omega_pr&gt;
-- Machine/partition: &lt;machine&gt;[, &lt;partition&gt;]
-- Compiler/build type: &lt;compiler&gt;, &lt;Debug|Release&gt;
-- Result: All tests passed | Diffs/Failures: &lt;brief summary&gt;
-- Logs (if applicable): &lt;path/to/polaris_omega_pr.o$JOBID&gt;
-
-Tests added/modified/impacted
-- CTest: &lt;name&gt; — &lt;one-line purpose&gt;
-- Polaris: &lt;path or name&gt; — &lt;one-line purpose&gt;
-
-Performance (if applicable)
-- PACE: &lt;link&gt;
-- Before: &lt;metric(s)&gt;
-- After: &lt;metric(s)&gt;
-- Delta: &lt;summary&gt;
-</pre></div>
-</div>
-</section>
 <section id="updating-polaris">
 <span id="omega-dev-testing-update-polaris"></span><h3>Updating Polaris<a class="headerlink" href="#updating-polaris" title="Permalink to this heading"></a></h3>
 <p>Many Omega changes are likely to also require Polaris changes.  In such cases,
@@ -571,6 +510,404 @@ tests, see the Polaris
 <a class="reference external" href="https://docs.e3sm.org/polaris/main/developers_guide/ocean/framework.html">Ocean Framework documentation</a>.</p>
 </section>
 </section>
+</section>
+<section id="coupled-testing-with-cime">
+<span id="omega-dev-cime-testing"></span><h2>Coupled Testing with CIME<a class="headerlink" href="#coupled-testing-with-cime" title="Permalink to this heading"></a></h2>
+<p>Because Omega is the ocean component of E3SM, changes must be validated in
+coupled configurations using E3SM’s CIME test harness.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All CIME creation commands shown below (<code class="docutils literal notranslate"><span class="pre">create_test</span></code>, <code class="docutils literal notranslate"><span class="pre">create_newcase</span></code>, etc.)
+are executed from the <code class="docutils literal notranslate"><span class="pre">cime/scripts/</span></code> directory relative to the <strong>top-level
+E3SM repository root</strong>, <em>not</em> from within the <code class="docutils literal notranslate"><span class="pre">components/omega/</span></code> subdirectory.</p>
+</div>
+<p>For general CIME testing concepts, options, and advanced workflows, refer to the
+comprehensive <a class="reference external" href="https://esmci.github.io/cime/versions/master/html/system_testing.html">CIME System Testing documentation</a>.
+This section focuses on the specific configurations, conventions, and knowledge an
+Omega developer needs.</p>
+<section id="why-coupled-testing-is-essential">
+<h3>Why Coupled Testing is Essential<a class="headerlink" href="#why-coupled-testing-is-essential" title="Permalink to this heading"></a></h3>
+<p>Coupled testing exercises critical behaviors that cannot be validated in
+standalone runs:</p>
+<ul class="simple">
+<li><p><strong>Flux exchanges:</strong> Validates ocean-atmosphere and ocean-ice boundary flux
+exchanges (<code class="docutils literal notranslate"><span class="pre">SfcCoupling</span></code> and the MCT/MOAB bridges).</p></li>
+<li><p><strong>Coupler clock stepping:</strong> Ensures ocean time stepping advances correctly
+under coupler clock alarms and coupling intervals.</p></li>
+<li><p><strong>Exact restart reproducibility (<code class="docutils literal notranslate"><span class="pre">ERS</span></code>):</strong> Verifies bit-for-bit restart
+capability under CIME driver control.</p></li>
+<li><p><strong>PE layout independence (<code class="docutils literal notranslate"><span class="pre">PEM</span></code>/<code class="docutils literal notranslate"><span class="pre">PET</span></code>):</strong> Verifies bit-for-bit results across
+different processor element (PE, i.e., MPI task) layouts and thread counts.</p></li>
+</ul>
+</section>
+<section id="sourcing-the-cime-environment">
+<span id="omega-cime-env"></span><h3>Sourcing the CIME Environment<a class="headerlink" href="#sourcing-the-cime-environment" title="Permalink to this heading"></a></h3>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p><strong>Required environment for running Omega under CIME:</strong>
+Prior to Omega being added to E3SM, developers did not need to source a special
+environment before running CIME commands; legacy components relied exclusively on
+the host system’s base Python interpreter.</p>
+<p>However, Omega uses YAML configuration files instead of traditional Fortran namelists.
+To generate <code class="docutils literal notranslate"><span class="pre">omega.yml</span></code>, CIME invokes Omega’s <code class="docutils literal notranslate"><span class="pre">components/omega/cime_config/buildnml</span></code>
+in-process using Python. This requires the <code class="docutils literal notranslate"><span class="pre">pyyaml</span></code> package, which is not part of the
+Python standard library.</p>
+<p>This generation step occurs during case setup and inside batch jobs during <code class="docutils literal notranslate"><span class="pre">case.run</span></code>
+(including between segments of <code class="docutils literal notranslate"><span class="pre">ERS</span></code> and <code class="docutils literal notranslate"><span class="pre">PEM</span></code> tests). Sourcing the machine’s environment
+script beforehand ensures <code class="docutils literal notranslate"><span class="pre">pyyaml</span></code> remains available at all stages of execution.</p>
+<p>A proposed standard developer environment (<a class="reference external" href="https://github.com/E3SM-Project/E3SM/discussions/8906">E3SM Discussion #8906</a>)
+aims to make sourcing an environment a standard, required step for running
+all E3SM v4 components. Until that is fully adopted in E3SM, developers
+<strong>must explicitly source the CIME environment script for their machine before invoking
+any CIME command</strong>:</p>
+</div>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Machine</p></th>
+<th class="head text-left"><p>Environment Script</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p>aurora</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/lus/flare/projects/E3SMinput/soft/e3sm-unified/load_latest_cime_env.sh</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>chrysalis</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/lcrc/soft/climate/e3sm-unified/load_latest_cime_env.sh</span></code></p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>frontier</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/ccs/proj/cli115/software/e3sm-unified/load_latest_cime_env.sh</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>perlmutter (<code class="docutils literal notranslate"><span class="pre">pm-cpu</span></code>, <code class="docutils literal notranslate"><span class="pre">pm-gpu</span></code>)</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/global/common/software/e3sm/anaconda_envs/load_latest_cime_env.sh</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="omega-compsets-and-grid-compatibility">
+<h3>Omega Compsets and Grid Compatibility<a class="headerlink" href="#omega-compsets-and-grid-compatibility" title="Permalink to this heading"></a></h3>
+<p>Omega compsets are grouped into three main tiers (defined in
+<code class="docutils literal notranslate"><span class="pre">components/omega/cime_config/config_compsets.xml</span></code> and
+<code class="docutils literal notranslate"><span class="pre">cime_config/allactive/config_compsets.xml</span></code>):</p>
+<ul class="simple">
+<li><p><strong>C Cases (Data Atmosphere &amp; Data Sea Ice):</strong> <code class="docutils literal notranslate"><span class="pre">COMEGA-IAF</span></code>, <code class="docutils literal notranslate"><span class="pre">COMEGA-JRA1p5</span></code></p>
+<ul>
+<li><p>Lightweight tests for atmospheric and runoff forcing ingestion and ocean
+state evolution without active ice or atmosphere components.</p></li>
+</ul>
+</li>
+<li><p><strong>G Cases (Active Sea-Ice MPASSI):</strong> <code class="docutils literal notranslate"><span class="pre">GOMEGA-IAF</span></code>, <code class="docutils literal notranslate"><span class="pre">GOMEGA-JRA1p5</span></code></p>
+<ul>
+<li><p>Tests bidirectional ice-ocean coupling, ice-ocean fluxes, and frazil ice.</p></li>
+</ul>
+</li>
+<li><p><strong>B Cases (Fully Coupled):</strong> <code class="docutils literal notranslate"><span class="pre">WCYCL1850NS-OMEGA</span></code></p>
+<ul>
+<li><p>Fully active simulation across all Earth system components (EAM, ELM,
+MOSART, MPASSI, OMEGA).</p></li>
+</ul>
+</li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p><strong>Data atmosphere (DATM) grid and forcing compatibility:</strong>
+In C and G compsets, the atmosphere component is a data atmosphere (DATM) reading
+prescribed atmospheric forcing files, <em>not</em> a prognostic atmosphere component
+(such as EAM, which runs on spectral element grids like <code class="docutils literal notranslate"><span class="pre">ne4pg2</span></code> or <code class="docutils literal notranslate"><span class="pre">ne30pg2</span></code>).
+For DATM, the atmosphere grid identifier specifies the resolution of the
+prescribed input data files:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">IAF</span></code> (Interannual Forcing) compsets use the <code class="docutils literal notranslate"><span class="pre">T62</span></code> atmospheric forcing grid (e.g., <code class="docutils literal notranslate"><span class="pre">T62_oQU240</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">JRA1p5</span></code> compsets use the <code class="docutils literal notranslate"><span class="pre">TL319</span></code> atmospheric forcing grid (e.g., <code class="docutils literal notranslate"><span class="pre">TL319_EC30to60E2r2</span></code>).</p></li>
+</ul>
+<p>Attempting to pair <code class="docutils literal notranslate"><span class="pre">T62</span></code> with a <code class="docutils literal notranslate"><span class="pre">JRA1p5</span></code> compset (or <code class="docutils literal notranslate"><span class="pre">TL319</span></code> with <code class="docutils literal notranslate"><span class="pre">IAF</span></code>) is
+invalid and will fail during case setup or input data checking. Refer to the
+<code class="docutils literal notranslate"><span class="pre">e3sm_omega_developer</span></code> test suite in
+<a class="reference external" href="https://github.com/E3SM-Project/Omega/blob/develop/cime_config/tests.py"><code class="docutils literal notranslate"><span class="pre">cime_config/tests.py</span></code></a>
+for verified compset, resolution, and test modifier combinations (such as
+<code class="docutils literal notranslate"><span class="pre">.omega-jra_1958</span></code>).</p>
+</div>
+</section>
+<section id="running-coupled-tests-with-create-test">
+<h3>Running Coupled Tests with <code class="docutils literal notranslate"><span class="pre">create_test</span></code><a class="headerlink" href="#running-coupled-tests-with-create-test" title="Permalink to this heading"></a></h3>
+<p>Automated coupled tests are run using CIME’s
+<a class="reference external" href="https://esmci.github.io/cime/versions/master/html/system_testing.html#run-a-individual-tests"><code class="docutils literal notranslate"><span class="pre">create_test</span></code></a>
+script located in <code class="docutils literal notranslate"><span class="pre">cime/scripts</span></code>.</p>
+<section id="test-name-syntax">
+<h4>Test Name Syntax<a class="headerlink" href="#test-name-syntax" title="Permalink to this heading"></a></h4>
+<p>CIME encodes the test configuration into a standardized name format (see
+<a class="reference external" href="https://esmci.github.io/cime/versions/master/html/system_testing.html#test-name-syntax">CIME Test Name Syntax</a>):</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>TESTTYPE[_MODIFIERS].GRID.COMPSET[.MACHINE_COMPILER][.GROUP-TESTMODS]
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">TESTTYPE</span></code>:</strong> The core test type without underscores (e.g., <code class="docutils literal notranslate"><span class="pre">ERS</span></code>, <code class="docutils literal notranslate"><span class="pre">PEM</span></code>, <code class="docutils literal notranslate"><span class="pre">SMS</span></code>).
+See <a class="reference external" href="https://esmci.github.io/cime/versions/master/html/system_testing.html#test-type">CIME Test Types</a>.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">_MODIFIERS</span></code>:</strong> Optional modifiers prefixed with underscores to alter settings
+(e.g., <code class="docutils literal notranslate"><span class="pre">_D</span></code> enables <code class="docutils literal notranslate"><span class="pre">DEBUG=TRUE</span></code>, <code class="docutils literal notranslate"><span class="pre">_Ld3</span></code> sets run length to 3 days).
+See <a class="reference external" href="https://esmci.github.io/cime/versions/master/html/system_testing.html#modifiers">CIME Modifiers</a>.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">GRID</span></code>:</strong> Atmosphere and ocean grid alias or longname (e.g., <code class="docutils literal notranslate"><span class="pre">T62_oQU240</span></code>, <code class="docutils literal notranslate"><span class="pre">ne4pg2_oQU240</span></code>).</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">COMPSET</span></code>:</strong> The compset alias (e.g., <code class="docutils literal notranslate"><span class="pre">COMEGA-IAF</span></code>, <code class="docutils literal notranslate"><span class="pre">GOMEGA-IAF</span></code>, <code class="docutils literal notranslate"><span class="pre">WCYCL1850NS-OMEGA</span></code>).</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">MACHINE_COMPILER</span></code>:</strong> Optional machine and compiler joined by an underscore
+(e.g., <code class="docutils literal notranslate"><span class="pre">chrysalis_intel</span></code>, <code class="docutils literal notranslate"><span class="pre">pm-gpu_gnugpu</span></code>). Can alternatively be passed via CLI flags
+(<code class="docutils literal notranslate"><span class="pre">-m</span> <span class="pre">&lt;machine&gt;</span> <span class="pre">-c</span> <span class="pre">&lt;compiler&gt;</span></code>).</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">GROUP-TESTMODS</span></code>:</strong> Optional directory with namelist or XML modifications
+(see <a class="reference external" href="https://esmci.github.io/cime/versions/master/html/system_testing.html#test-mods">CIME Test Mods</a>).
+Omega’s test mods are located under
+<code class="docutils literal notranslate"><span class="pre">components/omega/cime_config/testdefs/testmods_dirs/omega/</span></code>
+(for example, <code class="docutils literal notranslate"><span class="pre">omega-jra_1958</span></code> sets the atmospheric and runoff forcing start/end
+years to 1958 for JRA-55 simulations).</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Machine and compiler detection:</strong>
+Specifying the machine and compiler is <strong>optional</strong>. If omitted, <code class="docutils literal notranslate"><span class="pre">create_test</span></code>
+automatically detects the host machine and uses that machine’s default compiler.</p>
+<p>The primary exception is platforms like <strong>NERSC Perlmutter</strong>, where both <code class="docutils literal notranslate"><span class="pre">pm-cpu</span></code>
+and <code class="docutils literal notranslate"><span class="pre">pm-gpu</span></code> machine profiles are accessible from the same login environment.
+In that case, you must deliberately specify the machine (e.g., append <code class="docutils literal notranslate"><span class="pre">.pm-gpu</span></code>
+or pass <code class="docutils literal notranslate"><span class="pre">-m</span> <span class="pre">pm-gpu</span></code>) to target GPUs rather than CPU nodes.</p>
+</div>
+</section>
+<section id="recommended-tests-exact-restart-ers-and-pe-count-pem">
+<h4>Recommended Tests: Exact Restart (<code class="docutils literal notranslate"><span class="pre">ERS</span></code>) and PE-Count (<code class="docutils literal notranslate"><span class="pre">PEM</span></code>)<a class="headerlink" href="#recommended-tests-exact-restart-ers-and-pe-count-pem" title="Permalink to this heading"></a></h4>
+<p>Rather than running an extensive test suite across multiple machines, the best
+bet for developers is to run targeted <strong><code class="docutils literal notranslate"><span class="pre">ERS</span></code> (Exact Restart)</strong> and <strong><code class="docutils literal notranslate"><span class="pre">PEM</span></code>
+(PE-count reproducibility)</strong> tests:</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">ERS</span></code> (Exact Restart):</strong> Runs a continuous simulation and an equivalent
+segmented run that stops and restarts mid-run, comparing results bit-for-bit.
+This catches issues with state persistence, boundary conditions, and checkpointing.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">PEM</span></code> (PE-Count Reproducibility):</strong> Runs the same configuration using two
+different processor element counts (PEs, i.e., MPI tasks) and domain
+decompositions, verifying bit-for-bit identity. This catches bugs in domain
+decomposition, halo exchanges, and reductions.</p></li>
+<li><p><strong>Debug modifier (<code class="docutils literal notranslate"><span class="pre">_D</span></code>):</strong> Using debug versions (such as <code class="docutils literal notranslate"><span class="pre">ERS_D</span></code> or <code class="docutils literal notranslate"><span class="pre">PEM_D</span></code>)
+is strongly recommended. The <code class="docutils literal notranslate"><span class="pre">_D</span></code> modifier enables compiler assertions, array
+bounds checking, and floating-point exception (FPE) trapping, catching latent
+numerics or memory errors early.</p></li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p><strong>Critical on GPU machines and compilers:</strong>
+Running <code class="docutils literal notranslate"><span class="pre">ERS</span></code> and <code class="docutils literal notranslate"><span class="pre">PEM</span></code> tests (especially with <code class="docutils literal notranslate"><span class="pre">_D</span></code>) is particularly vital on
+GPU machines and compilers (e.g. <code class="docutils literal notranslate"><span class="pre">pm-gpu</span></code>, <code class="docutils literal notranslate"><span class="pre">frontier</span></code>, <code class="docutils literal notranslate"><span class="pre">aurora</span></code>). GPU builds
+are sensitive to asynchronous kernel synchronization, race conditions, memory
+space transfers, and decomposition-dependent reductions. These issues often
+pass short smoke runs without symptom, but reliably fail bit-for-bit restart
+(<code class="docutils literal notranslate"><span class="pre">ERS</span></code>) or PE-count (<code class="docutils literal notranslate"><span class="pre">PEM</span></code>) checks.</p>
+</div>
+<p>To run targeted tests from <code class="docutils literal notranslate"><span class="pre">cime/scripts</span></code> (relative to the E3SM repo root):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 1. Source CIME environment on Perlmutter</span>
+<span class="nb">source</span><span class="w"> </span>/global/common/software/e3sm/anaconda_envs/load_latest_cime_env.sh
+
+<span class="c1"># 2. Navigate to cime/scripts from the E3SM repository root</span>
+<span class="nb">cd</span><span class="w"> </span>cime/scripts
+
+<span class="c1"># Exact restart test with debug flags (machine &amp; compiler auto-detected):</span>
+./create_test<span class="w"> </span>ERS_D.T62_oQU240.COMEGA-IAF
+
+<span class="c1"># Explicitly specifying pm-gpu at NERSC (where login node supports both pm-cpu and pm-gpu):</span>
+./create_test<span class="w"> </span>ERS_D.T62_oQU240.COMEGA-IAF.pm-gpu_gnugpu
+<span class="c1"># (or equivalently using CLI flags: ./create_test ERS_D.T62_oQU240.COMEGA-IAF -m pm-gpu -c gnugpu)</span>
+
+<span class="c1"># PE-count reproducibility test with debug flags (crucial on GPUs):</span>
+./create_test<span class="w"> </span>PEM_D.T62_oQU240.COMEGA-IAF
+
+<span class="c1"># Active sea-ice exact restart test:</span>
+./create_test<span class="w"> </span>ERS.T62_oQU240.GOMEGA-IAF
+</pre></div>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p><strong>Developer workflow: <code class="docutils literal notranslate"><span class="pre">--no-run</span></code> and interactive execution</strong>
+Passing <code class="docutils literal notranslate"><span class="pre">--no-run</span></code> to <code class="docutils literal notranslate"><span class="pre">create_test</span></code> sets up and builds the test case without
+submitting the run phase to the batch system:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./create_test<span class="w"> </span>ERS_D.T62_oQU240.COMEGA-IAF<span class="w"> </span>--no-run
+</pre></div>
+</div>
+<p>This is especially helpful when you want to:</p>
+<ul class="simple">
+<li><p>Make case modifications (e.g., XML settings via <code class="docutils literal notranslate"><span class="pre">./xmlchange</span></code> or Omega
+runtime configuration edits in <code class="docutils literal notranslate"><span class="pre">user_nl_omega</span></code>) before running.</p></li>
+<li><p>Run the test from an interactive compute node allocation (such as <code class="docutils literal notranslate"><span class="pre">salloc</span></code>),
+which requires running <code class="docutils literal notranslate"><span class="pre">./case.submit</span> <span class="pre">--no-batch</span></code> from within the generated test
+case directory.</p></li>
+</ul>
+</div>
+</section>
+<section id="the-e3sm-omega-developer-test-suite">
+<h4>The <code class="docutils literal notranslate"><span class="pre">e3sm_omega_developer</span></code> Test Suite<a class="headerlink" href="#the-e3sm-omega-developer-test-suite" title="Permalink to this heading"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">e3sm_omega_developer</span></code> test suite defined in
+<a class="reference external" href="https://github.com/E3SM-Project/Omega/blob/develop/cime_config/tests.py"><code class="docutils literal notranslate"><span class="pre">cime_config/tests.py</span></code></a>
+is maintained primarily for automated nightly testing in E3SM and serves as a
+living catalog of valid compset, grid, and modifier combinations. Developers
+are not expected to run the entire suite for every PR given the variety of
+supported platforms. However, it can be run when comprehensive multi-case
+coverage is desired on a supported machine:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>cime/scripts
+./create_test<span class="w"> </span>e3sm_omega_developer
+<span class="c1"># Or explicitly specifying machine and compiler if desired:</span>
+./create_test<span class="w"> </span>e3sm_omega_developer<span class="w"> </span>-m<span class="w"> </span>&lt;machine&gt;<span class="w"> </span>-c<span class="w"> </span>&lt;compiler&gt;
+</pre></div>
+</div>
+</section>
+<section id="monitoring-diagnosing-and-iterating-on-failed-tests">
+<h4>Monitoring, Diagnosing, and Iterating on Failed Tests<a class="headerlink" href="#monitoring-diagnosing-and-iterating-on-failed-tests" title="Permalink to this heading"></a></h4>
+<p>Each test generated by <code class="docutils literal notranslate"><span class="pre">create_test</span></code> creates a standalone case directory under
+your configured test scratch root (named after the test, e.g.,
+<code class="docutils literal notranslate"><span class="pre">ERS_D.T62_oQU240.COMEGA-IAF.&lt;test-id&gt;</span></code>). Test status across all phases is
+tracked in <code class="docutils literal notranslate"><span class="pre">TestStatus</span></code> and <code class="docutils literal notranslate"><span class="pre">TestStatus.log</span></code>.</p>
+<p>If a test fails, you do <strong>not</strong> need to set up a new manual case to diagnose or
+fix the issue:</p>
+<ol class="arabic">
+<li><p>Navigate directly into the generated test case directory.</p></li>
+<li><p>Inspect <code class="docutils literal notranslate"><span class="pre">TestStatus</span></code> to identify the failing phase (e.g., <code class="docutils literal notranslate"><span class="pre">MODEL_BUILD</span></code>, <code class="docutils literal notranslate"><span class="pre">RUN</span></code>, <code class="docutils literal notranslate"><span class="pre">COMPARE_base_rest</span></code>).</p></li>
+<li><p>Check the logs:</p>
+<ul class="simple">
+<li><p>For build errors: inspect <code class="docutils literal notranslate"><span class="pre">bld/ocn.bldlog.*</span></code>.</p></li>
+<li><p>For runtime or comparison errors: inspect logs in the test’s <code class="docutils literal notranslate"><span class="pre">run/</span></code> directory
+(<code class="docutils literal notranslate"><span class="pre">e3sm.log.*</span></code>, <code class="docutils literal notranslate"><span class="pre">ocn.log.*</span></code> , <code class="docutils literal notranslate"><span class="pre">cpl.log.*</span></code>).</p></li>
+</ul>
+</li>
+<li><p>Fix the bug directly in the repository source code checkout used to set up the test.</p></li>
+<li><p>Rebuild and resubmit right from within the existing test case directory:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Recompile only modified components</span>
+./case.build<span class="w"> </span>-m
+
+<span class="c1"># Rerun the test</span>
+./case.submit
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+<section id="interactive-coupled-cases">
+<h3>Interactive Coupled Cases<a class="headerlink" href="#interactive-coupled-cases" title="Permalink to this heading"></a></h3>
+<p>For active feature development or exploring new configurations, creating an
+interactive case from scratch on Chrysalis is straightforward:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 1. Source the CIME environment on Chrysalis</span>
+<span class="nb">source</span><span class="w"> </span>/lcrc/soft/climate/e3sm-unified/load_latest_cime_env.sh
+
+<span class="c1"># 2. From the E3SM repository root, navigate to cime/scripts and create a case on Chrysalis</span>
+<span class="nb">cd</span><span class="w"> </span>cime/scripts
+./create_newcase<span class="w"> </span>--case<span class="w"> </span>/lcrc/group/e3sm/ac.username/cases/omega_test<span class="w"> </span>--compset<span class="w"> </span>COMEGA-IAF<span class="w"> </span>--res<span class="w"> </span>T62_oQU240<span class="w"> </span>--mach<span class="w"> </span>chrysalis
+
+<span class="c1"># 3. Setup the case (invokes Omega's buildnml to generate omega.yml)</span>
+<span class="nb">cd</span><span class="w"> </span>/lcrc/group/e3sm/ac.username/cases/omega_test
+./case.setup
+
+<span class="c1"># 4. (Optional) Enable debug compiler flags or customize configuration</span>
+./xmlchange<span class="w"> </span><span class="nv">DEBUG</span><span class="o">=</span>TRUE
+
+<span class="c1"># You can customize Omega configuration by editing user_nl_omega:</span>
+<span class="c1"># (see user guide: {ref}`omega-user-config`)</span>
+./preview_namelists
+
+<span class="c1"># 5. Build the case</span>
+./case.build
+
+<span class="c1"># 6. Submit the case</span>
+./case.submit
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Fast rebuilds:</strong> Run <code class="docutils literal notranslate"><span class="pre">./case.build</span> <span class="pre">-m</span></code> to recompile only modified components
+without rebuilding external libraries.</p></li>
+<li><p><strong>Resetting setup:</strong> Run <code class="docutils literal notranslate"><span class="pre">./case.setup</span> <span class="pre">--reset</span></code> after modifying grid resolutions,
+component layouts, or processor element (PE) counts.</p></li>
+</ul>
+</section>
+</section>
+<section id="what-to-include-in-your-pr-testing-comment">
+<h2>What to Include in Your PR Testing Comment<a class="headerlink" href="#what-to-include-in-your-pr-testing-comment" title="Permalink to this heading"></a></h2>
+<p>Please add a PR comment titled “Testing” that summarizes what you ran and the
+outcomes. Both standalone and coupled testing must be reported for non-trivial
+PRs:</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>At a minimum, testing must be performed on at least <strong>one CPU and one GPU machine/compiler combination</strong>, covering:</p>
+<ol class="arabic simple">
+<li><p>CTest unit tests</p></li>
+<li><p>Polaris <code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> regression suite (standalone)</p></li>
+<li><p>Targeted coupled CIME tests (such as <code class="docutils literal notranslate"><span class="pre">ERS</span></code> or <code class="docutils literal notranslate"><span class="pre">PEM</span></code> tests)</p></li>
+</ol>
+</div>
+<ul class="simple">
+<li><p><strong>CTest unit tests:</strong></p>
+<ul>
+<li><p>Machine(s) and partition/queue (if applicable)</p></li>
+<li><p>Compiler(s), and build type(s) (Debug/Release)</p></li>
+<li><p>Result: either “All tests passed” or a short list of failing tests with
+a one-line note each</p></li>
+</ul>
+</li>
+<li><p><strong>Polaris <code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> regression suite (standalone):</strong></p>
+<ul>
+<li><p>Baseline run (Polaris <code class="docutils literal notranslate"><span class="pre">e3sm_submodules/Omega</span></code>) build path (<code class="docutils literal notranslate"><span class="pre">-p</span></code>) and workdir (<code class="docutils literal notranslate"><span class="pre">-w</span></code>)</p></li>
+<li><p>PR branch run build path (<code class="docutils literal notranslate"><span class="pre">-p</span></code>) and workdir (<code class="docutils literal notranslate"><span class="pre">-w</span></code>)</p></li>
+<li><p>Machine/partition, compiler, and build type (should match between baseline and PR)</p></li>
+<li><p>Result: “All tests passed” or a concise list of diffs/failures with a brief note</p></li>
+<li><p>Log paths (e.g., <code class="docutils literal notranslate"><span class="pre">polaris_omega_pr.o$JOBID</span></code>) if issues occur</p></li>
+</ul>
+</li>
+<li><p><strong>Coupled CIME tests:</strong></p>
+<ul>
+<li><p>Machine(s) and compiler(s) (highlighting GPU platforms if applicable)</p></li>
+<li><p>Test name(s) (e.g., <code class="docutils literal notranslate"><span class="pre">ERS_D.T62_oQU240.COMEGA-IAF</span></code>, <code class="docutils literal notranslate"><span class="pre">PEM_D.T62_oQU240.COMEGA-IAF</span></code>)</p></li>
+<li><p>Result: “All tests passed (PASS)” or note on failures/phases</p></li>
+<li><p>Log paths (e.g., <code class="docutils literal notranslate"><span class="pre">TestStatus.log</span></code>) if issues occur</p></li>
+</ul>
+</li>
+<li><p><strong>Tests added/modified/impacted:</strong></p>
+<ul>
+<li><p>Briefly list any new or updated CTest, Polaris, or CIME tests and what they cover</p></li>
+</ul>
+</li>
+<li><p><strong>Performance PRs (if applicable):</strong></p>
+<ul>
+<li><p>Link to the relevant PACE experiment and summarize before/after metrics</p></li>
+</ul>
+</li>
+</ul>
+<p>Use the following template for your PR comment:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>## Testing
+
+CTest unit tests
+- Machine: &lt;machine&gt;[, &lt;partition&gt;]
+- Compiler: &lt;compiler&gt;
+- Build type: &lt;Debug|Release&gt;
+- Result: All tests passed | Failures (X of Y): &lt;name&gt; (&lt;one-line note&gt;), ...
+
+Polaris omega_pr regression suite (standalone)
+- Baseline build (-p): &lt;path/to/build of Polaris e3sm_submodules/Omega&gt;
+- Baseline workdir (-w): &lt;path/to/baseline_omega_pr&gt;
+- PR build (-p): &lt;path/to/pr/build&gt;
+- PR workdir (-w): &lt;path/to/my_branch_omega_pr&gt;
+- Machine/partition: &lt;machine&gt;[, &lt;partition&gt;]
+- Compiler/build type: &lt;compiler&gt;, &lt;Debug|Release&gt;
+- Result: All tests passed | Diffs/Failures: &lt;brief summary&gt;
+- Logs (if applicable): &lt;path/to/polaris_omega_pr.o$JOBID&gt;
+
+Coupled CIME tests
+- Machine: &lt;machine&gt;
+- Compiler: &lt;compiler&gt;
+- Test(s): &lt;e.g. ERS_D.T62_oQU240.COMEGA-IAF, PEM_D.T62_oQU240.COMEGA-IAF&gt;
+- Result: All tests passed | Failures (X of Y): &lt;test name&gt; (&lt;phase&gt;), ...
+- Logs (if applicable): &lt;path/to/TestStatus.log&gt;
+
+Tests added/modified/impacted
+- CTest: &lt;name&gt; — &lt;one-line purpose&gt;
+- Polaris: &lt;path or name&gt; — &lt;one-line purpose&gt;
+- CIME: &lt;test or compset&gt; — &lt;one-line purpose&gt;
+
+Performance (if applicable)
+- PACE: &lt;link&gt;
+- Before: &lt;metric(s)&gt;
+- After: &lt;metric(s)&gt;
+- Delta: &lt;summary&gt;
+</pre></div>
+</div>
 </section>
 </section>
 

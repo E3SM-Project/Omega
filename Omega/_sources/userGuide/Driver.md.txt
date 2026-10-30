@@ -1,6 +1,6 @@
 (omega-user-driver)=
 
-## Driver
+# Driver
 
 The Omega Driver manages the execution of the Omega ocean model. Currently,
 the only user-configurable parameters unique to the Driver relate to the
