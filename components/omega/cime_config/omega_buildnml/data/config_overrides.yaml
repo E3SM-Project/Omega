@@ -11,6 +11,14 @@ coupled:
     SfcThicknessForcingTendencyEnable: true
     SfcTracerForcingTendencyEnable: true
 
+  Analysis:
+    GlobalStats:
+      Enable: true
+    MOC:
+      Enable: true
+    MonthlyAverages:
+      Enable: true
+
   IOStreams:
     Forcing:
       FreqUnits: Never
@@ -43,6 +51,10 @@ meshes:
       ViscDel4: 2.0e14
     HorzMesh:
       MeshScalingEnable: false
+
+    Analysis:
+      MOC:
+        NumBins: 60
 
   EC30to60E2r2:
     TimeIntegration:
