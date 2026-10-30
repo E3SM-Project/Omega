@@ -1,0 +1,799 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rayleigh Damping &mdash; Omega develop documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Global Reductions" href="Reductions.html" />
+    <link rel="prev" title="IOStreams" href="IOStreams.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Omega
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/QuickStart.html">Quick Start for Users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OmegaBuild.html">CMake-based Omega Build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Logging.html">Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/MpasMesh.html">MPAS Mesh Specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Error.html">Error handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/SplitTimeStepping.html">Split Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/KPPMix.html">KPP Boundary Layer Mixing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/RayleighDamping.html">Rayleigh Damping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/SubmesoEddies.html">Submesoscale Eddy Parameterization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Forcing.html">Forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Frazil.html">Frazil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/SfcCoupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userGuide/Analysis.html">Analysis</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/QuickStart.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Linting.html">Linting Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Docs.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildDocs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Testing.html">Testing Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html">Data Types and Precision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/DataTypes.html#arrays-and-kokkos">Arrays and Kokkos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/ParallelLoops.html">Parallel loops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/MachEnv.html">Machine Environment (MachEnv)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Config.html">Model Configuration (Config)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Driver.html">Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CMakeBuild.html">Omega Build with CMake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/BuildNml.html">CIME <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> and Configuration Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Logging.html">Developing Omega Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Decomp.html">Domain Decomposition (Decomp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Dimension.html">Dimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Error.html">Error Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Field.html">Fields and Metadata (Field)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/CFUnits.html">CFUnits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IO.html">Parallel IO (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/IOStreams.html">IO Streams (IOStream)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Halo.html">Halo Exchanges (Halo)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzMesh.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/HorzOperators.html">Horizontal Operators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryVariables.html">Auxiliary Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/AuxiliaryState.html">Auxiliary State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TendencyTerms.html">Tendency Terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/OceanState.html">Ocean State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeMgr.html">Time Manager (TimeMgr)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TimeStepping.html">Time stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/SplitTimeStepping.html">Split Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Tracers.html">Tracers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/TridiagonalSolvers.html">Tridiagonal Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/PGrad.html">Pressure Gradient (PGrad)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Timing.html">Timing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/KPPMix.html">KPP Boundary Layer Mixing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/RayleighDamping.html">Rayleigh Damping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/SubmesoEddies.html">Submesoscale Eddy Parameterization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Forcing.html">Forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Frazil.html">Frazil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/SfcCoupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devGuide/Analysis.html">Analysis</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="OmegaV0ShallowWater.html">Omega V0: Shallow Water</a></li>
+<li class="toctree-l1"><a class="reference internal" href="OmegaV1GoverningEqns.html">Omega V1: Governing Equations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Analysis.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Broadcast.html">Broadcast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Coupling.html">Surface Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataTypes.html">DataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Decomp.html">Decomp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Driver.html">Driver and Component Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EOS.html">Equation of State (EOS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Error.html">ErrorHandler (Error)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FillValues.html">Fill Values</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Frazil.html">Frazil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Halo.html">Halo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HorzMeshClass.html">Horizontal Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MachEnv.html">MachineEnv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PGrad.html">Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PGradHighOrder.html">Higher-Order Horizontal Pressure Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IO.html">Input/Output (IO)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOStreams.html">IOStreams</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Rayleigh Damping</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">1 Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">2 Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-linear-damping-of-momentum-with-a-configurable-time-scale">2.1 Requirement: Linear damping of momentum with a configurable time scale</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-damping-is-applied-to-all-active-layers-of-the-momentum-equation-only">2.2 Requirement: Damping is applied to all active layers of the momentum equation only</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-unconditional-stability-for-large-damping-coefficients">2.3 Requirement: Unconditional stability for large damping coefficients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-disabled-by-default-with-no-effect-on-existing-results">2.4 Requirement: Disabled by default with no effect on existing results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-configuration-errors-are-detected-at-initialization">2.5 Requirement: Configuration errors are detected at initialization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-time-varying-damping-coefficient">2.6 Desired: Time-varying damping coefficient</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithmic-formulation">3 Algorithmic Formulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#continuous-form">3.1 Continuous form</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#layered-pseudo-thickness-weighted-form">3.2 Layered, pseudo-thickness-weighted form</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#discrete-implicit-form">3.3 Discrete implicit form</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#typical-coefficient-values">3.4 Typical coefficient values</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#design">4 Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-types-and-parameters">4.1 Data types and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">4.1.1 Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#class-structs-data-types">4.1.2 Class/structs/data types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#methods">4.2 Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#velvertmixsetuponedge-operator">4.2.1 <code class="docutils literal notranslate"><span class="pre">VelVertMixSetupOnEdge::operator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#vertmix-init">4.2.2 <code class="docutils literal notranslate"><span class="pre">VertMix::init()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tendencies-configuration-check">4.2.3 <code class="docutils literal notranslate"><span class="pre">Tendencies</span></code> configuration check</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#documentation">4.2.4 Documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#items-explicitly-unaffected">4.3 Items explicitly unaffected</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verification-and-testing">5 Verification and Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-single-layer-analytic-decay">5.1 Test: single-layer analytic decay</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-disabled-damping-is-bit-for-bit-neutral">5.2 Test: disabled damping is bit-for-bit neutral</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-stability-at-large-coefficient">5.3 Test: stability at large coefficient</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-combined-with-vertical-viscosity-and-bottom-drag">5.4 Test: combined with vertical viscosity and bottom drag</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-configuration-error-handling">5.5 Test: configuration error handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-dynamic-adjustment-in-a-realistic-configuration">5.6 Test: dynamic adjustment in a realistic configuration</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Reductions.html">Global Reductions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="State.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="StateValidation.html">Ocean State Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SubmesoscaleEddies.html">Submesoscale Eddy Parameterization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendency.html">Tendency</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tendencies.html">Tendencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryVariables.html">Auxiliary variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AuxiliaryState.html">AuxiliaryState</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeMgr.html">TimeManager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Timers.html">Timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TimeStepping.html">Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SplitTimeStepping.html">Split Time Stepping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tracers.html">Tracer Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TridiagonalSolver.html">Tridiagonal Solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KPPMix.html">KPP Boundary Layer Mixing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertAdv.html">Vertical Advection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VertCoord.html">Vertical Coordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VerticalMixingCoeff.html">Vertical Mixing Coefficients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Template.html">Template</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Omega</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Rayleigh Damping</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/RayleighDamping.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="rayleigh-damping">
+<span id="omega-design-rayleigh-damping"></span><h1>Rayleigh Damping<a class="headerlink" href="#rayleigh-damping" title="Permalink to this heading"></a></h1>
+<p><strong>Table of Contents</strong></p>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="#overview">Overview</a></p></li>
+<li><p><a class="reference internal" href="#requirements">Requirements</a></p></li>
+<li><p><a class="reference internal" href="#algorithmic-formulation">Algorithmic Formulation</a></p></li>
+<li><p><a class="reference internal" href="#design">Design</a></p></li>
+<li><p><a class="reference internal" href="#verification-and-testing">Verification and Testing</a></p></li>
+</ol>
+<section id="overview">
+<h2>1 Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>An ocean initial condition assembled from observational climatologies is not in
+dynamical balance with the model’s discrete equations. When such a state is used
+to start a simulation, the adjustment radiates large-amplitude barotropic and
+inertia-gravity waves. These waves carry velocities far larger than the
+climatological circulation, and they force the model to run with a very small
+time step (or to fail outright on the CFL condition) until they have propagated
+away or dissipated.</p>
+<p>The standard remedy, used routinely to produce E3SM ocean initial conditions
+with MPAS-Ocean, is a <em>dynamic adjustment</em> spin-up: the model is run for a short
+period with a strong linear drag on momentum, the so-called Rayleigh damping
+term, which removes the transient wave energy on a prescribed time scale. The
+spin-up proceeds as a sequence of adjustment segments, each run as a separate
+job. Across the sequence the damping coefficient is reduced and the time step is
+increased, until the damping is small enough to be turned off and the time step
+has reached its production value. At that point the state is dynamically
+balanced and can be integrated forward.</p>
+<p>The staging of the time step is as important as the staging of the coefficient.
+Running the entire sequence at the small initial time step would take far longer
+than necessary, and it would leave the stability of the production time step
+untested until the adjustment was over. Each segment therefore serves double
+duty: it damps transients, and it demonstrates that the state tolerates the
+next, longer time step.</p>
+<p>Omega currently has no such capability, which is a blocker for generating E3SM
+initial conditions (see
+<a class="reference external" href="https://github.com/E3SM-Project/Omega/issues/495">Omega issue #495</a>). This
+document describes the addition of Rayleigh damping to Omega’s momentum
+equation, following the formulation used by MPAS-Ocean but expressed in Omega’s
+non-Boussinesq, pseudo-thickness-weighted form and configured with Omega naming
+conventions.</p>
+<p>The scope here is deliberately narrow: a single, spatially uniform damping
+coefficient applied to the normal velocity at all active layers, treated
+implicitly in time. Two variants present in MPAS-Ocean are explicitly <em>not</em>
+carried over:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">config_Rayleigh_damping_depth_variable</span></code>, which divides the coefficient by the
+total column thickness. This is used by the subgrid wetting-and-drying work
+rather than by dynamic adjustment, and its coefficient has different units
+(m s<span class="math notranslate nohighlight">\(^{-1}\)</span> rather than s<span class="math notranslate nohighlight">\(^{-1}\)</span>), which would make a single config option
+ambiguous.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">config_Rayleigh_bottom_damping_coeff</span></code>, which applies the damping only in the
+bottom layer. That term is physically a linear bottom friction, not Rayleigh
+damping, and belongs with Omega’s bottom drag rather than here. If it is
+needed later, it should be added as a new <code class="docutils literal notranslate"><span class="pre">Type</span></code> under the existing
+<code class="docutils literal notranslate"><span class="pre">BottomDragTendency</span></code> config group.</p></li>
+</ul>
+</section>
+<section id="requirements">
+<h2>2 Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<section id="requirement-linear-damping-of-momentum-with-a-configurable-time-scale">
+<h3>2.1 Requirement: Linear damping of momentum with a configurable time scale<a class="headerlink" href="#requirement-linear-damping-of-momentum-with-a-configurable-time-scale" title="Permalink to this heading"></a></h3>
+<p>Omega shall provide a term that damps the normal velocity toward zero at a rate
+set by a single, run-time configurable inverse time scale <span class="math notranslate nohighlight">\(c_R\)</span> with units of
+s<span class="math notranslate nohighlight">\(^{-1}\)</span>.</p>
+<p>Dynamic adjustment requires control over how fast transient wave energy is
+removed. A damping time scale of a few hours (<span class="math notranslate nohighlight">\(c_R \sim 10^{-4}\)</span> s<span class="math notranslate nohighlight">\(^{-1}\)</span>) is
+short enough to suppress barotropic and near-inertial transients within a few
+days of simulation, while a subsequent segment with a weaker coefficient allows
+the slower baroclinic adjustment to proceed without being over-damped.</p>
+</section>
+<section id="requirement-damping-is-applied-to-all-active-layers-of-the-momentum-equation-only">
+<h3>2.2 Requirement: Damping is applied to all active layers of the momentum equation only<a class="headerlink" href="#requirement-damping-is-applied-to-all-active-layers-of-the-momentum-equation-only" title="Permalink to this heading"></a></h3>
+<p>The damping shall act on the normal velocity in every active layer between the
+top and bottom of each edge column, and shall not act on pseudo-thickness or on
+tracers.</p>
+<p>The transients being removed are momentum modes. Damping thickness or tracers
+would relax the model toward a state that is not the intended initial condition
+and would violate conservation of mass and tracer content. Applying the damping
+over the whole column rather than only near the bottom removes barotropic and
+baroclinic transients at comparable rates, which is the behavior needed for
+adjustment.</p>
+</section>
+<section id="requirement-unconditional-stability-for-large-damping-coefficients">
+<h3>2.3 Requirement: Unconditional stability for large damping coefficients<a class="headerlink" href="#requirement-unconditional-stability-for-large-damping-coefficients" title="Permalink to this heading"></a></h3>
+<p>The discrete damping term shall be stable and monotone for arbitrarily large
+values of <span class="math notranslate nohighlight">\(c_R \Delta t\)</span>, and shall not produce sign reversal or growth of the
+velocity.</p>
+<p>The whole point of the term is to allow the time steps to be as <em>large</em> as
+possible during adjustment. An explicit treatment would impose
+<span class="math notranslate nohighlight">\(c_R \Delta t &lt; 1\)</span> for monotone decay, which couples the very quantity being
+tuned (<span class="math notranslate nohighlight">\(c_R\)</span>) to the quantity being maximized (<span class="math notranslate nohighlight">\(\Delta t\)</span>) and defeats the
+purpose. An implicit treatment removes that coupling entirely.</p>
+</section>
+<section id="requirement-disabled-by-default-with-no-effect-on-existing-results">
+<h3>2.4 Requirement: Disabled by default with no effect on existing results<a class="headerlink" href="#requirement-disabled-by-default-with-no-effect-on-existing-results" title="Permalink to this heading"></a></h3>
+<p>Rayleigh damping shall be off by default, and when off, model results shall be
+bit-for-bit identical to results without the feature.</p>
+<p>Rayleigh damping is a spin-up tool, not part of the physics of a production
+simulation. Leaving it enabled in a science run would artificially dissipate the
+circulation. Bit-for-bit neutrality when disabled keeps existing test baselines
+valid.</p>
+</section>
+<section id="requirement-configuration-errors-are-detected-at-initialization">
+<h3>2.5 Requirement: Configuration errors are detected at initialization<a class="headerlink" href="#requirement-configuration-errors-are-detected-at-initialization" title="Permalink to this heading"></a></h3>
+<p>If Rayleigh damping is enabled in a configuration where it cannot be applied,
+Omega shall abort during initialization with an informative message rather than
+silently ignoring the setting.</p>
+<p>A silently dropped damping term would produce an adjustment run that appears to
+succeed but yields an unbalanced initial condition, and the failure would only
+be discovered much later in the E3SM initialization workflow.</p>
+</section>
+<section id="desired-time-varying-damping-coefficient">
+<h3>2.6 Desired: Time-varying damping coefficient<a class="headerlink" href="#desired-time-varying-damping-coefficient" title="Permalink to this heading"></a></h3>
+<p>It is desirable for the damping coefficient to decrease smoothly over the course
+of an adjustment segment, for example linearly or exponentially between a
+starting and an ending value.</p>
+<p>The value of such a ramp is limited, and it is worth being precise about what it
+would and would not buy. It would <em>not</em> replace the sequence of adjustment jobs:
+as described in Section 1, each segment also raises the time step, and Omega has
+no mechanism for changing the time step mid-run and no intention of adding one.
+The sequence is therefore intrinsic to the workflow regardless of how <span class="math notranslate nohighlight">\(c_R\)</span> is
+specified. What a ramp would offer is the removal of the abrupt change in <span class="math notranslate nohighlight">\(c_R\)</span>
+at each segment boundary, replacing a step with a continuous transition. That is
+a nice-to-have rather than a motivating capability, which is why it is listed as
+desired rather than required.</p>
+<p>The design accommodates it at no cost: the coefficient is a plain scalar member
+of the setup functor, so a ramp can later be implemented by updating that scalar
+once per time step, with no change to the tridiagonal setup or to the config
+group structure.</p>
+</section>
+</section>
+<section id="algorithmic-formulation">
+<h2>3 Algorithmic Formulation<a class="headerlink" href="#algorithmic-formulation" title="Permalink to this heading"></a></h2>
+<section id="continuous-form">
+<h3>3.1 Continuous form<a class="headerlink" href="#continuous-form" title="Permalink to this heading"></a></h3>
+<p>Rayleigh damping adds a linear drag to the momentum equation. In terms of the
+normal velocity at an edge, <span class="math notranslate nohighlight">\(u_e\)</span>, the added tendency is</p>
+<div class="math notranslate nohighlight">
+\[
+\left. \frac{\partial u_e}{\partial t} \right|_{\mathrm{Rayleigh}} = -c_R u_e ,
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(c_R \ge 0\)</span> has units of s<span class="math notranslate nohighlight">\(^{-1}\)</span> and <span class="math notranslate nohighlight">\(1 / c_R\)</span> is the e-folding time
+scale of the damping. In isolation this gives pure exponential decay,
+<span class="math notranslate nohighlight">\(u_e(t) = u_e(0) e^{-c_R t}\)</span>, at every wavenumber and every vertical mode. The
+term is scale-selective in neither space nor time: it damps the mean circulation
+along with the transients. That is acceptable for adjustment precisely because
+the adjustment run is short and the transients are much larger in amplitude than
+the circulation being preserved.</p>
+<p>The term is not energy conserving by construction. It removes kinetic energy at
+a rate</p>
+<div class="math notranslate nohighlight">
+\[
+\left. \frac{\partial}{\partial t} \frac{u_e^2}{2} \right|_{\mathrm{Rayleigh}}
+= -c_R u_e^2 ,
+\]</div>
+<p>and that energy is not returned to any other reservoir in the model.</p>
+</section>
+<section id="layered-pseudo-thickness-weighted-form">
+<h3>3.2 Layered, pseudo-thickness-weighted form<a class="headerlink" href="#layered-pseudo-thickness-weighted-form" title="Permalink to this heading"></a></h3>
+<p>Omega’s discrete momentum equation is non-Boussinesq and is advanced in
+pseudo-thickness-weighted form, with <span class="math notranslate nohighlight">\(\left[\tilde{h}_k\right]_e\)</span> the
+pseudo-thickness of layer <span class="math notranslate nohighlight">\(k\)</span> interpolated to edge <span class="math notranslate nohighlight">\(e\)</span>. Grouping the Rayleigh
+term with the vertical momentum stress divergence, the portion of the momentum
+equation that is treated implicitly is</p>
+<div class="math notranslate nohighlight">
+\[
+\left[\tilde{h}_k\right]_e \frac{\partial u_{e,k}}{\partial t}
+= \left[ \tilde{\nu}_v \frac{\partial u}{\partial \tilde{z}} \right]_{e,k}
+- \left[ \tilde{\nu}_v \frac{\partial u}{\partial \tilde{z}} \right]_{e,k+1}
+- c_R \left[\tilde{h}_k\right]_e u_{e,k} .
+\]</div>
+<p>Because the damping rate is independent of thickness, the Rayleigh term picks up
+the same <span class="math notranslate nohighlight">\(\left[\tilde{h}_k\right]_e\)</span> factor as the time derivative. This is the
+non-Boussinesq counterpart of the MPAS-Ocean form, in which the equivalent
+system is divided through by the layer thickness and the term appears simply as
+<span class="math notranslate nohighlight">\(c_R\)</span> on the diagonal.</p>
+</section>
+<section id="discrete-implicit-form">
+<h3>3.3 Discrete implicit form<a class="headerlink" href="#discrete-implicit-form" title="Permalink to this heading"></a></h3>
+<p>Omega already solves the vertical momentum stress divergence implicitly with a
+backward-Euler step, using the diffusion-form tridiagonal solver
+<code class="docutils literal notranslate"><span class="pre">TriDiagDiffSolver</span></code> (see the <a class="reference internal" href="TridiagonalSolver.html"><span class="doc std std-doc">Tridiagonal Solver</span></a> design
+document). The system solved at each edge for the updated normal velocity
+<span class="math notranslate nohighlight">\(Y_k = u^{n+1}_{e,k}\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[
+-G_{k-1} Y_{k-1} + \left( G_{k-1} + G_k + H_k \right) Y_k - G_k Y_{k+1} = X_k ,
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(G_k\)</span> holds the off-diagonal viscous coupling between layers <span class="math notranslate nohighlight">\(k\)</span> and
+<span class="math notranslate nohighlight">\(k+1\)</span>, <span class="math notranslate nohighlight">\(H_k\)</span> holds contributions that appear only on the diagonal, and <span class="math notranslate nohighlight">\(X_k\)</span> is
+the right-hand side. Without damping,</p>
+<div class="math notranslate nohighlight">
+\[
+H_k = \left[\tilde{h}_k\right]_e
++ \delta_{k,k_{\mathrm{bot}}} \, \Delta t \, C_D \, \frac{\rho}{\rho_0} \left| \mathbf{u}_e \right| ,
+\qquad
+X_k = \left[\tilde{h}_k\right]_e u^n_{e,k} ,
+\]</div>
+<p>with the second term in <span class="math notranslate nohighlight">\(H_k\)</span> the optional implicit bottom drag, present only in
+the bottom layer.</p>
+<p>Backward-Euler treatment of the Rayleigh term contributes
+<span class="math notranslate nohighlight">\(\Delta t \, c_R \left[\tilde{h}_k\right]_e u^{n+1}_{e,k}\)</span> to the left-hand side,
+so the <em>only</em> change to the system is an additional diagonal contribution in
+every active layer:</p>
+<div class="math notranslate nohighlight">
+\[
+H_k = \left[\tilde{h}_k\right]_e \left( 1 + \Delta t \, c_R \right)
++ \delta_{k,k_{\mathrm{bot}}} \, \Delta t \, C_D \, \frac{\rho}{\rho_0} \left| \mathbf{u}_e \right| .
+\]</div>
+<p>Neither <span class="math notranslate nohighlight">\(G_k\)</span> nor <span class="math notranslate nohighlight">\(X_k\)</span> is modified, and the matrix keeps its symmetric,
+diagonally dominant structure, so the existing solver applies unchanged.</p>
+<p>In the limit of no vertical viscosity and no bottom drag, the system decouples
+and reduces to</p>
+<div class="math notranslate nohighlight">
+\[
+u^{n+1}_{e,k} = \frac{u^n_{e,k}}{1 + \Delta t \, c_R} ,
+\]</div>
+<p>which is the analytic solution of the damping equation accurate to first order
+in <span class="math notranslate nohighlight">\(\Delta t\)</span>, is strictly decreasing in magnitude, preserves sign, and is
+bounded for any <span class="math notranslate nohighlight">\(\Delta t \, c_R \ge 0\)</span>. This satisfies the stability
+requirement in Section 2.3, and is the relation the unit test in Section 5.1
+checks. It is also identical to the single-active-layer branch of MPAS-Ocean’s
+<code class="docutils literal notranslate"><span class="pre">ocn_vel_vmix_tend_implicit_rayleigh</span></code>, after accounting for the fact that
+MPAS-Ocean divides its system by layer thickness.</p>
+</section>
+<section id="typical-coefficient-values">
+<h3>3.4 Typical coefficient values<a class="headerlink" href="#typical-coefficient-values" title="Permalink to this heading"></a></h3>
+<p>For reference, the coefficients used in MPAS-Ocean dynamic adjustment sequences
+are of order <span class="math notranslate nohighlight">\(10^{-4}\)</span> s<span class="math notranslate nohighlight">\(^{-1}\)</span> (a damping time scale of about 2.8 hours) for
+the first, most aggressive segment, decreasing by roughly an order of magnitude
+over several segments before damping is switched off. Omega’s default value
+follows this convention, but the feature is disabled by default so the default
+value is inert.</p>
+</section>
+</section>
+<section id="design">
+<h2>4 Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h2>
+<p>The design adds no new class and no new field. Omega already assembles the
+implicit velocity solve in one place, the <code class="docutils literal notranslate"><span class="pre">VelVertMixSetupOnEdge</span></code> functor in
+<code class="docutils literal notranslate"><span class="pre">VertMix.h</span></code>, and that functor already carries an optional diagonal contribution
+for implicit bottom drag. Rayleigh damping is a second such contribution, so it
+is added the same way: two new public members on the functor, a few lines in
+<code class="docutils literal notranslate"><span class="pre">operator()</span></code>, config reading in <code class="docutils literal notranslate"><span class="pre">VertMix::init()</span></code>, and a consistency check in
+<code class="docutils literal notranslate"><span class="pre">Tendencies</span></code>.</p>
+<section id="data-types-and-parameters">
+<h3>4.1 Data types and parameters<a class="headerlink" href="#data-types-and-parameters" title="Permalink to this heading"></a></h3>
+<section id="parameters">
+<h4>4.1.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>A new top-level <code class="docutils literal notranslate"><span class="pre">RayleighDamping</span></code> group is added to the Omega config, placed
+after the <code class="docutils literal notranslate"><span class="pre">VertMix</span></code> group in <code class="docutils literal notranslate"><span class="pre">components/omega/configs/Default.yml</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="nt">RayleighDamping</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">DampingCoeff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-4</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Enable</span></code> (logical, default <code class="docutils literal notranslate"><span class="pre">false</span></code>). Turns Rayleigh damping on. When <code class="docutils literal notranslate"><span class="pre">false</span></code>,
+the damping term is not evaluated at all and results are bit-for-bit
+unchanged, satisfying requirement 2.4.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DampingCoeff</span></code> (real, default <code class="docutils literal notranslate"><span class="pre">1.0e-4</span></code>, units s<span class="math notranslate nohighlight">\(^{-1}\)</span>). The coefficient
+<span class="math notranslate nohighlight">\(c_R\)</span>. Any non-negative value is allowed; a negative value is a configuration
+error and aborts at initialization. The default corresponds to a damping time
+scale of about 2.8 hours, the typical value for the first segment of a dynamic
+adjustment, but has no effect unless <code class="docutils literal notranslate"><span class="pre">Enable</span></code> is <code class="docutils literal notranslate"><span class="pre">true</span></code>.</p></li>
+</ul>
+<p>A top-level group is used rather than a subgroup of <code class="docutils literal notranslate"><span class="pre">Tendencies</span></code> because
+Rayleigh damping is a self-contained spin-up capability rather than one of the
+physical tendency terms, and because a top-level group is the natural place to
+add the ramp parameters of requirement 2.6 later.</p>
+<p>Note that <code class="docutils literal notranslate"><span class="pre">DampingCoeff</span></code> is read only at initialization. Changing it therefore
+requires a new job segment. This is not a limitation in practice: the time step
+is also fixed for the duration of a run, so an adjustment sequence must be
+staged as separate jobs in any case.</p>
+<p>Because the term is applied inside the implicit velocity vertical mixing solve,
+enabling it requires the existing option</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="nt">Tendencies</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">VelVertMixTendencyEnable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<p>which is the default. This is the same constraint that already applies to
+<code class="docutils literal notranslate"><span class="pre">BottomDragTendency</span></code> with <code class="docutils literal notranslate"><span class="pre">Mode:</span> <span class="pre">Implicit</span></code>.</p>
+</section>
+<section id="class-structs-data-types">
+<h4>4.1.2 Class/structs/data types<a class="headerlink" href="#class-structs-data-types" title="Permalink to this heading"></a></h4>
+<p>No new class is introduced. Two public members are added to
+<code class="docutils literal notranslate"><span class="pre">VelVertMixSetupOnEdge</span></code> in <code class="docutils literal notranslate"><span class="pre">components/omega/src/ocn/VertMix.h</span></code>, alongside the
+existing bottom drag members:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">VelVertMixSetupOnEdge</span><span class="w"> </span><span class="p">{</span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">Enabled</span><span class="p">;</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">ImplicitBottomDragEnabled</span><span class="p">;</span>
+<span class="w">   </span><span class="n">Real</span><span class="w"> </span><span class="n">BottomDragCoeff</span><span class="p">;</span>
+<span class="w">   </span><span class="kt">bool</span><span class="w"> </span><span class="n">RayleighDampingEnabled</span><span class="p">;</span><span class="w"> </span><span class="c1">///&lt; Enable Rayleigh damping flag</span>
+<span class="w">   </span><span class="n">Real</span><span class="w"> </span><span class="n">RayleighDampingCoeff</span><span class="p">;</span><span class="w">   </span><span class="c1">///&lt; Rayleigh damping coefficient (s^-1)</span>
+<span class="w">   </span><span class="n">Real</span><span class="w"> </span><span class="n">LocRhoSw</span><span class="p">;</span>
+<span class="w">   </span><span class="p">...</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Both are initialized in the constructor initializer list in <code class="docutils literal notranslate"><span class="pre">VertMix.cpp</span></code> to
+<code class="docutils literal notranslate"><span class="pre">false</span></code> and <code class="docutils literal notranslate"><span class="pre">0.0_Real</span></code> respectively, so that a <code class="docutils literal notranslate"><span class="pre">VertMix</span></code> instance created
+without reading a config performs no damping.</p>
+</section>
+</section>
+<section id="methods">
+<h3>4.2 Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<p>No new public method is added. Four existing pieces of code change.</p>
+<section id="velvertmixsetuponedge-operator">
+<h4>4.2.1 <code class="docutils literal notranslate"><span class="pre">VelVertMixSetupOnEdge::operator()</span></code><a class="headerlink" href="#velvertmixsetuponedge-operator" title="Permalink to this heading"></a></h4>
+<p>The functor already computes the diagonal contribution <code class="docutils literal notranslate"><span class="pre">H</span></code> for layer <code class="docutils literal notranslate"><span class="pre">K</span></code> at edge
+<code class="docutils literal notranslate"><span class="pre">IEdge</span></code>. The damping contribution is added immediately after the
+pseudo-thickness is assigned to <code class="docutils literal notranslate"><span class="pre">H</span></code> and before the bottom drag contribution:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">      </span><span class="n">H</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PseudoThickEdgeK</span><span class="p">;</span>
+
+<span class="w">      </span><span class="c1">// Rayleigh damping: a linear drag on momentum applied in every active</span>
+<span class="w">      </span><span class="c1">// layer. Treated implicitly, so it is unconditionally stable for any</span>
+<span class="w">      </span><span class="c1">// DT * RayleighDampingCoeff.</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">RayleighDampingEnabled</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="n">H</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">DT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">RayleighDampingCoeff</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">PseudoThickEdgeK</span><span class="p">;</span>
+<span class="w">      </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>The functor is only invoked for layers between <code class="docutils literal notranslate"><span class="pre">KMin</span></code> and <code class="docutils literal notranslate"><span class="pre">KMax</span></code> at each edge;
+layers outside that range are filled with the inactive-column values
+(<code class="docutils literal notranslate"><span class="pre">G</span> <span class="pre">=</span> <span class="pre">0</span></code>, <code class="docutils literal notranslate"><span class="pre">H</span> <span class="pre">=</span> <span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">X</span> <span class="pre">=</span> <span class="pre">0</span></code>) by the caller in <code class="docutils literal notranslate"><span class="pre">VertMix::applyVelVertMixImplicit</span></code>.
+The damping therefore automatically applies to exactly the active layers,
+satisfying requirement 2.2, and needs no additional masking. The off-diagonal
+term <code class="docutils literal notranslate"><span class="pre">G</span></code> and the right-hand side <code class="docutils literal notranslate"><span class="pre">X</span></code> are untouched.</p>
+<p>Guarding the addition with <code class="docutils literal notranslate"><span class="pre">RayleighDampingEnabled</span></code> rather than relying on a
+zero coefficient mirrors the existing bottom drag pattern, avoids the extra
+work in the common case, and makes the disabled path trivially bit-for-bit.</p>
+</section>
+<section id="vertmix-init">
+<h4>4.2.2 <code class="docutils literal notranslate"><span class="pre">VertMix::init()</span></code><a class="headerlink" href="#vertmix-init" title="Permalink to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">VertMix::init()</span></code> already reads the <code class="docutils literal notranslate"><span class="pre">VertMix</span></code> config group and its <code class="docutils literal notranslate"><span class="pre">Background</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Convective</span></code>, and <code class="docutils literal notranslate"><span class="pre">Shear</span></code> subgroups. It gains a block that reads the new
+top-level group, following the same error-handling and logging idiom:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="c1">/// Get RayleighDamping group from Omega config</span>
+<span class="w">   </span><span class="n">Config</span><span class="w"> </span><span class="n">RayleighConfig</span><span class="p">(</span><span class="s">"RayleighDamping"</span><span class="p">);</span>
+<span class="w">   </span><span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">OmegaConfig</span><span class="o">-&gt;</span><span class="n">get</span><span class="p">(</span><span class="n">RayleighConfig</span><span class="p">);</span>
+<span class="w">   </span><span class="n">CHECK_ERROR_ABORT</span><span class="p">(</span>
+<span class="w">       </span><span class="n">Err</span><span class="p">,</span><span class="w"> </span><span class="s">"VertMix::init: RayleighDamping group not found in Config"</span><span class="p">);</span>
+
+<span class="w">   </span><span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">RayleighConfig</span><span class="p">.</span><span class="n">get</span><span class="p">(</span>
+<span class="w">       </span><span class="s">"Enable"</span><span class="p">,</span><span class="w"> </span><span class="n">DefVertMix</span><span class="o">-&gt;</span><span class="n">VelVertMixSetup</span><span class="p">.</span><span class="n">RayleighDampingEnabled</span><span class="p">);</span>
+<span class="w">   </span><span class="n">CHECK_ERROR_ABORT</span><span class="p">(</span><span class="n">Err</span><span class="p">,</span><span class="w"> </span><span class="s">"VertMix::init: Parameter RayleighDamping:Enable not "</span>
+<span class="w">                          </span><span class="s">"found in RayleighConfig"</span><span class="p">);</span>
+
+<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">DefVertMix</span><span class="o">-&gt;</span><span class="n">VelVertMixSetup</span><span class="p">.</span><span class="n">RayleighDampingEnabled</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">LOG_INFO</span><span class="p">(</span><span class="s">"VertMix::init: Rayleigh damping is disabled."</span><span class="p">);</span>
+<span class="w">   </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">Err</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">RayleighConfig</span><span class="p">.</span><span class="n">get</span><span class="p">(</span>
+<span class="w">          </span><span class="s">"DampingCoeff"</span><span class="p">,</span><span class="w"> </span><span class="n">DefVertMix</span><span class="o">-&gt;</span><span class="n">VelVertMixSetup</span><span class="p">.</span><span class="n">RayleighDampingCoeff</span><span class="p">);</span>
+<span class="w">      </span><span class="n">CHECK_ERROR_ABORT</span><span class="p">(</span><span class="n">Err</span><span class="p">,</span><span class="w"> </span><span class="s">"VertMix::init: Parameter "</span>
+<span class="w">                             </span><span class="s">"RayleighDamping:DampingCoeff not found in "</span>
+<span class="w">                             </span><span class="s">"RayleighConfig"</span><span class="p">);</span>
+
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">DefVertMix</span><span class="o">-&gt;</span><span class="n">VelVertMixSetup</span><span class="p">.</span><span class="n">RayleighDampingCoeff</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.0</span><span class="n">_Real</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="n">ABORT_ERROR</span><span class="p">(</span><span class="s">"VertMix::init: RayleighDamping:DampingCoeff must be "</span>
+<span class="w">                     </span><span class="s">"non-negative but got {}"</span><span class="p">,</span>
+<span class="w">                     </span><span class="n">DefVertMix</span><span class="o">-&gt;</span><span class="n">VelVertMixSetup</span><span class="p">.</span><span class="n">RayleighDampingCoeff</span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span>
+
+<span class="w">      </span><span class="n">LOG_INFO</span><span class="p">(</span><span class="s">"VertMix::init: Rayleigh damping is enabled with coefficient "</span>
+<span class="w">               </span><span class="s">"{} s^-1."</span><span class="p">,</span>
+<span class="w">               </span><span class="n">DefVertMix</span><span class="o">-&gt;</span><span class="n">VelVertMixSetup</span><span class="p">.</span><span class="n">RayleighDampingCoeff</span><span class="p">);</span>
+<span class="w">   </span><span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">VertMix::init()</span></code> is called from <code class="docutils literal notranslate"><span class="pre">OceanInit.cpp</span></code> before <code class="docutils literal notranslate"><span class="pre">Tendencies::init()</span></code>,
+so the flag is set before the consistency check below runs.</p>
+</section>
+<section id="tendencies-configuration-check">
+<h4>4.2.3 <code class="docutils literal notranslate"><span class="pre">Tendencies</span></code> configuration check<a class="headerlink" href="#tendencies-configuration-check" title="Permalink to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">Tendencies</span></code> reads <code class="docutils literal notranslate"><span class="pre">VelVertMixTendencyEnable</span></code> into
+<code class="docutils literal notranslate"><span class="pre">VMix-&gt;VelVertMixSetup.Enabled</span></code> and already aborts if implicit bottom drag is
+requested without it. An analogous check for Rayleigh damping is added
+immediately after, satisfying requirement 2.5:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">VMix</span><span class="o">-&gt;</span><span class="n">VelVertMixSetup</span><span class="p">.</span><span class="n">RayleighDampingEnabled</span><span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="w">       </span><span class="o">!</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">VMix</span><span class="o">-&gt;</span><span class="n">VelVertMixSetup</span><span class="p">.</span><span class="n">Enabled</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">ABORT_ERROR</span><span class="p">(</span><span class="s">"Tendencies: RayleighDamping Enable requires "</span>
+<span class="w">                  </span><span class="s">"VelVertMixTendencyEnable to be true"</span><span class="p">);</span>
+<span class="w">   </span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="documentation">
+<h4>4.2.4 Documentation<a class="headerlink" href="#documentation" title="Permalink to this heading"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">\ConfigInput</span></code> block in the header comment of <code class="docutils literal notranslate"><span class="pre">VertMix.h</span></code> is extended with
+the new group, and the user guide gains a short section describing the option
+and its use in dynamic adjustment. A new entry <code class="docutils literal notranslate"><span class="pre">design/RayleighDamping</span></code> is added
+to the design document list in <code class="docutils literal notranslate"><span class="pre">components/omega/doc/index.md</span></code>.</p>
+</section>
+</section>
+<section id="items-explicitly-unaffected">
+<h3>4.3 Items explicitly unaffected<a class="headerlink" href="#items-explicitly-unaffected" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Halo exchanges.</strong> The damping is a pointwise operation on each edge column
+and introduces no new horizontal stencil, so no additional halo exchange is
+needed. The implicit solve is already performed over all edges including
+halos.</p></li>
+<li><p><strong>Restart and I/O.</strong> No new prognostic or diagnostic field is created, so the
+restart contents and all I/O streams are unchanged. A restart written during
+an adjustment segment is read normally by a subsequent segment with a
+different coefficient.</p></li>
+<li><p><strong>Explicit tendency path.</strong> <code class="docutils literal notranslate"><span class="pre">Tendencies::computeVelocityTendencies</span></code> and the
+functors in <code class="docutils literal notranslate"><span class="pre">TendencyTerms.h</span></code> are untouched.</p></li>
+<li><p><strong>Time steppers.</strong> The implicit vertical mixing step is applied by the time
+steppers through <code class="docutils literal notranslate"><span class="pre">VertMix::VertMixImplicit</span></code>, so all time steppers that call it
+pick up the damping with no change.</p></li>
+<li><p><strong>Performance.</strong> The added cost is one multiply-add per active edge layer
+inside a kernel that is already memory-bound, and only when the feature is
+enabled.</p></li>
+</ul>
+</section>
+</section>
+<section id="verification-and-testing">
+<h2>5 Verification and Testing<a class="headerlink" href="#verification-and-testing" title="Permalink to this heading"></a></h2>
+<section id="test-single-layer-analytic-decay">
+<h3>5.1 Test: single-layer analytic decay<a class="headerlink" href="#test-single-layer-analytic-decay" title="Permalink to this heading"></a></h3>
+<p>In <code class="docutils literal notranslate"><span class="pre">components/omega/test/ocn/VertMixTest.cpp</span></code>, add a test that configures a
+column with vertical viscosity and bottom drag set to zero, Rayleigh damping
+enabled, and a uniform nonzero initial normal velocity. After a single call to
+<code class="docutils literal notranslate"><span class="pre">VertMix::applyVelVertMixImplicit</span></code>, the normal velocity in every active layer at
+every edge must equal <span class="math notranslate nohighlight">\(u^n / (1 + \Delta t \, c_R)\)</span> to within round-off of the
+working precision.</p>
+<p>This is the exact analytic solution of the discrete system in the decoupled
+limit, so the test verifies both the presence of the term and the correctness of
+its pseudo-thickness weighting: an unweighted or doubly weighted term would give
+a thickness-dependent answer and fail.</p>
+<p>List which requirements it tests:</p>
+<ul class="simple">
+<li><p>tests requirement 2.1</p></li>
+<li><p>tests requirement 2.2</p></li>
+</ul>
+</section>
+<section id="test-disabled-damping-is-bit-for-bit-neutral">
+<h3>5.2 Test: disabled damping is bit-for-bit neutral<a class="headerlink" href="#test-disabled-damping-is-bit-for-bit-neutral" title="Permalink to this heading"></a></h3>
+<p>Run the existing <code class="docutils literal notranslate"><span class="pre">VertMixTest</span></code> cases with <code class="docutils literal notranslate"><span class="pre">Enable:</span> <span class="pre">false</span></code> and confirm the
+velocity and tracer results are bit-for-bit identical to the values expected
+before this feature was added. Separately, confirm that with <code class="docutils literal notranslate"><span class="pre">Enable:</span> <span class="pre">true</span></code> and
+<code class="docutils literal notranslate"><span class="pre">DampingCoeff:</span> <span class="pre">0.0</span></code> the results are also bit-for-bit identical, which verifies
+that the added diagonal contribution vanishes exactly rather than approximately.</p>
+<p>List which requirements it tests:</p>
+<ul class="simple">
+<li><p>tests requirement 2.4</p></li>
+</ul>
+</section>
+<section id="test-stability-at-large-coefficient">
+<h3>5.3 Test: stability at large coefficient<a class="headerlink" href="#test-stability-at-large-coefficient" title="Permalink to this heading"></a></h3>
+<p>Repeat the configuration of Section 5.1 with <span class="math notranslate nohighlight">\(c_R \Delta t = 10^3\)</span>, far outside
+the range an explicit scheme could tolerate. The resulting velocity must be
+reduced in magnitude by the expected factor, must retain the sign of the initial
+velocity, and must be finite. The test is repeated with both signs of the
+initial velocity.</p>
+<p>List which requirements it tests:</p>
+<ul class="simple">
+<li><p>tests requirement 2.3</p></li>
+</ul>
+</section>
+<section id="test-combined-with-vertical-viscosity-and-bottom-drag">
+<h3>5.4 Test: combined with vertical viscosity and bottom drag<a class="headerlink" href="#test-combined-with-vertical-viscosity-and-bottom-drag" title="Permalink to this heading"></a></h3>
+<p>Configure a multi-layer column with nonuniform pseudo-thickness, nonzero
+vertical viscosity, implicit bottom drag enabled, and Rayleigh damping enabled.
+Assemble the same tridiagonal system independently on the host with a
+straightforward Thomas-algorithm implementation in the test, and require the
+solver result to match to round-off.</p>
+<p>This verifies that the damping contribution is added to the diagonal only, that
+it does not perturb the off-diagonal coupling or the right-hand side, and that
+it composes correctly with the bottom drag term that shares the same diagonal.</p>
+<p>List which requirements it tests:</p>
+<ul class="simple">
+<li><p>tests requirement 2.1</p></li>
+<li><p>tests requirement 2.2</p></li>
+</ul>
+</section>
+<section id="test-configuration-error-handling">
+<h3>5.5 Test: configuration error handling<a class="headerlink" href="#test-configuration-error-handling" title="Permalink to this heading"></a></h3>
+<p>Confirm that a configuration with <code class="docutils literal notranslate"><span class="pre">RayleighDamping:</span> <span class="pre">Enable:</span> <span class="pre">true</span></code> and
+<code class="docutils literal notranslate"><span class="pre">Tendencies:</span> <span class="pre">VelVertMixTendencyEnable:</span> <span class="pre">false</span></code> aborts during initialization with
+the expected message, and that a negative <code class="docutils literal notranslate"><span class="pre">DampingCoeff</span></code> aborts during
+<code class="docutils literal notranslate"><span class="pre">VertMix::init()</span></code>.</p>
+<p>List which requirements it tests:</p>
+<ul class="simple">
+<li><p>tests requirement 2.5</p></li>
+</ul>
+</section>
+<section id="test-dynamic-adjustment-in-a-realistic-configuration">
+<h3>5.6 Test: dynamic adjustment in a realistic configuration<a class="headerlink" href="#test-dynamic-adjustment-in-a-realistic-configuration" title="Permalink to this heading"></a></h3>
+<p>As a system-level check, run a global Omega configuration started from a
+climatological initial condition, first without damping and then with
+<code class="docutils literal notranslate"><span class="pre">DampingCoeff:</span> <span class="pre">1.0e-4</span></code>. The damped run must show the maximum normal velocity and
+the globally averaged kinetic energy decaying over the first few simulated days,
+and must remain stable at a time step at which the undamped run either fails or
+requires a substantially smaller step. This is the end-to-end demonstration that
+the feature serves its purpose, and is the natural place for a Polaris dynamic
+adjustment task.</p>
+<p>List which requirements it tests:</p>
+<ul class="simple">
+<li><p>tests requirement 2.1</p></li>
+<li><p>tests requirement 2.3</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="IOStreams.html" class="btn btn-neutral float-left" title="IOStreams" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Reductions.html" class="btn btn-neutral float-right" title="Global Reductions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
