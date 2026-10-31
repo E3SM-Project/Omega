@@ -91,7 +91,6 @@ _TESTS = {
             "ERS.f19_f19.I20TRELMCN",
             "SMS_Ld1.hcru_hcru.I1850CRUELMCN",
             "SMS_Ly5_P1x1.1x1_smallvilleIA.IELMCNCROP.elm-force_netcdf_pio",
-            "ERS.f19_g16.I1850ELM.elm-betr",
             "ERS.f19_g16.I1850ELM.elm-vst",
             "ERS.f09_g16.I1850ELMCN.elm-bgcinterface",
             "SMS.r05_r05.I1850ELMCN.elm-qian_1948",
@@ -318,6 +317,7 @@ _TESTS = {
             "SMS_D_Ld1.T62_oQU240.GMPAS-IAF.mpaso-lat_dep_diffusivity",
             "SMS_D_Ld1.T62_oQU240.GMPAS-IAF.mpaso-leith_viscosity",
             "SMS_D_Ld1.T62_oQU240.GMPAS-IAF.mpaso-gm_geometric",
+            "SMS_D_Ld1.T62_oQU240.GMPAS-IAF.mpaso-ice_aware_mle",
             "ERS_Ld5_D.T62_oQU240.GMPAS-IAF.mpaso-conservation_check",
             "ERS_Ld5_PS.ne30pg2_r05_IcoswISC30E3r5.CRYO1850-DISMF.mpaso-scaled_dib_dismf",
             "SMS_PS.ne30pg2_r05_IcoswISC30E3r5.WCYCL1850.mpaso-frazil_ice_porosity",
@@ -351,7 +351,7 @@ _TESTS = {
         },
 
     "e3sm_developer" : {
-        "inherit" : ("e3sm_land_developer", "e3sm_atm_developer", "e3sm_ice_developer", "e3sm_cryo_developer", "e3sm_gcam_developer"),
+        "inherit" : ("e3sm_land_developer", "e3sm_atm_developer", "e3sm_ice_developer", "e3sm_cryo_developer"),
         "time"    : "0:45:00",
         "tests"   : (
             "ERS.ne4pg2_oQU480_rx1.A",
@@ -380,7 +380,7 @@ _TESTS = {
         },
 
     "e3sm_integration" : {
-        "inherit" : ("e3sm_developer", "e3sm_atm_integration", "e3sm_mmf_integration", "e3sm_rrm", "e3sm_land_integration"),
+        "inherit" : ("e3sm_developer", "e3sm_atm_integration", "e3sm_mmf_integration", "e3sm_rrm", "e3sm_land_integration", "e3sm_gcam_developer"),
         "time"    : "03:00:00",
         "tests"   : (
             "ERS.ne4pg2_oQU480.WCYCL1850NS",

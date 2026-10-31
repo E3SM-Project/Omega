@@ -282,7 +282,7 @@ any of the other supported types (but not another array):
 For type "string" and "array(T)", it is also possible to _append_ to the
 currently stored value.
 
-``` {.shell .copy}
+``` {.shell }
 $ ./atmquery homme::compute_tendencies
     namelist_defaults::atmosphere_processes::homme::compute_tendencies:
         value: a, b
@@ -295,6 +295,69 @@ $ ./atmquery homme::compute_tendencies --full
         type: array(string)
         valid values: []
 ```
+
+### Adding and removing parameters: open nodes
+
+By default, `atmchange` can only modify parameters that already exist, so that a typo in
+a parameter name results in an error rather than in a new (and silently ignored) parameter.
+Some nodes, however, are "open": they hold a set of parameters that is not known a priori
+(for instance, a list of fields). In an open node, the user can _add_ new parameters (leaves)
+with `--add`, and _remove_ existing ones with `--rm`:
+
+``` {.shell .copy}
+./atmchange --add my_open_node::new_param=1,2,3
+./atmchange --rm my_open_node::old_param
+```
+
+Some notes:
+
+- `--add` requires the name of the open node, and the new leaf must not exist already
+  (use a regular `atmchange` to modify an existing leaf).
+- All leaves of an open node have the same type (and, possibly, the same constraints
+  and valid values), specified by the open node via `leaf_*` attributes (e.g., `leaf_type`)
+  in `namelist_defaults_eamxx.xml`. A value that is not compatible with them is rejected.
+- Open nodes are listed in the [parameters documentation](eamxx_params.md).
+- This is a power feature: there is little protection against adding or removing leaves
+  that EAMxx does not expect, so use it with care.
+- Removing a leaf that is in the defaults is allowed, and, as for all atmchanges,
+  `atmchange --reset` brings it back.
+
+### Setting fields to constants in the initial conditions
+
+Fields that are needed at initialization time are normally read from the initial condition
+(IC) file. Fields can also be set to a constant, via the `initial_conditions::constant_fields`
+node, which has two (open) sub-nodes:
+
+- `overrides`: the field is _always_ set to the constant, even if it is in the IC file.
+- `defaults`: the field is set to the constant _only if_ it is not in the IC file
+  (if it is, it is read from the file, and the constant is ignored). Note that these are
+  defaults for the fields in the IC file, and are unrelated to the namelist defaults file.
+
+In other words, the priority is: `defaults` < IC file < `overrides`.
+
+If a field is in both nodes, `overrides` wins. Entries for fields that do not need to be initialized
+are ignored. Note that `defaults` constants are _not_ used for the fields that are read from the
+topography file (`phis`, `sgh30`, and `sgh`), so they would be silently ignored: use `overrides` for those.
+Since these nodes are open, entries can be added and removed with `atmchange`:
+
+``` {.shell .copy}
+# Always set 'my_field' to 1.5
+$ ./atmchange --add constant_fields::overrides::my_field=1.5
+
+# Set 'my_vec_field' to 1,2,3 (one value per component) if it is not in the IC file
+$ ./atmchange --add constant_fields::defaults::my_vec_field=1,2,3
+
+# Do not override 'tke' with a constant (it will be read from the IC file)
+$ ./atmchange --rm constant_fields::overrides::tke
+```
+
+All the entries are arrays of real numbers. A single value sets _all_ the entries of the field
+to that value (for any field), while an array of N values is only valid for vector fields with N components,
+and sets each component to the corresponding value.
+
+Note: constants used to be set directly in the `initial_conditions` list (e.g.,
+`initial_conditions::tke=0`). This is no longer supported: such entries are ignored, so
+they must be moved to `constant_fields::overrides` (or `constant_fields::defaults`).
 
 ### Modifying the list of atmosphere processes
 
