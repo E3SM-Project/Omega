@@ -189,11 +189,6 @@ If Omega CTests are failing or simulations are crashing, setting
 need to identify which test has failed, it may be useful to examine the CTest
 log file located at `$BUILD_DIR/Testing/Temporary/LastTest.log`.
 
-For SYCL builds (Intel GPUs such as Aurora), `Debug` builds still compile
-Omega's C++ code at `-O1`. Unoptimized SYCL kernels need enough private
-memory to fill the GPU and cause crashes, so debug checks stay on but the
-code is not compiled at `-O0`.
-
 (omega-dev-parmetis-libs)=
 
 ### Metis and Parmetis libraries
