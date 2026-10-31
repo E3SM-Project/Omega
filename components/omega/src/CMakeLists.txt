@@ -35,6 +35,20 @@ if(OMEGA_SINGLE_PRECISION)
   )
 endif()
 
+# Debug builds compile with -g and no -O level, which icpx applies to SYCL
+# device code as -O0. Unoptimized kernels need so much private memory that
+# the GPU runtime's per-kernel private allocations fill a whole PVC tile and
+# runs eventually crash with a GPU page fault (Omega issue #666). Optimize
+# Omega's C++ code at -O1 in that case. Fortran sources and the external
+# libraries keep the usual debug flags.
+if("${OMEGA_ARCH}" STREQUAL "SYCL" AND
+   ("${OMEGA_BUILD_TYPE}" STREQUAL "Debug" OR "${OMEGA_BUILD_TYPE}" STREQUAL "DEBUG"))
+  target_compile_options(
+      OmegaLibFlags
+      INTERFACE
+      $<$<COMPILE_LANGUAGE:CXX>:-O1>
+  )
+endif()
 
 target_link_options(
     OmegaLibFlags
