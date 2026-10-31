@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<config_pes>
+  <grid name="any">
+    <mach name="any">
+      <pes compset="any" pesize="any">
+        <comment>omega: any grid, any compset, any machine, 1 node</comment>
+        <ntasks>
+          <ntasks_atm>-1</ntasks_atm>
+          <ntasks_lnd>-1</ntasks_lnd>
+          <ntasks_rof>-1</ntasks_rof>
+          <ntasks_ice>-1</ntasks_ice>
+          <ntasks_ocn>-1</ntasks_ocn>
+          <ntasks_glc>-1</ntasks_glc>
+          <ntasks_wav>-1</ntasks_wav>
+          <ntasks_cpl>-1</ntasks_cpl>
+        </ntasks>
+      </pes>
+    </mach>
+    <!-- Omega runs on the GPUs with one MPI task per GPU, while the other
+         components (MPAS-Seaice, data models, coupler) run on the CPU
+         cores.  Use 64 MPI tasks per node so the CPU components have a
+         sensible number of tasks (and seaice partition files exist) and
+         stride Omega's tasks by 16 so pm-gpu_set_affinity_npergpu.sh
+         gives each Omega task its own GPU. -->
+    <mach name="pm-gpu|muller-gpu|alvarez-gpu">
+      <pes compset="any" pesize="any">
+        <comment>omega+pm-gpu: 1 node, 64x1 on CPU components, ocn 4x1 (1 per GPU) with stride 16</comment>
+        <MAX_MPITASKS_PER_NODE>64</MAX_MPITASKS_PER_NODE>
+        <ntasks>
+          <ntasks_atm>-1</ntasks_atm>
+          <ntasks_lnd>-1</ntasks_lnd>
+          <ntasks_rof>-1</ntasks_rof>
+          <ntasks_ice>-1</ntasks_ice>
+          <ntasks_ocn>4</ntasks_ocn>
+          <ntasks_glc>-1</ntasks_glc>
+          <ntasks_wav>-1</ntasks_wav>
+          <ntasks_cpl>-1</ntasks_cpl>
+        </ntasks>
+        <pstrid>
+          <pstrid_ocn>16</pstrid_ocn>
+        </pstrid>
+      </pes>
+    </mach>
+    <!-- Aurora has 12 GPU tiles per node.  With 96 MPI tasks per node,
+         Aurora's intelgpu CPU_BIND, GPU_BIND and MEM_BIND give each block of
+         8 tasks one GPU tile, so striding Omega's 12 tasks by 8 gives each
+         its own tile. -->
+    <mach name="aurora">
+      <pes compset="any" pesize="any">
+        <comment>omega+aurora: 1 node, 96x1 on CPU components, ocn 12x1 (1 per GPU tile) with stride 8</comment>
+        <MAX_MPITASKS_PER_NODE>96</MAX_MPITASKS_PER_NODE>
+        <ntasks>
+          <ntasks_atm>-1</ntasks_atm>
+          <ntasks_lnd>-1</ntasks_lnd>
+          <ntasks_rof>-1</ntasks_rof>
+          <ntasks_ice>-1</ntasks_ice>
+          <ntasks_ocn>12</ntasks_ocn>
+          <ntasks_glc>-1</ntasks_glc>
+          <ntasks_wav>-1</ntasks_wav>
+          <ntasks_cpl>-1</ntasks_cpl>
+        </ntasks>
+        <pstrid>
+          <pstrid_ocn>8</pstrid_ocn>
+        </pstrid>
+      </pes>
+    </mach>
+  </grid>
+</config_pes>
