@@ -456,7 +456,9 @@ are additional work.
 The first-order expansion [](#alpha-taylor) is what Phase 1 implements. A second-order expansion
 (adding $\alpha_{\Theta\Theta}$, $\alpha_{SS}$, $\alpha_{\Theta S}$, $\alpha_{pp}$, …) is a Phase 2
 option where stratification is strong; it adds derivative evaluations but still no in-integral
-TEOS-10 calls. It has no configuration key yet.
+TEOS-10 calls. It has no configuration key yet. It is the last part of Phase 2 to be taken up,
+after the parabolic reconstruction and the wide stencil, and it is dropped only if measurement then
+shows that it does not help (§4.5.3).
 
 #### 3.3.1 The expansion point must be shared across the edge
 
@@ -550,6 +552,80 @@ lie exactly on that line as a function of `PressureMid`, so this recovers the sl
 any distribution of layer thicknesses. The one-sided branches matter: the deepest valid layer is
 the partial cell that carries the whole signal where bathymetry steps. No limiter is applied. The
 slopes are formed once per cell and layer and reused across each cell's edges.
+
+**The Phase 2 estimator** is the piecewise parabolic method (PPM) of
+[Colella and Woodward (1984)](https://doi.org/10.1016/0021-9991%2884%2990143-8), without its
+limiter. Layer $k$'s deviation is
+
+$$
+\Theta'_{i,k}(p) = b_{i,k}\,(p - p^{\text{mid}}_{i,k})
++ c_{i,k}\left[(p - p^{\text{mid}}_{i,k})^2 - \tfrac{1}{12}\,\Delta p_{i,k}^2\right],
+$$ (ppm-recon)
+
+with $\Delta p_{i,k}$ the layer's thickness in pressure, and it integrates to zero over the layer
+for any $b_{i,k}$ and $c_{i,k}$, again because `PressureMid` is the exact midpoint. The parabola is
+the one that keeps the layer mean and takes the values $a^{\text{top}}_{i,k}$ and
+$a^{\text{bot}}_{i,k}$ at the layer's two interfaces,
+
+$$
+b_{i,k} = \frac{a^{\text{bot}}_{i,k} - a^{\text{top}}_{i,k}}{\Delta p_{i,k}},
+\qquad
+c_{i,k} = \frac{3\left(a^{\text{top}}_{i,k} + a^{\text{bot}}_{i,k} - 2\,\Theta_{i,k}\right)}
+{\Delta p_{i,k}^2}.
+$$ (ppm-coeffs)
+
+The value at an interface is the derivative there of the polynomial $P$ that interpolates the
+cumulative integral $\int\Theta\,dp$ at five consecutive interfaces centred on it — two layers on
+either side, the window shifted inward near the top and bottom of the column so that it stays among
+the valid layers. Each interface has one value, which both layers that meet there use, so the
+reconstruction is continuous in pressure where the Phase 1 one is not. That matters off the exact
+set, because the fixed quadrature rule of §4.1.1 does not resolve breaks in the integrand, and a
+jump costs it far more than a kink (§6.7).
+
+The estimator is exact on any grid. The layer means are exact layer averages, so the cumulative
+integral is known exactly at every interface, whatever the thicknesses. If $\Theta$ is cubic in
+pressure its cumulative integral is a quartic, which $P$ reproduces, so the interface values are
+exact; if $\Theta$ is quadratic, the only parabola through two exact interface values with the
+exact mean is $\Theta$ itself. In a column of fewer than four valid layers $P$ interpolates all of
+the column's interfaces instead, and its degree is the number of valid layers: the reconstruction
+stays exact for quadratics with three, is the Phase 1 linear reconstruction with two, and is
+constant with one.
+
+No cumulative integral is ever summed. Its first divided differences between neighbouring
+interfaces are the layer means themselves, so $P'$ is assembled from divided differences of the
+layer means and the interface pressures, and each layer forms its interface values as departures
+from its own mean. Round-off therefore scales with the variation of the profile across the window
+rather than with $\Theta$ itself or with the depth of the column (§3.7.5). Continuity across an
+interface then holds to round-off rather than bit for bit, and nothing depends on it holding
+exactly.
+
+**At the ends of a column the coefficients are taken from $P$ itself.** Where both of a layer's
+interfaces take their values from the same window — the two outermost valid layers at each end of
+a column, and every layer of a column of four or fewer —
+
+$$
+b_{i,k} = P''(p^{\text{mid}}_{i,k}) + \tfrac{1}{24}\,\Delta p_{i,k}^2\,P''''(p^{\text{mid}}_{i,k}),
+\qquad
+c_{i,k} = \tfrac{1}{2}\,P'''(p^{\text{mid}}_{i,k}),
+$$ (ppm-coeffs-end)
+
+which is [](#ppm-coeffs) rearranged. The two agree in exact arithmetic, but in a thin layer
+[](#ppm-coeffs) forms the curvature from $a^{\text{top}} + a^{\text{bot}} - 2\,\Theta$, a small
+difference of nearly equal quantities, and divides it by the square of the thickness, where
+[](#ppm-coeffs-end) forms no such difference. Within the layer that does no harm, since there the
+error is no larger than a small multiple of the interface values' own round-off. Beyond the layer
+it does, and the outermost valid layer at each end is the one whose reconstruction is extrapolated
+past the column (assumption A5, §3.7.6). Built from [](#ppm-coeffs),
+a partial bottom cell $10^{-4}$ of a layer thick extrapolates with an error of order 10 °C in single
+precision; built from [](#ppm-coeffs-end) it extrapolates as accurately as in double precision
+(§6.7).
+
+None of Colella and Woodward's constraints on the interface values or on the parabola is applied,
+for the reason given above. The coefficients are formed once per cell, layer and tracer and reused
+across each cell's edges, as the Phase 1 slopes are. A parabola fitted instead to the means of
+layers $k-1$, $k$ and $k+1$ is also exact for quadratics and needs only three layers, but it jumps
+at every interface: with the default quadrature its error is 3 to 76 times that of the estimator
+above, and below a thin bottom cell it extrapolates two to three times worse (§6.7).
 
 The isopycnal-model assumption of constant properties within a layer is the degenerate choice
 $\Theta'_{i,k} = S'_{i,k} = 0$. This is retained as a **verification-only** configuration — it is
@@ -649,9 +725,10 @@ with the sea-surface height difference and the surface pressures.
 
 **The shift to a common pressure must stay within one layer.** The short integrals use one
 first-order expansion, shared by the two layers that meet at the anchor (§3.3.1), and it is accurate
-across a pressure difference of about a layer. That covers a flat floor, and a sloping one cut by
-partial bottom cells beneath level interior layers: there the two columns' interfaces $K+1$ are
-always within a layer of each other. Terrain-following layers over a steep slope put one floor
+across a pressure difference of about a layer. That covers a flat floor, and most of a sloping one
+cut by partial bottom cells beneath level interior layers: there the two columns' interfaces $K+1$
+are within a layer of each other, except where a thin bottom cell lies entirely above the deeper
+column's layer $K$. Terrain-following layers over a steep slope put one floor
 several layers deeper than the other, and [](#anchor) then stretches the expansion across the whole
 offset. The resulting error grows with the cube of the offset and is the same at every depth.
 Measured in Omega on a resting state linear in pressure with the floors 6.4 layers apart, it leaves
@@ -1311,6 +1388,9 @@ rather than keys, so no configuration written for Phase 1 needs to change when P
   `QuadraturePoints: 2`.
 - **Phase 2 target:** `HorzOrder: 4`, `VerticalReconstruction: 'ppm'`.
 
+The Phase 2 values become available as each is implemented, but the defaults stay at Phase 1's
+until a realistic configuration shows that the gain is worth the cost (§4.5.3).
+
 The three sub-options are optional: where a key is absent the Phase 1 default is used, so a
 configuration written before they existed still runs. They are read and validated in the
 `PressureGrad` constructor and cached on the `PressureGradFiniteVolume` functor. **Values that are
@@ -1649,24 +1729,35 @@ well as on the assumption-A2 grounds §3.6.1 gives.
   rejected in the `PressureGrad` constructor (§4.1.1); Phase 2 accepts them, and
   `PressureGradVertRecon` gains its `PPM` value.
 - *Reconstruction.* Parabolic counterparts of the stencil, coefficient and evaluation functions in
-  `PGradRecon.h`, exact for a quadratic profile on a non-uniform grid (§3.4), with per-cell
-  coefficient arrays formed by `computeReconSlopes` alongside or in place of `ReconSlopeCt` and
-  `ReconSlopeSa`. The column scan evaluates the reconstruction in three places — the integrand of
-  each edge layer, the anchor's two short integrals, and the carry-down of
+  `PGradRecon.h`, implementing the estimator of §3.4, [](#ppm-recon)–[](#ppm-coeffs-end), with
+  per-cell coefficient arrays formed by `computeReconSlopes` alongside or in place of
+  `ReconSlopeCt` and `ReconSlopeSa`. The column scan evaluates the reconstruction in three places
+  — the integrand of each edge layer, the anchor's two short integrals, and the carry-down of
   [](#anchor-one-layer) — and all three must switch together, or the anchor will describe different
   water from the scan.
 - *Quadrature.* With parabolic deviations and the first-order expansion, the integrand is quadratic
   within a sub-interval and its first moment cubic, so the two-point default still integrates both
   exactly there. A second-order expansion adds products of deviations, a quartic integrand and a
   quintic moment, which need three points. Exactness on the exact set is unaffected either way
-  (§3.5, consequence 2).
+  (§3.5, consequence 2). Off the exact set, though, the default rule spans each edge layer whole,
+  so it does not resolve the kinks the parabolic reconstruction leaves at either column's
+  interfaces within the layer. Measured on the reconstruction alone, refining with the two columns'
+  displacement held at a fixed number of layer thicknesses, that holds the column scan to about
+  third order where integrating exactly between the kinks gives about fourth (§6.7); at fixed tilt,
+  Omega's unit test measures faster convergence (§6.8). Whether splitting the rule at those
+  interfaces is worth its cost is a question for the wide stencil, once the horizontal error no
+  longer dominates.
 - *Horizontal stencil.* The cell lists and weights are cached on the functor (§4.1.3).
-- *Tests.* The reconstruction unit test gains a quadratic profile on non-uniform layers; the
-  quadratic-in-pressure profile of §5.2 moves from the convergence group into the exact group; and
-  the Polaris kernel that §5.1 compares against has to gain the same reconstruction, written from
-  this document rather than from the C++, so that the comparison stays independent.
+- *Tests.* The reconstruction unit test gains a quadratic profile on non-uniform layers, columns of
+  one to three valid layers (§3.4), and a thin end layer extrapolated beyond the column, in both
+  precisions; the quadratic-in-pressure profile of §5.2 moves from the convergence group into the
+  exact group; §5.1's `bathymetry_step` variants and the sigma seamount re-measure assumption A5
+  with parabolas extrapolated below the floor; and the Polaris kernel that §5.1 compares against
+  has to gain the same reconstruction, written from this document rather than from the C++, so that
+  the comparison stays independent.
 - *The sigma instability* (§5.3.1). Phase 2 should be run on the sigma seamount. A 700-fold smaller
   starting error grew at the same rate there, so higher accuracy alone is not expected to cure it.
+  Run there with the parabolic reconstruction, it grows three to five times faster (§6.8).
 
 #### 4.5.3 Suggested order of work
 
@@ -1693,9 +1784,23 @@ well as on the assumption-A2 grounds §3.6.1 gives.
    spurious velocity to expect. It is **not** the A4 diagnostic: §5.3 explains why that one cannot
    be run with `Centered` and has to wait for Phase 1.
 3. Implement and verify Phase 1 against §5.1, §5.2, §5.3, and §5.5.
-4. Take up Phase 2. Re-examine [](#z-increment-exact) before adopting the second-order
-   equation-of-state expansion; that, and not the stencil, is the item that could reopen a settled
-   question.
+4. Take up Phase 2, in three parts that each ship on their own. In each, the Polaris kernel gains
+   the change first, written from this document, so that it stays an independent reference for
+   Omega (§5.1).
+
+   1. **The parabolic reconstruction** of §3.4, with the two-cell stencil. It is useful without
+      the rest, widening the exact set to profiles quadratic in pressure; with the two-cell stencil
+      the §5.1 gradient variants stay second order in the horizontal.
+   2. **The wide stencil** of §3.6.1. A multi-column Polaris configuration and a Python prototype
+      settle its form, which is recorded in §3.6.1 before the C++ is written.
+   3. **The second-order expansion** of §3.3, measured in Polaris with the parabolic
+      reconstruction and the wide stencil in place, and implemented in Omega unless that
+      measurement shows it does not help. It needs second derivatives from `Eos` (§4.1.2) and
+      three quadrature points (§4.5.2), and [](#z-increment-exact) must be re-examined before it
+      is adopted; that, and not the stencil, is the item that could reopen a settled question.
+
+   `linear` and `HorzOrder: 2` stay the default until a realistic configuration shows that the
+   gain is worth the cost.
 
 Steps 1–3 are done: step 1 in the Polaris `horiz_press_grad` kernel (polaris#675, with the anchor
 rule in polaris#900), step 2 in the Polaris seamount tasks (polaris#681), and step 3 in Omega#493
@@ -2127,6 +2232,12 @@ anomaly reaches a third of the profile's whole range.
 Because a 700-fold smaller starting error grows at the same rate, this looks like the scheme's
 response on steep sigma layers rather than its accuracy, so Phase 2's higher order is not expected
 to cure it by accuracy alone (§4.5.2).
+
+**The parabolic reconstruction makes it worse.** On the same sigma trees under TEOS-10 it starts as
+much as four times more accurate and then grows three to five times faster, overturning at day 0.58
+rather than 1.42 on the exponential profile and at day 1.50 rather than 2.58 on the one linear in
+pressure; on z-star it stays stable (§6.8). That fits the reading above: the instability is the
+scheme's response on steep layers, and the parabolic reconstruction responds more strongly.
 
 **What this does and does not mean.** Sigma layers follow the bathymetry, which is the steepest
 tilt against isobars in the whole suite and is not what Omega runs — p-star, like z-star, keeps
@@ -2588,3 +2699,104 @@ variant is $4.3\times10^{-10}$ m s⁻² against `PressureGradCentered`'s $9.1\ti
 
 **One reading to avoid** is recorded in §3.7.3: the fitted tilt exponent is $1.000$ for *both*
 schemes, so it cannot be used to compare them. The absolute level is the discriminating measurement.
+
+### 6.7 Choosing the parabolic estimator
+
+Two estimators meet the requirements of §3.4: the unlimited Colella–Woodward construction it
+specifies, and a parabola fitted to the means of layers $k-1$, $k$ and $k+1$, one-sided in the
+outermost layers. Both are exact for quadratics on any grid and both reduce to the two coefficients
+of [](#ppm-recon), so the choice touches only how those are formed. It was made by measurement, in
+a NumPy model of the column scan written for the purpose.
+
+Two columns hold one profile $\Theta(p)$ on different partitions of 40 MPa: layers stretched with
+depth and jittered, the second column's interior interfaces displaced by up to 0.3 or 2.5 layer
+thicknesses, and the top and bottom interfaces shared so that the anchor is exact.
+[](#d-recurrence) then accumulates the integral of the difference between the two columns'
+reconstructions at matched pressure — [](#dalpha) without its equation-of-state coefficient — so a
+perfect reconstruction gives $D_k = 0$, and $\max_k |D_k|$ is the error. The profiles are a cubic
+and an exponential in pressure, on 16 to 128 layers. The integral is taken either exactly,
+splitting each edge layer at both columns' interfaces, or with the default two Gauss points per
+edge layer, on 32 to 128 layers.
+
+| | linear | three-mean fit | Colella–Woodward |
+| --- | --- | --- | --- |
+| error relative to Colella–Woodward, exact integral | 27–1250 | 1.4–26 | 1 |
+| convergence rate, exact integral | 2.6–3.4 | 3.2–4.7 | 3.6–4.6 |
+| error relative to Colella–Woodward, two Gauss points | 14–119 | 3.2–76 | 1 |
+| convergence rate, two Gauss points | 1.3–3.0 | 1.5–3.9 | 2.8–3.1 |
+
+Rates are between successive doublings of the layer count from 32 to 128. On a quadratic profile
+both parabolic estimators return round-off, some ten orders of magnitude below the linear
+reconstruction, under either rule.
+
+**The default rule is what separates them.** Integrated exactly, the two parabolic estimators
+converge at about the same order and differ by a factor that depends on the profile. Under the two
+points Omega runs with, the three-mean fit gains little over the linear reconstruction where the
+interfaces are nearly level — 1.4 to 1.6 times on the cubic at 0.3 layers' displacement — and on
+the exponential profile it is worse than linear there, because its parabolas jump at every
+interface and two points do not resolve the jumps. Colella–Woodward parabolas meet continuously and
+leave only kinks, and theirs is also the cleanest convergence under that rule.
+
+**The default rule also costs the parabolic reconstruction an order.** All three estimators
+converge at about third order with two Gauss points, where integrating exactly between the breaks
+gives the parabolic ones about fourth. The refinement here holds the second column's displacement
+at a fixed number of layer thicknesses, so the tilt shrinks with the layers; at fixed tilt Omega's
+unit test measures more (§6.8). §4.5.2 records what follows from that.
+
+**Below a thin bottom cell.** Assumption A5's extrapolation was measured on the exponential profile
+with 32 layers and a bottom cell from a full layer down to $10^{-4}$ of one, by evaluating the
+deepest reconstruction down to three layers below the floor. The error there is
+$1.7$–$2.2\times10^{-2}$ °C for the linear reconstruction, $4.4$–$7.1\times10^{-3}$ for the
+three-mean fit and $1.9$–$2.5\times10^{-3}$ for Colella–Woodward. In single precision,
+Colella–Woodward built from [](#ppm-coeffs) degrades as the cell thins — to $6.4\times10^{-3}$ °C
+at $10^{-3}$ of a layer and to 12 °C at $10^{-4}$ — while built from [](#ppm-coeffs-end) it
+reproduces the double-precision figures at every thickness, which is why §3.4 specifies the latter
+at the ends of a column.
+
+These are measurements of the reconstruction alone. The Polaris reference implementation and Omega
+measure the scheme as a whole (§5.1, §5.2).
+
+### 6.8 Confirmation of the parabolic reconstruction in Omega
+
+The parabolic reconstruction was implemented in Omega as §3.4 specifies it, and measured on
+chrysalis with Intel against the Polaris kernel that §5.1 compares with, which was written from this
+document.
+
+**The unit test** (§5.2). On the two-column state the exactness gate returns 0.06 to 0.08 $\epsilon$
+of the cancelling terms on profiles linear and quadratic in pressure in double precision, and 0.12
+to 0.18 $\epsilon$ in single, where the linear reconstruction leaves $3.1\times10^{-7}$ m s$^{-2}$
+on the quadratic. The host-side assembly reproduces the kernel bit for bit on a cubic. On that
+cubic, under refinement at fixed tilt over 15, 30 and 60 layers, the error converges at 5.1 and 4.4,
+against 2.9 and 2.8 for the linear reconstruction, and is 40 to 600 times smaller. Extrapolated two
+layers below a bottom cell a billionth of a layer thick, the reconstruction of a quadratic is off by
+$2.6\times10^{-13}$ °C in double precision, against $1.4\times10^{4}$ °C built from [](#ppm-coeffs);
+in single precision, for a cell a thousandth of a layer thick, the two are $1.8\times10^{-4}$ and
+2.4 °C.
+
+**The two-column tasks** (§5.1). `finite_volume_ppm` agrees with the Polaris kernel to at most
+$1.6\times10^{-13}$ m s$^{-2}$ on all ten `horiz_press_grad` variants, and reproduces its
+predictions. The resting-state ratios are the smallest anywhere in each sweep:
+
+| variant | centered over `finite_volume_ppm` | against `finite_volume` |
+| --- | --- | --- |
+| `ztilde_gradient`, at 4 km | 5.11 | 2.8 to 2.9 times more accurate, converging at 1.99 |
+| `surface_pressure_gradient`, at 4 km | 3.27 | 1.5 times more accurate |
+| `temperature_gradient`, `salinity_gradient` | 1.00 | the same |
+| `hydrostatic_consistency` | 5.05 | 1.4 to 2.6 times more accurate |
+| `hydrostatic_consistency_linear` | 29.4 | the same; what remains of both is the anchor |
+| `hydrostatic_consistency_quadratic` | 27.5 | in the exact set; what remains is the anchor |
+| `bathymetry_step` | 632 | three times less accurate at 256 m, up to a thousand times more at 128 m |
+| `bathymetry_step_linear` | 58829 | the same |
+| `bathymetry_step_quadratic` | 61515 | in the exact set |
+
+On `bathymetry_step` at 256 m the profile's PCHIP node at −3000 m, where its curvature jumps, lies
+inside the five-interface window of the bottom layers. Moved to −2000 m, the parabolic
+reconstruction is 340 to 510 times more accurate there instead.
+
+**The seamount** (§5.3), for six days under TEOS-10. On z-star the parabolic reconstruction stays
+stable: at day 6 the maximum speed is $1.75\times10^{-4}$ m s$^{-1}$ on the exponential profile,
+against $3.24\times10^{-4}$ with the linear one, and $1.30\times10^{-6}$ with either on the profile
+linear in pressure. On sigma it starts up to four times more accurate and then grows three to five
+times faster: mean kinetic energy e-folds at 11.6 per day against 2.3 on the exponential profile,
+and at 7.9 against 2.8 on the linear one, and the columns first overturn at day 0.58 rather than
+1.42, and at day 1.50 rather than 2.58. The centered runs are unchanged.

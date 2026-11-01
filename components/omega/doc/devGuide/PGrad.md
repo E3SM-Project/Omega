@@ -91,7 +91,8 @@ The method uses hierarchical Kokkos parallelism: an outer `parallelForOuter` loo
 iterates over edges, and an inner `parallelForInner` loop iterates over vertical
 chunks. The appropriate functor is dispatched based on `PressureGradChoice`. The
 finite-volume branch additionally runs two kernels ahead of that dispatch: one
-forming the per-cell reconstruction slopes, and the per-edge column scan.
+forming the per-cell reconstruction slopes, and for the parabolic
+reconstruction curvatures, and the per-edge column scan.
 
 Note that `AuxiliaryState::computeMomVertAux` calls `Eos::computeSpecVolAndDerivs`
 in place of `Eos::computeSpecVol` when the finite-volume scheme is selected. That
@@ -205,6 +206,24 @@ interface is shifted to the common pressure by integrating its own reconstructio
 over half the cross-edge pressure difference, and both short integrals vanish
 where the two columns' interface pressures agree.
 
+Those short integrals use one first-order expansion of the equation of state,
+shared by the two bottom layers, so they are only accurate across a pressure
+difference of about a layer. That covers a flat floor, and most of a sloping
+one cut by partial bottom cells beneath level interior layers. The floors are
+just over a layer apart wherever a thin bottom cell lies entirely above the
+deeper column's layer of the same index, and terrain-following layers over a
+steep slope put one floor several layers deeper than the other. An expansion
+stretched across that whole offset leaves an error that grows with the cube of
+the offset and is the same at every depth. So where the floors are more than a
+layer apart, the shallower floor is compared instead with the deeper column's own
+interface just below its pressure, taking the deeper column's height there from
+`VertCoord` and sharing the expansion between the two layers that meet there.
+The anchor is then carried down to the edge's deepest interface with the
+matched-pressure integrand, which vanishes on the exact set like every other
+increment of the scan. Where the floors are within one layer of each other the
+deeper column's interface is the shared one, and the anchor reduces exactly to
+the comparison above.
+
 The scheme has a known instability on terrain-following (sigma) layers over a
 steep seamount that the centered scheme does not share. It is described, with
 the tests that rule out the anchor, extrapolation below the floor and the tracer
@@ -236,11 +255,46 @@ it differs from the edge layer index under tilt, that the answer does not depend
 on the starting hint, and that a pressure outside the column clamps. Those tests
 are not optional.
 
+## The vertical reconstruction
+
+Each column's temperature and salinity are reconstructed in pressure as the
+layer mean plus a deviation that integrates to zero over the layer:
+`VerticalReconstruction: 'linear'` gives a line in each layer, and `'ppm'` a
+parabola, which widens the set of profiles on which the scheme is exact from
+those linear in pressure to those quadratic in it.
+
+`computeReconSlopes` forms the coefficients once per cell and layer, ahead of
+the column scan: the slopes in `ReconSlopeCt` and `ReconSlopeSa`, and for the
+parabolic reconstruction the curvatures in `ReconCurvCt` and `ReconCurvSa`,
+which are allocated only then. The parabola keeps the layer mean and takes, at
+each of the layer's interfaces, the derivative of the polynomial through the
+cumulative integral of the profile at the five nearest interfaces.
+`ppmReconCoeffs` builds that polynomial from divided differences of the layer
+means, so no cumulative integral is ever summed. A column of fewer than four
+valid layers uses the polynomial through all of its interfaces, which with two
+layers is exactly the linear reconstruction.
+
+**At the ends of a column the coefficients come from the polynomial itself**,
+its derivatives at the layer midpoint, rather than from the two interface
+values. The two are the same in exact arithmetic, but in a thin layer the
+interface form takes the curvature from a small difference of nearly equal
+values divided by the square of the thickness. That is harmless inside the
+layer and not beyond it, and the outermost layers are the ones extrapolated
+past the column: in single precision a bottom cell a thousandth of a layer
+thick, extrapolated that way, is off by degrees.
+
+The column scan evaluates the reconstruction in three places: the integrand of
+each edge layer, the anchor's two short integrals, and the anchor's carry-down.
+All three go through `reconEval`, as does the host-side assembly in
+`PGradTest.cpp`, so they cannot use different reconstructions, which would
+leave the anchor describing different water from the scan. For the linear
+reconstruction `reconEval` is exactly the earlier `linearReconEval`.
+
 ## Supporting headers
 
 | Header | Contents |
 | ------ | -------- |
-| `PGradRecon.h` | the mean-preserving linear reconstruction of temperature and salinity in pressure, and the per-column pressure lookup |
+| `PGradRecon.h` | the mean-preserving linear and parabolic reconstructions of temperature and salinity in pressure, `reconEval` through which every evaluation of either goes, and the per-column pressure lookup |
 | `PGradFiniteVolume.h` | the edge-shared equation-of-state expansion, the matched-pressure integrand, and the Gauss-Legendre rule |
 
 The equation-of-state expansion is **shared across each edge**: the coefficients
@@ -273,10 +327,10 @@ Valid options for `PressureGradType` are:
 
 The `FiniteVolume` scheme reads three further keys from the same group, all
 optional: `HorzOrder` (default 2), `VerticalReconstruction` (default `'linear'`)
-and `QuadraturePoints` (default 2). Only `HorzOrder: 2` and
-`VerticalReconstruction: 'linear'` are implemented; other values are rejected
+and `QuadraturePoints` (default 2). Only `HorzOrder: 2` is implemented, and
+`VerticalReconstruction` is `'linear'` or `'ppm'`; other values are rejected
 with an error rather than falling back, so that a configuration requesting them
-cannot quietly run as the implemented scheme. `QuadraturePoints` is an accuracy
+cannot quietly run as an implemented scheme. `QuadraturePoints` is an accuracy
 setting only: the integrand is zero at every point on a resolved profile, so no
 quadrature rule can affect the exactness.
 
@@ -303,13 +357,16 @@ The `PressureGrad` class stores the following key data:
 | `PressureGradChoice` | `PressureGradType` | Selected pressure gradient method |
 | `ReconSlopeCt` | `Array2DReal` | Reconstruction slope of temperature in pressure, per cell and layer |
 | `ReconSlopeSa` | `Array2DReal` | Reconstruction slope of salinity in pressure |
+| `ReconCurvCt` | `Array2DReal` | Curvature of the parabolic reconstruction of temperature, per cell and layer |
+| `ReconCurvSa` | `Array2DReal` | Curvature of the parabolic reconstruction of salinity |
 | `DeltaZIncr` | `Array2DReal` | Per-layer integral of the matched-pressure integrand |
 | `DeltaZMoment` | `Array2DReal` | Its first moment about the layer's top interface |
 | `DeltaZFixedP` | `Array2DReal` | Fixed-pressure height difference at edge-layer interfaces |
 
-The last five are allocated only when the `FiniteVolume` scheme is selected, so a
-centered run pays no memory for them. The reconstruction slopes are computed once
-per cell and layer and reused across each cell's edges rather than recomputed per
+The last seven are allocated only when the `FiniteVolume` scheme is selected, so
+a centered run pays no memory for them, and the two curvatures only for the
+parabolic reconstruction. The reconstruction coefficients are computed once per
+cell and layer and reused across each cell's edges rather than recomputed per
 edge.
 
 ## Removal

@@ -156,13 +156,10 @@ PressureGrad::PressureGrad(
    if (VertReconStr == "linear" || VertReconStr == "Linear") {
       FiniteVolumePGrad.VertRecon = PressureGradVertRecon::Linear;
    } else if (VertReconStr == "ppm" || VertReconStr == "PPM") {
-      ABORT_ERROR("PressureGrad: VerticalReconstruction '{}' is not "
-                  "implemented for the FiniteVolume pressure gradient; "
-                  "only 'linear' is available",
-                  VertReconStr);
+      FiniteVolumePGrad.VertRecon = PressureGradVertRecon::PPM;
    } else {
-      ABORT_ERROR("PressureGrad: unknown VerticalReconstruction '{}'; only "
-                  "'linear' is available",
+      ABORT_ERROR("PressureGrad: unknown VerticalReconstruction '{}'; valid "
+                  "values are 'linear' and 'ppm'",
                   VertReconStr);
    }
 
@@ -187,6 +184,12 @@ PressureGrad::PressureGrad(
           Array2DReal("PGradReconSlopeCt", Mesh->NCellsSize, NVertLayers);
       ReconSlopeSa =
           Array2DReal("PGradReconSlopeSa", Mesh->NCellsSize, NVertLayers);
+      if (FiniteVolumePGrad.VertRecon == PressureGradVertRecon::PPM) {
+         ReconCurvCt =
+             Array2DReal("PGradReconCurvCt", Mesh->NCellsSize, NVertLayers);
+         ReconCurvSa =
+             Array2DReal("PGradReconCurvSa", Mesh->NCellsSize, NVertLayers);
+      }
       DeltaZIncr =
           Array2DReal("PGradDeltaZIncr", Mesh->NEdgesSize, NVertLayers);
       DeltaZMoment =
@@ -248,17 +251,43 @@ PressureGrad *PressureGrad::get(const std::string &Name ///< [in] Name of
 
 //------------------------------------------------------------------------------
 // Compute the mean-preserving reconstruction slopes of temperature and
-// salinity in pressure, once per cell and layer.
+// salinity in pressure, and for the parabolic reconstruction their
+// curvatures, once per cell and layer.
 void PressureGrad::computeReconSlopes(
-    const Array2DReal &ConservTemp, ///< [in] layer-mean temperature
-    const Array2DReal &AbsSalinity, ///< [in] layer-mean salinity
-    const Array2DReal &PressureMid  ///< [in] mid-layer pressure
+    const Array2DReal &ConservTemp,      ///< [in] layer-mean temperature
+    const Array2DReal &AbsSalinity,      ///< [in] layer-mean salinity
+    const Array2DReal &PressureMid,      ///< [in] mid-layer pressure
+    const Array2DReal &PressureInterface ///< [in] interface pressure
 ) const {
 
    OMEGA_SCOPE(LocReconSlopeCt, ReconSlopeCt);
    OMEGA_SCOPE(LocReconSlopeSa, ReconSlopeSa);
    OMEGA_SCOPE(LocMinLayerCell, MinLayerCell);
    OMEGA_SCOPE(LocMaxLayerCell, MaxLayerCell);
+
+   if (FiniteVolumePGrad.VertRecon == PressureGradVertRecon::PPM) {
+
+      OMEGA_SCOPE(LocReconCurvCt, ReconCurvCt);
+      OMEGA_SCOPE(LocReconCurvSa, ReconCurvSa);
+
+      parallelForOuter(
+          "pgrad-recon-ppm", {NCellsAll},
+          KOKKOS_LAMBDA(I4 ICell, const TeamMember &Team) {
+             const I4 KMin = LocMinLayerCell(ICell);
+             const I4 KMax = LocMaxLayerCell(ICell);
+
+             parallelForInner(
+                 Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+                    ppmReconCoeffs(ConservTemp, PressureInterface, ICell, K,
+                                   KMin, KMax, LocReconSlopeCt(ICell, K),
+                                   LocReconCurvCt(ICell, K));
+                    ppmReconCoeffs(AbsSalinity, PressureInterface, ICell, K,
+                                   KMin, KMax, LocReconSlopeSa(ICell, K),
+                                   LocReconCurvSa(ICell, K));
+                 });
+          });
+      return;
+   }
 
    parallelForOuter(
        "pgrad-recon-slopes", {NCellsAll},
@@ -311,6 +340,13 @@ void PressureGrad::computeReconSlopes(
 // heights and interface pressures imply, evaluated at a common pressure, and
 // it is the deepest instance of the same comparison the recurrence makes at
 // every other interface.
+//
+// Where the two floors are more than a layer apart in pressure, as with
+// terrain-following layers over a steep slope, the comparison is made at the
+// shallower floor against the deeper column's own interface just below it, so
+// that no shift to a common pressure spans more than one layer. One
+// first-order expansion stretched across the whole floor offset would leave an
+// error that grows with the cube of the offset and is the same at every depth.
 void PressureGrad::computeColumnScan(
     const Array2DReal &PressureMid,       ///< [in] mid-layer pressure
     const Array2DReal &PressureInterface, ///< [in] interface pressure
@@ -327,8 +363,14 @@ void PressureGrad::computeColumnScan(
    const I4 NQuad               = FiniteVolumePGrad.QuadraturePoints;
    const Real InvGravity        = 1.0_Real / Gravity;
 
+   // the curvature arrays are read only by the parabolic reconstruction
+   const bool Parabolic =
+       FiniteVolumePGrad.VertRecon == PressureGradVertRecon::PPM;
+
    OMEGA_SCOPE(LocReconSlopeCt, ReconSlopeCt);
    OMEGA_SCOPE(LocReconSlopeSa, ReconSlopeSa);
+   OMEGA_SCOPE(LocReconCurvCt, ReconCurvCt);
+   OMEGA_SCOPE(LocReconCurvSa, ReconCurvSa);
    OMEGA_SCOPE(LocDeltaZIncr, DeltaZIncr);
    OMEGA_SCOPE(LocDeltaZMoment, DeltaZMoment);
    OMEGA_SCOPE(LocDeltaZFixedP, DeltaZFixedP);
@@ -389,22 +431,18 @@ void PressureGrad::computeColumnScan(
                         PressureInterface, ICell1, LocMinLayerCell(ICell1),
                         LocMaxLayerCell(ICell1), Press, K);
 
-                    const Real Temp0 =
-                        linearReconEval(ConservTemp(ICell0, KFound0),
-                                        LocReconSlopeCt(ICell0, KFound0),
-                                        PressureMid(ICell0, KFound0), Press);
-                    const Real Salt0 =
-                        linearReconEval(AbsSalinity(ICell0, KFound0),
-                                        LocReconSlopeSa(ICell0, KFound0),
-                                        PressureMid(ICell0, KFound0), Press);
-                    const Real Temp1 =
-                        linearReconEval(ConservTemp(ICell1, KFound1),
-                                        LocReconSlopeCt(ICell1, KFound1),
-                                        PressureMid(ICell1, KFound1), Press);
-                    const Real Salt1 =
-                        linearReconEval(AbsSalinity(ICell1, KFound1),
-                                        LocReconSlopeSa(ICell1, KFound1),
-                                        PressureMid(ICell1, KFound1), Press);
+                    const Real Temp0 = reconEval(
+                        Parabolic, ConservTemp, LocReconSlopeCt, LocReconCurvCt,
+                        PressureMid, PressureInterface, ICell0, KFound0, Press);
+                    const Real Salt0 = reconEval(
+                        Parabolic, AbsSalinity, LocReconSlopeSa, LocReconCurvSa,
+                        PressureMid, PressureInterface, ICell0, KFound0, Press);
+                    const Real Temp1 = reconEval(
+                        Parabolic, ConservTemp, LocReconSlopeCt, LocReconCurvCt,
+                        PressureMid, PressureInterface, ICell1, KFound1, Press);
+                    const Real Salt1 = reconEval(
+                        Parabolic, AbsSalinity, LocReconSlopeSa, LocReconCurvSa,
+                        PressureMid, PressureInterface, ICell1, KFound1, Press);
 
                     const Real SpecVolDiff = matchedPressSpecVolDiff(
                         EdgeEos, Temp0, Salt0, Temp1, Salt1);
@@ -422,29 +460,49 @@ void PressureGrad::computeColumnScan(
 
           // Pass two: the anchor at the sea floor, then the recurrence upward.
           //
-          // The anchor sits at the deepest interface the two columns share.
-          // Each column's height there is shifted from its own interface
-          // pressure to the common one by integrating its own reconstruction
-          // over the half of the cross-edge pressure difference that separates
-          // them. Both short integrals vanish where the two columns' interface
-          // pressures agree.
+          // The shallower column's floor is the deepest interface the two
+          // columns share. The deeper column is represented by its own
+          // interface at or just below that floor's pressure: the shared
+          // interface itself wherever the floors are within one layer of each
+          // other, as on a flat floor, and a shallower interface of its own
+          // where they are further apart. Terrain-following layers over a
+          // steep slope put the floors several layers apart, and partial
+          // bottom cells put them just over a layer apart wherever a thin
+          // bottom cell lies entirely above the deeper column's layer of the
+          // same index. Each column's height is shifted from its own
+          // interface pressure to the pressure midway between the two, by
+          // integrating its own reconstruction with one expansion shared by
+          // the two layers that meet there, and both short integrals vanish
+          // where the two interface pressures agree.
+          const Real FloorPress0 = PressureInterface(ICell0, KBot + 1);
+          const Real FloorPress1 = PressureInterface(ICell1, KBot + 1);
+          const bool Shallow0    = FloorPress0 <= FloorPress1;
+          const I4 IDeep         = Shallow0 ? ICell1 : ICell0;
+          const I4 KDeep =
+              findLayerForPress(PressureInterface, IDeep,
+                                LocMinLayerCell(IDeep), LocMaxLayerCell(IDeep),
+                                Shallow0 ? FloorPress0 : FloorPress1, KBot);
+          const I4 KAnchor0 = Shallow0 ? KBot : KDeep;
+          const I4 KAnchor1 = Shallow0 ? KDeep : KBot;
+
           const Real AnchorPress =
-              0.5_Real * (PressureInterface(ICell0, KBot + 1) +
-                          PressureInterface(ICell1, KBot + 1));
+              0.5_Real * (PressureInterface(ICell0, KAnchor0 + 1) +
+                          PressureInterface(ICell1, KAnchor1 + 1));
 
           const PGradEdgeEos AnchorEos = buildEdgeEos(
               SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP, ConservTemp,
-              AbsSalinity, PressureMid, ICell0, ICell1, KBot);
+              AbsSalinity, PressureMid, ICell0, KAnchor0, ICell1, KAnchor1);
 
-          Real Anchor = GeomZInterface(ICell1, KBot + 1) -
-                        GeomZInterface(ICell0, KBot + 1);
+          Real Anchor = GeomZInterface(ICell1, KAnchor1 + 1) -
+                        GeomZInterface(ICell0, KAnchor0 + 1);
 
           for (int ISide = 0; ISide < 2; ++ISide) {
 
-             const I4 ICell  = (ISide == 0) ? ICell0 : ICell1;
-             const Real Sign = (ISide == 0) ? -1.0_Real : 1.0_Real;
+             const I4 ICell   = (ISide == 0) ? ICell0 : ICell1;
+             const I4 KAnchor = (ISide == 0) ? KAnchor0 : KAnchor1;
+             const Real Sign  = (ISide == 0) ? -1.0_Real : 1.0_Real;
 
-             const Real ColPress = PressureInterface(ICell, KBot + 1);
+             const Real ColPress = PressureInterface(ICell, KAnchor + 1);
              const Real Mid      = 0.5_Real * (AnchorPress + ColPress);
              const Real Half     = 0.5_Real * (ColPress - AnchorPress);
 
@@ -456,19 +514,63 @@ void PressureGrad::computeColumnScan(
 
                 const I4 KFound = findLayerForPress(
                     PressureInterface, ICell, LocMinLayerCell(ICell),
-                    LocMaxLayerCell(ICell), Press, KBot);
+                    LocMaxLayerCell(ICell), Press, KAnchor);
 
-                const Real Temp = linearReconEval(
-                    ConservTemp(ICell, KFound), LocReconSlopeCt(ICell, KFound),
-                    PressureMid(ICell, KFound), Press);
-                const Real Salt = linearReconEval(
-                    AbsSalinity(ICell, KFound), LocReconSlopeSa(ICell, KFound),
-                    PressureMid(ICell, KFound), Press);
+                const Real Temp = reconEval(
+                    Parabolic, ConservTemp, LocReconSlopeCt, LocReconCurvCt,
+                    PressureMid, PressureInterface, ICell, KFound, Press);
+                const Real Salt = reconEval(
+                    Parabolic, AbsSalinity, LocReconSlopeSa, LocReconCurvSa,
+                    PressureMid, PressureInterface, ICell, KFound, Press);
 
                 Integral += Weight * edgeSpecVol(AnchorEos, Temp, Salt, Press);
              }
 
              Anchor += Sign * InvGravity * Integral;
+          }
+
+          // Where the anchor sits above the edge's deepest interface, carry it
+          // down there with the matched-pressure integrand, which vanishes on
+          // the exact set like every other increment of the scan.
+          if (KDeep != KBot) {
+             const PGradEdgeEos FloorEos = buildEdgeEos(
+                 SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP, ConservTemp,
+                 AbsSalinity, PressureMid, ICell0, ICell1, KBot);
+             const Real FloorPress = 0.5_Real * (FloorPress0 + FloorPress1);
+             const Real Mid        = 0.5_Real * (AnchorPress + FloorPress);
+             const Real Half       = 0.5_Real * (FloorPress - AnchorPress);
+
+             Real Integral = 0.0_Real;
+             for (int IQuad = 0; IQuad < NQuad; ++IQuad) {
+
+                const Real Press  = Mid + Half * Nodes[IQuad];
+                const Real Weight = Half * Weights[IQuad];
+
+                const I4 KFound0 = findLayerForPress(
+                    PressureInterface, ICell0, LocMinLayerCell(ICell0),
+                    LocMaxLayerCell(ICell0), Press, KBot);
+                const I4 KFound1 = findLayerForPress(
+                    PressureInterface, ICell1, LocMinLayerCell(ICell1),
+                    LocMaxLayerCell(ICell1), Press, KBot);
+
+                const Real Temp0 = reconEval(
+                    Parabolic, ConservTemp, LocReconSlopeCt, LocReconCurvCt,
+                    PressureMid, PressureInterface, ICell0, KFound0, Press);
+                const Real Salt0 = reconEval(
+                    Parabolic, AbsSalinity, LocReconSlopeSa, LocReconCurvSa,
+                    PressureMid, PressureInterface, ICell0, KFound0, Press);
+                const Real Temp1 = reconEval(
+                    Parabolic, ConservTemp, LocReconSlopeCt, LocReconCurvCt,
+                    PressureMid, PressureInterface, ICell1, KFound1, Press);
+                const Real Salt1 = reconEval(
+                    Parabolic, AbsSalinity, LocReconSlopeSa, LocReconCurvSa,
+                    PressureMid, PressureInterface, ICell1, KFound1, Press);
+
+                Integral += Weight * matchedPressSpecVolDiff(
+                                         FloorEos, Temp0, Salt0, Temp1, Salt1);
+             }
+
+             Anchor -= InvGravity * Integral;
           }
 
           LocDeltaZFixedP(IEdge, KBot + 1) = Anchor;
@@ -525,9 +627,11 @@ void PressureGrad::computePressureGrad(
 
    } else {
 
-      // The per-cell reconstruction slopes are formed once and reused across
-      // each cell's edges; the per-edge work is polynomial arithmetic on them
-      computeReconSlopes(ConservTemp, AbsSalinity, PressureMid);
+      // The per-cell reconstruction slopes, and curvatures for the parabolic
+      // reconstruction, are formed once and reused across each cell's edges;
+      // the per-edge work is polynomial arithmetic on them
+      computeReconSlopes(ConservTemp, AbsSalinity, PressureMid,
+                         PressureInterface);
 
       // The column scan is a prefix sum with edge-dependent coefficients, so
       // it cannot live inside the per-vertical-chunk functor below
