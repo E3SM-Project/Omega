@@ -317,24 +317,29 @@ int testParabolicReconstruction() {
       for (int K = 0; K <= KMax; ++K) {
          Real Slope, Curv;
          ppmReconCoeffs(Value, PressInterface, 0, K, 0, KMax, Slope, Curv);
-         std::vector<Real> Probes;
+         // five points in the layer, and two beyond the column in the end
+         // layers; a fixed array, since GCC 14 warns (-Wfree-nonheap-object)
+         // about a vector grown here
+         Real Probes[9];
+         int NProbes = 0;
          for (int I = 0; I <= 4; ++I)
-            Probes.push_back(
+            Probes[NProbes++] =
                 PressInterface(0, K) +
                 0.25_Real * I *
-                    (PressInterface(0, K + 1) - PressInterface(0, K)));
+                    (PressInterface(0, K + 1) - PressInterface(0, K));
          if (K == 0) {
-            Probes.push_back(-1.0e6_Real);
-            Probes.push_back(-2.0e6_Real);
+            Probes[NProbes++] = -1.0e6_Real;
+            Probes[NProbes++] = -2.0e6_Real;
          }
          if (K == KMax) {
-            Probes.push_back(PressInterface(0, NLayers) + 1.0e6_Real);
-            Probes.push_back(PressInterface(0, NLayers) + 6.0e6_Real);
+            Probes[NProbes++] = PressInterface(0, NLayers) + 1.0e6_Real;
+            Probes[NProbes++] = PressInterface(0, NLayers) + 6.0e6_Real;
          }
-         for (const Real Press : Probes)
-            MaxErr = std::max(MaxErr, std::abs(evaluate(Value, PressInterface,
-                                                        K, Slope, Curv, Press) -
-                                               profile(Press, 0.0_Real)));
+         for (int I = 0; I < NProbes; ++I)
+            MaxErr =
+                std::max(MaxErr, std::abs(evaluate(Value, PressInterface, K,
+                                                   Slope, Curv, Probes[I]) -
+                                          profile(Probes[I], 0.0_Real)));
       }
       if (MaxErr <= Tol) {
          LOG_INFO("PGradTest: parabolic reconstruction of a quadratic PASS: "
