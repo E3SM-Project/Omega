@@ -2167,8 +2167,14 @@ int testParabolicExactness(HorzMesh *Mesh,    ///< [in] Horizontal mesh
 
    // The host assembly with the parabolic reconstruction must reproduce the
    // kernel, on a profile it does not resolve, where both sides are large.
-   setupProfileState(Mesh, VCoord, State, EqState, NLayers, DC, Bulge, Cubic,
-                     0.0_Real);
+   // Large here is still a residual of terms that cancel, so the two may
+   // differ by round-off on the scale of those terms rather than of the
+   // residual: a GPU kernel can round differently from the host, by
+   // contracting multiplies and adds, for example.
+   const Real CubicPressBot = setupProfileState(
+       Mesh, VCoord, State, EqState, NLayers, DC, Bulge, Cubic, 0.0_Real);
+   const Real CubicTendScale =
+       Gravity * hydrostaticCancelScale(EqState, NLayers, CubicPressBot) / DC;
    Real CubicDeltaZ, CubicUpper, CubicLower, CubicRms;
    const Real CubicKernel =
        runFiniteVolume(Mesh, VCoord, State, EqState, NLayers, CubicDeltaZ,
@@ -2181,17 +2187,15 @@ int testParabolicExactness(HorzMesh *Mesh,    ///< [in] Horizontal mesh
    Real RefMax = 0.0_Real;
    for (int K = 0; K < NLayers; ++K)
       RefMax = std::max(RefMax, std::abs(RefTend[K]));
-   const Real RelDiff = (CubicKernel > 0.0_Real)
-                            ? std::abs(RefMax - CubicKernel) / CubicKernel
-                            : 1.0_Real;
-   if (RelDiff <= 1.0e-10_Real) {
+   const Real FidelityTol = 8.0_Real * Eps * CubicTendScale;
+   if (std::abs(RefMax - CubicKernel) <= FidelityTol) {
       LOG_INFO("PGradTest: parabolic harness fidelity PASS: reference {} "
                "m/s2 against kernel {} m/s2",
                RefMax, CubicKernel);
    } else {
       LOG_ERROR("PGradTest: parabolic harness fidelity FAIL: reference {} "
-                "m/s2 against kernel {} m/s2, relative difference {}",
-                RefMax, CubicKernel, RelDiff);
+                "m/s2 against kernel {} m/s2, tolerance {}",
+                RefMax, CubicKernel, FidelityTol);
       ++Err;
    }
 
