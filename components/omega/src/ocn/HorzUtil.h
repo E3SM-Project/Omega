@@ -46,7 +46,7 @@ KOKKOS_INLINE_FUNCTION Real sphere_angle(const Real ax, const Real ay,
        one, Kokkos::max(0._Real,
                         (Kokkos::sin(s - b) * Kokkos::sin(s - c)) /
                             (Kokkos::sin(b) * Kokkos::sin(c))))); // Eqn. (28)
-   Real sa              = 2._Real *
+   Real sa = 2._Real *
              Kokkos::asin(Kokkos::max(Kokkos::min(sin_angle, one), neg_one));
    if ((Dx * ax + Dy * ay + Dz * az) < 0.0)
       sa *= neg_one;
