@@ -150,6 +150,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#surface-thickness-and-tracer-flux-forcing-data-flow">Surface thickness and tracer flux forcing data flow</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#surface-thickness-and-tracer-flux-forcing-key-classes-components">Surface thickness and tracer flux forcing key classes/components</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#surface-thickness-and-tracer-flux-forcing-config-coupling">Surface thickness and tracer flux forcing config coupling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#coupled-energy-heat-correction-aka-energy-fixer">Coupled energy/heat correction (aka energy fixer)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#notes">Notes</a></li>
@@ -401,6 +402,39 @@ These potential enthalpy terms are then scaled by <span class="math notranslate 
 </ul>
 </li>
 </ul>
+</section>
+<section id="coupled-energy-heat-correction-aka-energy-fixer">
+<span id="omega-dev-forcing-extra-energy"></span><h3>Coupled energy/heat correction (aka energy fixer)<a class="headerlink" href="#coupled-energy-heat-correction-aka-energy-fixer" title="Permalink to this heading"></a></h3>
+<p>The extra energy flux associated with freshwater mass exchange is included
+in the ocean’s surface heat budget. The coupled system accounts for the
+corresponding energy as an atmospheric adjustment. This correction is not an
+additional ocean temperature tendency or a total heat flux.</p>
+<p>The instantaneous field, in W m<span class="math notranslate nohighlight">\(^{-2}\)</span>, is owned by
+<code class="docutils literal notranslate"><span class="pre">Forcing::TracerForcing.ExtraEnergyCell</span></code>. <code class="docutils literal notranslate"><span class="pre">SfcTracerForcingOnCell</span></code> computes it
+alongside the surface tracer tendency:</p>
+<div class="math notranslate nohighlight">
+\[
+Q_{\mathrm{extra}} =
+(F_{\mathrm{rain}} + F_{\mathrm{river}}) h_{\mathrm{fw,in}}
++ F_{\mathrm{evap}} h_{\mathrm{fw,out}}
++ (F_{\mathrm{snow}} + F_{\mathrm{iceRunoff}})
+  (h_{\mathrm{ice}} + L_{\mathrm{ice}}).
+\]</div>
+<p>Here the mass fluxes retain their forcing-array signs, and the specific
+potential enthalpies are in J kg<span class="math notranslate nohighlight">\(^{-1}\)</span>:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(h_{\mathrm{fw,in}} = c^0_{p,sw}\max(C_{T,\mathrm{lim}}, C_{T,\mathrm{top}})\)</span>,
+with <code class="docutils literal notranslate"><span class="pre">Ct0Fw</span></code> as the limit for TEOS-10 and zero otherwise.</p></li>
+<li><p><span class="math notranslate nohighlight">\(h_{\mathrm{fw,out}} = c^0_{p,sw} C_{T,\mathrm{top}}\)</span>.</p></li>
+<li><p><span class="math notranslate nohighlight">\(h_{\mathrm{ice}} = -L_{\mathrm{ice}}\)</span> in the current approximation, so the
+snow and ice-runoff contribution to this correction is currently zero.</p></li>
+</ul>
+<p>Direct heat fluxes and sea-ice meltwater enthalpy are explicitly accounted for
+in the coupling fluxes and are not added to this correction.
+<code class="docutils literal notranslate"><span class="pre">ExtraEnergyCell</span></code> is reset to zero on every tracer-tendency evaluation,
+including when surface tracer forcing is disabled.</p>
+<p>The correction is exported as <code class="docutils literal notranslate"><span class="pre">Faoo_h2otemp</span></code>; see
+<a class="reference internal" href="SfcCoupling.html#omega-dev-sfc-coupling"><span class="std std-ref">surface coupling</span></a> for averaging and export details.</p>
 </section>
 </section>
 <section id="notes">
