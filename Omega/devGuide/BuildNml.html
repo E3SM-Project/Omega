@@ -230,7 +230,8 @@ validated, and how to add support for a new mesh.</p>
 validation logic used by <code class="docutils literal notranslate"><span class="pre">buildnml</span></code>:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">read_write.py</span></code> reads/writes YAML config files and packaged data.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">config.py</span></code> merges the configuration layers and resolves mesh input files.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">config.py</span></code> merges the configuration layers, resolves mesh input files, and
+prefixes analysis filenames with the case name.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">validate.py</span></code> validates overrides and <code class="docutils literal notranslate"><span class="pre">IOStreams</span></code> against <code class="docutils literal notranslate"><span class="pre">Default.yml</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">data/input_files.yaml</span></code> maps each supported mesh to its input file(s).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">data/config_overrides.yaml</span></code> holds the coupled and mesh-specific overrides.</p></li>
