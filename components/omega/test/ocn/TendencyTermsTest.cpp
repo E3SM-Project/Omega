@@ -2141,6 +2141,8 @@ int testPenetratingShortwaveOnCell(int NVertLayers, Real RTol) {
 
 void initTendTest(const std::string &MeshFile, int NVertLayers) {
 
+   Error Err;
+
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv  = MachEnv::getDefault();
    MPI_Comm DefComm = DefEnv->getComm();

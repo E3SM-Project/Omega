@@ -125,10 +125,7 @@ void initFillValueTest() {
 
    Decomp::init();
 
-   int Err = Halo::init();
-   if (Err != 0)
-      ABORT_ERROR("FillValueTest: error initializing default halo");
-
+   Halo::init();
    HorzMesh::init(ModelClock);
    VertCoord::init();
    VertAdv::init();
@@ -141,7 +138,7 @@ void initFillValueTest() {
    Tendencies::init();
    TimeStepper::init2();
 
-   Err = OceanState::init();
+   int Err = OceanState::init();
    if (Err != 0)
       ABORT_ERROR("FillValueTest: error initializing OceanState");
 

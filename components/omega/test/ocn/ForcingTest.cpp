@@ -124,8 +124,7 @@ int testSfcStressForcingVars(Real RTol) {
    return Err;
 }
 
-int initForcingTest(const std::string &MeshFile) {
-   int Err = 0;
+void initForcingTest(const std::string &MeshFile) {
 
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv  = MachEnv::getDefault();
@@ -146,10 +145,7 @@ int initForcingTest(const std::string &MeshFile) {
    Field::init(ModelClock);
    IOStream::init(ModelClock);
 
-   Err = Halo::init();
-   if (Err != 0) {
-      ABORT_ERROR("ForcingTest: error initializing default halo");
-   }
+   Halo::init();
 
    HorzMesh::init(ModelClock);
 
@@ -162,8 +158,6 @@ int initForcingTest(const std::string &MeshFile) {
 
    Config *OmegaConfig = Config::getOmegaConfig();
    TestForcing->readConfigOptions(OmegaConfig);
-
-   return 0;
 }
 
 void finalizeForcingTest() {
@@ -354,7 +348,7 @@ int forcingTest() {
    int Err         = 0;
    const Real RTol = sizeof(Real) == 4 ? 1e-2 : 2e-4;
 
-   Err += initForcingTest(DefaultMeshFile);
+   initForcingTest(DefaultMeshFile);
    Err += testForcingInitAndConfig();
    Err += testForcingComputeAll();
    Err += testSfcStressForcingVars(RTol);

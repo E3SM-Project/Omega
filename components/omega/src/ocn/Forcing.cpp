@@ -308,13 +308,10 @@ void Forcing::setSurfaceTracerFlux(const Array2DReal &Flux) {
                  "Forcing::setSurfaceTracerFlux: cell dimension mismatch");
    deepCopy(SurfaceTracerFlux, Flux);
 
-   I4 HaloErr = 0;
    for (I4 L = 0; L < SurfaceTracerFlux.extent(0); ++L) {
       auto TracerFlux = subviewUnmanaged(SurfaceTracerFlux, L, Kokkos::ALL);
-      HaloErr += MeshHalo->exchangeFullArrayHalo(TracerFlux, OnCell);
+      MeshHalo->exchangeFullArrayHalo(TracerFlux, OnCell);
    }
-   OMEGA_REQUIRE(HaloErr == 0,
-                 "Forcing::setSurfaceTracerFlux: halo exchange failed");
 }
 
 // Compute edge-normal stress from cell-center zonal and meridional components.
@@ -331,14 +328,11 @@ void Forcing::computeSfcStressForcingOnEdge() const {
 
 // Exchange halo for surface stress cell fields. Only needed for variables that
 // need information beyond cell-centered values.
-I4 Forcing::exchangeHalo() const {
-   I4 Err = 0;
+void Forcing::exchangeHalo() const {
 
    if (SfcStressFieldsEnabled) {
-      Err += MeshHalo->exchangeFullArrayHalo(SfcStressForcing.ZonalStressCell,
-                                             OnCell);
-      Err += MeshHalo->exchangeFullArrayHalo(SfcStressForcing.MeridStressCell,
-                                             OnCell);
+      MeshHalo->exchangeFullArrayHalo(SfcStressForcing.ZonalStressCell, OnCell);
+      MeshHalo->exchangeFullArrayHalo(SfcStressForcing.MeridStressCell, OnCell);
    }
 
    if (TracerForcingFieldsEnabled) {
@@ -346,18 +340,17 @@ I4 Forcing::exchangeHalo() const {
       for (I4 L = 0; L < NTracers; ++L) {
          auto TracerFlux = subviewUnmanaged(TracerForcing.SurfaceTracerFluxCell,
                                             L, Kokkos::ALL);
-         Err += MeshHalo->exchangeFullArrayHalo(TracerFlux, OnCell);
+         MeshHalo->exchangeFullArrayHalo(TracerFlux, OnCell);
       }
    }
 
    if (WindSpeed10mFieldEnabled) {
-      Err += MeshHalo->exchangeFullArrayHalo(WindSpeed10mCell, OnCell);
+      MeshHalo->exchangeFullArrayHalo(WindSpeed10mCell, OnCell);
    }
 
    if (IceFractionFieldEnabled) {
-      Err += MeshHalo->exchangeFullArrayHalo(IceFractionCell, OnCell);
+      MeshHalo->exchangeFullArrayHalo(IceFractionCell, OnCell);
    }
-   return Err;
 }
 
 // Read forcing fields from input stream.
@@ -384,10 +377,7 @@ void Forcing::readStreamIntoArrays() {
       resetArrays();
    }
 
-   I4 HaloErr = exchangeHalo();
-   if (HaloErr != 0) {
-      ABORT_ERROR("Forcing: Error exchanging halo for startup forcing fields");
-   }
+   exchangeHalo();
 
    computeAll();
 }
