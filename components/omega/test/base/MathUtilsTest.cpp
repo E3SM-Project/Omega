@@ -38,6 +38,12 @@ static_assert(Math::max(1, 2) == 2);
 static_assert(Math::max(2, 1) == 2);
 static_assert(Math::max(2, -1, 0, 3) == 3);
 
+// clamp tests
+static_assert(Math::clamp(-1, 0, 10) == 0);
+static_assert(Math::clamp(11, 0, 10) == 10);
+static_assert(Math::clamp(5, 0, 10) == 5);
+static_assert(Math::clamp(5, 0.5_Real, 10) == 5.0_Real);
+
 Error testMathUtilsHost() {
    Error Err;
 
@@ -75,6 +81,17 @@ Error testMathUtilsHost() {
 
    if (Math::max(2.5_Real, 2, 1.5_Real) != 2.5_Real) {
       Err += Error(ErrorCode::Fail, "host max(2.5_Real, 2, 1.5_Real) FAIL");
+   }
+
+   if (Math::clamp(-1, 0, 10) != 0 || Math::clamp(11, 0, 10) != 10 ||
+       Math::clamp(5, 0, 10) != 5 || Math::clamp(5, 0.5_Real, 10) != 5.0_Real) {
+      Err += Error(ErrorCode::Fail, "host clamp FAIL");
+   }
+
+   if (Math::linearInterp(1, 10, 0, 20, 2) != 15 ||
+       Math::linearInterp(-1, 10, 0, 20, 2) != 5 ||
+       Math::linearInterp(1, 10, 1, 20, 1) != 10) {
+      Err += Error(ErrorCode::Fail, "host linearInterp FAIL");
    }
 
    if (!Math::isApprox(100.5_Real, 100.6_Real, 0.01_Real)) {
@@ -156,6 +173,18 @@ Error testMathUtilsDevice() {
              Accum |= (1 << 8);
           }
 
+          if (Math::clamp(-1, 0, 10) != 0 || Math::clamp(11, 0, 10) != 10 ||
+              Math::clamp(5, 0, 10) != 5 ||
+              Math::clamp(5, 0.5_Real, 10) != 5.0_Real) {
+             Accum |= (1 << 14);
+          }
+
+          if (Math::linearInterp(1, 10, 0, 20, 2) != 15 ||
+              Math::linearInterp(-1, 10, 0, 20, 2) != 5 ||
+              Math::linearInterp(1, 10, 1, 20, 1) != 10) {
+             Accum |= (1 << 15);
+          }
+
           if (!Math::isApprox(100.5_Real, 100.6_Real, 0.01_Real)) {
              Accum |= (1 << 9);
           }
@@ -215,6 +244,14 @@ Error testMathUtilsDevice() {
 
    if (DeviceResults & (1 << 8)) {
       Err += Error(ErrorCode::Fail, "device max(2.5_Real, 2, 1.5_Real) FAIL");
+   }
+
+   if (DeviceResults & (1 << 14)) {
+      Err += Error(ErrorCode::Fail, "device clamp FAIL");
+   }
+
+   if (DeviceResults & (1 << 15)) {
+      Err += Error(ErrorCode::Fail, "device linearInterp FAIL");
    }
 
    if (DeviceResults & (1 << 9)) {

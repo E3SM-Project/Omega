@@ -40,6 +40,26 @@ const int Largest = Math::max(I, J, K, L);
 These functions are Omega utilities; they are distinct from the algorithms
 `std::min` and `std::max`.
 
+### Clamping
+
+`Math::clamp(X, Lo, Hi)` returns `X` limited to the inclusive interval
+`[Lo, Hi]`. The lower bound must not exceed the upper bound. Its arguments can
+have different types and are compared using the common type of those arguments:
+
+```c++
+const Real BoundedDepth = Math::clamp(Depth, 0.0_Real, MaxDepth);
+```
+
+### Linear interpolation
+
+`Math::linearInterp(X, Y1, X1, Y2, X2)` evaluates the line through
+`(X1, Y1)` and `(X2, Y2)` at `X`, including extrapolation outside the two
+points. When `X1` and `X2` are equal, it returns `Y1`:
+
+```c++
+const Real Value = Math::linearInterp(X, Y1, X1, Y2, X2);
+```
+
 ### Approximate equality
 
 `Math::isApprox(X, Y, RTol, ATol = 0)` returns whether two `Real` values
