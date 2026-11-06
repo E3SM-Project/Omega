@@ -16,6 +16,7 @@
 #include "IO.h"
 #include "IOStream.h"
 #include "Logging.h"
+#include "MathUtils.h"
 #include "OceanState.h"
 #include "OmegaKokkos.h"
 #include "TimeStepper.h"
@@ -34,13 +35,13 @@ constexpr Real Length = 1024._Real;
 // Test function used for tendTest
 KOKKOS_FUNCTION Real testFunc(const Real X) {
    Real Arg = Pi * (X + Alpha) / Length;
-   return std::sin(Arg) * std::sin(Arg) * std::cos(Arg) * std::cos(Arg);
+   return Math::sin(Arg) * Math::sin(Arg) * Math::cos(Arg) * Math::cos(Arg);
 }
 
 // Function used for analytical derivative in tendTest
 KOKKOS_FUNCTION Real testDeriv(const Real X) {
    Real C = Pi / Length;
-   return (C / 2._Real) * std::sin(4._Real * C * (X + Alpha));
+   return (C / 2._Real) * Math::sin(4._Real * C * (X + Alpha));
 }
 
 // For a given resolution, use computeStdVAdvTend to compute tracer
@@ -93,7 +94,7 @@ Real tendTest(const int NLayers, VertAdv *VAdv) {
       SumSq += Diff * Diff;
       Count++;
    }
-   Real L2 = std::sqrt(SumSq / Count);
+   Real L2 = Math::sqrt(SumSq / Count);
 
    return L2;
 }
@@ -242,7 +243,7 @@ int main(int argc, char *argv[]) {
 
       for (int K = 1; K < NVertLayersP1; ++K) {
          Real Expected = (NVertLayers - K) * Perim0 * InvAreaCell0;
-         Real Diff     = std::abs(VertTransVelH(ICell0, K) - Expected);
+         Real Diff     = Math::abs(VertTransVelH(ICell0, K) - Expected);
          if (Diff > Tol) {
             ++Err;
          }
@@ -266,7 +267,7 @@ int main(int argc, char *argv[]) {
       // velocity at bottom and top interface, i.e. the divergence
       for (int K = 1; K < NVertLayers; ++K) {
          Real Expected = -Perim0 * InvAreaCell0;
-         Real Diff     = std::abs(TendCell2DH(ICell0, K) - Expected);
+         Real Diff     = Math::abs(TendCell2DH(ICell0, K) - Expected);
          if (Diff > Tol) {
             ++Err;
          }
@@ -289,7 +290,7 @@ int main(int argc, char *argv[]) {
       OMEGA_SCOPE(LocVertVel, DefVertAdv->TotalVerticalPseudoVelocity);
       parallelFor(
           {NVertLayers}, KOKKOS_LAMBDA(int K) {
-             NormalVelEdge(IEdge0, K)       = sin(Pi * K / NVertLayers);
+             NormalVelEdge(IEdge0, K)       = Math::sin(Pi * K / NVertLayers);
              FluxPseudoThickEdge(IEdge0, K) = 1._Real;
              const I4 Cell1                 = LocCOnE(IEdge0, 0);
              const I4 Cell2                 = LocCOnE(IEdge0, 1);
@@ -307,10 +308,10 @@ int main(int argc, char *argv[]) {
 
       // Expected velocity tendency is derivative of initial distribution
       for (int K = 0; K < NVertLayers; ++K) {
-         Real Expected = (Pi / NVertLayers) * cos(Pi * K / NVertLayers);
+         Real Expected = (Pi / NVertLayers) * Math::cos(Pi * K / NVertLayers);
          if (K == 0 or K == NVertLayers - 1)
             Expected /= 2._Real;
-         Real Diff = std::abs(TendEdge2DH(IEdge0, K) - Expected);
+         Real Diff = Math::abs(TendEdge2DH(IEdge0, K) - Expected);
          if (Diff > Tol) {
             ++Err;
          }
@@ -360,10 +361,10 @@ int main(int argc, char *argv[]) {
             Real L2Err = tendTest(NLayers, DefVertAdv);
             L2Errors.push_back(L2Err);
          }
-         Real ExpectedRat = std::pow(2._Real, OrderOfAcc.at(Order));
+         Real ExpectedRat = Math::pow(2._Real, OrderOfAcc.at(Order));
          for (I4 I = 0; I < L2Errors.size() - 1; ++I) {
             Real Rat    = L2Errors[I] / L2Errors[I + 1];
-            Real RelErr = std::abs(Rat - ExpectedRat) / ExpectedRat;
+            Real RelErr = Math::abs(Rat - ExpectedRat) / ExpectedRat;
             if (RelErr > Tol) {
                ++Err;
             }

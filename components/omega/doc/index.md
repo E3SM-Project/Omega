@@ -75,6 +75,7 @@ devGuide/Docs
 devGuide/BuildDocs
 devGuide/Testing
 devGuide/DataTypes
+devGuide/MathUtils
 devGuide/ParallelLoops
 devGuide/MachEnv
 devGuide/Config

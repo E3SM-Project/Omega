@@ -40,6 +40,7 @@
 #include "DataTypes.h"
 #include "Error.h"
 #include "HorzMesh.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 #include "Reductions.h"
 #include "VertCoord.h"
@@ -136,7 +137,8 @@ class SpatialWeights {
                 Real Sum = 0;
                 if (LocActive(I, 0) > 0) {
                    Real Dev = static_cast<Real>(Data(I)) - Center;
-                   Sum = LocAreaWeights(I) * (Power == 2 ? Dev * Dev : Dev);
+                   Sum      = LocAreaWeights(I) *
+                         (Power == 2 ? Math::pow<2>(Dev) : Dev);
                 }
                 LocTerms(I) = Sum;
              });
@@ -147,8 +149,8 @@ class SpatialWeights {
                 for (I4 K = 0; K < LocNVert; ++K) {
                    if (LocActive(I, K) > 0) {
                       Real Dev = static_cast<Real>(Data(I, K)) - Center;
-                      Sum +=
-                          LocMassWeights(I, K) * (Power == 2 ? Dev * Dev : Dev);
+                      Sum += LocMassWeights(I, K) *
+                             (Power == 2 ? Math::pow<2>(Dev) : Dev);
                    }
                 }
                 LocTerms(I) = Sum;
@@ -163,7 +165,7 @@ class SpatialWeights {
                       if (LocActive(I, K) > 0) {
                          Real Dev = static_cast<Real>(Data(L, I, K)) - Center;
                          Sum += LocMassWeights(I, K) *
-                                (Power == 2 ? Dev * Dev : Dev);
+                                (Power == 2 ? Math::pow<2>(Dev) : Dev);
                       }
                    }
                 }
@@ -182,7 +184,7 @@ class SpatialWeights {
                             Real Dev =
                                 static_cast<Real>(Data(L0, L1, I, K)) - Center;
                             Sum += LocMassWeights(I, K) *
-                                   (Power == 2 ? Dev * Dev : Dev);
+                                   (Power == 2 ? Math::pow<2>(Dev) : Dev);
                          }
                       }
                    }

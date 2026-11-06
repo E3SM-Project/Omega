@@ -30,6 +30,7 @@
 #include "TimeMgr.h"
 #include "Error.h"
 #include "Logging.h"
+#include "MathUtils.h"
 
 #include <algorithm>
 #include <cctype>
@@ -234,7 +235,7 @@ void TimeFrac::setSeconds(R8 Seconds) { // [in] floating point seconds
    // infinite looping due to 64-bit overflow or computation of unreasonably
    // large n and d values.  Test cases: rin = (8+21/23)-8, rin = 9.1 - 9.
 
-   R8 P = pow(10.0, -(DBL_DIG - (I4)log10(Rabs)));
+   R8 P = Math::pow(10.0, -(DBL_DIG - (I4)Math::log10(Rabs)));
 
    R8 R         = Target;
    I8 Nprevprev = 0;

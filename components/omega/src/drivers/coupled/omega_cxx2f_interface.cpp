@@ -7,6 +7,7 @@
 #include "IO.h"
 #include "Logging.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OceanDriver.h"
 #include "OceanState.h"
 #include "OmegaKokkos.h"
@@ -322,7 +323,7 @@ void omega_get_area_cell(double *AreaCell) {
 
    for (int Cell = 0; Cell < HMesh->NCellsOwned; ++Cell) {
       AreaCell[Cell] = static_cast<double>(HMesh->AreaCellH[Cell] /
-                                           (SphereRadius * SphereRadius));
+                                           Math::pow<2>(SphereRadius));
    }
 }
 
