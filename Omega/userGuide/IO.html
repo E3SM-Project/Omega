@@ -248,6 +248,51 @@ is set to spread the IOTasks across the total number of MPI tasks so
 that every IOStride task (starting with the root task IOBaseTask) is an
 IOTask. The product of IOTasks and IOStride should equal the total number
 of MPI Tasks.</p>
+<p>These options apply to standalone Omega runs, where Omega creates its own
+SCORPIO IO system. In coupled E3SM runs the IO system is created by the
+coupled driver, so Omega reuses the driver’s instance rather than
+creating its own. The above IO options cannot be overridden in
+<code class="docutils literal notranslate"><span class="pre">user_nl_omega</span></code> and are set to <code class="docutils literal notranslate"><span class="pre">-9999</span></code> in the generated <code class="docutils literal notranslate"><span class="pre">omega.yml</span></code>
+to show they are not used.</p>
+<p>Instead, the IO task layout, rearranger and file format are set by case
+variables in <code class="docutils literal notranslate"><span class="pre">env_run.xml</span></code> in the case directory:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Omega option</p></th>
+<th class="head"><p>Case variable</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">IOTasks</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PIO_NUMTASKS_OCN</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">IOStride</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PIO_STRIDE_OCN</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">IOBaseTask</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PIO_ROOT_OCN</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">IORearranger</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PIO_REARRANGER_OCN</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">IODefaultFormat</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PIO_TYPENAME_OCN</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>(netCDF file version)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PIO_NETCDF_FORMAT_OCN</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>Each variable has a separate value for each model component, and Omega uses
+the ocean (<code class="docutils literal notranslate"><span class="pre">OCN</span></code>) value. These can be changed with <code class="docutils literal notranslate"><span class="pre">./xmlchange</span></code>, for
+example <code class="docutils literal notranslate"><span class="pre">./xmlchange</span> <span class="pre">PIO_STRIDE_OCN=56</span></code>. Searching <code class="docutils literal notranslate"><span class="pre">env_run.xml</span></code> for a
+variable name requires omitting the component suffix (e.g. <code class="docutils literal notranslate"><span class="pre">PIO_STRIDE</span></code>),
+since the component is given as an attribute of each value.</p>
+<p>In coupled runs, <code class="docutils literal notranslate"><span class="pre">PIO_NETCDF_FORMAT_OCN</span></code> sets the netCDF file version
+(for example classic, <code class="docutils literal notranslate"><span class="pre">64bit_offset</span></code> or <code class="docutils literal notranslate"><span class="pre">64bit_data</span></code>) for files written
+with the <code class="docutils literal notranslate"><span class="pre">netcdf</span></code> and <code class="docutils literal notranslate"><span class="pre">pnetcdf</span></code> formats. It has no equivalent in the Omega
+configuration, where <code class="docutils literal notranslate"><span class="pre">pnetcdf</span></code> files are always written with the
+<code class="docutils literal notranslate"><span class="pre">64bit_data</span></code> version.</p>
 <p>When using parallel IO, the data must be rearranged to match the IO task
 decomposition. There are two algorithms for rearranging data available
 in SCORPIO: box and subset. Box is the default and preferred for most
