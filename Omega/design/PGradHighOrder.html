@@ -909,9 +909,10 @@ interface pressures agree. Anchored at the surface instead, the same expression 
 with the sea-surface height difference and the surface pressures.</p>
 <p><strong>The shift to a common pressure must stay within one layer.</strong> The short integrals use one
 first-order expansion, shared by the two layers that meet at the anchor (§3.3.1), and it is accurate
-across a pressure difference of about a layer. That covers a flat floor, and a sloping one cut by
-partial bottom cells beneath level interior layers: there the two columns’ interfaces <span class="math notranslate nohighlight">\(K+1\)</span> are
-always within a layer of each other. Terrain-following layers over a steep slope put one floor
+across a pressure difference of about a layer. That covers a flat floor, and most of a sloping one
+cut by partial bottom cells beneath level interior layers: there the two columns’ interfaces <span class="math notranslate nohighlight">\(K+1\)</span>
+are within a layer of each other, except where a thin bottom cell lies entirely above the deeper
+column’s layer <span class="math notranslate nohighlight">\(K\)</span>. Terrain-following layers over a steep slope put one floor
 several layers deeper than the other, and <a class="reference internal" href="#equation-anchor">(14)</a> then stretches the expansion across the whole
 offset. The resulting error grows with the cube of the offset and is the same at every depth.
 Measured in Omega on a resting state linear in pressure with the floors 6.4 layers apart, it leaves
