@@ -129,6 +129,22 @@ isApprox(T1 X, T2 Y, CT RTol = defaultRelativeTolerance<CT>, CT ATol = 0)
           max(ATol, RTol * max(Kokkos::abs(X), Kokkos::abs(Y)));
 }
 
+// Clamps the value X to be no lower than Lo and no higher than Hi
+template <class T1, class T2, class T3>
+KOKKOS_INLINE_FUNCTION constexpr auto clamp(T1 X, T2 Lo, T3 Hi) {
+   return max(Lo, min(X, Hi));
+}
+
+// Linearly interpolate a function f given Y1 = f(X1) and Y2 = f(X2) to X
+KOKKOS_INLINE_FUNCTION Real linearInterp(Real X, Real Y1, Real X1, Real Y2,
+                                         Real X2) {
+   if (X1 == X2)
+      return Y1;
+   const Real A = (Y1 - Y2) / (X1 - X2);
+   const Real B = Y1 - A * X1;
+   return A * X + B;
+}
+
 // Below is a list of mathematical functions that we take from Kokkos without
 // modification See
 // https://kokkos.org/kokkos-core-wiki/API/core/numerics/mathematical-functions.html
