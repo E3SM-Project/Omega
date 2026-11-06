@@ -398,12 +398,7 @@ static int initOmegaModulesImpl() {
 
    Field::init(ModelClock);
    Decomp::init();
-
-   Err = Halo::init();
-   if (Err != 0) {
-      ABORT_ERROR("ocnInit: Error initializing default halo");
-   }
-
+   Halo::init();
    HorzMesh::init(ModelClock);
    VertCoord::init();
    Tracers::init();
@@ -492,11 +487,7 @@ int initUpdateHaloAndHostArrays() {
    DefAuxState->exchangeHalo();
 
    // Now update tracers - assume using same time level index
-   Err = Tracers::exchangeHalo(CurTimeLevel);
-   if (Err != 0) {
-      ABORT_ERROR("Error updating tracer halo");
-   }
-
+   Tracers::exchangeHalo(CurTimeLevel);
    Tracers::copyToHost(CurTimeLevel);
 
    return Err;

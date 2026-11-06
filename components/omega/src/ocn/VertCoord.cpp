@@ -745,10 +745,7 @@ void VertCoord::setStreamArrays(const bool ReadStream, Halo *MeshHalo) {
 //------------------------------------------------------------------------------
 // Exchange SurfacePressure halo
 void VertCoord::updateSurfacePressure(Halo *MeshHalo) {
-   int Err = MeshHalo->exchangeFullArrayHalo(SurfacePressure, OnCell);
-   if (Err != 0) {
-      ABORT_ERROR("VertCoord: Error exchanging SurfacePressure halo");
-   }
+   MeshHalo->exchangeFullArrayHalo(SurfacePressure, OnCell);
 }
 
 //------------------------------------------------------------------------------

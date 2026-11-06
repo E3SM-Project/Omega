@@ -80,9 +80,7 @@ void initStateTest() {
    Decomp::init();
 
    // Initialize the default halo
-   Err = Halo::init();
-   if (Err != 0)
-      ABORT_ERROR("State: error initializing default halo");
+   Halo::init();
 
    // Initialize the default mesh
    HorzMesh::init(ModelClock);
