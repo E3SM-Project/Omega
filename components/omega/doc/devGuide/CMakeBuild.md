@@ -108,6 +108,21 @@ During this step, the build process is configured. It includes building
 external libraries, followed by building the Omega main model from source
 files. Optionally, tests can also be built.
 
+### Optimization in SYCL Debug builds
+
+`Debug` builds compile Omega's C++ code with `-g` and no `-O` level. For
+SYCL, `icpx` applies this to device code as `-O0`. The unoptimized kernels
+need so much private (per-work-item) memory that the GPU runtime's
+per-kernel private allocations fill a whole GPU tile, and runs eventually
+crash with a GPU page fault (see
+[#666](https://github.com/E3SM-Project/Omega/issues/666)).
+
+To avoid this, `src/CMakeLists.txt` adds `-O1` to the C++ compile options
+of the `OmegaLibFlags` interface target when `OMEGA_ARCH` is `SYCL` and the
+build type is `Debug`. This reaches the Omega library, executable and tests,
+but not Fortran sources or external libraries. Debug checks
+(`OMEGA_DEBUG`, Kokkos debug checks) and `-g` are unchanged.
+
 ## Step 4: Output
 
 The final step, which is optional, involves copying a subset of the build
