@@ -25,9 +25,24 @@
 /// period. The operator maintains state (accumulation count and period flag)
 /// across timesteps.
 ///
+/// With the "Weighting" option set to "Mass", a field on the layers of cells,
+/// edges or vertices is weighted by the mass of each layer, so the output is
+/// the sum of w * phi over the samples divided by the sum of w. The area of
+/// each mesh entity is fixed, so the weight is in effect the layer
+/// pseudo-thickness: by default the cell pseudo-thickness, its mean on edges
+/// or its kite-area-weighted mean on vertices, from SpatialWeights. A field
+/// can instead name the layer-thickness Field to weight by (see
+/// Field::getTimeMeanWeight), as a normal velocity names the flux
+/// pseudo-thickness that carries its transport. Fields that are already per
+/// unit area (Field::NoTimeMeanWeight), horizontal fields and interface fields
+/// are not weighted. The weight is read at each sample, and the running sum of
+/// the weights is checkpointed for restarts alongside the weighted sum; a
+/// restart in the middle of a period without it aborts.
+///
 //===----------------------------------------------------------------------===//
 
 #include "AnalysisOperator.h"
+#include "SpatialWeights.h"
 #include "TimeStepper.h"
 
 #include <algorithm>
@@ -84,6 +99,14 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
       SamplingIntervalStr.clear();
       Options.get("SamplingInterval", SamplingIntervalStr);
 
+      // Read the optional weighting. Absent => an unweighted mean.
+      std::string Weighting = "None";
+      Options.get("Weighting", Weighting);
+      if (Weighting != "None" && Weighting != "Mass")
+         ABORT_ERROR("TimeMeanOp: Weighting for {} must be Mass or None, "
+                     "not {}",
+                     InputNames[0], Weighting);
+
       // Construct output field name and set instance name
       std::string OutputFieldName = InputNames[0] + "_TimeMean" + AvgPeriod;
       OutputNames                 = {OutputFieldName};
@@ -98,6 +121,10 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
       std::vector<std::string> DimNames;
       InputField->getDimNames(DimNames);
 
+      // Decide whether and by what the field is weighted
+      if (Weighting == "Mass")
+         chooseWeight(*InputField, DimNames);
+
       // Fetch the input description and valid range
       std::string InputDescr;
       ScalarT InputValidMin, InputValidMax;
@@ -108,8 +135,16 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
       // Register output Field with same dimensions as input but Real type.
       // A time mean has the units and standard name of the field it
       // averages; its cell_methods record the reduction after any the input
-      // already carries (e.g. "area: mean time: mean").
-      auto Meta = inheritMetadata(InputNames[0], "time: mean");
+      // already carries (e.g. "area: mean time: mean"). A weighted mean
+      // records its weight.
+      std::string CellMethod = "time: mean";
+      if (IsWeighted)
+         CellMethod +=
+             " (comment: weighted by " +
+             (WeightFieldName.empty() ? std::string("pseudo-thickness")
+                                      : WeightFieldName) +
+             ")";
+      auto Meta = inheritMetadata(InputNames[0], CellMethod);
       auto OutputField =
           createOutputField(OutputNames[0],
                             "Time average of " + InputDescr,  // Description
@@ -128,6 +163,14 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
 
       // Attach output data array to Field
       OutputField->template attachData<OutputArrayT>(OutputData);
+
+      // The running sum of the weights has one entry per entity and layer,
+      // shared by any leading dimensions of the input
+      if (IsWeighted) {
+         WeightSumData = Array2DReal(OutputNames[0] + "_weight_sum",
+                                     InputData.extent(ArrayT::rank - 2),
+                                     InputData.extent(ArrayT::rank - 1));
+      }
 
       // Initialize accumulation state
       NumAccum    = 0;
@@ -212,6 +255,28 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
             MinLayer = VCoord->MinLayerVertexBot;
             MaxLayer = VCoord->MaxLayerVertexTop;
          }
+      }
+
+      if (!IsWeighted)
+         return;
+
+      if (WeightFieldName.empty()) {
+         // Mass weights of the entity's layers
+         Weights.init(InputNames[0], Mesh, VCoord, Comm);
+      } else {
+         // A named weight must be a layer field on the input's entities
+         auto WeightField = Field::get(WeightFieldName);
+         OMEGA_REQUIRE(WeightField,
+                       "TimeMeanOp: weight field {} of {} not found",
+                       WeightFieldName, InputNames[0]);
+         std::vector<std::string> WeightDimNames;
+         WeightField->getDimNames(WeightDimNames);
+         OMEGA_REQUIRE(WeightDimNames.size() == 2 &&
+                           WeightDimNames[0] == IndexSpaceName &&
+                           WeightDimNames[1] == "NVertLayers",
+                       "TimeMeanOp: weight field {} of {} must have "
+                       "dimensions {} and NVertLayers",
+                       WeightFieldName, InputNames[0], IndexSpaceName);
       }
 
    } // end initialize
@@ -392,6 +457,20 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
       FieldGroup::addFieldToGroup(NumAccumName, "Restart");
       NumAccumField->template attachData<HostArray1DI4>(NumAccumData);
 
+      // --- Weight-sum Field: the running sum of the weights ---
+      if (IsWeighted) {
+         const std::string WeightSumName = OutputNames[0] + "_WeightSum";
+         std::vector<std::string> WeightDimNames(DimNames.end() - 2,
+                                                 DimNames.end());
+         auto WeightSumField = Field::create(
+             WeightSumName, "Restart checkpoint of time-mean sum of weights",
+             "", "", std::numeric_limits<Real>::lowest(),
+             std::numeric_limits<Real>::max(), 2, WeightDimNames);
+         WeightSumField->setOptionalRead(true);
+         FieldGroup::addFieldToGroup(WeightSumName, "Restart");
+         WeightSumField->template attachData<Array2DReal>(WeightSumData);
+      }
+
    } // end createRestartFields
 
    /// Restores live state from the restart-read count. IsNewPeriod is derived
@@ -399,10 +478,49 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
    /// accumulation starts fresh (also the default for restart files that lack
    /// the checkpoint variables, since OptionalRead leaves the array at its
    /// fill value of 0 for I4).
+   ///
+   /// A weighted mean also needs the sum of the weights. A restart file
+   /// written without it in the middle of a period, by an unweighted mean or
+   /// an older Omega, holds an unweighted partial sum that cannot be
+   /// continued as a weighted one, so this aborts rather than writing a mean
+   /// over part of the period.
    void applyRestartState() override {
       NumAccum    = NumAccumData(0);
       IsNewPeriod = (NumAccum == 0);
+
+      if (!IsNewPeriod && !hasRestartWeightSum())
+         ABORT_ERROR("TimeMeanOp: the restart file is in the middle of an "
+                     "averaging period of {} but has no sum of weights for "
+                     "its mass-weighted mean, so the partial sum it holds is "
+                     "unweighted. Restart from a file written at the end of "
+                     "an averaging period, use a hybrid start, or set "
+                     "Weighting to None.",
+                     OutputNames[0]);
    } // end applyRestartState
+
+   /// True unless this is a weighted mean and an active layer of an owned
+   /// entity still holds the fill value in the sum of the weights, which is
+   /// how a restart file without the sum leaves it. Meaningful only after a
+   /// restart read and before the next sample.
+   bool hasRestartWeightSum() const {
+      if (!IsWeighted)
+         return true;
+      OMEGA_SCOPE(LocWeightSum, WeightSumData);
+      OMEGA_SCOPE(LocMinLayer, MinLayer);
+      OMEGA_SCOPE(LocMaxLayer, MaxLayer);
+      const Real LocFillValue = FillValueReal;
+      I4 NMissing             = 0;
+      parallelReduce(
+          "TimeMeanWeightSumRead", {NHorizOwned},
+          KOKKOS_LAMBDA(int IHoriz, I4 &Accum) {
+             for (I4 K = LocMinLayer(IHoriz); K <= LocMaxLayer(IHoriz); ++K) {
+                if (LocWeightSum(IHoriz, K) == LocFillValue)
+                   ++Accum;
+             }
+          },
+          NMissing);
+      return NMissing == 0;
+   } // end hasRestartWeightSum
 
    /// Computes the time-averaged mean by accumulating input values. On the
    /// first call after alarm rings (IsNewPeriod), copies input to output and
@@ -424,15 +542,18 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
       // runs every call so a period boundary is always honored -- even when it
       // lands on a non-sample step.
       if (shouldSample(TimeStamp)) {
+         // The weights at this sample (empty if unweighted)
+         Array2DReal SampleWeights = currentWeights();
+
          // Accumulate input values into output array
          if (IsNewPeriod) {
             // Start of new averaging period: initialize with first input
             NumAccum = 1;
-            accumInit(InputData);
+            accumInit(InputData, SampleWeights);
             IsNewPeriod = false;
          } else {
             // Continue accumulation: add input to running sum
-            accumAdd(InputData);
+            accumAdd(InputData, SampleWeights);
             ++NumAccum;
          }
       }
@@ -466,8 +587,11 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
    /// averaging period. For column-structured mesh fields the write is
    /// restricted to active layers [MinLayer, MaxLayer] using hierarchical
    /// parallelism. Otherwise a flat parallel loop over the entire array is
-   /// used.
-   void accumInit(const ArrayT &InputData) {
+   /// used. A weighted mean stores the weight times the input and starts the
+   /// sum of the weights.
+   void accumInit(const ArrayT &InputData,
+                  const Array2DReal &SampleWeights ///< [in] empty if unweighted
+   ) {
       OMEGA_SCOPE(LocOutputData, OutputData);
       constexpr I4 InputRank = ArrayT::rank;
 
@@ -475,7 +599,9 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
          OMEGA_SCOPE(LocMinLayer, MinLayer);
          OMEGA_SCOPE(LocMaxLayer, MaxLayer);
          OMEGA_SCOPE(LocInputData, InputData);
+         OMEGA_SCOPE(LocWeights, SampleWeights);
          const I4 LocLayerBoundOffset = LayerBoundOffset;
+         const bool LocWeighted       = IsWeighted;
 
          if constexpr (InputRank == 2) {
             parallelForOuter(
@@ -487,8 +613,10 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
                    parallelForInner(
                        Team, KRange, INNER_LAMBDA(int KIdx) {
                           const I4 K = KMin + KIdx;
+                          const Real Wgt =
+                              LocWeighted ? LocWeights(IHoriz, K) : 1._Real;
                           LocOutputData(IHoriz, K) =
-                              static_cast<Real>(LocInputData(IHoriz, K));
+                              Wgt * static_cast<Real>(LocInputData(IHoriz, K));
                        });
                 });
          } else if constexpr (InputRank == 3) {
@@ -502,11 +630,16 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
                    parallelForInner(
                        Team, KRange, INNER_LAMBDA(int KIdx) {
                           const I4 K = KMin + KIdx;
+                          const Real Wgt =
+                              LocWeighted ? LocWeights(IHoriz, K) : 1._Real;
                           LocOutputData(I0, IHoriz, K) =
+                              Wgt *
                               static_cast<Real>(LocInputData(I0, IHoriz, K));
                        });
                 });
          }
+         if (IsWeighted)
+            accumWeights(SampleWeights, true);
       } else {
          // Flat fallback for scalars, rank-1, and non-mesh outputs
          parallelFor(
@@ -520,7 +653,9 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
    /// Adds an input sample to the running accumulator. Uses the same active
    /// layer bounds and dispatch logic as accumInit so that only the layers
    /// initialized at the start of the period are accumulated.
-   void accumAdd(const ArrayT &InputData) {
+   void accumAdd(const ArrayT &InputData,
+                 const Array2DReal &SampleWeights ///< [in] empty if unweighted
+   ) {
       OMEGA_SCOPE(LocOutputData, OutputData);
       constexpr I4 InputRank = ArrayT::rank;
 
@@ -528,7 +663,9 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
          OMEGA_SCOPE(LocMinLayer, MinLayer);
          OMEGA_SCOPE(LocMaxLayer, MaxLayer);
          OMEGA_SCOPE(LocInputData, InputData);
+         OMEGA_SCOPE(LocWeights, SampleWeights);
          const I4 LocLayerBoundOffset = LayerBoundOffset;
+         const bool LocWeighted       = IsWeighted;
 
          if constexpr (InputRank == 2) {
             parallelForOuter(
@@ -540,8 +677,10 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
                    parallelForInner(
                        Team, KRange, INNER_LAMBDA(int KIdx) {
                           const I4 K = KMin + KIdx;
+                          const Real Wgt =
+                              LocWeighted ? LocWeights(IHoriz, K) : 1._Real;
                           LocOutputData(IHoriz, K) +=
-                              static_cast<Real>(LocInputData(IHoriz, K));
+                              Wgt * static_cast<Real>(LocInputData(IHoriz, K));
                        });
                 });
          } else if constexpr (InputRank == 3) {
@@ -555,11 +694,16 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
                    parallelForInner(
                        Team, KRange, INNER_LAMBDA(int KIdx) {
                           const I4 K = KMin + KIdx;
+                          const Real Wgt =
+                              LocWeighted ? LocWeights(IHoriz, K) : 1._Real;
                           LocOutputData(I0, IHoriz, K) +=
+                              Wgt *
                               static_cast<Real>(LocInputData(I0, IHoriz, K));
                        });
                 });
          }
+         if (IsWeighted)
+            accumWeights(SampleWeights, false);
       } else {
          // Flat fallback for scalars, rank-1, and non-mesh outputs
          parallelFor(
@@ -572,7 +716,9 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
 
    /// Divides the accumulated sum by the sample count to form the mean. Uses
    /// the same active layer bounds and dispatch logic as accumInit/accumAdd so
-   /// fill values in inactive layers are preserved through finalization.
+   /// fill values in inactive layers are preserved through finalization. A
+   /// weighted mean divides by the sum of the weights instead, and is the
+   /// fill value where that sum is zero.
    void finalize() {
       OMEGA_SCOPE(LocOutputData, OutputData);
       const Real InvNumAccum = 1.0 / static_cast<Real>(NumAccum);
@@ -581,7 +727,10 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
       if (IsMeshDimension && InputRank >= 2) {
          OMEGA_SCOPE(LocMinLayer, MinLayer);
          OMEGA_SCOPE(LocMaxLayer, MaxLayer);
+         OMEGA_SCOPE(LocWeightSum, WeightSumData);
          const I4 LocLayerBoundOffset = LayerBoundOffset;
+         const bool LocWeighted       = IsWeighted;
+         const Real LocFillValue      = FillValueReal;
 
          if constexpr (InputRank == 2) {
             parallelForOuter(
@@ -593,7 +742,14 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
                    parallelForInner(
                        Team, KRange, INNER_LAMBDA(int KIdx) {
                           const I4 K = KMin + KIdx;
-                          LocOutputData(IHoriz, K) *= InvNumAccum;
+                          if (LocWeighted) {
+                             const Real WSum = LocWeightSum(IHoriz, K);
+                             LocOutputData(IHoriz, K) =
+                                 WSum > 0 ? LocOutputData(IHoriz, K) / WSum
+                                          : LocFillValue;
+                          } else {
+                             LocOutputData(IHoriz, K) *= InvNumAccum;
+                          }
                        });
                 });
          } else if constexpr (InputRank == 3) {
@@ -607,7 +763,14 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
                    parallelForInner(
                        Team, KRange, INNER_LAMBDA(int KIdx) {
                           const I4 K = KMin + KIdx;
-                          LocOutputData(I0, IHoriz, K) *= InvNumAccum;
+                          if (LocWeighted) {
+                             const Real WSum = LocWeightSum(IHoriz, K);
+                             LocOutputData(I0, IHoriz, K) =
+                                 WSum > 0 ? LocOutputData(I0, IHoriz, K) / WSum
+                                          : LocFillValue;
+                          } else {
+                             LocOutputData(I0, IHoriz, K) *= InvNumAccum;
+                          }
                        });
                 });
          }
@@ -621,6 +784,71 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
    } // end finalize
 
  private:
+   /// Decides whether a mass-weighted mean weights the input, and by what.
+   /// Only a rank-2 or rank-3 field on the layers of cells, edges or vertices
+   /// is weighted, unless it is marked as already per unit area. Sets
+   /// IsWeighted and WeightFieldName, which stays empty for the default mass
+   /// weights.
+   void chooseWeight(const Field &InputField, ///< [in] input field
+                     const std::vector<std::string> &DimNames ///< [in] dims
+   ) {
+      constexpr I4 InputRank = ArrayT::rank;
+      IsWeighted             = false;
+      WeightFieldName.clear();
+
+      if constexpr (InputRank == 2 || InputRank == 3) {
+         const std::string &HorizDimName = DimNames[InputRank - 2];
+         const std::string &VertDimName  = DimNames[InputRank - 1];
+         const bool OnLayers =
+             (HorizDimName == "NCells" || HorizDimName == "NEdges" ||
+              HorizDimName == "NVertices") &&
+             VertDimName == "NVertLayers";
+         const std::string &Weight = InputField.getTimeMeanWeight();
+         if (OnLayers && Weight != Field::NoTimeMeanWeight) {
+            IsWeighted      = true;
+            WeightFieldName = Weight;
+         }
+      }
+   } // end chooseWeight
+
+   /// Returns the weights at the current sample: the named weight Field, or
+   /// the mass weights refreshed from the current pseudo-thickness. Empty for
+   /// an unweighted mean.
+   Array2DReal currentWeights() {
+      if (!IsWeighted)
+         return Array2DReal();
+      if (!WeightFieldName.empty())
+         return Field::get(WeightFieldName)->getDataArray<Array2DReal>();
+      Weights.updateWeights();
+      return Weights.MassWeights;
+   } // end currentWeights
+
+   /// Starts (Init) or adds to the running sum of the weights over the active
+   /// layers of the owned entities
+   void accumWeights(const Array2DReal &SampleWeights, ///< [in] weights
+                     bool Init ///< [in] true to start a new sum
+   ) {
+      OMEGA_SCOPE(LocWeightSum, WeightSumData);
+      OMEGA_SCOPE(LocWeights, SampleWeights);
+      OMEGA_SCOPE(LocMinLayer, MinLayer);
+      OMEGA_SCOPE(LocMaxLayer, MaxLayer);
+      parallelForOuter(
+          "TimeMeanWeightSum", LaunchConfig({NHorizOwned}),
+          KOKKOS_LAMBDA(int IHoriz, const TeamMember &Team) {
+             const I4 KMin   = LocMinLayer(IHoriz);
+             const I4 KMax   = LocMaxLayer(IHoriz);
+             const I4 KRange = vertRange(KMin, KMax);
+             parallelForInner(
+                 Team, KRange, INNER_LAMBDA(int KIdx) {
+                    const I4 K = KMin + KIdx;
+                    if (Init)
+                       LocWeightSum(IHoriz, K) = LocWeights(IHoriz, K);
+                    else
+                       LocWeightSum(IHoriz, K) += LocWeights(IHoriz, K);
+                 });
+          });
+   } // end accumWeights
+
    /// Detaches the sample alarm, if any, from the clock it is attached to
    void detachSampleAlarm() {
       if (SampleClock != nullptr && OwnedSampleAlarm) {
@@ -722,6 +950,21 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
    /// The averaging period as given in config (e.g. "1Month"), kept so that
    /// a "<n>perPeriod" sampling interval can be built in the period's units
    std::string PeriodStr;
+
+   /// True if the mean is weighted (see chooseWeight)
+   bool IsWeighted = false;
+
+   /// Name of the layer-thickness Field to weight by; empty for the mass
+   /// weights from SpatialWeights
+   std::string WeightFieldName;
+
+   /// Mass weights of the input's entities and layers, used when
+   /// WeightFieldName is empty
+   SpatialWeights Weights;
+
+   /// Running sum of the weights over the current averaging period (entities
+   /// by layers); allocated only for a weighted mean
+   Array2DReal WeightSumData;
 
 }; // end class TimeMeanOp
 
