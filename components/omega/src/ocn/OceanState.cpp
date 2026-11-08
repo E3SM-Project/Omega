@@ -353,6 +353,15 @@ void OceanState::defineFields() {
    NormalVelocityField->attachData<Array2DReal>(NormalVelocity[TimeIndex]);
    PseudoThicknessField->attachData<Array2DReal>(PseudoThickness[TimeIndex]);
 
+   // A time mean weights each normal velocity by the pseudo-thickness that
+   // carries its transport through the edge, so that the mean transport can
+   // be recovered from the mean velocity and mean flux pseudo-thickness. The
+   // pseudo-thickness is already per unit area and is not weighted.
+   const std::string FluxThickName =
+       "FluxPseudoThickEdge" + (Name == "Default" ? std::string() : Name);
+   NormalVelocityField->setTimeMeanWeight(FluxThickName);
+   PseudoThicknessField->setTimeMeanWeight(Field::NoTimeMeanWeight);
+
    if (UseModeSplit) {
       FieldGroup::addFieldToGroup(NormalBaroclinicVelocityFldName, "Restart");
       FieldGroup::addFieldToGroup(NormalBarotropicVelocityFldName, "Restart");
@@ -360,6 +369,7 @@ void OceanState::defineFields() {
 
       NormalBaroclinicVelocityField->attachData<Array2DReal>(
           NormalBaroclinicVelocity[TimeIndex]);
+      NormalBaroclinicVelocityField->setTimeMeanWeight(FluxThickName);
       NormalBarotropicVelocityField->attachData<Array1DReal>(
           NormalBarotropicVelocity[TimeIndex]);
       BarotropicPressureAnomalyField->attachData<Array1DReal>(

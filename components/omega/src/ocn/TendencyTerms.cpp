@@ -336,6 +336,11 @@ void TracerHorzAdvOnCell::init() {
          );
          BudgetAdvectionCellTend->attachData<Array3DReal>(
              ActiveTracerHorizontalAdvectionTendency);
+
+         // Both hold thickness-weighted tracer fluxes and tendencies, which
+         // are already per unit area, so their time means are not weighted
+         BudgetAdvectionEdgeFlux->setTimeMeanWeight(Field::NoTimeMeanWeight);
+         BudgetAdvectionCellTend->setTimeMeanWeight(Field::NoTimeMeanWeight);
          FieldGroup::addFieldToGroup(
              ActiveTracerHorizontalAdvectionTendency.label(), GroupName);
       }

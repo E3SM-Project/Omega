@@ -87,6 +87,12 @@ void PseudoThicknessAuxVars::registerFields(const std::string &AuxGroupName,
    FluxPseudoThickEdgeField->attachData<Array2DReal>(FluxPseudoThickEdge);
    MeanPseudoThickEdgeField->attachData<Array2DReal>(MeanPseudoThickEdge);
    ProvPseudoThicknessField->attachData<Array2DReal>(ProvPseudoThickness);
+
+   // Pseudo-thicknesses are already per unit area, so their time means are
+   // not weighted
+   FluxPseudoThickEdgeField->setTimeMeanWeight(Field::NoTimeMeanWeight);
+   MeanPseudoThickEdgeField->setTimeMeanWeight(Field::NoTimeMeanWeight);
+   ProvPseudoThicknessField->setTimeMeanWeight(Field::NoTimeMeanWeight);
 }
 
 void PseudoThicknessAuxVars::unregisterFields() const {
