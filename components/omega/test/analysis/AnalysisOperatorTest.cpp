@@ -19,11 +19,13 @@
 #include "VertAdv.h"
 #include "VertCoord.h"
 #include "VertMix.h"
+#include "operators/TimeMeanOp.h"
 
 #include <cmath>
 #include <functional>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <type_traits>
 #include <vector>
 
@@ -1634,6 +1636,442 @@ void testTimeMeanOpSamplingPerDay(const MachEnv *Env, const HorzMesh *Mesh,
 }
 
 //------------------------------------------------------------------------------
+// Mass-weighted TimeMeanOp tests
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// Drives the pseudo-thickness of the default ocean state through a sequence
+// of samples, scaling each active layer by a factor that varies with the
+// step, cell and layer so that the weights of every entity change over the
+// period, and restores the original pseudo-thickness when done
+struct ThicknessDriver {
+   const VertCoord *VCoord;
+   Array2DReal Thick;
+   HostArray2DReal ThickOrig;
+
+   explicit ThicknessDriver(const VertCoord *InVCoord) : VCoord(InVCoord) {
+      auto State = OceanState::getDefault();
+      Thick      = Field::get(State->PseudoThicknessFldName)
+                  ->getDataArray<Array2DReal>();
+      // A fresh host array, since a host mirror aliases the device array
+      // on a CPU build and would change with it
+      ThickOrig = HostArray2DReal("ThicknessDriverOrig", Thick.extent(0),
+                                  Thick.extent(1));
+      deepCopy(ThickOrig, Thick);
+   }
+
+   // Pseudo-thickness of an active cell layer at a step
+   Real at(int Step, I4 ICell, I4 K) const {
+      return ThickOrig(ICell, K) *
+             (1.0_Real +
+              0.5_Real * static_cast<Real>(Step * ((ICell + K) % 3)));
+   }
+
+   // Sets the pseudo-thickness of the active layers for a step
+   void set(int Step) {
+      auto ThickH = createHostMirrorCopy(Thick);
+      for (I4 ICell = 0; ICell < Thick.extent_int(0); ++ICell)
+         for (I4 K = VCoord->MinLayerCellH(ICell);
+              K <= VCoord->MaxLayerCellH(ICell); ++K)
+            ThickH(ICell, K) = at(Step, ICell, K);
+      deepCopy(Thick, ThickH);
+   }
+
+   void restore() { deepCopy(Thick, ThickOrig); }
+};
+
+//------------------------------------------------------------------------------
+// Creates a 2D Real test field and returns its device array
+Array2DReal createWeightedTestField(const std::string &FieldName,
+                                    const std::string &HorizDim,
+                                    const std::string &VertDim, I4 NEntities,
+                                    I4 NVert) {
+   auto TestField =
+       Field::create(FieldName, "Weighted time mean test field", TestUnits,
+                     TestStdName, -1.0e30, 1.0e30, 2, {HorizDim, VertDim});
+   Array2DReal Data(FieldName + "_data", NEntities, NVert);
+   TestField->attachData<Array2DReal>(Data);
+   return Data;
+}
+
+//------------------------------------------------------------------------------
+// Sets every entry of a 2D field from a function of the entity and layer
+void setTestField(Array2DReal &Data, std::function<Real(I4, I4)> ValueFunc) {
+   auto DataH = createHostMirrorCopy(Data);
+   for (I4 I = 0; I < Data.extent_int(0); ++I)
+      for (I4 K = 0; K < Data.extent_int(1); ++K)
+         DataH(I, K) = ValueFunc(I, K);
+   deepCopy(Data, DataH);
+}
+
+//------------------------------------------------------------------------------
+// Checks a time-mean output against expected values over the layers
+// [KMin(I), KMax(I)] of the owned entities, to a relative tolerance
+bool checkTimeMean(const std::string &TestName, const std::string &OutputName,
+                   I4 NOwned, std::function<I4(I4)> KMin,
+                   std::function<I4(I4)> KMax,
+                   std::function<Real(I4, I4)> Expected, Real RelTol) {
+   auto ResultH = createHostMirrorCopy(
+       Field::get(OutputName)->getDataArray<Array2DReal>());
+   bool Passed = true;
+   for (I4 I = 0; I < NOwned && Passed; ++I) {
+      for (I4 K = KMin(I); K <= KMax(I); ++K) {
+         const Real Exp   = Expected(I, K);
+         const Real Scale = std::max(std::abs(Exp), static_cast<Real>(1));
+         if (std::abs(ResultH(I, K) - Exp) > RelTol * Scale) {
+            Passed = false;
+            LOG_ERROR("  {} at ({}, {}): expected {}, got {}", OutputName, I, K,
+                      Exp, ResultH(I, K));
+            break;
+         }
+      }
+   }
+   reportTest(TestName, Passed);
+   return Passed;
+}
+
+//------------------------------------------------------------------------------
+// Verifies the mass-weighted time mean over a period in which the
+// pseudo-thickness changes from sample to sample:
+//   - a cell field is weighted by the cell pseudo-thickness
+//   - an edge field is weighted by the mean pseudo-thickness of its cells
+//   - an edge velocity that names a flux thickness is weighted by it, so the
+//     mean velocity times the mean flux thickness is the mean transport even
+//     when the flux thickness differs from the mean of the cells
+//   - fields marked as per unit area and interface fields get the plain mean
+//   - cell_methods records the weight
+void testTimeMeanOpWeighted(const MachEnv *Env, const HorzMesh *Mesh,
+                            const VertCoord *VCoord, Clock *ModelClock) {
+
+   const int NumSteps        = 4;
+   TimeInterval StepInterval = ModelClock->getTimeStep();
+   R8 StepSeconds;
+   StepInterval.get(StepSeconds, TimeUnits::Seconds);
+   const R8 PeriodSeconds = StepSeconds * NumSteps;
+   TimeInterval PeriodInterval(PeriodSeconds, TimeUnits::Seconds);
+   const std::string PeriodLabel =
+       std::to_string(static_cast<int>(PeriodSeconds)) + "seconds";
+   const Real RelTol = std::is_same_v<Real, float> ? 1.0e-5 : 1.0e-12;
+
+   const I4 NVert = VCoord->NVertLayers;
+   ThicknessDriver Thick(VCoord);
+
+   // Values of the test fields at each step
+   auto CellValue = [](int S, I4 I, I4 K) -> Real {
+      return 10.0_Real + static_cast<Real>(S * ((I + 2 * K) % 4));
+   };
+   auto EdgeValue = [](int S, I4 I, I4 K) -> Real {
+      return 1.0_Real + static_cast<Real>(S * ((I + K) % 3));
+   };
+   auto VelValue = [](int S, I4 I, I4 K) -> Real {
+      return -1.0_Real + 0.5_Real * static_cast<Real>(S * ((I + K) % 5));
+   };
+   // An upwind-like flux thickness: that of the first cell on the edge
+   auto FluxThick = [&](int S, I4 IEdge, I4 K) -> Real {
+      return Thick.at(S, Mesh->CellsOnEdgeH(IEdge, 0), K);
+   };
+   auto MeanThick = [&](int S, I4 IEdge, I4 K) -> Real {
+      return 0.5_Real * (Thick.at(S, Mesh->CellsOnEdgeH(IEdge, 0), K) +
+                         Thick.at(S, Mesh->CellsOnEdgeH(IEdge, 1), K));
+   };
+
+   // Test fields
+   Array2DReal CellData = createWeightedTestField(
+       "TestWTMCell", "NCells", "NVertLayers", Mesh->NCellsSize, NVert);
+   Array2DReal EdgeData = createWeightedTestField(
+       "TestWTMEdge", "NEdges", "NVertLayers", Mesh->NEdgesSize, NVert);
+   Array2DReal FluxData = createWeightedTestField(
+       "TestWTMFluxThick", "NEdges", "NVertLayers", Mesh->NEdgesSize, NVert);
+   Field::get("TestWTMFluxThick")->setTimeMeanWeight(Field::NoTimeMeanWeight);
+   Array2DReal VelData = createWeightedTestField(
+       "TestWTMVel", "NEdges", "NVertLayers", Mesh->NEdgesSize, NVert);
+   Field::get("TestWTMVel")->setTimeMeanWeight("TestWTMFluxThick");
+   Array2DReal AreaData = createWeightedTestField(
+       "TestWTMPerArea", "NCells", "NVertLayers", Mesh->NCellsSize, NVert);
+   Field::get("TestWTMPerArea")->setTimeMeanWeight(Field::NoTimeMeanWeight);
+   Array2DReal IntfData =
+       createWeightedTestField("TestWTMInterface", "NCells", "NVertLayersP1",
+                               Mesh->NCellsSize, VCoord->NVertLayersP1);
+
+   const std::vector<std::string> FieldNames = {
+       "TestWTMCell", "TestWTMEdge",    "TestWTMFluxThick",
+       "TestWTMVel",  "TestWTMPerArea", "TestWTMInterface"};
+
+   Config OpConfig       = makeOpConfig(opParam("Period", PeriodLabel),
+                                        opParam("Weighting", std::string("Mass")));
+   TimeInstant StartTime = ModelClock->getCurrentTime();
+   Alarm PeriodAlarm("TestPeriodAlarmWeighted", PeriodInterval, StartTime);
+   std::vector<std::unique_ptr<AnalysisOperator>> Ops;
+   for (const auto &Name : FieldNames) {
+      Ops.push_back(AnalysisOpFactory::createOp("TimeMean", {Name}, OpConfig));
+      Ops.back()->initialize(Env, Mesh, VCoord, Config{});
+      Ops.back()->setPeriodAlarm(&PeriodAlarm);
+   }
+
+   for (int S = 0; S < NumSteps; ++S) {
+      Thick.set(S);
+      setTestField(CellData, [&](I4 I, I4 K) { return CellValue(S, I, K); });
+      setTestField(EdgeData, [&](I4 I, I4 K) { return EdgeValue(S, I, K); });
+      setTestField(VelData, [&](I4 I, I4 K) { return VelValue(S, I, K); });
+      setTestField(AreaData, [&](I4 I, I4 K) { return CellValue(S, I, K); });
+      setTestField(IntfData, [&](I4 I, I4 K) { return CellValue(S, I, K); });
+      // The flux thickness is only defined where both cells are active
+      setTestField(FluxData, [&](I4 I, I4 K) {
+         const bool Active = I < Mesh->NEdgesOwned &&
+                             K >= VCoord->MinLayerEdgeBotH(I) &&
+                             K <= VCoord->MaxLayerEdgeTopH(I);
+         return Active ? FluxThick(S, I, K) : FillValueReal;
+      });
+
+      ModelClock->advance();
+      TimeInstant CurrentTime = ModelClock->getCurrentTime();
+      PeriodAlarm.updateStatus(CurrentTime);
+      for (auto &Op : Ops)
+         Op->compute(CurrentTime);
+   }
+   Thick.restore();
+
+   // Expected weighted and plain means over the steps
+   auto WeightedMean = [&](std::function<Real(int)> Weight,
+                           std::function<Real(int)> Value) {
+      Real SumW = 0, SumWX = 0;
+      for (int S = 0; S < NumSteps; ++S) {
+         SumW += Weight(S);
+         SumWX += Weight(S) * Value(S);
+      }
+      return SumWX / SumW;
+   };
+   auto PlainMean = [&](std::function<Real(int)> Value) {
+      Real Sum = 0;
+      for (int S = 0; S < NumSteps; ++S)
+         Sum += Value(S);
+      return Sum / NumSteps;
+   };
+
+   auto CellKMin            = [&](I4 I) { return VCoord->MinLayerCellH(I); };
+   auto CellKMax            = [&](I4 I) { return VCoord->MaxLayerCellH(I); };
+   auto EdgeKMin            = [&](I4 I) { return VCoord->MinLayerEdgeBotH(I); };
+   auto EdgeKMax            = [&](I4 I) { return VCoord->MaxLayerEdgeTopH(I); };
+   const std::string Suffix = "_TimeMean" + PeriodLabel;
+
+   checkTimeMean(
+       "TimeMeanOp weighted: cell layers", "TestWTMCell" + Suffix,
+       Mesh->NCellsOwned, CellKMin, CellKMax,
+       [&](I4 I, I4 K) {
+          return WeightedMean([&](int S) { return Thick.at(S, I, K); },
+                              [&](int S) { return CellValue(S, I, K); });
+       },
+       RelTol);
+
+   checkTimeMean(
+       "TimeMeanOp weighted: edge layers", "TestWTMEdge" + Suffix,
+       Mesh->NEdgesOwned, EdgeKMin, EdgeKMax,
+       [&](I4 I, I4 K) {
+          return WeightedMean([&](int S) { return MeanThick(S, I, K); },
+                              [&](int S) { return EdgeValue(S, I, K); });
+       },
+       RelTol);
+
+   checkTimeMean(
+       "TimeMeanOp weighted: velocity by flux thickness", "TestWTMVel" + Suffix,
+       Mesh->NEdgesOwned, EdgeKMin, EdgeKMax,
+       [&](I4 I, I4 K) {
+          return WeightedMean([&](int S) { return FluxThick(S, I, K); },
+                              [&](int S) { return VelValue(S, I, K); });
+       },
+       RelTol);
+
+   checkTimeMean(
+       "TimeMeanOp weighted: flux thickness unweighted",
+       "TestWTMFluxThick" + Suffix, Mesh->NEdgesOwned, EdgeKMin, EdgeKMax,
+       [&](I4 I, I4 K) {
+          return PlainMean([&](int S) { return FluxThick(S, I, K); });
+       },
+       RelTol);
+
+   checkTimeMean(
+       "TimeMeanOp weighted: per-unit-area field unweighted",
+       "TestWTMPerArea" + Suffix, Mesh->NCellsOwned, CellKMin, CellKMax,
+       [&](I4 I, I4 K) {
+          return PlainMean([&](int S) { return CellValue(S, I, K); });
+       },
+       RelTol);
+
+   checkTimeMean(
+       "TimeMeanOp weighted: interface field unweighted",
+       "TestWTMInterface" + Suffix, Mesh->NCellsOwned, CellKMin,
+       [&](I4 I) { return VCoord->MaxLayerCellH(I) + 1; },
+       [&](I4 I, I4 K) {
+          return PlainMean([&](int S) { return CellValue(S, I, K); });
+       },
+       RelTol);
+
+   // The mean transport is recovered from the mean velocity and the mean
+   // flux thickness
+   {
+      auto FluxH = createHostMirrorCopy(
+          Field::get("TestWTMFluxThick" + Suffix)->getDataArray<Array2DReal>());
+      checkTimeMean(
+          "TimeMeanOp weighted: mean transport recovered",
+          "TestWTMVel" + Suffix, Mesh->NEdgesOwned, EdgeKMin, EdgeKMax,
+          [&](I4 I, I4 K) {
+             // Expected velocity is the mean transport over the mean thickness
+             Real Transport = PlainMean(
+                 [&](int S) { return FluxThick(S, I, K) * VelValue(S, I, K); });
+             return Transport / FluxH(I, K);
+          },
+          RelTol);
+   }
+
+   // Inactive layers keep their fill value
+   {
+      auto CellH = createHostMirrorCopy(
+          Field::get("TestWTMCell" + Suffix)->getDataArray<Array2DReal>());
+      bool Passed = true;
+      for (I4 I = 0; I < Mesh->NCellsOwned && Passed; ++I)
+         for (I4 K = 0; K < NVert; ++K)
+            if ((K < VCoord->MinLayerCellH(I) ||
+                 K > VCoord->MaxLayerCellH(I)) &&
+                CellH(I, K) != FillValueReal) {
+               Passed = false;
+               LOG_ERROR("  inactive layer ({}, {}) is {}", I, K, CellH(I, K));
+               break;
+            }
+      reportTest("TimeMeanOp weighted: inactive layers keep fill value",
+                 Passed);
+   }
+
+   // The cell methods record the weight
+   checkOutputMetadata("TimeMeanOp weighted: cell layers",
+                       "TestWTMCell" + Suffix, TestUnits, TestStdName,
+                       "time: mean (comment: weighted by pseudo-thickness)");
+   checkOutputMetadata("TimeMeanOp weighted: velocity", "TestWTMVel" + Suffix,
+                       TestUnits, TestStdName,
+                       "time: mean (comment: weighted by TestWTMFluxThick)");
+   checkOutputMetadata("TimeMeanOp weighted: per-unit-area field",
+                       "TestWTMPerArea" + Suffix, TestUnits, TestStdName,
+                       "time: mean");
+   checkOutputMetadata("TimeMeanOp weighted: interface field",
+                       "TestWTMInterface" + Suffix, TestUnits, TestStdName,
+                       "time: mean");
+}
+
+//------------------------------------------------------------------------------
+// Verifies that a weighted time mean survives a restart in the middle of a
+// period. As in the system test of the unweighted restart, the restart is
+// simulated in memory: the checkpoint Fields of an interrupted source
+// operator (_AccumSum, _NumAccum and _WeightSum) are copied into a fresh
+// operator before applyRestartState(). The restarted mean must match an
+// uninterrupted one. A restart that lacks the sum of the weights must be
+// detected, since applyRestartState() then aborts.
+void testTimeMeanOpWeightedRestart(const MachEnv *Env, const HorzMesh *Mesh,
+                                   const VertCoord *VCoord, Clock *ModelClock) {
+
+   const int NumSteps        = 4;
+   const int SplitStep       = 2;
+   TimeInterval StepInterval = ModelClock->getTimeStep();
+   R8 StepSeconds;
+   StepInterval.get(StepSeconds, TimeUnits::Seconds);
+   const R8 PeriodSeconds = StepSeconds * NumSteps;
+   TimeInterval PeriodInterval(PeriodSeconds, TimeUnits::Seconds);
+   const std::string PeriodLabel =
+       std::to_string(static_cast<int>(PeriodSeconds)) + "seconds";
+   const std::string Suffix = "_TimeMean" + PeriodLabel;
+   const Real RelTol        = std::is_same_v<Real, float> ? 1.0e-5 : 1.0e-12;
+
+   const I4 NVert = VCoord->NVertLayers;
+   ThicknessDriver Thick(VCoord);
+   auto Value = [](int S, I4 I, I4 K) -> Real {
+      return 10.0_Real + static_cast<Real>(S * ((I + 2 * K) % 4));
+   };
+
+   // Reference, interrupted source, restarted destination and a destination
+   // restarted without the sum of the weights
+   const std::vector<std::string> Names = {"TestWTMRstRef", "TestWTMRstSrc",
+                                           "TestWTMRstDst", "TestWTMRstMiss"};
+   std::vector<Array2DReal> Data;
+   std::vector<std::unique_ptr<AnalysisOperator>> Ops;
+   Config OpConfig       = makeOpConfig(opParam("Period", PeriodLabel),
+                                        opParam("Weighting", std::string("Mass")));
+   TimeInstant StartTime = ModelClock->getCurrentTime();
+   Alarm PeriodAlarm("TestPeriodAlarmWeightedRst", PeriodInterval, StartTime);
+   for (const auto &Name : Names) {
+      Data.push_back(createWeightedTestField(Name, "NCells", "NVertLayers",
+                                             Mesh->NCellsSize, NVert));
+      Ops.push_back(AnalysisOpFactory::createOp("TimeMean", {Name}, OpConfig));
+      Ops.back()->initialize(Env, Mesh, VCoord, Config{});
+      Ops.back()->setPeriodAlarm(&PeriodAlarm);
+   }
+   auto &RefOp  = Ops[0];
+   auto &SrcOp  = Ops[1];
+   auto &DstOp  = Ops[2];
+   auto &MissOp = Ops[3];
+
+   for (int S = 0; S < NumSteps; ++S) {
+      if (S == SplitStep) {
+         // Restart: copy the source's checkpoint into the destinations
+         const std::string Src = Names[1] + Suffix;
+         for (const std::string Dst : {Names[2] + Suffix, Names[3] + Suffix}) {
+            deepCopy(
+                Field::get(Dst + "_AccumSum")->getDataArray<Array2DReal>(),
+                Field::get(Src + "_AccumSum")->getDataArray<Array2DReal>());
+            Field::get(Dst + "_NumAccum")->getDataArray<HostArray1DI4>()(0) =
+                Field::get(Src + "_NumAccum")->getDataArray<HostArray1DI4>()(0);
+         }
+         deepCopy(Field::get(Names[2] + Suffix + "_WeightSum")
+                      ->getDataArray<Array2DReal>(),
+                  Field::get(Src + "_WeightSum")->getDataArray<Array2DReal>());
+         // A restart without the sum of the weights is detected; the
+         // destination that has it restarts
+         auto *DstTimeMean =
+             dynamic_cast<TimeMeanOp<Array2DReal> *>(DstOp.get());
+         auto *MissTimeMean =
+             dynamic_cast<TimeMeanOp<Array2DReal> *>(MissOp.get());
+         reportTest("TimeMeanOp weighted restart: weight sum detected",
+                    DstTimeMean && DstTimeMean->hasRestartWeightSum());
+         reportTest("TimeMeanOp weighted restart: missing weight sum detected",
+                    MissTimeMean && !MissTimeMean->hasRestartWeightSum());
+         DstOp->applyRestartState();
+      }
+
+      Thick.set(S);
+      for (auto &D : Data)
+         setTestField(D, [&](I4 I, I4 K) { return Value(S, I, K); });
+
+      ModelClock->advance();
+      TimeInstant CurrentTime = ModelClock->getCurrentTime();
+      PeriodAlarm.updateStatus(CurrentTime);
+      RefOp->compute(CurrentTime);
+      if (S < SplitStep) {
+         SrcOp->compute(CurrentTime);
+      } else {
+         DstOp->compute(CurrentTime);
+      }
+   }
+   Thick.restore();
+
+   auto WeightedMean = [&](I4 I, I4 K) {
+      Real SumW = 0, SumWX = 0;
+      for (int S = 0; S < NumSteps; ++S) {
+         SumW += Thick.at(S, I, K);
+         SumWX += Thick.at(S, I, K) * Value(S, I, K);
+      }
+      return SumWX / SumW;
+   };
+   auto CellKMin = [&](I4 I) { return VCoord->MinLayerCellH(I); };
+   auto CellKMax = [&](I4 I) { return VCoord->MaxLayerCellH(I); };
+
+   checkTimeMean(
+       "TimeMeanOp weighted restart: uninterrupted mean", Names[0] + Suffix,
+       Mesh->NCellsOwned, CellKMin, CellKMax,
+       [&](I4 I, I4 K) { return WeightedMean(I, K); }, RelTol);
+   checkTimeMean(
+       "TimeMeanOp weighted restart: restarted mean", Names[2] + Suffix,
+       Mesh->NCellsOwned, CellKMin, CellKMax,
+       [&](I4 I, I4 K) { return WeightedMean(I, K); }, RelTol);
+}
+
+//------------------------------------------------------------------------------
 // Test TimeMeanOp with all array types
 void testTimeMeanOp(const MachEnv *Env, const HorzMesh *Mesh,
                     const VertCoord *VCoord, Clock *ModelClock) {
@@ -1661,6 +2099,10 @@ void testTimeMeanOp(const MachEnv *Env, const HorzMesh *Mesh,
    testTimeMeanOpSamplingInterval(Env, Mesh, VCoord, ModelClock);
 
    testTimeMeanOpSamplingPerDay(Env, Mesh, VCoord, ModelClock);
+
+   testTimeMeanOpWeighted(Env, Mesh, VCoord, ModelClock);
+
+   testTimeMeanOpWeightedRestart(Env, Mesh, VCoord, ModelClock);
 }
 
 //------------------------------------------------------------------------------
