@@ -16,6 +16,15 @@
 /// Users specify:
 /// - A list of field names to average (required)
 /// - An optional ReductionPeriod list to override the default "1Month" period
+/// - An optional Weighting, "Mass" (the default) or "None"
+///
+/// With Mass weighting, a field on layers is weighted by the mass of each
+/// layer, so that, e.g., the mean temperature times the mean pseudo-thickness
+/// is the mean heat content. A normal velocity is weighted by the flux
+/// pseudo-thickness that carries its transport, so the mean transport is the
+/// mean velocity times the mean FluxPseudoThickEdge. Fields that are already
+/// per unit area (such as PseudoThickness and the tendencies), horizontal
+/// fields and interface fields get the plain time mean (see TimeMeanOp).
 ///
 /// Any SnapshotPeriod specified in config for this group is ignored, since the
 /// group produces temporal reductions rather than instantaneous snapshots. The
@@ -29,6 +38,7 @@
 ///   Enable: true
 ///   Fields: [Temperature, Salinity, NormalVelocity, PseudoThickness]
 ///   ReductionPeriod: [1Month]   # optional; defaults to [1Month]
+///   Weighting: Mass             # optional; Mass (default) or None
 /// \EndConfigInput
 ///
 //===----------------------------------------------------------------------===//
@@ -48,8 +58,8 @@ namespace OMEGA {
 /// optional ReductionPeriod config option.
 ///
 /// The constructor reads the required field list from config, builds one
-/// operator chain per field (field -> TimeMean<Period>), and creates a single
-/// IOStream for the time-averaged output.
+/// operator chain per field (field -> TimeMean<Period>) with the group's
+/// weighting, and creates a single IOStream for the time-averaged output.
 class MonthlyAverages : public AnalysisGroup {
  public:
    /// Constructs a MonthlyAverages analysis group. Reads the required field
