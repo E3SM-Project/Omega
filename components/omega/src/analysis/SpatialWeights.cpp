@@ -228,20 +228,12 @@ void SpatialWeights::computeLayerMass() {
 } // end computeLayerMass
 
 //------------------------------------------------------------------------------
-// Recomputes the mass weights and the global weight sum
-void SpatialWeights::update() {
+// Recomputes the mass weights from the current pseudo-thickness
+void SpatialWeights::updateWeights() {
 
-   std::vector<I4> Range;
-
-   if (Horizontal) {
-      // Area weights are constant, so their sum is computed once
-      if (!SumIsValid) {
-         Range      = {0, NOwned - 1};
-         WeightSum  = globalSum(AreaWeights, Comm, &Range);
-         SumIsValid = true;
-      }
+   // Area weights are constant
+   if (Horizontal)
       return;
-   }
 
    computeLayerMass();
 
@@ -262,6 +254,26 @@ void SpatialWeights::update() {
    } else {
       deepCopy(MassWeights, Layer);
    }
+
+} // end updateWeights
+
+//------------------------------------------------------------------------------
+// Recomputes the mass weights and the global weight sum
+void SpatialWeights::update() {
+
+   std::vector<I4> Range;
+
+   if (Horizontal) {
+      // Area weights are constant, so their sum is computed once
+      if (!SumIsValid) {
+         Range      = {0, NOwned - 1};
+         WeightSum  = globalSum(AreaWeights, Comm, &Range);
+         SumIsValid = true;
+      }
+      return;
+   }
+
+   updateWeights();
 
    Range      = {0, NOwned - 1, 0, NVert - 1};
    WeightSum  = globalSum(MassWeights, Comm, &Range);
