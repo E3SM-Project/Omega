@@ -45,7 +45,7 @@ void PseudoThicknessAuxVars::registerFields(const std::string &AuxGroupName,
        "upwinded, or a combination of the two.", // long Name or description
        "m",                                      // units
        "",                                       // CF standard Name
-       0,                                        // min valid value
+       0.0_Real,                                 // min valid value
        std::numeric_limits<Real>::max(),         // max valid value
        NDims,                                    // number of dimensions
        DimNames                                  // dimension names
@@ -58,7 +58,7 @@ void PseudoThicknessAuxVars::registerFields(const std::string &AuxGroupName,
                                                               // description
        "m",                                                   // units
        "",                               // CF standard Name
-       0,                                // min valid value
+       0.0_Real,                         // min valid value
        std::numeric_limits<Real>::max(), // max valid value
        NDims,                            // number of dimensions
        DimNames                          // dimension names
@@ -72,7 +72,7 @@ void PseudoThicknessAuxVars::registerFields(const std::string &AuxGroupName,
        "pseudo-thickness after horizontal flux", // long Name or description
        "m",                                      // units
        "",                                       // CF standard Name
-       0,                                        // min valid value
+       0.0_Real,                                 // min valid value
        std::numeric_limits<Real>::max(),         // max valid value
        NDims,                                    // number of dimensions
        DimNames                                  // dimension names
