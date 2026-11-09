@@ -120,9 +120,10 @@ class KPPSurfaceForcingOnCell {
 
       const Real SaTop    = AbsSalinity(ICell, KTop);
       const Real CtTop    = ConservTemp(ICell, KTop);
-      const Real PTopDb   = PressureMid(ICell, KTop) * Pa2Db;
+      const Real PTop     = PressureMid(ICell, KTop);
+      const Real PTopDb   = PTop * Pa2Db;
       const Real HeatFlux = sfcHeatFluxWithoutMassEnthalpy(
-          ICell, SaTop, PTopDb, EosChoice, LongWaveHeatFluxUp,
+          ICell, SaTop, PTop, EosChoice, LongWaveHeatFluxUp,
           LongWaveHeatFluxDown, ShortWaveHeatFlux, SensibleHeatFlux,
           SeaIceHeatFlux, SeaIceFreshWaterFlux, SeaIceSaltFlux,
           LatentHeatFluxEvap, SnowFlux, IceRunoffFlux);
