@@ -459,7 +459,7 @@ void Frazil::computeFrazilFixedPropertyImpl(
              const Real PseudoThicknessIn = PseudoThickness(ICell, K);
 
              const Real CtFreezing = Eos::calcCtFreezing(
-                 LocEosChoice, AbsSalinityIn, PressureDb, 0.0_Real);
+                 LocEosChoice, AbsSalinityIn, PressureIn, 0.0_Real);
 
              Real HTend = 0.0_Real;
              Real TTend = 0.0_Real;
@@ -577,7 +577,7 @@ void Frazil::computeFrazilTeosImpl(const Array2DReal &ConservTemp,
              const Real PseudoThicknessIn = PseudoThicknessH(ICell, K);
 
              const Real CtFreezing = Eos::calcCtFreezing(
-                 LocEosChoice, AbsSalinityIn, PressureDb, 0.0_Real);
+                 LocEosChoice, AbsSalinityIn, PressureIn, 0.0_Real);
 
              Real HTend = 0.0_Real;
              Real TTend = 0.0_Real;

@@ -27,7 +27,8 @@ When using the `teos10` EOS option, helper methods are available for common
 temperature conversions used by ocean thermodynamics workflows:
 
 - `calcCtFreezing(Sa, P, SaturationFract)` computes the Conservative
-   Temperature freezing point from absolute salinity and pressure.
+   Temperature freezing point from absolute salinity and sea pressure in Pa
+   (the units of Omega's pressure fields).
 - `calcPtFromCt(Sa, Ct)` converts Conservative Temperature to potential
    temperature.
 - `calcCtFromPt(Sa, Pt)` converts potential temperature to Conservative

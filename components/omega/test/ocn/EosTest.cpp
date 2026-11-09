@@ -1137,12 +1137,13 @@ void testCalcCtFreezing() {
 
    constexpr Real SaturationFrac = 0.0;
    constexpr Real PDb            = 500.0; // pressure in dbar for GSW pathway
+   constexpr Real PPa            = PDb * Db2Pa; // pressure in Pa for Omega
    constexpr Real SaLocal        = 32.0;
 
    const Real CtTeosExpected =
        gsw_ct_freezing_poly(SaLocal, PDb, SaturationFrac);
    const Real CtTeos =
-       Eos::calcCtFreezing(EosType::Teos10Eos, SaLocal, PDb, SaturationFrac);
+       Eos::calcCtFreezing(EosType::Teos10Eos, SaLocal, PPa, SaturationFrac);
    if (!isApprox(CtTeos, CtTeosExpected, RTol)) {
       ABORT_ERROR("testCalcCtFreezing: Teos10 FAIL, expected {}, got {}",
                   CtTeosExpected, CtTeos);
@@ -1150,7 +1151,7 @@ void testCalcCtFreezing() {
 
    const Real CtLinearExpected = -0.054_Real * SaLocal / Psu2Gpkg;
    const Real CtLinear =
-       Eos::calcCtFreezing(EosType::LinearEos, SaLocal, PDb, SaturationFrac);
+       Eos::calcCtFreezing(EosType::LinearEos, SaLocal, PPa, SaturationFrac);
    if (!isApprox(CtLinear, CtLinearExpected, RTol)) {
       ABORT_ERROR("testCalcCtFreezing: Linear FAIL, expected {}, got {}",
                   CtLinearExpected, CtLinear);
@@ -1158,7 +1159,7 @@ void testCalcCtFreezing() {
 
    const Real CtConstExpected = -1.9_Real;
    const Real CtConst =
-       Eos::calcCtFreezing(EosType::ConstantEos, SaLocal, PDb, SaturationFrac);
+       Eos::calcCtFreezing(EosType::ConstantEos, SaLocal, PPa, SaturationFrac);
    if (!isApprox(CtConst, CtConstExpected, RTol)) {
       ABORT_ERROR("testCalcCtFreezing: Constant FAIL, expected {}, got {}",
                   CtConstExpected, CtConst);
@@ -1179,18 +1180,18 @@ void testNegativeSalinityTeos10() {
    const Real PtFromCtAtZero = TestEos->calcPtFromCt(0.0_Real, Ct);
    const Real CtFromPtAtZero = TestEos->calcCtFromPt(0.0_Real, Pt);
    const Real CtFreezingAtZero =
-       Eos::calcCtFreezing(EosType::Teos10Eos, 0.0_Real, PDb, 0.0_Real);
+       Eos::calcCtFreezing(EosType::Teos10Eos, 0.0_Real, PPa, 0.0_Real);
    const Real CtFreezingLinearAtZero =
-       Eos::calcCtFreezing(EosType::LinearEos, 0.0_Real, PDb, 0.0_Real);
+       Eos::calcCtFreezing(EosType::LinearEos, 0.0_Real, PPa, 0.0_Real);
    const Real NegativeSalinity[2] = {-1.0_Real, -2.0_Real};
 
    for (const Real SaValue : NegativeSalinity) {
       const Real PtFromCt = TestEos->calcPtFromCt(SaValue, Ct);
       const Real CtFromPt = TestEos->calcCtFromPt(SaValue, Pt);
       const Real CtFreezing =
-          Eos::calcCtFreezing(EosType::Teos10Eos, SaValue, PDb, 0.0_Real);
+          Eos::calcCtFreezing(EosType::Teos10Eos, SaValue, PPa, 0.0_Real);
       const Real CtFreezingLinear =
-          Eos::calcCtFreezing(EosType::LinearEos, SaValue, PDb, 0.0_Real);
+          Eos::calcCtFreezing(EosType::LinearEos, SaValue, PPa, 0.0_Real);
       if (!isApprox(PtFromCt, PtFromCtAtZero, RTol) ||
           !isApprox(CtFromPt, CtFromPtAtZero, RTol) ||
           !isApprox(CtFreezing, CtFreezingAtZero, RTol) ||
@@ -1291,8 +1292,7 @@ void checkValueGswcCtFreezing() {
 
    /// Get freezing temperature from GSW-C library
    double CtFreezGswc = gsw_ct_freezing_poly(Sa, P * Pa2Db, SaturationFrac);
-   double CtFreez =
-       Teos10Eos::calcCtFreezingTeos10(Sa, P * Pa2Db, SaturationFrac);
+   double CtFreez     = Teos10Eos::calcCtFreezingTeos10(Sa, P, SaturationFrac);
 
    /// Check the value against the GSW-C value
    bool Check = isApprox(CtFreezGswc, CtFreez, RTol);

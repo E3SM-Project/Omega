@@ -174,7 +174,9 @@ ComputeSpecVolTeos10.calcCtFreezing(Sa, P, SaturationFract);
 ```
 
 This helper follows the TEOS-10 polynomial approximation used by
-`gsw_ct_freezing_poly` in the GSW toolbox.
+`gsw_ct_freezing_poly` in the GSW toolbox. Unlike the GSW function, which
+takes sea pressure in dbar, `P` is sea pressure in Pa, the units of Omega's
+pressure fields; the conversion is done internally.
 
 To convert Conservative Temperature to potential temperature through the EOS
 interface, use
