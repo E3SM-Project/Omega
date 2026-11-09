@@ -11,6 +11,7 @@
 #include "Error.h"
 #include "Logging.h"
 #include "MachEnv.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 
 #include "mpi.h"
@@ -69,7 +70,7 @@ Error testParallelReduce1D() {
 
    for (int J1 = 0; J1 < N1; ++J1) {
       RefSum += f1(J1, N1);
-      RefMax = std::max(RefMax, f1(J1, N1));
+      RefMax = Math::max(RefMax, f1(J1, N1));
    }
 
    // Test simple sum reduction
@@ -86,7 +87,7 @@ Error testParallelReduce1D() {
    parallelReduce(
        {N1},
        KOKKOS_LAMBDA(int J1, I4 &Accum) {
-          Accum = Kokkos::max(Accum, f1(J1, N1));
+          Accum = Math::max(Accum, f1(J1, N1));
        },
        Kokkos::Max<I4>(Max1));
 
@@ -100,7 +101,7 @@ Error testParallelReduce1D() {
        {N1},
        KOKKOS_LAMBDA(int J1, I4 &SumAccum, I4 &MaxAccum) {
           SumAccum += f1(J1, N1);
-          MaxAccum = Kokkos::max(MaxAccum, f1(J1, N1));
+          MaxAccum = Math::max(MaxAccum, f1(J1, N1));
        },
        Sum2, Kokkos::Max<I4>(Max2));
 
@@ -148,7 +149,7 @@ Error testParallelReduce2D() {
    for (int J1 = 0; J1 < N1; ++J1) {
       for (int J2 = 0; J2 < N2; ++J2) {
          RefSum += f2(J1, J2, N1, N2);
-         RefMax = std::max(RefMax, f2(J1, J2, N1, N2));
+         RefMax = Math::max(RefMax, f2(J1, J2, N1, N2));
       }
    }
 
@@ -170,7 +171,7 @@ Error testParallelReduce2D() {
    parallelReduce(
        {N1, N2},
        KOKKOS_LAMBDA(int J1, int J2, I4 &Accum) {
-          Accum = Kokkos::max(Accum, f2(J1, J2, N1, N2));
+          Accum = Math::max(Accum, f2(J1, J2, N1, N2));
        },
        Kokkos::Max<I4>(Max1));
 
@@ -184,7 +185,7 @@ Error testParallelReduce2D() {
        {N1, N2},
        KOKKOS_LAMBDA(int J1, int J2, I4 &SumAccum, I4 &MaxAccum) {
           SumAccum += f2(J1, J2, N1, N2);
-          MaxAccum = Kokkos::max(MaxAccum, f2(J1, J2, N1, N2));
+          MaxAccum = Math::max(MaxAccum, f2(J1, J2, N1, N2));
        },
        Sum2, Kokkos::Max<I4>(Max2));
 
@@ -238,7 +239,7 @@ Error testParallelReduce3D() {
       for (int J2 = 0; J2 < N2; ++J2) {
          for (int J3 = 0; J3 < N3; ++J3) {
             RefSum += f3(J1, J2, J3, N1, N2, N3);
-            RefMax = std::max(RefMax, f3(J1, J2, J3, N1, N2, N3));
+            RefMax = Math::max(RefMax, f3(J1, J2, J3, N1, N2, N3));
          }
       }
    }
@@ -261,7 +262,7 @@ Error testParallelReduce3D() {
    parallelReduce(
        {N1, N2, N3},
        KOKKOS_LAMBDA(int J1, int J2, int J3, I4 &Accum) {
-          Accum = Kokkos::max(Accum, f3(J1, J2, J3, N1, N2, N3));
+          Accum = Math::max(Accum, f3(J1, J2, J3, N1, N2, N3));
        },
        Kokkos::Max<I4>(Max1));
 
@@ -275,7 +276,7 @@ Error testParallelReduce3D() {
        {N1, N2, N3},
        KOKKOS_LAMBDA(int J1, int J2, int J3, I4 &SumAccum, I4 &MaxAccum) {
           SumAccum += f3(J1, J2, J3, N1, N2, N3);
-          MaxAccum = Kokkos::max(MaxAccum, f3(J1, J2, J3, N1, N2, N3));
+          MaxAccum = Math::max(MaxAccum, f3(J1, J2, J3, N1, N2, N3));
        },
        Sum2, Kokkos::Max<I4>(Max2));
 
@@ -334,7 +335,7 @@ Error testParallelReduce4D() {
          for (int J3 = 0; J3 < N3; ++J3) {
             for (int J4 = 0; J4 < N4; ++J4) {
                RefSum += f4(J1, J2, J3, J4, N1, N2, N3, N4);
-               RefMax = std::max(RefMax, f4(J1, J2, J3, J4, N1, N2, N3, N4));
+               RefMax = Math::max(RefMax, f4(J1, J2, J3, J4, N1, N2, N3, N4));
             }
          }
       }
@@ -358,7 +359,7 @@ Error testParallelReduce4D() {
    parallelReduce(
        {N1, N2, N3, N4},
        KOKKOS_LAMBDA(int J1, int J2, int J3, int J4, I4 &Accum) {
-          Accum = Kokkos::max(Accum, f4(J1, J2, J3, J4, N1, N2, N3, N4));
+          Accum = Math::max(Accum, f4(J1, J2, J3, J4, N1, N2, N3, N4));
        },
        Kokkos::Max<I4>(Max1));
 
@@ -373,7 +374,7 @@ Error testParallelReduce4D() {
        KOKKOS_LAMBDA(int J1, int J2, int J3, int J4, I4 &SumAccum,
                      I4 &MaxAccum) {
           SumAccum += f4(J1, J2, J3, J4, N1, N2, N3, N4);
-          MaxAccum = Kokkos::max(MaxAccum, f4(J1, J2, J3, J4, N1, N2, N3, N4));
+          MaxAccum = Math::max(MaxAccum, f4(J1, J2, J3, J4, N1, N2, N3, N4));
        },
        Sum2, Kokkos::Max<I4>(Max2));
 
@@ -439,8 +440,8 @@ Error testParallelReduce5D() {
             for (int J4 = 0; J4 < N4; ++J4) {
                for (int J5 = 0; J5 < N5; ++J5) {
                   RefSum += f5(J1, J2, J3, J4, J5, N1, N2, N3, N4, N5);
-                  RefMax = std::max(RefMax,
-                                    f5(J1, J2, J3, J4, J5, N1, N2, N3, N4, N5));
+                  RefMax = Math::max(
+                      RefMax, f5(J1, J2, J3, J4, J5, N1, N2, N3, N4, N5));
                }
             }
          }
@@ -465,8 +466,7 @@ Error testParallelReduce5D() {
    parallelReduce(
        {N1, N2, N3, N4, N5},
        KOKKOS_LAMBDA(int J1, int J2, int J3, int J4, int J5, I4 &Accum) {
-          Accum =
-              Kokkos::max(Accum, f5(J1, J2, J3, J4, J5, N1, N2, N3, N4, N5));
+          Accum = Math::max(Accum, f5(J1, J2, J3, J4, J5, N1, N2, N3, N4, N5));
        },
        Kokkos::Max<I4>(Max1));
 
@@ -482,7 +482,7 @@ Error testParallelReduce5D() {
                      I4 &MaxAccum) {
           SumAccum += f5(J1, J2, J3, J4, J5, N1, N2, N3, N4, N5);
           MaxAccum =
-              Kokkos::max(MaxAccum, f5(J1, J2, J3, J4, J5, N1, N2, N3, N4, N5));
+              Math::max(MaxAccum, f5(J1, J2, J3, J4, J5, N1, N2, N3, N4, N5));
        },
        Sum2, Kokkos::Max<I4>(Max2));
 

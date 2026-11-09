@@ -5,6 +5,7 @@
 #include "GlobalConstants.h"
 #include "HorzMesh.h"
 #include "HorzUtil.h"
+#include "MathUtils.h"
 #include "VertCoord.h"
 
 namespace OMEGA {
@@ -248,11 +249,11 @@ class SecondDerivativeOnCell {
          const I4 IEdge   = EdgesOnCell(ICell, I);
          const I4 Ind     = (ICell == CellsOnEdge(IEdge, 0)) ? 0 : 1;
          const Real Theta = Angle2D[I];
-         const Real x     = Kokkos::cos(Theta);
-         const Real y     = Kokkos::sin(Theta);
-         const Real xx    = x * x;
+         const Real x     = Math::cos(Theta);
+         const Real y     = Math::sin(Theta);
+         const Real xx    = Math::pow<2>(x);
          const Real xy    = x * y;
-         const Real yy    = y * y;
+         const Real yy    = Math::pow<2>(y);
          // Real(2) rather than 2._Real: nvcc 12.9 on pm-gpu fails to find
          // the _Real literal operator here
          for (int J = 0; J <= NEdges; ++J)
@@ -329,8 +330,8 @@ class SecondDerivativeOnCell {
          Angle2D[I]       = AngleEdge(IEdge);
          if (ICell != CellsOnEdge(IEdge, 0))
             Angle2D[I] -= Pii;
-         XP[I] = DcEdge(IEdge) * Kokkos::cos(Angle2D[I]);
-         YP[I] = DcEdge(IEdge) * Kokkos::sin(Angle2D[I]);
+         XP[I] = DcEdge(IEdge) * Math::cos(Angle2D[I]);
+         YP[I] = DcEdge(IEdge) * Math::sin(Angle2D[I]);
       }
    }
    KOKKOS_INLINE_FUNCTION static void DetermineSphericalPatchGeometry(
@@ -359,7 +360,7 @@ class SecondDerivativeOnCell {
       if (ZC[0] == 1.0_Real)
          ThetaAbs = Pii / 2._Real;
       else if (1 - ZC[0] < 1.0e-6)
-         ThetaAbs = Pii / 2._Real - (1 - ZC[0]) * std::atan2(YC[0], XC[0]);
+         ThetaAbs = Pii / 2._Real - (1 - ZC[0]) * Math::atan2(YC[0], XC[0]);
       else
          ThetaAbs =
              Pii / 2._Real - sphere_angle(XC[0], YC[0], ZC[0], XC[1], YC[1],
@@ -382,8 +383,8 @@ class SecondDerivativeOnCell {
          Thetat_prev       = Thetat;
          Thetav_prev       = Thetav;
 
-         XP[I] = Kokkos::cos(Thetat) * Dl_sphere;
-         YP[I] = Kokkos::sin(Thetat) * Dl_sphere;
+         XP[I] = Math::cos(Thetat) * Dl_sphere;
+         YP[I] = Math::sin(Thetat) * Dl_sphere;
 
          const I4 IEdge = EdgesOnCell[I];
          Real XV[2] = {}, YV[2] = {}, ZV[2] = {}, EC[3] = {};
@@ -675,10 +676,10 @@ class VectorReconOnCell {
       }
 
       if (OnSphere) {
-         const Real CLat = Kokkos::cos(LatCell(ICell));
-         const Real SLat = Kokkos::sin(LatCell(ICell));
-         const Real CLon = Kokkos::cos(LonCell(ICell));
-         const Real SLon = Kokkos::sin(LonCell(ICell));
+         const Real CLat = Math::cos(LatCell(ICell));
+         const Real SLat = Math::sin(LatCell(ICell));
+         const Real CLon = Math::cos(LonCell(ICell));
+         const Real SLon = Math::sin(LonCell(ICell));
 
          // cartesian to local geographic
          UReconX(ICell) = -SLon * Ux + CLon * Uy;

@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===/
 
 #include "PGrad.h"
+#include "MathUtils.h"
 
 #include "DataTypes.h"
 #include "Decomp.h"
@@ -749,7 +750,7 @@ void setupTwoColumnState(HorzMesh *Mesh,    ///< [in] Horizontal mesh
       parallelReduce(
           {NCellsAll, NVertLayers},
           KOKKOS_LAMBDA(int i, int k, Real &max) {
-             Real Diff = Kokkos::abs(SpecVol(i, k) - SpecVolOld(i, k));
+             Real Diff = Math::abs(SpecVol(i, k) - SpecVolOld(i, k));
              if (Diff > max)
                 max = Diff;
           },
@@ -859,12 +860,11 @@ Real setupProfileState(HorzMesh *Mesh,    ///< [in] Horizontal mesh
           BottomGeomDepth(i) = 4000.0_Real;
           for (int k = 0; k < NVertLayers; ++k) {
              const Real Shape = (i == 1) ? 1.0_Real : 0.0_Real;
-             const Real PTop =
-                 k * DeltaP +
-                 Shape * BulgePress * Kokkos::sin(Pi * k / NVertLayers);
+             const Real PTop  = k * DeltaP + Shape * BulgePress *
+                                                Math::sin(Pi * k / NVertLayers);
              const Real PBot =
                  (k + 1) * DeltaP +
-                 Shape * BulgePress * Kokkos::sin(Pi * (k + 1) / NVertLayers);
+                 Shape * BulgePress * Math::sin(Pi * (k + 1) / NVertLayers);
              PseudoThick(i, k) = (PBot - PTop) / (Gravity * RhoSw);
           }
        });
@@ -1280,7 +1280,7 @@ Real runFiniteVolume(HorzMesh *Mesh, VertCoord *VCoord, OceanState *State,
        KOKKOS_LAMBDA(int IEdge, int K, Real &MaxV, Real &LSum, I4 &LCount) {
           if (EdgeMask(IEdge, K) <= 0.0_Real)
              return;
-          const Real V = Kokkos::abs(Tend(IEdge, K));
+          const Real V = Math::abs(Tend(IEdge, K));
           if (V > MaxV)
              MaxV = V;
           LSum += V * V;
@@ -1298,7 +1298,7 @@ Real runFiniteVolume(HorzMesh *Mesh, VertCoord *VCoord, OceanState *State,
    parallelReduce(
        {Mesh->NEdgesAll, NVertLayers + 1},
        KOKKOS_LAMBDA(int IEdge, int K, Real &MaxA, Real &MaxU, Real &MaxL) {
-          const Real V = Kokkos::abs(DeltaZFixedP(IEdge, K));
+          const Real V = Math::abs(DeltaZFixedP(IEdge, K));
           if (V > MaxA)
              MaxA = V;
           if (K <= NVertLayers / 2 && V > MaxU)
@@ -1338,7 +1338,7 @@ Real runCentered(HorzMesh *Mesh, VertCoord *VCoord, OceanState *State,
        KOKKOS_LAMBDA(int IEdge, int K, Real &MaxV) {
           if (EdgeMask(IEdge, K) <= 0.0_Real)
              return;
-          const Real V = Kokkos::abs(Tend(IEdge, K));
+          const Real V = Math::abs(Tend(IEdge, K));
           if (V > MaxV)
              MaxV = V;
        },
@@ -1393,8 +1393,8 @@ int testExactnessAndGuards(HorzMesh *Mesh,    ///< [in] Horizontal mesh
    parallelReduce(
        {2, NLayers},
        KOKKOS_LAMBDA(int i, int k, Real &MaxV) {
-          const Real V = (Kokkos::abs(SpecVolDCt(i, k) * Temp(i, k)) +
-                          Kokkos::abs(SpecVolDSa(i, k) * Salinity(i, k))) *
+          const Real V = (Math::abs(SpecVolDCt(i, k) * Temp(i, k)) +
+                          Math::abs(SpecVolDSa(i, k) * Salinity(i, k))) *
                          PressBot / Gravity;
           if (V > MaxV)
              MaxV = V;
@@ -1935,13 +1935,13 @@ int testCenteredIdentity(HorzMesh *Mesh,    ///< [in] Horizontal mesh
              // the hydrostatic terms the centered functor forms and cancels
              const Real HydroScale =
                  InvDc * 0.25_Real *
-                 (Gravity * (Kokkos::abs(Z0K) + Kokkos::abs(Z1K) +
-                             Kokkos::abs(Z0K1) + Kokkos::abs(Z1K1)) +
-                  AlphaBar * (Kokkos::abs(Q0K) + Kokkos::abs(Q1K) +
-                              Kokkos::abs(Q0K1) + Kokkos::abs(Q1K1)));
+                 (Gravity * (Math::abs(Z0K) + Math::abs(Z1K) + Math::abs(Z0K1) +
+                             Math::abs(Z1K1)) +
+                  AlphaBar * (Math::abs(Q0K) + Math::abs(Q1K) +
+                              Math::abs(Q0K1) + Math::abs(Q1K1)));
 
-             const Real Resid = Kokkos::abs(Tend(IEdge, K) - Expected);
-             const Real Guard = Kokkos::abs(Tend(IEdge, K) - Broken);
+             const Real Resid = Math::abs(Tend(IEdge, K) - Expected);
+             const Real Guard = Math::abs(Tend(IEdge, K) - Broken);
 
              // masked edges carry no tendency, so neither expression has
              // anything to say there
@@ -2103,9 +2103,9 @@ int testPGradConfig(const HorzMesh *Mesh,   ///< [in] Horizontal mesh
    parallelReduce(
        {Mesh->NEdgesAll, VCoord->NVertLayers},
        KOKKOS_LAMBDA(int IEdge, int K, I4 &LSum, Real &MaxF, Real &MaxC) {
-          const Real F = Kokkos::abs(TendFV(IEdge, K));
-          const Real C = Kokkos::abs(TendCtr(IEdge, K));
-          if (!Kokkos::isfinite(TendFV(IEdge, K))) {
+          const Real F = Math::abs(TendFV(IEdge, K));
+          const Real C = Math::abs(TendCtr(IEdge, K));
+          if (!Math::isfinite(TendFV(IEdge, K))) {
              ++LSum;
           } else if (F > MaxF) {
              MaxF = F;
@@ -2226,7 +2226,7 @@ int main(int argc, char *argv[]) {
          parallelReduce(
              {NEdgesAll, NVertLayers - 2},
              KOKKOS_LAMBDA(int i, int k, Real &max) {
-                Real Val = Kokkos::abs(Tend(i, k + 1));
+                Real Val = Math::abs(Tend(i, k + 1));
                 if (Val > max)
                    max = Val;
              },
@@ -2238,7 +2238,7 @@ int main(int argc, char *argv[]) {
                 LSum += Tend(i, k + 1) * Tend(i, k + 1);
              },
              Kokkos::Sum<Real>(SumValue));
-         Real RmseVal = std::sqrt(SumValue / (NEdgesAll * (NVertLayers - 2)));
+         Real RmseVal = Math::sqrt(SumValue / (NEdgesAll * (NVertLayers - 2)));
          Rmse(Refinement) = RmseVal;
 
          LOG_INFO("refinement level {}: max |Tend| = {}, average Tend = {}",
@@ -2298,7 +2298,7 @@ int main(int argc, char *argv[]) {
       RetVal = 0;
       if (DoublePrecision) {
          if (Rmse(0) >=
-             Rmse(NRefinements - 1) / pow(4.0_Real, NRefinements - 1))
+             Rmse(NRefinements - 1) / Math::pow(4.0_Real, NRefinements - 1))
             RetVal = 1;
       } else {
          LOG_INFO("PGradTest: single precision: skipping the centered "

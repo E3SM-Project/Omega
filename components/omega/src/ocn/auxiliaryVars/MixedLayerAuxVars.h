@@ -3,23 +3,13 @@
 
 #include "DataTypes.h"
 #include "HorzMesh.h"
+#include "MathUtils.h"
 #include "OmegaKokkos.h"
 #include "VertCoord.h"
 
 #include <string>
 
 namespace OMEGA {
-
-// Generic linear interpolation routine. This should be in OmegaMath.h or
-// something like that once it exists.
-KOKKOS_INLINE_FUNCTION Real linearInterp(Real x, Real y1, Real x1, Real y2,
-                                         Real x2) {
-   if (x1 == x2)
-      return y1;
-   const Real A = (y1 - y2) / (x1 - x2);
-   const Real B = y1 - A * x1;
-   return A * x + B;
-}
 
 class MixedLayerAuxVars {
  public:
@@ -73,14 +63,14 @@ class MixedLayerAuxVars {
          return;
       }
 
-      const int KRefM1 = Kokkos::max(KRef - 1, MinLayerCell(ICell));
+      const int KRefM1 = Math::max(KRef - 1, MinLayerCell(ICell));
 
       const Real DepthKRef   = SSH - GeomZMid(ICell, KRef);
       const Real DepthKRefM1 = SSH - GeomZMid(ICell, KRefM1);
 
-      const Real ReferenceSpecVol =
-          linearInterp(ReferenceDepth, SpecVolDisp(ICell, KRef), DepthKRef,
-                       SpecVolDisp(ICell, KRefM1), DepthKRefM1);
+      const Real ReferenceSpecVol = Math::linearInterp(
+          ReferenceDepth, SpecVolDisp(ICell, KRef), DepthKRef,
+          SpecVolDisp(ICell, KRefM1), DepthKRefM1);
 
       // Start searching from reference level - 1
       int KDen;
@@ -97,7 +87,7 @@ class MixedLayerAuxVars {
          DenMixLayerIndex(ICell) = KMax;
          DenMixLayerDepth(ICell) = SSH - GeomZMid(ICell, KMax);
       } else { // Found
-         const int KDenM1 = Kokkos::max(KDen - 1, MinLayerCell(ICell));
+         const int KDenM1 = Math::max(KDen - 1, MinLayerCell(ICell));
 
          const Real DepthKDen   = SSH - GeomZMid(ICell, KDen);
          const Real DepthKDenM1 = SSH - GeomZMid(ICell, KDenM1);
@@ -108,14 +98,13 @@ class MixedLayerAuxVars {
              ReferenceSpecVol / SpecVolDisp(ICell, KDenM1) - 1;
 
          Real MixedLayerDepth =
-             linearInterp(DenThreshold * ReferenceSpecVol, DepthKDen,
-                          FactorKDen, DepthKDenM1, FactorKDenM1);
+             Math::linearInterp(DenThreshold * ReferenceSpecVol, DepthKDen,
+                                FactorKDen, DepthKDenM1, FactorKDenM1);
 
          // guarantee MLD between DepthKDenM1 and DepthKDen
          // this can happen because density difference in the first layer
          // can already be above the threshold
-         MixedLayerDepth =
-             Kokkos::clamp(MixedLayerDepth, DepthKDenM1, DepthKDen);
+         MixedLayerDepth = Math::clamp(MixedLayerDepth, DepthKDenM1, DepthKDen);
 
          DenMixLayerIndex(ICell) = KDen;
          DenMixLayerDepth(ICell) = MixedLayerDepth;

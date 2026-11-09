@@ -11,6 +11,7 @@
 //
 //===-----------------------------------------------------------------------===/
 
+#include "MathUtils.h"
 #include "OceanDriver.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
@@ -67,7 +68,7 @@ int main(int argc, char *argv[]) {
    }
    Pacer::stop("Finalize", 0);
 
-   ErrAll = abs(ErrCurr) + abs(ErrFinalize);
+   ErrAll = OMEGA::Math::abs(ErrCurr) + OMEGA::Math::abs(ErrFinalize);
    if (ErrAll == 0) {
       LOG_INFO("DriverTest: Successful completion");
    }
