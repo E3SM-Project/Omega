@@ -783,6 +783,33 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
       }
    } // end finalize
 
+   /// Starts (Init) or adds to the running sum of the weights over the active
+   /// layers of the owned entities. Public because CUDA does not allow an
+   /// extended device lambda in a private or protected member function.
+   void accumWeights(const Array2DReal &SampleWeights, ///< [in] weights
+                     bool Init ///< [in] true to start a new sum
+   ) {
+      OMEGA_SCOPE(LocWeightSum, WeightSumData);
+      OMEGA_SCOPE(LocWeights, SampleWeights);
+      OMEGA_SCOPE(LocMinLayer, MinLayer);
+      OMEGA_SCOPE(LocMaxLayer, MaxLayer);
+      parallelForOuter(
+          "TimeMeanWeightSum", LaunchConfig({NHorizOwned}),
+          KOKKOS_LAMBDA(int IHoriz, const TeamMember &Team) {
+             const I4 KMin   = LocMinLayer(IHoriz);
+             const I4 KMax   = LocMaxLayer(IHoriz);
+             const I4 KRange = vertRange(KMin, KMax);
+             parallelForInner(
+                 Team, KRange, INNER_LAMBDA(int KIdx) {
+                    const I4 K = KMin + KIdx;
+                    if (Init)
+                       LocWeightSum(IHoriz, K) = LocWeights(IHoriz, K);
+                    else
+                       LocWeightSum(IHoriz, K) += LocWeights(IHoriz, K);
+                 });
+          });
+   } // end accumWeights
+
  private:
    /// Decides whether a mass-weighted mean weights the input, and by what.
    /// Only a rank-2 or rank-3 field on the layers of cells, edges or vertices
@@ -822,32 +849,6 @@ template <typename ArrayT> class TimeMeanOp : public AnalysisOperator {
       Weights.updateWeights();
       return Weights.MassWeights;
    } // end currentWeights
-
-   /// Starts (Init) or adds to the running sum of the weights over the active
-   /// layers of the owned entities
-   void accumWeights(const Array2DReal &SampleWeights, ///< [in] weights
-                     bool Init ///< [in] true to start a new sum
-   ) {
-      OMEGA_SCOPE(LocWeightSum, WeightSumData);
-      OMEGA_SCOPE(LocWeights, SampleWeights);
-      OMEGA_SCOPE(LocMinLayer, MinLayer);
-      OMEGA_SCOPE(LocMaxLayer, MaxLayer);
-      parallelForOuter(
-          "TimeMeanWeightSum", LaunchConfig({NHorizOwned}),
-          KOKKOS_LAMBDA(int IHoriz, const TeamMember &Team) {
-             const I4 KMin   = LocMinLayer(IHoriz);
-             const I4 KMax   = LocMaxLayer(IHoriz);
-             const I4 KRange = vertRange(KMin, KMax);
-             parallelForInner(
-                 Team, KRange, INNER_LAMBDA(int KIdx) {
-                    const I4 K = KMin + KIdx;
-                    if (Init)
-                       LocWeightSum(IHoriz, K) = LocWeights(IHoriz, K);
-                    else
-                       LocWeightSum(IHoriz, K) += LocWeights(IHoriz, K);
-                 });
-          });
-   } // end accumWeights
 
    /// Detaches the sample alarm, if any, from the clock it is attached to
    void detachSampleAlarm() {
