@@ -108,7 +108,10 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Omega Build with CMake</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#step-1-setup">Step 1: Setup</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#step-2-update">Step 2: Update</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#step-3-build">Step 3: Build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-3-build">Step 3: Build</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#optimization-in-cpu-debug-builds-with-gnu">Optimization in CPU Debug builds with GNU</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#step-4-output">Step 4: Output</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#standalone-build-commands">Standalone Build Commands</a></li>
 </ul>
@@ -313,6 +316,20 @@ at the end of this step.</p>
 <p>During this step, the build process is configured. It includes building
 external libraries, followed by building the Omega main model from source
 files. Optionally, tests can also be built.</p>
+<section id="optimization-in-cpu-debug-builds-with-gnu">
+<h3>Optimization in CPU Debug builds with GNU<a class="headerlink" href="#optimization-in-cpu-debug-builds-with-gnu" title="Permalink to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Debug</span></code> builds compile Omega’s C++ code with <code class="docutils literal notranslate"><span class="pre">-g</span></code> and no <code class="docutils literal notranslate"><span class="pre">-O</span></code> level, so
+<code class="docutils literal notranslate"><span class="pre">g++</span></code> builds it at <code class="docutils literal notranslate"><span class="pre">-O0</span></code>. Without inlining, Kokkos kernels on the host
+(<code class="docutils literal notranslate"><span class="pre">SERIAL</span></code> and <code class="docutils literal notranslate"><span class="pre">OPENMP</span></code>) run about 130 times slower than in a <code class="docutils literal notranslate"><span class="pre">Release</span></code>
+build, so multi-day debug tests such as <code class="docutils literal notranslate"><span class="pre">ERS_D</span></code> run out of wall time.</p>
+<p>To avoid this, <code class="docutils literal notranslate"><span class="pre">src/CMakeLists.txt</span></code> adds <code class="docutils literal notranslate"><span class="pre">-Og</span></code> to the C++ compile options
+of the <code class="docutils literal notranslate"><span class="pre">OmegaLibFlags</span></code> interface target when <code class="docutils literal notranslate"><span class="pre">OMEGA_ARCH</span></code> is <code class="docutils literal notranslate"><span class="pre">SERIAL</span></code> or
+<code class="docutils literal notranslate"><span class="pre">OPENMP</span></code>, the C++ compiler is GNU and the build type is <code class="docutils literal notranslate"><span class="pre">Debug</span></code>. <code class="docutils literal notranslate"><span class="pre">-Og</span></code> is
+the optimization level GNU recommends for debugging, and it makes these
+builds about 30 times faster. This reaches the Omega library, executable
+and tests, but not Fortran sources or external libraries. Debug checks
+(<code class="docutils literal notranslate"><span class="pre">OMEGA_DEBUG</span></code>, Kokkos debug checks) and <code class="docutils literal notranslate"><span class="pre">-g</span></code> are unchanged.</p>
+</section>
 </section>
 <section id="step-4-output">
 <h2>Step 4: Output<a class="headerlink" href="#step-4-output" title="Permalink to this heading"></a></h2>
