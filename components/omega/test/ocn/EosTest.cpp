@@ -1204,9 +1204,9 @@ void testNegativeSalinityTeos10() {
       Real SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP;
       Teos.calcSpecVolAndDerivsAtPoint(Ct, SaValue, PPa, SpecVol, SpecVolDCt,
                                        SpecVolDSa, SpecVolDP);
-      const Real Alpha = Eos::computeAlpha(EosType::Teos10Eos, SaValue, Ct, PDb,
+      const Real Alpha = Eos::computeAlpha(EosType::Teos10Eos, SaValue, Ct, PPa,
                                            SpecVol, 0.0_Real);
-      const Real Beta  = Eos::computeBeta(EosType::Teos10Eos, SaValue, Ct, PDb,
+      const Real Beta  = Eos::computeBeta(EosType::Teos10Eos, SaValue, Ct, PPa,
                                           SpecVol, 0.0_Real);
       if (Kokkos::isnan(SpecVol) || Kokkos::isinf(SpecVol) ||
           Kokkos::isnan(SpecVolDCt) || Kokkos::isinf(SpecVolDCt) ||
@@ -1520,8 +1520,10 @@ void checkValueGswcAlphaBeta() {
                                                 SpecVol, SpecVolDCt, SpecVolDSa,
                                                 SpecVolDP);
 
-            const Real Alpha = TestBvf.calcAlpha(SaVal, CtVal, PDb, SpecVol);
-            const Real Beta  = TestBvf.calcBeta(SaVal, CtVal, PDb, SpecVol);
+            const Real Alpha =
+                TestBvf.calcAlpha(SaVal, CtVal, PDb * Db2Pa, SpecVol);
+            const Real Beta =
+                TestBvf.calcBeta(SaVal, CtVal, PDb * Db2Pa, SpecVol);
 
             double GswSpecVol, GswAlpha, GswBeta;
             gsw_specvol_alpha_beta(SaVal, CtVal, PDb, &GswSpecVol, &GswAlpha,

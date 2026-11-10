@@ -40,8 +40,7 @@ class FixedPropertyFrazilFormation {
        1.0_Real; // Internal for now; can move to config later.
 
    KOKKOS_FUNCTION void operator()(const Real AbsSalinity,
-                                   const Real ConservTemp,
-                                   const Real PressureDb,
+                                   const Real ConservTemp, const Real Pressure,
                                    const Real PseudoThickness,
                                    Real &SumIceThickness, Real &SumSalt,
                                    Real &SumEnergy, Real &HTend, Real &TTend,
@@ -96,8 +95,7 @@ class FixedPropertyFrazilMelt {
    Real LatFrazil = LatIce; // Global constant
 
    KOKKOS_FUNCTION void operator()(const Real AbsSalinity,
-                                   const Real ConservTemp,
-                                   const Real PressureDb,
+                                   const Real ConservTemp, const Real Pressure,
                                    const Real PseudoThickness,
                                    Real &SumIceThickness, Real &SumSalt,
                                    Real &SumEnergy, Real &HTend, Real &TTend,
@@ -151,7 +149,7 @@ class FrazilMelt {
    Real LayerMassFracMax;
 
    //   The functor for FrazilMelt takes as inputs:
-   //   the local ocean layer state (AbsSalinity, ConservTemp, PressureDb,
+   //   the local ocean layer state (AbsSalinity, ConservTemp, Pressure in Pa,
    //   PseudoThickness),
    //   the accumulated frazil solid and liquid mass, energy, and salt
    //   and outputs the frazil tendencies (HTend, TTend, STend) and updated
@@ -160,7 +158,7 @@ class FrazilMelt {
    //   This is a temporary implementation until a device-callable solution is
    //   available.
    void operator()(const Real AbsSalinity, const Real ConservTemp,
-                   const Real PressureDb, const Real PseudoThickness,
+                   const Real Pressure, const Real PseudoThickness,
                    Real &AccMIce, Real &AccMLiq, Real &AccMSalt, Real &AccELiq,
                    Real &AccEIce, Real &HTend, Real &TTend, Real &STend,
                    const Real CtFreezing) const {
@@ -198,7 +196,7 @@ class FrazilMelt {
       // ported
       const double SA_d     = static_cast<double>(AbsSalinity);
       const double CT_d     = static_cast<double>(ConservTemp);
-      const double P_d      = static_cast<double>(PressureDb);
+      const double P_d      = static_cast<double>(Pressure * Pa2Db); // dbar
       const double WIhIn_d  = static_cast<double>(NewLayerIceFraction);
       const double Pt0Ice_d = gsw_pt_from_pot_enthalpy_ice_poly(
           static_cast<double>(PotEnthalpyIce));
@@ -223,9 +221,9 @@ class FrazilMelt {
             return;
          }
          ABORT_ERROR("FrazilMelt: GSW returned invalid values for "
-                     "AbsSalinity={}, ConservTemp={}, PressureDb={}, "
+                     "AbsSalinity={}, ConservTemp={}, Pressure={}, "
                      "PseudoThickness={}, CtFreezing={}",
-                     AbsSalinity, ConservTemp, PressureDb, PseudoThickness,
+                     AbsSalinity, ConservTemp, Pressure, PseudoThickness,
                      CtFreezing);
       }
 
@@ -268,7 +266,7 @@ class FrazilFormation {
    Real LayerMassFracMax; ///< layer mass fraction limit for thickness tendency
 
    //   The functor for FrazilFormation takes as inputs:
-   //   the local ocean layer state (AbsSalinity, ConservTemp, PressureDb,
+   //   the local ocean layer state (AbsSalinity, ConservTemp, Pressure in Pa,
    //   PseudoThickness),
    //   the accumulated frazil solid and liquid mass, energy, and salt
    //   and outputs the frazil tendencies (HTend, TTend, STend) and updated
@@ -277,7 +275,7 @@ class FrazilFormation {
    //   This is a temporary implementation until a device-callable solution is
    //   available.
    void operator()(const Real AbsSalinity, const Real ConservTemp,
-                   const Real PressureDb, const Real PseudoThickness,
+                   const Real Pressure, const Real PseudoThickness,
                    Real &AccMIce, Real &AccMLiq, Real &AccMSalt, Real &AccELiq,
                    Real &AccEIce, Real &HTend, Real &TTend, Real &STend) const {
 
@@ -299,16 +297,16 @@ class FrazilFormation {
       gsw_frazil_properties_potential_poly(
           static_cast<double>(AbsSalinity),
           static_cast<double>(Cp0Sw * ConservTemp),
-          static_cast<double>(PressureDb), &SANew_d, &CTNew_d, &WIh_d);
+          static_cast<double>(Pressure * Pa2Db), &SANew_d, &CTNew_d, &WIh_d);
 
       // GSW flags out-of-domain input (w_Ih > 0.9) by setting all three outputs
       // to GSW_INVALID_VALUE; the LayerMassFracMax clamp below would otherwise
       // hide it.
       if (WIh_d > GSW_ERROR_LIMIT) {
          ABORT_ERROR("FrazilFormation: GSW returned invalid values for "
-                     "AbsSalinity={}, ConservTemp={}, PressureDb={}, "
+                     "AbsSalinity={}, ConservTemp={}, Pressure={}, "
                      "PseudoThickness={}",
-                     AbsSalinity, ConservTemp, PressureDb, PseudoThickness);
+                     AbsSalinity, ConservTemp, Pressure, PseudoThickness);
       }
 
       double PTNew_d =
