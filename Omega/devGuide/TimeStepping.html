@@ -128,6 +128,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#time-stepper-type">Time stepper type</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#timestepper-base-class">TimeStepper base class</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#do-step-method">Do step method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prepare-first-step-method">Prepare first step method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prepare-next-step-method">Prepare next step method</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#time-stepper-management-methods">Time stepper management methods</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#initialization">Initialization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#creation-of-non-default-time-steppers">Creation of non-default time steppers</a></li>
@@ -276,6 +278,21 @@ Each implementation also increments StepCount, a member variable that
 persists on the instance across calls, so it can be used to identify the
 first <code class="docutils literal notranslate"><span class="pre">doStep</span></code> call even when <code class="docutils literal notranslate"><span class="pre">doStep</span></code> is invoked repeatedly across
 separate calls to <code class="docutils literal notranslate"><span class="pre">ocnRun</span></code>, as is done by the coupled driver.</p>
+</section>
+<section id="prepare-first-step-method">
+<h3>Prepare first step method<a class="headerlink" href="#prepare-first-step-method" title="Permalink to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">prepareFirstStep</span></code> method initializes the time stepper for time integration
+by computing the auxiliary variables needed for the first step and doing other
+setup tasks. It needs to be called before <code class="docutils literal notranslate"><span class="pre">doStep</span></code> can be called. The time step
+needs to be set before calling this method, and should not be changed before the
+first <code class="docutils literal notranslate"><span class="pre">doStep</span></code> call.</p>
+</section>
+<section id="prepare-next-step-method">
+<h3>Prepare next step method<a class="headerlink" href="#prepare-next-step-method" title="Permalink to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">prepareNextStep</span></code> method prepares the time stepper for taking its next time step.
+It is automatically called at the end of <code class="docutils literal notranslate"><span class="pre">doStep</span></code>. It might need to be called manually
+if the model state is modified in the time stepping loop outside of the <code class="docutils literal notranslate"><span class="pre">doStep</span></code> method,
+or if the time step is changed before the next call to <code class="docutils literal notranslate"><span class="pre">doStep</span></code>.</p>
 </section>
 <section id="time-stepper-management-methods">
 <h3>Time stepper management methods<a class="headerlink" href="#time-stepper-management-methods" title="Permalink to this heading"></a></h3>
