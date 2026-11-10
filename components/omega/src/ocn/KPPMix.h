@@ -121,7 +121,6 @@ class KPPSurfaceForcingOnCell {
       const Real SaTop    = AbsSalinity(ICell, KTop);
       const Real CtTop    = ConservTemp(ICell, KTop);
       const Real PTop     = PressureMid(ICell, KTop);
-      const Real PTopDb   = PTop * Pa2Db;
       const Real HeatFlux = sfcHeatFluxWithoutMassEnthalpy(
           ICell, SaTop, PTop, EosChoice, LongWaveHeatFluxUp,
           LongWaveHeatFluxDown, ShortWaveHeatFlux, SensibleHeatFlux,
@@ -135,10 +134,10 @@ class KPPSurfaceForcingOnCell {
           SeaIceSaltFlux(ICell) * SFluxFac - FreshWaterFlux * SaTop / RhoSw;
       const Real SpVol = Kokkos::max(1.0e-12_Real, SpecVol(ICell, KTop));
       // LinearDRhodT/LinearDRhodS are ignored unless EosChoice is LinearEos.
-      const Real Alpha = Eos::computeAlpha(EosChoice, SaTop, CtTop, PTopDb,
-                                           SpVol, LinearDRhodT);
-      const Real Beta = Eos::computeBeta(EosChoice, SaTop, CtTop, PTopDb, SpVol,
-                                         LinearDRhodS);
+      const Real Alpha =
+          Eos::computeAlpha(EosChoice, SaTop, CtTop, PTop, SpVol, LinearDRhodT);
+      const Real Beta =
+          Eos::computeBeta(EosChoice, SaTop, CtTop, PTop, SpVol, LinearDRhodS);
       BuoyancyFlux(ICell) = Gravity * (Alpha * TempFlux - Beta * SaltFlux);
    }
 
