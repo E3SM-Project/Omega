@@ -86,8 +86,7 @@ void testFrazilFormationCold() {
 
    const Real AbsSalinityIn     = 35.0_Real;
    const Real ConservTempIn     = -2.0_Real;
-   const Real PressureDbIn      = 100.0_Real;
-   const Real PressureIn        = PressureDbIn * Db2Pa;
+   const Real PressureIn        = 1.0e6_Real; // Pa (100 dbar)
    const Real PseudoThicknessIn = 10.0_Real;
    const Real RTol              = 1e-10_Real;
 
@@ -168,8 +167,7 @@ void testFrazilFormationWarm() {
 
    const Real AbsSalinityIn     = 35.0_Real;
    const Real ConservTempIn     = 10.0_Real;
-   const Real PressureDbIn      = 100.0_Real;
-   const Real PressureIn        = PressureDbIn * Db2Pa;
+   const Real PressureIn        = 1.0e6_Real; // Pa (100 dbar)
    const Real PseudoThicknessIn = 10.0_Real;
    const Real RTol              = 1e-10_Real;
 
@@ -240,8 +238,7 @@ void testFrazilFormationMassLimit() {
 
    const Real AbsSalinityIn     = 20.0_Real;
    const Real ConservTempIn     = -5.0_Real;
-   const Real PressureDbIn      = 100.0_Real;
-   const Real PressureIn        = PressureDbIn * Db2Pa;
+   const Real PressureIn        = 1.0e6_Real; // Pa (100 dbar)
    const Real PseudoThicknessIn = 1.0_Real;
    const Real Phi               = 0.75_Real;
    const Real LayerMassFracMax  = 0.10_Real;
@@ -291,8 +288,7 @@ void testFrazilFormationMassLimit() {
 void testFrazilFormationPhi() {
    const Real AbsSalinityIn     = 35.0_Real;
    const Real ConservTempIn     = -2.0_Real;
-   const Real PressureDbIn      = 100.0_Real;
-   const Real PressureIn        = PressureDbIn * Db2Pa;
+   const Real PressureIn        = 1.0e6_Real; // Pa (100 dbar)
    const Real PseudoThicknessIn = 1.0_Real;
    const Real LayerMassFracMax  = 0.10_Real;
    const Real Phi0              = 0.75_Real;
@@ -364,8 +360,7 @@ void testFixedPropertyFrazilFormationWarm() {
 
    const Real AbsSalinityIn     = 35.0_Real;
    const Real ConservTempIn     = 10.0_Real;
-   const Real PressureDbIn      = 100.0_Real;
-   const Real PressureIn        = PressureDbIn * Db2Pa;
+   const Real PressureIn        = 1.0e6_Real; // Pa (100 dbar)
    const Real PseudoThicknessIn = 10.0_Real;
    const Real RTol              = 1e-10_Real;
    const Real LayerMassFracMax  = 0.10_Real;
@@ -384,7 +379,7 @@ void testFixedPropertyFrazilFormationWarm() {
    Real STend = 0.0_Real;
 
    Real CtFreezing =
-       gsw_ct_freezing_poly(AbsSalinityIn, PressureDbIn, 0.0_Real);
+       gsw_ct_freezing_poly(AbsSalinityIn, PressureIn * Pa2Db, 0.0_Real);
 
    ComputeFrazilFormation(AbsSalinityIn, ConservTempIn, PressureIn,
                           PseudoThicknessIn, AccMIce, AccMSalt, AccEIce, HTend,
@@ -443,8 +438,7 @@ void testFixedPropertyFrazilFormationCold() {
 
    const Real AbsSalinityIn     = 35.0_Real;
    const Real ConservTempIn     = -2.0_Real;
-   const Real PressureDbIn      = 100.0_Real;
-   const Real PressureIn        = PressureDbIn * Db2Pa;
+   const Real PressureIn        = 1.0e6_Real; // Pa (100 dbar)
    const Real PseudoThicknessIn = 10.0_Real;
    const Real RTol              = 1e-10_Real;
    const Real LayerMassFracMax  = 0.10_Real;
@@ -464,7 +458,7 @@ void testFixedPropertyFrazilFormationCold() {
    Real STend = 0.0_Real;
 
    Real CtFreezing =
-       gsw_ct_freezing_poly(AbsSalinityIn, PressureDbIn, 0.0_Real);
+       gsw_ct_freezing_poly(AbsSalinityIn, PressureIn * Pa2Db, 0.0_Real);
 
    ComputeFrazilFormation(AbsSalinityIn, ConservTempIn, PressureIn,
                           PseudoThicknessIn, AccMIce, AccMSalt, AccEIce, HTend,
@@ -516,8 +510,7 @@ void testFixedPropertyFrazilFormationCold() {
 void testFixedPropertyFrazilFormationMassLimit() {
    const Real AbsSalinityIn     = 20.0_Real;
    const Real ConservTempIn     = -12.0_Real;
-   const Real PressureDbIn      = 100.0_Real;
-   const Real PressureIn        = PressureDbIn * Db2Pa;
+   const Real PressureIn        = 1.0e6_Real; // Pa (100 dbar)
    const Real PseudoThicknessIn = 1.0_Real;
    const Real LayerMassFracMax  = 0.10_Real;
    const Real RTol              = 1e-10_Real;
@@ -534,7 +527,7 @@ void testFixedPropertyFrazilFormationMassLimit() {
    Real STend = 0.0_Real;
 
    Real CtFreezing =
-       gsw_ct_freezing_poly(AbsSalinityIn, PressureDbIn, 0.0_Real);
+       gsw_ct_freezing_poly(AbsSalinityIn, PressureIn * Pa2Db, 0.0_Real);
 
    ComputeFrazilFormation(AbsSalinityIn, ConservTempIn, PressureIn,
                           PseudoThicknessIn, AccMIce, AccMSalt, AccEIce, HTend,
@@ -560,8 +553,7 @@ void testFixedPropertyFrazilFormationMassLimit() {
 void testFrazilMeltMassLimit() {
    const Real AbsSalinityIn     = 32.0_Real;
    const Real ConservTempIn     = 35.0_Real;
-   const Real PressureDbIn      = 100.0_Real;
-   const Real PressureIn        = PressureDbIn * Db2Pa;
+   const Real PressureIn        = 1.0e6_Real; // Pa (100 dbar)
    const Real PseudoThicknessIn = 1.0_Real;
    const Real LayerMassFracMax  = 0.10_Real;
    const Real RTol              = 1e-10_Real;
@@ -584,7 +576,7 @@ void testFrazilMeltMassLimit() {
    Real TTend    = 0.0_Real;
    Real STend    = 0.0_Real;
    Real CtFreezing =
-       gsw_ct_freezing_poly(AbsSalinityIn, PressureDbIn, 0.0_Real);
+       gsw_ct_freezing_poly(AbsSalinityIn, PressureIn * Pa2Db, 0.0_Real);
 
    ComputeFrazilMelt(AbsSalinityIn, ConservTempIn, PressureIn,
                      PseudoThicknessIn, AccMIce, AccMLiq, AccMSalt, AccELiq,
@@ -628,8 +620,7 @@ void testFrazilMeltMassLimit() {
 void testFixedPropertyFrazilMeltMassLimit() {
    const Real AbsSalinityIn     = 32.0_Real;
    const Real ConservTempIn     = 35.0_Real;
-   const Real PressureDbIn      = 100.0_Real;
-   const Real PressureIn        = PressureDbIn * Db2Pa;
+   const Real PressureIn        = 1.0e6_Real; // Pa (100 dbar)
    const Real PseudoThicknessIn = 1.0_Real;
    const Real LayerMassFracMax  = 0.10_Real;
    const Real RTol              = 1e-10_Real;
@@ -648,7 +639,7 @@ void testFixedPropertyFrazilMeltMassLimit() {
    Real TTend     = 0.0_Real;
    Real STend     = 0.0_Real;
    Real CtFreezing =
-       gsw_ct_freezing_poly(AbsSalinityIn, PressureDbIn, 0.0_Real);
+       gsw_ct_freezing_poly(AbsSalinityIn, PressureIn * Pa2Db, 0.0_Real);
 
    ComputeFrazilMelt(AbsSalinityIn, ConservTempIn, PressureIn,
                      PseudoThicknessIn, SumIce, SumSalt, SumEnergy, HTend,
