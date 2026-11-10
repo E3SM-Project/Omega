@@ -2,7 +2,7 @@
 
 # Equation of State (EOS)
 
-The equation of state (EOS) for the ocean describes the relationship between specific volume of seawater (in $\textrm{m}^3/\textrm{kg}$; the reciprocal of density) and temperature (in $^{\circ}\textrm{C}$), salinity (in $\textrm{g/kg}$), and pressure (in $\textrm{dbar}$). Through the hydrostatic balance (which relates density/specific volume gradients to pressure gradients), the equation of state provides a connection between active tracers (temperature and salinity) and the fluid dynamics.
+The equation of state (EOS) for the ocean describes the relationship between specific volume of seawater (in $\textrm{m}^3/\textrm{kg}$; the reciprocal of density) and temperature (in $^{\circ}\textrm{C}$), salinity (in $\textrm{g/kg}$), and pressure (relative pressure, in $\textrm{Pa}$). Through the hydrostatic balance (which relates density/specific volume gradients to pressure gradients), the equation of state provides a connection between active tracers (temperature and salinity) and the fluid dynamics.
 
 Three choices of EOS are provided by Omega: a linear EOS, a constant EOS, and a TEOS-10 EOS. The linear EOS simplifies the relationship by excluding the influence of pressure and using constant expansion/contraction coefficients, making the specific volume a simple linear function of temperature and salinity. The constant EOS is intended for idealized/debug-style configurations and sets the specific volume to `1/RhoSw` for all active cells/layers (with `RhoSw` set to `1026.0` in `GlobalConstants.h`). However, both simplified options should only be used for simpler idealized test cases and are not appropriate for realistic ocean simulations. The TEOS-10 EOS is a 75-term polynomial expression from [Roquet et al. 2015](https://www.sciencedirect.com/science/article/pii/S1463500315000566) that approximates the [Thermodynamic Equation of Seawater 2010](https://www.teos-10.org/pubs/TEOS-10_Manual.pdf), but in a less complex and more computationally efficient manner, and is the preferred EOS for real ocean simulations in Omega.
 
@@ -27,7 +27,8 @@ When using the `teos10` EOS option, helper methods are available for common
 temperature conversions used by ocean thermodynamics workflows:
 
 - `calcCtFreezing(Sa, P, SaturationFract)` computes the Conservative
-   Temperature freezing point from absolute salinity and pressure.
+   Temperature freezing point from absolute salinity and sea pressure in Pa
+   (the units of Omega's pressure fields).
 - `calcPtFromCt(Sa, Ct)` converts Conservative Temperature to potential
    temperature.
 - `calcCtFromPt(Sa, Pt)` converts potential temperature to Conservative

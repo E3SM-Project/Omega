@@ -20,6 +20,13 @@ calculated as the average between two layer values, rather than being recalculat
 salinity, and pressure. Both of these assumptions incur less than a 1% error.
 For the constant EOS option, `BruntVaisalaFreqSq` is identically zero.
 
+Every `Eos` function that takes a pressure expects the relative pressure (gauge
+pressure, i.e. absolute pressure minus the standard atmosphere) in Pa, the
+units of Omega's pressure fields. The TEOS-10 polynomials are written in terms
+of pressure in dbar, but that conversion is done internally, so callers never
+convert with `Pa2Db` themselves. The same holds for the frazil functors, which
+convert to dbar only where they call the GSW library.
+
 ## Eos type
 
 An enumeration listing all implemented schemes is provided. It needs to be extended every time an
@@ -174,7 +181,9 @@ ComputeSpecVolTeos10.calcCtFreezing(Sa, P, SaturationFract);
 ```
 
 This helper follows the TEOS-10 polynomial approximation used by
-`gsw_ct_freezing_poly` in the GSW toolbox.
+`gsw_ct_freezing_poly` in the GSW toolbox. Unlike the GSW function, which
+takes sea pressure in dbar, `P` is sea pressure in Pa, the units of Omega's
+pressure fields; the conversion is done internally.
 
 To convert Conservative Temperature to potential temperature through the EOS
 interface, use

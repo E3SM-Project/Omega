@@ -63,9 +63,9 @@ const Real LinearDCtExpValue = -LinearDRhodT * LinearExpValue * LinearExpValue;
 const Real LinearDSaExpValue = -LinearDRhodS * LinearExpValue * LinearExpValue;
 
 /// Test input values
-const Real Sa = 30.0;           // Absolute Salinity in g/kg
-const Real Ct = 10.0;           // Conservative Temperature in degC
-const Real P  = 1000.0 * Db2Pa; // Pressure in Pa
+const Real Sa = 30.0;  // Absolute Salinity in g/kg
+const Real Ct = 10.0;  // Conservative Temperature in degC
+const Real P  = 1.0e7; // Pressure in Pa (1000 dbar)
 
 const I4 KDisp  = 1;     // Displate parcel to K=1 for TEOS-10 eos
 const Real RTol = 1e-10; // Relative tolerance for isApprox checks
@@ -80,8 +80,8 @@ constexpr int NCtTest      = 6;
 constexpr int NPTest       = 6;
 const Real SaTest[NSaTest] = {0.0, 5.0, 20.0, 30.0, 35.0, 38.5}; // g/kg
 const Real CtTest[NCtTest] = {-2.0, 0.0, 4.0, 10.0, 25.0, 35.0}; // degC
-const Real PTest[NPTest]   = {0.0,    100.0,  1000.0,
-                              4000.0, 8000.0, 10000.0}; // dbar
+const Real PTest[NPTest]   = {0.0,   1.0e6, 1.0e7,
+                              4.0e7, 8.0e7, 1.0e8}; // Pa (0 to 10000 dbar)
 
 /// Relative tolerance for the specific volume derivative checks against the
 /// GSW-C library. Omega and GSW-C evaluate the same polynomial in different
@@ -711,17 +711,17 @@ void testBruntVaisalaFreqSqTeos10() {
              GeomZMid(ICell, 1) = -993.1071379053125_Real;
              SArray(ICell, 1)   = Sa;
              TArray(ICell, 1)   = Ct + 10.0_Real;
-             PArray(ICell, 1)   = (P * Pa2Db + 1.0_Real) * Db2Pa;
+             PArray(ICell, 1)   = P + 1.0e4_Real;
           } else if (K == 2) {
              GeomZMid(ICell, 2) = -994.0968821072275_Real;
              SArray(ICell, 2)   = Sa + 1.0_Real;
              TArray(ICell, 2)   = Ct + 5.0_Real;
-             PArray(ICell, K)   = (P * Pa2Db + 2.0_Real) * Db2Pa;
+             PArray(ICell, K)   = P + 2.0e4_Real;
           } else { // fill rest with valid junk to avoid Nans and Inf
              GeomZMid(ICell, K) = -994.0968821072275_Real - 0.1_Real * K;
              SArray(ICell, K)   = Sa + 1.0_Real + 0.1_Real * K;
              TArray(ICell, K)   = Ct + 5.0_Real - 0.01_Real * K;
-             PArray(ICell, K)   = (P * Pa2Db + 2.0_Real + 0.1_Real * K) * Db2Pa;
+             PArray(ICell, K)   = P + 2.0e4_Real + 1.0e3_Real * K;
           }
        });
 
@@ -838,7 +838,7 @@ void testEosTeos10Derivs() {
        KOKKOS_LAMBDA(I4 ICell, I4 K) {
           SArray(ICell, K) = Sa + 0.1_Real * K;
           TArray(ICell, K) = Ct - 0.15_Real * K;
-          PArray(ICell, K) = (100.0_Real + 150.0_Real * K) * Db2Pa;
+          PArray(ICell, K) = 1.0e6_Real + 1.5e6_Real * K;
        });
 
    /// Compute specific volume and its derivatives
@@ -860,13 +860,14 @@ void testEosTeos10Derivs() {
    for (int K = 0; K < NVertLayers; ++K) {
       const double SaVal = Sa + 0.1 * K;
       const double CtVal = Ct - 0.15 * K;
-      const double PDb   = 100.0 + 150.0 * K;
+      const double PPa   = 1.0e6 + 1.5e6 * K;
 
+      /// GSW-C takes pressure in dbar
       double GswDSa, GswDCt, GswDP;
-      gsw_specvol_first_derivatives(SaVal, CtVal, PDb, &GswDSa, &GswDCt,
+      gsw_specvol_first_derivatives(SaVal, CtVal, PPa * Pa2Db, &GswDSa, &GswDCt,
                                     &GswDP);
 
-      ExpSpecVolH(K) = gsw_specvol(SaVal, CtVal, PDb);
+      ExpSpecVolH(K) = gsw_specvol(SaVal, CtVal, PPa * Pa2Db);
       ExpDCtH(K)     = GswDCt;
       ExpDSaH(K)     = GswDSa;
       ExpDPH(K)      = GswDP;
@@ -1136,13 +1137,14 @@ void testCalcCtFreezing() {
    const Real RTol = 1e-10;
 
    constexpr Real SaturationFrac = 0.0;
-   constexpr Real PDb            = 500.0; // pressure in dbar for GSW pathway
+   constexpr Real PPa            = 5.0e6; // pressure in Pa (500 dbar)
    constexpr Real SaLocal        = 32.0;
 
+   /// GSW-C takes pressure in dbar
    const Real CtTeosExpected =
-       gsw_ct_freezing_poly(SaLocal, PDb, SaturationFrac);
+       gsw_ct_freezing_poly(SaLocal, PPa * Pa2Db, SaturationFrac);
    const Real CtTeos =
-       Eos::calcCtFreezing(EosType::Teos10Eos, SaLocal, PDb, SaturationFrac);
+       Eos::calcCtFreezing(EosType::Teos10Eos, SaLocal, PPa, SaturationFrac);
    if (!isApprox(CtTeos, CtTeosExpected, RTol)) {
       ABORT_ERROR("testCalcCtFreezing: Teos10 FAIL, expected {}, got {}",
                   CtTeosExpected, CtTeos);
@@ -1150,7 +1152,7 @@ void testCalcCtFreezing() {
 
    const Real CtLinearExpected = -0.054_Real * SaLocal / Psu2Gpkg;
    const Real CtLinear =
-       Eos::calcCtFreezing(EosType::LinearEos, SaLocal, PDb, SaturationFrac);
+       Eos::calcCtFreezing(EosType::LinearEos, SaLocal, PPa, SaturationFrac);
    if (!isApprox(CtLinear, CtLinearExpected, RTol)) {
       ABORT_ERROR("testCalcCtFreezing: Linear FAIL, expected {}, got {}",
                   CtLinearExpected, CtLinear);
@@ -1158,7 +1160,7 @@ void testCalcCtFreezing() {
 
    const Real CtConstExpected = -1.9_Real;
    const Real CtConst =
-       Eos::calcCtFreezing(EosType::ConstantEos, SaLocal, PDb, SaturationFrac);
+       Eos::calcCtFreezing(EosType::ConstantEos, SaLocal, PPa, SaturationFrac);
    if (!isApprox(CtConst, CtConstExpected, RTol)) {
       ABORT_ERROR("testCalcCtFreezing: Constant FAIL, expected {}, got {}",
                   CtConstExpected, CtConst);
@@ -1173,24 +1175,23 @@ void testNegativeSalinityTeos10() {
    TestEos->EosChoice = EosType::Teos10Eos;
    Teos10Eos Teos(VertCoord::getDefault());
 
-   constexpr Real PDb        = 500.0;
-   constexpr Real PPa        = PDb * Db2Pa;
+   constexpr Real PPa        = 5.0e6; // pressure in Pa (500 dbar)
    constexpr Real Pt         = 10.0;
    const Real PtFromCtAtZero = TestEos->calcPtFromCt(0.0_Real, Ct);
    const Real CtFromPtAtZero = TestEos->calcCtFromPt(0.0_Real, Pt);
    const Real CtFreezingAtZero =
-       Eos::calcCtFreezing(EosType::Teos10Eos, 0.0_Real, PDb, 0.0_Real);
+       Eos::calcCtFreezing(EosType::Teos10Eos, 0.0_Real, PPa, 0.0_Real);
    const Real CtFreezingLinearAtZero =
-       Eos::calcCtFreezing(EosType::LinearEos, 0.0_Real, PDb, 0.0_Real);
+       Eos::calcCtFreezing(EosType::LinearEos, 0.0_Real, PPa, 0.0_Real);
    const Real NegativeSalinity[2] = {-1.0_Real, -2.0_Real};
 
    for (const Real SaValue : NegativeSalinity) {
       const Real PtFromCt = TestEos->calcPtFromCt(SaValue, Ct);
       const Real CtFromPt = TestEos->calcCtFromPt(SaValue, Pt);
       const Real CtFreezing =
-          Eos::calcCtFreezing(EosType::Teos10Eos, SaValue, PDb, 0.0_Real);
+          Eos::calcCtFreezing(EosType::Teos10Eos, SaValue, PPa, 0.0_Real);
       const Real CtFreezingLinear =
-          Eos::calcCtFreezing(EosType::LinearEos, SaValue, PDb, 0.0_Real);
+          Eos::calcCtFreezing(EosType::LinearEos, SaValue, PPa, 0.0_Real);
       if (!isApprox(PtFromCt, PtFromCtAtZero, RTol) ||
           !isApprox(CtFromPt, CtFromPtAtZero, RTol) ||
           !isApprox(CtFreezing, CtFreezingAtZero, RTol) ||
@@ -1203,9 +1204,9 @@ void testNegativeSalinityTeos10() {
       Real SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP;
       Teos.calcSpecVolAndDerivsAtPoint(Ct, SaValue, PPa, SpecVol, SpecVolDCt,
                                        SpecVolDSa, SpecVolDP);
-      const Real Alpha = Eos::computeAlpha(EosType::Teos10Eos, SaValue, Ct, PDb,
+      const Real Alpha = Eos::computeAlpha(EosType::Teos10Eos, SaValue, Ct, PPa,
                                            SpecVol, 0.0_Real);
-      const Real Beta  = Eos::computeBeta(EosType::Teos10Eos, SaValue, Ct, PDb,
+      const Real Beta  = Eos::computeBeta(EosType::Teos10Eos, SaValue, Ct, PPa,
                                           SpecVol, 0.0_Real);
       if (Kokkos::isnan(SpecVol) || Kokkos::isinf(SpecVol) ||
           Kokkos::isnan(SpecVolDCt) || Kokkos::isinf(SpecVolDCt) ||
@@ -1256,11 +1257,12 @@ void checkValueGswcN2() {
    int Nz = 2;
 
    // Input arrays: length nz+1
-   double Salt[4]  = {Sa - 1.0, Sa, Sa + 1.0}; // Absolute Salinity (g/kg)
-   double Temp[4]  = {Ct + 15.0, Ct + 10.0,
-                      Ct + 5.0}; // Conservative Temperature (deg C)
-   double Press[4] = {P * Pa2Db, P * Pa2Db + 1.0,
-                      P * Pa2Db + 2.0}; // Pressure (dbar)
+   double Salt[4] = {Sa - 1.0, Sa, Sa + 1.0}; // Absolute Salinity (g/kg)
+   double Temp[4] = {Ct + 15.0, Ct + 10.0,
+                     Ct + 5.0}; // Conservative Temperature (deg C)
+   // Pressure (dbar, as GSW-C expects), matching PArray in
+   // testBruntVaisalaFreqSqTeos10
+   double Press[4] = {P * Pa2Db, (P + 1.0e4) * Pa2Db, (P + 2.0e4) * Pa2Db};
 
    // Latitude (degrees north)
    double Latitude[4] = {0.0, 0.0, 0.0};
@@ -1286,13 +1288,12 @@ void checkValueGswcCtFreezing() {
    const Real RTol = 1e-10;
 
    constexpr Real SaturationFrac = 0.0;
-   constexpr Real P              = 500.0 * Db2Pa; // Convert dbar to Pa
+   constexpr Real P              = 5.0e6; // Pressure in Pa (500 dbar)
    constexpr Real Sa             = 32.0;
 
    /// Get freezing temperature from GSW-C library
    double CtFreezGswc = gsw_ct_freezing_poly(Sa, P * Pa2Db, SaturationFrac);
-   double CtFreez =
-       Teos10Eos::calcCtFreezingTeos10(Sa, P * Pa2Db, SaturationFrac);
+   double CtFreez     = Teos10Eos::calcCtFreezingTeos10(Sa, P, SaturationFrac);
 
    /// Check the value against the GSW-C value
    bool Check = isApprox(CtFreezGswc, CtFreez, RTol);
@@ -1342,15 +1343,15 @@ void checkValueGswcSpecVolDerivs() {
 
             const Real SaVal = SaTest[ISa];
             const Real CtVal = CtTest[ICt];
-            const Real PDb   = PTest[IP];
+            const Real PPa   = PTest[IP];
 
             Real SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP;
-            TestEos.calcSpecVolAndDerivsAtPoint(CtVal, SaVal, PDb * Db2Pa,
-                                                SpecVol, SpecVolDCt, SpecVolDSa,
-                                                SpecVolDP);
+            TestEos.calcSpecVolAndDerivsAtPoint(
+                CtVal, SaVal, PPa, SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP);
 
             /// GSW-C takes pressure in dbar and returns the derivatives per
             /// (g/kg), per degC, and per Pa
+            const double PDb = PPa * Pa2Db;
             double GswDSa, GswDCt, GswDP;
             gsw_specvol_first_derivatives(SaVal, CtVal, PDb, &GswDSa, &GswDCt,
                                           &GswDP);
@@ -1364,26 +1365,26 @@ void checkValueGswcSpecVolDerivs() {
 
             if (!isApprox(SpecVol, GswSpecVol, DerivRTol)) {
                LOG_ERROR("EosTest: SpecVol Bad Value at Sa={}, Ct={}, "
-                         "P={} dbar: expected {}, got {}",
-                         SaVal, CtVal, PDb, GswSpecVol, SpecVol);
+                         "P={} Pa: expected {}, got {}",
+                         SaVal, CtVal, PPa, GswSpecVol, SpecVol);
                ++NumBad;
             }
             if (!isApprox(SpecVolDCt, GswDCt, DerivRTol, DerivDCtATol)) {
                LOG_ERROR("EosTest: SpecVolDCt Bad Value at Sa={}, Ct={}, "
-                         "P={} dbar: expected {}, got {}",
-                         SaVal, CtVal, PDb, GswDCt, SpecVolDCt);
+                         "P={} Pa: expected {}, got {}",
+                         SaVal, CtVal, PPa, GswDCt, SpecVolDCt);
                ++NumBad;
             }
             if (!isApprox(SpecVolDSa, GswDSa, DerivRTol)) {
                LOG_ERROR("EosTest: SpecVolDSa Bad Value at Sa={}, Ct={}, "
-                         "P={} dbar: expected {}, got {}",
-                         SaVal, CtVal, PDb, GswDSa, SpecVolDSa);
+                         "P={} Pa: expected {}, got {}",
+                         SaVal, CtVal, PPa, GswDSa, SpecVolDSa);
                ++NumBad;
             }
             if (!isApprox(SpecVolDP, GswDP, DerivDPRTol)) {
                LOG_ERROR("EosTest: SpecVolDP Bad Value at Sa={}, Ct={}, "
-                         "P={} dbar: expected {}, got {}",
-                         SaVal, CtVal, PDb, GswDP, SpecVolDP);
+                         "P={} Pa: expected {}, got {}",
+                         SaVal, CtVal, PPa, GswDP, SpecVolDP);
                ++NumBad;
             }
          }
@@ -1443,7 +1444,7 @@ void checkFiniteDiffSpecVolDerivs() {
 
             const Real SaVal = SaTest[ISa];
             const Real CtVal = CtTest[ICt];
-            const Real PPa   = PTest[IP] * Db2Pa;
+            const Real PPa   = PTest[IP];
 
             Real SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP;
             TestEos.calcSpecVolAndDerivsAtPoint(
@@ -1461,19 +1462,19 @@ void checkFiniteDiffSpecVolDerivs() {
 
             if (!isApprox(SpecVolDCt, FDCt, FDRTol, FDCtATol)) {
                LOG_ERROR("EosTest: SpecVolDCt disagrees with finite difference "
-                         "at Sa={}, Ct={}, P={} dbar: {} vs {}",
+                         "at Sa={}, Ct={}, P={} Pa: {} vs {}",
                          SaVal, CtVal, PTest[IP], SpecVolDCt, FDCt);
                ++NumBad;
             }
             if (!isApprox(SpecVolDSa, FDSa, FDRTol, FDSaATol)) {
                LOG_ERROR("EosTest: SpecVolDSa disagrees with finite difference "
-                         "at Sa={}, Ct={}, P={} dbar: {} vs {}",
+                         "at Sa={}, Ct={}, P={} Pa: {} vs {}",
                          SaVal, CtVal, PTest[IP], SpecVolDSa, FDSa);
                ++NumBad;
             }
             if (!isApprox(SpecVolDP, FDP, FDRTol, FDPATol)) {
                LOG_ERROR("EosTest: SpecVolDP disagrees with finite difference "
-                         "at Sa={}, Ct={}, P={} dbar: {} vs {}",
+                         "at Sa={}, Ct={}, P={} Pa: {} vs {}",
                          SaVal, CtVal, PTest[IP], SpecVolDP, FDP);
                ++NumBad;
             }
@@ -1513,33 +1514,33 @@ void checkValueGswcAlphaBeta() {
 
             const Real SaVal = SaTest[ISa];
             const Real CtVal = CtTest[ICt];
-            const Real PDb   = PTest[IP];
+            const Real PPa   = PTest[IP];
 
             Real SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP;
-            TestEos.calcSpecVolAndDerivsAtPoint(CtVal, SaVal, PDb * Db2Pa,
-                                                SpecVol, SpecVolDCt, SpecVolDSa,
-                                                SpecVolDP);
+            TestEos.calcSpecVolAndDerivsAtPoint(
+                CtVal, SaVal, PPa, SpecVol, SpecVolDCt, SpecVolDSa, SpecVolDP);
 
-            const Real Alpha = TestBvf.calcAlpha(SaVal, CtVal, PDb, SpecVol);
-            const Real Beta  = TestBvf.calcBeta(SaVal, CtVal, PDb, SpecVol);
+            const Real Alpha = TestBvf.calcAlpha(SaVal, CtVal, PPa, SpecVol);
+            const Real Beta  = TestBvf.calcBeta(SaVal, CtVal, PPa, SpecVol);
 
+            /// GSW-C takes pressure in dbar
             double GswSpecVol, GswAlpha, GswBeta;
-            gsw_specvol_alpha_beta(SaVal, CtVal, PDb, &GswSpecVol, &GswAlpha,
-                                   &GswBeta);
+            gsw_specvol_alpha_beta(SaVal, CtVal, PPa * Pa2Db, &GswSpecVol,
+                                   &GswAlpha, &GswBeta);
 
             WorstAlpha = std::max(WorstAlpha, relDiff(Alpha, GswAlpha));
             WorstBeta  = std::max(WorstBeta, relDiff(Beta, GswBeta));
 
             if (!isApprox(Alpha, GswAlpha, DerivRTol, AlphaATol)) {
                LOG_ERROR("EosTest: Alpha Bad Value at Sa={}, Ct={}, "
-                         "P={} dbar: expected {}, got {}",
-                         SaVal, CtVal, PDb, GswAlpha, Alpha);
+                         "P={} Pa: expected {}, got {}",
+                         SaVal, CtVal, PPa, GswAlpha, Alpha);
                ++NumBad;
             }
             if (!isApprox(Beta, GswBeta, DerivRTol)) {
                LOG_ERROR("EosTest: Beta Bad Value at Sa={}, Ct={}, "
-                         "P={} dbar: expected {}, got {}",
-                         SaVal, CtVal, PDb, GswBeta, Beta);
+                         "P={} Pa: expected {}, got {}",
+                         SaVal, CtVal, PPa, GswBeta, Beta);
                ++NumBad;
             }
          }

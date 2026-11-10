@@ -36,14 +36,23 @@ class Teos10Eos {
 
    /// Normalization used by the Roquet et al. 2015 75-term polynomial. The
    /// polynomial is written in the normalized variables
-   ///    Ss = sqrt((Sa + DeltaS) / SaNorm), Tt = Ct / CtNorm, Pp = P * PNorm
-   /// with P the relative pressure in dbar. These are shared by the specific
+   ///    Ss = sqrt((Sa + DeltaS) / SaNorm), Tt = Ct / CtNorm,
+   ///    Pp = P * Pa2Db * PNorm
+   /// with P the relative pressure in Pa. These are shared by the specific
    /// volume and by its derivatives, so that both are evaluated at exactly
    /// the same normalized state.
    static constexpr Real SaNorm = 40.0 * SS0 / 35.0; ///< salinity scale (g/kg)
    static constexpr Real CtNorm = 40.0;   ///< temperature scale (degC)
    static constexpr Real DeltaS = 24.0;   ///< salinity offset (g/kg)
    static constexpr Real PNorm  = 1.0e-4; ///< pressure scale (1/dbar)
+
+   /// Convert relative pressure P [Pa] (gauge pressure, i.e. absolute
+   /// pressure minus the standard atmosphere) to the dimensionless normalized
+   /// pressure Pp of the polynomial. The helpers below take Pp rather than a
+   /// dimensional pressure.
+   KOKKOS_FUNCTION static Real calcNormPressure(const Real P) {
+      return P * Pa2Db * PNorm;
+   }
 
    //   The functor takes the full arrays of specific volume (inout),
    //   the team member and the cell index ICell, and the ocean tracers
@@ -76,16 +85,16 @@ class Teos10Eos {
              /// is always 0.
              if (KDisp == 0) {
                 // No displacement
+                const Real Pp = calcNormPressure(Pressure(ICell, K));
                 SpecVol(ICell, K) =
-                    calcRefProfile(Pressure(ICell, K) * Pa2Db) +
-                    calcDelta(SpecVolPCoeffs, Pressure(ICell, K) * Pa2Db);
+                    calcRefProfile(Pp) + calcDelta(SpecVolPCoeffs, Pp);
              } else {
                 // Displacement, use the displaced pressure
-                I4 KTmp = Kokkos::min(K + KDisp, KMax);
-                KTmp    = Kokkos::max(KMin, KTmp);
+                I4 KTmp       = Kokkos::min(K + KDisp, KMax);
+                KTmp          = Kokkos::max(KMin, KTmp);
+                const Real Pp = calcNormPressure(Pressure(ICell, KTmp));
                 SpecVol(ICell, K) =
-                    calcRefProfile(Pressure(ICell, KTmp) * Pa2Db) +
-                    calcDelta(SpecVolPCoeffs, Pressure(ICell, KTmp) * Pa2Db);
+                    calcRefProfile(Pp) + calcDelta(SpecVolPCoeffs, Pp);
              }
           });
    }
@@ -211,11 +220,10 @@ class Teos10Eos {
           V000;
    }
 
-   /// Evaluate pressure polynomial delta for TEOS-10
+   /// Evaluate pressure polynomial delta for TEOS-10 at the normalized
+   /// pressure Pp from calcNormPressure
    KOKKOS_FUNCTION Real calcDelta(const Real (&SpecVolPCoeffs)[6],
-                                  const Real P) const {
-
-      Real Pp = P * PNorm;
+                                  const Real Pp) const {
 
       Real Delta = ((((SpecVolPCoeffs[5] * Pp + SpecVolPCoeffs[4]) * Pp +
                       SpecVolPCoeffs[3]) *
@@ -229,15 +237,15 @@ class Teos10Eos {
       return Delta;
    }
 
-   /// Calculate reference profile for TEOS-10
-   KOKKOS_FUNCTION Real calcRefProfile(Real P) const {
+   /// Calculate reference profile for TEOS-10 at the normalized pressure Pp
+   /// from calcNormPressure
+   KOKKOS_FUNCTION Real calcRefProfile(Real Pp) const {
       constexpr Real V00 = -4.4015007269e-05;
       constexpr Real V01 = 6.9232335784e-06;
       constexpr Real V02 = -7.5004675975e-07;
       constexpr Real V03 = 1.7009109288e-08;
       constexpr Real V04 = -1.6884162004e-08;
       constexpr Real V05 = 1.9613503930e-09;
-      Real Pp            = P * PNorm;
 
       Real V0 =
           (((((V05 * Pp + V04) * Pp + V03) * Pp + V02) * Pp + V01) * Pp + V00) *
@@ -421,11 +429,10 @@ class Teos10Eos {
    }
 
    /// Evaluate one of the degree-4 derivative pressure polynomials assembled
-   /// by calcPCoeffsDTt or calcPCoeffsDSs. P is relative pressure in dbar.
+   /// by calcPCoeffsDTt or calcPCoeffsDSs at the normalized pressure Pp from
+   /// calcNormPressure.
    KOKKOS_FUNCTION static Real calcDeltaDeriv(const Real (&DPCoeffs)[5],
-                                              const Real P) {
-
-      Real Pp = P * PNorm;
+                                              const Real Pp) {
 
       Real DDelta =
           (((DPCoeffs[4] * Pp + DPCoeffs[3]) * Pp + DPCoeffs[2]) * Pp +
@@ -438,12 +445,10 @@ class Teos10Eos {
 
    /// Evaluate the derivative of the TEOS-10 pressure polynomial with respect
    /// to pressure, from the coefficients calcPCoeffs has already assembled for
-   /// the specific volume itself. P is relative pressure in dbar and the
-   /// result is per dbar.
-   KOKKOS_FUNCTION Real calcDeltaDP(const Real (&SpecVolPCoeffs)[6],
-                                    const Real P) const {
-
-      Real Pp = P * PNorm;
+   /// the specific volume itself. Pp is the normalized pressure from
+   /// calcNormPressure and the result is the derivative with respect to Pp.
+   KOKKOS_FUNCTION Real calcDeltaDPp(const Real (&SpecVolPCoeffs)[6],
+                                     const Real Pp) const {
 
       Real DDelta =
           (((5.0_Real * SpecVolPCoeffs[5] * Pp + 4.0_Real * SpecVolPCoeffs[4]) *
@@ -454,22 +459,21 @@ class Teos10Eos {
               Pp +
           SpecVolPCoeffs[1];
 
-      return DDelta * PNorm;
+      return DDelta;
    }
 
    /// Calculate the derivative of the TEOS-10 reference profile with respect
-   /// to pressure. P is relative pressure in dbar and the result is per dbar.
-   /// The reference profile does not depend on temperature or salinity, so it
-   /// contributes only to the pressure derivative -- but it must not be left
-   /// out of that one.
-   KOKKOS_FUNCTION Real calcRefProfileDP(Real P) const {
+   /// to pressure. Pp is the normalized pressure from calcNormPressure and the
+   /// result is the derivative with respect to Pp. The reference profile does
+   /// not depend on temperature or salinity, so it contributes only to the
+   /// pressure derivative -- but it must not be left out of that one.
+   KOKKOS_FUNCTION Real calcRefProfileDPp(Real Pp) const {
       constexpr Real V00 = -4.4015007269e-05;
       constexpr Real V01 = 6.9232335784e-06;
       constexpr Real V02 = -7.5004675975e-07;
       constexpr Real V03 = 1.7009109288e-08;
       constexpr Real V04 = -1.6884162004e-08;
       constexpr Real V05 = 1.9613503930e-09;
-      Real Pp            = P * PNorm;
 
       Real DV0 =
           (((((6.0_Real * V05 * Pp + 5.0_Real * V04) * Pp + 4.0_Real * V03) *
@@ -480,7 +484,7 @@ class Teos10Eos {
                Pp +
            V00);
 
-      return DV0 * PNorm;
+      return DV0;
    }
 
    /// Calculate the TEOS-10 specific volume and its three first derivatives at
@@ -504,23 +508,24 @@ class Teos10Eos {
       Real DTtPCoeffs[5];
       Real DSsPCoeffs[5];
 
-      const Real Ss  = Kokkos::sqrt((Sa + DeltaS) / SaNorm);
-      const Real Tt  = Ct / CtNorm;
-      const Real Pdb = P * Pa2Db;
+      const Real Ss = Kokkos::sqrt((Sa + DeltaS) / SaNorm);
+      const Real Tt = Ct / CtNorm;
+      const Real Pp = calcNormPressure(P);
 
       calcPCoeffs(SpecVolPCoeffs, Ct, Sa);
       calcPCoeffsDTt(DTtPCoeffs, Ss, Tt);
       calcPCoeffsDSs(DSsPCoeffs, Ss, Tt);
 
-      SpecVol = calcRefProfile(Pdb) + calcDelta(SpecVolPCoeffs, Pdb);
+      SpecVol = calcRefProfile(Pp) + calcDelta(SpecVolPCoeffs, Pp);
 
       /// Chain rule from the normalized variables of the polynomial to the
       /// physical ones: dTt/dCt = 1 / CtNorm, dSs/dSa = 1 / (2 SaNorm Ss),
-      /// and dPdb/dP = Pa2Db.
-      SpecVolDCt = calcDeltaDeriv(DTtPCoeffs, Pdb) / CtNorm;
-      SpecVolDSa = calcDeltaDeriv(DSsPCoeffs, Pdb) * 0.5_Real / (SaNorm * Ss);
-      SpecVolDP =
-          (calcRefProfileDP(Pdb) + calcDeltaDP(SpecVolPCoeffs, Pdb)) * Pa2Db;
+      /// and dPp/dP = PNorm * Pa2Db.
+      SpecVolDCt = calcDeltaDeriv(DTtPCoeffs, Pp) / CtNorm;
+      SpecVolDSa = calcDeltaDeriv(DSsPCoeffs, Pp) * 0.5_Real / (SaNorm * Ss);
+      SpecVolDP  = (calcRefProfileDPp(Pp) * PNorm +
+                   calcDeltaDPp(SpecVolPCoeffs, Pp) * PNorm) *
+                  Pa2Db;
    }
 
    /// Calculate the TEOS-10 specific volume and its three first derivatives
@@ -546,11 +551,13 @@ class Teos10Eos {
           });
    }
 
-   /// Calculate 2nd derivative of Gibbs wrt pot temp at ref P for TEOS-10
-   KOKKOS_FUNCTION Real calcGibbsDerivPt0Pt0(Real Sa, Real P) const {
+   /// Calculate 2nd derivative of Gibbs wrt pot temp at ref P for TEOS-10,
+   /// from Absolute Salinity Sa [g/kg] and potential temperature Pt [degC]
+   /// (as in GSW's gsw_gibbs_pt0_pt0)
+   KOKKOS_FUNCTION Real calcGibbsDerivPt0Pt0(Real Sa, Real Pt) const {
       Real x2 = Sfac * Sa;
       Real x  = Kokkos::sqrt(x2);
-      Real y  = P * 0.025;
+      Real y  = Pt * 0.025;
 
       Real g03 =
           -24715.571866078 +
@@ -669,13 +676,12 @@ class Teos10Eos {
    /// polynomial from GSW (gsw_ct_freezing_poly; polynomial error in
    /// [-5e-4, 6e-4] K).
    /// \param Sa Absolute Salinity [g/kg]
-   /// \param PDb Sea pressure [dbar] (absolute pressure minus the standard
-   ///        atmosphere). NOTE: units are dbar, NOT Pa. Omega pressure fields
-   ///        (e.g. Pressure, SurfacePressure) are in Pa and must be converted
-   ///        with Pa2Db before calling.
+   /// \param P Sea pressure [Pa] (absolute pressure minus the standard
+   ///        atmosphere), as in Omega's pressure fields
+   ///        (gsw_ct_freezing_poly takes dbar instead)
    /// \param SaturationFract Saturation fraction of dissolved air [0-1]
    static KOKKOS_FUNCTION Real calcCtFreezingTeos10(
-       const Real Sa, const Real PDb, const Real SaturationFract) {
+       const Real Sa, const Real P, const Real SaturationFract) {
       constexpr Real Sso = 35.16504;
       constexpr Real C0  = 0.017947064327968736;
       constexpr Real C1  = -6.076099099929818;
@@ -710,7 +716,8 @@ class Teos10Eos {
 
       Real Sar = SaPos * 1.0e-2;
       Real X   = Kokkos::sqrt(Sar);
-      Real Pr  = PDb * 1.0e-4;
+      // Reduced pressure: sea pressure in dbar scaled by 1e-4, as in GSW
+      Real Pr = P * Pa2Db * 1.0e-4;
 
       Real CtFreez =
           C0 + Sar * (C1 + X * (C2 + X * (C3 + X * (C4 + X * (C5 + C6 * X))))) +
@@ -876,8 +883,8 @@ class Teos10BruntVaisalaFreqSq {
                  0.5_Real * (Pressure(ICell, K) + Pressure(ICell, K - 1));
              Real SpInt =
                  0.5_Real * (SpecVol(ICell, K) + SpecVol(ICell, K - 1));
-             Real AlphaInt = calcAlpha(SaInt, CtInt, PInt * Pa2Db, SpInt);
-             Real BetaInt  = calcBeta(SaInt, CtInt, PInt * Pa2Db, SpInt);
+             Real AlphaInt = calcAlpha(SaInt, CtInt, PInt, SpInt);
+             Real BetaInt  = calcBeta(SaInt, CtInt, PInt, SpInt);
              Real DSa      = AbsSalinity(ICell, K) - AbsSalinity(ICell, K - 1);
              Real DCt      = ConservTemp(ICell, K) - ConservTemp(ICell, K - 1);
              Real DP       = Pressure(ICell, K) - Pressure(ICell, K - 1);
@@ -892,7 +899,7 @@ class Teos10BruntVaisalaFreqSq {
    /// Brunt-Vaisala frequency. Alpha is the temperature derivative of the
    /// specific volume divided by the specific volume, so it is formed from the
    /// TEOS-10 derivative helpers rather than from a second copy of the same
-   /// polynomial coefficients. P is relative pressure in dbar and Sp is the
+   /// polynomial coefficients. P is relative pressure in Pa and Sp is the
    /// specific volume.
    ///
    /// The coefficients are assembled here rather than taken from the
@@ -914,14 +921,15 @@ class Teos10BruntVaisalaFreqSq {
 
       Teos10Eos::calcPCoeffsDTt(DTtPCoeffs, Ss, Tt);
 
-      return Teos10Eos::calcDeltaDeriv(DTtPCoeffs, P) /
+      const Real Pp = Teos10Eos::calcNormPressure(P);
+      return Teos10Eos::calcDeltaDeriv(DTtPCoeffs, Pp) /
              (Teos10Eos::CtNorm * Sp);
    }
 
    /// Calculate beta (the haline contraction coefficient) for the squared
    /// Brunt-Vaisala frequency. Beta is minus the salinity derivative of the
    /// specific volume divided by the specific volume. P is relative pressure
-   /// in dbar and Sp is the specific volume. As for calcAlpha above, this is
+   /// in Pa and Sp is the specific volume. As for calcAlpha above, this is
    /// evaluated at the interface state and so cannot reuse the layer-center
    /// Eos::SpecVolDSa array.
    static KOKKOS_FUNCTION Real calcBeta(Real Sa, Real Ct, Real P, Real Sp) {
@@ -934,7 +942,8 @@ class Teos10BruntVaisalaFreqSq {
 
       Teos10Eos::calcPCoeffsDSs(DSsPCoeffs, Ss, Tt);
 
-      return -0.5_Real * Teos10Eos::calcDeltaDeriv(DSsPCoeffs, P) /
+      const Real Pp = Teos10Eos::calcNormPressure(P);
+      return -0.5_Real * Teos10Eos::calcDeltaDeriv(DSsPCoeffs, Pp) /
              (Teos10Eos::SaNorm * Ss * Sp);
    }
 
@@ -1073,7 +1082,7 @@ class Eos {
    Real getLinearDRhodS() const { return ComputeSpecVolLinear.DRhodS; }
 
    /// Calculate alpha (thermal expansion coefficient, per specific volume) for
-   /// the given EOS choice. P is relative pressure in dbar and Sp is the
+   /// the given EOS choice. P is relative pressure in Pa and Sp is the
    /// specific volume. LinearDRhodT is only used for LinearEos.
    static KOKKOS_FUNCTION Real computeAlpha(EosType Choice, Real Sa, Real Ct,
                                             Real P, Real Sp,
@@ -1089,7 +1098,7 @@ class Eos {
    }
 
    /// Calculate beta (haline contraction coefficient, per specific volume) for
-   /// the given EOS choice. P is relative pressure in dbar and Sp is the
+   /// the given EOS choice. P is relative pressure in Pa and Sp is the
    /// specific volume. LinearDRhodS is only used for LinearEos.
    static KOKKOS_FUNCTION Real computeBeta(EosType Choice, Real Sa, Real Ct,
                                            Real P, Real Sp, Real LinearDRhodS) {
@@ -1109,16 +1118,14 @@ class Eos {
    /// For ConstantEos, returns a constant approximate ocean freezing point.
    /// \param Choice EOS type
    /// \param Sa Absolute Salinity [g/kg]
-   /// \param PDb Sea pressure [dbar] (absolute pressure minus the standard
-   ///        atmosphere). NOTE: units are dbar, NOT Pa. Omega pressure fields
-   ///        (e.g. Pressure, SurfacePressure) are in Pa and must be converted
-   ///        with Pa2Db before calling.
+   /// \param P Sea pressure [Pa] (absolute pressure minus the standard
+   ///        atmosphere), as in Omega's pressure fields
    /// \param SaturationFract Saturation fraction of dissolved air [0-1]
    static KOKKOS_FUNCTION Real calcCtFreezing(EosType Choice, const Real Sa,
-                                              const Real PDb,
+                                              const Real P,
                                               const Real SaturationFract) {
       if (Choice == EosType::Teos10Eos) {
-         return Teos10Eos::calcCtFreezingTeos10(Sa, PDb, SaturationFract);
+         return Teos10Eos::calcCtFreezingTeos10(Sa, P, SaturationFract);
       }
       if (Choice == EosType::LinearEos) {
          // Linear salinity-dependent freezing point; coefficient -0.054

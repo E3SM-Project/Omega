@@ -455,11 +455,10 @@ void Frazil::computeFrazilFixedPropertyImpl(
              const Real AbsSalinityIn = Kokkos::max(0.0_Real, AbsSalinityRaw);
              const Real ConservTempIn = ConservTemp(ICell, K);
              const Real PressureIn    = Pressure(ICell, K);
-             const Real PressureDb    = PressureIn * Pa2Db;
              const Real PseudoThicknessIn = PseudoThickness(ICell, K);
 
              const Real CtFreezing = Eos::calcCtFreezing(
-                 LocEosChoice, AbsSalinityIn, PressureDb, 0.0_Real);
+                 LocEosChoice, AbsSalinityIn, PressureIn, 0.0_Real);
 
              Real HTend = 0.0_Real;
              Real TTend = 0.0_Real;
@@ -467,12 +466,12 @@ void Frazil::computeFrazilFixedPropertyImpl(
 
              if (ConservTempIn < CtFreezing) {
                 LocComputeFixedPropertyFrazilFormation(
-                    AbsSalinityIn, ConservTempIn, PressureDb, PseudoThicknessIn,
+                    AbsSalinityIn, ConservTempIn, PressureIn, PseudoThicknessIn,
                     LocAccMIce(ICell), LocAccMSalt(ICell), LocAccEIce(ICell),
                     HTend, TTend, STend, CtFreezing);
              } else if (LocAccMIce(ICell) > 0.0_Real) {
                 LocComputeFixedPropertyFrazilMelt(
-                    AbsSalinityIn, ConservTempIn, PressureDb, PseudoThicknessIn,
+                    AbsSalinityIn, ConservTempIn, PressureIn, PseudoThicknessIn,
                     LocAccMIce(ICell), LocAccMSalt(ICell), LocAccEIce(ICell),
                     HTend, TTend, STend, CtFreezing);
              }
@@ -573,11 +572,10 @@ void Frazil::computeFrazilTeosImpl(const Array2DReal &ConservTemp,
              const Real AbsSalinityIn = Kokkos::max(0.0_Real, AbsSalinityRaw);
              const Real ConservTempIn = ConservTempH(ICell, K);
              const Real PressureIn    = PressureH(ICell, K);
-             const Real PressureDb    = PressureIn * Pa2Db;
              const Real PseudoThicknessIn = PseudoThicknessH(ICell, K);
 
              const Real CtFreezing = Eos::calcCtFreezing(
-                 LocEosChoice, AbsSalinityIn, PressureDb, 0.0_Real);
+                 LocEosChoice, AbsSalinityIn, PressureIn, 0.0_Real);
 
              Real HTend = 0.0_Real;
              Real TTend = 0.0_Real;
@@ -585,11 +583,11 @@ void Frazil::computeFrazilTeosImpl(const Array2DReal &ConservTemp,
 
              if (ConservTempIn < CtFreezing) {
                 LocComputeFrazilFormation(
-                    AbsSalinityIn, ConservTempIn, PressureDb, PseudoThicknessIn,
+                    AbsSalinityIn, ConservTempIn, PressureIn, PseudoThicknessIn,
                     LocAccMIce(ICell), LocAccMLiq(ICell), LocAccMSalt(ICell),
                     LocAccELiq(ICell), LocAccEIce(ICell), HTend, TTend, STend);
              } else if (LocAccMIce(ICell) > 0.0_Real) {
-                LocComputeFrazilMelt(AbsSalinityIn, ConservTempIn, PressureDb,
+                LocComputeFrazilMelt(AbsSalinityIn, ConservTempIn, PressureIn,
                                      PseudoThicknessIn, LocAccMIce(ICell),
                                      LocAccMLiq(ICell), LocAccMSalt(ICell),
                                      LocAccELiq(ICell), LocAccEIce(ICell),
