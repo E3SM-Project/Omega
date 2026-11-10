@@ -147,6 +147,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#data-exchange">Data exchange</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#coupled-energy-heat-correction-aka-energy-fixer">Coupled energy/heat correction (aka energy fixer)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#units">Units</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#frazil-sign-conventions">Frazil Sign Conventions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#removal-of-surface-coupling-objects">Removal of surface coupling objects</a></li>
 </ul>
 </li>
@@ -302,6 +303,46 @@ All other averaged fields keep the same units and value on host and device.</p>
 <p>To keep this invariant, <code class="docutils literal notranslate"><span class="pre">OcnToCplFields</span></code>’s averaged device arrays are
 private: they can only be written via <code class="docutils literal notranslate"><span class="pre">updateAverages()</span></code> (called each
 ocean time step from <code class="docutils literal notranslate"><span class="pre">updateExportFields()</span></code>) and read via <code class="docutils literal notranslate"><span class="pre">copyToHost()</span></code>.</p>
+</section>
+<section id="frazil-sign-conventions">
+<h2>Frazil Sign Conventions<a class="headerlink" href="#frazil-sign-conventions" title="Permalink to this heading"></a></h2>
+<p>Frazil exports follow the existing MPAS-O / E3SM convention:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Coupler field</p></th>
+<th class="head"><p>Units</p></th>
+<th class="head"><p>Positive direction</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Fioo_frazilm</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\mathrm{kg\ m^{-2}\ s^{-1}}\)</span></p></td>
+<td><p>Out of ocean</p></td>
+<td><p>Frazil mass flux</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Fioo_frazils</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\mathrm{kg\ m^{-2}\ s^{-1}}\)</span></p></td>
+<td><p>Out of ocean</p></td>
+<td><p>Frazil salt flux</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Fioo_frazilh</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\mathrm{W\ m^{-2}}\)</span></p></td>
+<td><p>Into ocean</p></td>
+<td><p>Heat flux from frazil formation</p></td>
+</tr>
+</tbody>
+</table>
+<p>These mass and salt flux signs are an exception to the standard coupler
+convention used by other components. Omega adopts this inverse convention
+to interface with existing E3SM coupling plumbing. Standardizing this across
+E3SM is tracked in <a class="reference external" href="https://github.com/E3SM-Project/E3SM/issues/8928">E3SM-Project/E3SM#8928</a>.</p>
+<p>Because newly formed frazil has negative enthalpy, extracting frazil increases
+ocean heat energy. <code class="docutils literal notranslate"><span class="pre">Fioo_frazilh</span></code> is exported as this positive-into-ocean heat
+flux, which sea ice uses to reconstruct negative ice enthalpy.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Fioo_q</span></code> (<span class="math notranslate nohighlight">\(\mathrm{W\ m^{-2}}\)</span>) is separate, nonpositive melt potential. It is
+set to zero when frazil is exported; otherwise it represents energy available
+at the surface to melt ice. Note that this is not an energy flux passed to the sea ice model, only an indicator of the ocean state. After melting, the energy required for melting is passed to the ocean via the separate <code class="docutils literal notranslate"><span class="pre">Fioi_melth</span></code> coupling channel.</p>
 </section>
 <section id="removal-of-surface-coupling-objects">
 <h2>Removal of surface coupling objects<a class="headerlink" href="#removal-of-surface-coupling-objects" title="Permalink to this heading"></a></h2>
