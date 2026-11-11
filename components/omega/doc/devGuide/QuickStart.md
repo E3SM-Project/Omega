@@ -45,22 +45,24 @@ To sync your local clone with all the remotes, run:
 git fetch --all -p
 ```
 
-### Create a conda environment
+### Create a development environment
 
-If you do not have conda set up in your own space yet, follow
-{ref}`omega-dev-install-miniforge3` for instructions on how to install it.
+If you do not have [pixi](https://pixi.sh) installed yet, follow
+{ref}`omega-dev-install-pixi`. On an HPC machine, also follow
+{ref}`omega-dev-pixi-cache` before creating any environments, so pixi does not
+fill your home quota.
 
-
-Activate the `base` conda environment.  Go to the base of the Omega branch you
-plan to develop and create a conda environment for
-linting your code and building the documentation:
+Go to the base of the Omega branch you plan to develop, then create and
+activate the environment for linting your code and building the documentation:
 ```sh
 cd components/omega/
-conda create -n omega_dev --file dev-conda.txt
-conda activate omega_dev
+pixi shell
 ```
-(You can reuse `omega_dev` for other branches as long as `dev-conda.txt` has
-not changed between branches.)
+(`pixi shell` creates the environment the first time. Type `exit` to leave
+the shell.)
+
+If you cannot use pixi, see {ref}`omega-dev-conda-env` for how to create a
+conda environment instead.
 
 The first time you set up the environment, you need to initiate `pre-commit`:
 ```sh

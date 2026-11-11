@@ -2,9 +2,9 @@
 
 # Building the Documentation
 
-As long as you have followed the procedure in {ref}`omega-dev-conda-env` for
-setting up your conda environment, you will already have the packages available
-that you need to build the documentation.
+As long as you have followed the procedure in {ref}`omega-dev-env` for
+setting up your development environment, you will already have the packages
+available that you need to build the documentation.
 
 From the root of an Omega branch, run the following script to build the docs:
 
