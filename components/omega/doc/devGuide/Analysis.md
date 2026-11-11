@@ -204,7 +204,7 @@ field(s).
 | `TimeMean` | 1 | 1 | same rank and dimensions as the input (`Real`) | `_TimeMean<period>` | `Period` (string, e.g. `"1Day"`); `SamplingInterval` (string, optional) | Time average of the input field over a configurable period (e.g. `1Day`). By default accumulates every time step; the optional `SamplingInterval` instead gates accumulation to a coarser cadence (see below). Finalizes the mean when the period alarm rings. Output name embeds the period, e.g. `_TimeMean1Day`. |
 | `BinaryMultiply` | 2 | 1 | same as first input | `_BinaryMultiply(<field2>)` | — | Element-wise multiplication of two fields. Supports vertical expansion (1D field replicated across vertical layers when multiplied with 2D/3D field). |
 | `HorzMean` | 1 | 1 | 1D Real (`Array1DReal`) over the input's vertical dimension | `_HorzMean` | `WeightField` (string, optional, default `AreaCell`) | Area-weighted horizontal mean per vertical layer/interface. |
-| `BinnedAccumulator` | 2 (data field, bin index field) | 1 | replaces horizontal dimension with `NumBins` | `_BinnedAccumulator(<binfield>)` | `NumBins` (I4) | Accumulates field values into spatial bins. Uses MPI reduction for global totals. Automatically applies regional mask if attached to input Field. |
+| `BinnedAccumulator` | 2 (data field, bin index field) | 1 | replaces horizontal dimension with `NumBins` | `_BinnedAccumulator(<binfield>)` | `NumBins` (I4) | Accumulates field values into spatial bins, reproducibly (see {ref}`omega-dev-analysis-binned-sums`). Automatically applies regional mask if attached to input Field. |
 | `CoordinateBinning` | 1 | 1 | 1D integer (`Array1DI4`) | `_BinIndex` | `NumBins` (I4), `MinBin` (Real, optional), `MaxBin` (Real, optional) | Assigns mesh entities to bins based on coordinate values (e.g., latitude). Computed once during initialization and cached. |
 | `ExtractRegion` | 1 | 1 | same as input | `_<RegionName>` | `MaskName` (string) | Applies regional mask to field by multiplying values with mask. Attaches mask to output Field for downstream operators. Supports mask intersection. |
 | `PrefixSum` | 1 | 1 | same as input | `_PrefixSum` | `Dimension` (I4), `Reverse` (bool, default false) | Cumulative summation along specified dimension. Forward (start→end) or reverse (end→start) scan. |
@@ -298,6 +298,27 @@ so they are recomputed each time), and then `weightedSum()` or
 normalization. The sums accumulate each owned entity's terms in a fixed
 order and reduce them with `globalSum`, so they are as reproducible as
 Omega's other global sums.
+
+(omega-dev-analysis-binned-sums)=
+### Binned sums
+
+Operators that sum the owned entities in groups, such as `BinnedAccumulator`
+(one group per bin) and `HorzMean` (one group for all owned entities), use
+`BinnedSums` (`analysis/BinnedSums.h`) so that their results are bit-for-bit
+the same from run to run on CPUs and GPUs. Atomic adds and parallel
+reductions give results that depend on the order in which threads run, which
+on a GPU changes from one run to the next.
+
+An operator calls `build(NumBins, BinOfEntity)` with the bin of each owned
+entity (a bin outside `[0, NumBins)` excludes the entity). This lists each
+bin's entities in local index order and splits each list into segments.
+`localSums(NLevels, Value)` then takes a device functor
+`Value(Entity, Bin, Level)` and sums it over each bin at each level: one
+thread per segment and level, then one per bin and level, each adding in a
+fixed order in double-double precision. The returned partial sums go to
+`globalSumDD` (see {ref}`omega-dev-reductions`) for the sum across tasks.
+The results are as reproducible across task counts as Omega's other global
+sums.
 
 (omega-dev-analysis-output-metadata)=
 ### Output metadata

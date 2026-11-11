@@ -38,6 +38,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AnalysisOperator.h"
+#include "BinnedSums.h"
 #include "Reductions.h"
 
 #include <limits>
@@ -161,6 +162,9 @@ template <typename ArrayT> class HorzMeanOp : public AnalysisOperator {
          ABORT_ERROR("HorzMeanOp: Unknown index space {}", IndexSpaceName);
       }
 
+      // All owned horizontal locations go into a single bin
+      Sums.build(1, std::vector<I4>(NHorizOwned, 0));
+
       // Detect vertical staggering of the input field. The MinLayer/MaxLayer
       // arrays are layer indices; a midlayer field has NVertLayers levels and
       // uses the active range [MinLayer, MaxLayer], while an interface field
@@ -204,7 +208,7 @@ template <typename ArrayT> class HorzMeanOp : public AnalysisOperator {
    } // end initialize
 
    /// Computes the area-weighted horizontal mean per vertical level. For each
-   /// vertical index the operator accumulates a weighted numerator and
+   /// vertical index the operator reproducibly sums a weighted numerator and
    /// denominator over the owned horizontal locations, performs a single global
    /// reduction over the concatenated numerator/denominator vectors, and
    /// divides to obtain the mean (guarding against a zero denominator).
@@ -214,16 +218,7 @@ template <typename ArrayT> class HorzMeanOp : public AnalysisOperator {
       auto InputField = Field::get(InputNames[0]);
       auto InputData  = InputField->template getDataArray<ArrayT>();
 
-      const I4 NVert  = NVertSize;
-      const I4 NHoriz = NHorizOwned;
-
-      // Lazily allocate the per-level local reduction result arrays. These are
-      // kept as device arrays so that when a device-aware globalSum overload
-      // becomes available the host sync below can be removed entirely.
-      if (LocalNum.size() == 0) {
-         LocalNum = Array1DReal("HorzMeanLocalNum", NVert);
-         LocalDen = Array1DReal("HorzMeanLocalDen", NVert);
-      }
+      const I4 NVert = NVertSize;
 
       // Local device references captured by value into the kernel.
       OMEGA_SCOPE(LocInput, InputData);
@@ -231,72 +226,46 @@ template <typename ArrayT> class HorzMeanOp : public AnalysisOperator {
       OMEGA_SCOPE(LocMaxLayer, MaxLayer);
       const bool LocAtInterfaces = AtInterfaces;
       OMEGA_SCOPE(LocWeight, WeightArray);
-      OMEGA_SCOPE(LocNum, LocalNum);
-      OMEGA_SCOPE(LocDen, LocalDen);
       OMEGA_SCOPE(LocRegMask, RegionalMask);
       const bool LocUseRegMask = UseRegionalMask;
 
-      // Single on-device kernel: one team per vertical interface (outer over
-      // the vertical dimension), with an inner reduction over the owned
-      // horizontal locations accumulating the weighted numerator and the
-      // weighted denominator simultaneously.
-      parallelForOuter(
-          "HorzMeanReduce", {NVert},
-          KOKKOS_LAMBDA(int K, const TeamMember &Team) {
-             Real SumNum, SumDen;
-             parallelReduceInner(
-                 Team, NHoriz,
-                 INNER_LAMBDA(int IHoriz, Real &AccNum, Real &AccDen) {
-                    // The MinLayer/MaxLayer arrays give the per-column active
-                    // layer index range. For a midlayer input the active range
-                    // is [MinLayer, MaxLayer]. For an interface input (one more
-                    // level) the active range is extended by one level to
-                    // [MinLayer, MaxLayer+1] so the bottom interface bracketing
-                    // the deepest active layer is included.
-                    const I4 KMin = LocMinLayer(IHoriz);
-                    const I4 KMax =
-                        LocMaxLayer(IHoriz) + (LocAtInterfaces ? 1 : 0);
-                    const bool Active = (K >= KMin && K <= KMax);
+      // Reproducible sums over the owned horizontal locations of the weighted
+      // numerator (levels [0, NVert)) and the weighted denominator (levels
+      // [NVert, 2*NVert)) for each vertical index, concatenated so that a
+      // single global reduction covers both.
+      auto Partials = Sums.localSums(
+          2 * NVert, KOKKOS_LAMBDA(int IHoriz, int /*Bin*/, int Level)->R8 {
+             const bool IsDen = (Level >= NVert);
+             const I4 K       = IsDen ? Level - NVert : Level;
 
-                    const Real Value = LocInput(IHoriz, K);
+             // The MinLayer/MaxLayer arrays give the per-column active layer
+             // index range. For a midlayer input the active range is
+             // [MinLayer, MaxLayer]. For an interface input (one more level)
+             // the active range is extended by one level to
+             // [MinLayer, MaxLayer+1] so the bottom interface bracketing the
+             // deepest active layer is included.
+             const I4 KMin = LocMinLayer(IHoriz);
+             const I4 KMax = LocMaxLayer(IHoriz) + (LocAtInterfaces ? 1 : 0);
+             const bool Active = (K >= KMin && K <= KMax);
 
-                    // Presence: physically active cell AND inside the region.
-                    // When a 1D regional mask is attached to the input Field
-                    // (propagated from an upstream ExtractRegionOp) use it
-                    // directly. Otherwise fall back to the legacy non-zero
-                    // value check so that ExtractRegion-zeroing chains
-                    // continue to work without a mask attachment.
-                    const bool Present = LocUseRegMask
-                                             ? (LocRegMask(IHoriz) != 0)
-                                             : (Value != 0);
-                    if (Active && Present) {
-                       const Real Weight = LocWeight(IHoriz);
-                       AccNum += Weight * Value;
-                       AccDen += Weight;
-                    }
-                 },
-                 SumNum, SumDen);
+             const Real Value = LocInput(IHoriz, K);
 
-             // Inner reduction results are collective across the team, so every
-             // thread has the final values; store once per team.
-             LocNum(K) = SumNum;
-             LocDen(K) = SumDen;
+             // Presence: physically active cell AND inside the region. When a
+             // 1D regional mask is attached to the input Field (propagated
+             // from an upstream ExtractRegionOp) use it directly. Otherwise
+             // fall back to the legacy non-zero value check so that
+             // ExtractRegion-zeroing chains continue to work without a mask
+             // attachment.
+             const bool Present =
+                 LocUseRegMask ? (LocRegMask(IHoriz) != 0) : (Value != 0);
+             if (!(Active && Present))
+                return 0.0;
+
+             const R8 Weight = static_cast<R8>(LocWeight(IHoriz));
+             return IsDen ? Weight : Weight * static_cast<R8>(Value);
           });
 
-      // TODO: replace this host sync + std::vector globalSum with a
-      // device-array globalSum overload once it is supported.
-      auto LocalNumHost = createHostMirrorCopy(LocalNum);
-      auto LocalDenHost = createHostMirrorCopy(LocalDen);
-
-      // Concatenated reduction buffer: [Num(0..NVert-1), Den(0..NVert-1)]
-      std::vector<R8> LocalSums(2 * NVert, 0.0);
-      for (I4 K = 0; K < NVert; ++K) {
-         LocalSums[K]         = static_cast<R8>(LocalNumHost(K));
-         LocalSums[NVert + K] = static_cast<R8>(LocalDenHost(K));
-      }
-
-      // Single global reduction over the concatenated numerator/denominator
-      std::vector<R8> GlobalSums = globalSum(LocalSums, Comm);
+      std::vector<R8> GlobalSums = globalSumDD(Partials, Comm);
 
       // Divide numerator by denominator (guarding zero denominator)
       auto OutputHost = Kokkos::create_mirror_view(OutputData);
@@ -337,10 +306,8 @@ template <typename ArrayT> class HorzMeanOp : public AnalysisOperator {
    /// Horizontal weight array (default AreaCell)
    Array1DReal WeightArray;
 
-   /// Per-level local (owned-only) reduction results kept on the device.
-   /// Lazily allocated on first compute.
-   Array1DReal LocalNum;
-   Array1DReal LocalDen;
+   /// Reproducible sums over the owned horizontal locations, all in one bin
+   BinnedSums Sums;
 
    /// Name of the weight field (default "AreaCell")
    std::string WeightFieldName;

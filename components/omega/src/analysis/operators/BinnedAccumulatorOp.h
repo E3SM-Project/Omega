@@ -9,8 +9,10 @@
 /// BinnedAccumulatorOp accumulates field values into spatial bins. This
 /// operator is essential for MOC (Meridional Overturning Circulation)
 /// calculations, where it accumulates edge normal velocities into latitude
-/// bins. The operator performs local accumulation followed by MPI reduction
-/// across all ranks to produce global bin totals.
+/// bins. The operator sums the owned entities in each bin with BinnedSums,
+/// so the global bin totals are bit-for-bit the same from run to run and do
+/// not depend on the order of threads or, beyond the precision of globalSum,
+/// on the number of MPI tasks.
 ///
 /// The operator takes two inputs:
 /// 1. A value field to accumulate (1D or 2D)
@@ -37,16 +39,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "AnalysisOperator.h"
+#include "BinnedSums.h"
 #include "Reductions.h"
 #include "mpi.h"
+
+#include <complex>
+#include <vector>
 
 namespace OMEGA {
 
 /// BinnedAccumulatorOp accumulates field values into spatial bins. Supports
 /// 1D and 2D input fields and produces output with the horizontal dimension
 /// replaced by NumBins. If the input Field has a Field-attached regional mask
-/// it is applied automatically. Uses hierarchical parallelism for 2D input.
-/// Performs MPI reduction to compute global bin totals. This is the core
+/// it is applied automatically. Sums each bin reproducibly with BinnedSums
+/// and globalSumDD to compute global bin totals. This is the core
 /// operator for MOC streamfunction calculations.
 template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
  public:
@@ -158,13 +164,11 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
           OutputDimNames                          // Dimension names
       );
 
-      // Allocate output and local accumulation arrays
+      // Allocate output array
       if (InputRank == 1) {
          OutputData = OutputArrayT("BinnedAccum_out", NumBins);
-         LocalAccum = OutputArrayT("BinnedAccum_local", NumBins);
       } else {
          OutputData = OutputArrayT("BinnedAccum_out", NumBins, Dim1);
-         LocalAccum = OutputArrayT("BinnedAccum_local", NumBins, Dim1);
       }
 
       // Attach output data array to Field
@@ -209,11 +213,10 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
    } // end initialize
 
    /// Computes the binned accumulation by:
-   /// 1. Zeroing local accumulation array
-   /// 2. Accumulating values into bins for owned entities only (excludes halo),
-   ///    applying the Field-attached regional mask if present
-   /// 3. Performing MPI_Allreduce to sum local accumulations across all ranks
-   /// 4. Storing global totals in the output array
+   /// 1. Summing the values of the owned entities in each bin (excluding the
+   ///    halo), applying the Field-attached regional mask if present
+   /// 2. Summing these local sums across all ranks
+   /// 3. Storing global totals in the output array
    void compute(const TimeInstant &TimeStamp ///< [in] current timestamp
                 ) override {
 
@@ -250,138 +253,86 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
 
    } // end compute
 
-   /// Computes binned accumulation for 1D input. Zeroes the local array,
-   /// then atomically accumulates owned-entity values into bins, and
-   /// performs MPI_Allreduce to obtain global totals.
+   /// Computes binned accumulation for 1D input: sums the owned-entity values
+   /// in each bin reproducibly and stores the global totals.
    void computeAccum1D(const ArrayT &ValueData, const Array1DI4 &BinIndexData,
                        const Array1DI4 &MaskData, bool LocalUseMask) {
 
-      auto LocalAccumData = LocalAccum;
-      auto LocalNumBins   = NumBins;
-      auto LocalNOwned    = NOwned;
+      updateBins(BinIndexData);
 
-      // Zero local accumulation array
-      parallelFor(
-          {LocalNumBins},
-          KOKKOS_LAMBDA(int IBin) { LocalAccumData(IBin) = 0.0; });
-
-      // Accumulate values into bins (only owned entities, not halo)
-      // Atomic adds handle multiple threads writing to the same bin
-      parallelFor(
-          {LocalNOwned}, KOKKOS_LAMBDA(int I) {
-             I4 BinIdx = BinIndexData(I);
-
-             if (BinIdx >= 0 && BinIdx < LocalNumBins) {
-                Real Value = static_cast<Real>(ValueData(I));
-
-                if (LocalUseMask) {
-                   Value *= MaskData(I);
-                }
-
-                Kokkos::atomic_add(&LocalAccumData(BinIdx), Value);
-             }
+      auto Partials = Sums.localSums(
+          1, KOKKOS_LAMBDA(int I, int /*Bin*/, int /*K*/)->R8 {
+             R8 Value = static_cast<R8>(ValueData(I));
+             if (LocalUseMask)
+                Value *= MaskData(I);
+             return Value;
           });
 
-      // Copy local accumulation from device to host for MPI reduction
-      auto LocalAccumHost = createHostMirrorCopy(LocalAccum);
-
-      auto OutputDataHost = createHostMirrorCopy(OutputData);
-
-      // Sum local accumulations across all ranks element-wise. Use the
-      // reproducible Omega globalSum (multifield) helper, which performs an
-      // element-wise reduction across ranks using the same communicator and
-      // avoids a direct MPI_Allreduce call here.
-      std::vector<R8> LocalBins(NumBins);
-      for (I4 IBin = 0; IBin < NumBins; ++IBin)
-         LocalBins[IBin] = static_cast<R8>(LocalAccumHost(IBin));
-
-      std::vector<R8> GlobalBins = globalSum(LocalBins, Comm);
-
-      for (I4 IBin = 0; IBin < NumBins; ++IBin)
-         OutputDataHost(IBin) = GlobalBins[IBin];
-
-      // Copy global totals back to device
-      deepCopy(OutputData, OutputDataHost);
+      storeGlobalSums(Partials);
 
    } // end computeAccum1D
 
-   /// Computes binned accumulation for 2D input using hierarchical parallelism:
-   /// outer loop over owned horizontal entities, inner loop over vertical
-   /// levels. Zeroes the local array, accumulates with atomic adds, then
-   /// performs MPI_Allreduce to obtain global totals.
+   /// Computes binned accumulation for 2D input: sums the owned-entity values
+   /// in each bin reproducibly at each level, over each entity's active
+   /// layers bounded by MinLayer/MaxLayer, and stores the global totals.
    void computeAccum2D(const ArrayT &ValueData, const Array1DI4 &BinIndexData,
                        const Array1DI4 &MaskData, bool LocalUseMask) {
 
-      auto LocalAccumData = LocalAccum;
-      auto LocalNumBins   = NumBins;
-      auto LocalNOwned    = NOwned;
-      auto LocalVertSize  = VertSize;
+      updateBins(BinIndexData);
 
-      // Zero local accumulation array
-      parallelFor(
-          {LocalNumBins, LocalVertSize},
-          KOKKOS_LAMBDA(int IBin, int K) { LocalAccumData(IBin, K) = 0.0; });
-
-      // Accumulate values into bins (only owned entities, not halo)
-      // Hierarchical parallelism: outer over horizontal, inner over vertical
-      // Inner loop bounded by MinLayer/MaxLayer for partial columns
-      // Atomic adds handle multiple threads writing to the same bin
       OMEGA_SCOPE(LocMinLayer, MinLayer);
       OMEGA_SCOPE(LocMaxLayer, MaxLayer);
-      parallelForOuter(
-          "BinnedAccum2D", LaunchConfig({LocalNOwned}),
-          KOKKOS_LAMBDA(int I, const TeamMember &Team) {
-             I4 BinIdx = BinIndexData(I);
-
-             if (BinIdx >= 0 && BinIdx < LocalNumBins) {
-                const Real MaskVal =
-                    LocalUseMask ? static_cast<Real>(MaskData(I)) : 1.0;
-                const I4 KMin   = LocMinLayer(I);
-                const I4 KMax   = LocMaxLayer(I);
-                const I4 KRange = vertRange(KMin, KMax);
-                parallelForInner(
-                    Team, KRange, INNER_LAMBDA(int KIdx) {
-                       const I4 K = KMin + KIdx;
-                       Real Value =
-                           static_cast<Real>(ValueData(I, K)) * MaskVal;
-                       Kokkos::atomic_add(&LocalAccumData(BinIdx, K), Value);
-                    });
-             }
+      auto Partials = Sums.localSums(
+          VertSize, KOKKOS_LAMBDA(int I, int /*Bin*/, int K)->R8 {
+             if (K < LocMinLayer(I) || K > LocMaxLayer(I))
+                return 0.0;
+             R8 Value = static_cast<R8>(ValueData(I, K));
+             if (LocalUseMask)
+                Value *= MaskData(I);
+             return Value;
           });
 
-      // Copy local accumulation from device to host for MPI reduction
-      auto LocalAccumHost = createHostMirrorCopy(LocalAccum);
-
-      auto OutputDataHost = createHostMirrorCopy(OutputData);
-
-      // Sum local accumulations across all ranks element-wise. Flatten the
-      // (NumBins x VertSize) local array into a single vector, reduce with the
-      // reproducible Omega globalSum (multifield) helper, then unflatten into
-      // the output host mirror.
-      I4 TotalSize = NumBins * VertSize;
-      std::vector<R8> LocalFlat(TotalSize);
-      for (I4 IBin = 0; IBin < NumBins; ++IBin)
-         for (I4 K = 0; K < VertSize; ++K)
-            LocalFlat[IBin * VertSize + K] =
-                static_cast<R8>(LocalAccumHost(IBin, K));
-
-      std::vector<R8> GlobalFlat = globalSum(LocalFlat, Comm);
-
-      for (I4 IBin = 0; IBin < NumBins; ++IBin)
-         for (I4 K = 0; K < VertSize; ++K)
-            OutputDataHost(IBin, K) = GlobalFlat[IBin * VertSize + K];
-
-      // Copy global totals back to device
-      deepCopy(OutputData, OutputDataHost);
+      storeGlobalSums(Partials);
 
    } // end computeAccum2D
+
+   /// Builds the lists of owned entities in each bin on the first call, and
+   /// again whenever the bin indices change.
+   void updateBins(const Array1DI4 &BinIndexData) {
+      auto BinIndexHost = createHostMirrorCopy(BinIndexData);
+      std::vector<I4> Bins(BinIndexHost.data(), BinIndexHost.data() + NOwned);
+      if (!Sums.isBuilt() || Bins != OwnedBins) {
+         Sums.build(NumBins, Bins);
+         OwnedBins = std::move(Bins);
+      }
+   }
+
+   /// Sums each task's double-double partial sums across tasks and copies
+   /// the global totals to the output array.
+   void storeGlobalSums(const std::vector<std::complex<double>> &Partials) {
+      std::vector<R8> Global = globalSumDD(Partials, Comm);
+
+      auto OutputDataHost = Kokkos::create_mirror_view(OutputData);
+      if constexpr (ArrayT::rank == 1) {
+         for (I4 IBin = 0; IBin < NumBins; ++IBin)
+            OutputDataHost(IBin) = Global[IBin];
+      } else if constexpr (ArrayT::rank == 2) {
+         for (I4 IBin = 0; IBin < NumBins; ++IBin)
+            for (I4 K = 0; K < VertSize; ++K)
+               OutputDataHost(IBin, K) = Global[IBin * VertSize + K];
+      }
+      deepCopy(OutputData, OutputDataHost);
+   }
 
  private:
    /// Output data array holding global binned accumulation
    OutputArrayT OutputData;
 
-   /// Local accumulation array (before MPI reduction)
-   OutputArrayT LocalAccum;
+   /// Reproducible sums over the owned entities in each bin
+   BinnedSums Sums;
+
+   /// Bin index of each owned entity when Sums was last built
+   std::vector<I4> OwnedBins;
 
    /// Number of spatial bins
    I4 NumBins;
