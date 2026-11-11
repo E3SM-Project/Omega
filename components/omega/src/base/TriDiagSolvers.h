@@ -171,10 +171,10 @@ struct PCRSolver {
          const Real gamma = -Scratch.DU(K, 0) / Scratch.D(Kph, 0);
 
          // Compute new system coefficients
-         const Real NewD = Scratch.D(K, 0) + alpha * Scratch.DU(Kmh, 0) +
-                           gamma * Scratch.DL(Kph, 0);
-         const Real NewX = Scratch.X(K, 0) + alpha * Scratch.X(Kmh, 0) +
-                           gamma * Scratch.X(Kph, 0);
+         const Real NewD  = Scratch.D(K, 0) + alpha * Scratch.DU(Kmh, 0) +
+                            gamma * Scratch.DL(Kph, 0);
+         const Real NewX  = Scratch.X(K, 0) + alpha * Scratch.X(Kmh, 0) +
+                            gamma * Scratch.X(Kph, 0);
          const Real NewDL = alpha * Scratch.DL(Kmh, 0);
          const Real NewDU = gamma * Scratch.DU(Kph, 0);
 
@@ -195,8 +195,8 @@ struct PCRSolver {
       if (K + Stride < NRow || K - Stride >= 0) {
          // The result is two values so only half of threads do work
          if (K < NRow / 2) {
-            const Real Det = Scratch.D(K, 0) * Scratch.D(K + Stride, 0) -
-                             Scratch.DL(K + Stride, 0) * Scratch.DU(K, 0);
+            const Real Det  = Scratch.D(K, 0) * Scratch.D(K + Stride, 0) -
+                              Scratch.DL(K + Stride, 0) * Scratch.DU(K, 0);
             const Real Xk   = Scratch.X(K, 0);
             const Real Xkps = Scratch.X(K + Stride, 0);
             Scratch.X(K, 0) =
@@ -425,9 +425,9 @@ struct PCRDiffusionSolver {
             const int Kms   = K - Stride;
             const Real Gkms = Kms < 0 ? 0 : Scratch.G(Kms, 0);
 
-            const Real Dk   = Scratch.H(K, 0) + Gkms + Scratch.G(K, 0);
-            const Real Dkps = Scratch.H(K + Stride, 0) + Scratch.G(K, 0) +
-                              Scratch.G(K + Stride, 0);
+            const Real Dk    = Scratch.H(K, 0) + Gkms + Scratch.G(K, 0);
+            const Real Dkps  = Scratch.H(K + Stride, 0) + Scratch.G(K, 0) +
+                               Scratch.G(K + Stride, 0);
             const Real DUk   = -Scratch.G(K, 0);
             const Real DLkps = -Scratch.G(K, 0);
 

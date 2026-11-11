@@ -503,7 +503,7 @@ int testMatchedPressIntegrand() {
          }
          for (int K = 0; K < NLayers; ++K) {
             PressMid(ICell, K)    = 0.5_Real * (PressInterface(ICell, K) +
-                                             PressInterface(ICell, K + 1));
+                                                PressInterface(ICell, K + 1));
             ConservTemp(ICell, K) = exactLayerAvg(Temp0, Temp1, Temp2, 0.0_Real,
                                                   PressInterface(ICell, K),
                                                   PressInterface(ICell, K + 1));
@@ -552,12 +552,12 @@ int testMatchedPressIntegrand() {
                // under the offset is generally not layer K
                const I4 KFound = findLayerForPress(PressInterface, ICell, KMin,
                                                    KMax, Press, K);
-               TempAt[ICell]   = linearReconEval(ConservTemp(ICell, KFound),
-                                                 SlopeCt(ICell, KFound),
-                                                 PressMid(ICell, KFound), Press);
-               SaltAt[ICell]   = linearReconEval(AbsSalinity(ICell, KFound),
-                                                 SlopeSa(ICell, KFound),
-                                                 PressMid(ICell, KFound), Press);
+               TempAt[ICell] = linearReconEval(ConservTemp(ICell, KFound),
+                                               SlopeCt(ICell, KFound),
+                                               PressMid(ICell, KFound), Press);
+               SaltAt[ICell] = linearReconEval(AbsSalinity(ICell, KFound),
+                                               SlopeSa(ICell, KFound),
+                                               PressMid(ICell, KFound), Press);
             }
 
             const Real SpecVolDiff = matchedPressSpecVolDiff(
@@ -1000,9 +1000,9 @@ void setupSlopingFloorState(HorzMesh *Mesh,    ///< [in] Horizontal mesh
 struct PGradGuardRules {
    bool SharedExpansion = true; ///< one EOS expansion per edge layer, shared
                                 ///< by both columns, rather than one per cell
-   bool PressureLookup = true;  ///< each column's state from the layer
+   bool PressureLookup  = true; ///< each column's state from the layer
                                 ///< containing the pressure, not from layer K
-   bool ShiftedAnchor = true;   ///< the anchor shifted to a common pressure,
+   bool ShiftedAnchor   = true; ///< the anchor shifted to a common pressure,
                                 ///< rather than the raw height difference
    bool AnchorWithinOneLayer = true; ///< the shallower floor compared with the
                                      ///< deeper column's own interface just
@@ -1645,7 +1645,7 @@ int testExactnessAndGuards(HorzMesh *Mesh,    ///< [in] Horizontal mesh
             GuardD, OffsetMin, OffsetMax);
    const bool Fires = GuardD > 1.0e4_Real * Eps * TendScale;
    const bool Flat  = OffsetMax > 0.0_Real &&
-                     (OffsetMax - OffsetMin) <= 1.0e-6_Real * OffsetMax;
+                      (OffsetMax - OffsetMin) <= 1.0e-6_Real * OffsetMax;
    if (Fires && Flat) {
       LOG_INFO("PGradTest: guard (d) PASS: the anchor shift is load-bearing "
                "and its omission is flat with depth");

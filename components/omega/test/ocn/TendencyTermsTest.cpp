@@ -1778,7 +1778,7 @@ int testKPPNonLocalTracerFluxOnCell(int NVertLayers, int NTracers, Real RTol) {
    parallelFor(
        {Mesh->NCellsSize, NVertLayers + 1}, KOKKOS_LAMBDA(int ICell, int K) {
           const Real DistanceFromBottom = Real(NVertLayers - K);
-          VertNonLocalFlux(ICell, K)    = ProfileScale * Real(ICell + 1) *
+          VertNonLocalFlux(ICell, K) = ProfileScale * Real(ICell + 1) *
                                        DistanceFromBottom * DistanceFromBottom;
        });
 

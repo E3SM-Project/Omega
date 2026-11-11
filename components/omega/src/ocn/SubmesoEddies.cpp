@@ -212,7 +212,7 @@ void SubmesoEddies::computeBuoyGrad(const Array2DReal &SpecVol,
                  const int JCell0 = CellsOnEdge(IEdge, 0);
                  const int JCell1 = CellsOnEdge(IEdge, 1);
                  BVFSqEdge(K)     = 0.5_Real * (BruntVaisalaFreqSq(JCell1, K) +
-                                            BruntVaisalaFreqSq(JCell0, K));
+                                                BruntVaisalaFreqSq(JCell0, K));
               });
 
           teamBarrier(Team);

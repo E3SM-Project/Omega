@@ -1242,10 +1242,10 @@ void testDerivedUnits(const MachEnv *Env, const HorzMesh *Mesh,
 
    std::vector<std::string> DimNames = {"NCells"};
    auto createUnitsField             = [&](const std::string &Name,
-                               const std::string &Units,
-                               const std::string &StdName) {
+                                           const std::string &Units,
+                                           const std::string &StdName) {
       auto NewField = Field::create(Name, "Derived units test field", Units,
-                                                StdName, -1.0e30, 1.0e30, 1, DimNames);
+                                    StdName, -1.0e30, 1.0e30, 1, DimNames);
       Array1DReal Data(Name + "_data", Mesh->NCellsSize);
       NewField->attachData<Array1DReal>(Data);
    };
@@ -2347,8 +2347,8 @@ void testCoordinateBinningOp(const MachEnv *Env, const HorzMesh *Mesh,
 
    // Create latitude-like distribution: map global cell ID to latitude
    for (I4 i = 0; i < Mesh->NCellsOwned; ++i) {
-      Real Fraction = static_cast<Real>(CellIDH(i) - 1) /
-                      static_cast<Real>(Mesh->NCellsGlobal - 1);
+      Real Fraction   = static_cast<Real>(CellIDH(i) - 1) /
+                        static_cast<Real>(Mesh->NCellsGlobal - 1);
       TestDataHost(i) = -90.0 + Fraction * 180.0; // -90 to +90
    }
    deepCopy(TestData, TestDataHost);
