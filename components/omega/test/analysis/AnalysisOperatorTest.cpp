@@ -2511,6 +2511,128 @@ void testBinnedAccumulatorOp(const MachEnv *Env, const HorzMesh *Mesh,
 }
 
 //------------------------------------------------------------------------------
+// Test that BinnedAccumulatorOp sums are reproducible. Sub-test 1 sums a 1D
+// field in which pairs of cells in the same bin hold +2^52 + 1 and -2^52 + 1,
+// keyed on global cell ID. The exact sum of each bin is its number of cells.
+// Once partial sums pass 2^53 a plain double-precision sum can lose the ones,
+// depending on the order; the double-double sums give the exact sum on any
+// decomposition. Sub-test 2
+// computes a 2D sum twice and checks the results are bit-for-bit identical.
+void testBinnedAccumulatorOpReproducible(const MachEnv *Env,
+                                         const HorzMesh *Mesh,
+                                         const VertCoord *VCoord) {
+
+   const I4 NCells    = Mesh->NCellsSize;
+   const I4 NCellsGlb = Mesh->NCellsGlobal;
+   const I4 NumBins   = 7;
+   const R8 Big       = std::ldexp(1.0, 52);
+   auto CellIDH       = Decomp::getDefault()->CellIDH;
+
+   std::string BinFieldName = "TestReproBinIndices";
+   auto BinField = Field::create(BinFieldName, "Test bin indices", "1", "", 0,
+                                 NumBins, 1, {"NCells"});
+   Array1DI4 BinData(BinFieldName + "_data", NCells);
+   BinField->attachData<Array1DI4>(BinData, false);
+
+   std::string ValueFieldName = "TestReproValues";
+   auto ValueField =
+       Field::create(ValueFieldName, "Test values with cancellation", "m3/s",
+                     "", -1e30, 1e30, 1, {"NCells"});
+   Array1DR8 ValueData(ValueFieldName + "_data", NCells);
+   ValueField->attachData<Array1DR8>(ValueData, false);
+
+   // Cells 2m and 2m+1 (0-based global IDs) share a bin, and their large
+   // values cancel. A last unpaired cell gets no large value.
+   auto BinHost   = Kokkos::create_mirror_view(BinData);
+   auto ValueHost = Kokkos::create_mirror_view(ValueData);
+   for (I4 I = 0; I < NCells; ++I) {
+      const I4 GID      = CellIDH(I) - 1;
+      const bool Paired = GID < 2 * (NCellsGlb / 2);
+      BinHost(I)        = (GID / 2) % NumBins;
+      ValueHost(I)      = 1.0 + (Paired ? (GID % 2 == 0 ? Big : -Big) : 0.0);
+   }
+   deepCopy(BinData, BinHost);
+   deepCopy(ValueData, ValueHost);
+
+   auto AccumOp = AnalysisOpFactory::createOp(
+       "BinnedAccumulator", {ValueFieldName, BinFieldName},
+       makeOpConfig(opParam("NumBins", NumBins)));
+   AccumOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+   TimeInstant TestTime;
+   AccumOp->compute(TestTime);
+
+   std::string ResultName =
+       ValueFieldName + "_BinnedAccumulator(" + BinFieldName + ")";
+   auto ResultHost =
+       createHostMirrorCopy(Field::get(ResultName)->getDataArray<Array1DR8>());
+
+   std::vector<I8> LocalCounts(NumBins, 0);
+   for (I4 I = 0; I < Mesh->NCellsOwned; ++I)
+      ++LocalCounts[BinHost(I)];
+
+   bool Passed = true;
+   for (I4 Bin = 0; Bin < NumBins; ++Bin) {
+      const R8 Expected =
+          static_cast<R8>(globalSum(LocalCounts[Bin], Env->getComm()));
+      if (ResultHost(Bin) != Expected) {
+         Passed = false;
+         LOG_ERROR("  Bin {}: Expected {}, Got {}", Bin, Expected,
+                   ResultHost(Bin));
+      }
+   }
+   reportTest("BinnedAccumulatorOp (exact with cancellation)", Passed);
+
+   // Sub-test 2: a 2D sum gives bit-for-bit the same result when repeated
+   const I4 NVertLayers         = VCoord->NVertLayers;
+   std::string Value2DFieldName = "TestReproValues2D";
+   auto Value2DField =
+       Field::create(Value2DFieldName, "Test values for repeated sums", "m3/s",
+                     "", -1e30, 1e30, 2, {"NCells", "NVertLayers"});
+   Array2DR8 Value2DData(Value2DFieldName + "_data", NCells, NVertLayers);
+   Value2DField->attachData<Array2DR8>(Value2DData, false);
+
+   auto Value2DHost = Kokkos::create_mirror_view(Value2DData);
+   for (I4 I = 0; I < NCells; ++I) {
+      const I4 GID = CellIDH(I) - 1;
+      for (I4 K = 0; K < NVertLayers; ++K)
+         Value2DHost(I, K) = std::sin(0.1 * GID + K) * 1.0e6 / (K + 1);
+   }
+   deepCopy(Value2DData, Value2DHost);
+
+   auto Accum2DOp = AnalysisOpFactory::createOp(
+       "BinnedAccumulator", {Value2DFieldName, BinFieldName},
+       makeOpConfig(opParam("NumBins", NumBins)));
+   Accum2DOp->initialize(Env, Mesh, VCoord, makeOpConfig());
+
+   std::string Result2DName =
+       Value2DFieldName + "_BinnedAccumulator(" + BinFieldName + ")";
+   auto Result2DData = Field::get(Result2DName)->getDataArray<Array2DR8>();
+   Accum2DOp->compute(TestTime);
+   auto FirstHost = createHostMirrorCopy(Result2DData);
+   Accum2DOp->compute(TestTime);
+   auto SecondHost = createHostMirrorCopy(Result2DData);
+
+   bool Passed2 = true;
+   for (I4 Bin = 0; Bin < NumBins && Passed2; ++Bin) {
+      for (I4 K = 0; K < NVertLayers; ++K) {
+         if (FirstHost(Bin, K) != SecondHost(Bin, K)) {
+            Passed2 = false;
+            LOG_ERROR("  Bin {}, Layer {}: first {}, repeated {}", Bin, K,
+                      FirstHost(Bin, K), SecondHost(Bin, K));
+            break;
+         }
+      }
+   }
+   reportTest("BinnedAccumulatorOp (bit-for-bit when repeated)", Passed2);
+
+   Field::destroy(ResultName);
+   Field::destroy(Result2DName);
+   Field::destroy(ValueFieldName);
+   Field::destroy(Value2DFieldName);
+   Field::destroy(BinFieldName);
+}
+
+//------------------------------------------------------------------------------
 // Template for testing PseudoToGeometricOp with any array type
 template <typename ArrayType>
 void testPseudoToGeometricOpType(const std::string &TypeName,
@@ -2995,6 +3117,21 @@ void testHorzMeanOp(const MachEnv *Env, const HorzMesh *Mesh,
    }
 
    reportTest("HorzMeanOp", Passed);
+
+   // Repeating the computation gives bit-for-bit the same means
+   Op->compute(TestTime);
+   auto RepeatHost   = createHostMirrorCopy(ResultData);
+   bool PassedRepeat = true;
+   for (I4 k = 0; k < NVert; ++k) {
+      if (RepeatHost(k) != ResultHost(k)) {
+         PassedRepeat = false;
+         LOG_ERROR("  HorzMean repeated mismatch at level {}: first {}, "
+                   "repeated {}",
+                   k, ResultHost(k), RepeatHost(k));
+         break;
+      }
+   }
+   reportTest("HorzMeanOp (bit-for-bit when repeated)", PassedRepeat);
    checkOutputMetadata("HorzMeanOp", OutputNames[0], TestUnits, TestStdName,
                        "area: mean");
 
@@ -3452,6 +3589,8 @@ int main(int argc, char *argv[]) {
       testCoordinateBinningOp(DefEnv, Mesh, VCoord);
 
       testBinnedAccumulatorOp(DefEnv, Mesh, VCoord);
+
+      testBinnedAccumulatorOpReproducible(DefEnv, Mesh, VCoord);
 
       testPseudoToGeometricOp(DefEnv, Mesh, VCoord);
 
