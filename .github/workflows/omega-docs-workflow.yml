@@ -7,17 +7,11 @@ on:
     paths:
       - components/omega/doc/**
 
-env:
-  PYTHON_VERSION: "3.13"
-
 jobs:
   publish-docs:
     if: ${{ github.repository == 'E3SM-Project/E3SM' }} or \
         ${{ github.repository == 'E3SM-Project/Omega' }}
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash -l {0}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v3
@@ -25,32 +19,24 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Set up Conda Environment
-        uses: conda-incubator/setup-miniconda@v3
+      - name: Set up pixi Environment
+        uses: prefix-dev/setup-pixi@v0.11.2
         with:
-          activate-environment: "omega_ci"
-          miniforge-version: latest
-          channels: conda-forge
-          channel-priority: strict
-          auto-update-conda: true
-          python-version: ${{ env.PYTHON_VERSION }}
+          pixi-version: v0.83.0
+          manifest-path: components/omega/pixi.toml
+          activate-environment: true
 
-      - name: Install dependencies
+      - name: List Installed Packages
         run: |
-          conda create -n omega_dev --file components/omega/dev-conda.txt \
-              python=${{ env.PYTHON_VERSION }}
-          conda activate omega_dev
-          conda list
+          pixi list --manifest-path components/omega/pixi.toml
 
       - name: Build Omega Docs with Sphinx
         # Use 'make html' (not html-strict) so docs always update, even if warnings exist.
         run: |
-          conda activate omega_dev
           cd components/omega/doc
           make html
       - name: Copy Docs and Commit
         run: |
-          conda activate omega_dev
           cd components/omega/doc
           # gh-pages branch must already exist
           git clone https://github.com/${{ github.repository }}.git --branch gh-pages --single-branch gh-pages
