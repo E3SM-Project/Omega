@@ -39,6 +39,10 @@ jobs:
         run: |
           pixi list --manifest-path components/omega/pixi.toml
 
+      - name: Check that dev-conda.txt matches pixi.toml
+        run: |
+          components/omega/utils/check_dev_envs.py
+
       - id: file_changes
         uses: trilom/file-changes-action@v1.2.4
         with:

@@ -5,7 +5,8 @@
 # $ pre-commit install
 #
 # dev-conda.txt lists the same packages for developers who use conda instead
-# of pixi. Keep the two in sync.
+# of pixi. Keep the two in sync: CI runs utils/check_dev_envs.py to make sure
+# they list the same packages and version constraints.
 
 [workspace]
 name = "omega-dev"

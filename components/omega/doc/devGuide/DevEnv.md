@@ -138,6 +138,20 @@ cd components/omega/
 pixi update
 ```
 
+(omega-dev-change-env)=
+
+## Changing the packages
+
+If you add, remove or change the version constraint of a package in
+`pixi.toml`, make the same change in `dev-conda.txt`. CI runs
+`components/omega/utils/check_dev_envs.py` to make sure the two files list the
+same packages and version constraints. You can run it yourself before you
+commit:
+```bash
+cd components/omega/
+utils/check_dev_envs.py
+```
+
 (omega-dev-conda-env)=
 
 ## Fallback: conda environment
@@ -145,7 +159,8 @@ pixi update
 If you cannot use pixi, you can create a
 [conda](https://conda.io/projects/conda/en/latest/index.html) environment with
 the same packages instead. Unlike the pixi environment, this environment is not
-tested in CI.
+built in CI, though CI does check that `dev-conda.txt` lists the same packages
+as `pixi.toml`.
 
 (omega-dev-install-miniforge3)=
 
