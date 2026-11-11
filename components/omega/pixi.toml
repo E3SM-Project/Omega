@@ -1,0 +1,83 @@
+# The Omega development environment for linting, building the docs and
+# testing omega_buildnml. From this directory, create and activate it with:
+# $ pixi install
+# $ pixi shell
+# $ pre-commit install
+#
+# dev-conda.txt lists the same packages for developers who use conda instead
+# of pixi. Keep the two in sync: CI runs utils/check_dev_envs.py to make sure
+# they list the same packages and version constraints.
+
+[workspace]
+name = "omega-dev"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-64", "osx-arm64"]
+
+# The dependencies every environment needs, including the py3* environments
+# for testing omega_buildnml
+[dependencies]
+pytest = "*"
+pyyaml = "*"
+
+# The tools for linting and building the docs, only in the default environment
+# because they are not built for every Python version that omega_buildnml must
+# support
+[feature.dev.dependencies]
+# linting
+pre-commit = "*"
+
+# c++ linting (keep clang-format in sync with .pre-commit-config.yaml)
+clang-format = ">=23.1.5,<23.2.0"
+clang-tools = ">=23.1.5,<23.2.0"
+# clang provides the builtin headers that clang-tidy needs
+clang = ">=23.1.5,<23.2.0"
+cppcheck = ">=2.22.0,<2.23.0"
+
+# fortran linting
+fprettify = "*"
+
+# python linting
+ruff = "*"
+flynt = "*"
+mypy = "*"
+
+# documentation
+sphinx = "*"
+sphinx_rtd_theme = "*"
+myst-parser = "*"
+rst-to-myst = "*"
+
+# CF-compliance
+cfchecker = "*"
+udunits2 = "*"
+
+# The default environment uses the Python version that CI uses for linting
+# and the docs. The py3* environments are for testing omega_buildnml against
+# each Python version CIME supports.
+
+[feature.py39.dependencies]
+python = "3.9.*"
+
+[feature.py310.dependencies]
+python = "3.10.*"
+
+[feature.py311.dependencies]
+python = "3.11.*"
+
+[feature.py312.dependencies]
+python = "3.12.*"
+
+[feature.py313.dependencies]
+python = "3.13.*"
+
+[feature.py314.dependencies]
+python = "3.14.*"
+
+[environments]
+default = ["dev", "py313"]
+py39 = ["py39"]
+py310 = ["py310"]
+py311 = ["py311"]
+py312 = ["py312"]
+py313 = ["py313"]
+py314 = ["py314"]

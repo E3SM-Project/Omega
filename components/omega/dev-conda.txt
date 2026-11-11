@@ -3,17 +3,21 @@
 # $ conda create -n omega_dev --file <this file>
 # $ conda activate omega_dev
 # $ pre-commit install
+#
+# The preferred development environment is the pixi environment defined in
+# pixi.toml, which CI also uses. This file is a fallback for developers who
+# use conda. Keep the two in sync: CI runs utils/check_dev_envs.py to make sure
+# they list the same packages and version constraints.
 
 # linting
 pre-commit
 
-# c++ linting
-clang-format >=18.1.0,<18.2.0
-clang-tools >=18.1.0,<18.2.0
-cppcheck
-cpplint
-lizard
-include-what-you-use
+# c++ linting (keep clang-format in sync with .pre-commit-config.yaml)
+clang-format >=23.1.5,<23.2.0
+clang-tools >=23.1.5,<23.2.0
+# clang provides the builtin headers that clang-tidy needs
+clang >=23.1.5,<23.2.0
+cppcheck >=2.22.0,<2.23.0
 
 # fortran linting
 fprettify

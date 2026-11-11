@@ -235,11 +235,11 @@ Error::Error(ErrorCode ErrCode,        // [in] error code to assign
 
 /// This macro adds an error to the return code and returns this code to the
 /// calling routine.
-#define RETURN_ERROR(_ReturnErr, _ErrCode, _ErrMsg, ...)          \
-   {                                                              \
-      OMEGA::Error _NewErr(_ErrCode, __LINE__, __FILE__, _ErrMsg, \
-                           ##__VA_ARGS__);                        \
-      return (_ReturnErr += _NewErr);                             \
+#define RETURN_ERROR(_ReturnErr, _ErrCode, _ErrMsg, ...) \
+   {                                                     \
+      OMEGA::Error _NewErr(_ErrCode, __LINE__, __FILE__, \
+                           _ErrMsg, ##__VA_ARGS__);      \
+      return (_ReturnErr += _NewErr);                    \
    }
 
 /// This macro checks an existing error code and if it is not success, it

@@ -16,7 +16,6 @@ on:
 env:
   CANCEL_OTHERS: false
   PATHS_IGNORE: '["**/README.md", "**/doc/**"]'
-  PYTHON_VERSION: "3.13"
 
 jobs:
   build:
@@ -25,29 +24,24 @@ jobs:
     name: lint and test docs
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    defaults:
-      run:
-        shell: bash -l {0}
     steps:
       - name: Checkout Code Repository
         uses: actions/checkout@v3
 
-      - name: Set up Conda Environment
-        uses: conda-incubator/setup-miniconda@v3
+      - name: Set up pixi Environment
+        uses: prefix-dev/setup-pixi@v0.11.2
         with:
-          activate-environment: "omega_ci"
-          miniforge-version: latest
-          channels: conda-forge
-          channel-priority: strict
-          auto-update-conda: true
-          python-version: ${{ env.PYTHON_VERSION }}
+          pixi-version: v0.83.0
+          manifest-path: components/omega/pixi.toml
+          activate-environment: true
 
-      - name: Install dependencies
+      - name: List Installed Packages
         run: |
-          conda create -n omega_dev --file components/omega/dev-conda.txt \
-              python=${{ env.PYTHON_VERSION }}
-          conda activate omega_dev
-          conda list
+          pixi list --manifest-path components/omega/pixi.toml
+
+      - name: Check that dev-conda.txt matches pixi.toml
+        run: |
+          components/omega/utils/check_dev_envs.py
 
       - id: file_changes
         uses: trilom/file-changes-action@v1.2.4
@@ -56,11 +50,9 @@ jobs:
 
       - name: Run pre-commit
         run: |
-          conda activate omega_dev
           pre-commit run --show-diff-on-failure --files ${{ steps.file_changes.outputs.files}}
 
       - name: Build Sphinx Docs
         run: |
-          conda activate omega_dev
           cd components/omega/doc
           make html-strict

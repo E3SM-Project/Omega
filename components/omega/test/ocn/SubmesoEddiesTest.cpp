@@ -736,7 +736,9 @@ int main(int argc, char *argv[]) {
 
    try {
       Kokkos::initialize(argc, argv);
-      { Err += testSubmesoEddies(Comm, "OmegaMesh.nc", 0); }
+      {
+         Err += testSubmesoEddies(Comm, "OmegaMesh.nc", 0);
+      }
       Kokkos::finalize();
    } catch (const std::exception &Ex) {
       Err += Error(ErrorCode::Fail, Ex.what() + std::string(": FAIL"));
