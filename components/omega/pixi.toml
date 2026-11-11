@@ -13,7 +13,16 @@ name = "omega-dev"
 channels = ["conda-forge"]
 platforms = ["linux-64", "osx-64", "osx-arm64"]
 
+# The dependencies every environment needs, including the py3* environments
+# for testing omega_buildnml
 [dependencies]
+pytest = "*"
+pyyaml = "*"
+
+# The tools for linting and building the docs, only in the default environment
+# because they are not built for every Python version that omega_buildnml must
+# support
+[feature.dev.dependencies]
 # linting
 pre-commit = "*"
 
@@ -32,10 +41,6 @@ fprettify = "*"
 ruff = "*"
 flynt = "*"
 mypy = "*"
-
-# omega_buildnml testing
-pytest = "*"
-pyyaml = "*"
 
 # documentation
 sphinx = "*"
@@ -70,7 +75,7 @@ python = "3.13.*"
 python = "3.14.*"
 
 [environments]
-default = ["py313"]
+default = ["dev", "py313"]
 py39 = ["py39"]
 py310 = ["py310"]
 py311 = ["py311"]
