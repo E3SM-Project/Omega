@@ -42,7 +42,7 @@ pinned in `.pre-commit-config.yaml`, so the result does not depend on which
 `clang-format` is on your path. Different major versions of `clang-format`
 format some code differently. If your editor formats on save, point it at the
 `clang-format` in the development environment (see {ref}`omega-dev-env`),
-which is pinned to the same version (in VS Code, for example, set
+which is pinned to the same LLVM release (in VS Code, for example, set
 `C_Cpp.clang_format_path`).
 
 You can run the formatter on its own with:
