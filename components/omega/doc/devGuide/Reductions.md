@@ -70,6 +70,25 @@ std::vector<TT> Result = globalSum(const std::vector<ArrayTTDD> arrays1,
                                    const std::vector<I4> *indexRange = nullptr);
 ```
 
+## Global sum of double-double partial sums
+
+A local sum computed in a kernel can keep the full precision of the
+double-double algorithm by accumulating with the device-callable
+```c++
+sumDDLocal(R8 &Hi, R8 &Lo, const R8 Val);                // add a double
+sumDDPair(R8 &Hi, R8 &Lo, const R8 InHi, const R8 InLo); // add a DD sum
+```
+which use the same arithmetic as the array `globalSum` on the host. The
+local sums of several fields are then summed across tasks with
+```c++
+std::vector<R8> Result = globalSumDD(
+    const std::vector<std::complex<double>> &Partials, const MPI_Comm Comm);
+```
+where each element of `Partials` holds a local sum in its real part and the
+residual in its imaginary part. Unlike the multi-field `globalSum`, which
+starts from rounded local sums, this keeps the residuals, so the result is as
+reproducible as the array `globalSum`.
+
 ## Global minval and maxval
 
 Functions `globalMinVal` and `globalMaxVal` provide interfaces analogous

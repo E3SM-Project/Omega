@@ -1639,6 +1639,91 @@ void testArrayReductions() {
 } // End testArrayReductions
 
 //------------------------------------------------------------------------------
+// Tests the device-callable double-double sums against the host versions and
+// the global sum of double-double partial sums
+void testDDPartialSums() {
+
+   MachEnv *DefEnv = MachEnv::getDefault();
+   MPI_Comm Comm   = DefEnv->getComm();
+   int MyTask      = DefEnv->getMyTask();
+   int NTasks      = DefEnv->getNumTasks();
+
+   // A sequence with large values that cancel and small values that a plain
+   // double-precision sum would lose
+   const I4 NVals = 1000;
+   const R8 Big   = std::ldexp(1.0, 60);
+   HostArray1DR8 ValsH("DDVals", NVals);
+   for (I4 I = 0; I < NVals; ++I)
+      ValsH(I) = (I % 2 == 0 ? Big : -Big) + 0.1 * I;
+   Array1DR8 Vals("DDVals", NVals);
+   deepCopy(Vals, ValsH);
+
+   // Host sums of the whole sequence and of each half
+   complex<double> HostSum(0.0, 0.0), HostFirst(0.0, 0.0), HostSecond(0.0, 0.0);
+   for (I4 I = 0; I < NVals; ++I) {
+      sumDDLocal(HostSum, ValsH(I));
+      if (I < NVals / 2)
+         sumDDLocal(HostFirst, ValsH(I));
+      else
+         sumDDLocal(HostSecond, ValsH(I));
+   }
+   int Len = 1;
+   sumDD(&HostFirst, &HostSecond, &Len, nullptr); // HostSecond += HostFirst
+
+   // The same sums on the device
+   Array1DR8 DevSums("DDDevSums", 4);
+   parallelFor(
+       {1}, KOKKOS_LAMBDA(int) {
+          R8 Hi = 0.0, Lo = 0.0;
+          for (I4 I = 0; I < NVals; ++I)
+             sumDDLocal(Hi, Lo, Vals(I));
+          R8 FirstHi = 0.0, FirstLo = 0.0, SecondHi = 0.0, SecondLo = 0.0;
+          for (I4 I = 0; I < NVals / 2; ++I)
+             sumDDLocal(FirstHi, FirstLo, Vals(I));
+          for (I4 I = NVals / 2; I < NVals; ++I)
+             sumDDLocal(SecondHi, SecondLo, Vals(I));
+          sumDDPair(SecondHi, SecondLo, FirstHi, FirstLo);
+          DevSums(0) = Hi;
+          DevSums(1) = Lo;
+          DevSums(2) = SecondHi;
+          DevSums(3) = SecondLo;
+       });
+   auto DevSumsH = createHostMirrorCopy(DevSums);
+
+   if (DevSumsH(0) != real(HostSum) or DevSumsH(1) != imag(HostSum))
+      ABORT_ERROR("globalSum: device sumDDLocal ({}, {}) differs from host "
+                  "({}, {}): FAIL",
+                  DevSumsH(0), DevSumsH(1), real(HostSum), imag(HostSum));
+   LOG_INFO("globalSum: device sumDDLocal matches host: PASS");
+
+   if (DevSumsH(2) != real(HostSecond) or DevSumsH(3) != imag(HostSecond))
+      ABORT_ERROR("globalSum: device sumDDPair ({}, {}) differs from host "
+                  "sumDD ({}, {}): FAIL",
+                  DevSumsH(2), DevSumsH(3), real(HostSecond), imag(HostSecond));
+   LOG_INFO("globalSum: device sumDDPair matches host sumDD: PASS");
+
+   // Global sums of double-double partials. In the first field, pairs of
+   // tasks hold +Big and -Big with a residual of 1 each (a last unpaired task
+   // holds just 1), so the exact sum is the number of tasks, which summing
+   // only the high parts would lose. The second field is a plain sum of
+   // 1, 2, ..., NTasks.
+   std::vector<complex<double>> Partials(2);
+   const bool Paired = MyTask < 2 * (NTasks / 2);
+   Partials[0] = Paired ? complex<double>(MyTask % 2 == 0 ? Big : -Big, 1.0)
+                        : complex<double>(1.0, 0.0);
+   Partials[1] = complex<double>(MyTask + 1.0, 0.0);
+   std::vector<R8> Global = globalSumDD(Partials, Comm);
+
+   const R8 Expected0 = NTasks;
+   const R8 Expected1 = 0.5 * NTasks * (NTasks + 1);
+   if (Global[0] != Expected0 or Global[1] != Expected1)
+      ABORT_ERROR("globalSum: globalSumDD gave ({}, {}), expected ({}, {}): "
+                  "FAIL",
+                  Global[0], Global[1], Expected0, Expected1);
+   LOG_INFO("globalSum: globalSumDD keeps the residuals: PASS");
+}
+
+//------------------------------------------------------------------------------
 // Main test driver
 int main(int argc, char *argv[]) {
 
@@ -1662,6 +1747,7 @@ int main(int argc, char *argv[]) {
    // Call individual test routines
    testScalarReductions();
    testArrayReductions();
+   testDDPartialSums();
 
    LOG_INFO("------ Global Reductions Unit Tests Sucessful ------");
 
