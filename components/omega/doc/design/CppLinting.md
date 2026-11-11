@@ -78,7 +78,7 @@ a file with old findings.
 ### 2.6 Requirement: Fast commit-time checks
 
 Checks that run on every commit must take seconds per changed file and need
-nothing beyond Omega's development conda environment. Slower checks run in CI.
+nothing beyond Omega's development environment. Slower checks run in CI.
 
 ### 2.7 Requirement: Explicit, local suppressions
 
@@ -145,11 +145,12 @@ are removed from the development environment. So is `include-what-you-use`.
 ### 4.2 Tool versions
 
 `clang-format`, `clang-tidy` and the clang builtin headers that `clang-tidy`
-needs all come from a single LLVM release, initially LLVM 22. In the conda
-development environment they are the `clang-format`, `clang-tools` and `clang`
-packages, pinned to the same minor release. The `clang` package matters because
-`clang-tidy` cannot parse Omega's code without the builtin headers, which
-`clang-tools` alone does not provide.
+needs all come from a single LLVM release, initially LLVM 23. In the
+development environment (`pixi.toml`, mirrored in `dev-conda.txt`) they are
+the `clang-format`, `clang-tools` and `clang` packages, pinned to the same
+minor release. The `clang` package matters because `clang-tidy` cannot parse
+Omega's code without the builtin headers, which `clang-tools` alone does not
+provide.
 
 The `pre-commit` hook for `clang-format` uses a mirror that installs a pinned
 `clang-format` into the hook's own environment. The formatter used at commit
@@ -159,10 +160,14 @@ time is then independent of whatever `clang-format` is first on the path.
 releases. Its hook and the optional `clang-tidy` hook check that the version on
 the path matches the pinned one, and fail with instructions if it does not.
 
+Recent `cppcheck` releases need Python 3.11 or newer, so the linting tools are
+in a pixi feature that only the default environment uses. The environments that
+test `omega_buildnml` with older Python versions leave them out.
+
 Updating a tool is a deliberate change: all pins move together, the code is
 reformatted in a single commit listed in `.git-blame-ignore-revs`, and any new
 findings are fixed or suppressed in the same pull request. Moving from
-`clang-format` 18.1.8 to 22 changes about 70 lines in 13 files.
+`clang-format` 18.1.8 to 23.1.5 changes about 160 lines in 24 files.
 
 ### 4.3 A compilation database without CIME
 
@@ -182,8 +187,8 @@ build is unchanged. The project:
   normally generates a header at configure time (cpptrace's `version.hpp`,
   SCORPIO's `pio_config.h`), the project generates it from the same template.
   Configuring SCORPIO itself would require a Fortran compiler.
-- takes MPI, NetCDF, PnetCDF, ParMETIS and METIS headers from the conda
-  environment.
+- takes MPI, NetCDF, PnetCDF, ParMETIS and METIS headers from the
+  development environment.
 
 Configuring takes about 6 seconds, compiles and links nothing, and works with
 any C++ compiler that CMake accepts. A small driver script runs the configure
@@ -224,7 +229,7 @@ compilation database the first time it is needed and reuses it afterwards.
 
 In CI, a new job in the Omega pull request workflow initializes only the
 submodules listed in Section 4.3, using shallow clones and HTTPS URLs. It then
-creates the conda environment, generates the compilation database and runs
+sets up the pixi environment, generates the compilation database and runs
 `clang-tidy` on every Omega translation unit. It checks the whole of Omega
 rather than only the changed files so that a change to a header is checked
 through every file that includes it.
@@ -258,7 +263,7 @@ how to handle findings.
 Each stage leaves `develop` clean for every check that is enabled (Requirement
 2.5):
 
-1. **Tool baseline.** Pin LLVM 22, switch `clang-format` to the pinned hook,
+1. **Tool baseline.** Pin LLVM 23, switch `clang-format` to the pinned hook,
    remove unused tools from the environment, and reformat.
 2. **Fixes for issues found during evaluation.** These include
    `[[noreturn]]` on `OMEGA::Error::abort()`, logging macros that behave as
