@@ -3,6 +3,11 @@
 # $ conda create -n omega_dev --file <this file>
 # $ conda activate omega_dev
 # $ pre-commit install
+#
+# The preferred development environment is the pixi environment defined in
+# pixi.toml, which CI also uses. This file is a fallback for developers who
+# use conda. Keep the two in sync: CI runs utils/check_dev_envs.py to make sure
+# they list the same packages and version constraints.
 
 # linting
 pre-commit

@@ -1,0 +1,79 @@
+# The Omega development environment for linting, building the docs and
+# testing omega_buildnml. From this directory, create and activate it with:
+# $ pixi install
+# $ pixi shell
+# $ pre-commit install
+#
+# dev-conda.txt lists the same packages for developers who use conda instead
+# of pixi. Keep the two in sync: CI runs utils/check_dev_envs.py to make sure
+# they list the same packages and version constraints.
+
+[workspace]
+name = "omega-dev"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-64", "osx-arm64"]
+
+[dependencies]
+# linting
+pre-commit = "*"
+
+# c++ linting
+clang-format = ">=18.1.0,<18.2.0"
+clang-tools = ">=18.1.0,<18.2.0"
+cppcheck = "*"
+cpplint = "*"
+lizard = "*"
+include-what-you-use = "*"
+
+# fortran linting
+fprettify = "*"
+
+# python linting
+ruff = "*"
+flynt = "*"
+mypy = "*"
+
+# omega_buildnml testing
+pytest = "*"
+pyyaml = "*"
+
+# documentation
+sphinx = "*"
+sphinx_rtd_theme = "*"
+myst-parser = "*"
+rst-to-myst = "*"
+
+# CF-compliance
+cfchecker = "*"
+udunits2 = "*"
+
+# The default environment uses the Python version that CI uses for linting
+# and the docs. The py3* environments are for testing omega_buildnml against
+# each Python version CIME supports.
+
+[feature.py39.dependencies]
+python = "3.9.*"
+
+[feature.py310.dependencies]
+python = "3.10.*"
+
+[feature.py311.dependencies]
+python = "3.11.*"
+
+[feature.py312.dependencies]
+python = "3.12.*"
+
+[feature.py313.dependencies]
+python = "3.13.*"
+
+[feature.py314.dependencies]
+python = "3.14.*"
+
+[environments]
+default = ["py313"]
+py39 = ["py39"]
+py310 = ["py310"]
+py311 = ["py311"]
+py312 = ["py312"]
+py313 = ["py313"]
+py314 = ["py314"]

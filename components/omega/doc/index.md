@@ -69,7 +69,7 @@ userGuide/Analysis
 :maxdepth: 2
 
 devGuide/QuickStart
-devGuide/CondaEnv
+devGuide/DevEnv
 devGuide/Linting
 devGuide/Docs
 devGuide/BuildDocs

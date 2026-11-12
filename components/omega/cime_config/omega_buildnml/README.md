@@ -35,15 +35,23 @@ omega_buildnml
 
 ## Development environment
 
-For now, we use the same `conda` [environment](../../dev-conda.txt) used for
+For now, we use the same pixi [environment](../../pixi.toml) used for
 linting Omega source code. The development environment primarily provides
 `pytest` needed for running the unit tests. The actual code defined in this
 package is limited to the python standard library and PyYAML.
 
 ```bash
-conda create -n omega_dev --file ../../dev-conda.txt
-conda activate omega_dev
+pixi shell --manifest-path ../../pixi.toml
 pre-commit install
+```
+
+See the Omega developer's guide for how to set up pixi, or for how to use a
+conda environment from [dev-conda.txt](../../dev-conda.txt) instead.
+
+To run the unit tests with one of the other Python versions CIME supports,
+use one of the `py3*` environments in `pixi.toml`, for example:
+```bash
+pixi shell --manifest-path ../../pixi.toml -e py39
 ```
 
 ## Testing
