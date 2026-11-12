@@ -1359,6 +1359,8 @@ void Tendencies::computeTracerTendenciesOnly(
       const auto &IceRunoffFlux = ForcingState->TracerForcing.IceRunoffFluxCell;
       const auto &RiverRunoffFlux =
           ForcingState->TracerForcing.RiverRunoffFluxCell;
+      const auto &SeaIceFreshWaterFlux =
+          ForcingState->TracerForcing.SeaIceFreshWaterFluxCell;
       const auto &SeaIceSaltFlux =
           ForcingState->TracerForcing.SeaIceSaltFluxCell;
       const auto &PressureMid = VCoord->PressureMid;
@@ -1372,7 +1374,8 @@ void Tendencies::computeTracerTendenciesOnly(
                  TracerArray, LatentHeatFluxEvap, SensibleHeatFlux,
                  LongWaveHeatFluxUp, LongWaveHeatFluxDown, SeaIceHeatFlux,
                  ShortWaveHeatFlux, SnowFlux, RainFlux, IceRunoffFlux,
-                 RiverRunoffFlux, EvaporationFlux, SeaIceSaltFlux);
+                 RiverRunoffFlux, EvaporationFlux, SeaIceFreshWaterFlux,
+                 SeaIceSaltFlux);
           });
       Pacer::stop("Tend:sfcTracerForcing", 2);
    }
@@ -1385,6 +1388,37 @@ void Tendencies::computeTracerTendenciesOnly(
       FrazilTerm(PseudoThicknessTend, TracerTend, TracerArray, PressureMid,
                  PseudoThickness, TimeStep, FinalUpdateWeight);
       Pacer::stop("Tend:frazil", 2);
+   }
+
+   OMEGA_SCOPE(LocPenetratingShortwave, PenetratingShortwave);
+   if (LocPenetratingShortwave.Enabled) {
+      Pacer::start("Tend:penetratingShortwave", 2);
+      const auto *ForcingState = Forcing::getDefault();
+      const auto &ShortWaveHeatFlux =
+          ForcingState->TracerForcing.ShortWaveHeatFluxCell;
+      const auto &GeomZInterface = VCoord->GeomZInterface;
+      const auto &ExtinctionCoeffRed =
+          ForcingState->ShortwavePenForcing.ExtinctionCoeffRedCell;
+      const auto &ExtinctionCoeffBlue =
+          ForcingState->ShortwavePenForcing.ExtinctionCoeffBlueCell;
+      Array2DReal SurfaceTracerFlux;
+      Array1DI4 OSBLDepthIndex;
+      KPPMix *KPPInstance = KPPMix::getInstance();
+      if (LocSfcTracerForcing.Enabled && KPPInstance && KPPInstance->Enabled) {
+         SurfaceTracerFlux = ForcingState->TracerForcing.SurfaceTracerFluxCell;
+         OSBLDepthIndex    = KPPInstance->OSBLDepthIndex;
+      }
+
+      parallelForOuter(
+          LaunchConfig({Mesh->NCellsOwned},
+                       TeamScratch<Real>(VCoord->NVertLayers + 1)),
+          KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
+             LocPenetratingShortwave(Team, LocTracerTend, ICell, GeomZInterface,
+                                     ShortWaveHeatFlux, ExtinctionCoeffRed,
+                                     ExtinctionCoeffBlue, SurfaceTracerFlux,
+                                     OSBLDepthIndex);
+          });
+      Pacer::stop("Tend:penetratingShortwave", 2);
    }
 
    // Compute KPP non-local tracer tendency
@@ -1445,28 +1479,6 @@ void Tendencies::computeTracerTendenciesOnly(
 
          Pacer::stop("Tend:KPPNonLocalTracerFlux", 2);
       }
-   }
-   OMEGA_SCOPE(LocPenetratingShortwave, PenetratingShortwave);
-   if (LocPenetratingShortwave.Enabled) {
-      Pacer::start("Tend:penetratingShortwave", 2);
-      const auto *ForcingState = Forcing::getDefault();
-      const auto &ShortWaveHeatFlux =
-          ForcingState->TracerForcing.ShortWaveHeatFluxCell;
-      const auto &GeomZInterface = VCoord->GeomZInterface;
-      const auto &ExtinctionCoeffRed =
-          ForcingState->ShortwavePenForcing.ExtinctionCoeffRedCell;
-      const auto &ExtinctionCoeffBlue =
-          ForcingState->ShortwavePenForcing.ExtinctionCoeffBlueCell;
-
-      parallelForOuter(
-          LaunchConfig({Mesh->NCellsOwned},
-                       TeamScratch<Real>(VCoord->NVertLayers + 1)),
-          KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
-             LocPenetratingShortwave(Team, LocTracerTend, ICell, GeomZInterface,
-                                     ShortWaveHeatFlux, ExtinctionCoeffRed,
-                                     ExtinctionCoeffBlue);
-          });
-      Pacer::stop("Tend:penetratingShortwave", 2);
    }
 
    Pacer::stop("Tend:computeTracerTendenciesOnly", 1);

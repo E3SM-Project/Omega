@@ -559,6 +559,7 @@ class SfcTracerForcingOnCell {
        const Array1DReal &SnowFlux, const Array1DReal &RainFlux,
        const Array1DReal &IceRunoffFlux, const Array1DReal &RiverRunoffFlux,
        const Array1DReal &EvaporationFlux,
+       const Array1DReal &SeaIceFreshWaterFlux,
        const Array1DReal &SeaIceSaltFlux) const {
 
       const I4 KTop = MinLayerCell(ICell);
@@ -602,7 +603,6 @@ class SfcTracerForcingOnCell {
 
          const Real TempFlux = HeatFlux * HFluxFac;
          Tend(TempIndex, ICell, KTop) += TempFlux;
-         SurfaceTracerFlux(TempIndex, ICell) = TempFlux;
          // Accounting for extra energy/enthalpy (to be taken from atm)
          // - All direct heat fluxes are accounted for (via coupler)
          // - SeaIceHeatFlux comes entirely from the sea ice
@@ -614,12 +614,21 @@ class SfcTracerForcingOnCell {
              EvaporationFlux(ICell) * PotEnthalpyFwOut +
              (SnowFlux(ICell) + IceRunoffFlux(ICell)) *
                  (PotEnthalpyIce + LatIce);
+         // KPP non-local flux uses the direct temperature flux without the
+         // CT-neutral mass-flux enthalpy carried in ExtraEnergy.
+         SurfaceTracerFlux(TempIndex, ICell) =
+             (HeatFlux - ExtraEnergy(ICell)) * HFluxFac;
       }
 
       if (SaltIndex >= 0) {
          const Real SaltFlux = SeaIceSaltFlux(ICell) * SFluxFac;
          Tend(SaltIndex, ICell, KTop) += SaltFlux;
-         SurfaceTracerFlux(SaltIndex, ICell) = SaltFlux;
+         const Real FreshWaterFlux = sfcFreshWaterFlux(
+             ICell, SnowFlux, RainFlux, EvaporationFlux, SeaIceFreshWaterFlux,
+             IceRunoffFlux, RiverRunoffFlux);
+         const Real SaTop = TracerCell(SaltIndex, ICell, KTop);
+         SurfaceTracerFlux(SaltIndex, ICell) =
+             SaltFlux - FreshWaterFlux * SaTop / RhoSw;
       }
    }
 
@@ -1273,7 +1282,9 @@ class PenetratingShortwaveOnCell {
               const Array2DReal &GeomZInterface,
               const Array1DReal &ShortWaveHeatFlux,
               const Array1DReal &ExtinctionCoeffRed,
-              const Array1DReal &ExtinctionCoeffBlue) const {
+              const Array1DReal &ExtinctionCoeffBlue,
+              const Array2DReal &SurfaceTracerFlux = Array2DReal(),
+              const Array1DI4 &OSBLDepthIndex      = Array1DI4()) const {
 
       const I4 KTop = MinLayerCell(ICell);
       const I4 KBot = MaxLayerCell(ICell);
@@ -1315,6 +1326,20 @@ class PenetratingShortwaveOnCell {
              Tend(TempIndex, ICell, K) +=
                  (FluxAtInterface(K) - FluxAtInterface(K + 1)) * HFluxFac;
           });
+
+      // Add the OSBL-absorbed shortwave heat flux to the KPP non-local
+      // surface temperature flux when supplied.
+      if (SurfaceTracerFlux.data() != nullptr &&
+          OSBLDepthIndex.data() != nullptr) {
+         const I4 KOBL =
+             Kokkos::max(KTop, Kokkos::min(OSBLDepthIndex(ICell), KBot));
+         Kokkos::single(
+             PerTeam(Team), INNER_LAMBDA() {
+                SurfaceTracerFlux(TempIndex, ICell) +=
+                    (FluxAtInterface(KTop) - FluxAtInterface(KOBL + 1)) *
+                    HFluxFac;
+             });
+      }
    }
 
  private:
