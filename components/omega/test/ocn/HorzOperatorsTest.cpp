@@ -992,8 +992,7 @@ int testsecondderivativeoncellconstructor(Real RTol) {
 }
 //------------------------------------------------------------------------------
 // The initialization routine for Operators testing
-int initOperatorsTest(const std::string &MeshFile) {
-   int Err = 0;
+void initOperatorsTest(const std::string &MeshFile) {
 
    MachEnv::init(MPI_COMM_WORLD);
    MachEnv *DefEnv  = MachEnv::getDefault();
@@ -1009,12 +1008,7 @@ int initOperatorsTest(const std::string &MeshFile) {
 
    IO::init(DefComm);
    Decomp::init(MeshFile);
-
-   int HaloErr = Halo::init();
-   if (HaloErr != 0) {
-      Err++;
-      LOG_ERROR("OperatorsTest: error initializing default halo");
-   }
+   Halo::init();
 
    // Create dummy model clock
    Calendar::init("No Leap");
@@ -1028,7 +1022,7 @@ int initOperatorsTest(const std::string &MeshFile) {
    IOStream::init(ModelClock);
    HorzMesh::init(ModelClock);
 
-   return Err;
+   return;
 }
 
 void finalizeOperatorsTest() {
@@ -1042,13 +1036,12 @@ void finalizeOperatorsTest() {
 }
 
 int operatorsTest(const std::string &MeshFile = DefaultMeshFile) {
-   int Err = initOperatorsTest(MeshFile);
-   if (Err != 0) {
-      LOG_CRITICAL("OperatorsTest: Error initializing");
-   }
+
+   initOperatorsTest(MeshFile);
 
    const Real RTol = sizeof(Real) == 4 ? 1e-2 : 1e-10;
 
+   int Err = 0;
    Err += testDivergence(RTol);
    Err += testGradient(RTol);
    Err += testCurl(RTol);

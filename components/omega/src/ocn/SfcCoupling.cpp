@@ -386,10 +386,7 @@ void SfcCoupling::applyImportFields(Forcing *Forcing, VertCoord *VertCoord) {
 
    VertCoord->updateSurfacePressure(MeshHalo);
 
-   I4 HaloErr = Forcing->exchangeHalo();
-   if (HaloErr != 0) {
-      ABORT_ERROR("Error updating forcing halos after coupler import");
-   }
+   Forcing->exchangeHalo();
 };
 
 void SfcCoupling::updateExportFields(const OceanState *State,

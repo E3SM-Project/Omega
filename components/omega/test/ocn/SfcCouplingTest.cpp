@@ -126,12 +126,7 @@ int initSfcCouplingTest(const std::string &MeshFile) {
    IOStream::init(ModelClock);
 
    // Initialize the halo used by the pressure import fields.
-   int HaloErr = Halo::init();
-   if (HaloErr != 0) {
-      Err++;
-      LOG_ERROR("SfcCouplingTest: Error initializing default halo");
-   }
-
+   Halo::init();
    HorzMesh::init(ModelClock);
 
    VertCoord::init();

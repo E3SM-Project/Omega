@@ -65,12 +65,7 @@ int initStateValidationTest(const std::string &MeshFile) {
 
    IOStream::init(ModelClock);
 
-   int HaloErr = Halo::init();
-   if (HaloErr != 0) {
-      Err++;
-      LOG_ERROR("StateValidationTest: error initializing default halo");
-   }
-
+   Halo::init();
    HorzMesh::init(ModelClock);
    VertCoord::init();
    Tracers::init();

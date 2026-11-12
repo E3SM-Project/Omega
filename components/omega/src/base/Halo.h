@@ -20,7 +20,7 @@
 
 #include "DataTypes.h"
 #include "Decomp.h"
-#include "Logging.h"
+#include "Error.h"
 #include "MachEnv.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
@@ -44,9 +44,11 @@ static const MPI_Datatype MPI_RealKind = MPI_DOUBLE;
 /// The MeshElement enum identifies the index space to use for a halo exchange.
 enum MeshElement { OnCell, OnEdge, OnVertex };
 
-// Conditionally resize MPI buffer if it is not large enough
+/// Conditionally resize MPI buffer if it is not large enough
 template <class BufferType>
-void expandBuffer(BufferType &Buffer, int BufferSize) {
+void expandBuffer(BufferType &Buffer, ///< [inout] buffer to resize
+                  int BufferSize      ///< [in] new size for buffer
+) {
    if (Buffer.extent_int(0) < BufferSize) {
       Buffer = BufferType(Buffer.label(), BufferSize);
    }
@@ -171,10 +173,10 @@ class Halo {
       /// objects, as well as the ID of the neighboring task.
       Neighbor(const std::vector<std::vector<I4>> &SendCell,
                const std::vector<std::vector<I4>> &SendEdge,
-               const std::vector<std::vector<I4>> &SendVert,
+               const std::vector<std::vector<I4>> &SendVrtx,
                const std::vector<std::vector<I4>> &RecvCell,
                const std::vector<std::vector<I4>> &RecvEdge,
-               const std::vector<std::vector<I4>> &RecvVert, const I4 NghbrID);
+               const std::vector<std::vector<I4>> &RecvVrtx, const I4 NghbrID);
 
     public:
       /// Destructor
@@ -191,26 +193,34 @@ class Halo {
    /// Uses info from Decomp to generate a sorted list of tasks that own
    /// elements in the the Halo of the local task for a particular index space.
    /// Utilized only during halo construction
-   int generateListOfTasksInHalo(const I4 NOwned, const I4 NAll,
-                                 HostArray2DI4 Locs,
-                                 std::vector<I4> &ListOfTasks);
+   void generateListOfTasksInHalo(
+       const I4 NOwned,             ///< [in] num of owned elements
+       const I4 NAll,               ///< [in] tot num of elements (incl halo)
+       HostArray2DI4 Locs,          ///< [in] location of elements
+       std::vector<I4> &ListOfTasks ///< [out] tasks needed
+   );
 
    /// Set SendFlags and RecvFlags for the input index space. Utilized only
    /// during halo construction
-   int setNeighborFlags(std::vector<I4> NeighborElem,
-                        const MeshElement IdxSpace);
+   void
+   setNeighborFlags(std::vector<I4> NeighborElem, ///< [out] list of nbr flags
+                    const MeshElement IdxSpace    ///< [in] index space for halo
+   );
 
    /// Uses info from Decomp to determine all tasks which own elements in the
    /// halo of the local task or need locally owned elements for their halo.
    /// Utilized only during halo construction
-   int determineNeighbors(const I4 NumTasks);
+   void determineNeighbors(const I4 NumTasks ///< [in] num of tasks in decomp
+   );
 
    /// Send a vector of integers to each neighboring task and receive a vector
    /// of integers from each neighboring task. The first dimension of each
    /// input 2D vector represents the task in the order they appear in
    /// NeighborList. Utilized only during halo construction
-   int exchangeVectorInt(const std::vector<std::vector<I4>> &SendVec,
-                         std::vector<std::vector<I4>> &RecvVec);
+   void exchangeVectorInt(
+       const std::vector<std::vector<I4>> &SendVec, ///< [in] vec to send
+       std::vector<std::vector<I4>> &RecvVec        ///< [out] vec to recv
+   );
 
    /// Generate the lists of indices to send to and receive from each
    /// neighboring task for the input IndexSpace and the Decomp pointed to
@@ -219,7 +229,7 @@ class Halo {
    /// represent the task in the order they appear in NeighborList, and the
    /// remaining 2D vector is used in constructing a Neighbor object for
    /// that task. Utilized only during halo construction
-   int
+   void
    generateExchangeLists(std::vector<std::vector<std::vector<I4>>> &SendLists,
                          std::vector<std::vector<std::vector<I4>>> &RecvLists,
                          const MeshElement IndexSpace);
@@ -227,12 +237,12 @@ class Halo {
    /// Allocate the recieve buffers and call MPI_Irecv for each Neighbor.
    /// The input bool UseDevBuffer specifies whether or not the device buffer
    /// will be used in the unpackBuffer functionfor unpacking into the array.
-   int startReceives(bool UseDevBuffer);
+   void startReceives(bool UseDevBuffer);
 
    /// Call MPI_Isend for each Neighbor to send the packed buffers to the
    /// neighboring tasks. The input bool UseDevBuffer specifies whether or not
    /// the device buffer was packed in the packBuffer function.
-   int startSends(bool UseDevBuffer);
+   void startSends(bool UseDevBuffer);
 
    /// Function template that returns a bool that is true if the Array is
    /// on the device, or if the device and host memory spaces are the same
@@ -244,8 +254,11 @@ class Halo {
       return OnDev;
    }
 
-   /// Construct a new halo labeled Name for the input MachEnv and Decomp
-   Halo(const std::string &Name, const MachEnv *InEnv, const Decomp *InDecomp);
+   /// Construct a new halo
+   Halo(const std::string &Name, ///< [in] name for new halo
+        const MachEnv *InEnv,    ///< [in] machine environment
+        const Decomp *InDecomp   ///< [in] domain decomposition
+   );
 
    // Forbid copy and move construction
    Halo(const Halo &) = delete;
@@ -255,12 +268,14 @@ class Halo {
    // Methods
 
    /// initialize default Halo
-   static int init();
+   static void init();
 
    /// Creates a new halo by calling the constructor and puts it in the AllHalos
    /// map
-   static Halo *create(const std::string &Name, const MachEnv *Env,
-                       const Decomp *Decomp);
+   static Halo *create(const std::string &Name, ///< [in] name for halo
+                       const MachEnv *Env,      ///< [in] machine environment
+                       const Decomp *Decomp     ///< [in] domain decomposition
+   );
 
    /// Destructor
    ~Halo();
@@ -276,19 +291,21 @@ class Halo {
    static Halo *getDefault();
 
    /// Retrieves a pointer to a Halo object by Name
-   static Halo *get(std::string Name);
+   static Halo *get(std::string Name ///< [in] name of halo to retrieve
+   );
 
    /// Retrieves MPI communicator from a Halo object
    MPI_Comm getComm() const;
 
+   //---------------------------------------------------------------------------
    /// Buffer pack specialized function templates for supported Kokkos array
    /// ranks. Select out the proper elements from the input Array to send to a
    /// neighboring task and pack them into the proper send buffer for
    /// that Neighbor.
    template <typename T>
    std::enable_if_t<ArrayRank<T>::Is1D>
-   packBuffer(const T &Array,      // 1D Kokkos array of any type
-              const I4 CurNeighbor // current neighbor
+   packBuffer(const T &Array,      ///< [in] 1D Kokkos array of any type
+              const I4 CurNeighbor ///< [in] current neighbor
    ) {
       using ValType = typename T::non_const_value_type;
 
@@ -323,8 +340,8 @@ class Halo {
 
    template <typename T>
    std::enable_if_t<ArrayRank<T>::Is2D>
-   packBuffer(const T &Array,      // 2D Kokkos array of any type
-              const I4 CurNeighbor // current neighbor
+   packBuffer(const T &Array,      ///< [in] 2D Kokkos array of any type
+              const I4 CurNeighbor ///< [in] current neighbor
    ) {
 
       using ValType = typename T::non_const_value_type;
@@ -367,8 +384,8 @@ class Halo {
 
    template <typename T>
    std::enable_if_t<ArrayRank<T>::Is3D>
-   packBuffer(const T &Array,      // 3D Kokkos array of any type
-              const I4 CurNeighbor // current neighbor
+   packBuffer(const T &Array,      ///< [in] 3D Kokkos array of any type
+              const I4 CurNeighbor ///< [in] current neighbor
    ) {
 
       using ValType = typename T::non_const_value_type;
@@ -415,8 +432,8 @@ class Halo {
 
    template <typename T>
    std::enable_if_t<ArrayRank<T>::Is4D>
-   packBuffer(const T &Array,      // 4D Kokkos array of any type
-              const I4 CurNeighbor // current neighbor
+   packBuffer(const T &Array,      ///< [in] 4D Kokkos array of any type
+              const I4 CurNeighbor ///< [in] current neighbor
    ) {
 
       using ValType = typename T::non_const_value_type;
@@ -468,8 +485,8 @@ class Halo {
 
    template <typename T>
    std::enable_if_t<ArrayRank<T>::Is5D>
-   packBuffer(const T &Array,      // 5D Kokkos array of any type
-              const I4 CurNeighbor // current neighbor
+   packBuffer(const T &Array,      ///< [in] 5D Kokkos array of any type
+              const I4 CurNeighbor ///< [in] current neighbor
    ) {
 
       using ValType = typename T::non_const_value_type;
@@ -524,14 +541,15 @@ class Halo {
       }
    }
 
+   //---------------------------------------------------------------------------
    /// Buffer unpack specialized function templates for supported Kokkos array
    /// ranks. After receiving a message from a neighboring task, save the
    /// elements of the proper receive buffer for that Neighbor into the
    /// corresponding halo elements of the input Array
    template <typename T>
    std::enable_if_t<ArrayRank<T>::Is1D>
-   unpackBuffer(const T &Array,      // 1D Kokkos array of any type
-                const I4 CurNeighbor // current neighbor
+   unpackBuffer(const T &Array,      ///< [inout] 1D Kokkos array of any type
+                const I4 CurNeighbor ///< [in] current neighbor
    ) {
 
       using ValType = typename T::non_const_value_type;
@@ -565,8 +583,8 @@ class Halo {
 
    template <typename T>
    std::enable_if_t<ArrayRank<T>::Is2D>
-   unpackBuffer(const T &Array,      // 2D Kokkos array of any type
-                const I4 CurNeighbor // current neighbor
+   unpackBuffer(const T &Array,      ///< [inout] 2D Kokkos array of any type
+                const I4 CurNeighbor ///< [in] current neighbor
    ) {
 
       using ValType = typename T::non_const_value_type;
@@ -607,8 +625,8 @@ class Halo {
 
    template <typename T>
    std::enable_if_t<ArrayRank<T>::Is3D>
-   unpackBuffer(const T &Array,      // 3D Kokkos array of any type
-                const I4 CurNeighbor // current neighbor
+   unpackBuffer(const T &Array,      ///< [inout] 3D Kokkos array of any type
+                const I4 CurNeighbor ///< [in] current neighbor
    ) {
 
       using ValType = typename T::non_const_value_type;
@@ -654,8 +672,8 @@ class Halo {
 
    template <typename T>
    std::enable_if_t<ArrayRank<T>::Is4D>
-   unpackBuffer(const T &Array,      // 4D Kokkos array of any type
-                const I4 CurNeighbor // current neighbor
+   unpackBuffer(const T &Array,      ///< [inout] 4D Kokkos array of any type
+                const I4 CurNeighbor ///< [in] current neighbor
    ) {
 
       using ValType = typename T::non_const_value_type;
@@ -706,8 +724,8 @@ class Halo {
 
    template <typename T>
    std::enable_if_t<ArrayRank<T>::Is5D>
-   unpackBuffer(const T &Array,      // 5D Kokkos array of any type
-                const I4 CurNeighbor // current neighbor
+   unpackBuffer(const T &Array,      ///< [inout] 5D Kokkos array of any type
+                const I4 CurNeighbor ///< [in] current neighbor
    ) {
 
       using ValType = typename T::non_const_value_type;
@@ -762,19 +780,15 @@ class Halo {
    }
 
    //---------------------------------------------------------------------------
-   // Function template to perform a full halo exchange on the input Kokkos
-   // array of any supported type defined on the input index space ThisElem
+   /// Function template to perform a full halo exchange on the input Kokkos
+   /// array of any supported type defined on the input index space ThisElem
    template <typename T>
-   int
-   exchangeFullArrayHalo(T &Array,            // Kokkos array of any type
-                         MeshElement ThisElem // index space Array is defined on
+   void exchangeFullArrayHalo(
+       T &Array,            ///< [in] Kokkos array for updating halo
+       MeshElement ThisElem ///< [in] index space Array is defined on
    ) {
       // Add more context for timers in this function
-      // BUG: fails when there is no parent timer
-      // Uncomment after fixing in Pacer
-      // Pacer::addParentPrefix();
-
-      I4 IErr{0}; // error code
+      Pacer::addParentPrefix();
 
       // Logical flag to track if all messages have been received
       bool AllReceived{false};
@@ -888,11 +902,9 @@ class Halo {
             AllReceived = true;
          }
          ++IPass;
-         if (IPass == MaxIter) {
-            LOG_ERROR("Halo: Maximum iterations reached during halo exchange");
-            IErr = -1;
-            break;
-         }
+         if (IPass == MaxIter)
+            ABORT_ERROR(
+                "Halo: Maximum iterations reached during halo exchange");
       }
       Pacer::stop("Halo:receiveUnpack", 4);
 
@@ -907,11 +919,10 @@ class Halo {
       MPI_Waitall(SendReqs.size(), SendReqs.data(), MPI_STATUS_IGNORE);
       Pacer::stop("Halo:waitSends", 4);
 
-      // BUG: fails when there is no parent timer
-      // Uncomment after fixing in Pacer
-      // Pacer::removeParentPrefix();
+      // Reset Pacer timer prefix
+      Pacer::removeParentPrefix();
 
-      return IErr;
+      return;
    } // end exchangeFullArrayHalo
 
 }; // end class Halo

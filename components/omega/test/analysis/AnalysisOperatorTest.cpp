@@ -3326,9 +3326,7 @@ void initAnalysisTest() {
    Field::init(ModelClock);
 
    // Initialize the default halo
-   Err = Halo::init();
-   if (Err != 0)
-      ABORT_ERROR("AnalysisOperatorTest: error initializing default halo");
+   Halo::init();
 
    // Initialize the default mesh
    HorzMesh::init(ModelClock);

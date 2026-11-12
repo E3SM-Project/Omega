@@ -96,7 +96,7 @@ class Forcing {
    void computeSfcStressForcingOnEdge() const;
 
    /// Exchange halo for surface stress fields
-   I4 exchangeHalo() const;
+   void exchangeHalo() const;
 
  private:
    Forcing(const std::string &Name, const HorzMesh *Mesh, Halo *MeshHalo);

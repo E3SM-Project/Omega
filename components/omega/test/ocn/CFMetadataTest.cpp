@@ -207,10 +207,7 @@ Clock *initCFMetadataTest() {
    Field::init(ModelClock);
    Decomp::init();
 
-   int Err = Halo::init();
-   if (Err != 0)
-      ABORT_ERROR("CFMetadataTest: error initializing default halo");
-
+   Halo::init();
    HorzMesh::init(ModelClock);
    VertCoord::init();
    Tracers::init();
@@ -224,7 +221,7 @@ Clock *initCFMetadataTest() {
    Tendencies::init();
    TimeStepper::init2();
 
-   Err = OceanState::init();
+   int Err = OceanState::init();
    if (Err != 0)
       ABORT_ERROR("CFMetadataTest: error initializing OceanState");
 

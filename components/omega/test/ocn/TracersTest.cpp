@@ -37,9 +37,7 @@ const Real RefReal = 3.0;
 // The initialization routine for Tracers testing. It calls various
 // init routines, including the creation of the default decomposition.
 
-I4 initTracersTest() {
-
-   I4 Err = 0;
+void initTracersTest() {
 
    // Initialize the Machine Environment class - this also creates
    // the default MachEnv. Then retrieve the default environment and
@@ -66,11 +64,7 @@ I4 initTracersTest() {
    Decomp::init();
 
    // Initialize the default halo
-   Err = Halo::init();
-   if (Err != 0) {
-      LOG_ERROR("Tracers: error initializing default halo");
-      return Err;
-   }
+   Halo::init();
 
    // Read in the default mesh
    Field::init(ModelClock);
@@ -80,7 +74,7 @@ I4 initTracersTest() {
    // Initialize the vertical coordinate
    VertCoord::init(false);
 
-   return 0;
+   return;
 }
 
 //------------------------------------------------------------------------------
@@ -100,9 +94,7 @@ int main(int argc, char *argv[]) {
    {
 
       // Call initialization routine
-      Err = initTracersTest();
-      if (Err != 0)
-         LOG_ERROR("Tracers: Error initializing");
+      initTracersTest();
 
       // Get MPI vars if needed
       MachEnv *DefEnv = MachEnv::getDefault();

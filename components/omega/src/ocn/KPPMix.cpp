@@ -384,11 +384,8 @@ void KPPMix::update(const Array3DReal &TracerArray, I4 TempTracerIndex,
 
    Halo *MeshHalo = Halo::getDefault();
    OMEGA_REQUIRE(MeshHalo, "KPPMix::update: null default Halo pointer");
-   I4 HaloErr = 0;
-   HaloErr += MeshHalo->exchangeFullArrayHalo(SurfaceFrictionVelocity, OnCell);
-   HaloErr += MeshHalo->exchangeFullArrayHalo(SurfaceBuoyancyFlux, OnCell);
-   OMEGA_REQUIRE(HaloErr == 0,
-                 "KPPMix::update: halo exchange of surface forcing failed");
+   MeshHalo->exchangeFullArrayHalo(SurfaceFrictionVelocity, OnCell);
+   MeshHalo->exchangeFullArrayHalo(SurfaceBuoyancyFlux, OnCell);
 
    computeKPPMix(PotentialDensity, NormalVelocity, TangentialVelocity,
                  SurfaceFrictionVelocity, SurfaceBuoyancyFlux,
@@ -701,12 +698,10 @@ void KPPMix::computeOSBLDepth(const Array2DReal &PotentialDensity,
    Halo *MeshHalo = Halo::getDefault();
    OMEGA_REQUIRE(MeshHalo,
                  "KPPMix::computeOSBLDepth: null default Halo pointer");
-   I4 HaloErr = MeshHalo->exchangeFullArrayHalo(OSBLDepth, OnCell);
+   MeshHalo->exchangeFullArrayHalo(OSBLDepth, OnCell);
    if (!UseOSBLSmoothing) {
-      HaloErr += MeshHalo->exchangeFullArrayHalo(OSBLDepthIndex, OnCell);
+      MeshHalo->exchangeFullArrayHalo(OSBLDepthIndex, OnCell);
    }
-   OMEGA_REQUIRE(HaloErr == 0,
-                 "KPPMix::computeOSBLDepth: halo exchange of OSBLDepth failed");
 
    if (UseOSBLSmoothing) {
       OMEGA_SCOPE(LocOSBLDepthSmooth, OSBLDepthSmooth);
