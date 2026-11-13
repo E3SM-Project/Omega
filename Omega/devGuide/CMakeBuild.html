@@ -110,6 +110,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#step-2-update">Step 2: Update</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#step-3-build">Step 3: Build</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#optimization-in-cpu-debug-builds-with-gnu">Optimization in CPU Debug builds with GNU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#optimization-in-sycl-debug-builds">Optimization in SYCL Debug builds</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#step-4-output">Step 4: Output</a></li>
@@ -328,6 +329,20 @@ of the <code class="docutils literal notranslate"><span class="pre">OmegaLibFlag
 the optimization level GNU recommends for debugging, and it makes these
 builds about 30 times faster. This reaches the Omega library, executable
 and tests, but not Fortran sources or external libraries. Debug checks
+(<code class="docutils literal notranslate"><span class="pre">OMEGA_DEBUG</span></code>, Kokkos debug checks) and <code class="docutils literal notranslate"><span class="pre">-g</span></code> are unchanged.</p>
+</section>
+<section id="optimization-in-sycl-debug-builds">
+<h3>Optimization in SYCL Debug builds<a class="headerlink" href="#optimization-in-sycl-debug-builds" title="Permalink to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Debug</span></code> builds compile Omega’s C++ code with <code class="docutils literal notranslate"><span class="pre">-g</span></code> and no <code class="docutils literal notranslate"><span class="pre">-O</span></code> level. For
+SYCL, <code class="docutils literal notranslate"><span class="pre">icpx</span></code> applies this to device code as <code class="docutils literal notranslate"><span class="pre">-O0</span></code>. The unoptimized kernels
+need so much private (per-work-item) memory that the GPU runtime’s
+per-kernel private allocations fill a whole GPU tile, and runs eventually
+crash with a GPU page fault (see
+<a class="reference external" href="https://github.com/E3SM-Project/Omega/issues/666">#666</a>).</p>
+<p>To avoid this, <code class="docutils literal notranslate"><span class="pre">src/CMakeLists.txt</span></code> adds <code class="docutils literal notranslate"><span class="pre">-O1</span></code> to the C++ compile options
+of the <code class="docutils literal notranslate"><span class="pre">OmegaLibFlags</span></code> interface target when <code class="docutils literal notranslate"><span class="pre">OMEGA_ARCH</span></code> is <code class="docutils literal notranslate"><span class="pre">SYCL</span></code> and the
+build type is <code class="docutils literal notranslate"><span class="pre">Debug</span></code>. This reaches the Omega library, executable and tests,
+but not Fortran sources or external libraries. Debug checks
 (<code class="docutils literal notranslate"><span class="pre">OMEGA_DEBUG</span></code>, Kokkos debug checks) and <code class="docutils literal notranslate"><span class="pre">-g</span></code> are unchanged.</p>
 </section>
 </section>
