@@ -29,6 +29,11 @@ lists the facts to record. Lay them out like this:
    pull request build paths (`-p`) and work directories, commits, logs,
    the coupled case directories and `TestStatus` lines, norms. Paste
    output there, not above it.
+6. If testing was done outside existing or new polaris and ctests,
+   provide the commit or branch that was tested and provide the paths to
+   the output as above. In addition, indicate what role this test serves
+   and why it is not suitable for a ctest or polaris test in 1-2
+   sentences.
 
 Comments that the `omega-pr-testing` utility writes already have this
 shape. Post them as written, with your findings in its notes file, which

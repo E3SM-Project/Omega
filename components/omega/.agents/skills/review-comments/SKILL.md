@@ -5,7 +5,9 @@ description: Write a review comment, review findings, or a reply to review feedb
 
 # Review comments
 
-The reader is deciding what to change.
+The reader is deciding what to change. The reader also wants
+justification for code changes that are conceptually substantive either
+in the PR, docstrings local to the changes, or the documentation.
 
 - Put each finding as an inline comment on the line it concerns, one
   point each. That is where colleagues put them, and it is why their
