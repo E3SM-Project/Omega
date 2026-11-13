@@ -25,7 +25,7 @@ Below are a few things we ask you or your reviewers to kindly check.
 ***Remove checks that are not relevant by deleting the line(s) below.***
 -->
 Checklist
-* [ ] The description, above any `---` line, ends with a `[BFB]`, `[non-BFB]`, `[NCC]` or `[CC]` tag (plus `[NML]` if needed), with matching labels
+* [ ] The description, above any `---` line, ends with a `[BFB]`, `[non-BFB]`, `[NCC]` or `[CC]` tag (plus `[NML]` if needed), with matching labels. If this tag is inferred without testing, append with ` inferred`.
 * [ ] Documentation:
   * [ ] Design document has been generated and [added to the docs](https://github.com/E3SM-Project/Omega/tree/develop/components/omega/doc/design)
   * [ ] [User's Guide](https://github.com/E3SM-Project/Omega/tree/develop/components/omega/doc/userGuide) has been updated
