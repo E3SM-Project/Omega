@@ -48,6 +48,15 @@ void TransportAuxVars::registerFields(
    // Attach data
    NormalTransportVelocityField->attachData<Array2DReal>(
        NormalTransportVelocity);
+
+   // The transport through an edge is this velocity times the flux
+   // pseudo-thickness of the same auxiliary state, so a time mean weights it
+   // by that pseudo-thickness
+   const std::string BaseName = "NormalTransportVelocity";
+   const std::string AuxStateSuffix =
+       NormalTransportVelocity.label().substr(BaseName.size());
+   NormalTransportVelocityField->setTimeMeanWeight("FluxPseudoThickEdge" +
+                                                   AuxStateSuffix);
 }
 
 void TransportAuxVars::unregisterFields() const {

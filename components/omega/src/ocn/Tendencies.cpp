@@ -609,6 +609,13 @@ void Tendencies::defineFields() {
        KPPNonLocalTracerTempTendDiag, false);
    KPPNonLocalTracerTempColSumField->attachData<Array1DReal>(
        KPPNonLocalTracerTempColumnSumDiag, false);
+
+   // These are tendencies of the pseudo-thickness and of thickness-weighted
+   // tracers, which are already per unit area, so their time means are not
+   // weighted
+   PseudoThicknessTendField->setTimeMeanWeight(Field::NoTimeMeanWeight);
+   TracerTendField->setTimeMeanWeight(Field::NoTimeMeanWeight);
+   KPPNonLocalTracerTempDiagField->setTimeMeanWeight(Field::NoTimeMeanWeight);
    // Attaching with FillOnAttach=false keeps the zero initialization but does
    // not record the _FillValue that IOStream needs to write these fields
    KPPNonLocalTracerTempDiagField->addMetadata("_FillValue", FillValueReal);

@@ -323,11 +323,18 @@ Omega:
       # overridden with the optional ReductionPeriod parameter.
       # Output is written to the stream MonthlyAverages_<Period>TimeStats
       # (e.g., MonthlyAverages_1MonthTimeStats).
+      # With Mass weighting, fields on layers are weighted by layer mass and
+      # NormalVelocity by FluxPseudoThickEdge, so the mean transport is the
+      # mean NormalVelocity times the mean FluxPseudoThickEdge. Fields that
+      # are already per unit area (e.g. PseudoThickness), horizontal fields
+      # and interface fields get the plain mean.
       Fields: [Temperature, Salinity, PseudoThickness, SpecVol, GeomZMid,
-          GeomZInterface, SshCell, NormalVelocity, KineticEnergyCell]
+          GeomZInterface, SshCell, NormalVelocity, FluxPseudoThickEdge,
+          KineticEnergyCell]
                                 # List of global fields to average
       ReductionPeriod: [1Month] # Optional; averaging period(s)
       SamplingInterval: dt      # Accumulation cadence of the reductions
+      Weighting: Mass           # Mass (weight by layer mass) or None
       Filename: monthly.averages.$Y-$M.nc
       Stream:
         FileFreq: 1

@@ -3,7 +3,8 @@
 // Implementation of the MonthlyAverages constructor. Reads the required field
 // list from config, applies a default temporal reduction period of "1Month"
 // when none is supplied (an optional ReductionPeriod in config overrides the
-// default), builds one TimeMean operator chain per field, and creates the
+// default), builds one TimeMean operator chain per field with the group's
+// weighting (Mass unless config sets Weighting: None), and creates the
 // time-averaged output stream via the AnalysisGroup base class machinery.
 //
 //===----------------------------------------------------------------------===//
@@ -52,13 +53,27 @@ MonthlyAverages::MonthlyAverages(const std::string &GroupName,
       AnalysisGroupOptions.remove("SnapshotPeriod");
    }
 
+   // Time means are weighted by mass unless the group asks for plain means.
+   // The TimeMean operator decides which fields the weighting applies to.
+   std::string Weighting = "Mass";
+   AnalysisGroupOptions.get("Weighting", Weighting);
+   if (Weighting != "Mass" && Weighting != "None")
+      ABORT_ERROR("MonthlyAverages: Weighting must be Mass or None, not {}",
+                  Weighting);
+
    // No spatial operator: the chain stems are simply the field names. The base
    // class appends the TimeMean operator to each stem.
    std::vector<std::string> ChainStems = VarList;
 
+   // Each chain's TimeMean operator gets the group's weighting
+   std::vector<Config> ChainConfigs(ChainStems.size());
+   for (auto &ChainConfig : ChainConfigs)
+      ChainConfig.add("Weighting", Weighting);
+
    // Add temporal operator names to chain, build operators and populate
    // OpChainInfos
-   buildTemporalChains(ChainStems, AnalysisGroupOptions, AnalysisManager);
+   buildTemporalChains(ChainStems, AnalysisGroupOptions, AnalysisManager,
+                       ChainConfigs);
 
    // Create the IOStream for the monthly time-averaged output and associate
    // operators with it based on OpChainInfos metadata
