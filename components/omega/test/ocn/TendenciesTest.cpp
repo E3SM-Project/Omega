@@ -700,6 +700,33 @@ int testSfcTracerForcing() {
       LOG_INFO("TendenciesTest: SfcTracerForcing salt tendency PASS");
    }
 
+   // Verify SurfaceTracerFlux stores the concentration fluxes used by KPP
+   // non-local mixing (excluding rain mass-flux enthalpy for temperature and
+   // including freshwater dilution for salinity).
+   const auto SurfaceFluxH =
+       createHostMirrorCopy(DefForcing->TracerForcing.SurfaceTracerFluxCell);
+   deepCopy(SurfaceFluxH, DefForcing->TracerForcing.SurfaceTracerFluxCell);
+   const Real ExpectedNonLocalTempFlux =
+       (TestSensibleHeat - TestSnow * LatIce) * HFluxFac;
+   const Real ExpectedNonLocalSaltFlux =
+       TestSeaIceSaltFlux * SFluxFac -
+       (TestRain + TestSnow) * SaTopValue / RhoSw;
+
+   if (!isApprox(SurfaceFluxH(TempIndex, ICellTest), ExpectedNonLocalTempFlux,
+                 RelTol, AbsTol)) {
+      Err++;
+      LOG_ERROR("TendenciesTest: SfcTracerForcing SurfaceTracerFlux temp FAIL "
+                "(expected {}, got {})",
+                ExpectedNonLocalTempFlux, SurfaceFluxH(TempIndex, ICellTest));
+   }
+   if (!isApprox(SurfaceFluxH(SaltIndex, ICellTest), ExpectedNonLocalSaltFlux,
+                 RelTol, AbsTol)) {
+      Err++;
+      LOG_ERROR("TendenciesTest: SfcTracerForcing SurfaceTracerFlux salt FAIL "
+                "(expected {}, got {})",
+                ExpectedNonLocalSaltFlux, SurfaceFluxH(SaltIndex, ICellTest));
+   }
+
    DefTendencies->SfcStressForcing.Enabled       = OrigSfcStressEnabled;
    DefTendencies->SfcThicknessForcing.Enabled    = OrigSfcThicknessEnabled;
    DefTendencies->SfcTracerForcing.Enabled       = OrigSfcTracerEnabled;
@@ -780,7 +807,6 @@ int testKPPNonLocalVerticalMixGate() {
    deepCopy(DefForcing->TracerForcing.SeaIceHeatFluxCell, 0.0_Real);
    deepCopy(DefForcing->TracerForcing.ShortWaveHeatFluxCell, 0.0_Real);
    deepCopy(DefForcing->TracerForcing.SeaIceSaltFluxCell, 0.0_Real);
-   deepCopy(DefForcing->TracerForcing.SurfaceTracerFluxCell, 0.0_Real);
    deepCopy(DefForcing->TracerForcing.SensibleHeatFluxCell, 100.0_Real);
    DefForcing->computeAll();
 
