@@ -138,21 +138,19 @@ headings, tables and links. The problem is length.
 - **One document, one decision.** Anything still relevant after a pull
   request merges belongs in an issue, not a comment.
 
-Sign anything posted to GitHub on someone's behalf:
+Sign anything posted on the user's behalf: pull request descriptions,
+issues and comments. Put the signature at the end of a pull request
+description, below the `---` line, and on its own line at the top of
+anything else:
 
 ```
----
-
-*Posted by <agent> on @<user>'s behalf. The testing, analysis and wording
-above are AI-authored; please check them accordingly.*
+*Posted by <agent> on @<user>'s behalf*
 ```
 
-When the text grew out of the user's own draft or substantial direction,
-sign it instead with:
+If the text grew out of the user's own draft or substantial direction,
+use instead:
 
 ```
----
-
 *Drafted by @<user> and <agent> together*
 ```
 
