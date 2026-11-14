@@ -272,6 +272,12 @@ Build types tested: sp (single precision), dbg (debug), fpe (floating point exce
 When modifying files under `components/eamxx/**`, see `components/eamxx/AGENTS.md`
 for standalone testing instructions.
 
+## Omega Modifications (for AI Agents)
+
+When modifying files under `components/omega/**`, or writing commit messages
+or PR descriptions for E3SM-Project/Omega, see `components/omega/AGENTS.md`.
+Its rules take precedence over this file for that work.
+
 ## Rules for pull request (PR) description
 1. PR description should have two parts.  The fist should be a brief description in plain
  text with no markdown or other formatting. Add a line.  The second part should be the full
