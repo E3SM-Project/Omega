@@ -43,15 +43,18 @@ is where the lines in item 4 go.
 - Never tick the pull request's checklist boxes. That is the developer's
   job.
 
-## Calibration
+## Length
 
-Measured over Testing comments on Omega and Polaris pull requests from
-2023 and 2024, before any agent wrote there. Leaving out pasted output,
-they run 28 words at the median, 57 at the ninetieth percentile, and 129
-at the longest. They recorded less than the template now asks for, so
-the table and folds will make a comment longer than that. The figures
-apply to the prose you write outside them. A recent agent-written comment
-ran 606 words, all of it visible.
+Aim for what colleagues wrote before agents did. Testing comments run 28
+words at the median, 57 at the ninetieth percentile, and 129 at the
+longest. They recorded less than the template now asks for, so the table
+and folds will make a comment longer than that. The figures apply to the
+prose you write outside them. Past the ninetieth percentile, cut. A
+recent agent-written comment ran 606 words, all of it visible.
+
+These figures come from Testing comments on Omega and Polaris pull
+requests from 2023 and 2024, leaving out pasted output. Use them as they
+are; there is no need to measure again.
 
 ## Enough
 

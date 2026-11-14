@@ -18,14 +18,17 @@ in the PR, docstrings local to the changes, or the documentation.
 - No section on what already works. One line for all of it, if any.
 - Say what you could not check.
 
-## Calibration
+## Length
 
-Measured over Omega and Polaris pull requests from 2023 and 2024, before
-any agent wrote there, and leaving out pasted output. Review bodies run
-21 words at the median and 69 at the ninetieth percentile. Inline
-comments run 16 at the median, 57 at the ninetieth percentile and 329 at
-the longest. E3SM's are a little shorter. A recent agent-written review
-ran 1117 words, with the findings starting 444 words in.
+Aim for what colleagues wrote before agents did. Review bodies run 21
+words at the median and 69 at the ninetieth percentile. Inline comments
+run 16 at the median and 57 at the ninetieth percentile, and 329 at the
+longest. Past the ninetieth percentile, cut. A recent agent-written
+review ran 1117 words, with the findings starting 444 words in.
+
+These figures come from Omega and Polaris pull requests from 2023 and
+2024, leaving out pasted output. E3SM's are a little shorter. Use them
+as they are; there is no need to measure again.
 
 ## Enough
 

@@ -33,14 +33,18 @@ and the pull request template.
 - No commit list. No testing; that goes in a separate `Testing` comment.
 - Several fixes usually means several pull requests.
 
-## Calibration
+## Length
 
-Measured over Omega and Polaris pull requests merged in 2023 and 2024,
-before any agent wrote there. Descriptions run 36 words at the median, 66
-at the seventy-fifth percentile, 114 at the ninetieth, and 398 at the
-longest. In E3SM over the same years, the part above `---` runs 54 words
-at the median and 142 at the ninetieth percentile. A recent agent-written
-Polaris description ran 1167 words.
+Aim for what colleagues wrote before agents did. Descriptions run 36
+words at the median, 66 at the seventy-fifth percentile, 114 at the
+ninetieth, and 398 at the longest. In E3SM, the part above `---` runs 54
+words at the median and 142 at the ninetieth percentile. Past the
+ninetieth percentile, cut. A recent agent-written Polaris description
+ran 1167 words.
+
+These figures come from Omega and Polaris pull requests merged in 2023
+and 2024, and from E3SM's over the same years. Use them as they are;
+there is no need to measure again.
 
 ## Enough
 
