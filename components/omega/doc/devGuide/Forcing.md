@@ -75,8 +75,9 @@ the surface layer pseudo-thickness.
     debug tracers without an explicit surface flux receive zero non-local
     tendency by default. `SfcTracerForcingOnCell` and
     `PenetratingShortwaveOnCell` populate the temperature and salinity entries
-    with the concentration fluxes (excluding CT-neutral mass-flux enthalpy for
-    temperature, including the penetrating shortwave absorbed above
+    with the concentration fluxes (excluding CT-neutral mass-flux enthalpy and
+    the sea-ice meltwater enthalpy at its freezing CT for temperature, as in
+    the KPP surface buoyancy flux, including the penetrating shortwave absorbed above
     `VertMix.KPP.SurfaceBuoyancyDepth`, and including
     the freshwater dilution term for salinity).
 - `SfcThicknessForcingOnCell` tendency term

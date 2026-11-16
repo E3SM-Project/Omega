@@ -12,6 +12,22 @@
 
 namespace OMEGA {
 
+/// Enthalpy (W/m^2) of the sea-ice meltwater included in SeaIceHeatFlux,
+/// taken at the freezing CT of the meltwater (sea-ice salinity when known,
+/// otherwise the top-layer salinity).
+KOKKOS_INLINE_FUNCTION Real
+sfcSeaIceLiqEnthalpy(I4 ICell, Real SaTop, Real PTopDb, EosType EosChoice,
+                     const Array1DReal &SeaIceFreshWaterFlux,
+                     const Array1DReal &SeaIceSaltFlux) {
+   const Real SeaIceFreshWater = SeaIceFreshWaterFlux(ICell);
+   const Real SeaIceSalt       = SeaIceSaltFlux(ICell);
+   const Real SaSeaIce = SeaIceFreshWater > 0.0_Real && SeaIceSalt > 0.0_Real
+                             ? SeaIceSalt / SeaIceFreshWater * Salt2PPt
+                             : SaTop;
+   return SeaIceFreshWater * Cp0Sw *
+          Eos::calcCtFreezing(EosChoice, SaSeaIce, PTopDb, 0.0_Real);
+}
+
 /// Surface heat flux used by KPP buoyancy forcing, excluding mass-flux
 /// enthalpy carried by the tracer tendency.
 KOKKOS_INLINE_FUNCTION Real sfcHeatFluxWithoutMassEnthalpy(
@@ -23,15 +39,8 @@ KOKKOS_INLINE_FUNCTION Real sfcHeatFluxWithoutMassEnthalpy(
     const Array1DReal &SeaIceSaltFlux, const Array1DReal &LatentHeatFluxEvap,
     const Array1DReal &SnowFlux, const Array1DReal &IceRunoffFlux) {
 
-   const Real SeaIceFreshWater = SeaIceFreshWaterFlux(ICell);
-   const Real SeaIceSalt       = SeaIceSaltFlux(ICell);
-   const Real SaSeaIce = SeaIceFreshWater > 0.0_Real && SeaIceSalt > 0.0_Real
-                             ? SeaIceSalt / SeaIceFreshWater * Salt2PPt
-                             : SaTop;
-
-   const Real SeaIceLiqEnthalpyEstimate =
-       SeaIceFreshWaterFlux(ICell) * Cp0Sw *
-       Eos::calcCtFreezing(EosChoice, SaSeaIce, PTopDb, 0.0_Real);
+   const Real SeaIceLiqEnthalpyEstimate = sfcSeaIceLiqEnthalpy(
+       ICell, SaTop, PTopDb, EosChoice, SeaIceFreshWaterFlux, SeaIceSaltFlux);
 
    return LongWaveHeatFluxUp(ICell) + LongWaveHeatFluxDown(ICell) +
           ShortWaveHeatFlux(ICell) + SensibleHeatFlux(ICell) +

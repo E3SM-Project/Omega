@@ -615,9 +615,16 @@ class SfcTracerForcingOnCell {
              (SnowFlux(ICell) + IceRunoffFlux(ICell)) *
                  (PotEnthalpyIce + LatIce);
          // KPP non-local flux uses the direct temperature flux without the
-         // CT-neutral mass-flux enthalpy carried in ExtraEnergy.
+         // CT-neutral mass-flux enthalpy carried in ExtraEnergy, and without
+         // the sea-ice meltwater enthalpy (at its freezing CT) included in
+         // SeaIceHeatFlux, matching the KPP surface buoyancy flux.
+         const Real SaTopForIce =
+             SaltIndex >= 0 ? TracerCell(SaltIndex, ICell, KTop) : 0.0_Real;
+         const Real SeaIceLiqEnthalpy = sfcSeaIceLiqEnthalpy(
+             ICell, SaTopForIce, PressureMid(ICell, KTop) * Pa2Db, EosChoice,
+             SeaIceFreshWaterFlux, SeaIceSaltFlux);
          SurfaceTracerFlux(TempIndex, ICell) =
-             (HeatFlux - ExtraEnergy(ICell)) * HFluxFac;
+             (HeatFlux - ExtraEnergy(ICell) - SeaIceLiqEnthalpy) * HFluxFac;
       }
 
       if (SaltIndex >= 0) {
@@ -637,6 +644,7 @@ class SfcTracerForcingOnCell {
    I4 SaltIndex;
    Array1DI4 MinLayerCell;
    Array1DI4 MaxLayerCell;
+   Array2DReal PressureMid;
    EosType EosChoice;
 };
 

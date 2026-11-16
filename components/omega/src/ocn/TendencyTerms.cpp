@@ -92,7 +92,7 @@ SfcTracerForcingOnCell::SfcTracerForcingOnCell(const HorzMesh *Mesh,
                                                const Eos *EosInst)
     : TempIndex(TempTracerIndex), SaltIndex(SaltTracerIndex),
       MinLayerCell(VCoord->MinLayerCell), MaxLayerCell(VCoord->MaxLayerCell),
-      EosChoice(EosInst->EosChoice) {}
+      PressureMid(VCoord->PressureMid), EosChoice(EosInst->EosChoice) {}
 
 PenetratingShortwaveOnCell::PenetratingShortwaveOnCell(const HorzMesh *Mesh,
                                                        const VertCoord *VCoord,
