@@ -22,9 +22,11 @@ For the constant EOS option, `BruntVaisalaFreqSq` is identically zero.
 
 Every `Eos` function that takes a pressure expects the relative pressure (gauge
 pressure, i.e. absolute pressure minus the standard atmosphere) in Pa, the
-units of Omega's pressure fields. The TEOS-10 polynomials are written in terms
-of pressure in dbar, but that conversion is done internally, so callers never
-convert with `Pa2Db` themselves. The same holds for the frazil functors, which
+units of Omega's pressure fields. The TEOS-10 polynomials are evaluated in
+terms of a dimensionless normalized pressure (sea pressure in dbar scaled by
+1e-4; see `Teos10Eos::calcNormPressure`), and the GSW library takes pressure in
+dbar, but these conversions are done internally, so callers never convert with
+`Pa2Db` themselves. The same holds for the frazil functors, which
 convert to dbar only where they call the GSW library.
 
 ## Eos type

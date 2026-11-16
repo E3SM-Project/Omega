@@ -716,8 +716,9 @@ class Teos10Eos {
 
       Real Sar = SaPos * 1.0e-2;
       Real X   = Kokkos::sqrt(Sar);
-      // Reduced pressure: sea pressure in dbar scaled by 1e-4, as in GSW
-      Real Pr = P * Pa2Db * 1.0e-4;
+      // GSW's reduced pressure (dbar * 1e-4) is the same as the normalized
+      // pressure of the 75-term polynomial
+      const Real Pr = calcNormPressure(P);
 
       Real CtFreez =
           C0 + Sar * (C1 + X * (C2 + X * (C3 + X * (C4 + X * (C5 + C6 * X))))) +
