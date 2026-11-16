@@ -2136,6 +2136,60 @@ int testPenetratingShortwaveOnCell(int NVertLayers, Real RTol) {
       LOG_INFO("TendencyTermsTest: PenetratingShortwave PASS");
    }
 
+   // With a SurfaceTracerFlux supplied, the shortwave absorbed above
+   // SurfaceBuoyancyDepth is added to the temperature entry.
+   const Real SfcBuoyDepth = 2.5_Real; // m
+   Array2DReal SurfaceTracerFlux("SurfaceTracerFlux", 1, Mesh->NCellsSize);
+   deepCopy(SurfaceTracerFlux, 0);
+   deepCopy(Tend, 0);
+   parallelForOuter(
+       LaunchConfig({Mesh->NCellsOwned}, TeamScratch<Real>(NVertLayers + 1)),
+       KOKKOS_LAMBDA(int ICell, const TeamMember &Team) {
+          PenSwOnC(Team, Tend, ICell, GeomZInterface, ShortWaveHeatFlux,
+                   ExtinctionCoeffRed, ExtinctionCoeffBlue, SurfaceTracerFlux,
+                   SfcBuoyDepth);
+       });
+
+   I4 NumBadNonLocal = 0;
+   parallelReduce(
+       {Mesh->NCellsOwned},
+       KOKKOS_LAMBDA(int ICell, I4 &Accum) {
+          const I4 KTop = MinLayerCell(ICell);
+          const I4 KBot = MaxLayerCell(ICell);
+          if (KTop > KBot) {
+             return;
+          }
+          const Real ColumnDepth = Kokkos::abs(GeomZInterface(ICell, KBot + 1) -
+                                               GeomZInterface(ICell, KTop));
+          Real Transmission      = 0.0_Real;
+          if (ColumnDepth > SfcBuoyDepth) {
+             Transmission = NearIrFractionVal *
+                                Kokkos::exp(-NearIrCoeffVal * SfcBuoyDepth) +
+                            RedFractionVal *
+                                Kokkos::exp(-ExtinctionRedVal * SfcBuoyDepth) +
+                            BlueFractionVal *
+                                Kokkos::exp(-ExtinctionBlueVal * SfcBuoyDepth);
+          }
+          const Real Expected =
+              SurfaceFluxVal * (1.0_Real - Transmission) * HFluxFac;
+          const Real RelErr =
+              Kokkos::abs(SurfaceTracerFlux(0, ICell) - Expected) /
+              Kokkos::abs(Expected);
+          if (RelErr > RTol || Kokkos::isnan(SurfaceTracerFlux(0, ICell))) {
+             Accum += 1;
+          }
+       },
+       NumBadNonLocal);
+
+   if (NumBadNonLocal > 0) {
+      LOG_ERROR("TendencyTermsTest: PenetratingShortwave non-local flux FAIL, "
+                "{} cells do not match the expected results",
+                NumBadNonLocal);
+      Err += 1;
+   } else {
+      LOG_INFO("TendencyTermsTest: PenetratingShortwave non-local flux PASS");
+   }
+
    return Err;
 } // end testPenetratingShortwaveOnCell
 

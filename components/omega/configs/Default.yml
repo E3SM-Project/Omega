@@ -154,6 +154,7 @@ Omega:
       IceFractionThresholdForLangmuir: 0.05
       IceFractionThresholdForMinimumOSBL: 0.15
       MinimumOSBLUnderSeaIce: 5.0
+      SurfaceBuoyancyDepth: 1.0
       DebugDiagnostics: false
   RayleighDamping:
     Enable: false

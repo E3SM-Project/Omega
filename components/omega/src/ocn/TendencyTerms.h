@@ -559,6 +559,7 @@ class SfcTracerForcingOnCell {
        const Array1DReal &SnowFlux, const Array1DReal &RainFlux,
        const Array1DReal &IceRunoffFlux, const Array1DReal &RiverRunoffFlux,
        const Array1DReal &EvaporationFlux,
+       const Array1DReal &SeaIceFreshWaterFlux,
        const Array1DReal &SeaIceSaltFlux) const {
 
       const I4 KTop = MinLayerCell(ICell);
@@ -602,7 +603,6 @@ class SfcTracerForcingOnCell {
 
          const Real TempFlux = HeatFlux * HFluxFac;
          Tend(TempIndex, ICell, KTop) += TempFlux;
-         SurfaceTracerFlux(TempIndex, ICell) = TempFlux;
          // Accounting for extra energy/enthalpy (to be taken from atm)
          // - All direct heat fluxes are accounted for (via coupler)
          // - SeaIceHeatFlux comes entirely from the sea ice
@@ -614,12 +614,28 @@ class SfcTracerForcingOnCell {
              EvaporationFlux(ICell) * PotEnthalpyFwOut +
              (SnowFlux(ICell) + IceRunoffFlux(ICell)) *
                  (PotEnthalpyIce + LatIce);
+         // KPP non-local flux uses the direct temperature flux without the
+         // CT-neutral mass-flux enthalpy carried in ExtraEnergy, and without
+         // the sea-ice meltwater enthalpy (at its freezing CT) included in
+         // SeaIceHeatFlux, matching the KPP surface buoyancy flux.
+         const Real SaTopForIce =
+             SaltIndex >= 0 ? TracerCell(SaltIndex, ICell, KTop) : 0.0_Real;
+         const Real SeaIceLiqEnthalpy = sfcSeaIceLiqEnthalpy(
+             ICell, SaTopForIce, PressureMid(ICell, KTop) * Pa2Db, EosChoice,
+             SeaIceFreshWaterFlux, SeaIceSaltFlux);
+         SurfaceTracerFlux(TempIndex, ICell) =
+             (HeatFlux - ExtraEnergy(ICell) - SeaIceLiqEnthalpy) * HFluxFac;
       }
 
       if (SaltIndex >= 0) {
          const Real SaltFlux = SeaIceSaltFlux(ICell) * SFluxFac;
          Tend(SaltIndex, ICell, KTop) += SaltFlux;
-         SurfaceTracerFlux(SaltIndex, ICell) = SaltFlux;
+         const Real FreshWaterFlux = sfcFreshWaterFlux(
+             ICell, SnowFlux, RainFlux, EvaporationFlux, SeaIceFreshWaterFlux,
+             IceRunoffFlux, RiverRunoffFlux);
+         const Real SaTop = TracerCell(SaltIndex, ICell, KTop);
+         SurfaceTracerFlux(SaltIndex, ICell) =
+             SaltFlux - FreshWaterFlux * SaTop / RhoSw;
       }
    }
 
@@ -628,6 +644,7 @@ class SfcTracerForcingOnCell {
    I4 SaltIndex;
    Array1DI4 MinLayerCell;
    Array1DI4 MaxLayerCell;
+   Array2DReal PressureMid;
    EosType EosChoice;
 };
 
@@ -1273,7 +1290,9 @@ class PenetratingShortwaveOnCell {
               const Array2DReal &GeomZInterface,
               const Array1DReal &ShortWaveHeatFlux,
               const Array1DReal &ExtinctionCoeffRed,
-              const Array1DReal &ExtinctionCoeffBlue) const {
+              const Array1DReal &ExtinctionCoeffBlue,
+              const Array2DReal &SurfaceTracerFlux = Array2DReal(),
+              Real SurfaceBuoyancyDepth            = 1.0_Real) const {
 
       const I4 KTop = MinLayerCell(ICell);
       const I4 KBot = MaxLayerCell(ICell);
@@ -1301,9 +1320,8 @@ class PenetratingShortwaveOnCell {
                     Kokkos::abs(GeomZInterface(ICell, K) - ZSurface);
                 FluxAtInterface(K) =
                     SurfaceFlux *
-                    (NearIrFraction * Kokkos::exp(-NearIrCoeff * Depth) +
-                     RedFraction * Kokkos::exp(-Kr * Depth) +
-                     BlueFraction * Kokkos::exp(-Kb * Depth));
+                    sfcShortWaveTransmission(Depth, NearIrFraction, NearIrCoeff,
+                                             RedFraction, Kr, BlueFraction, Kb);
              }
           });
 
@@ -1315,6 +1333,22 @@ class PenetratingShortwaveOnCell {
              Tend(TempIndex, ICell, K) +=
                  (FluxAtInterface(K) - FluxAtInterface(K + 1)) * HFluxFac;
           });
+
+      // Add the shortwave absorbed above SurfaceBuoyancyDepth to the KPP
+      // non-local surface temperature flux when supplied. KPP uses the same
+      // depth for the surface buoyancy flux.
+      if (SurfaceTracerFlux.data() != nullptr) {
+         const Real ColumnDepth =
+             Kokkos::abs(GeomZInterface(ICell, KBot + 1) - ZSurface);
+         const Real Transmission = sfcShortWaveTransmissionBelowDepth(
+             SurfaceBuoyancyDepth, ColumnDepth, NearIrFraction, NearIrCoeff,
+             RedFraction, Kr, BlueFraction, Kb);
+         Kokkos::single(
+             PerTeam(Team), INNER_LAMBDA() {
+                SurfaceTracerFlux(TempIndex, ICell) +=
+                    SurfaceFlux * (1.0_Real - Transmission) * HFluxFac;
+             });
+      }
    }
 
  private:

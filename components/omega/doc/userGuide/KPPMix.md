@@ -64,6 +64,7 @@ VertMix:
     IceFractionThresholdForLangmuir: 0.05
     IceFractionThresholdForMinimumOSBL: 0.15
     MinimumOSBLUnderSeaIce: 5.0
+    SurfaceBuoyancyDepth: 1.0
     DebugDiagnostics: false
 ```
 
@@ -82,7 +83,17 @@ VertMix:
 | `IceFractionThresholdForLangmuir` | Above this ice fraction, disable Langmuir enhancement | `0.05` |
 | `IceFractionThresholdForMinimumOSBL` | Above this ice fraction, enforce minimum OSBL depth | `0.15` |
 | `MinimumOSBLUnderSeaIce` | Minimum OSBL depth under sea ice (m) | `5.0` |
+| `SurfaceBuoyancyDepth` | With penetrating shortwave enabled, only shortwave absorbed above this depth (m) enters the surface buoyancy flux and the non-local temperature flux | `1.0` |
 | `DebugDiagnostics` | Enable additional KPP diagnostics/logging in debug workflows, and extend the Ri diagnostic profiles below the boundary layer base | `false` |
+
+When `PenetratingShortwaveTendency.Enable` is true, the surface buoyancy flux
+and the non-local temperature flux both include only the shortwave absorbed
+above `SurfaceBuoyancyDepth`, as in MPAS-Ocean's
+`config_surface_buoyancy_depth`. Shortwave that penetrates deeper is still
+deposited by the penetrating shortwave term, but is treated as interior heating
+rather than surface forcing. In columns shallower than `SurfaceBuoyancyDepth`,
+all of the shortwave counts as surface forcing. Without penetrating shortwave,
+all of the shortwave enters both fluxes.
 
 Independent of those options, KPP keeps the diagnosed OSBL depth at least as deep
 as the bottom of the first active layer.

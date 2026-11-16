@@ -288,7 +288,7 @@ void Forcing::resetArrays() {
       deepCopy(TracerForcing.SeaIceHeatFluxCell, 0.0_Real);
       deepCopy(TracerForcing.ShortWaveHeatFluxCell, 0.0_Real);
       deepCopy(TracerForcing.SeaIceSaltFluxCell, 0.0_Real);
-      deepCopy(TracerForcing.SurfaceTracerFluxCell, FillValueReal);
+      deepCopy(TracerForcing.SurfaceTracerFluxCell, 0.0_Real);
    }
 
    if (WindSpeed10mFieldEnabled) {
