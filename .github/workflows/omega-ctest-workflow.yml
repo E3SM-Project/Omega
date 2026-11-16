@@ -14,6 +14,8 @@ on:
       - '.github/workflows/omega-ctest-workflow.yml'
 
   pull_request:
+    # Defaults plus ready_for_review, so drafts are tested once marked ready
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [develop]
     paths:
       - 'components/omega/**'
@@ -32,8 +34,9 @@ permissions:
 
 jobs:
   ctest:
-    if: ${{ github.repository == 'E3SM-Project/E3SM' ||
-            github.repository == 'E3SM-Project/Omega' }}
+    if: ${{ !github.event.pull_request.draft &&
+            (github.repository == 'E3SM-Project/E3SM' ||
+             github.repository == 'E3SM-Project/Omega') }}
     name: ${{ matrix.env }}, ${{ matrix.build_type }}
     # x86_64 only: on aarch64 the standalone build picks up x86's -mcmodel=medium from the
     # CIME macros and fails to configure (E3SM-Project/Omega#610).
