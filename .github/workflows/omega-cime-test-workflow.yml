@@ -32,9 +32,86 @@ permissions:
   contents: read
 
 jobs:
-  cime-test:
+  # Inputdata depends only on the grid and compset, so download it once and share it
+  # with the test jobs through the Actions cache
+  cache-inputdata:
     if: ${{ github.repository == 'E3SM-Project/E3SM' ||
             github.repository == 'E3SM-Project/Omega' }}
+    name: inputdata (${{ matrix.grid_compset }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        grid_compset: [T62_oQU240.GOMEGA-NYF]
+    env:
+      IMAGE: ghcr.io/e3sm-project/e3sm-image:gnu13-openmpi4
+    steps:
+      # Bump the key's version to refresh the cache; the remaining steps run only on a miss
+      - name: Check for cached inputdata
+        id: lookup
+        uses: actions/cache/restore@v6
+        with:
+          path: inputdata
+          key: omega-inputdata-${{ matrix.grid_compset }}-v1
+          lookup-only: true
+
+      - name: Free disk space
+        if: steps.lookup.outputs.cache-hit != 'true'
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/local/.ghcup \
+            /usr/share/swift
+          sudo docker image prune --all --force > /dev/null
+          df -h /
+
+      - name: Checkout Code Repository
+        if: steps.lookup.outputs.cache-hit != 'true'
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Only cime, as nothing is built here
+      - name: Update submodules
+        if: steps.lookup.outputs.cache-hit != 'true'
+        run: |
+          git -c url."https://github.com/".insteadOf=git@github.com: \
+            submodule update --init --depth 1 cime
+
+      - name: Pull the image
+        if: steps.lookup.outputs.cache-hit != 'true'
+        run: docker pull "$IMAGE"
+
+      - name: Download inputdata
+        if: steps.lookup.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p inputdata scratch
+          sudo chown -R 1000:1000 . inputdata scratch
+          rc=0
+          docker run --rm \
+            -v "$PWD:/projects/e3sm/work/Omega" \
+            -v "$PWD/inputdata:/projects/e3sm/data/inputdata" \
+            -v "$PWD/scratch:/home/e3sm/e3sm_scratch" \
+            "$IMAGE" bash -l /projects/e3sm/work/Omega/components/omega/ci/get-inputdata.sh \
+            "${{ matrix.grid_compset }}" \
+            || rc=$?
+          sudo chown -R "$(id -u):$(id -g)" . inputdata scratch
+          exit "$rc"
+
+      - name: Save inputdata to the cache
+        if: steps.lookup.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: inputdata
+          key: omega-inputdata-${{ matrix.grid_compset }}-v1
+
+  cime-test:
+    # Run even if priming failed; the tests then download their own inputdata
+    needs: cache-inputdata
+    if: ${{ !cancelled() &&
+            (github.repository == 'E3SM-Project/E3SM' ||
+             github.repository == 'E3SM-Project/Omega') }}
     name: ${{ matrix.test }}.${{ matrix.grid_compset }} (${{ matrix.env }})
     runs-on: ubuntu-latest
     timeout-minutes: 180
@@ -79,13 +156,19 @@ jobs:
             components/mpas-seaice/src/icepack \
             components/omega/external
 
+      # Saved by cache-inputdata; anything missing is downloaded by the test
+      - name: Restore cached inputdata
+        uses: actions/cache/restore@v6
+        with:
+          path: inputdata
+          key: omega-inputdata-${{ matrix.grid_compset }}-v1
+
       # The published images are public; no login needed
       - name: Pull the image
         run: docker pull "$IMAGE"
 
       # As the image's default user (uid 1000). The runner's own uid is 1001, so hand it
-      # what the test writes to, and take it back after for the logs. Inputdata (< 1 GB)
-      # is downloaded fresh each run.
+      # what the test writes to, and take it back after for the logs.
       - name: Run CIME test
         run: |
           mkdir -p inputdata scratch

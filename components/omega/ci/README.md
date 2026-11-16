@@ -8,7 +8,9 @@ images' CIME machine (`e3sm-container`). Usage is in each script's header.
 |------|---------|---------|
 | `get-meshes.sh` | Download the meshes the CTests need (on the runner, outside the container) | [omega-ctest-workflow.yml](../../../.github/workflows/omega-ctest-workflow.yml) |
 | `omega-ctest.sh` | Build Omega standalone and run its CTests (in the container) | [omega-ctest-workflow.yml](../../../.github/workflows/omega-ctest-workflow.yml) |
+| `get-inputdata.sh` | Download the CIME inputdata a test needs (in the container) | [omega-cime-test-workflow.yml](../../../.github/workflows/omega-cime-test-workflow.yml) |
 | `omega-cime-test.sh` | Run the CIME system tests given as arguments (in the container) | [omega-cime-test-workflow.yml](../../../.github/workflows/omega-cime-test-workflow.yml) |
 
-Nothing is cached or uploaded as an artifact: meshes and inputdata are
-downloaded on every run, and logs of failed runs are printed to the job log.
+Meshes and inputdata are kept in the Actions cache, and downloaded only when
+missing from it. Nothing is uploaded as an artifact; logs of failed runs are
+printed to the job log.

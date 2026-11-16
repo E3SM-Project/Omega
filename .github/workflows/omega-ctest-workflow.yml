@@ -75,6 +75,13 @@ jobs:
             components/omega/external \
             cime
 
+      # get-meshes.sh pins the mesh filenames, so its hash changes when the meshes do
+      - name: Restore cached meshes
+        uses: actions/cache@v6
+        with:
+          path: omega-meshes
+          key: omega-meshes-${{ hashFiles('components/omega/ci/get-meshes.sh') }}
+
       - name: Download meshes
         run: components/omega/ci/get-meshes.sh omega-meshes
 
