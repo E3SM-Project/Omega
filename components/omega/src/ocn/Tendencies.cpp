@@ -1402,11 +1402,11 @@ void Tendencies::computeTracerTendenciesOnly(
       const auto &ExtinctionCoeffBlue =
           ForcingState->ShortwavePenForcing.ExtinctionCoeffBlueCell;
       Array2DReal SurfaceTracerFlux;
-      Array1DI4 OSBLDepthIndex;
-      KPPMix *KPPInstance = KPPMix::getInstance();
+      Real SurfaceBuoyancyDepth = KPP::SurfaceBuoyancyDepth;
+      KPPMix *KPPInstance       = KPPMix::getInstance();
       if (LocSfcTracerForcing.Enabled && KPPInstance && KPPInstance->Enabled) {
          SurfaceTracerFlux = ForcingState->TracerForcing.SurfaceTracerFluxCell;
-         OSBLDepthIndex    = KPPInstance->OSBLDepthIndex;
+         SurfaceBuoyancyDepth = KPPInstance->SurfaceBuoyancyDepth;
       }
 
       parallelForOuter(
@@ -1416,7 +1416,7 @@ void Tendencies::computeTracerTendenciesOnly(
              LocPenetratingShortwave(Team, LocTracerTend, ICell, GeomZInterface,
                                      ShortWaveHeatFlux, ExtinctionCoeffRed,
                                      ExtinctionCoeffBlue, SurfaceTracerFlux,
-                                     OSBLDepthIndex);
+                                     SurfaceBuoyancyDepth);
           });
       Pacer::stop("Tend:penetratingShortwave", 2);
    }

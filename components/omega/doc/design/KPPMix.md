@@ -147,6 +147,8 @@ KPP is configured from the `VertMix: KPP` YAML group. Key parameters include:
 - `IceFractionThresholdForLangmuir`
 - `IceFractionThresholdForMinimumOSBL`
 - `MinimumOSBLUnderSeaIce`
+- `SurfaceBuoyancyDepth` (depth above which absorbed penetrating shortwave
+  counts as surface forcing in the buoyancy and non-local fluxes)
 - `DebugDiagnostics`
 
 Defaults and usage examples are documented in the user guide page:

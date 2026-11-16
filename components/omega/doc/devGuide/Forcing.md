@@ -76,7 +76,8 @@ the surface layer pseudo-thickness.
     tendency by default. `SfcTracerForcingOnCell` and
     `PenetratingShortwaveOnCell` populate the temperature and salinity entries
     with the concentration fluxes (excluding CT-neutral mass-flux enthalpy for
-    temperature, including OSBL-absorbed penetrating shortwave, and including
+    temperature, including the penetrating shortwave absorbed above
+    `VertMix.KPP.SurfaceBuoyancyDepth`, and including
     the freshwater dilution term for salinity).
 - `SfcThicknessForcingOnCell` tendency term
   - Computes the layer mass contribution (converted to pseudo-thickness): $\sum (\text{SnowFlux} + \text{RainFlux} + \text{EvaporationFlux} + \text{SeaIceFreshWaterFlux} + \text{IceRunoffFlux} + \text{RiverRunoffFlux} + \text{SeaIceSaltFlux}) / \rho_{sw}$
@@ -213,6 +214,14 @@ When penetration is enabled, `Tendencies` sets
 `SfcTracerForcingOnCell::IncludeShortWaveHeatFlux` to false. This prevents
 the same shortwave energy from being applied once through the penetrating
 kernel and again in the surface tracer forcing kernel.
+
+When KPP is enabled, `PenetratingShortwaveOnCell` adds the shortwave absorbed
+above `VertMix.KPP.SurfaceBuoyancyDepth` (default 1 m) to the temperature entry
+of `SurfaceTracerFlux`, the forcing for the KPP non-local flux.
+`KPPSurfaceForcingOnCell` removes the shortwave transmitted below the same
+depth from the surface buoyancy flux, so the two are consistent. Both use
+`sfcShortWaveTransmissionBelowDepth` in `SurfaceFlux.h`, which treats all of
+the shortwave as absorbed when the column is shallower than that depth.
 
 ## Surface tracer restoring design
 

@@ -87,6 +87,13 @@ class PotentialDensityOnCell {
 class KPPSurfaceForcingOnCell {
  public:
    bool UseTracerForcing = false;
+   /// When true, only shortwave absorbed above SurfaceBuoyancyDepth enters B0
+   bool UsePenetratingShortwave = false;
+   Real SurfaceBuoyancyDepth    = KPP::SurfaceBuoyancyDepth;
+   Real NearIrFraction          = 0.58_Real;
+   Real NearIrCoeff             = 2.86_Real;
+   Real RedFraction             = 0.21_Real;
+   Real BlueFraction            = 0.21_Real;
 
    KPPSurfaceForcingOnCell(const HorzMesh *Mesh, const VertCoord *VCoord,
                            const Eos *EosInst);
@@ -105,7 +112,9 @@ class KPPSurfaceForcingOnCell {
        const Array1DReal &EvaporationFlux,
        const Array1DReal &SeaIceFreshWaterFlux,
        const Array1DReal &IceRunoffFlux, const Array1DReal &RiverRunoffFlux,
-       const Array1DReal &SeaIceSaltFlux) const {
+       const Array1DReal &SeaIceSaltFlux,
+       const Array1DReal &ExtinctionCoeffRed  = Array1DReal(),
+       const Array1DReal &ExtinctionCoeffBlue = Array1DReal()) const {
       const I4 KTop = MinLayerCell(ICell);
       if (KTop < 0 || KTop >= NVertLayers)
          return;
@@ -118,14 +127,27 @@ class KPPSurfaceForcingOnCell {
       if (!UseTracerForcing)
          return;
 
-      const Real SaTop    = AbsSalinity(ICell, KTop);
-      const Real CtTop    = ConservTemp(ICell, KTop);
-      const Real PTopDb   = PressureMid(ICell, KTop) * Pa2Db;
-      const Real HeatFlux = sfcHeatFluxWithoutMassEnthalpy(
+      const Real SaTop                = AbsSalinity(ICell, KTop);
+      const Real CtTop                = ConservTemp(ICell, KTop);
+      const Real PTopDb               = PressureMid(ICell, KTop) * Pa2Db;
+      const Real HeatFluxAllShortWave = sfcHeatFluxWithoutMassEnthalpy(
           ICell, SaTop, PTopDb, EosChoice, LongWaveHeatFluxUp,
           LongWaveHeatFluxDown, ShortWaveHeatFlux, SensibleHeatFlux,
           SeaIceHeatFlux, SeaIceFreshWaterFlux, SeaIceSaltFlux,
           LatentHeatFluxEvap, SnowFlux, IceRunoffFlux);
+      Real HeatFlux = HeatFluxAllShortWave;
+      if (UsePenetratingShortwave) {
+         // Remove the shortwave that penetrates below SurfaceBuoyancyDepth, so
+         // B0 matches the KPP non-local temperature flux.
+         const I4 KBot          = MaxLayerCell(ICell);
+         const Real ColumnDepth = Kokkos::abs(GeomZInterface(ICell, KBot + 1) -
+                                              GeomZInterface(ICell, KTop));
+         HeatFlux -= ShortWaveHeatFlux(ICell) *
+                     sfcShortWaveTransmissionBelowDepth(
+                         SurfaceBuoyancyDepth, ColumnDepth, NearIrFraction,
+                         NearIrCoeff, RedFraction, ExtinctionCoeffRed(ICell),
+                         BlueFraction, ExtinctionCoeffBlue(ICell));
+      }
       const Real FreshWaterFlux = sfcFreshWaterFlux(
           ICell, SnowFlux, RainFlux, EvaporationFlux, SeaIceFreshWaterFlux,
           IceRunoffFlux, RiverRunoffFlux);
@@ -146,6 +168,8 @@ class KPPSurfaceForcingOnCell {
    Real LinearDRhodS;
    I4 NVertLayers;
    Array1DI4 MinLayerCell;
+   Array1DI4 MaxLayerCell;
+   Array2DReal GeomZInterface;
    EosType EosChoice;
 };
 
@@ -1029,6 +1053,9 @@ class KPPMix {
    Real IceFractionThresholdForMinimumOSBL = KPP::IceSuppressThresh;
    /// Min OSBL depth under sea ice (m)
    Real MinimumOSBLUnderSeaIce = KPP::MinOSBLUnderIce;
+   /// Depth (m) above which absorbed penetrating shortwave enters the surface
+   /// buoyancy flux and the non-local temperature flux
+   Real SurfaceBuoyancyDepth = KPP::SurfaceBuoyancyDepth;
 
    // KPP matching/profile controls (CVMix-style semantics)
    KPPMatchType MatchTechnique = KPPMatchType::SimpleShapes;

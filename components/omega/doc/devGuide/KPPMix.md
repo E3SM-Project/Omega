@@ -96,7 +96,8 @@ The non-dimensional functions live in `src/ocn/KPPConstants.h` in namespace
 
 `src/ocn/KPPConstants.h` is the single authoritative source for KPP default
 values. The runtime-configurable members of `KPPMix` (`SurfaceLayerExtent`, the
-two ice-fraction thresholds and `MinimumOSBLUnderSeaIce`) are initialized from
+two ice-fraction thresholds, `MinimumOSBLUnderSeaIce` and
+`SurfaceBuoyancyDepth`) are initialized from
 those constants rather than from inline literals, so a default is changed in
 exactly one place.
 
@@ -124,6 +125,11 @@ state: EOS fields, surface-referenced potential density, edge tangential
 velocity, surface friction velocity, surface buoyancy flux, and temporary ice
 fraction. Temperature and salinity are zero-copy subviews of the canonical
 tracer array, while surface tracer fluxes remain owned by the forcing state.
+When penetrating shortwave is enabled, the surface buoyancy flux removes the
+shortwave transmitted below `SurfaceBuoyancyDepth`, using the band fractions
+from `Tendencies::PenetratingShortwave` and the extinction coefficients from
+`Forcing::ShortwavePenForcing`. `PenetratingShortwaveOnCell` adds the same
+absorbed shortwave to the non-local temperature flux.
 `KPPMix::update(...)` validates required non-local tracer fluxes and performs
 the OSBL-depth and mixing-coefficient calculation.
 
@@ -188,6 +194,7 @@ Important keys and class members:
 - `IceFractionThresholdForLangmuir` -> `IceFractionThresholdForLangmuir`
 - `IceFractionThresholdForMinimumOSBL` -> `IceFractionThresholdForMinimumOSBL`
 - `MinimumOSBLUnderSeaIce` -> `MinimumOSBLUnderSeaIce`
+- `SurfaceBuoyancyDepth` -> `SurfaceBuoyancyDepth`
 - `DebugDiagnostics` -> `DebugDiagnostics`
 
 See [User KPP guide](../userGuide/KPPMix.md) for defaults and runnable examples.

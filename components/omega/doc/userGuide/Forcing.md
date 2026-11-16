@@ -163,6 +163,11 @@ from the surface-only heat sum in `SfcTracerForcingOnCell`; the other surface
 heat, freshwater enthalpy, and salt fluxes remain controlled by
 `SfcTracerForcingTendencyEnable`.
 
+With KPP enabled, only the shortwave absorbed above
+`VertMix.KPP.SurfaceBuoyancyDepth` (default 1 m) enters the KPP surface
+buoyancy flux and non-local temperature flux; see the
+[KPP user guide](KPPMix.md).
+
 ## Surface tracer restoring
 
 Surface tracer restoring applies a piston-velocity tendency, or damping, at the ocean

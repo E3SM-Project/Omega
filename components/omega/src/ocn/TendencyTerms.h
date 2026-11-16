@@ -1284,7 +1284,7 @@ class PenetratingShortwaveOnCell {
               const Array1DReal &ExtinctionCoeffRed,
               const Array1DReal &ExtinctionCoeffBlue,
               const Array2DReal &SurfaceTracerFlux = Array2DReal(),
-              const Array1DI4 &OSBLDepthIndex      = Array1DI4()) const {
+              Real SurfaceBuoyancyDepth            = 1.0_Real) const {
 
       const I4 KTop = MinLayerCell(ICell);
       const I4 KBot = MaxLayerCell(ICell);
@@ -1312,9 +1312,8 @@ class PenetratingShortwaveOnCell {
                     Kokkos::abs(GeomZInterface(ICell, K) - ZSurface);
                 FluxAtInterface(K) =
                     SurfaceFlux *
-                    (NearIrFraction * Kokkos::exp(-NearIrCoeff * Depth) +
-                     RedFraction * Kokkos::exp(-Kr * Depth) +
-                     BlueFraction * Kokkos::exp(-Kb * Depth));
+                    sfcShortWaveTransmission(Depth, NearIrFraction, NearIrCoeff,
+                                             RedFraction, Kr, BlueFraction, Kb);
              }
           });
 
@@ -1327,17 +1326,19 @@ class PenetratingShortwaveOnCell {
                  (FluxAtInterface(K) - FluxAtInterface(K + 1)) * HFluxFac;
           });
 
-      // Add the OSBL-absorbed shortwave heat flux to the KPP non-local
-      // surface temperature flux when supplied.
-      if (SurfaceTracerFlux.data() != nullptr &&
-          OSBLDepthIndex.data() != nullptr) {
-         const I4 KOBL =
-             Kokkos::max(KTop, Kokkos::min(OSBLDepthIndex(ICell), KBot));
+      // Add the shortwave absorbed above SurfaceBuoyancyDepth to the KPP
+      // non-local surface temperature flux when supplied. KPP uses the same
+      // depth for the surface buoyancy flux.
+      if (SurfaceTracerFlux.data() != nullptr) {
+         const Real ColumnDepth =
+             Kokkos::abs(GeomZInterface(ICell, KBot + 1) - ZSurface);
+         const Real Transmission = sfcShortWaveTransmissionBelowDepth(
+             SurfaceBuoyancyDepth, ColumnDepth, NearIrFraction, NearIrCoeff,
+             RedFraction, Kr, BlueFraction, Kb);
          Kokkos::single(
              PerTeam(Team), INNER_LAMBDA() {
                 SurfaceTracerFlux(TempIndex, ICell) +=
-                    (FluxAtInterface(KTop) - FluxAtInterface(KOBL + 1)) *
-                    HFluxFac;
+                    SurfaceFlux * (1.0_Real - Transmission) * HFluxFac;
              });
       }
    }

@@ -22,6 +22,7 @@
 #include "OceanState.h"
 #include "OmegaKokkos.h"
 #include "Pacer.h"
+#include "Tendencies.h"
 #include "Tracers.h"
 #include "VertCoord.h"
 #include "VertMix.h"
@@ -63,7 +64,8 @@ KPPSurfaceForcingOnCell::KPPSurfaceForcingOnCell(const HorzMesh *Mesh,
     : LinearDRhodT(EosInst->getLinearDRhodT()),
       LinearDRhodS(EosInst->getLinearDRhodS()),
       NVertLayers(VCoord->NVertLayers), MinLayerCell(VCoord->MinLayerCell),
-      EosChoice(EosInst->EosChoice) {}
+      MaxLayerCell(VCoord->MaxLayerCell),
+      GeomZInterface(VCoord->GeomZInterface), EosChoice(EosInst->EosChoice) {}
 
 /// Constructor for KPPMix
 KPPMix::KPPMix(const std::string &InName, const HorzMesh *InMesh,
@@ -226,6 +228,15 @@ void KPPMix::init() {
                         DefKPPMix->IceFractionThresholdForMinimumOSBL);
    Err += KPPConfig.get("MinimumOSBLUnderSeaIce",
                         DefKPPMix->MinimumOSBLUnderSeaIce);
+   Error SfcBuoyDepthErr =
+       KPPConfig.get("SurfaceBuoyancyDepth", DefKPPMix->SurfaceBuoyancyDepth);
+   if (!SfcBuoyDepthErr.isSuccess()) {
+      SfcBuoyDepthErr.reset();
+   }
+   if (DefKPPMix->SurfaceBuoyancyDepth < 0.0_Real) {
+      ABORT_ERROR("KPPMix::init: SurfaceBuoyancyDepth={} must be >= 0",
+                  DefKPPMix->SurfaceBuoyancyDepth);
+   }
    Error DebugErr =
        KPPConfig.get("DebugDiagnostics", DefKPPMix->DebugDiagnostics);
    if (!DebugErr.isSuccess()) {
@@ -303,7 +314,17 @@ void KPPMix::update(const Array3DReal &TracerArray, I4 TempTracerIndex,
    const auto &SfcStress     = ForcingState->SfcStressForcing;
    const auto &TracerForcing = ForcingState->TracerForcing;
    KPPSurfaceForcingOnCell SurfaceForcing(Mesh, VCoord, EqState);
-   SurfaceForcing.UseTracerForcing = UseTracerForcing;
+   SurfaceForcing.UseTracerForcing     = UseTracerForcing;
+   SurfaceForcing.SurfaceBuoyancyDepth = SurfaceBuoyancyDepth;
+   const Tendencies *DefTend           = Tendencies::getDefault();
+   if (DefTend && DefTend->PenetratingShortwave.Enabled) {
+      const auto &PenSw                      = DefTend->PenetratingShortwave;
+      SurfaceForcing.UsePenetratingShortwave = true;
+      SurfaceForcing.NearIrFraction          = PenSw.NearIrFraction;
+      SurfaceForcing.NearIrCoeff             = PenSw.NearIrCoeff;
+      SurfaceForcing.RedFraction             = PenSw.RedFraction;
+      SurfaceForcing.BlueFraction            = PenSw.BlueFraction;
+   }
 
    OMEGA_SCOPE(LocSurfaceForcing, SurfaceForcing);
    OMEGA_SCOPE(LocFrictionVelocity, SurfaceFrictionVelocity);
@@ -324,6 +345,10 @@ void KPPMix::update(const Array3DReal &TracerArray, I4 TempTracerIndex,
    OMEGA_SCOPE(IceRunoffFlux, TracerForcing.IceRunoffFluxCell);
    OMEGA_SCOPE(RiverRunoffFlux, TracerForcing.RiverRunoffFluxCell);
    OMEGA_SCOPE(SeaIceSaltFlux, TracerForcing.SeaIceSaltFluxCell);
+   OMEGA_SCOPE(ExtinctionCoeffRed,
+               ForcingState->ShortwavePenForcing.ExtinctionCoeffRedCell);
+   OMEGA_SCOPE(ExtinctionCoeffBlue,
+               ForcingState->ShortwavePenForcing.ExtinctionCoeffBlueCell);
    OMEGA_SCOPE(MinLayerCell, VCoord->MinLayerCell);
 
    if (UseTracerForcing) {
@@ -379,7 +404,8 @@ void KPPMix::update(const Array3DReal &TracerArray, I4 TempTracerIndex,
               LatentHeatFluxEvap, SensibleHeatFlux, LongWaveHeatFluxUp,
               LongWaveHeatFluxDown, SeaIceHeatFlux, ShortWaveHeatFlux, SnowFlux,
               RainFlux, EvaporationFlux, SeaIceFreshWaterFlux, IceRunoffFlux,
-              RiverRunoffFlux, SeaIceSaltFlux);
+              RiverRunoffFlux, SeaIceSaltFlux, ExtinctionCoeffRed,
+              ExtinctionCoeffBlue);
        });
 
    Halo *MeshHalo = Halo::getDefault();

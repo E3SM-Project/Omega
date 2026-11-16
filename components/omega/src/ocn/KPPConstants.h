@@ -101,6 +101,10 @@ constexpr Real IceSuppressThresh = 0.15_Real;
 /// are averaged over the top SurfaceLayerExtent * d of the column.
 constexpr Real SurfaceLayerExtent = 0.1_Real;
 
+/// Depth (m) above which absorbed penetrating shortwave counts toward the
+/// KPP surface buoyancy flux and the non-local temperature flux
+constexpr Real SurfaceBuoyancyDepth = 1.0_Real;
+
 /// Empirical convective velocity coefficient in the turbulent velocity scale
 /// w_s = (u*^3 + ConvectiveVelFac * max(-B_0,0) * h)^(1/3)
 constexpr Real ConvectiveVelFac = 0.35_Real;
