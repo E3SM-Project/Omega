@@ -79,6 +79,12 @@ class SpatialWeights {
    /// constant, so only the sum is computed, and only once.
    void update();
 
+   /// Recomputes the mass weights from the current pseudo-thickness without
+   /// the global weight sum, for a caller that uses the weights entity by
+   /// entity rather than in a global reduction. Does nothing for a
+   /// horizontal field, whose area weights are constant.
+   void updateWeights();
+
    /// Returns the global sum of the weights times the field over the owned
    /// entities, active layers and all leading extra dimensions of the input
    /// array. Call update() first.

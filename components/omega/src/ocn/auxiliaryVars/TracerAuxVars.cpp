@@ -52,6 +52,10 @@ void TracerAuxVars::registerFields(const std::string &AuxGroupName,
 
    // Attach data to fields
    Del2TracersCellField->attachData<Array3DReal>(Del2TracersCell);
+
+   // The Laplacian is of mass-weighted tracers, so its time mean is not
+   // weighted
+   Del2TracersCellField->setTimeMeanWeight(Field::NoTimeMeanWeight);
 }
 
 void TracerAuxVars::unregisterFields() const {

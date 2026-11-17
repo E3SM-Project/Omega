@@ -42,8 +42,8 @@ coupled:
     MonthlyAverages:
       Enable: true
       Fields: [Temperature, Salinity, PseudoThickness, SpecVol, GeomZMid,
-          GeomZInterface, SshCell, NormalVelocity, KineticEnergyCell,
-          FrazilMassFlux, FrazilSaltFlux, FrazilEnergyFlux]
+          GeomZInterface, SshCell, NormalVelocity, FluxPseudoThickEdge,
+          KineticEnergyCell, FrazilMassFlux, FrazilSaltFlux, FrazilEnergyFlux]
 
   # buildnml will also prepend '${CASE}.omega.' to the default filename of
   # 'write' mode IOStreams, except RestartRead which get special handling to

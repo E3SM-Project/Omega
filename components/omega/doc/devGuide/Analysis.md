@@ -201,7 +201,7 @@ field(s).
 | `SpatialMax` | 1 | 1 | scalar with same type as input (`Array1D<InType>`, dimension `Scalar`) | `_SpatialMax` | — | Global maximum of the input field. |
 | `SpatialMean` | 1 | 1 | scalar (`Array1DReal`, dimension `Scalar`) | `_SpatialMean` | — | Global weighted mean of the input field: by area for a horizontal field, by mass for a layered one (see [Spatial weights](#omega-dev-analysis-spatial-weights)). |
 | `SpatialStdDev` | 2 (the field and its `_SpatialMean`) | 1 | scalar (`Array1DReal`, dimension `Scalar`) | `_SpatialStdDev` | — | Global weighted standard deviation of the input field, with the same weights as `SpatialMean`. Requires the field's `SpatialMean` as an upstream input, which is added to its input list automatically. |
-| `TimeMean` | 1 | 1 | same rank and dimensions as the input (`Real`) | `_TimeMean<period>` | `Period` (string, e.g. `"1Day"`); `SamplingInterval` (string, optional) | Time average of the input field over a configurable period (e.g. `1Day`). By default accumulates every time step; the optional `SamplingInterval` instead gates accumulation to a coarser cadence (see below). Finalizes the mean when the period alarm rings. Output name embeds the period, e.g. `_TimeMean1Day`. |
+| `TimeMean` | 1 | 1 | same rank and dimensions as the input (`Real`) | `_TimeMean<period>` | `Period` (string, e.g. `"1Day"`); `SamplingInterval` (string, optional); `Weighting` (`Mass` or `None`, optional, default `None`) | Time average of the input field over a configurable period (e.g. `1Day`). By default accumulates every time step; the optional `SamplingInterval` instead gates accumulation to a coarser cadence (see below). With `Weighting: Mass`, fields on layers are weighted by mass (see [Mass-weighted time means](#omega-dev-analysis-weighted-time-means)). Finalizes the mean when the period alarm rings. Output name embeds the period, e.g. `_TimeMean1Day`. |
 | `BinaryMultiply` | 2 | 1 | same as first input | `_BinaryMultiply(<field2>)` | — | Element-wise multiplication of two fields. Supports vertical expansion (1D field replicated across vertical layers when multiplied with 2D/3D field). |
 | `HorzMean` | 1 | 1 | 1D Real (`Array1DReal`) over the input's vertical dimension | `_HorzMean` | `WeightField` (string, optional, default `AreaCell`) | Area-weighted horizontal mean per vertical layer/interface. |
 | `BinnedAccumulator` | 2 (data field, bin index field) | 1 | replaces horizontal dimension with `NumBins` | `_BinnedAccumulator(<binfield>)` | `NumBins` (I4) | Accumulates field values into spatial bins. Uses MPI reduction for global totals. Automatically applies regional mask if attached to input Field. |
@@ -297,7 +297,52 @@ so they are recomputed each time), and then `weightedSum()` or
 `weightedSquaredDeviation()` with the input array and `weightSum()` for the
 normalization. The sums accumulate each owned entity's terms in a fixed
 order and reduce them with `globalSum`, so they are as reproducible as
-Omega's other global sums.
+Omega's other global sums. An operator that uses the weights entity by
+entity rather than in a global sum calls `updateWeights()` instead of
+`update()`, which skips the global sum of the weights.
+
+(omega-dev-analysis-weighted-time-means)=
+### Mass-weighted time means
+
+With `Weighting: Mass` (the default in `MonthlyAverages`), `TimeMeanOp`
+accumulates both $w \phi$ and $w$ over the period at each active layer and
+writes out their ratio, so the output is $\overline{w \phi} / \overline{w}$.
+The area of an entity is fixed, so this is the mean weighted by the layer
+pseudo-thickness. Each field declares how its time mean is weighted with
+`Field::setTimeMeanWeight()`, where the field is created:
+
+- By default (an empty weight), a rank-2 or rank-3 field whose last two
+  dimensions are `NCells`, `NEdges` or `NVertices` and `NVertLayers` is
+  weighted by the mass weights of `SpatialWeights`, refreshed with
+  `updateWeights()` at each sample. On edges that is the mean pseudo-thickness
+  of the two cells, `MeanPseudoThickEdge`.
+- `Field::NoTimeMeanWeight` (`"None"`) marks a field that is already per unit
+  area, so its time mean is not weighted: the pseudo-thicknesses
+  (`PseudoThickness`, `FluxPseudoThickEdge`, `MeanPseudoThickEdge`, ...),
+  their tendency, and the tendencies, fluxes and Laplacian of
+  thickness-weighted tracers (`TracerTend`, the FCT budget arrays,
+  `Del2TracerCell`).
+- Any other value names a layer-thickness Field on the same entities to weight
+  by. `NormalVelocity`, `NormalBaroclinicVelocity`, `NormalTransportVelocity`
+  and `EddyVelocity` name `FluxPseudoThickEdge`, the thickness their
+  transport through an edge uses, so the mean velocity times the mean
+  `FluxPseudoThickEdge` is the mean transport, with centered or upwind flux
+  thickness. The named Field is read at each sample, so it must be current
+  when the analysis is computed, as the auxiliary variables are at the end of
+  each time step.
+
+A new field on layers that is per unit area (a thickness, a thickness flux or
+the tendency of a thickness-weighted quantity) should be marked with
+`NoTimeMeanWeight`, and a new normal velocity that is paired with a flux
+thickness should name that thickness; otherwise its mass-weighted mean will
+be wrong. Horizontal fields, interface fields (`NVertLayersP1`), fields that
+are not on the mesh and rank-4 fields are never weighted. The `SpatialMean`
+and `SpatialStdDev` operators ignore the declared weight and always use
+`SpatialWeights`.
+
+Where the sum of the weights is zero the output is the fill value. A weighted
+mean appends `(comment: weighted by <weight>)` to its `time: mean` cell
+method, naming `pseudo-thickness` or the weight Field.
 
 (omega-dev-analysis-output-metadata)=
 ### Output metadata
@@ -538,6 +583,13 @@ the existing `Restart` FieldGroup (the same mechanism other modules such as
    Field (not metadata) is required because Field-level metadata is written
    but not read back on restart.
 
+A mass-weighted mean also persists `<Out>_WeightSum`, the running sum of the
+weights over each entity and layer. A restart file without it leaves the
+array at its fill value, which `hasRestartWeightSum()` detects. In the middle
+of a period the partial sum is then unweighted and cannot be continued, so
+`applyRestartState()` aborts rather than writing a mean over part of the
+period.
+
 The restart Fields are created at the end of the `TimeMeanOp` constructor via
 the operator-private, non-virtual `createRestartFields()`; there is no
 base-class hook for it. Both Fields use `OptionalRead = true` for backward
@@ -707,4 +759,9 @@ The Analysis module is covered by two standalone C++ test executables, both
 registered in `test/CMakeLists.txt` and run with eight MPI ranks.
 `AnalysisOperatorTest.cpp` verifies the accuracy of the operators, while
 `AnalysisSystemTest.cpp` tests the individual components of the Analysis
-framework.
+framework. The mass-weighted time means are checked in
+`AnalysisOperatorTest.cpp` against means computed on the host while the
+pseudo-thickness changes from sample to sample, including the recovery of
+the mean transport from the mean velocity and flux thickness, and across an
+in-memory restart, including the detection of a restart file without the
+sum of the weights.
