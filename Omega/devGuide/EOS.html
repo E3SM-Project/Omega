@@ -243,6 +243,14 @@ for the <code class="docutils literal notranslate"><span class="pre">BruntVaisal
 calculated as the average between two layer values, rather than being recalculated using the interface values of temperature,
 salinity, and pressure. Both of these assumptions incur less than a 1% error.
 For the constant EOS option, <code class="docutils literal notranslate"><span class="pre">BruntVaisalaFreqSq</span></code> is identically zero.</p>
+<p>Every <code class="docutils literal notranslate"><span class="pre">Eos</span></code> function that takes a pressure expects the relative pressure (gauge
+pressure, i.e. absolute pressure minus the standard atmosphere) in Pa, the
+units of Omega’s pressure fields. The TEOS-10 polynomials are evaluated in
+terms of a dimensionless normalized pressure (sea pressure in dbar scaled by
+1e-4; see <code class="docutils literal notranslate"><span class="pre">Teos10Eos::calcNormPressure</span></code>), and the GSW library takes pressure in
+dbar, but these conversions are done internally, so callers never convert with
+<code class="docutils literal notranslate"><span class="pre">Pa2Db</span></code> themselves. The same holds for the frazil functors, which
+convert to dbar only where they call the GSW library.</p>
 <section id="eos-type">
 <h2>Eos type<a class="headerlink" href="#eos-type" title="Permalink to this heading"></a></h2>
 <p>An enumeration listing all implemented schemes is provided. It needs to be extended every time an
@@ -375,7 +383,9 @@ pressure, use</p>
 </pre></div>
 </div>
 <p>This helper follows the TEOS-10 polynomial approximation used by
-<code class="docutils literal notranslate"><span class="pre">gsw_ct_freezing_poly</span></code> in the GSW toolbox.</p>
+<code class="docutils literal notranslate"><span class="pre">gsw_ct_freezing_poly</span></code> in the GSW toolbox. Unlike the GSW function, which
+takes sea pressure in dbar, <code class="docutils literal notranslate"><span class="pre">P</span></code> is sea pressure in Pa, the units of Omega’s
+pressure fields; the conversion is done internally.</p>
 <p>To convert Conservative Temperature to potential temperature through the EOS
 interface, use</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Eos</span><span class="p">.</span><span class="n">calcPtFromCt</span><span class="p">(</span><span class="n">Sa</span><span class="p">,</span><span class="w"> </span><span class="n">Ct</span><span class="p">);</span>
