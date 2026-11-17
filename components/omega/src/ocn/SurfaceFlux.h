@@ -13,9 +13,10 @@
 namespace OMEGA {
 
 /// Surface heat flux used by KPP buoyancy forcing, excluding mass-flux
-/// enthalpy carried by the tracer tendency.
+/// enthalpy carried by the tracer tendency. PTop is the sea pressure [Pa]
+/// in the top layer.
 KOKKOS_INLINE_FUNCTION Real sfcHeatFluxWithoutMassEnthalpy(
-    I4 ICell, Real SaTop, Real PTopDb, EosType EosChoice,
+    I4 ICell, Real SaTop, Real PTop, EosType EosChoice,
     const Array1DReal &LongWaveHeatFluxUp,
     const Array1DReal &LongWaveHeatFluxDown,
     const Array1DReal &ShortWaveHeatFlux, const Array1DReal &SensibleHeatFlux,
@@ -31,7 +32,7 @@ KOKKOS_INLINE_FUNCTION Real sfcHeatFluxWithoutMassEnthalpy(
 
    const Real SeaIceLiqEnthalpyEstimate =
        SeaIceFreshWaterFlux(ICell) * Cp0Sw *
-       Eos::calcCtFreezing(EosChoice, SaSeaIce, PTopDb, 0.0_Real);
+       Eos::calcCtFreezing(EosChoice, SaSeaIce, PTop, 0.0_Real);
 
    return LongWaveHeatFluxUp(ICell) + LongWaveHeatFluxDown(ICell) +
           ShortWaveHeatFlux(ICell) + SensibleHeatFlux(ICell) +
