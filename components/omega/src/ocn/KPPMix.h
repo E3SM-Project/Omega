@@ -323,8 +323,9 @@ class KPPOSBLDepthSearch {
             const I4 IEdge     = EdgesOnCell(ICell, J);
             const I4 JCell     = CellsOnCell(ICell, J);
             const I4 KEMax     = MaxLayerEdgeTop(IEdge);
+            const I4 KEdgeMax  = Kokkos::min(K, KEMax);
             const Real SshEdge = 0.5_Real * (SshCell(ICell) + SshCell(JCell));
-            while (KSurfE[J] < K &&
+            while (KSurfE[J] < KEdgeMax &&
                    (SshEdge - 0.5_Real * (ZInterface(ICell, KSurfE[J] + 1) +
                                           ZInterface(JCell, KSurfE[J] + 1))) <
                        SurfLayerDepth) {
