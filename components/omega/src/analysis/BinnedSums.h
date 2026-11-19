@@ -9,19 +9,19 @@
 /// of a number of levels, so that the result does not depend on the order in
 /// which threads run or on how the mesh is divided among MPI tasks.
 ///
-/// Sums accumulated with atomic adds, or with a parallel reduction, depend on
-/// the order in which the values arrive, which on a GPU changes from one run
-/// to the next. BinnedSums instead lists each bin's entities once, in local
-/// index order, and splits each list into segments of at most SegmentSize
-/// entities. One thread per segment and level adds its entities in list order
-/// in double-double precision, and one thread per bin and level then adds its
-/// segments in order. Each task's double-double partial sums go to
-/// globalSumDD, which adds them across tasks in double-double as well.
+/// Each bin's entities are listed once, in local index order, and split into
+/// segments of at most SegmentSize entities. A team per segment and level
+/// reduces its entities in parallel, and a team per bin and level then
+/// reduces its segment partials. Both stages preserve the high and low parts
+/// of each sum, without floating-point atomic updates. Each task's partial
+/// sums go to globalSumDD, which adds them across tasks in double-double as
+/// well.
 ///
 /// The double-double sums carry about 106 bits, so a different division of
 /// the mesh among tasks changes the result only in the rare case that the
 /// exact sum lies almost exactly halfway between two doubles. This is the
-/// same reproducibility as globalSum.
+/// same reproducibility as globalSum. Reduction trees are backend-dependent;
+/// bitwise equality across hardwar is is not guaranteed.
 ///
 /// A caller builds the lists from each entity's bin, then computes the sums
 /// with a device functor giving the value of an entity at a level:
@@ -47,8 +47,8 @@ namespace OMEGA {
 /// Reproducible sums of entity values by bin and level
 class BinnedSums {
  public:
-   /// Maximum number of entities a single thread adds before its partial sum
-   /// is combined with those of the other segments of the same bin
+   /// Maximum number of entities a team reduces before its partial sum is
+   /// combined with those of the other segments of the same bin
    static constexpr I4 SegmentSize = 256;
 
    /// Builds the lists of entities in each bin. Entity I belongs to bin
@@ -142,30 +142,41 @@ class BinnedSums {
       OMEGA_SCOPE(LocBinLo, BinLo);
       const F LocValue = Value;
 
-      // Sum each segment's entities in list order
-      parallelFor(
+      parallelForOuter(
           "BinnedSumsSegments", {NSegments, NLevels},
-          KOKKOS_LAMBDA(int Seg, int Level) {
+          KOKKOS_LAMBDA(int Seg, int Level, const TeamMember &Team) {
              const I4 Bin = LocSegBin(Seg);
-             R8 Hi        = 0.0;
-             R8 Lo        = 0.0;
-             for (I4 J = LocSegStart(Seg); J < LocSegStart(Seg + 1); ++J)
-                sumDDLocal(Hi, Lo, LocValue(LocEntities(J), Bin, Level));
-             LocSegHi(Seg, Level) = Hi;
-             LocSegLo(Seg, Level) = Lo;
+             DDValue Sum;
+             parallelReduceInner(
+                 Team, Range{LocSegStart(Seg), LocSegStart(Seg + 1) - 1},
+                 INNER_LAMBDA(int J, DDValue &Accum) {
+                    sumDDLocal(Accum.Hi, Accum.Lo,
+                               LocValue(LocEntities(J), Bin, Level));
+                 },
+                 DDReducer(Sum));
+             Kokkos::single(
+                 PerTeam(Team), INNER_LAMBDA() {
+                    LocSegHi(Seg, Level) = Sum.Hi;
+                    LocSegLo(Seg, Level) = Sum.Lo;
+                 });
           });
 
-      // Sum each bin's segments in order
-      parallelFor(
+      parallelForOuter(
           "BinnedSumsBins", {NumBins, NLevels},
-          KOKKOS_LAMBDA(int Bin, int Level) {
-             R8 Hi = 0.0;
-             R8 Lo = 0.0;
-             for (I4 Seg = LocBinSegStart(Bin); Seg < LocBinSegStart(Bin + 1);
-                  ++Seg)
-                sumDDPair(Hi, Lo, LocSegHi(Seg, Level), LocSegLo(Seg, Level));
-             LocBinHi(Bin, Level) = Hi;
-             LocBinLo(Bin, Level) = Lo;
+          KOKKOS_LAMBDA(int Bin, int Level, const TeamMember &Team) {
+             DDValue Sum;
+             parallelReduceInner(
+                 Team, Range{LocBinSegStart(Bin), LocBinSegStart(Bin + 1) - 1},
+                 INNER_LAMBDA(int Seg, DDValue &Accum) {
+                    sumDDPair(Accum.Hi, Accum.Lo, LocSegHi(Seg, Level),
+                              LocSegLo(Seg, Level));
+                 },
+                 DDReducer(Sum));
+             Kokkos::single(
+                 PerTeam(Team), INNER_LAMBDA() {
+                    LocBinHi(Bin, Level) = Sum.Hi;
+                    LocBinLo(Bin, Level) = Sum.Lo;
+                 });
           });
 
       auto BinHiH = createHostMirrorCopy(BinHi);
@@ -179,6 +190,42 @@ class BinnedSums {
    }
 
  private:
+   struct DDValue {
+      R8 Hi;
+      R8 Lo;
+   };
+
+   /// Keeps the residual when team threads merge their partial sums.
+   struct DDReducer {
+      using reducer    = DDReducer;
+      using value_type = DDValue;
+      using result_view_type =
+          Kokkos::View<value_type, HostMemSpace, Kokkos::MemoryUnmanaged>;
+
+      KOKKOS_INLINE_FUNCTION
+      explicit DDReducer(value_type &Value) : Result(&Value) {}
+
+      KOKKOS_INLINE_FUNCTION void init(value_type &Value) const {
+         Value.Hi = 0.0;
+         Value.Lo = 0.0;
+      }
+
+      KOKKOS_INLINE_FUNCTION void join(value_type &Dest,
+                                       const value_type &Src) const {
+         sumDDPair(Dest.Hi, Dest.Lo, Src.Hi, Src.Lo);
+      }
+
+      KOKKOS_INLINE_FUNCTION value_type &reference() const {
+         return *Result.data();
+      }
+
+      KOKKOS_INLINE_FUNCTION result_view_type view() const { return Result; }
+
+      KOKKOS_INLINE_FUNCTION bool references_scalar() const { return true; }
+
+      result_view_type Result;
+   };
+
    /// Copies a host vector to a new device array
    static Array1DI4 copyToDevice(const std::string &Label,
                                  const std::vector<I4> &Host) {
