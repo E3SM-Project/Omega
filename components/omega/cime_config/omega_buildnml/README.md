@@ -48,8 +48,11 @@ pre-commit install
 See the Omega developer's guide for how to set up pixi, or for how to use a
 conda environment from [dev-conda.txt](../../dev-conda.txt) instead.
 
-To run the unit tests with one of the other Python versions supported,
+To run the unit tests with one of the other supported Python versions,
 use one of the `py3*` environments in `pixi.toml`, for example:
+```bash
+pixi shell --manifest-path ../../pixi.toml -e py314
+```
 
 ## Testing
 
