@@ -563,6 +563,14 @@ macro(setup_e3sm_build)
     omega_read_e3sm_macros()
   endif()
 
+  # An OMEGA_ARCH given to this build (buildlib_cmake passes the case's
+  # OCN_KOKKOS_BACKEND as -DOMEGA_ARCH) is checked in update_variables
+  # against the Kokkos Omega reuses; one detected below is not.
+  set(OMEGA_ARCH_GIVEN FALSE)
+  if(DEFINED OMEGA_ARCH AND NOT "${OMEGA_ARCH}" STREQUAL "")
+    set(OMEGA_ARCH_GIVEN TRUE)
+  endif()
+
   # Detect OMEGA_ARCH from the E3SM/CIME build variables when not provided.
   # USE_CUDA/USE_HIP/USE_SYCL are set by the GPU machine cmake_macros
   if(NOT DEFINED OMEGA_ARCH OR "${OMEGA_ARCH}" STREQUAL "")
@@ -803,6 +811,24 @@ macro(update_variables)
         "On machine '${MACH}' the GPU architecture is expected in KOKKOS_OPTIONS "
         "(cime_config/machines/cmake_macros/); add the appropriate Kokkos_ARCH_* "
         "there, or include EAMxx so Omega reuses its Kokkos.")
+    endif()
+
+  elseif(OMEGA_ARCH_GIVEN)
+    # Omega reuses the case's shared Kokkos, so a backend the case asked for
+    # must be one that Kokkos was built with. Kokkos's package config sets
+    # Kokkos_ENABLE_<BACKEND> for each enabled backend.
+    set(_OMEGA_ENABLED_ARCHS)
+    foreach(_OmegaArch SERIAL OPENMP CUDA HIP SYCL)
+      if(Kokkos_ENABLE_${_OmegaArch})
+        list(APPEND _OMEGA_ENABLED_ARCHS ${_OmegaArch})
+      endif()
+    endforeach()
+    if(NOT "${OMEGA_ARCH}" IN_LIST _OMEGA_ENABLED_ARCHS)
+      string(JOIN " " _OMEGA_ENABLED_ARCHS_STR ${_OMEGA_ENABLED_ARCHS})
+      message(FATAL_ERROR
+        "OMEGA_ARCH=${OMEGA_ARCH} (from OCN_KOKKOS_BACKEND in a coupled case) "
+        "is not a backend of the Kokkos this case shares with its other "
+        "components. Valid values: default ${_OMEGA_ENABLED_ARCHS_STR}")
     endif()
 
   endif()
