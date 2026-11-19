@@ -88,9 +88,8 @@ void RungeKutta4Stepper::doStep(OceanState *State,   // model state
    const int CurLevel  = 0;
    const int NextLevel = 1;
 
-   Array3DReal CurTracerArray   = Tracers::getAll(CurLevel);
-   Array3DReal NextTracerArray  = Tracers::getAll(NextLevel);
-   TimeInstant ForcingStageTime = SimTime;
+   Array3DReal CurTracerArray  = Tracers::getAll(CurLevel);
+   Array3DReal NextTracerArray = Tracers::getAll(NextLevel);
 
    VertMix *VMix = VertMix::getInstance();
 
@@ -116,9 +115,8 @@ void RungeKutta4Stepper::doStep(OceanState *State,   // model state
          // q^{n+1} += RKB[stage] * dt * R^{(s)}
          updateStateByTend(ProvisState, CurLevel, State, CurLevel,
                            RKA[Stage] * TimeStep);
-         ForcingStageTime += RKA[Stage] * TimeStep;
          prescribeState(ProvisState, CurLevel, ProvisState, CurLevel,
-                        ForcingStageTime);
+                        StageTime);
          updateTracersByTend(ProvisTracers, CurTracerArray, ProvisState,
                              CurLevel, State, CurLevel, RKA[Stage] * TimeStep);
 
