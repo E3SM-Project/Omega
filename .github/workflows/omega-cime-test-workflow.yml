@@ -26,9 +26,9 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # Cancel in progress runs testing the same git ref
+  # Cancel in progress runs testing the same PR; let every push to develop finish
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -110,9 +110,9 @@ jobs:
           key: omega-inputdata-${{ matrix.grid_compset }}-v1
 
   cime-test:
-    # Run even if priming failed; the tests then download their own inputdata
+    # Skipped if the inputdata job fails, so a struggling server isn't hit by every test
     needs: cache-inputdata
-    if: ${{ !cancelled() && !github.event.pull_request.draft &&
+    if: ${{ !github.event.pull_request.draft &&
             (github.repository == 'E3SM-Project/E3SM' ||
              github.repository == 'E3SM-Project/Omega') }}
     name: ${{ matrix.test }}.${{ matrix.grid_compset }} (${{ matrix.env }})
