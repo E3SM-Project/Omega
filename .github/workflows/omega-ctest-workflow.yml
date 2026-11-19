@@ -25,9 +25,9 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # Cancel in progress runs testing the same git ref
+  # Cancel in progress runs testing the same PR; let every push to develop finish
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
