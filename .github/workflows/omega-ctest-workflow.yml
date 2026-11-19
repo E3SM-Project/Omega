@@ -33,7 +33,46 @@ permissions:
   contents: read
 
 jobs:
+  # Download the meshes once and share them with the CTest jobs through the Actions
+  # cache, saved before any build so failing tests don't prevent it
+  cache-meshes:
+    if: ${{ !github.event.pull_request.draft &&
+            (github.repository == 'E3SM-Project/E3SM' ||
+             github.repository == 'E3SM-Project/Omega') }}
+    name: meshes
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      key: ${{ steps.restore.outputs.cache-primary-key }}
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: components/omega/ci
+
+      # get-meshes.sh pins the mesh filenames, so its hash changes when the meshes do
+      - name: Restore cached meshes
+        id: restore
+        uses: actions/cache/restore@v6
+        with:
+          path: omega-meshes
+          key: omega-meshes-${{ hashFiles('components/omega/ci/get-meshes.sh') }}
+
+      - name: Download meshes
+        if: steps.restore.outputs.cache-hit != 'true'
+        run: components/omega/ci/get-meshes.sh omega-meshes
+
+      - name: Save meshes to the cache
+        if: steps.restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: omega-meshes
+          key: ${{ steps.restore.outputs.cache-primary-key }}
+
   ctest:
+    # Skipped if the meshes job fails, so a struggling server isn't hit by every job
+    needs: cache-meshes
     if: ${{ !github.event.pull_request.draft &&
             (github.repository == 'E3SM-Project/E3SM' ||
              github.repository == 'E3SM-Project/Omega') }}
@@ -78,12 +117,12 @@ jobs:
             components/omega/external \
             cime
 
-      # get-meshes.sh pins the mesh filenames, so its hash changes when the meshes do
+      # Saved by cache-meshes; anything missing is downloaded
       - name: Restore cached meshes
-        uses: actions/cache@v6
+        uses: actions/cache/restore@v6
         with:
           path: omega-meshes
-          key: omega-meshes-${{ hashFiles('components/omega/ci/get-meshes.sh') }}
+          key: ${{ needs.cache-meshes.outputs.key }}
 
       - name: Download meshes
         run: components/omega/ci/get-meshes.sh omega-meshes
