@@ -1,0 +1,3 @@
+# pixi environment and its lock file (see pixi.toml)
+.pixi/
+pixi.lock
