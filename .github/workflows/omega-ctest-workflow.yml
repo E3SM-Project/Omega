@@ -6,11 +6,16 @@ name: omega-ctest
 # The containers repo runs the same build weekly against Omega develop (omega-case.yaml).
 
 on:
+  # Omega and what its standalone build reads from the rest of the repo
   push:
     branches: [develop]
     paths:
       - 'components/omega/**'
       - '!components/omega/doc/**'
+      - '!components/omega/cime_config/**'
+      - 'cime'
+      - 'cime_config/**'
+      - 'externals/**'
       - '.github/workflows/omega-ctest-workflow.yml'
 
   pull_request:
@@ -20,6 +25,10 @@ on:
     paths:
       - 'components/omega/**'
       - '!components/omega/doc/**'
+      - '!components/omega/cime_config/**'
+      - 'cime'
+      - 'cime_config/**'
+      - 'externals/**'
       - '.github/workflows/omega-ctest-workflow.yml'
 
   workflow_dispatch:
