@@ -50,4 +50,7 @@ cd "$case_dir"
 ./preview_namelists
 ./check_input_data --download
 
+# The workflow keys the inputdata cache on this list
+cat Buildconf/*.input_data_list | sort > "$HOME/e3sm_scratch/input_data_list"
+
 rm -rf "$case_dir"

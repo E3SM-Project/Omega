@@ -35,7 +35,8 @@ permissions:
 
 jobs:
   # Inputdata depends only on the grid and compset, so download it once and share it
-  # with the test jobs through the Actions cache
+  # with the test jobs through the Actions cache. Starts from the latest cache and
+  # fetches only what is missing, so changes to the input files are picked up.
   cache-inputdata:
     if: ${{ !github.event.pull_request.draft &&
             (github.repository == 'E3SM-Project/E3SM' ||
@@ -47,47 +48,34 @@ jobs:
       fail-fast: false
       matrix:
         grid_compset: [T62_oQU240.GOMEGA-NYF]
+    outputs:
+      key: ${{ steps.key.outputs.key }}
     env:
       IMAGE: ghcr.io/e3sm-project/e3sm-image:gnu13-openmpi4
     steps:
-      # Bump the key's version to refresh the cache; the remaining steps run only on a miss
-      - name: Check for cached inputdata
-        id: lookup
-        uses: actions/cache/restore@v6
-        with:
-          path: inputdata
-          key: omega-inputdata-${{ matrix.grid_compset }}-v1
-          lookup-only: true
-
-      - name: Free disk space
-        if: steps.lookup.outputs.cache-hit != 'true'
-        run: |
-          df -h /
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
-            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/local/.ghcup \
-            /usr/share/swift
-          sudo docker image prune --all --force > /dev/null
-          df -h /
-
       - name: Checkout Code Repository
-        if: steps.lookup.outputs.cache-hit != 'true'
         uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       # Only cime, as nothing is built here
       - name: Update submodules
-        if: steps.lookup.outputs.cache-hit != 'true'
         run: |
           git -c url."https://github.com/".insteadOf=git@github.com: \
             submodule update --init --depth 1 cime
 
+      - name: Restore cached inputdata
+        id: restore
+        uses: actions/cache/restore@v6
+        with:
+          path: inputdata
+          key: omega-inputdata-${{ matrix.grid_compset }}
+          restore-keys: omega-inputdata-${{ matrix.grid_compset }}-
+
       - name: Pull the image
-        if: steps.lookup.outputs.cache-hit != 'true'
         run: docker pull "$IMAGE"
 
       - name: Download inputdata
-        if: steps.lookup.outputs.cache-hit != 'true'
         run: |
           mkdir -p inputdata scratch
           sudo chown -R 1000:1000 . inputdata scratch
@@ -102,12 +90,19 @@ jobs:
           sudo chown -R "$(id -u):$(id -g)" . inputdata scratch
           exit "$rc"
 
+      - name: Compute cache key
+        id: key
+        env:
+          LIST_HASH: ${{ hashFiles('scratch/input_data_list') }}
+        run: |
+          echo "key=omega-inputdata-${{ matrix.grid_compset }}-$LIST_HASH" >> "$GITHUB_OUTPUT"
+
       - name: Save inputdata to the cache
-        if: steps.lookup.outputs.cache-hit != 'true'
+        if: steps.restore.outputs.cache-matched-key != steps.key.outputs.key
         uses: actions/cache/save@v6
         with:
           path: inputdata
-          key: omega-inputdata-${{ matrix.grid_compset }}-v1
+          key: ${{ steps.key.outputs.key }}
 
   cime-test:
     # Skipped if the inputdata job fails, so a struggling server isn't hit by every test
@@ -164,7 +159,8 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: inputdata
-          key: omega-inputdata-${{ matrix.grid_compset }}-v1
+          key: ${{ needs.cache-inputdata.outputs.key }}
+          restore-keys: omega-inputdata-${{ matrix.grid_compset }}-
 
       # The published images are public; no login needed
       - name: Pull the image
