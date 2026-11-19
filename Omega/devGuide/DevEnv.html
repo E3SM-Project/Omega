@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Development Conda Environment &mdash; Omega develop documentation</title>
+  <title>Development Environment &mdash; Omega develop documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
 
@@ -92,10 +92,20 @@
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="QuickStart.html">Quick Start for Developers</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Development Conda Environment</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#installing-miniforge3">Installing Miniforge3</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#creating-the-conda-environment">Creating the Conda Environment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#updating-the-conda-environment">Updating the Conda Environment</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Development Environment</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installing-pixi">Installing pixi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#keeping-pixi-off-your-home-quota">Keeping pixi off your home quota</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-the-environment">Creating the environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#activating-the-environment">Activating the environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#updating-the-environment">Updating the environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changing-the-packages">Changing the packages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#removing-the-environment">Removing the environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fallback-conda-environment">Fallback: conda environment</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#installing-miniforge3">Installing Miniforge3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-the-conda-environment">Creating the Conda Environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#updating-the-conda-environment">Updating the Conda Environment</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="Linting.html">Linting Code</a></li>
@@ -207,9 +217,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Development Conda Environment</li>
+      <li class="breadcrumb-item active">Development Environment</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/devGuide/CondaEnv.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/devGuide/DevEnv.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -217,14 +227,185 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section class="tex2jax_ignore mathjax_ignore" id="development-conda-environment">
-<span id="omega-dev-conda-env"></span><h1>Development Conda Environment<a class="headerlink" href="#development-conda-environment" title="Permalink to this heading"></a></h1>
-<p>As a developer, if you want to build the documentation locally or lint the
-code, you will need your own
-<a class="reference external" href="https://conda.io/projects/conda/en/latest/index.html">conda</a> environment with
+  <section class="tex2jax_ignore mathjax_ignore" id="development-environment">
+<span id="omega-dev-env"></span><h1>Development Environment<a class="headerlink" href="#development-environment" title="Permalink to this heading"></a></h1>
+<p>As a developer, if you want to lint the code, build the documentation locally
+or run the <code class="docutils literal notranslate"><span class="pre">omega_buildnml</span></code> unit tests, you will need your own environment with
 the necessary packages.</p>
+<p>We recommend <a class="reference external" href="https://pixi.sh">pixi</a>, which creates the environment from
+<code class="docutils literal notranslate"><span class="pre">components/omega/pixi.toml</span></code>. Omega’s CI also uses this environment. If you
+cannot use pixi, <a class="reference internal" href="#omega-dev-conda-env"><span class="std std-ref">Fallback: conda environment</span></a> describes how to create a conda
+environment from <code class="docutils literal notranslate"><span class="pre">components/omega/dev-conda.txt</span></code> instead.</p>
+<section id="installing-pixi">
+<span id="omega-dev-install-pixi"></span><h2>Installing pixi<a class="headerlink" href="#installing-pixi" title="Permalink to this heading"></a></h2>
+<p>If you have not already done so, install pixi:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://pixi.sh/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+</pre></div>
+</div>
+<p>This installs <code class="docutils literal notranslate"><span class="pre">pixi</span></code> in <code class="docutils literal notranslate"><span class="pre">${HOME}/.pixi/bin</span></code> and adds that directory to your
+<code class="docutils literal notranslate"><span class="pre">PATH</span></code> in your <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code>. Start a new shell (or <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">~/.bashrc</span></code>) before
+using it. Pixi is a single small executable, so it can stay in your home
+directory even where your home quota is small.</p>
+</section>
+<section id="keeping-pixi-off-your-home-quota">
+<span id="omega-dev-pixi-cache"></span><h2>Keeping pixi off your home quota<a class="headerlink" href="#keeping-pixi-off-your-home-quota" title="Permalink to this heading"></a></h2>
+<p>Before you create any pixi environments on an HPC machine, decide where pixi
+will keep its packages.</p>
+<p>Pixi downloads each package once into a package cache, and then hardlinks the
+files from the cache into each environment. Hardlinks only work when the cache
+and the environment are on the same file system. Otherwise, pixi copies the
+packages into every environment. The Omega environment is about 2 GB, and
+every branch or worktree gets its own environment, so copies add up quickly.
+Home directories on HPC machines usually have small quotas.</p>
+<p>To avoid this, add a line like the following to your <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code> on each
+machine, pointing at a directory with plenty of space:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">PIXI_CACHE_DIR</span><span class="o">=</span>/path/with/space/pixi/cache
+</pre></div>
+</div>
+<p>Set <code class="docutils literal notranslate"><span class="pre">PIXI_CACHE_DIR</span></code> explicitly even if the default location would have room.
+On some network file systems, pixi otherwise caches packages inside each
+workspace, so every branch or worktree gets its own copy of every package.</p>
+<p>Pixi puts an environment in <code class="docutils literal notranslate"><span class="pre">components/omega/.pixi</span></code> of the branch you create
+it from. If your Omega branches are not on the same file system as
+<code class="docutils literal notranslate"><span class="pre">PIXI_CACHE_DIR</span></code> (for example, if your branches are in your home directory but
+the cache is on a project file system), also tell pixi to put its environments
+next to the cache:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pixi<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--global<span class="w"> </span>detached-environments<span class="w"> </span>/path/with/space/pixi/envs
+</pre></div>
+</div>
+<p>You only need to run this once on each machine. It is saved in
+<code class="docutils literal notranslate"><span class="pre">${HOME}/.pixi/config.toml</span></code>.</p>
+<p>For example, on Perlmutter, the home directory is too small for Omega branches,
+so we recommend cloning Omega somewhere under <code class="docutils literal notranslate"><span class="pre">/global/cfs/cdirs/e3sm/${USER}</span></code>.
+Then put the cache on the same file system:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># in ~/.bashrc</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">PIXI_CACHE_DIR</span><span class="o">=</span>/global/cfs/cdirs/e3sm/<span class="si">${</span><span class="nv">USER</span><span class="si">}</span>/pixi/cache
+</pre></div>
+</div>
+<p>If you do keep Omega branches in your home directory, this cache alone would
+make pixi copy packages into each environment in your home directory. In that
+case, also put the environments on CFS:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># once</span>
+pixi<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--global<span class="w"> </span>detached-environments<span class="w"> </span>/global/cfs/cdirs/e3sm/<span class="si">${</span><span class="nv">USER</span><span class="si">}</span>/pixi/envs
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">detached-environments</span></code> is a global setting. It applies to every pixi
+workspace you use on that machine, not just Omega. This includes the pixi
+environments that Polaris creates. All of them will go in this directory
+instead of next to their workspaces. Environments outside their workspaces
+are also not deleted when you delete a branch or worktree, so see
+<a class="reference internal" href="#omega-dev-remove-env"><span class="std std-ref">Removing the environment</span></a> for how to clean them up.</p>
+<p>Avoid scratch file systems that are purged. If files in an environment are
+purged, the environment stops working and you will need to recreate it.</p>
+<p>On a laptop or workstation, the default locations are usually fine.</p>
+</section>
+<section id="creating-the-environment">
+<span id="omega-dev-create-env"></span><h2>Creating the environment<a class="headerlink" href="#creating-the-environment" title="Permalink to this heading"></a></h2>
+<p>From the root of an Omega branch, run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>components/omega/
+pixi<span class="w"> </span>install
+</pre></div>
+</div>
+<p>Pixi solves for the packages in <code class="docutils literal notranslate"><span class="pre">pixi.toml</span></code> and installs them. It also writes a
+<code class="docutils literal notranslate"><span class="pre">pixi.lock</span></code> file recording exactly what it installed. Omega does not commit
+this file to the repository (it is in <code class="docutils literal notranslate"><span class="pre">.gitignore</span></code>), so each branch gets the
+latest compatible packages when its environment is created.</p>
+</section>
+<section id="activating-the-environment">
+<span id="omega-dev-activate-env"></span><h2>Activating the environment<a class="headerlink" href="#activating-the-environment" title="Permalink to this heading"></a></h2>
+<p>To activate the environment, run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>components/omega/
+pixi<span class="w"> </span>shell
+</pre></div>
+</div>
+<p>This starts a new shell with the environment activated. You can then move
+around the repository (or anywhere else) and use the tools in the environment.
+Type <code class="docutils literal notranslate"><span class="pre">exit</span></code> to leave the shell. You can also run <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">shell</span></code> from the root of
+the branch with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pixi<span class="w"> </span>shell<span class="w"> </span>--manifest-path<span class="w"> </span>components/omega/pixi.toml
+</pre></div>
+</div>
+<p>If you have not run <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">install</span></code> yet, <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">shell</span></code> will create the
+environment first.</p>
+<p>The first time you set up the environment, you need to initiate <code class="docutils literal notranslate"><span class="pre">pre-commit</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>install
+</pre></div>
+</div>
+<p>This needs to be done once per environment, so re-run it as necessary if you
+re-create the development environment.</p>
+<p>Please activate this environment each time you commit code. This will ensure
+that <code class="docutils literal notranslate"><span class="pre">pre-commit</span></code> and the associated linting utilities are available and that
+they check your code as it is committed (rather than requiring fix-up commits
+later on).</p>
+</section>
+<section id="updating-the-environment">
+<span id="omega-dev-update-env"></span><h2>Updating the environment<a class="headerlink" href="#updating-the-environment" title="Permalink to this heading"></a></h2>
+<p>If <code class="docutils literal notranslate"><span class="pre">pixi.toml</span></code> changes (for example, after you merge or rebase onto a newer
+<code class="docutils literal notranslate"><span class="pre">develop</span></code>), pixi updates the environment the next time you run <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">shell</span></code> or
+<code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">install</span></code>.</p>
+<p>To update the packages to their latest compatible versions without any change
+to <code class="docutils literal notranslate"><span class="pre">pixi.toml</span></code>, run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>components/omega/
+pixi<span class="w"> </span>update
+</pre></div>
+</div>
+</section>
+<section id="changing-the-packages">
+<span id="omega-dev-change-env"></span><h2>Changing the packages<a class="headerlink" href="#changing-the-packages" title="Permalink to this heading"></a></h2>
+<p>If you add, remove or change the version constraint of a package in
+<code class="docutils literal notranslate"><span class="pre">pixi.toml</span></code>, make the same change in <code class="docutils literal notranslate"><span class="pre">dev-conda.txt</span></code>. CI runs
+<code class="docutils literal notranslate"><span class="pre">components/omega/ci/check_dev_envs.py</span></code> to make sure the two files list the
+same packages and version constraints. You can run it yourself before you
+commit:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>components/omega/
+ci/check_dev_envs.py
+</pre></div>
+</div>
+</section>
+<section id="removing-the-environment">
+<span id="omega-dev-remove-env"></span><h2>Removing the environment<a class="headerlink" href="#removing-the-environment" title="Permalink to this heading"></a></h2>
+<p>If you use the default location, the environment is in
+<code class="docutils literal notranslate"><span class="pre">components/omega/.pixi</span></code>, so it is deleted along with the branch or worktree.</p>
+<p>If you set <code class="docutils literal notranslate"><span class="pre">detached-environments</span></code>, the environment is outside the branch and
+outlives it. Before you delete a branch or worktree, remove its environment
+with <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">clean</span></code>, which needs the branch’s <code class="docutils literal notranslate"><span class="pre">pixi.toml</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pixi<span class="w"> </span>clean<span class="w"> </span>--manifest-path<span class="w"> </span>&lt;worktree&gt;/components/omega/pixi.toml
+git<span class="w"> </span>worktree<span class="w"> </span>remove<span class="w"> </span>&lt;worktree&gt;
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">clean</span></code> removes the environments but leaves a small directory behind
+(a few KB).</p>
+<p>If you have already deleted a branch or worktree without running <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">clean</span></code>,
+pixi has no command to find its environment. Each environment records the
+<code class="docutils literal notranslate"><span class="pre">pixi.toml</span></code> it was created from, so you can list the environments whose
+<code class="docutils literal notranslate"><span class="pre">pixi.toml</span></code> no longer exists:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">envs_dir</span><span class="o">=</span>/global/cfs/cdirs/e3sm/<span class="si">${</span><span class="nv">USER</span><span class="si">}</span>/pixi/envs
+<span class="k">for</span><span class="w"> </span>meta<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">envs_dir</span><span class="si">}</span><span class="s2">"</span>/*/envs/*/conda-meta/pixi<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">  </span><span class="nv">manifest</span><span class="o">=</span><span class="k">$(</span>sed<span class="w"> </span>-n<span class="w"> </span><span class="s1">'s/.*"manifest_path": *"\([^"]*\)".*/\1/p'</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">meta</span><span class="si">}</span><span class="s2">"</span><span class="k">)</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>!<span class="w"> </span>-f<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">manifest</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">meta</span><span class="p">%/envs/*/conda-meta/pixi</span><span class="si">}</span><span class="s2">"</span>
+<span class="w">  </span><span class="k">fi</span>
+<span class="k">done</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-u
+</pre></div>
+</div>
+<p>Set <code class="docutils literal notranslate"><span class="pre">envs_dir</span></code> to your <code class="docutils literal notranslate"><span class="pre">detached-environments</span></code> directory. This lists
+environments from other pixi workspaces, such as Polaris, as well as Omega.
+Check the list, then delete those directories with <code class="docutils literal notranslate"><span class="pre">rm</span> <span class="pre">-rf</span></code>. It is worth doing
+this from time to time so that unused environments do not pile up.</p>
+<p>Because environments are hardlinked from the package cache, deleting them
+frees less space than their size suggests. To free the rest, also clear out
+the cache with <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">clean</span> <span class="pre">cache</span></code>. Existing environments keep working, and
+pixi downloads packages again the next time it needs them.</p>
+</section>
+<section id="fallback-conda-environment">
+<span id="omega-dev-conda-env"></span><h2>Fallback: conda environment<a class="headerlink" href="#fallback-conda-environment" title="Permalink to this heading"></a></h2>
+<p>If you cannot use pixi, you can create a
+<a class="reference external" href="https://conda.io/projects/conda/en/latest/index.html">conda</a> environment with
+the same packages instead. Unlike the pixi environment, this environment is not
+built in CI, though CI does check that <code class="docutils literal notranslate"><span class="pre">dev-conda.txt</span></code> lists the same packages
+as <code class="docutils literal notranslate"><span class="pre">pixi.toml</span></code>.</p>
 <section id="installing-miniforge3">
-<span id="omega-dev-install-miniforge3"></span><h2>Installing Miniforge3<a class="headerlink" href="#installing-miniforge3" title="Permalink to this heading"></a></h2>
+<span id="omega-dev-install-miniforge3"></span><h3>Installing Miniforge3<a class="headerlink" href="#installing-miniforge3" title="Permalink to this heading"></a></h3>
 <p>If you have not already done so, you will install
 <a class="reference external" href="https://github.com/conda-forge/miniforge#miniforge3">Miniforge3</a>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-L<span class="w"> </span>-O<span class="w"> </span><span class="s2">"https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-</span><span class="k">$(</span>uname<span class="k">)</span><span class="s2">-</span><span class="k">$(</span>uname<span class="w"> </span>-m<span class="k">)</span><span class="s2">.sh"</span>
@@ -253,22 +434,26 @@ to add an alias like the following to your <code class="docutils literal notrans
 <p>Anytime you need <code class="docutils literal notranslate"><span class="pre">conda</span></code> command, you can first run <code class="docutils literal notranslate"><span class="pre">conda_base</span></code>to get it.</p>
 </section>
 <section id="creating-the-conda-environment">
-<span id="omega-dev-create-conda-env"></span><h2>Creating the Conda Environment<a class="headerlink" href="#creating-the-conda-environment" title="Permalink to this heading"></a></h2>
+<span id="omega-dev-create-conda-env"></span><h3>Creating the Conda Environment<a class="headerlink" href="#creating-the-conda-environment" title="Permalink to this heading"></a></h3>
 <p>With Miniforge3 installed and the <code class="docutils literal notranslate"><span class="pre">conda</span></code> command available, you can create the
 Omega development environment, starting from the root
 of an Omega branch, with:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>components/omega/
 conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>omega_dev<span class="w"> </span>--file<span class="w"> </span>dev-conda.txt
 conda<span class="w"> </span>activate<span class="w"> </span>omega_dev
+pre-commit<span class="w"> </span>install
 </pre></div>
 </div>
+<p>(You can reuse <code class="docutils literal notranslate"><span class="pre">omega_dev</span></code> for other branches as long as <code class="docutils literal notranslate"><span class="pre">dev-conda.txt</span></code> has
+not changed between branches.)</p>
 </section>
 <section id="updating-the-conda-environment">
-<span id="omega-dev-update-conda-env"></span><h2>Updating the Conda Environment<a class="headerlink" href="#updating-the-conda-environment" title="Permalink to this heading"></a></h2>
+<span id="omega-dev-update-conda-env"></span><h3>Updating the Conda Environment<a class="headerlink" href="#updating-the-conda-environment" title="Permalink to this heading"></a></h3>
 <p>If you need to update the <code class="docutils literal notranslate"><span class="pre">omega_dev</span></code> conda environment, the easiest way to
 do that is just to recreate it by following the same instructions as above.
 You will be prompted about whether you want to delete the old environment
 unless you include the <code class="docutils literal notranslate"><span class="pre">-y</span></code> flag (to say “yes” to all prompts).</p>
+</section>
 </section>
 </section>
 

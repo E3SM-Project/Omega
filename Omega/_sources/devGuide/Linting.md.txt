@@ -4,8 +4,8 @@
 
 ## Enabling Lint Checks
 
-First, please follow the procedure in {ref}`omega-dev-conda-env` to set up a
-conda environment for linting the code and building the docs.
+First, please follow the procedure in {ref}`omega-dev-env` to set up a
+development environment for linting the code and building the docs.
 
 Once on each machine you are developing on, before committing code, please run:
 ```bash
@@ -85,5 +85,5 @@ You can specify one more more files instead of `--all-files`.
 
 ## Updating the linting pacakge
 
-To update the linting packages, you just need to recreate the development
-conda environment.  See {ref}`omega-dev-update-conda-env`.
+To update the linting packages, you just need to update the development
+environment.  See {ref}`omega-dev-update-env`.

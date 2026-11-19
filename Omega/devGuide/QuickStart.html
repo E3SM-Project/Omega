@@ -19,7 +19,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Development Conda Environment" href="CondaEnv.html" />
+    <link rel="next" title="Development Environment" href="DevEnv.html" />
     <link rel="prev" title="Analysis" href="../userGuide/Analysis.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
@@ -95,7 +95,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#getting-set-up">Getting set up</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#creating-an-e3sm-fork">Creating an E3SM fork</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#check-out-the-code">Check out the code</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#create-a-conda-environment">Create a conda environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#create-a-development-environment">Create a development environment</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#building-and-testing-omega">Building and testing Omega</a><ul>
@@ -114,7 +114,7 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="CondaEnv.html">Development Conda Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DevEnv.html">Development Environment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Linting.html">Linting Code</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Docs.html">Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="BuildDocs.html">Building the Documentation</a></li>
@@ -274,20 +274,22 @@ git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </s
 </pre></div>
 </div>
 </section>
-<section id="create-a-conda-environment">
-<h3>Create a conda environment<a class="headerlink" href="#create-a-conda-environment" title="Permalink to this heading"></a></h3>
-<p>If you do not have conda set up in your own space yet, follow
-<a class="reference internal" href="CondaEnv.html#omega-dev-install-miniforge3"><span class="std std-ref">Installing Miniforge3</span></a> for instructions on how to install it.</p>
-<p>Activate the <code class="docutils literal notranslate"><span class="pre">base</span></code> conda environment.  Go to the base of the Omega branch you
-plan to develop and create a conda environment for
-linting your code and building the documentation:</p>
+<section id="create-a-development-environment">
+<h3>Create a development environment<a class="headerlink" href="#create-a-development-environment" title="Permalink to this heading"></a></h3>
+<p>If you do not have <a class="reference external" href="https://pixi.sh">pixi</a> installed yet, follow
+<a class="reference internal" href="DevEnv.html#omega-dev-install-pixi"><span class="std std-ref">Installing pixi</span></a>. On an HPC machine, also follow
+<a class="reference internal" href="DevEnv.html#omega-dev-pixi-cache"><span class="std std-ref">Keeping pixi off your home quota</span></a> before creating any environments, so pixi does not
+fill your home quota.</p>
+<p>Go to the base of the Omega branch you plan to develop, then create and
+activate the environment for linting your code and building the documentation:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>components/omega/
-conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>omega_dev<span class="w"> </span>--file<span class="w"> </span>dev-conda.txt
-conda<span class="w"> </span>activate<span class="w"> </span>omega_dev
+pixi<span class="w"> </span>shell
 </pre></div>
 </div>
-<p>(You can reuse <code class="docutils literal notranslate"><span class="pre">omega_dev</span></code> for other branches as long as <code class="docutils literal notranslate"><span class="pre">dev-conda.txt</span></code> has
-not changed between branches.)</p>
+<p>(<code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">shell</span></code> creates the environment the first time. Type <code class="docutils literal notranslate"><span class="pre">exit</span></code> to leave
+the shell.)</p>
+<p>If you cannot use pixi, see <a class="reference internal" href="DevEnv.html#omega-dev-conda-env"><span class="std std-ref">Fallback: conda environment</span></a> for how to create a
+conda environment instead.</p>
 <p>The first time you set up the environment, you need to initiate <code class="docutils literal notranslate"><span class="pre">pre-commit</span></code>:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>install
 </pre></div>
@@ -499,7 +501,7 @@ the Omega documentation as you are writing them.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="../userGuide/Analysis.html" class="btn btn-neutral float-left" title="Analysis" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="CondaEnv.html" class="btn btn-neutral float-right" title="Development Conda Environment" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="DevEnv.html" class="btn btn-neutral float-right" title="Development Environment" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
