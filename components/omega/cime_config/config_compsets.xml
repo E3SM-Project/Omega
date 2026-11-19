@@ -10,6 +10,12 @@
   <!-- E3SM C/G compsets -->
 
   <compset>
+    <alias>COMEGA-NYF</alias>
+    <lname>2000_DATM%NYF_SLND_DICE%SSMI_OMEGA%DATMFORCED_DROF%NYF_SGLC_SWAV</lname>
+    <support_level>Experimental, under development</support_level>
+  </compset>
+
+  <compset>
     <alias>COMEGA-IAF</alias>
     <lname>2000_DATM%IAF_SLND_DICE%IAF_OMEGA%DATMFORCED_DROF%IAF_SGLC_SWAV</lname>
     <support_level>Experimental, under development</support_level>
@@ -19,6 +25,11 @@
     <alias>COMEGA-JRA1p5</alias>
     <lname>2000_DATM%JRA-1p5_SLND_DICE%SSMI_OMEGA%DATMFORCED_DROF%JRA-1p5_SGLC_SWAV</lname>
     <support_level>Experimental, under development</support_level>
+  </compset>
+
+  <compset>
+    <alias>GOMEGA-NYF</alias>
+    <lname>2000_DATM%NYF_SLND_MPASSI_OMEGA%DATMFORCED_DROF%NYF_SGLC_SWAV</lname>
   </compset>
 
   <compset>
