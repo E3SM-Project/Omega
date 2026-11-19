@@ -47,21 +47,7 @@ rst-to-myst = "*"
 cfchecker = "*"
 udunits2 = "*"
 
-# The default environment uses the Python version that CI uses for linting
-# and the docs. The py3* environments are for testing omega_buildnml against
-# each Python version CIME supports.
-
-[feature.py39.dependencies]
-python = "3.9.*"
-
-[feature.py310.dependencies]
-python = "3.10.*"
-
-[feature.py311.dependencies]
-python = "3.11.*"
-
-[feature.py312.dependencies]
-python = "3.12.*"
+# Default env uses Python version that CI uses for linting and the docs.
 
 [feature.py313.dependencies]
 python = "3.13.*"
@@ -71,9 +57,5 @@ python = "3.14.*"
 
 [environments]
 default = ["py313"]
-py39 = ["py39"]
-py310 = ["py310"]
-py311 = ["py311"]
-py312 = ["py312"]
 py313 = ["py313"]
 py314 = ["py314"]

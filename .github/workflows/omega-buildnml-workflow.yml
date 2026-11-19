@@ -65,7 +65,7 @@ jobs:
       fail-fast: false
       matrix:
         # pixi environments for each Python version CIME supports
-        environment: [py39, py310, py311, py312, py313, py314]
+        environment: [py313, py314]
     steps:
       - name: Checkout Code Repository
         uses: actions/checkout@v4
