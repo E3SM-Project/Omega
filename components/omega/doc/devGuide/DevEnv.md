@@ -73,6 +73,13 @@ case, also put the environments on CFS:
 pixi config set --global detached-environments /global/cfs/cdirs/e3sm/${USER}/pixi/envs
 ```
 
+`detached-environments` is a global setting. It applies to every pixi
+workspace you use on that machine, not just Omega. This includes the pixi
+environments that Polaris creates. All of them will go in this directory
+instead of next to their workspaces. Environments outside their workspaces
+are also not deleted when you delete a branch or worktree, so see
+{ref}`omega-dev-remove-env` for how to clean them up.
+
 Avoid scratch file systems that are purged. If files in an environment are
 purged, the environment stops working and you will need to recreate it.
 
@@ -151,6 +158,46 @@ commit:
 cd components/omega/
 utils/check_dev_envs.py
 ```
+
+(omega-dev-remove-env)=
+
+## Removing the environment
+
+If you use the default location, the environment is in
+`components/omega/.pixi`, so it is deleted along with the branch or worktree.
+
+If you set `detached-environments`, the environment is outside the branch and
+outlives it. Before you delete a branch or worktree, remove its environment
+with `pixi clean`, which needs the branch's `pixi.toml`:
+```bash
+pixi clean --manifest-path <worktree>/components/omega/pixi.toml
+git worktree remove <worktree>
+```
+`pixi clean` removes the environments but leaves a small directory behind
+(a few KB).
+
+If you have already deleted a branch or worktree without running `pixi clean`,
+pixi has no command to find its environment. Each environment records the
+`pixi.toml` it was created from, so you can list the environments whose
+`pixi.toml` no longer exists:
+```bash
+envs_dir=/global/cfs/cdirs/e3sm/${USER}/pixi/envs
+for meta in "${envs_dir}"/*/envs/*/conda-meta/pixi; do
+  manifest=$(sed -n 's/.*"manifest_path": *"\([^"]*\)".*/\1/p' "${meta}")
+  if [ ! -f "${manifest}" ]; then
+    echo "${meta%/envs/*/conda-meta/pixi}"
+  fi
+done | sort -u
+```
+Set `envs_dir` to your `detached-environments` directory. This lists
+environments from other pixi workspaces, such as Polaris, as well as Omega.
+Check the list, then delete those directories with `rm -rf`. It is worth doing
+this from time to time so that unused environments do not pile up.
+
+Because environments are hardlinked from the package cache, deleting them
+frees less space than their size suggests. To free the rest, also clear out
+the cache with `pixi clean cache`. Existing environments keep working, and
+pixi downloads packages again the next time it needs them.
 
 (omega-dev-conda-env)=
 
