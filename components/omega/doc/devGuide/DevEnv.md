@@ -151,12 +151,12 @@ pixi update
 
 If you add, remove or change the version constraint of a package in
 `pixi.toml`, make the same change in `dev-conda.txt`. CI runs
-`components/omega/utils/check_dev_envs.py` to make sure the two files list the
+`components/omega/ci/check_dev_envs.py` to make sure the two files list the
 same packages and version constraints. You can run it yourself before you
 commit:
 ```bash
 cd components/omega/
-utils/check_dev_envs.py
+ci/check_dev_envs.py
 ```
 
 (omega-dev-remove-env)=

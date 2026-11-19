@@ -8,7 +8,7 @@ pixi's default environment with those in dev-conda.txt, including their
 version constraints. Python is skipped because only pixi.toml pins it.
 
 Usage (from components/omega):
-$ utils/check_dev_envs.py
+$ ci/check_dev_envs.py
 """
 
 import argparse

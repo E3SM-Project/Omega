@@ -41,7 +41,7 @@ jobs:
 
       - name: Check that dev-conda.txt matches pixi.toml
         run: |
-          components/omega/utils/check_dev_envs.py
+          components/omega/ci/check_dev_envs.py
 
       - id: file_changes
         uses: trilom/file-changes-action@v1.2.4
