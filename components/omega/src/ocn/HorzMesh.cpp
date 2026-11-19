@@ -237,6 +237,12 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
    completeReadArrays();
 
    // Compute additional mesh quantities
+   // On spherical meshes, compute the Coriolis parameter from latitude
+   // (planar meshes read it from the mesh file)
+   if (OnSphere) {
+      computeCoriolis();
+   }
+
    // Compute EdgeSignOnCells and EdgeSignOnVertex
    computeEdgeSign();
 
@@ -432,6 +438,43 @@ void HorzMesh::computeEdgeSign() {
 } // end computeEdgeSign
 
 //------------------------------------------------------------------------------
+// Compute the Coriolis parameter on a spherical mesh from latitude and the
+// Earth's rotation rate from the Physical Constants Dictionary. Any Coriolis
+// parameter in the mesh file is ignored. Latitudes have already had their
+// halos filled, so the loops include halo cells, edges and vertices and no
+// halo exchange is needed.
+void HorzMesh::computeCoriolis() {
+
+   constexpr Real TwoOmega = 2.0_Real * Omega;
+
+   OMEGA_SCOPE(o_LatCell, LatCell);
+   OMEGA_SCOPE(o_LatEdge, LatEdge);
+   OMEGA_SCOPE(o_LatVertex, LatVertex);
+   OMEGA_SCOPE(o_FCell, FCell);
+   OMEGA_SCOPE(o_FEdge, FEdge);
+   OMEGA_SCOPE(o_FVertex, FVertex);
+
+   parallelFor(
+       {NCellsAll}, KOKKOS_LAMBDA(int Cell) {
+          o_FCell(Cell) = TwoOmega * Kokkos::sin(o_LatCell(Cell));
+       });
+
+   parallelFor(
+       {NEdgesAll}, KOKKOS_LAMBDA(int Edge) {
+          o_FEdge(Edge) = TwoOmega * Kokkos::sin(o_LatEdge(Edge));
+       });
+
+   parallelFor(
+       {NVerticesAll}, KOKKOS_LAMBDA(int Vertex) {
+          o_FVertex(Vertex) = TwoOmega * Kokkos::sin(o_LatVertex(Vertex));
+       });
+
+   FCellH   = createHostMirrorCopy(FCell);
+   FEdgeH   = createHostMirrorCopy(FEdge);
+   FVertexH = createHostMirrorCopy(FVertex);
+} // end computeCoriolis
+
+//------------------------------------------------------------------------------
 // Set mesh scaling coefficients for mixing terms in momentum and tracer
 // equations so viscosity and diffusion scale with mesh
 void HorzMesh::computeMeshScaling() {
@@ -621,9 +664,13 @@ void HorzMesh::completeReadArrays() {
    HorzMeshHalo->exchangeFullArrayHalo(DvEdge, OnEdge);
    HorzMeshHalo->exchangeFullArrayHalo(AngleEdge, OnEdge);
    HorzMeshHalo->exchangeFullArrayHalo(WeightsOnEdge, OnEdge);
-   HorzMeshHalo->exchangeFullArrayHalo(FCell, OnCell);
-   HorzMeshHalo->exchangeFullArrayHalo(FEdge, OnEdge);
-   HorzMeshHalo->exchangeFullArrayHalo(FVertex, OnVertex);
+   // The Coriolis parameter is only read on planar meshes (see
+   // computeCoriolis for spherical meshes)
+   if (!OnSphere) {
+      HorzMeshHalo->exchangeFullArrayHalo(FCell, OnCell);
+      HorzMeshHalo->exchangeFullArrayHalo(FEdge, OnEdge);
+      HorzMeshHalo->exchangeFullArrayHalo(FVertex, OnVertex);
+   }
    // ReconWeightsCell is (NCells, R3, MaxEdges2) to match the mesh
    // file's on-disk dimension order. Halo's generic 3D exchange expects
    // the mesh dimension in the middle (as in Tracers' [Tracer, Cell,
@@ -661,11 +708,12 @@ void HorzMesh::completeReadArrays() {
    DvEdgeH            = createHostMirrorCopy(DvEdge);
    AngleEdgeH         = createHostMirrorCopy(AngleEdge);
    WeightsOnEdgeH     = createHostMirrorCopy(WeightsOnEdge);
-   FCellH             = createHostMirrorCopy(FCell);
-   FEdgeH             = createHostMirrorCopy(FEdge);
-   FVertexH           = createHostMirrorCopy(FVertex);
    if (OnSphere) {
       ReconWeightsCellH = createHostMirrorCopy(ReconWeightsCell);
+   } else {
+      FCellH   = createHostMirrorCopy(FCell);
+      FEdgeH   = createHostMirrorCopy(FEdge);
+      FVertexH = createHostMirrorCopy(FVertex);
    }
 
 } // end completeReadArrays
@@ -1136,6 +1184,10 @@ void HorzMesh::defineMeshFields() {
    Field::attachFieldData<Array2DReal>(FieldName, WeightsOnEdge);
 
    // Coriolis parameter at the cells, edges, and vertices
+   // The fields are always defined so they can be written to output
+   // streams, but they are only read from the mesh file on planar
+   // meshes. On spherical meshes, they are computed from latitude (see
+   // computeCoriolis), and any values in the mesh file are ignored.
    NDims = 1;
    DimNames.resize(1);
    DimNames[0] = "NEdges";
@@ -1152,7 +1204,9 @@ void HorzMesh::defineMeshFields() {
                      DimNames,             // dimension names
                      false                 // not time dependent
        );
-   MeshGroupIn->addField(FieldName);
+   if (!OnSphere) {
+      MeshGroupIn->addField(FieldName);
+   }
    Field::attachFieldData<Array1DReal>(FieldName, FEdge);
 
    DimNames[0] = "NVertices";
@@ -1169,7 +1223,9 @@ void HorzMesh::defineMeshFields() {
                      DimNames,             // dimension names
                      false                 // not time dependent
        );
-   MeshGroupIn->addField(FieldName);
+   if (!OnSphere) {
+      MeshGroupIn->addField(FieldName);
+   }
    Field::attachFieldData<Array1DReal>(FieldName, FVertex);
 
    DimNames[0] = "NCells";
@@ -1186,7 +1242,9 @@ void HorzMesh::defineMeshFields() {
                      DimNames,             // dimension names
                      false                 // not time dependent
        );
-   MeshGroupIn->addField(FieldName);
+   if (!OnSphere) {
+      MeshGroupIn->addField(FieldName);
+   }
    Field::attachFieldData<Array1DReal>(FieldName, FCell);
 
    if (OnSphere) {
