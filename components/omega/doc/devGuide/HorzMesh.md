@@ -20,6 +20,11 @@ reads most of the remaining mesh variables (coordinates, lengths, areas)
 from the input HorzMeshIn IOStream. A few variables, like masks and operator
 scaling are computed internally; the mesh scaling is relative to
 the global median cell width, which is computed during initialization.
+On spherical meshes, the Coriolis parameter (`FCell`, `FEdge` and `FVertex`)
+is also computed internally by `computeCoriolis` as $2 \Omega \sin\phi$, where
+$\Omega$ is the Earth's rotation rate (`Omega` in `GlobalConstants.h`) and
+$\phi$ is the latitude, including in halos. These fields are added to the
+HorzMeshIn group only on planar meshes, which read them from the mesh file.
 After reading, the init routine fills all
 halos and synchronizes the host and device copies of the mesh variables.
 These tasks are organized into several private methods. Eventually,
