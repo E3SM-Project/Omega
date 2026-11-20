@@ -55,8 +55,8 @@ int SfcCoupling::init(const CouplingInitParams &CouplingInitParams) {
 
    // Create the default surface coupling object and set pointer to it
    SfcCoupling::DefaultSfcCoupling = SfcCoupling::create(
-       "Default", DefHorzMesh, CouplingInitParams.NImportFields,
-       CouplingInitParams.NExportFields, CouplingInitParams.ImportIdxMap,
+       "Default", DefHorzMesh, CouplingInitParams.NCouplerImports,
+       CouplingInitParams.NCouplerExports, CouplingInitParams.ImportIdxMap,
        CouplingInitParams.ExportIdxMap, DefTimeStepper, CplTimeStep,
        CouplingInitParams.Layout);
 
@@ -75,14 +75,15 @@ int SfcCoupling::findIdx(const std::map<std::string, int> &Map,
 
 // Construct a new surface coupling object
 SfcCoupling::SfcCoupling(const std::string &Name_, const HorzMesh *Mesh,
-                         const int NImportFields_, const int NExportFields_,
+                         const int NCouplerImports_, const int NCouplerExports_,
                          const std::map<std::string, int> &ImportIdxMap,
                          const std::map<std::string, int> &ExportIdxMap,
                          TimeStepper *Stepper,
                          const TimeInterval &CouplingTimeStep,
                          const CouplingLayout &Layout)
-    : Name(Name_), NImportFields(NImportFields_), NExportFields(NExportFields_),
-      CplToOcn(Name_, Mesh), OcnToCpl(Name_, Mesh), Layout(Layout) {
+    : Name(Name_), NCouplerImports(NCouplerImports_),
+      NCouplerExports(NCouplerExports_), CplToOcn(Name_, Mesh),
+      OcnToCpl(Name_, Mesh), Layout(Layout) {
 
    // Retrieve mesh cell/edge count
    NCellsOwned = Mesh->NCellsOwned;
@@ -104,16 +105,16 @@ SfcCoupling::SfcCoupling(const std::string &Name_, const HorzMesh *Mesh,
    StepperClock->attachAlarm(&CouplingAlarm);
 
    for (int F = 0; F < NImport; ++F)
-      ImportIdx[F] = findIdx(ImportIdxMap, ImportNames[F], NImportFields);
+      ImportIdx[F] = findIdx(ImportIdxMap, ImportNames[F], NCouplerImports);
    for (int F = 0; F < NExport; ++F)
-      ExportIdx[F] = findIdx(ExportIdxMap, ExportNames[F], NExportFields);
+      ExportIdx[F] = findIdx(ExportIdxMap, ExportNames[F], NCouplerExports);
 }
 
 // Create a new surface coupling object by calling the constructor and storing
 // it in the AllSfcCoupling map
 SfcCoupling *SfcCoupling::create(
-    const std::string &Name, const HorzMesh *Mesh, const int NImportFields,
-    const int NExportFields, const std::map<std::string, int> &ImportIdxMap,
+    const std::string &Name, const HorzMesh *Mesh, const int NCouplerImports,
+    const int NCouplerExports, const std::map<std::string, int> &ImportIdxMap,
     const std::map<std::string, int> &ExportIdxMap, TimeStepper *Stepper,
     const TimeInterval &CouplingTimeStep, const CouplingLayout &Layout) {
 
@@ -134,9 +135,9 @@ SfcCoupling *SfcCoupling::create(
 
    // create a new surface coupling on the heap and store it in the map of
    // unique_ptrs, which will manage its lifetime
-   auto *NewSfcCoupling =
-       new SfcCoupling(Name, Mesh, NImportFields, NExportFields, ImportIdxMap,
-                       ExportIdxMap, Stepper, CouplingTimeStep, Layout);
+   auto *NewSfcCoupling = new SfcCoupling(
+       Name, Mesh, NCouplerImports, NCouplerExports, ImportIdxMap, ExportIdxMap,
+       Stepper, CouplingTimeStep, Layout);
    AllSfcCoupling.emplace(Name, NewSfcCoupling);
 
    return NewSfcCoupling;
@@ -192,17 +193,17 @@ void SfcCoupling::attachData(const Real *CplToOcnData, Real *OcnToCplData) {
    Kokkos::LayoutStride CplToOcnLayout, OcnToCplLayout;
 
    if (Layout == CouplingLayout::MCT) {
-      /// MCT layout: (NCellsOwned, NImportFields) - field idx strides faster
-      CplToOcnLayout =
-          Kokkos::LayoutStride(NImportFields, 1, NCellsOwned, NImportFields);
-      OcnToCplLayout =
-          Kokkos::LayoutStride(NExportFields, 1, NCellsOwned, NExportFields);
+      /// MCT layout: (NCellsOwned, NCouplerImports) - field idx strides faster
+      CplToOcnLayout = Kokkos::LayoutStride(NCouplerImports, 1, NCellsOwned,
+                                            NCouplerImports);
+      OcnToCplLayout = Kokkos::LayoutStride(NCouplerExports, 1, NCellsOwned,
+                                            NCouplerExports);
    } else if (Layout == CouplingLayout::MOAB) {
-      /// MOAB layout: (NImportFields, NCellsOwned) - cell idx strides faster
+      /// MOAB layout: (NCouplerImports, NCellsOwned) - cell idx strides faster
       CplToOcnLayout =
-          Kokkos::LayoutStride(NImportFields, NCellsOwned, NCellsOwned, 1);
+          Kokkos::LayoutStride(NCouplerImports, NCellsOwned, NCellsOwned, 1);
       OcnToCplLayout =
-          Kokkos::LayoutStride(NExportFields, NCellsOwned, NCellsOwned, 1);
+          Kokkos::LayoutStride(NCouplerExports, NCellsOwned, NCellsOwned, 1);
    } else {
       ABORT_ERROR("SfcCoupling::attachData: Unknown coupling layout");
    }

@@ -56,8 +56,8 @@ CouplingInitParams mockCouplingInitParams(
    TimeInterval CouplingTimeStep_ =
        CouplingTimeStep.value_or(DefTimeStepper->getTimeStep());
 
-   CouplingInitParams CouplingParams{.NImportFields    = Setup.NImports,
-                                     .NExportFields    = Setup.NExports,
+   CouplingInitParams CouplingParams{.NCouplerImports  = Setup.NImports,
+                                     .NCouplerExports  = Setup.NExports,
                                      .ImportIdxMap     = Setup.ImportIdxMap,
                                      .ExportIdxMap     = Setup.ExportIdxMap,
                                      .CouplingTimeStep = CouplingTimeStep_,
