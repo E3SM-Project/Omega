@@ -1649,9 +1649,10 @@ void testDDPartialSums() {
    int NTasks      = DefEnv->getNumTasks();
 
    // A sequence with large values that cancel and small values that a plain
-   // double-precision sum would lose
+   // double-precision sum would lose. Big is small enough that each value
+   // keeps its offset 0.1 * I, to within the spacing of doubles near Big.
    const I4 NVals = 1000;
-   const R8 Big   = std::ldexp(1.0, 60);
+   const R8 Big   = std::ldexp(1.0, 50);
    HostArray1DR8 ValsH("DDVals", NVals);
    for (I4 I = 0; I < NVals; ++I)
       ValsH(I) = (I % 2 == 0 ? Big : -Big) + 0.1 * I;
@@ -1703,13 +1704,15 @@ void testDDPartialSums() {
    LOG_INFO("globalSum: device sumDDPair matches host sumDD: PASS");
 
    // Global sums of double-double partials. In the first field, pairs of
-   // tasks hold +Big and -Big with a residual of 1 each (a last unpaired task
-   // holds just 1), so the exact sum is the number of tasks, which summing
-   // only the high parts would lose. The second field is a plain sum of
-   // 1, 2, ..., NTasks.
+   // tasks hold +BigHi and -BigHi with a residual of 1 each (a last unpaired
+   // task holds just 1), so the exact sum is the number of tasks, which
+   // summing only the high parts would lose. BigHi is large enough that a
+   // residual of 1 is below its rounding, as in a double-double sum. The
+   // second field is a plain sum of 1, 2, ..., NTasks.
+   const R8 BigHi = std::ldexp(1.0, 60);
    std::vector<complex<double>> Partials(2);
    const bool Paired = MyTask < 2 * (NTasks / 2);
-   Partials[0] = Paired ? complex<double>(MyTask % 2 == 0 ? Big : -Big, 1.0)
+   Partials[0] = Paired ? complex<double>(MyTask % 2 == 0 ? BigHi : -BigHi, 1.0)
                         : complex<double>(1.0, 0.0);
    Partials[1] = complex<double>(MyTask + 1.0, 0.0);
    std::vector<R8> Global = globalSumDD(Partials, Comm);
