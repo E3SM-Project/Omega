@@ -288,7 +288,7 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
 
       if (ReverseDirection) {
          Kokkos::parallel_scan(
-             "PrefixSum_1D_Reverse", N,
+             "PrefixSum_1D_Reverse", Bounds1D(0, N),
              KOKKOS_LAMBDA(int IRev, Real &Accum, bool IsFinal) {
                 const int I = N - 1 - IRev;
                 Accum += static_cast<Real>(InputData(I));
@@ -298,7 +298,7 @@ template <typename ArrayT> class PrefixSumOp : public AnalysisOperator {
              });
       } else {
          Kokkos::parallel_scan(
-             "PrefixSum_1D_Forward", N,
+             "PrefixSum_1D_Forward", Bounds1D(0, N),
              KOKKOS_LAMBDA(int I, Real &Accum, bool IsFinal) {
                 Accum += static_cast<Real>(InputData(I));
                 if (IsFinal) {
