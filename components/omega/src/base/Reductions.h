@@ -43,6 +43,36 @@ inline bool R8SumNotInitialized = true;
 inline MPI_Op MPI_SUMDD; // special MPI operator for reproducible R8 sum
 
 //------------------------------------------------------------------------------
+/// Adds a double to a double-double sum, held as its high and low parts.
+/// Callable on host and device, so sums computed in kernels match those
+/// computed on the host.
+KOKKOS_INLINE_FUNCTION void
+sumDDLocal(R8 &Hi,      ///< [inout] high part of the sum
+           R8 &Lo,      ///< [inout] low part (residual) of the sum
+           const R8 Val ///< [in] value to add to the sum
+) {
+   R8 T1 = Val + Hi;
+   R8 E  = T1 - Val;
+   R8 T2 = ((Hi - E) + (Val - (T1 - E))) + Lo;
+   Hi    = T1 + T2;
+   Lo    = T2 - ((T1 + T2) - T1);
+}
+
+/// Adds one double-double sum to another. Callable on host and device.
+KOKKOS_INLINE_FUNCTION void
+sumDDPair(R8 &Hi,        ///< [inout] high part of the sum
+          R8 &Lo,        ///< [inout] low part (residual) of the sum
+          const R8 InHi, ///< [in] high part of the sum to add
+          const R8 InLo  ///< [in] low part of the sum to add
+) {
+   R8 T1 = InHi + Hi;
+   R8 E  = T1 - InHi;
+   R8 T2 = ((Hi - E) + (InHi - (T1 - E))) + InLo + Lo;
+   Hi    = T1 + T2;
+   Lo    = T2 - ((T1 + T2) - T1);
+}
+
+//------------------------------------------------------------------------------
 // Special sum function to use in custom double precision MPI reduction.
 // Implements the DD algorithm for reproducible sums as implemented in
 //
@@ -50,13 +80,11 @@ inline void sumDD(void *InBuffer, void *OutBuffer, int *Len,
                   MPI_Datatype *DataType) {
    complex<double> *DDa = (complex<double> *)InBuffer;
    complex<double> *DDb = (complex<double> *)OutBuffer;
-   double E, T1, T2;
    for (int I = 0; I < *Len; I++) {
-      T1 = real(DDa[I]) + real(DDb[I]);
-      E  = T1 - real(DDa[I]);
-      T2 = ((real(DDb[I]) - E) + (real(DDa[I]) - (T1 - E))) + imag(DDa[I]) +
-           imag(DDb[I]);
-      DDb[I] = complex<double>(T1 + T2, T2 - ((T1 + T2) - T1));
+      R8 Hi = real(DDb[I]);
+      R8 Lo = imag(DDb[I]);
+      sumDDPair(Hi, Lo, real(DDa[I]), imag(DDa[I]));
+      DDb[I] = complex<double>(Hi, Lo);
    }
 }
 
@@ -64,10 +92,10 @@ inline void sumDD(void *InBuffer, void *OutBuffer, int *Len,
 inline void sumDDLocal(complex<double> &DDb, //< [inout] local sum and residual
                        const double &DDa     //< [in] local double to add to sum
 ) {
-   double T1 = DDa + real(DDb);
-   double E  = T1 - DDa;
-   double T2 = ((real(DDb) - E) + (DDa - (T1 - E))) + imag(DDb);
-   DDb       = complex<double>(T1 + T2, T2 - ((T1 + T2) - T1));
+   R8 Hi = real(DDb);
+   R8 Lo = imag(DDb);
+   sumDDLocal(Hi, Lo, DDa);
+   DDb = complex<double>(Hi, Lo);
 }
 
 //------------------------------------------------------------------------------
@@ -302,6 +330,31 @@ inline std::vector<R8> globalSum(
    for (int i = 0; i < NFields; i++) {
       Results[i] = real(GlobalTmp[i]); // result is in real part of complex
    }
+   return Results;
+}
+
+/// Sums double-double partial sums element-wise across MPI tasks. Each
+/// element holds a task's local sum in its real part and the residual in its
+/// imaginary part, as accumulated by sumDDLocal. Passing the residuals keeps
+/// the full precision of the local sums, so the result does not depend on how
+/// the values were divided among tasks.
+inline std::vector<R8>
+globalSumDD(const std::vector<complex<double>>
+                &Partials,      ///< [in] local double-double sums
+            const MPI_Comm Comm ///< [in] MPI communicator
+) {
+   if (R8SumNotInitialized)
+      globalSumInit();
+
+   int NFields = Partials.size();
+   std::vector<complex<double>> GlobalTmp(NFields, complex<double>(0.0, 0.0));
+   int Err = MPI_Allreduce(Partials.data(), GlobalTmp.data(), NFields,
+                           MPI_C_DOUBLE_COMPLEX, MPI_SUMDD, Comm);
+   if (Err != MPI_SUCCESS)
+      ABORT_ERROR("globalSumDD: Error in MPI_Allreduce");
+   std::vector<R8> Results(NFields);
+   for (int I = 0; I < NFields; ++I)
+      Results[I] = real(GlobalTmp[I]); // result is in real part of complex
    return Results;
 }
 
