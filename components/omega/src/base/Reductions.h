@@ -52,10 +52,10 @@ inline void sumDD(void *InBuffer, void *OutBuffer, int *Len,
    complex<double> *DDb = (complex<double> *)OutBuffer;
    double E, T1, T2;
    for (int I = 0; I < *Len; I++) {
-      T1 = real(DDa[I]) + real(DDb[I]);
-      E  = T1 - real(DDa[I]);
-      T2 = ((real(DDb[I]) - E) + (real(DDa[I]) - (T1 - E))) + imag(DDa[I]) +
-           imag(DDb[I]);
+      T1     = real(DDa[I]) + real(DDb[I]);
+      E      = T1 - real(DDa[I]);
+      T2     = ((real(DDb[I]) - E) + (real(DDa[I]) - (T1 - E))) + imag(DDa[I]) +
+               imag(DDb[I]);
       DDb[I] = complex<double>(T1 + T2, T2 - ((T1 + T2) - T1));
    }
 }
@@ -522,7 +522,7 @@ globalSum(const Kokkos::View<T, ML, MS> Array, ///< [in] array to be summed
                      size_t LinearAdd = I * Strides[0] + J * Strides[1] +
                                         K * Strides[2] + L * Strides[3] +
                                         M * Strides[4];
-                     R8 DataTmp = Array.data()[LinearAdd];
+                     R8 DataTmp       = Array.data()[LinearAdd];
                      sumDDLocal(DDTmp, DataTmp);
                   }
                }
@@ -541,7 +541,7 @@ globalSum(const Kokkos::View<T, ML, MS> Array, ///< [in] array to be summed
                      size_t LinearAdd = I * Strides[0] + J * Strides[1] +
                                         K * Strides[2] + L * Strides[3] +
                                         M * Strides[4];
-                     R8 DataTmp = ArrayH.data()[LinearAdd];
+                     R8 DataTmp       = ArrayH.data()[LinearAdd];
                      sumDDLocal(DDTmp, DataTmp);
                   }
                }
@@ -980,7 +980,7 @@ localMinVal(const Kokkos::View<T, ML, MS> Array, ///< [in] array to find min
                      size_t LinearAdd = I * Strides[0] + J * Strides[1] +
                                         K * Strides[2] + L * Strides[3] +
                                         M * Strides[4];
-                     IT TestVal = Array.data()[LinearAdd];
+                     IT TestVal       = Array.data()[LinearAdd];
                      if (TestVal < LocalMin)
                         LocalMin = TestVal;
                   }
@@ -1004,8 +1004,8 @@ localMinVal(const Kokkos::View<T, ML, MS> Array, ///< [in] array to find min
                 size_t LinearAdd = I * LocStrides(0) + J * LocStrides(1) +
                                    K * LocStrides(2) + L * LocStrides(3) +
                                    M * LocStrides(4);
-                IT TestVal = LocArray.data()[LinearAdd];
-                DevMin     = Kokkos::min(TestVal, DevMin);
+                IT TestVal       = LocArray.data()[LinearAdd];
+                DevMin           = Kokkos::min(TestVal, DevMin);
              }
           },
           Kokkos::Min<IT>(LocalMin));
@@ -1283,7 +1283,7 @@ localMaxVal(const Kokkos::View<T, ML, MS> Array, ///< [in] array to find max
                      size_t LinearAdd = I * Strides[0] + J * Strides[1] +
                                         K * Strides[2] + L * Strides[3] +
                                         M * Strides[4];
-                     IT TestVal = Array.data()[LinearAdd];
+                     IT TestVal       = Array.data()[LinearAdd];
                      if (TestVal > LocalMax)
                         LocalMax = TestVal;
                   }
@@ -1307,8 +1307,8 @@ localMaxVal(const Kokkos::View<T, ML, MS> Array, ///< [in] array to find max
                 size_t LinearAdd = I * LocStrides(0) + J * LocStrides(1) +
                                    K * LocStrides(2) + L * LocStrides(3) +
                                    M * LocStrides(4);
-                IT TestVal = LocArray.data()[LinearAdd];
-                DevMax     = Kokkos::max(TestVal, DevMax);
+                IT TestVal       = LocArray.data()[LinearAdd];
+                DevMax           = Kokkos::max(TestVal, DevMax);
              }
           },
           Kokkos::Max<IT>(LocalMax));

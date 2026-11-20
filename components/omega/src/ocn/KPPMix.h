@@ -826,8 +826,8 @@ class KPPMixingCoeffs {
          Real SigmaKtup = -ZKtup / H;
          SigmaKtup = Kokkos::fmax(-1.0_Real, Kokkos::fmin(0.0_Real, SigmaKtup));
          const Real SigmaCoord = -SigmaKtup;
-         const Real SigmaLoc   = Kokkos::fmin(SurfaceLayerExtent,
-                                              Kokkos::fmax(0.0_Real, SigmaCoord));
+         const Real SigmaLoc = Kokkos::fmin(SurfaceLayerExtent,
+                                            Kokkos::fmax(0.0_Real, SigmaCoord));
 
          Real WMKtup = 0.0_Real;
          Real WSKtup = 0.0_Real;
@@ -934,8 +934,8 @@ class KPPMix {
    /// Output arrays are computed in-place.
    void computeKPPMix(
        const Array2DReal
-           &PotentialDensity, ///< Density (kg/m³) [NCells×NLevels]
-       const Array2DReal &NormalVelocity,     ///< Normal vel on edges (m/s)
+           &PotentialDensity,             ///< Density (kg/m³) [NCells×NLevels]
+       const Array2DReal &NormalVelocity, ///< Normal vel on edges (m/s)
        const Array2DReal &TangentialVelocity, ///< Tangential vel on edges (m/s)
        const Array1DReal &SurfaceFrictionVelocity, ///< u* (m/s)
        const Array1DReal &SurfaceBuoyancyFlux,     ///< B_0 (m²/s³)
