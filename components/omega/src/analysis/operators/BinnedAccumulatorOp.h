@@ -261,7 +261,7 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
       updateBins(BinIndexData);
 
       auto Partials = Sums.localSums(
-          1, KOKKOS_LAMBDA(int I, int /*Bin*/, int /*K*/)->R8 {
+          1, KOKKOS_LAMBDA(int I, int /*Bin*/, int /*K*/) {
              R8 Value = static_cast<R8>(ValueData(I));
              if (LocalUseMask)
                 Value *= MaskData(I);
@@ -283,7 +283,7 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
       OMEGA_SCOPE(LocMinLayer, MinLayer);
       OMEGA_SCOPE(LocMaxLayer, MaxLayer);
       auto Partials = Sums.localSums(
-          VertSize, KOKKOS_LAMBDA(int I, int /*Bin*/, int K)->R8 {
+          VertSize, KOKKOS_LAMBDA(int I, int /*Bin*/, int K) {
              if (K < LocMinLayer(I) || K > LocMaxLayer(I))
                 return 0.0;
              R8 Value = static_cast<R8>(ValueData(I, K));
@@ -299,12 +299,28 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
    /// Builds the lists of owned entities in each bin on the first call, and
    /// again whenever the bin indices change.
    void updateBins(const Array1DI4 &BinIndexData) {
-      auto BinIndexHost = createHostMirrorCopy(BinIndexData);
-      std::vector<I4> Bins(BinIndexHost.data(), BinIndexHost.data() + NOwned);
-      if (!Sums.isBuilt() || Bins != OwnedBins) {
-         Sums.build(NumBins, Bins);
-         OwnedBins = std::move(Bins);
+      if (Sums.isBuilt()) {
+         // Compare the bin indices on the device, so they only come back to
+         // the host when the lists need to be rebuilt
+         OMEGA_SCOPE(LocOwnedBins, OwnedBins);
+         I4 NChanged = 0;
+         parallelReduce(
+             "BinnedAccumCompareBins", {NOwned},
+             KOKKOS_LAMBDA(int I, I4 &Accum) {
+                if (BinIndexData(I) != LocOwnedBins(I))
+                   ++Accum;
+             },
+             NChanged);
+         if (NChanged == 0)
+            return;
       }
+
+      OwnedBins = Array1DI4("BinnedAccumOwnedBins", NOwned);
+      OMEGA_SCOPE(LocOwnedBins, OwnedBins);
+      parallelFor(
+          "BinnedAccumCopyBins", {NOwned},
+          KOKKOS_LAMBDA(int I) { LocOwnedBins(I) = BinIndexData(I); });
+      Sums.build(NumBins, createHostMirrorCopy(OwnedBins));
    }
 
    /// Sums each task's double-double partial sums across tasks and copies
@@ -332,7 +348,7 @@ template <typename ArrayT> class BinnedAccumulatorOp : public AnalysisOperator {
    BinnedSums Sums;
 
    /// Bin index of each owned entity when Sums was last built
-   std::vector<I4> OwnedBins;
+   Array1DI4 OwnedBins;
 
    /// Number of spatial bins
    I4 NumBins;

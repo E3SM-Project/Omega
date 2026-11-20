@@ -162,8 +162,9 @@ template <typename ArrayT> class HorzMeanOp : public AnalysisOperator {
          ABORT_ERROR("HorzMeanOp: Unknown index space {}", IndexSpaceName);
       }
 
-      // All owned horizontal locations go into a single bin
-      Sums.build(1, std::vector<I4>(NHorizOwned, 0));
+      // All owned horizontal locations go into a single bin (Kokkos
+      // initializes the bin indices to zero)
+      Sums.build(1, HostArray1DI4("HorzMeanBins", NHorizOwned));
 
       // Detect vertical staggering of the input field. The MinLayer/MaxLayer
       // arrays are layer indices; a midlayer field has NVertLayers levels and
@@ -234,7 +235,7 @@ template <typename ArrayT> class HorzMeanOp : public AnalysisOperator {
       // [NVert, 2*NVert)) for each vertical index, concatenated so that a
       // single global reduction covers both.
       auto Partials = Sums.localSums(
-          2 * NVert, KOKKOS_LAMBDA(int IHoriz, int /*Bin*/, int Level)->R8 {
+          2 * NVert, KOKKOS_LAMBDA(int IHoriz, int /*Bin*/, int Level) {
              const bool IsDen = (Level >= NVert);
              const I4 K       = IsDen ? Level - NVert : Level;
 

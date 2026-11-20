@@ -304,9 +304,10 @@ Omega's other global sums.
 
 Operators that sum the owned entities in groups, such as `BinnedAccumulator`
 (one group per bin) and `HorzMean` (one group for all owned entities), use
-`BinnedSums` (`analysis/BinnedSums.h`) for run-to-run reproducibility and
-for nearly guaranteed reproduciblity across task counts through
-double-double accumulation.
+`BinnedSums` (`analysis/BinnedSums.h`) so that their results are bit-for-bit
+the same from run to run on CPUs and GPUs. Atomic adds give results that
+depend on the order in which threads run, which on a GPU changes from one run
+to the next.
 
 An operator calls `build(NumBins, BinOfEntity)` with the bin of each owned
 entity (a bin outside `[0, NumBins)` excludes the entity). This lists each
@@ -314,8 +315,13 @@ bin's entities in local index order and splits each list into segments.
 `localSums(NLevels, Value)` then takes a device functor
 `Value(Entity, Bin, Level)` and sums it over each bin at each level. A team
 per segment and level reduces the entities in parallel, then a team per bin
-and level reduces the segment partials. Both stages use a double-double
-reducer that preserves each partial sum's high part and residual.
+and level reduces the segment partials. Each team writes only its own
+result, and with a fixed team size (`OMEGA_TEAMSIZE`) a team reduction
+combines its threads' partial sums in the same order on every run. Both
+stages use a double-double reducer that keeps each partial sum's high part
+and residual. The order of the team reductions depends on the Kokkos backend
+and team size, so results are not guaranteed to match bit for bit across
+different hardware.
 
 The returned partial sums go to `globalSumDD` (see
 {ref}`omega-dev-reductions`) for the sum across tasks without discarding the

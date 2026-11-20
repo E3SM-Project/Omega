@@ -6,29 +6,34 @@
 /// \brief Defines BinnedSums, reproducible sums of mesh entities by bin
 ///
 /// BinnedSums sums values over the owned mesh entities in each bin, at each
-/// of a number of levels, so that the result does not depend on the order in
-/// which threads run or on how the mesh is divided among MPI tasks.
+/// of a number of levels, so that the result is the same from run to run and
+/// does not depend on how the mesh is divided among MPI tasks.
 ///
-/// Each bin's entities are listed once, in local index order, and split into
-/// segments of at most SegmentSize entities. A team per segment and level
-/// reduces its entities in parallel, and a team per bin and level then
-/// reduces its segment partials. Both stages preserve the high and low parts
-/// of each sum, without floating-point atomic updates. Each task's partial
-/// sums go to globalSumDD, which adds them across tasks in double-double as
-/// well.
+/// Sums accumulated with atomic adds depend on the order in which the values
+/// arrive, which on a GPU changes from one run to the next. BinnedSums
+/// instead lists each bin's entities once, in local index order, and splits
+/// each list into segments of at most SegmentSize entities. A team per
+/// segment and level reduces its entities in parallel, and a team per bin
+/// and level then reduces its segment partials. Each team writes only its own
+/// result, and a team reduction with a fixed team size (OMEGA_TEAMSIZE)
+/// combines its threads' partial sums in the same order on every run. Both
+/// stages keep the high and low parts of each double-double sum. Each task's
+/// partial sums go to globalSumDD, which adds them across tasks in
+/// double-double as well.
 ///
 /// The double-double sums carry about 106 bits, so a different division of
 /// the mesh among tasks changes the result only in the rare case that the
 /// exact sum lies almost exactly halfway between two doubles. This is the
-/// same reproducibility as globalSum. Reduction trees are backend-dependent;
-/// bitwise equality across hardwar is is not guaranteed.
+/// same reproducibility as globalSum. The order of the team reductions
+/// depends on the Kokkos backend and team size, so results are not
+/// guaranteed to match bit for bit across different hardware.
 ///
 /// A caller builds the lists from each entity's bin, then computes the sums
 /// with a device functor giving the value of an entity at a level:
 /// \code
-///   Sums.build(NumBins, BinOfEntity);
+///   Sums.build(NumBins, BinOfEntity); // BinOfEntity is a HostArray1DI4
 ///   auto Partials = Sums.localSums(
-///       NLevels, KOKKOS_LAMBDA(int Entity, int Bin, int Level) -> R8 {...});
+///       NLevels, KOKKOS_LAMBDA(int Entity, int Bin, int Level) {...});
 ///   std::vector<R8> Global = globalSumDD(Partials, Comm);
 /// \endcode
 //
@@ -54,55 +59,57 @@ class BinnedSums {
    /// Builds the lists of entities in each bin. Entity I belongs to bin
    /// BinOfEntity[I]; entities with a bin outside [0, NumBins) belong to none.
    /// Each list holds its entities in increasing index order.
-   void build(I4 InNumBins,                      ///< [in] number of bins
-              const std::vector<I4> &BinOfEntity ///< [in] bin of each entity
+   void build(I4 InNumBins,                    ///< [in] number of bins
+              const HostArray1DI4 &BinOfEntity ///< [in] bin of each entity
    ) {
       NumBins            = InNumBins;
-      const I4 NEntities = static_cast<I4>(BinOfEntity.size());
+      const I4 NEntities = static_cast<I4>(BinOfEntity.extent(0));
 
       // Count the entities in each bin
-      std::vector<I4> BinCount(NumBins, 0);
+      HostArray1DI4 BinCount("BinnedSumsBinCount", NumBins);
       for (I4 I = 0; I < NEntities; ++I) {
-         const I4 Bin = BinOfEntity[I];
+         const I4 Bin = BinOfEntity(I);
          if (Bin >= 0 && Bin < NumBins)
-            ++BinCount[Bin];
+            ++BinCount(Bin);
       }
 
       // Offsets of each bin's list, and of each bin's first segment
-      std::vector<I4> BinStart(NumBins + 1, 0);
-      std::vector<I4> BinSegStartH(NumBins + 1, 0);
+      HostArray1DI4 BinStart("BinnedSumsBinStart", NumBins + 1);
+      HostArray1DI4 BinSegStartH("BinnedSumsBinSegStart", NumBins + 1);
       for (I4 Bin = 0; Bin < NumBins; ++Bin) {
-         BinStart[Bin + 1] = BinStart[Bin] + BinCount[Bin];
-         const I4 NBinSegs = (BinCount[Bin] + SegmentSize - 1) / SegmentSize;
-         BinSegStartH[Bin + 1] = BinSegStartH[Bin] + NBinSegs;
+         BinStart(Bin + 1) = BinStart(Bin) + BinCount(Bin);
+         const I4 NBinSegs = (BinCount(Bin) + SegmentSize - 1) / SegmentSize;
+         BinSegStartH(Bin + 1) = BinSegStartH(Bin) + NBinSegs;
       }
-      NSegments = BinSegStartH[NumBins];
+      NSegments = BinSegStartH(NumBins);
 
       // Fill each bin's list in increasing entity order
-      std::vector<I4> EntitiesH(BinStart[NumBins]);
-      std::vector<I4> Next(BinStart.begin(), BinStart.end() - 1);
+      HostArray1DI4 EntitiesH("BinnedSumsEntities", BinStart(NumBins));
+      HostArray1DI4 Next("BinnedSumsNext", NumBins);
+      for (I4 Bin = 0; Bin < NumBins; ++Bin)
+         Next(Bin) = BinStart(Bin);
       for (I4 I = 0; I < NEntities; ++I) {
-         const I4 Bin = BinOfEntity[I];
+         const I4 Bin = BinOfEntity(I);
          if (Bin >= 0 && Bin < NumBins)
-            EntitiesH[Next[Bin]++] = I;
+            EntitiesH(Next(Bin)++) = I;
       }
 
       // Split each bin's list into segments
-      std::vector<I4> SegStartH(NSegments + 1, 0);
-      std::vector<I4> SegBinH(NSegments, 0);
+      HostArray1DI4 SegStartH("BinnedSumsSegStart", NSegments + 1);
+      HostArray1DI4 SegBinH("BinnedSumsSegBin", NSegments);
       for (I4 Bin = 0; Bin < NumBins; ++Bin) {
-         for (I4 Seg = BinSegStartH[Bin]; Seg < BinSegStartH[Bin + 1]; ++Seg) {
-            SegStartH[Seg] =
-                BinStart[Bin] + (Seg - BinSegStartH[Bin]) * SegmentSize;
-            SegBinH[Seg] = Bin;
+         for (I4 Seg = BinSegStartH(Bin); Seg < BinSegStartH(Bin + 1); ++Seg) {
+            SegStartH(Seg) =
+                BinStart(Bin) + (Seg - BinSegStartH(Bin)) * SegmentSize;
+            SegBinH(Seg) = Bin;
          }
       }
-      SegStartH[NSegments] = BinStart[NumBins];
+      SegStartH(NSegments) = BinStart(NumBins);
 
-      Entities    = copyToDevice("BinnedSumsEntities", EntitiesH);
-      SegStart    = copyToDevice("BinnedSumsSegStart", SegStartH);
-      SegBin      = copyToDevice("BinnedSumsSegBin", SegBinH);
-      BinSegStart = copyToDevice("BinnedSumsBinSegStart", BinSegStartH);
+      Entities    = createDeviceMirrorCopy(EntitiesH);
+      SegStart    = createDeviceMirrorCopy(SegStartH);
+      SegBin      = createDeviceMirrorCopy(SegBinH);
+      BinSegStart = createDeviceMirrorCopy(BinSegStartH);
       Built       = true;
 
       // Scratch arrays are sized on the next call to localSums
@@ -225,17 +232,6 @@ class BinnedSums {
 
       result_view_type Result;
    };
-
-   /// Copies a host vector to a new device array
-   static Array1DI4 copyToDevice(const std::string &Label,
-                                 const std::vector<I4> &Host) {
-      Array1DI4 Device(Label, Host.size());
-      auto Mirror = Kokkos::create_mirror_view(Device);
-      for (size_t I = 0; I < Host.size(); ++I)
-         Mirror(I) = Host[I];
-      deepCopy(Device, Mirror);
-      return Device;
-   }
 
    bool Built       = false;
    I4 NumBins       = 0;
