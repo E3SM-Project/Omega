@@ -63,6 +63,16 @@ int SfcCoupling::init(const CouplingInitParams &CouplingInitParams) {
    return Err;
 }
 
+// Look up a coupler field index; aborts if missing or out of range
+int SfcCoupling::findIdx(const std::map<std::string, int> &Map,
+                         const std::string &Name, int NFields) {
+   auto It = Map.find(Name);
+   OMEGA_REQUIRE(It != Map.end(), "SfcCoupling: no index for {}", Name);
+   OMEGA_REQUIRE(It->second >= 0 && It->second < NFields,
+                 "SfcCoupling: index {} for {} out of range", It->second, Name);
+   return It->second;
+}
+
 // Construct a new surface coupling object
 SfcCoupling::SfcCoupling(const std::string &Name_, const HorzMesh *Mesh,
                          const int NImportFields_, const int NExportFields_,
@@ -72,7 +82,6 @@ SfcCoupling::SfcCoupling(const std::string &Name_, const HorzMesh *Mesh,
                          const TimeInterval &CouplingTimeStep,
                          const CouplingLayout &Layout)
     : Name(Name_), NImportFields(NImportFields_), NExportFields(NExportFields_),
-      ImportIdxMap(ImportIdxMap), ExportIdxMap(ExportIdxMap),
       CplToOcn(Name_, Mesh), OcnToCpl(Name_, Mesh), Layout(Layout) {
 
    // Retrieve mesh cell/edge count
@@ -93,6 +102,11 @@ SfcCoupling::SfcCoupling(const std::string &Name_, const HorzMesh *Mesh,
 
    CouplingAlarm = Alarm(AlarmName, CouplingTimeStep, StartTime);
    StepperClock->attachAlarm(&CouplingAlarm);
+
+   for (int F = 0; F < NImport; ++F)
+      ImportIdx[F] = findIdx(ImportIdxMap, ImportNames[F], NImportFields);
+   for (int F = 0; F < NExport; ++F)
+      ExportIdx[F] = findIdx(ExportIdxMap, ExportNames[F], NExportFields);
 }
 
 // Create a new surface coupling object by calling the constructor and storing
@@ -205,24 +219,8 @@ void SfcCoupling::importFromCoupler() {
           "method must be called before importing data from the coupler.");
    }
 
-   // Get import field indices
-   int TauxIdx   = ImportIdxMap.at("Foxx_taux");
-   int TauyIdx   = ImportIdxMap.at("Foxx_tauy");
-   int SwnetIdx  = ImportIdxMap.at("Foxx_swnet");
-   int SenIdx    = ImportIdxMap.at("Foxx_sen");
-   int LatIdx    = ImportIdxMap.at("Foxx_lat");
-   int LwupIdx   = ImportIdxMap.at("Foxx_lwup");
-   int LwdnIdx   = ImportIdxMap.at("Faxa_lwdn");
-   int SaltIdx   = ImportIdxMap.at("Fioi_salt");
-   int MelthIdx  = ImportIdxMap.at("Fioi_melth");
-   int MeltwIdx  = ImportIdxMap.at("Fioi_meltw");
-   int SnowIdx   = ImportIdxMap.at("Faxa_snow");
-   int RainIdx   = ImportIdxMap.at("Faxa_rain");
-   int EvapIdx   = ImportIdxMap.at("Foxx_evap");
-   int RoflIdx   = ImportIdxMap.at("Foxx_rofl");
-   int RofiIdx   = ImportIdxMap.at("Foxx_rofi");
-   int BPressIdx = ImportIdxMap.at("Si_bpress");
-   int PslvIdx   = ImportIdxMap.at("Sa_pslv");
+   // Local copy so the lambda does not capture this
+   const auto Idx = ImportIdx;
 
    // Copy Kokkos view handles
    auto CplToOcnView_         = CplToOcnView;
@@ -248,30 +246,30 @@ void SfcCoupling::importFromCoupler() {
    ///       unless threading is used. But this has to be run on the host.
    auto Policy = Kokkos::RangePolicy<HostExecSpace, Kokkos::IndexType<int>>(
        0, NCellsOwned);
-   Kokkos::parallel_for("importFromCoupler", Policy, [=](int Idx) {
-      SfcStressZonal_(Idx)       = CplToOcnView_(TauxIdx, Idx);
-      SfcStressMerid_(Idx)       = CplToOcnView_(TauyIdx, Idx);
-      SnowFlux_(Idx)             = CplToOcnView_(SnowIdx, Idx);
-      RainFlux_(Idx)             = CplToOcnView_(RainIdx, Idx);
-      EvaporationFlux_(Idx)      = CplToOcnView_(EvapIdx, Idx);
-      SeaIceFreshWaterFlux_(Idx) = CplToOcnView_(MeltwIdx, Idx);
-      IceRunoffFlux_(Idx)        = CplToOcnView_(RofiIdx, Idx);
-      RiverRunoffFlux_(Idx)      = CplToOcnView_(RoflIdx, Idx);
-      LatentHeatFluxEvap_(Idx)   = CplToOcnView_(LatIdx, Idx);
-      SensibleHeatFlux_(Idx)     = CplToOcnView_(SenIdx, Idx);
-      LongWaveHeatFluxUp_(Idx)   = CplToOcnView_(LwupIdx, Idx);
-      LongWaveHeatFluxDown_(Idx) = CplToOcnView_(LwdnIdx, Idx);
-      SeaIceHeatFlux_(Idx)       = CplToOcnView_(MelthIdx, Idx);
-      ShortWaveHeatFlux_(Idx)    = CplToOcnView_(SwnetIdx, Idx);
-      SeaIceSaltFlux_(Idx)       = CplToOcnView_(SaltIdx, Idx);
+   Kokkos::parallel_for("importFromCoupler", Policy, [=](int ICell) {
+      SfcStressZonal_(ICell)       = CplToOcnView_(Idx[Taux], ICell);
+      SfcStressMerid_(ICell)       = CplToOcnView_(Idx[Tauy], ICell);
+      SnowFlux_(ICell)             = CplToOcnView_(Idx[Snow], ICell);
+      RainFlux_(ICell)             = CplToOcnView_(Idx[Rain], ICell);
+      EvaporationFlux_(ICell)      = CplToOcnView_(Idx[Evap], ICell);
+      SeaIceFreshWaterFlux_(ICell) = CplToOcnView_(Idx[Meltw], ICell);
+      IceRunoffFlux_(ICell)        = CplToOcnView_(Idx[Rofi], ICell);
+      RiverRunoffFlux_(ICell)      = CplToOcnView_(Idx[Rofl], ICell);
+      LatentHeatFluxEvap_(ICell)   = CplToOcnView_(Idx[Lat], ICell);
+      SensibleHeatFlux_(ICell)     = CplToOcnView_(Idx[Sen], ICell);
+      LongWaveHeatFluxUp_(ICell)   = CplToOcnView_(Idx[Lwup], ICell);
+      LongWaveHeatFluxDown_(ICell) = CplToOcnView_(Idx[Lwdn], ICell);
+      SeaIceHeatFlux_(ICell)       = CplToOcnView_(Idx[Melth], ICell);
+      ShortWaveHeatFlux_(ICell)    = CplToOcnView_(Idx[Swnet], ICell);
+      SeaIceSaltFlux_(ICell)       = CplToOcnView_(Idx[Salt], ICell);
 
       // Limit sea ice basal pressure (Pa) to 5 m of seawater equivalent
       const Real SeaIcePressure =
-          Kokkos::min(CplToOcnView_(BPressIdx, Idx), MaxSeaIcePressure);
+          Kokkos::min(CplToOcnView_(Idx[Bpress], ICell), MaxSeaIcePressure);
       // Compute the relative sea level pressure (Pa)
-      const Real SeaLevelPressure = CplToOcnView_(PslvIdx, Idx) - AtmRefP;
+      const Real SeaLevelPressure = CplToOcnView_(Idx[Pslv], ICell) - AtmRefP;
       // Compute the relative surface pressure (Pa);
-      SurfacePressure_(Idx) = SeaIcePressure + SeaLevelPressure;
+      SurfacePressure_(ICell) = SeaIcePressure + SeaLevelPressure;
    });
 }
 
@@ -286,18 +284,8 @@ void SfcCoupling::exportToCoupler() {
    // Copy the OcnToCpl fields to their host mirrors
    OcnToCpl.copyToHost();
 
-   int TempIdx        = ExportIdxMap.at("So_t");
-   int SalinIdx       = ExportIdxMap.at("So_s");
-   int VelUIdx        = ExportIdxMap.at("So_u");
-   int VelVIdx        = ExportIdxMap.at("So_v");
-   int SshIdx         = ExportIdxMap.at("So_ssh");
-   int DhdxIdx        = ExportIdxMap.at("So_dhdx");
-   int DhdyIdx        = ExportIdxMap.at("So_dhdy");
-   int ExtraEnergyIdx = ExportIdxMap.at("Faoo_h2otemp");
-   int MeltPotIdx     = ExportIdxMap.at("Fioo_q");
-   int FrazilMIdx     = ExportIdxMap.at("Fioo_frazilm");
-   int FrazilSIdx     = ExportIdxMap.at("Fioo_frazils");
-   int FrazilHIdx     = ExportIdxMap.at("Fioo_frazilh");
+   // Local copy so the lambda does not capture this
+   const auto Idx = ExportIdx;
 
    // Copy Kokkos view handles
    auto OcnToCplView_         = OcnToCplView;
@@ -320,19 +308,19 @@ void SfcCoupling::exportToCoupler() {
    /// TODO: Shouldn't be making direct calls to Kokkos here.
    auto Policy = Kokkos::RangePolicy<HostExecSpace, Kokkos::IndexType<int>>(
        0, NCellsOwned);
-   Kokkos::parallel_for("exportToCoupler", Policy, [=](int Idx) {
-      OcnToCplView_(TempIdx, Idx)        = AvgSfcTemperature_(Idx);
-      OcnToCplView_(SalinIdx, Idx)       = AvgSfcSalinity_(Idx);
-      OcnToCplView_(VelUIdx, Idx)        = AvgSfcVelocityZonal_(Idx);
-      OcnToCplView_(VelVIdx, Idx)        = AvgSfcVelocityMerid_(Idx);
-      OcnToCplView_(DhdxIdx, Idx)        = AvgSfcSshGradZonal_(Idx);
-      OcnToCplView_(DhdyIdx, Idx)        = AvgSfcSshGradMerid_(Idx);
-      OcnToCplView_(SshIdx, Idx)         = InstSshCellH_(Idx);
-      OcnToCplView_(ExtraEnergyIdx, Idx) = AvgExtraEnergy_(Idx);
-      OcnToCplView_(MeltPotIdx, Idx)     = MeltPotentialFluxH_(Idx);
-      OcnToCplView_(FrazilMIdx, Idx)     = AvgFrazilMassFluxH_(Idx);
-      OcnToCplView_(FrazilSIdx, Idx)     = AvgFrazilSaltFluxH_(Idx);
-      OcnToCplView_(FrazilHIdx, Idx)     = AvgFrazilEnergyFluxH_(Idx);
+   Kokkos::parallel_for("exportToCoupler", Policy, [=](int ICell) {
+      OcnToCplView_(Idx[T], ICell)       = AvgSfcTemperature_(ICell);
+      OcnToCplView_(Idx[S], ICell)       = AvgSfcSalinity_(ICell);
+      OcnToCplView_(Idx[U], ICell)       = AvgSfcVelocityZonal_(ICell);
+      OcnToCplView_(Idx[V], ICell)       = AvgSfcVelocityMerid_(ICell);
+      OcnToCplView_(Idx[Dhdx], ICell)    = AvgSfcSshGradZonal_(ICell);
+      OcnToCplView_(Idx[Dhdy], ICell)    = AvgSfcSshGradMerid_(ICell);
+      OcnToCplView_(Idx[Ssh], ICell)     = InstSshCellH_(ICell);
+      OcnToCplView_(Idx[H2otemp], ICell) = AvgExtraEnergy_(ICell);
+      OcnToCplView_(Idx[Q], ICell)       = MeltPotentialFluxH_(ICell);
+      OcnToCplView_(Idx[Frazilm], ICell) = AvgFrazilMassFluxH_(ICell);
+      OcnToCplView_(Idx[Frazils], ICell) = AvgFrazilSaltFluxH_(ICell);
+      OcnToCplView_(Idx[Frazilh], ICell) = AvgFrazilEnergyFluxH_(ICell);
    });
 
    OcnToCpl.resetFields(); // Reset fields to 0 for the next coupling interval
