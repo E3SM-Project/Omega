@@ -160,14 +160,10 @@ time is then independent of whatever `clang-format` is first on the path.
 releases. Its hook and the optional `clang-tidy` hook check that the version on
 the path matches the pinned one, and fail with instructions if it does not.
 
-Recent `cppcheck` releases need Python 3.11 or newer, so the linting tools are
-in a pixi feature that only the default environment uses. The environments that
-test `omega_buildnml` with older Python versions leave them out.
-
 Updating a tool is a deliberate change: all pins move together, the code is
 reformatted in a single commit listed in `.git-blame-ignore-revs`, and any new
 findings are fixed or suppressed in the same pull request. Moving from
-`clang-format` 18.1.8 to 23.1.5 changes about 160 lines in 24 files.
+`clang-format` 18.1.8 to 23.1.5 changes about 165 lines in 25 files.
 
 ### 4.3 A compilation database without CIME
 
