@@ -152,6 +152,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#built-in-operators">Built-in operators</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#sampling-gate-for-temporal-reductions">Sampling gate for temporal reductions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#spatial-weights">Spatial weights</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#binned-sums">Binned sums</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#output-metadata">Output metadata</a></li>
 </ul>
 </li>
@@ -503,7 +504,7 @@ field(s).</p>
 <td><p>replaces horizontal dimension with <code class="docutils literal notranslate"><span class="pre">NumBins</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">_BinnedAccumulator(&lt;binfield&gt;)</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">NumBins</span></code> (I4)</p></td>
-<td><p>Accumulates field values into spatial bins. Uses MPI reduction for global totals. Automatically applies regional mask if attached to input Field.</p></td>
+<td><p>Accumulates field values into spatial bins, reproducibly (see <a class="reference internal" href="#omega-dev-analysis-binned-sums"><span class="std std-ref">Binned sums</span></a>). Automatically applies regional mask if attached to input Field.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CoordinateBinning</span></code></p></td>
 <td><p>1</p></td>
@@ -636,6 +637,32 @@ so they are recomputed each time), and then <code class="docutils literal notran
 normalization. The sums accumulate each owned entity’s terms in a fixed
 order and reduce them with <code class="docutils literal notranslate"><span class="pre">globalSum</span></code>, so they are as reproducible as
 Omega’s other global sums.</p>
+</section>
+<section id="binned-sums">
+<span id="omega-dev-analysis-binned-sums"></span><h3>Binned sums<a class="headerlink" href="#binned-sums" title="Permalink to this heading"></a></h3>
+<p>Operators that sum the owned entities in groups, such as <code class="docutils literal notranslate"><span class="pre">BinnedAccumulator</span></code>
+(one group per bin) and <code class="docutils literal notranslate"><span class="pre">HorzMean</span></code> (one group for all owned entities), use
+<code class="docutils literal notranslate"><span class="pre">BinnedSums</span></code> (<code class="docutils literal notranslate"><span class="pre">analysis/BinnedSums.h</span></code>) so that their results are bit-for-bit
+the same from run to run on CPUs and GPUs. Atomic adds give results that
+depend on the order in which threads run, which on a GPU changes from one run
+to the next.</p>
+<p>An operator calls <code class="docutils literal notranslate"><span class="pre">build(NumBins,</span> <span class="pre">BinOfEntity)</span></code> with the bin of each owned
+entity (a bin outside <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">NumBins)</span></code> excludes the entity). This lists each
+bin’s entities in local index order and splits each list into segments.
+<code class="docutils literal notranslate"><span class="pre">localSums(NLevels,</span> <span class="pre">Value)</span></code> then takes a device functor
+<code class="docutils literal notranslate"><span class="pre">Value(Entity,</span> <span class="pre">Bin,</span> <span class="pre">Level)</span></code> and sums it over each bin at each level. A team
+per segment and level reduces the entities in parallel, then a team per bin
+and level reduces the segment partials. Each team writes only its own
+result, and with a fixed team size (<code class="docutils literal notranslate"><span class="pre">OMEGA_TEAMSIZE</span></code>) a team reduction
+combines its threads’ partial sums in the same order on every run. Both
+stages use a double-double reducer that keeps each partial sum’s high part
+and residual. The order of the team reductions depends on the Kokkos backend
+and team size, so results are not guaranteed to match bit for bit across
+different hardware.</p>
+<p>The returned partial sums go to <code class="docutils literal notranslate"><span class="pre">globalSumDD</span></code> (see
+<a class="reference internal" href="Reductions.html#omega-dev-reductions"><span class="std std-ref">Global Reductions</span></a>) for the sum across tasks without discarding the
+local residuals. The results are as reproducible across task counts as Omega’s
+other global sums.</p>
 </section>
 <section id="output-metadata">
 <span id="omega-dev-analysis-output-metadata"></span><h3>Output metadata<a class="headerlink" href="#output-metadata" title="Permalink to this heading"></a></h3>

@@ -130,6 +130,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#global-sum">Global sum</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#global-sum-with-product">Global sum with product</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#global-sum-multi-field">Global sum multi-field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#global-sum-of-double-double-partial-sums">Global sum of double-double partial sums</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#global-minval-and-maxval">Global minval and maxval</a></li>
 </ul>
 </li>
@@ -285,6 +286,25 @@ Its signature will be:</p>
 <span class="w">                                   </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">I4</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">indexRange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">nullptr</span><span class="p">);</span>
 </pre></div>
 </div>
+</section>
+<section id="global-sum-of-double-double-partial-sums">
+<h2>Global sum of double-double partial sums<a class="headerlink" href="#global-sum-of-double-double-partial-sums" title="Permalink to this heading"></a></h2>
+<p>A local sum computed in a kernel can keep the full precision of the
+double-double algorithm by accumulating with the device-callable</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">sumDDLocal</span><span class="p">(</span><span class="n">R8</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Hi</span><span class="p">,</span><span class="w"> </span><span class="n">R8</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Lo</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">R8</span><span class="w"> </span><span class="n">Val</span><span class="p">);</span><span class="w">                </span><span class="c1">// add a double</span>
+<span class="n">sumDDPair</span><span class="p">(</span><span class="n">R8</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Hi</span><span class="p">,</span><span class="w"> </span><span class="n">R8</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Lo</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">R8</span><span class="w"> </span><span class="n">InHi</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">R8</span><span class="w"> </span><span class="n">InLo</span><span class="p">);</span><span class="w"> </span><span class="c1">// add a DD sum</span>
+</pre></div>
+</div>
+<p>which use the same arithmetic as the array <code class="docutils literal notranslate"><span class="pre">globalSum</span></code> on the host. The
+local sums of several fields are then summed across tasks with</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">R8</span><span class="o">&gt;</span><span class="w"> </span><span class="n">Result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">globalSumDD</span><span class="p">(</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Partials</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">Comm</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>where each element of <code class="docutils literal notranslate"><span class="pre">Partials</span></code> holds a local sum in its real part and the
+residual in its imaginary part. Unlike the multi-field <code class="docutils literal notranslate"><span class="pre">globalSum</span></code>, which
+starts from rounded local sums, this keeps the residuals, so the result is as
+reproducible as the array <code class="docutils literal notranslate"><span class="pre">globalSum</span></code>.</p>
 </section>
 <section id="global-minval-and-maxval">
 <h2>Global minval and maxval<a class="headerlink" href="#global-minval-and-maxval" title="Permalink to this heading"></a></h2>
