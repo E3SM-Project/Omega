@@ -19,6 +19,15 @@ Decomp. The input contents are defined by the
 `HorzMeshIn` FieldGroup. Refer to the specification for the
 definition, units, and dimensions of each field.
 
+The Coriolis parameter (`FCell`, `FEdge` and `FVertex`) is handled differently
+on spherical and planar meshes. On a spherical mesh, it is computed at
+initialization as $f = 2 \Omega \sin\phi$ from the latitude $\phi$ and the
+Earth's rotation rate $\Omega$ from the Physical Constants Dictionary
+(``Omega`` in ``GlobalConstants.h``). Any Coriolis parameter in the mesh file
+is ignored. On a planar mesh, `fCell`, `fEdge` and `fVertex` are read from the
+mesh file, since they depend on the test case (for example, a constant $f$ or
+a beta plane).
+
 These are all read using the input [IOStream](#omega-user-iostreams) HorzMeshIn
 ```yaml
   IOStreams:

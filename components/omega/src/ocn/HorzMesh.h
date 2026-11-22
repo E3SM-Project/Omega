@@ -75,6 +75,10 @@ class HorzMesh {
    /// operator
    void computeMeshScaling();
 
+   /// Computes the Coriolis parameter at cells, edges and vertices from
+   /// latitude and the Earth's rotation rate (spherical meshes only)
+   void computeCoriolis();
+
    // Variables
    // Since these are used frequently, we make them public to reduce the
    // number of retrievals required.
@@ -237,6 +241,9 @@ class HorzMesh {
                                    ///  each of the edgesOnEdge
 
    // Coriolis
+   // On spherical meshes, these are computed as 2 * Omega * sin(lat) from
+   // the Earth's rotation rate; on planar meshes, they are read from the
+   // mesh file.
 
    Array1DReal FEdge;      ///< Coriolis parameter at edges (radians s^-1)
    HostArray1DReal FEdgeH; ///< Coriolis parameter at edges (radians s^-1)

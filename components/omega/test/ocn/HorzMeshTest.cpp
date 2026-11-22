@@ -117,11 +117,11 @@ R8 computeLat(R8 X, R8 Y, R8 Z) {
 }
 
 //------------------------------------------------------------------------------
-// Computes coriolis parameter for a given latitude
+// Computes coriolis parameter for a given latitude using the Earth's rotation
+// rate from the Physical Constants Dictionary
 R8 coriolis(R8 Lat) {
 
-   R8 Omega = 7.29212e-5;
-   R8 F     = 2.0 * Omega * sin(Lat);
+   R8 F = 2.0 * static_cast<R8>(OMEGA::Omega) * sin(Lat);
 
    return F;
 }
@@ -463,15 +463,22 @@ int main(int argc, char *argv[]) {
       if (Count > 0)
          ABORT_ERROR("HorzMeshTest: angleEdge test FAIL");
 
+      // On a spherical mesh, the Coriolis parameter is computed from latitude
+      // rather than read from the mesh file. The mesh computes it in Real, so
+      // the tolerance (relative to the maximum value, 2 * Omega) depends on the
+      // build precision. The check includes halo elements, which are also
+      // computed.
+      R8 FTol = (sizeof(Real) == 4 ? 1.e-6 : 1.e-12) * 2.0 *
+                static_cast<R8>(OMEGA::Omega);
+
       // Test FCell
-      // Compute the Coriolis parameter for cell centers and compare with values
-      // that were read in
-      // Tests that the cell Coriolis values were read in correctly
+      // Compare the Coriolis parameter at cell centers with the value
+      // computed from latitude
       Count = 0;
-      for (int Cell = 0; Cell < LocCells; Cell++) {
+      for (int Cell = 0; Cell < Mesh->NCellsAll; Cell++) {
          R8 F = coriolis(Mesh->LatCellH(Cell));
 
-         if (abs(F - Mesh->FCellH(Cell)) > Tol) {
+         if (abs(F - Mesh->FCellH(Cell)) > FTol) {
             Count++;
          }
       }
@@ -480,15 +487,14 @@ int main(int argc, char *argv[]) {
          ABORT_ERROR("HorzMeshTest: fCell test FAIL");
 
       // Test FVertex
-      // Compute the Coriolis parameter for vertices and compare with values
-      // that were read in Tests that the vertex Coriolis values were read in
-      // correctly
+      // Compare the Coriolis parameter at vertices with the value computed
+      // from latitude
       Count = 0;
-      for (int Vertex = 0; Vertex < LocVertices; Vertex++) {
+      for (int Vertex = 0; Vertex < Mesh->NVerticesAll; Vertex++) {
 
          R8 F = coriolis(Mesh->LatVertexH(Vertex));
 
-         if (abs(F - Mesh->FVertexH(Vertex)) > Tol) {
+         if (abs(F - Mesh->FVertexH(Vertex)) > FTol) {
             Count++;
          }
       }
@@ -497,14 +503,13 @@ int main(int argc, char *argv[]) {
          ABORT_ERROR("HorzMeshTest: fVertex test FAIL");
 
       // Test FEdge
-      // Compute the Coriolis parameter for edges and compare with values that
-      // were read in
-      // Tests that the edge Coriolis values were read in correctly
+      // Compare the Coriolis parameter at edges with the value computed from
+      // latitude
       Count = 0;
-      for (int Edge = 0; Edge < LocEdges; Edge++) {
+      for (int Edge = 0; Edge < Mesh->NEdgesAll; Edge++) {
          R8 F = coriolis(Mesh->LatEdgeH(Edge));
 
-         if (abs(F - Mesh->FEdgeH(Edge)) > Tol) {
+         if (abs(F - Mesh->FEdgeH(Edge)) > FTol) {
             Count++;
          }
       }
