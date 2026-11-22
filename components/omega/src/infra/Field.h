@@ -88,6 +88,10 @@ class Field {
    /// (leaving the attached array at its fill value) instead of failing.
    bool OptionalRead;
 
+   /// How a time mean of this field is weighted (see setTimeMeanWeight).
+   /// Empty for the default mass weighting of a layered field.
+   std::string TimeMeanWeight;
+
    /// Data attached to this field. This will be a pointer to the Kokkos
    /// array holding the data. We use a void pointer to manage all the
    /// various types and cast to the appropriate type when needed.
@@ -258,6 +262,24 @@ class Field {
    /// Set whether this field may be absent from an input file (see
    /// isOptionalRead). Fields are required (not optional) by default.
    void setOptionalRead(bool OptRead ///< [in] optional-read flag value
+   );
+
+   /// Time-mean weight ("None") of a field whose time mean is not weighted
+   static const std::string NoTimeMeanWeight;
+
+   /// Returns how a mass-weighted time mean weights this field. Empty (the
+   /// default) means mass, which for a field on layers is the layer
+   /// pseudo-thickness at the field's location. NoTimeMeanWeight ("None")
+   /// marks a field that is already per unit area, such as a thickness or the
+   /// tendency of a thickness or thickness-weighted tracer, so its time mean
+   /// is not weighted. Any other value names the layer-thickness Field to
+   /// weight by, e.g. FluxPseudoThickEdge for a normal velocity whose
+   /// transport uses that thickness.
+   const std::string &getTimeMeanWeight() const;
+
+   /// Sets how a mass-weighted time mean weights this field (see
+   /// getTimeMeanWeight)
+   void setTimeMeanWeight(const std::string &Weight ///< [in] weight to use
    );
 
    //---------------------------------------------------------------------------

@@ -128,6 +128,10 @@ void SubmesoEddies::defineFields() {
 
       EddyVelocityField->attachData<Array2DReal>(EddyVelocity);
 
+      // The eddy velocity adds to the normal transport velocity, so a time
+      // mean weights it by the same flux pseudo-thickness
+      EddyVelocityField->setTimeMeanWeight("FluxPseudoThickEdge");
+
       SubmesoGroup->addField(EddyVelocity.label());
    }
 }

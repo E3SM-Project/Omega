@@ -361,6 +361,20 @@ bool Field::isOptionalRead() const { return OptionalRead; }
 void Field::setOptionalRead(bool OptRead) { OptionalRead = OptRead; }
 
 //------------------------------------------------------------------------------
+// The weight that marks a field whose time mean is not weighted
+const std::string Field::NoTimeMeanWeight = "None";
+
+//------------------------------------------------------------------------------
+// Returns how a mass-weighted time mean weights the field
+const std::string &Field::getTimeMeanWeight() const { return TimeMeanWeight; }
+
+//------------------------------------------------------------------------------
+// Sets how a mass-weighted time mean weights the field
+void Field::setTimeMeanWeight(const std::string &Weight) {
+   TimeMeanWeight = Weight;
+}
+
+//------------------------------------------------------------------------------
 // Returns a vector of dimension names associated with each dimension
 // of an array field. Returns an error code.
 void Field::getDimNames(

@@ -471,6 +471,10 @@ void VertCoord::defineFields() {
    RefPseudoThickField->attachData<Array2DReal>(RefPseudoThickness);
    VertCoordMvmtWgtsField->attachData<Array1DReal>(VertCoordMovementWeights);
 
+   // A pseudo-thickness is already per unit area, so its time mean is not
+   // weighted
+   RefPseudoThickField->setTimeMeanWeight(Field::NoTimeMeanWeight);
+
    // Create a field group for VertCoord fields
    GroupName = "VertCoord";
    if (Name != "Default") {
@@ -494,6 +498,7 @@ void VertCoord::defineFields() {
    GeomZMidField->attachData<Array2DReal>(GeomZMid);
    GeopotentialMidField->attachData<Array2DReal>(GeopotentialMid);
    PseudoThicknessTargetField->attachData<Array2DReal>(PseudoThicknessTarget);
+   PseudoThicknessTargetField->setTimeMeanWeight(Field::NoTimeMeanWeight);
    SshField->attachData<Array1DReal>(SshCell);
    TotalPseudoThicknessField->attachData<Array1DReal>(TotalPseudoThickness);
 

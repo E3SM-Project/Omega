@@ -294,7 +294,9 @@ defaults to one month, but may be overridden with the optional
 `ReductionPeriod` parameter. The `MonghtlyAverages` group is specifically for
 temporal reductions, any defined `SnapshotPeriod` parameter is ignored. This
 group mirrors the `timeSeriesStatsMonthly` analysis member in MPAS-Ocean, which
-delivers monthly means of prognostic and derived fields.
+delivers monthly means of prognostic and derived fields. Unlike MPAS-Ocean,
+the means of fields on layers are weighted by mass by default (see
+[Mass-weighted means](#omega-user-analysis-mass-weighted-means) below).
 
 **Example:**
 
@@ -306,6 +308,7 @@ Omega:
       Fields: [Temperature, Salinity, NormalVelocity, PseudoThickness]
       ReductionPeriod: [1Month]   # optional; defaults to [1Month]
       SamplingInterval: "dt"
+      Weighting: Mass             # optional; Mass (default) or None
       Filename: monthly.averages.$Y.nc
       Stream:
         FileFreq: 1
@@ -326,9 +329,43 @@ Omega:
   [Sampling interval for temporal reductions](#omega-user-analysis-sampling-interval).
   Empty, `dt`, or `timestep` samples every timestep.
 
+- **Weighting:** `Mass` (the default) weights the time means of fields on
+  layers by mass, as described below. `None` gives the plain mean of every
+  field.
+
 **Output fields:**
 For each requested field, a time-averaged field is produced:
  - `FieldName_TimeMeanPeriod` (e.g., `Temperature_TimeMean1Month`)
+
+(omega-user-analysis-mass-weighted-means)=
+**Mass-weighted means:**
+In Omega the pseudo-thickness of a layer is its mass per unit area divided by
+$\rho_0$, and the area of a cell, edge or vertex does not change over time.
+So with `Weighting: Mass`, a field $\phi$ on layers is averaged as
+$\overline{w \phi} / \overline{w}$, where $w$ is the layer pseudo-thickness at
+the field's location, sampled at the same times as the field. The weight
+depends on where the field lives and what it measures:
+
+| Field | Weight | Examples |
+| ----- | ------ | -------- |
+| On cell layers | `PseudoThickness` | `Temperature`, `Salinity`, `SpecVol`, `GeomZMid` |
+| On edge layers | the mean `PseudoThickness` of the two cells | `NormalVelocityTend` |
+| Normal velocity on edge layers | `FluxPseudoThickEdge` | `NormalVelocity`, `NormalTransportVelocity` |
+| On vertex layers | the kite-area-weighted mean `PseudoThickness` | `RelVortVertex` |
+| Already per unit area, on interfaces, or horizontal | none | `PseudoThickness`, `FluxPseudoThickEdge`, `PseudoThicknessTend`, `TracerTend`, `GeomZInterface`, `SshCell` |
+
+A quantity per unit mass (a tracer concentration, a velocity) gets the
+mass-weighted mean, so the mean `Temperature` times the mean
+`PseudoThickness` is the mean heat content of the layer, covariance included. A quantity that is already per unit area gets the plain mean,
+because weighting it would count the thickness twice; `TracerTend` is the
+tendency of the thickness-weighted tracer, so it is in this group. A normal
+velocity is weighted by the flux pseudo-thickness that carries its transport,
+so the mean transport through an edge is the mean `NormalVelocity` times the
+mean `FluxPseudoThickEdge`, whether `FluxThicknessType` is `Center` or
+`Upwind`. This is the transport needed for the barotropic and overturning
+streamfunctions, which is why `FluxPseudoThickEdge` is in the default field
+list. The `cell_methods` attribute of a weighted mean names its weight, e.g.
+`time: mean (comment: weighted by pseudo-thickness)`.
 
 **Output streams:**
 Automatically created and named:
@@ -337,7 +374,8 @@ Automatically created and named:
 
 ```{note}
 The default field list in `Default.yml` includes the core prognostic fields
-(`Temperature`, `Salinity`, `NormalVelocity`, `PseudoThickness`). Additional
+(`Temperature`, `Salinity`, `NormalVelocity`, `PseudoThickness`) and the
+`FluxPseudoThickEdge` needed to rebuild the mean transport. Additional
 registered global fields may be requested by adding them to the `Fields` list.
 A reduction period may span a restart; see
 [Temporal Reduction and Restarts](#temporal-reduction-and-restarts) below.
@@ -352,11 +390,16 @@ requirement that the reduction period divide evenly into the restart interval,
 so any combination of periods and restart intervals is valid (for example, a
 `1Month` average with a 10-day restart interval). When a restart is written in
 the middle of a reduction period, the mid-period accumulation state (the
-partial sum and the sample count) is checkpointed in the restart file and
-restored on continuation, so the final written average is identical to that of
-an uninterrupted run. Restart files written before this capability was added
-remain readable; a reduction that lacks checkpointed state simply begins a
-fresh accumulation period on restart.
+partial sum, the sample count and, for a mass-weighted mean, the sum of the
+weights) is checkpointed in the restart file and restored on continuation, so
+the final written average is identical to that of an uninterrupted run.
+Restart files written before this capability was added remain readable; a
+reduction that lacks checkpointed state simply begins a fresh accumulation
+period on restart. A mass-weighted mean restarted in the middle of a period
+from a file without the sum of the weights (written by an unweighted mean or
+an older Omega) aborts, since its partial sum is unweighted. Restart from a
+file written at the end of an averaging period, use a hybrid start, or set
+`Weighting: None`.
 
 ### Field Availability
 
