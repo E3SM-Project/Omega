@@ -1900,6 +1900,43 @@ void testBoundaryLayerEdgeFallbacks() {
    }
 
    VCoord->minMaxLayerEdge(Halo::getDefault());
+
+   // Next to a 2-layer neighbor (2 m deep, with two 1 m layers) whose
+   // GeomZInterface holds FillValueReal below its bottom (K > 2), the edge
+   // surface-layer average at K=2 (ZDepth=30 m, SurfLayerDepth=3 m > 2 m)
+   // must stop at MaxLayerEdgeTop = 1 rather than stepping into fill values.
+   OMEGA_SCOPE(MaxLayerCell, VCoord->MaxLayerCell);
+   OMEGA_SCOPE(GeomZInterface, VCoord->GeomZInterface);
+   OMEGA_SCOPE(GeomZMid, VCoord->GeomZMid);
+   parallelFor(
+       "KPPMixTest-SetShallowNeighbor", {Mesh->NCellsAll},
+       KOKKOS_LAMBDA(I4 ICell) {
+          GeomZInterface(ICell, 0) = 0.0_Real;
+          GeomZInterface(ICell, 1) = -1.0_Real;
+          GeomZInterface(ICell, 2) = -2.0_Real;
+          GeomZMid(ICell, 0)       = -0.5_Real;
+          GeomZMid(ICell, 1)       = -1.5_Real;
+          MaxLayerCell(ICell)      = (ICell == 0) ? NVertLayers - 1 : 1;
+          if (ICell != 0) {
+             for (I4 K = 3; K <= NVertLayers; ++K) {
+                GeomZInterface(ICell, K) = FillValueReal;
+             }
+          }
+       });
+   VCoord->minMaxLayerEdge(Halo::getDefault());
+   KPPInstance->computeOSBLDepth(Density, NormalVelocity, TangentialVelocity,
+                                 UStar, B0, BVF, IceFraction, Wind);
+   BulkShearH = createHostMirrorCopy(KPPInstance->BulkRichardsonShear);
+   // For cell 0 at K=2 (interface 3), every neighbor has KEMax=1, so the
+   // surface average spans the two 1 m layers (UnAvg=0.05, VtAvg=0.10) while
+   // KE is clamped to layer 1 (UnK=0.10, VtK=0.20), giving DUn^2+DVt^2 =
+   // 0.0125.
+   if (!isApprox(BulkShearH(0, 3), 0.0125_Real, RTol, ATol)) {
+      ++NumErrors;
+   }
+
+   setCoefficientTestGeometry();
+   VCoord->minMaxLayerEdge(Halo::getDefault());
    checkResult("boundary-layer edge fallbacks", NumErrors);
 }
 
