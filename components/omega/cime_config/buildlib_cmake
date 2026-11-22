@@ -31,6 +31,14 @@ def buildlib(bldroot, installpath, case):
         f' -DOMEGA_PARMETIS_ROOT="{parmetis_root}"'
     )
 
+    # The ocean's Kokkos backend, from the drivers' per-component
+    # KOKKOS_BACKEND (E3SM-Project/E3SM#9048). Without it, or with 'default',
+    # Omega derives OMEGA_ARCH from the machine as before; any other value is
+    # checked against the shared Kokkos in OmegaBuild.cmake.
+    kokkos_backend = case.get_value("OCN_KOKKOS_BACKEND")
+    if kokkos_backend and kokkos_backend.lower() != "default":
+        cmake_args += f" -DOMEGA_ARCH={kokkos_backend.upper()}"
+
     comp_interface = case.get_value("COMP_INTERFACE")
     if comp_interface == "moab":
         moab_root = os.environ.get("MOAB_ROOT")
