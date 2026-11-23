@@ -631,7 +631,7 @@ void VertCoord::setStreamArrays(const bool ReadStream, Halo *MeshHalo) {
                LOG_INFO("VertCoord: Error reading MinLayerCell from {}, "
                         "using MinLayerCell = 0",
                         StreamName);
-               deepCopy(MinLayerCell, 1);
+               deepCopy(MinLayerCell, 0);
             }
             I4 NFill2 = 0;
             parallelReduce(
@@ -645,7 +645,7 @@ void VertCoord::setStreamArrays(const bool ReadStream, Halo *MeshHalo) {
                LOG_INFO("VertCoord: Error reading MaxLayerCell from {}, "
                         "using MaxLayerCell = NVertLayers - 1",
                         StreamName);
-               deepCopy(MaxLayerCell, NVertLayers);
+               deepCopy(MaxLayerCell, NVertLayers - 1);
             }
             I4 NFill3 = 0;
             parallelReduce(
@@ -712,17 +712,32 @@ void VertCoord::setStreamArrays(const bool ReadStream, Halo *MeshHalo) {
          ABORT_ERROR("Error validating IO stream {}", StreamName);
       }
    } else {
-      deepCopy(MinLayerCell, 1);
-      deepCopy(MaxLayerCell, NVertLayers);
+      deepCopy(MinLayerCell, 0);
+      deepCopy(MaxLayerCell, NVertLayers - 1);
       deepCopy(VertCoordMovementWeights, 1._Real);
    }
 
-   // Subtract 1 to convert to zero-based indexing
-   parallelFor(
-       {NCellsAll}, KOKKOS_LAMBDA(int ICell) {
-          LocMinLayerCell(ICell) -= 1;
-          LocMaxLayerCell(ICell) -= 1;
-       });
+   // MinLayerCell and MaxLayerCell are zero-based layer indices in files as
+   // well as in Omega. A file with one-based indices (as in MPAS-Ocean) would
+   // put the bottom of any full-depth column below the last layer, so make
+   // sure that no index on an owned cell is out of range.
+   OMEGA_SCOPE(LocNVertLayers, NVertLayers);
+   I4 NOutOfRange = 0;
+   parallelReduce(
+       {NCellsOwned},
+       KOKKOS_LAMBDA(int ICell, I4 &Count) {
+          if (LocMinLayerCell(ICell) < 0 or
+              LocMaxLayerCell(ICell) > LocNVertLayers - 1)
+             ++Count;
+       },
+       NOutOfRange);
+   if (NOutOfRange > 0)
+      ABORT_ERROR("VertCoord: MinLayerCell or MaxLayerCell is outside the "
+                  "zero-based range [0, NVertLayers - 1 = {}] in {} cells. "
+                  "These indices are zero-based in Omega input files; a "
+                  "file with one-based (MPAS-Ocean) indices must be "
+                  "regenerated.",
+                  NVertLayers - 1, NOutOfRange);
 
    // Exchange halos since stream only reads owned cells
    MeshHalo->exchangeFullArrayHalo(MinLayerCell, OnCell);

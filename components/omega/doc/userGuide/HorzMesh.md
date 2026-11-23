@@ -63,7 +63,9 @@ the counts ``NEdgesOnCell`` and ``NEdgesOnEdge``, the global IDs
 ``IndexToCellID``, ``IndexToEdgeID`` and ``IndexToVertexID`` and, on a
 sphere, the reconstruction stencil (``NEdgesReconOnCell`` and
 ``ReconStencilCell``). As in the MPAS mesh specification, the connectivity
-holds one-based global IDs, with 0 for a missing neighbor.
+holds one-based global IDs, with 0 for a missing neighbor. (The vertical layer
+indices ``MinLayerCell`` and ``MaxLayerCell``, which are not part of that
+specification, are zero-based; see [VertCoord](#omega-user-vert-coord).)
 Omega does not read these connectivity variables through the ``HorzMeshIn``
 stream: the decomposition reads the connectivity itself (under either the
 Omega or the older MPAS names, e.g. ``cellsOnCell``) and computes the counts.
