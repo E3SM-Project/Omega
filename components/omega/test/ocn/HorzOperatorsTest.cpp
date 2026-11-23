@@ -83,14 +83,14 @@ struct TestSetupSphere1 {
    Real Radius = REarth;
 
    ErrorMeasures ExpectedDivErrors         = {0.013659556524995887,
-                                              0.0036698023600862115};
-   ErrorMeasures ExpectedGradErrors        = {0.0018790366228384064,
-                                              0.001498464739730873};
+                                              0.003669802356960979};
+   ErrorMeasures ExpectedGradErrors        = {0.0018790366180595625,
+                                              0.0014984647360648706};
    ErrorMeasures ExpectedCurlErrors        = {0.027146182264345276,
                                               0.025202560969394435};
    ErrorMeasures ExpectedReconErrors       = {0.020633072221392872,
                                               0.0069262670519179542};
-   ErrorMeasures ExpectedVectorReconErrors = {0.0033076912646330093,
+   ErrorMeasures ExpectedVectorReconErrors = {0.0033076912697193924,
                                               0.0029392950172411627};
    ErrorMeasures ExpectedAnisoInterpErrors = {0.0024007805796189691,
                                               0.0018491570972366796};
