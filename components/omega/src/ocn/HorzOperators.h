@@ -470,7 +470,7 @@ class MasksAndCoefficients {
  public:
    MasksAndCoefficients(HorzMesh const *Mesh, VertCoord const *VCoord,
                         const Array3DReal DerivTwo, Array1DI4 NAdvCellsForEdge,
-                        Array2DI4 AdvCellsForEdge, Array2DI4 AdvMaskHighOrder,
+                        Array2DI4 AdvCellsForEdge, Array2DReal AdvMaskHighOrder,
                         Array2DReal AdvCoefs, Array2DReal AdvCoefs3rd);
 
    KOKKOS_FUNCTION void operator()(const int IEdge) const {
@@ -493,23 +493,23 @@ class MasksAndCoefficients {
       const int NLyr = AdvMaskHighOrder.extent(1);
       for (int K = 0; K < NLyr; ++K) {
          if (BoundaryCell(Cell1, K) == 1 or BoundaryCell(Cell2, K) == 1) {
-            AdvMaskHighOrder(IEdge, K) = 0;
+            AdvMaskHighOrder(IEdge, K) = 0._Real;
          } else {
-            AdvMaskHighOrder(IEdge, K) = 1;
+            AdvMaskHighOrder(IEdge, K) = 1._Real;
          }
       }
 
       for (int J = 0; J < NEdgesOnCell(Cell1); ++J) {
          if (CellsOnCell(Cell1, J) == NCellsGlobal) {
             for (int K = 0; K < NLyr; ++K) {
-               AdvMaskHighOrder(IEdge, K) = 0;
+               AdvMaskHighOrder(IEdge, K) = 0._Real;
             }
          }
       }
       for (int J = 0; J < NEdgesOnCell(Cell2); ++J) {
          if (CellsOnCell(Cell2, J) == NCellsGlobal) {
             for (int K = 0; K < NLyr; ++K) {
-               AdvMaskHighOrder(IEdge, K) = 0;
+               AdvMaskHighOrder(IEdge, K) = 0._Real;
             }
          }
       }
@@ -641,7 +641,7 @@ class MasksAndCoefficients {
    Array2DI4 CellIndx;
    Array3DI4 CellIndxSorted;
    Array1DI4 CellID;
-   Array2DI4 AdvMaskHighOrder;
+   Array2DReal AdvMaskHighOrder;
    Array2DI4 EdgesOnEdge;
    Array2DI4 CellsOnCell;
    Array2DI4 CellsOnEdge;

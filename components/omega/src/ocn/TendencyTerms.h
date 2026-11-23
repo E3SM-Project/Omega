@@ -1055,7 +1055,7 @@ class TracerHorzAdvOnCell {
 
    Array1DI4 NAdvCellsForEdge;
    Array2DI4 AdvCellsForEdge;
-   Array2DI4 AdvMaskHighOrder;
+   Array2DReal AdvMaskHighOrder;
    Array2DI4 CellsOnCell;
    Array1DI4 NEdgesOnCell;
    Array2DReal AdvCoefs;
