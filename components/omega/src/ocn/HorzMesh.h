@@ -81,6 +81,9 @@ class HorzMesh {
 
    std::string MeshName;     ///< name of this mesh
    std::string MeshFileName; ///< name (and full path) of input mesh file
+   std::string MeshMetaName; ///< name of the metadata-only field holding the
+                             ///< global mesh attributes written with the
+                             ///< mesh fields
 
    // Global attributes
    bool OnSphere;     ///< true if mesh is spherical

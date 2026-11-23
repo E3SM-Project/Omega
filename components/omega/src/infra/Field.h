@@ -88,6 +88,10 @@ class Field {
    /// (leaving the attached array at its fill value) instead of failing.
    bool OptionalRead;
 
+   /// Name of a metadata-only field whose metadata are written as global
+   /// attributes to any file that contains this field (empty if none)
+   std::string GlobalMetaField;
+
    /// Data attached to this field. This will be a pointer to the Kokkos
    /// array holding the data. We use a void pointer to manage all the
    /// various types and cast to the appropriate type when needed.
@@ -259,6 +263,16 @@ class Field {
    /// isOptionalRead). Fields are required (not optional) by default.
    void setOptionalRead(bool OptRead ///< [in] optional-read flag value
    );
+
+   /// Associates a metadata-only field (see create(FieldName)) whose metadata
+   /// are written as global attributes to any file that contains this field,
+   /// for example the global attributes of the mesh the field is defined on
+   void setGlobalMetaField(
+       const std::string &MetaFieldName ///< [in] name of metadata-only field
+   );
+
+   /// Returns the name of the associated global metadata field (empty if none)
+   std::string getGlobalMetaField() const;
 
    //---------------------------------------------------------------------------
    // Regional mask functions

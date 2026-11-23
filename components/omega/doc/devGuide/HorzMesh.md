@@ -22,6 +22,11 @@ scaling are computed internally; the mesh scaling is relative to
 the global median cell width, which is computed during initialization.
 After reading, the init routine fills all
 halos and synchronizes the host and device copies of the mesh variables.
+The global mesh attributes read from the file are stored as metadata of a
+metadata-only field (`HorzMeshMeta`, with the mesh name appended for meshes
+other than the default) associated with each mesh field (see
+`Field::setGlobalMetaField`), so that any file containing a mesh field carries
+the attributes needed to read it back in as a mesh.
 These tasks are organized into several private methods. Eventually,
 dependent mesh variables will be computed from the minimum set of required mesh
 information.

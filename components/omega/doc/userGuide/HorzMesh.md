@@ -49,6 +49,11 @@ the Earth radius from the Physical Constants Dictionary (``REarth`` in
 otherwise. See the {ref}`MPAS mesh specification <mpas-mesh-specification>` for how to
 bring older meshes into compliance.
 
+Any output file containing mesh variables (for example, a stream with
+``HorzMeshIn`` in its contents) is written with the global attributes
+``on_a_sphere`` and ``is_periodic`` and, as applicable, ``sphere_radius`` or
+``x_period`` and ``y_period``, with the values read from the mesh file.
+
 In the future, the Mesh class will optionally compute internally those fields
 the specification marks as *could be computed internally* — the areas, lengths,
 angles, and weights needed for the TRiSK discretization.

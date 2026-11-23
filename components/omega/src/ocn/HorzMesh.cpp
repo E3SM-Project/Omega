@@ -233,6 +233,20 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
       ABORT_ERROR("OnSphere or on_a_sphere missing from mesh file");
    }
 
+   // Record the global mesh attributes so that they are written to any file
+   // containing the mesh fields, which must carry them to be read back in as
+   // a mesh. The MPAS names are used, as in mesh files, and the values are
+   // the double-precision values read from the mesh file.
+   std::shared_ptr<Field> MeshMeta = Field::get(MeshMetaName);
+   MeshMeta->addMetadata("on_a_sphere", std::string(OnSphere ? "YES" : "NO"));
+   MeshMeta->addMetadata("is_periodic", std::string(IsPeriodic ? "YES" : "NO"));
+   if (OnSphere)
+      MeshMeta->addMetadata("sphere_radius", TmpRadius);
+   if (IsPeriodic) {
+      MeshMeta->addMetadata("x_period", TmpXPeriod);
+      MeshMeta->addMetadata("y_period", TmpYPeriod);
+   }
+
    // Complete read arrays (fill halos and duplicate on host)
    completeReadArrays();
 
@@ -712,6 +726,12 @@ void HorzMesh::defineMeshFields() {
 
    std::string MeshGroupName = "HorzMeshIn" + MeshSuffix;
    auto MeshGroupIn          = FieldGroup::create(MeshGroupName);
+
+   // Create a metadata-only field for the global mesh attributes. These are
+   // added once they have been read from the mesh file (see the constructor)
+   // and are written to any file that contains a mesh field.
+   MeshMetaName = "HorzMeshMeta" + MeshSuffix;
+   Field::create(MeshMetaName);
 
    // Check whether the file name in the input stream matches that of
    // the Decomp. They are typically different only for unit testing where
@@ -1305,6 +1325,10 @@ void HorzMesh::defineMeshFields() {
    //    );
    // MeshGroupIn->addField(FieldName);
    // Field::attachFieldData<Array1DReal>(FieldName, MeshScalingDel4);
+
+   // Any file containing a mesh field gets the global mesh attributes
+   for (const auto &MeshFieldName : MeshGroupIn->getFieldList())
+      Field::get(MeshFieldName)->setGlobalMetaField(MeshMetaName);
 
 } // end defineMeshFields
 
