@@ -756,13 +756,11 @@ void VertMix::VertMixImplicit(OceanState *State, AuxiliaryState *AuxState,
 
    parallelForOuter(
        {Mesh->NEdgesAll}, KOKKOS_LAMBDA(int IEdge, const TeamMember &Team) {
-          const int KMin   = MinLayerEdgeBot(IEdge);
-          const int KMax   = MaxLayerEdgeTop(IEdge);
-          const int KRange = vertRangeChunked(KMin, KMax);
+          const int KMin = MinLayerEdgeBot(IEdge);
+          const int KMax = MaxLayerEdgeTop(IEdge);
           parallelForInner(
-              Team, KRange, INNER_LAMBDA(int KChunk) {
-                 TanReconEdge(LocTangentialVelocity, IEdge, KChunk,
-                              NormalVelEdge);
+              Team, Range{KMin, KMax}, INNER_LAMBDA(int K) {
+                 TanReconEdge(LocTangentialVelocity, IEdge, K, NormalVelEdge);
               });
        });
 
