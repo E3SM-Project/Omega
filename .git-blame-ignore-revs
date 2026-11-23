@@ -1,0 +1,6 @@
+# Commits that only reformat code, skipped by `git blame` when configured with
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# GitHub's blame view uses this file automatically.
+
+# Reformat Omega C++ code with clang-format 23
+f3aeba20709ae523ede3d322c747f42bfe663738

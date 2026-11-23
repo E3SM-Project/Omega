@@ -524,8 +524,8 @@ class Teos10Eos {
       SpecVolDCt = calcDeltaDeriv(DTtPCoeffs, Pp) / CtNorm;
       SpecVolDSa = calcDeltaDeriv(DSsPCoeffs, Pp) * 0.5_Real / (SaNorm * Ss);
       SpecVolDP  = (calcRefProfileDPp(Pp) * PNorm +
-                   calcDeltaDPp(SpecVolPCoeffs, Pp) * PNorm) *
-                  Pa2Db;
+                    calcDeltaDPp(SpecVolPCoeffs, Pp) * PNorm) *
+                   Pa2Db;
    }
 
    /// Calculate the TEOS-10 specific volume and its three first derivatives
