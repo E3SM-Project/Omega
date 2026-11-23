@@ -49,6 +49,25 @@ the Earth radius from the Physical Constants Dictionary (``REarth`` in
 otherwise. See the {ref}`MPAS mesh specification <mpas-mesh-specification>` for how to
 bring older meshes into compliance.
 
+Any output file containing mesh variables (for example, a stream with
+``HorzMeshIn`` in its contents) is written with the global attributes
+``on_a_sphere`` and ``is_periodic`` and, as applicable, ``sphere_radius`` or
+``x_period`` and ``y_period``, with the values read from the mesh file.
+
+A stream with ``HorzMeshIn`` in its contents writes a valid mesh in the
+[MPAS mesh specification](https://mpas-dev.github.io/files/documents/MPAS-MeshSpec.pdf):
+along with the mesh variables Omega reads, it writes the connectivity
+(``CellsOnCell``, ``EdgesOnCell``, ``VerticesOnCell``, ``CellsOnEdge``,
+``EdgesOnEdge``, ``VerticesOnEdge``, ``CellsOnVertex`` and ``EdgesOnVertex``),
+the counts ``NEdgesOnCell`` and ``NEdgesOnEdge``, the global IDs
+``IndexToCellID``, ``IndexToEdgeID`` and ``IndexToVertexID`` and, on a
+sphere, the reconstruction stencil (``NEdgesReconOnCell`` and
+``ReconStencilCell``). As in the MPAS mesh specification, the connectivity
+holds one-based global IDs, with 0 for a missing neighbor.
+Omega does not read these connectivity variables through the ``HorzMeshIn``
+stream: the decomposition reads the connectivity itself (under either the
+Omega or the older MPAS names, e.g. ``cellsOnCell``) and computes the counts.
+
 In the future, the Mesh class will optionally compute internally those fields
 the specification marks as *could be computed internally* — the areas, lengths,
 angles, and weights needed for the TRiSK discretization.

@@ -2479,6 +2479,10 @@ Error IOStream::readStream(
       std::string FieldName            = *IFld;
       std::shared_ptr<Field> ThisField = Field::get(FieldName);
 
+      // Skip fields that are only ever written (eg computed rather than read)
+      if (ThisField->isWriteOnly())
+         continue;
+
       // Extract the data pointer and read the data array
       int FieldID; // not currently used but available if field metadata needed
       Err += readFieldData(ThisField, InFileID, AllDimIDs, FieldID);
@@ -2672,6 +2676,18 @@ void IOStream::writeStream(
    if (DefineMode) {
       writeFieldMeta(CodeMeta, OutFileID, IO::GlobalID);
       writeFieldMeta(SimMeta, OutFileID, IO::GlobalID);
+
+      // Also write the global metadata associated with any field in the
+      // stream (for example, the attributes of the mesh the fields are
+      // defined on), once for each associated metadata field
+      std::set<std::string> GlobalMetaFields;
+      for (const auto &FieldName : Contents) {
+         std::string MetaName = Field::get(FieldName)->getGlobalMetaField();
+         if (!MetaName.empty())
+            GlobalMetaFields.insert(MetaName);
+      }
+      for (const auto &MetaName : GlobalMetaFields)
+         writeFieldMeta(MetaName, OutFileID, IO::GlobalID);
    }
 
    // Create and write a field for any global data that is file or time

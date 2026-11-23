@@ -142,6 +142,10 @@ Field::create(const std::string &FieldName,   // [in] Name of variable/field
    // when absent from a read stream.
    ThisField->OptionalRead = false;
 
+   // Fields are read as well as written unless the owning module marks them
+   // write-only via setWriteOnly
+   ThisField->WriteOnly = false;
+
    // Number of dimensions for the field
    ThisField->NDims = NumDims;
 
@@ -205,6 +209,16 @@ Field::create(const std::string &FieldName // [in] Name of field
 
    // Number of dimensions is 0 for this field
    ThisField->NDims = 0;
+
+   // There is no data, so these flags only matter for the metadata. Metadata
+   // are kept at full precision even in a reduced-precision stream, since a
+   // global attribute such as a sphere radius must not lose precision when
+   // a file is read back in.
+   ThisField->TimeDependent   = false;
+   ThisField->Distributed     = false;
+   ThisField->RetainPrecision = true;
+   ThisField->OptionalRead    = false;
+   ThisField->WriteOnly       = false;
 
    // Initialize to Unknown or null - no data is attached
    ThisField->DataType  = ArrayDataType::Unknown;
@@ -359,6 +373,32 @@ bool Field::isOptionalRead() const { return OptionalRead; }
 //------------------------------------------------------------------------------
 // Sets whether the field may be absent from an input file (see isOptionalRead)
 void Field::setOptionalRead(bool OptRead) { OptionalRead = OptRead; }
+
+//------------------------------------------------------------------------------
+// Determines whether the field is only written, never read
+bool Field::isWriteOnly() const { return WriteOnly; }
+
+//------------------------------------------------------------------------------
+// Sets whether the field is only written: a read stream whose contents include
+// it skips it
+void Field::setWriteOnly(bool WriteOnlyFlag) { WriteOnly = WriteOnlyFlag; }
+
+//------------------------------------------------------------------------------
+// Associates a metadata-only field whose metadata are written as global
+// attributes to any file that contains this field
+void Field::setGlobalMetaField(
+    const std::string &MetaFieldName // [in] name of metadata-only field
+) {
+   if (!exists(MetaFieldName))
+      ABORT_ERROR("Unable to associate global metadata field {} with field "
+                  "{}: field {} has not been created",
+                  MetaFieldName, FldName, MetaFieldName);
+   GlobalMetaField = MetaFieldName;
+}
+
+//------------------------------------------------------------------------------
+// Returns the name of the associated global metadata field (empty if none)
+std::string Field::getGlobalMetaField() const { return GlobalMetaField; }
 
 //------------------------------------------------------------------------------
 // Returns a vector of dimension names associated with each dimension

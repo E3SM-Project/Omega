@@ -38,9 +38,35 @@ class HorzMesh {
    /// computed by Decomp
    void defineMeshFields();
 
+   /// Creates write-only fields for the mesh connectivity, counts and global
+   /// IDs, filled from the global-ID copies of the connectivity Decomp keeps,
+   /// as the one-based global IDs of the MPAS mesh specification, so that a
+   /// file written with the mesh fields is a valid mesh
+   void defineConnectivityFields(Decomp *MeshDecomp ///< [in] mesh decomp
+   );
+
    /// Finishes filling arrays read from input file by filling halo regions
    /// and creating host mirror copies
    void completeReadArrays();
+
+   // Connectivity, counts and global IDs as written to a mesh file: one-based
+   // global IDs (0 for none), filled for owned and halo entries. These are
+   // only for output; the model uses the local arrays from Decomp.
+   HostArray1DI4 IndexToCellIDOut;     ///< global ID of each cell
+   HostArray1DI4 IndexToEdgeIDOut;     ///< global ID of each edge
+   HostArray1DI4 IndexToVertexIDOut;   ///< global ID of each vertex
+   HostArray1DI4 NEdgesOnCellOut;      ///< num of edges around each cell
+   HostArray1DI4 NEdgesOnEdgeOut;      ///< num of edges around cells across
+   HostArray2DI4 CellsOnCellOut;       ///< cells neighboring each cell
+   HostArray2DI4 EdgesOnCellOut;       ///< edges bordering each cell
+   HostArray2DI4 VerticesOnCellOut;    ///< vertices bordering each cell
+   HostArray2DI4 CellsOnEdgeOut;       ///< cells straddling each edge
+   HostArray2DI4 EdgesOnEdgeOut;       ///< edges around cells across edge
+   HostArray2DI4 VerticesOnEdgeOut;    ///< vertices straddling each edge
+   HostArray2DI4 CellsOnVertexOut;     ///< cells sharing each vertex
+   HostArray2DI4 EdgesOnVertexOut;     ///< edges sharing each vertex
+   HostArray1DI4 NEdgesReconOnCellOut; ///< num of edges in recon stencil
+   HostArray2DI4 ReconStencilCellOut;  ///< edges in recon stencil
 
    /// Computes the global median of the cell widths, where the width of a
    /// cell is the diameter of a circle with the same area as the cell
@@ -81,6 +107,9 @@ class HorzMesh {
 
    std::string MeshName;     ///< name of this mesh
    std::string MeshFileName; ///< name (and full path) of input mesh file
+   std::string MeshMetaName; ///< name of the metadata-only field holding the
+                             ///< global mesh attributes written with the
+                             ///< mesh fields
 
    // Global attributes
    bool OnSphere;     ///< true if mesh is spherical

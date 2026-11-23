@@ -121,6 +121,7 @@ void readMesh(
     std::vector<I4> &VerticesOnCellInit,    // vertices around each cell
     std::vector<I4> &CellsOnEdgeInit,       // cell IDs sharing edge
     std::vector<I4> &EdgesOnEdgeInit,       // all edges neighboring edge
+    std::vector<I4> &NEdgesOnEdgeInit,      // num of edges in EdgesOnEdge
     std::vector<I4> &VerticesOnEdgeInit,    // vertices on ends of edge
     std::vector<I4> &CellsOnVertexInit,     // cells meeting at each vrtx
     std::vector<I4> &EdgesOnVertexInit,     // edges meeting at each vrtx
@@ -306,6 +307,13 @@ void readMesh(
       } // end loop VertexDegree
    } // end loop NVerticesLocal
 
+   // Offsets for the number of edges in EdgesOnEdge, a scalar per edge
+   I4 OnEdgeSizeScalar = NEdgesChunk;
+   std::vector<I4> OnEdgeDimsScalar{NEdgesGlobal};
+   std::vector<I4> OnEdgeOffsetScalar(OnEdgeSizeScalar, -1);
+   for (int Edge = 0; Edge < NEdgesLocal; ++Edge)
+      OnEdgeOffsetScalar[Edge] = MyTask * NEdgesChunk + Edge;
+
    // Offsets for the reconstruction stencil arrays. NEdgesReconOnCell is
    // a scalar per cell; ReconStencilCell is MaxEdges2-wide per cell.
    // Both use the same linear cell chunking as the other XxOnCell arrays.
@@ -324,15 +332,18 @@ void readMesh(
    }
 
    // Create the parallel IO decompositions
-   IO::Rearranger Rearr  = IO::DefaultRearr;
-   I4 OnCellDecomp       = IO::createDecomp(IO::IOTypeI4, NDims, OnCellDims,
-                                            OnCellSize, OnCellOffset, Rearr);
-   I4 OnEdgeDecomp       = IO::createDecomp(IO::IOTypeI4, NDims, OnEdgeDims,
-                                            OnEdgeSize, OnEdgeOffset, Rearr);
-   I4 OnEdgeDecomp2      = IO::createDecomp(IO::IOTypeI4, NDims, OnEdgeDims2,
-                                            OnEdgeSize2, OnEdgeOffset2, Rearr);
-   I4 OnVertexDecomp     = IO::createDecomp(IO::IOTypeI4, NDims, OnVertexDims,
-                                            OnVertexSize, OnVertexOffset, Rearr);
+   IO::Rearranger Rearr = IO::DefaultRearr;
+   I4 OnCellDecomp      = IO::createDecomp(IO::IOTypeI4, NDims, OnCellDims,
+                                           OnCellSize, OnCellOffset, Rearr);
+   I4 OnEdgeDecomp      = IO::createDecomp(IO::IOTypeI4, NDims, OnEdgeDims,
+                                           OnEdgeSize, OnEdgeOffset, Rearr);
+   I4 OnEdgeDecomp2     = IO::createDecomp(IO::IOTypeI4, NDims, OnEdgeDims2,
+                                           OnEdgeSize2, OnEdgeOffset2, Rearr);
+   I4 OnVertexDecomp    = IO::createDecomp(IO::IOTypeI4, NDims, OnVertexDims,
+                                           OnVertexSize, OnVertexOffset, Rearr);
+   I4 OnEdgeDecompScalar =
+       IO::createDecomp(IO::IOTypeI4, 1, OnEdgeDimsScalar, OnEdgeSizeScalar,
+                        OnEdgeOffsetScalar, Rearr);
    I4 OnCellDecompScalar = -1;
    I4 OnCellDecomp2      = -1;
    if (OnSphere) {
@@ -409,6 +420,20 @@ void readMesh(
       CHECK_ERROR_ABORT(Err, "Decomp: error reading EdgesOnEdge");
    }
 
+   // The number of entries in EdgesOnEdge is read rather than counted,
+   // since a 0 in EdgesOnEdge may mark a boundary within that number or
+   // padding beyond it, depending on the mesh
+   NEdgesOnEdgeInit.resize(OnEdgeSizeScalar);
+   VarName    = "NEdgesOnEdge";
+   VarNameOld = "nEdgesOnEdge";
+   int NEdgesOnEdgeID;
+   Err = IO::readArray(&NEdgesOnEdgeInit[0], OnEdgeSizeScalar, VarName,
+                       MeshFileID, OnEdgeDecompScalar, NEdgesOnEdgeID);
+   if (Err.isFail())
+      Err = IO::readArray(&NEdgesOnEdgeInit[0], OnEdgeSizeScalar, VarNameOld,
+                          MeshFileID, OnEdgeDecompScalar, NEdgesOnEdgeID);
+   CHECK_ERROR_ABORT(Err, "Decomp: error reading NEdgesOnEdge");
+
    VarName    = "VerticesOnEdge";
    VarNameOld = "verticesOnEdge";
    int VerticesOnEdgeID;
@@ -468,6 +493,7 @@ void readMesh(
    IO::destroyDecomp(OnEdgeDecomp);
    IO::destroyDecomp(OnEdgeDecomp2);
    IO::destroyDecomp(OnVertexDecomp);
+   IO::destroyDecomp(OnEdgeDecompScalar);
    if (OnSphere) {
       IO::destroyDecomp(OnCellDecompScalar);
       IO::destroyDecomp(OnCellDecomp2);
@@ -572,6 +598,7 @@ Decomp::Decomp(
    std::vector<I4> VerticesOnCellInit;
    std::vector<I4> CellsOnEdgeInit;
    std::vector<I4> EdgesOnEdgeInit;
+   std::vector<I4> NEdgesOnEdgeInit;
    std::vector<I4> VerticesOnEdgeInit;
    std::vector<I4> CellsOnVertexInit;
    std::vector<I4> EdgesOnVertexInit;
@@ -582,9 +609,9 @@ Decomp::Decomp(
    readMesh(FileID, InEnv, NCellsGlobal, NEdgesGlobal, NVerticesGlobal,
             MaxEdges, MaxCellsOnEdge, VertexDegree, MaxEdges2, OnSphere,
             CellsOnCellInit, EdgesOnCellInit, VerticesOnCellInit,
-            CellsOnEdgeInit, EdgesOnEdgeInit, VerticesOnEdgeInit,
-            CellsOnVertexInit, EdgesOnVertexInit, NEdgesReconOnCellInit,
-            ReconStencilCellInit);
+            CellsOnEdgeInit, EdgesOnEdgeInit, NEdgesOnEdgeInit,
+            VerticesOnEdgeInit, CellsOnVertexInit, EdgesOnVertexInit,
+            NEdgesReconOnCellInit, ReconStencilCellInit);
 
    // Close file
    IO::closeFile(FileID);
@@ -653,7 +680,7 @@ Decomp::Decomp(
    // to their final locations.
    TimerFlag = Pacer::start("Decomp rearrange edges", 2) && TimerFlag;
    rearrangeEdgeArrays(InEnv, CellsOnEdgeInit, EdgesOnEdgeInit,
-                       VerticesOnEdgeInit);
+                       NEdgesOnEdgeInit, VerticesOnEdgeInit);
    TimerFlag = Pacer::stop("Decomp rearrange edges", 2) && TimerFlag;
 
    // Partition the vertices
@@ -672,6 +699,26 @@ Decomp::Decomp(
    // Invalid/non-existent edges have been assigned NXxGlobal+1 and we want
    // to map that to the local NXxAll+1 (NXxSize). We insert that value
    // first in the map so that later attempts to change will be ignored.
+
+   // Keep copies of the connectivity with global IDs for writing the mesh,
+   // since translating to local indices loses the IDs of any neighbors
+   // outside this task's owned and halo entries
+   auto copyHost = [](const HostArray2DI4 &Array) {
+      HostArray2DI4 Copy(Array.label() + "Glob", Array.extent(0),
+                         Array.extent(1));
+      deepCopy(Copy, Array);
+      return Copy;
+   };
+   CellsOnCellGlobH    = copyHost(CellsOnCellH);
+   EdgesOnCellGlobH    = copyHost(EdgesOnCellH);
+   VerticesOnCellGlobH = copyHost(VerticesOnCellH);
+   CellsOnEdgeGlobH    = copyHost(CellsOnEdgeH);
+   EdgesOnEdgeGlobH    = copyHost(EdgesOnEdgeH);
+   VerticesOnEdgeGlobH = copyHost(VerticesOnEdgeH);
+   CellsOnVertexGlobH  = copyHost(CellsOnVertexH);
+   EdgesOnVertexGlobH  = copyHost(EdgesOnVertexH);
+   if (OnSphere)
+      ReconStencilCellGlobH = copyHost(ReconStencilCellH);
 
    TimerFlag = Pacer::start("Decomp construct global to local", 2) && TimerFlag;
    std::map<I4, I4> GlobToLocCell;
@@ -2358,6 +2405,7 @@ void Decomp::rearrangeEdgeArrays(
     const MachEnv *InEnv, // input machine environment for MPI layout
     const std::vector<I4> &CellsOnEdgeInit,   //< [in] cell nbrs on each edge
     const std::vector<I4> &EdgesOnEdgeInit,   //< [in] edges around nbr cells
+    const std::vector<I4> &NEdgesOnEdgeInit,  //< [in] num edges in EdgesOnEdge
     const std::vector<I4> &VerticesOnEdgeInit //< [in] vertices at edge end
 ) {
 
@@ -2373,8 +2421,9 @@ void Decomp::rearrangeEdgeArrays(
 
    // Create a buffer for sending all the edge array information
    // Each of the arrays are either NEdgesChunk*2 (cell, vertex)
-   // or NEdgesChunk*MaxEdges*2 (edge)
-   I4 SizePerEdge = 2 * MaxEdges + MaxCellsOnEdge + 2;
+   // or NEdgesChunk*MaxEdges*2 (edge), plus the number of edges in
+   // EdgesOnEdge
+   I4 SizePerEdge = 2 * MaxEdges + MaxCellsOnEdge + 3;
    I4 BufSize     = NEdgesChunk * SizePerEdge;
    std::vector<I4> EdgeBuf(BufSize);
 
@@ -2427,6 +2476,8 @@ void Decomp::rearrangeEdgeArrays(
                EdgeBuf[BufAdd] = EdgesOnEdgeInit[ArrayAdd];
                ++BufAdd;
             }
+            EdgeBuf[BufAdd] = NEdgesOnEdgeInit[Edge];
+            ++BufAdd;
          }
       }
       Broadcast(EdgeBuf, InEnv, ITask);
@@ -2451,7 +2502,10 @@ void Decomp::rearrangeEdgeArrays(
                   ++BufAdd;
                }
                // In the EdgeOnEdge array, a zero entry must be kept in
-               // place but assigned the boundary value NEdgesGlobal+1
+               // place but assigned the boundary value NEdgesGlobal+1.
+               // Entries beyond NEdgesOnEdge are padding, which may be 0 or
+               // an invalid ID depending on the mesh, so NEdgesOnEdge is
+               // taken from the mesh file rather than counted here.
                I4 EdgeCount = 0;
                for (int NbrEdge = 0; NbrEdge < 2 * MaxEdges; ++NbrEdge) {
                   I4 EdgeID = EdgeBuf[BufAdd];
@@ -2464,7 +2518,7 @@ void Decomp::rearrangeEdgeArrays(
                      EdgeCount++;
                   }
                }
-               NEdgesOnEdgeTmp(Edge) = EdgeCount;
+               NEdgesOnEdgeTmp(Edge) = EdgeBuf[BufAdd];
             } // end if address in buffer
          } // end if address on this task
       } // end loop over local edges

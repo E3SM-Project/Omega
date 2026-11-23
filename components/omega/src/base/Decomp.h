@@ -161,8 +161,9 @@ class Decomp {
    /// in the correct final domain decomposition.
    void rearrangeEdgeArrays(
        const MachEnv *InEnv, ///< [in] MachEnv for the new partition
-       const std::vector<I4> &CellsOnEdgeInit, ///< [in] cell nbrs on each edge
-       const std::vector<I4> &EdgesOnEdgeInit, ///< [in] edges around each cell
+       const std::vector<I4> &CellsOnEdgeInit,  ///< [in] cell nbrs on each edge
+       const std::vector<I4> &EdgesOnEdgeInit,  ///< [in] edges around each cell
+       const std::vector<I4> &NEdgesOnEdgeInit, ///< [in] num of EdgesOnEdge
        const std::vector<I4> &VerticesOnEdgeInit ///< [in] vertices around cell
    );
 
@@ -287,6 +288,21 @@ class Decomp {
 
    Array2DI4 ReconStencilCell;      ///< Local edge indices in the stencil
    HostArray2DI4 ReconStencilCellH; ///< Local edge indices in the stencil
+
+   // The connectivity above with global (one-based) IDs rather than local
+   // indices, as read from the mesh file, kept on the host for writing the
+   // mesh. Unlike the local arrays, these keep the IDs of neighbors outside
+   // this task's owned and halo entries. Invalid or missing entries are
+   // NCellsGlobal+1 (NEdgesGlobal+1, NVerticesGlobal+1).
+   HostArray2DI4 CellsOnCellGlobH;      ///< global IDs of cells on cell
+   HostArray2DI4 EdgesOnCellGlobH;      ///< global IDs of edges on cell
+   HostArray2DI4 VerticesOnCellGlobH;   ///< global IDs of vertices on cell
+   HostArray2DI4 CellsOnEdgeGlobH;      ///< global IDs of cells on edge
+   HostArray2DI4 EdgesOnEdgeGlobH;      ///< global IDs of edges on edge
+   HostArray2DI4 VerticesOnEdgeGlobH;   ///< global IDs of vertices on edge
+   HostArray2DI4 CellsOnVertexGlobH;    ///< global IDs of cells on vertex
+   HostArray2DI4 EdgesOnVertexGlobH;    ///< global IDs of edges on vertex
+   HostArray2DI4 ReconStencilCellGlobH; ///< global IDs of stencil edges
 
    // Methods
 
