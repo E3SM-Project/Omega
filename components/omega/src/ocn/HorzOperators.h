@@ -108,25 +108,15 @@ class TangentialReconOnEdge {
  public:
    TangentialReconOnEdge(HorzMesh const *Mesh);
 
+   /// The reconstruction at layer K of edge IEdge
    KOKKOS_FUNCTION void operator()(const Array2DReal &ReconEdge, int IEdge,
-                                   int KChunk,
-                                   const Array2DReal &VecEdge) const {
-      const int KStart = KChunk * VecLength;
-
-      Real ReconEdgeTmp[VecLength] = {0};
-
+                                   int K, const Array2DReal &VecEdge) const {
+      Real ReconEdgeTmp = 0;
       for (int J = 0; J < NEdgesOnEdge(IEdge); ++J) {
          const int JEdge = EdgesOnEdge(IEdge, J);
-         for (int KVec = 0; KVec < VecLength; ++KVec) {
-            const int K = KStart + KVec;
-            ReconEdgeTmp[KVec] += WeightsOnEdge(IEdge, J) * VecEdge(JEdge, K);
-         }
+         ReconEdgeTmp += WeightsOnEdge(IEdge, J) * VecEdge(JEdge, K);
       }
-
-      for (int KVec = 0; KVec < VecLength; ++KVec) {
-         const int K         = KStart + KVec;
-         ReconEdge(IEdge, K) = ReconEdgeTmp[KVec];
-      }
+      ReconEdge(IEdge, K) = ReconEdgeTmp;
    }
 
  private:
