@@ -161,8 +161,9 @@ class Decomp {
    /// in the correct final domain decomposition.
    void rearrangeEdgeArrays(
        const MachEnv *InEnv, ///< [in] MachEnv for the new partition
-       const std::vector<I4> &CellsOnEdgeInit, ///< [in] cell nbrs on each edge
-       const std::vector<I4> &EdgesOnEdgeInit, ///< [in] edges around each cell
+       const std::vector<I4> &CellsOnEdgeInit,  ///< [in] cell nbrs on each edge
+       const std::vector<I4> &EdgesOnEdgeInit,  ///< [in] edges around each cell
+       const std::vector<I4> &NEdgesOnEdgeInit, ///< [in] num of EdgesOnEdge
        const std::vector<I4> &VerticesOnEdgeInit ///< [in] vertices around cell
    );
 
