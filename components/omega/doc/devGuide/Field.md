@@ -114,6 +114,14 @@ global mesh attributes (`on_a_sphere`, `is_periodic` and `sphere_radius` or
 metadata-only field are always written at full precision, even to a
 reduced-precision stream.
 
+A field that is computed rather than read, but that belongs in a group used
+as the contents of both input and output streams, can be marked write-only:
+```c++
+   MyField->setWriteOnly(true);
+```
+A read stream then skips it. HorzMesh uses this for the mesh connectivity,
+which Decomp reads and converts itself.
+
 Additional metadata in the form of a name-value pair can be added using:
 ```c++
    MyField->addMetadata(MetaName, // [in] Name of new metadata (string)

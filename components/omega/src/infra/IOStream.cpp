@@ -2479,6 +2479,10 @@ Error IOStream::readStream(
       std::string FieldName            = *IFld;
       std::shared_ptr<Field> ThisField = Field::get(FieldName);
 
+      // Skip fields that are only ever written (eg computed rather than read)
+      if (ThisField->isWriteOnly())
+         continue;
+
       // Extract the data pointer and read the data array
       int FieldID; // not currently used but available if field metadata needed
       Err += readFieldData(ThisField, InFileID, AllDimIDs, FieldID);

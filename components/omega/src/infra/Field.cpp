@@ -142,6 +142,10 @@ Field::create(const std::string &FieldName,   // [in] Name of variable/field
    // when absent from a read stream.
    ThisField->OptionalRead = false;
 
+   // Fields are read as well as written unless the owning module marks them
+   // write-only via setWriteOnly
+   ThisField->WriteOnly = false;
+
    // Number of dimensions for the field
    ThisField->NDims = NumDims;
 
@@ -214,6 +218,7 @@ Field::create(const std::string &FieldName // [in] Name of field
    ThisField->Distributed     = false;
    ThisField->RetainPrecision = true;
    ThisField->OptionalRead    = false;
+   ThisField->WriteOnly       = false;
 
    // Initialize to Unknown or null - no data is attached
    ThisField->DataType  = ArrayDataType::Unknown;
@@ -368,6 +373,15 @@ bool Field::isOptionalRead() const { return OptionalRead; }
 //------------------------------------------------------------------------------
 // Sets whether the field may be absent from an input file (see isOptionalRead)
 void Field::setOptionalRead(bool OptRead) { OptionalRead = OptRead; }
+
+//------------------------------------------------------------------------------
+// Determines whether the field is only written, never read
+bool Field::isWriteOnly() const { return WriteOnly; }
+
+//------------------------------------------------------------------------------
+// Sets whether the field is only written: a read stream whose contents include
+// it skips it
+void Field::setWriteOnly(bool WriteOnlyFlag) { WriteOnly = WriteOnlyFlag; }
 
 //------------------------------------------------------------------------------
 // Associates a metadata-only field whose metadata are written as global

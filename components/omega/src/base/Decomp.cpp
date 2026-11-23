@@ -700,6 +700,26 @@ Decomp::Decomp(
    // to map that to the local NXxAll+1 (NXxSize). We insert that value
    // first in the map so that later attempts to change will be ignored.
 
+   // Keep copies of the connectivity with global IDs for writing the mesh,
+   // since translating to local indices loses the IDs of any neighbors
+   // outside this task's owned and halo entries
+   auto copyHost = [](const HostArray2DI4 &Array) {
+      HostArray2DI4 Copy(Array.label() + "Glob", Array.extent(0),
+                         Array.extent(1));
+      deepCopy(Copy, Array);
+      return Copy;
+   };
+   CellsOnCellGlobH    = copyHost(CellsOnCellH);
+   EdgesOnCellGlobH    = copyHost(EdgesOnCellH);
+   VerticesOnCellGlobH = copyHost(VerticesOnCellH);
+   CellsOnEdgeGlobH    = copyHost(CellsOnEdgeH);
+   EdgesOnEdgeGlobH    = copyHost(EdgesOnEdgeH);
+   VerticesOnEdgeGlobH = copyHost(VerticesOnEdgeH);
+   CellsOnVertexGlobH  = copyHost(CellsOnVertexH);
+   EdgesOnVertexGlobH  = copyHost(EdgesOnVertexH);
+   if (OnSphere)
+      ReconStencilCellGlobH = copyHost(ReconStencilCellH);
+
    TimerFlag = Pacer::start("Decomp construct global to local", 2) && TimerFlag;
    std::map<I4, I4> GlobToLocCell;
    GlobToLocCell[NCellsGlobal + 1] = NCellsAll;
