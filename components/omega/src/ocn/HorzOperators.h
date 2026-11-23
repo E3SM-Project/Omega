@@ -641,7 +641,6 @@ class MasksAndCoefficients {
    Array2DI4 CellIndx;
    Array3DI4 CellIndxSorted;
    Array1DI4 CellID;
-   Array2DReal AdvMaskHighOrder;
    Array2DI4 EdgesOnEdge;
    Array2DI4 CellsOnCell;
    Array2DI4 CellsOnEdge;
@@ -649,6 +648,7 @@ class MasksAndCoefficients {
    Array1DReal DvEdge;
    Array2DReal AdvCoefs;
    Array2DReal AdvCoefs3rd;
+   Array2DReal AdvMaskHighOrder;
    Array2DReal BoundaryCell;
    Array3DReal DerivTwo;
 };
