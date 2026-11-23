@@ -152,8 +152,8 @@ class GradRichardsonNum {
             I4 K2      = K;
 
             // Skip this edge contribution if it would access
-            // invalid edge velocity levels.
-            if (K > MaxLayerEdgeTop(JEdge))
+            // invalid edge velocity levels, above or below.
+            if (K > MaxLayerEdgeTop(JEdge) || K1 < MinLayerEdgeBot(JEdge))
                continue;
 
             Real DNormVel =
