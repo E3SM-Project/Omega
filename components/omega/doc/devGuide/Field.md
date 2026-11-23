@@ -100,7 +100,27 @@ a 1D array with size 1. Fields without a data array can be created with:
 ```
 but this interface should generally be not be used and global metadata
 should be added to the existing CodeMeta or SimMeta fields for this
-purpose.
+purpose. The exception is global metadata that belong only in files
+containing particular fields, such as the attributes of the mesh those fields
+are defined on. A metadata-only field holding them can be associated with each
+such field using:
+```c++
+   MyField->setGlobalMetaField(MetaFieldName);
+```
+and its metadata are then written as global attributes to any new file
+containing at least one of those fields. HorzMesh uses this to write the
+global mesh attributes (`on_a_sphere`, `is_periodic` and `sphere_radius` or
+`x_period` and `y_period`) with the mesh fields. The metadata of a
+metadata-only field are always written at full precision, even to a
+reduced-precision stream.
+
+A field that is computed rather than read, but that belongs in a group used
+as the contents of both input and output streams, can be marked write-only:
+```c++
+   MyField->setWriteOnly(true);
+```
+A read stream then skips it. HorzMesh uses this for the mesh connectivity,
+which Decomp reads and converts itself.
 
 Additional metadata in the form of a name-value pair can be added using:
 ```c++

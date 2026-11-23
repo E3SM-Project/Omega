@@ -14,7 +14,11 @@ The `VertCoord` class contains variables and functions relevant to keeping track
  - the maximum possible number of layers in a cell, i.e. the extent of the vertical dimension (read in from the mesh file)
  - the bottom depth of each cell (read in from the mesh file)
  - the location of active vertical layers (used to set extents of vertical loop bounds):
-   - the max and min indices of active layers in each cell (read in from the mesh file)
+   - the max and min indices of active layers in each cell (read in from the mesh file
+     as `MinLayerCell` and `MaxLayerCell`, which are zero-based layer indices in
+     the file as in Omega, unlike the one-based `minLevelCell` and `maxLevelCell`
+     of MPAS-Ocean; Omega aborts if they are out of range, as they would be in a
+     file with one-based indices)
    - the max and min indices of active layers for edges and vertices at the bottom and top of the water column (computed from min/max cell layers)
  - pressure (computed from the pseudo-thickness and surface pressure)
  - geometric height (computed from the bottom depth, specific volume, and pseudo-thickness)
@@ -35,8 +39,8 @@ Multiple instances of the vertical coordinate class can be created and accessed 
 | GeomZMid | geometric height of layer midpoint | m |
 | GeopotentialMid | geopotential at layer mid points | m$^2$/s$^2$|
 | PseudoThicknessTarget | desired pseudo-thickness based on total perturbation from the reference pseudo-thickness | - |
-| MinLayerCell | first active layer for cell | - |
-| MaxLayerCell | last active layer for cell | - |
+| MinLayerCell | first active layer for cell (zero-based) | - |
+| MaxLayerCell | last active layer for cell (zero-based) | - |
 | MinLayerEdgeTop | min of the first active layers for cells on edge | - |
 | MaxLayerEdgeTop | min of the last active layer for cells on edge | - |
 | MinLayerEdgeBot | max of the first active layer for cells on edge | - |

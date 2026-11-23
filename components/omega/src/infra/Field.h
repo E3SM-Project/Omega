@@ -88,6 +88,16 @@ class Field {
    /// (leaving the attached array at its fill value) instead of failing.
    bool OptionalRead;
 
+   /// Flag for whether this field is only written, never read. A read stream
+   /// whose contents include this field skips it, so a field group can serve
+   /// as the contents of both an input and an output stream even if some of
+   /// its fields are computed rather than read (eg the mesh connectivity).
+   bool WriteOnly;
+
+   /// Name of a metadata-only field whose metadata are written as global
+   /// attributes to any file that contains this field (empty if none)
+   std::string GlobalMetaField;
+
    /// Data attached to this field. This will be a pointer to the Kokkos
    /// array holding the data. We use a void pointer to manage all the
    /// various types and cast to the appropriate type when needed.
@@ -259,6 +269,25 @@ class Field {
    /// isOptionalRead). Fields are required (not optional) by default.
    void setOptionalRead(bool OptRead ///< [in] optional-read flag value
    );
+
+   /// Determine whether this field is only written, never read (see
+   /// setWriteOnly)
+   bool isWriteOnly() const;
+
+   /// Set whether this field is only written: a read stream whose contents
+   /// include it skips it. Fields are read and written by default.
+   void setWriteOnly(bool WriteOnlyFlag ///< [in] write-only flag value
+   );
+
+   /// Associates a metadata-only field (see create(FieldName)) whose metadata
+   /// are written as global attributes to any file that contains this field,
+   /// for example the global attributes of the mesh the field is defined on
+   void setGlobalMetaField(
+       const std::string &MetaFieldName ///< [in] name of metadata-only field
+   );
+
+   /// Returns the name of the associated global metadata field (empty if none)
+   std::string getGlobalMetaField() const;
 
    //---------------------------------------------------------------------------
    // Regional mask functions

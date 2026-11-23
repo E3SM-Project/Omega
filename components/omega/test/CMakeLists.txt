@@ -238,6 +238,27 @@ add_omega_test(
 )
 
 #######################
+# Mesh round-trip tests
+#######################
+
+# Read each test mesh (and vertical coordinate) as Omega does and write it back
+# out through Omega streams; every variable written must match the file it was
+# read from exactly. The test files hold the vertical coordinate in the same
+# file as the horizontal mesh, except for the planar mesh, which has no
+# vertical coordinate ("none"), so only its horizontal mesh is tested.
+add_omega_test(
+    MESH_ROUNDTRIP_TEST
+    testMeshRoundTrip.exe
+    ocn/MeshRoundTripTest.cpp
+    "-n;8"
+    test_arg=OmegaMesh.nc
+)
+add_omega_ctest(MESH_ROUNDTRIP_SPHERE_TEST testMeshRoundTrip.exe "-n;8"
+                OmegaSphereMesh.nc)
+add_omega_ctest(MESH_ROUNDTRIP_PLANAR_TEST testMeshRoundTrip.exe "-n;8"
+                "OmegaPlanarMesh.nc;none")
+
+#######################
 # HorzOperators tests
 #######################
 

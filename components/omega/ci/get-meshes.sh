@@ -10,8 +10,8 @@ base_url=https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest
 
 # Name the tests expect, then the file on the server
 meshes=(
-    "OmegaMesh.nc        ocean.QU.240km.omega_vars.260807.nc"
-    "OmegaSphereMesh.nc  cosine_bell_icos480.omega_vars.260911.nc"
+    "OmegaMesh.nc        ocean.QU.240km.omega_vars.261123.nc"
+    "OmegaSphereMesh.nc  cosine_bell_icos480.omega_vars.261123.nc"
     "OmegaPlanarMesh.nc  PlanarPeriodic48x48.omega_vars.260825.nc"
 )
 

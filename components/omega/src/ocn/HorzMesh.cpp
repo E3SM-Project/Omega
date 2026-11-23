@@ -141,6 +141,17 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
    // read populates the arrays attached to these fields.
    defineMeshFields();
 
+   // Add the connectivity, counts and global IDs to the mesh fields so that a
+   // file written with them is a valid mesh. These are computed from the
+   // decomposition, not read with the other mesh fields.
+   defineConnectivityFields(MeshDecomp);
+
+   // Any file containing a mesh field gets the global mesh attributes
+   std::string MeshSuffix = MeshName == "Default" ? "" : MeshName;
+   for (const auto &MeshFieldName :
+        FieldGroup::getFieldListFromGroup("HorzMeshIn" + MeshSuffix))
+      Field::get(MeshFieldName)->setGlobalMetaField(MeshMetaName);
+
    // Read the input mesh stream to fill most of the fields
    // Some global mesh attributes are needed - we define both current
    // and older MPAS names for back compatibility
@@ -231,6 +242,20 @@ HorzMesh::HorzMesh(const std::string &Name, //< [in] Name for new mesh
       }
    } else {
       ABORT_ERROR("OnSphere or on_a_sphere missing from mesh file");
+   }
+
+   // Record the global mesh attributes so that they are written to any file
+   // containing the mesh fields, which must carry them to be read back in as
+   // a mesh. The MPAS names are used, as in mesh files, and the values are
+   // the double-precision values read from the mesh file.
+   std::shared_ptr<Field> MeshMeta = Field::get(MeshMetaName);
+   MeshMeta->addMetadata("on_a_sphere", std::string(OnSphere ? "YES" : "NO"));
+   MeshMeta->addMetadata("is_periodic", std::string(IsPeriodic ? "YES" : "NO"));
+   if (OnSphere)
+      MeshMeta->addMetadata("sphere_radius", TmpRadius);
+   if (IsPeriodic) {
+      MeshMeta->addMetadata("x_period", TmpXPeriod);
+      MeshMeta->addMetadata("y_period", TmpYPeriod);
    }
 
    // Complete read arrays (fill halos and duplicate on host)
@@ -590,6 +615,160 @@ void HorzMesh::computeMedianCellWidth() {
 } // end computeMedianCellWidth
 
 //------------------------------------------------------------------------------
+// Create write-only fields for the mesh connectivity, counts and global IDs.
+// Decomp reads the connectivity from the mesh file and converts it to local
+// (zero-based) indices for its decomposition, deriving NEdgesOnCell rather
+// than reading it, so these fields are not read with the other mesh fields.
+// Instead, they are filled here from the global-ID copies Decomp keeps, as
+// the one-based global IDs of the MPAS mesh specification with 0 for a
+// missing neighbor, so that any file written with the mesh fields is a valid
+// mesh. Only the entries for owned cells, edges and vertices are written.
+void HorzMesh::defineConnectivityFields(
+    Decomp *MeshDecomp // [in] decomposition for this mesh
+) {
+
+   std::string MeshSuffix = MeshName == "Default" ? "" : MeshName;
+   auto MeshGroupIn       = FieldGroup::get("HorzMeshIn" + MeshSuffix);
+
+   // Creates a write-only field, adds it to the mesh group and attaches its
+   // array. Attaching fills the array with the fill value, so it must come
+   // before the array is filled below.
+   auto defineField =
+       [&](const std::string &FieldName, const std::string &Description,
+           const std::vector<std::string> &DimNames, auto &Array) {
+          auto NewField = Field::create(FieldName,   // field name
+                                        Description, // long name
+                                        "",          // units
+                                        "",          // CF standard name
+                                        0,           // min valid value
+                                        std::numeric_limits<I4>::max(), // max
+                                        static_cast<int>(DimNames.size()),
+                                        DimNames, // dimension names
+                                        false     // not time dependent
+          );
+          NewField->setWriteOnly(true);
+          MeshGroupIn->addField(FieldName);
+          NewField->attachData(Array);
+       };
+
+   IndexToCellIDOut   = HostArray1DI4("IndexToCellID", NCellsSize);
+   IndexToEdgeIDOut   = HostArray1DI4("IndexToEdgeID", NEdgesSize);
+   IndexToVertexIDOut = HostArray1DI4("IndexToVertexID", NVerticesSize);
+   NEdgesOnCellOut    = HostArray1DI4("NEdgesOnCell", NCellsSize);
+   NEdgesOnEdgeOut    = HostArray1DI4("NEdgesOnEdge", NEdgesSize);
+   CellsOnCellOut     = HostArray2DI4("CellsOnCell", NCellsSize, MaxEdges);
+   EdgesOnCellOut     = HostArray2DI4("EdgesOnCell", NCellsSize, MaxEdges);
+   VerticesOnCellOut  = HostArray2DI4("VerticesOnCell", NCellsSize, MaxEdges);
+   CellsOnEdgeOut = HostArray2DI4("CellsOnEdge", NEdgesSize, MaxCellsOnEdge);
+   EdgesOnEdgeOut = HostArray2DI4("EdgesOnEdge", NEdgesSize, MaxEdges2);
+   VerticesOnEdgeOut =
+       HostArray2DI4("VerticesOnEdge", NEdgesSize, MaxCellsOnEdge);
+   CellsOnVertexOut =
+       HostArray2DI4("CellsOnVertex", NVerticesSize, VertexDegree);
+   EdgesOnVertexOut =
+       HostArray2DI4("EdgesOnVertex", NVerticesSize, VertexDegree);
+
+   defineField("IndexToCellID", "Global ID of each cell", {"NCells"},
+               IndexToCellIDOut);
+   defineField("IndexToEdgeID", "Global ID of each edge", {"NEdges"},
+               IndexToEdgeIDOut);
+   defineField("IndexToVertexID", "Global ID of each vertex", {"NVertices"},
+               IndexToVertexIDOut);
+   defineField("NEdgesOnCell", "Number of edges on each cell", {"NCells"},
+               NEdgesOnCellOut);
+   defineField("NEdgesOnEdge",
+               "Number of edges around the cells on either side of each edge",
+               {"NEdges"}, NEdgesOnEdgeOut);
+   defineField("CellsOnCell", "Global IDs of the cells neighboring each cell",
+               {"NCells", "MaxEdges"}, CellsOnCellOut);
+   defineField("EdgesOnCell", "Global IDs of the edges on each cell",
+               {"NCells", "MaxEdges"}, EdgesOnCellOut);
+   defineField("VerticesOnCell", "Global IDs of the vertices on each cell",
+               {"NCells", "MaxEdges"}, VerticesOnCellOut);
+   defineField("CellsOnEdge",
+               "Global IDs of the cells on either side of each edge",
+               {"NEdges", "MaxCellsOnEdge"}, CellsOnEdgeOut);
+   defineField("EdgesOnEdge",
+               "Global IDs of the edges around the cells on either side of "
+               "each edge",
+               {"NEdges", "MaxEdges2"}, EdgesOnEdgeOut);
+   defineField("VerticesOnEdge",
+               "Global IDs of the vertices at either end of each edge",
+               {"NEdges", "MaxCellsOnEdge"}, VerticesOnEdgeOut);
+   defineField("CellsOnVertex", "Global IDs of the cells sharing each vertex",
+               {"NVertices", "VertexDegree"}, CellsOnVertexOut);
+   defineField("EdgesOnVertex", "Global IDs of the edges sharing each vertex",
+               {"NVertices", "VertexDegree"}, EdgesOnVertexOut);
+
+   // Decomp keeps the connectivity with global IDs (one-based) for writing,
+   // since its local arrays lose the IDs of neighbors outside this task's
+   // owned and halo entries. An invalid or missing entry is written as 0.
+   I4 NCellsGlob = MeshDecomp->NCellsGlobal;
+   I4 NEdgesGlob = MeshDecomp->NEdgesGlobal;
+   I4 NVrtxGlob  = MeshDecomp->NVerticesGlobal;
+   auto validID  = [](I4 ID, I4 NGlobal) {
+      return (ID > 0 and ID <= NGlobal) ? ID : 0;
+   };
+
+   for (int Cell = 0; Cell < NCellsAll; ++Cell) {
+      IndexToCellIDOut(Cell) = MeshDecomp->CellIDH(Cell);
+      NEdgesOnCellOut(Cell)  = NEdgesOnCellH(Cell);
+      for (int I = 0; I < MaxEdges; ++I) {
+         CellsOnCellOut(Cell, I) =
+             validID(MeshDecomp->CellsOnCellGlobH(Cell, I), NCellsGlob);
+         EdgesOnCellOut(Cell, I) =
+             validID(MeshDecomp->EdgesOnCellGlobH(Cell, I), NEdgesGlob);
+         VerticesOnCellOut(Cell, I) =
+             validID(MeshDecomp->VerticesOnCellGlobH(Cell, I), NVrtxGlob);
+      }
+   }
+   for (int Edge = 0; Edge < NEdgesAll; ++Edge) {
+      IndexToEdgeIDOut(Edge) = MeshDecomp->EdgeIDH(Edge);
+      NEdgesOnEdgeOut(Edge)  = NEdgesOnEdgeH(Edge);
+      for (int I = 0; I < MaxCellsOnEdge; ++I) {
+         CellsOnEdgeOut(Edge, I) =
+             validID(MeshDecomp->CellsOnEdgeGlobH(Edge, I), NCellsGlob);
+         VerticesOnEdgeOut(Edge, I) =
+             validID(MeshDecomp->VerticesOnEdgeGlobH(Edge, I), NVrtxGlob);
+      }
+      for (int I = 0; I < MaxEdges2; ++I)
+         EdgesOnEdgeOut(Edge, I) =
+             validID(MeshDecomp->EdgesOnEdgeGlobH(Edge, I), NEdgesGlob);
+   }
+   for (int Vrtx = 0; Vrtx < NVerticesAll; ++Vrtx) {
+      IndexToVertexIDOut(Vrtx) = MeshDecomp->VertexIDH(Vrtx);
+      for (int I = 0; I < VertexDegree; ++I) {
+         CellsOnVertexOut(Vrtx, I) =
+             validID(MeshDecomp->CellsOnVertexGlobH(Vrtx, I), NCellsGlob);
+         EdgesOnVertexOut(Vrtx, I) =
+             validID(MeshDecomp->EdgesOnVertexGlobH(Vrtx, I), NEdgesGlob);
+      }
+   }
+
+   // The vector reconstruction stencil is only on spherical meshes
+   if (OnSphere) {
+      NEdgesReconOnCellOut = HostArray1DI4("NEdgesReconOnCell", NCellsSize);
+      ReconStencilCellOut =
+          HostArray2DI4("ReconStencilCell", NCellsSize, MaxEdges2);
+      defineField("NEdgesReconOnCell",
+                  "Number of edges in the vector reconstruction stencil of "
+                  "each cell",
+                  {"NCells"}, NEdgesReconOnCellOut);
+      defineField("ReconStencilCell",
+                  "Global IDs of the edges in the vector reconstruction "
+                  "stencil of each cell",
+                  {"NCells", "MaxEdges2"}, ReconStencilCellOut);
+      for (int Cell = 0; Cell < NCellsAll; ++Cell) {
+         NEdgesReconOnCellOut(Cell) = NEdgesReconOnCellH(Cell);
+         for (int I = 0; I < MaxEdges2; ++I)
+            ReconStencilCellOut(Cell, I) =
+                validID(MeshDecomp->ReconStencilCellGlobH(Cell, I), NEdgesGlob);
+      }
+   }
+
+} // end defineConnectivityFields
+
+//------------------------------------------------------------------------------
 // Finish filling arrays read from a file by filling halos and copying to host
 void HorzMesh::completeReadArrays() {
 
@@ -712,6 +891,12 @@ void HorzMesh::defineMeshFields() {
 
    std::string MeshGroupName = "HorzMeshIn" + MeshSuffix;
    auto MeshGroupIn          = FieldGroup::create(MeshGroupName);
+
+   // Create a metadata-only field for the global mesh attributes. These are
+   // added once they have been read from the mesh file (see the constructor)
+   // and are written to any file that contains a mesh field.
+   MeshMetaName = "HorzMeshMeta" + MeshSuffix;
+   Field::create(MeshMetaName);
 
    // Check whether the file name in the input stream matches that of
    // the Decomp. They are typically different only for unit testing where
