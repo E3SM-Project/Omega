@@ -187,12 +187,12 @@ void testStabilityFunctions() {
        KOKKOS_LAMBDA(int ITest, int &ErrorCount) {
           const Real Transition = ITest == 0 ? KPP::ZetaM : KPP::ZetaS;
           const Real Epsilon    = 1.0e-6_Real;
-          const Real Above      = ITest == 0
-                                      ? KPP::kppPhiInvMomentum(Transition + Epsilon)
-                                      : KPP::kppPhiInvScalar(Transition + Epsilon);
-          const Real Below      = ITest == 0
-                                      ? KPP::kppPhiInvMomentum(Transition - Epsilon)
-                                      : KPP::kppPhiInvScalar(Transition - Epsilon);
+          const Real Above = ITest == 0
+                                 ? KPP::kppPhiInvMomentum(Transition + Epsilon)
+                                 : KPP::kppPhiInvScalar(Transition + Epsilon);
+          const Real Below = ITest == 0
+                                 ? KPP::kppPhiInvMomentum(Transition - Epsilon)
+                                 : KPP::kppPhiInvScalar(Transition - Epsilon);
           if (!isApprox(Above, Below, 2.0e-5_Real, 2.0e-5_Real))
              ++ErrorCount;
        },
@@ -767,9 +767,9 @@ void testMatchBothInteriorCoefficients() {
    constexpr Real SmoothAtSigma = 0.5_Real;
    const Real TurbVel           = VonKar * 0.02_Real;
    const Real ExpectedDiffMid   = TestOSBLDepth * TurbVel * SimpleShape +
-                                SmoothAtSigma * ExpectedInteriorDiff;
-   const Real ExpectedViscMid = TestOSBLDepth * TurbVel * SimpleShape +
-                                SmoothAtSigma * ExpectedInteriorVisc;
+                                  SmoothAtSigma * ExpectedInteriorDiff;
+   const Real ExpectedViscMid   = TestOSBLDepth * TurbVel * SimpleShape +
+                                  SmoothAtSigma * ExpectedInteriorVisc;
    const Real MatchDiffShape = ExpectedInteriorDiff / (TestOSBLDepth * TurbVel);
    // The non-local shape is independent of MatchTechnique, so gamma still
    // follows the unmatched scalar shape and vanishes at the OSBL base.
@@ -1192,7 +1192,7 @@ void testOSBLDepth() {
           }
           const Real ZCenter = LayerThickness * (K + 0.5_Real);
           const Real Vt2     = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                           TestN * WindTurbulentScale / 0.25_Real;
+                               TestN * WindTurbulentScale / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1223,8 +1223,8 @@ void testOSBLDepth() {
        Slope * Slope - 4.0_Real * Quadratic * (RiAbove - 0.25_Real);
    const Real ExpectedBLD =
        ZAbove + (-Slope + Kokkos::sqrt(Discriminant)) / (2.0_Real * Quadratic);
-   const Real ExpectedVt2 = 1.7_Real * UnresolvedShearConstant * 25.0_Real *
-                            TestN * WindTurbulentScale / 0.25_Real;
+   const Real ExpectedVt2    = 1.7_Real * UnresolvedShearConstant * 25.0_Real *
+                               TestN * WindTurbulentScale / 0.25_Real;
    const Real ExpectedDeltaB = 0.4_Real * ExpectedVt2 / (RiScaling * 25.0_Real);
 
    int NumErrors = 0;
@@ -1250,7 +1250,7 @@ void testOSBLDepth() {
                                          : 0.3_Real;
           const Real ZCenter  = LayerThickness * (K + 0.5_Real);
           const Real Vt2      = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                           TestN * WindTurbulentScale / 0.25_Real;
+                                TestN * WindTurbulentScale / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1330,7 +1330,7 @@ void testOSBLDepth() {
           }
           const Real ZCenter = LayerThickness * (K + 0.5_Real);
           const Real Vt2     = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                           TestN * WindTurbulentScale / 0.25_Real;
+                               TestN * WindTurbulentScale / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1388,7 +1388,7 @@ void testOSBLDepth() {
           const Real ZCenter  = LayerThickness * (K + 0.5_Real);
           const Real TargetRi = K == 0 ? 0.0_Real : 1.0_Real;
           const Real Vt2      = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                           TestN * WindTurbulentScale / 0.25_Real;
+                                TestN * WindTurbulentScale / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1514,9 +1514,9 @@ void testBoundaryLayerNonuniformThickness() {
               0.10_Real * Vt2Layer2 * RhoSw / (RiScaling * Gravity * 6.5_Real);
           const Real DeltaRho3 = 0.40_Real * (Shear3 + Vt2Layer3) * RhoSw /
                                  (RiScaling * Gravity * 17.5_Real);
-          Density(ICell, 0) = RhoSw;
-          Density(ICell, 1) = RhoSw + DeltaRho1;
-          Density(ICell, 2) = RhoSw + DeltaRho2;
+          Density(ICell, 0)    = RhoSw;
+          Density(ICell, 1)    = RhoSw + DeltaRho1;
+          Density(ICell, 2)    = RhoSw + DeltaRho2;
 
           // At k=3, the 2.5 m surface layer contains the unequal 1 m and
           // 2 m layers. Construct rho(3) relative to that weighted mean.
@@ -1764,7 +1764,7 @@ void testSshOffsetInvariance() {
           }
           const Real ZCenter = LayerThickness * (K + 0.5_Real);
           const Real Vt2     = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                           TestN * WindTurbulentScale / 0.25_Real;
+                               TestN * WindTurbulentScale / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;
@@ -1948,7 +1948,7 @@ void testBoundaryLayerLangmuir() {
           const Real PhiInv = Kokkos::sqrt(1.0_Real - 16.0_Real * Zeta);
           const Real WTurb  = VonKar * TestUStar * PhiInv;
           const Real Vt2    = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                           TestN * WTurb / 0.25_Real;
+                              TestN * WTurb / 0.25_Real;
           const Real TargetRi =
               K == 0 ? 0.0_Real : (K == 1 ? 0.1_Real : 0.26_Real);
           const Real DeltaRho =
@@ -2003,15 +2003,15 @@ void testBoundaryLayerLangmuir() {
    const Real Enhancement  = Kokkos::sqrt(3.0_Real);
    const Real DisabledZeta = KPP::SurfaceLayerExtent * ZDepth * VonKar *
                              TestB0 / (TestUStar * TestUStar * TestUStar);
-   const Real EnabledZeta = DisabledZeta * Enhancement;
+   const Real EnabledZeta  = DisabledZeta * Enhancement;
    const Real DisabledWTurb =
        VonKar * TestUStar * Kokkos::sqrt(1.0_Real - 16.0_Real * DisabledZeta);
    const Real EnabledWTurb =
        VonKar * TestUStar * Kokkos::sqrt(1.0_Real - 16.0_Real * EnabledZeta);
    const Real ExpectedDisabledVt2 = 1.7_Real * UnresolvedShearConstant *
                                     ZCenter * TestN * DisabledWTurb / 0.25_Real;
-   const Real ExpectedEnabledVt2 = 1.7_Real * UnresolvedShearConstant *
-                                   ZCenter * TestN * EnabledWTurb / 0.25_Real;
+   const Real ExpectedEnabledVt2  = 1.7_Real * UnresolvedShearConstant *
+                                    ZCenter * TestN * EnabledWTurb / 0.25_Real;
    const Real ExpectedEnabledRi =
        0.26_Real * ExpectedDisabledVt2 / ExpectedEnabledVt2;
 
@@ -2102,7 +2102,7 @@ void testBoundaryLayerSmoothing() {
           }
           const Real ZCenter = LayerThickness * (K + 0.5_Real);
           const Real Vt2     = 1.7_Real * UnresolvedShearConstant * ZCenter *
-                           TestN * WTurb / 0.25_Real;
+                               TestN * WTurb / 0.25_Real;
           const Real DeltaRho =
               TargetRi * Vt2 * RhoSw / (RiScaling * Gravity * ZCenter);
           Density(ICell, K) = RhoSw + DeltaRho;

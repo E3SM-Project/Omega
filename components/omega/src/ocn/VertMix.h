@@ -69,7 +69,7 @@ class ShearMix {
    // Shear mixing parameters
    Real BaseShearValue = 0.005; ///< Base shear vertical viscosity and
                                 ///< diffusivity (m^2 s^-1) of LMD94
-   Real ShearRiCrit = 0.7;      ///< Critical Richardson number of LMD94
+   Real ShearRiCrit    = 0.7;   ///< Critical Richardson number of LMD94
    Real ShearExponent =
        3.0; /// Exponent value used interior shear mixing calculation of LMD94
 
