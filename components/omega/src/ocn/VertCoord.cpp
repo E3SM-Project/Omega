@@ -281,7 +281,8 @@ void VertCoord::defineFields() {
        0,                                           // min valid value
        std::numeric_limits<I4>::max(),              // max valid value
        NDims,                                       // number of dimensions
-       DimNames                                     // dimension names
+       DimNames,                                    // dimension names
+       false                                        // not time dependent
    );
 
    auto MaxLayerCellField = Field::create(
@@ -292,7 +293,8 @@ void VertCoord::defineFields() {
        -1,                                         // min valid value
        std::numeric_limits<I4>::max(),             // max valid value
        NDims,                                      // number of dimensions
-       DimNames                                    // dimension names
+       DimNames,                                   // dimension names
+       false                                       // not time dependent
    );
 
    auto BottomGeomDepthField = Field::create(
@@ -304,7 +306,8 @@ void VertCoord::defineFields() {
        0.0,                              // min valid value
        std::numeric_limits<Real>::max(), // max valid value
        NDims,                            // number of dimensions
-       DimNames                          // dimension names
+       DimNames,                         // dimension names
+       false                             // not time dependent
    );
 
    auto SshField = Field::create(
@@ -359,7 +362,8 @@ void VertCoord::defineFields() {
        0.0,                              // min valid value
        std::numeric_limits<Real>::max(), // max valid value
        NDims,                            // number of dimensions
-       DimNames                          // dimension names
+       DimNames,                         // dimension names
+       false                             // not time dependent
    );
 
    NDims = 1;
@@ -375,7 +379,8 @@ void VertCoord::defineFields() {
        0.0,                              // min valid value
        std::numeric_limits<Real>::max(), // max valid value
        NDims,                            // number of dimensions
-       DimNames                          // dimension names
+       DimNames,                         // dimension names
+       false                             // not time dependent
    );
 
    NDims = 2;
