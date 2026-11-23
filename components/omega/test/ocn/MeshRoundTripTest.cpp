@@ -3,22 +3,25 @@
 /// \file
 /// \brief Test that the mesh read by Omega is written back out unchanged
 ///
-/// This driver reads the horizontal mesh the way Omega does (Decomp and
-/// HorzMesh, through the HorzMeshIn stream) and then writes the contents of
-/// that stream back out through an Omega output stream. Every variable in the
+/// This driver reads the horizontal mesh and the vertical coordinate the way
+/// Omega does (Decomp, HorzMesh and VertCoord, through the HorzMeshIn and
+/// InitialVertCoord streams) and then writes the contents of each of those
+/// streams back out through an Omega output stream. Every variable in each
 /// output file is then compared with the variable of the same name (or its
-/// older MPAS name) in the mesh file and must be identical, so that a stream
-/// asked to write the horizontal mesh writes a valid MPAS mesh. Any
-/// conversion Omega applies on reading must therefore be undone on writing.
-/// Connectivity entries beyond the count of valid entries in each row are
-/// padding and are not compared. The output must also carry the global
-/// attributes HorzMesh requires of any mesh file (on_a_sphere, is_periodic
-/// and, as applicable, sphere_radius or x_period and y_period) with the
-/// input values.
+/// older MPAS name) in the file that stream read and must be identical. Any
+/// conversion Omega applies on reading (for example, from one-based to
+/// zero-based indices) must therefore be undone on writing. The horizontal
+/// mesh output must also carry the global attributes HorzMesh requires of
+/// any mesh file (on_a_sphere, is_periodic and, as applicable,
+/// sphere_radius or x_period and y_period) with the input values.
 ///
-/// Usage: testMeshRoundTrip.exe [MeshFile]
+/// Usage: testMeshRoundTrip.exe [MeshFile [VertCoordFile]]
 ///
-/// MeshFile is read by the HorzMeshIn stream (default OmegaMesh.nc).
+/// MeshFile is read by the HorzMeshIn stream (default OmegaMesh.nc) and
+/// VertCoordFile by the InitialVertCoord stream (default MeshFile). If
+/// VertCoordFile is "none", the vertical coordinate is not read or tested,
+/// for a mesh (such as the planar test mesh) without a vertical coordinate
+/// file to go with it.
 //
 //===-----------------------------------------------------------------------===/
 
@@ -38,6 +41,7 @@
 #include "Pacer.h"
 #include "TimeMgr.h"
 #include "TimeStepper.h"
+#include "VertCoord.h"
 #include "mpi.h"
 #include "pio.h"
 #include "yaml-cpp/yaml.h"
@@ -56,8 +60,12 @@ using namespace OMEGA;
 
 namespace {
 
-// Name of the output stream added to the configuration by this test
+// Names of the output streams added to the configuration by this test
 const std::string HorzOutStreamName = "MeshRoundTripHorzOut";
+const std::string VertOutStreamName = "MeshRoundTripVertOut";
+
+// Value of the VertCoordFile argument that skips the vertical coordinate
+const std::string NoFile = "none";
 
 // Maximum number of mismatched entries to report for each variable
 constexpr int MaxReport = 5;
@@ -84,11 +92,14 @@ YAML::Node makeOutStream(const YAML::Node &Template, const std::string &OutFile,
 
 //------------------------------------------------------------------------------
 // Writes a copy of the input config in which HorzMeshIn reads MeshFile and
-// adds a write stream for its contents. Only task 0 writes the file; all
-// tasks then read the same copy. Returns the new config file name.
+// InitialVertCoord reads VertFile, and adds a write stream for the contents
+// of each (the latter only if VertFile is not "none"). Only task 0 writes the
+// file; all tasks then read the same copy. Returns the new config file name.
 std::string makeRoundTripConfig(const std::string &InFile,
                                 const std::string &MeshFile,
+                                const std::string &VertFile,
                                 const std::string &HorzOutFile,
+                                const std::string &VertOutFile,
                                 const std::string &ConfigFile, MachEnv *Env) {
 
    if (Env->getMyTask() == 0) {
@@ -98,6 +109,12 @@ std::string makeRoundTripConfig(const std::string &InFile,
       Streams["HorzMeshIn"]["Filename"] = MeshFile;
       Streams[HorzOutStreamName] =
           makeOutStream(Streams["RestartWrite"], HorzOutFile, "HorzMeshIn");
+
+      if (VertFile != NoFile) {
+         Streams["InitialVertCoord"]["Filename"] = VertFile;
+         Streams[VertOutStreamName]              = makeOutStream(
+             Streams["RestartWrite"], VertOutFile, "InitVertCoord");
+      }
 
       std::ofstream Out(ConfigFile);
       Out << Root;
@@ -566,11 +583,16 @@ int main(int argc, char *argv[]) {
    std::string MeshFile = "OmegaMesh.nc";
    if (argc > 1)
       MeshFile = argv[1];
+   std::string VertFile = MeshFile;
+   if (argc > 2)
+      VertFile = argv[2];
+   bool TestVert = VertFile != NoFile;
 
    // Distinguish the files of this test by mesh so that tests on different
    // meshes can run at the same time in the same directory
    std::string Stem        = std::filesystem::path(MeshFile).stem().string();
    std::string HorzOutFile = "MeshRoundTrip_" + Stem + "_horz.nc";
+   std::string VertOutFile = "MeshRoundTrip_" + Stem + "_vert.nc";
    std::string ConfigFile  = "omega.meshroundtrip." + Stem + ".yml";
 
    int NFail = 0;
@@ -585,11 +607,14 @@ int main(int argc, char *argv[]) {
       MPI_Comm DefComm = DefEnv->getComm();
 
       initLogging(DefEnv);
-      LOG_INFO("------ Mesh round trip test for {} ------", MeshFile);
+      LOG_INFO("------ Mesh round trip test for {} (vertical coordinate: "
+               "{}) ------",
+               MeshFile, VertFile);
 
       Config("Omega");
-      Config::readAll(makeRoundTripConfig("omega.yml", MeshFile, HorzOutFile,
-                                          ConfigFile, DefEnv));
+      Config::readAll(makeRoundTripConfig("omega.yml", MeshFile, VertFile,
+                                          HorzOutFile, VertOutFile, ConfigFile,
+                                          DefEnv));
 
       // Read the mesh in the same order as Omega does in OceanInit
       TimeStepper::init1();
@@ -600,16 +625,23 @@ int main(int argc, char *argv[]) {
       Decomp::init();
       Halo::init();
       HorzMesh::init(ModelClock);
+      if (TestVert)
+         VertCoord::init();
 
-      // Write the mesh back out through an Omega stream
+      // Write the mesh and vertical coordinate back out through Omega streams
       writeStream(HorzOutStreamName, ModelClock);
+      if (TestVert)
+         writeStream(VertOutStreamName, ModelClock);
       MPI_Barrier(DefComm);
 
-      // Compare the output with the mesh file
+      // Compare each output with the file its contents were read from
       NFail = compareFiles(MeshFile, HorzOutFile, true);
+      if (TestVert)
+         NFail += compareFiles(VertFile, VertOutFile, false);
 
       IOStream::finalize();
       TimeStepper::clear();
+      VertCoord::clear();
       HorzMesh::clear();
       Field::clear();
       Dimension::clear();
