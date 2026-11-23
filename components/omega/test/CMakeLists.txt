@@ -238,6 +238,24 @@ add_omega_test(
 )
 
 #######################
+# Mesh round-trip tests
+#######################
+
+# Read each test mesh as Omega does and write it back out through an Omega
+# stream; every variable written must match the mesh file exactly
+add_omega_test(
+    MESH_ROUNDTRIP_TEST
+    testMeshRoundTrip.exe
+    ocn/MeshRoundTripTest.cpp
+    "-n;8"
+    test_arg=OmegaMesh.nc
+)
+add_omega_ctest(MESH_ROUNDTRIP_SPHERE_TEST testMeshRoundTrip.exe "-n;8"
+                OmegaSphereMesh.nc)
+add_omega_ctest(MESH_ROUNDTRIP_PLANAR_TEST testMeshRoundTrip.exe "-n;8"
+                OmegaPlanarMesh.nc)
+
+#######################
 # HorzOperators tests
 #######################
 
