@@ -19,8 +19,8 @@ env:
 
 jobs:
   build:
-    if: ${{ github.repository == 'E3SM-Project/E3SM' }} or \
-        ${{ github.repository == 'E3SM-Project/Omega' }}
+    if: ${{ github.repository == 'E3SM-Project/E3SM' ||
+            github.repository == 'E3SM-Project/Omega' }}
     name: lint and test docs
     runs-on: ubuntu-latest
     timeout-minutes: 20
