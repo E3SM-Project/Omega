@@ -251,7 +251,7 @@ void TracerHorzAdvOnCell::init() {
    if (ForceLowOrder) {
       // Return when the 2nd-order tracer horz adv
       deepCopy(NAdvCellsForEdge, 0);
-      deepCopy(AdvMaskHighOrder, 0);
+      deepCopy(AdvMaskHighOrder, 0.);
       return;
    }
 

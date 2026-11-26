@@ -47,7 +47,7 @@ SecondDerivativeOnCell::SecondDerivativeOnCell(HorzMesh const *Mesh)
 MasksAndCoefficients::MasksAndCoefficients(
     HorzMesh const *Mesh, VertCoord const *VCoord, const Array3DReal DerivTwo,
     Array1DI4 NAdvCellsForEdge, Array2DI4 AdvCellsForEdge,
-    Array2DI4 AdvMaskHighOrder, Array2DReal AdvCoefs, Array2DReal AdvCoefs3rd)
+    Array2DReal AdvMaskHighOrder, Array2DReal AdvCoefs, Array2DReal AdvCoefs3rd)
     : NCellsGlobal(Mesh->NCellsGlobal), NCellsAll(Mesh->NCellsAll),
       NAdvCellsMax(Mesh->MaxEdges2), // PatchCellLists("PatchCellLists",
                                      // Mesh->NEdgesOwned, Mesh->NEdgesAll+1),
