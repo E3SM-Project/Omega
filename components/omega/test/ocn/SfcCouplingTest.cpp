@@ -28,6 +28,10 @@ using namespace OMEGA;
 
 struct TestSetup {
 
+   // Coupler buffer widths (fields per cell)
+   int NImports = 17;
+   int NExports = 12;
+
    std::map<std::string, int> ImportIdxMap = {
        {"Foxx_taux", 3},  {"Foxx_tauy", 8},  {"Foxx_swnet", 0},
        {"Foxx_sen", 1},   {"Foxx_lat", 2},   {"Foxx_lwup", 4},
@@ -52,8 +56,8 @@ CouplingInitParams mockCouplingInitParams(
    TimeInterval CouplingTimeStep_ =
        CouplingTimeStep.value_or(DefTimeStepper->getTimeStep());
 
-   CouplingInitParams CouplingParams{.NImportFields    = 17,
-                                     .NExportFields    = 12,
+   CouplingInitParams CouplingParams{.NCouplerImports  = Setup.NImports,
+                                     .NCouplerExports  = Setup.NExports,
                                      .ImportIdxMap     = Setup.ImportIdxMap,
                                      .ExportIdxMap     = Setup.ExportIdxMap,
                                      .CouplingTimeStep = CouplingTimeStep_,
@@ -89,6 +93,26 @@ int flatIdx(const CouplingLayout Layout, const int Cell, const int Field,
       return Cell * NFields + Field;
    else // MOAB
       return Field * NCells + Cell;
+}
+
+// Set surface-layer temperature and salinity to Base + Cell in tracer level 0
+void setSfcTracers(const int NCells, const Real TempBase,
+                   const Real SalinBase) {
+   VertCoord *DefVertCoord = VertCoord::getDefault();
+
+   I4 TempIdx, SalinIdx;
+   Tracers::getIndex(TempIdx, "Temperature");
+   Tracers::getIndex(SalinIdx, "Salinity");
+
+   HostArray2DReal TempH  = Tracers::getHostByIndex(0, TempIdx);
+   HostArray2DReal SalinH = Tracers::getHostByIndex(0, SalinIdx);
+
+   for (int Cell = 0; Cell < NCells; Cell++) {
+      const int KSfc     = DefVertCoord->MinLayerCellH(Cell);
+      TempH(Cell, KSfc)  = TempBase + Cell;
+      SalinH(Cell, KSfc) = SalinBase + Cell;
+   }
+   Tracers::copyToDevice(0);
 }
 
 int initSfcCouplingTest(const std::string &MeshFile) {
@@ -151,107 +175,99 @@ int initSfcCouplingTest(const std::string &MeshFile) {
    return Err;
 }
 
+// Import: fill a raw x2o buffer, import it, and check the owned cells of the
+// Forcing and VertCoord arrays it is meant to populate
 int testImportFromCoupler(const CouplingLayout Layout) {
 
    int Err = 0;
 
+   TestSetup Setup;
    auto CouplingParams = mockCouplingInitParams(Layout);
    Err += SfcCoupling::init(CouplingParams);
 
    SfcCoupling *DefCoupling = SfcCoupling::getDefault();
+   Forcing *DefForcing      = Forcing::getDefault();
+   VertCoord *DefVertCoord  = VertCoord::getDefault();
 
-   int NCells   = DefCoupling->NCellsOwned;
-   int NImports = DefCoupling->NImportFields;
-   int NExports = DefCoupling->NExportFields;
+   const int NCells   = HorzMesh::getDefault()->NCellsOwned;
+   const int NImports = Setup.NImports;
+   const int NExports = Setup.NExports;
 
    std::vector<Real> CplToOcnData(NCells * NImports, 0.0);
    std::vector<Real> OcnToCplData(NCells * NExports, 0.0);
 
-   auto fillImportField = [&](const std::string &Name) {
-      const int FieldIdx = CouplingParams.ImportIdxMap.at(Name);
+   // Give every field a distinct, cell-varying value: FieldIdx + Cell
+   for (const auto &[Name, FieldIdx] : Setup.ImportIdxMap) {
       for (int Cell = 0; Cell < NCells; Cell++) {
          CplToOcnData[flatIdx(Layout, Cell, FieldIdx, NCells, NImports)] =
              static_cast<Real>(FieldIdx + Cell);
       }
-   };
+   }
 
-   fillImportField("Foxx_taux");
-   fillImportField("Foxx_tauy");
-   fillImportField("Foxx_swnet");
-   fillImportField("Foxx_sen");
-   fillImportField("Foxx_lat");
-   fillImportField("Foxx_lwup");
-   fillImportField("Faxa_lwdn");
-   fillImportField("Fioi_salt");
-   fillImportField("Fioi_melth");
-   fillImportField("Fioi_meltw");
-   fillImportField("Faxa_snow");
-   fillImportField("Faxa_rain");
-   fillImportField("Foxx_evap");
-   fillImportField("Foxx_rofl");
-   fillImportField("Foxx_rofi");
-   fillImportField("Si_bpress");
-   fillImportField("Sa_pslv");
-
-   // Push one cell's sea ice pressure above the 5 m limit so the clamp in
-   // importFromCoupler is exercised
-   const int BPressFieldIdx = CouplingParams.ImportIdxMap.at("Si_bpress");
-   CplToOcnData[flatIdx(Layout, 0, BPressFieldIdx, NCells, NImports)] =
+   // Push one cell's sea ice pressure above the 5 m limit so the clamp is
+   // exercised
+   const int BPressIdx = Setup.ImportIdxMap.at("Si_bpress");
+   const int PslvIdx   = Setup.ImportIdxMap.at("Sa_pslv");
+   CplToOcnData[flatIdx(Layout, 0, BPressIdx, NCells, NImports)] =
        2.0_Real * MaxSeaIcePressure;
 
    DefCoupling->attachData(CplToOcnData.data(), OcnToCplData.data());
    DefCoupling->importFromCoupler();
+   DefCoupling->applyImportFields(DefForcing, DefVertCoord);
 
-   auto checkImportField = [&](const HostArray1DReal &Field,
+   auto checkImportField = [&](const Array1DReal &Field,
                                const std::string &Name) {
-      const int FieldIdx = CouplingParams.ImportIdxMap.at(Name);
+      const int FieldIdx = Setup.ImportIdxMap.at(Name);
       HostArray1DReal Expected =
           makeCellVarryingArray("Expected" + Name, NCells, Real(FieldIdx));
-      return arraysEqual(Field, Expected);
-   };
-
-   auto checkSurfacePressure = [&]() {
-      const int BPressIdx = CouplingParams.ImportIdxMap.at("Si_bpress");
-      const int PslvIdx   = CouplingParams.ImportIdxMap.at("Sa_pslv");
-      HostArray1DReal Expected("ExpectedSurfacePressure", NCells);
-      for (int Cell = 0; Cell < NCells; Cell++) {
-         const Real BPress = std::min(
-             CplToOcnData[flatIdx(Layout, Cell, BPressIdx, NCells, NImports)],
-             MaxSeaIcePressure);
-         Expected(Cell) = BPress + Real(PslvIdx + Cell) - AtmRefP;
+      auto Owned = Kokkos::subview(Field, std::pair(0, NCells));
+      if (!arraysEqual(Owned, Expected)) {
+         LOG_ERROR("SfcCouplingTest: import of {} FAIL", Name);
+         return false;
       }
-      return arraysEqual(DefCoupling->CplToOcn.SurfacePressureH, Expected);
+      return true;
    };
 
-   auto ImportPass =
-       checkImportField(DefCoupling->CplToOcn.SfcStressZonalH, "Foxx_taux") &&
-       checkImportField(DefCoupling->CplToOcn.SfcStressMeridH, "Foxx_tauy") &&
-       checkImportField(DefCoupling->CplToOcn.ShortWaveHeatFluxH,
-                        "Foxx_swnet") &&
-       checkImportField(DefCoupling->CplToOcn.SensibleHeatFluxH, "Foxx_sen") &&
-       checkImportField(DefCoupling->CplToOcn.LatentHeatFluxEvapH,
-                        "Foxx_lat") &&
-       checkImportField(DefCoupling->CplToOcn.LongWaveHeatFluxUpH,
-                        "Foxx_lwup") &&
-       checkImportField(DefCoupling->CplToOcn.LongWaveHeatFluxDownH,
-                        "Faxa_lwdn") &&
-       checkImportField(DefCoupling->CplToOcn.SeaIceSaltFluxH, "Fioi_salt") &&
-       checkImportField(DefCoupling->CplToOcn.SeaIceHeatFluxH, "Fioi_melth") &&
-       checkImportField(DefCoupling->CplToOcn.SeaIceFreshWaterFluxH,
-                        "Fioi_meltw") &&
-       checkImportField(DefCoupling->CplToOcn.SnowFluxH, "Faxa_snow") &&
-       checkImportField(DefCoupling->CplToOcn.RainFluxH, "Faxa_rain") &&
-       checkImportField(DefCoupling->CplToOcn.EvaporationFluxH, "Foxx_evap") &&
-       checkImportField(DefCoupling->CplToOcn.RiverRunoffFluxH, "Foxx_rofl") &&
-       checkImportField(DefCoupling->CplToOcn.IceRunoffFluxH, "Foxx_rofi") &&
-       checkSurfacePressure();
+   HostArray1DReal ExpectedSfcPress("ExpectedSurfacePressure", NCells);
+   for (int Cell = 0; Cell < NCells; Cell++) {
+      const Real BPress = std::min(
+          CplToOcnData[flatIdx(Layout, Cell, BPressIdx, NCells, NImports)],
+          MaxSeaIcePressure);
+      ExpectedSfcPress(Cell) = BPress + Real(PslvIdx + Cell) - AtmRefP;
+   }
+   auto OwnedSfcPress =
+       Kokkos::subview(DefVertCoord->SurfacePressure, std::pair(0, NCells));
+   const bool SfcPressPass = arraysEqual(OwnedSfcPress, ExpectedSfcPress);
+   if (!SfcPressPass)
+      LOG_ERROR("SfcCouplingTest: import of SurfacePressure FAIL");
+
+   const auto &Stress = DefForcing->SfcStressForcing;
+   const auto &Tracer = DefForcing->TracerForcing;
+
+   // Not short-circuited, so every failing field is logged
+   bool ImportPass = SfcPressPass;
+   ImportPass &= checkImportField(Stress.ZonalStressCell, "Foxx_taux");
+   ImportPass &= checkImportField(Stress.MeridStressCell, "Foxx_tauy");
+   ImportPass &= checkImportField(Tracer.ShortWaveHeatFluxCell, "Foxx_swnet");
+   ImportPass &= checkImportField(Tracer.SensibleHeatFluxCell, "Foxx_sen");
+   ImportPass &= checkImportField(Tracer.LatentHeatFluxEvapCell, "Foxx_lat");
+   ImportPass &= checkImportField(Tracer.LongWaveHeatFluxUpCell, "Foxx_lwup");
+   ImportPass &= checkImportField(Tracer.LongWaveHeatFluxDownCell, "Faxa_lwdn");
+   ImportPass &= checkImportField(Tracer.SeaIceSaltFluxCell, "Fioi_salt");
+   ImportPass &= checkImportField(Tracer.SeaIceHeatFluxCell, "Fioi_melth");
+   ImportPass &=
+       checkImportField(Tracer.SeaIceFreshWaterFluxCell, "Fioi_meltw");
+   ImportPass &= checkImportField(Tracer.SnowFluxCell, "Faxa_snow");
+   ImportPass &= checkImportField(Tracer.RainFluxCell, "Faxa_rain");
+   ImportPass &= checkImportField(Tracer.EvaporationFluxCell, "Foxx_evap");
+   ImportPass &= checkImportField(Tracer.RiverRunoffFluxCell, "Foxx_rofl");
+   ImportPass &= checkImportField(Tracer.IceRunoffFluxCell, "Foxx_rofi");
 
    if (ImportPass) {
-      LOG_INFO("SfcCouplingTest: importFromCoupler with {} layout PASS",
-               toString(Layout));
+      LOG_INFO("SfcCouplingTest: import with {} layout PASS", toString(Layout));
    } else {
       Err++;
-      LOG_ERROR("SfcCouplingTest: importFromCoupler with {} layout FAIL",
+      LOG_ERROR("SfcCouplingTest: import with {} layout FAIL",
                 toString(Layout));
    }
 
@@ -260,226 +276,103 @@ int testImportFromCoupler(const CouplingLayout Layout) {
    return Err;
 }
 
-int testApplyImportFields() {
-
-   int Err = 0;
-
-   auto CouplingParams = mockCouplingInitParams();
-   Err += SfcCoupling::init(CouplingParams);
-
-   Forcing *DefForcing      = Forcing::getDefault();
-   SfcCoupling *DefCoupling = SfcCoupling::getDefault();
-
-   int NCells   = DefCoupling->NCellsOwned;
-   int NImports = DefCoupling->NImportFields;
-   int NExports = DefCoupling->NExportFields;
-
-   std::vector<Real> CplToOcnData(NCells * NImports, 0.0);
-   std::vector<Real> OcnToCplData(NCells * NExports, 0.0);
-
-   int Offset = 27;
-
-   auto setImportField = [&](HostArray1DReal &Field, const std::string &Name) {
-      const int FieldIdx       = CouplingParams.ImportIdxMap.at(Name);
-      HostArray1DReal Expected = makeCellVarryingArray(
-          "Expected" + Name, NCells, Real(FieldIdx + Offset));
-      deepCopy(Field, Expected);
-   };
-
-   setImportField(DefCoupling->CplToOcn.SfcStressZonalH, "Foxx_taux");
-   setImportField(DefCoupling->CplToOcn.SfcStressMeridH, "Foxx_tauy");
-   setImportField(DefCoupling->CplToOcn.ShortWaveHeatFluxH, "Foxx_swnet");
-   setImportField(DefCoupling->CplToOcn.SensibleHeatFluxH, "Foxx_sen");
-   setImportField(DefCoupling->CplToOcn.LatentHeatFluxEvapH, "Foxx_lat");
-   setImportField(DefCoupling->CplToOcn.LongWaveHeatFluxUpH, "Foxx_lwup");
-   setImportField(DefCoupling->CplToOcn.LongWaveHeatFluxDownH, "Faxa_lwdn");
-   setImportField(DefCoupling->CplToOcn.SeaIceSaltFluxH, "Fioi_salt");
-   setImportField(DefCoupling->CplToOcn.SeaIceHeatFluxH, "Fioi_melth");
-   setImportField(DefCoupling->CplToOcn.SeaIceFreshWaterFluxH, "Fioi_meltw");
-   setImportField(DefCoupling->CplToOcn.SnowFluxH, "Faxa_snow");
-   setImportField(DefCoupling->CplToOcn.RainFluxH, "Faxa_rain");
-   setImportField(DefCoupling->CplToOcn.EvaporationFluxH, "Foxx_evap");
-   setImportField(DefCoupling->CplToOcn.RiverRunoffFluxH, "Foxx_rofl");
-   setImportField(DefCoupling->CplToOcn.IceRunoffFluxH, "Foxx_rofi");
-
-   HostArray1DReal ExpectedSfcPress =
-       makeCellVarryingArray("ExpectedSurfacePressure", NCells, 100.0_Real);
-   deepCopy(DefCoupling->CplToOcn.SurfacePressureH, ExpectedSfcPress);
-
-   DefCoupling->applyImportFields(DefForcing, VertCoord::getDefault());
-
-   auto checkAppliedField = [&](const Array1DReal &Field,
-                                const std::string &Name) {
-      const int FieldIdx       = CouplingParams.ImportIdxMap.at(Name);
-      HostArray1DReal Expected = makeCellVarryingArray(
-          "Expected" + Name, NCells, Real(FieldIdx + Offset));
-      auto Owned = Kokkos::subview(Field, std::pair(0, NCells));
-      return arraysEqual(Owned, Expected);
-   };
-
-   VertCoord *DefVertCoord = VertCoord::getDefault();
-   auto OwnedSfcPress =
-       Kokkos::subview(DefVertCoord->SurfacePressure, std::pair(0, NCells));
-   bool SfcPressPass = arraysEqual(OwnedSfcPress, ExpectedSfcPress);
-
-   auto ApplyPass =
-       checkAppliedField(DefForcing->SfcStressForcing.ZonalStressCell,
-                         "Foxx_taux") &&
-       checkAppliedField(DefForcing->SfcStressForcing.MeridStressCell,
-                         "Foxx_tauy") &&
-       checkAppliedField(DefForcing->TracerForcing.ShortWaveHeatFluxCell,
-                         "Foxx_swnet") &&
-       checkAppliedField(DefForcing->TracerForcing.SensibleHeatFluxCell,
-                         "Foxx_sen") &&
-       checkAppliedField(DefForcing->TracerForcing.LatentHeatFluxEvapCell,
-                         "Foxx_lat") &&
-       checkAppliedField(DefForcing->TracerForcing.LongWaveHeatFluxUpCell,
-                         "Foxx_lwup") &&
-       checkAppliedField(DefForcing->TracerForcing.LongWaveHeatFluxDownCell,
-                         "Faxa_lwdn") &&
-       checkAppliedField(DefForcing->TracerForcing.SeaIceSaltFluxCell,
-                         "Fioi_salt") &&
-       checkAppliedField(DefForcing->TracerForcing.SeaIceHeatFluxCell,
-                         "Fioi_melth") &&
-       checkAppliedField(DefForcing->TracerForcing.SeaIceFreshWaterFluxCell,
-                         "Fioi_meltw") &&
-       checkAppliedField(DefForcing->TracerForcing.SnowFluxCell, "Faxa_snow") &&
-       checkAppliedField(DefForcing->TracerForcing.RainFluxCell, "Faxa_rain") &&
-       checkAppliedField(DefForcing->TracerForcing.EvaporationFluxCell,
-                         "Foxx_evap") &&
-       checkAppliedField(DefForcing->TracerForcing.RiverRunoffFluxCell,
-                         "Foxx_rofl") &&
-       checkAppliedField(DefForcing->TracerForcing.IceRunoffFluxCell,
-                         "Foxx_rofi") &&
-       SfcPressPass;
-
-   if (ApplyPass) {
-      LOG_INFO("SfcCouplingTest: applyImportFields PASS");
-   } else {
-      Err++;
-      LOG_ERROR("SfcCouplingTest: applyImportFields FAIL");
-   }
-
-   SfcCoupling::clear();
-
-   return Err;
-}
-
+// Averaging: accumulate NSteps of varying surface tracers, export, and check
+// the raw o2x buffer holds their mean (converted to coupler units)
 int testUpdateExportFields(const I4 NSteps) {
 
    int Err = 0;
 
-   auto *DefStepper = TimeStepper::getDefault();
+   TestSetup Setup;
+   auto *DefStepper            = TimeStepper::getDefault();
+   const CouplingLayout Layout = CouplingLayout::MCT;
 
    // Coupling interval spans NSteps ocean timesteps
-   auto CouplingParams = mockCouplingInitParams(
-       CouplingLayout::MCT, DefStepper->getTimeStep() * NSteps);
+   auto CouplingParams =
+       mockCouplingInitParams(Layout, DefStepper->getTimeStep() * NSteps);
 
    Err += SfcCoupling::init(CouplingParams);
 
    SfcCoupling *DefCoupling = SfcCoupling::getDefault();
    OceanState *DefState     = OceanState::getDefault();
-   VertCoord *DefVertCoord  = VertCoord::getDefault();
    Frazil *DefFrazil        = Frazil::getDefault();
 
-   int NCells = DefCoupling->NCellsOwned;
+   const int NCells   = HorzMesh::getDefault()->NCellsOwned;
+   const int NImports = Setup.NImports;
+   const int NExports = Setup.NExports;
 
-   Real TempBase  = static_cast<Real>(CouplingParams.ExportIdxMap.at("So_t"));
-   Real SalinBase = static_cast<Real>(CouplingParams.ExportIdxMap.at("So_s"));
+   std::vector<Real> CplToOcnData(NCells * NImports, 0.0);
+   std::vector<Real> OcnToCplData(NCells * NExports, 0.0);
+   DefCoupling->attachData(CplToOcnData.data(), OcnToCplData.data());
 
-   I4 TempIdx, SalinIdx;
-   Tracers::getIndex(TempIdx, "Temperature");
-   Tracers::getIndex(SalinIdx, "Salinity");
+   const int TempIdx  = Setup.ExportIdxMap.at("So_t");
+   const int SalinIdx = Setup.ExportIdxMap.at("So_s");
 
-   // Run exactly NSteps updates. Clock and alarm behavior is covered by
-   // TimeMgrTest; keeping this test focused on field accumulation avoids
-   // advancing a shared clock with alarms from cleared test objects.
+   const Real TempBase  = static_cast<Real>(TempIdx);
+   const Real SalinBase = static_cast<Real>(SalinIdx);
+
+   // Clock and alarm behavior is covered by TimeMgrTest; keeping this test
+   // focused on field accumulation avoids advancing a shared clock with
+   // alarms from cleared test objects.
    for (I4 Step = 0; Step < NSteps; ++Step) {
-      Real CurrStep = static_cast<Real>(DefCoupling->getNAccumSteps());
-
-      HostArray2DReal TempH  = Tracers::getHostByIndex(0, TempIdx);
-      HostArray2DReal SalinH = Tracers::getHostByIndex(0, SalinIdx);
-
-      for (int Cell = 0; Cell < NCells; Cell++) {
-         int KSfc = DefVertCoord->MinLayerCellH(Cell);
-
-         TempH(Cell, KSfc)  = TempBase + Cell + CurrStep;
-         SalinH(Cell, KSfc) = SalinBase + Cell + CurrStep;
-      }
-      Tracers::copyToDevice(0);
-
+      setSfcTracers(NCells, TempBase + Step, SalinBase + Step);
       DefCoupling->updateExportFields(DefState, Tracers::getAll(0), DefFrazil);
    }
 
-   // Sanity check: the expected number of updates was performed
-   if (DefCoupling->getNAccumSteps() != NSteps) {
-      Err++;
-      LOG_ERROR("SfcCouplingTest: updateExportFields FAIL - "
-                "NAccumSteps = {}, expected {}",
-                DefCoupling->getNAccumSteps(), NSteps);
-   }
-
-   // copyToHost() is the only sanctioned way to read the averages; it also
-   // converts temp to in-situ Kelvin (identity CT->PT w/ ConstantEos)
-   DefCoupling->OcnToCpl.copyToHost();
-   auto &AvgTempH  = DefCoupling->OcnToCpl.AvgSfcTemperatureH;
-   auto &AvgSalinH = DefCoupling->OcnToCpl.AvgSfcSalinityH;
+   DefCoupling->exportToCoupler();
 
    // Only accumulated round-off error (no discretization/truncation error),
    // so use a tighter tolerance than tests comparing against analytic
-   // solutions of numerical operators.
-   Real RTol                    = sizeof(Real) == 4 ? 1e-5 : 1e-10;
-   Real StepOffset              = static_cast<Real>(NSteps - 1) / 2.0;
-   HostArray1DReal ExpectedTemp = makeCellVarryingArray(
-       "ExpectedTemp", NCells, TempBase + StepOffset + TkFrz);
-   HostArray1DReal ExpectedSalin =
-       makeCellVarryingArray("ExpectedSalin", NCells, SalinBase + StepOffset);
+   // solutions of numerical operators. ConstantEos makes CT->PT the identity.
+   const Real RTol       = sizeof(Real) == 4 ? 1e-5 : 1e-10;
+   const Real StepOffset = static_cast<Real>(NSteps - 1) / 2.0;
 
    I4 TempErr  = 0;
    I4 SalinErr = 0;
 
    for (int Cell = 0; Cell < NCells; Cell++) {
-      if (!isApprox(AvgTempH(Cell), ExpectedTemp(Cell), RTol)) {
-         TempErr++;
-      }
+      const Real ExpectedTemp  = TempBase + Cell + StepOffset + TkFrz;
+      const Real ExpectedSalin = (SalinBase + Cell + StepOffset) / Psu2Gpkg;
 
-      if (!isApprox(AvgSalinH(Cell), ExpectedSalin(Cell) / Psu2Gpkg, RTol)) {
+      const Real Temp =
+          OcnToCplData[flatIdx(Layout, Cell, TempIdx, NCells, NExports)];
+      const Real Salin =
+          OcnToCplData[flatIdx(Layout, Cell, SalinIdx, NCells, NExports)];
+
+      if (!isApprox(Temp, ExpectedTemp, RTol))
+         TempErr++;
+      if (!isApprox(Salin, ExpectedSalin, RTol))
          SalinErr++;
-      }
    }
 
    if (TempErr == 0) {
-      LOG_INFO("SfcCouplingTest: updateExportFields PASS - "
-               "AvgSfcTemperature within relative tolerance of {}",
-               RTol);
+      LOG_INFO("SfcCouplingTest: {}-step average of So_t PASS", NSteps);
    } else {
       Err += TempErr;
-      LOG_ERROR("SfcCouplingTest: updateExportFields FAIL - "
-                "AvgSfcTemperature outside relative tolerance of {} for {} "
-                "cells",
-                RTol, TempErr);
+      LOG_ERROR("SfcCouplingTest: {}-step average of So_t FAIL - outside "
+                "relative tolerance of {} for {} cells",
+                NSteps, RTol, TempErr);
    }
 
    if (SalinErr == 0) {
-      LOG_INFO("SfcCouplingTest: updateExportFields PASS - "
-               "AvgSfcSalinity within relative tolerance of {}",
-               RTol);
+      LOG_INFO("SfcCouplingTest: {}-step average of So_s PASS", NSteps);
    } else {
       Err += SalinErr;
-      LOG_ERROR("SfcCouplingTest: updateExportFields FAIL - "
-                "AvgSfcSalinity outside relative tolerance of {} for {} "
-                "cells",
-                RTol, SalinErr);
+      LOG_ERROR("SfcCouplingTest: {}-step average of So_s FAIL - outside "
+                "relative tolerance of {} for {} cells",
+                NSteps, RTol, SalinErr);
    }
 
    SfcCoupling::clear();
    return Err;
 }
 
+// Export: check fields land in the right slots of the raw o2x buffer for the
+// given layout, then check a second interval doesn't see the first one
 int testExportToCoupler(const CouplingLayout Layout) {
 
    int Err = 0;
 
+   TestSetup Setup;
    auto CouplingParams = mockCouplingInitParams(Layout);
    Err += SfcCoupling::init(CouplingParams);
 
@@ -488,72 +381,61 @@ int testExportToCoupler(const CouplingLayout Layout) {
    VertCoord *DefVertCoord  = VertCoord::getDefault();
    Frazil *DefFrazil        = Frazil::getDefault();
 
-   int NCells   = DefCoupling->NCellsOwned;
-   int NImports = DefCoupling->NImportFields;
-   int NExports = DefCoupling->NExportFields;
+   const int NCells   = HorzMesh::getDefault()->NCellsOwned;
+   const int NImports = Setup.NImports;
+   const int NExports = Setup.NExports;
 
    std::vector<Real> CplToOcnData(NCells * NImports, 0.0);
    std::vector<Real> OcnToCplData(NCells * NExports, 0.0);
-
-   int TempIdx  = CouplingParams.ExportIdxMap.at("So_t");
-   int SalinIdx = CouplingParams.ExportIdxMap.at("So_s");
-   int SshIdx   = CouplingParams.ExportIdxMap.at("So_ssh");
-
    DefCoupling->attachData(CplToOcnData.data(), OcnToCplData.data());
 
-   HostArray1DReal ExpectedTemp =
-       makeCellVarryingArray("ExpectedTemp", NCells, Real(TempIdx));
-   HostArray1DReal ExpectedSalin =
-       makeCellVarryingArray("ExpectedSalin", NCells, Real(SalinIdx));
-   HostArray1DReal ExpectedSsh =
-       makeCellVarryingArray("ExpectedSsh", NCells, Real(SshIdx));
+   const int TempIdx  = Setup.ExportIdxMap.at("So_t");
+   const int SalinIdx = Setup.ExportIdxMap.at("So_s");
+   const int SshIdx   = Setup.ExportIdxMap.at("So_ssh");
+   const int UIdx     = Setup.ExportIdxMap.at("So_u");
+   const int VIdx     = Setup.ExportIdxMap.at("So_v");
 
-   // Seed the averages through the public API: at NAccumSteps == 0,
-   // Welford's update reduces to AvgSfc* := mocked value, so one call sets
-   // the averages to exactly ExpectedTemp/ExpectedSalin.
-   I4 TempTracerIdx, SalinTracerIdx;
-   Tracers::getIndex(TempTracerIdx, "Temperature");
-   Tracers::getIndex(SalinTracerIdx, "Salinity");
+   auto exported = [&](const int Cell, const int FieldIdx) {
+      return OcnToCplData[flatIdx(Layout, Cell, FieldIdx, NCells, NExports)];
+   };
 
-   HostArray2DReal TempH  = Tracers::getHostByIndex(0, TempTracerIdx);
-   HostArray2DReal SalinH = Tracers::getHostByIndex(0, SalinTracerIdx);
-   for (int Cell = 0; Cell < NCells; Cell++) {
-      int KSfc           = DefVertCoord->MinLayerCellH(Cell);
-      TempH(Cell, KSfc)  = ExpectedTemp(Cell);
-      SalinH(Cell, KSfc) = ExpectedSalin(Cell);
-   }
-   Tracers::copyToDevice(0);
+   // Save the shared normal velocity so it can be restored at the end
+   Array2DReal NormVel = DefState->getNormalVelocity(0);
+   Array2DReal SavedNormVel("SavedNormVel", NormVel.extent(0),
+                            NormVel.extent(1));
+   deepCopy(SavedNormVel, NormVel);
+
+   // Interval 1: a single step, so the average is exactly the input.
+   // Non-zero velocity so interval 2 can detect a missing reset.
+   const Real TempBase  = static_cast<Real>(TempIdx);
+   const Real SalinBase = static_cast<Real>(SalinIdx);
+   setSfcTracers(NCells, TempBase, SalinBase);
+   deepCopy(NormVel, 1.0_Real);
 
    DefCoupling->updateExportFields(DefState, Tracers::getAll(0), DefFrazil);
 
+   // SSH is instantaneous: whatever SshCell holds at export is sent
+   HostArray1DReal ExpectedSsh =
+       makeCellVarryingArray("ExpectedSsh", NCells, Real(SshIdx));
    auto SshCellOwned =
        Kokkos::subview(DefVertCoord->SshCell, std::pair(0, NCells));
    deepCopy(SshCellOwned, ExpectedSsh);
 
    DefCoupling->exportToCoupler();
 
-   // Check 1: exportToCoupler properly packs into OcnToCplView.
-   // NormalVelocity is accumulated on edges and reconstructed at cell centers
-   // during copyToHost(). Recon correctness is tested in HorzOperatorsTest.
-   // copyToHost() converts conservative temperature to in-situ Kelvin and
-   // absolute salinity to practical salinity.
-
+   // Check 1: values are packed into the right slots and converted to coupler
+   // units (ConstantEos makes CT->PT the identity).
+   // Velocity recon correctness is tested in HorzOperatorsTest.
    // TODO: Add end-to-end SSH-gradient accumulation/export coverage if we
    // decide to continue passing ssh grad (cf. ssh directly) to mpas-si
    int PackErr = 0;
    for (int Cell = 0; Cell < NCells; Cell++) {
-      if (OcnToCplData[flatIdx(Layout, Cell, TempIdx, NCells, NExports)] !=
-          ExpectedTemp(Cell) + TkFrz) {
+      if (exported(Cell, TempIdx) != TempBase + Cell + TkFrz)
          PackErr++;
-      }
-      if (OcnToCplData[flatIdx(Layout, Cell, SalinIdx, NCells, NExports)] !=
-          ExpectedSalin(Cell) / Psu2Gpkg) {
+      if (exported(Cell, SalinIdx) != (SalinBase + Cell) / Psu2Gpkg)
          PackErr++;
-      }
-      if (OcnToCplData[flatIdx(Layout, Cell, SshIdx, NCells, NExports)] !=
-          ExpectedSsh(Cell)) {
+      if (exported(Cell, SshIdx) != ExpectedSsh(Cell))
          PackErr++;
-      }
    }
 
    if (PackErr == 0) {
@@ -566,42 +448,40 @@ int testExportToCoupler(const CouplingLayout Layout) {
                 toString(Layout), PackErr);
    }
 
-   // Check 2: resetFields() zeroed the running-average accumulators
-   HostArray1DReal ZeroArray("ZeroArray", NCells);
-   deepCopy(ZeroArray, 0.0);
+   // Interval 2: one step with new values. If the accumulators were reset by
+   // the first export, the export is exactly the new values; otherwise it is
+   // mixed with interval 1.
+   const Real Shift = 100.0_Real;
+   setSfcTracers(NCells, TempBase + Shift, SalinBase + Shift);
+   deepCopy(NormVel, 0.0_Real);
 
-   // AvgSfcTemperatureH holds Kelvin, so a reset (0 degC) mirrors to TkFrz
-   HostArray1DReal ZeroTempArray("ZeroTempArray", NCells);
-   deepCopy(ZeroTempArray, TkFrz);
+   DefCoupling->updateExportFields(DefState, Tracers::getAll(0), DefFrazil);
+   DefCoupling->exportToCoupler();
 
-   // Refresh OcnToCpl's own host mirrors post-reset, rather than creating
-   // separate test-only mirrors
-   DefCoupling->OcnToCpl.copyToHost();
-
+   // Check 2: nothing from interval 1 leaks into interval 2
    int ResetErr = 0;
-   if (!arraysEqual(DefCoupling->OcnToCpl.AvgSfcTemperatureH, ZeroTempArray))
-      ResetErr++;
-   if (!arraysEqual(DefCoupling->OcnToCpl.AvgSfcSalinityH, ZeroArray))
-      ResetErr++;
-   if (!arraysEqual(DefCoupling->OcnToCpl.AvgSfcVelocityZonalH, ZeroArray))
-      ResetErr++;
-   if (!arraysEqual(DefCoupling->OcnToCpl.AvgSfcVelocityMeridH, ZeroArray))
-      ResetErr++;
+   for (int Cell = 0; Cell < NCells; Cell++) {
+      if (exported(Cell, TempIdx) != TempBase + Shift + Cell + TkFrz)
+         ResetErr++;
+      if (exported(Cell, SalinIdx) != (SalinBase + Shift + Cell) / Psu2Gpkg)
+         ResetErr++;
+      if (exported(Cell, UIdx) != 0.0_Real)
+         ResetErr++;
+      if (exported(Cell, VIdx) != 0.0_Real)
+         ResetErr++;
+   }
 
    if (ResetErr == 0) {
-      LOG_INFO("SfcCouplingTest: exportToCoupler resetFields PASS");
+      LOG_INFO("SfcCouplingTest: exportToCoupler reset with {} layout PASS",
+               toString(Layout));
    } else {
       Err += ResetErr;
-      LOG_ERROR("SfcCouplingTest: exportToCoupler resetFields FAIL");
+      LOG_ERROR("SfcCouplingTest: exportToCoupler reset with {} layout FAIL "
+                "- {} errors",
+                toString(Layout), ResetErr);
    }
 
-   // Check 3: NAccumSteps was reset to 0
-   if (DefCoupling->getNAccumSteps() != 0) {
-      Err++;
-      LOG_ERROR("SfcCouplingTest: exportToCoupler reset counter FAIL");
-   } else {
-      LOG_INFO("SfcCouplingTest: exportToCoupler reset counter PASS");
-   }
+   deepCopy(NormVel, SavedNormVel);
 
    SfcCoupling::clear();
 
@@ -618,9 +498,9 @@ int testEraseAndGet() {
    TimeInterval TimeStep = DefStepper->getTimeStep();
 
    // test creation of a non-default, named surface coupling object
-   SfcCoupling::create("AnotherSfcCoupling", DefMesh, 15, 12,
-                       Setup.ImportIdxMap, Setup.ExportIdxMap, DefStepper,
-                       TimeStep, CouplingLayout::MCT);
+   SfcCoupling::create("AnotherSfcCoupling", DefMesh, Setup.NImports,
+                       Setup.NExports, Setup.ImportIdxMap, Setup.ExportIdxMap,
+                       DefStepper, TimeStep, CouplingLayout::MCT);
 
    if (SfcCoupling::get("AnotherSfcCoupling")) {
       LOG_INFO("SfcCouplingTest: Non-default SfcCoupling retrieval PASS");
@@ -673,8 +553,6 @@ int sfcCouplingTest(const std::string &MeshFile = "OmegaMesh.nc") {
 
    Err += testImportFromCoupler(CouplingLayout::MCT);
    Err += testImportFromCoupler(CouplingLayout::MOAB);
-
-   Err += testApplyImportFields();
 
    Err += testUpdateExportFields(1);
    Err += testUpdateExportFields(5);

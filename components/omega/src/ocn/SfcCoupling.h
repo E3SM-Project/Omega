@@ -19,6 +19,7 @@
 #include "TimeMgr.h"
 #include "TimeStepper.h"
 
+#include <array>
 #include <string>
 
 namespace OMEGA {
@@ -44,8 +45,8 @@ enum class CouplingLayout { MCT, MOAB };
 // Parameters needed to initialize a SfcCoupling object. The information
 // needed to initialize these parameters is provided by the coupler.
 struct CouplingInitParams {
-   int NImportFields;
-   int NExportFields;
+   int NCouplerImports;
+   int NCouplerExports;
    std::map<std::string, int> ImportIdxMap;
    std::map<std::string, int> ExportIdxMap;
    TimeInterval CouplingTimeStep;
@@ -163,13 +164,58 @@ class OcnToCplFields {
 class SfcCoupling {
 
  private:
-   static SfcCoupling *DefaultSfcCoupling;
+   // Coupler fields Omega exchanges. Enum order must match the name lists.
+   enum ImportField : int {
+      Taux,
+      Tauy,
+      Swnet,
+      Sen,
+      Lat,
+      Lwup,
+      Lwdn,
+      Salt,
+      Melth,
+      Meltw,
+      Snow,
+      Rain,
+      Evap,
+      Rofl,
+      Rofi,
+      Bpress,
+      Pslv,
+      NImport // count, keep last
+   };
+   static constexpr std::array<const char *, NImport> ImportNames = {
+       "Foxx_taux", "Foxx_tauy", "Foxx_swnet", "Foxx_sen",   "Foxx_lat",
+       "Foxx_lwup", "Faxa_lwdn", "Fioi_salt",  "Fioi_melth", "Fioi_meltw",
+       "Faxa_snow", "Faxa_rain", "Foxx_evap",  "Foxx_rofl",  "Foxx_rofi",
+       "Si_bpress", "Sa_pslv"};
+   static_assert(ImportNames.size() == NImport);
 
-   static std::map<std::string, std::unique_ptr<SfcCoupling>> AllSfcCoupling;
+   enum ExportField : int {
+      T,
+      S,
+      U,
+      V,
+      Ssh,
+      Dhdx,
+      Dhdy,
+      H2otemp,
+      Q,
+      Frazilm,
+      Frazils,
+      Frazilh,
+      NExport
+   };
+   static constexpr std::array<const char *, NExport> ExportNames = {
+       "So_t",   "So_s",         "So_u",         "So_v",
+       "So_ssh", "So_dhdx",      "So_dhdy",      "Faoo_h2otemp",
+       "Fioo_q", "Fioo_frazilm", "Fioo_frazils", "Fioo_frazilh"};
+   static_assert(ExportNames.size() == NExport);
 
    // Construct a new local coupling object
    SfcCoupling(const std::string &Name_, const HorzMesh *Mesh,
-               const int NImportFields_, const int NExportFields_,
+               const int NCouplerImport_, const int NCouplerExports_,
                const std::map<std::string, int> &ImportIdxMap,
                const std::map<std::string, int> &ExportIdxMap,
                TimeStepper *Stepper, const TimeInterval &CouplingTimeStep,
@@ -184,6 +230,10 @@ class SfcCoupling {
       return Kokkos::subview(V, std::make_pair(0, NCellsOwned));
    }
 
+   // Look up a coupler field index; aborts if missing or out of range
+   static int findIdx(const std::map<std::string, int> &Map,
+                      const std::string &Name, int NFields);
+
    // Number of ocn timesteps acccumulated over the coupling interval
    I4 NAccumSteps;
    // Length of coupling timestep in second. Follows Omegas convention of
@@ -192,11 +242,14 @@ class SfcCoupling {
 
    CouplingLayout Layout; ///< Coupling layout (MCT or MOAB)
 
-   // Map of import/export variable names to index in the raw data arrays
-   std::map<std::string, int> ImportIdxMap;
-   std::map<std::string, int> ExportIdxMap;
-
    Alarm CouplingAlarm; ///< Alarm for coupling interval
+
+   // Coupler buffer index of each ImportField / ExportField
+   Kokkos::Array<int, NImport> ImportIdx;
+   Kokkos::Array<int, NExport> ExportIdx;
+
+   static SfcCoupling *DefaultSfcCoupling;
+   static std::map<std::string, std::unique_ptr<SfcCoupling>> AllSfcCoupling;
 
  public:
    std::string Name;
@@ -207,8 +260,8 @@ class SfcCoupling {
    // The values below will be larger than InportIdx.size() and
    // ExportIdxMap.size() because omega does not ingest all cpl fields (e.g.
    // BGC, landice), yet...
-   I4 NImportFields; ///< Num of fields in the x2o pointer array
-   I4 NExportFields; ///< Num of fields in the o2x pointer array
+   I4 NCouplerImports; ///< Num of fields in the x2o pointer array
+   I4 NCouplerExports; ///< Num of fields in the o2x pointer array
 
    // Coupling Variable containers
    CplToOcnFields CplToOcn; ///< Coupler to Ocean (x2o)
@@ -229,7 +282,8 @@ class SfcCoupling {
    /// Create a new surface coupling by calling the constructor and put it
    /// in the AllSfcCoupling map
    static SfcCoupling *create(const std::string &Name, const HorzMesh *Mesh,
-                              const int NImportFields, const int NExportFields,
+                              const int NCouplerImports,
+                              const int NCouplerExports,
                               const std::map<std::string, int> &ImportIdxMap,
                               const std::map<std::string, int> &ExportIdxMap,
                               TimeStepper *Stepper,
