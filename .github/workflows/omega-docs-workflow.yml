@@ -1,16 +1,27 @@
-name: omega-release
+name: omega-docs
 
+# Publish the Omega docs to gh-pages, one directory per version: develop on
+# pushes to develop, and a release version (e.g. 0.1.0-alpha.1) on pushes of
+# release tags (e.g. Omega-v0.1.0-alpha.1). Other versions are never touched.
 on:
   push:
     branches: [develop]
-    # But only if Omega docs-related files are touched
+    tags: ['Omega-v*']
+    # Only rebuild develop if Omega docs-related files are touched. GitHub
+    # does not apply path filters to tag pushes, so release tags always build.
     paths:
       - components/omega/doc/**
+      - .github/workflows/omega-docs-workflow.yml
+  workflow_dispatch:
+
+# Publish one version at a time, since each run force-pushes gh-pages
+concurrency:
+  group: omega-docs-publish
+  cancel-in-progress: false
 
 jobs:
   publish-docs:
-    if: ${{ github.repository == 'E3SM-Project/E3SM' }} or \
-        ${{ github.repository == 'E3SM-Project/Omega' }}
+    if: github.repository == 'E3SM-Project/E3SM' || github.repository == 'E3SM-Project/Omega'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -18,6 +29,22 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+
+      - name: Set the Docs Version
+        run: |
+          # develop publishes as develop and Omega-vX.Y.Z as X.Y.Z. Refuse
+          # anything else (e.g. a manual run on a feature branch), which would
+          # add a stray version to the switcher.
+          case "$GITHUB_REF_TYPE/$GITHUB_REF_NAME" in
+            branch/develop) version=develop ;;
+            tag/Omega-v*) version="${GITHUB_REF_NAME#Omega-v}" ;;
+            *)
+              echo "::error::Docs are published only from develop or an Omega-v* tag, not $GITHUB_REF_TYPE $GITHUB_REF_NAME"
+              exit 1
+              ;;
+          esac
+          echo "DOCS_VERSION=$version" >> "$GITHUB_ENV"
+          echo "Publishing docs version $version"
 
       - name: Set up pixi Environment
         uses: prefix-dev/setup-pixi@v0.11.2
@@ -31,27 +58,43 @@ jobs:
           pixi list --manifest-path components/omega/pixi.toml
 
       - name: Build Omega Docs with Sphinx
-        # Use 'make html' (not html-strict) so docs always update, even if warnings exist.
+        # Use 'versioned-html' (not the strict variant) so docs always
+        # update, even if warnings exist. PRs check with 'make html-strict'.
         run: |
           cd components/omega/doc
-          make html
+          make versioned-html
+
       - name: Copy Docs and Commit
         run: |
           cd components/omega/doc
           # gh-pages branch must already exist
           git clone https://github.com/${{ github.repository }}.git --branch gh-pages --single-branch gh-pages
-          # Make sure we're in the gh-pages directory.
           cd gh-pages
-          # Replace `Omega` docs with latest changes
-          rm -rf Omega
-          mkdir Omega
-          cp -r ../_build/html/* Omega/
+
+          # One-time cleanup of the unversioned layout, which put a single
+          # build directly in Omega/. Remove once the first versioned docs
+          # have been published.
+          (cd Omega && rm -rf _downloads _images _sources _static design \
+            devGuide userGuide genindex.html objects.inv search.html \
+            searchindex.js .buildinfo)
+
+          # Replace only this version's docs. Other versions stay as built.
+          rm -rf "Omega/$DOCS_VERSION"
+          cp -r "../_build/html/$DOCS_VERSION" Omega/
+          mkdir -p Omega/shared
+          cp ../shared/version-switcher.js Omega/shared/
+          # List all versions now in Omega/ for the version switcher
+          python ../generate_versions_json.py --base-dir Omega
+          # Links to the unversioned docs land on develop
+          printf '<meta http-equiv="refresh" content="0; url=./develop/index.html" />\n' > Omega/index.html
+          touch .nojekyll
+
           # Configure git using GitHub Actions credentials.
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           # The second command will fail if no changes were present, so we ignore it
           git add .
-          git commit -m "Update documentation" -a || true
+          git commit -m "Update Omega documentation ($DOCS_VERSION)" -a || true
 
       - name: Push Changes
         uses: ad-m/github-push-action@master
