@@ -20,17 +20,11 @@ project = "Omega"
 copyright = f"{date.today().year}, Energy Exascale Earth System Model Project"
 author = "E3SM Development Team"
 
-# The version info for the project you're documenting, acts as replacement for
-# |version| and |release|, also used in various other places throughout the
-# built documents.
-if "DOCS_VERSION" in os.environ:
-    version = os.environ.get("DOCS_VERSION")
-    release = version
-else:
-    # The short X.Y.Z version.
-    version = "develop"
-    # The full version, including alpha/beta/rc tags.
-    release = "develop"
+# The version of the docs: develop or a release version such as 0.1.0. It
+# replaces |version| and |release| and names the build in the version
+# switcher. The publish workflow sets DOCS_VERSION; see the Makefile.
+version = os.environ.get("DOCS_VERSION", "develop")
+release = version
 
 master_doc = "index"
 language = "en"
@@ -126,12 +120,5 @@ html_theme = "sphinx_rtd_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-html_sidebars = {
-    "**": [
-        "versions.html",
-    ],
-}
-
-smv_tag_whitelist = r"^\d+\.\d+.\d+$"  # Include tags like "tags/2.5.0"
-smv_branch_whitelist = "main"
-smv_remote_whitelist = r"^(origin|upstream)$"  # Use branches from origin
+# Used by _templates/layout.html to select this version in the switcher
+html_context = {"current_version": version}
