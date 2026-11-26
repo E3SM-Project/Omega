@@ -4,8 +4,15 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import dataclasses
 import os
 from datetime import date
+
+import sphinxcontrib.bibtex.plugin
+from sphinxcontrib.bibtex.style.referencing import BracketStyle
+from sphinxcontrib.bibtex.style.referencing.author_year import (
+    AuthorYearReferenceStyle,
+)
 
 # -- Project information -----------------------------------------------------
 
@@ -38,6 +45,7 @@ extensions = [
     "sphinx_rtd_theme",
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
+    "sphinxcontrib.bibtex",
 ]
 
 numfig = True
@@ -68,6 +76,46 @@ myst_dmath_double_inline = True
 myst_enable_checkboxes = True
 suppress_warnings = ["myst.header"]
 myst_heading_start_level = 1
+
+# -- Bibliography ------------------------------------------------
+
+# Pages cite with {cite:t} ("Ringler et al. (2010)") or {cite:p}
+# ("(Ringler et al., 2010)"); techGuide/Bibliography.md lists every cited work.
+bibtex_bibfiles = ["techGuide/references.bib"]
+bibtex_default_style = "plain"
+bibtex_reference_style = "author_year_round"
+
+
+def _round_brackets():
+    return BracketStyle(left="(", right=")", sep="; ")
+
+
+@dataclasses.dataclass
+class _AuthorYearRoundStyle(AuthorYearReferenceStyle):
+    """Author-year citations in round brackets, separated by semicolons"""
+
+    bracket_parenthetical: BracketStyle = dataclasses.field(
+        default_factory=_round_brackets
+    )
+    bracket_textual: BracketStyle = dataclasses.field(
+        default_factory=_round_brackets
+    )
+    bracket_author: BracketStyle = dataclasses.field(
+        default_factory=_round_brackets
+    )
+    bracket_label: BracketStyle = dataclasses.field(
+        default_factory=_round_brackets
+    )
+    bracket_year: BracketStyle = dataclasses.field(
+        default_factory=_round_brackets
+    )
+
+
+sphinxcontrib.bibtex.plugin.register_plugin(
+    "sphinxcontrib.bibtex.style.referencing",
+    "author_year_round",
+    _AuthorYearRoundStyle,
+)
 
 # -- HTML output -------------------------------------------------
 
