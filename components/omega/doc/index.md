@@ -43,12 +43,3 @@ devGuide/index
 techGuide/index
 design/index
 ```
-
-% Temporary while the reorganization is in progress: pages not yet moved
-% into their new homes. This toctree shrinks as they move and then goes.
-
-```{toctree}
-:hidden:
-
-devGuide/BuildDocs
-```
