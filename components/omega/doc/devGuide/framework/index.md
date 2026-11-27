@@ -3,19 +3,44 @@
 
 The infrastructure classes that the ocean model is built on.
 
-Parallel programming
-: data types, Kokkos parallel loops, the machine environment, decomposition,
-  halo exchanges, broadcasts and reductions
+```{toctree}
+:caption: Parallel programming
+:maxdepth: 1
 
-Runtime services
-: configuration, logging, errors, timers and the time manager
-
-Fields and I/O
-: dimensions, fields and their metadata, CF units, parallel I/O and streams
-
-Numerical utilities
-: tridiagonal solvers
+DataTypes
+ParallelLoops
+MachEnv
+Decomp
+Halo
+Broadcast
+Reductions
+```
 
 ```{toctree}
+:caption: Runtime services
 :maxdepth: 1
+
+Config
+Logging
+Error
+Timing
+TimeMgr
+```
+
+```{toctree}
+:caption: Fields and I/O
+:maxdepth: 1
+
+Dimension
+Field
+CFUnits
+IO
+IOStreams
+```
+
+```{toctree}
+:caption: Numerical utilities
+:maxdepth: 1
+
+TridiagonalSolvers
 ```

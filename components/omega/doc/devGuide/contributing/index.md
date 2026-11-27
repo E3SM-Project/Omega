@@ -7,4 +7,9 @@ changes to how Omega is set up in E3SM, the CIME integration.
 
 ```{toctree}
 :maxdepth: 1
+
+Linting
+Testing
+Docs
+CimeIntegration
 ```

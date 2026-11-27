@@ -9,4 +9,26 @@ mathematics.
 
 ```{toctree}
 :maxdepth: 1
+
+Driver
+OceanState
+HorzMesh
+HorzOperators
+VertCoord
+AuxiliaryState
+Tendencies
+TimeStepping
+SplitTimeStepping
+Tracers
+EOS
+PGrad
+VertAdv
+VertMix
+KPPMix
+SubmesoEddies
+RayleighDamping
+Frazil
+Forcing
+SfcCoupling
+Analysis
 ```

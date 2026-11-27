@@ -7,4 +7,10 @@ output, and the analysis that Omega computes while it runs.
 
 ```{toctree}
 :maxdepth: 1
+
+Streams
+Mesh
+InitialConditions
+Fields
+Analysis
 ```

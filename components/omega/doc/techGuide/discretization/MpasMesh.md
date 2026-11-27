@@ -24,7 +24,7 @@ to a density function, and edges are nominally located at the midpoints of
 edges. {numref}`fig-three-cell` shows three cells with their associated edges
 and vertices.
 
-```{figure} images/cellEdgeVertex_simple.png
+```{figure} ../images/cellEdgeVertex_simple.png
 :name: fig-three-cell
 :align: center
 :width: 60%
@@ -53,7 +53,7 @@ this; older MPAS-Ocean meshes (typically 6371229 m) must be rescaled, which
 Polaris' `utils/omega/convert_mpaso_ic_to_omega.py` does along with the
 variable renaming.
 
-```{figure} images/meshPlanarSpherical.png
+```{figure} ../images/meshPlanarSpherical.png
 :name: fig-voronoi-examples
 :align: center
 :width: 100%
@@ -111,7 +111,7 @@ with both Cartesian and latitude/longitude coordinates.
 An `ncdump -h` of an MPAS mesh, output, or restart file should contain the
 mesh-variable names listed in {numref}`tab-grid-variables`.
 
-```{figure} images/dualMesh_simple.png
+```{figure} ../images/dualMesh_simple.png
 :name: fig-variable-position
 :align: center
 :width: 100%
@@ -134,7 +134,7 @@ Definition of elements used to build the MPAS grid. Also see
 | $D_v$        | cell         | a cell on the dual-mesh                           |
 ```
 
-```{figure} images/dualMeshRelationships.png
+```{figure} ../images/dualMeshRelationships.png
 :name: fig-grid-connectivity
 :align: center
 :width: 100%
@@ -267,7 +267,7 @@ direction $\vec{u}$ makes with the local eastward direction (shown in
 {ref}`fig-angle-edge`), or as the angle that the positive tangential direction
 $\vec{v}$ makes with the local northward direction.
 
-```{figure} images/angleEdge.png
+```{figure} ../images/angleEdge.png
 :name: fig-angle-edge
 :align: center
 :height: 350px
@@ -450,7 +450,7 @@ satisfy the following ordering requirements:
   those of the TRiSK formulation of Thuburn et al., *J. Comput. Phys.*, 2009,
   and depend on `dcEdge`, `dvEdge`, `areaCell`, and `kiteAreasOnVertex`.
 
-```{figure} images/edgesOnEdge.png
+```{figure} ../images/edgesOnEdge.png
 :name: fig-edges-on-edge
 :align: center
 :width: 75%
@@ -491,7 +491,7 @@ edge.
   `edgesOnVertex(n+1, iVertex)`, where the edge index wraps back to 1 for the
   last kite.
 
-```{figure} images/dualMesh_kiteAreas.png
+```{figure} ../images/dualMesh_kiteAreas.png
 :name: fig-vertex-elements
 :align: center
 :width: 75%
@@ -520,7 +520,7 @@ Ordering of cells, edges, and kite areas relative to a vertex.
   when `cellsOnCell` is substituted for `edgesOnCell`. The indices in these
   expressions represent their corresponding Cartesian position vectors.
 
-```{figure} images/cellEdgeVertex_labeled.png
+```{figure} ../images/cellEdgeVertex_labeled.png
 :name: fig-cell-elements
 :align: center
 :width: 85%

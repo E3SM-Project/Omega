@@ -147,3 +147,12 @@ Omega:
 ```
 
 Attempting to set one of these is a `case.setup` error.
+
+```{toctree}
+:maxdepth: 1
+
+TimeManagement
+TimeStepping
+SplitTimeStepping
+Parallel
+```

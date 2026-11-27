@@ -111,7 +111,7 @@ The centered scheme stays stable in every sigma configuration tested, while on
 z-star layers over the same seamount the finite-volume scheme stays clean
 through 20 days and the centered scheme does not.
 
-```{figure} images/pgrad_fv_sigma_seamount.png
+```{figure} ../images/pgrad_fv_sigma_seamount.png
 :name: pgrad-fv-sigma-seamount
 :align: center
 :width: 800 px

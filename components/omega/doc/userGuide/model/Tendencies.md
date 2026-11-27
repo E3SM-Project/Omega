@@ -172,7 +172,7 @@ second order. For the advection of a $\psi$ in the shape of a cosine bell
 being advected around a sphere and compared with the analytic solution, the spatial convergence for grid refinement
 is about order 1.7 as shown in  {numref}`tracer-higher-order-convergence`:
 
-```{figure} images/higher_order_tracer_convergence_on_sphere.jpeg
+```{figure} ../images/higher_order_tracer_convergence_on_sphere.jpeg
 :name:  tracer-higher-order-convergence
 :align: center
 :width: 600 px
@@ -214,7 +214,7 @@ $$
 $$
 
 
-```{figure} images/higher_order_tracer_convergence_on_sphere_FCT.jpeg
+```{figure} ../images/higher_order_tracer_convergence_on_sphere_FCT.jpeg
 :name:  tracer-higher-order-convergence_FCT
 :align: center
 :width: 600 px
@@ -243,7 +243,7 @@ an exact solution. The difference between the initial condition and the advected
 in the advection scheme. This difference is shown in the following two plots for non-monotonic and monotonic
 advection.
 
-```{figure} images/higher_order_slotted_cylinder_non_monotonic_diff.jpg
+```{figure} ../images/higher_order_slotted_cylinder_non_monotonic_diff.jpg
 :name:  tracer-error-in-higher-order-convergence_non-monotonic
 :align: center
 :width: 600 px
@@ -251,7 +251,7 @@ Error in a tracer higher order convergence example of a slotted cylinder advecte
 algorithm with no FCT flux correction. Notice the ringing due to the sharp edges of the tracer distribution.
 ```
 
-```{figure} images/higher_order_slotted_cylinder_FCT_diff.jpg
+```{figure} ../images/higher_order_slotted_cylinder_FCT_diff.jpg
 :name:  tracer-error-in-higher-order-convergence_FCT
 :align: center
 :width: 600 px

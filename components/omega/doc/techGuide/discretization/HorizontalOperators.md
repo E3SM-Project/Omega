@@ -31,7 +31,7 @@ There are no user-configurable options; the method for `InterpCellToEdge` is loc
 - `InterpolateAnisotropic`
 - `InterpolateIsotropic`
 
-```{figure} images/interpCellToEdge.png
+```{figure} ../images/interpCellToEdge.png
 :name: fig-interp
 :align: center
 :width: 60%

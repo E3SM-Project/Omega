@@ -7,4 +7,8 @@ produces: log files, timing files and error messages.
 
 ```{toctree}
 :maxdepth: 1
+
+Logging
+Timing
+Errors
 ```

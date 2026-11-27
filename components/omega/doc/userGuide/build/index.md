@@ -8,4 +8,6 @@ and MPI on device are described once, on the options page.
 
 ```{toctree}
 :maxdepth: 1
+
+Standalone
 ```

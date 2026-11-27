@@ -9,7 +9,7 @@ The build process is defined in the CMakeLists.txt file located
 in the top-level directory of Omega. It consists of four consecutive
 steps: Setup, Update, Build, and Output.
 
-![CMake-based Omega build process](../_static/cmakebuild.png)
+![CMake-based Omega build process](../../_static/cmakebuild.png)
 
 The build step consists of adding three subdirectories that drive builds
 for external libraries, the Omega model, and optional tests.

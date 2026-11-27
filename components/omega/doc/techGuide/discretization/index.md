@@ -8,4 +8,7 @@ vertical mixing.
 
 ```{toctree}
 :maxdepth: 1
+
+MpasMesh
+HorizontalOperators
 ```
