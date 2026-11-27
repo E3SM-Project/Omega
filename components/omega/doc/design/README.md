@@ -1,9 +1,9 @@
 # OMEGA doc/design directory
 
 This directory contains requirement and design documents for the
-Ocean Model for E3SM Global Applications (OMEGA) source code.  A
-file called OmegaDesignTemplate.rst is provided as a template
-for the information required in such a design document.
+Ocean Model for E3SM Global Applications (OMEGA) source code.
+`Template.md` is the template for a new design document; see
+`../devGuide/contributing/Docs.md` for how to add one.
 
 ```mermaid
 gantt

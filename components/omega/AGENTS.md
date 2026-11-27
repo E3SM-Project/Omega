@@ -10,24 +10,25 @@ and take precedence over it where the two differ.
   `.pre-commit-config.yaml`, with `.clang-format`, `ruff.toml`, `mypy.cfg`
   and `.fortitude.toml` in this directory. If anything here conflicts with
   these tools, follow the tools.
-- The Developer's and User's Guides in `doc/` (published at
+- The User, Developer and Technical Guides in `doc/` (published at
   <https://docs.e3sm.org/Omega/>) describe how Omega works. Read the
   relevant page before changing a part of the code, and link to it rather
   than explaining unchanged features again.
 
 ## Environment
 
-- Linting and the docs build use the conda environment described in
-  `doc/devGuide/CondaEnv.md`. Run `pre-commit` on the files you changed
-  before finishing, and fix problems rather than suppressing them.
+- Linting and the docs build use the development environment described
+  in `doc/devGuide/gettingStarted/DevEnv.md`. Run `pre-commit` on the
+  files you changed before finishing, and fix problems rather than
+  suppressing them.
 - Omega is built and tested on supported machines. Ask the developer
   before submitting batch jobs, which spend a shared allocation.
 
 ## Building and testing
 
 - What a pull request needs is set by the pull request template and
-  `doc/devGuide/Testing.md`: CTests, the Polaris `omega_pr` suite and
-  coupled CIME tests, on at least one CPU and one GPU machine.
+  `doc/devGuide/contributing/Testing.md`: CTests, the Polaris `omega_pr`
+  suite and coupled CIME tests, on at least one CPU and one GPU machine.
 - Polaris has optional helpers. Use them only when the developer wants
   them:
   - `polaris setup` and `polaris suite` build Omega themselves; see the
@@ -42,8 +43,10 @@ and take precedence over it where the two differ.
 
 ## Documentation
 
-- A new feature updates the User's Guide and Developer's Guide, and adds
-  its pages to `doc/index.md`.
+- A new feature updates the User Guide and Developer Guide, and the
+  Technical Guide if it changes what the model computes, as described in
+  `doc/devGuide/contributing/Docs.md`. A new page goes in the toctree of
+  its section's `index.md`.
 - Start a design document from `doc/design/Template.md`.
 
 ## Branches

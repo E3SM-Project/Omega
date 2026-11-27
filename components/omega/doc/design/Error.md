@@ -184,7 +184,7 @@ The error message (ErrMsg) can be either a simple string or
 can follow the format of the Logging facility in which ``{}``
 placeholders can be used with additional arguments to
 include variable information
-(see the [Logging documentation](#omega-user-logging)).
+(see the [Logging documentation](#omega-user-run-logging)).
 If the input ErrCode is ``Err::Success`` nothing happens and
 the code continues. If the ErrCode matches a code predefined
 using the ``defineCode`` function described below, the ErrMsg

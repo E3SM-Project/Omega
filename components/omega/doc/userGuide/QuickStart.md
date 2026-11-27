@@ -1,8 +1,11 @@
-(omega-quick-start)=
+(omega-user-quick-start)=
 
-# Quick Start for Users
+# Quick Start
 
-:::{admonition} Quick Start for Users is coming soon
-Omega is still in the early stages of development, so we are not yet ready for
-outside users.  For now, please refer to the {ref}`omega-dev-quick-start`.
+:::{admonition} Not yet written
+:class: warning
+This page is a placeholder. It will take a new user from a checkout to a first
+standalone run. Omega is not yet ready for outside users; for now, see the
+{ref}`omega-dev-quick-start`. Progress is tracked in
+[E3SM-Project/Omega#724](https://github.com/E3SM-Project/Omega/issues/724).
 :::

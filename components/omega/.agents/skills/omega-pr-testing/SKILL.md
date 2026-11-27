@@ -7,7 +7,7 @@ description: Run the testing the Omega pull request template asks for (CTests, t
 
 Polaris's Omega PR testing utility is one way to run the testing the pull
 request template asks for. It is not the required way. Developers can also
-run the tests by hand, following `doc/devGuide/Testing.md`, or any other
+run the tests by hand, following `doc/devGuide/contributing/Testing.md`, or any other
 way that covers the template's rows. Use the utility only when the
 developer asks for it.
 

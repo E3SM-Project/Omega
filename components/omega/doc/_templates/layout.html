@@ -1,4 +1,16 @@
 {% extends "!layout.html" %}
+
 {% block extrahead %}
     <link href="{{ pathto("_static/style.css", True) }}" rel="stylesheet" type="text/css">
+    <meta name="doc-version" content="{{ current_version }}">
 {% endblock %}
+
+{#- The version switcher sits under the search box. Each version is built into
+    its own directory next to a shared/ directory that holds the switcher
+    script and the list of published versions, so the script is one level up
+    from the root of this build. #}
+{%- block sidebartitle %}
+  {{ super() }}
+  <div id="version-switcher"></div>
+  <script src="{{ pathto('../shared/version-switcher.js', 1) }}"></script>
+{%- endblock %}

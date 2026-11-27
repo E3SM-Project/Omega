@@ -13,7 +13,7 @@ All new features are created with design documents. The location of these docume
 
 1. [MPAS Documents repository](https://github.com/MPAS-Dev/MPAS-Documents/tree/master/ocean)
 2. [E3SM repository MPAS-Ocean docs](https://github.com/E3SM-Project/E3SM/tree/master/components/mpas-ocean/docs/design_docs)
-3. Documents for the new Omega model are similar to MPAS-Ocean and may be found in the [Omega documentation](https://docs.e3sm.org/Omega/develop/index.html).
+3. Documents for the new Omega model are similar to MPAS-Ocean and may be found in the [Omega documentation](https://docs.e3sm.org/Omega/Omega/develop/index.html).
 
 All test cases are housed in the [Compass repository](https://github.com/MPAS-Dev/compass) and, more recently, the [Polaris repository](https://github.com/E3SM-Project/polaris). The corresponding documentation is housed in the [Compass docs](https://mpas-dev.github.io/compass/latest/) and [Polaris docs](http://docs.e3sm.org/polaris/main/) pages.
 
