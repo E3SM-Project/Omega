@@ -1,4 +1,4 @@
-(omega-user-IO)=
+(omega-user-config-parallel-io)=
 
 ## Parallel IO (IO)
 

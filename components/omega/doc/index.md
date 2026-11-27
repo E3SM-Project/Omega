@@ -1,30 +1,58 @@
 (omega-home)=
 # Omega
 
-The Ocean Model for E3SM Global Applications (Omega) initially is an eddy-resolving,
-global ocean model in the early stages of development by the
-[E3SM](https://e3sm.org/) ocean team.  The first release is planned for
-Summer 2026.  A non-eddying configuration will be released in early 2027.
+The Ocean Model for E3SM Global Applications (Omega) is a global ocean model
+under development by the [E3SM](https://e3sm.org/) ocean team. It is
+initially eddy-resolving, with a non-eddying configuration to follow.
 
-The model is written in c++ using the [Kokkos](https://github.com/kokkos)
-framework for performance portability.  Omega is based on the
+The model is written in C++ using the [Kokkos](https://github.com/kokkos)
+framework for performance portability. Omega is based on the
 [TRSK formulation](https://doi.org/10.1016/j.jcp.2009.08.006) for geophysical
-models on unstructured meshes. The first version of Omega will primarily be a direct port
-of the [MPAS-Ocean](https://e3sm.org/model/e3sm-model-description/v1-description/v1-ocean-sea-ice-land-ice/)
-component of E3SM for comparison purposes.
+models on unstructured meshes. The first version of Omega is primarily a
+direct port of the
+[MPAS-Ocean](https://e3sm.org/model/e3sm-model-description/v1-description/v1-ocean-sea-ice-land-ice/)
+component of E3SM, for comparison purposes.
 
-Development is taking place at https://github.com/E3SM-Project/Omega.
+Development takes place at <https://github.com/E3SM-Project/Omega>.
 
+## How these docs are organized
+
+Each part answers one kind of question:
+
+- The {ref}`omega-user-guide` answers *how do I set up and run Omega, and
+  what can I control?* It covers building, running, configuration, input and
+  output, and the model options.
+- The {ref}`omega-dev-guide` answers *how do I work on the code?* It covers
+  the development environment, contributing, the framework classes, how the
+  ocean model is put together, and how-to recipes.
+- The {ref}`omega-tech-guide` answers *what does the model compute, and why?*
+  It holds the equations, their discretization and the parameterizations.
+- The {ref}`omega-design` record *what we were thinking when we built it*.
+  They are frozen when written; the guides describe the code as it is.
+
+Running Omega standalone is done through
+[Polaris](https://docs.e3sm.org/polaris/main/), whose documentation covers
+setting up and running tasks and suites.
 
 ```{toctree}
-:caption: User's guide
+:hidden:
 :maxdepth: 2
 
-userGuide/QuickStart
+userGuide/index
+devGuide/index
+techGuide/index
+design/index
+```
+
+% Temporary while the reorganization is in progress: pages not yet moved
+% into their new homes. This toctree shrinks as they move and then goes.
+
+```{toctree}
+:hidden:
+
 userGuide/OmegaBuild
 userGuide/DataTypes
 userGuide/MachEnv
-userGuide/Config
 userGuide/Broadcast
 userGuide/Logging
 userGuide/Driver
@@ -62,12 +90,6 @@ userGuide/Forcing
 userGuide/Frazil
 userGuide/SfcCoupling
 userGuide/Analysis
-```
-
-```{toctree}
-:caption: Developer's guide
-:maxdepth: 2
-
 devGuide/QuickStart
 devGuide/DevEnv
 devGuide/Linting
@@ -117,54 +139,4 @@ devGuide/Forcing
 devGuide/Frazil
 devGuide/SfcCoupling
 devGuide/Analysis
-```
-
-```{toctree}
-:caption: Design documents
-:maxdepth: 1
-
-design/OmegaV0ShallowWater
-design/OmegaV1GoverningEqns
-design/Analysis
-design/Broadcast
-design/Config
-design/Coupling
-design/DataTypes
-design/Decomp
-design/Driver
-design/EOS
-design/Error
-design/FillValues
-design/Frazil
-design/Halo
-design/HorzMeshClass
-design/Logging
-design/MachEnv
-design/Metadata
-design/PGrad
-design/PGradHighOrder
-design/IO
-design/IOStreams
-design/RayleighDamping
-design/Reductions
-design/ReorgDocs
-design/State
-design/StateValidation
-design/SubmesoscaleEddies
-design/Tendency
-design/Tendencies
-design/AuxiliaryVariables
-design/AuxiliaryState
-design/TimeMgr
-design/Timers
-design/TimeStepping
-design/SplitTimeStepping
-design/Tracers
-design/TridiagonalSolver
-design/KPPMix
-design/VertAdv
-design/VertCoord
-design/VerticalMixingCoeff
-
-design/Template
 ```

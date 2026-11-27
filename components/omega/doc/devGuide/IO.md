@@ -38,7 +38,7 @@ from the Omega default MachEnv (see [MachEnv](#omega-dev-mach-env)). This
 function also extracts the user-defined variables from the model configuration,
 include the number of IO tasks, the IO task stride, the default data
 rearranger method, and the default file format
-(see [User Guide](#omega-user-IO)).
+(see [User Guide](#omega-user-config-parallel-io)).
 
 As mentioned above, most I/O operations will take place within the IOStreams
 module, but the base IO functions can be accessed directly. To open and close
@@ -180,7 +180,7 @@ to use to map to the number of IO tasks. The Rearr can be set to
 ``OMEGA::IO::DefaultRearr`` to make use of the overall default defined
 when the IO system was initialized, but can also be set explicitly to
 ``OMEGA::IO::RearrBox`` or ``OMEGA::IO::RearrSubset``. The box rearranger
-is generally preferred (see [UserGuide](#omega-user-IO)). The GlobalIndx
+is generally preferred (see [UserGuide](#omega-user-config-parallel-io)). The GlobalIndx
 array describes the global location (as a zero-based offset) of each
 local array entry. This can be computed from the Omega Default Decomp
 arrays. For example, an array dimensioned (NCellsAll,NVertLayers) would

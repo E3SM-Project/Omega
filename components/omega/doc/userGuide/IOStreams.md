@@ -165,4 +165,4 @@ a template can be:
 This streams configuration should be sufficient to define all input and output
 from the model and provides a relatively simple interface for a typical user.
 However, if necessary (eg before streams have been defined), the specific
-interfaces in the lower level [IO](#omega-user-IO) module can be used.
+interfaces in the lower level [IO](#omega-user-config-parallel-io) module can be used.

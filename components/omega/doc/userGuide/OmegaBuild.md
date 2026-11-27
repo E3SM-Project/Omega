@@ -1,4 +1,4 @@
-(omega-user-build)=
+(omega-user-build-cmake)=
 
 # CMake-based Omega Build
 
