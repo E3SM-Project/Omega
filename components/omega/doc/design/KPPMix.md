@@ -150,7 +150,7 @@ KPP is configured from the `VertMix: KPP` YAML group. Key parameters include:
 - `DebugDiagnostics`
 
 Defaults and usage examples are documented in the user guide page:
-[KPP in the User Guide](../userGuide/KPPMix.md).
+[KPP in the User Guide](#omega-kppmix).
 
 #### 4.1.2 Class/data structure
 
@@ -215,8 +215,8 @@ coefficients are lagged relative to the state during the implicit solve at the e
 step. Full call-flow detail per stepper is described for developers and
 users in:
 
-- [Developer KPP workflow](../devGuide/KPPMix.md)
-- [User runtime notes](../userGuide/KPPMix.md)
+- [Developer KPP workflow](#omega-dev-kppmix)
+- [User runtime notes](#omega-kppmix)
 
 ## 5 Verification and Testing
 

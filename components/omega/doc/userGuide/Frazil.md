@@ -64,4 +64,4 @@ Both pathways contribute to:
 - The frazil tendency hook assumes tracer names include `Temperature` and
   `Salinity`.
 - For implementation and algorithm details, see
-  [Developer Frazil Guide](../devGuide/Frazil.md).
+  [Developer Frazil Guide](#omega-dev-frazil).

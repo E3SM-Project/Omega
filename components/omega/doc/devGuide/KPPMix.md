@@ -190,7 +190,7 @@ Important keys and class members:
 - `MinimumOSBLUnderSeaIce` -> `MinimumOSBLUnderSeaIce`
 - `DebugDiagnostics` -> `DebugDiagnostics`
 
-See [User KPP guide](../userGuide/KPPMix.md) for defaults and runnable examples.
+See [User KPP guide](#omega-kppmix) for defaults and runnable examples.
 
 ## Output and Diagnostic Fields
 
@@ -247,4 +247,4 @@ behavior in experiments.
 ### Regression checks
 
 Run CTests and appropriate OMEGA regression workflows documented in:
-[Testing Code](./Testing.md).
+[Testing Code](#omega-dev-testing).

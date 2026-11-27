@@ -165,7 +165,7 @@ It has an outer `parallel_for` that splits horizontal cells into teams and an in
 
 ### Layer masking
 
-Field arrays are auto-filled with `FillValueReal` when they are attached to a `Field` (see the [Fill Values design](../design/FillValues.md)).
+Field arrays are auto-filled with `FillValueReal` when they are attached to a `Field` (see the [Fill Values design](#omega-design-fill-values)).
 Compute kernels only write to active layers, so inactive layers naturally retain the fill value.
 After an initial-condition or restart read, however, state and tracer arrays come from the input file and may hold zeros (or arbitrary values) in inactive and boundary layers.
 `VertCoord` provides a family of helper methods that enforce the correct layer pattern on such arrays.

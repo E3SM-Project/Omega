@@ -11,4 +11,4 @@ Frazil is one of the configurable tendency contributions. It is controlled by
 `Omega.Tendencies.FrazilTendencyEnable` together with the `Omega.Frazil`
 configuration block (`FrazilType`, `LayerMassFracMax`, `Phi`, `DepthLimit`, and
 `ConservationCheck`). For operational guidance and options, see
-[Frazil](Frazil.md).
+[Frazil](#omega-user-frazil).

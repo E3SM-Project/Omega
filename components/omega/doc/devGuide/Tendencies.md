@@ -85,7 +85,7 @@ contributions to:
 
 The frazil implementation choice and parameters are read from the
 `Omega.Frazil` block. Detailed algorithm/physics notes are in
-[Frazil](Frazil.md).
+[Frazil](#omega-dev-frazil).
 
 ## Removal of tendencies
 To erase a specific named tendencies instance use `erase`

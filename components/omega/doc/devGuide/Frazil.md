@@ -93,5 +93,5 @@ The existing frazil test driver is in
 
 ## Related pages
 
-- User-facing options: [User Frazil Guide](../userGuide/Frazil.md)
-- Tendency container/hook-up: [Tendencies](Tendencies.md)
+- User-facing options: [User Frazil Guide](#omega-user-frazil)
+- Tendency container/hook-up: [Tendencies](#omega-dev-tendencies)

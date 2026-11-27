@@ -83,7 +83,7 @@ implemented as the functors above, but they are enabled from the same
 | PressureGradTendencyEnable | enable/disable the pressure gradient tendency
 | VelVertMixTendencyEnable | enable/disable vertical mixing of velocity; required when bottom drag uses `Implicit` mode
 | TracerVertMixTendencyEnable | enable/disable vertical mixing of tracers
-| KPPNonLocalTracerFluxTendencyEnable | enable/disable the KPP non-local tracer flux; see [KPP Boundary Layer Mixing](./KPPMix.md)
+| KPPNonLocalTracerFluxTendencyEnable | enable/disable the KPP non-local tracer flux; see [KPP Boundary Layer Mixing](#omega-kppmix)
 | KPPNonLocalTracerDiagnosticsEnable | enable/disable diagnostic output of the non-local flux tendency
 
 The non-local options are only read when velocity or tracer vertical mixing is
