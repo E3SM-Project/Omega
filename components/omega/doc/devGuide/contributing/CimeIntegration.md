@@ -4,7 +4,7 @@
 
 `components/omega/cime_config/buildnml` generates a case's `omega.yml` by
 layering Omega's defaults, coupled/mesh overrides, runtime overrides derived
-from the case, and `user_nl_omega` (see {ref}`omega-user-config`). This
+from the case, and `user_nl_omega` (see {ref}`omega-user-run-e3sm-user-nl-omega`). This
 page covers the Python package behind `buildnml`, how its configuration is
 validated, and how to add support for a new mesh.
 

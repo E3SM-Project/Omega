@@ -25,8 +25,9 @@ dynamics (momentum and continuity equations). Additional time steppers can
 be used for other portions of the model (eg the barotropic mode or tracer
 transport) that may have different time steps and use different algorithms.
 
-The ``CalendarType`` choice is described in the
-[Time Management](#omega-user-config-time-management) section.
+The ``CalendarType``, ``StartType``, ``StartTime``, ``StopType`` and
+``StopCriterion`` options are described in
+{ref}`omega-user-config-time-management`.
 
 The ``TimeStepper`` option refers to the numerical scheme used to advance the
 model in time. Omega implements a number of time-stepping schemes. The user
@@ -45,56 +46,5 @@ subgroup shown above. See [Split time stepping](#omega-user-config-split-time-st
 for descriptions of these schemes and their configuration options.
 
 The ``TimeStep`` refers to the main model time step used to advance the solution
-forward. The time step is specified as a formatted string and can be provided
-in any of the following forms:
-
-- ``DDDD_HH:MM:SS(.sss...)``
-- ``HH:MM:SS(.sss...)``
-- ``MM:SS(.sss...)``
-- ``SS(.sss...)``
-
-Days, hours and minutes are optional but must be in order if included.
-Fractional seconds are optional.
-
-The ``StartOption`` can be one of five choices. The ``StartUp`` option is for
-starting a solution from scratch from an initial state file. The ``Continue``
-option is for continuing a simulation from a restart file. The ``Branch``
-option will branch from an existing simulation by reading from the restart
-file and is identical to ``Continue`` except that some other simulation
-metadata (eg case name or simulation name) can be changed. The ``Hybrid``
-option will continue a branch from a restart file but will reset the start
-time and should only be used for the first step of a hybrid run, similar to the
-``StartUp`` option. It is equivalent to using the ``StartUp`` option and
-specifying the restart file as an init file. It is only provided in the event
-a future mult-level time stepping scheme is used in which starting from a
-restart with multiple time levels is an advantage over a fresh start. Finally,
-a ``Coupled`` option specifies that the ``StartType`` is provided by the
-coupler in a coupled configuration. The actual ``StartType`` used internally
-is created by the E3SM CIME tools from a combination of the ``RUN_TYPE`` and
-``CONTINUE`` options.
-
-The ``StartTime`` refers to the starting time for the full simulation (not the
-current leg of an ongoing simulation). It is in the
-format ``yyyy-mm-day_hh:mm:ss`` for year, month, day, hour, minute, second.
-If this is a continuation of an existing simulation, the current time for this
-leg of the full simulation will be set by the restart file.
-
-A ``StopType`` determines (with the ``StopCriterion`` below) how the simulation
-will be stopped. There are three options. The ``AtTime`` option will stop the
-simulation at a specific time and the ``StopCriterion`` holds that specific time
-as described below. The ``AfterDuration`` option runs the simulation for a fixed
-time interval and the ``StopCriterion`` is used to define that interval. A final
-option called ``Coupled`` is primarily for coupled simulations where the
-simulation will stop after receiving a signal from the coupler.
-
-For the ``AtTime`` stop type, the ``StopCriterion`` must be a time instant in
-the format ``yyyy-mm-dd_hh:mm:ss``. If the ``StopType`` is ``AfterDuration``,
-the ``StopCriterion`` is a time interval in the format described above for the
-time step (but typically ``dddd_hh:mm:ss``). For the ``Coupled`` option the
-``StopCriterion`` is ignored.
-
-```{toctree}
-:hidden:
-
-SplitTimeStepping
-```
+forward. It is a time interval, in one of the forms given in
+{ref}`omega-user-config-time-formats`.

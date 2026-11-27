@@ -51,7 +51,6 @@ design/index
 :hidden:
 
 userGuide/Broadcast
-userGuide/Driver
 userGuide/Dimension
 userGuide/IO
 userGuide/AuxiliaryVariables
@@ -59,7 +58,6 @@ userGuide/AuxiliaryState
 userGuide/Tendencies
 userGuide/Reductions
 userGuide/TridiagonalSolvers
-userGuide/SfcCoupling
 devGuide/BuildDocs
 devGuide/AuxiliaryVariables
 devGuide/TendencyTerms

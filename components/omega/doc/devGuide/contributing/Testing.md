@@ -555,7 +555,7 @@ cd /lcrc/group/e3sm/ac.username/cases/omega_test
 ./xmlchange DEBUG=TRUE
 
 # You can customize Omega configuration by editing user_nl_omega:
-# (see user guide: {ref}`omega-user-config`)
+# (see "Running in E3SM" in the User Guide)
 ./preview_namelists
 
 # 5. Build the case
