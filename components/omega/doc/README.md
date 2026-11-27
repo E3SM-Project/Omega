@@ -1,9 +1,13 @@
 # Omega doc directory
 
-This directory stores source files for various forms of documentation
-for the Ocean Model for E3SM Global Applications (Omega). Currently,
-these are stored in three subdirectories for software requirements and
-design (design), a User's Guide (userGuide) and a reference manual or
-developer's guide (devGuide). These sources are generally built for
-display through ReadTheDocs or other mechanisms but are often in
-restructuredText format so can be readable individually.
+This directory holds the source of the Omega documentation, written in
+MyST Markdown and built with Sphinx. It has four parts, each with its own
+subdirectory and landing page (`index.md`):
+
+- `userGuide`: how to set up and run Omega, and what can be controlled;
+- `devGuide`: how to work on the code;
+- `techGuide`: what the model computes, and why;
+- `design`: design documents, frozen when written.
+
+Where each kind of content goes, and how to build the docs, is described on
+the Developer Guide's documentation page, `devGuide/contributing/Docs.md`.
