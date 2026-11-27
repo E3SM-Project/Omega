@@ -28,8 +28,9 @@ Checklist
 * [ ] The description, above any `---` line, ends with a `[BFB]`, `[non-BFB]`, `[NCC]` or `[CC]` tag (plus `[NML]` if needed), with matching labels. If this tag is inferred without testing, append with ` inferred`.
 * [ ] Documentation:
   * [ ] Design document has been generated and [added to the docs](https://github.com/E3SM-Project/Omega/tree/develop/components/omega/doc/design)
-  * [ ] [User's Guide](https://github.com/E3SM-Project/Omega/tree/develop/components/omega/doc/userGuide) has been updated
-  * [ ] [Developer's Guide](https://github.com/E3SM-Project/Omega/tree/develop/components/omega/doc/devGuide) has been updated
+  * [ ] [User Guide](https://github.com/E3SM-Project/Omega/tree/develop/components/omega/doc/userGuide) has been updated
+  * [ ] [Developer Guide](https://github.com/E3SM-Project/Omega/tree/develop/components/omega/doc/devGuide) has been updated
+  * [ ] [Technical Guide](https://github.com/E3SM-Project/Omega/tree/develop/components/omega/doc/techGuide) has been updated
   * [ ] Documentation has been [built locally](https://docs.e3sm.org/Omega/Omega/develop/devGuide/contributing/Docs.html#building-the-documentation) and changes look as expected
 * Linting
   * [ ] [Pre-commit](https://docs.e3sm.org/Omega/Omega/develop/devGuide/contributing/Linting.html) run locally
