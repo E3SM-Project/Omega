@@ -14,5 +14,6 @@ KPP
 HorizontalMixing
 SurfaceForcing
 Frazil
+SubmesoEddies
 RayleighDamping
 ```

@@ -7,5 +7,7 @@ the vertical coordinate.
 ```{toctree}
 :maxdepth: 1
 
+Notation
+GoverningEquations
 VerticalCoordinate
 ```
