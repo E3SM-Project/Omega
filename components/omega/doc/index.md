@@ -51,10 +51,6 @@ design/index
 :hidden:
 
 userGuide/Broadcast
-userGuide/Dimension
-userGuide/AuxiliaryVariables
-userGuide/AuxiliaryState
-userGuide/Tendencies
 userGuide/Reductions
 userGuide/TridiagonalSolvers
 devGuide/BuildDocs

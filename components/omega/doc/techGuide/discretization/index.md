@@ -11,4 +11,6 @@ vertical mixing.
 
 MpasMesh
 HorizontalOperators
+AuxiliaryVariables
+TracerAdvection
 ```

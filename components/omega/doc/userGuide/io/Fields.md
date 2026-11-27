@@ -22,3 +22,30 @@ There are no user-configurable options for the Field class itself since all
 fields are defined and updated internally, but further details on the methods
 and implementation can be found in the {ref}`omega-dev-field` section of the
 Developer's Guide.
+
+(omega-user-io-fields-auxiliary)=
+
+## Auxiliary variables
+
+Omega computes a number of auxiliary variables from the state at every time
+step, and they can be written to output like any other field. The following
+auxiliary variables are currently available:
+| Name | Description |
+| ------------------- | ------- |
+| KineticEnergyCell | kinetic energy of horizontal velocity on cells
+| VelocityDivCell | divergence of horizontal velocity
+| FluxPseudoThickEdge | pseudo-thickness used for fluxes through edges. May be centered, upwinded, or a combination of the two
+| MeanPseudoThickEdge | pseudo-thickness averaged from cell center to edges
+| RelVortVertex | curl of horizontal velocity, defined at vertices
+| NormRelVortVertex | curl of horizontal velocity divided by pseudo-thickness
+| NormPlanetVortVertex | earth's rotational rate (Coriolis parameter, f) divided by pseudo-thickness
+| NormRelVortEdge | curl of horizontal velocity divided by pseudo-thickness, averaged from vertices to edges
+| NormPlanetVortEdge | earth's rotational rate (Coriolis parameter, f) divided by pseudo-thickness, averaged from vertices to edges
+| VelDel2Edge | laplacian of horizontal velocity on edges
+| VelDel2DivCell | divergence of laplacian of horizontal velocity on cells
+| VelDel2RelVortVertex | curl of laplacian of horizontal velocity on cells
+| HTracersEdge | thickness-weighted tracers used for fluxes through edges. May be centered, upwinded or a combination of the two
+| Del2TracersCell | laplacian of tracers on cells
+| SurfTracerRestoringDiffsCell | surface tracer restoring differences on cells
+| TracersMonthlySurfClimoCell | monthly climatology values to restore to for surface tracer on cells
+| DenMixLayerDepth | density-threshold mixed-layer depth on cells
