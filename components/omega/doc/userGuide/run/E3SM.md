@@ -97,3 +97,9 @@ described in {ref}`omega-user-config-time-management`.
 The I/O layout belongs to the case, so that it stays consistent with the rest
 of E3SM. See {ref}`omega-user-config-parallel-io` for the `PIO_*_OCN` case
 variables that set it.
+
+## Log files
+
+Omega's messages go to `ocn.log.*` in the run directory, while other output,
+including crash backtraces, stays in `e3sm.log.*`; see
+{ref}`omega-user-run-logging-e3sm`.

@@ -51,6 +51,4 @@ design/index
 :hidden:
 
 devGuide/BuildDocs
-devGuide/AuxiliaryVariables
-devGuide/TendencyTerms
 ```

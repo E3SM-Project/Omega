@@ -32,7 +32,8 @@ The ``CalendarType``, ``StartType``, ``StartTime``, ``StopType`` and
 The ``TimeStepper`` option refers to the numerical scheme used to advance the
 model in time. Omega implements a number of time-stepping schemes. The user
 can select the scheme they want in the configuration file.
-The following time steppers are currently available:
+The following time steppers are currently available (the schemes are
+described in {ref}`omega-tech-time-stepping`):
 | Config option name | Scheme |
 | ------------------- | ------- |
 | Forward-Backward | forward-backward |

@@ -145,19 +145,10 @@ Intermediate iterations exchange the baroclinic velocity halo; after the loop
 the barotropic forcing halo is exchanged for the split case.
 
 `updateBaroclinicVelocityWithBarotropicForcing` makes one pass over each edge
-column. It first forms the barotropic forcing, the thickness-weighted column
-mean of the provisional full-step baroclinic velocity divided by the time step,
-and stores it in `BarotropicForcing` for Stage 2. For each wet edge column,
-with $h_k$ from `MeanPseudoThickEdge`, $u^n_{bcl,k}$ from `NormalBclVelCur`,
-$R_k$ from `IterVelocityTend`, and split factor $s$,
-
-$$
-F = \frac{s}{\Delta t}
-\frac{\sum_k h_k (u^n_{bcl,k} + \Delta t R_k)}{\sum_k h_k}.
-$$
-
-This includes any column mean remaining in the old baroclinic velocity under
-the current thickness weights. In the code, `FluxSum` is the numerator:
+column. It first forms the barotropic forcing $F$, the thickness-weighted column mean
+of the provisional full-step baroclinic velocity divided by the time step
+(defined in {ref}`omega-tech-time-stepping-split-forcing`), and stores it in
+`BarotropicForcing` for Stage 2. In the code, `FluxSum` is the numerator:
 
 ```c++
 Forcing = LocSplitFactor * (FluxSum / ThicknessSum) * InvDtSeconds;

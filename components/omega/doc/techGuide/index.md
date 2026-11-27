@@ -17,5 +17,6 @@ yet say so.
 equations/index
 discretization/index
 physics/index
+Diagnostics
 Bibliography
 ```
