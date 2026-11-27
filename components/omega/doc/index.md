@@ -147,6 +147,7 @@ design/IO
 design/IOStreams
 design/RayleighDamping
 design/Reductions
+design/ReorgDocs
 design/State
 design/StateValidation
 design/SubmesoscaleEddies
