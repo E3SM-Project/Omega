@@ -149,13 +149,9 @@ The incoming `ShortWaveHeatFlux` is split into three bands:
 The fractions (`NearIrFraction`, `RedFraction`, and `BlueFraction`) and the
 near-infrared extinction coefficient (`NearIrCoeff`) can be configured under
 `Omega.Tendencies.PenetratingShortwaveTendency`. By default, the red and blue
-fractions are set to 0.21 as in [Manizza et al. (2005)](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2004GL020778).
+fractions are set to 0.21. The resulting heating profile is described in
+{ref}`omega-tech-surface-forcing-shortwave`.
 The sum of `NearIrFraction`, `RedFraction`, and `BlueFraction` must equal 1.
-
-The attenuated flux is converted to temperature heating from the difference
-between the flux at the top and bottom of each layer. Any flux remaining at the
-bottom of the active column is deposited in the bottom active layer, so the
-full incoming shortwave flux is conserved.
 
 When `PenetratingShortwaveTendency.Enable` is true,
 `SfcTracerForcingTendencyEnable` must also be enabled. Shortwave is removed

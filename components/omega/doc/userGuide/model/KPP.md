@@ -7,22 +7,14 @@ Parameterization (KPP) boundary layer mixing in runs.  The implementation follow
 directly from the MPAS-Ocean implementation.
 
 Related pages:
-- KPP design/theory: [Design KPP document](#omega-design-kppmix)
+- KPP formulation: {ref}`omega-tech-kpp`
+- KPP design: [Design KPP document](#omega-design-kppmix)
 - KPP implementation details: [Developer KPP document](#omega-dev-kppmix)
 - Broader vertical mixing options: [Vertical Mixing Coefficients](#omega-user-model-vertical-mixing)
 
-## What KPP Provides
-
-KPP computes:
-
-- Ocean surface boundary layer depth (`OSBLDepth`)
-- Vertical viscosity (`VertVisc`)
-- Vertical diffusivity (`VertDiff`)
-- Non-local tracer flux profile (`VertNonLocalFlux`)
-
-It uses a bulk Richardson depth search followed by profile-based coefficient
-construction. The non-local flux is a standard part of the KPP formulation and
-is included by default.
+KPP computes the ocean surface boundary layer depth (`OSBLDepth`), vertical
+viscosity and diffusivity, and a non-local tracer flux; see
+{ref}`omega-tech-kpp` for the formulation.
 
 ## How KPP Is Used in Time Stepping
 

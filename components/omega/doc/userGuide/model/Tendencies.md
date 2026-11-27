@@ -55,12 +55,7 @@ advection schemes in {ref}`omega-user-model-advection`:
 | | BottomDragTendency:BottomDragCoeff | bottom drag coefficient
 | SfcThicknessForcingOnCell | SfcThicknessForcingTendencyEnable | enable/disable term
 | SfcTracerForcingOnCell | SfcTracerForcingTendencyEnable | enable/disable term
-| PenetratingShortwaveOnCell | PenetratingShortwaveTendency | enable/disable depth-dependent shortwave heating
-| | PenetratingShortwaveTendency:Enable | enable/disable term
-| | PenetratingShortwaveTendency:NearIrFraction | near-infrared fraction of shortwave flux
-| | PenetratingShortwaveTendency:NearIrCoeff | near-infrared extinction coefficient ($\mathrm{m}^{-1}$)
-| | PenetratingShortwaveTendency:RedFraction | red-band fraction of shortwave flux
-| | PenetratingShortwaveTendency:BlueFraction | blue/green-band fraction of shortwave flux
+| PenetratingShortwaveOnCell | PenetratingShortwaveTendency:Enable | enable/disable depth-dependent shortwave heating; its parameters are described in {ref}`omega-user-model-forcing`
 | SurfaceTracerRestoringOnCell | SurfaceTracerRestoringEnable | enable/disable term
 
 The vertical advection, pressure gradient and vertical mixing tendencies are not

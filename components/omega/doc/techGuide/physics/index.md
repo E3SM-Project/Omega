@@ -8,5 +8,11 @@ submesoscale eddies and Rayleigh damping.
 ```{toctree}
 :maxdepth: 1
 
+EOS
+VerticalMixing
+KPP
 HorizontalMixing
+SurfaceForcing
+Frazil
+RayleighDamping
 ```

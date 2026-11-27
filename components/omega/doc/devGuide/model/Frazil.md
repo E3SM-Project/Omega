@@ -51,34 +51,8 @@ Frazil behavior is configured with:
 
 ## Physics/algorithm summary
 
-### Common behavior
-
-- Freezing-point checks are based on conservative temperature and absolute
-  salinity with pressure-dependent freezing temperature.
-- Vertical accumulation order is bottom-to-top within each active column.
-- Frazil tendencies are not time-step scaled inside `Frazil`; they are
-  accumulated as tendency contributions.
-
-### Fixed-property pathway (`FrazilType: FixedProperty`)
-
-- Uses simplified energetics: the energy of the super-cooled water sets the
-amount of solid ice formed (used constant latent heat of fusion of fresh ice).
-Salt is added based on a constant bulk salinity `IceRefSal` (default) or a
-manual toggle (for now) using the local salinity and the frazil porosity. The salt contribution is included in the salinity tendency term, but is not accounted for in the pseudo-thickness tendency.
-The fraction of existing frazil to be melted is set by the amount of pure ice that can be melted by the warm layer, and used to determine the energy, mass and salt added to the tendencies. There is also fractional thickness limit to the possible melt.
-- Computes local layer tendencies (`HTend`, `TTend`, `STend`) and updates
-  accumulated frazil stores.
-- Converts accumulators to coupler units at the end of the column loop.
-
-### Teos pathway (`FrazilType: Teos10`)
-
-- Uses teos-10 Gibbs SeaWater routines for frazil formation and melt state
-  transitions.
-- Formation uses `Phi` and `LayerMassFracMax` to partition and limit newly formed
-  frazil contributions.
-- Melt computes fraction melted subject to available thermodynamic energy and
-  mass-limit constraints.
-  - Performance note: the GSW TEOS-10 routines rely on the submodule which is not GPU-portable, so this option currently executes on the CPU/host even in GPU builds. Expect host execution (and associated data movement) when `FrazilType: Teos10` is selected. The calculation will be moved to GPU once a function port is possible.
+The physics and the two pathways (`FixedProperty` and `Teos10`) are described
+in {ref}`omega-tech-frazil`.
 
 ## Existing ctest coverage
 
