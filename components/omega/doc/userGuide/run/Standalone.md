@@ -6,7 +6,7 @@
 :class: warning
 This page does not yet walk through setting up and running a standalone case.
 Progress is tracked in
-[E3SM-Project/Omega#TODO-issue-1](https://github.com/E3SM-Project/Omega/issues/TODO-issue-1).
+[E3SM-Project/Omega#724](https://github.com/E3SM-Project/Omega/issues/724).
 :::
 
 Standalone runs are usually set up by

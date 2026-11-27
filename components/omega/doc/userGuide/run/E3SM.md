@@ -6,7 +6,7 @@
 :class: warning
 This page does not yet cover choosing a compset, creating and running a case,
 or where a run's output lands. Progress is tracked in
-[E3SM-Project/Omega#TODO-issue-1](https://github.com/E3SM-Project/Omega/issues/TODO-issue-1).
+[E3SM-Project/Omega#724](https://github.com/E3SM-Project/Omega/issues/724).
 :::
 
 When Omega runs as the `ocn` component of a coupled E3SM case, the case

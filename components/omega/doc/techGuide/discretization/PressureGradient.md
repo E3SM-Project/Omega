@@ -54,5 +54,5 @@ the column.
 The derivation of the finite-volume scheme is still to be written here, from
 the {ref}`design document <omega-design-pressure-grad-high-order>`. Progress is
 tracked in
-[E3SM-Project/Omega#TODO-issue-3](https://github.com/E3SM-Project/Omega/issues/TODO-issue-3).
+[E3SM-Project/Omega#726](https://github.com/E3SM-Project/Omega/issues/726).
 :::

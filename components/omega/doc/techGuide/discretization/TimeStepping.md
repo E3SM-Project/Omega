@@ -8,7 +8,7 @@ This page does not yet describe the forward-backward, RK2, RK4 and
 split-explicit time steppers. They are to be written here from the
 {doc}`time stepping </design/TimeStepping>` and
 {doc}`split time stepping </design/SplitTimeStepping>` design documents. Progress is tracked in
-[E3SM-Project/Omega#TODO-issue-3](https://github.com/E3SM-Project/Omega/issues/TODO-issue-3).
+[E3SM-Project/Omega#726](https://github.com/E3SM-Project/Omega/issues/726).
 :::
 
 The time steppers are chosen with the options in
