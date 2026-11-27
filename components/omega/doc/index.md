@@ -50,13 +50,10 @@ design/index
 ```{toctree}
 :hidden:
 
-userGuide/DataTypes
-userGuide/MachEnv
 userGuide/Broadcast
 userGuide/Driver
 userGuide/Dimension
 userGuide/IO
-userGuide/Halo
 userGuide/AuxiliaryVariables
 userGuide/AuxiliaryState
 userGuide/Tendencies

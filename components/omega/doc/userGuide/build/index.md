@@ -10,4 +10,6 @@ and MPI on device are described once, on the options page.
 :maxdepth: 1
 
 Standalone
+E3SM
+Options
 ```

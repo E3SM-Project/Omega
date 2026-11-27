@@ -1,12 +1,11 @@
 (omega-user-build-standalone)=
 
-# CMake-based Omega Build
+# Standalone Build
 
-Omega's build system is constructed using the CMake build tool,
-offering a strong foundation for managing the building process.
-
-This page describes how to build Omega in general (outside Polaris or within
-other workflows).
+Omega's build system uses CMake. This page describes how to build Omega
+standalone, outside Polaris or within other workflows. To build it as part of
+an E3SM case, see {ref}`omega-user-build-e3sm`; every CMake option is listed
+in {ref}`omega-user-build-options`.
 
 ## If You Are Using Polaris
 
@@ -23,21 +22,16 @@ during `polaris setup` or `polaris suite`.
 
 Standalone/manual and Polaris-based build workflows are both supported.
 
-## General Build Overview
+## Requirements
 
-The Omega build system has two modes: standalone and E3SM component.
+A standalone build creates a generic E3SM case and reads the build
+configuration for the machine from it. It then configures CMake variables and
+environment variables for the machine, along with any options given on the
+CMake command line.
 
-For standalone build, the Omega build creates a generic E3SM case and
-reads build configurations from the case. In E3SM component build, the
-Omega build reads build configrations from the E3SM case created by
-CIME build system. Following this, it configures CMake variables and
-environment variables based on the computing system where the build is
-taking place, as well as user input from the CMake command-line.
+The build needs a Python interpreter and CMake 3.21 or newer.
 
-For the Omega build system to function, a Python interpreter is necessary.
-The minimum version of CMake is 3.21.
-
-## Standalone Build
+## Building
 
 CMake and Omega prefer an out-of-source build. This enables a user to build
 and maintain multiple executables from the same source directory.
@@ -45,30 +39,23 @@ The standard practice is for a user to create a separate directory where
 the build should take place and the commands below should be launched from
 that directory.
 
-To utilize a compiler name that's defined in the E3SM machine configuration
-file (`config_machines.xml`), employ the `OMEGA_CIME_COMPILER` CMake variable,
-as illustrated below. In some cases, you may also want to add `OMEGA_CIME_MACHINE`
-to specify which system you intend to use. On systems where there is not a
-default `PROJECT` defined, you can use `OMEGA_CIME_PROJECT` to specify an
-account to use as a placeholder during the Omega build.
-The values of `OMEGA_CIME_COMPILER` and `OMEGA_CIME_MACHINE` are defined in
-"${E3SM}/cime\_config/machines/config\_machines.xml".
-Omega requires some external libraries. Many of these are built automatically
-from the E3SM distribution. However, the METIS, ParMETIS, and, optionally,
-GKlib libraries must be built separately and the path must be supplied during
-the cmake invocation as shown below. If a `OMEGA_METIS_ROOT` is not supplied,
-it is assumed that both METIS and ParMETIS are installed in the same
-`OMEGA_PARMETIS_ROOT` location. If a `OMEGA_GKLIB_ROOT` is not supplied, it is
-assumed that both GKLIB and METIS are installed in the same `OMEGA_METIS_ROOT`
-location. All three libraries should be static libraries.
+Choose the machine and compiler by their names in the E3SM machine
+configuration (`cime_config/machines/config_machines.xml`), and give the path
+to ParMETIS, which must be built separately. For example, to build for GPUs on
+Perlmutter:
 
 ```sh
 >> cmake \
   -DOMEGA_CIME_COMPILER=nvidiagpu \
   -DOMEGA_CIME_MACHINE=pm-gpu \
+  -DOMEGA_ARCH=CUDA \
   -DOMEGA_PARMETIS_ROOT=/path/to/parmetis \
   ${E3SM_HOME}/components/omega
 ```
+
+{ref}`omega-user-build-options` describes these and the other options, such
+as `OMEGA_BUILD_TEST` to build the unit tests and `OMEGA_BUILD_TYPE` for a
+debug build.
 
 Once the command completes successfully, several scripts will be created
 in the build directory.
@@ -79,36 +66,6 @@ in the build directory.
 * omega\_ctest.sh : run `ctest` after sourcing `omega_env.sh`
 
 Run omega\_build.sh in the build directory to build Omega.
-
-To employ a specific compiler, users can utilize the `OMEGA_CXX_COMPILER`
-CMake variable, providing CMake with the compiler's path.
-
-```sh
->> cmake \
-  -DOMEGA_CXX_COMPILER=CC \
-  ${E3SM_HOME}/components/omega
-```
-
-`OMEGA_CXX_COMPILER` overrides `OMEGA_CIME_COMPILER`.
-
-To build Omega for GPU, add OMEGA\_ARCH to one of "CUDA" or "HIP".
-
-```sh
->> cmake \
-  -DOMEGA_CIME_COMPILER=nvidiagpu \
-  -DOMEGA_CIME_MACHINE=pm-gpu \
-  -DOMEGA_ARCH=CUDA \
-  ${E3SM_HOME}/components/omega
-```
-
-To enable the ctest-based unittest option, include the `OMEGA_BUILD_TEST`
-option as illustrated below.
-
-```sh
->> cmake \
-  -DOMEGA_BUILD_TEST=ON \
-  ${E3SM_HOME}/components/omega
-```
 
 Once the `cmake` command succeeds, the directory where the command was
 executed will contain the following files and directories.
@@ -134,22 +91,6 @@ To build the Omega, execute the `./omega_build.sh` command in the build director
 If the build succeeds, the Omega library and executable are created in the
 `src` sub-directory of the build directory.
 
-To specify the output directory for saving the generated output files,
-a user can include the `OMEGA_INSTALL_PREFIX` variable in the `cmake` command,
-as shown below:
-
-```sh
-cmake \
-  ... \
-  -DOMEGA_INSTALL_PREFIX="/path/to/output/directory" \
-  ${E3SM_HOME}/components/omega
-  ...
-```
-
-Afterwards, a user can use the `make install` command to copy the Omega library
-and executable to the `lib` and `bin` sub-directories under the directory
-specified by `DOMEGA_INSTALL_PREFIX`.
-
 The `./omega_ctest.sh` command runs Omega unit tests. To run the tests, MPI
 parallel job launcher such as SLURM srun should be available. You may first
 get allocation of an interactive computing node or use batch system.
@@ -171,28 +112,3 @@ Test project <cmake working directory>
 
 Total Test time (real) =   0.04 sec
 ```
-
-(omega-user-cime-component-build)=
-
-## E3SM Component Build
-
-Omega can be built as the ocean component (`ocn`) of a coupled E3SM simulation,
-using a compset where Omega is selected as the ocean model (see
-`components/omega/cime_config/config_compsets.xml` for supported compsets, such
-as `COMEGA`, `GOMEGA`, or `WCYCL...-OMEGA`).
-
-When an E3SM case is built using CIME's `case.build`, CIME automatically configures
-and builds Omega via `components/omega/cime_config/buildlib_cmake`. In this mode,
-CIME configures the build with `OMEGA_BUILD_MODE=E3SM`, which builds `OmegaLib`
-together with the coupled driver bridge in `src/drivers/coupled/` (the Fortran/C++
-bridge and MCT cap), creating the `ocn` library that CIME links into the coupled
-`e3sm.exe` executable.
-
-During case setup and execution, CIME runs Omega's configuration generator
-(`components/omega/cime_config/buildnml`) in-process within Python to generate
-`omega.yml` from YAML configuration files. Because `buildnml` requires `pyyaml`,
-the Python environment running CIME commands must have `pyyaml` available
-(see {ref}`omega-dev-cime-env`).
-
-For comprehensive instructions on setting up, building, and running coupled cases
-and CIME system tests, see {ref}`omega-dev-cime-testing`.
