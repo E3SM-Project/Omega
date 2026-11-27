@@ -114,7 +114,7 @@ jobs:
         with:
           persist-credentials: false
 
-      # Only the submodules a standalone build needs (doc/devGuide/CMakeBuild.md); several
+      # Only the submodules a standalone build needs (doc/devGuide/gettingStarted/BuildSystem.md); several
       # use git@ URLs, rewritten to https for this command only.
       - name: Update submodules
         run: |

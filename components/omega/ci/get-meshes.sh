@@ -1,6 +1,6 @@
 #!/bin/bash
 # Download the meshes Omega's CTests read into a directory, skipping any already
-# there. The list matches doc/devGuide/QuickStart.md ("Getting test meshes").
+# there. The list matches doc/devGuide/gettingStarted/QuickStart.md ("Getting test meshes").
 #
 #   components/omega/ci/get-meshes.sh [mesh_dir]   (default: ./omega-meshes)
 set -euo pipefail

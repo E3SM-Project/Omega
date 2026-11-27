@@ -10,7 +10,7 @@ passed. Someone tracking down a failure later needs every path, commit
 and log. Keep the first short and visible, and put the second in a fold.
 Do not drop either.
 
-`doc/devGuide/Testing.md` ("What to Include in Your PR Testing Comment")
+`doc/devGuide/contributing/Testing.md` ("What to Include in Your PR Testing Comment")
 lists the facts to record. Lay them out like this:
 
 1. A `## Testing` heading. A heading can name the machine when each

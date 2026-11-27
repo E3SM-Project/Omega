@@ -9,8 +9,8 @@ Polaris's Omega CTest utility is an optional helper for building Omega and
 running its CTests. Use it only when the developer wants it, and only when
 the CTests are the focus: on their own, or as a quick check before the
 full testing in the `omega-pr-testing` skill. Without it, build and test
-by hand as described in `doc/devGuide/QuickStart.md` and
-`doc/devGuide/CMakeBuild.md`.
+by hand as described in `doc/devGuide/gettingStarted/QuickStart.md` and
+`doc/devGuide/gettingStarted/BuildSystem.md`.
 
 ## Running it
 
