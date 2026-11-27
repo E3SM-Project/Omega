@@ -7,28 +7,8 @@ mass due to horizontal variations in pressure and geopotential. This term is
 essential for capturing the dynamics of
 ocean circulation, including both barotropic and baroclinic motions.
 
-## Physical Background
-
-In the layered non-Boussinesq momentum equation solved in Omega, the pressure
-gradient tendency for each edge and layer includes three contributions:
-
-1. **Montgomery potential gradient**: The horizontal gradient of the Montgomery
-   potential ($\alpha p + g z$), averaged across the top and bottom interfaces of
-   each layer. The Montgomery potential combines the pressure gradient and the
-   geopotential, and its gradient along coordinate surfaces accounts for both the
-   direct pressure force and the effect of tilted layer interfaces that arise when
-   using a general vertical coordinate.
-
-2. **Specific volume correction**: A correction term proportional to the gradient
-   of specific volume (inverse density) at each edge. This term ensures that
-   horizontal density variations between the two cells sharing an edge are properly
-   represented in the pressure gradient force.
-
-3. **External geopotential forcing**: Contributions from the tidal potential and
-   the self-attraction and loading (SAL) terms. These represent gravitational
-   forcing from astronomical tides and the deformation of the solid Earth and ocean
-   surface in response to the ocean mass distribution. These terms are currently set
-   to zero and will be provided by a future tidal forcing module.
+The physical background and the two discretizations are described in
+{ref}`omega-tech-pressure-gradient`.
 
 ## Configuration Options
 
@@ -57,17 +37,9 @@ like a passing centered run.
 
 **Finite Volume** (`'FiniteVolume'` or `'finiteVolume'`)
 - The default
-- Compares the geopotential of the two columns sharing an edge at a **common
-  pressure**, rather than at a common layer index
-- Gives a pressure gradient that is zero to machine precision for any resting
-  ocean whose temperature and salinity vary linearly with pressure, at any
-  coordinate tilt or layer thickness, provided the two columns' sea floors are
-  at the same pressure
-- Over a sloping sea floor a small residual remains, because the two columns'
-  sea-floor heights come from `VertCoord`'s sums over different layers. It is
-  smallest where partial bottom cells cut the floor beneath level interior
-  layers, and with terrain-following layers it shrinks as the layers are
-  refined
+- Compares the two columns sharing an edge at a common pressure rather than
+  at a common layer index; see {ref}`omega-tech-pressure-gradient-fv` for
+  what this makes exact
 - Intended for simulations with ice shelf cavities and steep bathymetry, where
   the centered scheme carries an error that is first order in the coordinate
   tilt and accumulates downward through the column

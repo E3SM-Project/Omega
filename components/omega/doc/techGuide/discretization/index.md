@@ -13,4 +13,6 @@ MpasMesh
 HorizontalOperators
 AuxiliaryVariables
 TracerAdvection
+PressureGradient
+TridiagonalSystems
 ```

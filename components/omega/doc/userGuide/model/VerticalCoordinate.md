@@ -4,12 +4,10 @@
 
 ## Overview
 
-Omega uses pseudo height, $\tilde{z} = \frac{p}{\rho_0 g}$,  as the vertical coordinate ([V1 governing equation document](omega-design-governing-eqns-omega1)),
-where $p$ is **relative pressure** (gauge pressure, i.e., absolute pressure minus the standard atmosphere of 101325 Pa).
-With this definition, $\tilde{z} = 0$ at the sea surface under standard atmospheric forcing.
-In practice, $\tilde{z}$ is not computed directly.
-Instead, the model tracks and evolves the pseudo-thickness, $\tilde{h} = \Delta \tilde{z}$, defined as the difference between adjacent layer interfaces.
-The pseudo height is essentially a normalized pressure coordinate, with the advantage that it has units of meters.
+Omega uses pseudo height, a normalized pressure with units of meters, as its
+vertical coordinate, and tracks the pseudo-thickness of each layer; see
+{ref}`omega-tech-vertical-coordinate` for the definitions.
+
 The `VertCoord` class contains variables and functions relevant to keeping track of:
  - the maximum possible number of layers in a cell, i.e. the extent of the vertical dimension (read in from the mesh file)
  - the bottom depth of each cell (read in from the mesh file)
@@ -65,12 +63,3 @@ zero (0 Pa), so it may simply be omitted from the initial-condition file.
 For a coupled ocean–atmosphere run, `SurfacePressure` holds the anomaly of the atmospheric
 surface pressure from the standard atmosphere; eventually it will be updated each timestep
 via the coupler as a weighted sum of atmosphere, sea-ice, and land-ice pressure.
-
-## Inactive and boundary layers in output
-
-Each output field declares a fill value (matching the NetCDF-C standard `_FillValue`) that marks entries outside the active domain.
-In a cell column only the active layers (`[MinLayerCell, MaxLayerCell]`) carry valid data; deeper, inactive layers contain the fill value.
-Edge and vertex fields have an intermediate boundary range where some, but not all, of the surrounding cells are active.
-For flux-type edge fields (such as `NormalVelocity`), the flux through a face bordering land vanishes, so those boundary layers carry `0`; layers fully outside the valid range carry the fill value.
-Vertex fields, by contrast, keep their computed (generally non-zero) values throughout the valid range, since a boundary vertex still has active surrounding cells contributing to quantities like vorticity; only layers outside the valid range carry the fill value.
-After an initial-condition or restart read, `VertCoord` enforces this pattern on the state and tracer fields so that analysis tools (ncview, Xarray, NCO, etc.) recognize and mask the inactive entries automatically.

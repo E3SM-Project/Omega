@@ -19,19 +19,10 @@ architecture:
 
 ## Representations of tridiagonal systems
 
-### General tridiagonal system
-A general tridiagonal system is represented by three vectors
-`DL`, `D`, `DU`, representing the lower, main, and upper diagonal, respectively, and a right-hand-side vector `X`
-$$
-(DL)_i Y_{i - 1} + D_i Y_i + (DU)_i Y_{i + 1} = X_i.
-$$
-
-### Diffusion-type tridiagonal system
-
-A diffusion-type system is represented by two vectors `G` and `H`, and a right-hand-side vector `X`. It has the form
-$$
--G_{i - 1} Y_{i - 1} + (G_{i - 1} + G_i + H_i) Y_i - G_{i} Y_{i + 1} = X_i.
-$$
+A general system is given by its lower, main and upper diagonals `DL`, `D`
+and `DU` and its right-hand side `X`; a diffusion-type system by the vectors
+`G` and `H` and its right-hand side `X`. Both forms are written out in
+{ref}`omega-tech-tridiagonal-systems`.
 
 ## Using tridiagonal solvers
 
@@ -65,7 +56,7 @@ TriDiagSolver::solve(DL, D, DU, X);
 After this call, the rhs array `X` contains the solution.
 
 Solving diffusion-type systems is similar, except the input arrays contain coefficients in the
-form presented [above](#diffusion-type-tridiagonal-system)
+form given in {ref}`omega-tech-tridiagonal-systems-diffusion`
 and the static `TriDiagDiffSolver::solve` method is called
 ```c++
 Array2DReal G("G", NBatch, NRow); // G(n, :) = coefficients G_i of system n

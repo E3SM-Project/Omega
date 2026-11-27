@@ -6,4 +6,6 @@ the vertical coordinate.
 
 ```{toctree}
 :maxdepth: 1
+
+VerticalCoordinate
 ```

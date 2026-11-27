@@ -50,9 +50,6 @@ design/index
 ```{toctree}
 :hidden:
 
-userGuide/Broadcast
-userGuide/Reductions
-userGuide/TridiagonalSolvers
 devGuide/BuildDocs
 devGuide/AuxiliaryVariables
 devGuide/TendencyTerms
