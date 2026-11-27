@@ -52,7 +52,6 @@ design/index
 
 userGuide/Broadcast
 userGuide/Dimension
-userGuide/IO
 userGuide/AuxiliaryVariables
 userGuide/AuxiliaryState
 userGuide/Tendencies

@@ -33,8 +33,9 @@ Tendencies:
 ```
 
 Some functors have member variables that can be set by the user by the
-configuration file. The following are all the user-configurable parameters for
-the currently available tendency terms:
+configuration file. The following are the user-configurable parameters for the
+currently available tendency terms; the coefficients of the horizontal mixing
+terms are described in {ref}`omega-user-model-horizontal-mixing`:
 | Term | Parameter | Description
 | ------------ | ------------ | ------------ |
 | PseudoThicknessFluxDivOnCell | ThicknessFluxTendencyEnable | enable/disable term
@@ -42,10 +43,7 @@ the currently available tendency terms:
 | KEGradOnEdge | KETendencyEnable | enable/disable term
 | SSHGradONEdge | SSHTendencyEnable | enable/disable term
 | VelocityDiffusionOnEdge | VelDiffTendencyEnable | enable/disable term
-| | ViscDel2 | horizontal viscosity
 | VelocityHyperDiffOnEdge | VelHyperDiffTendencyEnable | enable/disable term
-| | ViscDel4 | horizontal biharmonic mixing coefficient for normal velocity
-| | DivFactor | scale factor for the divergence term
 | TracerHorzAdvOnCell | TracerHorzAdvTendencyEnable | enable/disable term
 | | HorzTracerFluxOrder | 2 for standard linear advection
 | | HorzTracerFluxOrder | 3 for second order advection algorithm
@@ -53,9 +51,7 @@ the currently available tendency terms:
 | | HorzTracerFluxLimiterBudgetsEnable | enable/disable budgets if FCT is enabled
 | | HorzTracerFluxLimiterMonotonicityCheckEnable | enable/disable check for mon-mononic values if FCT is enabled
 | TracerDiffOnCell | TracerDiffTendencyEnable | enable/disable term
-| | EddyDiff2 | horizontal diffusion coefficient
 | TracerHyperDiffOnCell | TracerHyperDiffTendencyEnable | enable/disable term
-| | EddyDiff4 | biharmonic horizontal mixing coeffienct for tracers
 | SfcStressForcingOnEdge | SfcStressForcingTendencyEnable | enable/disable term
 | BottomDragOnEdge | BottomDragTendency | enable/disable term
 | | BottomDragTendency:Mode | bottom drag mode; `Implicit` or `Explicit`

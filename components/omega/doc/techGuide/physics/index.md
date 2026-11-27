@@ -7,4 +7,6 @@ submesoscale eddies and Rayleigh damping.
 
 ```{toctree}
 :maxdepth: 1
+
+HorizontalMixing
 ```

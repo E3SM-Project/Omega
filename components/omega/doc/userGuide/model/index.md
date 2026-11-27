@@ -11,6 +11,7 @@ model computes.
 Tendencies
 Tracers
 Advection
+HorizontalMixing
 PressureGradient
 VerticalCoordinate
 VerticalMixing
