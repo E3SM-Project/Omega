@@ -668,62 +668,8 @@ The module is designed so that new operators and new groups plug in through
 the registration and dispatch mechanisms without changes to the core compute
 loop.
 
-### Adding a new operator
-
-To add a new operator:
-
-1. **Create the operator class** in `operators/` as a template on the input
-   array type, deriving from `AnalysisOperator`. In the constructor, pass the
-   operator type name to the base constructor, set `InputNames`, build the
-   output name as `<input>_<Suffix>`, set `OutputNames` and `InstanceName`,
-   allocate the output data array, and register the output Field with
-   `createOutputField()` plus `attachData()`, deriving its units, standard
-   name and cell methods from the input as described under
-   [Output metadata](#omega-dev-analysis-output-metadata). If the operator
-   depends on another operator's output (as `SpatialStdDev` depends on
-   `SpatialMean`), append that dependency to `InputNames`.
-2. **Implement `compute()`** to retrieve the input array(s) from the Field
-   registry, perform the transformation, write the output array(s), and update
-   `LastComputed`/`FieldComputed`.
-3. **Implement `setPeriodAlarm()`** only if the operator is a temporal
-   reduction that finalizes on a period boundary.
-4. **Include the header** in `operators/Ops.h`.
-5. **Register the operator** by adding a
-   `AnalysisOpFactory::registerAllArrayVariants<NewOp>("NewName")` call to
-   `Analysis::registerAllBaseAnalysisOperators()` in `operators/Ops.cpp`.
-6. **Update the chain parser** if your operator introduces a new naming
-   convention. The current parser in `Analysis::parseChainAndBuildOps()`
-   identifies operators by prefix (`Spatial` for spatial reductions, `Time`
-   for temporal reductions). If your operator uses a different naming
-   pattern, add logic to recognize and dispatch the new token. The parser is
-   preliminary and expected to evolve as new operator categories are added.
-7. **Add unit tests** in `test/analysis/AnalysisOperatorTest.cpp` to verify the
-   new operator implementation. Tests should validate correct computation on
-   representative input data.
-
-If your operator follows an existing naming convention, no parser changes are
-needed. No changes to the dependency resolution, alarm propagation, or compute
-logic are required.
-
-### Adding a new analysis group
-
-To add a new bundled group:
-
-1. **Create the group class** in `analysisGroups/`, deriving from
-   `AnalysisGroup`. In the constructor, read the group's configuration
-   options, build chain stem strings (field names with spatial operators but
-   without temporal operators), and call `buildTemporalChains()` to handle
-   temporal operator construction, operator instantiation via
-   `parseChainAndBuildOps()`, and automatic `OpChainInfo` population.
-   Alternatively, for groups with custom chain building logic, manually call
-   `AnalysisManager->parseChainAndBuildOps()` for each chain and record an
-   `OpChainInfo` for each chain describing its output frequency and whether it
-   performs temporal reduction or instantaneous output.
-2. **Create the output streams** by calling `createAnalysisGroupStreams()`
-   at the end of the constructor.
-3. **Include the header** in `analysisGroups/Groups.h`.
-4. **Add a dispatch branch** so the `Analysis` constructor constructs the new
-   group when it is enabled in the configuration.
+See {ref}`omega-dev-howto-add-analysis-operator` and
+{ref}`omega-dev-howto-add-analysis-group` for the steps.
 
 The guiding principle, as with the rest of the module, is that extensions
 should not require restructuring the core: new capabilities are added by
