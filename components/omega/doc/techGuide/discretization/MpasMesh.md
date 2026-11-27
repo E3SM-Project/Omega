@@ -1,4 +1,4 @@
-(mpas-mesh-specification)=
+(omega-tech-mpas-mesh)=
 
 # MPAS Mesh Specification
 
@@ -258,7 +258,7 @@ conventions:
 | `lonCell`, `lonEdge`, `lonVertex` | $0 \leq \mathrm{longitude} \leq 2\pi$ |
 | All latitude and longitude fields on a planar mesh | Constant value of 0 |
 
-(edge-angles)=
+(omega-tech-mpas-mesh-edge-angles)=
 
 ## Edge angles
 
@@ -409,7 +409,7 @@ as well:
 | `x_period` | double | any positive real value | Period of the mesh in the $x$ direction. |
 | `y_period` | double | any positive real value | Period of the mesh in the $y$ direction. |
 
-(connectivity-ordering-requirements)=
+(omega-tech-mpas-mesh-connectivity-ordering)=
 
 ## Connectivity and ordering requirements
 
@@ -437,7 +437,7 @@ complete tool chain.
 ### Requirements relative to edges
 
 The edge-normal and tangential vectors and the `angleEdge` convention are
-defined in {ref}`edge-angles`. In addition, the edge connectivity arrays must
+defined in {ref}`omega-tech-mpas-mesh-edge-angles`. In addition, the edge connectivity arrays must
 satisfy the following ordering requirements:
 
 - `edgesOnEdge` must proceed counter-clockwise, beginning with the edges that

@@ -1,6 +1,6 @@
-(omega-user-time-stepping)=
+(omega-user-config-time-stepping)=
 
-# Time stepping
+# Time Stepping
 Time stepper refers to the means by which a simulation is advanced in time.
 The configuration of a simulation is set by the ``TimeIntegration`` section
 of the Omega configuration file:
@@ -26,7 +26,7 @@ be used for other portions of the model (eg the barotropic mode or tracer
 transport) that may have different time steps and use different algorithms.
 
 The ``CalendarType`` choice is described in the
-[Time Management](#omega-user-time-manager) section.
+[Time Management](#omega-user-config-time-management) section.
 
 The ``TimeStepper`` option refers to the numerical scheme used to advance the
 model in time. Omega implements a number of time-stepping schemes. The user
@@ -41,7 +41,7 @@ The following time steppers are currently available:
 | UnsplitRK2 | the same RK2 scheme with mode splitting disabled |
 
 `SplitExplicitRK2` and `UnsplitRK2` use the `ModeSplitShare` configuration
-subgroup shown above. See [Split time stepping](#omega-user-split-time-stepping)
+subgroup shown above. See [Split time stepping](#omega-user-config-split-time-stepping)
 for descriptions of these schemes and their configuration options.
 
 The ``TimeStep`` refers to the main model time step used to advance the solution

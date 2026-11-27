@@ -1,4 +1,4 @@
-(omega-user-tracers)=
+(omega-user-model-tracers)=
 
 # Tracers
 

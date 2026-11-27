@@ -1,4 +1,4 @@
-(omega-user-horz-operators)=
+(omega-tech-horz-operators)=
 
 # Horizontal Operators
 
@@ -9,7 +9,7 @@ such as reconstruction of tangential velocity from its normal components. These
 operators act on quantities located at the cells, edges, and vertices of an
 MPAS mesh, and rely on the connectivity, geometric measures, and ordering
 conventions defined in the
-{ref}`MPAS mesh specification <mpas-mesh-specification>`. Omega
+{ref}`MPAS mesh specification <omega-tech-mpas-mesh>`. Omega
 provides reference implementations of these operators, each in a separate C++
 class. The class name describes the operator and the mesh element associated
 with its result.
@@ -41,7 +41,7 @@ For a scalar quantity at the edge location shown in red, either average the two 
 
 The `cellsOnEdge`, `cellsOnVertex`, `verticesOnEdge`, and `kiteAreasOnVertex`
 fields, along with their required ordering, are defined in the
-{ref}`MPAS mesh specification <mpas-mesh-specification>`; see in particular
-{ref}`connectivity-ordering-requirements`.
+{ref}`MPAS mesh specification <omega-tech-mpas-mesh>`; see in particular
+{ref}`omega-tech-mpas-mesh-connectivity-ordering`.
 
 The isotropic interpolation has been shown to be less accurate than the anisotropic method, with higher error about pentagons, and should be used only when spatial smoothing is desired, e.g., in the context of wind stress coupling where both `SfcStressZonal` and `SfcStressMeridional` are interpolated from cells to edges, see {ref}`Surface Stress Forcing <omega-user-forcing-sfc-stress>`.

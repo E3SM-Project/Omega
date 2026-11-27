@@ -1,6 +1,6 @@
-(omega-user-eos)=
+(omega-user-model-eos)=
 
-# Equation of State (EOS)
+# Equation of State
 
 The equation of state (EOS) for the ocean describes the relationship between specific volume of seawater (in $\textrm{m}^3/\textrm{kg}$; the reciprocal of density) and temperature (in $^{\circ}\textrm{C}$), salinity (in $\textrm{g/kg}$), and pressure (relative pressure, in $\textrm{Pa}$). Through the hydrostatic balance (which relates density/specific volume gradients to pressure gradients), the equation of state provides a connection between active tracers (temperature and salinity) and the fluid dynamics.
 

@@ -1,6 +1,6 @@
-(omega-user-field)=
+(omega-user-io-fields)=
 
-## Fields and Metadata (Field)
+# Fields and Metadata
 
 Within OMEGA, each module registers fields that it owns together with the
 metadata associated with that field. Metadata must be compliant with the
@@ -17,7 +17,7 @@ Groups of fields can also be defined to provide a shortcut to a list of fields
 commonly used together, like the model state or tracer groups. This reduces the
 size of the input YAML configuration. The user can select which fields or field
 groups they wish to include via the streams section of the input YAML
-configuration file. This is described further in {ref} `omega-user-iostreams`.
+configuration file. This is described further in {ref}`omega-user-io-streams`.
 There are no user-configurable options for the Field class itself since all
 fields are defined and updated internally, but further details on the methods
 and implementation can be found in the {ref}`omega-dev-field` section of the

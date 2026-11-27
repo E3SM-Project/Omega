@@ -1,6 +1,6 @@
 (omega-dev-driver)=
 
-## Driver
+# Driver
 
 The Omega Driver runs Omega either as a standalone model or as the ocean
 component of E3SM (currently via the MCT coupler). In both modes execution
@@ -9,7 +9,7 @@ splits init into two phases and calls run once per coupling interval
 instead of once for the whole simulation. All entry points below are
 declared in `OceanDriver.h`.
 
-### Standalone driver
+## Standalone driver
 
 `ocnInit` reads `omega.yml`, calls `initOmegaModules` to initialize every
 Omega module (including the default `TimeStepper`, which owns the model
@@ -33,7 +33,7 @@ The standalone `main` (`src/drivers/standalone/OceanDriver.cpp`) wraps
 these three calls with `MPI_Init`/`Kokkos::initialize` and their shutdown
 counterparts.
 
-### Coupled driver
+## Coupled driver
 
 The coupled driver (`src/drivers/coupled/`) runs Omega as the `ocn`
 component of an MCT-based E3SM system. `ocn_comp_mct.F90` is the MCT cap,
@@ -42,7 +42,7 @@ calls `bind(c)` interfaces declared in `omega_f2cxx_interface.F90` and
 implemented in `omega_cxx2f_interface.cpp`, which call the C++ entry
 points below.
 
-#### Init
+### Init
 
 Init is split into two phases because the coupler needs Omega's
 decomposition (`NCellsOwned`) before it can size and allocate the MCT
@@ -71,7 +71,7 @@ coupling-interval boundary so it is in sync with the coupler's clock.
 them to `SfcCoupling` (`SfcCoupling::attachData`), does the initial
 export/import exchange with the coupler, and updates halo/host arrays.
 
-#### Run
+### Run
 
 The coupled overload of `ocnRun` advances the model one coupling interval,
 rather than to the end of the simulation: it imports coupler fields into
@@ -84,12 +84,12 @@ a restart write at the end of the interval:
 int ocnRun(TimeInstant &CurrTime, bool WriteRestart);
 ```
 
-#### Finalize
+### Finalize
 
 `ocnFinalize` is shared with the standalone driver; it additionally clears
 all `SfcCoupling` instances.
 
-#### Field name/index mapping
+### Field name/index mapping
 
 `omega_cpl_indices.F90` builds the import (`x2o`) and export (`o2x`) field
 name and coupler-column-index arrays from a dummy MCT attribute vector,
@@ -99,7 +99,7 @@ builds the `std::map<std::string, int>` (`ImportIdx`/`ExportIdx`) required
 by `CouplingInitParams`; see [Surface Coupling](#omega-dev-sfc-coupling)
 for how those maps are used.
 
-#### Mesh/decomposition queries
+### Mesh/decomposition queries
 
 Before the coupler-owned buffers exist, the Fortran bridge needs Omega's
 decomposition to build its MCT `gsMap` and domain. These bridge-only

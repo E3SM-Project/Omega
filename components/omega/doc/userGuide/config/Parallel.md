@@ -1,6 +1,6 @@
-(omega-user-decomp)=
+(omega-user-config-parallel)=
 
-## Domain Decomposition (Decomp)
+# Parallel Layout
 
 Omega is designed to be run in parallel across multiple nodes and cores
 in a clustered architecture. As in many Earth System Models, we decompose

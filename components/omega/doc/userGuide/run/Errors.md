@@ -1,6 +1,6 @@
-(omega-user-error)=
+(omega-user-run-errors)=
 
-# Error handling
+# Error Messages
 
 Omega includes an error handling facility that checks for potential errors
 and responds to those errors when encountered.

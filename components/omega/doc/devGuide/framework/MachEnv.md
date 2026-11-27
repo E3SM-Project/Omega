@@ -1,6 +1,6 @@
 (omega-dev-mach-env)=
 
-## Machine Environment (MachEnv)
+# Machine Environment (MachEnv)
 
 The MachEnv class maintains a number of parameters associated with
 the parallel machine environment. These include message-passing parameters

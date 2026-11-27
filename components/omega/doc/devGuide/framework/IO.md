@@ -1,6 +1,6 @@
-(omega-dev-IO)=
+(omega-dev-io)=
 
-## Parallel IO (IO)
+# Parallel IO (IO)
 
 For input and output of data needed for Omega, we use the Software for
 Caching Output and Reads for Parallel I/O
@@ -16,7 +16,7 @@ for optimal IO, the user would specify a different number of IO tasks than
 for computation. For example, the user could specify the number of IO tasks to
 match underlying hardware like the network interfaces (NICs) on a node.
 Users and developers will generally access IO via
-[IOStreams](#omega-user-iostreams)
+[IOStreams](#omega-user-io-streams)
 and other interfaces. The base IO layer described here only provides
 an Omega-aware wrapper around SCORPIO calls.
 

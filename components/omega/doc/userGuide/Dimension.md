@@ -1,6 +1,6 @@
 (omega-user-dimension)=
 
-## Dimension
+# Dimension
 
 When performing IO, some metadata associated with each dimension in Omega
 must be defined. We provide a Dimension class to hold this metadata for use by

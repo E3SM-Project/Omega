@@ -1,4 +1,4 @@
-(omega-kppmix)=
+(omega-user-model-kpp)=
 
 # KPP Boundary Layer Mixing
 
@@ -9,7 +9,7 @@ directly from the MPAS-Ocean implementation.
 Related pages:
 - KPP design/theory: [Design KPP document](#omega-design-kppmix)
 - KPP implementation details: [Developer KPP document](#omega-dev-kppmix)
-- Broader vertical mixing options: [Vertical Mixing Coefficients](#omega-user-vertmix)
+- Broader vertical mixing options: [Vertical Mixing Coefficients](#omega-user-model-vertical-mixing)
 
 ## What KPP Provides
 
@@ -124,6 +124,6 @@ full water column profile of these four fields; it does not change
   layer tracer fluxes. It is applied through the
   `Tendencies: KPPNonLocalTracerFluxTendencyEnable` flag, which is on by default
   and should be left enabled; see
-  [Tendency Terms](#omega-user-tend-terms).
+  [Tendency Terms](#omega-user-model-tendencies).
 - Use `DebugDiagnostics` sparingly for troubleshooting targeted cases.
 - When studying sea-ice regions, review minimum-OBL and ice-threshold options.

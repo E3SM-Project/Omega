@@ -1,6 +1,6 @@
 (omega-user-data-types)=
 
-## Data Types and Precision
+# Data Types and Precision
 
 Omega supports all standard data types and uses some specific defined
 types to guarantee a specific level of precision. There is only one

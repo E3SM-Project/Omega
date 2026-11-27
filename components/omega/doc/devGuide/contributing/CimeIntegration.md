@@ -38,7 +38,7 @@ Because CIME imports and executes `buildnml` in-process within the Python
 interpreter running CIME commands (`case.setup`, `case.submit`, `create_test`),
 `pyyaml` must be importable in that interpreter. On supported machines, source
 the machine's CIME environment loader before invoking CIME commands (see the
-{ref}`CIME environment table <omega-cime-env>`). For discussion on
+{ref}`CIME environment table <omega-dev-cime-env>`). For discussion on
 shared Python environments across E3SM, see
 [E3SM Discussion #8906](https://github.com/E3SM-Project/E3SM/discussions/8906).
 ```

@@ -1,6 +1,6 @@
 (omega-user-tridiagonal)=
 
-## Tridiagonal Solvers
+# Tridiagonal Solvers
 
 OMEGA provides two types of solvers for solving many tridiagonal systems of equations
 in one go:

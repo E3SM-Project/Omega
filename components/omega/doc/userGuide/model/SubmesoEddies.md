@@ -1,4 +1,4 @@
-(omega-user-submeso-eddies)=
+(omega-user-model-submeso-eddies)=
 
 # Submesoscale Eddy Parameterization
 

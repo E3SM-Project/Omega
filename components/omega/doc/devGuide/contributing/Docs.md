@@ -25,7 +25,7 @@ headings within the page whenever you think internal linking might be useful
 `omega-`:
 
 ```markdown
-(omega-quick-start)=
+(omega-user-quick-start)=
 
 # Quick Start for Users
 ...

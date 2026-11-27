@@ -1,4 +1,4 @@
-(omega-user-analysis)=
+(omega-user-io-analysis)=
 
 # Analysis
 
@@ -136,7 +136,7 @@ automatically by `AnalysisGroup` configuration. Any user-specified values for
 these parameters will be overwritten.
 
 For complete IOStream documentation, see the
-[IOStreams](#omega-user-iostreams) section of the User's Guide.
+[IOStreams](#omega-user-io-streams) section of the User's Guide.
 
 ### GlobalStats
 

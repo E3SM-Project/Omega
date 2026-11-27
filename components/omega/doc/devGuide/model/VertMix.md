@@ -1,4 +1,4 @@
-(omega-dev-vertmix) =
+(omega-dev-vertmix)=
 
 # Vertical Mixing Coefficients
 

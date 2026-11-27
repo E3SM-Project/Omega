@@ -1,8 +1,8 @@
-(omega-user-vert-coord)=
+(omega-user-model-vertical-coordinate)=
 
-## Vertical Coordinate
+# Vertical Coordinate
 
-### Overview
+## Overview
 
 Omega uses pseudo height, $\tilde{z} = \frac{p}{\rho_0 g}$,  as the vertical coordinate ([V1 governing equation document](omega-design-governing-eqns-omega1)),
 where $p$ is **relative pressure** (gauge pressure, i.e., absolute pressure minus the standard atmosphere of 101325 Pa).
@@ -23,7 +23,7 @@ The `VertCoord` class contains variables and functions relevant to keeping track
 
 Multiple instances of the vertical coordinate class can be created and accessed by a unique name.
 
-### Variables
+## Variables
 
 | Variable Name | Description | Units |
 | ------------- | ----------- | ----- |
@@ -50,7 +50,7 @@ Multiple instances of the vertical coordinate class can be created and accessed 
 | BottomGeomDepth | positive down distance from the reference geoid to the bottom | m |
 | SurfacePressure | relative pressure (gauge pressure) at the top of the ocean column | Pa |
 
-### Surface pressure
+## Surface pressure
 
 `SurfacePressure` is the relative pressure (gauge pressure, i.e., absolute pressure minus the
 standard atmosphere of 101325 Pa) at the top of the ocean column. It is the top boundary
@@ -66,7 +66,7 @@ For a coupled ocean–atmosphere run, `SurfacePressure` holds the anomaly of the
 surface pressure from the standard atmosphere; eventually it will be updated each timestep
 via the coupler as a weighted sum of atmosphere, sea-ice, and land-ice pressure.
 
-### Inactive and boundary layers in output
+## Inactive and boundary layers in output
 
 Each output field declares a fill value (matching the NetCDF-C standard `_FillValue`) that marks entries outside the active domain.
 In a cell column only the active layers (`[MinLayerCell, MaxLayerCell]`) carry valid data; deeper, inactive layers contain the fill value.

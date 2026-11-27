@@ -1,6 +1,6 @@
 (omega-dev-ocean-state)=
 
-## Ocean State
+# Ocean State
 
 The Omega `OceanState` class
 A state object is created by the `init` method, which assumes that `Decomp` and `HorzMesh` have

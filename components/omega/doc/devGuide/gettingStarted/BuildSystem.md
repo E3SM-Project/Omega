@@ -1,6 +1,6 @@
 (omega-dev-cmake-build)=
 
-# Omega Build with CMake
+# The CMake Build System
 
 The Omega build system utilizes CMake, a widely-used build tool,
 to facilitate the build process.

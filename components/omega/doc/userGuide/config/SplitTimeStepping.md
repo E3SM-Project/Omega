@@ -1,4 +1,4 @@
-(omega-user-split-time-stepping)=
+(omega-user-config-split-time-stepping)=
 
 # Split Time Stepping
 
@@ -47,7 +47,7 @@ options for `SplitExplicitRK2` and `UnsplitRK2`:
 ```
 
 The remaining `TimeIntegration` options are described in the [Time
-stepping](#omega-user-time-stepping) section, and the `ModeSplitShare` values
+stepping](#omega-user-config-time-stepping) section, and the `ModeSplitShare` values
 shown are those of the default configuration. The `ModeSplitShare` subgroup is
 required whenever one of the two steppers is selected. Within it, only
 `BtrTimeStep` is required, and only for `SplitExplicitRK2`; the other options
@@ -113,10 +113,10 @@ configuration file:
 
 - `HaloWidth` in the `Decomp` section must be at least 3, which is the default.
   The barotropic subcycle uses the extra halo layers to communicate only once
-  per subcycle. This is checked when the barotropic update is first called; see [Domain Decomposition](#omega-user-decomp).
+  per subcycle. This is checked when the barotropic update is first called; see [Domain Decomposition](#omega-user-config-parallel).
 - `SSHTendencyEnable` in the `Tendencies` section must be false, which is also
   the default. The split time stepper computes the barotropic pressure gradient
-  itself. This is checked at initialization; see [Tendency Terms](#omega-user-tend-terms).
+  itself. This is checked at initialization; see [Tendency Terms](#omega-user-model-tendencies).
 
 ## State variables and restart
 

@@ -1,6 +1,6 @@
 (omega-dev-config)=
 
-## Model Configuration (Config)
+# Model Configuration (Config)
 
 Model configuration refers to all of the necessary variables to configure
 and run the model. It contains all the input parameters, choices of methods,

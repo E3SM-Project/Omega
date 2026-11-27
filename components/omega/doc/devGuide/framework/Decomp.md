@@ -1,6 +1,6 @@
 (omega-dev-decomp)=
 
-## Domain Decomposition (Decomp)
+# Domain Decomposition (Decomp)
 
 In order to run across nodes in a parallel computer, Omega subdivides the
 horizontal domain into subdomains that are distributed across the machine
@@ -21,7 +21,7 @@ with the call:
 ```
 This must be called very early in the init process, just after initializing
 the MachEnv, Config and IO.  By default, the mesh information is read from
-the filename defined in the [HorzMeshIn IOStream](#omega-user-horz-mesh).
+the filename defined in the [HorzMeshIn IOStream](#omega-user-io-mesh).
 However, an optional filename argument to the init function above can be used
 to override the input configuration (eg for unit testing). Mesh information is
 first read using parallel IO into an equally-spaced linear decomposition, then

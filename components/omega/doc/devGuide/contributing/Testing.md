@@ -315,7 +315,7 @@ standalone runs:
 - **PE layout independence (`PEM`/`PET`):** Verifies bit-for-bit results across
   different processor element (PE, i.e., MPI task) layouts and thread counts.
 
-(omega-cime-env)=
+(omega-dev-cime-env)=
 
 ### Sourcing the CIME Environment
 

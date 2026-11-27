@@ -1,6 +1,6 @@
-(omega-user-iostreams)=
+(omega-user-io-streams)=
 
-## IO Streams (IOStream)
+# I/O Streams
 
 IO Streams are the primary mechanism for users to specify input and output
 for Omega. An IOStream can be defined for any number of fields and at desired

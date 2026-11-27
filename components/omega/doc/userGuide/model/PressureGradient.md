@@ -1,4 +1,4 @@
-(omega-user-pgrad)=
+(omega-user-model-pressure-gradient)=
 
 # Pressure Gradient
 
@@ -135,9 +135,9 @@ bathymetry until this is resolved.
 The pressure gradient calculation requires the following Omega components to be
 initialized first:
 
-- [**Horizontal Mesh**](omega-user-horz-mesh): provides mesh geometry including
+- [**Horizontal Mesh**](omega-user-io-mesh): provides mesh geometry including
   distances between cell centers and edge connectivity
-- [**Vertical Coordinate**](omega-user-vert-coord): provides pressure at layer
+- [**Vertical Coordinate**](omega-user-model-vertical-coordinate): provides pressure at layer
   mid-points and interfaces, geometric interface heights ($z$), and geopotential
-- [**Equation of State**](omega-user-eos): provides the specific volume field
-- [**Ocean State**](omega-user-state): provides the current pseudo-thicknesses
+- [**Equation of State**](omega-user-model-eos): provides the specific volume field
+- [**Ocean State**](omega-user-io-initial-conditions): provides the current pseudo-thicknesses

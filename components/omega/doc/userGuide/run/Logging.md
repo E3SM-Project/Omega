@@ -1,4 +1,4 @@
-(omega-user-logging)=
+(omega-user-run-logging)=
 
 # Omega Logging
 

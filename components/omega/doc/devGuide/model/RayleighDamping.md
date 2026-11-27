@@ -2,7 +2,7 @@
 
 # Rayleigh Damping
 
-Rayleigh damping (see the [user guide](#omega-user-rayleigh-damping)) is not a separate class or tendency term. It is a diagonal contribution to the tridiagonal system solved by the implicit velocity vertical mixing in `VertMix::applyVelVertMixImplicit`.
+Rayleigh damping (see the [user guide](#omega-user-model-rayleigh-damping)) is not a separate class or tendency term. It is a diagonal contribution to the tridiagonal system solved by the implicit velocity vertical mixing in `VertMix::applyVelVertMixImplicit`.
 
 ## Implementation
 

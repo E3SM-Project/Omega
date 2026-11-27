@@ -1,4 +1,4 @@
-(omega-user-frazil)=
+(omega-user-model-frazil)=
 
 # Frazil
 

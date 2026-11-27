@@ -190,7 +190,7 @@ Important keys and class members:
 - `MinimumOSBLUnderSeaIce` -> `MinimumOSBLUnderSeaIce`
 - `DebugDiagnostics` -> `DebugDiagnostics`
 
-See [User KPP guide](#omega-kppmix) for defaults and runnable examples.
+See [User KPP guide](#omega-user-model-kpp) for defaults and runnable examples.
 
 ## Output and Diagnostic Fields
 

@@ -1,4 +1,4 @@
-(omega-user-tend-terms)=
+(omega-user-model-tendencies)=
 
 # Tendency Terms
 
@@ -83,7 +83,7 @@ implemented as the functors above, but they are enabled from the same
 | PressureGradTendencyEnable | enable/disable the pressure gradient tendency
 | VelVertMixTendencyEnable | enable/disable vertical mixing of velocity; required when bottom drag uses `Implicit` mode
 | TracerVertMixTendencyEnable | enable/disable vertical mixing of tracers
-| KPPNonLocalTracerFluxTendencyEnable | enable/disable the KPP non-local tracer flux; see [KPP Boundary Layer Mixing](#omega-kppmix)
+| KPPNonLocalTracerFluxTendencyEnable | enable/disable the KPP non-local tracer flux; see [KPP Boundary Layer Mixing](#omega-user-model-kpp)
 | KPPNonLocalTracerDiagnosticsEnable | enable/disable diagnostic output of the non-local flux tendency
 
 The non-local options are only read when velocity or tracer vertical mixing is
@@ -264,4 +264,4 @@ flux correction. Notice the reduction in ringing around the sharp edges of the t
 
 Additional information on forcing, including surface stress forcing,
 surface thickness and tracer flux forcing, and surface tracer restoring, is detailed in
-[](omega-user-forcing).
+[](omega-user-model-forcing).

@@ -1,6 +1,6 @@
 (omega-dev-broadcast)=
 
-## Broadcast
+# Broadcast
 
 In a parallel environment, it is sometimes necessary to broadcast values
 from a single task to all remaining tasks. Omega provides broadcast

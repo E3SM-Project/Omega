@@ -103,7 +103,7 @@ testing (the Polaris `omega_pr` regression suite and CTests) and coupled testing
 Both Polaris-based standalone workflows and CIME coupled workflows are supported.
 To build and test Omega as part of a coupled E3SM simulation or run CIME
 system tests, see {ref}`omega-dev-cime-testing`. Remember to source the machine's
-{ref}`CIME environment <omega-cime-env>` before running CIME commands.
+{ref}`CIME environment <omega-dev-cime-env>` before running CIME commands.
 
 (omega-dev-quick-start-ctest-util)=
 
@@ -134,7 +134,7 @@ Some tests require a valid Omega mesh file. Different tests require different
 meshes. At the moment, mesh files need to be copied or linked to specifically
 named files under the `test` directory. Spherical meshes must lie on a sphere
 with the Earth radius from the Physical Constants Dictionary (see
-[Horizontal Mesh](#omega-user-horz-mesh)). Appropriate mesh files can be
+[Horizontal Mesh](#omega-user-io-mesh)). Appropriate mesh files can be
 downloaded from:
 - [Ocean Mesh](https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/ocean.QU.240km.omega_vars.260807.nc)
 - [Global Mesh](https://web.lcrc.anl.gov/public/e3sm/polaris/ocean/omega_ctest/cosine_bell_icos480.omega_vars.260911.nc)

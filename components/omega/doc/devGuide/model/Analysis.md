@@ -7,7 +7,7 @@ fields from the ocean model state during a simulation. Analysis fields are
 computed on the fly at user-specified intervals and written to output
 streams, avoiding the need to store large volumes of raw model output for
 offline post-processing. User-level configuration is described in the
-[User Guide](#omega-user-analysis) and the algorithmic formulation is
+[User Guide](#omega-user-io-analysis) and the algorithmic formulation is
 described in the [Design Document](#omega-design-analysis). This document
 describes the implementation: the classes, their interfaces, and how to
 extend the module.

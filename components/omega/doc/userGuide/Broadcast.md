@@ -1,6 +1,6 @@
 (omega-user-broadcast)=
 
-## Broadcast
+# Broadcast
 
 In any parallel code, there is sometimes a need to broadcast values from
 one processor to all other processors. This is implemented in Omega as a

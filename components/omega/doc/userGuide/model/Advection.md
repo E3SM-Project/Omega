@@ -1,8 +1,8 @@
-(omega-user-vert-adv)=
+(omega-user-model-advection)=
 
-## Vertical Advection
+# Vertical Advection
 
-### Overview
+## Overview
 
 In Omega, vertical advection represents the transport of mass, momentum, and
 tracer quantities along the vertical coordinate due to vertical motion within a
@@ -18,7 +18,7 @@ velocity and the tendencies of `PseudoThickness`, `NormalVelocity`, and
 `Tracers`. The algorithms used are determined by options specified in the
 configuration file.
 
-### Configuration Options
+## Configuration Options
 
 Within the `Tendencies` group of the configuration file, flags are used to
 enable or disable the contribution of vertical advection to the tendencies of

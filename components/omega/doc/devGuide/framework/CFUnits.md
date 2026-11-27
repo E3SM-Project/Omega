@@ -1,6 +1,6 @@
 (omega-dev-cfunits)=
 
-## CFUnits
+# CFUnits
 
 Omega fields carry their units as a string attribute in the plain form used
 by the CF standard name table: unit symbols separated by single spaces, each

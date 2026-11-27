@@ -1,4 +1,4 @@
-(omega-dev-eos) =
+(omega-dev-eos)=
 
 # Equation of State (EOS)
 

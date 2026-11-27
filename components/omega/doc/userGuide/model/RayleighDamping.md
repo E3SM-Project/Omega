@@ -1,4 +1,4 @@
-(omega-user-rayleigh-damping)=
+(omega-user-model-rayleigh-damping)=
 
 # Rayleigh Damping
 

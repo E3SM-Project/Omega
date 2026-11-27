@@ -1,6 +1,6 @@
-(omega-user-time-manager)=
+(omega-user-config-time-management)=
 
-# Time Manager (TimeMgr)
+# Time Management
 
 The time manager manages various time quantities during a simulation, including
 time steps, time instants, the calendar, clocks and alarms. The user can
@@ -24,4 +24,4 @@ for tracking simulation time. Supported calendars include:
 
 A number of other time quantities are specified in the ``TimeIntegration``
 section (eg time step, start time) and are described in the
-[TimeStepping](#omega-user-time-stepping) section.
+[TimeStepping](#omega-user-config-time-stepping) section.

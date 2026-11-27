@@ -1,6 +1,6 @@
 (omega-dev-horz-mesh)=
 
-## Horizontal Mesh
+# Horizontal Mesh
 
 The Omega horizontal mesh uses the [MPAS Mesh
 Specification](https://mpas-dev.github.io/files/documents/MPAS-MeshSpec.pdf).
@@ -12,7 +12,7 @@ OMEGA::HorzMesh::init(ModelClock);
 ```
 The model clock should be the ocean model clock and is required by the IOStream
 routines that read the HorzMesh variables from the input stream
-[HorzMeshIn](#omega-user-horz-mesh).
+[HorzMeshIn](#omega-user-io-mesh).
 The constructor replicates the subdomain mesh cell/edge/vertex counts and
 connectivity information from Decomp so this information can be passed among the
 computational routines, alongside the other local mesh information.  It then

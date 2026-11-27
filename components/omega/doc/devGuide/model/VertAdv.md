@@ -1,12 +1,12 @@
 (omega-dev-vert-adv)=
 
-## Vertical Advection
+# Vertical Advection
 
 The `VertAdv` class contains methods and arrays for calculating vertical
 velocities and the tendencies of thickness, horizontal velocity, and tracers due
 to vertical advection.
 
-### Initialization
+## Initialization
 
 The default `VertAdv` instance is created by calling `VertAdv::init()` method.
 The default `HorzMesh`, `VertCoord`, and `Tracers` objects must be initialized
@@ -33,7 +33,7 @@ The constructor reads configuration options, stores some info from the
 `HorzMesh`, `VertCoord`, and `Tracers` objects, allocates needed arrays,
 and defines `Field` metadata.
 
-### Variables
+## Variables
 
 The following arrays are stored as members of the `VertAdv` class.
 
@@ -52,7 +52,7 @@ includes corrections applied to the `VerticalPseudoVelocity`. The `VertFlux` and
 numerical algorithms to compute these fluxes are chosen by the user through
 configuration options.
 
-### Methods
+## Methods
 
 The `VerticalPseudoVelocity` and `TotalVerticalPseudoVelocity` arrays are
 computed by calling the `computeVerticalPseudoVelocity` method:

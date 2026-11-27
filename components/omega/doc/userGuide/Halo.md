@@ -11,7 +11,7 @@ halos. The Halo class accomplishes these halo exchanges using the MPI
 
 The Halo class depends on the MachEnv class and the Decomp class. Currently,
 the only configuration parameters that directly impact Halo are those set
-to configure the [Decomp](#omega-user-decomp) class. During the build
+to configure the [Decomp](#omega-user-config-parallel) class. During the build
 process, the pre-processing parameter `-DOMEGA_MPI_ON_DEVICE` toggles
 whether or not buffer arrays in device memory space can be passed to
 MPI send and receive functions during halo exchanges. By default,

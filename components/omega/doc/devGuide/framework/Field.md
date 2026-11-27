@@ -1,6 +1,6 @@
 (omega-dev-field)=
 
-## Fields and Metadata (Field)
+# Fields and Metadata (Field)
 
 Omega includes a Field class that registers available fields and associated
 metadata for use in IO (or any other part of Omega that may require the field

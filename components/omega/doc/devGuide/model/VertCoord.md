@@ -1,8 +1,8 @@
 (omega-dev-vert-coord)=
 
-## Vertical Coordinate
+# Vertical Coordinate
 
-### Initialization
+## Initialization
 
 The default `VertCoord` instance is created by the `init` method, which assumes that `Decomp` has already been initialized.
 ```
@@ -44,7 +44,7 @@ Host mirror copies are also created, with variables appended with `H`.
 It also reads in some additional mesh information and computes the information describing the min/max location of the active vertical layers.
 Finally, it registers variables with `IOStreams` so they can be requested as output.
 
-### Variables
+## Variables
 
 A list of member variables along with their types and dimension sizes is below:
 
@@ -71,7 +71,7 @@ A list of member variables along with their types and dimension sizes is below:
 | BottomGeomDepth | Real | NCellsSize |
 | SurfacePressure | Real | NCellsSize |
 
-### Surface pressure
+## Surface pressure
 
 `SurfacePressure` is the relative pressure (gauge pressure) at the top of the ocean column and
 is the top boundary condition used by `computePressure`. It is owned by `VertCoord` and its host
@@ -104,7 +104,7 @@ updated by `copyToHost()`. Note the asymmetry with `copyToDevice()`, which delib
 copy `SurfacePressureH` back: the device array is the authoritative copy and is the only one
 written by the stream read and by `SfcCoupling`.
 
-### Removal
+## Removal
 
 `VertCoord` instances can be removed by name:
 ```
@@ -115,7 +115,7 @@ or all instances can be destroyed by calling:
 VertCoord.clear();
 ```
 
-### Use of hierarchical parallelism
+## Use of hierarchical parallelism
 
 The methods `computePressure` and `computeGeomZHeight` are similar in that they use hierarchical parallelism to split the work for horizontal cells over teams of threads, with a `parallel_for`.
 This is done with a `TeamPolicy`:
@@ -163,7 +163,7 @@ The vector length on GPUs is set to 1 to maximize parallelism.
 The `computeGeopotential` method uses hierarchical parallelism in a very similar way to `computeTargetThickness`, except that it doesn't require a column sum.
 It has an outer `parallel_for` that splits horizontal cells into teams and an inner `parallel_for` that does vertical computations in chunks.
 
-### Layer masking
+## Layer masking
 
 Field arrays are auto-filled with `FillValueReal` when they are attached to a `Field` (see the [Fill Values design](#omega-design-fill-values)).
 Compute kernels only write to active layers, so inactive layers naturally retain the fill value.

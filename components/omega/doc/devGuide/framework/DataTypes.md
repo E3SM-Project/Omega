@@ -1,6 +1,6 @@
 (omega-dev-data-types)=
 
-## Data Types and Precision
+# Data Types and Precision
 
 Omega supports all standard data types and uses some additional defined
 types to guarantee a specific level of precision. In particular, we
@@ -24,7 +24,7 @@ the inverse area of a cell using only the Real type as follows:
     Real InvAreaCell = 1._Real / AreaCell(ICell);
 ```
 
-## Arrays and Kokkos
+# Arrays and Kokkos
 
 The C++ language does not have native support for multi-dimensional
 arrays as part of the language standard, though there are a number

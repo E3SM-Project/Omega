@@ -1,13 +1,13 @@
 (omega-dev-iostreams)=
 
-## IO Streams (IOStream)
+# IO Streams (IOStream)
 
 Most input and output for Omega occurs through IOStreams. Each stream
 defines a file, the contents to be read/written and the time frequency
 for reading and writing. Defining streams via the input configuration
-file is described in the [User Guide](#omega-user-iostreams). IOStreams
+file is described in the [User Guide](#omega-user-io-streams). IOStreams
 are built on top of the parallel IO infrastructure described in the
-[IO Section](#omega-dev-IO) and the Field and Metadata described in the
+[IO Section](#omega-dev-io) and the Field and Metadata described in the
 [Field Section](#omega-dev-Field). Here we describe the classes and functions
 used to implement IOStreams. Any module accessing an IOStream instance
 or related functions must include the ``IOStream.h`` header file.
@@ -103,7 +103,7 @@ The Metadata corresponding to ForcingTime will then be read from the file
 and inserted as the Metadata value. If no metadata is to be read from the
 file, then an empty ReqMetadata variable can be passed.
 
-### IOName Metadata for User-Friendly Output Variable Names
+## IOName Metadata for User-Friendly Output Variable Names
 
 Fields written to netCDF files can optionally specify a custom output variable
 name using the `IOName` metadata field. By default, IOStream uses the field's
@@ -125,7 +125,7 @@ This feature is particularly useful for analysis outputs where operator chain
 names are long and technical, but output files should have concise, descriptive
 variable names.
 
-As described in the [User Guide](#omega-user-iostreams), all streams are
+As described in the [User Guide](#omega-user-io-streams), all streams are
 defined in the input configuration file and most other IOStream functions
 are associated either with that initialization or to support the read/write
 functions above.

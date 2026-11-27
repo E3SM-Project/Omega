@@ -1,4 +1,4 @@
-(omega-user-build-cmake)=
+(omega-user-build-standalone)=
 
 # CMake-based Omega Build
 
@@ -192,7 +192,7 @@ During case setup and execution, CIME runs Omega's configuration generator
 (`components/omega/cime_config/buildnml`) in-process within Python to generate
 `omega.yml` from YAML configuration files. Because `buildnml` requires `pyyaml`,
 the Python environment running CIME commands must have `pyyaml` available
-(see {ref}`omega-cime-env`).
+(see {ref}`omega-dev-cime-env`).
 
 For comprehensive instructions on setting up, building, and running coupled cases
 and CIME system tests, see {ref}`omega-dev-cime-testing`.

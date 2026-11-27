@@ -1,6 +1,6 @@
 (omega-dev-dimension)=
 
-## Dimension
+# Dimension
 
 When performing IO for fields in Omega, some metadata associated with each
 dimension of multi-dimensional arrays are required. The Dimension class is

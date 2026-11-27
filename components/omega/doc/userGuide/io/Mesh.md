@@ -1,25 +1,25 @@
-(omega-user-horz-mesh)=
+(omega-user-io-mesh)=
 
-## Horizontal Mesh
+# Mesh Files
 
-Omega uses the {ref}`MPAS mesh specification <mpas-mesh-specification>`. The
+Omega uses the {ref}`MPAS mesh specification <omega-tech-mpas-mesh>`. The
 names of the mesh variables have been retained, with the caveat that they now
 begin with a capital letter (e.g. `angleEdge` becomes `AngleEdge`).
 
 The Mesh class is meant to be a container for all mesh variables local to a
 decomposed sub-domain that can be easily passed among the dycore routines. It
-depends on a given [Decomp](#omega-user-decomp) and reproduces the
+depends on a given [Decomp](#omega-user-config-parallel) and reproduces the
 cell/edge/vertex totals and connectivity information from that class. The Mesh
 class also creates parallel I/O decompositions that are used to read in the
 additional mesh variables, which are not required for Decomp.
 
 Currently, the Mesh class reads in every field required by the
-{ref}`MPAS mesh specification <mpas-mesh-specification>` except those read by
+{ref}`MPAS mesh specification <omega-tech-mpas-mesh>` except those read by
 Decomp. The input contents are defined by the
 `HorzMeshIn` FieldGroup. Refer to the specification for the
 definition, units, and dimensions of each field.
 
-These are all read using the input [IOStream](#omega-user-iostreams) HorzMeshIn
+These are all read using the input [IOStream](#omega-user-io-streams) HorzMeshIn
 ```yaml
   IOStreams:
     HorzMeshIn:
@@ -46,14 +46,14 @@ OnSphere and IsPeriodic are stored as YES/NO strings in the metadata but as
 boolean flags in the code. For a spherical mesh, ``SphereRadius`` must match
 the Earth radius from the Physical Constants Dictionary (``REarth`` in
 ``GlobalConstants.h``) to a relative tolerance of $10^{-8}$; the model aborts
-otherwise. See the {ref}`MPAS mesh specification <mpas-mesh-specification>` for how to
+otherwise. See the {ref}`MPAS mesh specification <omega-tech-mpas-mesh>` for how to
 bring older meshes into compliance.
 
 In the future, the Mesh class will optionally compute internally those fields
 the specification marks as *could be computed internally* — the areas, lengths,
 angles, and weights needed for the TRiSK discretization.
 
-### Horizontal mixing mesh scaling
+## Horizontal mixing mesh scaling
 
 Omega scales horizontal viscosity and diffusivity with the local mesh size.
 This scaling is enabled by default and is controlled by the following

@@ -1,6 +1,6 @@
-(omega-user-vertmix)=
+(omega-user-model-vertical-mixing)=
 
-# Vertical Mixing Coefficients
+# Vertical Mixing
 
 The vertical mixing module in Omega handles the parameterization of unresolved vertical mixing
 processes in the ocean. It calculates vertical diffusivity and viscosity coefficients that

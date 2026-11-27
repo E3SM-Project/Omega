@@ -1,6 +1,6 @@
 (omega-user-mach-env)=
 
-## Machine Environment (MachEnv)
+# Machine Environment (MachEnv)
 
 Within Omega, many aspects of the machine environment are stored
 in a class called MachEnv. These include message-passing parameters
